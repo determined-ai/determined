@@ -13,7 +13,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 message TrialValidation {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
-      required: ["batch_number", "start_time", "state", "searcher_metric"]
+      required: ["batch_number", "start_time", "state"]
    }
   };
   // The batch number where validation was evaluated.

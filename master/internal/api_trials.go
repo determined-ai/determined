@@ -209,7 +209,7 @@ func (a *apiServer) GetExperimentTrials(
 	switch err := a.m.db.QueryProto(
 		"proto_get_trials_plus",
 		&resp.Trials,
-		strings.Join(trialIds, ","),
+		"{"+strings.Join(trialIds, ",")+"}",
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIds)
@@ -227,7 +227,7 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	switch err := a.m.db.QueryProto(
 		"proto_get_trials_plus",
 		resp.Trial,
-		strconv.Itoa(int(req.TrialId)),
+		"{"+strconv.Itoa(int(req.TrialId))+"}",
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)

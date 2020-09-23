@@ -15,7 +15,7 @@ WITH searcher_info AS (
   FROM experiments e
     INNER JOIN trials t ON t.experiment_id = e.id
   WHERE t.id IN (
-      SELECT unnest(string_to_array($1, ','))::int
+      SELECT unnest($1::int [])::int
     )
 ),
 trial_validations AS (
