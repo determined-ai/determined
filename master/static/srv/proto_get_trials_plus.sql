@@ -1,4 +1,4 @@
-WITH const AS (
+WITH searcher_info AS (
   SELECT config->'searcher'->>'metric' AS metric_name,
     (
       SELECT CASE
@@ -7,7 +7,7 @@ WITH const AS (
               config->'searcher'->>'smaller_is_better'
             )::boolean,
             true
-          ) THEN -1 -- so we can order by DESC to get the highest value
+          ) THEN -1
           ELSE 1
         END
     ) AS sign,
@@ -18,7 +18,7 @@ WITH const AS (
       SELECT unnest(string_to_array($1, ','))::int
     )
 ),
-w_validations AS (
+trial_validations AS (
   SELECT v.trial_id,
     v.step_id,
     v.start_time,
@@ -26,55 +26,55 @@ w_validations AS (
     v.state,
     (
       (
-        v.metrics->'validation_metrics'->>(const.metric_name)
-      )::float8 * const.sign
+        v.metrics->'validation_metrics'->>(searcher_info.metric_name)
+      )::float8 * searcher_info.sign
     ) AS signed_searcher_metric
   FROM validations v
-    INNER JOIN const ON v.trial_id = const.trial_id
+    INNER JOIN searcher_info ON v.trial_id = searcher_info.trial_id
   WHERE v.state = 'COMPLETED'
     AND (
-      v.metrics->'validation_metrics'->>(const.metric_name)
+      v.metrics->'validation_metrics'->>(searcher_info.metric_name)
     ) IS NOT NULL
 ),
 best_validation AS (
-  SELECT v.trial_Id,
+  SELECT v.trial_id,
     v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
-    v.signed_searcher_metric * const.sign as searcher_metric,
+    v.signed_searcher_metric * searcher_info.sign as searcher_metric,
     s.prior_batches_processed + s.num_batches AS batch_number
   FROM (
       SELECT v.*,
         ROW_NUMBER() OVER(
           PARTITION BY v.trial_id
           ORDER BY v.signed_searcher_metric DESC
-        ) AS rk
-      FROM w_validations v
+        ) AS rank
+      FROM trial_validations v
     ) v
     JOIN steps s ON v.step_id = s.id
     AND v.trial_id = s.trial_id
-    JOIN const ON const.trial_id = v.trial_id
-  WHERE v.rk = 1
+    JOIN searcher_info ON searcher_info.trial_id = v.trial_id
+  WHERE v.rank = 1
 ),
 latest_validation AS (
-  SELECT v.trial_Id,
+  SELECT v.trial_id,
     v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
-    v.signed_searcher_metric * const.sign as searcher_metric,
+    v.signed_searcher_metric * searcher_info.sign as searcher_metric,
     s.prior_batches_processed + s.num_batches AS batch_number
   FROM (
       SELECT v.*,
         ROW_NUMBER() OVER(
           PARTITION BY v.trial_id
           ORDER BY v.end_time DESC
-        ) AS rk
-      FROM w_validations v
+        ) AS rank
+      FROM trial_validations v
     ) v
     JOIN steps s ON v.step_id = s.id
     AND v.trial_id = s.trial_id
-    JOIN const ON const.trial_id = v.trial_id
-  WHERE v.rk = 1
+    JOIN searcher_info ON searcher_info.trial_id = v.trial_id
+  WHERE v.rank = 1
 ),
 best_checkpoint AS (
   SELECT c.uuid::text AS uuid,
@@ -89,8 +89,8 @@ best_checkpoint AS (
         ROW_NUMBER() OVER(
           PARTITION BY v.trial_id
           ORDER BY v.signed_searcher_metric DESC
-        ) AS rk
-      FROM w_validations v
+        ) AS rank
+      FROM trial_validations v
         INNER JOIN checkpoints c ON (
           c.step_id = v.step_id
           AND c.trial_id = v.trial_id
@@ -99,7 +99,7 @@ best_checkpoint AS (
     ) c
     JOIN steps s ON c.step_id = s.id
     AND c.trial_id = s.trial_id
-  WHERE c.rk = 1
+  WHERE c.rank = 1
 )
 SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
   row_to_json(lv)::jsonb - 'trial_id' AS latest_validation,
@@ -118,8 +118,8 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
     ORDER BY s.id DESC
     LIMIT 1
   ) AS total_batches_processed
-FROM const
-  INNER JOIN trials t ON t.id = const.trial_id
-  LEFT JOIN best_validation bv ON bv.trial_id = const.trial_id
-  LEFT JOIN latest_validation lv ON lv.trial_id = const.trial_id
-  LEFT JOIN best_checkpoint bc ON bc.trial_id = const.trial_id
+FROM searcher_info
+  INNER JOIN trials t ON t.id = searcher_info.trial_id
+  LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
+  LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
+  LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
