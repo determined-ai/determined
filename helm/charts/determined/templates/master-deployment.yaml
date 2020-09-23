@@ -28,8 +28,9 @@ spec:
           {{ $image = "determinedai/determined-ee-master" }}
         {{- end -}}
         {{ $tag := (required "A valid Chart.AppVersion entry required!" .Chart.AppVersion) }}
+        {{- /* detVersion is used for CI to override the appVersion. */ -}}
         {{- if .Values.detVersion -}}
-          {{ $tag =  .Values.detVersion }}
+          {{ $tag = .Values.detVersion }}
         {{- end -}}
         image: {{ $image }}:{{ $tag }}
         imagePullPolicy: "Always"
