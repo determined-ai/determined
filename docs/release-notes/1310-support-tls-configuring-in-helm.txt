@@ -2,5 +2,5 @@
 
 **Improvements**
 
--  Support configuring TLS encryption when deploying Determined on Kubernetes.
-   For more details please see :ref:`install-on-kubernetes`.
+-  Support configuring TLS encryption when deploying Determined on
+   Kubernetes. For more details please see :ref:`install-on-kubernetes`.
