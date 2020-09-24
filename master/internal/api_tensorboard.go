@@ -41,7 +41,7 @@ func (a *apiServer) KillTensorboard(
 
 func (a *apiServer) LaunchTensorboard(
 	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
-) (resp *apiv1.LaunchTensorboardResponse, err error) {
+) (*apiv1.LaunchTensorboardResponse, error) {
 	experimentIds := make([]int, 0)
 	trialIds := make([]int, 0)
 	for _, id := range req.ExperimentIds {
@@ -50,32 +50,37 @@ func (a *apiServer) LaunchTensorboard(
 	for _, id := range req.TrialIds {
 		trialIds = append(trialIds, int(id))
 	}
-	tensorboardReq := command.TensorboardRequest{
+	tensorboardConfig := command.TensorboardRequest{
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}
 	user, _, err := grpc.GetUser(ctx, a.m.db)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user")
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	req := command.TensorboardRequestWithUser{Tensorboard: tensorboardReq, User: user}
-	resp := a.m.system.AskAt(tensorboardsAddr.String(), req)
-	if err != nil {
-		logrus.WithError(err).Error("failed to launch tensorboard")
-		return nil, status.Errorf(codes.Internal, "failed to launch tensorboard")
+	tensorboardLaunchReq := command.TensorboardRequestWithUser{
+		Tensorboard: tensorboardConfig,
+		User:        user,
 	}
-	tensorboardID := resp.Get().(scheduler.TaskID)
+	actorResp := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
+	if actorResp.Error() != nil {
+		return nil, status.Errorf(codes.Internal, "failed to launch tensorboard: %s", err)
+	}
+	tensorboardID := actorResp.Get().(scheduler.TaskID)
 
-	var tensorboardv1 *tensorboardv1.Tensorboard
-	err = a.actorRequest(tensorboardsAddr.Child(tensorboardID).String(), tensorboardv1, &tensorboardv1)
-	if err != nil {
+	tensorboardReq := tensorboardv1.Tensorboard{}
+	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardReq)
+	if actorResp.Error() != nil {
 		return nil, status.Errorf(
 			codes.Internal,
-			"failed to get the created tensorboard %s",
+			"failed to get the created tensorboard %s: %s",
 			tensorboardID,
+			err,
 		)
 	}
 
-	return &apiv1.LaunchTensorboardResponse{Tensorboard: tensorboardv1}, err
+	return &apiv1.LaunchTensorboardResponse{
+		Tensorboard: actorResp.Get().(*tensorboardv1.Tensorboard),
+	}, err
 }

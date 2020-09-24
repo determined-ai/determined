@@ -105,11 +105,12 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 	case TensorboardRequestWithUser:
-		summaryResp, err := t.handleTensorboardRequest(ctx, msg.User, &msg.Tensorboard)
+		summary, err := t.handleTensorboardRequest(ctx, msg.User, &msg.Tensorboard)
 		if err != nil {
-			return errors.Wrap(err, "failed to launch tensorboard")
+			ctx.Respond(errors.Wrap(err, "failed to launch tensorboard"))
+		} else {
+			ctx.Respond(summary.ID)
 		}
-		ctx.Respond(summaryResp.Get().(summary).ID)
 	}
 
 	return nil
@@ -119,7 +120,7 @@ func (t *tensorboardManager) handleTensorboardRequest(
 	ctx *actor.Context,
 	user *model.User,
 	req *TensorboardRequest,
-) (actor.Response, error) {
+) (*summary, error) {
 	fmt.Println(req)
 	commandReq, err := parseCommandRequestWithUser(
 		*user, t.db, &req.commandParams, &t.taskSpec.TaskContainerDefaults)
@@ -133,7 +134,8 @@ func (t *tensorboardManager) handleTensorboardRequest(
 	}
 
 	if len(req.ExperimentIDs) == 0 && len(req.TrialIDs) == 0 {
-		respondBadRequest(ctx, errors.New("must set experiment or trial ids"))
+		err = errors.New("must set experiment or trial ids")
+		respondBadRequest(ctx, err)
 		return nil, err
 	}
 
@@ -143,11 +145,13 @@ func (t *tensorboardManager) handleTensorboardRequest(
 	b, err := t.newTensorBoard(commandReq, *req)
 
 	if err != nil {
+		err = errors.Wrap(err, "failed to create tensorboard")
 		ctx.Respond(err)
 		return nil, err
 	}
 
 	if err := check.Validate(b.config); err != nil {
+		err = errors.Wrap(err, "failed to validate tensorboard config")
 		ctx.Respond(err)
 		return nil, err
 	}
@@ -158,7 +162,8 @@ func (t *tensorboardManager) handleTensorboardRequest(
 		return nil, err
 	}
 	ctx.Log().Infof("created tensorboard %s", a.Address().Local())
-	return summaryResponse, nil
+	summary := summaryResponse.Get().(summary)
+	return &summary, nil
 }
 
 func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
