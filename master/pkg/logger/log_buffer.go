@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func min(a, b int) int {
@@ -86,15 +84,6 @@ type Entry struct {
 	Message string       `json:"message"`
 	Time    time.Time    `json:"time"`
 	Level   logrus.Level `json:"level"`
-}
-
-// Proto returns the proto representation of the log entry.
-func (e *Entry) Proto() *apiv1.MasterLogsResponse {
-	return &apiv1.MasterLogsResponse{
-		Id: int32(e.ID),
-		Message: fmt.Sprintf("[%s] [%s] %s",
-			e.Level.String(), e.Time.Format(time.RFC822), e.Message),
-	}
 }
 
 // LogBuffer is an in-memory buffer based logger.

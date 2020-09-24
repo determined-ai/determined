@@ -258,6 +258,11 @@ service Determined {
         option (google.api.http) = {post: "/api/v1/notebooks/{notebook_id}/kill"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Notebooks"};
     }
+    // Stream notebook logs.
+    rpc NotebookLogs(NotebookLogsRequest) returns (stream NotebookLogsResponse) {
+        option (google.api.http) = {get: "/api/v1/notebooks/{notebook_id}/logs"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Notebooks"};
+    }
 
     // Get a list of shells.
     rpc GetShells(GetShellsRequest) returns (GetShellsResponse) {
