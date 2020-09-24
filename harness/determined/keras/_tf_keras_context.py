@@ -1,11 +1,10 @@
 import inspect
-import logging
 from typing import Any, Callable, List, NamedTuple, Optional, Union
 
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, errors, horovod, keras
+from determined import _data_layer, errors, horovod, keras, log
 from determined.horovod import hvd
 
 
@@ -186,12 +185,12 @@ class TFKerasContext:
         if not self.hvd_config.use or not isinstance(dataset, tf.data.Dataset) or not shard_dataset:
 
             if self.hvd_config and not shard_dataset:
-                logging.info("Dataset sharding skipped.")
+                log.harness.info("Dataset sharding skipped.")
             return dataset
 
         hvd.require_horovod_type("tensorflow.keras", "TFKerasContext.wrap_dataset was called.")
         dataset = dataset.shard(hvd.size(), hvd.rank())
-        logging.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
+        log.harness.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
         return dataset
 
 

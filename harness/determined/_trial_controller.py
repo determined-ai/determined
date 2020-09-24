@@ -1,10 +1,9 @@
 import abc
-import logging
 import pathlib
 from typing import Any, Dict, List, Optional, cast
 
 import determined as det
-from determined import constants, horovod, ipc, workload
+from determined import constants, horovod, ipc, log, workload
 from determined._rendezvous_info import RendezvousInfo
 from determined.horovod import hvd
 from determined_common import check
@@ -258,7 +257,7 @@ class LoopTrialController(TrialController):
         self.batch_size = self.context.get_per_slot_batch_size()
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()
 
-        logging.debug("Starting LoopTrialController initialization.")
+        log.harness.debug("Starting LoopTrialController initialization.")
 
         if self.hvd_config.use:
             self.is_chief = hvd.rank() == 0
@@ -267,13 +266,9 @@ class LoopTrialController(TrialController):
             self.is_chief = True
             training_process_rank = 0
 
-        if self.hvd_config.use and not self.is_chief:
-            log_level = (
-                logging.DEBUG if self.env.experiment_config.debug_enabled() else logging.WARNING
-            )
-            logging.getLogger().setLevel(log_level)
+        self.env.dbg.set_loggers(is_chief=self.is_chief)
 
-        logging.debug(
+        log.harness.debug(
             f"Training coordination initialized on local rank {training_process_rank}, "
             f"using hvd: {self.hvd_config.use}."
         )
@@ -295,7 +290,7 @@ class LoopTrialController(TrialController):
         )
 
         if self.is_chief:
-            logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
+            log.harness.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
             self.train_process_comm_chief = ipc.ZMQBroadcastServer(
                 num_connections=self.env.experiment_config.slots_per_trial() - 1,
                 pub_port=srv_pub_port,
@@ -303,7 +298,7 @@ class LoopTrialController(TrialController):
             )
         else:
             chief_ip_address = self.rendezvous_info.get_ip_addresses()[0]
-            logging.debug(
+            log.harness.debug(
                 f"Non-Chief {hvd.rank()} setting up comm to "
                 f"{chief_ip_address} w/ ports "
                 f"{srv_pub_port}/{srv_pull_port}."

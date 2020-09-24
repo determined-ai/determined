@@ -1,6 +1,7 @@
-import logging
 import pathlib
 from typing import Dict, List
+
+from determined import log
 
 
 class TensorboardManager:
@@ -14,7 +15,11 @@ class TensorboardManager:
     implements the sync method.
     """
 
-    def __init__(self, base_path: pathlib.Path, sync_path: pathlib.Path):
+    def __init__(
+        self,
+        base_path: pathlib.Path,
+        sync_path: pathlib.Path,
+    ):
         self.base_path = base_path
         self.sync_path = sync_path
         self._synced_event_sizes: Dict[pathlib.Path, int] = {}
@@ -25,7 +30,7 @@ class TensorboardManager:
         """
 
         if not self.base_path.exists():
-            logging.warning(
+            log.storage.warning(
                 f"{self.base_path} directory does not exist. "
                 "Trial does not include the correct callback for TensorBoard"
             )

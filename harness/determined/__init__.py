@@ -1,3 +1,4 @@
+from determined_common import log
 from determined.__version__ import __version__
 from determined._env_context import EnvContext
 from determined._rendezvous_info import RendezvousInfo
@@ -17,3 +18,4 @@ from determined._trial_controller import (
 )
 from determined import errors
 from determined import util
+from determined import debug

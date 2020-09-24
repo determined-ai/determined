@@ -1,12 +1,11 @@
 import enum
-import logging
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
 
 import determined as det
-from determined import pytorch
+from determined import log, pytorch
 from determined.horovod import hvd
 from determined_common import check
 
@@ -15,7 +14,7 @@ try:
     import apex
 except ImportError:
     if torch.cuda.is_available():
-        logging.warning("Failed to import apex.")
+        log.harness.warning("Failed to import apex.")
     pass
 
 
@@ -78,7 +77,7 @@ class PyTorchTrialContext(det.TrialContext):
             This is deprecated.
         """
         # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
+        log.harness.warning(
             "PyTorchTrialContext.get_model is deprecated. "
             "Please directly use the model wrapped by context.wrap_model()."
         )
@@ -99,7 +98,7 @@ class PyTorchTrialContext(det.TrialContext):
             This is deprecated.
         """
         # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
+        log.harness.warning(
             "PyTorchTrialContext.get_optimizer is deprecated. "
             "Please directly use the model wrapped by context.wrap_optimizer()."
         )
@@ -120,7 +119,7 @@ class PyTorchTrialContext(det.TrialContext):
             This is deprecated.
         """
         # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
+        log.harness.warning(
             "PyTorchTrialContext.get_lr_scheduler is deprecated. "
             "Please directly use the model wrapped by context.wrap_lr_scheduler()."
         )
@@ -145,7 +144,7 @@ class PyTorchTrialContext(det.TrialContext):
                     "training.",
                 )
                 model = nn.DataParallel(model)
-                logging.debug("Initialized model for native parallel training.")
+                log.harness.debug("Initialized model for native parallel training.")
 
         model_id = len(self.models)
         self._main_model.__setattr__(f"model_{model_id}", model)
@@ -172,7 +171,7 @@ class PyTorchTrialContext(det.TrialContext):
                     backward_passes_per_step=self.hvd_config.aggregation_frequency,
                     compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
                 )
-                logging.debug(
+                log.harness.debug(
                     "Initialized optimizer for distributed and optimized parallel training."
                 )
 
@@ -334,7 +333,7 @@ class PyTorchTrialContext(det.TrialContext):
             "Mixed precision training (AMP) is supported only on GPU slots.",
         )
 
-        logging.info(f"Enabling mixed precision training with opt_level: {opt_level}.")
+        log.harness.info(f"Enabling mixed precision training with opt_level: {opt_level}.")
         models, optimizers = apex.amp.initialize(
             models=models,
             optimizers=optimizers,
@@ -349,9 +348,7 @@ class PyTorchTrialContext(det.TrialContext):
             num_losses=num_losses,
             min_loss_scale=min_loss_scale,
             max_loss_scale=max_loss_scale,
-            verbosity=verbosity
-            if self.distributed.get_rank() == 0 or self.env.experiment_config.debug_enabled()
-            else 0,
+            verbosity=verbosity if self.env.dbg.debug_all_workers else 0,
         )
         if not isinstance(models, list):
             self.models = [models]

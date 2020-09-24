@@ -1,9 +1,9 @@
-from typing import List, cast
+from typing import Any, Dict, List, Union, cast
 
 
 class ExperimentConfig(dict):
-    def debug_enabled(self) -> bool:
-        return bool(self.get("debug", False))
+    def debug(self) -> Union[None, bool, Dict[str, Any]]:
+        return self.get("debug")
 
     def horovod_optional_args(self) -> List[str]:
         return cast(List, self.get("data", {}).get("__det_dtrain_args", []))

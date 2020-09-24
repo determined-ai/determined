@@ -1,8 +1,8 @@
-import logging
 from typing import Any, Optional
 
 from hdfs.client import InsecureClient
 
+from determined import log
 from determined.tensorboard import base
 from determined_common import util
 
@@ -34,7 +34,7 @@ class HDFSTensorboardManager(base.TensorboardManager):
         for path in self.to_sync():
             file_name = str(self.sync_path.joinpath(path.name))
 
-            logging.debug(f"Uploading {path} to {self.hdfs_path}")
+            log.storage.debug(f"Uploading {path} to {self.hdfs_path}")
 
             self.client.upload(file_name, str(path))
             self._synced_event_sizes[path] = path.stat().st_size

@@ -1,10 +1,9 @@
 import importlib
-import logging
 import pathlib
 from typing import Any, Dict, List, Optional, cast
 
 import determined as det
-from determined import constants
+from determined import constants, log
 from determined._experiment_config import ExperimentConfig
 from determined._rendezvous_info import RendezvousInfo
 from determined_common import check
@@ -125,7 +124,6 @@ def create_run_command(
     num_gpus_per_machine: int,
     ip_addresses: List[str],
     env: det.EnvContext,
-    debug: bool,
     optional_args: List[str],
     worker_process_env_path: pathlib.Path,
 ) -> List[str]:
@@ -148,7 +146,7 @@ def create_run_command(
     ]
     horovod_process_cmd.extend(create_network_interface_arg_if_specified(env, num_machines))
     horovod_process_cmd.extend(create_performance_args(env))
-    if debug:
+    if env.dbg.horovod_verbose:
         horovod_process_cmd.append("--verbose")
     horovod_process_cmd.extend(optional_args)
     # Use "python3" instead of sys.executable since the remote machine may have differing paths.
@@ -159,7 +157,7 @@ def create_run_command(
         str(worker_process_env_path),
     ]
 
-    logging.debug(f"Chief worker subprocess launch command: {horovod_process_cmd}.")
+    log.harness.debug(f"Chief worker subprocess launch command: {horovod_process_cmd}.")
     return horovod_process_cmd
 
 
@@ -243,12 +241,12 @@ class HorovodContext:
         )
 
         if hvd_config.use and hvd_config.aggregation_frequency > 1:
-            logging.info(
+            log.harness.info(
                 f"Setting `aggregation_frequency` to {hvd_config.aggregation_frequency} "
                 "to optimize training."
             )
 
         if hvd_config.use and hvd_config.fp16_compression:
-            logging.info("Enabling `gradient_compression` to optimize training.")
+            log.harness.info("Enabling `gradient_compression` to optimize training.")
 
         return hvd_config

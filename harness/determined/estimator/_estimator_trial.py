@@ -1,5 +1,4 @@
 import functools
-import logging
 import numbers
 import os
 import pathlib
@@ -16,7 +15,7 @@ from tensorflow.python.util import function_utils
 from tensorflow_estimator.python.estimator.training import _NewCheckpointListenerForEvaluate
 
 import determined as det
-from determined import estimator, horovod, ipc, monkey_patch, tensorboard, workload
+from determined import estimator, horovod, ipc, log, monkey_patch, tensorboard, workload
 from determined.horovod import hvd
 from determined_common import check
 
@@ -81,9 +80,11 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
         for summary in tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.SUMMARIES):
             if summary.op.type in summary_types_collected_every_batch:
                 per_batch_summaries.append(summary)
-                logging.debug(f"Collecting {summary} of type {summary.op.type} every batch.")
+                log.harness.debug(f"Collecting {summary} of type {summary.op.type} every batch.")
             else:
-                logging.debug(f"Not collecting {summary} of type {summary.op.type} every batch.")
+                log.harness.debug(
+                    f"Not collecting {summary} of type {summary.op.type} every batch."
+                )
         self._summary_op = tf.compat.v1.summary.merge(per_batch_summaries)
         self._global_step_tensor = tf.compat.v1.train.get_global_step()
 
@@ -223,7 +224,7 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
         ):
             return
 
-        logging.info(
+        log.harness.info(
             f"Saving checkpoints for step: {self._current_global_step} "
             f"into {self.estimator_trial_controller.estimator_dir}."
         )
@@ -250,7 +251,7 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
 
     def _save_serving_input_receiver_fns(self, checkpoint_path: str) -> None:
         for name, fn in self.estimator_trial_controller.serving_input_receiver_fns.items():
-            logging.info(
+            log.harness.info(
                 f"Found a serving input receiver function '{name}', exporting as a SavedModel."
             )
             self.estimator_trial_controller.estimator.export_saved_model(
@@ -266,7 +267,7 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
 
     def control_loop(self) -> None:
         for wkld, args, response_func in self.estimator_trial_controller.workloads:
-            logging.debug(f"Received wkld {wkld.kind} with args {args}.")
+            log.harness.debug(f"Received wkld {wkld.kind} with args {args}.")
 
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
                 # Store values for the training loop.
@@ -350,7 +351,7 @@ class EstimatorTrialController(det.LoopTrialController):
             # This is option is available for when TF ignores `gpu_options.visible_device_list`.
             # TODO (DET-3762): Remove this once it's no longer necessary.
             if env.experiment_config.get("data", {}).get("set_cuda_visible_devices", False):
-                logging.info(
+                log.harness.info(
                     "Setting `CUDA_VISIBLE_DEVICES` environment variables "
                     "and disabling NCCL_P2P_DISABLE"
                 )
@@ -374,7 +375,7 @@ class EstimatorTrialController(det.LoopTrialController):
             env=env, hvd_config=hvd_config, session_config=None
         )
 
-        logging.debug("Applying tf.estimator patches.")
+        log.harness.debug("Applying tf.estimator patches.")
 
         @monkey_patch.monkey_patch_decorator(_NewCheckpointListenerForEvaluate, "_evaluate")
         def patch_estimator_eval_on_checkpoint(original, *args, **kwargs):  # type: ignore
@@ -383,7 +384,7 @@ class EstimatorTrialController(det.LoopTrialController):
             # `input_fn` or `steps` is None, which causes an error when evaluating the
             # model function. Apply a monkey-patch to skip the internal function that
             # ultimately runs the evaluation.
-            logging.info("Skipping %s(*%s, **%s)", original.__name__, args, kwargs)
+            log.harness.info("Skipping %s(*%s, **%s)", original.__name__, args, kwargs)
 
     @staticmethod
     def set_random_seed(seed: int) -> None:
@@ -629,7 +630,7 @@ class EstimatorTrialController(det.LoopTrialController):
         return session_config
 
     def _init_run_config(self, config: tf.estimator.RunConfig) -> tf.estimator.RunConfig:
-        logging.debug(f"Initializing RunConfig. Got RunConfig: {config} .")
+        log.harness.debug(f"Initializing RunConfig. Got RunConfig: {config} .")
 
         session_config = config.session_config
         train_distribute = None
@@ -657,14 +658,14 @@ class EstimatorTrialController(det.LoopTrialController):
             eval_distribute=eval_distribute,
             experimental_distribute=None,
         )
-        logging.debug(f"Initialized RunConfig with args: {config}.")
+        log.harness.debug(f"Initialized RunConfig with args: {config}.")
         return config
 
     def run(self) -> None:
         try:
             tf.estimator.train_and_evaluate(self.estimator, self.train_spec, self.eval_spec)
         except det.errors.WorkerFinishedGracefully:
-            pass
+            assert next(self.workloads) is None
         else:
             raise AssertionError(
                 "Training loop exited unexpectedly but without throwing any errors. This is "
@@ -692,7 +693,7 @@ class EstimatorTrialController(det.LoopTrialController):
         suffix = str(0) if not self.hvd_config.use else str(hvd.local_rank())
         if self.load_path is None:
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
-            logging.debug(f"Estimator directory set to {self.estimator_dir}.")
+            log.harness.debug(f"Estimator directory set to {self.estimator_dir}.")
             return
 
         for callback in self.train_hooks:
@@ -702,12 +703,12 @@ class EstimatorTrialController(det.LoopTrialController):
         self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
         if self.estimator_dir.exists():
             shutil.rmtree(str(self.estimator_dir))
-        logging.debug(f"Copying from {self.load_path} to {self.estimator_dir}.")
+        log.harness.debug(f"Copying from {self.load_path} to {self.estimator_dir}.")
         shutil.copytree(str(self.load_path), str(self.estimator_dir))
 
         # Calibrate the CheckpointState metadata file to the new location.
         estimator._update_checkpoint_path_in_state_file(self.estimator_dir)
-        logging.debug(f"Load path set to {self.estimator_dir}.")
+        log.harness.debug(f"Load path set to {self.estimator_dir}.")
 
     def compute_validation_metrics(self) -> workload.Response:
         metrics = self.estimator.evaluate(
@@ -717,7 +718,7 @@ class EstimatorTrialController(det.LoopTrialController):
         if self.hvd_config.use:
             metrics = self.average_metrics(metrics)
             if self.is_chief:
-                logging.debug(f"Averaged validation metrics: {metrics}.")
+                log.harness.debug(f"Averaged validation metrics: {metrics}.")
 
         estimator._cleanup_after_validation_step(
             pathlib.Path(self.estimator._model_dir), self.is_chief
@@ -737,15 +738,15 @@ class EstimatorTrialController(det.LoopTrialController):
             self.train_process_comm_chief = cast(
                 ipc.ZMQBroadcastServer, self.train_process_comm_chief
             )
-            logging.debug(f"Chief {hvd.rank()} beginning receiving validation metrics.")
+            log.harness.debug(f"Chief {hvd.rank()} beginning receiving validation metrics.")
             worker_metrics, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
             self.train_process_comm_chief.broadcast(None)
-            logging.debug(f"Chief {hvd.rank()} done receiving validation metrics.")
+            log.harness.debug(f"Chief {hvd.rank()} done receiving validation metrics.")
             for metric_name in metrics:
                 if isinstance(metrics[metric_name], numbers.Number):
                     metrics[metric_name] /= hvd.size()
                 else:
-                    logging.warning(f"Skipping averaging metric: {metric_name}.")
+                    log.harness.warning(f"Skipping averaging metric: {metric_name}.")
             for metric_name in metrics.keys():
                 for worker_metric in worker_metrics:
                     if isinstance(worker_metric[metric_name], numbers.Number):
@@ -755,7 +756,7 @@ class EstimatorTrialController(det.LoopTrialController):
             self.train_process_comm_worker = cast(
                 ipc.ZMQBroadcastClient, self.train_process_comm_worker
             )
-            logging.debug(f"Worker {hvd.rank()} sending metrics.")
+            log.harness.debug(f"Worker {hvd.rank()} sending metrics.")
             self.train_process_comm_worker.send(metrics)
             # Synchronize with the chief so that there is no risk of accidentally calling send()
             # for a future gather before all workers have called send() on this gather.
@@ -770,9 +771,9 @@ class EstimatorTrialController(det.LoopTrialController):
             self.train_process_comm_chief = cast(
                 ipc.ZMQBroadcastServer, self.train_process_comm_chief
             )
-            logging.debug(f"Chief {hvd.rank()} beginning allgathering metrics.")
+            log.harness.debug(f"Chief {hvd.rank()} beginning allgathering metrics.")
             worker_stuff, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
-            logging.debug(f"Chief {hvd.rank()} done allgathering metrics.")
+            log.harness.debug(f"Chief {hvd.rank()} done allgathering metrics.")
             all_metrics = [metrics, *worker_stuff]
             self.train_process_comm_chief.broadcast(all_metrics)
             return all_metrics
@@ -780,7 +781,7 @@ class EstimatorTrialController(det.LoopTrialController):
             self.train_process_comm_worker = cast(
                 ipc.ZMQBroadcastClient, self.train_process_comm_worker
             )
-            logging.debug(f"Worker {hvd.rank()} allgathering metrics.")
+            log.harness.debug(f"Worker {hvd.rank()} allgathering metrics.")
             self.train_process_comm_worker.send(metrics)
             return self.train_process_comm_worker.recv()  # type: ignore
 

@@ -407,13 +407,12 @@ func TestExperiment(t *testing.T) {
 	// Unmarshal should give config2.
 	assert.DeepEqual(t, config1, config2)
 
-	// Can't round-trip to JSON.
 	json2, err := json.Marshal(config1)
 	assert.NilError(t, err)
 	assert.Assert(t, !cmp.Equal(json1, json2))
 
 	// Check JSON marshaling round-trip support.
-	config3 := ExperimentConfig{}
+	config3 := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal(json2, &config3))
 	assert.DeepEqual(t, config1, config3)
 }
@@ -532,6 +531,90 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 		Username: "worst-user",
 	}
 	expected.Description = description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+}
+
+func TestNoDebugConfig(t *testing.T) {
+	actual := DefaultExperimentConfig(nil)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "searcher": {
+    "name": "single",
+    "metric": "loss",
+    "smaller_is_better": false,
+    "max_length": {
+      "batches": 1000
+    }
+  }
+}`), &actual))
+
+	marshaled, err := json.Marshal(actual)
+	assert.NilError(t, err)
+
+	var rawConfig map[string]interface{}
+	assert.NilError(t, json.Unmarshal(marshaled, &rawConfig))
+
+	_, ok := rawConfig["debug"]
+	assert.Assert(t, !ok)
+}
+
+func TestFalseDebugConfig(t *testing.T) {
+	actual := DefaultExperimentConfig(nil)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "debug": false
+}`), &actual))
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Debug = &DebugConfig{}
+	expected.Description = actual.Description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+}
+
+func TestTrueDebugConfig(t *testing.T) {
+	actual := DefaultExperimentConfig(nil)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "debug": true
+}`), &actual))
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Debug = &trueDebugConfig
+	expected.Description = actual.Description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+}
+
+func TestFullDebugConfig(t *testing.T) {
+	actual := DefaultExperimentConfig(nil)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "debug": {
+    "root_log_level": "INFO",
+    "storage_log_level": "WARNING",
+    "debug_all_workers": true,
+    "horovod_verbose": false,
+    "nccl_debug": "INFO",
+    "nccl_debug_subsys": "^INIT",
+    "resource_profile_period_sec": 0.5
+  }
+}`), &actual))
+
+	debugConfigWarning := "WARNING"
+	debugConfigInit := "^INIT"
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Debug = &DebugConfig{
+		RootLogLevel:             &debugConfigInfo,
+		StorageLogLevel:          &debugConfigWarning,
+		DebugAllWorkers:          true,
+		HorovodVerbose:           false,
+		NCCLDebug:                &debugConfigInfo,
+		NCCLDebugSubsys:          &debugConfigInit,
+		ResourceProfilePeriodSec: 0.5,
+	}
+	expected.Description = actual.Description
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)

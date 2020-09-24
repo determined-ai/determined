@@ -1,8 +1,8 @@
-import logging
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import determined as det
-from determined import constants, workload
+import determined_common
+from determined import constants, log, workload
 from determined_common import check, types
 
 
@@ -21,7 +21,7 @@ class EnvContext:
         use_gpu: bool,
         container_gpus: List[str],
         slot_ids: List[int],
-        debug: bool,
+        dbg: determined_common.DebugConfig,
         workload_manager_type: str,
         det_rendezvous_ports: str,
         det_trial_unique_port_offset: int,
@@ -44,7 +44,7 @@ class EnvContext:
         self.use_gpu = use_gpu
         self.container_gpus = container_gpus
         self.slot_ids = slot_ids
-        self.debug = debug
+        self.dbg = dbg
         self.workload_manager_type = workload_manager_type
         self.det_rendezvous_ports = det_rendezvous_ports
         self.det_trial_unique_port_offset = det_trial_unique_port_offset
@@ -63,7 +63,9 @@ class EnvContext:
     def rendezvous_ports(self) -> Tuple[int, int]:
         ports = [int(x) for x in self.det_rendezvous_ports.split(",")]
         if len(ports) != 2:
-            logging.warning("DET_RENDEZVOUS_PORTS not set, falling back on LOCAL_RENDEZVOUS_PORTS")
+            log.harness.warning(
+                "DET_RENDEZVOUS_PORTS not set, falling back on LOCAL_RENDEZVOUS_PORTS"
+            )
             ports = [constants.LOCAL_RENDEZVOUS_PORT, constants.LOCAL_RENDEZVOUS_PORT + 1]
         return ports[0], ports[1]
 
@@ -75,7 +77,7 @@ class EnvContext:
             )
 
         if "batch_size" in self.hparams.keys():
-            logging.warning(
+            log.harness.warning(
                 "Use `global_batch_size` not `batch_size` under `hyperparameters` "
                 "in experiment config."
             )
@@ -99,7 +101,7 @@ class EnvContext:
         per_gpu_batch_size = global_batch_size // slots_per_trial
         effective_batch_size = per_gpu_batch_size * slots_per_trial
         if effective_batch_size != global_batch_size:
-            logging.warning(
+            log.harness.warning(
                 f"`global_batch_size` changed from {global_batch_size} to {effective_batch_size} "
                 f"to divide equally across {slots_per_trial} slots."
             )

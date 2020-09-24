@@ -1,8 +1,4 @@
-r"""
-"""
-
 import inspect
-import logging
 import pathlib
 import random
 import sys
@@ -19,7 +15,7 @@ from tensorflow.python.keras.saving.hdf5_format import load_optimizer_weights_fr
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
-from determined import horovod, keras, workload
+from determined import horovod, keras, log, workload
 from determined.horovod import hvd
 from determined_common import check
 
@@ -41,7 +37,7 @@ def load_optimizer_weights(model: Model, load_path: pathlib.Path) -> None:
                 try:
                     model.optimizer._create_all_weights(model.trainable_variables)
                 except (NotImplementedError, AttributeError):
-                    logging.warning(
+                    log.harness.warning(
                         "Error when creating the weights of optimizer, making it "
                         "impossible to restore the saved optimizer state. As a result, "
                         "your model is starting with a freshly initialized optimizer."
@@ -56,14 +52,14 @@ def load_optimizer_weights(model: Model, load_path: pathlib.Path) -> None:
             try:
                 model.optimizer.set_weights(optimizer_weight_values)
             except ValueError:
-                logging.warning(
+                log.harness.warning(
                     "Error in loading the saved optimizer "
                     "state. As a result, your model is "
                     "starting with a freshly initialized "
                     "optimizer."
                 )
         else:
-            logging.warning(
+            log.harness.warning(
                 "Sequential models without an `input_shape` "
                 "passed to the first layer cannot reload their "
                 "optimizer state. As a result, your model is "
@@ -376,7 +372,7 @@ class TFKerasTrialController(det.LoopTrialController):
         if hvd_config.use and version.parse("2.0.0") <= version.parse(
             tf.__version__
         ) < version.parse("2.2.0"):
-            logging.info(
+            log.harness.info(
                 "Calling `model.compile(...)` with `experimental_run_tf_function=False` to ensure "
                 "TensorFlow calls `optimizer.get_gradients()` to compute gradients."
             )
@@ -405,7 +401,7 @@ class TFKerasTrialController(det.LoopTrialController):
         else:
             full_ckpt_path = self.load_path.joinpath("determined-keras-model")
 
-        logging.info(f"Restoring checkpoint from {full_ckpt_path}")
+        log.harness.info(f"Restoring checkpoint from {full_ckpt_path}")
         self.model.load_weights(str(full_ckpt_path))
         load_optimizer_weights(self.model, full_ckpt_path)
 
@@ -428,7 +424,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
     def run(self) -> None:
         for wkld, args, response_func in self.workloads:
-            logging.debug(f"Received wkld {wkld.kind} with args {args}.")
+            log.harness.debug(f"Received wkld {wkld.kind} with args {args}.")
 
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
                 # Store the train_response_func for later.
@@ -470,7 +466,6 @@ class TFKerasTrialController(det.LoopTrialController):
                 self.model.stop_training = True
                 self.expect_terminate = True
                 response_func({} if self.is_chief else workload.Skipped())
-                break
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
 

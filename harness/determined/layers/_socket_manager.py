@@ -1,4 +1,3 @@
-import logging
 import socket
 import ssl
 from typing import Any, Optional
@@ -8,7 +7,7 @@ import lomond.session
 import simplejson
 
 import determined as det
-from determined import layers, util, workload
+from determined import log, util, workload
 
 
 class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignore
@@ -87,36 +86,36 @@ class SocketManager(workload.Source):
         # Empty the websocket.
         for ws_event in self.ws_events:
             if not self.message_is_log_only(ws_event):
-                logging.warning(f"Unexpected websocket event: {ws_event}")
+                log.harness.warning(f"Unexpected websocket event: {ws_event}")
 
     def get_rendezvous_info(self) -> det.RendezvousInfo:
         return self.rendezvous_info
 
     def message_is_log_only(self, event: Any) -> bool:
         if isinstance(event, lomond.events.Connecting):
-            logging.info("Connecting to master at %s", event.url)
+            log.harness.info("Connecting to master at %s", event.url)
         elif isinstance(event, lomond.events.Connected):
-            logging.info("Connected to master")
+            log.harness.info("Connected to master")
         elif isinstance(event, lomond.events.ConnectFail):
-            logging.warning("Failed to connect to master: %s", event.reason)
+            log.harness.warning("Failed to connect to master: %s", event.reason)
         elif isinstance(event, lomond.events.Closing):
-            logging.info("Server started WebSocket shutdown: %s", event.reason)
+            log.harness.info("Server started WebSocket shutdown: %s", event.reason)
         elif isinstance(event, lomond.events.Closed):
-            logging.info("WebSocket closed" + (f": {event.reason}" if event.reason else ""))
+            log.harness.info("WebSocket closed" + (f": {event.reason}" if event.reason else ""))
         elif isinstance(event, lomond.events.Disconnected):
             # The event loop will exit after this event is received.
             if event.graceful:
-                logging.info("Disconnected from master, exiting gracefully")
+                log.harness.info("Disconnected from master, exiting gracefully")
             else:
-                logging.warning("Disconnected from master abruptly: %s", event.reason)
+                log.harness.warning("Disconnected from master abruptly: %s", event.reason)
         elif isinstance(event, lomond.events.ProtocolError):
-            logging.warning("WebSocket protocol error: %s", event.error)
+            log.harness.warning("WebSocket protocol error: %s", event.error)
         elif isinstance(event, lomond.events.Rejected):
-            logging.warning("Master rejected WebSocket: %s", event.reason)
+            log.harness.warning("Master rejected WebSocket: %s", event.reason)
         elif isinstance(event, lomond.events.Ready):
-            logging.info("Established WebSocket session with master")
+            log.harness.info("Established WebSocket session with master")
         elif isinstance(event, lomond.events.Poll):
-            logging.debug("WebSocket poll")
+            log.harness.debug("WebSocket poll")
         else:
             return False
         return True
@@ -135,7 +134,7 @@ class SocketManager(workload.Source):
             msg = simplejson.loads(event.text)
 
             if msg["type"] == "RENDEZVOUS_INFO":
-                logging.info("Got rendezvous information: %s", msg)
+                log.harness.info("Got rendezvous information: %s", msg)
 
                 # If there's only one container, there's nothing to do for
                 # rendezvous.
@@ -157,7 +156,7 @@ class SocketManager(workload.Source):
             elif msg["type"] == "RUN_WORKLOAD":
                 raise ValueError("Received workload before rendezvous info")
         else:
-            logging.warning(f"unexpected websocket event: {event}")
+            log.harness.warning(f"unexpected websocket event: {event}")
 
         return None
 
@@ -172,14 +171,9 @@ class SocketManager(workload.Source):
             else:
                 raise NotImplementedError(f"Unrecognized message: {msg}")
         else:
-            logging.warning(f"Unexpected websocket event: {event}")
+            log.harness.warning(f"Unexpected websocket event: {event}")
 
     def yield_workload(self, wkld: workload.Workload) -> workload.Stream:
-        if self.env.debug:
-            logging.debug("Starting profiler...")
-            profiler = layers.HarnessProfiler(use_gpu=self.env.use_gpu)
-            profiler.start()
-
         # When the workload manager responds, forward the message to the master.
         def respond(metrics: workload.Response) -> None:
 
@@ -194,13 +188,10 @@ class SocketManager(workload.Source):
                 return
 
             duration = metrics["end_time"] - metrics["start_time"]
-            logging.info(f"Workload completed: {metrics['workload']} (duration {duration})")
+            log.harness.info(f"Workload completed: {metrics['workload']} (duration {duration})")
 
             self.socket.send_text(util.json_encode(metrics))
 
-        yield wkld, [], respond
+        self.env.dbg.set_workload(str(wkld.kind))
 
-        if self.env.debug:
-            profiler.stop()
-            profiler.serialize_raw_results(f"/tmp/step-{wkld.step_id}-{wkld.kind}.json")
-            profiler.serialize_graph(f"/tmp/step-{wkld.step_id}-{wkld.kind}.png")
+        yield wkld, [], respond

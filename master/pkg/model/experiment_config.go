@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"path/filepath"
@@ -33,7 +34,7 @@ type ExperimentConfig struct {
 	Reproducibility          ReproducibilityConfig     `json:"reproducibility"`
 	MaxRestarts              int                       `json:"max_restarts"`
 	Security                 *SecurityConfig           `json:"security,omitempty"`
-	Debug                    bool                      `json:"debug"`
+	Debug                    *DebugConfig              `json:"debug,omitempty"`
 	Internal                 *InternalConfig           `json:"internal"`
 	Entrypoint               string                    `json:"entrypoint"`
 	DataLayer                DataLayerConfig           `json:"data_layer"`
@@ -273,4 +274,59 @@ type InternalConfig struct {
 // NativeConfig represents configuration set by Determined native implementations.
 type NativeConfig struct {
 	Command []string `json:"command"`
+}
+
+// DebugConfig represents which subsystems will be debugged in the harness.
+type DebugConfig struct {
+	RootLogLevel             *string `json:"root_log_level"`
+	StorageLogLevel          *string `json:"storage_log_level"`
+	HarnessLogLevel          *string `json:"harness_log_level"`
+	DebugAllWorkers          bool    `json:"debug_all_workers"`
+	HorovodVerbose           bool    `json:"horovod_verbose"`
+	NCCLDebug                *string `json:"nccl_debug"`
+	NCCLDebugSubsys          *string `json:"nccl_debug_subsys"`
+	ResourceProfilePeriodSec float32 `json:"resource_profile_period_sec"`
+	StackTracePeriodSec      float32 `json:"stack_trace_period_sec"`
+}
+
+var (
+	debugConfigInfo  = "INFO"
+	debugConfigDebug = "DEBUG"
+	// trueDebugConfig is the value of DebugConfig that we assign for `debug: true`.
+	trueDebugConfig = DebugConfig{
+		RootLogLevel:             &debugConfigDebug,
+		StorageLogLevel:          &debugConfigInfo,
+		HarnessLogLevel:          &debugConfigDebug,
+		DebugAllWorkers:          true,
+		HorovodVerbose:           true,
+		NCCLDebug:                nil,
+		NCCLDebugSubsys:          nil,
+		ResourceProfilePeriodSec: 10.0,
+		StackTracePeriodSec:      0.0,
+	}
+)
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (d *DebugConfig) UnmarshalJSON(data []byte) error {
+	// Compatibility layer with the old boolean value.
+	var oldDebugValue bool
+	if e := json.Unmarshal(data, &oldDebugValue); e == nil {
+		if oldDebugValue {
+			*d = trueDebugConfig
+		} else {
+			*d = DebugConfig{}
+		}
+		return nil
+	}
+
+	type NoRecurseDebugConfig DebugConfig
+
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	var noRecurse NoRecurseDebugConfig
+	if e := dec.Decode(&noRecurse); e != nil {
+		return e
+	}
+	*d = DebugConfig(noRecurse)
+	return nil
 }

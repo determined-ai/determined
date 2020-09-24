@@ -1,5 +1,4 @@
 import contextlib
-import logging
 import os
 import tempfile
 from typing import Iterator, Optional
@@ -9,7 +8,7 @@ import urllib3.exceptions
 from google.api_core import retry
 from google.cloud import storage
 
-from determined_common import util
+from determined_common import log, util
 from determined_common.storage.base import StorageManager, StorageMetadata
 
 retry_network_errors = retry.Retry(
@@ -33,13 +32,17 @@ class GCSStorageManager(StorageManager):
     performance could be improved by using multiple clients in a multithreaded fashion.
 
     Authentication is currently only supported via the "Application
-    Default Credentials" method in GCP [1]. Typical configuration:
+    Default Credentials" method in GCP. Typical configuration:
     ensure your VM runs in a service account that has sufficient
     permissions to read/write/delete from the GCS bucket where
     checkpoints will be stored (this only works when running in GCE).
     """
 
-    def __init__(self, bucket: str, temp_dir: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        bucket: str,
+        temp_dir: Optional[str] = None,
+    ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
         self.client = storage.Client()
         self.bucket = self.client.bucket(bucket)
@@ -47,7 +50,7 @@ class GCSStorageManager(StorageManager):
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """post_store_path uploads the checkpoint to gcs and deletes the original files."""
         try:
-            logging.info("Uploading checkpoint {} to GCS".format(storage_id))
+            log.storage.info("Uploading checkpoint {} to GCS".format(storage_id))
             self.upload(metadata, storage_dir)
         finally:
             self._remove_checkpoint_directory(metadata.storage_id)
@@ -57,7 +60,7 @@ class GCSStorageManager(StorageManager):
         storage_dir = os.path.join(self._base_path, metadata.storage_id)
         os.makedirs(storage_dir, exist_ok=True)
 
-        logging.info("Downloading checkpoint {} from GCS".format(metadata.storage_id))
+        log.storage.info("Downloading checkpoint {} from GCS".format(metadata.storage_id))
         self.download(metadata, storage_dir)
 
         try:
@@ -71,7 +74,7 @@ class GCSStorageManager(StorageManager):
             blob_name = "{}/{}".format(metadata.storage_id, rel_path)
             blob = self.bucket.blob(blob_name)
 
-            logging.debug("Uploading to GCS: {}".format(blob_name))
+            log.storage.debug("Uploading to GCS: {}".format(blob_name))
 
             if rel_path.endswith("/"):
                 # Create empty blobs for subdirectories. This ensures
@@ -95,16 +98,16 @@ class GCSStorageManager(StorageManager):
             blob_name = "{}/{}".format(metadata.storage_id, rel_path)
             blob = self.bucket.blob(blob_name)
 
-            logging.debug("Downloading from GCS: {}".format(blob_name))
+            log.storage.debug("Downloading from GCS: {}".format(blob_name))
 
             blob.download_to_filename(abs_path)
 
     @util.preserve_random_state
     def delete(self, metadata: StorageMetadata) -> None:
-        logging.info("Deleting checkpoint {} from GCS".format(metadata.storage_id))
+        log.storage.info("Deleting checkpoint {} from GCS".format(metadata.storage_id))
 
         for rel_path in metadata.resources.keys():
-            logging.debug("Deleting {} from GCS".format(rel_path))
+            log.storage.debug("Deleting {} from GCS".format(rel_path))
             blob_name = "{}/{}".format(metadata.storage_id, rel_path)
             blob = self.bucket.blob(blob_name)
             blob.delete()

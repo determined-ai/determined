@@ -13,6 +13,7 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
+import determined_common
 from determined import constants, experimental, gpu, horovod, keras, load, workload
 from determined_common import check
 from determined_common.types import ExperimentID, StepID, TrialID
@@ -129,7 +130,7 @@ def make_default_env_context(
         use_gpu=use_gpu,
         container_gpus=gpu_uuids,
         slot_ids=[],
-        debug=False,
+        dbg=determined_common.DebugConfig(),
         workload_manager_type="TRIAL_WORKLOAD_MANAGER",
         det_rendezvous_ports="",
         det_trial_unique_port_offset=0,

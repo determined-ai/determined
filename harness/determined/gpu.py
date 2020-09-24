@@ -1,9 +1,9 @@
 import csv
-import logging
 import subprocess
 from typing import List, NamedTuple, Optional, Tuple
 
 import determined as det
+from determined import log
 from determined_common import check
 
 gpu_fields = [
@@ -33,14 +33,14 @@ def get_gpus() -> List[GPU]:
         # This case is expected if NVIDIA drivers are not available.
         return []
     except Exception as e:
-        logging.warning(f"Couldn't query GPUs with `nvidia-smi`; assuming there are none: {e}")
+        log.harness.warning(f"Couldn't query GPUs with `nvidia-smi`; assuming there are none: {e}")
         return []
 
     gpus = []
     with proc:
         for field_list in csv.reader(proc.stdout):  # type: ignore
             if len(field_list) != len(gpu_fields):
-                logging.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
+                log.harness.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
                 continue
             fields = dict(zip(gpu_fields, field_list))
             try:
@@ -53,9 +53,9 @@ def get_gpus() -> List[GPU]:
                     )
                 )
             except ValueError:
-                logging.warning(f"Ignoring unexpected nvidia-smi output: {fields}")
+                log.harness.warning(f"Ignoring unexpected nvidia-smi output: {fields}")
     if proc.returncode:
-        logging.warning(f"`nvidia-smi` exited with failure status code {proc.returncode}")
+        log.harness.warning(f"`nvidia-smi` exited with failure status code {proc.returncode}")
     return gpus
 
 

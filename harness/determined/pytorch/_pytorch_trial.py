@@ -1,4 +1,3 @@
-import logging
 import pathlib
 import random
 from abc import abstractmethod
@@ -10,7 +9,7 @@ import torch
 import torch.nn as nn
 
 import determined as det
-from determined import horovod, ipc, util, workload
+from determined import horovod, ipc, log, util, workload
 from determined.horovod import hvd
 from determined.pytorch import (
     DataLoader,
@@ -123,8 +122,10 @@ class PyTorchTrialController(det.LoopTrialController):
         Check if the user has implemented evaluate_batch
         or evaluate_full_dataset.
         """
-        logging.debug(f"Evaluate_batch_defined: {self._evaluate_batch_defined()}.")
-        logging.debug(f"Evaluate full dataset defined: {self._evaluate_full_dataset_defined()}.")
+        log.harness.debug(f"Evaluate_batch_defined: {self._evaluate_batch_defined()}.")
+        log.harness.debug(
+            f"Evaluate full dataset defined: {self._evaluate_full_dataset_defined()}."
+        )
         check.not_eq(
             self._evaluate_batch_defined(),
             self._evaluate_full_dataset_defined(),
@@ -146,13 +147,13 @@ class PyTorchTrialController(det.LoopTrialController):
             or util.is_overridden(self.trial.optimizer, PyTorchTrial)
             or util.is_overridden(self.trial.create_lr_scheduler, PyTorchTrial)
         ):
-            logging.warning(
+            log.harness.warning(
                 "build_model(), optimizer(), and create_lr_scheduler(), which belong to "
                 "the old interface, are deprecated. Please see the following documentation "
                 "of PyTorchTrial for the new interface \n"
                 f"{PyTorchTrial.__doc__}"
             )
-            logging.warning(
+            log.harness.warning(
                 "The callback on_before_optimizer_step is deprecated."
                 "Please use context.step_optimizer to clip gradients."
             )
@@ -182,7 +183,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 self.context.lr_schedulers.append(lr_scheduler)
 
             if det.ExperimentConfig(self.context.get_experiment_config()).mixed_precision_enabled():
-                logging.warning(
+                log.harness.warning(
                     "The experiment configuration field optimization.mixed_precision is deprecated."
                     "Please use configure_apex_amp in __init__ to configrue apex amp. "
                     "See the following documentation of PyTorchTrial for the new interface \n"
@@ -290,7 +291,6 @@ class PyTorchTrialController(det.LoopTrialController):
                 response_func(self._save(path))
             elif w.kind == workload.Workload.Kind.TERMINATE:
                 response_func({} if self.is_chief else workload.Skipped())
-                break
             else:
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
 
@@ -415,7 +415,7 @@ class PyTorchTrialController(det.LoopTrialController):
             # The training metrics are reported only in the chief process.
             return workload.Skipped()
 
-        logging.debug(f"Done training step: {num_inputs} records in {num_batches} batches.")
+        log.harness.debug(f"Done training step: {num_inputs} records in {num_batches} batches.")
 
         return metrics
 
@@ -434,7 +434,7 @@ class PyTorchTrialController(det.LoopTrialController):
             model.eval()
 
         for callback in self.callbacks.values():
-            logging.warning(
+            log.harness.warning(
                 "on_validation_step_start is now deprecated, please use on_validation_start instead"
             )
             callback.on_validation_step_start()
@@ -504,14 +504,14 @@ class PyTorchTrialController(det.LoopTrialController):
                 self.callbacks.values(),
             )
         ):
-            logging.debug(
+            log.harness.debug(
                 "Broadcasting metrics to all worker processes to execute a "
                 "validation step end callback"
             )
             metrics = hvd.broadcast_object(metrics, root_rank=0)
 
         for callback in self.callbacks.values():
-            logging.warning(
+            log.harness.warning(
                 "on_validation_step_end is now deprecated, please use on_validation_end instead"
             )
             callback.on_validation_step_end(cast(Dict[str, Any], metrics))
@@ -673,12 +673,12 @@ class PyTorchTrialController(det.LoopTrialController):
             if self.context._use_amp:
                 apex.amp.load_state_dict(checkpoint["amp_state"])
             else:
-                logging.warning(
+                log.harness.warning(
                     "There exists amp_state in checkpoint but the experiment is not using AMP."
                 )
         else:
             if self.context._use_amp:
-                logging.warning(
+                log.harness.warning(
                     "The experiment is using AMP but amp_state does not exist in the checkpoint."
                 )
 
@@ -694,16 +694,16 @@ class PyTorchTrialController(det.LoopTrialController):
                         rng_state["gpu_rng_state"], device=self.context.distributed.get_local_rank()
                     )
                 else:
-                    logging.warning(
+                    log.harness.warning(
                         "The system has a gpu but no gpu_rng_state exists in the checkpoint."
                     )
             else:
                 if "gpu_rng_state" in rng_state:
-                    logging.warning(
+                    log.harness.warning(
                         "There exists gpu_rng_state in checkpoint but the system has no gpu."
                     )
         else:
-            logging.warning("The checkpoint has no random state to restore.")
+            log.harness.warning("The checkpoint has no random state to restore.")
 
         callback_state = checkpoint.get("callbacks", {})
         for name in self.callbacks:
@@ -712,7 +712,7 @@ class PyTorchTrialController(det.LoopTrialController):
             elif util.is_overridden(
                 self.callbacks[name].load_state_dict, _callback.PyTorchCallback
             ):
-                logging.warning(
+                log.harness.warning(
                     "Callback '{}' implements load_state_dict(), but no callback state "
                     "was found for that name when restoring from checkpoint. This "
                     "callback will be initialized from scratch"
@@ -1038,7 +1038,7 @@ def reset_parameters(model: torch.nn.Module) -> None:
 
     Recursively calls ``reset_parameters()`` for all modules.
     """
-    logging.warning(
+    log.harness.warning(
         "det.pytorch.reset_parameters() is deprecated and should not be called.  For custom "
         "nn.Modules which do need a call to reset_parameters(), it is recommended to call "
         "self.reset_parameters() directly in their __init__() function, as is standard in all "

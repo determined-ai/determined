@@ -1,11 +1,10 @@
-import logging
 import math
 import pathlib
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, cast
 
 import determined as det
-from determined import tensorboard, workload
+from determined import log, tensorboard, workload
 from determined_common import storage
 from determined_common.check import (
     check_eq,
@@ -85,9 +84,9 @@ class _TrialWorkloadManager(WorkloadManager):
     def __iter__(self) -> workload.Stream:
         for w, _, response_func in self.workloads:
             if self.rendezvous_info.get_rank() == 0:
-                logging.info("Running workload {}".format(w))
+                log.harness.info("Running workload {}".format(w))
             else:
-                logging.debug("Running workload {}".format(w))
+                log.harness.debug("Running workload {}".format(w))
             self.check_sane_workload(w)
 
             self.workload = w
@@ -246,7 +245,7 @@ class _TrialWorkloadManager(WorkloadManager):
                     non_serializable_metrics.add(metric_name)
 
             if len(non_serializable_metrics):
-                logging.warning(
+                log.harness.warning(
                     "Removed non serializable metrics: %s", ", ".join(non_serializable_metrics)
                 )
                 for metric_name in non_serializable_metrics:
@@ -292,7 +291,7 @@ class _TrialWorkloadManager(WorkloadManager):
                 checkpoint_info.get("format", ""),
             )
 
-            logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
+            log.harness.info("Saved trial to checkpoint {}".format(metadata.storage_id))
             self.tensorboard_mgr.sync()
 
             nonlocal message

@@ -37,7 +37,9 @@ def get_base_path(checkpoint_config: Dict[str, Any], manager: bool = False) -> p
 
 
 def build(
-    env: det.EnvContext, checkpoint_config: Dict[str, Any], container_path: Optional[str] = None
+    env: det.EnvContext,
+    checkpoint_config: Dict[str, Any],
+    container_path: Optional[str] = None,
 ) -> base.TensorboardManager:
     """
     Return a tensorboard manager defined by the value of the `type` key in
@@ -68,7 +70,11 @@ def build(
         )
 
     elif type_name == "gcs":
-        return gcs.GCSTensorboardManager(checkpoint_config["bucket"], base_path, sync_path)
+        return gcs.GCSTensorboardManager(
+            checkpoint_config["bucket"],
+            base_path,
+            sync_path,
+        )
 
     elif type_name == "s3":
         return s3.S3TensorboardManager(

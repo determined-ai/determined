@@ -1,12 +1,12 @@
 import contextlib
-import logging
 import os
 import pathlib
 import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import determined as det
-from determined import constants, gpu, horovod, workload
+import determined_common
+from determined import constants, gpu, horovod, log, workload
 from determined_common import api
 
 
@@ -49,7 +49,7 @@ def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> 
     }
     for key in config_keys_to_ignore:
         if key in input_config:
-            logging.info(
+            log.harness.info(
                 f"'{key}' configuration key is not supported by local test mode and will be ignored"
             )
             del input_config[key]
@@ -82,7 +82,7 @@ def _make_local_execution_env(
         use_gpu=use_gpu,
         container_gpus=container_gpus,
         slot_ids=slot_ids,
-        debug=config.debug_enabled(),
+        dbg=determined_common.DebugConfig.from_config(config.debug()),
         workload_manager_type="",
         det_rendezvous_ports=local_rendezvous_ports,
         det_trial_unique_port_offset=0,
