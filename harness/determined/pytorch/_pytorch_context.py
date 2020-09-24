@@ -132,7 +132,7 @@ class PyTorchTrialContext(det.TrialContext):
     def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:
         """Returns a wrapped model."""
 
-        if self.env.training:
+        if self.env.managed_training:
             check.false(self._use_amp, "Must call wrap_model() before configure_apex_amp.")
 
             model = model.to(self.device)
@@ -161,7 +161,7 @@ class PyTorchTrialContext(det.TrialContext):
         The optimizer must use the models wrapped by :meth:`wrap_model`. This function
         creates a ``horovod.DistributedOptimizer`` if using parallel/distributed training.
         """
-        if self.env.training:
+        if self.env.managed_training:
             check.false(self._use_amp, "Must call wrap_optimizer() before configure_apex_amp.")
 
             if self.hvd_config.use:
@@ -307,7 +307,7 @@ class PyTorchTrialContext(det.TrialContext):
             If  ``optimizers`` args were lists, the corresponding return value will
             also be a list.
         """
-        if not self.env.training:
+        if not self.env.managed_training:
             return models, optimizers
 
         check.false(self._use_amp, "Please only call configure_apex_amp once.")
@@ -360,6 +360,8 @@ class PyTorchTrialContext(det.TrialContext):
         return models, optimizers
 
     def _should_communicate_and_update(self) -> bool:
+        if not self.env.managed_training:
+            return True
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
         return (self._current_batch_idx + 1) % self.hvd_config.aggregation_frequency == 0

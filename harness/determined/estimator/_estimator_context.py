@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import tensorflow as tf
 
@@ -51,7 +51,7 @@ class EstimatorContext:
         ``build_estimator()``, they should call ``optimizer = wrap_optimizer(optimzer)``
         prior to passing the optimizer into their Estimator.
         """
-        if not self.env.training:
+        if not self.env.managed_training:
             return optimizer
 
         self.optimizer_initialized = True
@@ -95,7 +95,7 @@ class EstimatorContext:
                 configure each process to use unique data.
 
         """
-        if not self.env.training:
+        if not self.env.managed_training:
             return dataset
 
         hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_dataset was called.")
@@ -139,6 +139,13 @@ class EstimatorNativeContext(det.NativeContext, EstimatorContext):
             self._train_fn()
 
 
+def default_allgather_fn(metrics: Any) -> List:
+    """
+    A noop allgather implementation to ensure that custom reducers work outside of Determined.
+    """
+    return [metrics]
+
+
 class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     """
     Context class that contains experimental runtime information and features
@@ -150,7 +157,7 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         super().__init__(env=env, hvd_config=hvd_config)
-        self._allgather_fn = None  # type: Optional[Callable[[Any], List]]
+        self._allgather_fn = default_allgather_fn  # type: Callable[[Any], List]
         # allgather is not parallelizable, so we have to strictly order how they are placed in the
         # graph via tf.control_dependencies().
         self._allgather_ops = []  # type: List[tf.Operation]
@@ -159,8 +166,6 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
         self._allgather_fn = fn
 
     def allgather_metrics(self, metrics: Any) -> List:
-        if self._allgather_fn is None:
-            raise AssertionError("allgather_metrics must not be called before training begins")
         return self._allgather_fn(metrics)
 
     def _build_allgather_op(self, build_op_fn: Callable[[], tf.Operation]) -> tf.Operation:

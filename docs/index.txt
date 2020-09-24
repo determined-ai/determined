@@ -18,29 +18,30 @@
  Overview
 **********
 
-Determined is an open-source deep learning training platform that makes building
-models fast and easy. Determined enables you to:
+Determined is an open-source deep learning training platform that makes
+building models fast and easy. Determined enables you to:
 
-- **Train models faster** using state-of-the-art :ref:`distributed training
-  <multi-gpu-training>`, without changing your model code
+-  **Train models faster** using state-of-the-art :ref:`distributed
+   training <multi-gpu-training>`, without changing your model code
 
-- **Automatically find high-quality models** with advanced :ref:`hyperparameter
-  tuning <hyperparameter-tuning>` from the creators of Hyperband
+-  **Automatically find high-quality models** with advanced
+   :ref:`hyperparameter tuning <hyperparameter-tuning>` from the
+   creators of Hyperband
 
-- **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
-  seamlessly using preemptible instances
+-  **Get more from your GPUs** with smart scheduling and cut cloud GPU
+   costs by seamlessly using preemptible instances
 
-- **Track and reproduce your work** with experiment tracking that works
-  out-of-the-box, covering code versions, metrics, checkpoints, and
-  hyperparameters
+-  **Track and reproduce your work** with experiment tracking that works
+   out-of-the-box, covering code versions, metrics, checkpoints, and
+   hyperparameters
 
-Determined integrates these features into an easy-to-use, high-performance deep
-learning environment --- which means you can spend your time building models
-instead of managing infrastructure.
+Determined integrates these features into an easy-to-use,
+high-performance deep learning environment --- which means you can spend
+your time building models instead of managing infrastructure.
 
 To use Determined, you can continue using popular DL frameworks such as
-TensorFlow and PyTorch; you just need to update your model code to integrate
-with the Determined API.
+TensorFlow and PyTorch; you just need to update your model code to
+integrate with the Determined API.
 
 More information about Determined can be found on the `website
 <https://determined.ai/>`__.

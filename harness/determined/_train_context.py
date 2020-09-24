@@ -18,6 +18,46 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self.distributed = DistributedContext(env, hvd_config)
         self._stop_requested = False
 
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> "_TrainContext":
+        """
+        Create an context object suitable for debugging outside of Determined.
+
+        An example for a subclass of :class:`~determined.pytorch._pytorch_trial.PyTorchTrial`:
+
+        .. code-block:: python
+
+            config = { ... }
+            context = det.pytorch.PyTorchTrialContext.from_config(config)
+            my_trial = MyPyTorchTrial(context)
+
+            train_ds = trial.build_training_data_loader()
+            for epoch_idx in range(3):
+                for batch_idx, batch in enumerate(train_ds):
+                    metrics = my_trial.train_batch(batch, epoch_idx, batch_idx)
+                    ...
+
+        An example for a subclass of :class:`~determined.keras._tf_keras_trial.TFKerasTrial`:
+
+        .. code-block:: python
+
+            config = { ... }
+            context = det.keras.TFKerasTrialContext.from_config(config)
+            my_trial = tf_keras_one_var_model.OneVarTrial(context)
+
+            model = my_trial.build_model()
+            model.fit(my_trial.build_training_data_loader())
+            eval_metrics = model.evaluate(my_trial.build_validation_data_loader())
+
+        Arguments:
+            config: An experiment config file, in dictionary form.
+        """
+        env_context, rendezvous_info, hvd_config = det._make_local_execution_env(
+            managed_training=False,
+            config=config,
+        )
+        return cls(env_context, hvd_config)
+
     def get_experiment_config(self) -> Dict[str, Any]:
         """
         Return the experiment configuration.
@@ -107,8 +147,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
 class TrialContext(_TrainContext):
     """
     A base class that all TrialContexts will inherit from.
-    The context passed to the UserTrial.__init__() when we instantiate the user's Trial must
-    inherit from this class.
+    The context passed to the User's ``Trial.__init__()`` will inherit from this class.
     """
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
@@ -119,7 +158,7 @@ class NativeContext(_TrainContext):
     """
     A base class that all NativeContexts will inherit when using the Native API.
 
-    The context returned by the init() function must inherit from this class.
+    The context returned by the ``init()`` function will inherit from this class.
     """
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):

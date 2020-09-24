@@ -125,5 +125,6 @@ The following configuration settings are supported:
       <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
       for replicas of the bind-mount. Defaults to ``rprivate``.
 
-- ``tensorboard_args``: Lists optional arguments for launching Tensorboard.
-  Each element of the list should be a string of the form ``NAME=VALUE``.
+-  ``tensorboard_args``: Lists optional arguments for launching
+   Tensorboard. Each element of the list should be a string of the form
+   ``NAME=VALUE``.

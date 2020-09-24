@@ -2,4 +2,4 @@
 
 **Update**
 
-- Removed support for TensorpackTrial.
+-  Removed support for TensorpackTrial.

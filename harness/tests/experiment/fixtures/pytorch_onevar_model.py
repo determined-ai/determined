@@ -102,7 +102,7 @@ class OneVarTrial(pytorch.PyTorchTrial):
 
         def float_eq(a: np.ndarray, b: np.ndarray) -> bool:
             epsilon = 0.000001
-            return (np.abs(a - b) < epsilon).all()
+            return (abs(a - b) < epsilon).all()
 
         assert float_eq(
             metrics["loss"], metrics["loss_exp"]

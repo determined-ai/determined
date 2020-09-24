@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -49,7 +50,7 @@ func (a *apiServer) TrialLogs(
 		return err
 	}
 
-	offset := effectiveOffset(int(req.Offset), total)
+	offset := api.EffectiveOffset(int(req.Offset), total)
 
 	if limit := int32(total - offset); !req.Follow && (limit < req.Limit || req.Limit == 0) {
 		req.Limit = limit

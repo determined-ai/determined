@@ -208,10 +208,10 @@ Images will be fetched via HTTPS by default. An HTTPS proxy can be
 configured using the ``https_proxy`` field as part of the :ref:`agent
 configuration <agent-configuration>`.
 
-Your custom image and credentials can also be set as the defaults for all tasks launched
-in Determined. This can be done under ``image`` and ``registry_auth`` in the
-:ref:`master-configuration`. Please note that for this to take effect you
-will have to restart the master.
+Your custom image and credentials can also be set as the defaults for
+all tasks launched in Determined. This can be done under ``image`` and
+``registry_auth`` in the :ref:`master-configuration`. Please note that
+for this to take effect you will have to restart the master.
 
 Next Steps
 ==========

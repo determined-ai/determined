@@ -13,39 +13,12 @@ import numpy as np
 import tensorflow as tf
 from packaging import version
 from tensorflow.python.util import function_utils
+from tensorflow_estimator.python.estimator.training import _NewCheckpointListenerForEvaluate
 
 import determined as det
-from determined import estimator, horovod, ipc, tensorboard, workload
+from determined import estimator, horovod, ipc, monkey_patch, tensorboard, workload
 from determined.horovod import hvd
 from determined_common import check
-
-"""
-The TF Estimator API has issues around multiple invocations:
-
-- In order to take advantage of the TF Estimator API's built-in distributed
-  training, we need to use the `train_and_evaluate` method of an Estimator;
-  `train` doesn't support it.
-- When serializing functions, `tf.data.Dataset.map` appends a unique identifier
-  to function names. The identifier counter is maintained per process. The
-  `input_fn` of an estimator is called per `train` call. This creates an
-  inconsistency between function names and the checkpointed function names when
-  `train` is called multiple times in the same process.
-
-While it is possible to add even more monkey patching to make it work, it
-ultimately seems more elegant to give the TensorFlow API what it wants: we
-spawn a subprocess for executing TensorFlow operations, passing results back to
-the parent via IPC. EstimatorTrialController contains the logic of the main
-(outer) process, while EstimatorTrialController contains most of the logic for the
-child process from which train_and_evaluate() is executed.
-
-To avoid the very expensive initialization overhead that occurs every
-train_and_evaluate() call, EstimatorTrial controls the train_and_evaluate()
-call via a tf.train.SessionRunHook. Every time training iterates for a
-sufficient amount of batches, the child subprocess blocks and waits for
-instructions to either continue training, compute validation metrics via the
-estimator.evaluate() method, or take a checkpoint.
-"""
-
 
 VERY_LARGE_NUMBER = 9999999999999999
 
@@ -400,6 +373,17 @@ class EstimatorTrialController(det.LoopTrialController):
         EstimatorTrialController._set_default_tensorflow_session(
             env=env, hvd_config=hvd_config, session_config=None
         )
+
+        logging.debug("Applying tf.estimator patches.")
+
+        @monkey_patch.monkey_patch_decorator(_NewCheckpointListenerForEvaluate, "_evaluate")
+        def patch_estimator_eval_on_checkpoint(original, *args, **kwargs):  # type: ignore
+            # With a single worker and multiple devices,
+            # `tf.estimator.train_and_evaluate` attempts to execute `eval_spec` even if
+            # `input_fn` or `steps` is None, which causes an error when evaluating the
+            # model function. Apply a monkey-patch to skip the internal function that
+            # ultimately runs the evaluation.
+            logging.info("Skipping %s(*%s, **%s)", original.__name__, args, kwargs)
 
     @staticmethod
     def set_random_seed(seed: int) -> None:

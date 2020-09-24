@@ -2,4 +2,4 @@
 
 **BUG FIXES**
 
-- Remove unused TensorBoard sources column from task list page.
+-  Remove unused TensorBoard sources column from task list page.

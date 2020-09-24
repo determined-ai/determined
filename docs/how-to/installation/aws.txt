@@ -97,14 +97,14 @@ using the ``--deployment-type`` argument (e.g., ``det-deploy aws
    subnets; the Determined cluster is deployed into these subnets.
 
 -  ``efs``: The EFS deployment creates an `EFS
-   <https://aws.amazon.com/efs/>`_ drive and a Determined
-   cluster into a separate VPC. The EFS drive attaches to agent
-   instances at `/mnt/efs`.
+   <https://aws.amazon.com/efs/>`_ drive and a Determined cluster into a
+   separate VPC. The EFS drive attaches to agent instances at
+   `/mnt/efs`.
 
 -  ``fsx``: The FSX deployment creates a `Lustre FSx
-   <https://aws.amazon.com/fsx/lustre/>`_ drive and a
-   Determined cluster into a separate VPC. The FSx drive attaches to
-   agent instances at `/mnt/fsx`.
+   <https://aws.amazon.com/fsx/lustre/>`_ drive and a Determined cluster
+   into a separate VPC. The FSx drive attaches to agent instances at
+   `/mnt/fsx`.
 
 -  ``secure``: The secure deployment creates resources to lock down the
    Determined cluster. These resources are:

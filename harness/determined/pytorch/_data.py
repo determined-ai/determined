@@ -1,5 +1,17 @@
 import logging
-from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, TypeVar, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import numpy as np
 import torch
@@ -190,6 +202,18 @@ class DataLoader:
             timeout=self.timeout,
             worker_init_fn=self.worker_init_fn,  # type: ignore
         )
+
+    def __iter__(self) -> Iterator:
+        """Compatibiliy with the real DataLoader when using a PyTorchTrial outside of Determined."""
+        return iter(self.get_data_loader())
+
+    def __len__(self) -> int:
+        """Compatibiliy with the real DataLoader when using a PyTorchTrial outside of Determined."""
+        # TODO(DET-1524): uncomment this as we do not currently support IterableDataset
+        # if isinstance(dataset, IterableDataset):
+        #     return len(self.dataset)
+        batch_sampler = cast(BatchSampler, self.batch_sampler)
+        return len(batch_sampler)
 
 
 def adapt_batch_sampler(
