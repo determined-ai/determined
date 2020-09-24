@@ -8,11 +8,10 @@ hyperparameters:
   n_filters2: 64
   dropout1: 0.25
   dropout2: 0.5
-records_per_epoch: 50000
 searcher:
   name: single
   metric: validation_loss
   max_length:
-    epochs: 1
+      batches: 937 #60,000 training images with batch size 64
   smaller_is_better: true
 entrypoint: model_def:MNistTrial

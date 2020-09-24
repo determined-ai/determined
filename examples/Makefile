@@ -19,8 +19,14 @@ META_LEARNING_EXAMPLES_DIRS := $(patsubst meta-learning/%/., build/%.tgz, $(META
 GAN_EXAMPLES := $(wildcard GAN/*/.)
 GAN_EXAMPLES_DIRS := $(patsubst GAN/%/., build/%.tgz, $(GAN_EXAMPLES))
 
+DT_EXAMPLES := $(wildcard decision-trees/*/.)
+DT_EXAMPLES_DIRS := $(patsubst decision-trees/%/., build/%.tgz, $(DT_EXAMPLES))
+
+DATA_LAYER_EXAMPLES := $(wildcard data-layer/*/.)
+DATA_LAYER_EXAMPLES_DIRS := $(patsubst data-layer/%/., build/%.tgz, $(DATA_LAYER_EXAMPLES))
+
 .PHONY: build
-build: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(NLP_EXAMPLES_DIRS) $(HPSEARCH_EXAMPLES_DIRS) $(NAS_EXAMPLES_DIRS) $(META_LEARNING_EXAMPLES_DIRS) $(GAN_EXAMPLES_DIRS)
+build: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(NLP_EXAMPLES_DIRS) $(HPSEARCH_EXAMPLES_DIRS) $(NAS_EXAMPLES_DIRS) $(META_LEARNING_EXAMPLES_DIRS) $(GAN_EXAMPLES_DIRS) $(DT_EXAMPLES_DIRS) $(DATA_LAYER_EXAMPLES_DIRS)
 
 .PHONY: clean
 clean:

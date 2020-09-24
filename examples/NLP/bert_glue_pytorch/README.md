@@ -9,6 +9,7 @@ For this implementation, we removed the system configuration since Determined wi
 * **constants.py**: Contains constant references to models able to run on GLUE.
 * **startup-hook.sh**: Contains extra dependencies that Determined is required to install.
 * **const.yaml**: Contains the configuration for the experiment. This is also where you can set the flags used in the original script.  
+* **distributed.yaml**: Same as const.yaml, but instead uses multiple GPUs. 
 * **download_glue_data**: Contains the code to download glue data based on tasks. This script is from [W4ngatang](https://gist.github.com/W4ngatang/60c2bdb54d156a41194446737ce03e2e) which is reference on the [Huggingface's GLUE page](https://github.com/huggingface/transformers/tree/v2.2.1/examples#glue)
 
 ### Data

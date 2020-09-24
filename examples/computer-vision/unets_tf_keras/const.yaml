@@ -11,7 +11,6 @@ hyperparameters:
   global_batch_size: 64
   OUTPUT_CHANNELS: 3
 
-records_per_epoch: 7400
 searcher:
   name: single
   metric: val_accuracy

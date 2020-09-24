@@ -123,3 +123,14 @@ For an introduction to using the Trial API, refer to :ref:`PyTorch MNIST <pytorc
     - TensorFlow (Estimator API)
     - Titanic
     - :download:`gbt_titanic_estimator.tgz </examples/gbt_titanic_estimator.tgz>`
+
+  * - Data Layer
+    - TensorFlow (Estimator API)
+    - MNIST
+    - :download:`data_layer_mnist_estimator.tgz </examples/data_layer_mnist_estimator>`
+
+  * - Decision Trees
+    - TensorFlow (tf.keras)
+    - MNIST
+    - :download:`data_layer_mnist_tf_keras.tgz </examples/data_layer_mnist_tf_keras>`
+

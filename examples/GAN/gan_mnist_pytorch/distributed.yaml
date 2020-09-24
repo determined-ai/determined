@@ -1,8 +1,8 @@
-description: MNIST GAN Pytorch Distributed
+description: gan_mnist_pytorch_distributed 
 data:
   url: "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
 hyperparameters:
-  global_batch_size: 32
+  global_batch_size: 256 # per GPU batch size of 32
   lr: 0.0002
   b1: 0.5
   b2: 0.999
@@ -11,7 +11,7 @@ searcher:
   name: single
   metric: loss
   max_length:
-    batches: 40000
+    batches: 5000
   smaller_is_better: True
 entrypoint: model_def:GANTrial
 resources:

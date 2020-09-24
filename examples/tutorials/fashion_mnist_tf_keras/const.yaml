@@ -2,7 +2,7 @@ description: fashion_mnist_tf_keras_const
 hyperparameters:
   global_batch_size: 32
   dense1: 128
-records_per_epoch: 50000
+records_per_epoch: 60000
 searcher:
   name: single
   metric: val_accuracy

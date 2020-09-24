@@ -1,10 +1,10 @@
-description: fashion_mnist_tf_keras_const_distributed
+description: fashion_mnist_tf_keras_distributed
 hyperparameters:
-  global_batch_size: 32
+  global_batch_size: 256
   dense1: 128
 resources:
   slots_per_trial: 8
-records_per_epoch: 50000
+records_per_epoch: 60000
 searcher:
   name: single
   metric: val_accuracy
