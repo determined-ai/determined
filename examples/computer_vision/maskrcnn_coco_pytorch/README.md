@@ -9,12 +9,12 @@ The file version can be found on this [PyTorch Mask R-CNN tutorial](https://pyto
 * **distributed.yaml**: Same as const.yaml, but instead uses multiple GPUs.
 * **adaptive.yaml**: Uses state-of-the-art ASHA hyperparameter tuning algorithm.
 
-### Data:
+### Data
 The current implementation uses the pedestrian detection and segmentation [Penn-Fudan Database](https://www.cis.upenn.edu/~jshi/ped_html/).
 
-### To Run:
-Installation instructions can be found under `docs/install-admin.html` or at [Determined installation page](https://docs.determined.ai/latest/index.html). 
-After configuring the settings in  const.yaml, run the following command: `det -m <master host:port> experiment create -f const.yaml . `
+### To Run
+Installation instructions can be found under `docs/install-admin.html` or at [Determined installation page](https://docs.determined.ai/latest/index.html).
+After configuring the settings in  const.yaml, run the following command: `det -m <master host:port> experiment create -f const.yaml .`
 
-### Results:
+### Results
 Upon completion of the experiment, model should achieve a target IOU of ~0.42.

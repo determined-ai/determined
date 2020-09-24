@@ -26,8 +26,8 @@ fixed set of hyperparameters:
 For an introduction to using the Trial API, refer to the :ref:`PyTorch MNIST <pytorch-mnist-tutorial>` and
 :ref:`tf.keras MNIST <tf-mnist-tutorial>` tutorials.
 
-Computer Vision Examples
-=========================
+Computer Vision
+===============
 
 .. list-table::
   :header-rows: 1
@@ -72,8 +72,8 @@ Computer Vision Examples
     - Oxford-IIIT Pet Dataset
     - :download:`unets_tf_keras.tgz </examples/unets_tf_keras.tgz>`
 
-Natural Language Processing (NLP) Examples
-===========================================
+Natural Language Processing (NLP)
+=================================
 
 .. list-table::
   :header-rows: 1
@@ -90,8 +90,8 @@ Natural Language Processing (NLP) Examples
     - GLUE
     - :download:`bert_glue_pytorch.tgz </examples/bert_glue_pytorch.tgz>`
 
-HP Search Benchmarking Examples
-================================
+HP Search Benchmarking
+======================
 
 .. list-table::
   :header-rows: 1
@@ -108,8 +108,8 @@ HP Search Benchmarking Examples
     - Penn Treebank Dataset
     - :download:`darts_penntreebank_pytorch.tgz </examples/darts_penntreebank_pytorch.tgz>`
 
-Neural Architecture Search (NAS) Examples
-==========================================
+Neural Architecture Search (NAS)
+================================
 
 .. list-table::
   :header-rows: 1
@@ -122,8 +122,8 @@ Neural Architecture Search (NAS) Examples
     - DARTS
     - :download:`gaea_pytorch.tgz </examples/gaea_pytorch.tgz>`
 
-Meta Learning Examples
-========================
+Meta Learning
+=============
 
 .. list-table::
   :header-rows: 1
@@ -136,8 +136,8 @@ Meta Learning Examples
     - Omniglot
     - :download:`protonet_omniglot_pytorch.tgz </examples/protonet_omniglot_pytorch.tgz>`
 
-Generative Adversarial Network (GAN) Examples
-==============================================
+Generative Adversarial Networks (GANs)
+======================================
 
 .. list-table::
   :header-rows: 1
@@ -150,8 +150,8 @@ Generative Adversarial Network (GAN) Examples
     - MNIST
     - :download:`gan_mnist_pytorch.tgz </examples/gan_mnist_pytorch.tgz>`
 
-Decision Trees Examples
-========================
+Decision Trees
+==============
 
 .. list-table::
   :header-rows: 1
@@ -164,8 +164,8 @@ Decision Trees Examples
     - Titanic
     - :download:`gbt_titanic_estimator.tgz </examples/gbt_titanic_estimator.tgz>`
 
-Data Layer Examples
-====================
+Data Layer
+==========
 
 .. list-table::
   :header-rows: 1
