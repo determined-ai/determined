@@ -1,6 +1,7 @@
 import numpy as np
 
 import determined as det
+import determined_common
 import determined_common.types
 from determined import constants, workload
 from determined.tensorboard.metric_writers import util as metric_writers_util
@@ -26,7 +27,7 @@ def get_dummy_env() -> det.EnvContext:
         use_gpu=False,
         container_gpus=[],
         slot_ids=[],
-        debug=False,
+        dbg=determined_common.DebugConfig(),
         workload_manager_type="",
         hparams={"global_batch_size": 1},
         det_rendezvous_ports="",

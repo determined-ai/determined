@@ -1,4 +1,3 @@
-import logging
 import os
 import pathlib
 import pickle
@@ -10,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import psutil
 
 import determined as det
-from determined import constants, horovod, ipc, workload
+from determined import constants, horovod, ipc, log, workload
 from determined_common import check
 
 
@@ -19,7 +18,6 @@ class WorkerProcessContext:
         self,
         broadcast_pub_port: int,
         broadcast_pull_port: int,
-        debug: bool,
         hvd_config: horovod.HorovodContext,
         rendezvous_info: det.RendezvousInfo,
         env: det.EnvContext,
@@ -27,7 +25,6 @@ class WorkerProcessContext:
     ) -> None:
         self.broadcast_pub_port = broadcast_pub_port
         self.broadcast_pull_port = broadcast_pull_port
-        self.debug = debug
         self.hvd_config = hvd_config
         self.rendezvous_info = rendezvous_info
         self.env = env
@@ -95,7 +92,6 @@ class SubprocessLauncher:
         self._worker_process_ids = []  # type: List[int]
 
         self.num_gpus = len(self.env.container_gpus)
-        self.debug = self.env.experiment_config.debug_enabled()
 
         # Horovod will have a separate training process for each GPU.
         number_of_worker_processes = self.num_gpus if self.hvd_config.use else 1
@@ -121,7 +117,7 @@ class SubprocessLauncher:
                             f"Chief received sshd ready signal only from {len(responses)} "
                             f"of {num_peers} machines."
                         )
-                    logging.debug("Chief finished sshd barrier.")
+                    log.harness.debug("Chief finished sshd barrier.")
 
             if self.hvd_config.use:
                 self._subproc = self._launch_horovodrun()
@@ -147,7 +143,6 @@ class SubprocessLauncher:
         worker_process_env = WorkerProcessContext(
             broadcast_pub_port=self.broadcast_server.get_pub_port(),
             broadcast_pull_port=self.broadcast_server.get_pull_port(),
-            debug=self.debug,
             hvd_config=self.hvd_config,
             rendezvous_info=self.rendezvous_info,
             env=self.env,
@@ -164,24 +159,27 @@ class SubprocessLauncher:
 
     def _launch_horovodrun(self) -> subprocess.Popen:
         check.true(self.hvd_config.use)
-        logging.debug(f"Starting training process on: {self.rendezvous_info.get_rank()}.")
+        log.harness.debug(f"Starting training process on: {self.rendezvous_info.get_rank()}.")
 
         horovod_process_cmd = horovod.create_run_command(
             num_gpus_per_machine=self.num_gpus,
             ip_addresses=self.rendezvous_info.get_ip_addresses(),
             env=self.env,
-            debug=self.env.experiment_config.debug_enabled(),
             optional_args=self.env.experiment_config.horovod_optional_args(),
             worker_process_env_path=self._worker_process_env_path,
         )
-        subprocess_env = {
+        subprocess_environ = {
             **os.environ,
-            "NCCL_DEBUG": "INFO",
             "DET_HOROVOD_GLOO_RENDEZVOUS_PORT": str(
                 constants.HOROVOD_GLOO_RENDEZVOUS_PORT + self.env.det_trial_unique_port_offset
             ),
         }
-        return subprocess.Popen(horovod_process_cmd, env=subprocess_env)
+        if self.env.dbg.nccl_debug is not None:
+            subprocess_environ["NCCL_DEBUG"] = self.env.dbg.nccl_debug
+        if self.env.dbg.nccl_debug_subsys is not None:
+            subprocess_environ["NCCL_DEBUG_SUBSYS"] = self.env.dbg.nccl_debug_subsys
+
+        return subprocess.Popen(horovod_process_cmd, env=subprocess_environ)
 
     def _launch_sshd(self) -> subprocess.Popen:
         run_sshd_command = [
@@ -192,7 +190,7 @@ class SubprocessLauncher:
             "/run/determined/ssh/sshd_config",
             "-D",
         ]
-        logging.debug(
+        log.harness.debug(
             f"Non-chief [{self.rendezvous_info.get_rank()}] training process launch "
             "command: {run_sshd_command}."
         )
@@ -200,14 +198,16 @@ class SubprocessLauncher:
 
     def _wait_for_sshd_to_start(self) -> None:
         connection_attempts = 0
-        logging.debug(f"Non-chief [{self.rendezvous_info.get_rank()}] waiting for sshd service.")
+        log.harness.debug(
+            f"Non-chief [{self.rendezvous_info.get_rank()}] waiting for sshd service."
+        )
         while True:
             ssh_attempt_cmd = ["ssh", "localhost", "-p", str(constants.HOROVOD_SSH_PORT), "ls"]
             ssh_attempt_process = subprocess.run(
                 ssh_attempt_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10
             )
             if ssh_attempt_process.returncode == 0:
-                logging.debug(
+                log.harness.debug(
                     f"Non-chief [{self.rendezvous_info.get_rank()}] successfully "
                     "started sshd service."
                 )
@@ -220,7 +220,7 @@ class SubprocessLauncher:
             if connection_attempts == 10:
                 raise AssertionError("Training process failed to start sshd.")
 
-            logging.info("Waiting for training process to start sshd ...")
+            log.harness.info("Waiting for training process to start sshd ...")
             time.sleep(1)
 
     def _launch_python_subprocess(self) -> subprocess.Popen:

@@ -1,13 +1,12 @@
 import contextlib
 import importlib
 import json
-import logging
 import runpy
 import sys
 from typing import Any, Iterator, List, Optional, Tuple, Type, cast
 
 import determined as det
-from determined import horovod
+from determined import horovod, log
 from determined_common import check
 
 
@@ -41,7 +40,7 @@ def load_trial_implementation(entrypoint_spec: str) -> Type[det.Trial]:
     [1] https://packaging.python.org/specifications/entry-points/
     """
 
-    logging.info(f"Loading Trial implementation with entrypoint {entrypoint_spec}.")
+    log.harness.info(f"Loading Trial implementation with entrypoint {entrypoint_spec}.")
     module, qualname_separator, qualname = entrypoint_spec.partition(":")
 
     # Exporting checkpoints reliably requires instantiating models from user
@@ -177,7 +176,7 @@ def load_native_implementation(
     # For now, we assume the entrypoint_cmd is a python invocation like
     # "python <command>"
     command = env.experiment_config["internal"]["native"]["command"]  # type: List[str]
-    logging.info(f"Loading Native implementation with command {command}.")
+    log.harness.info(f"Loading Native implementation with command {command}.")
     if len(command) < 1:
         raise AssertionError("Expected non-empty command, but was empty.")
 

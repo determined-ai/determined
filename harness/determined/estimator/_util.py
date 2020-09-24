@@ -1,4 +1,3 @@
-import logging
 import os
 import pathlib
 from collections import defaultdict
@@ -7,7 +6,7 @@ from typing import Dict, List, Optional, Set, Tuple
 import tensorflow as tf
 from tensorflow.python.training.checkpoint_state_pb2 import CheckpointState
 
-from determined import tensorboard
+from determined import log, tensorboard
 from determined_common import check
 
 # TODO: DET-175 direct checkpoint file manipulation is deprecated in TF 1.13.
@@ -216,7 +215,7 @@ def delete_all_checkpoints_except_most_recent(model_dir: str) -> None:
         for path in all_paths[:-1]:
             basename = os.path.basename(path)
             for p in checkpoint.paths[basename]:
-                logging.debug("Deleting non-recent checkpoint file %s", p)
+                log.harness.debug(f"Deleting non-recent checkpoint file: {p}")
                 os.remove(p)
 
         tf.compat.v1.train.update_checkpoint_state(

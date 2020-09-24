@@ -36,7 +36,11 @@ class SharedFSStorageManager(StorageManager):
     """
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any], container_path: Optional[str]) -> "StorageManager":
+    def from_config(
+        cls,
+        config: Dict[str, Any],
+        container_path: Optional[str],
+    ) -> "StorageManager":
         allowed_keys = {"host_path", "storage_path", "container_path", "propagation"}
         for key in config.keys():
             check.is_in(key, allowed_keys, "extra key in shared_fs config")

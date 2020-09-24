@@ -1,8 +1,8 @@
-import logging
 from typing import Any, Optional
 
 import boto3
 
+from determined import log
 from determined.tensorboard import base
 from determined_common import util
 
@@ -36,7 +36,7 @@ class S3TensorboardManager(base.TensorboardManager):
             key_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
 
             url = f"s3://{self.bucket}/{key_name}"
-            logging.debug(f"Uploading {path} to {url}")
+            log.storage.debug(f"Uploading {path} to {url}")
 
             self.client.upload_file(str(path), self.bucket, key_name)
             self._synced_event_sizes[path] = path.stat().st_size

@@ -1,10 +1,9 @@
-import logging
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, estimator, horovod
+from determined import _data_layer, estimator, horovod, log
 from determined.horovod import hvd
 from determined_common import check
 
@@ -41,7 +40,7 @@ class EstimatorContext:
 
         self.optimizer_initialized = False
         self.dataset_initialized = False
-        logging.debug(f"Initialized EstimatorContext with config: {self.hvd_config}.")
+        log.harness.debug(f"Initialized EstimatorContext with config: {self.hvd_config}.")
 
     def wrap_optimizer(self, optimizer: Any) -> Any:
         """
@@ -73,7 +72,7 @@ class EstimatorContext:
             aggregation_frequency=self.hvd_config.aggregation_frequency,
             average_aggregated_gradients=self.hvd_config.average_aggregated_gradients,
         )
-        logging.debug("Initialized optimizer for distributed and optimized parallel training.")
+        log.harness.debug("Initialized optimizer for distributed and optimized parallel training.")
         return optimizer
 
     def wrap_dataset(self, dataset: Any, shard_dataset: bool = True) -> Any:
@@ -103,11 +102,11 @@ class EstimatorContext:
         self.dataset_initialized = True
         if not self.hvd_config.use or not shard_dataset:
             if self.hvd_config and not shard_dataset:
-                logging.info("Dataset sharding skipped.")
+                log.harness.info("Dataset sharding skipped.")
             return dataset
 
         dataset = dataset.shard(hvd.size(), hvd.rank())
-        logging.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
+        log.harness.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
         return dataset
 
 

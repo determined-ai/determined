@@ -1,4 +1,3 @@
-import logging
 from typing import (
     Any,
     Callable,
@@ -17,6 +16,7 @@ import numpy as np
 import torch
 
 # from torch.utils.data.dataloader import _InfiniteConstantSampler
+from determined import log
 from determined_common.check import check_gt, check_lt
 
 # TODO(DET-1524): Uncomment inports.
@@ -396,7 +396,7 @@ def to_device(data: _Data, device: torch.device, log_warning: bool = False) -> T
         return data.to(device)  # type: ignore
 
     if log_warning:
-        logging.warning(f"Was not able to move data item of type '{type(data)}' to device.")
+        log.harness.warning(f"Was not able to move data item of type '{type(data)}' to device.")
         log_warning = False
 
     return data

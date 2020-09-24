@@ -1,4 +1,4 @@
-import logging
+import os
 import pathlib
 import sys
 import tempfile
@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, cast
 import determined as det
 import determined_common
 import determined_common.api.authentication as auth
-from determined import constants, errors, load, workload
+from determined import constants, errors, load, log, workload
 from determined_common import api, check, context, util
 
 
@@ -66,7 +66,7 @@ def _submit_experiment(
     config = {**constants.DEFAULT_EXP_CFG, **(config or {})}
     config.setdefault("internal", {})
     config["internal"]["native"] = {"command": _set_command_default(context_path, command)}
-    logging.info(f"Creating an experiment with config: {config}")
+    log.harness.info(f"Creating an experiment with config: {config}")
 
     if master_url is None:
         master_url = util.get_default_master_address()
@@ -85,30 +85,28 @@ def _submit_experiment(
         return api.create_experiment_and_follow_logs(master_url, config, exp_context)
 
 
-def _make_test_workloads(
-    checkpoint_dir: pathlib.Path, config: det.ExperimentConfig
-) -> workload.Stream:
+def _make_test_workloads(checkpoint_dir: pathlib.Path, env: det.EnvContext) -> workload.Stream:
     interceptor = workload.WorkloadResponseInterceptor()
 
-    logging.info("Training one batch")
+    log.harness.info("Training one batch")
     yield from interceptor.send(workload.train_workload(1), [])
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
-    check.eq(len(batch_metrics), config.scheduling_unit())
-    logging.debug(f"Finished training, metrics: {batch_metrics}")
+    check.eq(len(batch_metrics), env.experiment_config.scheduling_unit())
+    log.harness.debug(f"Finished training, metrics: {batch_metrics}")
 
-    logging.info("Validating one step")
+    log.harness.info("Validating one step")
     yield from interceptor.send(workload.validation_workload(1), [])
     validation = interceptor.metrics_result()
     v_metrics = validation["metrics"]["validation_metrics"]
-    logging.debug(f"Finished validating, validation metrics: {v_metrics}")
+    log.harness.debug(f"Finished validating, validation metrics: {v_metrics}")
 
-    logging.info(f"Saving a checkpoint to {checkpoint_dir}.")
+    log.harness.info(f"Saving a checkpoint to {checkpoint_dir}.")
     yield workload.checkpoint_workload(), [checkpoint_dir], workload.ignore_workload_response
-    logging.info(f"Finished saving a checkpoint to {checkpoint_dir}.")
+    log.harness.info(f"Finished saving a checkpoint to {checkpoint_dir}.")
 
     yield workload.terminate_workload(), [], workload.ignore_workload_response
-    logging.info("The test experiment passed.")
+    log.harness.info("The test experiment passed.")
 
 
 def _stop_loading_implementation() -> None:
@@ -144,7 +142,7 @@ def _init_cluster_mode(
             _submit_experiment(
                 config=config, context_dir=context_dir, command=command, master_url=master_url
             )
-            logging.info("Exiting the program after submitting the experiment.")
+            log.harness.info("Exiting the program after submitting the experiment.")
             sys.exit(0)
 
     elif trial_def is not None:
@@ -196,14 +194,12 @@ def test_one_batch(
     # TODO(DET-2931): Make the validation step a single batch as well.
     config = {**(config or {}), "scheduling_unit": 1}
 
-    logging.info("Running a minimal test experiment locally")
+    log.harness.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
     env, rendezvous_info, hvd_config = det._make_local_execution_env(True, config)
-    workloads = _make_test_workloads(
-        pathlib.Path(checkpoint_dir.name).joinpath("checkpoint"), env.experiment_config
-    )
-    logging.info(f"Using hyperparameters: {env.hparams}.")
-    logging.debug(f"Using a test experiment config: {env.experiment_config}.")
+    workloads = _make_test_workloads(pathlib.Path(checkpoint_dir.name).joinpath("checkpoint"), env)
+    log.harness.info(f"Using hyperparameters: {env.hparams}.")
+    log.harness.debug(f"Using a test experiment config: {env.experiment_config}.")
 
     if native_context_cls is not None and controller_cls is not None:
         # Case 1: test one batch for Native implementation.
@@ -223,7 +219,7 @@ def test_one_batch(
             checkpoint_dir.cleanup()
 
         context._set_train_fn(train_fn)
-        logging.info(
+        log.harness.info(
             "Note: to submit an experiment to the cluster, change local parameter to False"
         )
         return context
@@ -240,7 +236,7 @@ def test_one_batch(
         )
         controller.run()
         checkpoint_dir.cleanup()
-        logging.info(
+        log.harness.info(
             "Note: to submit an experiment to the cluster, change local parameter to False"
         )
 
@@ -262,13 +258,11 @@ def init_native(
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> Any:
-    determined_common.set_logger(
-        util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
-    )
+    determined_common.DebugConfig.from_environ(dict(**os.environ)).set_loggers()
 
     if local:
         if not test:
-            logging.warning("local training is not supported, testing instead")
+            log.harness.warning("local training is not supported, testing instead")
 
         with det._local_execution_manager(pathlib.Path(context_dir).resolve()):
             return test_one_batch(
@@ -391,9 +385,7 @@ def create_trial_instance(
             :class:`determined.TrialContext`. If not specified, a minimal default
             is used.
     """
-    determined_common.set_logger(
-        util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
-    )
+    determined_common.DebugConfig.from_environ(dict(**os.environ)).set_loggers()
     env, rendezvous_info, hvd_config = det._make_local_execution_env(False, config, hparams)
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)

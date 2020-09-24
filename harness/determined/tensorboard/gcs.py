@@ -1,8 +1,8 @@
-import logging
 from typing import Any
 
 from google.cloud import storage
 
+from determined import log
 from determined.tensorboard import base
 from determined_common import util
 
@@ -28,7 +28,7 @@ class GCSTensorboardManager(base.TensorboardManager):
         for path in self.to_sync():
             blob_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
             blob = self.bucket.blob(blob_name)
-            logging.debug(f"Uploading to GCS: {blob_name}")
+            log.storage.debug(f"Uploading to GCS: {blob_name}")
 
             blob.upload_from_filename(str(path))
             self._synced_event_sizes[path] = path.stat().st_size

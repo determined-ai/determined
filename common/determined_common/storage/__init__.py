@@ -3,6 +3,7 @@ import os
 import uuid
 from typing import Any, Dict, Optional, Type
 
+import determined_common
 from determined_common.check import check_eq, check_in, check_type
 
 from .base import StorageManager, StorageMetadata
@@ -28,7 +29,10 @@ _STORAGE_MANAGERS = {
 }  # type: Dict[str, Type[StorageManager]]
 
 
-def build(config: Dict[str, Any], container_path: Optional[str]) -> StorageManager:
+def build(
+    config: Dict[str, Any],
+    container_path: Optional[str],
+) -> StorageManager:
     """
     Return a checkpoint manager defined by the value of the `type` key in
     the configuration dictionary. Throws a `TypeError` if no storage manager

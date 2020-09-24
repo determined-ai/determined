@@ -1,7 +1,8 @@
-import logging
 from typing import Any, Dict, Iterator
 
 import torch
+
+from determined import log
 
 
 class PyTorchCallback:
@@ -103,7 +104,7 @@ class ClipGradsL2Norm(PyTorchCallback):
     """
 
     def __init__(self, clip_value: float) -> None:
-        logging.warning(
+        log.harness.warning(
             "The ClipGradsL2Norm callback is deprecated. Please use clip_grads "
             "argument in PytorchTrialContext.step_optimizer(optimizer, clip_grads=...) "
             "for clipping the gradients."
@@ -126,7 +127,7 @@ class ClipGradsL2Value(PyTorchCallback):
     """
 
     def __init__(self, clip_value: float) -> None:
-        logging.warning(
+        log.harness.warning(
             "The ClipGradsL2Value callback is deprecated. Please use clip_grads "
             "argument in PytorchTrialContext.step_optimizer(optimizer, clip_grads=...) "
             "for clipping the gradients."

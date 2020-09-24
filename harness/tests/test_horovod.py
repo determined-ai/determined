@@ -4,6 +4,7 @@ from typing import Any, Dict
 import pytest
 
 import determined as det
+import determined_common
 from determined import constants, horovod, workload
 from determined_common.types import ExperimentID, StepID, TrialID
 
@@ -30,7 +31,7 @@ def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvCont
         use_gpu=False,
         container_gpus=[],
         slot_ids=[],
-        debug=False,
+        dbg=determined_common.DebugConfig(),
         workload_manager_type="",
         det_rendezvous_ports="",
         det_trial_unique_port_offset=0,
@@ -106,7 +107,6 @@ def test_create_run_command(
         num_gpus_per_machine=num_gpus_per_machine,
         ip_addresses=ip_addresses,
         env=env,
-        debug=debug,
         optional_args=[],
         worker_process_env_path=pathlib.Path("env_path"),
     )

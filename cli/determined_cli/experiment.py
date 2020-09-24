@@ -171,7 +171,7 @@ def local_experiment(args: Namespace) -> None:
 
     experiment_config = _parse_config_file_or_exit(args.config_file)
 
-    determined_common.set_logger(bool(experiment_config.get("debug", False)))
+    determined_common.DebugConfig.from_environ().set_loggers()
 
     with det._local_execution_manager(args.model_def.resolve()):
         trial_class = load.load_trial_implementation(experiment_config["entrypoint"])

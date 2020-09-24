@@ -1,6 +1,5 @@
 import enum
 import functools
-import logging
 import pathlib
 from typing import Any, Callable, Optional, cast
 
@@ -9,7 +8,7 @@ import yogadl
 from yogadl import storage, tensorflow
 
 import determined as det
-from determined import horovod
+from determined import horovod, log
 from determined.horovod import hvd
 from determined_common import check
 
@@ -182,8 +181,8 @@ class _CacheableDecorator:
                 def make_dataset() -> yogadl.DataRef:
                     return make_dataset_fn(*args, **kwargs)
 
-                logging.info(f"Preparing dataset: {dataset_id}:{dataset_version}.")
-                logging.debug(
+                log.harness.info(f"Preparing dataset: {dataset_id}:{dataset_version}.")
+                log.harness.debug(
                     f"Calling make dataset for: {dataset_id}:{dataset_version} "
                     f"with following start_offset: {self._offset}, "
                     f"shuffle: {shuffle} shuffle_seed: {self._shuffle_seed} "
@@ -201,7 +200,7 @@ class _CacheableDecorator:
                     drop_shard_remainder=True if self._training else False,
                 )
                 self._dataset_length = len(stream_from_cache)
-                logging.info(f"Dataset {dataset_id}:{dataset_version} preparation finished.")
+                log.harness.info(f"Dataset {dataset_id}:{dataset_version} preparation finished.")
 
                 return tensorflow.make_tf_dataset(stream_from_cache)
 

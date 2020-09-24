@@ -1,9 +1,8 @@
 import abc
-import logging
 from typing import Any, Callable, Dict, Optional, cast
 
 import determined as det
-from determined import horovod
+from determined import horovod, log
 
 
 class _TrainContext(metaclass=abc.ABCMeta):
@@ -116,7 +115,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
                 "configuration 'hyperparameters' section.".format(name)
             )
         if name == "global_batch_size":
-            logging.warning(
+            log.harness.warning(
                 "Please use `context.get_per_slot_batch_size()` and "
                 "`context.get_global_batch_size()` instead of accessing "
                 "`global_batch_size` directly."
@@ -137,7 +136,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         if not isinstance(stop_requested, bool):
             raise AssertionError("stop_requested must be a boolean")
 
-        logging.info(
+        log.harness.info(
             "A trial stoppage has requested. The trial will be stopped "
             "at the end of the current step."
         )

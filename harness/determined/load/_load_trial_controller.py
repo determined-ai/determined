@@ -1,9 +1,8 @@
-import logging
 import pathlib
 from typing import Optional, Tuple, Type, cast
 
 import determined as det
-from determined import horovod, load, tensorboard, workload
+from determined import horovod, load, log, tensorboard, workload
 from determined_common import check
 
 
@@ -38,7 +37,7 @@ def load_controller_from_trial(
     trial_inst = trial_class(trial_context)
 
     # Step 4: Return the TrialController.
-    logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
+    log.harness.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
     return controller_class.from_trial(
         trial_inst=trial_inst,
         context=trial_context,
@@ -106,7 +105,7 @@ def load_native_implementation_controller(
             "The class attribute `trial_controller_class` is "
             "not a valid subclass of `det.TrialController`",
         )
-        logging.info(f"Creating {controller_class.__name__} with {type(context).__name__}.")
+        log.harness.info(f"Creating {controller_class.__name__} with {type(context).__name__}.")
         return cast(det.TrialController, controller_class).from_native(
             context=cast(det.NativeContext, context),
             env=env,
@@ -153,7 +152,7 @@ def prepare_tensorboard(
         writer: tensorboard.MetricWriter = tensorflow.TFWriter()
 
     except ModuleNotFoundError:
-        logging.warning("Tensorflow writer not found")
+        log.harness.warning("Tensorflow writer not found")
         from determined.tensorboard.metric_writers import pytorch
 
         writer = pytorch.TorchWriter()

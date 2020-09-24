@@ -1,12 +1,11 @@
 import contextlib
-import logging
 import os
 import tempfile
 from typing import Iterator, Optional
 
 import boto3
 
-from determined_common import util
+from determined_common import log, util
 from determined_common.storage.base import StorageManager, StorageMetadata
 
 
@@ -35,7 +34,7 @@ class S3StorageManager(StorageManager):
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """post_store_path uploads the checkpoint to s3 and deletes the original files."""
         try:
-            logging.info("Uploading checkpoint {} to s3".format(storage_id))
+            log.storage.info("Uploading checkpoint {} to s3".format(storage_id))
             self.upload(metadata, storage_dir)
         finally:
             self._remove_checkpoint_directory(metadata.storage_id)
@@ -45,7 +44,7 @@ class S3StorageManager(StorageManager):
         storage_dir = os.path.join(self._base_path, metadata.storage_id)
         os.makedirs(storage_dir, exist_ok=True)
 
-        logging.info("Downloading checkpoint {} from S3".format(metadata.storage_id))
+        log.storage.info("Downloading checkpoint {} from S3".format(metadata.storage_id))
         self.download(metadata, storage_dir)
 
         try:
@@ -59,7 +58,7 @@ class S3StorageManager(StorageManager):
             key_name = "{}/{}".format(metadata.storage_id, rel_path)
             url = "s3://{}/{}".format(self.bucket, key_name)
 
-            logging.debug("Uploading {} to {}".format(rel_path, url))
+            log.storage.debug("Uploading {} to {}".format(rel_path, url))
 
             if rel_path.endswith("/"):
                 # Create empty S3 keys for each subdirectory.
@@ -82,13 +81,13 @@ class S3StorageManager(StorageManager):
 
             key_name = "{}/{}".format(metadata.storage_id, rel_path)
             url = "s3://{}/{}".format(self.bucket, key_name)
-            logging.debug("Downloading {} from {}".format(url, rel_path))
+            log.storage.debug("Downloading {} from {}".format(url, rel_path))
 
             self.client.download_file(self.bucket, key_name, abs_path)
 
     @util.preserve_random_state
     def delete(self, metadata: StorageMetadata) -> None:
-        logging.info("Deleting checkpoint {} from S3".format(metadata.storage_id))
+        log.storage.info("Deleting checkpoint {} from S3".format(metadata.storage_id))
 
         objects = [
             {"Key": "{}/{}".format(metadata.storage_id, rel_path)}
@@ -97,5 +96,5 @@ class S3StorageManager(StorageManager):
 
         # S3 delete_objects has a limit of 1000 objects.
         for chunk in util.chunks(objects, 1000):
-            logging.debug("Deleting {} objects from S3".format(len(chunk)))
+            log.storage.debug("Deleting {} objects from S3".format(len(chunk)))
             self.client.delete_objects(Bucket=self.bucket, Delete={"Objects": chunk})

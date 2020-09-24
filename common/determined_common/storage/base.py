@@ -66,7 +66,11 @@ class StorageManager:
         self._base_path = base_path
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any], container_path: Optional[str]) -> "StorageManager":
+    def from_config(
+        cls,
+        config: Dict[str, Any],
+        container_path: Optional[str],
+    ) -> "StorageManager":
         """from_config() just calls __init__() unless it is overridden in a subclass."""
         return cls(**config)
 
