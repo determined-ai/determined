@@ -23,14 +23,14 @@ type LogsRequest struct {
 	Follow bool
 }
 
-// OnLogEntry is a callback called on each log entry.
-type OnLogEntry func(*logger.Entry) error
+// OnLogEntryFn is a callback called on each log entry.
+type OnLogEntryFn func(*logger.Entry) error
 
 // LogFetcherFn fetchs returns a subset of logs based on a LogRequest.
 type LogFetcherFn func(LogsRequest) ([]*logger.Entry, error)
 
-// TerminationCheck checks whether a log processing should stop or not.
-type TerminationCheck func() (bool, error)
+// TerminationCheckFn checks whether the log processing should stop or not.
+type TerminationCheckFn func() (bool, error)
 
 // LogEntryToProtoLogEntry turns a logger.LogEntry into logv1.LogEntry.
 func LogEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
@@ -41,8 +41,8 @@ func LogEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
 func ProcessLogs(ctx context.Context,
 	req LogsRequest,
 	logFetcher LogFetcherFn,
-	cb OnLogEntry,
-	terminateCheck *TerminationCheck,
+	cb OnLogEntryFn,
+	terminateCheck *TerminationCheckFn,
 ) error {
 	for {
 		logEntries, err := logFetcher(req)
@@ -85,7 +85,7 @@ func ProcessLogs(ctx context.Context,
 type LogStreamActor struct {
 	req         LogsRequest
 	ctx         context.Context
-	send        OnLogEntry
+	send        OnLogEntryFn
 	logStore    *actor.Ref
 	sendCounter int
 }
@@ -98,7 +98,7 @@ func NewLogStreamActor(
 	ctx context.Context,
 	eventManager *actor.Ref,
 	request LogsRequest,
-	send OnLogEntry,
+	send OnLogEntryFn,
 ) *LogStreamActor {
 	return &LogStreamActor{req: request, ctx: ctx, send: send, logStore: eventManager}
 }
@@ -113,7 +113,6 @@ func (l *LogStreamActor) Receive(ctx *actor.Context) error {
 		}
 
 	case logger.Entry:
-		// Make sure the context is still open.
 		if l.ctx.Err() != nil {
 			ctx.Self().Stop()
 			break

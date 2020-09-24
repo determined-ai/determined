@@ -77,8 +77,6 @@ func (a *apiServer) NotebookLogs(
 		return errors.New("failed to create actor")
 	}
 
-	// We delegate checking for context closure to logStreamActor accepting that
-	// it could stay up if there are no log messages coming in instead of busy checking
-	// to kill the actor.
+	// Keep the request context open until the actor stops.
 	return logStreamActor.AwaitTermination()
 }

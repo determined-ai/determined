@@ -23,8 +23,7 @@ const defaultEventBufferSize = 200
 const ctxMissingSender = "message is missing sender information"
 
 func countNonNullRingValues(ring *ring.Ring) int {
-	// TODO we could add a constant time solution.
-	// https://determinedai.atlassian.net/browse/DET-4206
+	// TODO(DET-4206) we could work on a constant time solution.
 	count := 0
 	ring.Do(func(val interface{}) {
 		if val != nil {
@@ -90,7 +89,6 @@ func (e *eventManager) removeSusbscribers(ctx *actor.Context) {
 }
 
 func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg event) {
-	// Publish.
 	for streamActor, logRequest := range e.logStreams {
 		if eventSatisfiesLogRequest(logRequest, &msg) {
 			entry := eventToLogEntry(&msg)
@@ -98,7 +96,6 @@ func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg event) {
 		}
 	}
 
-	// Remove terminated subscribers.
 	if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
 		e.isTerminated = true
 		e.removeSusbscribers(ctx)
@@ -147,7 +144,6 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		offset := webAPI.EffectiveOffset(msg.Offset, total)
 		msg.Offset = offset
 
-		// Stream existing matching entries.
 		matchingEvents := e.getMatchingEvents(msg)
 		for _, ev := range matchingEvents {
 			logEntry := eventToLogEntry(ev)

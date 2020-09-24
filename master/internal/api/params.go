@@ -2,7 +2,7 @@ package api
 
 import "math"
 
-// EffectiveOffset returns effective offset.
+// EffectiveOffset translated negative offsets into positive ones.
 func EffectiveOffset(reqOffset int, total int) (offset int) {
 	switch {
 	case reqOffset < -total:
@@ -14,9 +14,13 @@ func EffectiveOffset(reqOffset int, total int) (offset int) {
 	}
 }
 
-// EffectiveLimit returns effective limit.
-// Input: non-negative offset and limit.
+// EffectiveLimit computes a hard limit based on the offset and total available items if there is a
+// limit set.
+// Input: non-negative offset
 func EffectiveLimit(limit int, offset int, total int) int {
+	if offset < 0 {
+		panic("input offset has to be non-negative")
+	}
 	switch {
 	case limit <= 0:
 		return -1
@@ -27,7 +31,7 @@ func EffectiveLimit(limit int, offset int, total int) int {
 	}
 }
 
-// EffectiveOffsetNLimit calculates effective offset and limit.
+// EffectiveOffsetNLimit chains EffectiveOffset and EffectiveLimit together.
 func EffectiveOffsetNLimit(reqOffset int, reqLimit int, totalItems int) (offset int, limit int) {
 	offset = EffectiveOffset(reqOffset, totalItems)
 	limit = EffectiveLimit(reqLimit, offset, totalItems)
