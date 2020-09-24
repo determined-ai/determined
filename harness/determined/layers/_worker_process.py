@@ -289,6 +289,9 @@ class SubprocessLauncher:
 
         for subprocess_id in self._worker_process_ids:
             if not psutil.pid_exists(subprocess_id):
+                # Wait a few seconds, in case some processes are in the process of exiting but have
+                # not finished logging quite yet.
+                time.sleep(3)
                 raise det.errors.WorkerError("Detected that worker process died.")
 
     def _send_recv_workload(self, wkld: workload.Workload, args: List[Any]) -> workload.Response:
