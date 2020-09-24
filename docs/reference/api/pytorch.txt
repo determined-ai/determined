@@ -187,5 +187,5 @@ places in your code:
 -  :download:`cifar10_pytorch.tgz
    </examples/cifar10_pytorch.tgz>`
 -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
--  :download:`object_detection_pytorch.tgz
-   </examples/object_detection_pytorch.tgz>`
+-  :download:`maskRCNN_COCO_pytorch.tgz
+   </examples/maskRCNN_COCO_pytorch.tgz>`

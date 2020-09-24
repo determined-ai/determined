@@ -23,7 +23,7 @@ fixed set of hyperparameters:
     cd mnist_pytorch
     det experiment create const.yaml .
 
-For an introduction to using the Trial API, refer to :ref:`PyTorch MNIST <pytorch-mnist-tutorial>` and
+For an introduction to using the Trial API, refer to the :ref:`PyTorch MNIST <pytorch-mnist-tutorial>` and
 :ref:`tf.keras MNIST <tf-mnist-tutorial>` tutorials.
 
 .. list-table::
