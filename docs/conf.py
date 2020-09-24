@@ -48,7 +48,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinxarg.ext",
-    "sphinx_gallery.gen_gallery",
     "sphinx_copybutton",
     "sphinx_sitemap",
 ]
@@ -117,49 +116,3 @@ todo_include_todos = True
 
 html_use_index = True
 html_domain_indices = True
-
-# -- Sphinx Gallery settings -------------------------------------------
-
-
-class ExplicitOrder:
-    """
-    sphinx_gallery.sorting.ExplicitOrder doesn't work with
-    within_subsection_order. Define a custom class for ordering examples within
-    subsections with a static ordering.
-    """
-
-    ORDERING = {
-        "native-tf-keras": [
-            "tf_keras_native.py",
-            "tf_keras_native_hparam_search.py",
-            "tf_keras_native_dtrain.py",
-        ]
-    }
-
-    def __init__(self, src_dir):
-        self.gallery = pathlib.Path(src_dir).name
-        if self.gallery not in ExplicitOrder.ORDERING:
-            raise Exception("Ordering for gallery {} not found".format(self.gallery))
-
-        self.ordering = ExplicitOrder.ORDERING[pathlib.Path(src_dir).name]
-
-    def __call__(self, item):
-        if item in self.ordering:
-            return self.ordering.index(item)
-        else:
-            raise Exception(
-                "Item '{}' not found in ordering for gallery {}".format(item, self.gallery)
-            )
-
-
-sphinx_gallery_conf = {
-    "examples_dirs": "../examples/tutorials/native-tf-keras",
-    "gallery_dirs": "tutorials/native-tf-keras",
-    # Subsections are sorted by number of code lines per example. Override this
-    # to sort via the explicit ordering.
-    # "within_subsection_order": CustomOrdering,
-    "within_subsection_order": ExplicitOrder,
-    "download_all_examples": True,
-    "plot_gallery": False,
-    "min_reported_time": float("inf"),
-}
