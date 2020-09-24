@@ -124,7 +124,7 @@ For an introduction to using the Trial API, refer to :ref:`PyTorch MNIST <pytorc
     - MNIST
     - :download:`data_layer_mnist_estimator.tgz </examples/data_layer_mnist_estimator.tgz>`
 
-  * - Decision Trees
+  * - Data Layer
     - TensorFlow (tf.keras)
     - MNIST
     - :download:`data_layer_mnist_tf_keras.tgz </examples/data_layer_mnist_tf_keras.tgz>`
