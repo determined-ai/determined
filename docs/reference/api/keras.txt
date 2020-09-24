@@ -124,29 +124,6 @@ by implementing :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
 
 .. autofunction:: determined.keras.TFKerasTrial.keras_callbacks
 
-Native
-======
-
-Disregard if using the trial API (subclassing
-:class:`~determined.keras.TFKerasTrial`).
-
-.. _keras-init:
-
-*****************************************
- ``determined.keras.TFKerasTensorBoard``
-*****************************************
-
-.. autoclass:: determined.keras.TFKerasTensorBoard
-   :members:
-
-******************************************
- ``determined.experimental.keras.init()``
-******************************************
-
-.. autofunction:: determined.experimental.keras.init
-
-.. _keras-context:
-
 **********
  Examples
 **********
