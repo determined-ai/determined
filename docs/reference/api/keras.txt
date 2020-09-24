@@ -130,4 +130,4 @@ by implementing :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
 
 -  :download:`Fashion MNIST example
    </examples/fashion_mnist_tf_keras.tgz>`
--  :download:`CIFAR-10 example </examples/cifar10_cnn_tf_keras.tgz>`
+-  :download:`CIFAR-10 example </examples/cifar10_tf_keras.tgz>`

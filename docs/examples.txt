@@ -1,10 +1,8 @@
 .. _examples:
 
-Examples
-========
-
-Example Models
---------------
+####################################################
+ Examples
+####################################################
 
 Determined includes several example machine learning models that have
 been ported to Determined's APIs. These examples can be found in the
@@ -12,15 +10,12 @@ been ported to Determined's APIs. These examples can be found in the
 <https://github.com/determined-ai/determined/tree/master/examples>`__;
 download links to each example can also be found below.
 
-Trial API
-~~~~~~~~~
-
-The examples below use the :ref:`model-definitions_trial-api`. Each example consists of a
-model definition, along with one or more experiment configuration files. To run one of
-these examples, download the appropriate ``.tgz`` file, extract it, ``cd`` into the
-directory, and use ``det experiment create`` to create a new experiment, passing in the
-appropriate configuration file. For example, here is how to train the ``mnist_pytorch``
-example with a fixed set of hyperparameters:
+Each example consists of a model definition, along with one or more experiment
+configuration files. To run one of these examples, download the appropriate
+``.tgz`` file, extract it, ``cd`` into the directory, and use ``det experiment
+create`` to create a new experiment, passing in the appropriate configuration
+file. For example, here is how to train the ``mnist_pytorch`` example with a
+fixed set of hyperparameters:
 
 .. code::
 
@@ -102,7 +97,7 @@ For an introduction to using the Trial API, refer to :ref:`PyTorch MNIST <pytorc
   * - HP Search Benchmarks
     - PyTorch
     - Penn Treebank Dataset
-    - :download:`darts_penntreebank_pytorch.tgz </examples/darts_penntreebank_pytorch.tgz`
+    - :download:`darts_penntreebank_pytorch.tgz </examples/darts_penntreebank_pytorch.tgz>`
 
   * - Neural Architecture Search (NAS)
     - PyTorch
@@ -127,10 +122,9 @@ For an introduction to using the Trial API, refer to :ref:`PyTorch MNIST <pytorc
   * - Data Layer
     - TensorFlow (Estimator API)
     - MNIST
-    - :download:`data_layer_mnist_estimator.tgz </examples/data_layer_mnist_estimator>`
+    - :download:`data_layer_mnist_estimator.tgz </examples/data_layer_mnist_estimator.tgz>`
 
   * - Decision Trees
     - TensorFlow (tf.keras)
     - MNIST
-    - :download:`data_layer_mnist_tf_keras.tgz </examples/data_layer_mnist_tf_keras>`
-
+    - :download:`data_layer_mnist_tf_keras.tgz </examples/data_layer_mnist_tf_keras.tgz>`

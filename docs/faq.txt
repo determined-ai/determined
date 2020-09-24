@@ -259,7 +259,7 @@ Can I use TensorBoard with PyTorch?
 ===================================
 
 Yes! For an example of this check out the :download:`mnist-GAN
-</examples/mnist_gan_pytorch.tgz>` example. This model uses the
+</examples/gan_mnist_pytorch.tgz>` example. This model uses the
 :class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter`
 class which automatically configures the location for writing
 TensorBoards. Users can also directly use
