@@ -112,9 +112,6 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 			check.Equal(podSpec.Name, "", "pod Name is not a configurable option"),
 			check.Equal(podSpec.Namespace, "", "pod Namespace is not a configurable option"),
 			check.False(podSpec.Spec.HostNetwork, "host networking must be configured via master.yaml"),
-			check.LessThanOrEqualTo(
-				len(podSpec.Spec.Containers), 1,
-				"can specify at most one container in pod_spec"),
 		}
 
 		if len(podSpec.Spec.Containers) > 0 {
@@ -124,7 +121,6 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 				}
 
 				containerSpecErrors := []error{
-					check.Equal(container.Name, "", "container Name is not configurable"),
 					check.Equal(container.Image, "",
 						"container Image is not configurable, set it in the experiment config"),
 					check.Equal(len(container.Command), 0,

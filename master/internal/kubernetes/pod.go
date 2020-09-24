@@ -203,7 +203,7 @@ func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, msg resourceCrea
 func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
 	p.pod = msg.updatedPod
 
-	containerState, err := getContainerState(ctx, p.pod, p.containerNames)
+	containerState, err := getDeterminedContainerState(ctx, p.pod, p.containerNames)
 	if err != nil {
 		return err
 	}
@@ -388,7 +388,7 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	})
 }
 
-func getContainerState(
+func getDeterminedContainerState(
 	ctx *actor.Context,
 	pod *k8sV1.Pod,
 	containerNames map[string]bool,
@@ -428,12 +428,13 @@ func getContainerState(
 		}
 
 		for _, containerStatus := range containerStatuses {
-			if containerStatus.State.Running != nil {
-				return container.Running, nil
+			// Check that all Determined containers are running.
+			if containerStatus.State.Running == nil {
+				return container.Starting, nil
 			}
 		}
 
-		return container.Starting, nil
+		return container.Running, nil
 
 	case k8sV1.PodFailed, k8sV1.PodSucceeded:
 		return container.Terminated, nil
@@ -466,7 +467,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames map[string]bool) (int,
 
 	if len(pod.Status.ContainerStatuses) < len(containerNames) {
 		return 0, "", errors.Errorf(
-			"unexpected number of containers when processing exit for pod %s", pod.Name)
+			"unexpected number of containers when processing exit code for pod %s", pod.Name)
 	}
 
 	containerStatuses, err := getDeterminedContainersStatus(

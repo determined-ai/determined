@@ -404,7 +404,8 @@ def test_killed_pending_command_terminates() -> None:
 
 
 @pytest.mark.e2e_gpu  # type: ignore
-def test_k8_mount(using_k8s: bool) -> None:
+@pytest.mark.parametrize("sidecar", [True, False])  # type: ignore
+def test_k8_mount(using_k8s: bool, sidecar: bool) -> None:
     if not using_k8s:
         pytest.skip("only need to run test on kubernetes")
 
@@ -431,6 +432,21 @@ def test_k8_mount(using_k8s: bool) -> None:
             }
         }
     }
+
+    if sidecar:
+        sidecar_container = {
+            "name": "sidecar",
+            "image": conf.TF1_CPU_IMAGE,
+            "command": ["/bin/bash"],
+            "args": ["-c", "exit 0"],
+        }
+
+        # We insert this as the first container, to make sure Determined can handle the case
+        # where the `determined-container` is not the first one.
+        config["environment"]["pod_spec"]["spec"]["containers"] = [
+            sidecar_container,
+            config["environment"]["pod_spec"]["spec"]["containers"][0],  # type: ignore
+        ]
 
     _run_cmd_with_config_expecting_success(cmd=f"sleep 3; touch {mount_path}", config=config)
 
