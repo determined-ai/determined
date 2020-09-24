@@ -322,6 +322,10 @@ func (r *Ref) close() {
 		closeTracer(r)
 	}
 
+	if DeadlockDetectorEnabled {
+		closeDeadlockDetectorResources(r)
+	}
+
 	r.shutdown = true
 }
 

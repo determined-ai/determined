@@ -3,6 +3,7 @@ package actor
 import (
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"net/url"
 	"path"
 	"strings"
@@ -102,4 +103,11 @@ func (a Address) MarshalText() (text []byte, err error) {
 func (a *Address) UnmarshalText(text []byte) error {
 	a.path = string(text)
 	return nil
+}
+
+// ID implements the graph.Node interface.
+func (a Address) ID() int64 {
+	h := fnv.New64()
+	_, _ = h.Write([]byte(a.path))
+	return int64(h.Sum64())
 }

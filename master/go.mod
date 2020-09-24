@@ -49,6 +49,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9
 	golang.org/x/tools v0.0.0-20200702044944-0cc1aa72b347
+	gonum.org/v1/gonum v0.8.1
 	google.golang.org/api v0.26.0
 	google.golang.org/genproto v0.0.0-20200608115520-7c474a2e3482
 	google.golang.org/grpc v1.29.1

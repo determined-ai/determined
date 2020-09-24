@@ -39,7 +39,7 @@ func (i *inbox) ask(ctx context.Context, owner *Ref, sender *Ref, message Messag
 	if i.closed {
 		return emptyResponse(sender)
 	}
-	resp := &response{source: owner, future: make(chan Message, 1)}
+	resp := &response{source: owner, requestSource: sender, future: make(chan Message, 1)}
 	i._add(wrap(ctx, owner, sender, message, resp.future))
 	return resp
 }

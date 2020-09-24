@@ -30,19 +30,21 @@ type Response interface {
 }
 
 type response struct {
-	lock    sync.Mutex
-	source  *Ref
-	fetched bool
-	future  chan Message
-	result  Message
+	lock          sync.Mutex
+	source        *Ref
+	requestSource *Ref
+	fetched       bool
+	future        chan Message
+	result        Message
 }
 
 func emptyResponse(source *Ref) Response {
 	return &response{
-		source:  source,
-		fetched: true,
-		future:  nil,
-		result:  errNoResponse,
+		source:        source,
+		requestSource: source,
+		fetched:       true,
+		future:        nil,
+		result:        errNoResponse,
 	}
 }
 
@@ -56,6 +58,9 @@ func (r *response) get() Message {
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()
+	if DeadlockDetectorEnabled && r.requestSource != nil {
+		defer detectDeadlock(r.source.system, r.requestSource.Address(), r.source.Address())()
+	}
 	r.fetched = true
 	r.result = <-r.future
 	return r.result

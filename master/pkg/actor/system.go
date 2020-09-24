@@ -4,16 +4,27 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	sgraph "gonum.org/v1/gonum/graph/simple"
 )
 
 // System is a hierarchical group of actors.
-type System struct {
-	id string
-	*Ref
+type (
+	System struct {
+		id string
+		*Ref
 
-	refsLock sync.RWMutex
-	refs     map[Address]*Ref
-}
+		refsLock sync.RWMutex
+		refs     map[Address]*Ref
+
+		// Used by the deadlock detector for detecting ask cycles.
+		asks *asks
+	}
+	asks struct {
+		*sync.Mutex
+		*sgraph.DirectedGraph
+	}
+)
 
 // NewSystem constructs a new actor system and starts it.
 func NewSystem(id string) *System {
@@ -22,7 +33,11 @@ func NewSystem(id string) *System {
 
 // NewSystemWithRoot constructs a new actor system with the specified root actor and starts it.
 func NewSystemWithRoot(id string, actor Actor) *System {
-	system := &System{id: id, refs: make(map[Address]*Ref)}
+	system := &System{
+		id:   id,
+		refs: make(map[Address]*Ref),
+		asks: &asks{&sync.Mutex{}, sgraph.NewDirectedGraph()},
+	}
 	system.Ref = newRef(system, nil, rootAddress, actor)
 	return system
 }
