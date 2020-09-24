@@ -59,15 +59,13 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, status.Errorf(codes.Internal, "failed to get the user")
 	}
 
-	var tensorboardID scheduler.TaskID
-	err = a.actorRequest(
-		tensorboardsAddr.String(),
-		command.TensorboardRequestWithUser{Tensorboard: tensorboardReq, User: user},
-		&tensorboardID,
-	)
+	req := command.TensorboardRequestWithUser{Tensorboard: tensorboardReq, User: user}
+	resp := a.m.system.AskAt(tensorboardsAddr.String(), req)
 	if err != nil {
+		logrus.WithError(err).Error("failed to launch tensorboard")
 		return nil, status.Errorf(codes.Internal, "failed to launch tensorboard")
 	}
+	tensorboardID := resp.Get().(scheduler.TaskID)
 
 	var tensorboardv1 *tensorboardv1.Tensorboard
 	err = a.actorRequest(tensorboardsAddr.Child(tensorboardID).String(), tensorboardv1, &tensorboardv1)
