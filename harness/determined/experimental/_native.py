@@ -172,11 +172,16 @@ def _init_cluster_mode(
 
 
 def _load_trial_on_local(
-    context_dir: pathlib.Path, training: bool, config: Dict[str, Any], hparams: Dict[str, Any]
+    context_dir: pathlib.Path,
+    managed_training: bool,
+    config: Dict[str, Any],
+    hparams: Dict[str, Any],
 ) -> Tuple[Type[det.Trial], det.TrialContext]:
     with det._local_execution_manager(context_dir):
         trial_class = load.load_trial_implementation(config["entrypoint"])
-        env, rendezvous_info, hvd_config = det._make_local_execution_env(training, config, hparams)
+        env, rendezvous_info, hvd_config = det._make_local_execution_env(
+            managed_training, config, hparams
+        )
         trial_context = trial_class.trial_context_class(env, hvd_config)
     return trial_class, trial_context
 

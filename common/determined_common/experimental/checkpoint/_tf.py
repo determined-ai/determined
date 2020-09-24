@@ -22,7 +22,7 @@ def load_model(
     elif save_format == "h5":
         trial_cls, trial_context = experimental._load_trial_on_local(
             ckpt_dir.joinpath("code"),
-            training=False,
+            managed_training=False,
             config=metadata["experiment_config"],
             hparams=metadata["hparams"],
         )
