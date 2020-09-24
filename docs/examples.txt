@@ -26,105 +26,158 @@ fixed set of hyperparameters:
 For an introduction to using the Trial API, refer to the :ref:`PyTorch MNIST <pytorch-mnist-tutorial>` and
 :ref:`tf.keras MNIST <tf-mnist-tutorial>` tutorials.
 
+Computer Vision Examples
+=========================
+
 .. list-table::
   :header-rows: 1
 
-  * - Domain
-    - Framework
+  * - Framework
     - Dataset
     - Filename
 
-  * - Computer Vision
-    - PyTorch
+  * - PyTorch
     - MNIST
     - :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
-  * - Computer Vision
-    - PyTorch
+  * - PyTorch
     - CIFAR-10
     - :download:`cifar10_pytorch.tgz </examples/cifar10_pytorch.tgz>`
 
-  * - Computer Vision
-    - PyTorch
+  * - PyTorch
     - MNIST
     - :download:`mnist_multi_output_pytorch.tgz </examples/mnist_multi_output_pytorch.tgz>`
 
-  * - Computer Vision
-    - PyTorch
+  * - PyTorch
     - Penn-Fudan Dataset
-    - :download:`maskRCNN_COCO_pytorch.tgz </examples/maskRCNN_COCO_pytorch.tgz>`
+    - :download:`maskRCNN_COCO_pytorch.tgz </examples/maskrcnn_coco_pytorch.tgz>`
 
-  * - Computer Vision
-    - TensorFlow (Estimator API)
+  * - TensorFlow (Estimator API)
     - MNIST
     - :download:`mnist_estimator.tgz </examples/mnist_estimator.tgz>`
 
-  * - Computer Vision
-    - TensorFlow (tf.keras)
+  * - TensorFlow (tf.keras)
     - Fashion MNIST
     - :download:`fashion_mnist_tf_keras.tgz </examples/fashion_mnist_tf_keras.tgz>`
 
-  * - Computer Vision
-    - TensorFlow (tf.keras)
+  * - TensorFlow (tf.keras)
     - CIFAR-10
     - :download:`cifar10_tf_keras.tgz </examples/cifar10_tf_keras.tgz>`
 
-  * - Computer Vision
-    - TensorFlow (tf.keras)
+  * - TensorFlow (tf.keras)
     - Iris Dataset
     - :download:`iris_tf_keras.tgz </examples/iris_tf_keras.tgz>`
 
-  * - Computer Vision
-    - TensorFlow (tf.keras)
+  * - TensorFlow (tf.keras)
     - Oxford-IIIT Pet Dataset
     - :download:`unets_tf_keras.tgz </examples/unets_tf_keras.tgz>`
 
-  * - Natural Language Processing (NLP)
-    - PyTorch
+Natural Language Processing (NLP) Examples
+===========================================
+
+.. list-table::
+  :header-rows: 1
+
+  * - Framework
+    - Dataset
+    - Filename
+
+  * - PyTorch
     - SQuAD
     - :download:`bert_squad_pytorch.tgz </examples/bert_squad_pytorch.tgz>`
 
-  * - Natural Language Processing (NLP)
-    - PyTorch
+  * - PyTorch
     - GLUE
     - :download:`bert_glue_pytorch.tgz </examples/bert_glue_pytorch.tgz>`
 
-  * - HP Search Benchmarks
-    - PyTorch
+HP Search Benchmarking Examples
+================================
+
+.. list-table::
+  :header-rows: 1
+
+  * - Framework
+    - Dataset
+    - Filename
+
+  * - PyTorch
     - CIFAR-10
     - :download:`darts_cifar10_pytorch.tgz </examples/darts_cifar10_pytorch.tgz>`
 
-  * - HP Search Benchmarks
-    - PyTorch
+  * - PyTorch
     - Penn Treebank Dataset
     - :download:`darts_penntreebank_pytorch.tgz </examples/darts_penntreebank_pytorch.tgz>`
 
-  * - Neural Architecture Search (NAS)
-    - PyTorch
+Neural Architecture Search (NAS) Examples
+==========================================
+
+.. list-table::
+  :header-rows: 1
+
+  * - Framework
+    - Dataset
+    - Filename
+
+  * - PyTorch
     - DARTS
     - :download:`gaea_pytorch.tgz </examples/gaea_pytorch.tgz>`
 
-  * - Meta Learning
-    - PyTorch
+Meta Learning Examples
+========================
+
+.. list-table::
+  :header-rows: 1
+
+  * - Framework
+    - Dataset
+    - Filename
+
+  * - PyTorch
     - Omniglot
     - :download:`protonet_omniglot_pytorch.tgz </examples/protonet_omniglot_pytorch.tgz>`
 
-  * - Generative Adversarial Network (GAN)
-    - PyTorch
+Generative Adversarial Network (GAN) Examples
+==============================================
+
+.. list-table::
+  :header-rows: 1
+
+  * - Framework
+    - Dataset
+    - Filename
+
+  * - PyTorch
     - MNIST
     - :download:`gan_mnist_pytorch.tgz </examples/gan_mnist_pytorch.tgz>`
 
-  * - Decision Trees
-    - TensorFlow (Estimator API)
+Decision Trees Examples
+========================
+
+.. list-table::
+  :header-rows: 1
+
+  * - Framework
+    - Dataset
+    - Filename
+
+  * - TensorFlow (Estimator API)
     - Titanic
     - :download:`gbt_titanic_estimator.tgz </examples/gbt_titanic_estimator.tgz>`
 
-  * - Data Layer
-    - TensorFlow (Estimator API)
+Data Layer Examples
+====================
+
+.. list-table::
+  :header-rows: 1
+
+  * - Framework
+    - Dataset
+    - Filename
+
+  * - TensorFlow (Estimator API)
     - MNIST
     - :download:`data_layer_mnist_estimator.tgz </examples/data_layer_mnist_estimator.tgz>`
 
-  * - Data Layer
-    - TensorFlow (tf.keras)
+  * - TensorFlow (tf.keras)
     - MNIST
     - :download:`data_layer_mnist_tf_keras.tgz </examples/data_layer_mnist_tf_keras.tgz>`

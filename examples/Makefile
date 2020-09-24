@@ -1,29 +1,29 @@
 TUTORIAL_EXAMPLES := $(wildcard tutorials/*/.)
 TUTORIAL_EXAMPLES_DIRS := $(patsubst tutorials/%/., build/%.tgz, $(TUTORIAL_EXAMPLES))
 
-CV_EXAMPLES := $(wildcard computer-vision/*/.)
-CV_EXAMPLES_DIRS := $(patsubst computer-vision/%/., build/%.tgz, $(CV_EXAMPLES))
+CV_EXAMPLES := $(wildcard computer_vision/*/.)
+CV_EXAMPLES_DIRS := $(patsubst computer_vision/%/., build/%.tgz, $(CV_EXAMPLES))
 
-NLP_EXAMPLES := $(wildcard NLP/*/.)
-NLP_EXAMPLES_DIRS := $(patsubst NLP/%/., build/%.tgz, $(NLP_EXAMPLES))
+NLP_EXAMPLES := $(wildcard nlp/*/.)
+NLP_EXAMPLES_DIRS := $(patsubst nlp/%/., build/%.tgz, $(NLP_EXAMPLES))
 
-HPSEARCH_EXAMPLES := $(wildcard hp-search-benchmarks/*/.)
-HPSEARCH_EXAMPLES_DIRS := $(patsubst hp-search-benchmarks/%/., build/%.tgz, $(HPSEARCH_EXAMPLES))
+HPSEARCH_EXAMPLES := $(wildcard hp_search_benchmarks/*/.)
+HPSEARCH_EXAMPLES_DIRS := $(patsubst hp_search_benchmarks/%/., build/%.tgz, $(HPSEARCH_EXAMPLES))
 
-NAS_EXAMPLES := $(wildcard NAS/*/.)
-NAS_EXAMPLES_DIRS := $(patsubst NAS/%/., build/%.tgz, $(NAS_EXAMPLES))
+NAS_EXAMPLES := $(wildcard nas/*/.)
+NAS_EXAMPLES_DIRS := $(patsubst nas/%/., build/%.tgz, $(NAS_EXAMPLES))
 
-META_LEARNING_EXAMPLES := $(wildcard meta-learning/*/.)
-META_LEARNING_EXAMPLES_DIRS := $(patsubst meta-learning/%/., build/%.tgz, $(META_LEARNING_EXAMPLES))
+META_LEARNING_EXAMPLES := $(wildcard meta_learning/*/.)
+META_LEARNING_EXAMPLES_DIRS := $(patsubst meta_learning/%/., build/%.tgz, $(META_LEARNING_EXAMPLES))
 
-GAN_EXAMPLES := $(wildcard GAN/*/.)
-GAN_EXAMPLES_DIRS := $(patsubst GAN/%/., build/%.tgz, $(GAN_EXAMPLES))
+GAN_EXAMPLES := $(wildcard gan/*/.)
+GAN_EXAMPLES_DIRS := $(patsubst gan/%/., build/%.tgz, $(GAN_EXAMPLES))
 
-DT_EXAMPLES := $(wildcard decision-trees/*/.)
-DT_EXAMPLES_DIRS := $(patsubst decision-trees/%/., build/%.tgz, $(DT_EXAMPLES))
+DT_EXAMPLES := $(wildcard decision_trees/*/.)
+DT_EXAMPLES_DIRS := $(patsubst decision_trees/%/., build/%.tgz, $(DT_EXAMPLES))
 
-DATA_LAYER_EXAMPLES := $(wildcard data-layer/*/.)
-DATA_LAYER_EXAMPLES_DIRS := $(patsubst data-layer/%/., build/%.tgz, $(DATA_LAYER_EXAMPLES))
+DATA_LAYER_EXAMPLES := $(wildcard data_layer/*/.)
+DATA_LAYER_EXAMPLES_DIRS := $(patsubst data_layer/%/., build/%.tgz, $(DATA_LAYER_EXAMPLES))
 
 .PHONY: build
 build: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(NLP_EXAMPLES_DIRS) $(HPSEARCH_EXAMPLES_DIRS) $(NAS_EXAMPLES_DIRS) $(META_LEARNING_EXAMPLES_DIRS) $(GAN_EXAMPLES_DIRS) $(DT_EXAMPLES_DIRS) $(DATA_LAYER_EXAMPLES_DIRS)

@@ -1,14 +1,12 @@
-# PyTorch MNIST CNN Tutorial
+# PyTorch multi-prediction MNIST CNN Example
 
-This folder contains the required files and the example code to use PyTorch's MNIST example with Determined.
-The file version can be found on [PyTorch MNIST examples](https://github.com/pytorch/examples/tree/master/mnist)
+This folder contains the required files to show how to build a multi-prediction MNIST network using Determined's PyTorch API.
 
 ### Files
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
 * **data.py**: The data loading and preparation code for the model.
 * **layers.py**: Defines the convolutional layers that the model uses. 
 * **const.yaml**: A configuration file that trains the model with constant hyperparameter values. This is also where you can set the flags used in the original script. 
-* **distributed.yaml**: Same as const.yaml, but instead uses multiple GPUs.
 * **adaptive.yaml**: Uses state-of-the-art ASHA hyperparameter tuning algorithm. 
 
 ### To Run
