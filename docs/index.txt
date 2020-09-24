@@ -66,15 +66,8 @@ We recommend you follow our :ref:`quick-start` if you're new to
 Determined.
 
 Next, learn more about our Experiment APIs by following our tutorials.
-If you're using TensorFlow Keras or Estimator and want to get started
-quickly with a minimal modification of source code, follow our Native
-API tutorial:
-
--  :ref:`tutorials_native-api`
-
-If you're using PyTorch or want a finer-grained level of control over
-the training loop, follow our Trial API tutorials in your preferred
-framework:
+If you're using TensoFlow Keras or PyTorch, follow our Trial API tutorials
+in your preferred framework:
 
 -  :ref:`pytorch-mnist-tutorial`
 -  :ref:`tf-mnist-tutorial`
@@ -109,7 +102,6 @@ capabilities.
 
 -  :ref:`pytorch-mnist-tutorial`
 -  :ref:`tf-mnist-tutorial`
--  :ref:`tutorials_native-api`
 -  :ref:`data-access`
 
 **Hyperparameter Tuning**

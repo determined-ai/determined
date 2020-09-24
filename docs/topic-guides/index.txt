@@ -32,7 +32,6 @@ explanation. Below you will find some suggested starting guides.
 **Model Definitions**
 
 -  :ref:`model-definitions`
--  :ref:`model-definitions_native-api`
 -  :ref:`model-definitions_trial-api`
 -  :ref:`model-definitions_best-practices`
 
@@ -55,7 +54,6 @@ The full list of our topic guides can be found below:
    hp-tuning-defined
    hp-tuning-det/index
    model-definitions/index
-   model-definitions/native-api
    model-definitions/trial-api
    model-definitions/best-practices
    optimizing-distributed-training
