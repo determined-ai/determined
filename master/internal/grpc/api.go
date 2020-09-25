@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"net/http"
 	"runtime/debug"
 
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -54,8 +53,8 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
 	return grpcS
 }
 
-// NewGRPCMux creates a new gRPC server mux.
-func NewGRPCMux() *runtime.ServeMux {
+// newGRPCMux creates a new gRPC server mux.
+func newGRPCMux() *runtime.ServeMux {
 	serverOpts := []runtime.ServeMuxOption{
 		runtime.WithMarshalerOption(jsonPretty,
 			&runtime.JSONPb{EmitDefaults: true, Indent: "    "}),
@@ -67,33 +66,8 @@ func NewGRPCMux() *runtime.ServeMux {
 	return runtime.NewServeMux(serverOpts...)
 }
 
-func echoToMux(c echo.Context) (*http.Request, *echo.Response) {
-	request := c.Request()
-	if c.Request().Header.Get("Authorization") == "" {
-		if cookie, err := c.Cookie(cookieName); err == nil {
-			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
-		}
-	}
-	if _, ok := request.URL.Query()["pretty"]; ok {
-		request.Header.Set("Accept", jsonPretty)
-	}
-	return request, c.Response()
-}
-
-// PassToGRPCProxy passes an echo server request to gRPC-gateway servermux.
-func PassToGRPCProxy(c echo.Context, mux http.Handler) {
-	request, response := echoToMux(c)
-	mux.ServeHTTP(response, request)
-}
-
 // RegisterHTTPProxy registers grpc-gateway with the master echo server.
-func RegisterHTTPProxy(
-	e *echo.Echo,
-	mux *runtime.ServeMux,
-	port int,
-	enableCORS bool,
-	cert *tls.Certificate,
-) error {
+func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certificate) error {
 	addr := fmt.Sprintf(":%d", port)
 	var opts []grpc.DialOption
 	if cert == nil {
@@ -104,17 +78,31 @@ func RegisterHTTPProxy(
 			InsecureSkipVerify: true, //nolint:gosec
 		})))
 	}
+	mux := newGRPCMux()
 	err := proto.RegisterDeterminedHandlerFromEndpoint(context.Background(), mux, addr, opts)
 	if err != nil {
 		return err
 	}
-	apiV1 := e.Group("/api/v1")
-	apiV1.Any("/*", func(c echo.Context) error {
+	handler := func(c echo.Context) error {
 		if enableCORS {
 			api.AddCORSHeader(c)
 		}
-		PassToGRPCProxy(c, mux)
+		request := c.Request()
+		if c.Request().Header.Get("Authorization") == "" {
+			if cookie, err := c.Cookie(cookieName); err == nil {
+				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
+			}
+		}
+		if _, ok := request.URL.Query()["pretty"]; ok {
+			request.Header.Set("Accept", jsonPretty)
+		}
+		mux.ServeHTTP(c.Response(), request)
 		return nil
-	}, middleware.RemoveTrailingSlash())
+	}
+	apiV1 := e.Group("/api/v1")
+	apiV1.Any("/*", handler, middleware.RemoveTrailingSlash())
+	// We explicitly set this route here to make sure another route handler with them same path but
+	// different method doesn't take over GET.
+	apiV1.GET("/experiments", handler, middleware.RemoveTrailingSlash())
 	return nil
 }
