@@ -1102,22 +1102,20 @@ func (t *trial) terminated(ctx *actor.Context) {
 	case !t.sequencer.UpToDate():
 		w, err = t.sequencer.Workload()
 		if err != nil {
-			ctx.Log().
-				WithError(err).
-				Error("failed to form errored completed message when terminated")
 			panic(err)
-		}
-		if !t.replaying {
-			if wErr := markWorkloadErrored(t.db, w); wErr != nil {
-				ctx.Log().
-					WithError(wErr).
-					Error("failed to mark workload errored when terminated")
-			}
 		}
 	case t.sequencer.PrecloseCheckpointWorkload() != nil:
 		w = *t.sequencer.PrecloseCheckpointWorkload()
 	default:
 		panic("trial terminated due to failure but had nothing to fail")
+	}
+
+	if !t.replaying {
+		if err := markWorkloadErrored(t.db, w); err != nil {
+			ctx.Log().
+				WithError(err).
+				Error("failed to mark workload errored when terminated")
+		}
 	}
 
 	e := workload.Errored

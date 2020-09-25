@@ -1750,7 +1750,7 @@ func (db *PgDB) UpdateCheckpoint(
 			toUpdate = append(toUpdate, "end_time")
 		}
 	}
-	if len(*newCheckpoint.UUID) != 0 {
+	if newCheckpoint.UUID != nil && len(*newCheckpoint.UUID) != 0 {
 		if checkpoint.UUID != nil && len(*checkpoint.UUID) != 0 {
 			return errors.Errorf("checkpoint (%v, %v) already has UUID",
 				trialID, stepID)
