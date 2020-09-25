@@ -121,7 +121,6 @@ func (t *tensorboardManager) handleTensorboardRequest(
 	user *model.User,
 	req *TensorboardRequest,
 ) (*summary, error) {
-	fmt.Println(req)
 	commandReq, err := parseCommandRequestWithUser(
 		*user, t.db, &req.commandParams, &t.taskSpec.TaskContainerDefaults)
 	if err != nil {
