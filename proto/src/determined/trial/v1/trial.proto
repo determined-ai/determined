@@ -9,48 +9,7 @@ import "determined/checkpoint/v1/checkpoint.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-
-// TrialValidation represents a validation entry presenting the searcher_metric.
-message TrialValidation {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-      required: ["batch_number", "start_time", "state"]
-   }
-  };
-  // The batch number where validation was evaluated.
-  int32 batch_number = 1;
-  // The time validation was started.
-  google.protobuf.Timestamp start_time = 2;
-  // The time validaiton ended.
-  google.protobuf.Timestamp end_time = 3;
-  // The current validation state.
-  determined.experiment.v1.State state = 4;
-  // The value of the `searcher.metric`, indicated by the experiment config, for the validation.
-  float searcher_metric = 5;
-}
-
-// CheckpointBase is an artifact created by a trial during training.
-message TrialCheckpoint {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-          required: ["uuid", "batch_number", "start_time", "state"]
-      }
-  };
-  // UUID of the checkpoint.
-  string uuid = 1;
-  // The batch number where checkpoint was evaluated.
-  int32 batch_number = 2;
-  // Timestamp when the checkpoint began being saved to persistent storage.
-  google.protobuf.Timestamp start_time  = 3;
-  // Timestamp when the checkpoint completed being saved to persistent storage.
-  google.protobuf.Timestamp end_time  = 4;
-  // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
-  map<string, int64> resources = 5;
-  // The state of the checkpoint.
-  determined.checkpoint.v1.State state = 6;
-}
-
-// TODO ideally we can share more between these messages.
+// CheckpointWorkload is an artifact created by a trial during training.
 message CheckpointWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
@@ -68,6 +27,7 @@ message CheckpointWorkload {
   map<string, int64> resources = 5;
 }
 
+// MetricsWorkload is a workload generating metrics.
 message MetricsWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
@@ -87,6 +47,7 @@ message MetricsWorkload {
 }
 
 
+// Workload is a unit of work in Determined.
 message Workload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
@@ -130,9 +91,9 @@ message Trial {
   // The current processed batches.
   int32 total_batches_processed = 7;
   // Best validation.
-  TrialValidation best_validation = 8;
+  MetricsWorkload best_validation = 8;
   // Latest validation.
-  TrialValidation latest_validation = 9;
+  MetricsWorkload latest_validation = 9;
   // Best checkpoint.
-  TrialCheckpoint best_checkpoint = 10;
+  CheckpointWorkload best_checkpoint = 10;
 }

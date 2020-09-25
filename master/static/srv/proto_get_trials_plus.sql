@@ -24,6 +24,7 @@ trial_validations AS (
     v.start_time,
     v.end_time,
     v.state,
+    v.metrics,
     (
       (
         v.metrics->'validation_metrics'->>(searcher_info.metric_name)
@@ -41,8 +42,8 @@ best_validation AS (
     v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
-    v.signed_searcher_metric * searcher_info.sign as searcher_metric,
-    s.prior_batches_processed + s.num_batches AS batch_number
+    v.metrics->'validation_metrics' as metrics,
+    v.metrics->'num_inputs' as num_inputs
   FROM (
       SELECT v.*,
         ROW_NUMBER() OVER(
@@ -61,8 +62,8 @@ latest_validation AS (
     v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
-    v.signed_searcher_metric * searcher_info.sign as searcher_metric,
-    s.prior_batches_processed + s.num_batches AS batch_number
+    v.metrics->'validation_metrics' as metrics,
+    v.metrics->'num_inputs' as num_inputs
   FROM (
       SELECT v.*,
         ROW_NUMBER() OVER(
@@ -82,8 +83,7 @@ best_checkpoint AS (
     c.start_time AS start_time,
     c.end_time AS end_time,
     c.resources AS resources,
-    'STATE_' || c.state AS state,
-    s.prior_batches_processed + s.num_batches AS batch_number
+    'STATE_' || c.state AS state
   FROM (
       SELECT c.*,
         ROW_NUMBER() OVER(
