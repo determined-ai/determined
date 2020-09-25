@@ -37,12 +37,12 @@ Computer Vision
     - Filename
 
   * - PyTorch
-    - MNIST
-    - :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
-
-  * - PyTorch
     - CIFAR-10
     - :download:`cifar10_pytorch.tgz </examples/cifar10_pytorch.tgz>`
+
+  * - PyTorch
+    - MNIST
+    - :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
   * - PyTorch
     - MNIST

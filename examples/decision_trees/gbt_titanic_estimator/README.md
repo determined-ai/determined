@@ -6,7 +6,7 @@ Estimator example](https://www.tensorflow.org/tutorials/estimator/boosted_trees)
 
 ## Files
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
-* **startup-hook.sh**: Extra dependencies that Determined is required to install.
+* **startup-hook.sh**: Additional dependencies that Determined will automatically install into each container for this experiment.
 
 ### Configuration Files
 * **const.yaml**: Train the model with constant hyperparameter values.
@@ -19,10 +19,10 @@ The current implementation uses the titanic dataset downloaded from TensorFlow A
 If you have not yet installed Determined, installation instructions can be found
 under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
-Run the following command: `det -m <master host:port> experiment create -f 
-const.yaml .`. The other configurations can be run by specifying the appropriate 
+Run the following command: `det -m <master host:port> experiment create -f
+const.yaml .`. The other configurations can be run by specifying the appropriate
 configuration file in place of `const.yaml`.
 
 ## Results
 Training the model with the hyperparameter settings in `const.yaml` should yield
-a validation accuracy of ~83%. 
+a validation accuracy of ~83%.

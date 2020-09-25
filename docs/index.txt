@@ -63,12 +63,10 @@ Each user should also :ref:`install the Determined command-line tools
 Next Steps
 ==========
 
-We recommend you follow our :ref:`quick-start` if you're new to
-Determined.
+We recommend starting with the :ref:`quick-start` if you're new to Determined.
 
-Next, learn more about our Experiment APIs by following our tutorials.
-If you're using TensoFlow Keras or PyTorch, follow our Trial API tutorials
-in your preferred framework:
+Next, learn more about Determined's Python APIs by following a tutorial.
+Follow the tutorial for your preferred framework:
 
 -  :ref:`pytorch-mnist-tutorial`
 -  :ref:`tf-mnist-tutorial`
@@ -83,7 +81,7 @@ production models, we'd love to hear from you!
    <https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`_
 -  `Mailing list
    <https://groups.google.com/a/determined.ai/forum/#!forum/community>`_
--  `Source <https://github.com/determined-ai/determined>`_
+-  `GitHub <https://github.com/determined-ai/determined>`_
 -  `Website <https://determined.ai/>`_
 -  `Blog <https://determined.ai/blog/>`_
 
