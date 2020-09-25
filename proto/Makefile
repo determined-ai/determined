@@ -33,3 +33,8 @@ build: $(patsubst %.proto, %.pb.go, $(shell find src/determined -type f -name '*
 .PHONY: check
 check:
 	buf check lint
+
+.PHONY: fmt
+fmt:
+	git ls-files -z '*.proto' | xargs -0 -P8 clang-format -i
+

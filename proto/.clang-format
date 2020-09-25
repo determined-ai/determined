@@ -1,0 +1,8 @@
+---
+BasedOnStyle: Google
+IndentWidth: 4
+---
+Language: Proto
+ColumnLimit: 100
+AlignConsecutiveAssignments: true
+...
