@@ -26,6 +26,12 @@ ERROR: Secret {{ .Values.tlsSecret }} does not exist in namespace: {{ .Release.N
   {{ end }}
 {{ end -}}
 
+{{- if (contains "dev" .Chart.AppVersion) }}
+ERROR: Installing a non-released version of Determined: {{ .Chart.AppVersion }}.
+Please update `appVersion` in Chart.yaml to an official release version which has
+the format X.Y.Z (e.g., 0.13.4).
+
+{{ end -}}
 Once you have the IP address, configure master address locally by running: `export DET_MASTER=<ip address>:{{ .Values.masterPort }}`.
 To submit experiments please install the Determined CLI locally: `pip install determined-cli`.
 To access the WebUI go to: {{ $httpOrHttps }}://<ip address>:{{ .Values.masterPort }}.
