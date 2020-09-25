@@ -27,4 +27,4 @@ The data for ImageNet is the ILSVRC2012 version of the dataset, which is availab
 
 ### Expected Performance
 After 24 Epochs, the top 5 validation accuracy should be close to 80% (see learning curve below).  At convergence, the top 1 validation accuracy should be close to the 76% reported in the original paper.  
-![](./top5\_val.png)
+![](./eval/top5\_val.png)
