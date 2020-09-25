@@ -19,10 +19,9 @@ The current implementation uses CIFAR-10 data downloaded from AWS S3.
 If you have not yet installed Determined, installation instructions can be found
 under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
-After configuring the settings in `const.yaml`, run the following command: `det
--m <master host:port> experiment create -f const.yaml .`. The other
-configurations can be run by specifying the appropriate configuration file in
-place of `const.yaml`.
+Run the following command: `det -m <master host:port> experiment create -f 
+const.yaml .`. The other configurations can be run by specifying the appropriate 
+configuration file in place of `const.yaml`.
 
 ## Results
 Training the model with the hyperparameter settings in `const.yaml` should yield

@@ -1,21 +1,29 @@
 # TensorFlow (tf.keras) CIFAR-10 CNN Example
 
-This folder contains the example code to run a basic CIFAR-10 trained CNN with Determined's TF Keras API. 
-The file version can be found on this [Keras CNN example](https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py)
+This example shows how to build a simple CNN on the CIFAR-10 dataset using
+Determined's tf.keras API. This example is adapted from this [Keras CNN
+ example](https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py).
 
-### Files
+## Files
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
 * **data.py**: The data loading and preparation code for the model.
-* **const.yaml**: A configuration file that trains the model with constant hyperparameter values. This is also where you can set the flags used in the original script.
-* **distributed.yaml**: Same as const.yaml, but instead uses multiple GPUs.
-* **adaptive.yaml**: Uses state-of-the-art ASHA hyperparameter tuning algorithm.
 
-### Data:
+### Configuration Files
+* **const.yaml**: Train the model with constant hyperparameter values. 
+* **distributed.yaml**: Same as `const.yaml`, but instead uses multiple GPUs.
+* **adaptive.yaml**: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm. 
+
+## Data:
 The current implementation uses CIFAR-10 data downloaded from AWS S3.
 
-### To Run:
-Installation instructions can be found under `docs/install-admin.html` or at [Determined installation page](https://docs.determined.ai/latest/index.html). 
-After configuring the settings in const.yaml, run the following command: `det -m <master host:port> experiment create -f const.yaml . `
+## To Run:
+If you have not yet installed Determined, installation instructions can be found
+under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
-### Results:
-Upon completion of the experiment, model should achieve target accuracy of ~74%.
+Run the following command: `det -m <master host:port> experiment create -f 
+const.yaml .`. The other configurations can be run by specifying the appropriate 
+configuration file in place of `const.yaml`.
+
+## Results:
+Training the model with the hyperparameter settings in `const.yaml` should yield
+a validation accuracy of ~74%.
