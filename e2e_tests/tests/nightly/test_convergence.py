@@ -80,11 +80,11 @@ def test_mnist_pytorch_accuracy() -> None:
 
 
 @pytest.mark.nightly  # type: ignore
-def test_maskrcnn_coco_pytorch_accuracy() -> None:
-    config = conf.load_config(conf.cv_examples_path("maskrcnn_coco_pytorch/const.yaml"))
+def test_fasterrcnn_coco_pytorch_accuracy() -> None:
+    config = conf.load_config(conf.cv_examples_path("fasterrcnn_coco_pytorch/const.yaml"))
     config = conf.set_random_seed(config, 1590497309)
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("maskrcnn_coco_pytorch"), 1
+        config, conf.cv_examples_path("fasterrcnn_coco_pytorch"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -98,7 +98,7 @@ def test_maskrcnn_coco_pytorch_accuracy() -> None:
 
     target_iou = 0.42
     assert max(validation_errors) > target_iou, (
-        "maskrcnn_coco_pytorch did not reach minimum target accuracy {} in {} steps."
+        "fasterrcnn_coco_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation error history: {}".format(
             target_iou, len(trial_metrics["steps"]), validation_errors
         )

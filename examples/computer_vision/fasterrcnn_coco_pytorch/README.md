@@ -1,4 +1,4 @@
-# PyTorch Mask R-CNN Example
+# PyTorch Faster R-CNN Example
 
 This example shows how to build an object detection model on the Penn-Fudan 
 Database using Determined's PyTorch API. This example is adapted from this [PyTorch 

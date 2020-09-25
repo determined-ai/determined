@@ -14,7 +14,7 @@ classification tutorial](https://www.tensorflow.org/tutorials/keras/classificati
 * **adaptive.yaml**: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm.
 
 ## Data
-The current implementation uses Fashion MNIST data downloaded from 
+The current implementation downloads the Fashion MNIST data from 
 [here](https://github.com/zalandoresearch/fashion-mnist/blob/master/LICENSE).
 
 ## To Run

@@ -50,7 +50,7 @@ Computer Vision
 
   * - PyTorch
     - Penn-Fudan Dataset
-    - :download:`maskrcnn_coco_pytorch.tgz </examples/maskrcnn_coco_pytorch.tgz>`
+    - :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
 
   * - TensorFlow (Estimator API)
     - MNIST
