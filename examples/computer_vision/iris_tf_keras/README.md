@@ -6,7 +6,7 @@ categorization medium post](https://medium.com/@nickbortolotti/iris-species-cate
 
 ## Files
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
-* **startup-hook.sh**: Extra dependencies that Determined is required to install.
+* **startup-hook.sh**: Additional dependencies that Determined will automatically install into each container for this experiment.
 
 ### Configuration Files
 * **const.yaml**: Train the model with constant hyperparameter values.

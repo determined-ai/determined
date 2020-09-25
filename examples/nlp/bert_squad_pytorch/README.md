@@ -8,7 +8,7 @@ example](https://github.com/huggingface/transformers/blob/master/examples/questi
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
 * **data.py**: The data loading and preparation code for the model.
 * **constants.py**: Constant references to models able to run on SQuAD.
-* **startup-hook.sh**: Extra dependencies that Determined is required to install.
+* **startup-hook.sh**: Additional dependencies that Determined will automatically install into each container for this experiment.
 
 ### Configuration Files
 * **const.yaml**: Train the model with constant hyperparameter values.

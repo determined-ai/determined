@@ -10,7 +10,7 @@ for NAS](https://arxiv.org/abs/1902.07638).
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
 * **data.py**: The data loading and preparation code for the model. 
 * **optimizer.py**: The optimizer code for the model. 
-* **startup-hook.sh**: Extra dependencies that Determined is required to install. 
+* **startup-hook.sh**: Additional dependencies that Determined will automatically install into each container for this experiment.
 
 ### Configuration Files
 * **const.yaml**: Train the model with constant hyperparameter values.

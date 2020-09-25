@@ -6,7 +6,7 @@ from this [Tensorflow Image Segmentation example](https://www.tensorflow.org/tut
 
 ## Files
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
-* **startup-hook.sh**: Extra dependencies that Determined is required to install. This includes downloading the training data.
+* **startup-hook.sh**: This script will automatically be run by Determined during startup of every container launched for this experiment. This script installs some additional dependencies and downloads the training data.
 
 ### Configuration Files
 * **const.yaml**: Train the model with constant hyperparameter values.
