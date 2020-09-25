@@ -16,10 +16,11 @@ message CheckpointWorkload {
       required: ["start_time", "state"]
    }
   };
+  // UUID of the checkpoint.
   string uuid = 1;
-  // The time the step was started.
+  // The time the workload was started.
   google.protobuf.Timestamp start_time = 2;
-  // The time the step ended if the trial is stopped.
+  // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 3;
   // The state of the checkpoint.
   determined.checkpoint.v1.State state = 4;
@@ -34,9 +35,9 @@ message MetricsWorkload {
       required: ["start_time", "state"]
    }
   };
-  // The time the step was started.
+  // The time the workload was started.
   google.protobuf.Timestamp start_time = 1;
-  // The time the step ended if the trial is stopped.
+  // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 2;
   // The current validation state.
   determined.experiment.v1.State state = 3;

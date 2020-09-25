@@ -33,7 +33,7 @@ enum State {
 message Checkpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
-          required: ["uuid"]
+          required: ["start_time", "experiment_id", "trial_id", "batch_number"]
       }
   };
   // UUID of the checkpoint.

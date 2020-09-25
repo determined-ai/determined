@@ -242,9 +242,9 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 		req.TrialId,
 	); {
 	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
+		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)
 	case err != nil:
-		return nil, errors.Wrapf(err, "failed to get trial workloads %d", req.TrialId)
+		return nil, errors.Wrapf(err, "failed to get trial %d workloads", req.TrialId)
 	}
 
 	return resp, nil
