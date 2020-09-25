@@ -105,7 +105,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 	case TensorboardRequestWithUser:
-		summary, err := t.handleTensorboardRequest(ctx, msg.User, &msg.Tensorboard)
+		summary, err := t.processTensorboardRequest(ctx, msg.User, &msg.Tensorboard)
 		if err != nil {
 			ctx.Respond(errors.Wrap(err, "failed to launch tensorboard"))
 		} else {
@@ -116,7 +116,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (t *tensorboardManager) handleTensorboardRequest(
+func (t *tensorboardManager) processTensorboardRequest(
 	ctx *actor.Context,
 	user *model.User,
 	req *TensorboardRequest,
@@ -124,7 +124,6 @@ func (t *tensorboardManager) handleTensorboardRequest(
 	commandReq, err := parseCommandRequestWithUser(
 		*user, t.db, &req.commandParams, &t.taskSpec.TaskContainerDefaults)
 	if err != nil {
-		respondBadRequest(ctx, err)
 		return nil, err
 	}
 
@@ -134,7 +133,6 @@ func (t *tensorboardManager) handleTensorboardRequest(
 
 	if len(req.ExperimentIDs) == 0 && len(req.TrialIDs) == 0 {
 		err = errors.New("must set experiment or trial ids")
-		respondBadRequest(ctx, err)
 		return nil, err
 	}
 
@@ -145,13 +143,11 @@ func (t *tensorboardManager) handleTensorboardRequest(
 
 	if err != nil {
 		err = errors.Wrap(err, "failed to create tensorboard")
-		ctx.Respond(err)
 		return nil, err
 	}
 
 	if err := check.Validate(b.config); err != nil {
 		err = errors.Wrap(err, "failed to validate tensorboard config")
-		ctx.Respond(err)
 		return nil, err
 	}
 
@@ -180,8 +176,10 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 			return
 		}
 		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		summary, err := t.handleTensorboardRequest(ctx, &user, &req)
-		if err == nil {
+		summary, err := t.processTensorboardRequest(ctx, &user, &req)
+		if err != nil {
+			respondBadRequest(ctx, err)
+		} else {
 			ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 		}
 

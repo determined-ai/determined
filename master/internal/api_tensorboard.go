@@ -64,19 +64,25 @@ func (a *apiServer) LaunchTensorboard(
 		User:        user,
 	}
 	actorResp := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
-	if actorResp.Error() != nil {
-		return nil, status.Errorf(codes.Internal, "failed to launch tensorboard: %s", err)
+	switch {
+	case actorResp.Empty():
+		return nil, status.Errorf(codes.Internal, "tensorboard manager did not respond")
+	case actorResp.Error() != nil:
+		return nil, status.Errorf(codes.Internal, "failed to launch tensorboard: %s", actorResp.Error())
 	}
 	tensorboardID := actorResp.Get().(scheduler.TaskID)
 
 	tensorboardReq := tensorboardv1.Tensorboard{}
 	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardReq)
-	if actorResp.Error() != nil {
+	switch {
+	case actorResp.Empty():
+		return nil, status.Errorf(codes.Internal, "tensorboard actor did not respond")
+	case actorResp.Error() != nil:
 		return nil, status.Errorf(
 			codes.Internal,
 			"failed to get the created tensorboard %s: %s",
 			tensorboardID,
-			err,
+			actorResp.Error(),
 		)
 	}
 
