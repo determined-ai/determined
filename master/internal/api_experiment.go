@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -122,6 +123,32 @@ func (a *apiServer) GetExperiments(
 	})
 	a.sort(resp.Experiments, req.OrderBy, req.SortBy, apiv1.GetExperimentsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Experiments, req.Offset, req.Limit)
+}
+
+func (a *apiServer) GetExperimentLabels(_ context.Context,
+	req *apiv1.GetExperimentLabelsRequest) (*apiv1.GetExperimentLabelsResponse, error) {
+	resp := &apiv1.GetExperimentLabelsResponse{}
+
+	var err error
+	labelUsage, err := a.m.db.ExperimentLabelUsage()
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert the label usage map into a sorted list of labels
+	// May add other sorting / pagination options later if needed
+	labels := make([]string, len(labelUsage))
+	i := 0
+	for label := range labelUsage {
+		labels[i] = label
+		i++
+	}
+	sort.Slice(labels, func(i, j int) bool {
+		return labelUsage[labels[i]] > labelUsage[labels[j]]
+	})
+	resp.Labels = labels
+
+	return resp, nil
 }
 
 func (a *apiServer) GetExperimentValidationHistory(

@@ -77,6 +77,15 @@ message GetExperimentsResponse {
     Pagination pagination = 2;
 }
 
+// Get a list of experiment labels.
+message GetExperimentLabelsRequest {
+}
+// Response to GetExperimentsLabelsRequest.
+message GetExperimentLabelsResponse {
+    // The list of labels used across all experiments.
+    repeated string labels = 1; 
+}
+
 // Preview hyperparameter search.
 message PreviewHPSearchRequest {
     // The experiment config to simulate.
