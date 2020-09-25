@@ -195,7 +195,7 @@ def create_experiment(
     if additional_body_fields:
         body.update(additional_body_fields)
 
-    r = req.post(master_url, "api/v1/experiments", body=body)
+    r = req.post(master_url, "experiments", body=body)
     if not hasattr(r, "headers"):
         raise Exception(r)
 
