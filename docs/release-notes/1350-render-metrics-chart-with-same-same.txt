@@ -1,0 +1,5 @@
+:orphan:
+
+**BUG FIXES**
+
+- WebUI: Fix rendering metrics with the same name on the metric chart.
