@@ -22,7 +22,6 @@ The full list of our tutorials can be found below:
    :titlesonly:
 
    data-access
-   native-tf-keras/index
    notebook-tutorial
    model-registry
    pytorch-mnist-tutorial

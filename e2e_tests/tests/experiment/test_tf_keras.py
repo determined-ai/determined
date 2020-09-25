@@ -9,14 +9,14 @@ from tests import experiment as exp
 @pytest.mark.parallel  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 def test_tf_keras_native_parallel(tf2: bool) -> None:
-    config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_tf_keras/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, True)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/cifar10_cnn_tf_keras"), 1
+        config, conf.cv_examples_path("cifar10_tf_keras"), 1
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
@@ -30,13 +30,13 @@ def test_tf_keras_native_parallel(tf2: bool) -> None:
     ],
 )
 def test_tf_keras_const_warm_start(tf2: bool) -> None:
-    config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_tf_keras/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_min_validation_period(config, {"batches": 1000})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/cifar10_cnn_tf_keras"), 1
+        config, conf.cv_examples_path("cifar10_tf_keras"), 1
     )
     trials = exp.experiment_trials(experiment_id1)
     assert len(trials) == 1
@@ -51,7 +51,7 @@ def test_tf_keras_const_warm_start(tf2: bool) -> None:
     config["searcher"]["source_trial_id"] = first_trial_id
 
     experiment_id2 = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/cifar10_cnn_tf_keras"), 1
+        config, conf.cv_examples_path("cifar10_tf_keras"), 1
     )
 
     # The new  trials should have a warm start checkpoint ID.
@@ -65,7 +65,7 @@ def test_tf_keras_const_warm_start(tf2: bool) -> None:
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 @pytest.mark.parametrize("tf2", [False, True])  # type: ignore
 def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
-    config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_tf_keras/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, False)
     config = conf.set_max_length(config, {"batches": 200})
@@ -73,7 +73,7 @@ def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/cifar10_cnn_tf_keras"), 1
+        config, conf.cv_examples_path("cifar10_tf_keras"), 1
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
@@ -82,13 +82,13 @@ def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 def test_tf_keras_single_gpu(tf2: bool) -> None:
-    config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_tf_keras/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/cifar10_cnn_tf_keras"), 1
+        config, conf.cv_examples_path("cifar10_tf_keras"), 1
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
@@ -96,15 +96,13 @@ def test_tf_keras_single_gpu(tf2: bool) -> None:
 
 @pytest.mark.parallel  # type: ignore
 def test_tf_keras_mnist_parallel() -> None:
-    config = conf.load_config(
-        conf.official_examples_path("trial/fashion_mnist_tf_keras/const.yaml")
-    )
+    config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, False)
     config = conf.set_max_length(config, {"batches": 200})
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/fashion_mnist_tf_keras"), 1
+        config, conf.tutorials_path("fashion_mnist_tf_keras"), 1
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
@@ -128,7 +126,7 @@ def test_tf_keras_mnist_data_layer_s3(
 
 
 def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> None:
-    config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.load_config(conf.data_layer_examples_path("data_layer_mnist_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_min_validation_period(config, {"batches": 1000})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
@@ -138,7 +136,7 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> None:
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.experimental_path("trial/data_layer_mnist_tf_keras"), 1
+        config, conf.data_layer_examples_path("data_layer_mnist_tf_keras"), 1
     )
 
 
@@ -148,7 +146,7 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> None:
 def test_tf_keras_mnist_data_layer_parallel(
     tf2: bool, storage_type: str, secrets: Dict[str, str]
 ) -> None:
-    config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.load_config(conf.data_layer_examples_path("data_layer_mnist_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
@@ -158,5 +156,5 @@ def test_tf_keras_mnist_data_layer_parallel(
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.experimental_path("trial/data_layer_mnist_tf_keras"), 1
+        config, conf.data_layer_examples_path("data_layer_mnist_tf_keras"), 1
     )

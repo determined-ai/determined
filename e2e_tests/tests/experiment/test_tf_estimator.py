@@ -13,7 +13,7 @@ def test_mnist_estimator_load() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
     config = conf.set_tf1_image(config)
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_estimator"), 1
+        config, conf.cv_examples_path("mnist_estimator"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -36,7 +36,7 @@ def test_mnist_estimmator_const_parallel(native_parallel: bool, tf2: bool) -> No
     config = conf.set_perform_initial_validation(config, True)
 
     exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_estimator"), 1, has_zeroth_step=True
+        config, conf.cv_examples_path("mnist_estimator"), 1, has_zeroth_step=True
     )
     exp.assert_performed_initial_validation(exp_id)
 
@@ -52,7 +52,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     experiment_id1 = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_estimator"), 1
+        config, conf.cv_examples_path("mnist_estimator"), 1
     )
 
     trials = exp.experiment_trials(experiment_id1)
@@ -70,7 +70,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     config_obj = conf.set_tf2_image(config_obj) if tf2 else conf.set_tf1_image(config_obj)
 
     experiment_id2 = exp.run_basic_test_with_temp_config(
-        config_obj, conf.official_examples_path("trial/mnist_estimator"), 1
+        config_obj, conf.cv_examples_path("mnist_estimator"), 1
     )
 
     trials = exp.experiment_trials(experiment_id2)
@@ -120,7 +120,9 @@ def test_mnist_estimator_data_layer_s3(
 
 
 def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
-    config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_estimator/const.yaml"))
+    config = conf.load_config(
+        conf.data_layer_examples_path("data_layer_mnist_estimator/const.yaml")
+    )
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     if storage_type == "lfs":
@@ -129,14 +131,16 @@ def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.experimental_path("trial/data_layer_mnist_estimator"), 1
+        config, conf.data_layer_examples_path("data_layer_mnist_estimator"), 1
     )
 
 
 @pytest.mark.parallel  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
 def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[str, str]) -> None:
-    config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_estimator/const.yaml"))
+    config = conf.load_config(
+        conf.data_layer_examples_path("data_layer_mnist_estimator/const.yaml")
+    )
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf1_image(config)
@@ -146,7 +150,7 @@ def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[st
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.experimental_path("trial/data_layer_mnist_estimator"), 1
+        config, conf.data_layer_examples_path("data_layer_mnist_estimator"), 1
     )
 
 
@@ -157,7 +161,7 @@ def test_mnist_estimator_adaptive_with_data_layer() -> None:
     config = conf.set_shared_fs_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.experimental_path("trial/data_layer_mnist_estimator"), None
+        config, conf.data_layer_examples_path("data_layer_mnist_estimator"), None
     )
 
 

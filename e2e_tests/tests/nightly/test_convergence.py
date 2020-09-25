@@ -6,9 +6,9 @@ from tests import experiment as exp
 
 @pytest.mark.nightly  # type: ignore
 def test_cifar10_pytorch_accuracy() -> None:
-    config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_pytorch/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/cifar10_cnn_pytorch"), 1
+        config, conf.cv_examples_path("cifar10_pytorch"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -22,7 +22,7 @@ def test_cifar10_pytorch_accuracy() -> None:
 
     target_accuracy = 0.74
     assert max(validation_errors) > target_accuracy, (
-        "cifar10_cnn_pytorch did not reach minimum target accuracy {} in {} steps."
+        "cifar10_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation error history: {}".format(
             target_accuracy, len(trial_metrics["steps"]), validation_errors
         )
@@ -31,9 +31,9 @@ def test_cifar10_pytorch_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_mnist_estimator_accuracy() -> None:
-    config = conf.load_config(conf.official_examples_path("trial/mnist_estimator/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("mnist_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_estimator"), 1
+        config, conf.cv_examples_path("mnist_estimator"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -56,9 +56,9 @@ def test_mnist_estimator_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_mnist_pytorch_accuracy() -> None:
-    config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("mnist_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+        config, conf.cv_examples_path("mnist_pytorch"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -80,13 +80,11 @@ def test_mnist_pytorch_accuracy() -> None:
 
 
 @pytest.mark.nightly  # type: ignore
-def test_object_detection_accuracy() -> None:
-    config = conf.load_config(
-        conf.official_examples_path("trial/object_detection_pytorch/const.yaml")
-    )
+def test_fasterrcnn_coco_pytorch_accuracy() -> None:
+    config = conf.load_config(conf.cv_examples_path("fasterrcnn_coco_pytorch/const.yaml"))
     config = conf.set_random_seed(config, 1590497309)
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/object_detection_pytorch"), 1
+        config, conf.cv_examples_path("fasterrcnn_coco_pytorch"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -100,7 +98,7 @@ def test_object_detection_accuracy() -> None:
 
     target_iou = 0.42
     assert max(validation_errors) > target_iou, (
-        "object_detection_pytorch did not reach minimum target accuracy {} in {} steps."
+        "fasterrcnn_coco_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation error history: {}".format(
             target_iou, len(trial_metrics["steps"]), validation_errors
         )
@@ -109,10 +107,10 @@ def test_object_detection_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_iris_tf_keras() -> None:
-    config = conf.load_config(conf.official_examples_path("trial/iris_tf_keras/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("iris_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591280374)
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/iris_tf_keras"), 1
+        config, conf.cv_examples_path("iris_tf_keras"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -135,12 +133,10 @@ def test_iris_tf_keras() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_fashion_mnist_tf_keras() -> None:
-    config = conf.load_config(
-        conf.official_examples_path("trial/fashion_mnist_tf_keras/const.yaml")
-    )
+    config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/fashion_mnist_tf_keras"), 1
+        config, conf.tutorials_path("fashion_mnist_tf_keras"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)

@@ -1,7 +1,7 @@
 .. _pytorch-mnist-tutorial:
 
 ###################################
- Trial API: PyTorch MNIST Tutorial
+ PyTorch MNIST Tutorial
 ###################################
 
 This tutorial describes how to port an existing PyTorch model to

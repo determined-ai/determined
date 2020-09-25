@@ -658,9 +658,8 @@ Version 0.12.10
 -  Expand documentation on :ref:`use-trained-models` by including
    checkpoint metadata management.
 
--  Reorganize examples by splitting :ref:`model-definitions_native-api`
-   and :ref:`model-definitions_trial-api` examples into separate
-   folders.
+-  Reorganize examples by splitting :ref:`model-definitions_trial-api`
+   examples into separate folders.
 
 **Bug Fixes**
 
@@ -831,7 +830,7 @@ Version 0.12.4
 -  Add a topic guide explaining Determined's approach to
    :ref:`elastic-infra-index`.
 
--  Add a topic guide explaining the :ref:`model-definitions_native-api`.
+-  Add a topic guide explaining the Native API (since deprecated).
 
 -  UI: The Determined favicon acquires a small dot when any slots are in
    use.

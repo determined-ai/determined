@@ -1,0 +1,26 @@
+description: unets_tf_keras_const
+data:
+  BUFFER_SIZE: 1000
+  data_dir: '/tmp/data'
+  data_file: mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_128_no_top.h5
+
+hyperparameters:
+  learning_rate: 1e-4
+  learning_rate_decay: 1e-6
+  layer1_dense_size: 16
+  global_batch_size: 64
+  OUTPUT_CHANNELS: 3
+
+searcher:
+  name: single
+  metric: val_accuracy
+  smaller_is_better: false
+  max_length:
+    batches: 1140
+
+min_validation_period:
+  batches: 57
+entrypoint: model_def:UNetsTrial
+scheduling_unit: 57
+environment:
+    image: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-23863bb

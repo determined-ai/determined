@@ -9,21 +9,12 @@ application framework (e.g., Keras, TensorFlow), in terms of loading
 training data, describing a model architecture, and specifying the
 underlying iterative optimization training algorithms.
 
-There are two interfaces you can use to write model definitions: Native
-and Trial. With the :ref:`model-definitions_native-api` (TensorFlow
-Keras and Estimators), developers instrument training scripts adhering
-to these frameworks' native patterns including their training loops.
+There interface you can use to write model definition is the Trial API.
 With the :ref:`model-definitions_trial-api`, developers expose the
 components of a model definition to Determined’s training loop
 implementation.
 
-The Python SDK supports the Native API for TF Keras and Estimators. The
-command line interface and Python SDK support the Trial API.
-
-To read more about the Native API, see:
-
--  :ref:`tutorials_native-api`
--  :ref:`model-definitions_native-api`
+The command line interface and Python SDK support the Trial API.
 
 To read more about the Trial API, see:
 
@@ -43,5 +34,4 @@ definitions, see :ref:`model-definitions_best-practices`.
    :hidden:
 
    trial-api
-   native-api
    best-practices

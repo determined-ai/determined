@@ -1,0 +1,18 @@
+description: mnist_estimator_distributed
+hyperparameters:
+  learning_rate: 1e-3
+  global_batch_size: 1024 # per GPU batch size of 64
+  hidden_layer_1: 2500
+  hidden_layer_2: 1000
+  hidden_layer_3: 500
+  dropout: 0.5
+resources:
+  # Use 16 GPUs to train the model.
+  slots_per_trial: 16
+searcher:
+  name: single
+  metric: accuracy
+  max_length:
+    batches: 125
+  smaller_is_better: false
+entrypoint: model_def:MNistTrial
