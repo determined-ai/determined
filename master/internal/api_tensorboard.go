@@ -65,14 +65,14 @@ func (a *apiServer) LaunchTensorboard(
 		User:        user,
 	}
 	actorResp := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
-	if err := api.ProcessActorResponseError(&actorResp); err != nil {
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
 		return nil, err
 	}
 
 	tensorboardID := actorResp.Get().(scheduler.TaskID)
 	tensorboardReq := tensorboardv1.Tensorboard{}
 	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardReq)
-	if err := api.ProcessActorResponseError(&actorResp); err != nil {
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
 		return nil, err
 	}
 

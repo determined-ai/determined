@@ -3,9 +3,10 @@ package api
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 // ProcessActorResponseError checks actor resposne for errors.
