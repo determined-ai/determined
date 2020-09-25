@@ -18,7 +18,8 @@ type Options struct {
 	ContainerMasterHost string `json:"container_master_host"`
 	ContainerMasterPort int    `json:"container_master_port"`
 
-	Label string `json:"label"`
+	Label        string `json:"label"`
+	ResourcePool string `json:"resourcepool"`
 
 	APIEnabled bool   `json:"api_enabled"`
 	BindIP     string `json:"bind_ip"`

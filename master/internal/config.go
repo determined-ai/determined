@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -38,7 +40,6 @@ func DefaultConfig() *Config {
 			NetworkMode:  "bridge",
 		},
 		TensorBoardTimeout: 5 * 60,
-		Scheduler:          *scheduler.DefaultConfig(),
 		Security: SecurityConfig{
 			DefaultTask: model.AgentUserGroup{
 				UID:   0,
@@ -69,8 +70,6 @@ type Config struct {
 	ConfigFile            string                            `json:"config_file"`
 	Log                   logger.Config                     `json:"log"`
 	DB                    db.Config                         `json:"db"`
-	Scheduler             scheduler.Config                  `json:"scheduler"`
-	Provisioner           *provisioner.Config               `json:"provisioner"`
 	TensorBoardTimeout    int                               `json:"tensorboard_timeout"`
 	Security              SecurityConfig                    `json:"security"`
 	CheckpointStorage     CheckpointStorageConfig           `json:"checkpoint_storage"`
@@ -80,6 +79,11 @@ type Config struct {
 	Root                  string                            `json:"root"`
 	Telemetry             TelemetryConfig                   `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`
+
+	Scheduler   *scheduler.Config   `json:"scheduler"`
+	Provisioner *provisioner.Config `json:"provisioner"`
+	*scheduler.ResourcePoolsConfig
+	ResourceManager *scheduler.ResourceManagerConfig `json:"resource_manager"`
 }
 
 // Printable returns a printable string.
@@ -100,6 +104,35 @@ func (c Config) Printable() ([]byte, error) {
 		return nil, errors.Wrap(err, "unable to convert config to JSON")
 	}
 	return optJSON, nil
+}
+
+// Resolve resolves the values in the configuration.
+func (c *Config) Resolve() error {
+	if c.Port == 0 {
+		if c.Security.TLS.Enabled() {
+			c.Port = 8443
+		} else {
+			c.Port = 8080
+		}
+	}
+
+	root, err := filepath.Abs(c.Root)
+	if err != nil {
+		return err
+	}
+	c.Root = root
+
+	c.DB.Migrations = fmt.Sprintf("file://%s", filepath.Join(c.Root, "static/migrations"))
+
+	c.ResourceManager, c.ResourcePoolsConfig, err = scheduler.ResolveConfig(
+		c.Scheduler, c.Provisioner, c.ResourceManager, c.ResourcePoolsConfig,
+	)
+	if err != nil {
+		return err
+	}
+	c.Scheduler, c.Provisioner = nil, nil
+
+	return nil
 }
 
 // CheckpointStorageConfig defers the parsing of a

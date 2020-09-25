@@ -251,19 +251,24 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 func (m *Master) initializeResourceProviders(provisionerSlotsPerInstance int) {
 	var resourceProvider *actor.Ref
 	switch {
-	case m.config.Scheduler.ResourceProvider.DefaultRPConfig != nil:
+	case m.config.ResourceManager.DeterminedRM != nil:
 		resourceProvider, _ = m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
-			m.config.Scheduler.MakeScheduler(),
-			m.config.Scheduler.FitFunction(),
+			scheduler.MakeScheduler(m.config.ResourceManager.DeterminedRM.SchedulingPolicy),
+			scheduler.MakeFitFunction(m.config.ResourceManager.DeterminedRM.FittingPolicy),
 			m.provisioner,
 			provisionerSlotsPerInstance,
 		))
 
-	case m.config.Scheduler.ResourceProvider.KubernetesRPConfig != nil:
+	case m.config.ResourceManager.KubernetesRM != nil:
 		resourceProvider, _ = m.system.ActorOf(
 			actor.Addr("kubernetesRP"),
 			scheduler.NewKubernetesResourceProvider(
-				m.config.Scheduler.ResourceProvider.KubernetesRPConfig,
+				&scheduler.KubernetesResourceProviderConfig{
+					Namespace:                m.config.ResourceManager.KubernetesRM.Namespace,
+					MaxSlotsPerPod:           m.config.ResourceManager.KubernetesRM.MaxSlotsPerPod,
+					MasterServiceName:        m.config.ResourceManager.KubernetesRM.MasterServiceName,
+					LeaveKubernetesResources: m.config.ResourceManager.KubernetesRM.LeaveKubernetesResources,
+				},
 			),
 		)
 
@@ -337,7 +342,7 @@ func (m *Master) Run() error {
 	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
 
 	var p *provisioner.Provisioner
-	p, m.provisioner, err = provisioner.Setup(m.system, m.config.Provisioner, cert)
+	p, m.provisioner, err = provisioner.Setup(m.system, m.config.ResourcePools[0].Provider, cert)
 	if err != nil {
 		return err
 	}

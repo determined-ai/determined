@@ -44,7 +44,7 @@ provisioner:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: scheduler.Config{Fit: "best"},
+		Scheduler: &scheduler.Config{Fit: "best"},
 		Provisioner: &provisioner.Config{
 			AgentDockerRuntime:     "runc",
 			AgentDockerNetwork:     "default",
@@ -85,7 +85,7 @@ scheduler:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: scheduler.Config{Fit: "best"},
+		Scheduler: &scheduler.Config{Fit: "best"},
 	}
 
 	var unmarshaled Config
@@ -137,7 +137,7 @@ checkpoint_storage:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: scheduler.Config{Fit: "best"},
+		Scheduler: &scheduler.Config{Fit: "best"},
 		CheckpointStorage: CheckpointStorageConfig(removeAllWhitespace(`
 {
   "access_key": "my_key",

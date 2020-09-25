@@ -37,9 +37,10 @@ type MasterMessage struct {
 
 // AgentStarted notifies the master that the agent has started up.
 type AgentStarted struct {
-	Version string
-	Label   string
-	Devices []device.Device
+	Version      string
+	ResourcePool string
+	Label        string
+	Devices      []device.Device
 }
 
 // ContainerStateChanged notifies the master that the agent transitioned the container state.

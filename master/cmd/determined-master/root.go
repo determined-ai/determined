@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -127,37 +126,8 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 		return nil, errors.Wrap(err, "cannot unmarshal configuration")
 	}
 
-	setDefaultPort(config)
-
-	if err = resolveConfigPaths(config); err != nil {
+	if err := config.Resolve(); err != nil {
 		return nil, err
 	}
-
 	return config, nil
-}
-
-func setDefaultPort(config *internal.Config) {
-	if config.Port != 0 {
-		return
-	}
-
-	if config.Security.TLS.Enabled() {
-		config.Port = 8443
-	} else {
-		config.Port = 8080
-	}
-}
-
-func resolveConfigPaths(config *internal.Config) error {
-	root, err := filepath.Abs(config.Root)
-	if err != nil {
-		return err
-	}
-
-	config.Root = root
-	config.DB.Migrations = fmt.Sprintf(
-		"file://%s",
-		filepath.Join(config.Root, "static/migrations"),
-	)
-	return nil
 }
