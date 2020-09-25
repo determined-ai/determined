@@ -8,7 +8,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func HandleActorResponseError(resp *actor.Response) error {
+// ProcessActorResponseError checks actor resposne for errors.
+func ProcessActorResponseError(resp *actor.Response) error {
 	if (*resp).Empty() {
 		src := (*resp).Source()
 		msg := "actor not found"

@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -64,26 +65,15 @@ func (a *apiServer) LaunchTensorboard(
 		User:        user,
 	}
 	actorResp := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
-	switch {
-	case actorResp.Empty():
-		return nil, status.Errorf(codes.Internal, "tensorboard manager did not respond")
-	case actorResp.Error() != nil:
-		return nil, status.Errorf(codes.Internal, "failed to launch tensorboard: %s", actorResp.Error())
+	if err := api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
 	}
-	tensorboardID := actorResp.Get().(scheduler.TaskID)
 
+	tensorboardID := actorResp.Get().(scheduler.TaskID)
 	tensorboardReq := tensorboardv1.Tensorboard{}
 	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardReq)
-	switch {
-	case actorResp.Empty():
-		return nil, status.Errorf(codes.Internal, "tensorboard actor did not respond")
-	case actorResp.Error() != nil:
-		return nil, status.Errorf(
-			codes.Internal,
-			"failed to get the created tensorboard %s: %s",
-			tensorboardID,
-			actorResp.Error(),
-		)
+	if err := api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
 	}
 
 	return &apiv1.LaunchTensorboardResponse{
