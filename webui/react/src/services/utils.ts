@@ -19,7 +19,7 @@ export const isAuthFailure = (e: any): boolean => {
 // is a failure received from a failed login attempt due to bad credentials
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isLoginFailure = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 403;
+  return e && e.status === 401;
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
