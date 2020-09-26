@@ -1,6 +1,8 @@
-# worker_process_wrapper.py is the entrypoint for Horovod worker processes.
-# It exists to redirect stdout/stderr to the docker logging without needing
-# to package a shell script.
+"""
+worker_process_wrapper.py is the entrypoint for Horovod worker processes.
+It exists to redirect stdout/stderr to the docker logging without needing
+to package a shell script.
+"""
 import os
 import sys
 

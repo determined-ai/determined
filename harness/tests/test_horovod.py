@@ -98,7 +98,9 @@ def test_create_run_command(
     )
     if debug:
         expected_horovod_run_cmd.append("--verbose")
-    expected_horovod_run_cmd.extend(["python3", "-m", "determined.exec.worker_process", "env_path"])
+    expected_horovod_run_cmd.extend(
+        ["python3", "-m", "determined.exec.worker_process_wrapper", "env_path"]
+    )
 
     created_horovod_run_cmd = horovod.create_run_command(
         num_gpus_per_machine=num_gpus_per_machine,
