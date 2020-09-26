@@ -56,9 +56,9 @@ def test_mnist_estimator_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_mnist_pytorch_accuracy() -> None:
-    config = conf.load_config(conf.cv_examples_path("mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.cv_examples_path("mnist_multi_output_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("mnist_pytorch"), 1
+        config, conf.cv_examples_path("mnist_multi_output_pytorch"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)

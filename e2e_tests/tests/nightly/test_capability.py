@@ -32,9 +32,9 @@ def test_imagenet_nas() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_gbt_estimator() -> None:
-    config = conf.load_config(conf.decision_trees_examples_path("gbt_estimator/const.yaml"))
+    config = conf.load_config(conf.decision_trees_examples_path("gbt_titanic_estimator/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(
-        config, conf.decision_trees_examples_path("gbt_estimator"), 1
+        config, conf.decision_trees_examples_path("gbt_titanic_estimator"), 1
     )
