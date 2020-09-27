@@ -27,7 +27,7 @@ searcher:
   name: adaptive_asha
   metric: validation_error
   max_length:
-    epochs: 50
+    epochs: 32
   max_trials: 16
 entrypoint: model_def:CIFARTrial
 min_validation_period:
