@@ -1,5 +1,7 @@
 package scheduler
 
+// calculateDesiredNewInstanceNum calculates the new instances based on pending tasks and
+// slots per instance.
 func calculateDesiredNewInstanceNum(taskList *taskList, slotsPerInstance int) int {
 	slotSum := 0
 	zeroSlotTasks := false
@@ -9,6 +11,7 @@ func calculateDesiredNewInstanceNum(taskList *taskList, slotsPerInstance int) in
 		//    with the scheduler in some way and not duplicate this logic.
 		switch {
 		case taskList.GetAllocations(it.value().TaskActor) != nil:
+			// If a task is already allocated, skip it.
 			continue
 		case it.value().SlotsNeeded == 0:
 			zeroSlotTasks = true

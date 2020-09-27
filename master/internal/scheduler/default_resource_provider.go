@@ -25,9 +25,9 @@ type DefaultRP struct {
 	taskList *taskList
 	groups   map[*actor.Ref]*group
 
-	provisioner         *actor.Ref
-	slotsPerInstance    int
-	previousScalingInfo *sproto.ScalingInfo
+	provisioner      *actor.Ref
+	slotsPerInstance int
+	scalingInfo      *sproto.ScalingInfo
 
 	reschedule bool
 
@@ -51,9 +51,9 @@ func NewDefaultRP(
 
 		taskList: newTaskList(),
 
-		provisioner:         provisioner,
-		slotsPerInstance:    provisionerSlotsPerInstance,
-		previousScalingInfo: &sproto.ScalingInfo{},
+		provisioner:      provisioner,
+		slotsPerInstance: provisionerSlotsPerInstance,
+		scalingInfo:      &sproto.ScalingInfo{},
 
 		reschedule: false,
 	}
@@ -145,12 +145,12 @@ func (d *DefaultRP) updateScalingInfo() bool {
 		summary := newAgentSummary(agentState)
 		agents[summary.Name] = summary
 	}
-	return d.previousScalingInfo.Update(desiredInstanceNum, agents)
+	return d.scalingInfo.Update(desiredInstanceNum, agents)
 }
 
 func (d *DefaultRP) sendScalingInfo(ctx *actor.Context) {
 	if d.provisioner != nil && d.updateScalingInfo() {
-		ctx.Tell(d.provisioner, *d.previousScalingInfo)
+		ctx.Tell(d.provisioner, *d.scalingInfo)
 	}
 }
 

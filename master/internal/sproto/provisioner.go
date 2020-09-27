@@ -7,15 +7,15 @@ import (
 
 // ScalingInfo describes the information that is needed for scaling.
 type ScalingInfo struct {
-	DesiredNewInstanceNum int
-	Agents                map[string]AgentSummary
+	DesiredNewInstances int
+	Agents              map[string]AgentSummary
 }
 
 // Update updates its desired new instance number and the agent summaries.
 func (s *ScalingInfo) Update(desiredNewInstanceNum int, agents map[string]AgentSummary) bool {
 	updated := false
 
-	if desiredNewInstanceNum != s.DesiredNewInstanceNum {
+	if desiredNewInstanceNum != s.DesiredNewInstances {
 		updated = true
 	}
 
@@ -31,7 +31,7 @@ func (s *ScalingInfo) Update(desiredNewInstanceNum int, agents map[string]AgentS
 	}
 
 	if updated {
-		s.DesiredNewInstanceNum = desiredNewInstanceNum
+		s.DesiredNewInstances = desiredNewInstanceNum
 		s.Agents = agents
 	}
 

@@ -63,8 +63,8 @@ func setupCluster(
 		agents:        make(map[*actor.Ref]*agentState),
 		groups:        make(map[*actor.Ref]*group),
 
-		taskList:            newTaskList(),
-		previousScalingInfo: &sproto.ScalingInfo{},
+		taskList:    newTaskList(),
+		scalingInfo: &sproto.ScalingInfo{},
 
 		reschedule: false,
 	}
@@ -292,8 +292,8 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	// Test basic.
 	updated := c.updateScalingInfo()
 	assert.Check(t, updated)
-	assert.DeepEqual(t, *c.previousScalingInfo, sproto.ScalingInfo{
-		DesiredNewInstanceNum: 1,
+	assert.DeepEqual(t, *c.scalingInfo, sproto.ScalingInfo{
+		DesiredNewInstances: 1,
 		Agents: map[string]sproto.AgentSummary{
 			"agent1": {Name: "agent1", IsIdle: false},
 			"agent2": {Name: "agent2", IsIdle: false},
@@ -305,8 +305,8 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	c.addAgent(t, system, "agent4", 4, 1, 0)
 	updated = c.updateScalingInfo()
 	assert.Check(t, updated)
-	assert.DeepEqual(t, *c.previousScalingInfo, sproto.ScalingInfo{
-		DesiredNewInstanceNum: 1,
+	assert.DeepEqual(t, *c.scalingInfo, sproto.ScalingInfo{
+		DesiredNewInstances: 1,
 		Agents: map[string]sproto.AgentSummary{
 			"agent1": {Name: "agent1", IsIdle: false},
 			"agent2": {Name: "agent2", IsIdle: false},
@@ -319,8 +319,8 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	delete(c.agents, agents[0].handler)
 	updated = c.updateScalingInfo()
 	assert.Check(t, updated)
-	assert.DeepEqual(t, *c.previousScalingInfo, sproto.ScalingInfo{
-		DesiredNewInstanceNum: 1,
+	assert.DeepEqual(t, *c.scalingInfo, sproto.ScalingInfo{
+		DesiredNewInstances: 1,
 		Agents: map[string]sproto.AgentSummary{
 			"agent2": {Name: "agent2", IsIdle: false},
 			"agent3": {Name: "agent3", IsIdle: true},
@@ -340,8 +340,8 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	}
 	updated = c.updateScalingInfo()
 	assert.Check(t, updated)
-	assert.DeepEqual(t, *c.previousScalingInfo, sproto.ScalingInfo{
-		DesiredNewInstanceNum: 1,
+	assert.DeepEqual(t, *c.scalingInfo, sproto.ScalingInfo{
+		DesiredNewInstances: 1,
 		Agents: map[string]sproto.AgentSummary{
 			"agent2": {Name: "agent2", IsIdle: false},
 			"agent3": {Name: "agent3", IsIdle: false},

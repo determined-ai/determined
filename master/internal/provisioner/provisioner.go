@@ -112,13 +112,13 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 
 	ctx.Log().Debug("scale happening")
 	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
-		ctx.Log().Infof("terminating %d instances: %s",
+		ctx.Log().Infof("decided to terminate %d instances: %s",
 			len(toTerminate.InstanceIDs), toTerminate.String())
 		p.provider.terminate(ctx, toTerminate.InstanceIDs)
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
-		ctx.Log().Infof("launching %d instances", numToLaunch)
+		ctx.Log().Infof("decided to launch %d instances", numToLaunch)
 		p.provider.launch(ctx, p.provider.instanceType(), numToLaunch)
 	}
 }

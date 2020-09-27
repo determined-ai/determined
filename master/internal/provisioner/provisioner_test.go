@@ -150,7 +150,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 		initInstances: []*Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
-	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstanceNum: 4}).Get()
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
@@ -173,7 +173,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 		initInstances: []*Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
-	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstanceNum: 3}).Get()
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 3}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
@@ -212,7 +212,7 @@ func TestProvisionerScaleDown(t *testing.T) {
 	mock := newMockEnvironment(t, setup)
 
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{
-		DesiredNewInstanceNum: 0,
+		DesiredNewInstances: 0,
 		Agents: map[string]sproto.AgentSummary{
 			"agent1": {Name: "agent1", IsIdle: true},
 			"agent2": {Name: "agent2", IsIdle: true},
@@ -263,7 +263,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	// Start the master.
 	mock.system.Ask(mock.provisioner,
 		sproto.ScalingInfo{
-			DesiredNewInstanceNum: 0,
+			DesiredNewInstances: 0,
 			Agents: map[string]sproto.AgentSummary{
 				"agent1": {Name: "agent1", IsIdle: true},
 				"agent2": {Name: "agent2", IsIdle: true},
@@ -274,7 +274,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 
 	// Submit jobs.
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{
-		DesiredNewInstanceNum: 2,
+		DesiredNewInstances: 2,
 		Agents: map[string]sproto.AgentSummary{
 			"agent1": {Name: "agent1", IsIdle: true},
 			"agent2": {Name: "agent2", IsIdle: true},

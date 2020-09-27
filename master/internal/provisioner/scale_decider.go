@@ -38,7 +38,7 @@ type scaleDecider struct {
 	idleAgentSnapshot      map[string]sproto.AgentSummary
 	connectedAgentSnapshot map[string]sproto.AgentSummary
 
-	desiredNewInstanceNum int
+	desiredNewInstances int
 
 	pastIdleInstances         map[string]time.Time
 	pastDisconnectedInstances map[string]time.Time
@@ -79,7 +79,7 @@ func (s *scaleDecider) needScale() bool {
 }
 
 func (s *scaleDecider) updateScalingInfo(info *sproto.ScalingInfo) {
-	s.desiredNewInstanceNum = info.DesiredNewInstanceNum
+	s.desiredNewInstances = info.DesiredNewInstances
 	s.idleAgentSnapshot = make(map[string]sproto.AgentSummary)
 	s.connectedAgentSnapshot = make(map[string]sproto.AgentSummary)
 	for _, agent := range info.Agents {
@@ -203,8 +203,9 @@ func (s *scaleDecider) calculateNumInstancesToLaunch() int {
 		}
 	}
 
-	desiredNum := min(s.desiredNewInstanceNum, s.maxInstanceNum-len(s.instanceSnapshot))
-	return max(0, desiredNum-numRecentlyLaunched)
+	desiredNum := s.desiredNewInstances - numRecentlyLaunched
+	desiredNum = min(desiredNum, s.maxInstanceNum-len(s.instanceSnapshot))
+	return max(0, desiredNum)
 }
 
 func max(a, b int) int {
