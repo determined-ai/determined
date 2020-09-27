@@ -15,8 +15,8 @@ hyperparameters:
 searcher:
   name: adaptive_asha
   metric: val_avg_iou
+  smaller_is_better: false
   max_length:
     batches: 800
-  smaller_is_better: false
   max_trials: 16
 entrypoint: model_def:ObjectDetectionTrial

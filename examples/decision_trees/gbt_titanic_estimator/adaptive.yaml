@@ -35,10 +35,10 @@ hyperparameters:
 searcher:
   name: adaptive_asha
   metric: accuracy
+  smaller_is_better: false
   max_length:
     batches: 500
   max_trials: 100
-  smaller_is_better: false
 entrypoint: model_def:BoostedTreesTrial
 scheduling_unit: 1
 environment:
