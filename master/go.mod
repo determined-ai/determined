@@ -4,7 +4,8 @@ require (
 	cloud.google.com/go v0.58.0
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/go-winio v0.4.9 // indirect
-	github.com/aws/aws-sdk-go v1.31.13
+	github.com/apex/log v1.5.0
+	github.com/aws/aws-sdk-go v1.34.32
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/bufbuild/buf v0.16.0
 	github.com/containerd/containerd v1.3.2 // indirect
