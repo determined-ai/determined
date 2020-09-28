@@ -5,16 +5,15 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"net/url"
-
+	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/pkg/errors"
+	"net/url"
 )
 
 const awsAgentID = `$(ec2metadata --instance-id)`
@@ -43,9 +42,7 @@ func onEC2() bool {
 	return ec2Metadata.Available()
 }
 
-type pendingSpotRequest struct {
 
-}
 
 // awsCluster wraps an EC2 client. Determined recognizes agent EC2 instances by:
 // 1. A specific key/value pair tag.
@@ -56,8 +53,10 @@ type awsCluster struct {
 	ec2UserData []byte
 	client      *ec2.EC2
 
-	pendingSpotRequests []pendingSpotRequest
+	// Only used if spot instances are enabled
+	pendingSpotRequestIds []*string
 }
+
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	if err := config.AWS.initDefaultValues(); err != nil {
@@ -107,6 +106,8 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
 
+	log.Info("Checking logs work inside AWS provider creation")
+
 	cluster := &awsCluster{
 		AWSClusterConfig: config.AWS,
 		masterURL:        *masterURL,
@@ -124,6 +125,8 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 			LogOptions:                   config.AWS.buildDockerLogString(),
 		}),
 	}
+
+
 	return cluster, nil
 }
 
@@ -180,25 +183,34 @@ func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	}
 }
 
-
-func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
-	// 1. List all spot instance requests
-	// 2. For any requests that indicate a failure, write out an error message and clean up the spot request (if needed)
-	// 3. For each spot instance request, find the matching instances
-	// 4. Keep track of the spot requests that haven't been fulfilled
-	// TODO: Spot
-	instances, err := c.describeInstances(false)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot describe EC2 instances")
+func (c *awsCluster) launch(
+	ctx *actor.Context,
+	instanceType instanceType,
+	instanceNum int,
+) {
+	if c.SpotInstanceEnabled {
+		c.launchSpot(ctx, instanceType, instanceNum)
+	} else {
+		c.launchOnDemand(ctx, instanceType, instanceNum)
 	}
-	res := c.newInstances(instances)
-	for _, inst := range res {
-		if inst.State == Unknown {
-			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
-		}
-	}
-	return res, nil
 }
+
+func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
+	ids := make([]*string, 0, len(instanceIDs))
+	for _, id := range instanceIDs {
+		idCopy := id
+		ids = append(ids, &idCopy)
+	}
+
+	if c.SpotInstanceEnabled {
+		c.terminateSpot(ctx, ids)
+	} else {
+		c.terminateOnDemand(ctx, ids)
+	}
+}
+
+
+
 
 func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
 	instances, err := c.describeInstances(false)
@@ -214,17 +226,7 @@ func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
 	return res, nil
 }
 
-func (c *awsCluster) launch(
-	ctx *actor.Context,
-	instanceType instanceType,
-	instanceNum int,
-) {
-	if c.SpotInstanceEnabled {
-		c.launchSpot(ctx, instanceType, instanceNum)
-	} else {
-		c.launchOnDemand(ctx, instanceType, instanceNum)
-	}
-}
+
 
 func (c *awsCluster) launchOnDemand(
 	ctx *actor.Context,
@@ -254,48 +256,9 @@ func (c *awsCluster) launchOnDemand(
 	)
 }
 
-func (c *awsCluster) launchSpot(
-	ctx *actor.Context,
-	instanceType instanceType,
-	instanceNum int,
-) {
-	// 1. Take the number of instances to launch + the number of pending spot requests to calculate how many instances to launch or shut down
-	// 2. Launch or terminate the appropriate number of requests
-	// TODO: Spot
-	instType, ok := instanceType.(ec2InstanceType)
-	if !ok {
-		panic("cannot pass non-ec2InstanceType to ec2Cluster")
-	}
-
-	if instanceNum <= 0 {
-		return
-	}
-	ctx.Log().Infof("launching %d EC2 instances", instanceNum)
-	instances, err := c.launchInstances(instType, instanceNum, false)
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
-		return
-	}
-	launched := c.newInstances(instances.Instances)
-	ctx.Log().Infof(
-		"launched %d/%d EC2 instances: %s",
-		len(launched),
-		instanceNum,
-		fmtInstances(launched),
-	)
-}
-
-func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
-	if c.SpotInstanceEnabled {
-		c.terminateSpot(ctx, instanceIDs)
-	} else {
-		c.terminateOnDemand(ctx, instanceIDs)
-	}
-}
 
 
-func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []string) {
-	// TODO: Spot
+func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string) {
 	if len(instanceIDs) == 0 {
 		return
 	}
@@ -305,41 +268,8 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []string) {
 		len(instanceIDs),
 		instanceIDs,
 	)
-	ids := make([]*string, 0, len(instanceIDs))
-	for _, id := range instanceIDs {
-		idCopy := id
-		ids = append(ids, &idCopy)
-	}
-	res, err := c.terminateInstances(ids, false)
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
-		return
-	}
-	terminated := c.newInstancesFromTerminateInstancesOutput(res)
-	ctx.Log().Infof(
-		"terminated %d/%d EC2 instances: %s",
-		len(terminated),
-		len(instanceIDs),
-		fmtInstances(terminated),
-	)
-}
 
-func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []string) {
-	if len(instanceIDs) == 0 {
-		return
-	}
-
-	ctx.Log().Infof(
-		"terminating %d EC2 instances: %s",
-		len(instanceIDs),
-		instanceIDs,
-	)
-	ids := make([]*string, 0, len(instanceIDs))
-	for _, id := range instanceIDs {
-		idCopy := id
-		ids = append(ids, &idCopy)
-	}
-	res, err := c.terminateInstances(ids, false)
+	res, err := c.terminateInstances(instanceIDs, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
 		return
@@ -398,6 +328,24 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 				},
 			},
 		},
+	}
+	result, err := c.client.DescribeInstances(input)
+	if err != nil {
+		return nil, err
+	}
+	var instances []*ec2.Instance
+	for _, rsv := range result.Reservations {
+		if rsv.Instances != nil {
+			instances = append(instances, rsv.Instances...)
+		}
+	}
+	return instances, nil
+}
+
+func (c *awsCluster) describeInstancesById(instanceIds []*string, dryRun bool) ([]*ec2.Instance, error) {
+	input := &ec2.DescribeInstancesInput{
+		DryRun: aws.Bool(dryRun),
+		InstanceIds: instanceIds,
 	}
 	result, err := c.client.DescribeInstances(input)
 	if err != nil {
