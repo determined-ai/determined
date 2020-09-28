@@ -1,13 +1,11 @@
 description: cifar10_pytorch_const_distributed
-data:
-  url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz
 hyperparameters:
   learning_rate: 1e-4
   learning_rate_decay: 1e-6
   layer1_dropout: 0.25
   layer2_dropout: 0.25
   layer3_dropout: 0.5
-  global_batch_size: 512 # per GPU batch size of 32
+  global_batch_size: 512 # Per-GPU batch size of 32
 resources:
   slots_per_trial: 16
 records_per_epoch: 50000
@@ -16,7 +14,6 @@ searcher:
   metric: validation_error
   max_length:
     epochs: 32
-  smaller_is_better: true
 entrypoint: model_def:CIFARTrial
 min_validation_period:
   epochs: 1

@@ -1,6 +1,4 @@
 description: cifar10_pytorch_adaptive_search
-data:
-  url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz
 hyperparameters:
   learning_rate:
     type: log
@@ -29,7 +27,7 @@ searcher:
   name: adaptive_asha
   metric: validation_error
   max_length:
-    epochs: 50
+    epochs: 32
   max_trials: 16
 entrypoint: model_def:CIFARTrial
 min_validation_period:

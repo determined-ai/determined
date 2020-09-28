@@ -9,7 +9,7 @@ hyperparameters:
 searcher:
   name: single
   metric: accuracy
+  smaller_is_better: false
   max_length:
     batches: 2000
-  smaller_is_better: false
 entrypoint: model_def:MNistTrial

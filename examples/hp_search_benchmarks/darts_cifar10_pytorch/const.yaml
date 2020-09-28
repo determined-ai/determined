@@ -1,7 +1,7 @@
 description: darts_cnn_nas
 
 data:
-  data_download_dir: /data 
+  data_download_dir: /data
 
 min_validation_period:
   batches: 500
@@ -67,10 +67,10 @@ bind_mounts:
 
 searcher:
   name: single
-  metric: top1_accuracy 
+  metric: top1_accuracy
+  smaller_is_better: false
   # 50k examples in train, 96 examples per batch, 100 batches per step -> 300 epochs ~ 1562 steps
   max_length:
     batches: 156200
-  smaller_is_better: false 
 
 entrypoint: model_def:DARTSCNNTrial

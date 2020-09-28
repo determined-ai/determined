@@ -43,6 +43,6 @@ searcher:
   mode: aggressive
   metric: val_categorical_error
   max_length:
-    epochs: 50
+    epochs: 32
   max_trials: 16
 entrypoint: model_def:CIFARTrial

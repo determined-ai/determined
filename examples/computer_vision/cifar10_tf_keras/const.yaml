@@ -11,11 +11,12 @@ hyperparameters:
   width_shift_range: 0.1
   height_shift_range: 0.1
   horizontal_flip: True
+records_per_epoch: 50000
 searcher:
   name: single
   metric: val_categorical_error
   max_length:
-    batches: 5000
+    epochs: 32
 min_validation_period:
-  batches: 1000
+  epochs: 1
 entrypoint: model_def:CIFARTrial

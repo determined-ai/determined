@@ -34,9 +34,9 @@ records_per_epoch: 25000
 searcher:
   name: single
   metric: top1_accuracy 
+  smaller_is_better: false 
   max_length: 
     epochs: 50
-  smaller_is_better: false 
 
 optimizations:
   aggregation_frequency:  1
