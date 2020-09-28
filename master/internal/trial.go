@@ -1105,24 +1105,36 @@ func (t *trial) terminated(ctx *actor.Context) {
 		return
 	}
 
-	if w, err := t.sequencer.Workload(); err != nil {
-		if !t.replaying {
-			if err := markWorkloadErrored(t.db, w); err != nil {
-				ctx.Log().Error(err)
-			}
+	var w workload.Workload
+	var err error
+	switch {
+	case !t.sequencer.UpToDate():
+		w, err = t.sequencer.Workload()
+		if err != nil {
+			panic(err)
+		}
+	case t.sequencer.PrecloseCheckpointWorkload() != nil:
+		w = *t.sequencer.PrecloseCheckpointWorkload()
+	default:
+		panic("trial terminated due to failure but had nothing to fail")
+	}
+
+	if !t.replaying {
+		if err := markWorkloadErrored(t.db, w); err != nil {
+			ctx.Log().
+				WithError(err).
+				Error("failed to mark workload errored when terminated")
 		}
 	}
+
 	e := workload.Errored
-	w, err := t.sequencer.Workload()
-	if err != nil {
-		ctx.Log().Error(err)
-		panic(err)
-	}
 	erroredMessage := workload.CompletedMessage{
 		Workload:     w,
 		ExitedReason: &e,
 	}
 	if err := t.processCompletedWorkload(ctx, erroredMessage); err != nil {
-		ctx.Log().Error(err)
+		ctx.Log().
+			WithError(err).
+			Error("failed to process errored message")
 	}
 }
