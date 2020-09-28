@@ -132,6 +132,11 @@ service Determined {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
     }
 
+    // Create an experiment.
+    rpc PostExperiment(PostExperimentRequest) returns (PostExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments" body: "*"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
     // Get the requested experiment.
     rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {
         option (google.api.http) = {get: "/api/v1/experiments/{experiment_id}"};

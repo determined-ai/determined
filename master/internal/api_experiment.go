@@ -477,3 +477,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
+
+func (a *apiServer) PostExperiment(
+	_ context.Context, req *apiv1.PostExperimentRequest,
+) (*apiv1.PostExperimentResponse, error) {
+	panic("hamid not implemented")
+	return nil, nil
+}

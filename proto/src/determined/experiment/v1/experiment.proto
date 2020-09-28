@@ -74,3 +74,14 @@ message ValidationHistoryEntry {
     // The value of the `searcher.metric`, indicated by the experiment config, for the validation.
     float searcher_metric = 3;
 }
+
+message File {
+  // Path should include the filename.  For directories, it should not end in a '/'.
+  string path = 1;
+  int32 type = 2;
+  bytes content = 3;
+  google.protobuf.Timestamp mtime = 4;
+  uint32 mode = 5;
+  int32 uid = 6;
+  int32 gid = 7;
+}
