@@ -1429,6 +1429,9 @@ workflows:
 
       - test-det-deploy:
           name: test-det-deploy-local
+          filters:
+            branches:
+              only: master
           requires:
             - package-and-push-system-local
           matrix:
@@ -1436,7 +1439,6 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
-
 
 
   nightly:
