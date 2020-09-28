@@ -110,7 +110,7 @@ class Model:
             resp = api.get(self._master, "/api/v1/models/{}/versions/{}".format(self.name, version))
 
         data = resp.json()
-        return Checkpoint.from_json(data["model_version"]["checkpoint"], self._master)
+        return Checkpoint.from_json(data["modelVersion"]["checkpoint"], self._master)
 
     def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[Checkpoint]:
         """
