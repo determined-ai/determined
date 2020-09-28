@@ -26,9 +26,14 @@ type AWSClusterConfig struct {
 	IamInstanceProfileArn string              `json:"iam_instance_profile_arn"`
 
 	InstanceType ec2InstanceType `json:"instance_type"`
+	MaxInstances int             `json:"max_instances"`
 
 	LogGroup  string `json:"log_group"`
 	LogStream string `json:"log_stream"`
+
+	SpotInstanceEnabled bool `json:"spot_instance_enabled"`
+	SpotMaxPrice string `json:"spot_max_price"`
+
 }
 
 var defaultAWSClusterConfig = AWSClusterConfig{
@@ -39,6 +44,9 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 		PublicIP: true,
 	},
 	InstanceType: "p3.8xlarge",
+	MaxInstances: 5,
+	SpotInstanceEnabled: false,
+	SpotMaxPrice: "NA",
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
@@ -91,6 +99,7 @@ func (c AWSClusterConfig) Validate() []error {
 		check.GreaterThan(len(c.ImageID), 0, "ec2 image ID must be non-empty"),
 		check.GreaterThan(len(c.SSHKeyName), 0, "ec2 key name must be non-empty"),
 		check.GreaterThanOrEqualTo(c.RootVolumeSize, 100, "ec2 root volume size must be >= 100"),
+		check.GreaterThanOrEqualTo(c.MaxInstances, 0, "ec2 cluster max instance number must be >= 0"),
 	}
 }
 

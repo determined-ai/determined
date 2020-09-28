@@ -43,6 +43,10 @@ func onEC2() bool {
 	return ec2Metadata.Available()
 }
 
+type pendingSpotRequest struct {
+
+}
+
 // awsCluster wraps an EC2 client. Determined recognizes agent EC2 instances by:
 // 1. A specific key/value pair tag.
 // 2. Names of agents that are equal to the instance IDs.
@@ -51,6 +55,8 @@ type awsCluster struct {
 	masterURL   url.URL
 	ec2UserData []byte
 	client      *ec2.EC2
+
+	pendingSpotRequests []pendingSpotRequest
 }
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
@@ -144,6 +150,7 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
 }
 
 func (c *awsCluster) dryRunRequests() error {
+	// TODO: Spot
 	const (
 		DryRunOperationErrorCode  = "DryRunOperation"
 		InstanceLimitExceededCode = "InstanceLimitExceeded"
@@ -162,6 +169,34 @@ func (c *awsCluster) dryRunRequests() error {
 }
 
 func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
+	if c.SpotInstanceEnabled {
+		return c.listSpot(ctx)
+	} else {
+		return c.listOnDemand(ctx)
+	}
+}
+
+
+func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
+	// 1. List all spot instance requests
+	// 2. For any requests that indicate a failure, write out an error message and clean up the spot request (if needed)
+	// 3. For each spot instance request, find the matching instances
+	// 4. Keep track of the spot requests that haven't been fulfilled
+	// TODO: Spot
+	instances, err := c.describeInstances(false)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot describe EC2 instances")
+	}
+	res := c.newInstances(instances)
+	for _, inst := range res {
+		if inst.State == Unknown {
+			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
+		}
+	}
+	return res, nil
+}
+
+func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
 	instances, err := c.describeInstances(false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 instances")
@@ -180,6 +215,49 @@ func (c *awsCluster) launch(
 	instanceType instanceType,
 	instanceNum int,
 ) {
+	if c.SpotInstanceEnabled {
+		c.launchSpot(ctx, instanceType, instanceNum)
+	} else {
+		c.launchOnDemand(ctx, instanceType, instanceNum)
+	}
+}
+
+func (c *awsCluster) launchOnDemand(
+	ctx *actor.Context,
+	instanceType instanceType,
+	instanceNum int,
+) {
+	instType, ok := instanceType.(ec2InstanceType)
+	if !ok {
+		panic("cannot pass non-ec2InstanceType to ec2Cluster")
+	}
+
+	if instanceNum <= 0 {
+		return
+	}
+	ctx.Log().Infof("launching %d EC2 instances", instanceNum)
+	instances, err := c.launchInstances(instType, instanceNum, false)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
+		return
+	}
+	launched := c.newInstances(instances.Instances)
+	ctx.Log().Infof(
+		"launched %d/%d EC2 instances: %s",
+		len(launched),
+		instanceNum,
+		fmtInstances(launched),
+	)
+}
+
+func (c *awsCluster) launchSpot(
+	ctx *actor.Context,
+	instanceType instanceType,
+	instanceNum int,
+) {
+	// 1. Take the number of instances to launch + the number of pending spot requests to calculate how many instances to launch or shut down
+	// 2. Launch or terminate the appropriate number of requests
+	// TODO: Spot
 	instType, ok := instanceType.(ec2InstanceType)
 	if !ok {
 		panic("cannot pass non-ec2InstanceType to ec2Cluster")
@@ -203,6 +281,45 @@ func (c *awsCluster) launch(
 }
 
 func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
+	if c.SpotInstanceEnabled {
+		c.terminateSpot(ctx, instanceIDs)
+	} else {
+		c.terminateOnDemand(ctx, instanceIDs)
+	}
+}
+
+
+func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []string) {
+	// TODO: Spot
+	if len(instanceIDs) == 0 {
+		return
+	}
+
+	ctx.Log().Infof(
+		"terminating %d EC2 instances: %s",
+		len(instanceIDs),
+		instanceIDs,
+	)
+	ids := make([]*string, 0, len(instanceIDs))
+	for _, id := range instanceIDs {
+		idCopy := id
+		ids = append(ids, &idCopy)
+	}
+	res, err := c.terminateInstances(ids, false)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
+		return
+	}
+	terminated := c.newInstancesFromTerminateInstancesOutput(res)
+	ctx.Log().Infof(
+		"terminated %d/%d EC2 instances: %s",
+		len(terminated),
+		len(instanceIDs),
+		fmtInstances(terminated),
+	)
+}
+
+func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []string) {
 	if len(instanceIDs) == 0 {
 		return
 	}
