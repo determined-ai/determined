@@ -307,8 +307,6 @@ Resources:
         MinCapacity: 8
         MaxCapacity: 32
 
-
-
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
