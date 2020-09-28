@@ -10,8 +10,8 @@ from determined import constants
 
 
 def main() -> None:
-    os.dup2(os.open(constants.CONTAINER_STDOUT, os.O_WRONLY), sys.stdout.fileno)
-    os.dup2(os.open(constants.CONTAINER_STDERR, os.O_WRONLY), sys.stderr.fileno)
+    os.dup2(os.open(constants.CONTAINER_STDOUT, os.O_WRONLY), sys.stdout.fileno())
+    os.dup2(os.open(constants.CONTAINER_STDERR, os.O_WRONLY), sys.stderr.fileno())
     os.execv(
         sys.executable,
         [
