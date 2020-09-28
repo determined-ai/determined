@@ -120,7 +120,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		c.terminate(ctx)
 
-	case scheduler.ResourcesAllocated, scheduler.ReleaseResources:
+	case scheduler.ResourcesAllocated:
 		return c.receiveSchedulerMsg(ctx)
 
 	case getSummary:
@@ -297,9 +297,6 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 		// TODO: Consider not storing the userFiles in memory at all.
 		c.userFiles = nil
 		c.additionalFiles = nil
-
-	case scheduler.ReleaseResources:
-		c.terminate(ctx)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
