@@ -64,5 +64,5 @@ HOROVOD_AUTOTUNE_LOG_FILEPATH = "/tmp/autotune_log.csv"
 HOROVOD_GLOO_TIMEOUT_SECONDS = 240
 
 # The well-known locations of the executing container's STDOUT and STDERR.
-CONTAINER_STDOUT = "/var/log/determined.log"
-CONTAINER_STDERR = "/var/log/determined_error.log"
+CONTAINER_STDOUT = "/run/determined/train/determined.log"
+CONTAINER_STDERR = "/run/determined/train/determined_error.log"
