@@ -30,7 +30,7 @@ fmt:
 
 .PHONY: test
 test:
-	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
+	go test -short -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: pre-package
 pre-package:
