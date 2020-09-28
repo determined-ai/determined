@@ -52,8 +52,8 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
 	return grpcS
 }
 
-// newGRPCMux creates a new gRPC server mux.
-func newGRPCMux() *runtime.ServeMux {
+// newGRPCGatewayMux creates a new gRPC server mux.
+func newGRPCGatewayMux() *runtime.ServeMux {
 	serverOpts := []runtime.ServeMuxOption{
 		runtime.WithMarshalerOption(jsonPretty,
 			&runtime.JSONPb{EmitDefaults: true, Indent: "    "}),
@@ -77,7 +77,7 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 			InsecureSkipVerify: true, //nolint:gosec
 		})))
 	}
-	mux := newGRPCMux()
+	mux := newGRPCGatewayMux()
 	err := proto.RegisterDeterminedHandlerFromEndpoint(context.Background(), mux, addr, opts)
 	if err != nil {
 		return err
