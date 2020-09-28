@@ -52,9 +52,8 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
 	return grpcS
 }
 
-// RegisterHTTPProxy registers grpc-gateway with the master echo server.
-func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certificate) error {
-	addr := fmt.Sprintf(":%d", port)
+// newGRPCGatewayMux creates a new gRPC server mux.
+func newGRPCGatewayMux() *runtime.ServeMux {
 	serverOpts := []runtime.ServeMuxOption{
 		runtime.WithMarshalerOption(jsonPretty,
 			&runtime.JSONPb{EmitDefaults: true, Indent: "    "}),
@@ -63,7 +62,12 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 		runtime.WithProtoErrorHandler(errorHandler),
 		runtime.WithForwardResponseOption(userTokenResponse),
 	}
-	mux := runtime.NewServeMux(serverOpts...)
+	return runtime.NewServeMux(serverOpts...)
+}
+
+// RegisterHTTPProxy registers grpc-gateway with the master echo server.
+func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certificate) error {
+	addr := fmt.Sprintf(":%d", port)
 	var opts []grpc.DialOption
 	if cert == nil {
 		opts = append(opts, grpc.WithInsecure())
@@ -73,11 +77,12 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 			InsecureSkipVerify: true, //nolint:gosec
 		})))
 	}
+	mux := newGRPCGatewayMux()
 	err := proto.RegisterDeterminedHandlerFromEndpoint(context.Background(), mux, addr, opts)
 	if err != nil {
 		return err
 	}
-	e.Any("/api/v1/*", func(c echo.Context) error {
+	handler := func(c echo.Context) error {
 		request := c.Request()
 		if origin := request.Header.Get("Origin"); enableCORS && origin != "" {
 			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
@@ -92,6 +97,11 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 		}
 		mux.ServeHTTP(c.Response(), request)
 		return nil
-	}, middleware.RemoveTrailingSlash())
+	}
+	apiV1 := e.Group("/api/v1")
+	apiV1.Any("/*", handler, middleware.RemoveTrailingSlash())
+	// We explicitly set this route here to make sure another route handler with them same path but
+	// different method doesn't take over GET.
+	apiV1.GET("/experiments", handler, middleware.RemoveTrailingSlash())
 	return nil
 }
