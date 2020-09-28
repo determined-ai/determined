@@ -18,6 +18,7 @@ _INTEG_MARKERS = {
     "tensorflow2_cpu",
     "e2e_cpu",
     "e2e_gpu",
+    "det_deploy_local",
     "distributed",
     "cloud",
     "parallel",
@@ -37,6 +38,9 @@ def pytest_addoption(parser: Parser) -> None:
     )
     parser.addoption(
         "--master-port", action="store", default="8080", help="Master port for integration tests"
+    )
+    parser.addoption(
+        "--det-version", action="store", default=None, help="Determind version for det-deploy tests"
     )
     parser.addoption(
         "--require-secrets", action="store_true", help="fail tests when s3 access fails"
@@ -64,11 +68,13 @@ def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
     master_config_path = Path(master_config_path) if master_config_path else None
     master_host = request.config.getoption("--master-host")
     master_port = request.config.getoption("--master-port")
+    det_version = request.config.getoption("--det-version")
     follow_local_logs = request.config.getoption("--follow-local-logs")
     compose_file = request.config.getoption("--compose-file")
 
     config.MASTER_IP = master_host
     config.MASTER_PORT = master_port
+    config.DET_VERSION = det_version
 
     if master_host == "localhost" and follow_local_logs:
         project_name = request.config.getoption("--compose-project-name")
