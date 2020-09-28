@@ -35,7 +35,6 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
 		grpc.StreamInterceptor(grpcmiddleware.ChainStreamServer(
 			grpclogrus.StreamServerInterceptor(logger, opts...),
 			grpcrecovery.StreamServerInterceptor(),
-			streamAuthInterceptor(db),
 		)),
 		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(
 			grpclogrus.UnaryServerInterceptor(logger, opts...),
@@ -45,7 +44,7 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
 					return status.Errorf(codes.Internal, "%s", p)
 				},
 			)),
-			unaryAuthInterceptor(db),
+			authInterceptor(db),
 		)),
 	)
 	proto.RegisterDeterminedServer(grpcS, srv)
