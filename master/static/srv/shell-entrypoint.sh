@@ -8,7 +8,7 @@ export PATH="/run/determined/pythonuserbase/bin:$PATH"
 # modified in this entrypoint because the HOME in the user's ssh session is set
 # by sshd at a later time.
 
-python3.6 -m pip install --user /opt/determined/wheels/determined*.whl
+python3.6 -m pip install -q --user /opt/determined/wheels/determined*.whl
 
 # Prepend each key in authorized_keys with a set of environment="KEY=VALUE"
 # options to inject the entire docker environment into the eventual ssh

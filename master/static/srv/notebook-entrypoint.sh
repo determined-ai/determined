@@ -15,6 +15,6 @@ if [ "$HOME" = "/" ] ; then
     export HOME
 fi
 
-python3.6 -m pip install --user /opt/determined/wheels/determined*.whl
+python3.6 -m pip install -q --user /opt/determined/wheels/determined*.whl
 
 jupyter lab --config /run/determined/workdir/jupyter-conf.py --port=${NOTEBOOK_PORT}
