@@ -28,7 +28,7 @@ ERROR: Secret {{ .Values.tlsSecret }} does not exist in namespace: {{ .Release.N
 
 {{- if (and (not .Values.detVersion) (contains "dev" .Chart.AppVersion)) }}
 ERROR: Installing a non-released version of Determined: {{ .Chart.AppVersion }}.
-Determined does not publish docker images for non-release version, attempts to
+Determined does not publish Docker images for non-release version; attempts to
 install a non-release version will lead to a `ImagePullBackOff` error.
 Please update `appVersion` in Chart.yaml to an official release version in the
 format X.Y.Z (e.g., 0.13.4).
