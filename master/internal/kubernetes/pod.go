@@ -26,6 +26,9 @@ const (
 	determinedLabel         = "determined"
 )
 
+// pod manages the lifecycle of a Kubernetes pod that executes a
+// Determined task. The lifecycle of the pod is managed based on
+// the status of the specified set of containers.
 type pod struct {
 	cluster                  *actor.Ref
 	clusterID                string
@@ -413,7 +416,7 @@ func getDeterminedContainerState(
 
 	case k8sV1.PodRunning:
 		// Pods are in a running state as long as at least one container has not terminated.
-		// We check the status of the Determined containers directly to determined if they
+		// We check the status of the Determined containers directly to determine if they
 		// are still running.
 		containerStatuses, err := getDeterminedContainersStatus(
 			pod.Status.ContainerStatuses, containerNames)
