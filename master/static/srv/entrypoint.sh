@@ -3,9 +3,10 @@
 set -e
 set -x
 
-# Create a symbolic link between this process's STDOUT and STDERR and
-# well-known files. This is so logs for dtrain can get routed through this
-# container, rather than through SSH back to agent 0.
+# Create symbolic links from well-known files to this process's STDOUT and
+# STDERR. Anything written to those files will be inserted into the output
+# streams of this process, allowing distributed training logs to route through
+# individual containers rather than all going through SSH back to agent 0.
 ln -sf /proc/$$/fd/1 /var/log/determined.log
 ln -sf /proc/$$/fd/2 /var/log/determined_error.log
 
