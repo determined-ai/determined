@@ -3,8 +3,16 @@ package internal
 import (
 	"context"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
@@ -30,4 +38,45 @@ func (a *apiServer) KillTensorboard(
 	_ context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
 	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId).String(), req, &resp)
+}
+
+func (a *apiServer) LaunchTensorboard(
+	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
+) (*apiv1.LaunchTensorboardResponse, error) {
+	experimentIds := make([]int, 0)
+	trialIds := make([]int, 0)
+	for _, id := range req.ExperimentIds {
+		experimentIds = append(experimentIds, int(id))
+	}
+	for _, id := range req.TrialIds {
+		trialIds = append(trialIds, int(id))
+	}
+	tensorboardConfig := command.TensorboardRequest{
+		ExperimentIDs: experimentIds,
+		TrialIDs:      trialIds,
+	}
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	tensorboardLaunchReq := command.TensorboardRequestWithUser{
+		Tensorboard: tensorboardConfig,
+		User:        user,
+	}
+	actorResp := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
+	}
+
+	tensorboardID := actorResp.Get().(scheduler.TaskID)
+	tensorboardReq := tensorboardv1.Tensorboard{}
+	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardReq)
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.LaunchTensorboardResponse{
+		Tensorboard: actorResp.Get().(*tensorboardv1.Tensorboard),
+	}, err
 }

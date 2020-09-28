@@ -316,6 +316,11 @@ service Determined {
         option (google.api.http) = {post: "/api/v1/tensorboards/{tensorboard_id}/kill"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Tensorboards"};
     }
+    // Launch a tensorboard.
+    rpc LaunchTensorboard(LaunchTensorboardRequest) returns (LaunchTensorboardResponse) {
+        option (google.api.http) = {post: "/api/v1/tensorboards" body: "*"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Tensorboards"};
+    }
 
     // Get the requested model.
     rpc GetModel(GetModelRequest) returns (GetModelResponse)  {

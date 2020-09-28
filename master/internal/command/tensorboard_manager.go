@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
+	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -40,11 +41,18 @@ const (
 	tickInterval              = 5 * time.Second
 )
 
-type tensorboardRequest struct {
+// TensorboardRequest describes a request for a new Tensorboard.
+type TensorboardRequest struct {
 	commandParams
 
 	ExperimentIDs []int `json:"experiment_ids"`
 	TrialIDs      []int `json:"trial_ids"`
+}
+
+// TensorboardRequestWithUser accompanies TensorboardRequest with a user.
+type TensorboardRequestWithUser struct {
+	Tensorboard TensorboardRequest
+	User        *model.User
 }
 
 type tensorboardConfig struct {
@@ -96,9 +104,61 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		}
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
+	case TensorboardRequestWithUser:
+		summary, err := t.processTensorboardRequest(ctx, msg.User, &msg.Tensorboard)
+		if err != nil {
+			ctx.Respond(errors.Wrap(err, "failed to launch tensorboard"))
+		} else {
+			ctx.Respond(summary.ID)
+		}
 	}
 
 	return nil
+}
+
+func (t *tensorboardManager) processTensorboardRequest(
+	ctx *actor.Context,
+	user *model.User,
+	req *TensorboardRequest,
+) (*summary, error) {
+	commandReq, err := parseCommandRequestWithUser(
+		*user, t.db, &req.commandParams, &t.taskSpec.TaskContainerDefaults)
+	if err != nil {
+		return nil, err
+	}
+
+	if commandReq.AgentUserGroup == nil {
+		commandReq.AgentUserGroup = &t.defaultAgentUserGroup
+	}
+
+	if len(req.ExperimentIDs) == 0 && len(req.TrialIDs) == 0 {
+		err = errors.New("must set experiment or trial ids")
+		return nil, err
+	}
+
+	ctx.Log().Infof("creating tensorboard (experiment id(s): %v trial id(s): %v)",
+		req.ExperimentIDs, req.TrialIDs)
+
+	b, err := t.newTensorBoard(commandReq, *req)
+
+	if err != nil {
+		err = errors.Wrap(err, "failed to create tensorboard")
+		return nil, err
+	}
+
+	if err := check.Validate(b.config); err != nil {
+		err = errors.Wrap(err, "failed to validate tensorboard config")
+		return nil, err
+	}
+
+	a, _ := ctx.ActorOf(b.taskID, b)
+	summaryResponse := ctx.Ask(a, getSummary{})
+	if err := summaryResponse.Error(); err != nil {
+		return nil, err
+	}
+	ctx.Log().Infof("created tensorboard %s", a.Address().Local())
+	summary := summaryResponse.Get().(summary)
+	return &summary, nil
 }
 
 func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
@@ -110,46 +170,18 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		req := tensorboardRequest{}
+		req := TensorboardRequest{}
 		if err := apiCtx.Bind(&req); err != nil {
 			respondBadRequest(ctx, err)
 			return
 		}
-
-		commandReq, err := parseCommandRequest(
-			apiCtx, t.db, &req.commandParams, &t.taskSpec.TaskContainerDefaults)
+		user := apiCtx.(*requestContext.DetContext).MustGetUser()
+		summary, err := t.processTensorboardRequest(ctx, &user, &req)
 		if err != nil {
 			respondBadRequest(ctx, err)
-			return
+		} else {
+			ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 		}
-
-		if commandReq.AgentUserGroup == nil {
-			commandReq.AgentUserGroup = &t.defaultAgentUserGroup
-		}
-
-		if len(req.ExperimentIDs) == 0 && len(req.TrialIDs) == 0 {
-			respondBadRequest(ctx, errors.New("must set experiment or trial ids"))
-			return
-		}
-
-		ctx.Log().Infof("creating tensorboard (experiment id(s): %v trial id(s): %v)",
-			req.ExperimentIDs, req.TrialIDs)
-
-		b, err := t.newTensorBoard(commandReq, req)
-
-		if err != nil {
-			ctx.Respond(err)
-			return
-		}
-
-		if err := check.Validate(b.config); err != nil {
-			ctx.Respond(err)
-			return
-		}
-
-		a, _ := ctx.ActorOf(b.taskID, b)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, getSummary{})))
-		ctx.Log().Infof("created tensorboard %s", a.Address().Local())
 
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
@@ -158,7 +190,7 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 
 func (t *tensorboardManager) newTensorBoard(
 	commandReq *commandRequest,
-	req tensorboardRequest,
+	req TensorboardRequest,
 ) (*command, error) {
 	// Warning! Since certain fields are incompatible with the current model.Experiment,
 	// internally this avoids loading certain parts of the experiment configuration so
@@ -341,7 +373,7 @@ func (t *tensorboardManager) newTensorBoard(
 	}, nil
 }
 
-func (t *tensorboardManager) getTensorBoardConfigs(req tensorboardRequest) (
+func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	[]*tensorboardConfig, error) {
 	confByID := map[int]*tensorboardConfig{}
 	var exp *model.Experiment

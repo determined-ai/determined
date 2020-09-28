@@ -42,8 +42,8 @@ func respondBadRequest(ctx *actor.Context, err error) {
 // - template: The configuration template name.
 // - user_files: The files to run with the command.
 // - data: Additional data for a command.
-func parseCommandRequest(
-	c echo.Context,
+func parseCommandRequestWithUser(
+	user model.User,
 	db *db.PgDB,
 	params *commandParams,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
@@ -72,7 +72,6 @@ func parseCommandRequest(
 		}
 	}
 
-	user := c.(*requestContext.DetContext).MustGetUser()
 	agentUserGroup, err := db.AgentUserGroup(user.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find user and group information for user %s", user.Username)
@@ -89,4 +88,14 @@ func parseCommandRequest(
 		},
 		AgentUserGroup: agentUserGroup,
 	}, nil
+}
+
+func parseCommandRequest(
+	c echo.Context,
+	db *db.PgDB,
+	params *commandParams,
+	taskContainerDefaults *model.TaskContainerDefaultsConfig,
+) (*commandRequest, error) {
+	user := c.(*requestContext.DetContext).MustGetUser()
+	return parseCommandRequestWithUser(user, db, params, taskContainerDefaults)
 }
