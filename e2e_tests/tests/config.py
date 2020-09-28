@@ -169,4 +169,3 @@ def set_pod_spec(config: Dict[Any, Any], pod_spec: Dict[Any, Any]) -> Dict[Any, 
     config.setdefault("environment", {})
     config["environment"]["pod_spec"] = pod_spec
     return config
-
