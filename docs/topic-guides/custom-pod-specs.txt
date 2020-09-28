@@ -182,6 +182,11 @@ Example of configuring a pod spec for an individual task:
        metadata:
          labels:
            customLabel: task-specific-label
+       spec:
+         # Specify a pull secret for task container image.
+         imagePullSecrets:
+           name: regcred
+
 
 ************
  Next Steps

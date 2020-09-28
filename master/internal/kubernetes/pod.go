@@ -206,7 +206,7 @@ func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, msg resourceCrea
 func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
 	p.pod = msg.updatedPod
 
-	containerState, err := getDeterminedContainerState(ctx, p.pod, p.containerNames)
+	containerState, err := getPodState(ctx, p.pod, p.containerNames)
 	if err != nil {
 		return err
 	}
@@ -391,7 +391,7 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	})
 }
 
-func getDeterminedContainerState(
+func getPodState(
 	ctx *actor.Context,
 	pod *k8sV1.Pod,
 	containerNames map[string]bool,
