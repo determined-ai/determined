@@ -18,7 +18,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -84,10 +83,10 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 		return err
 	}
 	handler := func(c echo.Context) error {
-		if enableCORS {
-			api.AddCORSHeader(c)
-		}
 		request := c.Request()
+		if origin := request.Header.Get("Origin"); enableCORS && origin != "" {
+			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
+		}
 		if c.Request().Header.Get("Authorization") == "" {
 			if cookie, err := c.Cookie(cookieName); err == nil {
 				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
