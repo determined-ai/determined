@@ -50,9 +50,7 @@ class NoopPytorchTrial(pytorch.PyTorchTrial):
         torch_rand = torch.randint(1000, (1,))
         gpu_rand = torch.randint(1000, (1,), device=self.context.device)
 
-        print(
-            "finished evaluate_batch for rank {}".format(self.context.distributed.get_rank())
-        )
+        print("finished evaluate_batch for rank {}".format(self.context.distributed.get_rank()))
 
         return {
             "validation_error": val,
