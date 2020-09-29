@@ -412,7 +412,7 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 		return
 	}
 
-	if len(msg.event.Message) > 22 &&  msg.event.Message[0:23] == gpuTextReplacement {
+	if len(msg.event.Message) > 22 && msg.event.Message[0:23] == gpuTextReplacement {
 		msg.event.Message += strconv.Itoa(p.gpus) + " GPUs required."
 	}
 
