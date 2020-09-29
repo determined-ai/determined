@@ -442,11 +442,9 @@ func (c *awsCluster) listSpotRequestsById(
 		ctx.Log().Debug("dry run of listSpotRequestsById.")
 	}
 
-	// TODO: Catch the case where there are no ids? At least test it
-	ctx.Log().
-		WithField("log-type", "list-spot-requests-by-ids").
-		Infof("num spot request ids: %d", len(spotRequestIds))
-
+	if len(spotRequestIds) == 0 {
+		return &ec2.DescribeSpotInstanceRequestsOutput{}, nil
+	}
 
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		DryRun:                 aws.Bool(dryRun),
