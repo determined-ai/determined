@@ -63,6 +63,8 @@ type spotRequest struct {
 }
 
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
+	// TODO: This list operation will grow and grow. If performance is a concern, we should
+	//       offload cleanup of inactiveRequests to another goroutine
 	activeSpotRequests, inactiveSpotRequests, err := c.listSpotInstanceRequests(ctx, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
@@ -76,6 +78,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	// Clean up time!
 	// If there are spot requests that are cancelled but still have an active instance, delete the instance
 	// If there are requests that failed and the error indicates that the user need to do something, log it
+	// TODO: Currently the implementation means that cleanup is going to grow indefinitely.
 	c.cleanupInactiveSpotRequests(ctx, inactiveSpotRequests)
 
 	// Next, update the requestSnapshot. It is the API response + the previous state

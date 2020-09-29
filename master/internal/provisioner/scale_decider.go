@@ -197,7 +197,7 @@ func (s *scaleDecider) calculateNumInstancesToLaunch(
 	instances := make([]*Instance, 0, len(s.instanceSnapshot))
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
-		case Starting, Running:
+		case Starting, Running, SpotRequestPendingAWS:
 			instances = append(instances, inst)
 		}
 	}
