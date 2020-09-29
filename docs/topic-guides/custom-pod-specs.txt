@@ -17,10 +17,22 @@ use Determined on Kubernetes.
 
 In this topic guide, we will cover:
 
+#. How Determined uses pod specs.
 #. The different ways to configure custom pod specs.
 #. Supported pod spec fields.
 #. How to configuring default pod specs.
 #. How to configuring per-task pods specs.
+
+*****************************
+How Determined Uses Pod Specs
+*****************************
+
+All Determined tasks are launched as pods. Determined pods consists of an
+initContainer named ``determined-init-container`` and a container named
+``determined-container`` which execute the workload. When users provide a
+pod spec, Determined inserts the ``determined-init-container`` and
+``determined-container`` into the provided pod spec. As described below
+users may also configure some of the fields for the ``determined-container``.
 
 *****************************
  Ways to Configure Pod Specs
@@ -50,15 +62,14 @@ Determined does not currently support configuring:
    which the Determined master is running.
 -  Host Networking - This must be configured via the
    :ref:`master-configuration`.
--  Init Containers - Determined does not currently support init
-   containers.
+-  Restart Policy - This is always set to ``Never``.
 
-Additionally, users are allowed to specify the spec for exactly one
-container within the pod. The specs of this container will be applied to
-the container that executes the task launched by Determined. For the
-container spec, Determined does not currently support configuring:
-
--  Container Name - Determined automatically assigns this.
+As part of their pod spec, users can specify ``initContainers`` and
+``containers``. Additionally users can configure the
+``determined-container`` that executes the task (e.g., training), by
+setting the container name in the pod spec to ``determined-container``.
+For the ``determined-container``, Determined does not currently support
+configuring:
 
 -  Container Image - Please see :ref:`container-images` for how to
    specify custom docker images.
@@ -105,7 +116,7 @@ configured in ``values.yaml`` of the :ref:`Determined helm chart
 <helm-config>` under ``taskContainerDefaults.cpuPodSpec`` and
 ``taskContainerDefaults.gpuPodSpec``. The ``gpuPodSpec`` is applied to
 all tasks that use GPUs (e.g., experiments, notebooks). ``cpuPodSpec``
-is applied to all tasks that only use CPUs (e.g, TensorBoards, CPU-only
+is applied to all tasks that only use CPUs (e.g., TensorBoards, CPU-only
 notebooks).
 
 Example of configuring default pod specs:
@@ -114,27 +125,37 @@ Example of configuring default pod specs:
 
    taskContainerDefaults:
      cpuPodSpec:
+       apiVersion: v1
+       kind: Pod
        metadata:
          labels:
            customLabel: cpu-label
        spec:
          containers:
-           volumeMounts:
-           - mountPath: /example-data
-             name: example-volume
+           # Will be applied to the container executing the task.
+           - name: determined-container
+             volumeMounts:
+               - name: example-volume
+                 mountPath: /example-data
+           # Custom sidecar container.
+           - name: sidecar-container
+             image: alpine:latest
          volumes:
            - name: example-volume
              hostPath:
                path: /data
      gpuPodSpec:
+       apiVersion: v1
+       kind: Pod
        metadata:
          labels:
            customLabel: gpu-label
        spec:
          containers:
-           volumeMounts:
-           - mountPath: /example-data
-             name: example-volume
+           - name: determined-container
+             volumeMounts:
+               - name: example-volume
+                 mountPath: /example-data
          volumes:
            - name: example-volume
              hostPath:
@@ -156,9 +177,16 @@ Example of configuring a pod spec for an individual task:
 
    environment:
      pod_spec:
+       apiVersion: v1
+       kind: Pod
        metadata:
          labels:
            customLabel: task-specific-label
+       spec:
+         # Specify a pull secret for task container image.
+         imagePullSecrets:
+           name: regcred
+
 
 ************
  Next Steps
