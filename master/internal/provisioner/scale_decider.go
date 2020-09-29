@@ -192,7 +192,7 @@ func (s *scaleDecider) calculateNumInstancesToLaunch() int {
 	numRecentlyLaunched := 0
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
-		case Starting, Running:
+		case Starting, Running, SpotRequestPendingAWS:
 			// Check recently launched unconnected instances.
 			if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
 				continue
