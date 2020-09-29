@@ -27,27 +27,35 @@ def wait_for_process(process):
 
 
 def login_as(username, password=""):
+    print(f"logging in as {username} ... ", end="")
     p = pexpect.spawn("det", ["user", "login", username])
     p.expect("Password.*:")
     p.sendline(password)
     wait_for_process(p)
+    print("done")
 
 
 def create_user(username, password=""):
+    print(f"creating user {username} ... ", end="")
     p = pexpect.spawn("det", ["-u", "admin", "user", "create", username])
     p.expect(pexpect.EOF)
     wait_for_process(p)
+    print("done")
 
     if password != "":
+        print(f"update password for {username} ... ", end="")
         p = pexpect.spawn("det", ["-u", "admin", "user", "change-password", username])
         p.expect("New password.*:")
+        print(f"password: {password}")
         p.sendline(password)
         p.expect("Confirm password:")
         p.sendline(password)
         wait_for_process(p)
+        print("done")
 
 
-print("setting up users..")
+print("setting up users...")
+
 # First login as admin to avoid having to authenticate downstream
 login_as("admin")
 
