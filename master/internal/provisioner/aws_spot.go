@@ -62,6 +62,11 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
 
+	ctx.Log().
+		WithField("log-type", "listSpot.querySpotRequest").
+		Infof("Retrieved active spot requests: %d", len(resp.SpotInstanceRequests))
+
+
 	runningSpotInstances, pendingRequests, unfulfillableRequests := parseDescribeSpotInstanceRequestsResponse(resp)
 	c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
 
@@ -478,7 +483,8 @@ func parseDescribeSpotInstanceRequestsResponse(
 	healthyPendingRequests = make([]*string, 0, 0)
 	runningInstanceIds = make([]*string, 0, 0)
 
-	for _, request := range response.SpotInstanceRequests {
+	for i, request := range response.SpotInstanceRequests {
+		fmt.Println("Parsing spot instance request response number", i)
 		if spotRequestIsUnfulfillable(*request) {
 			unfulfillableRequests = append(unfulfillableRequests, &unfulfillableSpotRequest{
 				SpotRequestId: *request.SpotInstanceRequestId,
