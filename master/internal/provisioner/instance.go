@@ -26,6 +26,8 @@ const (
 	Stopping InstanceState = "Stopping"
 	// Stopped describes the instance is stopped.
 	Stopped InstanceState = "Stopped"
+	// SpotRequestPendingAWS indicates that the instance is actually a pending AWS spot request
+	SpotRequestPendingAWS InstanceState = "SpotRequestPendingAWS"
 )
 
 // Instance connects a provider's name for a compute resource to the Determined agent name.
