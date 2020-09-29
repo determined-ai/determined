@@ -14,15 +14,15 @@ import (
 
 // Spot Instances are created asynchronously - you create a request with a
 // time in the future and the request will be fulfilled or not. However, the scaleDecider operates in terms of instances.
-//Most of this code is about handling this. When the scaleDecider asks for a list of instances, we return the spot
-//instances that have been created and we silently keep track of the spot requests
-//that are pending but have not been fulfilled. We obey deletion as normal.
-//During instance creation, the scaleDecider is telling us that it wants X
-//more instances than it thinks we have based on the output of list. It is
-//unaware of the unfulfilled pending spot requests. We look at the number of
-//additional instances that the scaleDecider wants and compare that to the
-//number of unfulfilled spot requests to decide whether we need to create
-//more spot requests, delete spot requests or do nothing.
+// Most of this code is about handling this. When the scaleDecider asks for a list of instances, we return the spot
+// instances that have been created and we silently keep track of the spot requests
+// that are pending but have not been fulfilled. We obey deletion as normal.
+// During instance creation, the scaleDecider is telling us that it wants X
+// more instances than it thinks we have based on the output of list. It is
+// unaware of the unfulfilled pending spot requests. We look at the number of
+// additional instances that the scaleDecider wants and compare that to the
+// number of unfulfilled spot requests to decide whether we need to create
+// more spot requests, delete spot requests or do nothing.
 
 
 
@@ -36,12 +36,12 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
 
-	runningInstanceIds, requestsWithoutInstances, unfulfillableRequests := parseDescribeSpotInstanceRequestResponse(resp)
+	runningSpotInstances, pendingRequests, unfulfillableRequests := parseDescribeSpotInstanceRequestResponse(resp)
 	c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
 
-	c.pendingSpotRequestIds = requestsWithoutInstances
+	c.pendingSpotRequestIds = pendingRequests
 
-	instancesToReturn, err := c.describeInstancesById(runningInstanceIds, false)
+	instancesToReturn, err := c.describeInstancesById(runningSpotInstances, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 instances")
 	}
@@ -72,7 +72,7 @@ func (c *awsCluster) launchSpot(
 		return
 	}
 
-	// There may be pending spot requests that have been fulfilled or since we told the
+	// There may be pending spot requests that have been fulfilled in the time since we told the
 	// scaleDecider how many instances were running. This means that we need to look
 	// at instanceNum and pendingSpotRequest to decide what action we should actually
 	// take. There are three cases:
@@ -126,7 +126,6 @@ func (c *awsCluster) launchSpot(
 		var numPendingRequestsToDelete int
 		var numRunningInstancesToDelete int
 		if diff <= len(requestsWithoutInstances) {
-
 			numPendingRequestsToDelete = diff
 			numRunningInstancesToDelete = 0
 		} else {
@@ -138,12 +137,22 @@ func (c *awsCluster) launchSpot(
 			_, err := c.terminateSpotInstanceRequest(ctx, spotRequestsToCancel, false)
 			if err != nil {
 				ctx.Log().WithError(err).Error("cannot cancel spot requests")
+				return
 			}
 
 			// Remember that the request may have been fulfilled since we checked, so
 			// make sure we don't leave behind orphaned instances!
 
-			// TODO: Do another scan of the spot requests to see if there are any instances to shut down
+			listSpotRequestResp, err = c.listSpotRequestsById(ctx, c.pendingSpotRequestIds, false)
+			if err != nil {
+				ctx.Log().WithError(err).Error("cannot describe EC2 spot requests")
+				return
+			}
+			runningSpotInstances, _, _ := parseDescribeSpotInstanceRequestResponse(listSpotRequestResp)
+			if len(runningInstanceIds) > 0 {
+				c.terminateSpot(ctx, runningSpotInstances)
+			}
+
 		}
 		if numRunningInstancesToDelete > 0 {
 			instanceIdsToTerminate := runningInstanceIds[0:numRunningInstancesToDelete]
@@ -156,8 +165,44 @@ func (c *awsCluster) launchSpot(
 
 
 func (c *awsCluster) handleUnfulfillableRequests(ctx *actor.Context, unfulfillableRequests []*unfulfillableSpotRequest) {
-	// TODO: Add error logs
-	// TODO: Clean up spot requests to the extent possible
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
+	for _, unfulfillableRequest := range unfulfillableRequests {
+		switch unfulfillableRequest.StatusCode {
+		case
+		"cancelled-before-fulfillment",
+		"instance-terminated-by-price",
+		"instance-terminated-by-schedule",
+		"instance-terminated-by-service",
+		"instance-terminated-by-user",
+		"spot-instance-terminated-by-user",
+		"instance-terminated-launch-group-constraint",
+		"instance-terminated-no-capacity",
+		"marked-for-stop",
+		"marked-for-termination",
+		"instance-stopped-by-price",
+		"instance-stopped-by-user",
+		"instance-stopped-no-capacity",
+		"schedule-expired",
+		"system-error":
+			// Unfulfillable, not requiring cleanup
+			continue
+		case "request-canceled-and-instance-running":
+			// Unfulfillable, maybe requiring cleanup
+			c.terminateSpot(ctx, []*string{unfulfillableRequest.InstanceId})
+			continue
+		case
+		"bad-parameters",
+		"constraint-not-fulfillable",
+		"limit-exceeded":
+			// Unfulfillable, requiring user attention
+			ctx.Log().
+				WithField("spot-request-status-code", unfulfillableRequest.StatusCode).
+				WithField("spot-request-status-message", unfulfillableRequest.StatusMessage).
+				Error("a spot request cannot be fulfilled and the error message indicates that this is a permanent error requiring the user to fix something")
+			continue
+		}
+	}
+
 	return
 }
 
@@ -233,7 +278,7 @@ func (c *awsCluster) createSpotInstanceRequest(
 					},
 				},
 			},
-			EbsOptimized:        nil,  // TODO: We should enable this.
+			EbsOptimized:        nil,  // TODO: We should enable this, but we need to confirm that all allowable instance support this
 			ImageId:      aws.String(c.ImageID),
 			InstanceType: aws.String(instanceType.name()),
 			KeyName:      aws.String(c.SSHKeyName),
@@ -337,8 +382,17 @@ type unfulfillableSpotRequest struct {
 	State string
 	StatusCode string
 	StatusMessage string
+	InstanceId *string
 }
 
+// This function takes the output of a DescribeSpotInstanceRequests and
+// divides the results into three groups:
+//   1. Spot requests that have been fulfilled.
+//      Represented by the instanceId.
+//   2. Spot requests that are pending and will be fulfilled in time.
+//      Represented by the spotRequestId.
+//   3. Spot requests that have entered a permanently failed state.
+//      Represented by an unfulfillableSpotRequest struct.
 func parseDescribeSpotInstanceRequestResponse(
 	response *ec2.DescribeSpotInstanceRequestsOutput,
 ) (runningInstanceIds []*string, healthyPendingRequests []*string, unfulfillableRequests []*unfulfillableSpotRequest) {
@@ -348,18 +402,18 @@ func parseDescribeSpotInstanceRequestResponse(
 	runningInstanceIds = make([]*string, 0, 0)
 
 	for _, request := range response.SpotInstanceRequests {
+		if spotRequestIsUnfulfillable(*request) {
+			unfulfillableRequests = append(unfulfillableRequests, &unfulfillableSpotRequest{
+				SpotRequestId: *request.SpotInstanceRequestId,
+				State: *request.State,
+				StatusCode: *request.Status.Code,
+				StatusMessage: *request.Status.Message,
+				InstanceId: request.InstanceId,
+			})
+			continue
+		}
 		if request.InstanceId == nil {
-			if spotRequestIsUnfulfillable(*request) {
-				unfulfillableRequests = append(unfulfillableRequests, &unfulfillableSpotRequest{
-					SpotRequestId: *request.SpotInstanceRequestId,
-					State: *request.State,
-					StatusCode: *request.Status.Code,
-					StatusMessage: *request.Status.Message,
-				})
-			} else {
-				healthyPendingRequests = append(healthyPendingRequests, request.SpotInstanceRequestId)
-			}
-
+			healthyPendingRequests = append(healthyPendingRequests, request.SpotInstanceRequestId)
 		} else {
 			runningInstanceIds = append(runningInstanceIds, request.InstanceId)
 		}
@@ -423,6 +477,49 @@ func (c *awsCluster) terminateSpotInstanceRequest(
 func spotRequestIsUnfulfillable(
 	requestInfo ec2.SpotInstanceRequest,
 ) bool {
-	// TODO: Implement
-	return false
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
+
+
+	// Unfulfillable:
+	// state=closed
+	// state=cancelled
+	// state=disabled
+
+	// Unfulfillable not requiring cleanup
+	// canceled-before-fulfillment
+	// instance-terminated-by-price
+	// instance-terminated-by-schedule
+	// instance-terminated-by-service
+	// instance-terminated-by-user
+	// spot-instance-terminated-by-user
+	// instance-terminated-launch-group-constraint
+	// instance-terminated-no-capacity
+	// marked-for-stop
+	// marked-for-termination
+	// instance-stopped-by-price
+	// instance-stopped-by-user
+	// instance-stopped-no-capacity
+	// schedule-expired
+	// system-error
+
+
+	// Unfulfillable, maybe requiring cleanup
+	// request-canceled-and-instance-running
+
+	// Unfulfillable due to reason requiring user correction
+	// status-code=bad-parameters, state=closed
+	// constraint-not-fulfillable
+	// limit-exceeded
+
+	// Fulfillable (status-code)
+	// az-group-constraint
+	// capacity-not-available
+	// fulfilled
+	// launch-group-constraint
+	// not-scheduled-yet
+	// pending-evaluation
+	// pending-fulfillment
+	// placement-group-constraint
+	// price-too-low
+	return *requestInfo.State == "closed" || *requestInfo.State == "disabled" || *requestInfo.State == "cancelled"
 }
