@@ -442,16 +442,20 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 	//	},
 	//}
 
+	//input := &ec2.DescribeSpotInstanceRequestsInput{
+	//	DryRun: aws.Bool(dryRun),
+	//	Filters: []*ec2.Filter{
+	//		{
+	//			Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+	//			Values: []*string{
+	//				aws.String(c.TagValue),
+	//			},
+	//		},
+	//	},
+	//}
+
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		DryRun: aws.Bool(dryRun),
-		Filters: []*ec2.Filter{
-			{
-				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
-				Values: []*string{
-					aws.String(c.TagValue),
-				},
-			},
-		},
 	}
 
 	return c.client.DescribeSpotInstanceRequests(input)
