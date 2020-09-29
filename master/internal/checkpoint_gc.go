@@ -3,7 +3,7 @@ package internal
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -28,16 +28,16 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(t.rp, scheduler.AllocateRequest{
+		ctx.Tell(t.rp, resourcemanagers.AllocateRequest{
 			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
-			FittingRequirements: scheduler.FittingRequirements{
+			FittingRequirements: resourcemanagers.FittingRequirements{
 				SingleAgent: true,
 			},
 			TaskActor:      ctx.Self(),
 			NonPreemptible: true,
 		})
 
-	case scheduler.ResourcesAllocated:
+	case resourcemanagers.ResourcesAllocated:
 		config := t.experiment.Config.CheckpointStorage
 
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(t.experiment.ID,
@@ -58,7 +58,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			}
 			a.Start(ctx, taskSpec)
 		}
-	case scheduler.ReleaseResources:
+	case resourcemanagers.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.
 
 	case sproto.TaskContainerStateChanged:

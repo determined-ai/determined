@@ -11,7 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/provisioner"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -80,10 +80,10 @@ type Config struct {
 	Telemetry             TelemetryConfig                   `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`
 
-	Scheduler   *scheduler.Config   `json:"scheduler"`
-	Provisioner *provisioner.Config `json:"provisioner"`
-	*scheduler.ResourcePoolsConfig
-	ResourceManager *scheduler.ResourceManagerConfig `json:"resource_manager"`
+	Scheduler   *resourcemanagers.Config `json:"scheduler"`
+	Provisioner *provisioner.Config      `json:"provisioner"`
+	*resourcemanagers.ResourcePoolsConfig
+	ResourceManager *resourcemanagers.ResourceManagerConfig `json:"resource_manager"`
 }
 
 // Printable returns a printable string.
@@ -124,7 +124,7 @@ func (c *Config) Resolve() error {
 
 	c.DB.Migrations = fmt.Sprintf("file://%s", filepath.Join(c.Root, "static/migrations"))
 
-	c.ResourceManager, c.ResourcePoolsConfig, err = scheduler.ResolveConfig(
+	c.ResourceManager, c.ResourcePoolsConfig, err = resourcemanagers.ResolveConfig(
 		c.Scheduler, c.Provisioner, c.ResourceManager, c.ResourcePoolsConfig,
 	)
 	if err != nil {

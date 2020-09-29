@@ -11,7 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/provisioner"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
@@ -44,7 +44,7 @@ provisioner:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: &scheduler.Config{Fit: "best"},
+		Scheduler: &resourcemanagers.Config{Fit: "best"},
 		Provisioner: &provisioner.Config{
 			AgentDockerRuntime:     "runc",
 			AgentDockerNetwork:     "default",
@@ -85,7 +85,7 @@ scheduler:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: &scheduler.Config{Fit: "best"},
+		Scheduler: &resourcemanagers.Config{Fit: "best"},
 	}
 
 	var unmarshaled Config
@@ -137,7 +137,7 @@ checkpoint_storage:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: &scheduler.Config{Fit: "best"},
+		Scheduler: &resourcemanagers.Config{Fit: "best"},
 		CheckpointStorage: CheckpointStorageConfig(removeAllWhitespace(`
 {
   "access_key": "my_key",

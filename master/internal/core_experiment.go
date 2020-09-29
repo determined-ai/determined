@@ -17,7 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -316,11 +316,11 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if patch.Resources != nil {
 		if patch.Resources.MaxSlots.IsPresent {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				scheduler.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
+				sproto.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
 		}
 		if patch.Resources.Weight != nil {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				scheduler.SetGroupWeight{Weight: *patch.Resources.Weight})
+				sproto.SetGroupWeight{Weight: *patch.Resources.Weight})
 		}
 	}
 

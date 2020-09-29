@@ -6,11 +6,11 @@ import (
 	"github.com/labstack/echo"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 )
 
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
-	return m.system.Ask(m.rp, scheduler.GetTaskSummaries{}).Get(), nil
+	return m.system.Ask(m.rp, resourcemanagers.GetTaskSummaries{}).Get(), nil
 }
 
 func (m *Master) getTask(c echo.Context) (interface{}, error) {
@@ -20,8 +20,8 @@ func (m *Master) getTask(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	id := scheduler.TaskID(args.TaskID)
-	resp := m.system.Ask(m.rp, scheduler.GetTaskSummary{ID: &id})
+	id := resourcemanagers.TaskID(args.TaskID)
+	resp := m.system.Ask(m.rp, resourcemanagers.GetTaskSummary{ID: &id})
 	if resp.Empty() {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "task not found: %s", args.TaskID)
 	}

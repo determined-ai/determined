@@ -12,7 +12,7 @@ import (
 func (a *apiServer) GetAgents(
 	_ context.Context, req *apiv1.GetAgentsRequest) (resp *apiv1.GetAgentsResponse, err error) {
 	response := a.m.system.AskAt(
-		actor.Addr("resourceProviders"), sproto.GetEndpointActorAddress{}).Get()
+		actor.Addr("resourceManagers"), sproto.GetEndpointActorAddress{}).Get()
 	endpointActorName := response.(string)
 
 	err = a.actorRequest(endpointActorName, req, &resp)

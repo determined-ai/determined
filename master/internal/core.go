@@ -27,7 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/proxy"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
@@ -248,28 +248,24 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
-func (m *Master) initializeResourceProviders(provisionerSlotsPerInstance int) {
-	var resourceProvider *actor.Ref
+func (m *Master) initializeResourceManagers(provisionerSlotsPerInstance int) {
+	var ref *actor.Ref
 	switch {
 	case m.config.ResourceManager.DeterminedRM != nil:
-		resourceProvider, _ = m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
-			scheduler.MakeScheduler(m.config.ResourceManager.DeterminedRM.SchedulingPolicy),
-			scheduler.MakeFitFunction(m.config.ResourceManager.DeterminedRM.FittingPolicy),
-			m.provisioner,
-			provisionerSlotsPerInstance,
-		))
+		ref, _ = m.system.ActorOf(
+			actor.Addr("defaultRP"),
+			resourcemanagers.NewDeterminedResourceManager(
+				resourcemanagers.MakeScheduler(m.config.ResourceManager.DeterminedRM.SchedulingPolicy),
+				resourcemanagers.MakeFitFunction(m.config.ResourceManager.DeterminedRM.FittingPolicy),
+				m.provisioner,
+				provisionerSlotsPerInstance,
+			),
+		)
 
 	case m.config.ResourceManager.KubernetesRM != nil:
-		resourceProvider, _ = m.system.ActorOf(
+		ref, _ = m.system.ActorOf(
 			actor.Addr("kubernetesRP"),
-			scheduler.NewKubernetesResourceProvider(
-				&scheduler.KubernetesResourceProviderConfig{
-					Namespace:                m.config.ResourceManager.KubernetesRM.Namespace,
-					MaxSlotsPerPod:           m.config.ResourceManager.KubernetesRM.MaxSlotsPerPod,
-					MasterServiceName:        m.config.ResourceManager.KubernetesRM.MasterServiceName,
-					LeaveKubernetesResources: m.config.ResourceManager.KubernetesRM.LeaveKubernetesResources,
-				},
-			),
+			resourcemanagers.NewKubernetesResourceManager(m.config.ResourceManager.KubernetesRM),
 		)
 
 	default:
@@ -277,8 +273,8 @@ func (m *Master) initializeResourceProviders(provisionerSlotsPerInstance int) {
 	}
 
 	m.rp, _ = m.system.ActorOf(
-		actor.Addr("resourceProviders"),
-		scheduler.NewResourceProviders(resourceProvider))
+		actor.Addr("resourceManagers"),
+		resourcemanagers.NewResourceManagers(ref))
 }
 
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
@@ -316,10 +312,10 @@ func (m *Master) Run() error {
 	// Actor structure:
 	// master system
 	// +- Provisioner (provisioner.Provisioner: provisioner)
-	// +- ResourceProviders (scheduler.ResourceProviders: resourceProviders)
+	// +- ResourceManagers (scheduler.ResourceManagers: resourceManagers)
 	// Exactly one of the resource providers is enabled at a time.
-	// +- DefaultResourceProvider (scheduler.DefaultResourceProvider: defaultRP)
-	// +- KubernetesResourceProvider (scheduler.KubernetesResourceProvider: kubernetesRP)
+	// +- DefaultResourceManager (scheduler.DefaultResourceManager: defaultRM)
+	// +- KubernetesResourceManager (scheduler.KubernetesResourceManager: kubernetesRM)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
@@ -353,7 +349,7 @@ func (m *Master) Run() error {
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	m.initializeResourceProviders(provisionerSlotsPerInstance)
+	m.initializeResourceManagers(provisionerSlotsPerInstance)
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 

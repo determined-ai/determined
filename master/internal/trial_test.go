@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -34,8 +34,8 @@ func (a *mockActor) Receive(ctx *actor.Context) error {
 type mockAllocation struct {
 }
 
-func (mockAllocation) Summary() scheduler.ContainerSummary {
-	return scheduler.ContainerSummary{}
+func (mockAllocation) Summary() resourcemanagers.ContainerSummary {
+	return resourcemanagers.ContainerSummary{}
 }
 func (mockAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec) {}
 func (mockAllocation) Kill(ctx *actor.Context)                       {}
@@ -81,10 +81,10 @@ func TestRendezvousInfo(t *testing.T) {
 	system := actor.NewSystem("")
 
 	rp, created := system.ActorOf(
-		actor.Addr("resourceProviders"),
-		scheduler.NewDefaultRP(
-			scheduler.NewFairShareScheduler(),
-			scheduler.WorstFit,
+		actor.Addr("resourceManagers"),
+		resourcemanagers.NewDeterminedResourceManager(
+			resourcemanagers.NewFairShareScheduler(),
+			resourcemanagers.WorstFit,
 			nil,
 			0,
 		))
@@ -101,8 +101,8 @@ func TestRendezvousInfo(t *testing.T) {
 	trial := &trial{
 		rp:                   rp,
 		experiment:           &model.Experiment{},
-		task:                 &scheduler.AllocateRequest{},
-		allocations:          []scheduler.Allocation{mockAllocation{}, mockAllocation{}},
+		task:                 &resourcemanagers.AllocateRequest{},
+		allocations:          []resourcemanagers.Allocation{mockAllocation{}, mockAllocation{}},
 		experimentState:      model.ActiveState,
 		startedContainers:    make(map[cproto.ID]bool),
 		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
