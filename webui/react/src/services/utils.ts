@@ -20,6 +20,8 @@ export const isAuthFailure = (e: any): boolean => {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isLoginFailure = (e: any): boolean => {
   return e.response && e.response.status && e.response.status === 403;
+  // TODO: Use the following when upgrading to new API login.
+  // return e && e.status === 401;
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
