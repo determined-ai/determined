@@ -118,13 +118,12 @@ func TestRendezvousInfo(t *testing.T) {
 	}
 
 	// Simulate a stray websocket connecting to the trial.
-	var stray mockActor
-	strayRef, created := system.ActorOf(actor.Addr(uuid.New().String()), &stray)
-	if !created {
-		t.Fatal("unable to create cluster")
-	}
 	strayID := cproto.ID("stray-container-id")
-	trial.containerSockets[strayID] = strayRef
+	system.Ask(trialRef, containerConnected{ContainerID: strayID})
+	t.Run("Stray sockets are not accepted", func(t *testing.T) {
+		_, strayRemains := trial.containerSockets[strayID]
+		assert.Assert(t, !strayRemains)
+	})
 
 	containers := make([]*cproto.Container, 0)
 	mockActors := make(map[*cproto.Container]*mockActor)
@@ -152,11 +151,6 @@ func TestRendezvousInfo(t *testing.T) {
 
 		containers = append(containers, c)
 	}
-
-	t.Run("Stray sockets are dropped", func(t *testing.T) {
-		_, strayRemains := trial.containerSockets[strayID]
-		assert.Assert(t, !strayRemains)
-	})
 
 	var rmsgs []*rendezvousInfoMessage
 	for _, c := range containers {
