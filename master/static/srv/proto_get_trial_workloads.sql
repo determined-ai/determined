@@ -50,13 +50,7 @@ checkpoints_vt AS (
       WHERE c.trial_id = 20
     ) AS r1
 )
-SELECT t.training as workload,
-  t.num_batches,
-  t.prior_batches_processed
+SELECT *
 FROM trainings_vt t
-UNION ALL
-SELECT *
-FROM validations_vt v
-UNION ALL
-SELECT *
-FROM checkpoints_vt c
+  FULL JOIN checkpoints_vt c ON false
+  FULL JOIN validations_vt v ON false
