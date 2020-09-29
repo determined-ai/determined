@@ -141,6 +141,7 @@ var ec2InstanceStates = map[string]InstanceState{
 	"pending": Starting,
 	"running": Running,
 	"stopped": Stopped,
+	"stopping": Stopping,
 }
 
 func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
