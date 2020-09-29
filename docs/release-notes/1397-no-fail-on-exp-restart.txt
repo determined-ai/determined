@@ -1,0 +1,6 @@
+:orphan:
+
+**BUG FIXES**
+
+-  Fix a bug where the master instance would fail if an experiment
+   could not be read from the database.
