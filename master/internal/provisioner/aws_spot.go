@@ -349,7 +349,7 @@ func (c *awsCluster) createSpotInstanceRequest(
 	}
 	idempotencyToken := uuid.New().String()
 
-	validFrom := time.Now().Local().Add(time.Second * time.Duration(2))
+	validFrom := time.Now().Local().Add(time.Second * time.Duration(10))  // Potential bug with clock skew?
 	spotInput := &ec2.RequestSpotInstancesInput{
 		ClientToken:                  aws.String(idempotencyToken),
 		DryRun:                       aws.Bool(dryRun),
