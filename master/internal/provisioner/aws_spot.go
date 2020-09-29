@@ -52,7 +52,7 @@ import (
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
 
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
-	// 1. List all non-terminal spot instance requests
+	// 1. List all non-terminal spot instance request
 	// 2. For any requests that indicate a failure, write out an error message
 	//    and clean up the spot request (if needed).
 	// 3. For each spot instance request, find the matching instances
