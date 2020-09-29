@@ -12,21 +12,31 @@ const ndjsonStream = require('can-ndjson-stream');
 /* Response Helpers */
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isAuthFailure = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 401;
+const getResponseStatus = (e: any): number | undefined => {
+  const errorResponse = e || {};
+  return (errorResponse.response || {}).status || errorResponse.status;
 };
 
-// is a failure received from a failed login attempt due to bad credentials
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isAuthFailure = (e: any): boolean => {
+  return getResponseStatus(e) === 401;
+};
+
+/*
+ * This is a failure received from a failed login attempt due to bad credentials
+ * 403 is returned by the old API
+ * 401 is returned by the new API. We can rely on isAuthFailure
+ * when we completely migrate over to the new API.
+ */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isLoginFailure = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 403;
-  // TODO: Use the following when upgrading to new API login.
-  // return e && e.status === 401;
+  const status = getResponseStatus(e);
+  return status === 401 || status === 403;
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isNotFound = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 404;
+  return getResponseStatus(e) === 404;
 };
 
 /* HTTP Helpers */
