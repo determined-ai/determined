@@ -12,7 +12,7 @@ WITH validations_vt AS (
       FROM validations v
         INNER JOIN steps s ON v.trial_id = s.trial_id
         AND v.step_id = s.id
-      WHERE v.trial_id = 20
+      WHERE v.trial_id = $1
     ) AS r1
 ),
 trainings_vt AS (
@@ -27,7 +27,7 @@ trainings_vt AS (
         s.metrics->'avg_metrics' as metrics,
         s.metrics->'num_inputs' as num_inputs
       FROM steps s
-      WHERE s.trial_id = 20
+      WHERE s.trial_id = $1
     ) AS r1
 ),
 checkpoints_vt AS (
@@ -44,7 +44,7 @@ checkpoints_vt AS (
       FROM checkpoints c
         INNER JOIN steps s ON c.trial_id = s.trial_id
         AND c.step_id = s.id
-      WHERE c.trial_id = 20
+      WHERE c.trial_id = $1
     ) AS r1
 )
 SELECT v.validation,
