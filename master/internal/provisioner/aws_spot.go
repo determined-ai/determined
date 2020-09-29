@@ -496,7 +496,7 @@ func parseDescribeSpotInstanceRequestsResponse(
 	runningInstanceIds = make([]*string, 0, 0)
 
 	for i, request := range response.SpotInstanceRequests {
-		fmt.Println("Parsing spot instance request response number", i)
+		fmt.Println("Parsing spot instance request response number", i, *request.SpotInstanceRequestId, *request.State, *request.Status.Code, *request.Status.Message)
 		if spotRequestIsUnfulfillable(*request) {
 			unfulfillableRequests = append(unfulfillableRequests, &unfulfillableSpotRequest{
 				SpotRequestId: *request.SpotInstanceRequestId,
