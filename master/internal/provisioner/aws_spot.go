@@ -158,6 +158,10 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	}
 
 	combined := append(realInstances, pendingSpotRequestsAsInstances...)
+	ctx.Log().
+		WithField("log-type", "listSpot.returnCombinedList").
+		Infof("Returning list of instances: %d EC2 instances and %d dummy spot instances for %d total.",
+			len(realInstances), len(pendingSpotRequestsAsInstances), len(combined))
 	return combined, nil
 }
 
