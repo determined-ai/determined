@@ -104,8 +104,6 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
 
-	log.Info("Checking logs work inside AWS provider creation")
-
 	cluster := &awsCluster{
 		AWSClusterConfig: config.AWS,
 		masterURL:        *masterURL,
@@ -123,7 +121,6 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 			LogOptions:                   config.AWS.buildDockerLogString(),
 		}),
 	}
-
 	return cluster, nil
 }
 
@@ -154,7 +151,6 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
 }
 
 func (c *awsCluster) dryRunRequests() error {
-	// TODO: Spot
 	const (
 		DryRunOperationErrorCode  = "DryRunOperation"
 		InstanceLimitExceededCode = "InstanceLimitExceeded"
