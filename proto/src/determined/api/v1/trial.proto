@@ -134,15 +134,6 @@ message GetTrialRequest {
 // Response to GetTrialRequest.
 message GetTrialResponse {
     message WorkloadContainer {
-        // Workload ID.
-        int32 id = 1;
-        // Number of batches in this workload.
-        int32 num_batches = 2;
-        // Number of batches processed prior to this workload.
-        int32 prior_batches_processed = 3;
-        // DISCUSS if metrics workload distinguishes between training and validation
-        // we can have one type and field representing both.
-        // What would we call that field?
         oneof workload {
             // Training workload.
             determined.trial.v1.MetricsWorkload training = 4;

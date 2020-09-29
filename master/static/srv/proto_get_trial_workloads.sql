@@ -50,7 +50,9 @@ checkpoints_vt AS (
       WHERE c.trial_id = 20
     ) AS r1
 )
-SELECT *
+SELECT v.validation,
+  t.training,
+  c.checkpoint
 FROM trainings_vt t
   FULL JOIN checkpoints_vt c ON false
   FULL JOIN validations_vt v ON false

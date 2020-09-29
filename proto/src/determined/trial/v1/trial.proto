@@ -26,6 +26,10 @@ message CheckpointWorkload {
   determined.checkpoint.v1.State state = 4;
   // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
   map<string, int64> resources = 5;
+  // Number of batches in this workload.
+  int32 num_batches = 6;
+  // Number of batches processed prior to this workload.
+  int32 prior_batches_processed = 7;
 }
 
 // MetricsWorkload is a workload generating metrics.
@@ -35,12 +39,6 @@ message MetricsWorkload {
       required: ["start_time", "state"]
    }
   };
-  /* enum Type { */
-  /*     // Training workload. */
-  /*     TYPE_TRAINING = 0; */
-  /*     // Validation workload. */
-  /*     TYPE_VALIDATION = 1; */
-  /* } */
   // The time the workload was started.
   google.protobuf.Timestamp start_time = 1;
   // The time the workload finished or was stopped.
@@ -51,30 +49,11 @@ message MetricsWorkload {
   map<string, float> metrics = 4; // FIXME string, string legacy metrics?
   // Number of inputs processed.
   int32 num_inputs = 5;
-}
-
-
-// Workload is a unit of work in Determined.
-message Workload {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-      required: ["id", "num_batches", "prior_batches_processed", "training"]
-   }
-  };
-  // Workload ID.
-  int32 id = 1;
   // Number of batches in this workload.
-  int32 num_batches = 2;
+  int32 num_batches = 6;
   // Number of batches processed prior to this workload.
-  int32 prior_batches_processed = 3;
-  // Associated checkpoint if any.
-  CheckpointWorkload checkpoint = 4;
-  // Associated validation if any.
-  MetricsWorkload validation = 5;
-  // Associated training.
-  MetricsWorkload training = 6;
+  int32 prior_batches_processed = 7;
 }
-
 
 // Trial is a set of workloads and are exploring a determined set of hyperparameters.
 message Trial {

@@ -39,6 +39,8 @@ trial_validations AS (
 ),
 best_validation AS (
   SELECT v.trial_id,
+    num_batches,
+    prior_batches_processed,
     v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
@@ -59,6 +61,8 @@ best_validation AS (
 ),
 latest_validation AS (
   SELECT v.trial_id,
+    num_batches,
+    prior_batches_processed,
     v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
@@ -79,6 +83,8 @@ latest_validation AS (
 ),
 best_checkpoint AS (
   SELECT c.uuid::text AS uuid,
+    num_batches,
+    prior_batches_processed,
     c.trial_id,
     c.start_time AS start_time,
     c.end_time AS end_time,
