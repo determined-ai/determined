@@ -2,7 +2,7 @@ package provisioner
 
 import (
 	"encoding/base64"
-	"fmt"
+	//"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -67,7 +67,11 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 		Infof("Retrieved active spot requests: %d", len(resp.SpotInstanceRequests))
 
 
-	runningSpotInstances, pendingRequests, unfulfillableRequests := parseDescribeSpotInstanceRequestsResponse(resp)
+	runningSpotInstances, pendingRequests, unfulfillableRequests, nil := c.parseDescribeSpotInstanceRequestsResponse(resp)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot parse DescribeSpotInstanceRequestsResponse")
+		return []*Instance{}, err
+	}
 	c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
 
 	ctx.Log().
@@ -78,7 +82,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 
 	instancesToReturn, err := c.describeInstancesById(runningSpotInstances, false)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot describe EC2 instances")
+		return []*Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
 	}
 	res := c.newInstances(instancesToReturn)
 	for _, inst := range res {
@@ -124,7 +128,11 @@ func (c *awsCluster) launchSpot(
 		return
 	}
 
-	runningInstanceIds, pendingRequests, unfulfillableRequests := parseDescribeSpotInstanceRequestsResponse(listSpotRequestResp)
+	runningInstanceIds, pendingRequests, unfulfillableRequests, nil := c.parseDescribeSpotInstanceRequestsResponse(listSpotRequestResp)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot parse DescribeSpotInstanceRequestsResponse")
+		return
+	}
 	c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
 
 	ctx.Log().
@@ -185,7 +193,11 @@ func (c *awsCluster) launchSpot(
 				ctx.Log().WithError(err).Error("cannot describe EC2 spot requests")
 				return
 			}
-			_, _, unfulfillableRequests := parseDescribeSpotInstanceRequestsResponse(listSpotRequestResp)
+			_, _, unfulfillableRequests, err := c.parseDescribeSpotInstanceRequestsResponse(listSpotRequestResp)
+			if err != nil {
+				ctx.Log().WithError(err).Error("cannot parse DescribeSpotInstanceRequestsResponse")
+				return
+			}
 			c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
 
 		}
@@ -491,13 +503,13 @@ func (c *awsCluster) listSpotRequestsById(
 //      Represented by the spotRequestId.
 //   3. Spot requests that have entered a permanently failed state.
 //      Represented by an unfulfillableSpotRequest struct.
-func parseDescribeSpotInstanceRequestsResponse(
+func (c *awsCluster) parseDescribeSpotInstanceRequestsResponse(
 	response *ec2.DescribeSpotInstanceRequestsOutput,
-) (runningInstanceIds []*string, healthyPendingRequests []*string, unfulfillableRequests []*unfulfillableSpotRequest) {
+) (runningInstanceIds []*string, healthyPendingRequests []*string, unfulfillableRequests []*unfulfillableSpotRequest, err error) {
 
 	unfulfillableRequests = make([]*unfulfillableSpotRequest, 0, 0)
 	healthyPendingRequests = make([]*string, 0, 0)
-	runningInstanceIds = make([]*string, 0, 0)
+	possiblyRunningInstanceIds := make([]*string, 0, 0)
 
 	for _, request := range response.SpotInstanceRequests {
 	//for i, request := range response.SpotInstanceRequests {
@@ -515,8 +527,24 @@ func parseDescribeSpotInstanceRequestsResponse(
 		if request.InstanceId == nil {
 			healthyPendingRequests = append(healthyPendingRequests, request.SpotInstanceRequestId)
 		} else {
-			runningInstanceIds = append(runningInstanceIds, request.InstanceId)
+			possiblyRunningInstanceIds = append(possiblyRunningInstanceIds, request.InstanceId)
 		}
+	}
+	if len(possiblyRunningInstanceIds) > 0 {
+		instances, err := c.describeInstancesById(possiblyRunningInstanceIds, false)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		runningInstanceIds = make([]*string, 0, 0)
+		for _, instance := range instances {
+			if *instance.State.Name == "pending" ||
+				*instance.State.Name == "running" ||
+				*instance.State.Name == "stopped" ||
+				*instance.State.Name == "stopping" {
+				runningInstanceIds = append(runningInstanceIds, instance.InstanceId)
+			}
+		}
+
 	}
 	return
 }
