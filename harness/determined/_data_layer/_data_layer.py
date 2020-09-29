@@ -77,7 +77,10 @@ class _CacheableDecorator:
             session_config = tf.compat.v1.ConfigProto()
             session_config.gpu_options.visible_device_list = str(hvd.local_rank())
 
-        rw_coordinator_url = f"ws://{self._env.master_addr}:{self._env.master_port}/ws/data-layer/"
+        scheme = "wss" if self._env.use_tls else "ws"
+        rw_coordinator_url = (
+            f"{scheme}://{self._env.master_addr}:{self._env.master_port}/ws/data-layer/"
+        )
         data_layer_type = self._env.experiment_config.get_data_layer_type()
 
         if data_layer_type == StorageTypes.SHARED_FS.value:
@@ -109,6 +112,7 @@ class _CacheableDecorator:
                 access_key=self._env.experiment_config["data_layer"].get("access_key"),
                 secret_key=self._env.experiment_config["data_layer"].get("secret_key"),
                 endpoint_url=self._env.experiment_config["data_layer"].get("endpoint_url"),
+                coordinator_cert_file=self._env.master_cert_file,
             )
             self._storage = storage.S3Storage(storage_config, tensorflow_config=session_config)
 
@@ -126,6 +130,7 @@ class _CacheableDecorator:
                 ],
                 url=rw_coordinator_url,
                 local_cache_dir=str(local_cache_path),
+                coordinator_cert_file=self._env.master_cert_file,
             )
             self._storage = storage.GCSStorage(storage_config, tensorflow_config=session_config)
 
