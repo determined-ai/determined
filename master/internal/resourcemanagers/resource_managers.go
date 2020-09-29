@@ -1,6 +1,7 @@
 package resourcemanagers
 
 import (
+	"crypto/tls"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -21,21 +22,42 @@ type ResourceManagers struct {
 }
 
 // NewResourceManagers creates an instance of ResourceManagers.
-func NewResourceManagers(ref *actor.Ref) *ResourceManagers {
-	return &ResourceManagers{
-		ref: ref,
+func NewResourceManagers(
+	system *actor.System,
+	rmConfig *ResourceManagerConfig,
+	poolsConfig *ResourcePoolsConfig,
+	cert *tls.Certificate,
+) *ResourceManagers {
+	var ref *actor.Ref
+	switch {
+	case rmConfig.DeterminedRM != nil:
+		ref, _ = system.ActorOf(
+			actor.Addr("determinedRM"),
+			newDeterminedResourceManager(rmConfig.DeterminedRM, poolsConfig, cert),
+		)
+
+	case rmConfig.KubernetesRM != nil:
+		ref, _ = system.ActorOf(
+			actor.Addr("kubernetesRM"),
+			newKubernetesResourceManager(rmConfig.KubernetesRM),
+		)
+
+	default:
+		panic("no expected resource manager config is defined")
 	}
+
+	return &ResourceManagers{ref: ref}
 }
 
 // Receive implements the actor.Actor interface.
-func (rp *ResourceManagers) Receive(ctx *actor.Context) error {
+func (rm *ResourceManagers) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case
 		AllocateRequest, ResourcesReleased,
 		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
 		GetTaskSummary, GetTaskSummaries,
 		sproto.ConfigureEndpoints, sproto.GetEndpointActorAddress:
-		rp.forward(ctx, msg)
+		rm.forward(ctx, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -44,11 +66,11 @@ func (rp *ResourceManagers) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourceManagers) forward(ctx *actor.Context, msg actor.Message) {
+func (rm *ResourceManagers) forward(ctx *actor.Context, msg actor.Message) {
 	if ctx.ExpectingResponse() {
-		response := ctx.Ask(rp.ref, msg)
+		response := ctx.Ask(rm.ref, msg)
 		ctx.Respond(response.Get())
 	} else {
-		ctx.Tell(rp.ref, msg)
+		ctx.Tell(rm.ref, msg)
 	}
 }

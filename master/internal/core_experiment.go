@@ -329,7 +329,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			&checkpointGCTask{
 				agentUserGroup: agentUserGroup,
 				taskSpec:       m.taskSpec,
-				rp:             m.rp,
+				rm:             m.rm,
 				db:             m.db,
 				experiment:     dbExp,
 			})
@@ -488,7 +488,7 @@ func (m *Master) deleteExperiment(c echo.Context) (interface{}, error) {
 	m.system.ActorOf(addr, &checkpointGCTask{
 		agentUserGroup: agentUserGroup,
 		taskSpec:       m.taskSpec,
-		rp:             m.rp,
+		rm:             m.rm,
 		db:             m.db,
 		experiment:     dbExp,
 	})

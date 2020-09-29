@@ -14,9 +14,7 @@ func NewPriorityScheduler() Scheduler {
 	return &priorityScheduler{}
 }
 
-func (p *priorityScheduler) Schedule(
-	rp *DeterminedResourceManager,
-) ([]*AllocateRequest, []*actor.Ref) {
+func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*AllocateRequest, []*actor.Ref) {
 	return prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 

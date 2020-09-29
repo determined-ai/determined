@@ -81,7 +81,7 @@ const (
 type experiment struct {
 	*model.Experiment
 	modelDefinition     archive.Archive
-	rp                  *actor.Ref
+	rm                  *actor.Ref
 	trialLogger         *actor.Ref
 	db                  *db.PgDB
 	searcher            *searcher.Searcher
@@ -134,7 +134,7 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 	return &experiment{
 		Experiment:          expModel,
 		modelDefinition:     modelDefinition,
-		rp:                  master.rp,
+		rm:                  master.rm,
 		trialLogger:         master.trialLogger,
 		db:                  master.db,
 		searcher:            search,
@@ -282,11 +282,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		telemetry.ReportExperimentCreated(ctx.Self().System(), *e.Experiment)
 
-		ctx.Tell(e.rp, sproto.SetGroupMaxSlots{
+		ctx.Tell(e.rm, sproto.SetGroupMaxSlots{
 			MaxSlots: e.Config.Resources.MaxSlots,
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rp, sproto.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
+		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
 		ops, err := e.searcher.InitialOperations()
 		e.processOperations(ctx, ops, err)
 	case trialCreated:
@@ -355,11 +355,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case sproto.SetGroupMaxSlots:
 		e.Config.Resources.MaxSlots = msg.MaxSlots
 		msg.Handler = ctx.Self()
-		ctx.Tell(e.rp, msg)
+		ctx.Tell(e.rm, msg)
 	case sproto.SetGroupWeight:
 		e.Config.Resources.Weight = msg.Weight
 		msg.Handler = ctx.Self()
-		ctx.Tell(e.rp, msg)
+		ctx.Tell(e.rm, msg)
 
 	case killExperiment:
 		if _, running := model.RunningStates[e.State]; running {
@@ -398,7 +398,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
 			agentUserGroup: e.agentUserGroup,
 			taskSpec:       e.taskSpec,
-			rp:             e.rp,
+			rm:             e.rm,
 			db:             e.db,
 			experiment:     e.Experiment,
 		})

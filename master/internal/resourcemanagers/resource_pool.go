@@ -16,8 +16,8 @@ import (
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-// DeterminedResourceManager manages the agent and task lifecycles.
-type DeterminedResourceManager struct {
+// ResourcePool manages the agent and task lifecycles.
+type ResourcePool struct {
 	scheduler     Scheduler
 	fittingMethod SoftConstraint
 	agents        map[*actor.Ref]*agentState
@@ -36,14 +36,14 @@ type DeterminedResourceManager struct {
 	notifications     []<-chan struct{}
 }
 
-// NewDeterminedResourceManager initializes a new empty default resource provider.
-func NewDeterminedResourceManager(
+// NewResourcePool initializes a new empty default resource provider.
+func NewResourcePool(
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
 	provisioner *actor.Ref,
 	provisionerSlotsPerInstance int,
-) actor.Actor {
-	d := &DeterminedResourceManager{
+) *ResourcePool {
+	d := &ResourcePool{
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
 		agents:        make(map[*actor.Ref]*agentState),
@@ -60,7 +60,7 @@ func NewDeterminedResourceManager(
 	return d
 }
 
-func (d *DeterminedResourceManager) addTask(ctx *actor.Context, msg AllocateRequest) {
+func (d *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
 	d.notifyOnStop(ctx, msg.TaskActor, ResourcesReleased{TaskActor: msg.TaskActor})
 
 	if len(msg.ID) == 0 {
@@ -83,7 +83,7 @@ func (d *DeterminedResourceManager) addTask(ctx *actor.Context, msg AllocateRequ
 
 // allocateResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully allocated.
-func (d *DeterminedResourceManager) allocateResources(req *AllocateRequest) bool {
+func (d *ResourcePool) allocateResources(req *AllocateRequest) bool {
 	fits := findFits(req, d.agents, d.fittingMethod)
 
 	if len(fits) == 0 {
@@ -109,17 +109,17 @@ func (d *DeterminedResourceManager) allocateResources(req *AllocateRequest) bool
 	return true
 }
 
-func (d *DeterminedResourceManager) releaseResource(handler *actor.Ref) {
+func (d *ResourcePool) releaseResource(handler *actor.Ref) {
 	log.Infof("releasing resources taken by %s", handler.Address())
 	handler.System().Tell(handler, ReleaseResources{})
 }
 
-func (d *DeterminedResourceManager) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
+func (d *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	d.taskList.RemoveTaskByHandler(handler)
 }
 
-func (d *DeterminedResourceManager) getOrCreateGroup(
+func (d *ResourcePool) getOrCreateGroup(
 	ctx *actor.Context, handler *actor.Ref,
 ) *group {
 	if g, ok := d.groups[handler]; ok {
@@ -133,7 +133,7 @@ func (d *DeterminedResourceManager) getOrCreateGroup(
 	return g
 }
 
-func (d *DeterminedResourceManager) notifyOnStop(
+func (d *ResourcePool) notifyOnStop(
 	ctx *actor.Context, ref *actor.Ref, msg actor.Message,
 ) {
 	done := actors.NotifyOnStop(ctx, ref, msg)
@@ -142,7 +142,7 @@ func (d *DeterminedResourceManager) notifyOnStop(
 	}
 }
 
-func (d *DeterminedResourceManager) updateScalingInfo() bool {
+func (d *ResourcePool) updateScalingInfo() bool {
 	desiredInstanceNum := calculateDesiredNewInstanceNum(d.taskList, d.slotsPerInstance)
 	agents := make(map[string]sproto.AgentSummary)
 	for _, agentState := range d.agents {
@@ -152,14 +152,14 @@ func (d *DeterminedResourceManager) updateScalingInfo() bool {
 	return d.scalingInfo.Update(desiredInstanceNum, agents)
 }
 
-func (d *DeterminedResourceManager) sendScalingInfo(ctx *actor.Context) {
+func (d *ResourcePool) sendScalingInfo(ctx *actor.Context) {
 	if d.provisioner != nil && d.updateScalingInfo() {
 		ctx.Tell(d.provisioner, *d.scalingInfo)
 	}
 }
 
 // Receive implements the actor.Actor interface.
-func (d *DeterminedResourceManager) Receive(ctx *actor.Context) error {
+func (d *ResourcePool) Receive(ctx *actor.Context) error {
 	reschedule := true
 	defer func() {
 		// Default to scheduling every 500ms if a message was received, but allow messages
@@ -224,11 +224,11 @@ func (d *DeterminedResourceManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (d *DeterminedResourceManager) receiveAgentMsg(ctx *actor.Context) error {
+func (d *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.ConfigureEndpoints:
 		ctx.Log().Infof("initializing endpoints for agents")
-		agent.Initialize(msg.System, msg.Echo, ctx.Self())
+		agent.Initialize(ctx, msg.Echo, ctx.Self())
 
 	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
@@ -271,7 +271,7 @@ func (d *DeterminedResourceManager) receiveAgentMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (d *DeterminedResourceManager) receiveRequestMsg(ctx *actor.Context) error {
+func (d *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case groupActorStopped:
 		delete(d.groups, msg.Ref)

@@ -47,7 +47,7 @@ func (g groupState) String() string {
 		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
 }
 
-func (f *fairShare) Schedule(rp *DeterminedResourceManager) ([]*AllocateRequest, []*actor.Ref) {
+func (f *fairShare) Schedule(rp *ResourcePool) ([]*AllocateRequest, []*actor.Ref) {
 	return fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 

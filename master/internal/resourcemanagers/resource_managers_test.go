@@ -10,16 +10,10 @@ import (
 
 func TestResourceManagerForwardMessage(t *testing.T) {
 	system := actor.NewSystem(t.Name())
-	defaultRP, created := system.ActorOf(actor.Addr("defaultRP"), NewDeterminedResourceManager(
-		NewFairShareScheduler(),
-		BestFit,
-		nil,
-		0,
-	))
-	assert.Assert(t, created)
-
+	rmConfig := DefaultRMConfig()
+	poolsConfig := DefaultRPsConfig()
 	rpActor, created := system.ActorOf(actor.Addr("resourceManagers"),
-		NewResourceManagers(defaultRP))
+		NewResourceManagers(system, rmConfig, poolsConfig, nil))
 	assert.Assert(t, created)
 
 	taskSummary := system.Ask(rpActor, GetTaskSummaries{}).Get()

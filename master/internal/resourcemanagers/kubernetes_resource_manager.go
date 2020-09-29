@@ -24,8 +24,8 @@ type kubernetesResourceManager struct {
 	reschedule bool
 }
 
-// NewKubernetesResourceManager initializes a new kubernetesResourceManager.
-func NewKubernetesResourceManager(
+// newKubernetesResourceManager initializes a new kubernetesResourceManager.
+func newKubernetesResourceManager(
 	config *KubernetesResourceManagerConfig,
 ) actor.Actor {
 	return &kubernetesResourceManager{

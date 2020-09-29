@@ -14,7 +14,7 @@ import (
 )
 
 type checkpointGCTask struct {
-	rp         *actor.Ref
+	rm         *actor.Ref
 	db         *db.PgDB
 	experiment *model.Experiment
 
@@ -28,7 +28,7 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(t.rp, resourcemanagers.AllocateRequest{
+		ctx.Tell(t.rm, resourcemanagers.AllocateRequest{
 			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
 			FittingRequirements: resourcemanagers.FittingRequirements{
 				SingleAgent: true,

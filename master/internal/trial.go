@@ -235,7 +235,7 @@ func newTrial(
 		warmStartCheckpointID = &checkpointID
 	}
 	return &trial{
-		rp:                    exp.rp,
+		rp:                    exp.rm,
 		logger:                exp.trialLogger,
 		db:                    exp.db,
 		experimentState:       exp.State,

@@ -82,7 +82,7 @@ func TestRendezvousInfo(t *testing.T) {
 
 	rp, created := system.ActorOf(
 		actor.Addr("resourceManagers"),
-		resourcemanagers.NewDeterminedResourceManager(
+		resourcemanagers.NewResourcePool(
 			resourcemanagers.NewFairShareScheduler(),
 			resourcemanagers.WorstFit,
 			nil,

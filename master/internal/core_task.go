@@ -10,7 +10,7 @@ import (
 )
 
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
-	return m.system.Ask(m.rp, resourcemanagers.GetTaskSummaries{}).Get(), nil
+	return m.system.Ask(m.rm, resourcemanagers.GetTaskSummaries{}).Get(), nil
 }
 
 func (m *Master) getTask(c echo.Context) (interface{}, error) {
@@ -21,7 +21,7 @@ func (m *Master) getTask(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 	id := resourcemanagers.TaskID(args.TaskID)
-	resp := m.system.Ask(m.rp, resourcemanagers.GetTaskSummary{ID: &id})
+	resp := m.system.Ask(m.rm, resourcemanagers.GetTaskSummary{ID: &id})
 	if resp.Empty() {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "task not found: %s", args.TaskID)
 	}

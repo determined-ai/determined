@@ -14,14 +14,14 @@ import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
 
-func (d *DeterminedResourceManager) addAllocatedTask(
+func (d *ResourcePool) addAllocatedTask(
 	req *AllocateRequest, allocated *ResourcesAllocated,
 ) {
 	d.taskList.AddTask(req)
 	d.taskList.SetAllocations(req.TaskActor, allocated)
 }
 
-func (d *DeterminedResourceManager) addAgent(
+func (d *ResourcePool) addAgent(
 	t *testing.T,
 	system *actor.System,
 	agentID string,
@@ -58,8 +58,8 @@ func createAgent(
 
 func setupCluster(
 	scheduler Scheduler, fittingMethod SoftConstraint, agents []*agentState, tasks []*actor.Ref,
-) *DeterminedResourceManager {
-	d := DeterminedResourceManager{
+) *ResourcePool {
+	d := ResourcePool{
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
 		agents:        make(map[*actor.Ref]*agentState),
