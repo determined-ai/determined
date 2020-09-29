@@ -12,9 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/pkg/errors"
+	"net/url"
 )
 
 const awsAgentID = `$(ec2metadata --instance-id)`
@@ -43,8 +43,6 @@ func onEC2() bool {
 	return ec2Metadata.Available()
 }
 
-
-
 // awsCluster wraps an EC2 client. Determined recognizes agent EC2 instances by:
 // 1. A specific key/value pair tag.
 // 2. Names of agents that are equal to the instance IDs.
@@ -57,7 +55,6 @@ type awsCluster struct {
 	// Only used if spot instances are enabled
 	pendingSpotRequestIds []*string
 }
-
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	if err := config.AWS.initDefaultValues(); err != nil {
@@ -126,7 +123,6 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 			LogOptions:                   config.AWS.buildDockerLogString(),
 		}),
 	}
-
 
 	return cluster, nil
 }
@@ -210,9 +206,6 @@ func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
 	}
 }
 
-
-
-
 func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
 	instances, err := c.describeInstances(false)
 	if err != nil {
@@ -226,8 +219,6 @@ func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
 	}
 	return res, nil
 }
-
-
 
 func (c *awsCluster) launchOnDemand(
 	ctx *actor.Context,
@@ -256,8 +247,6 @@ func (c *awsCluster) launchOnDemand(
 		fmtInstances(launched),
 	)
 }
-
-
 
 func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string) {
 	if len(instanceIDs) == 0 {
@@ -345,7 +334,7 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 
 func (c *awsCluster) describeInstancesById(instanceIds []*string, dryRun bool) ([]*ec2.Instance, error) {
 	input := &ec2.DescribeInstancesInput{
-		DryRun: aws.Bool(dryRun),
+		DryRun:      aws.Bool(dryRun),
 		InstanceIds: instanceIds,
 	}
 	result, err := c.client.DescribeInstances(input)

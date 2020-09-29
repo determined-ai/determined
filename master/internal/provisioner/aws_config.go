@@ -31,9 +31,8 @@ type AWSClusterConfig struct {
 	LogGroup  string `json:"log_group"`
 	LogStream string `json:"log_stream"`
 
-	SpotInstanceEnabled bool `json:"spot_instance_enabled"`
-	SpotMaxPrice string `json:"spot_max_price"`
-
+	SpotInstanceEnabled bool   `json:"spot_instance_enabled"`
+	SpotMaxPrice        string `json:"spot_max_price"`
 }
 
 var defaultAWSClusterConfig = AWSClusterConfig{
@@ -43,10 +42,10 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
-	InstanceType: "p3.8xlarge",
-	MaxInstances: 5,
+	InstanceType:        "p3.8xlarge",
+	MaxInstances:        5,
 	SpotInstanceEnabled: false,
-	SpotMaxPrice: "100",
+	SpotMaxPrice:        "100",
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
