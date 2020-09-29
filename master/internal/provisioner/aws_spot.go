@@ -65,6 +65,10 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	runningSpotInstances, pendingRequests, unfulfillableRequests := parseDescribeSpotInstanceRequestsResponse(resp)
 	c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
 
+	ctx.Log().
+		WithField("log-type", "listSpot.trackPendingRequests").
+		Infof("about to save pendingRequests so launch is aware of them. Running requests: %d. Pending requests: %d. Unfulfillable: %d", len(runningSpotInstances), len(pendingRequests), len(unfulfillableRequests))
+
 	c.pendingSpotRequestIds = pendingRequests
 
 	instancesToReturn, err := c.describeInstancesById(runningSpotInstances, false)
