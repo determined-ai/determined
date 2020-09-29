@@ -2,7 +2,8 @@ package provisioner
 
 import (
 	"encoding/base64"
-	//"fmt"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -51,47 +52,169 @@ import (
 // More information about the spot instance lifecycle -
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
 
+const spotRequestAsInstancePrefix = "spot-request-instance"
+
+type spotRequest struct {
+	SpotRequestId string
+	State         string
+	StatusCode    *string
+	StatusMessage *string
+	InstanceId    *string
+}
+
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
-	// 1. List all non-terminal spot instance request
-	// 2. For any requests that indicate a failure, write out an error message
-	//    and clean up the spot request (if needed).
-	// 3. For each spot instance request, find the matching instances
-	// 4. Keep track of the spot requests that haven't been fulfilled
-	resp, err := c.listActiveSpotInstanceRequests(ctx, false)
+	activeSpotRequests, inactiveSpotRequests, err := c.listSpotInstanceRequests(ctx, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
 
 	ctx.Log().
 		WithField("log-type", "listSpot.querySpotRequest").
-		Infof("Retrieved active spot requests: %d", len(resp.SpotInstanceRequests))
+		Infof("Retrieved spot requests: %d active requests and %d inactive requests",
+			len(activeSpotRequests), len(inactiveSpotRequests))
 
+	// Clean up time!
+	// If there are spot requests that are cancelled but still have an active instance, delete the instance
+	// If there are requests that failed and the error indicates that the user need to do something, log it
+	c.cleanupInactiveSpotRequests(ctx, inactiveSpotRequests)
 
-	runningSpotInstances, pendingRequests, unfulfillableRequests, nil := c.parseDescribeSpotInstanceRequestsResponse(resp)
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot parse DescribeSpotInstanceRequestsResponse")
-		return []*Instance{}, err
+	// Next, update the requestSnapshot. It is the API response + the previous state
+	// for any requests not included in the response. They might not be included because
+	// the the requests were just submitted and the API hasn't caught up yet. Or they
+	// could have transitioned from active to inactive (in which case we don't want to
+	// include them in the snapshot).
+
+	// In the case of a master restart, we may have active spot requests, but the
+	// internal state will have been lost, so we always build a fresh snapshot
+	// instead of updating in-place
+
+	inactiveSpotRequestIds := make(map[string]bool)
+	for _, inactiveRequest := range inactiveSpotRequests {
+		inactiveSpotRequestIds[*inactiveRequest.SpotInstanceRequestId] = true
 	}
-	c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
+
+	newActiveSpotRequestSnapshot := make(map[string]*spotRequest)
+	for _, request := range activeSpotRequests {
+		newActiveSpotRequestSnapshot[*request.SpotInstanceRequestId] = &spotRequest{
+			SpotRequestId: *request.SpotInstanceRequestId,
+			State:         *request.State,
+			StatusCode:    request.Status.Code,
+			StatusMessage: request.Status.Message,
+			InstanceId:    request.InstanceId,
+		}
+	}
+
+	// Go through the previous snapshot and add any spotRequests that are too new to be returned by the EC2 API
+	for _, previousSpotRequestInfo := range c.activeSpotRequests {
+		if _, ok := newActiveSpotRequestSnapshot[previousSpotRequestInfo.SpotRequestId]; !ok {
+			// This requests was not one of the active spotRequests returned by the API
+			if _, ok2 := inactiveSpotRequestIds[previousSpotRequestInfo.SpotRequestId]; !ok2 {
+				// This requests was also not one of the inactive spotRequests returned by the API.
+				// This means that it is a fresh spot request and the API just hasn't updated yet.
+				// Include it in the snapshot as it
+				newActiveSpotRequestSnapshot[previousSpotRequestInfo.SpotRequestId] = previousSpotRequestInfo
+			}
+		}
+	}
 
 	ctx.Log().
-		WithField("log-type", "listSpot.trackPendingRequests").
-		Infof("about to save pendingRequests so launch is aware of them. Running requests: %d. Pending requests: %d. Unfulfillable: %d", len(runningSpotInstances), len(pendingRequests), len(unfulfillableRequests))
+		WithField("log-type", "listSpot.updateActiveSpotRequestSnapshot").
+		Infof("built a new snapshot of the active spot requests. there are %d active requests.",
+			len(newActiveSpotRequestSnapshot))
 
-	c.pendingSpotRequestIds = pendingRequests
+	c.activeSpotRequests = newActiveSpotRequestSnapshot
 
-	instancesToReturn, err := c.describeInstancesById(runningSpotInstances, false)
+	// Take the active spot requests and generate the Instances that will be returned. For spot requests
+	// that have been fulfilled, just read the InstanceId and then query EC2 for details. For unfulfilled
+	// spot instance requests, use placeholder instances so the scaleDecider is aware that more instances
+	// are pending.
+	runningSpotInstanceIds := make([]*string, 0, 0)
+	pendingSpotRequestsAsInstances := make([]*Instance, 0, 0)
+	for _, activeRequest := range c.activeSpotRequests {
+		if activeRequest.InstanceId != nil {
+			runningSpotInstanceIds = append(runningSpotInstanceIds, activeRequest.InstanceId)
+		} else {
+			dummyInstanceId := fmt.Sprintf("%s-%s", spotRequestAsInstancePrefix, activeRequest.SpotRequestId)
+			pendingSpotRequestsAsInstances = append(pendingSpotRequestsAsInstances, &Instance{
+				ID:         dummyInstanceId,
+				LaunchTime: time.Now(),
+				AgentName:  dummyInstanceId,
+				State:      SpotRequestPendingAWS,
+			})
+		}
+	}
+
+
+
+	instancesToReturn, err := c.describeInstancesById(runningSpotInstanceIds, false)
 	if err != nil {
 		return []*Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
 	}
-	res := c.newInstances(instancesToReturn)
-	for _, inst := range res {
+	realInstances := c.newInstances(instancesToReturn)
+	for _, inst := range realInstances {
 		if inst.State == Unknown {
 			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
 		}
 	}
-	return res, nil
+
+	combined := append(realInstances, pendingSpotRequestsAsInstances...)
+	return combined, nil
 }
+
+
+func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
+	if len(instanceIDs) == 0 {
+		return
+	}
+
+	instancesToTerminate := make([]*string, 0, 0)
+	pendingSpotRequestsToTerminate := make([]*string, 0, 0)
+
+	for _, instanceId := range instanceIDs {
+		if strings.HasPrefix(*instanceId, spotRequestAsInstancePrefix) {
+			spotRequestId := strings.TrimPrefix(*instanceId, spotRequestAsInstancePrefix)
+			pendingSpotRequestsToTerminate = append(pendingSpotRequestsToTerminate, &spotRequestId)
+		} else {
+			instancesToTerminate = append(instancesToTerminate, instanceId)
+		}
+	}
+
+	ctx.Log().Infof(
+		"terminating %d EC2 instances and %d spot requests: %s,  %s",
+		len(instancesToTerminate),
+		len(pendingSpotRequestsToTerminate),
+		instancesToTerminate,
+		pendingSpotRequestsToTerminate,
+	)
+
+	terminateInstancesResponse, err := c.terminateInstances(instanceIDs, false)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
+	} else {
+		terminated := c.newInstancesFromTerminateInstancesOutput(terminateInstancesResponse)
+		ctx.Log().Infof(
+			"terminated %d/%d EC2 instances: %s",
+			len(terminated),
+			len(instanceIDs),
+			fmtInstances(terminated),
+		)
+	}
+
+	_, err = c.terminateSpotInstanceRequests(ctx, pendingSpotRequestsToTerminate, false)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot terminate spot requests")
+	} else {
+		ctx.Log().Infof(
+			"terminated %d spot requests: %s",
+			len(pendingSpotRequestsToTerminate),
+			pendingSpotRequestsToTerminate,
+		)
+	}
+
+	// TODO: We could clean up the spot instances here. But it will be cleaned up on the next call to list() anyway
+}
+
+
 
 func (c *awsCluster) launchSpot(
 	ctx *actor.Context,
@@ -110,206 +233,47 @@ func (c *awsCluster) launchSpot(
 		return
 	}
 
-	// There may be pending spot requests that have been fulfilled in the time since we told the
-	// scaleDecider how many instances were running.
-	// Look at instanceNum and pendingSpotRequests
-	// to decide what action to take. There are three cases:
-	// 1. numInstancesToLaunch == len(pendingSpotRequests)
-	// 	  - nothing needs to be done
-	// 2. numInstancesToLaunch < len(pendingSpotRequests)
-	//    - we need to cancel spotRequests, prioritizing those that do not have running instances
-	// 3. numInstancesToLaunch > len(pendingSpotRequests)
-	//    - we need to create more spotRequests
-	// First we need to inspect the pendingSpotRequests and clean up any requests that
-	// are unfulfillable and so should not be included in this calculation
-	listSpotRequestResp, err := c.listSpotRequestsById(ctx, c.pendingSpotRequestIds, false)
+	ctx.Log().Infof("launching %d EC2 spot requests", instanceNum)
+	resp, err := c.createSpotInstanceRequest(ctx, instanceNum, false, instType)
 	if err != nil {
-		ctx.Log().WithError(err).Error("cannot describe EC2 spot requests")
+		ctx.Log().WithError(err).Error("cannot launch EC2 spot requests")
 		return
 	}
 
-	runningInstanceIds, pendingRequests, unfulfillableRequests, nil := c.parseDescribeSpotInstanceRequestsResponse(listSpotRequestResp)
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot parse DescribeSpotInstanceRequestsResponse")
-		return
+	// Update the internal spotRequest tracker because there can be a large delay
+	// before the API start returning information about this spot request and if
+	// we don't track it internally, we will end up overprovisioning.
+	for _, request := range resp.SpotInstanceRequests {
+		c.activeSpotRequests[*request.SpotInstanceRequestId] = &spotRequest{
+			SpotRequestId: *request.SpotInstanceRequestId,
+			State:         *request.State,
+			StatusCode:    request.Status.Code,
+			StatusMessage: request.Status.Message,
+			InstanceId:    nil,
+		}
+
+		ctx.Log().Infof(
+			"Launching spot request, %s, %s",
+			*request.SpotInstanceRequestId,
+			*request.State,
+		)
 	}
-	c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
+	return
 
-	ctx.Log().
-		WithField("log-type", "launchSpot.checkPendingRequests").
-		Infof("All pending from last list: %d. Running requests: %d. Pending requests: %d. Unfulfillable: %d", len(c.pendingSpotRequestIds), len(runningInstanceIds), len(pendingRequests), len(unfulfillableRequests))
-
-	numNewInstanceRunningOrPending := len(pendingRequests) + len(runningInstanceIds)
-	numNewInstancesDesired := instanceNum
-	numAdditionalRequestsNeeded := numNewInstancesDesired - numNewInstanceRunningOrPending
-
-	switch {
-	case numAdditionalRequestsNeeded == 0:
-		ctx.Log().Infof("The number of desired instances will be met by the current set of spot requests. " +
-			"No need to launch more spot requests")
-		return
-	case numAdditionalRequestsNeeded > 0:
-		ctx.Log().Infof("More instances are desired than can be met by the current set of spot requests. "+
-			"Creating %d additional requests", numAdditionalRequestsNeeded)
-		ctx.Log().Infof("launching %d EC2 spot requests", numAdditionalRequestsNeeded)
-		resp, err := c.createSpotInstanceRequest(ctx, numAdditionalRequestsNeeded, false, instType)
-		if err != nil {
-			ctx.Log().WithError(err).Error("cannot launch EC2 spot requests")
-			return
-		}
-
-		for _, request := range resp.SpotInstanceRequests {
-			ctx.Log().Infof(
-				"Launching spot request, %s, %s",
-				*request.SpotInstanceRequestId,
-				*request.State,
-			)
-		}
-		return
-	case numAdditionalRequestsNeeded < 0:
-		ctx.Log().Infof("The set of current spot requests exceeds the desired number of instances." +
-			" Shutting down requests.")
-		var numPendingRequestsToDelete int
-		var numRunningInstancesToDelete int
-		if numAdditionalRequestsNeeded <= len(pendingRequests) {
-			numPendingRequestsToDelete = numAdditionalRequestsNeeded
-			numRunningInstancesToDelete = 0
-		} else {
-			numPendingRequestsToDelete = len(pendingRequests)
-			numRunningInstancesToDelete = numAdditionalRequestsNeeded - numPendingRequestsToDelete
-		}
-		if numPendingRequestsToDelete > 0 {
-			spotRequestsToCancel := pendingRequests[0:numPendingRequestsToDelete]
-			_, err := c.terminateSpotInstanceRequest(ctx, spotRequestsToCancel, false)
-			if err != nil {
-				ctx.Log().WithError(err).Error("cannot cancel spot requests")
-				return
-			}
-
-			// Remember that the requests may have been fulfilled since we checked, so
-			// make sure we don't leave behind orphaned instances!
-			listSpotRequestResp, err = c.listSpotRequestsById(ctx, c.pendingSpotRequestIds, false)
-			if err != nil {
-				ctx.Log().WithError(err).Error("cannot describe EC2 spot requests")
-				return
-			}
-			_, _, unfulfillableRequests, err := c.parseDescribeSpotInstanceRequestsResponse(listSpotRequestResp)
-			if err != nil {
-				ctx.Log().WithError(err).Error("cannot parse DescribeSpotInstanceRequestsResponse")
-				return
-			}
-			c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
-
-		}
-		if numRunningInstancesToDelete > 0 {
-			instanceIdsToTerminate := runningInstanceIds[0:numRunningInstancesToDelete]
-			c.terminateSpot(ctx, instanceIdsToTerminate)
-		}
-
-		return
-	}
 }
 
-func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
-	if len(instanceIDs) == 0 {
-		return
-	}
 
-	ctx.Log().Infof(
-		"terminating %d EC2 spot instances: %s",
-		len(instanceIDs),
-		instanceIDs,
-	)
 
-	// First we need to terminate the spot requests. This will leave behind instances
-	spotRequestIds, err := c.getSpotRequestIdsGivenInstanceIds(ctx, instanceIDs, false)
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot list spot request ids given EC2 instance ids")
-		return
-	}
 
-	_, err = c.terminateSpotInstanceRequest(ctx, spotRequestIds, false)
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot terminate EC2 spot instance requests")
-		return
-	}
 
-	res, err := c.terminateInstances(instanceIDs, false)
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
-		return
-	}
-	terminated := c.newInstancesFromTerminateInstancesOutput(res)
-	ctx.Log().Infof(
-		"terminated %d/%d EC2 instances: %s",
-		len(terminated),
-		len(instanceIDs),
-		fmtInstances(terminated),
-	)
-}
+func (c *awsCluster) cleanupInactiveSpotRequests(ctx *actor.Context, inactiveSpotRequests []*ec2.SpotInstanceRequest) {
+	// For requests that are in a terminal state, clean up any orphaned
+	// instances and create error logs if there is user action required
 
-type unfulfillableSpotRequest struct {
-	SpotRequestId string
-	State         string
-	StatusCode    string
-	StatusMessage string
-	InstanceId    *string
-}
+	instancesToTerminate := make([]*string, 0, 0)
 
-func spotRequestIsUnfulfillable(
-	requestInfo ec2.SpotInstanceRequest,
-) bool {
-	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
-
-	// Unfulfillable:
-	// state=closed
-	// state=cancelled
-	// state=disabled
-
-	// Unfulfillable not requiring cleanup
-	// canceled-before-fulfillment
-	// instance-terminated-by-price
-	// instance-terminated-by-schedule
-	// instance-terminated-by-service
-	// instance-terminated-by-user
-	// spot-instance-terminated-by-user
-	// instance-terminated-launch-group-constraint
-	// instance-terminated-no-capacity
-	// marked-for-stop
-	// marked-for-termination
-	// instance-stopped-by-price
-	// instance-stopped-by-user
-	// instance-stopped-no-capacity
-	// schedule-expired
-	// system-error
-
-	// Unfulfillable, maybe requiring cleanup
-	// request-canceled-and-instance-running
-
-	// Unfulfillable due to reason requiring user correction
-	// status-code=bad-parameters, state=closed
-	// constraint-not-fulfillable
-	// limit-exceeded
-
-	// Fulfillable (status-code)
-	// az-group-constraint
-	// capacity-not-available
-	// fulfilled
-	// launch-group-constraint
-	// not-scheduled-yet
-	// pending-evaluation
-	// pending-fulfillment
-	// placement-group-constraint
-	// price-too-low
-	return *requestInfo.State == "closed" || *requestInfo.State == "disabled" || *requestInfo.State == "cancelled"
-}
-
-func (c *awsCluster) handleUnfulfillableRequests(ctx *actor.Context, unfulfillableRequests []*unfulfillableSpotRequest) {
-	// For requests that are in a terminal state,
-	// clean up any orphaned instances and create error logs if there is user action required
-
-	for _, unfulfillableRequest := range unfulfillableRequests {
-		switch unfulfillableRequest.StatusCode {
+	for _, request := range inactiveSpotRequests {
+		switch *request.Status.Code {
 		case
 			"cancelled-before-fulfillment",
 			"instance-terminated-by-price",
@@ -330,19 +294,25 @@ func (c *awsCluster) handleUnfulfillableRequests(ctx *actor.Context, unfulfillab
 			continue
 		case "request-canceled-and-instance-running":
 			// Unfulfillable, maybe requiring cleanup
-			//c.terminateSpot(ctx, []*string{unfulfillableRequest.InstanceId})
+			instancesToTerminate = append(instancesToTerminate, request.InstanceId)
 			continue
 		case
 			"bad-parameters",
 			"constraint-not-fulfillable",
 			"limit-exceeded":
 			// Unfulfillable, requiring user attention
+			// TODO: This could get extremely noisy in the logs. We should track whether we have already notified the user about the error related to this spot request
 			ctx.Log().
-				WithField("spot-request-status-code", unfulfillableRequest.StatusCode).
-				WithField("spot-request-status-message", unfulfillableRequest.StatusMessage).
+				WithField("spot-request-status-code", request.Status.Code).
+				WithField("spot-request-status-message", request.Status.Message).
 				Error("a spot request cannot be fulfilled and the error message indicates that this is a permanent error requiring the user to fix something")
 			continue
 		}
+	}
+
+	_, err := c.terminateInstances(instancesToTerminate, false)
+	if err != nil {
+		ctx.Log().WithError(err).Error("cannot terminate EC2 instances associated with inactive spot requests")
 	}
 
 	return
@@ -426,51 +396,44 @@ func (c *awsCluster) createSpotInstanceRequest(
 	return c.client.RequestSpotInstances(spotInput)
 }
 
-func (c *awsCluster) listActiveSpotInstanceRequests(
+
+func (c *awsCluster) listSpotInstanceRequests(
 	ctx *actor.Context,
 	dryRun bool,
-) (*ec2.DescribeSpotInstanceRequestsOutput, error) {
+) (activeRequests []*ec2.SpotInstanceRequest, inactiveRequests []*ec2.SpotInstanceRequest, err error) {
 
 	if dryRun {
 		ctx.Log().Debug("dry run of listActiveSpotInstanceRequests.")
 	}
 
-	//input := &ec2.DescribeSpotInstanceRequestsInput{
-	//	DryRun: aws.Bool(dryRun),
-	//	Filters: []*ec2.Filter{
-	//		{
-	//			Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
-	//			Values: []*string{
-	//				aws.String(c.TagValue),
-	//			},
-	//		},
-	//		{
-	//			Name: aws.String("state"),
-	//			Values: []*string{
-	//				aws.String("open"),
-	//				aws.String("active"),
-	//			},
-	//		},
-	//	},
-	//}
-
-	//input := &ec2.DescribeSpotInstanceRequestsInput{
-	//	DryRun: aws.Bool(dryRun),
-	//	Filters: []*ec2.Filter{
-	//		{
-	//			Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
-	//			Values: []*string{
-	//				aws.String(c.TagValue),
-	//			},
-	//		},
-	//	},
-	//}
-
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		DryRun: aws.Bool(dryRun),
+		Filters: []*ec2.Filter{
+			{
+				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+				Values: []*string{
+					aws.String(c.TagValue),
+				},
+			},
+		},
 	}
 
-	return c.client.DescribeSpotInstanceRequests(input)
+	response, err := c.client.DescribeSpotInstanceRequests(input)
+	if err != nil {
+		return
+	}
+
+	activeRequests = make([]*ec2.SpotInstanceRequest, 0, 0)
+	inactiveRequests = make([]*ec2.SpotInstanceRequest, 0, 0)
+
+	for _, request := range response.SpotInstanceRequests {
+		if *request.State == "open" || *request.State == "active" {
+			activeRequests = append(activeRequests, request)
+		} else {
+			inactiveRequests = append(inactiveRequests, request)
+		}
+	}
+	return
 }
 
 func (c *awsCluster) listSpotRequestsById(
@@ -495,98 +458,7 @@ func (c *awsCluster) listSpotRequestsById(
 	return c.client.DescribeSpotInstanceRequests(input)
 }
 
-// This function takes the output of a DescribeSpotInstanceRequests and
-// divides the results into three groups:
-//   1. Spot requests that have been fulfilled.
-//      Represented by the instanceId.
-//   2. Spot requests that are pending and will be fulfilled in time.
-//      Represented by the spotRequestId.
-//   3. Spot requests that have entered a permanently failed state.
-//      Represented by an unfulfillableSpotRequest struct.
-func (c *awsCluster) parseDescribeSpotInstanceRequestsResponse(
-	response *ec2.DescribeSpotInstanceRequestsOutput,
-) (runningInstanceIds []*string, healthyPendingRequests []*string, unfulfillableRequests []*unfulfillableSpotRequest, err error) {
-
-	unfulfillableRequests = make([]*unfulfillableSpotRequest, 0, 0)
-	healthyPendingRequests = make([]*string, 0, 0)
-	possiblyRunningInstanceIds := make([]*string, 0, 0)
-
-	for _, request := range response.SpotInstanceRequests {
-	//for i, request := range response.SpotInstanceRequests {
-		//fmt.Println("Parsing spot instance request response number", i, *request.SpotInstanceRequestId, *request.State, *request.Status.Code, *request.Status.Message)
-		if spotRequestIsUnfulfillable(*request) {
-			unfulfillableRequests = append(unfulfillableRequests, &unfulfillableSpotRequest{
-				SpotRequestId: *request.SpotInstanceRequestId,
-				State:         *request.State,
-				StatusCode:    *request.Status.Code,
-				StatusMessage: *request.Status.Message,
-				InstanceId:    request.InstanceId,
-			})
-			continue
-		}
-		if request.InstanceId == nil {
-			healthyPendingRequests = append(healthyPendingRequests, request.SpotInstanceRequestId)
-		} else {
-			possiblyRunningInstanceIds = append(possiblyRunningInstanceIds, request.InstanceId)
-		}
-	}
-	if len(possiblyRunningInstanceIds) > 0 {
-		instances, err := c.describeInstancesById(possiblyRunningInstanceIds, false)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		runningInstanceIds = make([]*string, 0, 0)
-		for _, instance := range instances {
-			if *instance.State.Name == "pending" ||
-				*instance.State.Name == "running" ||
-				*instance.State.Name == "stopped" ||
-				*instance.State.Name == "stopping" {
-				runningInstanceIds = append(runningInstanceIds, instance.InstanceId)
-			}
-		}
-
-	}
-	return
-}
-
-func (c *awsCluster) getSpotRequestIdsGivenInstanceIds(
-	ctx *actor.Context,
-	instanceIds []*string,
-	dryRun bool,
-) ([]*string, error) {
-
-	if dryRun {
-		ctx.Log().Debug("dry run of getSpotRequestIdsGivenInstanceIds.")
-	}
-
-	if len(instanceIds) == 0 {
-		return make([]*string, 0, 0), nil
-	}
-
-	input := &ec2.DescribeSpotInstanceRequestsInput{
-		DryRun: aws.Bool(dryRun),
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("instance-id"),
-				Values: instanceIds,
-			},
-		},
-	}
-
-	resp, err := c.client.DescribeSpotInstanceRequests(input)
-	if err != nil {
-		return nil, err
-	}
-
-	spotRequestIds := make([]*string, 0, len(resp.SpotInstanceRequests))
-	for _, spotRequest := range resp.SpotInstanceRequests {
-		spotRequestIds = append(spotRequestIds, spotRequest.SpotInstanceRequestId)
-	}
-
-	return spotRequestIds, nil
-}
-
-func (c *awsCluster) terminateSpotInstanceRequest(
+func (c *awsCluster) terminateSpotInstanceRequests(
 	ctx *actor.Context,
 	spotRequestIds []*string,
 	dryRun bool,

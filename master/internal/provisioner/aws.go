@@ -53,7 +53,7 @@ type awsCluster struct {
 	client      *ec2.EC2
 
 	// Only used if spot instances are enabled
-	pendingSpotRequestIds []*string
+	activeSpotRequests map[string]*spotRequest
 }
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
@@ -121,6 +121,11 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 			LogOptions:                   config.AWS.buildDockerLogString(),
 		}),
 	}
+
+	if cluster.SpotInstanceEnabled {
+		cluster.activeSpotRequests = make(map[string]*spotRequest)
+	}
+
 	return cluster, nil
 }
 
