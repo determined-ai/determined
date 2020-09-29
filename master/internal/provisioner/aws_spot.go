@@ -423,6 +423,25 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 		ctx.Log().Debug("dry run of listActiveSpotInstanceRequests.")
 	}
 
+	//input := &ec2.DescribeSpotInstanceRequestsInput{
+	//	DryRun: aws.Bool(dryRun),
+	//	Filters: []*ec2.Filter{
+	//		{
+	//			Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+	//			Values: []*string{
+	//				aws.String(c.TagValue),
+	//			},
+	//		},
+	//		{
+	//			Name: aws.String("state"),
+	//			Values: []*string{
+	//				aws.String("open"),
+	//				aws.String("active"),
+	//			},
+	//		},
+	//	},
+	//}
+
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		DryRun: aws.Bool(dryRun),
 		Filters: []*ec2.Filter{
@@ -430,13 +449,6 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
 				Values: []*string{
 					aws.String(c.TagValue),
-				},
-			},
-			{
-				Name: aws.String("state"),
-				Values: []*string{
-					aws.String("open"),
-					aws.String("active"),
 				},
 			},
 		},
