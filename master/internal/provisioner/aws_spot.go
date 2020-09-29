@@ -187,7 +187,7 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 		pendingSpotRequestsToTerminate,
 	)
 
-	terminateInstancesResponse, err := c.terminateInstances(instanceIDs, false)
+	terminateInstancesResponse, err := c.terminateInstances(instancesToTerminate, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
 	} else {
@@ -195,7 +195,7 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 		ctx.Log().Infof(
 			"terminated %d/%d EC2 instances: %s",
 			len(terminated),
-			len(instanceIDs),
+			len(instancesToTerminate),
 			fmtInstances(terminated),
 		)
 	}
