@@ -21,7 +21,7 @@ the following prerequisites are satisfied:
    support enabled.
 -  You should have access to the cluster via `kubectl
    <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
--  `Helm <https://helm.sh/docs/helm/helm_install/>`_ should be
+-  `Helm 3 <https://helm.sh/docs/intro/install/>`_ should be
    installed.
 
 You should also download a copy of the :download:`Determined Helm Chart
