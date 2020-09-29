@@ -51,6 +51,7 @@ type pod struct {
 	container        container.Container
 	ports            []int
 	resourcesDeleted bool
+	testLogStreamer  bool
 	containerNames   map[string]bool
 }
 
@@ -235,12 +236,16 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(container.Running)
 
-		logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
-		if err != nil {
-			return err
-		}
-		if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
-			return errors.Errorf("log streamer already exists")
+		// testLogStreamer is a testing flag only set in the pod_tests.
+		// This allows us to bypass the need for a log streamer or REST server.
+		if !p.testLogStreamer {
+			logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
+			if err != nil {
+				return err
+			}
+			if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
+				return errors.Errorf("log streamer already exists")
+			}
 		}
 
 		addresses := []container.Address{}
