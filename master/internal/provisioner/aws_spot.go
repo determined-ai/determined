@@ -318,7 +318,7 @@ func (c *awsCluster) handleUnfulfillableRequests(ctx *actor.Context, unfulfillab
 			continue
 		case "request-canceled-and-instance-running":
 			// Unfulfillable, maybe requiring cleanup
-			c.terminateSpot(ctx, []*string{unfulfillableRequest.InstanceId})
+			//c.terminateSpot(ctx, []*string{unfulfillableRequest.InstanceId})
 			continue
 		case
 			"bad-parameters",
@@ -495,8 +495,9 @@ func parseDescribeSpotInstanceRequestsResponse(
 	healthyPendingRequests = make([]*string, 0, 0)
 	runningInstanceIds = make([]*string, 0, 0)
 
-	for i, request := range response.SpotInstanceRequests {
-		fmt.Println("Parsing spot instance request response number", i, *request.SpotInstanceRequestId, *request.State, *request.Status.Code, *request.Status.Message)
+	for _, request := range response.SpotInstanceRequests {
+	//for i, request := range response.SpotInstanceRequests {
+		//fmt.Println("Parsing spot instance request response number", i, *request.SpotInstanceRequestId, *request.State, *request.Status.Code, *request.Status.Message)
 		if spotRequestIsUnfulfillable(*request) {
 			unfulfillableRequests = append(unfulfillableRequests, &unfulfillableSpotRequest{
 				SpotRequestId: *request.SpotInstanceRequestId,
