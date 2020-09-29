@@ -12,7 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -70,7 +70,7 @@ func (p *pod) configureEnvVars(
 	return envVars, nil
 }
 
-func (p *pod) configureConfigMapSpec(runArchives []cproto.RunArchive) (*k8sV1.ConfigMap, error) {
+func (p *pod) configureConfigMapSpec(runArchives []container.RunArchive) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte)
 	// Add additional files as tar.gz archive.
 	for idx, runArchive := range runArchives {
@@ -100,7 +100,7 @@ func (p *pod) configureConfigMapSpec(runArchives []cproto.RunArchive) (*k8sV1.Co
 func (p *pod) configureVolumes(
 	ctx *actor.Context,
 	dockerMounts []mount.Mount,
-	runArchives []cproto.RunArchive,
+	runArchives []container.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
 	volumeMounts := make([]k8sV1.VolumeMount, 0)
 	volumes := make([]k8sV1.Volume, 0)
@@ -125,8 +125,8 @@ func (p *pod) configureVolumes(
 func (p *pod) configurePodSpec(
 	ctx *actor.Context,
 	volumes []k8sV1.Volume,
-	determinedInitContainers k8sV1.Container,
-	determinedContainer k8sV1.Container,
+	initContainers []k8sV1.Container,
+	containers []k8sV1.Container,
 	podSpec *k8sV1.Pod,
 ) *k8sV1.Pod {
 	if podSpec == nil {
@@ -142,37 +142,30 @@ func (p *pod) configurePodSpec(
 	}
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.TaskID
 
-	nonDeterminedContainers := make([]k8sV1.Container, 0)
-	for idx, container := range podSpec.Spec.Containers {
-		if container.Name != model.DeterminedK8ContainerName {
-			nonDeterminedContainers = append(nonDeterminedContainers, container)
-			continue
-		}
-
-		for k, v := range podSpec.Spec.Containers[idx].Resources.Limits {
-			if _, present := determinedContainer.Resources.Limits[k]; !present {
-				determinedContainer.Resources.Limits[k] = v
+	if len(podSpec.Spec.Containers) > 0 {
+		for k, v := range podSpec.Spec.Containers[0].Resources.Limits {
+			if _, present := containers[0].Resources.Limits[k]; !present {
+				containers[0].Resources.Limits[k] = v
 			}
 		}
 
-		for k, v := range podSpec.Spec.Containers[idx].Resources.Requests {
-			if _, present := determinedContainer.Resources.Requests[k]; !present {
-				determinedContainer.Resources.Requests[k] = v
+		for k, v := range podSpec.Spec.Containers[0].Resources.Requests {
+			if _, present := containers[0].Resources.Requests[k]; !present {
+				containers[0].Resources.Requests[k] = v
 			}
 		}
 
-		determinedContainer.VolumeMounts = append(
-			determinedContainer.VolumeMounts, podSpec.Spec.Containers[idx].VolumeMounts...)
+		containers[0].VolumeMounts = append(
+			containers[0].VolumeMounts, podSpec.Spec.Containers[0].VolumeMounts...)
 
-		determinedContainer.VolumeDevices = append(
-			determinedContainer.VolumeDevices, podSpec.Spec.Containers[idx].VolumeDevices...)
+		containers[0].VolumeDevices = append(
+			containers[0].VolumeDevices, podSpec.Spec.Containers[0].VolumeDevices...)
 	}
 
-	podSpec.Spec.Containers = nonDeterminedContainers
-	podSpec.Spec.Containers = append(podSpec.Spec.Containers, determinedContainer)
 	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
 	podSpec.Spec.HostNetwork = p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
-	podSpec.Spec.InitContainers = append(podSpec.Spec.InitContainers, determinedInitContainers)
+	podSpec.Spec.InitContainers = initContainers
+	podSpec.Spec.Containers = containers
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
 
 	return podSpec
@@ -205,27 +198,31 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		return err
 	}
 
-	initContainer := configureInitContainer(
-		len(runArchives),
-		initContainerVolumeMounts,
-		exp.ExperimentConfig.Environment.Image.For(deviceType),
-		configureImagePullPolicy(exp.ExperimentConfig.Environment),
-	)
+	initContainers := []k8sV1.Container{
+		configureInitContainer(
+			len(runArchives),
+			initContainerVolumeMounts,
+			exp.ExperimentConfig.Environment.Image.For(deviceType),
+			configureImagePullPolicy(exp.ExperimentConfig.Environment),
+		),
+	}
 
-	container := k8sV1.Container{
-		Name:            model.DeterminedK8ContainerName,
-		Command:         []string{"/run/determined/train/entrypoint.sh"},
-		Image:           exp.ExperimentConfig.Environment.Image.For(deviceType),
-		ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
-		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
-		Resources:       p.configureResourcesRequirements(),
-		VolumeMounts:    volumeMounts,
-		Env:             envVars,
-		WorkingDir:      tasks.ContainerWorkDir,
+	containers := []k8sV1.Container{
+		{
+			Name:            "determined-trial",
+			Command:         []string{"/run/determined/train/entrypoint.sh"},
+			Image:           exp.ExperimentConfig.Environment.Image.For(deviceType),
+			ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
+			SecurityContext: configureSecurityContext(exp.AgentUserGroup),
+			Resources:       p.configureResourcesRequirements(),
+			VolumeMounts:    volumeMounts,
+			Env:             envVars,
+			WorkingDir:      tasks.ContainerWorkDir,
+		},
 	}
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, exp.ExperimentConfig.Environment.PodSpec)
+		ctx, volumes, initContainers, containers, exp.ExperimentConfig.Environment.PodSpec)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives)
 	if err != nil {
@@ -260,27 +257,31 @@ func (p *pod) createPodSpecForCommand(ctx *actor.Context) error {
 		return err
 	}
 
-	initContainer := configureInitContainer(
-		len(runArchives),
-		initContainerVolumeMounts,
-		cmd.Config.Environment.Image.For(deviceType),
-		configureImagePullPolicy(cmd.Config.Environment),
-	)
+	initContainers := []k8sV1.Container{
+		configureInitContainer(
+			len(runArchives),
+			initContainerVolumeMounts,
+			cmd.Config.Environment.Image.For(deviceType),
+			configureImagePullPolicy(cmd.Config.Environment),
+		),
+	}
 
-	container := k8sV1.Container{
-		Name:            model.DeterminedK8ContainerName,
-		Command:         cmd.Config.Entrypoint,
-		Env:             envVars,
-		Image:           cmd.Config.Environment.Image.For(deviceType),
-		ImagePullPolicy: configureImagePullPolicy(cmd.Config.Environment),
-		SecurityContext: configureSecurityContext(cmd.AgentUserGroup),
-		Resources:       p.configureResourcesRequirements(),
-		VolumeMounts:    volumeMounts,
-		WorkingDir:      tasks.ContainerWorkDir,
+	containers := []k8sV1.Container{
+		{
+			Name:            "determined-task",
+			Command:         cmd.Config.Entrypoint,
+			Env:             envVars,
+			Image:           cmd.Config.Environment.Image.For(deviceType),
+			ImagePullPolicy: configureImagePullPolicy(cmd.Config.Environment),
+			SecurityContext: configureSecurityContext(cmd.AgentUserGroup),
+			Resources:       p.configureResourcesRequirements(),
+			VolumeMounts:    volumeMounts,
+			WorkingDir:      tasks.ContainerWorkDir,
+		},
 	}
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, cmd.Config.Environment.PodSpec)
+		ctx, volumes, initContainers, containers, cmd.Config.Environment.PodSpec)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives)
 	if err != nil {
@@ -311,27 +312,31 @@ func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 		return err
 	}
 
-	initContainer := configureInitContainer(
-		len(runArchives),
-		initContainerVolumeMounts,
-		gcc.ExperimentConfig.Environment.Image.For(deviceType),
-		configureImagePullPolicy(gcc.ExperimentConfig.Environment),
-	)
+	initContainers := []k8sV1.Container{
+		configureInitContainer(
+			len(runArchives),
+			initContainerVolumeMounts,
+			gcc.ExperimentConfig.Environment.Image.For(deviceType),
+			configureImagePullPolicy(gcc.ExperimentConfig.Environment),
+		),
+	}
 
-	container := k8sV1.Container{
-		Name:            model.DeterminedK8ContainerName,
-		Command:         tasks.GCCmd(),
-		Env:             envVars,
-		Image:           gcc.ExperimentConfig.Environment.Image.For(deviceType),
-		ImagePullPolicy: configureImagePullPolicy(gcc.ExperimentConfig.Environment),
-		SecurityContext: configureSecurityContext(gcc.AgentUserGroup),
-		Resources:       p.configureResourcesRequirements(),
-		VolumeMounts:    volumeMounts,
-		WorkingDir:      tasks.ContainerWorkDir,
+	containers := []k8sV1.Container{
+		{
+			Name:            "determined-gc",
+			Command:         tasks.GCCmd(),
+			Env:             envVars,
+			Image:           gcc.ExperimentConfig.Environment.Image.For(deviceType),
+			ImagePullPolicy: configureImagePullPolicy(gcc.ExperimentConfig.Environment),
+			SecurityContext: configureSecurityContext(gcc.AgentUserGroup),
+			Resources:       p.configureResourcesRequirements(),
+			VolumeMounts:    volumeMounts,
+			WorkingDir:      tasks.ContainerWorkDir,
+		},
 	}
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, gcc.ExperimentConfig.Environment.PodSpec)
+		ctx, volumes, initContainers, containers, gcc.ExperimentConfig.Environment.PodSpec)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives)
 	if err != nil {

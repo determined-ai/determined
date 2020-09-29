@@ -14,10 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-// DeterminedK8ContainerName is the name of the container that executes the
-// task within Kubernetes pods that are launched by Determined.
-const DeterminedK8ContainerName = "determined-container"
-
 // Environment configures the environment of a Determined command or experiment.
 type Environment struct {
 	Image                RuntimeItem  `json:"image"`
@@ -112,48 +108,44 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 			check.Equal(podSpec.Name, "", "pod Name is not a configurable option"),
 			check.Equal(podSpec.Namespace, "", "pod Namespace is not a configurable option"),
 			check.False(podSpec.Spec.HostNetwork, "host networking must be configured via master.yaml"),
+			check.Equal(
+				len(podSpec.Spec.InitContainers), 0,
+				"init containers are not a configurable option"),
+			check.LessThanOrEqualTo(
+				len(podSpec.Spec.Containers), 1,
+				"can specify at most one container in pod_spec"),
 		}
 
 		if len(podSpec.Spec.Containers) > 0 {
-			for _, container := range podSpec.Spec.Containers {
-				if container.Name != DeterminedK8ContainerName {
-					continue
-				}
-
-				containerSpecErrors := []error{
-					check.Equal(container.Image, "",
-						"container Image is not configurable, set it in the experiment config"),
-					check.Equal(len(container.Command), 0,
-						"container Command is not configurable"),
-					check.Equal(len(container.Args), 0,
-						"container Args are not configurable"),
-					check.Equal(container.WorkingDir, "",
-						"container WorkingDir is not configurable"),
-					check.Equal(len(container.Ports), 0,
-						"container Ports are not configurable"),
-					check.Equal(len(container.EnvFrom), 0,
-						"container EnvFrom is not configurable"),
-					check.Equal(len(container.Env), 0,
-						"container Env is not configurable, set it in the experiment config"),
-					check.True(container.LivenessProbe == nil,
-						"container LivenessProbe is not configurable"),
-					check.True(container.ReadinessProbe == nil,
-						"container ReadinessProbe is not configurable"),
-					check.True(container.StartupProbe == nil,
-						"container StartupProbe is not configurable"),
-					check.True(container.Lifecycle == nil,
-						"container Lifecycle is not configurable"),
-					check.Match(container.TerminationMessagePath, "",
-						"container TerminationMessagePath is not configurable"),
-					check.Match(string(container.TerminationMessagePolicy), "",
-						"container TerminationMessagePolicy is not configurable"),
-					check.Match(string(container.ImagePullPolicy), "",
-						"container ImagePullPolicy is not configurable, set it in the experiment config"),
-					check.True(container.SecurityContext == nil,
-						"container SecurityContext is not configurable, set it in the experiment config"),
-				}
-				podSpecErrors = append(podSpecErrors, containerSpecErrors...)
+			container := podSpec.Spec.Containers[0]
+			containerSpecErrors := []error{
+				check.Equal(container.Name, "", "container Name is not configurable"),
+				check.Equal(container.Image, "",
+					"container Image is not configurable, set it in the experiment config"),
+				check.Equal(len(container.Command), 0, "container Command is not configurable"),
+				check.Equal(len(container.Args), 0, "container Args are not configurable"),
+				check.Equal(container.WorkingDir, "", "container WorkingDir is not configurable"),
+				check.Equal(len(container.Ports), 0, "container Ports are not configurable"),
+				check.Equal(len(container.EnvFrom), 0, "container EnvFrom is not configurable"),
+				check.Equal(len(container.Env), 0,
+					"container Env is not configurable, set it in the experiment config"),
+				check.True(container.LivenessProbe == nil,
+					"container LivenessProbe is not configurable"),
+				check.True(container.ReadinessProbe == nil,
+					"container ReadinessProbe is not configurable"),
+				check.True(container.StartupProbe == nil,
+					"container StartupProbe is not configurable"),
+				check.True(container.Lifecycle == nil, "container Lifecycle is not configurable"),
+				check.Match(container.TerminationMessagePath, "",
+					"container TerminationMessagePath is not configurable"),
+				check.Match(string(container.TerminationMessagePolicy), "",
+					"container TerminationMessagePolicy is not configurable"),
+				check.Match(string(container.ImagePullPolicy), "",
+					"container ImagePullPolicy is not configurable, set it in the experiment config"),
+				check.True(container.SecurityContext == nil,
+					"container SecurityContext is not configurable, set it in the experiment config"),
 			}
+			podSpecErrors = append(podSpecErrors, containerSpecErrors...)
 		}
 
 		return podSpecErrors
