@@ -149,17 +149,20 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
   });
 };
 
+export const login = generateApi<Credentials, void>(Config.login);
+
 /*
  * Login is an exception where the caller will perform the error handling,
  * so it is one of the few API calls that will not have a try/catch block.
  */
-export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
-  const response = await detApi.Auth.determinedLogin({
-    password: Config.saltAndHashPassword(credentials.password),
-    username: credentials.username,
-  } as Api.V1LoginRequest);
-  return response;
-};
+// Temporarily disabling this until we figure out how we want to secure new login endpoint.
+// export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
+//   const response = await detApi.Auth.determinedLogin({
+//     password: Config.saltAndHashPassword(credentials.password),
+//     username: credentials.username,
+//   } as Api.V1LoginRequest);
+//   return response;
+// };
 
 export const logout = async (): Promise<Api.V1LogoutResponse> => {
   try {

@@ -49,7 +49,7 @@ Cypress.Commands.add('login', credentials => {
     password: saltAndHashPassword(ACCOUNT_PASSWORD),
     username: ACCOUNT_USERNAME,
   };
-  cy.request('POST', `${API_PATH}/auth/login`, credentials)
+  cy.request('POST', '/login', credentials)
     .then(response => {
       expect(response.body).to.have.property('token');
       return cy.setCookie('auth', response.body.token);
