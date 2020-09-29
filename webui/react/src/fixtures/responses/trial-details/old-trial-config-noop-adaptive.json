@@ -29,8 +29,8 @@
   "description": "noop_adaptive",
   "environment": {
     "image": {
-      "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-9b346b2",
-      "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-9b346b2"
+      "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-7b8b1e9",
+      "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-7b8b1e9"
     },
     "ports": null,
     "force_pull_image": false,

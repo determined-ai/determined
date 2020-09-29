@@ -4,35 +4,35 @@ Description: Determined Template
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: junk-ami-ap_northeast_1_master_ami
-      Agent: junk-ami-ap_northeast_1_agent_ami
+      Master: ami-0349224eed420a3b5
+      Agent: ami-08d8ce7792e9e4551
     ap-northeast-2:
-      Master: junk-ami-ap_northeast_2_master_ami
-      Agent: junk-ami-ap_northeast_2_agent_ami
+      Master: ami-0cd876b15dcf9249d
+      Agent: ami-0657504cd814a3069
     ap-southeast-1:
-      Master: junk-ami-ap_southeast_1_master_ami
-      Agent: junk-ami-ap_southeast_1_agent_ami
+      Master: ami-0e841276b0f027389
+      Agent: ami-0bbb1e46977bec0e4
     ap-southeast-2:
-      Master: junk-ami-ap_southeast_2_master_ami
-      Agent: junk-ami-ap_southeast_2_agent_ami
+      Master: ami-0257304d38f0c6e7d
+      Agent: ami-02fddef4d8bd31432
     eu-central-1:
-      Master: junk-ami-eu_central_1_master_ami
-      Agent: junk-ami-eu_central_1_agent_ami
+      Master: ami-0db63f4dee2d55b7a
+      Agent: ami-0f12c86004d521a8b
     eu-west-1:
-      Master: junk-ami-eu_west_1_master_ami
-      Agent: junk-ami-eu_west_1_agent_ami
+      Master: ami-08f3064d8481f3782
+      Agent: ami-04ffea01cecb3a62d
     eu-west-2:
-      Master: junk-ami-eu_west_2_master_ami
-      Agent: junk-ami-eu_west_2_agent_ami
+      Master: ami-0b48089553c9d7962
+      Agent: ami-01b39b3103b0970f0
     us-east-1:
-      Master: ami-66506c1c
-      Agent: ami-035df2edf93f67c5d
+      Master: ami-0f40c8f97004632f9
+      Agent: ami-0f35c45914ece7f62
     us-east-2:
-      Master: junk-ami-us_east_2_master_ami
-      Agent: junk-ami-us_east_2_agent_ami
+      Master: ami-05692172625678b4e
+      Agent: ami-000d9854f5923d7c0
     us-west-2:
-      Master: ami-79873901
-      Agent: ami-0a0b109aeb7ca72fc
+      Master: ami-09456e8683eb4d259
+      Agent: ami-0fc567e15722634c1
 
 Parameters:
   Keypair:
