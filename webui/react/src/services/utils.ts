@@ -3,6 +3,7 @@ import axios, { AxiosResponse, CancelToken } from 'axios';
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
+import { isObject } from 'utils/data';
 
 import { HttpApi } from './types';
 
@@ -104,7 +105,15 @@ export const consumeStream = async <T = unknown>(
   onEvent: (event: T) => void,
 ): Promise<void> => {
   try {
-    const response = await fetch(serverAddress(true, fetchArgs.url), fetchArgs.options);
+    const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
+
+    /*
+     * Default fetch credentials is set to `same-origin`, but we need to change it
+     * to `include` for local dev because the ports do not match up (3000 vs 8080).
+     */
+    if (process.env.IS_DEV) options.credentials = 'include';
+
+    const response = await fetch(serverAddress(true, fetchArgs.url), options);
     const reader = ndjsonStream(response.body).getReader();
     let result;
     while (!result || !result.done) {

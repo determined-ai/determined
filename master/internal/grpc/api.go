@@ -86,6 +86,7 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 		request := c.Request()
 		if origin := request.Header.Get("Origin"); enableCORS && origin != "" {
 			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
+			c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 		if c.Request().Header.Get("Authorization") == "" {
 			if cookie, err := c.Cookie(cookieName); err == nil {
