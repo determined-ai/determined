@@ -33,3 +33,16 @@ prep-root:
 .PHONY: run
 run: prep-root
 	@python3 run-server.py
+
+.PHONY: fmt
+fmt:
+	isort -y
+	black .
+
+.PHONY: check
+check:
+	isort --check-only
+	black . --check
+	flake8
+	mypy . scripts
+	
