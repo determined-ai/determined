@@ -119,12 +119,13 @@ def deploy_aws(args: argparse.Namespace) -> None:
         print("use the --region argument to deploy to a supported region")
         sys.exit(1)
 
-    if boto3_session.region_name == "eu-west-2" and args.agent_instance_type is None:
-        print(
-            "the default agent instance type for det-deploy (p2.8xlarge) is not available in "
-            "eu-west-2 (London).  Please specify an --agent-instance-type argument."
-        )
-        sys.exit(1)
+    # TODO(DET-4258) Uncomment this when we fully support all P3 regions.
+    # if boto3_session.region_name == "eu-west-2" and args.agent_instance_type is None:
+    #     print(
+    #         "the default agent instance type for det-deploy (p2.8xlarge) is not available in "
+    #         "eu-west-2 (London).  Please specify an --agent-instance-type argument."
+    #     )
+    #     sys.exit(1)
 
     if not re.match(constants.misc.CLOUDFORMATION_REGEX, args.cluster_id):
         print("Deployment Failed - cluster-id much match ^[a-zA-Z][-a-zA-Z0-9]*$")
