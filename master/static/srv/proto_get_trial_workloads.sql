@@ -1,6 +1,5 @@
 WITH validations_vt AS (
   SELECT row_to_json(r1) AS validation,
-    num_batches,
     prior_batches_processed
   FROM (
       SELECT 'STATE_' || v.state as state,
@@ -18,7 +17,6 @@ WITH validations_vt AS (
 ),
 trainings_vt AS (
   SELECT row_to_json(r1) AS training,
-    num_batches,
     prior_batches_processed
   FROM (
       SELECT s.start_time,
@@ -34,7 +32,6 @@ trainings_vt AS (
 ),
 checkpoints_vt AS (
   SELECT row_to_json(r1) AS checkpoint,
-    num_batches,
     prior_batches_processed
   FROM (
       SELECT 'STATE_' || c.state as state,
@@ -56,3 +53,10 @@ SELECT v.validation,
 FROM trainings_vt t
   FULL JOIN checkpoints_vt c ON false
   FULL JOIN validations_vt v ON false
+ORDER BY coalesce(
+    t.prior_batches_processed,
+    coalesce(
+      v.prior_batches_processed,
+      c.prior_batches_processed
+    )
+  ) ASC
