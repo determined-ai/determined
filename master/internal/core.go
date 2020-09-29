@@ -2,7 +2,9 @@ package internal
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -250,6 +252,26 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
+func (m *Master) postTrialLogs(c echo.Context) (interface{}, error) {
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var logs []model.TrialLog
+	if err = json.Unmarshal(body, &logs); err != nil {
+		return nil, err
+	}
+
+	for _, l := range logs {
+		if l.TrialID == 0 {
+			continue
+		}
+		m.system.Tell(m.trialLogger, l)
+	}
+	return "", nil
+}
+
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 func (m *Master) Run() error {
 	log.Infof("Determined master %s (built with %s)", m.Version, runtime.Version())
@@ -470,6 +492,8 @@ func (m *Master) Run() error {
 	checkpointsGroup.GET("/:checkpoint_uuid", api.Route(m.getCheckpoint))
 	checkpointsGroup.POST("/:checkpoint_uuid/metadata", api.Route(m.addCheckpointMetadata))
 	checkpointsGroup.DELETE("/:checkpoint_uuid/metadata", api.Route(m.deleteCheckpointMetadata))
+
+	m.echo.POST("/trial_logs", api.Route(m.postTrialLogs))
 
 	m.echo.GET("/ws/trial/:experiment_id/:trial_id/:container_id",
 		api.WebSocketRoute(m.trialWebSocket))

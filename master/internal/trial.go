@@ -292,9 +292,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.restore(ctx)
 		t.replaying = false
 
-	case sproto.ContainerLog:
-		t.processLog(ctx, msg)
-
 	case trialAborted:
 		// This is to handle trial being aborted. It does nothing here but requires
 		// the code below this switch statement to handle releasing resources in
@@ -933,11 +930,7 @@ func (t *trial) processContainerTerminated(
 	t.killAndRemoveSocket(ctx, msg.Container.ID)
 
 	exitMsg := msg.ContainerStopped.String()
-	t.processLog(ctx, sproto.ContainerLog{
-		Container:  msg.Container,
-		Timestamp:  time.Now(),
-		AuxMessage: &exitMsg,
-	})
+	t.insertLog(ctx, msg.Container, exitMsg)
 
 	// Terminate the task if the container never started (since this prevents the gang
 	// from ever being able to start), if the leader of the gang has exited out, or if
@@ -952,12 +945,12 @@ func (t *trial) processContainerTerminated(
 	}
 }
 
-func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
+func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
 	// Log messages should never come in before the trial ID is set, since no trial runners are
 	// launched until after the trial ID is set. But for futureproofing, we will log an error while
 	// we protect the database.
 	if !t.idSet {
-		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg.String())
+		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg)
 		return
 	}
 
@@ -966,7 +959,22 @@ func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
 		return
 	}
 
-	ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: msg.String() + "\n"})
+	cid := string(container.ID)
+	now := time.Now()
+	msg += "\n"
+	level := "INFO"
+	source := "master"
+	stdType := "stdout"
+	ctx.Tell(t.logger, model.TrialLog{
+		TrialID: t.id,
+		Log:     &msg,
+
+		ContainerID: &cid,
+		Timestamp:   &now,
+		Level:       &level,
+		Source:      &source,
+		StdType:     &stdType,
+	})
 }
 
 func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped {

@@ -89,7 +89,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			dockerMasterLabel:        c.MasterInfo.MasterID,
 		}
 
-	case proto.ContainerLog, proto.ContainerStateChanged:
+	case proto.ContainerLog, proto.ContainerStateChanged, fluentLog:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case proto.StartContainer:
@@ -157,6 +157,18 @@ func (c *containerManager) overwriteSpec(
 
 	spec.RunSpec.HostConfig.DeviceRequests = append(
 		spec.RunSpec.HostConfig.DeviceRequests, c.gpuDeviceRequests(cont)...)
+
+	if spec.RunSpec.UseFluentLogging {
+		spec.RunSpec.HostConfig.LogConfig = dcontainer.LogConfig{
+			Type: "fluentd",
+			Config: map[string]string{
+				"fluentd-address":              "localhost:" + strconv.Itoa(c.fluentPort),
+				"fluentd-sub-second-precision": "true",
+				"env":                          strings.Join(fluentEnvVarNames, ","),
+				"labels":                       dockerContainerParentLabel,
+			},
+		}
+	}
 
 	return spec
 }

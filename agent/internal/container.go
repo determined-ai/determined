@@ -1,7 +1,10 @@
 package internal
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
+	"strings"
 	"syscall"
 
 	"github.com/docker/docker/api/types"
@@ -20,6 +23,8 @@ type containerActor struct {
 	client        *client.Client
 	docker        *actor.Ref
 	containerInfo *types.ContainerJSON
+	// Extra values to inject into each Fluent log entry.
+	extraFluentValues map[string]string
 }
 
 type (
@@ -33,13 +38,31 @@ func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.A
 	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client}
 }
 
+// getExtraFluentValues computes the container-specific extra fields to be injected into each Fluent
+// log entry. We configure Docker to send these fields itself, but we need to compute and add them
+// ourselves for agent-inserted logs.
+func getExtraFluentValues(spec *cproto.Spec) map[string]string {
+	ret := make(map[string]string)
+	for _, n := range fluentEnvVarNames {
+		ret[n] = ""
+	}
+	for _, env := range spec.RunSpec.ContainerConfig.Env {
+		split := strings.SplitN(env, "=", 2)
+		if _, ok := ret[split[0]]; ok {
+			ret[split[0]] = split[1]
+		}
+	}
+	return ret
+}
+
 func (c *containerActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
+		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client, spec: c.spec})
 		c.transition(ctx, cproto.Pulling)
 		pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
 		ctx.Tell(c.docker, pull)
+		c.extraFluentValues = getExtraFluentValues(c.spec)
 
 	case getContainerSummary:
 		ctx.Respond(c.Container)
@@ -97,8 +120,11 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	case aproto.ContainerLog:
 		msg.Container = c.Container
 		ctx.Log().Debug(msg)
-		ctx.Tell(ctx.Self().Parent(), msg)
-
+		if c.spec.RunSpec.UseFluentLogging {
+			ctx.Tell(ctx.Self().Parent(), c.makeFluentLog(msg))
+		} else {
+			ctx.Tell(ctx.Self().Parent(), msg)
+		}
 	case actor.ChildStopped:
 
 	case actor.ChildFailed:
@@ -123,6 +149,43 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (c *containerActor) makeFluentLog(log aproto.ContainerLog) fluentLog {
+	var source string
+	var msg string
+	switch {
+	case log.AuxMessage != nil:
+		source = "agent"
+		msg = *log.AuxMessage
+	case log.PullMessage != nil:
+		source = "pull"
+		buf := new(bytes.Buffer)
+		if err := log.PullMessage.Display(buf, false); err != nil {
+			msg = err.Error()
+		} else {
+			msg = buf.String()
+			// Docker disables printing the progress bar in non-terminal mode.
+			if msg == "" && log.PullMessage.Progress != nil {
+				msg = log.PullMessage.Progress.String()
+			}
+			msg = strings.TrimSpace(msg)
+		}
+	case log.RunMessage != nil:
+		panic(fmt.Sprintf("unexpected run message from container on Fluent logging: %v", log.RunMessage))
+	default:
+		panic("unknown log message received")
+	}
+
+	f := fluentLog{
+		"log":     msg,
+		"source":  source,
+		"stdtype": "stdout",
+	}
+	for key, val := range c.extraFluentValues {
+		f[key] = val
+	}
+	return f
 }
 
 func (c *containerActor) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {

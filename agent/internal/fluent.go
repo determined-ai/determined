@@ -21,6 +21,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 )
 
+// The names of environment variables whose values should be included in log entries that Docker or
+// the agent sends to the Fluent Bit logger.
+var fluentEnvVarNames = []string{"DET_TRIAL_ID", "DET_CONTAINER_ID"}
+
 // fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
 // an appropriate configuration.
 func fluentConfig(opts Options) ([]string, archive.Archive, error) {
@@ -35,7 +39,6 @@ func fluentConfig(opts Options) ([]string, archive.Archive, error) {
 	luaCode := `
 -- Do some tweaking of values that can't be expressed with the normal filters.
 function run(tag, timestamp, record)
-    record.rank = tonumber(record.rank)
     record.trial_id = tonumber(record.trial_id)
 
     -- TODO: Only do this if it's not a partial record.
