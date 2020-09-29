@@ -1,33 +1,33 @@
 gcp_env:
-  new: pedl-environments-06318c7
-  old: pedl-environments-aaa3750
+  new: det-environments-9b346b2
+  old: pedl-environments-06318c7
 tf1_cpu_hashed:
-  new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-06318c7
-  old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750
+  new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-9b346b2
+  old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-06318c7
 tf1_cpu_versioned:
   new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0
 tf1_gpu_hashed:
-  new: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-06318c7
-  old: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750
+  new: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-9b346b2
+  old: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-06318c7
 tf1_gpu_versioned:
   new: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0
 tf2_cpu_hashed:
-  new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-06318c7
-  old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-aaa3750
+  new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-9b346b2
+  old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-06318c7
 tf2_cpu_versioned:
   new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.5.0
 tf2_gpu_hashed:
-  new: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-06318c7
-  old: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-aaa3750
+  new: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-9b346b2
+  old: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-06318c7
 tf2_gpu_versioned:
   new: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0
 us_east_1_agent_ami:
-  new: ami-04894a7352df9fdf9
-  old: ami-07a25d724ee82aad5
+  new: ami-035df2edf93f67c5d
+  old: ami-04894a7352df9fdf9
 us_east_1_master_ami:
   new: ami-66506c1c
 us_west_2_agent_ami:
-  new: ami-017627938fe327e4f
-  old: ami-0eb085752fdbec583
+  new: ami-0a0b109aeb7ca72fc
+  old: ami-017627938fe327e4f
 us_west_2_master_ami:
   new: ami-79873901
