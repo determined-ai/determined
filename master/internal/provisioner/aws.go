@@ -329,6 +329,9 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 }
 
 func (c *awsCluster) describeInstancesById(instanceIds []*string, dryRun bool) ([]*ec2.Instance, error) {
+	if len(instanceIds) == 0 {
+		return make([]*ec2.Instance, 0, 0), nil
+	}
 	input := &ec2.DescribeInstancesInput{
 		DryRun:      aws.Bool(dryRun),
 		InstanceIds: instanceIds,
