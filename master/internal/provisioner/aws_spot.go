@@ -118,17 +118,21 @@ func (c *awsCluster) launchSpot(
 	runningInstanceIds, pendingRequests, unfulfillableRequests := parseDescribeSpotInstanceRequestsResponse(listSpotRequestResp)
 	c.handleUnfulfillableRequests(ctx, unfulfillableRequests)
 
+	ctx.Log().
+		WithField("log-type", "launchSpot.checkPendingRequests").
+		Infof("All pending from last list: %d. Running requests: %d. Pending requests: %d. Unfulfillable: %d", len(c.pendingSpotRequestIds), len(runningInstanceIds), len(pendingRequests), len(unfulfillableRequests))
+
 	numNewInstanceRunningOrPending := len(pendingRequests) + len(runningInstanceIds)
 	numNewInstancesDesired := instanceNum
 	numAdditionalRequestsNeeded := numNewInstancesDesired - numNewInstanceRunningOrPending
 
 	switch {
 	case numAdditionalRequestsNeeded == 0:
-		ctx.Log().Debugf("The number of desired instances will be met by the current set of spot requests. " +
+		ctx.Log().Infof("The number of desired instances will be met by the current set of spot requests. " +
 			"No need to launch more spot requests")
 		return
 	case numAdditionalRequestsNeeded > 0:
-		ctx.Log().Debugf("More instances are desired than can be met by the current set of spot requests. "+
+		ctx.Log().Infof("More instances are desired than can be met by the current set of spot requests. "+
 			"Creating %d additional requests", numAdditionalRequestsNeeded)
 		ctx.Log().Infof("launching %d EC2 spot requests", numAdditionalRequestsNeeded)
 		resp, err := c.createSpotInstanceRequest(ctx, numAdditionalRequestsNeeded, false, instType)
