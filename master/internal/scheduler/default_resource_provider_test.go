@@ -81,13 +81,12 @@ func setupCluster(
 		label := system.Ask(handler, GetLabel{}).Get().(string)
 
 		d.addAllocatedTask(&AllocateRequest{
-			ID:           TaskID(handler.Address().String()),
-			Name:         handler.Address().Local(),
-			Group:        g,
-			TaskActor:    handler,
-			SlotsNeeded:  slots,
-			CanTerminate: true,
-			Label:        label,
+			ID:          TaskID(handler.Address().String()),
+			Name:        handler.Address().Local(),
+			Group:       g,
+			TaskActor:   handler,
+			SlotsNeeded: slots,
+			Label:       label,
 		}, nil)
 		_ = d.getOrCreateGroup(nil, g)
 		if resp := system.Ask(g, getMaxSlots{}); resp.Get() != nil {
