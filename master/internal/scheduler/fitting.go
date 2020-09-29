@@ -66,9 +66,9 @@ func (c candidateList) Swap(i, j int) {
 func findFits(
 	req *AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
-	// TODO(DET-4035): Some of this code is duplicated in filterable_view.go to prevent
-	// the provisioner from scaling up for jobs that can never be scheduled in the
-	// current cluster configuration.
+	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewInstanceNum()
+	//    to prevent the provisioner from scaling up for jobs that can never be scheduled in
+	//    the current cluster configuration.
 	if fit := findSharedAgentFit(req, agents, fittingMethod); fit != nil {
 		return []*fittingState{fit}
 	}

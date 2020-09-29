@@ -21,7 +21,6 @@ func newAWSTestConfig() *AWSClusterConfig {
 		TagValue:       fmt.Sprintf("ci-test-%s", uuid.New()),
 		RootVolumeSize: 100,
 		InstanceType:   "p2.xlarge",
-		MaxInstances:   5,
 	}
 }
 

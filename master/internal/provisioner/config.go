@@ -54,6 +54,7 @@ type Config struct {
 	GCP                    *GCPClusterConfig `union:"provider,gcp" json:"-"`
 	MaxIdleAgentPeriod     Duration          `json:"max_idle_agent_period"`
 	MaxAgentStartingPeriod Duration          `json:"max_agent_starting_period"`
+	MaxInstances           int               `json:"max_instances"`
 }
 
 // DefaultConfig returns the default configuration of the provisioner.
@@ -63,6 +64,7 @@ func DefaultConfig() *Config {
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     Duration(300 * time.Second),
 		MaxAgentStartingPeriod: Duration(300 * time.Second),
+		MaxInstances:           5,
 	}
 }
 
@@ -104,6 +106,7 @@ func (c Config) Validate() []error {
 			int64(c.MaxIdleAgentPeriod), int64(0), "max idle agent period must be greater than 0"),
 		check.GreaterThan(
 			int64(c.MaxAgentStartingPeriod), int64(0), "max agent starting period must be greater than 0"),
+		check.GreaterThan(int64(c.MaxInstances), int64(0), "max instance must be greater than 0"),
 	}...)
 	return errs
 }

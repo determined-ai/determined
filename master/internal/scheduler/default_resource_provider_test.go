@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -15,61 +14,90 @@ import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
 
-var errMock = errors.New("mock error")
-
-type mockActor struct {
-	system      *actor.System
-	cluster     *actor.Ref
-	onAllocated func(ResourcesAllocated) error
+func (d *DefaultRP) addAllocatedTask(req *AllocateRequest, allocated *ResourcesAllocated) {
+	d.taskList.AddTask(req)
+	d.taskList.SetAllocations(req.TaskActor, allocated)
 }
 
-type (
-	AskSchedulerToAddTask struct {
-		task AllocateRequest
+func (d *DefaultRP) addAgent(
+	t *testing.T,
+	system *actor.System,
+	agentID string,
+	numSlots int,
+	numUsedSlots int,
+	numZeroSlotContainers int,
+) *agentState {
+	agent := createAgent(t, system, agentID, numSlots, numUsedSlots, numZeroSlotContainers)
+	d.agents[agent.handler] = agent
+	return agent
+}
+
+func createAgent(
+	t *testing.T,
+	system *actor.System,
+	agentID string,
+	numSlots int,
+	numUsedSlots int,
+	numZeroSlotContainers int,
+) *agentState {
+	state := newMockAgent(t, system, agentID, numSlots, "")
+	i := 0
+	for ix := range state.devices {
+		if i < numUsedSlots {
+			id := cproto.ID(uuid.New().String())
+			state.devices[ix] = &id
+		}
 	}
-	ThrowError struct{}
-	ThrowPanic struct{}
-)
-
-func (h *mockActor) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case AskSchedulerToAddTask:
-		msg.task.TaskActor = ctx.Self()
-		if ctx.ExpectingResponse() {
-			ctx.Respond(ctx.Ask(h.cluster, msg.task).Get())
-		} else {
-			ctx.Tell(h.cluster, msg.task)
-		}
-
-	case ThrowError:
-		return errMock
-
-	case ThrowPanic:
-		panic(errMock)
-
-	case ResourcesAllocated:
-		if h.onAllocated != nil {
-			return h.onAllocated(msg)
-		}
-
-		// Mock a container is started.
-		h.system.Tell(h.cluster, sproto.TaskContainerStateChanged{
-			Container:        cproto.Container{ID: "random-container-name"},
-			ContainerStarted: &sproto.TaskContainerStarted{},
-		})
-
-	case sproto.TaskContainerStateChanged:
-		if msg.Container.State == cproto.Running {
-			h.system.Tell(h.cluster, sproto.TaskContainerStateChanged{
-				Container:        cproto.Container{ID: msg.Container.ID},
-				ContainerStopped: &sproto.TaskContainerStopped{},
-			})
-		}
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
+	for i := 0; i < numZeroSlotContainers; i++ {
+		state.zeroSlotContainers[cproto.ID(uuid.New().String())] = true
 	}
-	return nil
+	return state
+}
+
+func setupCluster(
+	scheduler Scheduler, fittingMethod SoftConstraint, agents []*agentState, tasks []*actor.Ref,
+) *DefaultRP {
+	d := DefaultRP{
+		scheduler:     scheduler,
+		fittingMethod: fittingMethod,
+		agents:        make(map[*actor.Ref]*agentState),
+		groups:        make(map[*actor.Ref]*group),
+
+		taskList:    newTaskList(),
+		scalingInfo: &sproto.ScalingInfo{},
+
+		reschedule: false,
+	}
+
+	for _, agent := range agents {
+		d.agents[agent.handler] = agent
+	}
+
+	for _, handler := range tasks {
+		system := handler.System()
+
+		g := system.Ask(handler, GetGroup{}).Get().(*actor.Ref)
+		slots := system.Ask(handler, GetSlots{}).Get().(int)
+		label := system.Ask(handler, GetLabel{}).Get().(string)
+
+		d.addAllocatedTask(&AllocateRequest{
+			ID:           TaskID(handler.Address().String()),
+			Name:         handler.Address().Local(),
+			Group:        g,
+			TaskActor:    handler,
+			SlotsNeeded:  slots,
+			CanTerminate: true,
+			Label:        label,
+		}, nil)
+		_ = d.getOrCreateGroup(nil, g)
+		if resp := system.Ask(g, getMaxSlots{}); resp.Get() != nil {
+			d.getOrCreateGroup(nil, g).maxSlots = resp.Get().(*int)
+		}
+		if resp := system.Ask(g, getWeight{}); resp.Get() != nil {
+			d.getOrCreateGroup(nil, g).weight = resp.Get().(float64)
+		}
+	}
+	return &d
 }
 
 func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
@@ -80,8 +108,8 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	cluster, created := system.ActorOf(actor.Addr("scheduler"), c)
 	assert.Assert(t, created)
 	mockActor, created := system.ActorOf(
-		actor.Addr("mockActor"),
-		&mockActor{
+		actor.Addr("mockTaskActor"),
+		&mockTask{
 			cluster: cluster,
 			system:  system,
 		},
@@ -118,8 +146,8 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	cluster, created := system.ActorOf(actor.Addr("scheduler"), c)
 	assert.Assert(t, created)
 	mockActor, created := system.ActorOf(
-		actor.Addr("mockActor"),
-		&mockActor{
+		actor.Addr("mockTaskActor"),
+		&mockTask{
 			cluster: cluster,
 			system:  system,
 		},
@@ -157,8 +185,8 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	assert.Assert(t, created)
 
 	mockActor, created := system.ActorOf(
-		actor.Addr("mockActor"),
-		&mockActor{
+		actor.Addr("mockTaskActor"),
+		&mockTask{
 			cluster: cluster,
 			system:  system,
 		},
@@ -195,8 +223,8 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 	assert.Assert(t, created)
 
 	mockActor, created := system.ActorOf(
-		actor.Addr("mockActor"),
-		&mockActor{
+		actor.Addr("mockTaskActor"),
+		&mockTask{
 			cluster: cluster,
 			system:  system,
 		})
@@ -245,4 +273,79 @@ func TestCleanUpTaskWhenActorsStopOrTaskIsKilled(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		testWhenActorsStopOrTaskIsKilled(t, r)
 	}
+}
+
+func TestScalingInfoAgentSummary(t *testing.T) {
+	system := actor.NewSystem(t.Name())
+	agents := []*agentState{
+		createAgent(t, system, "agent1", 1, 0, 1),
+		createAgent(t, system, "agent2", 1, 1, 1),
+	}
+	var tasks []*actor.Ref
+	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
+	c.slotsPerInstance = 4
+
+	addTask(t, system, c.taskList, "task1", 1, 1)
+	addTask(t, system, c.taskList, "task2", 0, 1)
+	addTask(t, system, c.taskList, "task3", 0, 5)
+
+	// Test basic.
+	updated := c.updateScalingInfo()
+	assert.Check(t, updated)
+	assert.DeepEqual(t, *c.scalingInfo, sproto.ScalingInfo{
+		DesiredNewInstances: 1,
+		Agents: map[string]sproto.AgentSummary{
+			"agent1": {Name: "agent1", IsIdle: false},
+			"agent2": {Name: "agent2", IsIdle: false},
+		},
+	})
+
+	// Test adding agents.
+	agent3 := c.addAgent(t, system, "agent3", 4, 0, 0)
+	c.addAgent(t, system, "agent4", 4, 1, 0)
+	updated = c.updateScalingInfo()
+	assert.Check(t, updated)
+	assert.DeepEqual(t, *c.scalingInfo, sproto.ScalingInfo{
+		DesiredNewInstances: 1,
+		Agents: map[string]sproto.AgentSummary{
+			"agent1": {Name: "agent1", IsIdle: false},
+			"agent2": {Name: "agent2", IsIdle: false},
+			"agent3": {Name: "agent3", IsIdle: true},
+			"agent4": {Name: "agent4", IsIdle: false},
+		},
+	})
+
+	// Test removing agents.
+	delete(c.agents, agents[0].handler)
+	updated = c.updateScalingInfo()
+	assert.Check(t, updated)
+	assert.DeepEqual(t, *c.scalingInfo, sproto.ScalingInfo{
+		DesiredNewInstances: 1,
+		Agents: map[string]sproto.AgentSummary{
+			"agent2": {Name: "agent2", IsIdle: false},
+			"agent3": {Name: "agent3", IsIdle: true},
+			"agent4": {Name: "agent4", IsIdle: false},
+		},
+	})
+
+	// Test agent state change.
+	// Allocate a container to a device of the agent2.
+	i := 0
+	for d := range c.agents[agent3.handler].devices {
+		if i == 0 {
+			id := cproto.ID(uuid.New().String())
+			c.agents[agent3.handler].devices[d] = &id
+		}
+		i++
+	}
+	updated = c.updateScalingInfo()
+	assert.Check(t, updated)
+	assert.DeepEqual(t, *c.scalingInfo, sproto.ScalingInfo{
+		DesiredNewInstances: 1,
+		Agents: map[string]sproto.AgentSummary{
+			"agent2": {Name: "agent2", IsIdle: false},
+			"agent3": {Name: "agent3", IsIdle: false},
+			"agent4": {Name: "agent4", IsIdle: false},
+		},
+	})
 }

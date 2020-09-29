@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
@@ -21,16 +21,6 @@ func (t TestInstanceType) name() string {
 }
 func (t TestInstanceType) slots() int {
 	return t.Slots
-}
-
-func newTasks(slotsNeeded []int) []*scheduler.TaskSummary {
-	tasks := make([]*scheduler.TaskSummary, 0, len(slotsNeeded))
-	for i := range slotsNeeded {
-		tasks = append(tasks, &scheduler.TaskSummary{
-			SlotsNeeded: slotsNeeded[i],
-		})
-	}
-	return tasks
 }
 
 func newInstanceIDSet(instanceIDs []string) map[string]bool {
@@ -62,11 +52,12 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 	assert.NilError(t, err)
 	p := &Provisioner{
 		provider: cluster,
-		scaleDecider: &scaleDecider{
-			maxStartingPeriod:   setup.maxAgentStartingPeriod,
-			maxIdlePeriod:       setup.maxIdleAgentPeriod,
-			maxDisconnectPeriod: setup.maxDisconnectPeriod,
-		},
+		scaleDecider: newScaleDecider(
+			setup.maxIdleAgentPeriod,
+			setup.maxAgentStartingPeriod,
+			setup.maxDisconnectPeriod,
+			setup.maxInstances,
+		),
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
 	assert.Assert(t, created)
@@ -117,10 +108,6 @@ func (c *mockProvider) instanceType() instanceType {
 	return c.mockInstanceType
 }
 
-func (c *mockProvider) maxInstanceNum() int {
-	return c.maxInstances
-}
-
 func (c *mockProvider) list(ctx *actor.Context) ([]*Instance, error) {
 	c.history = append(c.history, newMockFuncCall("list"))
 	instances := make([]*Instance, 0, len(c.instances))
@@ -163,9 +150,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 		initInstances: []*Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
-	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		Tasks: newTasks([]int{1, 2, 3, 4, 5}),
-	}).Get()
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
@@ -188,9 +173,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 		initInstances: []*Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
-	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		Tasks: newTasks([]int{1, 2, 3, 5}),
-	}).Get()
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 3}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
@@ -228,22 +211,11 @@ func TestProvisionerScaleDown(t *testing.T) {
 	}
 	mock := newMockEnvironment(t, setup)
 
-	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		IdleAgents: []*scheduler.AgentSummary{
-			{
-				Name: "agent1",
-			},
-			{
-				Name: "agent2",
-			},
-		},
-		ConnectedAgents: []*scheduler.AgentSummary{
-			{
-				Name: "agent1",
-			},
-			{
-				Name: "agent2",
-			},
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{
+		DesiredNewInstances: 0,
+		Agents: map[string]sproto.AgentSummary{
+			"agent1": {Name: "agent1", IsIdle: true},
+			"agent2": {Name: "agent2", IsIdle: true},
 		},
 	}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
@@ -289,24 +261,25 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	mock := newMockEnvironment(t, setup)
 
 	// Start the master.
-	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		IdleAgents: []*scheduler.AgentSummary{
-			{
-				Name: "agent1",
+	mock.system.Ask(mock.provisioner,
+		sproto.ScalingInfo{
+			DesiredNewInstances: 0,
+			Agents: map[string]sproto.AgentSummary{
+				"agent1": {Name: "agent1", IsIdle: true},
+				"agent2": {Name: "agent2", IsIdle: true},
+				"agent3": {Name: "agent3", IsIdle: true},
 			},
-			{
-				Name: "agent2",
-			},
-			{
-				Name: "agent3",
-			},
-		},
-	}).Get()
+		}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 
 	// Submit jobs.
-	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		Tasks: newTasks([]int{1, 2, 3}),
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{
+		DesiredNewInstances: 2,
+		Agents: map[string]sproto.AgentSummary{
+			"agent1": {Name: "agent1", IsIdle: true},
+			"agent2": {Name: "agent2", IsIdle: true},
+			"agent3": {Name: "agent3", IsIdle: true},
+		},
 	}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	time.Sleep(50 * time.Millisecond)
@@ -316,7 +289,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	assert.DeepEqual(t, mock.cluster.history[len(mock.cluster.history)-1], newMockFuncCall("list"))
 }
 
-func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
+func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 	setup := &mockConfig{
 		maxAgentStartingPeriod: 3 * time.Minute,
 		maxIdleAgentPeriod:     50 * time.Millisecond,
@@ -343,9 +316,7 @@ func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
 	}
 	mock := newMockEnvironment(t, setup)
 
-	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		ConnectedAgents: []*scheduler.AgentSummary{},
-	}).Get()
+	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
 	time.Sleep(100 * time.Millisecond)
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()

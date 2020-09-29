@@ -125,10 +125,6 @@ func (c *awsCluster) instanceType() instanceType {
 	return c.InstanceType
 }
 
-func (c *awsCluster) maxInstanceNum() int {
-	return c.MaxInstances
-}
-
 func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {
 	return *inst.InstanceId
 }
@@ -192,7 +188,6 @@ func (c *awsCluster) launch(
 	if instanceNum <= 0 {
 		return
 	}
-	ctx.Log().Infof("launching %d EC2 instances", instanceNum)
 	instances, err := c.launchInstances(instType, instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
@@ -212,11 +207,6 @@ func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
 		return
 	}
 
-	ctx.Log().Infof(
-		"terminating %d EC2 instances: %s",
-		len(instanceIDs),
-		instanceIDs,
-	)
 	ids := make([]*string, 0, len(instanceIDs))
 	for _, id := range instanceIDs {
 		idCopy := id

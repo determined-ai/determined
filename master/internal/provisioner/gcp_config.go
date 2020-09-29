@@ -40,7 +40,6 @@ type GCPClusterConfig struct {
 	ServiceAccount   gceServiceAccount   `json:"service_account"`
 
 	InstanceType gceInstanceType `json:"instance_type"`
-	MaxInstances int             `json:"max_instances"`
 
 	OperationTimeoutPeriod Duration `json:"operation_timeout_period"`
 }
@@ -55,7 +54,6 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 			GPUType:     "nvidia-tesla-v100",
 			GPUNum:      4,
 		},
-		MaxInstances:           5,
 		OperationTimeoutPeriod: Duration(5 * time.Minute),
 	}
 }

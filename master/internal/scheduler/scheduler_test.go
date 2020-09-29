@@ -3,6 +3,7 @@ package scheduler
 import (
 	"testing"
 
+	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -11,19 +12,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-type getMaxSlots struct{}
-type getWeight struct{}
+type (
+	getMaxSlots struct{}
+	getWeight   struct{}
+)
 
 type mockGroup struct {
 	id       string
 	maxSlots *int
 	weight   float64
-}
-
-func newGroup(t *testing.T, system *actor.System, id string) *actor.Ref {
-	ref, created := system.ActorOf(actor.Addr(id), &mockGroup{})
-	assert.Assert(t, created)
-	return ref
 }
 
 func (g *mockGroup) Receive(ctx *actor.Context) error {
@@ -39,6 +36,10 @@ func (g *mockGroup) Receive(ctx *actor.Context) error {
 }
 
 type mockTask struct {
+	system      *actor.System
+	cluster     *actor.Ref
+	onAllocated func(ResourcesAllocated) error
+
 	id             TaskID
 	slotsNeeded    int
 	label          string
@@ -47,21 +48,60 @@ type mockTask struct {
 }
 
 type (
-	getSlots struct{}
-	getGroup struct{}
-	getLabel struct{}
+	AskSchedulerToAddTask struct {
+		task AllocateRequest
+	}
+	ThrowError struct{}
+	ThrowPanic struct{}
+	GetSlots   struct{}
+	GetGroup   struct{}
+	GetLabel   struct{}
 )
 
+var errMock = errors.New("mock error")
+
 func (t *mockTask) Receive(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
+	switch msg := ctx.Message().(type) {
+	case AskSchedulerToAddTask:
+		msg.task.TaskActor = ctx.Self()
+		if ctx.ExpectingResponse() {
+			ctx.Respond(ctx.Ask(t.cluster, msg.task).Get())
+		} else {
+			ctx.Tell(t.cluster, msg.task)
+		}
+
 	case ResourcesAllocated:
+		if t.onAllocated != nil {
+			return t.onAllocated(msg)
+		}
+
+		// Mock a container is started.
+		t.system.Tell(t.cluster, sproto.TaskContainerStateChanged{
+			Container:        cproto.Container{ID: "random-container-name"},
+			ContainerStarted: &sproto.TaskContainerStarted{},
+		})
 	case ReleaseResources:
-	case getSlots:
+
+	case sproto.TaskContainerStateChanged:
+		if msg.Container.State == cproto.Running {
+			t.system.Tell(t.cluster, sproto.TaskContainerStateChanged{
+				Container:        cproto.Container{ID: msg.Container.ID},
+				ContainerStopped: &sproto.TaskContainerStopped{},
+			})
+		}
+
+	case GetSlots:
 		ctx.Respond(t.slotsNeeded)
-	case getGroup:
+	case GetGroup:
 		ctx.Respond(t.group)
-	case getLabel:
+	case GetLabel:
 		ctx.Respond(t.label)
+
+	case ThrowError:
+		return errMock
+	case ThrowPanic:
+		panic(errMock)
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -101,52 +141,6 @@ func (m mockAgent) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
-}
-
-func setupCluster(
-	scheduler Scheduler, fittingMethod SoftConstraint, agents []*agentState, tasks []*actor.Ref,
-) *DefaultRP {
-	d := DefaultRP{
-		scheduler:     scheduler,
-		fittingMethod: fittingMethod,
-		agents:        make(map[*actor.Ref]*agentState),
-		groups:        make(map[*actor.Ref]*group),
-
-		taskList:        newTaskList(),
-		provisionerView: newProvisionerView(0),
-
-		reschedule: false,
-	}
-
-	for _, agent := range agents {
-		d.agents[agent.handler] = agent
-	}
-
-	for _, handler := range tasks {
-		system := handler.System()
-
-		g := system.Ask(handler, getGroup{}).Get().(*actor.Ref)
-		slots := system.Ask(handler, getSlots{}).Get().(int)
-		label := system.Ask(handler, getLabel{}).Get().(string)
-
-		d.addAllocatedTask(&AllocateRequest{
-			ID:           TaskID(handler.Address().String()),
-			Name:         handler.Address().Local(),
-			Group:        g,
-			TaskActor:    handler,
-			SlotsNeeded:  slots,
-			CanTerminate: true,
-			Label:        label,
-		}, nil)
-		_ = d.getOrCreateGroup(nil, g)
-		if resp := system.Ask(g, getMaxSlots{}); resp.Get() != nil {
-			d.getOrCreateGroup(nil, g).maxSlots = resp.Get().(*int)
-		}
-		if resp := system.Ask(g, getWeight{}); resp.Get() != nil {
-			d.getOrCreateGroup(nil, g).weight = resp.Get().(float64)
-		}
-	}
-	return &d
 }
 
 func setupClusterStates(
