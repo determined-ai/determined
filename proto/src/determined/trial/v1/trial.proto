@@ -35,6 +35,12 @@ message MetricsWorkload {
       required: ["start_time", "state"]
    }
   };
+  /* enum Type { */
+  /*     // Training workload. */
+  /*     TYPE_TRAINING = 0; */
+  /*     // Validation workload. */
+  /*     TYPE_VALIDATION = 1; */
+  /* } */
   // The time the workload was started.
   google.protobuf.Timestamp start_time = 1;
   // The time the workload finished or was stopped.
