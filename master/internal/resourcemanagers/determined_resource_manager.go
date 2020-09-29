@@ -2,44 +2,38 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
-	"fmt"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-// determinedResourceManager manages resources using Determined.
-type determinedResourceManager struct {
-	config      *DeterminedResourceManagerConfig
+type agentResourceManager struct {
+	config      *AgentResourceManagerConfig
 	poolsConfig *ResourcePoolsConfig
 	cert        *tls.Certificate
 
 	onlyPool *actor.Ref
 }
 
-func newDeterminedResourceManager(
-	config *DeterminedResourceManagerConfig, poolsConfig *ResourcePoolsConfig, cert *tls.Certificate,
-) *determinedResourceManager {
-	return &determinedResourceManager{
+func newAgentResourceManager(
+	config *AgentResourceManagerConfig, poolsConfig *ResourcePoolsConfig, cert *tls.Certificate,
+) *agentResourceManager {
+	return &agentResourceManager{
 		config:      config,
 		poolsConfig: poolsConfig,
 		cert:        cert,
 	}
 }
 
-func (d *determinedResourceManager) Receive(ctx *actor.Context) error {
+func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		for ix := range d.poolsConfig.ResourcePools {
-			config := d.poolsConfig.ResourcePools[ix]
-			if ref := ctx.Child(config.PoolName); ref != nil {
-				panic("cannot have duplicate resource pool names")
-			}
-			if rpRef, _ := d.createResourcePool(ctx, &config, d.cert); rpRef != nil {
-				d.onlyPool = rpRef
+		for ix := range a.poolsConfig.ResourcePools {
+			rpRef := a.createResourcePool(ctx, &a.poolsConfig.ResourcePools[ix], a.cert)
+			if rpRef != nil {
+				a.onlyPool = rpRef
+				return nil
 			}
 		}
 
@@ -48,7 +42,7 @@ func (d *determinedResourceManager) Receive(ctx *actor.Context) error {
 		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
 		GetTaskSummary, GetTaskSummaries,
 		sproto.ConfigureEndpoints, sproto.GetEndpointActorAddress:
-		d.forward(ctx, msg)
+		a.forward(ctx, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -56,43 +50,45 @@ func (d *determinedResourceManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (d *determinedResourceManager) forward(ctx *actor.Context, msg actor.Message) {
+func (a *agentResourceManager) forward(ctx *actor.Context, msg actor.Message) {
 	if ctx.ExpectingResponse() {
-		response := ctx.Ask(d.onlyPool, msg)
+		response := ctx.Ask(a.onlyPool, msg)
 		ctx.Respond(response.Get())
 	} else {
-		ctx.Tell(d.onlyPool, msg)
+		ctx.Tell(a.onlyPool, msg)
 	}
 }
 
-func (d *determinedResourceManager) createResourcePool(
+func (a *agentResourceManager) createResourcePool(
 	ctx *actor.Context, config *ResourcePoolConfig, cert *tls.Certificate,
-) (*actor.Ref, error) {
+) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
 	var rp *ResourcePool
 	if config.Provider == nil {
 		ctx.Log().Infof("disabling provisioner for resource pool: %s", config.PoolName)
 		rp = NewResourcePool(
-			MakeScheduler(d.config.SchedulingPolicy),
-			MakeFitFunction(d.config.FittingPolicy),
+			MakeScheduler(a.config.SchedulingPolicy),
+			MakeFitFunction(a.config.FittingPolicy),
 			nil,
 			0,
 		)
 	} else {
 		p, pRef, err := provisioner.Setup(ctx, config.Provider, cert)
 		if err != nil {
-			return nil, errors.Wrap(err, "cannot create resource pool")
+			ctx.Log().WithError(err).Errorf("cannot create resource pool: %s", config.PoolName)
+			return nil
 		}
 		rp = NewResourcePool(
-			MakeScheduler(d.config.SchedulingPolicy),
-			MakeFitFunction(d.config.FittingPolicy),
+			MakeScheduler(a.config.SchedulingPolicy),
+			MakeFitFunction(a.config.FittingPolicy),
 			pRef,
 			p.SlotsPerInstance(),
 		)
 	}
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {
-		panic(fmt.Sprintf("cannot create resource pool actor: %s", config.PoolName))
+		ctx.Log().Errorf("cannot create resource pool actor: %s", config.PoolName)
+		return nil
 	}
-	return ref, nil
+	return ref
 }

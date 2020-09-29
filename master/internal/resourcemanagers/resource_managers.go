@@ -33,7 +33,7 @@ func NewResourceManagers(
 	case rmConfig.DeterminedRM != nil:
 		ref, _ = system.ActorOf(
 			actor.Addr("determinedRM"),
-			newDeterminedResourceManager(rmConfig.DeterminedRM, poolsConfig, cert),
+			newAgentResourceManager(rmConfig.DeterminedRM, poolsConfig, cert),
 		)
 
 	case rmConfig.KubernetesRM != nil:

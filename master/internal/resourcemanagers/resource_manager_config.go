@@ -13,41 +13,41 @@ import (
 // ResolveConfig applies backwards compatibility for the old scheduler
 // and provisioner configuration.
 func ResolveConfig(
-	sConf *Config,
-	pConf *provisioner.Config,
+	schedulerConf *Config,
+	provisionerConf *provisioner.Config,
 	rmConf *ResourceManagerConfig,
 	rpsConf *ResourcePoolsConfig,
 ) (*ResourceManagerConfig, *ResourcePoolsConfig, error) {
 	switch {
-	case pConf == nil && rpsConf == nil:
+	case provisionerConf == nil && rpsConf == nil:
 		rpsConf = DefaultRPsConfig()
-	case pConf != nil && rpsConf == nil:
+	case provisionerConf != nil && rpsConf == nil:
 		rpsConf = &ResourcePoolsConfig{
-			ResourcePools: []ResourcePoolConfig{{PoolName: "default", Provider: pConf}},
+			ResourcePools: []ResourcePoolConfig{{PoolName: "default", Provider: provisionerConf}},
 		}
-	case pConf != nil && rpsConf != nil:
+	case provisionerConf != nil && rpsConf != nil:
 		return nil, nil, errors.New("cannot specify both the provisioner and resource_pools fields")
 	}
 
 	switch {
-	case sConf == nil && rmConf == nil:
+	case schedulerConf == nil && rmConf == nil:
 		rmConf = DefaultRMConfig()
 
-	case sConf != nil && rmConf == nil:
+	case schedulerConf != nil && rmConf == nil:
 		switch {
-		case sConf.ResourceProvider == nil ||
-			sConf.ResourceProvider.DefaultRPConfig != nil:
+		case schedulerConf.ResourceProvider == nil ||
+			schedulerConf.ResourceProvider.DefaultRPConfig != nil:
 			rmConf = &ResourceManagerConfig{
-				DeterminedRM: &DeterminedResourceManagerConfig{
-					SchedulingPolicy: sConf.Type,
-					FittingPolicy:    sConf.Fit,
+				DeterminedRM: &AgentResourceManagerConfig{
+					SchedulingPolicy: schedulerConf.Type,
+					FittingPolicy:    schedulerConf.Fit,
 				},
 			}
-		case sConf.ResourceProvider.KubernetesRPConfig != nil:
-			rmConf = &ResourceManagerConfig{KubernetesRM: sConf.ResourceProvider.KubernetesRPConfig}
+		case schedulerConf.ResourceProvider.KubernetesRPConfig != nil:
+			rmConf = &ResourceManagerConfig{KubernetesRM: schedulerConf.ResourceProvider.KubernetesRPConfig}
 		}
 
-	case sConf != nil && rmConf != nil:
+	case schedulerConf != nil && rmConf != nil:
 		return nil, nil, errors.New("cannot specify both the scheduler and resource_manager fields")
 	}
 	return rmConf, rpsConf, nil
@@ -61,8 +61,8 @@ func DefaultRMConfig() *ResourceManagerConfig {
 }
 
 // DefaultDetRMConfig returns the default determined resource manager configuration.
-func DefaultDetRMConfig() *DeterminedResourceManagerConfig {
-	return &DeterminedResourceManagerConfig{
+func DefaultDetRMConfig() *AgentResourceManagerConfig {
+	return &AgentResourceManagerConfig{
 		SchedulingPolicy: "fair_share",
 		FittingPolicy:    "best",
 	}
@@ -70,7 +70,7 @@ func DefaultDetRMConfig() *DeterminedResourceManagerConfig {
 
 // ResourceManagerConfig hosts configuration fields for the resource manager.
 type ResourceManagerConfig struct {
-	DeterminedRM *DeterminedResourceManagerConfig `union:"type,default" json:"-"`
+	DeterminedRM *AgentResourceManagerConfig      `union:"type,default" json:"-"`
 	KubernetesRM *KubernetesResourceManagerConfig `union:"type,kubernetes" json:"-"`
 }
 
@@ -88,8 +88,8 @@ func (r *ResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(r)), "failed to parse resource manager")
 }
 
-// DeterminedResourceManagerConfig hosts configuration fields for the determined resource manager.
-type DeterminedResourceManagerConfig struct {
+// AgentResourceManagerConfig hosts configuration fields for the determined resource manager.
+type AgentResourceManagerConfig struct {
 	SchedulingPolicy       string `json:"scheduling_policy"`
 	FittingPolicy          string `json:"fitting_policy"`
 	DefaultCPUResourcePool string `json:"default_cpu_resource_pool"`
@@ -97,7 +97,7 @@ type DeterminedResourceManagerConfig struct {
 }
 
 // Validate implements the check.Validatable interface.
-func (c DeterminedResourceManagerConfig) Validate() []error {
+func (c AgentResourceManagerConfig) Validate() []error {
 	return []error{
 		check.Contains(
 			c.SchedulingPolicy, []interface{}{"priority", "fair_share"}, "invalid scheduling policy",

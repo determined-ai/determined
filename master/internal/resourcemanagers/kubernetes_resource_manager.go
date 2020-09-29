@@ -10,7 +10,6 @@ import (
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-// kubernetesResourceManager manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
 	config *KubernetesResourceManagerConfig
 
@@ -24,7 +23,6 @@ type kubernetesResourceManager struct {
 	reschedule bool
 }
 
-// newKubernetesResourceManager initializes a new kubernetesResourceManager.
 func newKubernetesResourceManager(
 	config *KubernetesResourceManagerConfig,
 ) actor.Actor {
