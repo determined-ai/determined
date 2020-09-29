@@ -390,6 +390,15 @@ type TrialLog struct {
 	ID      int    `db:"id"`
 	TrialID int    `db:"trial_id"`
 	Message string `db:"message"`
+
+	AgentID string `db:"agent_id"`
+	// In the case of k8s, container_id is a pod name instead.
+	ContainerID string    `db:"container_id"`
+	RankID      int       `db:"rank_id"`
+	Timestamp   time.Time `db:"timestamp"`
+	Level       string    `db:"level"`
+	StdType     int       `db:"std_type"`
+	Source      string    `db:"source"`
 }
 
 // SearcherEvent represents a row from the `searcher_events` table.
