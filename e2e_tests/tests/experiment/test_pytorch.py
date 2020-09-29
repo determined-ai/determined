@@ -15,7 +15,12 @@ def test_pytorch_11_const(aggregation_frequency: int, using_k8s: bool) -> None:
         pod_spec = {
             "metadata": {"labels": {"ci": "testing"}},
             "spec": {
-                "containers": [{"volumeMounts": [{"name": "temp1", "mountPath": "/random"}]}],
+                "containers": [
+                    {
+                        "name": "determined-container",
+                        "volumeMounts": [{"name": "temp1", "mountPath": "/random"}],
+                    }
+                ],
                 "volumes": [{"name": "temp1", "emptyDir": {}}],
             },
         }
