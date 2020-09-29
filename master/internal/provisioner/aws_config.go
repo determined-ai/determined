@@ -60,24 +60,24 @@ func (c *AWSClusterConfig) buildDockerLogString() string {
 }
 
 func (c *AWSClusterConfig) initDefaultValues() error {
-	//metadata, err := getEC2MetadataSess()
-	//if err != nil {
-	//	return err
-	//}
+	metadata, err := getEC2MetadataSess()
+	if err != nil {
+		return err
+	}
 
-	//if len(c.Region) == 0 {
-	//	if c.Region, err = metadata.Region(); err != nil {
-	//		return err
-	//	}
-	//}
+	if len(c.Region) == 0 {
+		if c.Region, err = metadata.Region(); err != nil {
+			return err
+		}
+	}
 
 	// One common reason that metadata.GetInstanceIdentityDocument() fails is that the master is not
 	// running in EC2. Use a default name here rather than holding up initializing the provider.
 	identifier := pkg.DeterminedIdentifier
-	//idDoc, err := metadata.GetInstanceIdentityDocument()
-	//if err == nil {
-	//	identifier = idDoc.InstanceID
-	//}
+	idDoc, err := metadata.GetInstanceIdentityDocument()
+	if err == nil {
+		identifier = idDoc.InstanceID
+	}
 
 	if len(c.TagValue) == 0 {
 		c.TagValue = identifier
