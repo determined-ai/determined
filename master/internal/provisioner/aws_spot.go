@@ -52,7 +52,8 @@ import (
 // More information about the spot instance lifecycle -
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
 
-const spotRequestAsInstancePrefix = "spot-request-instance"
+
+const spotRequestIdPrefix = "sir-"
 
 type spotRequest struct {
 	SpotRequestId string
@@ -137,11 +138,10 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 		if activeRequest.InstanceId != nil {
 			runningSpotInstanceIds = append(runningSpotInstanceIds, activeRequest.InstanceId)
 		} else {
-			dummyInstanceId := fmt.Sprintf("%s-%s", spotRequestAsInstancePrefix, activeRequest.SpotRequestId)
 			pendingSpotRequestsAsInstances = append(pendingSpotRequestsAsInstances, &Instance{
-				ID:         dummyInstanceId,
+				ID:         activeRequest.SpotRequestId,
 				LaunchTime: time.Now(),
-				AgentName:  dummyInstanceId,
+				AgentName:  activeRequest.SpotRequestId,
 				State:      SpotRequestPendingAWS,
 			})
 		}
@@ -178,9 +178,9 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 	pendingSpotRequestsToTerminate := make([]*string, 0, 0)
 
 	for _, instanceId := range instanceIDs {
-		if strings.HasPrefix(*instanceId, spotRequestAsInstancePrefix) {
-			spotRequestId := strings.TrimPrefix(*instanceId, spotRequestAsInstancePrefix)
-			pendingSpotRequestsToTerminate = append(pendingSpotRequestsToTerminate, &spotRequestId)
+		if strings.HasPrefix(*instanceId, spotRequestIdPrefix) {
+			spotRequestId := instanceId
+			pendingSpotRequestsToTerminate = append(pendingSpotRequestsToTerminate, spotRequestId)
 		} else {
 			instancesToTerminate = append(instancesToTerminate, instanceId)
 		}
