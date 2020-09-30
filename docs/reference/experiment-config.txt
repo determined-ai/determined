@@ -990,9 +990,9 @@ more information on customizing the trial environment, refer to
    CPU agents differently by specifying a dict with two keys, ``cpu``
    and ``gpu``. Default values:
 
-   -  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.6.0``
+   -  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.7.0``
       for CPU agents
-   -  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.6.0``
+   -  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.7.0``
       for GPU agents.
 
 ``force_pull_image``
