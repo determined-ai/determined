@@ -462,8 +462,7 @@ commands:
       - run:
           name: Dump det-deploy logs
           when: always
-          command:
-            det-deploy local logs --no-follow
+          command: det-deploy local logs --no-follow
 
   run-e2e-webui-tests:
     steps:
@@ -547,6 +546,7 @@ commands:
 
 jobs:
   build-docs:
+    # TODO this now depends on build-proto
     docker:
       - image: determinedai/cimg-base:stable
     steps:
@@ -1210,7 +1210,9 @@ workflows:
       - build-storybook:
           requires:
             - build-and-package-ts-sdk
-      - build-docs
+      - build-docs:
+          requires:
+            - build-proto
       - build-go
       - package-and-push-system-local:
           requires:
@@ -1441,8 +1443,6 @@ workflows:
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
 
-
-
   nightly:
     triggers:
       - schedule:
@@ -1489,6 +1489,8 @@ workflows:
       - build-docs:
           context: determined-production
           filters: *release-and-rc-filters
+          requires:
+            - build-proto
 
       - publish-python-package:
           matrix:
