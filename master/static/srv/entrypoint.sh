@@ -3,6 +3,13 @@
 set -e
 set -x
 
+# Create symbolic links from well-known files to this process's STDOUT and
+# STDERR. Anything written to those files will be inserted into the output
+# streams of this process, allowing distributed training logs to route through
+# individual containers rather than all going through SSH back to agent 0.
+ln -sf /proc/$$/fd/1 /run/determined/train/stdout.log
+ln -sf /proc/$$/fd/2 /run/determined/train/stderr.log
+
 WORKING_DIR="/run/determined/workdir"
 STARTUP_HOOK="startup-hook.sh"
 export PATH="/run/determined/pythonuserbase/bin:$PATH"

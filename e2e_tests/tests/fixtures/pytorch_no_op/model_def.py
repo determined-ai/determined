@@ -17,7 +17,7 @@ class OnesDataset(torch.utils.data.Dataset):
 
 
 class NoopPytorchTrial(pytorch.PyTorchTrial):
-    def __init__(self, context):
+    def __init__(self, context: pytorch.PyTorchTrialContext):
         self.context = context
 
         model = nn.Linear(1, 1, False)
@@ -38,6 +38,8 @@ class NoopPytorchTrial(pytorch.PyTorchTrial):
         self.context.backward(loss)
         self.context.step_optimizer(self.opt)
 
+        print("finished train_batch for rank {}".format(self.context.distributed.get_rank()))
+
         return {"loss": loss, "w_real": w_real}
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
@@ -46,6 +48,8 @@ class NoopPytorchTrial(pytorch.PyTorchTrial):
         rand_rand = random.randint(0, 1000)
         torch_rand = torch.randint(1000, (1,))
         gpu_rand = torch.randint(1000, (1,), device=self.context.device)
+
+        print("finished evaluate_batch for rank {}".format(self.context.distributed.get_rank()))
 
         return {
             "validation_error": val,

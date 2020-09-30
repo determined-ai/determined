@@ -255,8 +255,8 @@ def test_startup_hook() -> None:
 @pytest.mark.e2e_cpu  # type: ignore
 def test_rng_restore() -> None:
     experiment = exp.run_basic_test(
-        conf.fixtures_path("pytorch-rng-saver/const.yaml"),
-        conf.fixtures_path("pytorch-rng-saver"),
+        conf.fixtures_path("pytorch_no_op/const.yaml"),
+        conf.fixtures_path("pytorch_no_op"),
         1,
     )
 
@@ -267,12 +267,12 @@ def test_rng_restore() -> None:
     first_step = first_trial["steps"][0]
     first_checkpoint_id = first_trial["steps"][0]["checkpoint"]["id"]
 
-    config_base = conf.load_config(conf.fixtures_path("pytorch-rng-saver/const.yaml"))
+    config_base = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
     config_obj = copy.deepcopy(config_base)
     config_obj["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
 
     experiment2 = exp.run_basic_test_with_temp_config(
-        config_obj, conf.fixtures_path("pytorch-rng-saver"), 1
+        config_obj, conf.fixtures_path("pytorch_no_op"), 1
     )
 
     second_trial = exp.experiment_trials(experiment2)[0]
@@ -296,8 +296,8 @@ def test_rng_restore() -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 def test_gpu_restore() -> None:
     experiment = exp.run_basic_test(
-        conf.fixtures_path("pytorch-rng-saver/const.yaml"),
-        conf.fixtures_path("pytorch-rng-saver"),
+        conf.fixtures_path("pytorch_no_op/const.yaml"),
+        conf.fixtures_path("pytorch_no_op"),
         1,
     )
 
@@ -308,12 +308,12 @@ def test_gpu_restore() -> None:
     first_step = first_trial["steps"][0]
     second_checkpoint_id = first_step["checkpoint"]["id"]
 
-    config_base = conf.load_config(conf.fixtures_path("pytorch-rng-saver/const.yaml"))
+    config_base = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
     config_obj = copy.deepcopy(config_base)
     config_obj["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
 
     experiment2 = exp.run_basic_test_with_temp_config(
-        config_obj, conf.fixtures_path("pytorch-rng-saver"), 1
+        config_obj, conf.fixtures_path("pytorch_no_op"), 1
     )
 
     second_trial = exp.experiment_trials(experiment2)[0]

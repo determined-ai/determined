@@ -62,3 +62,7 @@ HOROVOD_AUTOTUNE_LOG_FILEPATH = "/tmp/autotune_log.csv"
 # Increasing this from a default of 30 is necessary when there is a
 # large number of machines.
 HOROVOD_GLOO_TIMEOUT_SECONDS = 240
+
+# The well-known locations of the executing container's STDOUT and STDERR.
+CONTAINER_STDOUT = "/run/determined/train/stdout.log"
+CONTAINER_STDERR = "/run/determined/train/stderr.log"

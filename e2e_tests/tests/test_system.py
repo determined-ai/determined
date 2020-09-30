@@ -539,3 +539,18 @@ def test_perform_initial_validation() -> None:
         config, conf.fixtures_path("no_op"), 1, has_zeroth_step=True
     )
     exp.assert_performed_initial_validation(exp_id)
+
+
+@pytest.mark.parallel  # type: ignore
+def test_distributed_logging() -> None:
+    config = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_max_length(config, {"batches": 1})
+
+    e_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_no_op"), 1)
+    t_id = exp.experiment_trials(e_id)[0]["id"]
+
+    for i in range(config["resources"]["slots_per_trial"]):
+        assert exp.check_if_string_present_in_trial_logs(
+            t_id, "finished train_batch for rank {}".format(i)
+        )

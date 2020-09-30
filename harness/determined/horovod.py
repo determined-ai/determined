@@ -155,7 +155,7 @@ def create_run_command(
     horovod_process_cmd += [
         "python3",
         "-m",
-        "determined.exec.worker_process",
+        "determined.exec.worker_process_wrapper",
         str(worker_process_env_path),
     ]
 
