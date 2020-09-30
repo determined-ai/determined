@@ -20,7 +20,8 @@ build: build-examples build-helm
 	cp ../helm/build/* site/downloads/helm
 	$(MAKE) sp-html
 	# pull in swagger-ui
-	cp -r ../master/static/swagger-ui site/html
+	# cp -r ../master/static/swagger-ui site/html
+	cp -r ./swagger-ui site/html
 	cp ../proto/build/swagger/determined/api/v1/api.swagger.json  site/html/swagger-ui/
 
 .PHONY: clean
@@ -30,6 +31,7 @@ clean:
 .PHONY: publish
 publish: clean
 	$(MAKE) build
+	cp ./swagger-ui/swagger-ui-main-deploy.js ./site/html/swagger-ui/swagger-ui-main.js
 	$(MAKE) -C deploy publish
 
 live:
