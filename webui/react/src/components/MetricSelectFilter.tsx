@@ -64,10 +64,11 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
 
   return <SelectFilter
     disableTags
+    dropdownMatchSelectWidth={400}
     label="Metrics"
     mode={multiple ? 'multiple' : undefined}
     showArrow
-    style={{ width: 320 }}
+    style={{ width: 150 }}
     value={metricValues}
     onDeselect={handleMetricDeselect}
     onSelect={handleMetricSelect}>

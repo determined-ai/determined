@@ -413,8 +413,8 @@ If the problem persists please contact support.',
   const options = (
     <Space size="middle">
       <SelectFilter
+        dropdownMatchSelectWidth={300}
         label="Show"
-        style={{ width: 242 }}
         value={hasCheckpointOrValidation}
         onSelect={handleHasCheckpointOrValidationSelect}>
         <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>

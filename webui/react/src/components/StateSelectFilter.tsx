@@ -55,7 +55,12 @@ const StateSelectFilter: React.FC<Props> = ({
   }, [ onChange ]);
 
   return (
-    <SelectFilter label="State" value={value} onSelect={handleSelect}>
+    <SelectFilter
+      dropdownMatchSelectWidth={150}
+      label="State"
+      value={value}
+      onSelect={handleSelect}
+    >
       <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
       {options}
     </SelectFilter>

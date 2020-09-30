@@ -115,10 +115,10 @@ html {
     border-radius: var(--theme-sizes-border-radius);
     box-shadow: var(--theme-shadow);
   }
-  .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  .ant-select:not(.ant-select-customize-input) .ant-select-selector {
     border-radius: var(--theme-sizes-border-radius);
   }
-  .ant-select-focused.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  .ant-select-focused.ant-select:not(.ant-select-customize-input) .ant-select-selector {
     box-shadow: var(--theme-focus-shadow);
   }
 
