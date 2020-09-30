@@ -333,7 +333,6 @@ func (m *Master) Run() error {
 	// Used to decide whether we add trailing slash to the paths or not affecting
 	// relative links in web pages hosted under these routes.
 	staticWebDirectoryPaths := map[string]bool{
-		"/swagger-ui":      true,
 		"/docs":            true,
 		"/docs/swagger-ui": true,
 	}
@@ -425,7 +424,6 @@ func (m *Master) Run() error {
 		m.echo.Static(dirRoute.route, filepath.Join(reactRoot, dirRoute.path))
 	}
 
-	m.echo.Static("/swagger-ui", filepath.Join(m.config.Root, "static/swagger-ui"))
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 	// Support the old experiment creation endpoint under the new API route.
