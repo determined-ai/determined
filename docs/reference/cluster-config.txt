@@ -628,7 +628,7 @@ The master supports the following configuration settings:
       -  ``access_key``: The AWS access key to use.
       -  ``secret_key``: The AWS secret key to use.
       -  ``endpoint_url``: The optional endpoint to use for S3 clones,
-         e.g., http://127.0.0.1:8080/.
+         e.g., ``http://127.0.0.1:8080/``.
 
    -  ``type: shared_fs``: Checkpoints are written to a directory on the
       agent's file system. The assumption is that the system

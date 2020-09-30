@@ -161,6 +161,6 @@ reusing the cached dataset.
 ************
 
 -  `TensorFlow Keras MNIST with Data Layer
-   <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/data_layer_mnist_tf_keras>`_
+   <https://github.com/determined-ai/determined/tree/master/examples/data_layer/data_layer_mnist_tf_keras>`_
 -  `TensorFlow Estimator MNIST with Data Layer
-   <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/data_layer_mnist_estimator>`_
+   <https://github.com/determined-ai/determined/tree/master/examples/data_layer/data_layer_mnist_estimator>`_
