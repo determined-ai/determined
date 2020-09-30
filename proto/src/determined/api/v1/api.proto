@@ -144,7 +144,7 @@ service Determined {
     }
     // Get a list of unique experiment labels (sorted by popularity).
     rpc GetExperimentLabels(GetExperimentLabelsRequest) returns (GetExperimentLabelsResponse) {
-        option (google.api.http) = {get: "/api/v1/experiments/labels"};
+        option (google.api.http) = {get: "/api/v1/experiment/labels"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
     // Get the validation history for an experiment.
