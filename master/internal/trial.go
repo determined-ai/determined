@@ -210,7 +210,7 @@ type trial struct {
 	lastContainerConnectedTime time.Time
 	startedContainers          map[cproto.ID]bool
 	containers                 map[cproto.ID]cproto.Container // only for running containers.
-	containerRanks             map[cproto.ID]int              // only for started containers.
+	containerRanks             map[cproto.ID]int              // only for launched containers.
 	containerAddresses         map[cproto.ID][]cproto.Address // only for running containers.
 	containerSockets           map[cproto.ID]*actor.Ref       // only for running containers.
 	terminatedContainers       map[cproto.ID]terminatedContainerWithState
@@ -769,9 +769,11 @@ func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
 	}
 }
 
-// allReady returns true if and only if an appropriate ContainerStarted message and a corresponding
-// containerConnected message have been received from each container in the trial. The two messages
-// are not guaranteed to come in-order.
+// allReady returns true if and only if all the containers are reported to be started with the
+// ContainerStarted message and their sockets to be connected with the containerConnected
+// message. The two messages are not guaranteed to come in-order. During each run of the
+// trial, once all the containers are ready this function will return true afterward because this
+// function is used in deciding if the trial should be forcibly killed when terminating.
 func (t *trial) allReady(ctx *actor.Context) bool {
 	// If a trial has passed allReady it can never return to a state of not ready until the
 	// current containers are all terminated.
