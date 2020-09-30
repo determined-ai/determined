@@ -149,6 +149,10 @@ func (s *scaleDecider) findInstancesToTerminate(
 		toTerminate[id] = true
 	}
 
+	// TODO: Why do we terminate idle instances here? Does is indicate an error of some
+	//      sort or is is just to reduce resource usage? Should we prioritize shutting
+	//      down spot requests first?
+
 	// Terminate instances that are idle for a long time.
 	var longIdle map[string]bool
 	s.pastIdleInstances, longIdle = findInstancesLongInSameState(
@@ -158,15 +162,26 @@ func (s *scaleDecider) findInstancesToTerminate(
 	}
 
 	// Terminate instances to keep the number of instances less than the limit. We start by
-	// terminating instances that are idle and haven't been terminated.
-	// Then we terminate the ones that are most recently provisioned.
+	// terminating unfulfilled spot requests. Then instances that are idle and haven't
+	// been terminated. Then we terminate the ones that are most recently provisioned.
 	numExceeds := len(s.instanceSnapshot) - maxInstanceNum
-	for inst := range s.pastIdleInstances {
+
+	for instId, inst := range s.instanceSnapshot {
 		if len(toTerminate) >= numExceeds {
 			break
 		}
-		delete(s.pastIdleInstances, inst)
-		toTerminate[inst] = true
+		if inst.State == SpotRequestPendingAWS {
+			toTerminate[instId] = true
+		}
+
+	}
+
+	for instId := range s.pastIdleInstances {
+		if len(toTerminate) >= numExceeds {
+			break
+		}
+		delete(s.pastIdleInstances, instId)
+		toTerminate[instId] = true
 	}
 	instances := make([]*Instance, 0)
 	for _, inst := range s.instanceSnapshot {

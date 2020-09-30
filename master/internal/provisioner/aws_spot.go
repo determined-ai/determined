@@ -61,6 +61,8 @@ type spotRequest struct {
 	StatusCode    *string
 	StatusMessage *string
 	InstanceId    *string
+	CreationTime *time.Time
+
 }
 
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
@@ -105,6 +107,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 			StatusCode:    request.Status.Code,
 			StatusMessage: request.Status.Message,
 			InstanceId:    request.InstanceId,
+			CreationTime: request.CreateTime,
 		}
 	}
 
@@ -140,7 +143,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 		} else {
 			pendingSpotRequestsAsInstances = append(pendingSpotRequestsAsInstances, &Instance{
 				ID:         activeRequest.SpotRequestId,
-				LaunchTime: time.Now(),
+				LaunchTime: *activeRequest.CreationTime,
 				AgentName:  activeRequest.SpotRequestId,
 				State:      SpotRequestPendingAWS,
 			})
@@ -256,6 +259,7 @@ func (c *awsCluster) launchSpot(
 			State:         *request.State,
 			StatusCode:    request.Status.Code,
 			StatusMessage: request.Status.Message,
+			CreationTime:  request.CreateTime,
 			InstanceId:    nil,
 		}
 
