@@ -210,7 +210,7 @@ type trial struct {
 	lastContainerConnectedTime time.Time
 	startedContainers          map[cproto.ID]bool
 	containers                 map[cproto.ID]cproto.Container // only for running containers.
-	containerRanks             map[cproto.ID]int              // only for running containers.
+	containerRanks             map[cproto.ID]int              // only for launched containers.
 	containerAddresses         map[cproto.ID][]cproto.Address // only for running containers.
 	containerSockets           map[cproto.ID]*actor.Ref       // only for running containers.
 	terminatedContainers       map[cproto.ID]terminatedContainerWithState
@@ -735,15 +735,12 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.runID})
 	}
 
-	// If we have all of the container IDs from ContainerStarted messages, we can guard against
-	// stale containers trying to connect.
-	if len(t.containers) == len(t.allocations) {
-		if _, ok := t.containers[msg.ContainerID]; !ok {
-			ctx.Respond(errors.Errorf(
-				"socket connection from stale container: %s", msg.ContainerID))
-			return nil
-		}
+	// Check to make sure this is not a connection from a stale container.
+	if _, ok := t.containerRanks[msg.ContainerID]; !ok {
+		ctx.Respond(errors.Errorf("socket connection from stale container: %s", msg.ContainerID))
+		return nil
 	}
+
 	a := api.WrapSocket(msg.socket, workload.CompletedMessage{}, false)
 	ref, _ := ctx.ActorOf(fmt.Sprintf("socket-%s", msg.ContainerID), a)
 	t.containerSockets[msg.ContainerID] = ref
@@ -772,9 +769,11 @@ func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
 	}
 }
 
-// allReady returns true if and only if an appropriate ContainerStarted message and a corresponding
-// containerConnected message have been received from each container in the trial. The two messages
-// are not guaranteed to come in-order.
+// allReady returns true if and only if all the containers are reported to be started with the
+// ContainerStarted message and their sockets to be connected with the containerConnected
+// message. The two messages are not guaranteed to come in-order. During each run of the
+// trial, once all the containers are ready this function will return true afterward because this
+// function is used in deciding if the trial should be forcibly killed when terminating.
 func (t *trial) allReady(ctx *actor.Context) bool {
 	// If a trial has passed allReady it can never return to a state of not ready until the
 	// current containers are all terminated.
@@ -785,19 +784,6 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 	// Ensure all ContainerStarted messages have arrived.
 	if len(t.containers) < len(t.allocations) {
 		return false
-	}
-
-	// Detect websockets which are not from the most current set of container IDs.
-	//
-	// Stale containers from this trial may still exist either after a trial crash or after a
-	// master restart. Since ContainerStarted and containerConnected messages can come in any
-	// order, it is not possible to detect which connections are from stale containers until after
-	// all of the ContainerStarted messages have arrived.
-	for id := range t.containerSockets {
-		if _, ok := t.containers[id]; !ok {
-			ctx.Log().Warnf("detected stray socket for unknown container: %s", id)
-			t.killAndRemoveSocket(ctx, id)
-		}
 	}
 
 	// Finally, ensure all sockets have connected.
