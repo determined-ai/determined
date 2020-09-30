@@ -1,5 +1,5 @@
 export const percent = (n: number, decimals = 1): number => {
-  if (n < 0 || n > 1) throw new Error('input out of range');
+  const normalized = n < 0 ? 0 : (n > 1 ? 1 : (n || 0));
   const factor = Math.pow(10, decimals);
-  return Math.round(n * 100 * factor) / factor;
+  return Math.round(normalized * 100 * factor) / factor;
 };
