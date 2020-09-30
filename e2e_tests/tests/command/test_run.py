@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import docker
 import docker.errors
@@ -48,23 +48,19 @@ def _run_and_verify_failure(args: List[str], message: str, **kwargs: Any) -> Non
         raise subprocess.CalledProcessError(1, " ".join(args), output=output)
 
 
-def _run_cmd_with_config_expecting_success(cmd: str, config: Dict[str, Any]) -> None:
+def _run_cmd_with_config_expecting_success(
+    cmd: str, config: Dict[str, Any], context_path: Optional[str] = None
+) -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
 
-        _run_and_verify_exit_code_zero(
-            [
-                "det",
-                "-m",
-                conf.make_master_url(),
-                "cmd",
-                "run",
-                "--config-file",
-                tf.name,
-                cmd,
-            ]
-        )
+        command = ["det", "-m", conf.make_master_url(), "cmd", "run", "--config-file", tf.name]
+        if context_path:
+            command += ["-c", context_path]
+        command.append(cmd)
+
+        _run_and_verify_exit_code_zero(command)
 
 
 def _run_cmd_with_config_expecting_failure(
@@ -514,3 +510,39 @@ def test_k8_sidecars(using_k8s: bool) -> None:
         )
 
         _run_cmd_with_config_expecting_success(cmd="sleep 3", config=config)
+
+
+@pytest.mark.parallel  # type: ignore
+@pytest.mark.parametrize("tf2", [True, False])  # type: ignore
+@pytest.mark.parametrize("aggregation_frequency", [1, 4, 8])  # type: ignore
+@pytest.mark.parametrize("average_aggregated_gradients", [True, False])  # type: ignore
+def test_horovod_optimizer(
+    tf2: bool, aggregation_frequency: int, average_aggregated_gradients: bool
+) -> None:
+    image = conf.TF1_GPU_IMAGE
+    if tf2:
+        image = conf.TF2_GPU_IMAGE
+
+    config = {
+        "environment": {
+            "image": image,
+        },
+        "resources": {
+            "slots": 4,
+        },
+    }
+
+    cmd = (
+        "horovodrun -np 4 -H localhost:4 python /run/determined/workdir/grad_aggregation_test.py"
+        f" --aggregation-frequency {aggregation_frequency}"
+    )
+
+    if not tf2:
+        cmd += " --tf1"
+
+    if average_aggregated_gradients:
+        cmd += " --average-aggregated-gradients"
+
+    _run_cmd_with_config_expecting_success(
+        cmd=cmd, config=config, context_path="tests/fixtures/tf_keras_grad_aggregation"
+    )
