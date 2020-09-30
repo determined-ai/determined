@@ -167,7 +167,12 @@ const Navigation: React.FC = () => {
           <section className={css.bottom}>
             <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
             <NavigationItem icon="docs" label="Docs" noProxy path="/docs" popout />
-            <NavigationItem icon="cloud" label="API (Beta)" noProxy path="/docs/swagger-ui" popout />
+            <NavigationItem
+              icon="cloud"
+              label="API (Beta)"
+              noProxy
+              path="/docs/swagger-ui"
+              popout />
             <NavigationItem
               icon={isCollapsed ? 'expand' : 'collapse'}
               label={isCollapsed ? 'Expand' : 'Collapse'}
