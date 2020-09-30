@@ -31,7 +31,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
             context = det.pytorch.PyTorchTrialContext.from_config(config)
             my_trial = MyPyTorchTrial(context)
 
-            train_ds = trial.build_training_data_loader()
+            train_ds = my_trial.build_training_data_loader()
             for epoch_idx in range(3):
                 for batch_idx, batch in enumerate(train_ds):
                     metrics = my_trial.train_batch(batch, epoch_idx, batch_idx)
