@@ -45,6 +45,7 @@ type mockTask struct {
 	label          string
 	group          *mockGroup
 	allocatedAgent *mockAgent
+	nonPreemptible bool
 }
 
 type (
@@ -194,10 +195,11 @@ func setupClusterStates(
 		groups[ref] = &group{handler: ref}
 
 		req := &AllocateRequest{
-			ID:          mockTask.id,
-			SlotsNeeded: mockTask.slotsNeeded,
-			Label:       mockTask.label,
-			TaskActor:   ref,
+			ID:             mockTask.id,
+			SlotsNeeded:    mockTask.slotsNeeded,
+			Label:          mockTask.label,
+			TaskActor:      ref,
+			NonPreemptible: mockTask.nonPreemptible,
 		}
 		if mockTask.group == nil {
 			req.Group = ref

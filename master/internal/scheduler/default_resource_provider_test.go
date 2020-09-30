@@ -81,13 +81,12 @@ func setupCluster(
 		label := system.Ask(handler, GetLabel{}).Get().(string)
 
 		d.addAllocatedTask(&AllocateRequest{
-			ID:           TaskID(handler.Address().String()),
-			Name:         handler.Address().Local(),
-			Group:        g,
-			TaskActor:    handler,
-			SlotsNeeded:  slots,
-			CanTerminate: true,
-			Label:        label,
+			ID:          TaskID(handler.Address().String()),
+			Name:        handler.Address().Local(),
+			Group:       g,
+			TaskActor:   handler,
+			SlotsNeeded: slots,
+			Label:       label,
 		}, nil)
 		_ = d.getOrCreateGroup(nil, g)
 		if resp := system.Ask(g, getMaxSlots{}); resp.Get() != nil {
@@ -118,11 +117,10 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
 		task: AllocateRequest{
-			ID:           TaskID(uuid.New().String()),
-			Name:         "mock_task",
-			Group:        mockActor,
-			SlotsNeeded:  1,
-			CanTerminate: true,
+			ID:          TaskID(uuid.New().String()),
+			Name:        "mock_task",
+			Group:       mockActor,
+			SlotsNeeded: 1,
 		},
 	}).Get()
 	assert.Equal(t, c.taskList.len(), 1)
@@ -156,11 +154,10 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
 		task: AllocateRequest{
-			ID:           TaskID(uuid.New().String()),
-			Name:         "mock_task",
-			Group:        mockActor,
-			SlotsNeeded:  1,
-			CanTerminate: true,
+			ID:          TaskID(uuid.New().String()),
+			Name:        "mock_task",
+			Group:       mockActor,
+			SlotsNeeded: 1,
 		},
 	}).Get()
 
@@ -195,11 +192,10 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
 		task: AllocateRequest{
-			ID:           TaskID(uuid.New().String()),
-			Name:         "mock_task",
-			Group:        mockActor,
-			SlotsNeeded:  1,
-			CanTerminate: true,
+			ID:          TaskID(uuid.New().String()),
+			Name:        "mock_task",
+			Group:       mockActor,
+			SlotsNeeded: 1,
 		},
 	}).Get()
 
@@ -232,11 +228,10 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
 		task: AllocateRequest{
-			ID:           TaskID(uuid.New().String()),
-			Name:         "mock_task",
-			Group:        mockActor,
-			SlotsNeeded:  1,
-			CanTerminate: true,
+			ID:          TaskID(uuid.New().String()),
+			Name:        "mock_task",
+			Group:       mockActor,
+			SlotsNeeded: 1,
 		},
 	}).Get()
 

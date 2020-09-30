@@ -14,7 +14,7 @@ type (
 		Name                string
 		Group               *actor.Ref
 		SlotsNeeded         int
-		CanTerminate        bool
+		NonPreemptible      bool
 		Label               string
 		FittingRequirements FittingRequirements
 		TaskActor           *actor.Ref

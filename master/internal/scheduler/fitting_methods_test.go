@@ -10,8 +10,8 @@ import (
 
 func consumeSlots(agent *agentState, consume int) *agentState {
 	req := &AllocateRequest{
-		SlotsNeeded:  consume,
-		CanTerminate: true,
+		SlotsNeeded:    consume,
+		NonPreemptible: false,
 	}
 	container := newContainer(req, agent, req.SlotsNeeded)
 	agent.allocateFreeDevices(req.SlotsNeeded, container.id)

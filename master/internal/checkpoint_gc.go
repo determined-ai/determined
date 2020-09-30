@@ -33,7 +33,8 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
-			TaskActor: ctx.Self(),
+			TaskActor:      ctx.Self(),
+			NonPreemptible: true,
 		})
 
 	case scheduler.ResourcesAllocated:

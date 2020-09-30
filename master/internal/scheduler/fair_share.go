@@ -27,6 +27,8 @@ type groupState struct {
 	slotDemand int
 	// activeSlots is the number of slots in use by running tasks that can potentially be freed.
 	activeSlots int
+	// presubscribedSlots are slots that are already allocated and cannot be terminated.
+	presubscribedSlots int
 	// offered is the number of slots that were offered to the group for scheduling.
 	offered int
 
@@ -136,6 +138,9 @@ func calculateGroupStates(
 				case allocated == nil || len(allocated.Allocations) == 0:
 					state.pendingReqs = append(state.pendingReqs, req)
 				case len(allocated.Allocations) > 0:
+					if req.NonPreemptible {
+						state.presubscribedSlots += req.SlotsNeeded
+					}
 					state.allocatedReqs = append(state.allocatedReqs, req)
 					state.activeSlots += req.SlotsNeeded
 				}
@@ -159,7 +164,39 @@ func getTotalWeight(states []*groupState) float64 {
 	return total
 }
 
+func accountForPreoffers(preoffers int, offer int) (int, int) {
+	if preoffers > 0 {
+		if preoffers == offer {
+			preoffers = 0
+			offer = 0
+		}
+		if preoffers > offer {
+			preoffers -= offer
+			offer = 0
+		}
+		if preoffers < offer {
+			preoffers = 0
+			offer -= preoffers
+		}
+	}
+	return preoffers, offer
+}
+
 func allocateSlotOffers(states []*groupState, capacity int) {
+	// To prevent becoming oversubscribed, we first need to account for slots that were already
+	// allocated to tasks that cannot be preempted.
+	preoffers := make(map[*groupState]int)
+	for _, state := range states {
+		if state.presubscribedSlots == 0 {
+			continue
+		}
+		// if state.presubscribedSlots > capacity, we are oversubscribed
+		// This shouldn't happen outside of unit tests
+		state.offered = state.presubscribedSlots
+		preoffers[state] = state.presubscribedSlots
+		capacity -= state.presubscribedSlots
+	}
+
 	// Slots are offered to each group based on the progressive filling algorithm, an
 	// implementation of max-min fairness. All groups start with no slots offered. All
 	// groups offers increase equally until groups have reached their slot demand. The
@@ -202,6 +239,7 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 
 			progressMade = true
 			offer := min(calculatedFairShare, capacity, state.slotDemand-state.offered)
+			preoffers[state], offer = accountForPreoffers(preoffers[state], offer)
 			state.offered += offer
 			capacity -= offer
 			if state.offered == state.slotDemand {
@@ -263,10 +301,12 @@ func assignTasks(
 			// the count of offered slots.
 			// TODO: We should terminate running tasks more intelligently.
 			for _, req := range state.allocatedReqs {
-				toRelease = append(toRelease, req.TaskActor)
-				state.activeSlots -= req.SlotsNeeded
-				if state.activeSlots <= state.offered {
-					break
+				if !req.NonPreemptible {
+					toRelease = append(toRelease, req.TaskActor)
+					state.activeSlots -= req.SlotsNeeded
+					if state.activeSlots <= state.offered {
+						break
+					}
 				}
 			}
 		} else if state.activeSlots < state.offered {

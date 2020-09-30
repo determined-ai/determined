@@ -262,3 +262,85 @@ func TestFairShareLabels(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
+
+func TestFairSharePreemptible(t *testing.T) {
+	agents := []*mockAgent{
+		{id: "agent", slots: 1, label: ""},
+	}
+	tasks := []*mockTask{
+		{id: "task1", slotsNeeded: 1, allocatedAgent: agents[0]},
+		{id: "task2", slotsNeeded: 1, allocatedAgent: agents[0]},
+	}
+
+	expectedToAllocate := []*mockTask{}
+	expectedToRelease := []*mockTask{tasks[1]}
+
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupClusterStates(t, system, tasks, nil, agents)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+}
+
+func TestFairShareHonorsNonPreemptibleInAGroup(t *testing.T) {
+	agents := []*mockAgent{
+		{id: "agent", slots: 1, label: ""},
+	}
+	groups := []*mockGroup{
+		{id: "group1", maxSlots: newMaxSlot(2), weight: 1},
+	}
+	expectedToAllocate := []*mockTask{}
+
+	tasks := []*mockTask{
+		{id: "task1", slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0]},
+		{id: "task2", slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0], nonPreemptible: true},
+	}
+	expectedToRelease := []*mockTask{tasks[0]}
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupClusterStates(t, system, tasks, groups, agents)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+
+	// Repeat test in reverse order, because subtle bugs can be order-dependent
+	tasks = []*mockTask{
+		{id: "task1", slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0], nonPreemptible: true},
+		{id: "task2", slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0]},
+	}
+	expectedToRelease = []*mockTask{tasks[1]}
+	system = actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap = setupClusterStates(t, system, tasks, groups, agents)
+	toAllocate, toRelease = fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+}
+
+func TestFairShareHonorsNonPreemptibleNilGroup(t *testing.T) {
+	agents := []*mockAgent{
+		{id: "agent", slots: 1, label: ""},
+	}
+	expectedToAllocate := []*mockTask{}
+
+	tasks := []*mockTask{
+		{id: "task1", slotsNeeded: 1, allocatedAgent: agents[0]},
+		{id: "task2", slotsNeeded: 1, allocatedAgent: agents[0], nonPreemptible: true},
+	}
+	expectedToRelease := []*mockTask{tasks[0]}
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupClusterStates(t, system, tasks, nil, agents)
+	toAllocate, toRelease := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+
+	// Repeat test in reverse order, because subtle bugs can be order-dependent
+	tasks = []*mockTask{
+		{id: "task1", slotsNeeded: 1, allocatedAgent: agents[0], nonPreemptible: true},
+		{id: "task2", slotsNeeded: 1, allocatedAgent: agents[0]},
+	}
+	expectedToRelease = []*mockTask{tasks[1]}
+	system = actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap = setupClusterStates(t, system, tasks, nil, agents)
+	toAllocate, toRelease = fairshareSchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+}

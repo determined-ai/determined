@@ -20,11 +20,10 @@ func addTask(
 	assert.Assert(t, created)
 
 	req := &AllocateRequest{
-		ID:           TaskID(taskID),
-		TaskActor:    ref,
-		Group:        ref,
-		SlotsNeeded:  slotsNeeded,
-		CanTerminate: true,
+		ID:          TaskID(taskID),
+		TaskActor:   ref,
+		Group:       ref,
+		SlotsNeeded: slotsNeeded,
 	}
 	taskList.AddTask(req)
 	setTaskAllocations(t, taskList, taskID, numAllocated)

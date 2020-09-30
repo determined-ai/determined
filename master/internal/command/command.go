@@ -104,11 +104,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
 
 		c.task = &scheduler.AllocateRequest{
-			ID:           c.taskID,
-			Name:         c.config.Description,
-			SlotsNeeded:  c.config.Resources.Slots,
-			Label:        c.config.Resources.AgentLabel,
-			CanTerminate: true,
+			ID:             c.taskID,
+			Name:           c.config.Description,
+			SlotsNeeded:    c.config.Resources.Slots,
+			Label:          c.config.Resources.AgentLabel,
+			NonPreemptible: true,
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
@@ -120,7 +120,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		c.terminate(ctx)
 
-	case scheduler.ResourcesAllocated, scheduler.ReleaseResources:
+	case scheduler.ResourcesAllocated:
 		return c.receiveSchedulerMsg(ctx)
 
 	case getSummary:
@@ -297,9 +297,6 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 		// TODO: Consider not storing the userFiles in memory at all.
 		c.userFiles = nil
 		c.additionalFiles = nil
-
-	case scheduler.ReleaseResources:
-		c.terminate(ctx)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
