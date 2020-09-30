@@ -3,12 +3,11 @@ r"""
 
 import inspect
 import logging
-import os
 import pathlib
 import random
 import sys
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, TextIO, cast
+from typing import Any, Dict, List, Optional, cast
 
 import h5py
 import numpy as np
@@ -20,7 +19,7 @@ from tensorflow.python.keras.saving.hdf5_format import load_optimizer_weights_fr
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
-from determined import horovod, keras, profile, workload
+from determined import horovod, keras, workload
 from determined.horovod import hvd
 from determined_common import check
 
@@ -153,55 +152,6 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
         if self.model.stop_training and version.parse(tf.__version__) >= version.parse("2.2.0"):
             # Starting with TF 2.2, `model.stop_training` is only checked at the end of epochs.
             raise det.errors.WorkerFinishedGracefully
-
-
-class DeterminedProfiler(tf.keras.callbacks.Callback):  # type: ignore
-    """
-    DeterminedProfiler profiles the training time per batch, outputting the results to a log file.
-    """
-
-    OUTPUT_FILENAME = "/profile/det_profiling.log"
-
-    def __init__(self, profile_frequency: Optional[int], out_file: str) -> None:
-        self._profile_frequency = profile_frequency
-        self._out_file = out_file
-        self._profile_file: Optional[TextIO] = None
-        self._count = 0
-
-    def on_train_begin(self, _: Any) -> None:
-        if self._profile_frequency:
-            if not os.path.isdir(os.path.dirname(self._out_file)):
-                raise AssertionError(
-                    f"{self._out_file} is not a valid output file, because the directory "
-                    f"{os.path.dirname(self._out_file)} does not exist"
-                )
-            # Set buffering to 1 because the `on_train_end` hook does not get
-            # hit, and so we have no good way of ensuring the file flushes
-            # before we end the process.
-            self._profile_file = open(self._out_file, "a", buffering=1)
-
-    def _should_profile(self) -> bool:
-        return (
-            self._profile_frequency is not None
-            and self._count == self._profile_frequency - 1
-            and self._profile_file is not None
-        )
-
-    def on_train_batch_begin(self, batch: int, _: Any = None) -> None:
-        if self._should_profile():
-            self._profile_file = cast(TextIO, self._profile_file)
-            self._train_batch_start_time = profile.log_start(
-                "batch", self._profile_file, batch=batch
-            )
-
-    def on_train_batch_end(self, batch: int, _: Any = None) -> None:
-        if self._profile_frequency:
-            if self._should_profile():
-                self._profile_file = cast(TextIO, self._profile_file)
-                profile.log_end(
-                    "batch", self._profile_file, self._train_batch_start_time, batch=batch
-                )
-            self._count = (self._count + 1) % self._profile_frequency
 
 
 class TFKerasTrialController(det.LoopTrialController):
@@ -421,8 +371,6 @@ class TFKerasTrialController(det.LoopTrialController):
             optimizer=compile_args.arguments["optimizer"],
             env=env,
             hvd_config=hvd_config,
-            profile_frequency=env.experiment_config.profile_frequency(),
-            profile_filename=DeterminedProfiler.OUTPUT_FILENAME,
         )
 
         if hvd_config.use and version.parse("2.0.0") <= version.parse(
@@ -532,12 +480,6 @@ class TFKerasTrialController(det.LoopTrialController):
 
         self.tf_keras_callbacks.append(DeterminedEarlyStoppingCallback(self))
         self.tf_keras_callbacks.append(WaitForInstructionsCallback(self))
-
-        profile_frequency = self.env.experiment_config.profile_frequency()
-        if profile_frequency:
-            self.tf_keras_callbacks.append(
-                DeterminedProfiler(profile_frequency, DeterminedProfiler.OUTPUT_FILENAME)
-            )
 
         if self.hvd_config.use:
             # When using horovod broadcast initial variable states from rank 0 to

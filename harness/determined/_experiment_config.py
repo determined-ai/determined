@@ -8,9 +8,6 @@ class ExperimentConfig(dict):
     def horovod_optional_args(self) -> List[str]:
         return cast(List, self.get("data", {}).get("__det_dtrain_args", []))
 
-    def profile_frequency(self) -> int:
-        return int(self.get("data", {}).get("__det_profile_frequency", 0))
-
     def scheduling_unit(self) -> int:
         return int(self.get("scheduling_unit", 100))
 
