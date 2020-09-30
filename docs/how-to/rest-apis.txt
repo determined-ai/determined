@@ -27,7 +27,7 @@ As Swagger puts it:
 
 A static version of the Swagger UI is available bundled with this docs
 `here
-<../swagger-ui/index.html`__. If
+<../swagger-ui/index.html>`__. If
 you have access to a running Determiend cluster you can checkout the
 more feature-full by clicking the API icon from the Determined WebUI or
 by visiting the path `/docs/swagger-ui/` on your Determined cluster.
