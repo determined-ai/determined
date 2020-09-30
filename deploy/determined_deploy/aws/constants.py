@@ -45,4 +45,16 @@ class cloudformation:
 class misc:
     TEMPLATE_PATH = "determined_deploy.aws.templates"
     CLOUDFORMATION_REGEX = r"^[a-zA-Z][-a-zA-Z0-9]*$"
-    SUPPORTED_REGIONS = ["us-west-2", "us-east-1"]
+    SUPPORTED_REGIONS = [
+        "ap-northeast-1",
+        # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
+        # "ap-northeast-2",
+        # "ap-southeast-1",
+        # "ap-southeast-2",
+        "eu-central-1",
+        "eu-west-1",
+        # "eu-west-2",
+        "us-east-1",
+        "us-east-2",
+        "us-west-2",
+    ]
