@@ -103,6 +103,10 @@ const AppContexts: React.FC = () => {
     setTensorboards({ type: Commands.ActionType.Set, value: tensorboardsResponse });
   }, [ tensorboardsResponse, setTensorboards ]);
 
+  useEffect(() => {
+    return (): void => apiSource.cancel();
+  }, [ apiSource ]);
+
   return <React.Fragment />;
 };
 
