@@ -18,8 +18,8 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 	err = check.Validate(&config)
 	assert.ErrorContains(t, err, "must configure aws or gcp cluster")
 	expected := Config{
-		MaxIdleAgentPeriod:     Duration(5 * time.Minute),
-		MaxAgentStartingPeriod: Duration(5 * time.Minute),
+		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
+		MaxAgentStartingPeriod: Duration(20 * time.Minute),
 		MaxInstances:           5,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
@@ -138,8 +138,8 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 		AgentDockerImage:       "test_image",
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
-		MaxIdleAgentPeriod:     Duration(5 * time.Minute),
-		MaxAgentStartingPeriod: Duration(5 * time.Minute),
+		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
+		MaxAgentStartingPeriod: Duration(20 * time.Minute),
 		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
