@@ -1,6 +1,6 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
 import { metricNameSorter } from 'utils/data';
@@ -22,6 +22,7 @@ interface Props {
 }
 
 const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, value }: Props) => {
+  const [ filterInput, setFilterInput ] = useState('');
 
   const metricValues = useMemo(() => {
     if (multiple && Array.isArray(value)) return value.map(metric => metricNameToValue(metric));
@@ -37,7 +38,29 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     return metricNames.filter(metric => metric.type === MetricType.Validation);
   }, [ metricNames ]);
 
+  const totalNumMetrics = useMemo(() => {
+    return metricNames.length;
+  }, [ metricNames ]);
+
+  const visibleMetrics = useMemo(() => {
+    return metricNames.filter((metricName: MetricName) => {
+      if (metricName.name.includes(filterInput)) {
+        return true;
+      }
+      if (metricName.type === MetricType.Training && 'training'.includes(filterInput)) {
+        return true;
+      }
+      if (metricName.type === MetricType.Validation && 'validation'.includes(filterInput)) {
+        return true;
+      }
+      return false;
+
+      // metricName.name !== 'All' && metricName.name !== 'None'
+    });
+  }, [ metricNames, filterInput ]);
+
   const handleMetricSelect = useCallback((newValue: SelectValue) => {
+    console.log('Metric select event happened', newValue);
     if (!onChange) return;
 
     let metricName;
@@ -53,8 +76,11 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
 
     if (multiple) {
       if (newValue === 'All') {
-        const newMetric = metricNames.filter((metricName: MetricName) => metricName.name !== 'All' && metricName.name !== 'None');
-        (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
+        // console.log('Metric select event happened - all');
+        // console.log('What do I see?', metricNames);
+        // const newMetric = metricNames.filter((metricName: MetricName) => metricName.name !== 'All' && metricName.name !== 'None');
+        (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
+        setFilterInput('');
       } else if (newValue === 'None') {
         const newMetric: MetricName[] = [];
         (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
@@ -68,7 +94,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
 
       (onChange as SingleHandler)(metricName);
     }
-  }, [ multiple, onChange, value ]);
+  }, [ multiple, onChange, value, filterInput ]);
 
   const handleMetricDeselect = useCallback((newValue: SelectValue) => {
     if (!onChange || !multiple) return;
@@ -80,23 +106,59 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
   }, [ multiple, onChange, value ]);
 
+  const handleFiltering = useCallback((inputValue: string, option) => {
+    if (option.key === 'All') {
+      return true;
+    } else {
+      // TODO: Split on pipe (as long as there is only one) so 'ion|' doesn't return results
+      return option.key.includes(filterInput);
+    }
+  }, [ filterInput ]);
+
+  const handleSearchInputChange = (searchInput: string) => {
+    setFilterInput(searchInput);
+  };
+
+  const allSelector = useMemo(() => {
+    let allOptionLabel;
+    const numVisibleOptions = visibleMetrics.length;
+    if (numVisibleOptions === totalNumMetrics) {
+      allOptionLabel = 'All';
+    } else {
+      allOptionLabel =`All ${numVisibleOptions} results`;
+    }
+    return (
+      <Option key={'All'} value={'All'}>
+        <BadgeTag label={allOptionLabel} />
+      </Option>
+    );
+
+  }, [ filterInput, metricNames ]);
+
+  const selectorPlaceholder = useMemo(() => {
+    if (metricValues.length === totalNumMetrics) {
+      return `All ${totalNumMetrics} selected`;
+    } else {
+      return `${metricValues.length} of ${totalNumMetrics} selected`;
+    }
+  }, [ metricValues, totalNumMetrics ]);
+
   return <SelectFilter
     disableTags
     dropdownMatchSelectWidth={400}
+    filterOption={handleFiltering}
+    // filterOption={true}
     label="Metrics"
+    maxTagPlaceholder={selectorPlaceholder}
     mode={multiple ? 'multiple' : undefined}
     showArrow
     style={{ width: 150 }}
     value={metricValues}
     onDeselect={handleMetricDeselect}
+    onSearch={handleSearchInputChange}
     onSelect={handleMetricSelect}>
-    {multiple && <OptGroup label="Convenience (TODO: Better Name)">
-      {[ 'All', 'None' ].map(key => {
-        return <Option key={key} value={key}>
-          <BadgeTag label={key} />
-        </Option>;
-      })}
-    </OptGroup>}
+
+    {visibleMetrics.length > 1 && allSelector}
 
     {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
       {validationMetricNames.map(key => {
