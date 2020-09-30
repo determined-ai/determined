@@ -1,5 +1,7 @@
 package resourcemanagers
 
+import "fmt"
+
 // Hard Constraints
 
 func slotsSatisfied(req *AllocateRequest, agent *agentState) bool {
@@ -25,4 +27,16 @@ func BestFit(_ *AllocateRequest, agent *agentState) float64 {
 // method should be used when the cluster is dominated by single-slot applications.
 func WorstFit(_ *AllocateRequest, agent *agentState) float64 {
 	return float64(agent.numEmptySlots()) / float64(agent.numSlots())
+}
+
+// MakeFitFunction returns the corresponding fitting function.
+func MakeFitFunction(fittingPolicy string) func(*AllocateRequest, *agentState) float64 {
+	switch fittingPolicy {
+	case "worst":
+		return WorstFit
+	case "best":
+		return BestFit
+	default:
+		panic(fmt.Sprintf("invalid scheduler fit: %s", fittingPolicy))
+	}
 }

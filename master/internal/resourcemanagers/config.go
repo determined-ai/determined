@@ -2,7 +2,6 @@ package resourcemanagers
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -38,27 +37,3 @@ func (r *ResourceProviderConfig) UnmarshalJSON(data []byte) error {
 
 // DefaultResourceProviderConfig hosts configuration fields for the default resource provider.
 type DefaultResourceProviderConfig struct{}
-
-// MakeFitFunction returns the corresponding fitting function.
-func MakeFitFunction(fittingPolicy string) func(*AllocateRequest, *agentState) float64 {
-	switch fittingPolicy {
-	case "worst":
-		return WorstFit
-	case "best":
-		return BestFit
-	default:
-		panic(fmt.Sprintf("invalid scheduler fit: %s", fittingPolicy))
-	}
-}
-
-// MakeScheduler returns the corresponding scheduler implementation.
-func MakeScheduler(schedulingPolicy string) Scheduler {
-	switch schedulingPolicy {
-	case "priority":
-		return NewPriorityScheduler()
-	case "fair_share":
-		return NewFairShareScheduler()
-	default:
-		panic(fmt.Sprintf("invalid scheduler: %s", schedulingPolicy))
-	}
-}

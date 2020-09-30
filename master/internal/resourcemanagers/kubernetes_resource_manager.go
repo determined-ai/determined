@@ -10,6 +10,7 @@ import (
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
+// kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
 	config *KubernetesResourceManagerConfig
 

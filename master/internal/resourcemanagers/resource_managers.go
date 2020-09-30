@@ -30,10 +30,10 @@ func NewResourceManagers(
 ) *ResourceManagers {
 	var ref *actor.Ref
 	switch {
-	case rmConfig.DeterminedRM != nil:
+	case rmConfig.AgentRM != nil:
 		ref, _ = system.ActorOf(
-			actor.Addr("determinedRM"),
-			newAgentResourceManager(rmConfig.DeterminedRM, poolsConfig, cert),
+			actor.Addr("agentRM"),
+			newAgentResourceManager(rmConfig.AgentRM, poolsConfig, cert),
 		)
 
 	case rmConfig.KubernetesRM != nil:

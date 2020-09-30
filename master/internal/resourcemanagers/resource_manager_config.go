@@ -15,53 +15,56 @@ import (
 func ResolveConfig(
 	schedulerConf *Config,
 	provisionerConf *provisioner.Config,
-	rmConf *ResourceManagerConfig,
-	rpsConf *ResourcePoolsConfig,
+	resourceMangerConf *ResourceManagerConfig,
+	resourcePoolsConf *ResourcePoolsConfig,
 ) (*ResourceManagerConfig, *ResourcePoolsConfig, error) {
 	switch {
-	case provisionerConf == nil && rpsConf == nil:
-		rpsConf = DefaultRPsConfig()
-	case provisionerConf != nil && rpsConf == nil:
-		rpsConf = &ResourcePoolsConfig{
+	case provisionerConf == nil && resourcePoolsConf == nil:
+		resourcePoolsConf = DefaultRPsConfig()
+	case provisionerConf != nil && resourcePoolsConf == nil:
+		resourcePoolsConf = &ResourcePoolsConfig{
 			ResourcePools: []ResourcePoolConfig{{PoolName: "default", Provider: provisionerConf}},
 		}
-	case provisionerConf != nil && rpsConf != nil:
+	case provisionerConf != nil && resourcePoolsConf != nil:
 		return nil, nil, errors.New("cannot specify both the provisioner and resource_pools fields")
 	}
 
 	switch {
-	case schedulerConf == nil && rmConf == nil:
-		rmConf = DefaultRMConfig()
+	case schedulerConf == nil && resourceMangerConf == nil:
+		resourceMangerConf = DefaultRMConfig()
 
-	case schedulerConf != nil && rmConf == nil:
+	case schedulerConf != nil && resourceMangerConf == nil:
 		switch {
 		case schedulerConf.ResourceProvider == nil ||
 			schedulerConf.ResourceProvider.DefaultRPConfig != nil:
-			rmConf = &ResourceManagerConfig{
-				DeterminedRM: &AgentResourceManagerConfig{
+			resourceMangerConf = &ResourceManagerConfig{
+				AgentRM: &AgentResourceManagerConfig{
 					SchedulingPolicy: schedulerConf.Type,
 					FittingPolicy:    schedulerConf.Fit,
 				},
 			}
 		case schedulerConf.ResourceProvider.KubernetesRPConfig != nil:
-			rmConf = &ResourceManagerConfig{KubernetesRM: schedulerConf.ResourceProvider.KubernetesRPConfig}
+			resourceMangerConf = &ResourceManagerConfig{
+				KubernetesRM: schedulerConf.ResourceProvider.KubernetesRPConfig,
+			}
 		}
 
-	case schedulerConf != nil && rmConf != nil:
-		return nil, nil, errors.New("cannot specify both the scheduler and resource_manager fields")
+	case schedulerConf != nil && resourceMangerConf != nil:
+		return nil, nil, errors.New(
+			"cannot specify both the scheduler and resource_manager fields")
 	}
-	return rmConf, rpsConf, nil
+	return resourceMangerConf, resourcePoolsConf, nil
 }
 
 // DefaultRMConfig returns the default resource manager configuration.
 func DefaultRMConfig() *ResourceManagerConfig {
 	return &ResourceManagerConfig{
-		DeterminedRM: DefaultDetRMConfig(),
+		AgentRM: DefaultAgentRMConfig(),
 	}
 }
 
-// DefaultDetRMConfig returns the default determined resource manager configuration.
-func DefaultDetRMConfig() *AgentResourceManagerConfig {
+// DefaultAgentRMConfig returns the default determined resource manager configuration.
+func DefaultAgentRMConfig() *AgentResourceManagerConfig {
 	return &AgentResourceManagerConfig{
 		SchedulingPolicy: "fair_share",
 		FittingPolicy:    "best",
@@ -70,7 +73,7 @@ func DefaultDetRMConfig() *AgentResourceManagerConfig {
 
 // ResourceManagerConfig hosts configuration fields for the resource manager.
 type ResourceManagerConfig struct {
-	DeterminedRM *AgentResourceManagerConfig      `union:"type,default" json:"-"`
+	AgentRM      *AgentResourceManagerConfig      `union:"type,agent" json:"-"`
 	KubernetesRM *KubernetesResourceManagerConfig `union:"type,kubernetes" json:"-"`
 }
 
@@ -97,13 +100,13 @@ type AgentResourceManagerConfig struct {
 }
 
 // Validate implements the check.Validatable interface.
-func (c AgentResourceManagerConfig) Validate() []error {
+func (a AgentResourceManagerConfig) Validate() []error {
 	return []error{
 		check.Contains(
-			c.SchedulingPolicy, []interface{}{"priority", "fair_share"}, "invalid scheduling policy",
+			a.SchedulingPolicy, []interface{}{"priority", "fair_share"}, "invalid scheduling policy",
 		),
 		check.Contains(
-			c.FittingPolicy, []interface{}{"best", "worst"}, "invalid fitting policy",
+			a.FittingPolicy, []interface{}{"best", "worst"}, "invalid fitting policy",
 		),
 	}
 }

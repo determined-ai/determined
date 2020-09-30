@@ -282,7 +282,7 @@ func (m *Master) Run() error {
 	// master system
 	// +- ResourceManagers (scheduler.ResourceManagers: resourceManagers)
 	// Exactly one of the resource providers is enabled at a time.
-	// +- DefaultResourceManager (resourcemanagers.DeterminedResourceManager: determinedRM)
+	// +- AgentResourceManager (resourcemanagers.AgentResourceManager: agentRM)
 	//     +- Resource Pool (resourcemanagers.ResourcePool: <resource-pool-name>)
 	//        +- Provisioner (provisioner.Provisioner: provisioner)
 	//        +- Agent Group (actors.Group: agents)
