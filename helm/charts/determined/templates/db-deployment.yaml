@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deteremined-db-deployment-{{ .Release.Name }}
+  name: determined-db-deployment-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
     app: determined-db-{{ .Release.Name }}
