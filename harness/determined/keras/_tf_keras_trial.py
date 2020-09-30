@@ -658,7 +658,7 @@ class TFKerasTrial(det.Trial):
             of NumPy arrays.
 
             3) A `tf.data.Dataset
-            <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__ returning
+            <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/data/Dataset>`__ returning
             a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
 
             4) A `keras.utils.Sequence
@@ -696,7 +696,7 @@ class TFKerasTrial(det.Trial):
             of NumPy arrays.
 
             3) A `tf.data.Dataset
-            <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__ returning
+            <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/data/Dataset>`__ returning
             a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
 
             4) A `keras.utils.Sequence
