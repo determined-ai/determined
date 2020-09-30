@@ -333,8 +333,7 @@ func (m *Master) Run() error {
 	// Used to decide whether we add trailing slash to the paths or not affecting
 	// relative links in web pages hosted under these routes.
 	staticWebDirectoryPaths := map[string]bool{
-		"/docs":       true,
-		"/swagger-ui": true,
+		"/docs": true,
 	}
 
 	// Initialize the HTTP server and listen for incoming requests.
