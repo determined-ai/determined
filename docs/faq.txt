@@ -199,7 +199,7 @@ Determined has support for TensorFlow models that use the :ref:`tf.keras
 that use the low-level TensorFlow Core APIs, we recommend porting your
 model to use :ref:`Estimator Trial <estimator-trial>`. `Example of
 converting a Tensorflow graph into an Estimator
-<https://github.com/determined-ai/determined/blob/master/examples/experimental/trial/mnist_tp_to_estimator/model_def.py>`_.
+<https://github.com/determined-ai/determined/blob/master/examples/computer_vision/mnist_tf_layers/model_def.py>`_.
 
 *****************
  PyTorch Support

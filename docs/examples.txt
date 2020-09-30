@@ -56,6 +56,10 @@ Computer Vision
     - MNIST
     - :download:`mnist_estimator.tgz </examples/mnist_estimator.tgz>`
 
+  * - TensorFlow (tf.layers via Estimator API)
+    - MNIST
+    - :download:`mnist_tf_layers.tgz </examples/mnist_tf_layers.tgz>`
+
   * - TensorFlow (tf.keras)
     - Fashion MNIST
     - :download:`fashion_mnist_tf_keras.tgz </examples/fashion_mnist_tf_keras.tgz>`
