@@ -62,8 +62,8 @@ func DefaultConfig() *Config {
 	return &Config{
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
-		MaxIdleAgentPeriod:     Duration(300 * time.Second),
-		MaxAgentStartingPeriod: Duration(300 * time.Second),
+		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
+		MaxAgentStartingPeriod: Duration(20 * time.Minute),
 		MaxInstances:           5,
 	}
 }

@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  Increase default max agent starting and idle timeouts to 20 minutes and increase max
+   disconnected period from 5 to 10 minutes.
