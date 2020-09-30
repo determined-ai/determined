@@ -44,26 +44,28 @@ const TrialChart: React.FC<Props> = ({
         const y = metric.type === MetricType.Validation ?
           validationSource[metric.name] : trainingSource[metric.name];
 
+        const metricKey = `${metric.type}_${metric.name}`;
+
         const text = [
           `Batches: ${x}`,
           `Metric Value: ${y}`,
         ].join('<br>');
 
         if (text && x && y) {
-          if (!dataMap[metric.name]) {
-            dataMap[metric.name] = {
+          if (!dataMap[metricKey]) {
+            dataMap[metricKey] = {
               hovertemplate: '%{text}<extra></extra>',
               mode: 'lines+markers',
-              name: metric.name,
+              name: `${metric.name} (${metric.type})`,
               text: [],
               type: 'scatter',
               x: [],
               y: [],
             };
           }
-          (dataMap[metric.name].text as string[]).push(text);
-          (dataMap[metric.name].x as number[]).push(x);
-          (dataMap[metric.name].y as number[]).push(y);
+          (dataMap[metricKey].text as string[]).push(text);
+          (dataMap[metricKey].x as number[]).push(x);
+          (dataMap[metricKey].y as number[]).push(y);
         }
       });
     });
