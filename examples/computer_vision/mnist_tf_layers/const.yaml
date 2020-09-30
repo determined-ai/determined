@@ -1,0 +1,13 @@
+description: mnist_tf_core_to_estimator
+hyperparameters:
+  learning_rate: 1e-3
+  global_batch_size: 64
+  n_filters_1: 10
+  n_filters_2: 40
+searcher:
+  name: single
+  metric: error
+  smaller_is_better: true
+  max_length:
+    batches: 2000
+entrypoint: model_def:MNistTrial

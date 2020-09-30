@@ -18,6 +18,7 @@ official_examples = [
     ),
     ("computer_vision/iris_tf_keras", "computer_vision/iris_tf_keras/const.yaml"),
     ("computer_vision/mnist_estimator", "computer_vision/mnist_estimator/const.yaml"),
+    ("computer_vision/mnist_tf_layers", "computer_vision/mnist_tf_layers/const.yaml"),
     ("tutorials/mnist_pytorch", "tutorials/mnist_pytorch/const.yaml"),
     ("gan/gan_mnist_pytorch", "gan/gan_mnist_pytorch/const.yaml"),
 ]
@@ -28,6 +29,10 @@ def test_official(model_def: str, config_file: str) -> None:
     examples_dir = pathlib.Path(__file__).parent.parent
     model_def_absolute = examples_dir.joinpath(model_def)
     config_file_absolute = examples_dir.joinpath(config_file)
+
+    startup_hook = model_def_absolute.joinpath("startup-hook.sh")
+    if startup_hook.exists():
+        subprocess.check_output(("sh", str(startup_hook)))
 
     subprocess.check_output(
         (
