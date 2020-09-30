@@ -9,7 +9,7 @@ import (
 
 const (
 	minRetryInterval    = 10 * time.Second
-	maxDisconnectPeriod = 5 * time.Minute
+	maxDisconnectPeriod = 10 * time.Minute
 )
 
 // scaleDecider makes decisions based on the following assumptions:
