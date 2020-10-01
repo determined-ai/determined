@@ -20,11 +20,11 @@ import { decodeExperimentList, encodeExperimentState } from './decoder';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
-const address = serverAddress();
+const ApiConfig : Api.Configuration = { basePath: serverAddress() };
 
 export const detApi = {
-  Auth: new Api.AuthenticationApi(undefined, address),
-  Experiments: new Api.ExperimentsApi(undefined, address),
+  Auth: new Api.AuthenticationApi(ApiConfig),
+  Experiments: new Api.ExperimentsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(),
 };
 
