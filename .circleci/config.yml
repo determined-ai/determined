@@ -594,7 +594,8 @@ jobs:
       - attach_workspace:
           at: .
       - go-get-deps
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.12
       - run: make -C proto build
       - run: make package
       - run: mkdir -p build/
@@ -619,7 +620,8 @@ jobs:
       - attach_workspace:
           at: .
       - go-get-deps
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.12
       - run: make -C proto build
       - run: make package
       - login-docker
@@ -636,7 +638,8 @@ jobs:
       - attach_workspace:
           at: .
       - go-get-deps
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.12
       - run: make -C proto build
       - run: make package
       - login-docker
@@ -653,7 +656,8 @@ jobs:
       - attach_workspace:
           at: .
       - go-get-deps
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.12
       - login-docker
       - run: make -C proto build
       - run: make -C master release
