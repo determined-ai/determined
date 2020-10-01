@@ -3,7 +3,6 @@ package resourcemanagers
 import (
 	"crypto/tls"
 
-	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -65,28 +64,12 @@ func (a *agentResourceManager) createResourcePool(
 	ctx *actor.Context, config *ResourcePoolConfig, cert *tls.Certificate,
 ) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
-	var rp *ResourcePool
-	if config.Provider == nil {
-		ctx.Log().Infof("disabling provisioner for resource pool: %s", config.PoolName)
-		rp = NewResourcePool(
-			MakeScheduler(a.config.SchedulingPolicy),
-			MakeFitFunction(a.config.FittingPolicy),
-			nil,
-			0,
-		)
-	} else {
-		p, pRef, err := provisioner.Setup(ctx, config.Provider, cert)
-		if err != nil {
-			ctx.Log().WithError(err).Errorf("cannot create resource pool: %s", config.PoolName)
-			return nil
-		}
-		rp = NewResourcePool(
-			MakeScheduler(a.config.SchedulingPolicy),
-			MakeFitFunction(a.config.FittingPolicy),
-			pRef,
-			p.SlotsPerInstance(),
-		)
-	}
+	rp := NewResourcePool(
+		config,
+		cert,
+		MakeScheduler(a.config.SchedulingPolicy),
+		MakeFitFunction(a.config.FittingPolicy),
+	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {
 		ctx.Log().Errorf("cannot create resource pool actor: %s", config.PoolName)

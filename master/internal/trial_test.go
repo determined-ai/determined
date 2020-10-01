@@ -83,10 +83,10 @@ func TestRendezvousInfo(t *testing.T) {
 	rp, created := system.ActorOf(
 		actor.Addr("resourceManagers"),
 		resourcemanagers.NewResourcePool(
+			&resourcemanagers.ResourcePoolConfig{PoolName: "default"},
+			nil,
 			resourcemanagers.NewFairShareScheduler(),
 			resourcemanagers.WorstFit,
-			nil,
-			0,
 		))
 	if !created {
 		t.Fatal("unable to create cluster")
