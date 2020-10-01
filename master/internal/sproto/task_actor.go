@@ -33,7 +33,7 @@ type (
 		agent.ContainerStopped
 	}
 	// TaskContainerStateChanged notifies that the task actor container state has been transitioned.
-	// It is used by the resource providers to communicate with the task handlers.
+	// It is used by the resource managers to communicate with the task handlers.
 	TaskContainerStateChanged struct {
 		Container        container.Container
 		ContainerStarted *TaskContainerStarted

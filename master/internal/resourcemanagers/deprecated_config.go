@@ -15,7 +15,7 @@ type Config struct {
 	ResourceProvider *ResourceProviderConfig `json:"resource_provider"`
 }
 
-// ResourceProviderConfig hosts configuration fields for the resource provider.
+// ResourceProviderConfig hosts configuration fields for the resource manager.
 type ResourceProviderConfig struct {
 	DefaultRPConfig    *DefaultResourceProviderConfig   `union:"type,default" json:"-"`
 	KubernetesRPConfig *KubernetesResourceManagerConfig `union:"type,kubernetes" json:"-"`

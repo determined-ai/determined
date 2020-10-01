@@ -82,7 +82,7 @@ func Initialize(
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 
-	// We re-use the agents endpoint for the default resource provider.
+	// We re-use the agents endpoint for the default resource manager.
 	e.Any("/agents", api.Route(s, podsActor))
 	return podsActor
 }

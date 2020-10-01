@@ -281,7 +281,7 @@ func (m *Master) Run() error {
 	// Actor structure:
 	// master system
 	// +- ResourceManagers (scheduler.ResourceManagers: resourceManagers)
-	// Exactly one of the resource providers is enabled at a time.
+	// Exactly one of the resource managers is enabled at a time.
 	// +- AgentResourceManager (resourcemanagers.AgentResourceManager: agentRM)
 	//     +- Resource Pool (resourcemanagers.ResourcePool: <resource-pool-name>)
 	//        +- Provisioner (provisioner.Provisioner: provisioner)

@@ -8,7 +8,7 @@ import (
 
 // Task-related cluster level messages.
 type (
-	// AllocateRequest notifies resource providers to assign resources to a task.
+	// AllocateRequest notifies resource managers to assign resources to a task.
 	AllocateRequest struct {
 		ID                  TaskID
 		Name                string

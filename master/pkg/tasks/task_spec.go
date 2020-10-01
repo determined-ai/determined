@@ -81,7 +81,7 @@ type StartContainer struct {
 	WorkloadManagerType model.WorkloadManagerType `json:"workload_manager_type"`
 	AdditionalFiles     archive.Archive           `json:"additional_files"`
 
-	// This is used to hint the resource provider to override defaults and start
+	// This is used to hint the resource manager to override defaults and start
 	// the container in host mode iff it has been scheduled across multiple agents.
 	IsMultiAgent bool `json:"is_multi_agent"`
 

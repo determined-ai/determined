@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	// ConfigureEndpoints informs the resource provider to configure the endpoints resources.
+	// ConfigureEndpoints informs the resource manager to configure the endpoints resources.
 	ConfigureEndpoints struct {
 		System *actor.System
 		Echo   *echo.Echo

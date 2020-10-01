@@ -16,7 +16,7 @@ const (
 type schedulerTick struct{}
 
 // ResourceManagers manages the configured resource providers.
-// Currently support only one resource provider at a time.
+// Currently support only one resource manager at a time.
 type ResourceManagers struct {
 	ref *actor.Ref
 }

@@ -13,6 +13,8 @@ type agentResourceManager struct {
 	poolsConfig *ResourcePoolsConfig
 	cert        *tls.Certificate
 
+	// onlyPool hosts the reference to the only resource pool
+	// since we currently support only one resource pool.
 	onlyPool *actor.Ref
 }
 
