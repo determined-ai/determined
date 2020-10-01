@@ -1,10 +1,5 @@
 export GO111MODULE := on
 
-.PHONY: all
-all:
-	$(MAKE) get-deps
-	$(MAKE) build
-
 .PHONY: clean
 clean:
 	rm -rf build
