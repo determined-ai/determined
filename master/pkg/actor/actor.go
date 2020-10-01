@@ -22,6 +22,11 @@ type (
 
 	// PostStop notifies the actor that its reference is shutting down.
 	PostStop struct{}
+
+	// Ping is an actor message that the actor system automatically respond with an empty
+	// response back once being processed. It is used for synchronizing that the messages
+	// that are previous to this Ping message and received by the actor are processed.
+	Ping struct{}
 )
 
 // Actor is an object that encapsulates both state and behavior.

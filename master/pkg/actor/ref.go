@@ -184,6 +184,9 @@ func (r *Ref) processMessage() bool {
 
 	// Handle any internal state change messages first.
 	switch typed := ctx.Message().(type) {
+	case Ping:
+		ctx.Respond(typed)
+		return false
 	case createChild:
 		child, created := r.createChild(typed.address, typed.actor)
 		ctx.Respond(childCreated{
