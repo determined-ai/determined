@@ -55,9 +55,9 @@ Version 0.13.5
 
 - WebUI: Make several fixes to improve select appearance and user experience.
 
-- WebUI: Fix issue of agent and cluster info not loading on slow connections.
+- WebUI: Fix the issue of agent and cluster info not loading on slow connections.
 
-- WebUI: Fix issue where the chart in the Experiment page does not have the metric name in the legend.
+- WebUI: Fix the issue where the chart in the Experiment page does not have the metric name in the legend.
 
 Version 0.13.4
 ==============
