@@ -8,7 +8,7 @@ build-examples:
 	make -C ../examples build
 
 
-.PHONE: build-helm
+.PHONY: build-helm
 build-helm:
 	make -C ../helm build
 
