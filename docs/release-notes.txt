@@ -8,6 +8,57 @@
  Version 0.13
 **************
 
+Version 0.13.5
+==============
+
+**Release Date:** September 30, 2020
+
+**Improvements**
+
+- Security: Use one TCP port for all incoming connections to the master and use TLS for all connections if configured.
+
+  - **Breaking Change:** The ``http_port`` and ``https_port`` options in the master configuration have been replaced by the single ``port`` option. The ``security.http`` option is no longer accepted; the master can no longer be configured to listen over HTTP and HTTPS simultaneously.
+
+- Security: Support configuring TLS encryption when deploying Determined on Kubernetes. For more details please see :ref:`install-on-kubernetes`.
+
+- Agent: Increase default max agent starting and idle timeouts to 20 minutes and increase max disconnected period from 5 to 10 minutes.
+
+- API: Deprecate Native API. Removed related examples and docs.
+
+- Deployment: Add support for ``det-deploy aws`` in the following new regions: ``ap-northeast-1``, ``eu-central-1``, ``eu-west-1``, ``us-east-2``.
+
+- Documentation: Add extra documentation to and reorganize examples by use case.
+
+- Documentation: Add a ``tf.layers-in-Estimator`` example.
+
+- Kubernetes: Add support for users to specify ``initContainers`` and ``containers`` as part of their custom pod specs. Please see :ref:`custom-pod-specs` for details.
+
+- Trials: Remove support for ``TensorpackTrial``.
+
+- WebUI: Before launching a new TensorBoard through the UI, direct the user to an already running TensorBoard if one exists.
+
+- WebUI: Have experiment and trial detail pages wait for any previous API request polling to finish, before making another request.
+
+**Bug Fixes**
+
+- Documentation: Fix some broken links.
+
+- Trials: Fix a bug where if only a subset of workers on a machine executed the ``on_trial_close()`` ``EstimatorTrial`` callback, the container would terminate as soon as one worker exited.
+
+- Trials: Fix a bug where ``det e create --test`` would succeed when there were checkpointing failures.
+
+- WebUI: Fix the issue of multiple selected rows dissappearing after a successful table batch action.
+
+- WebUI: Remove unused TensorBoard sources column from the task list page.
+
+- WebUI: Fix rendering metrics with the same name on the metric chart.
+
+- WebUI: Make several fixes to improve select appearance and user experience.
+
+- WebUI: Fix issue of agent and cluster info not loading on slow connections.
+
+- WebUI: Fix issue where the chart in the Experiment page does not have the metric name in the legend.
+
 Version 0.13.4
 ==============
 
