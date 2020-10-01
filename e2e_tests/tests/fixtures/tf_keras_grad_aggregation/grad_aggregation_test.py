@@ -97,7 +97,9 @@ def compute_expected_value(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tf1", action="store_true")
-    parser.add_argument("--aggregation-frequency", dest="aggregation_frequency", default=0, type=int)
+    parser.add_argument(
+        "--aggregation-frequency", dest="aggregation_frequency", default=0, type=int
+    )
     parser.add_argument("--average-aggregated-gradients", action="store_true")
     args = parser.parse_args()
 
