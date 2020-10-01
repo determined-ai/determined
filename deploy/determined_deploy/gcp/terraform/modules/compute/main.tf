@@ -1,5 +1,10 @@
 // Create Master instance
 resource "google_compute_instance" "master_instance" {
+  // The resource name must match the label_value in the dynamic agent
+  // provisioner config below in order for upstream tooling (det-deploy) to
+  // properly clean up dynamic agents during deprovisioning. During
+  // deprovisioning it filters for agents using this same label key / value.
+  // We copy the same string since a resource can't reference its own name.
   name = "det-master-${var.unique_id}-${var.det_version_key}"
   machine_type = var.master_instance_type
   zone = var.zone
@@ -46,6 +51,8 @@ resource "google_compute_instance" "master_instance" {
       max_agent_starting_period: ${var.max_agent_starting_period}
       provider: gcp
       name_prefix: det-dynamic-agent-${var.unique_id}-${var.det_version_key}-
+      label_key: managed-by
+      label_value: det-master-${var.unique_id}-${var.det_version_key}
       network_interface:
         network: projects/${var.project_id}/global/networks/${var.network_name}
         subnetwork: projects/${var.project_id}/regions/${var.region}/subnetworks/${var.subnetwork_name}
