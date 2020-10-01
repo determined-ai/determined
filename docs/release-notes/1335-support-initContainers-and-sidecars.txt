@@ -1,7 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Add support for users to specify ``initContainers`` and ``containers`` as
-   part of their custom pod specs. Please see :ref:`custom-pod-specs` for
-   details.

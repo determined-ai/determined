@@ -1,5 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  Remove unused TensorBoard sources column from task list page.

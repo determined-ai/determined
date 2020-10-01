@@ -1,5 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
-- WebUI: Made several fixes to improve select appearence and user experience.

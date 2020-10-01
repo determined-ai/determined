@@ -1,7 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  Fix a bug where if only a subset of workers on a machine executed the
-   `on_trial_close()` EstimatorTrial callback, the container would
-   terminate as soon as one worker exited.

@@ -1,6 +1,0 @@
-:orphan:
-
-**IMPROVEMENTS**
-
--  WebUI: Update experiment and trial detail page to wait for previous
-   API request polling resolve before making another one.

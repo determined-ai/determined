@@ -1,6 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  Fix the issue of multiple selected rows dissappearing after a
-   successful table batch action.

@@ -1,7 +1,0 @@
-:orphan:
-
-**Improvements**
-- Added extra documentation to and reorganized examples by use case.
-
-**Extra Note**
-- Deprecated Native API. Removed related examples and docs.

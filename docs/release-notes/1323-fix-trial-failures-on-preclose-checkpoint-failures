@@ -1,5 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
-- Fix a bug where ``det e create --test`` would succeed when there were checkpointing failures.
