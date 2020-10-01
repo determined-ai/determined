@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+import "protoc-gen-swagger/options/openapiv2.proto";
 
 import "determined/api/v1/agent.proto";
 import "determined/api/v1/auth.proto";
@@ -21,25 +22,50 @@ import "determined/api/v1/shell.proto";
 import "determined/api/v1/user.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
-    info: {
-        title: "Determined API (Beta)",
-        description: "Determined helps deep learning teams train models more quickly, easily share GPU resources, and effectively collaborate. Determined allows deep learning engineers to focus on building and training models at scale, without needing to worry about DevOps or writing custom code for common tasks like fault tolerance or experiment tracking.\n\nYou can think of Determined as a platform that bridges the gap between tools like TensorFlow and PyTorch --- which work great for a single researcher with a single GPU --- to the challenges that arise when doing deep learning at scale, as teams, clusters, and data sets all increase in size.",
-        version: "0.1",
-        contact: {
-            name: "Determined AI",
-            url: "https://determined.ai/",
-            email: "community@determined.ai",
-        }
-        license: {
-            name: "Apache 2.0",
-            url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-        }
+  info : {
+    title : "Determined API (Beta)",
+    description : "Determined helps deep learning teams train models more "
+                  "quickly, easily share GPU resources, and effectively "
+                  "collaborate. Determined allows deep learning engineers to "
+                  "focus on building and training models at scale, without "
+                  "needing to worry about DevOps or writing custom code for "
+                  "common tasks like fault tolerance or experiment "
+                  "tracking.\n\nYou can think of Determined as a platform that "
+                  "bridges the gap between tools like TensorFlow and PyTorch "
+                  "--- which work great for a single researcher with a single "
+                  "GPU --- to the challenges that arise when doing deep "
+                  "learning at scale, as teams, clusters, and data sets all "
+                  "increase in size.",
+    version : "0.1",
+    contact : {
+      name : "Determined AI",
+      url : "https://determined.ai/",
+      email : "community@determined.ai",
     }
-    schemes: [HTTP, HTTPS],
-    external_docs: {
-        description: "Determined AI Documentation",
-        url: "/docs",
+    license : {
+      name : "Apache 2.0",
+      url : "http://www.apache.org/licenses/LICENSE-2.0.html"
     }
+  }
+  schemes : [ HTTP, HTTPS ],
+  external_docs : {
+    description : "Determined AI Documentation",
+    url : "/docs",
+  },
+  security_definitions : {
+    security : {
+      key : "BearerToken",
+      value : {
+        type : TYPE_API_KEY,
+        description : "Bearer token authentication strategy",
+        name : "Authorization",
+        in : IN_HEADER
+      }
+    }
+  },
+  security : {
+    security_requirement : {key : "BearerToken"; value : {}}
+  }
 };
 
 // Determined is the official v1 of the Determined API.
