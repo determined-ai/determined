@@ -546,7 +546,6 @@ commands:
 
 jobs:
   build-docs:
-    # TODO this now depends on build-proto
     docker:
       - image: determinedai/cimg-base:stable
     steps:

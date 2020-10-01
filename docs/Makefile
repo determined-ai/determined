@@ -20,7 +20,6 @@ build: build-examples build-helm
 	cp ../helm/build/* site/downloads/helm
 	$(MAKE) sp-html
 	# pull in swagger-ui
-	# cp -r ../master/static/swagger-ui site/html
 	cp -r ./swagger-ui site/html
 	cp ../proto/build/swagger/determined/api/v1/api.swagger.json  site/html/swagger-ui/
 
