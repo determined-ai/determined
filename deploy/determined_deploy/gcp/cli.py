@@ -1,8 +1,18 @@
 import argparse
 import os
+from typing import Callable
 
 import determined_deploy
 from determined_deploy.gcp import constants, gcp
+
+
+def validate_cluster_id() -> Callable:
+    def validate(s: str) -> str:
+        if isinstance(s, str) and len(s) <= 35:
+            return s
+        raise argparse.ArgumentTypeError("must be at most 35 characters")
+
+    return validate
 
 
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -23,7 +33,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     required_named = parser_gcp.add_argument_group("required named arguments")
     required_named.add_argument(
         "--cluster-id",
-        type=str,
+        type=validate_cluster_id(),
         default=None,
         required=True,
         help="unique identifier to name and tag resources",
