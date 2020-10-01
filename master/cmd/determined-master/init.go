@@ -85,11 +85,6 @@ func registerConfig() {
 	registerString(flags, name("db", "ssl-root-cert"),
 		defaults.DB.SSLRootCert, "database ssl root cert path")
 
-	registerString(flags, name("scheduler", "fit"),
-		defaults.Scheduler.Fit, "scheduler fit method")
-	registerString(flags, name("scheduler", "type"),
-		defaults.Scheduler.Type, "scheduler type")
-
 	registerInt(flags, name("security", "default-task", "uid"),
 		defaults.Security.DefaultTask.UID, "security default task UID")
 	registerInt(flags, name("security", "default-task", "gid"),

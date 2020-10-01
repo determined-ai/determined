@@ -129,5 +129,5 @@ def using_k8s(request: SubRequest) -> bool:
 
     output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
 
-    rp = json.loads(output)["scheduler"]["resource_provider"]["type"]
+    rp = json.loads(output)["resource_manager"]["type"]
     return bool(rp == "kubernetes")

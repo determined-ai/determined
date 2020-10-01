@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -203,8 +203,8 @@ type trial struct {
 	killed                     bool
 
 	// The following fields tracks the interaction with the resource providers.
-	task        *scheduler.AllocateRequest
-	allocations []scheduler.Allocation
+	task        *resourcemanagers.AllocateRequest
+	allocations []resourcemanagers.Allocation
 
 	// The following fields tracks containers and their states.
 	lastContainerConnectedTime time.Time
@@ -235,7 +235,7 @@ func newTrial(
 		warmStartCheckpointID = &checkpointID
 	}
 	return &trial{
-		rp:                    exp.rp,
+		rp:                    exp.rm,
 		logger:                exp.trialLogger,
 		db:                    exp.db,
 		experimentState:       exp.State,
@@ -340,14 +340,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				name = fmt.Sprintf("Trial (Experiment %d)", t.experiment.ID)
 			}
 
-			t.task = &scheduler.AllocateRequest{
-				ID:             scheduler.NewTaskID(),
+			t.task = &resourcemanagers.AllocateRequest{
+				ID:             resourcemanagers.NewTaskID(),
 				Name:           name,
 				Group:          ctx.Self().Parent(),
 				SlotsNeeded:    slotsNeeded,
 				NonPreemptible: false,
 				Label:          label,
-				FittingRequirements: scheduler.FittingRequirements{
+				FittingRequirements: resourcemanagers.FittingRequirements{
 					SingleAgent: false,
 				},
 				TaskActor: ctx.Self(),
@@ -363,7 +363,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 
 func (t *trial) runningReceive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case scheduler.ResourcesAllocated, scheduler.ReleaseResources:
+	case resourcemanagers.ResourcesAllocated, resourcemanagers.ReleaseResources:
 		return t.processSchedulerMsg(ctx)
 
 	case containerConnected, sproto.TaskContainerStateChanged:
@@ -424,12 +424,12 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 
 func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case scheduler.ResourcesAllocated:
+	case resourcemanagers.ResourcesAllocated:
 		if err := t.processAllocated(ctx, msg); err != nil {
 			return err
 		}
 
-	case scheduler.ReleaseResources:
+	case resourcemanagers.ReleaseResources:
 		ctx.Log().Info("releasing resources because of being preempted")
 		return t.releaseResource(ctx)
 
@@ -501,7 +501,9 @@ func (t *trial) processID(ctx *actor.Context, id int) {
 	ctx.AddLabel("trial-id", id)
 }
 
-func (t *trial) processAllocated(ctx *actor.Context, msg scheduler.ResourcesAllocated) error {
+func (t *trial) processAllocated(
+	ctx *actor.Context, msg resourcemanagers.ResourcesAllocated,
+) error {
 	// Ignore this message if the resources are already released or
 	// it is from the last run of the trial.
 	if t.task == nil {
@@ -1050,7 +1052,7 @@ func (t *trial) terminated(ctx *actor.Context) {
 	t.task = nil
 	t.allocations = nil
 	t.containerRanks = make(map[cproto.ID]int)
-	ctx.Tell(t.rp, scheduler.ResourcesReleased{TaskActor: ctx.Self()})
+	ctx.Tell(t.rp, resourcemanagers.ResourcesReleased{TaskActor: ctx.Self()})
 
 	t.allReadySucceeded = false
 	t.pendingGracefulTermination = false

@@ -13,10 +13,10 @@ import (
 )
 
 // Initialize creates a new global agent actor.
-func Initialize(s *actor.System, e *echo.Echo, c *actor.Ref) {
-	_, ok := s.ActorOf(actor.Addr("agents"), &agents{cluster: c})
+func Initialize(ctx *actor.Context, e *echo.Echo, c *actor.Ref) {
+	ref, ok := ctx.ActorOf("agents", &agents{cluster: c})
 	check.Panic(check.True(ok, "agents address already taken"))
-	e.Any("/agents*", api.Route(s, nil))
+	e.Any("/agents*", api.Route(ctx.Self().System(), ref))
 }
 
 type agents struct {

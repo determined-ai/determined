@@ -25,9 +25,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
-	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/proxy"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
@@ -55,9 +54,8 @@ type Master struct {
 	logs          *logger.LogBuffer
 	system        *actor.System
 	echo          *echo.Echo
-	rp            *actor.Ref
+	rm            *actor.Ref
 	rwCoordinator *actor.Ref
-	provisioner   *actor.Ref
 	db            *db.PgDB
 	proxy         *actor.Ref
 	trialLogger   *actor.Ref
@@ -248,34 +246,6 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
-func (m *Master) initializeResourceProviders(provisionerSlotsPerInstance int) {
-	var resourceProvider *actor.Ref
-	switch {
-	case m.config.Scheduler.ResourceProvider.DefaultRPConfig != nil:
-		resourceProvider, _ = m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
-			m.config.Scheduler.MakeScheduler(),
-			m.config.Scheduler.FitFunction(),
-			m.provisioner,
-			provisionerSlotsPerInstance,
-		))
-
-	case m.config.Scheduler.ResourceProvider.KubernetesRPConfig != nil:
-		resourceProvider, _ = m.system.ActorOf(
-			actor.Addr("kubernetesRP"),
-			scheduler.NewKubernetesResourceProvider(
-				m.config.Scheduler.ResourceProvider.KubernetesRPConfig,
-			),
-		)
-
-	default:
-		panic("no expected resource provider config is defined")
-	}
-
-	m.rp, _ = m.system.ActorOf(
-		actor.Addr("resourceProviders"),
-		scheduler.NewResourceProviders(resourceProvider))
-}
-
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 func (m *Master) Run() error {
 	log.Infof("Determined master %s (built with %s)", m.Version, runtime.Version())
@@ -310,11 +280,15 @@ func (m *Master) Run() error {
 
 	// Actor structure:
 	// master system
-	// +- Provisioner (provisioner.Provisioner: provisioner)
-	// +- ResourceProviders (scheduler.ResourceProviders: resourceProviders)
-	// Exactly one of the resource providers is enabled at a time.
-	// +- DefaultResourceProvider (scheduler.DefaultResourceProvider: defaultRP)
-	// +- KubernetesResourceProvider (scheduler.KubernetesResourceProvider: kubernetesRP)
+	// +- ResourceManagers (scheduler.ResourceManagers: resourceManagers)
+	// Exactly one of the resource managers is enabled at a time.
+	// +- AgentResourceManager (resourcemanagers.AgentResourceManager: agentRM)
+	//     +- Resource Pool (resourcemanagers.ResourcePool: <resource-pool-name>)
+	//        +- Provisioner (provisioner.Provisioner: provisioner)
+	//        +- Agent Group (actors.Group: agents)
+	//            +- Agent (internal.agent: <agent-id>)
+	//                +- Websocket (actors.WebSocket: <remote-address>)
+	// +- KubernetesResourceManager (scheduler.KubernetesResourceManager: kubernetesRM)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
@@ -323,9 +297,6 @@ func (m *Master) Run() error {
 	//     +- Experiment (internal.experiment: <experiment-id>)
 	//         +- Trial (internal.trial: <trial-request-id>)
 	//             +- Websocket (actors.WebSocket: <remote-address>)
-	// +- Agent Group (actors.Group: agents)
-	//     +- Agent (internal.agent: <agent-id>)
-	//         +- Websocket (actors.WebSocket: <remote-address>)
 	m.system = actor.NewSystem("master")
 
 	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(m.db))
@@ -336,19 +307,14 @@ func (m *Master) Run() error {
 	}
 	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
 
-	var p *provisioner.Provisioner
-	p, m.provisioner, err = provisioner.Setup(m.system, m.config.Provisioner, cert)
-	if err != nil {
-		return err
-	}
-	var provisionerSlotsPerInstance int
-	if p != nil {
-		provisionerSlotsPerInstance = p.SlotsPerInstance()
-	}
-
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	m.initializeResourceProviders(provisionerSlotsPerInstance)
+	m.rm, _ = m.system.ActorOf(
+		actor.Addr("resourceManagers"),
+		resourcemanagers.NewResourceManagers(
+			m.system, m.config.ResourceManager, m.config.ResourcePoolsConfig, cert,
+		),
+	)
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
@@ -539,7 +505,7 @@ func (m *Master) Run() error {
 
 	// The Echo server registrations must be serialized, so we block until the ResourceProvider is
 	// finished with its ConfigureEndpoints call.
-	m.system.Ask(m.rp, sproto.ConfigureEndpoints{System: m.system, Echo: m.echo}).Get()
+	m.system.Ask(m.rm, sproto.ConfigureEndpoints{System: m.system, Echo: m.echo}).Get()
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(

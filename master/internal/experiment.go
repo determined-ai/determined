@@ -4,21 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/workload"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -82,7 +81,7 @@ const (
 type experiment struct {
 	*model.Experiment
 	modelDefinition     archive.Archive
-	rp                  *actor.Ref
+	rm                  *actor.Ref
 	trialLogger         *actor.Ref
 	db                  *db.PgDB
 	searcher            *searcher.Searcher
@@ -135,7 +134,7 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 	return &experiment{
 		Experiment:          expModel,
 		modelDefinition:     modelDefinition,
-		rp:                  master.rp,
+		rm:                  master.rm,
 		trialLogger:         master.trialLogger,
 		db:                  master.db,
 		searcher:            search,
@@ -283,11 +282,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		telemetry.ReportExperimentCreated(ctx.Self().System(), *e.Experiment)
 
-		ctx.Tell(e.rp, scheduler.SetGroupMaxSlots{
+		ctx.Tell(e.rm, sproto.SetGroupMaxSlots{
 			MaxSlots: e.Config.Resources.MaxSlots,
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rp, scheduler.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
+		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
 		ops, err := e.searcher.InitialOperations()
 		e.processOperations(ctx, ops, err)
 	case trialCreated:
@@ -353,14 +352,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	// Patch experiment messages.
 	case model.State:
 		e.updateState(ctx, msg)
-	case scheduler.SetGroupMaxSlots:
+	case sproto.SetGroupMaxSlots:
 		e.Config.Resources.MaxSlots = msg.MaxSlots
 		msg.Handler = ctx.Self()
-		ctx.Tell(e.rp, msg)
-	case scheduler.SetGroupWeight:
+		ctx.Tell(e.rm, msg)
+	case sproto.SetGroupWeight:
 		e.Config.Resources.Weight = msg.Weight
 		msg.Handler = ctx.Self()
-		ctx.Tell(e.rp, msg)
+		ctx.Tell(e.rm, msg)
 
 	case killExperiment:
 		if _, running := model.RunningStates[e.State]; running {
@@ -399,7 +398,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
 			agentUserGroup: e.agentUserGroup,
 			taskSpec:       e.taskSpec,
-			rp:             e.rp,
+			rm:             e.rm,
 			db:             e.db,
 			experiment:     e.Experiment,
 		})

@@ -86,6 +86,10 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.Label, "label", "",
 		"Label attached to the agent for scheduling constraints")
 
+	// ResourcePool flags.
+	cmd.Flags().StringVar(&opts.ResourcePool, "resource-pool", "default",
+		"Resource Pool the agent belongs to")
+
 	// Container flags.
 	cmd.Flags().StringVar(&opts.ContainerMasterHost, "container-master-host", "",
 		"Master hostname that containers started by this agent will connect to")

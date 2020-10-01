@@ -9,7 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
@@ -69,7 +69,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, err
 	}
 
-	tensorboardID := actorResp.Get().(scheduler.TaskID)
+	tensorboardID := actorResp.Get().(resourcemanagers.TaskID)
 	tensorboardReq := tensorboardv1.Tensorboard{}
 	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardReq)
 	if err = api.ProcessActorResponseError(&actorResp); err != nil {

@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -173,7 +173,7 @@ func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Conte
 
 func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 	config := req.Config
-	taskID := scheduler.NewTaskID()
+	taskID := resourcemanagers.NewTaskID()
 
 	// Postprocess the config. Add Jupyter and configuration to the container.
 
