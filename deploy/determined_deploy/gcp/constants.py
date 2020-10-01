@@ -7,7 +7,7 @@ class defaults:
     GPU_TYPE = "nvidia-tesla-k80"
     MASTER_INSTANCE_TYPE = "n1-standard-2"
     MAX_IDLE_AGENT_PERIOD = "10m"
-    MAX_AGENT_STARTING_PERIOD = "10m"
+    MAX_AGENT_STARTING_PERIOD = "20m"
     OPERATION_TIMEOUT_PERIOD = "5m"
     MAX_DYNAMIC_AGENTS = 5
     STATIC_AGENTS = 0

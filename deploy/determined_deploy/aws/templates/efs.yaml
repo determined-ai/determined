@@ -87,7 +87,7 @@ Parameters:
   MaxAgentStartingPeriod:
     Type: String
     Description: How long for agent starting before retrying
-    Default: 10m
+    Default: 20m
 
   MaxDynamicAgents:
     Type: Number
