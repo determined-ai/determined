@@ -703,7 +703,7 @@ jobs:
 
   test-debian-packaging:
     machine:
-      image: ubuntu-2004:202008-01
+      image: ubuntu-1604:202004-01
     steps:
       - checkout
       - attach_workspace:
@@ -721,7 +721,7 @@ jobs:
 
   test-e2e-webui:
     machine:
-      image: ubuntu-2004:202008-01
+      image: ubuntu-1604:202004-01
     resource_class: large
     steps:
       - checkout
@@ -737,7 +737,7 @@ jobs:
           determined-cli: true
           determined-deploy: true
           extra-requirements-file: "webui/tests/requirements.txt"
-          executor: ubuntu-2004:202008-01
+          executor: ubuntu-1604:202004-01
       - setup-local-cluster:
           det-version: ${CIRCLE_SHA1}
       - run-e2e-webui-tests
@@ -931,7 +931,7 @@ jobs:
       parallelism:
         type: integer
     machine:
-      image: ubuntu-2004:202008-01
+      image: ubuntu-1604:202004-01
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -946,7 +946,7 @@ jobs:
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-2004:202008-01
+          executor: ubuntu-1604:202004-01
 
       - run:
           name: Start database
@@ -1131,7 +1131,7 @@ jobs:
       det-version:
         type: string
     machine:
-      image: ubuntu-2004:202008-01
+      image: ubuntu-1604:202004-01
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1148,7 +1148,7 @@ jobs:
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-2004:202008-01
+          executor: ubuntu-1604:202004-01
 
       - pull-task-images:
           tf1: True
