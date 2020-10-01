@@ -27,11 +27,15 @@ Version 0.13.5
 
 - Deployment: Add support for ``det-deploy aws`` in the following new regions: ``ap-northeast-1``, ``eu-central-1``, ``eu-west-1``, ``us-east-2``.
 
+- Docker: Publish new Docker task containers that upgrade TensorFlow versions from 1.15.0 to 1.15.4, and 2.2.0 to 2.2.1.
+
 - Documentation: Add extra documentation to and reorganize examples by use case.
 
 - Documentation: Add a ``tf.layers-in-Estimator`` example.
 
 - Kubernetes: Add support for users to specify ``initContainers`` and ``containers`` as part of their custom pod specs. Please see :ref:`custom-pod-specs` for details.
+
+- Kubernetes: Publish version 0.2.0 of the Determined Helm chart.
 
 - Trials: Remove support for ``TensorpackTrial``.
 
