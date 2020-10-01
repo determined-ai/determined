@@ -56,9 +56,9 @@ class Build:
     def __init__(self, data: Dict["str", Any]) -> None:
         self.build_num = data["build_num"]
         self.job_name = data["workflows"]["job_name"]
-        assert (
-            data["status"] == "success"
-        ), f"'{self.job_name}' ({self.build_num}) failed"
+        self.completed_successfully = data["status"] != "success"
+        if not self.completed_successfully:
+            print(f"Job: {self.job_name} build: {self.build_num} did not succeed.")
 
     def get_artifacts(self) -> Dict[str, str]:
         print(f"fetching artifacts for {self.job_name}", file=sys.stderr)
@@ -87,6 +87,8 @@ def get_all_builds(commit: str) -> Dict[str, Build]:
     for build_meta in req.json():
         if build_meta["vcs_revision"] == commit:
             build = Build(build_meta)
+            if not build.completed_successfully:
+                continue
             builds[build.job_name] = build
 
     found = set(builds.keys())
