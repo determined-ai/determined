@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
+import axios from 'axios';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
@@ -12,10 +13,11 @@ import {
   getShells, getTensorboards, getUsers,
 } from 'services/api';
 import { EmptyParams, ExperimentsParams } from 'services/types';
-import { Agent, Command, DetailedUser, ExperimentBase } from 'types';
+import { Command, DetailedUser, ExperimentBase } from 'types';
 import { activeRunStates } from 'utils/types';
 
 const AppContexts: React.FC = () => {
+  const [ apiSource ] = useState(axios.CancelToken.source());
   const setUsers = Users.useActionContext();
   const setAgents = Agents.useActionContext();
   const setCommands = Commands.useActionContext();
@@ -26,8 +28,6 @@ const AppContexts: React.FC = () => {
   const setOverview = ClusterOverview.useActionContext();
   const [ usersResponse, triggerUsersRequest ] =
     useRestApi<EmptyParams, DetailedUser[]>(getUsers, {});
-  const [ agentsResponse, triggerAgentsRequest ] =
-    useRestApi<EmptyParams, Agent[]>(getAgents, {});
   const [ commandsResponse, triggerCommandsRequest ] =
     useRestApi<EmptyParams, Command[]>(getCommands, {});
   const [ notebooksResponse, triggerNotebooksRequest ] =
@@ -39,15 +39,31 @@ const AppContexts: React.FC = () => {
   const [ activeExperimentsResponse, triggerActiveExperimentsRequest ] =
     useRestApi<ExperimentsParams, ExperimentBase[]>(getExperimentSummaries, {});
 
+  const fetchAgents = useCallback(async (): Promise<void> => {
+    try {
+      const agentsResponse = await getAgents({ cancelToken: apiSource.token });
+      setAgents({
+        type: Agents.ActionType.Set,
+        value: {
+          data: agentsResponse,
+          errorCount: 0,
+          hasLoaded: true,
+          isLoading: false,
+        },
+      });
+      setOverview({ type: ClusterOverview.ActionType.SetAgents, value: agentsResponse });
+    } catch (e) {
+      /* eslint-disable-next-line no-empty */
+    }
+  }, [ apiSource.token, setAgents, setOverview ]);
+
   const fetchAll = useCallback((): void => {
-    triggerAgentsRequest({});
     triggerCommandsRequest({});
     triggerNotebooksRequest({});
     triggerShellsRequest({});
     triggerTensorboardsRequest({});
     triggerActiveExperimentsRequest({ states: activeRunStates });
   }, [
-    triggerAgentsRequest,
     triggerCommandsRequest,
     triggerNotebooksRequest,
     triggerShellsRequest,
@@ -59,17 +75,13 @@ const AppContexts: React.FC = () => {
     triggerUsersRequest({ url: '/users' });
   }, [ triggerUsersRequest ]);
 
+  usePolling(fetchAgents);
   usePolling(fetchAll);
   usePolling(fetchUsers, { delay: 60000 });
 
   useEffect(() => {
     setUsers({ type: Users.ActionType.Set, value: usersResponse });
   }, [ usersResponse, setUsers ]);
-  useEffect(() => {
-    setAgents({ type: Agents.ActionType.Set, value: agentsResponse });
-    if (!agentsResponse.data) return;
-    setOverview({ type: ClusterOverview.ActionType.SetAgents, value: agentsResponse.data });
-  }, [ agentsResponse.data, setOverview, agentsResponse, setAgents ]);
   useEffect(() => {
     setCommands({ type: Commands.ActionType.Set, value: commandsResponse });
   }, [ commandsResponse, setCommands ]);
@@ -88,6 +100,10 @@ const AppContexts: React.FC = () => {
   useEffect(() => {
     setTensorboards({ type: Commands.ActionType.Set, value: tensorboardsResponse });
   }, [ tensorboardsResponse, setTensorboards ]);
+
+  useEffect(() => {
+    return (): void => apiSource.cancel();
+  }, [ apiSource ]);
 
   return <React.Fragment />;
 };
