@@ -3,15 +3,13 @@ package provisioner
 import (
 	"encoding/base64"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"strings"
+	"time"
 )
 
 // Spot instances are created asynchronously. You create a spot request, the
@@ -330,6 +328,9 @@ func (c *awsCluster) cleanupInactiveSpotRequests(ctx *actor.Context, inactiveSpo
 }
 
 // EC2 calls
+
+
+
 func (c *awsCluster) createSpotInstanceRequest(
 	ctx *actor.Context,
 	numInstances int,
@@ -359,7 +360,6 @@ func (c *awsCluster) createSpotInstanceRequest(
 					},
 				},
 			},
-			EbsOptimized: nil, // TODO: We should enable this, but we need to confirm that all allowable instance support this
 			ImageId:      aws.String(c.ImageID),
 			InstanceType: aws.String(instanceType.name()),
 			KeyName:      aws.String(c.SSHKeyName),
@@ -377,8 +377,12 @@ func (c *awsCluster) createSpotInstanceRequest(
 				},
 			},
 		},
-		SpotPrice: aws.String(c.AWSClusterConfig.SpotMaxPrice),
 		ValidFrom: aws.Time(validFrom),
+	}
+
+	// Excluding the SpotPrice param automatically uses the on-demand price
+	if c.SpotMaxPrice != SpotPriceNotSetPlaceholder {
+		spotInput.SpotPrice = aws.String(c.AWSClusterConfig.SpotMaxPrice)
 	}
 
 	spotInput.LaunchSpecification.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{
@@ -484,3 +488,5 @@ func (c *awsCluster) terminateSpotInstanceRequests(
 
 	return c.client.CancelSpotInstanceRequests(input)
 }
+
+
