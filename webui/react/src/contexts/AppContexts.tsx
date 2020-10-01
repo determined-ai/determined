@@ -6,7 +6,6 @@ import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
-import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import {
@@ -20,7 +19,6 @@ import { activeRunStates } from 'utils/types';
 const AppContexts: React.FC = () => {
   const [ apiSource ] = useState(axios.CancelToken.source());
   const setUsers = Users.useActionContext();
-  const agents = Agents.useStateContext();
   const setAgents = Agents.useActionContext();
   const setCommands = Commands.useActionContext();
   const setActiveExperiments = ActiveExperiments.useActionContext();
@@ -48,16 +46,16 @@ const AppContexts: React.FC = () => {
         type: Agents.ActionType.Set,
         value: {
           data: agentsResponse,
-          errorCount: agents.errorCount,
+          errorCount: 0,
           hasLoaded: true,
           isLoading: false,
         },
       });
       setOverview({ type: ClusterOverview.ActionType.SetAgents, value: agentsResponse });
     } catch (e) {
-      handleError({ message: 'Unable to fetch agents.', silent: true, type: ErrorType.Api });
+      /* eslint-disable-next-line no-empty */
     }
-  }, [ agents.errorCount, apiSource.token, setAgents, setOverview ]);
+  }, [ apiSource.token, setAgents, setOverview ]);
 
   const fetchAll = useCallback((): void => {
     triggerCommandsRequest({});
