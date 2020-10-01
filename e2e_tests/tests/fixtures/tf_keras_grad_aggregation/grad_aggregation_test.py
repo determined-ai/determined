@@ -17,7 +17,7 @@ class CustomOptimizer(optimizer_v2.OptimizerV2):
         return config
 
 
-def test_tf_1(aggregation_frequency: int, average_aggregated_gradients: bool) -> None:
+def check_tf_1(aggregation_frequency: int, average_aggregated_gradients: bool) -> None:
     config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
     config.gpu_options.visible_device_list = str(hvd.local_rank())
@@ -41,7 +41,7 @@ def test_tf_1(aggregation_frequency: int, average_aggregated_gradients: bool) ->
         assert expected_value == value
 
 
-def test_tf_2(aggregation_frequency: int, average_aggregated_gradients: bool) -> None:
+def check_tf_2(aggregation_frequency: int, average_aggregated_gradients: bool) -> None:
     gpus = tf.config.experimental.list_physical_devices("GPU")
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
@@ -105,9 +105,9 @@ def main() -> None:
 
     hvd.init()
     if args.tf1:
-        test_tf_1(args.aggregation_frequency, args.average_aggregated_gradients)
+        check_tf_1(args.aggregation_frequency, args.average_aggregated_gradients)
     else:
-        test_tf_2(args.aggregation_frequency, args.average_aggregated_gradients)
+        check_tf_2(args.aggregation_frequency, args.average_aggregated_gradients)
 
 
 if __name__ == "__main__":
