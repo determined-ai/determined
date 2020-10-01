@@ -73,7 +73,8 @@ service Determined {
     // Login the user.
     rpc Login(LoginRequest) returns (LoginResponse) {
         option (google.api.http) = {post: "/api/v1/auth/login" body: "*"};
-        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Authentication"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Authentication",
+            security: {};};
     }
     // Get the current user.
     rpc CurrentUser(CurrentUserRequest) returns (CurrentUserResponse) {
