@@ -43,6 +43,7 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
       hovermode: 'y unified',
       hovertemplate: '%{text}<extra></extra>',
       mode: 'lines+markers',
+      name: validationMetric,
       text: textData,
       type: 'scatter',
       x: xData,
