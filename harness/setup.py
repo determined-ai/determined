@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.13.5rc1",
+    version="0.13.5rc2",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -16,7 +16,7 @@ setup(
     install_requires=[
         "boto3>=1.9.220",
         "cloudpickle==0.5.3",
-        "determined-common==0.13.5rc1",
+        "determined-common==0.13.5rc2",
         "dill>=0.2.9",
         "h5py>=2.9.0",
         "lomond>=0.3.3",
