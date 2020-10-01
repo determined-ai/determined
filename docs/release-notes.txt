@@ -23,13 +23,11 @@ Version 0.13.5
 
 - Agent: Increase default max agent starting and idle timeouts to 20 minutes and increase max disconnected period from 5 to 10 minutes.
 
-- API: Deprecate Native API. Removed related examples and docs.
-
 - Deployment: Add support for ``det-deploy aws`` in the following new regions: ``ap-northeast-1``, ``eu-central-1``, ``eu-west-1``, ``us-east-2``.
 
 - Docker: Publish new Docker task containers that upgrade TensorFlow versions from 1.15.0 to 1.15.4, and 2.2.0 to 2.2.1.
 
-- Documentation: Add extra documentation to and reorganize examples by use case.
+- Documentation: Add extra documentation and reorganize examples by use case.
 
 - Documentation: Add a ``tf.layers-in-Estimator`` example.
 
@@ -37,15 +35,13 @@ Version 0.13.5
 
 - Kubernetes: Publish version 0.2.0 of the Determined Helm chart.
 
+- Native API: Deprecate Native API. Removed related examples and docs.
+
 - Trials: Remove support for ``TensorpackTrial``.
 
-- WebUI: Before launching a new TensorBoard through the UI, direct the user to an already running TensorBoard if one exists.
-
-- WebUI: Have experiment and trial detail pages wait for any previous API request polling to finish, before making another request.
+- WebUI: Improve polling behavior for experiment and trial details pages to avoid hanging indefinitely for very large experiments/trials.
 
 **Bug Fixes**
-
-- Documentation: Fix some broken links.
 
 - Trials: Fix a bug where if only a subset of workers on a machine executed the ``on_trial_close()`` ``EstimatorTrial`` callback, the container would terminate as soon as one worker exited.
 
