@@ -12,15 +12,18 @@ build-examples:
 build-helm:
 	make -C ../helm build
 
+.PHONY: build-proto
+build-proto: 
+	$(MAKE) -C ../proto
+
 .PHONY: build
-build: build-examples build-helm
+build: build-examples build-helm build-proto
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
 	mkdir -p site/downloads/helm
 	cp ../helm/build/* site/downloads/helm
 	$(MAKE) sp-html
-	# pull in swagger-ui
-	# cp -r ../master/static/swagger-ui site/html
+	# Pull in swagger-ui
 	cp -r ./swagger-ui site/html
 	cp ../proto/build/swagger/determined/api/v1/api.swagger.json  site/html/swagger-ui/
 
