@@ -79,10 +79,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList))
 
-	case sproto.GetEndpointActorAddress:
-		reschedule = false
-		ctx.Respond("/pods")
-
 	case schedulerTick:
 		if k.reschedule {
 			k.schedulePendingTasks(ctx)

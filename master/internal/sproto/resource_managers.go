@@ -12,7 +12,4 @@ type (
 		System *actor.System
 		Echo   *echo.Echo
 	}
-
-	// GetEndpointActorAddress requests the name of the actor that is managing the resources.
-	GetEndpointActorAddress struct{}
 )

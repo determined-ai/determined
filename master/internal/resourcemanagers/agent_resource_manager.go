@@ -42,7 +42,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		AllocateRequest, ResourcesReleased,
 		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
 		GetTaskSummary, GetTaskSummaries, SetTaskName,
-		sproto.ConfigureEndpoints, sproto.GetEndpointActorAddress:
+		sproto.ConfigureEndpoints:
 		a.forward(ctx, msg)
 
 	default:

@@ -227,10 +227,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskSummaries(rp.taskList))
 
-	case sproto.GetEndpointActorAddress:
-		reschedule = false
-		ctx.Respond("/agents")
-
 	case schedulerTick:
 		if rp.reschedule {
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
