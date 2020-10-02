@@ -9,6 +9,7 @@ import sys
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, cast
 
+import cloudpickle
 import h5py
 import numpy as np
 import tensorflow as tf
@@ -409,6 +410,13 @@ class TFKerasTrialController(det.LoopTrialController):
         self.model.load_weights(str(full_ckpt_path))
         load_optimizer_weights(self.model, full_ckpt_path)
 
+        # Load RNG state
+        with open(self.load_path.joinpath("rng_state.pkl"), "rb") as f:
+            rng_state = cloudpickle.load(f)
+        np.random.set_state(rng_state["np_rng_state"])
+        random.setstate(rng_state["random_rng_state"])
+        tf.random.set_random_seed(rng_state["tf_rng_global_seed"])
+
     def _save_checkpoint(self, path: pathlib.Path) -> workload.Response:
         # We assume that at least one training step has completed when saving a
         # checkpoint.
@@ -421,6 +429,15 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # Save model.
         self.model.save(path.joinpath("determined-keras-model.h5"), save_format="h5")
+
+        # Save RNG state
+        rng_state = {
+            "np_rng_state": np.random.get_state(),
+            "random_rng_state": random.getstate(),
+            "tf_rng_global_seed": tf.random.get_seed(0)[0],
+        }
+        with open(path.joinpath("rng_state.pkl"), "wb") as f:
+            cloudpickle.dump(rng_state, f)
 
         det.util.write_user_code(path)
 
