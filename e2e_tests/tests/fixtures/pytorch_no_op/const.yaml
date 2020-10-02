@@ -1,4 +1,4 @@
-description: noop-rv
+description: noop-pytorch
 data:
   model_type: single_output
 entrypoint: model_def:NoopPytorchTrial
@@ -16,5 +16,3 @@ min_checkpoint_period:
   batches: 1
 min_validation_period:
   batches: 1
-reproducibility:
-  experiment_seed: 777

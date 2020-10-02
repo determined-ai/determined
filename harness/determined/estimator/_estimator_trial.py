@@ -3,6 +3,7 @@ import logging
 import numbers
 import os
 import pathlib
+import pickle
 import random
 import shutil
 import tempfile
@@ -21,6 +22,41 @@ from determined.horovod import hvd
 from determined_common import check
 
 VERY_LARGE_NUMBER = 9999999999999999
+
+
+class RNGStateHook(estimator.RunHook):
+    def __init__(self, checkpoint_dir: pathlib.Path):
+        try:
+            self.rng_state = None
+            with open(checkpoint_dir.joinpath("rng_state.pkl"), "rb") as f:
+                self.rng_state = pickle.load(f)
+        except IOError:
+            logging.debug("No RNG state found in checkpoint_dir")
+
+    def after_create_session(self, session, coord):  # type: ignore
+        if self.rng_state is not None:
+            logging.info("Restoring RNG state from checkpoint")
+            np.random.set_state(self.rng_state["np_rng_state"])
+            random.setstate(self.rng_state["random_rng_state"])
+
+            if version.parse(tf.__version__) < version.parse("2.0.0"):
+                tf.random.set_random_seed(rng_state["tf_rng_global_seed"])
+            else:
+                algorithm = rng_state["tf2_rng_global_algorithm"]
+                state = rng_state["tf2_rng_global_state"]
+                generator = tf.random.Generator.from_state(state, algorithm)
+                tf.random.set_global_generator(generator)
+
+    def on_checkpoint_end(self, checkpoint_dir: str) -> None:
+        rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
+        if version.parse(tf.__version__) < version.parse("2.0.0"):
+            rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
+        else:
+            generator = tf.random.get_global_generator()
+            rng_state["tf2_rng_global_algorithm"] = generator.algorithm
+            rng_state["tf2_rng_global_state"] = generator.state
+        with open(checkpoint_dir + "/rng_state.pkl", "wb") as f:
+            pickle.dump(rng_state, f)
 
 
 class DeterminedEarlyStoppingHook(tf.compat.v1.train.SessionRunHook):  # type: ignore
@@ -533,6 +569,8 @@ class EstimatorTrialController(det.LoopTrialController):
         self._init_train_hooks()
         self._init_val_hooks()
         self._init_paths()
+
+        self.train_hooks.append(RNGStateHook(self.estimator_dir))
 
         self.estimator = tf.estimator.Estimator(
             model_fn=self._set_default_session_before_building_model(self.estimator._model_fn),
