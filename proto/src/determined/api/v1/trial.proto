@@ -138,6 +138,21 @@ message GetTrialRequest {
 }
 // Response to GetTrialRequest.
 message GetTrialResponse {
+    // WorkloadContainer is a wrapper for Determined workloads to allow repeated
+    // oneof types.
+    message WorkloadContainer {
+        // workload represent one of Determined workloads: training, validation, or checkpoint.
+        oneof workload {
+            // Training workload.
+            determined.trial.v1.MetricsWorkload training = 4;
+            // Validation workload.
+            determined.trial.v1.MetricsWorkload validation = 5;
+            // Checkpoint workload.
+            determined.trial.v1.CheckpointWorkload checkpoint = 6;
+        }
+    }
     // The requested trial.
     determined.trial.v1.Trial trial = 1;
+    // Trial workloads.
+    repeated WorkloadContainer workloads = 2;
 }

@@ -235,5 +235,17 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	case err != nil:
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
+
+	switch err := a.m.db.QueryProto(
+		"proto_get_trial_workloads",
+		&resp.Workloads,
+		req.TrialId,
+	); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)
+	case err != nil:
+		return nil, errors.Wrapf(err, "failed to get trial %d workloads", req.TrialId)
+	}
+
 	return resp, nil
 }
