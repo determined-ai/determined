@@ -230,7 +230,10 @@ const ExperimentList: React.FC = () => {
           case Action.Archive:
             return archiveExperiment(experiment.id);
           case Action.Cancel:
-            return setExperimentState({ experimentId: experiment.id, state: RunState.StoppingCanceled });
+            return setExperimentState({
+              experimentId: experiment.id,
+              state: RunState.StoppingCanceled,
+            });
           case Action.Kill:
             return killExperiment({ experimentId: experiment.id });
           case Action.Pause:
