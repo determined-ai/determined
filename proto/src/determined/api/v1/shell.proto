@@ -10,55 +10,55 @@ import "determined/shell/v1/shell.proto";
 
 // Get a list of shells.
 message GetShellsRequest {
-    // Sorts shells by the given field.
-    enum SortBy {
-        // Returns shells in an unsorted list.
-        SORT_BY_UNSPECIFIED = 0;
-        // Returns shells sorted by id.
-        SORT_BY_ID = 1;
-        // Returns shells sorted by description.
-        SORT_BY_DESCRIPTION = 2;
-        // Return shells sorted by start time.
-        SORT_BY_START_TIME = 4;
-    }
-    // Sort shells by the given field
-    SortBy sort_by = 1;
-    // Order shells in either ascending or descending order.
-    OrderBy order_by = 2;
-    // Skip the number of shells before returning results. Negative values
-    // denote number of shells to skip from the end before returning results.
-    int32 offset = 3;
-    // Limit the number of shells. A value of 0 denotes no limit.
-    int32 limit = 4;
+  // Sorts shells by the given field.
+  enum SortBy {
+    // Returns shells in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns shells sorted by id.
+    SORT_BY_ID = 1;
+    // Returns shells sorted by description.
+    SORT_BY_DESCRIPTION = 2;
+    // Return shells sorted by start time.
+    SORT_BY_START_TIME = 4;
+  }
+  // Sort shells by the given field
+  SortBy sort_by = 1;
+  // Order shells in either ascending or descending order.
+  OrderBy order_by = 2;
+  // Skip the number of shells before returning results. Negative values
+  // denote number of shells to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of shells. A value of 0 denotes no limit.
+  int32 limit = 4;
 }
 // Response to GetShellsRequest.
 message GetShellsResponse {
-    // The list of returned shells.
-    repeated determined.shell.v1.Shell shells = 1;
-    // Pagination information of the full dataset.
-    Pagination pagination = 2;
+  // The list of returned shells.
+  repeated determined.shell.v1.Shell shells = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get the requested shell.
 message GetShellRequest {
-    // The id of the shell.
-    string shell_id = 1;
+  // The id of the shell.
+  string shell_id = 1;
 }
 // Response to GetShellRequest.
 message GetShellResponse {
-    // The requested shell.
-    determined.shell.v1.Shell shell = 1;
-    // The shell config.
-    google.protobuf.Struct config = 2;
+  // The requested shell.
+  determined.shell.v1.Shell shell = 1;
+  // The shell config.
+  google.protobuf.Struct config = 2;
 }
 
 // Kill the requested shell.
 message KillShellRequest {
-    // The id of the shell.
-    string shell_id = 1;
+  // The id of the shell.
+  string shell_id = 1;
 }
 // Response to KillShellRequest.
 message KillShellResponse {
-    // The requested shell.
-    determined.shell.v1.Shell shell = 1;
+  // The requested shell.
+  determined.shell.v1.Shell shell = 1;
 }

@@ -9,43 +9,43 @@ import "determined/user/v1/user.proto";
 message GetUsersRequest {}
 // Response to GetUsersRequest.
 message GetUsersResponse {
-    // The list of requested users.
-    repeated determined.user.v1.User users = 1;
+  // The list of requested users.
+  repeated determined.user.v1.User users = 1;
 }
 
 // Get the requested user.
 message GetUserRequest {
-    // The username of the user.
-    string username = 1;
+  // The username of the user.
+  string username = 1;
 }
 // Response to GetUserRequest.
 message GetUserResponse {
-    // The requested user.
-    determined.user.v1.User user = 1;
+  // The requested user.
+  determined.user.v1.User user = 1;
 }
 
 // Create a new user.
 message PostUserRequest {
-    // The user to create.
-    determined.user.v1.User user = 1;
-    // The password of the user.
-    string password = 2;
+  // The user to create.
+  determined.user.v1.User user = 1;
+  // The password of the user.
+  string password = 2;
 }
 // Response to PostUserRequest.
 message PostUserResponse {
-    // The created user.
-    determined.user.v1.User user = 1;
+  // The created user.
+  determined.user.v1.User user = 1;
 }
 
 // Set the requested user's passwords.
 message SetUserPasswordRequest {
-    // The username of the user.
-    string username = 1;
-    // The password of the user.
-    string password = 2;
+  // The username of the user.
+  string username = 1;
+  // The password of the user.
+  string password = 2;
 }
 // Response to SetUserPasswordRequest.
 message SetUserPasswordResponse {
-    // The updated user.
-    determined.user.v1.User user = 1;
+  // The updated user.
+  determined.user.v1.User user = 1;
 }

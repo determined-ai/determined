@@ -9,115 +9,115 @@ import "determined/agent/v1/agent.proto";
 
 // Get a set of agents from the cluster.
 message GetAgentsRequest {
-    // Sorts agents by the given field.
-    enum SortBy {
-        // Returns agents in an unsorted list.
-        SORT_BY_UNSPECIFIED = 0;
-        // Returns agents sorted by id.
-        SORT_BY_ID = 1;
-        // Returns agents sorted by time.
-        SORT_BY_TIME = 2;
-    }
-    // Sort agents by the given field
-    SortBy sort_by = 1;
-    // Order agents in either ascending or descending order.
-    OrderBy order_by = 2;
-    // Skip the number of agents before returning results. Negative values
-    // denote number of agents to skip from the end before returning results.
-    int32 offset = 3;
-    // Limit the number of agents. A value of 0 denotes no limit.
-    int32 limit = 4;
-    // Filter agents by their label. If no label is specified or is empty, all agents are
-    // returned.
-    string label = 5;
+  // Sorts agents by the given field.
+  enum SortBy {
+    // Returns agents in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns agents sorted by id.
+    SORT_BY_ID = 1;
+    // Returns agents sorted by time.
+    SORT_BY_TIME = 2;
+  }
+  // Sort agents by the given field
+  SortBy sort_by = 1;
+  // Order agents in either ascending or descending order.
+  OrderBy order_by = 2;
+  // Skip the number of agents before returning results. Negative values
+  // denote number of agents to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of agents. A value of 0 denotes no limit.
+  int32 limit = 4;
+  // Filter agents by their label. If no label is specified or is empty, all
+  // agents are returned.
+  string label = 5;
 }
 // Response to GetAgentsRequest.
 message GetAgentsResponse {
-    // The list of returned agents.
-    repeated determined.agent.v1.Agent agents = 1;
-    // Pagination information of the full dataset.
-    Pagination pagination = 2;
+  // The list of returned agents.
+  repeated determined.agent.v1.Agent agents = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get the requested agent.
 message GetAgentRequest {
-    // The id of the agent.
-    string agent_id = 1;
+  // The id of the agent.
+  string agent_id = 1;
 }
 // Response to GetAgentRequest.
 message GetAgentResponse {
-    // The requested agent.
-    determined.agent.v1.Agent agent = 1;
+  // The requested agent.
+  determined.agent.v1.Agent agent = 1;
 }
 
 // Get the set of slots for the agent with the given id.
 message GetSlotsRequest {
-    // The id of the agent.
-    string agent_id = 1;
+  // The id of the agent.
+  string agent_id = 1;
 }
 // Response to GetSlotsRequest.
 message GetSlotsResponse {
-    // The requested slots.
-    repeated determined.agent.v1.Slot slots = 1;
+  // The requested slots.
+  repeated determined.agent.v1.Slot slots = 1;
 }
 
 // Get the requested slot for the agent with the given id.
 message GetSlotRequest {
-    // The id of the agent.
-    string agent_id = 1;
-    // The id of the slot.
-    string slot_id = 2;
+  // The id of the agent.
+  string agent_id = 1;
+  // The id of the slot.
+  string slot_id = 2;
 }
 // Response to GetSlotRequest.
 message GetSlotResponse {
-    // The requested slot.
-    determined.agent.v1.Slot slot = 1;
+  // The requested slot.
+  determined.agent.v1.Slot slot = 1;
 }
 
 // Enable the agent.
 message EnableAgentRequest {
-    // The id of the agent.
-    string agent_id = 1;
+  // The id of the agent.
+  string agent_id = 1;
 }
 // Response to EnableAgentRequest.
 message EnableAgentResponse {
-    // The enabled agent.
-    determined.agent.v1.Agent agent = 1;
+  // The enabled agent.
+  determined.agent.v1.Agent agent = 1;
 }
 
 // Disable the agent.
 message DisableAgentRequest {
-    // The id of the agent.
-    string agent_id = 1;
+  // The id of the agent.
+  string agent_id = 1;
 }
 // Response to DisableAgentRequest.
 message DisableAgentResponse {
-    // The disabled agent.
-    determined.agent.v1.Agent agent = 1;
+  // The disabled agent.
+  determined.agent.v1.Agent agent = 1;
 }
 
 // Enable the slot.
 message EnableSlotRequest {
-    // The id of the agent.
-    string agent_id = 1;
-    // The id of the slot.
-    string slot_id = 2;
+  // The id of the agent.
+  string agent_id = 1;
+  // The id of the slot.
+  string slot_id = 2;
 }
 // Response to EnableSlotRequest.
 message EnableSlotResponse {
-    // The enabled slot.
-    determined.agent.v1.Slot slot = 1;
+  // The enabled slot.
+  determined.agent.v1.Slot slot = 1;
 }
 
 // Disable the slot.
 message DisableSlotRequest {
-    // The id of the agent.
-    string agent_id = 1;
-    // The id of the slot.
-    string slot_id = 2;
+  // The id of the agent.
+  string agent_id = 1;
+  // The id of the slot.
+  string slot_id = 2;
 }
 // Response to DisableSlotRequest.
 message DisableSlotResponse {
-    // The disabled slot.
-    determined.agent.v1.Slot slot = 1;
+  // The disabled slot.
+  determined.agent.v1.Slot slot = 1;
 }

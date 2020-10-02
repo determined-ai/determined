@@ -8,28 +8,28 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Login the user.
 message LoginRequest {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: { required: [ "username", "password" ] }
-    };
-    // The username of the user.
-    string username = 1;
-    // The password of the user.
-    string password = 2;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "username", "password" ] }
+  };
+  // The username of the user.
+  string username = 1;
+  // The password of the user.
+  string password = 2;
 }
 // Response to LoginRequest.
 message LoginResponse {
-    // The token to be used when sending results
-    string token = 1;
-    // The logged in user.
-    determined.user.v1.User user = 2;
+  // The token to be used when sending results
+  string token = 1;
+  // The logged in user.
+  determined.user.v1.User user = 2;
 }
 
 // Get the current user.
 message CurrentUserRequest {}
 // Response to CurrentUserRequest.
 message CurrentUserResponse {
-    // The currently logged in user.
-    determined.user.v1.User user = 1;
+  // The currently logged in user.
+  determined.user.v1.User user = 1;
 }
 
 // Logout the user.

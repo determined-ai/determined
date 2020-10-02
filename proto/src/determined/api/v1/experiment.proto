@@ -14,213 +14,215 @@ import "determined/experiment/v1/searcher.proto";
 
 // Get a single experiment.
 message GetExperimentRequest {
-    // The id of the experiment.
-    int32 experiment_id = 1;
+  // The id of the experiment.
+  int32 experiment_id = 1;
 }
 // Response to GetExperimentRequest.
 message GetExperimentResponse {
-    // The requested experiment.
-    determined.experiment.v1.Experiment experiment = 1;
-    // The experiment config.
-    google.protobuf.Struct config = 2;
+  // The requested experiment.
+  determined.experiment.v1.Experiment experiment = 1;
+  // The experiment config.
+  google.protobuf.Struct config = 2;
 }
 
 // Get a list of experiments.
 message GetExperimentsRequest {
-    // Sorts experiments by the given field.
-    enum SortBy {
-        // Returns experiments in an unsorted list.
-        SORT_BY_UNSPECIFIED = 0;
-        // Returns experiments sorted by id.
-        SORT_BY_ID = 1;
-        // Returns experiments sorted by description.
-        SORT_BY_DESCRIPTION = 2;
-        // Return experiments sorted by start time.
-        SORT_BY_START_TIME = 4;
-        // Return experiments sorted by end time. Experiments without end times are
-        // returned after experiments that are.
-        SORT_BY_END_TIME = 5;
-        // Return experiments sorted by state.
-        SORT_BY_STATE = 6;
-        // Return experiments sorted by number of trials.
-        SORT_BY_NUM_TRIALS = 8;
-        // Return experiments sorted by progress.
-        SORT_BY_PROGRESS = 9;
-        // Return experiments sorted by user.
-        SORT_BY_USER = 10;
-    }
-    // Sort experiments by the given field.
-    SortBy sort_by = 1;
-    // Order experiments in either ascending or descending order.
-    OrderBy order_by = 2;
-    // Skip the number of experiments before returning results. Negative values
-    // denote number of experiments to skip from the end before returning results.
-    int32 offset = 3;
-    // Limit the number of experiments. A value of 0 denotes no limit.
-    int32 limit = 4;
-    // Limit experiments to those that match the description.
-    string description = 5;
-    // Limit experiments to those that match the provided labels.
-    repeated string labels = 6;
-    // Limit experiments to those that are archived.
-    google.protobuf.BoolValue archived = 7;
-    // Limit experiments to those that match the provided state.
-    repeated determined.experiment.v1.State states = 8;
-    // Limit experiments to those that are owned by the specified users.
-    repeated string users = 9;
+  // Sorts experiments by the given field.
+  enum SortBy {
+    // Returns experiments in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns experiments sorted by id.
+    SORT_BY_ID = 1;
+    // Returns experiments sorted by description.
+    SORT_BY_DESCRIPTION = 2;
+    // Return experiments sorted by start time.
+    SORT_BY_START_TIME = 4;
+    // Return experiments sorted by end time. Experiments without end times are
+    // returned after experiments that are.
+    SORT_BY_END_TIME = 5;
+    // Return experiments sorted by state.
+    SORT_BY_STATE = 6;
+    // Return experiments sorted by number of trials.
+    SORT_BY_NUM_TRIALS = 8;
+    // Return experiments sorted by progress.
+    SORT_BY_PROGRESS = 9;
+    // Return experiments sorted by user.
+    SORT_BY_USER = 10;
+  }
+  // Sort experiments by the given field.
+  SortBy sort_by = 1;
+  // Order experiments in either ascending or descending order.
+  OrderBy order_by = 2;
+  // Skip the number of experiments before returning results. Negative values
+  // denote number of experiments to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of experiments. A value of 0 denotes no limit.
+  int32 limit = 4;
+  // Limit experiments to those that match the description.
+  string description = 5;
+  // Limit experiments to those that match the provided labels.
+  repeated string labels = 6;
+  // Limit experiments to those that are archived.
+  google.protobuf.BoolValue archived = 7;
+  // Limit experiments to those that match the provided state.
+  repeated determined.experiment.v1.State states = 8;
+  // Limit experiments to those that are owned by the specified users.
+  repeated string users = 9;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {
-    // The list of returned experiments.
-    repeated determined.experiment.v1.Experiment experiments = 1;
-    // Pagination information of the full dataset.
-    Pagination pagination = 2;
+  // The list of returned experiments.
+  repeated determined.experiment.v1.Experiment experiments = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get a list of experiment labels.
 message GetExperimentLabelsRequest {}
 // Response to GetExperimentsLabelsRequest.
 message GetExperimentLabelsResponse {
-    // The list of labels used across all experiments.
-    repeated string labels = 1;
+  // The list of labels used across all experiments.
+  repeated string labels = 1;
 }
 
 // Preview hyperparameter search.
 message PreviewHPSearchRequest {
-    // The experiment config to simulate.
-    google.protobuf.Struct config = 1;
-    // The searcher simulation seed.
-    uint32 seed = 2;
+  // The experiment config to simulate.
+  google.protobuf.Struct config = 1;
+  // The searcher simulation seed.
+  uint32 seed = 2;
 }
 // Response to PreviewSearchRequest.
 message PreviewHPSearchResponse {
-    // The resulting simulation.
-    determined.experiment.v1.ExperimentSimulation simulation = 1;
+  // The resulting simulation.
+  determined.experiment.v1.ExperimentSimulation simulation = 1;
 }
 
 // Activate an experiment.
 message ActivateExperimentRequest {
-    // The experiment id.
-    int32 id = 1;
+  // The experiment id.
+  int32 id = 1;
 }
 // Response to ActivateExperimentRequest.
 message ActivateExperimentResponse {}
 
 // Pause an experiment.
 message PauseExperimentRequest {
-    // The experiment id.
-    int32 id = 1;
+  // The experiment id.
+  int32 id = 1;
 }
 // Response to PauseExperimentRequest.
 message PauseExperimentResponse {}
 
 // Cancel an experiment.
 message CancelExperimentRequest {
-    // The experiment id.
-    int32 id = 1;
+  // The experiment id.
+  int32 id = 1;
 }
 // Response to CancelExperimentRequest.
 message CancelExperimentResponse {}
 
 // Kill an experiment.
 message KillExperimentRequest {
-    // The experiment id.
-    int32 id = 1;
+  // The experiment id.
+  int32 id = 1;
 }
 // Response to KillExperimentRequest.
 message KillExperimentResponse {}
 
 // Archive an experiment.
 message ArchiveExperimentRequest {
-    // The experiment id.
-    int32 id = 1;
+  // The experiment id.
+  int32 id = 1;
 }
 // Response to ArchiveExperimentRequest.
 message ArchiveExperimentResponse {}
 
 // Unarchive an experiment.
 message UnarchiveExperimentRequest {
-    // The experiment id.
-    int32 id = 1;
+  // The experiment id.
+  int32 id = 1;
 }
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {}
 
 // Patch an experiment by providing the updated attributes.
 message PatchExperimentRequest {
-    // Patched experiment attributes.
-    determined.experiment.v1.Experiment experiment = 1;
-    // Update mask.
-    google.protobuf.FieldMask update_mask = 2;
+  // Patched experiment attributes.
+  determined.experiment.v1.Experiment experiment = 1;
+  // Update mask.
+  google.protobuf.FieldMask update_mask = 2;
 }
 
 // Response to PatchExperimentRequest.
 message PatchExperimentResponse {
-    // Patched experiment.
-    determined.experiment.v1.Experiment experiment = 1;
+  // Patched experiment.
+  determined.experiment.v1.Experiment experiment = 1;
 }
 
 // Get a list of checkpoints for an experiment.
 message GetExperimentCheckpointsRequest {
-    // Sorts checkpoints by the given field.
-    enum SortBy {
-        // Returns checkpoints in an unsorted list.
-        SORT_BY_UNSPECIFIED = 0;
-        // Returns checkpoints sorted by UUID.
-        SORT_BY_UUID = 1;
-        // Returns checkpoints sorted by trial id.
-        SORT_BY_TRIAL_ID = 4;
-        // Returns checkpoints sorted by batch number.
-        SORT_BY_BATCH_NUMBER = 6;
-        // Returns checkpoints sorted by start time.
-        SORT_BY_START_TIME = 7;
-        // Returns checkpoints sorted by end time.
-        SORT_BY_END_TIME = 8;
-        // Returns checkpoints sorted by validation state.
-        SORT_BY_VALIDATION_STATE = 15;
-        // Returns checkpoints sorted by state.
-        SORT_BY_STATE = 16;
-        // Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
-        SORT_BY_SEARCHER_METRIC = 17;
-    }
-    // The experiment id.
-    int32 id = 1;
-    // Sort checkpoints by the given field
-    SortBy sort_by = 2;
-    // Order checkpoints in either ascending or descending order.
-    OrderBy order_by = 3;
-    // Skip the number of checkpoints before returning results. Negative values
-    // denote number of checkpoints to skip from the end before returning results.
-    int32 offset = 4;
-    // Limit the number of checkpoints. A value of 0 denotes no limit.
-    int32 limit = 5;
+  // Sorts checkpoints by the given field.
+  enum SortBy {
+    // Returns checkpoints in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns checkpoints sorted by UUID.
+    SORT_BY_UUID = 1;
+    // Returns checkpoints sorted by trial id.
+    SORT_BY_TRIAL_ID = 4;
+    // Returns checkpoints sorted by batch number.
+    SORT_BY_BATCH_NUMBER = 6;
+    // Returns checkpoints sorted by start time.
+    SORT_BY_START_TIME = 7;
+    // Returns checkpoints sorted by end time.
+    SORT_BY_END_TIME = 8;
+    // Returns checkpoints sorted by validation state.
+    SORT_BY_VALIDATION_STATE = 15;
+    // Returns checkpoints sorted by state.
+    SORT_BY_STATE = 16;
+    // Returns checkpoints sorted by the experiment's `searcher.metric`
+    // configuration setting.
+    SORT_BY_SEARCHER_METRIC = 17;
+  }
+  // The experiment id.
+  int32 id = 1;
+  // Sort checkpoints by the given field
+  SortBy sort_by = 2;
+  // Order checkpoints in either ascending or descending order.
+  OrderBy order_by = 3;
+  // Skip the number of checkpoints before returning results. Negative values
+  // denote number of checkpoints to skip from the end before returning results.
+  int32 offset = 4;
+  // Limit the number of checkpoints. A value of 0 denotes no limit.
+  int32 limit = 5;
 
-    // Limit the checkpoints to those that match the validation states.
-    repeated determined.checkpoint.v1.State validation_states = 6;
-    // Limit the checkpoints to those that match the states.
-    repeated determined.checkpoint.v1.State states = 7;
+  // Limit the checkpoints to those that match the validation states.
+  repeated determined.checkpoint.v1.State validation_states = 6;
+  // Limit the checkpoints to those that match the states.
+  repeated determined.checkpoint.v1.State states = 7;
 }
 
 // Response to GetExperimentCheckpointsRequest.
 message GetExperimentCheckpointsResponse {
-    // The list of returned checkpoints.
-    repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
-    // Pagination information of the full dataset.
-    Pagination pagination = 2;
+  // The list of returned checkpoints.
+  repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get the validation history for the requested experiment. The
 // validation history is a time ordered list of the historical
 // best validations.
 message GetExperimentValidationHistoryRequest {
-    // The id of the experiment.
-    int32 experiment_id = 1;
+  // The id of the experiment.
+  int32 experiment_id = 1;
 }
 
 // Response to GetExperimentValidationHistoryRequest.
 message GetExperimentValidationHistoryResponse {
-    // validation_history is a collection of zero or more validation metrics for an experiment,
-    // describing the best metrics as they were reported through the lifetime of an experiment.
-    // The historical list of best validations.
-    repeated determined.experiment.v1.ValidationHistoryEntry validation_history = 1;
+  // validation_history is a collection of zero or more validation metrics for
+  // an experiment, describing the best metrics as they were reported through
+  // the lifetime of an experiment. The historical list of best validations.
+  repeated determined.experiment.v1.ValidationHistoryEntry validation_history =
+      1;
 }

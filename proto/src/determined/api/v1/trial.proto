@@ -11,143 +11,144 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Stream Trial logs.
 message TrialLogsRequest {
-    // The id of the trial.
-    int32 trial_id = 1;
-    // Skip the number of trial logs before returning results. Negative values
-    // denote number of trial logs to skip from the end before returning results.
-    int32 offset = 3;
-    // Limit the number of trial logs. A value of 0 denotes no limit.
-    int32 limit = 4;
-    // Continue following logs until the trial stops or the limit is reached.
-    bool follow = 5;
+  // The id of the trial.
+  int32 trial_id = 1;
+  // Skip the number of trial logs before returning results. Negative values
+  // denote number of trial logs to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of trial logs. A value of 0 denotes no limit.
+  int32 limit = 4;
+  // Continue following logs until the trial stops or the limit is reached.
+  bool follow = 5;
 }
 // Response to TrialLogsRequest.
 message TrialLogsResponse {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: { required: [ "id", "message" ] }
-    };
-    // The id of the trial log.
-    int32 id = 1;
-    // The log message.
-    string message = 2;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "message" ] }
+  };
+  // The id of the trial log.
+  int32 id = 1;
+  // The log message.
+  string message = 2;
 }
 
 // Get a list of checkpoints for a trial.
 message GetTrialCheckpointsRequest {
-    // Sorts checkpoints by the given field.
-    enum SortBy {
-        // Returns checkpoints in an unsorted list.
-        SORT_BY_UNSPECIFIED = 0;
-        // Returns checkpoints sorted by UUID.
-        SORT_BY_UUID = 1;
-        // Returns checkpoints sorted by batch number.
-        SORT_BY_BATCH_NUMBER = 6;
-        // Returns checkpoints sorted by start time.
-        SORT_BY_START_TIME = 7;
-        // Returns checkpoints sorted by end time.
-        SORT_BY_END_TIME = 8;
-        // Returns checkpoints sorted by validation state.
-        SORT_BY_VALIDATION_STATE = 15;
-        // Returns checkpoints sorted by state.
-        SORT_BY_STATE = 16;
-    }
-    // The trial id.
-    int32 id = 1;
-    // Sort checkpoints by the given field.
-    SortBy sort_by = 2;
-    // Order checkpoints in either ascending or descending order.
-    OrderBy order_by = 3;
-    // Skip the number of checkpoints before returning results. Negative values
-    // denote number of checkpoints to skip from the end before returning results.
-    int32 offset = 4;
-    // Limit the number of checkpoints. A value of 0 denotes no limit.
-    int32 limit = 5;
+  // Sorts checkpoints by the given field.
+  enum SortBy {
+    // Returns checkpoints in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns checkpoints sorted by UUID.
+    SORT_BY_UUID = 1;
+    // Returns checkpoints sorted by batch number.
+    SORT_BY_BATCH_NUMBER = 6;
+    // Returns checkpoints sorted by start time.
+    SORT_BY_START_TIME = 7;
+    // Returns checkpoints sorted by end time.
+    SORT_BY_END_TIME = 8;
+    // Returns checkpoints sorted by validation state.
+    SORT_BY_VALIDATION_STATE = 15;
+    // Returns checkpoints sorted by state.
+    SORT_BY_STATE = 16;
+  }
+  // The trial id.
+  int32 id = 1;
+  // Sort checkpoints by the given field.
+  SortBy sort_by = 2;
+  // Order checkpoints in either ascending or descending order.
+  OrderBy order_by = 3;
+  // Skip the number of checkpoints before returning results. Negative values
+  // denote number of checkpoints to skip from the end before returning results.
+  int32 offset = 4;
+  // Limit the number of checkpoints. A value of 0 denotes no limit.
+  int32 limit = 5;
 
-    // Limit the checkpoints to those that match the validation states.
-    repeated determined.checkpoint.v1.State validation_states = 6;
-    // Limit the checkpoints to those that match the states.
-    repeated determined.checkpoint.v1.State states = 7;
+  // Limit the checkpoints to those that match the validation states.
+  repeated determined.checkpoint.v1.State validation_states = 6;
+  // Limit the checkpoints to those that match the states.
+  repeated determined.checkpoint.v1.State states = 7;
 }
 
 // Response to GetTrialCheckpointsRequest.
 message GetTrialCheckpointsResponse {
-    // The list of returned checkpoints.
-    repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
-    // Pagination information of the full dataset.
-    Pagination pagination = 2;
+  // The list of returned checkpoints.
+  repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Kill an trial.
 message KillTrialRequest {
-    // The trial id
-    int32 id = 1;
+  // The trial id
+  int32 id = 1;
 }
 // Response to KillTrialRequest.
 message KillTrialResponse {}
 
 // Get the list of trials for an experiment.
 message GetExperimentTrialsRequest {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: { required: [ "experiment_id" ] }
-    };
-    // Sorts trials by the given field.
-    enum SortBy {
-        // Returns trials in an unsorted list.
-        SORT_BY_UNSPECIFIED = 0;
-        // Returns trials sorted by id.
-        SORT_BY_ID = 1;
-        // Return trials sorted by start time.
-        SORT_BY_START_TIME = 4;
-        // Return trials sorted by end time. Trials without end times are
-        // returned after trials that are.
-        SORT_BY_END_TIME = 5;
-        // Return trials sorted by state.
-        SORT_BY_STATE = 6;
-    }
-    // Sort trials by the given field.
-    SortBy sort_by = 1;
-    // Order trials in either ascending or descending order.
-    OrderBy order_by = 2;
-    // Skip the number of trials before returning results. Negative values
-    // denote number of trials to skip from the end before returning results.
-    int32 offset = 3;
-    // Limit the number of trials. A value of 0 denotes no limit.
-    int32 limit = 4;
-    // Limit trials to those that match the provided state.
-    repeated determined.experiment.v1.State states = 5;
-    // Limit trials to those that are owned by the specified experiments.
-    int32 experiment_id = 6;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id" ] }
+  };
+  // Sorts trials by the given field.
+  enum SortBy {
+    // Returns trials in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns trials sorted by id.
+    SORT_BY_ID = 1;
+    // Return trials sorted by start time.
+    SORT_BY_START_TIME = 4;
+    // Return trials sorted by end time. Trials without end times are
+    // returned after trials that are.
+    SORT_BY_END_TIME = 5;
+    // Return trials sorted by state.
+    SORT_BY_STATE = 6;
+  }
+  // Sort trials by the given field.
+  SortBy sort_by = 1;
+  // Order trials in either ascending or descending order.
+  OrderBy order_by = 2;
+  // Skip the number of trials before returning results. Negative values
+  // denote number of trials to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of trials. A value of 0 denotes no limit.
+  int32 limit = 4;
+  // Limit trials to those that match the provided state.
+  repeated determined.experiment.v1.State states = 5;
+  // Limit trials to those that are owned by the specified experiments.
+  int32 experiment_id = 6;
 }
 // Response to GetExperimentTrialsRequest.
 message GetExperimentTrialsResponse {
-    // The list of returned trials.
-    repeated determined.trial.v1.Trial trials = 1;
-    // Pagination information of the full dataset.
-    Pagination pagination = 2;
+  // The list of returned trials.
+  repeated determined.trial.v1.Trial trials = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get trial details.
 message GetTrialRequest {
-    // The requested trial's id.
-    int32 trial_id = 1;
+  // The requested trial's id.
+  int32 trial_id = 1;
 }
 // Response to GetTrialRequest.
 message GetTrialResponse {
-    // WorkloadContainer is a wrapper for Determined workloads to allow repeated
-    // oneof types.
-    message WorkloadContainer {
-        // workload represent one of Determined workloads: training, validation, or checkpoint.
-        oneof workload {
-            // Training workload.
-            determined.trial.v1.MetricsWorkload training = 4;
-            // Validation workload.
-            determined.trial.v1.MetricsWorkload validation = 5;
-            // Checkpoint workload.
-            determined.trial.v1.CheckpointWorkload checkpoint = 6;
-        }
+  // WorkloadContainer is a wrapper for Determined workloads to allow repeated
+  // oneof types.
+  message WorkloadContainer {
+    // workload represent one of Determined workloads: training, validation, or
+    // checkpoint.
+    oneof workload {
+      // Training workload.
+      determined.trial.v1.MetricsWorkload training = 4;
+      // Validation workload.
+      determined.trial.v1.MetricsWorkload validation = 5;
+      // Checkpoint workload.
+      determined.trial.v1.CheckpointWorkload checkpoint = 6;
     }
-    // The requested trial.
-    determined.trial.v1.Trial trial = 1;
-    // Trial workloads.
-    repeated WorkloadContainer workloads = 2;
+  }
+  // The requested trial.
+  determined.trial.v1.Trial trial = 1;
+  // Trial workloads.
+  repeated WorkloadContainer workloads = 2;
 }
