@@ -1,0 +1,134 @@
+{
+  "paths": {
+    "/api/v1/experiments": {
+      "post": {
+        "summary": "Post a new experiment. (Alias)",
+        "operationId": "Determined_PostExperiment",
+        "responses": {
+          "200": {
+            "description": "Created experiment.",
+            "schema": {
+              "$ref": "#/definitions/v1PostExperimentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PostExperimentRequest"
+            }
+          }
+
+        ],
+        "tags": [
+          "Experiments"
+        ]
+      }
+    }
+  },
+
+  "definitions": {
+    "v1PostExperimentRequest": {
+      "type": "object",
+      "properties": {
+        "validate_only": {
+          "type": "boolean",
+          "description": "Just validate the experiment."
+        },
+        "experiment_config": {
+          "type": "object",
+          "description": "The experiment config."
+        },
+        "model_definition": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1File"
+          },
+          "description": "Experiment context."
+        },
+        "parent_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Parent experiment ID."
+        }
+      },
+      "description": "Request to create a new experiment.",
+      "title": "GetExperimentResponse"
+    },
+
+    "v1File": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the file and or directory."
+        },
+        "type": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "content": {
+          "type": "string",
+          "format": "byte",
+          "description": "base64 encoded file content."
+        },
+        "mtime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modified time"
+        },
+        "mode": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "uid": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "gid": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "File"
+    },
+
+    "v1PostExperimentResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The requested experiment."
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Labels attached to the experiment."
+        },
+        "archived": {
+          "type": "boolean",
+          "format": "boolean",
+          "description": "Boolean denoting whether the experiment was archived."
+        },
+        "config": {
+          "type": "object",
+          "description": "The experiment config."
+        }
+      },
+      "description": "Response to GetExperimentRequest.",
+      "title": "GetExperimentResponse"
+    }
+  }
+}
