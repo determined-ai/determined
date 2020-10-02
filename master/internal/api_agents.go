@@ -4,12 +4,24 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func (a *apiServer) GetAgents(
-	_ context.Context, req *apiv1.GetAgentsRequest) (resp *apiv1.GetAgentsResponse, err error) {
-	err = a.actorRequest("/agents", req, &resp)
+	_ context.Context, req *apiv1.GetAgentsRequest,
+) (resp *apiv1.GetAgentsResponse, err error) {
+	switch {
+	case a.m.system.Get(actor.Addr("agents")) != nil:
+		err = a.actorRequest("/agents", req, &resp)
+	case a.m.system.Get(actor.Addr("pods")) != nil:
+		err = a.actorRequest("/pods", req, &resp)
+	default:
+		err = status.Error(codes.NotFound, "cannot find agents or pods actor")
+	}
 	if err != nil {
 		return nil, err
 	}
