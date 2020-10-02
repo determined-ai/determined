@@ -1,8 +1,8 @@
 ---
 BasedOnStyle: Google
-IndentWidth: 4
+IndentWidth: 2
 ---
 Language: Proto
-ColumnLimit: 100
+ColumnLimit: 80
 AlignConsecutiveAssignments: true
 ...
