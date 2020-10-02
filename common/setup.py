@@ -15,6 +15,8 @@ setup(
     package_data={"determined_common": ["py.typed"]},
     install_requires=[
         "google-cloud-storage>=1.20.0",
+        # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
+        "google-cloud-core<1.4.2",
         "boto3>=1.9.220",
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
