@@ -670,8 +670,8 @@ The master supports the following configuration settings:
 
 -  ``security``: Specifies security-related configuration settings.
 
-   -  ``tls``: Specifies TLS-related configuration settings. TLS is
-      enabled if certificate and key files are both specified.
+   -  ``tls``: Specifies configuration settings for :ref:`TLS <tls>`.
+      TLS is enabled if certificate and key files are both specified.
 
       -  ``cert``: Certificate file to use for serving TLS.
       -  ``key``: Key file to use for serving TLS.
@@ -728,7 +728,7 @@ The master supports the following configuration settings:
 
 -  ``security``: Security-related configuration settings.
 
-   -  ``tls``: TLS-related configuration settings.
+   -  ``tls``: Configuration settings for :ref:`TLS <tls>`.
 
       -  ``enabled``: Whether to use TLS to connect to the master.
          Defaults to ``false``.
