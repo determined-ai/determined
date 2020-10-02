@@ -31,6 +31,19 @@ type AWSClusterConfig struct {
 	LogStream string `json:"log_stream"`
 }
 
+var defaultAWSImageID = map[string]string{
+	"ap-northeast-1": "ami-05fad074898b6711f",
+	"ap-northeast-2": "ami-00aaa2fef0172090b",
+	"ap-southeast-1": "ami-07b3ac92dcc5d3eb6",
+	"ap-southeast-2": "ami-0d00733b08d204db6",
+	"us-east-2":      "ami-0b79433826c228d35",
+	"us-east-1":      "ami-084469676da11fa5e",
+	"us-west-2":      "ami-00f470c0ed034f8e7",
+	"eu-central-1":   "ami-0da16c489f7e24e17",
+	"eu-west-2":      "ami-07f352b002ba64694",
+	"eu-west-1":      "ami-0af0ccbdace44fb31",
+}
+
 var defaultAWSClusterConfig = AWSClusterConfig{
 	InstanceName:   "determined-ai-agent",
 	RootVolumeSize: 200,
@@ -64,6 +77,14 @@ func (c *AWSClusterConfig) initDefaultValues() error {
 		}
 	}
 
+	if len(c.ImageID) == 0 {
+		if v, ok := defaultAWSImageID[c.Region]; ok {
+			c.ImageID = v
+		} else {
+			return errors.Errorf("cannot find default image ID in the region %s", c.Region)
+		}
+	}
+
 	// One common reason that metadata.GetInstanceIdentityDocument() fails is that the master is not
 	// running in EC2. Use a default name here rather than holding up initializing the provider.
 	identifier := pkg.DeterminedIdentifier
@@ -88,7 +109,6 @@ func (c *AWSClusterConfig) UnmarshalJSON(data []byte) error {
 // Validate implements the check.Validatable interface.
 func (c AWSClusterConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(len(c.ImageID), 0, "ec2 image ID must be non-empty"),
 		check.GreaterThan(len(c.SSHKeyName), 0, "ec2 key name must be non-empty"),
 		check.GreaterThanOrEqualTo(c.RootVolumeSize, 100, "ec2 root volume size must be >= 100"),
 	}
