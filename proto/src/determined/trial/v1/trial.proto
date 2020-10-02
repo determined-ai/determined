@@ -11,75 +11,78 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // CheckpointWorkload is an artifact created by a trial during training.
 message CheckpointWorkload {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-      required: ["start_time", "state"]
-   }
-  };
-  // UUID of the checkpoint.
-  string uuid = 1;
-  // The time the workload was started.
-  google.protobuf.Timestamp start_time = 2;
-  // The time the workload finished or was stopped.
-  google.protobuf.Timestamp end_time = 3;
-  // The state of the checkpoint.
-  determined.checkpoint.v1.State state = 4;
-  // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
-  map<string, int64> resources = 5;
-  // Number of batches in this workload.
-  int32 num_batches = 6;
-  // Number of batches processed prior to this workload.
-  int32 prior_batches_processed = 7;
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: [ "start_time", "state" ] }
+    };
+    // UUID of the checkpoint.
+    string uuid = 1;
+    // The time the workload was started.
+    google.protobuf.Timestamp start_time = 2;
+    // The time the workload finished or was stopped.
+    google.protobuf.Timestamp end_time = 3;
+    // The state of the checkpoint.
+    determined.checkpoint.v1.State state = 4;
+    // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
+    map<string, int64> resources = 5;
+    // Number of batches in this workload.
+    int32 num_batches = 6;
+    // Number of batches processed prior to this workload.
+    int32 prior_batches_processed = 7;
 }
 
 // MetricsWorkload is a workload generating metrics.
 message MetricsWorkload {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-      required: ["start_time", "state"]
-   }
-  };
-  // The time the workload was started.
-  google.protobuf.Timestamp start_time = 1;
-  // The time the workload finished or was stopped.
-  google.protobuf.Timestamp end_time = 2;
-  // The current validation state.
-  determined.experiment.v1.State state = 3;
-  // Metrics.
-  map<string, float> metrics = 4;
-  // Number of inputs processed.
-  int32 num_inputs = 5;
-  // Number of batches in this workload.
-  int32 num_batches = 6;
-  // Number of batches processed prior to this workload.
-  int32 prior_batches_processed = 7;
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: { required: [ "start_time", "state" ] }
+    };
+    // The time the workload was started.
+    google.protobuf.Timestamp start_time = 1;
+    // The time the workload finished or was stopped.
+    google.protobuf.Timestamp end_time = 2;
+    // The current validation state.
+    determined.experiment.v1.State state = 3;
+    // Metrics.
+    map<string, float> metrics = 4;
+    // Number of inputs processed.
+    int32 num_inputs = 5;
+    // Number of batches in this workload.
+    int32 num_batches = 6;
+    // Number of batches processed prior to this workload.
+    int32 prior_batches_processed = 7;
 }
 
 // Trial is a set of workloads and are exploring a determined set of hyperparameters.
 message Trial {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-      required: ["id", "experiment_id", "start_time", "state", "hparams", "total_batches_processed"]
-   }
-  };
-  // The id of the trial.
-  int32 id = 1;
-  // The id of the parent experiment.
-  int32 experiment_id = 2;
-  // The time the trial was started.
-  google.protobuf.Timestamp start_time = 3;
-  // The time the trial ended if the trial is stopped.
-  google.protobuf.Timestamp end_time = 4;
-  // The current state of the trial.
-  determined.experiment.v1.State state = 5;
-  // Trial hyperparameters.
-  google.protobuf.Struct hparams = 6;
-  // The current processed batches.
-  int32 total_batches_processed = 7;
-  // Best validation.
-  MetricsWorkload best_validation = 8;
-  // Latest validation.
-  MetricsWorkload latest_validation = 9;
-  // Best checkpoint.
-  CheckpointWorkload best_checkpoint = 10;
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {
+            required: [
+                "id",
+                "experiment_id",
+                "start_time",
+                "state",
+                "hparams",
+                "total_batches_processed"
+            ]
+        }
+    };
+    // The id of the trial.
+    int32 id = 1;
+    // The id of the parent experiment.
+    int32 experiment_id = 2;
+    // The time the trial was started.
+    google.protobuf.Timestamp start_time = 3;
+    // The time the trial ended if the trial is stopped.
+    google.protobuf.Timestamp end_time = 4;
+    // The current state of the trial.
+    determined.experiment.v1.State state = 5;
+    // Trial hyperparameters.
+    google.protobuf.Struct hparams = 6;
+    // The current processed batches.
+    int32 total_batches_processed = 7;
+    // Best validation.
+    MetricsWorkload best_validation = 8;
+    // Latest validation.
+    MetricsWorkload latest_validation = 9;
+    // Best checkpoint.
+    CheckpointWorkload best_checkpoint = 10;
 }

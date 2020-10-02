@@ -7,24 +7,24 @@ import "determined/checkpoint/v1/checkpoint.proto";
 
 // Get the requested checkpoint.
 message GetCheckpointRequest {
-  // The uuid for the requested checkpoint.
-  string checkpoint_uuid = 1;
+    // The uuid for the requested checkpoint.
+    string checkpoint_uuid = 1;
 }
 
 // Response to GetCheckpointRequest.
 message GetCheckpointResponse {
-  // The requested checkpoint.
-  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+    // The requested checkpoint.
+    determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }
 
 // Request for updating a checkpoints metadata.
 message PostCheckpointMetadataRequest {
-  // The desired checkpoint fields and values.
-  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+    // The desired checkpoint fields and values.
+    determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }
 
 // Response to PostCheckpointRequest.
 message PostCheckpointMetadataResponse {
-  // The updated checkpoint.
-  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+    // The updated checkpoint.
+    determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }

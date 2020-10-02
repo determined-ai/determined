@@ -8,141 +8,140 @@ import "determined/model/v1/model.proto";
 
 // Get the requested model.
 message GetModelRequest {
-  // The name of the template.
-  string model_name = 1;
+    // The name of the template.
+    string model_name = 1;
 }
 
 // Response to GetModelRequest.
 message GetModelResponse {
-  // The model requested.
-  determined.model.v1.Model model = 1;
+    // The model requested.
+    determined.model.v1.Model model = 1;
 }
 
 // Get a list of models.
 message GetModelsRequest {
-  // Sort models by the given field.
-  enum SortBy {
-    // Returns models in an unsorted list.
-    SORT_BY_UNSPECIFIED = 0;
-    // Returns models sorted by name.
-    SORT_BY_NAME = 1;
-    // Returns models sorted by description.
-    SORT_BY_DESCRIPTION = 2;
-    // Returns models sorted by creation time.
-    SORT_BY_CREATION_TIME = 4;
-    // Returns models sorted by last updated time.
-    SORT_BY_LAST_UPDATED_TIME = 5;
-  }
+    // Sort models by the given field.
+    enum SortBy {
+        // Returns models in an unsorted list.
+        SORT_BY_UNSPECIFIED = 0;
+        // Returns models sorted by name.
+        SORT_BY_NAME = 1;
+        // Returns models sorted by description.
+        SORT_BY_DESCRIPTION = 2;
+        // Returns models sorted by creation time.
+        SORT_BY_CREATION_TIME = 4;
+        // Returns models sorted by last updated time.
+        SORT_BY_LAST_UPDATED_TIME = 5;
+    }
 
-  // Sort the models by the given field.
-  SortBy sort_by = 1;
-  // Order models in either ascending or descending order.
-  OrderBy order_by = 2;
+    // Sort the models by the given field.
+    SortBy sort_by = 1;
+    // Order models in either ascending or descending order.
+    OrderBy order_by = 2;
 
-  // Skip the number of models before returning results. Negative values
-  // denote number of models to skip from the end before returning results.
-  int32 offset = 3;
-  // Limit the number of models. A value of 0 denotes no limit.
-  int32 limit = 4;
+    // Skip the number of models before returning results. Negative values
+    // denote number of models to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of models. A value of 0 denotes no limit.
+    int32 limit = 4;
 
-  // Limit the models to those matching the name.
-  string name = 5;
-  // Limit the models to those matching the description.
-  string description = 6;
+    // Limit the models to those matching the name.
+    string name = 5;
+    // Limit the models to those matching the description.
+    string description = 6;
 }
 
 // Response to GetModelsRequest.
 message GetModelsResponse {
-  // The list of returned models.
-  repeated determined.model.v1.Model models = 1;
-  // Pagination information of the full dataset.
-  Pagination pagination = 2;
+    // The list of returned models.
+    repeated determined.model.v1.Model models = 1;
+    // Pagination information of the full dataset.
+    Pagination pagination = 2;
 }
 
 // Request for creating a model in the registry.
 message PostModelRequest {
-  // The model to create.
-  determined.model.v1.Model model = 1;
+    // The model to create.
+    determined.model.v1.Model model = 1;
 }
 
 // Response to PostModelRequest.
 message PostModelResponse {
-  // The model created.
-  determined.model.v1.Model model = 1;
+    // The model created.
+    determined.model.v1.Model model = 1;
 }
 
 // Request for updating a model in the registry.
 message PatchModelRequest {
-  // The model desired model fields and values.
-  determined.model.v1.Model model = 1;
+    // The model desired model fields and values.
+    determined.model.v1.Model model = 1;
 }
 
 // Response to PatchModelRequest.
 message PatchModelResponse {
-  // The model created.
-  determined.model.v1.Model model = 1;
+    // The model created.
+    determined.model.v1.Model model = 1;
 }
 
 // Request for a version of a model in the regsitry.
 message GetModelVersionRequest {
-  // The name of the model.
-  string model_name = 1;
-  // The version number.
-  int32 model_version = 2;
+    // The name of the model.
+    string model_name = 1;
+    // The version number.
+    int32 model_version = 2;
 }
 
 // Response for GetModelVersionRequest.
 message GetModelVersionResponse {
-  // The model version requested.
-  determined.model.v1.ModelVersion model_version = 1;
+    // The model version requested.
+    determined.model.v1.ModelVersion model_version = 1;
 }
-
 
 // Get a list of versions of the requested model.
 message GetModelVersionsRequest {
-  // Sort models by the given field.
-  enum SortBy {
-    // Returns model versions in an unsorted list.
-    SORT_BY_UNSPECIFIED = 0;
-    // Returns model versions sorted by version number.
-    SORT_BY_VERSION = 3;
-    // Returns model versions sorted by creation_time.
-    SORT_BY_CREATION_TIME = 4;
-  }
+    // Sort models by the given field.
+    enum SortBy {
+        // Returns model versions in an unsorted list.
+        SORT_BY_UNSPECIFIED = 0;
+        // Returns model versions sorted by version number.
+        SORT_BY_VERSION = 3;
+        // Returns model versions sorted by creation_time.
+        SORT_BY_CREATION_TIME = 4;
+    }
 
-  // Sort the model versions by the given field.
-  SortBy sort_by = 1;
-  // Order model versions in either ascending or descending order.
-  OrderBy order_by = 2;
-  // Skip the number of model versions before returning results. Negative values
-  // denote number of models to skip from the end before returning results.
-  int32 offset = 3;
-  // Limit the number of model versions. A value of 0 denotes no limit.
-  int32 limit = 4;
-  // The name of the model.
-  string model_name = 5;
+    // Sort the model versions by the given field.
+    SortBy sort_by = 1;
+    // Order model versions in either ascending or descending order.
+    OrderBy order_by = 2;
+    // Skip the number of model versions before returning results. Negative values
+    // denote number of models to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of model versions. A value of 0 denotes no limit.
+    int32 limit = 4;
+    // The name of the model.
+    string model_name = 5;
 }
 
 // Response for GetModelVersionRequest.
 message GetModelVersionsResponse {
-  // The model requested.
-  determined.model.v1.Model model = 1;
-  // The list of returned model versions.
-  repeated determined.model.v1.ModelVersion model_versions = 2;
-  // Pagination information of the full dataset.
-  Pagination pagination = 3;
+    // The model requested.
+    determined.model.v1.Model model = 1;
+    // The list of returned model versions.
+    repeated determined.model.v1.ModelVersion model_versions = 2;
+    // Pagination information of the full dataset.
+    Pagination pagination = 3;
 }
 
 // Request for creating a model version.
 message PostModelVersionRequest {
-  // The name of the model to add a version to.
-  string model_name = 1;
-  // The checkpoint representing the new version.
-  string checkpoint_uuid = 2;
+    // The name of the model to add a version to.
+    string model_name = 1;
+    // The checkpoint representing the new version.
+    string checkpoint_uuid = 2;
 }
 
 // Response for PostModelVersionRequest.
 message PostModelVersionResponse {
-  // The model version requested.
-  determined.model.v1.ModelVersion model_version = 1;
+    // The model version requested.
+    determined.model.v1.ModelVersion model_version = 1;
 }

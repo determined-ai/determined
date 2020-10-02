@@ -21,7 +21,6 @@ message GetNotebooksRequest {
         SORT_BY_DESCRIPTION = 2;
         // Return notebooks sorted by start time.
         SORT_BY_START_TIME = 4;
-
     }
     // Sort notebooks by the given field
     SortBy sort_by = 1;

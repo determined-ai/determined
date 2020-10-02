@@ -35,7 +35,16 @@ enum State {
 message Experiment {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {
-            required: ["id", "description", "start_time", "end_time", "state", "archived", "num_trials", "username"]
+            required: [
+                "id",
+                "description",
+                "start_time",
+                "end_time",
+                "state",
+                "archived",
+                "num_trials",
+                "username"
+            ]
         }
     };
     // The id of the experiment.
@@ -63,9 +72,7 @@ message Experiment {
 // ValidationHistoryEntry is a single entry for a validation history for an experiment.
 message ValidationHistoryEntry {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {
-            required: ["trial_id", "end_time", "searcher_metric"]
-        }
+        json_schema: { required: [ "trial_id", "end_time", "searcher_metric" ] }
     };
     // The id for the trial associated with this validation entry.
     int32 trial_id = 1;

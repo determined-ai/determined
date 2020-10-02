@@ -78,12 +78,11 @@ message GetExperimentsResponse {
 }
 
 // Get a list of experiment labels.
-message GetExperimentLabelsRequest {
-}
+message GetExperimentLabelsRequest {}
 // Response to GetExperimentsLabelsRequest.
 message GetExperimentLabelsResponse {
     // The list of labels used across all experiments.
-    repeated string labels = 1; 
+    repeated string labels = 1;
 }
 
 // Preview hyperparameter search.
@@ -105,8 +104,7 @@ message ActivateExperimentRequest {
     int32 id = 1;
 }
 // Response to ActivateExperimentRequest.
-message ActivateExperimentResponse {
-}
+message ActivateExperimentResponse {}
 
 // Pause an experiment.
 message PauseExperimentRequest {
@@ -114,8 +112,7 @@ message PauseExperimentRequest {
     int32 id = 1;
 }
 // Response to PauseExperimentRequest.
-message PauseExperimentResponse {
-}
+message PauseExperimentResponse {}
 
 // Cancel an experiment.
 message CancelExperimentRequest {
@@ -123,8 +120,7 @@ message CancelExperimentRequest {
     int32 id = 1;
 }
 // Response to CancelExperimentRequest.
-message CancelExperimentResponse {
-}
+message CancelExperimentResponse {}
 
 // Kill an experiment.
 message KillExperimentRequest {
@@ -132,37 +128,36 @@ message KillExperimentRequest {
     int32 id = 1;
 }
 // Response to KillExperimentRequest.
-message KillExperimentResponse {
-}
+message KillExperimentResponse {}
 
 // Archive an experiment.
 message ArchiveExperimentRequest {
-  // The experiment id.
-  int32 id = 1;
+    // The experiment id.
+    int32 id = 1;
 }
 // Response to ArchiveExperimentRequest.
 message ArchiveExperimentResponse {}
 
 // Unarchive an experiment.
 message UnarchiveExperimentRequest {
-  // The experiment id.
-  int32 id = 1;
+    // The experiment id.
+    int32 id = 1;
 }
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {}
 
 // Patch an experiment by providing the updated attributes.
 message PatchExperimentRequest {
-  // Patched experiment attributes.
-  determined.experiment.v1.Experiment experiment = 1;
-  // Update mask.
-  google.protobuf.FieldMask update_mask = 2;
+    // Patched experiment attributes.
+    determined.experiment.v1.Experiment experiment = 1;
+    // Update mask.
+    google.protobuf.FieldMask update_mask = 2;
 }
 
 // Response to PatchExperimentRequest.
 message PatchExperimentResponse {
-  // Patched experiment.
-  determined.experiment.v1.Experiment experiment = 1;
+    // Patched experiment.
+    determined.experiment.v1.Experiment experiment = 1;
 }
 
 // Get a list of checkpoints for an experiment.
@@ -208,10 +203,10 @@ message GetExperimentCheckpointsRequest {
 
 // Response to GetExperimentCheckpointsRequest.
 message GetExperimentCheckpointsResponse {
-  // The list of returned checkpoints.
-  repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
-  // Pagination information of the full dataset.
-  Pagination pagination = 2;
+    // The list of returned checkpoints.
+    repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
+    // Pagination information of the full dataset.
+    Pagination pagination = 2;
 }
 
 // Get the validation history for the requested experiment. The

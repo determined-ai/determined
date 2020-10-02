@@ -20,7 +20,6 @@ message GetCommandsRequest {
         SORT_BY_DESCRIPTION = 2;
         // Return commands sorted by start time.
         SORT_BY_START_TIME = 4;
-
     }
     // Sort commands by the given field
     SortBy sort_by = 1;

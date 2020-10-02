@@ -13,11 +13,13 @@ enum State {
     STATE_ASSIGNED = 1;
     // The container's base image is being pulled from the Docker registry.
     STATE_PULLING = 2;
-    // The image has been built and the container is being started, but the service in the container is not ready yet.
+    // The image has been built and the container is being started, but the service in the container
+    // is not ready yet.
     STATE_STARTING = 3;
     // The service in the container is able to accept requests.
     STATE_RUNNING = 4;
-    // The container has completely exited or the container has been aborted prior to getting assigned.
+    // The container has completely exited or the container has been aborted prior to getting
+    // assigned.
     STATE_TERMINATED = 5;
 }
 

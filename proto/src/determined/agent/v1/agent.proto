@@ -8,7 +8,6 @@ import "google/protobuf/timestamp.proto";
 import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
-
 // Agent is a pool of resources where containers are run.
 message Agent {
     // The unique id of the agent.

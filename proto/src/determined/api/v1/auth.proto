@@ -9,9 +9,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Login the user.
 message LoginRequest {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {
-            required: ["username", "password"]
-        }
+        json_schema: { required: [ "username", "password" ] }
     };
     // The username of the user.
     string username = 1;

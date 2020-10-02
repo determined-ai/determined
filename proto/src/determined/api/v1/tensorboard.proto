@@ -18,7 +18,6 @@ message GetTensorboardsRequest {
         SORT_BY_DESCRIPTION = 2;
         // Return tensorboards sorted by start time.
         SORT_BY_START_TIME = 4;
-
     }
     // Sort tensorboards by the given field
     SortBy sort_by = 1;

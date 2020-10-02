@@ -24,9 +24,7 @@ message TrialLogsRequest {
 // Response to TrialLogsRequest.
 message TrialLogsResponse {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {
-            required: ["id", "message"]
-        }
+        json_schema: { required: [ "id", "message" ] }
     };
     // The id of the trial log.
     int32 id = 1;
@@ -90,9 +88,7 @@ message KillTrialResponse {}
 // Get the list of trials for an experiment.
 message GetExperimentTrialsRequest {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {
-        required: ["experiment_id"]
-     }
+        json_schema: { required: [ "experiment_id" ] }
     };
     // Sorts trials by the given field.
     enum SortBy {
@@ -129,7 +125,6 @@ message GetExperimentTrialsResponse {
     // Pagination information of the full dataset.
     Pagination pagination = 2;
 }
-
 
 // Get trial details.
 message GetTrialRequest {
