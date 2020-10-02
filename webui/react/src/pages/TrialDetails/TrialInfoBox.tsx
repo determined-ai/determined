@@ -117,7 +117,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     },
     {
       content: totalCheckpointsSize,
-      label: 'Checkpoint Size',
+      label: 'Total Checkpoint Size',
     },
     {
       content: <Button onClick={handleShowHParams}>Show</Button>,
@@ -126,7 +126,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   ];
 
   return (
-    <Section bodyBorder maxHeight title="Info Box">
+    <Section bodyBorder maxHeight title="Summary">
       <InfoBox rows={infoRows} />
       <Modal
         bodyStyle={{ padding: 0 }}
