@@ -334,7 +334,7 @@ func (m *Master) Run() error {
 	// relative links in web pages hosted under these routes.
 	staticWebDirectoryPaths := map[string]bool{
 		"/docs":            true,
-		"/docs/swagger-ui": true,
+		"/docs/api": true,
 	}
 
 	// Initialize the HTTP server and listen for incoming requests.
@@ -376,7 +376,7 @@ func (m *Master) Run() error {
 	reactRoot := filepath.Join(webuiRoot, "react")
 
 	// Docs.
-	m.echo.Static("/docs/swagger-ui", filepath.Join(webuiRoot, "docs", "swagger-ui"))
+	m.echo.Static("/docs/api", filepath.Join(webuiRoot, "docs", "swagger-ui"))
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
 
 	type fileRoute struct {

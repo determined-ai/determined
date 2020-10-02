@@ -27,10 +27,10 @@ As Swagger puts it:
 
 A static version of the Swagger UI is bundled with these docs
 `here
-<../swagger-ui/index.html>`__. If
+<../api/index.html>`__. If
 you have access to a running Determined cluster you can checkout the
 live-interact version by clicking the API icon from the Determined WebUI or
-by visiting the path `/docs/swagger-ui/` on your Determined cluster.
+by visiting the path `/docs/api/` on your Determined cluster.
 
 The Swagger UI gives you an up-to-date view of the APIs your Determined
 cluster provides in a readable and interactive fashion.

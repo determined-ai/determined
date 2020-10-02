@@ -171,7 +171,7 @@ const Navigation: React.FC = () => {
               icon="cloud"
               label="API (Beta)"
               noProxy
-              path="/docs/swagger-ui/"
+              path="/docs/api/"
               popout />
             <NavigationItem
               icon={isCollapsed ? 'expand' : 'collapse'}
