@@ -37,5 +37,5 @@ check:
 .PHONY: fmt
 fmt:
 	type clang-format > /dev/null || exit 0
-	git ls-files -z '*.proto' | xargs -0 -P8 clang-format -i
+	git ls-files -z 'src/determined/**/*.proto' | xargs -0 -P8 clang-format -i
 
