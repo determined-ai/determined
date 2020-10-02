@@ -33,6 +33,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		for ix := range a.poolsConfig.ResourcePools {
 			rpRef := a.createResourcePool(ctx, &a.poolsConfig.ResourcePools[ix], a.cert)
 			if rpRef != nil {
+				ctx.Ask(rpRef, actor.Ping{}).Get()
 				a.onlyPool = rpRef
 				return nil
 			}
@@ -41,8 +42,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case
 		AllocateRequest, ResourcesReleased,
 		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
-		GetTaskSummary, GetTaskSummaries, SetTaskName,
-		sproto.ConfigureEndpoints:
+		GetTaskSummary, GetTaskSummaries, SetTaskName:
 		a.forward(ctx, msg)
 
 	default:

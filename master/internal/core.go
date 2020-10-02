@@ -27,7 +27,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -361,9 +360,6 @@ func (m *Master) Run() error {
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))
-	// The Echo server registrations must be serialized, so we block until the ResourceProvider is
-	// finished with its ConfigureEndpoints call.
-	m.system.Ask(m.rm, sproto.ConfigureEndpoints{System: m.system, Echo: m.echo}).Get()
 
 	// Distributed lock server.
 	rwCoordinator := newRWCoordinator()

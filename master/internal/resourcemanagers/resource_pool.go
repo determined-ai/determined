@@ -8,7 +8,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -200,7 +199,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		return err
 
 	case
-		sproto.ConfigureEndpoints,
 		sproto.AddAgent,
 		sproto.AddDevice,
 		sproto.FreeDevice,
@@ -251,10 +249,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case sproto.ConfigureEndpoints:
-		ctx.Log().Infof("initializing endpoints for agents")
-		agent.Initialize(ctx, msg.Echo, ctx.Self())
-
 	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
 		rp.agents[msg.Agent] = newAgentState(msg)

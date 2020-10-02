@@ -3,7 +3,6 @@ package resourcemanagers
 import (
 	"github.com/google/uuid"
 
-	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -48,17 +47,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
-	case sproto.ConfigureEndpoints:
-		ctx.Log().Infof("initializing endpoints for pods")
-		podsActor := kubernetes.Initialize(
-			msg.System,
-			msg.Echo,
-			ctx.Self(),
-			k.config.Namespace,
-			k.config.MasterServiceName,
-			k.config.LeaveKubernetesResources,
-		)
-		k.agent = newAgentState(sproto.AddAgent{Agent: podsActor})
+	case sproto.AddAgent:
+		k.agent = newAgentState(msg)
 
 	case
 		groupActorStopped,
