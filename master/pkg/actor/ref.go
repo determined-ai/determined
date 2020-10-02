@@ -97,6 +97,20 @@ func (r *Ref) Parent() *Ref {
 	return r.parent
 }
 
+// Children returns a list of references to the actor's children.
+func (r *Ref) Children() []*Ref {
+	children := make([]*Ref, 0, len(r.children))
+	for _, child := range r.children {
+		children = append(children, child)
+	}
+	return children
+}
+
+// Child returns the child with the given local ID.
+func (r *Ref) Child(id interface{}) *Ref {
+	return r.children[r.address.Child(id)]
+}
+
 // Address returns the address of the actor.
 func (r *Ref) Address() Address {
 	return r.address

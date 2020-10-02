@@ -311,8 +311,8 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 		TLSClientConfig:  tlsConfig,
 	}
 
-	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s",
-		masterProto, a.MasterHost, a.MasterPort, a.AgentID)
+	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&&resource_pool=%s",
+		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool)
 	ctx.Log().Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.Dial(masterAddr, nil)
 	if err != nil {

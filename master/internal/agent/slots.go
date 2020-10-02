@@ -16,7 +16,7 @@ import (
 )
 
 type slots struct {
-	cluster *actor.Ref
+	resourcePool *actor.Ref
 }
 
 // SlotsSummary contains a summary for a number of slots.
@@ -32,7 +32,7 @@ func (s *slots) Receive(ctx *actor.Context) error {
 				agentEnabled: true,
 				userEnabled:  true,
 			}
-			_, ok := ctx.ActorOf(d.ID, &slot{cluster: s.cluster, enabled: enabled, device: d})
+			_, ok := ctx.ActorOf(d.ID, &slot{resourcePool: s.resourcePool, enabled: enabled, device: d})
 			check.Panic(check.True(ok, "error registering slot, slot %s already created", d.ID))
 		}
 	case aproto.StartContainer:
@@ -84,7 +84,7 @@ func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor
 	if len(c.Devices) == 0 && c.State == container.Terminated {
 		// This is to handle the case where the task is not using GPU devices and is running
 		// on agent where only GPUs are modeled as devices.
-		ctx.Tell(s.cluster, sproto.FreeDevice{
+		ctx.Tell(s.resourcePool, sproto.FreeDevice{
 			DeviceID: sproto.DeviceID{
 				Agent: ctx.Self().Parent(), Device: device.Device{Type: device.ZeroSlot}},
 			ContainerID: &c.ID,
