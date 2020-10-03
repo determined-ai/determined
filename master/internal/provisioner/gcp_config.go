@@ -51,9 +51,7 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-1def2ee",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
-			MachineType: "n1-standard-32",
-			GPUType:     "nvidia-tesla-v100",
-			GPUNum:      4,
+			MachineType: "n1-standard-16",
 		},
 		OperationTimeoutPeriod: Duration(5 * time.Minute),
 	}
@@ -218,6 +216,7 @@ var gceMachineTypes = []string{
 }
 
 var gceGPUTypes = map[string][]int{
+	"":                  {0},
 	"nvidia-tesla-t4":   {1, 2, 4},
 	"nvidia-tesla-p100": {1, 2, 4},
 	"nvidia-tesla-p4":   {1, 2, 4},
