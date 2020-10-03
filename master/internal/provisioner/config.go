@@ -54,6 +54,7 @@ type Config struct {
 	GCP                    *GCPClusterConfig `union:"provider,gcp" json:"-"`
 	MaxIdleAgentPeriod     Duration          `json:"max_idle_agent_period"`
 	MaxAgentStartingPeriod Duration          `json:"max_agent_starting_period"`
+	MinInstances           int               `json:"min_instances"`
 	MaxInstances           int               `json:"max_instances"`
 }
 
@@ -64,6 +65,7 @@ func DefaultConfig() *Config {
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: Duration(20 * time.Minute),
+		MinInstances:           0,
 		MaxInstances:           5,
 	}
 }
@@ -106,7 +108,11 @@ func (c Config) Validate() []error {
 			int64(c.MaxIdleAgentPeriod), int64(0), "max idle agent period must be greater than 0"),
 		check.GreaterThan(
 			int64(c.MaxAgentStartingPeriod), int64(0), "max agent starting period must be greater than 0"),
+		check.GreaterThanOrEqualTo(int64(c.MinInstances), int64(0),
+			"min instance must be greater than or equal to 0"),
 		check.GreaterThan(int64(c.MaxInstances), int64(0), "max instance must be greater than 0"),
+		check.GreaterThanOrEqualTo(int64(c.MaxInstances), int64(c.MinInstances),
+			"max instance must be greater than or equal to min instance"),
 	}...)
 	return errs
 }
