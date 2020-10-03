@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -13,16 +12,17 @@ import (
 func Setup(
 	ctx *actor.Context,
 	config *Config,
+	resourcePool string,
 	cert *tls.Certificate,
 ) (*Provisioner, *actor.Ref, error) {
-	log.Info("found provisioner configuration")
+	ctx.Log().Info("found provisioner configuration")
 	if config.AWS != nil {
-		log.Info("connecting to AWS")
+		ctx.Log().Info("connecting to AWS")
 	}
 	if config.GCP != nil {
-		log.Info("connecting to GCP")
+		ctx.Log().Info("connecting to GCP")
 	}
-	provisioner, err := New(config, cert)
+	provisioner, err := New(resourcePool, config, cert)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "error creating provisioner")
 	}

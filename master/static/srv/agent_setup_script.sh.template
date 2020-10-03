@@ -30,6 +30,7 @@ docker run --init --name determined-agent {{.LogOptions}} --restart always --net
     -e DET_AGENT_ID="{{.AgentID}}" \
     -e DET_MASTER_HOST="{{.MasterHost}}" \
     -e DET_MASTER_PORT="{{.MasterPort}}" \
+    -e DET_RESOURCE_POOL="{{.ResourcePool}}" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
     "${docker_args[@]}" \

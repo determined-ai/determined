@@ -185,11 +185,12 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
 
-	_, err = c.terminateInstances(canceledButInstanceRunningReqs.idsAsListOfPointers(), false)
-	if err != nil {
-		ctx.Log().
-			WithError(err).
-			Debugf("cannot terminate EC2 instances associated with canceled spot requests")
+	if canceledButInstanceRunningReqs.numReqs() > 0 {
+		ctx.Log().Infof(
+			"terminating EC2 instances associated with canceled spot requests: %s",
+			strings.Join(canceledButInstanceRunningReqs.idsAsList(), ","),
+		)
+		c.terminateOnDemand(ctx, canceledButInstanceRunningReqs.idsAsListOfPointers())
 	}
 
 	instances, err := c.buildInstanceListFromTrackedReqs(ctx)
@@ -226,24 +227,15 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 			pendingSpotReqsToTerminate.string(),
 		)
 
-	terminateInstancesResponse, err := c.terminateInstances(
-		instancesToTerminate.asListOfPointers(),
-		false)
-
-	if err != nil {
-		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
-	} else {
-		terminated := c.newInstancesFromTerminateInstancesOutput(terminateInstancesResponse)
-		ctx.Log().
-			WithField("log-type", "terminateSpot.terminatedInstances").
-			Debugf(
-				"terminated %d EC2 instances: %s",
-				len(terminated),
-				fmtInstances(terminated),
-			)
+	if instancesToTerminate.length() > 0 {
+		ctx.Log().Infof(
+			"terminating EC2 instances associated with fulfilled spot requests: %s",
+			instancesToTerminate.string(),
+		)
+		c.terminateOnDemand(ctx, instancesToTerminate.asListOfPointers())
 	}
 
-	_, err = c.terminateSpotInstanceRequests(ctx, pendingSpotReqsToTerminate.asListOfPointers(), false)
+	_, err := c.terminateSpotInstanceRequests(ctx, pendingSpotReqsToTerminate.asListOfPointers(), false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate spot requests")
 	} else {
@@ -259,14 +251,8 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 
 func (c *awsCluster) launchSpot(
 	ctx *actor.Context,
-	instanceType instanceType,
 	instanceNum int,
 ) {
-	instType, ok := instanceType.(ec2InstanceType)
-	if !ok {
-		panic("cannot pass non-ec2InstanceType to ec2Cluster")
-	}
-
 	if instanceNum < 0 {
 		return
 	}
@@ -274,7 +260,7 @@ func (c *awsCluster) launchSpot(
 	ctx.Log().
 		WithField("log-type", "launchSpot.start").
 		Infof("launching %d EC2 spot requests", instanceNum)
-	resp, err := c.createSpotInstanceRequestsCorrectingForClockSkew(ctx, instanceNum, false, instType)
+	resp, err := c.createSpotInstanceRequestsCorrectingForClockSkew(ctx, instanceNum, false, c.InstanceType)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 spot requests")
 		return

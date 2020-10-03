@@ -26,6 +26,7 @@ func TestAgentSetupScript(t *testing.T) {
 		AgentDockerRuntime:           "runc",
 		AgentNetwork:                 "default",
 		AgentID:                      "test.id",
+		ResourcePool:                 "test-pool",
 	}
 
 	// nolint
@@ -61,6 +62,7 @@ docker run --init --name determined-agent  --restart always --network default --
     -e DET_AGENT_ID="test.id" \
     -e DET_MASTER_HOST="test.master" \
     -e DET_MASTER_PORT="8080" \
+    -e DET_RESOURCE_POOL="test-pool" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
     "${docker_args[@]}" \

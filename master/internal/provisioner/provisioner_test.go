@@ -46,7 +46,7 @@ type mockEnvironment struct {
 
 func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 	system := actor.NewSystem(t.Name())
-	cluster, err := newMockCluster(setup)
+	cluster, err := newMockProvider(setup)
 	assert.NilError(t, err)
 	p := &Provisioner{
 		provider: cluster,
@@ -90,7 +90,7 @@ type mockProvider struct {
 	history          []mockFuncCall
 }
 
-func newMockCluster(config *mockConfig) (*mockProvider, error) {
+func newMockProvider(config *mockConfig) (*mockProvider, error) {
 	instMap := make(map[string]*Instance)
 	for _, inst := range config.initInstances {
 		instMap[inst.ID] = inst
@@ -119,8 +119,8 @@ func (c *mockProvider) list(ctx *actor.Context) ([]*Instance, error) {
 
 func (c *mockProvider) prestart(ctx *actor.Context) {}
 
-func (c *mockProvider) launch(ctx *actor.Context, instanceType instanceType, instanceNum int) {
-	c.history = append(c.history, newMockFuncCall("launch", instanceType, instanceNum))
+func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) {
+	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
 	for i := 0; i < instanceNum; i++ {
 		name := uuid.New().String()
 		inst := Instance{
