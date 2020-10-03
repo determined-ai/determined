@@ -351,11 +351,8 @@ func (m *Master) Run() error {
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
 
 	// Resource Manager.
-	m.rm, _ = m.system.ActorOf(
-		actor.Addr("resourceManagers"),
-		resourcemanagers.NewResourceManagers(
-			m.system, m.config.ResourceManager, m.config.ResourcePoolsConfig, cert,
-		),
+	m.rm = resourcemanagers.Setup(
+		m.system, m.echo, m.config.ResourceManager, m.config.ResourcePoolsConfig, cert,
 	)
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))

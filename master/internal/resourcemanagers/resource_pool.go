@@ -6,8 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -70,7 +68,7 @@ func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
 		ctx.Log().Infof("disabling provisioner for resource pool: %s", rp.config.PoolName)
 		return nil
 	}
-	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.cert)
+	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert)
 	if err != nil {
 		return errors.Wrapf(err, "cannot create resource pool: %s", rp.config.PoolName)
 	}
@@ -108,7 +106,7 @@ func (d *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
 
 // allocateResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully allocated.
-func (rp *ResourcePool) allocateResources(req *AllocateRequest) bool {
+func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *AllocateRequest) bool {
 	fits := findFits(req, rp.agents, rp.fittingMethod)
 
 	if len(fits) == 0 {
@@ -126,17 +124,19 @@ func (rp *ResourcePool) allocateResources(req *AllocateRequest) bool {
 		})
 	}
 
-	allocated := ResourcesAllocated{ID: req.ID, Allocations: allocations}
+	allocated := ResourcesAllocated{
+		ID: req.ID, ResourcePool: rp.config.PoolName, Allocations: allocations,
+	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
-	log.Infof("allocated resources to %s", req.TaskActor.Address())
+	ctx.Log().Infof("allocated resources to %s", req.TaskActor.Address())
 
 	return true
 }
 
-func (rp *ResourcePool) releaseResource(handler *actor.Ref) {
-	log.Infof("releasing resources taken by %s", handler.Address())
-	handler.System().Tell(handler, ReleaseResources{})
+func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) {
+	ctx.Log().Infof("releasing resources taken by %s", handler.Address())
+	handler.System().Tell(handler, ReleaseResources{ResourcePool: rp.config.PoolName})
 }
 
 func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
@@ -229,10 +229,10 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		if rp.reschedule {
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
 			for _, req := range toAllocate {
-				rp.allocateResources(req)
+				rp.allocateResources(ctx, req)
 			}
 			for _, taskActor := range toRelease {
-				rp.releaseResource(taskActor)
+				rp.releaseResource(ctx, taskActor)
 			}
 			rp.sendScalingInfo(ctx)
 		}

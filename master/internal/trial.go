@@ -169,7 +169,7 @@ type trial struct {
 	id    int
 	idSet bool
 
-	rp              *actor.Ref
+	rm              *actor.Ref
 	logger          *actor.Ref
 	db              *db.PgDB
 	experimentState model.State
@@ -235,7 +235,7 @@ func newTrial(
 		warmStartCheckpointID = &checkpointID
 	}
 	return &trial{
-		rp:                    exp.rm,
+		rm:                    exp.rm,
 		logger:                exp.trialLogger,
 		db:                    exp.db,
 		experimentState:       exp.State,
@@ -352,7 +352,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				},
 				TaskActor: ctx.Self(),
 			}
-			ctx.Tell(t.rp, *t.task)
+			ctx.Tell(t.rm, *t.task)
 		}
 	} else if t.experimentState != model.ActiveState {
 		_ = t.releaseResource(ctx)
@@ -1056,7 +1056,7 @@ func (t *trial) terminated(ctx *actor.Context) {
 	t.task = nil
 	t.allocations = nil
 	t.containerRanks = make(map[cproto.ID]int)
-	ctx.Tell(t.rp, resourcemanagers.ResourcesReleased{TaskActor: ctx.Self()})
+	ctx.Tell(t.rm, resourcemanagers.ResourcesReleased{TaskActor: ctx.Self()})
 
 	t.allReadySucceeded = false
 	t.pendingGracefulTermination = false

@@ -99,7 +99,7 @@ func TestRendezvousInfo(t *testing.T) {
 
 	// This is the minimal trial to receive scheduler.ContainerStarted messages.
 	trial := &trial{
-		rp:                   rp,
+		rm:                   rp,
 		experiment:           &model.Experiment{},
 		task:                 &resourcemanagers.AllocateRequest{},
 		allocations:          []resourcemanagers.Allocation{mockAllocation{}, mockAllocation{}},

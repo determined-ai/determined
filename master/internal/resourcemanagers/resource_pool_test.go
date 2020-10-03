@@ -60,7 +60,7 @@ func setupCluster(
 	scheduler Scheduler, fittingMethod SoftConstraint, agents []*agentState, tasks []*actor.Ref,
 ) *ResourcePool {
 	d := ResourcePool{
-		config:        &ResourcePoolConfig{PoolName: "default"},
+		config:        &ResourcePoolConfig{},
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
 		agents:        make(map[*actor.Ref]*agentState),

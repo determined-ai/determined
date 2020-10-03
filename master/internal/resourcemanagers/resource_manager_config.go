@@ -60,6 +60,14 @@ func ResolveConfig(
 		}
 		if resourceMangerConf.AgentRM.FittingPolicy == "" {
 			resourceMangerConf.AgentRM.FittingPolicy = DefaultRMConfig().AgentRM.FittingPolicy
+	if resourceMangerConf != nil && resourceMangerConf.AgentRM != nil && resourcePoolsConf != nil {
+		if len(resourceMangerConf.AgentRM.DefaultCPUResourcePool) == 0 {
+			resourceMangerConf.AgentRM.DefaultCPUResourcePool =
+				resourcePoolsConf.ResourcePools[0].PoolName
+		}
+		if len(resourceMangerConf.AgentRM.DefaultGPUResourcePool) == 0 {
+			resourceMangerConf.AgentRM.DefaultGPUResourcePool =
+				resourcePoolsConf.ResourcePools[0].PoolName
 		}
 	}
 	return resourceMangerConf, resourcePoolsConf, nil

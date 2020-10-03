@@ -12,6 +12,7 @@ type TaskSummary struct {
 	ID             TaskID             `json:"id"`
 	Name           string             `json:"name"`
 	RegisteredTime time.Time          `json:"registered_time"`
+	ResourcePool   string             `json:"resource_pool"`
 	SlotsNeeded    int                `json:"slots_needed"`
 	Containers     []ContainerSummary `json:"containers"`
 }
@@ -28,6 +29,7 @@ func newTaskSummary(request *AllocateRequest, allocated *ResourcesAllocated) Tas
 		ID:             request.ID,
 		Name:           request.Name,
 		RegisteredTime: request.TaskActor.RegisteredTime(),
+		ResourcePool:   request.ResourcePool,
 		SlotsNeeded:    request.SlotsNeeded,
 		Containers:     containerSummaries,
 	}
