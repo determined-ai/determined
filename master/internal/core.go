@@ -333,8 +333,8 @@ func (m *Master) Run() error {
 	// Used to decide whether we add trailing slash to the paths or not affecting
 	// relative links in web pages hosted under these routes.
 	staticWebDirectoryPaths := map[string]bool{
-		"/docs":            true,
-		"/docs/api": true,
+		"/docs":          true,
+		"/docs/rest-api": true,
 	}
 
 	// Initialize the HTTP server and listen for incoming requests.
@@ -376,7 +376,7 @@ func (m *Master) Run() error {
 	reactRoot := filepath.Join(webuiRoot, "react")
 
 	// Docs.
-	m.echo.Static("/docs/api", filepath.Join(webuiRoot, "docs", "swagger-ui"))
+	m.echo.Static("/docs/rest-api", filepath.Join(webuiRoot, "docs", "rest-api"))
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
 
 	type fileRoute struct {
