@@ -54,6 +54,7 @@ type awsCluster struct {
 
 	// Only used if spot instances are enabled
 	activeSpotRequests map[string]*spotRequest
+	spotLoopState *spotLoopState
 }
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
@@ -124,6 +125,7 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 
 	if cluster.SpotInstanceEnabled {
 		cluster.activeSpotRequests = make(map[string]*spotRequest)
+		cluster.spotLoopState = &spotLoopState{}
 	}
 
 	return cluster, nil
