@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/pkg/errors"
-	"net/url"
 )
 
 const awsAgentID = `$(ec2metadata --instance-id)`
@@ -136,10 +135,6 @@ func (c *awsCluster) instanceType() instanceType {
 	return c.InstanceType
 }
 
-func (c *awsCluster) maxInstanceNum() int {
-	return c.MaxInstances
-}
-
 func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {
 	return *inst.InstanceId
 }
@@ -238,7 +233,6 @@ func (c *awsCluster) launchOnDemand(
 	if instanceNum <= 0 {
 		return
 	}
-	ctx.Log().Infof("launching %d EC2 instances", instanceNum)
 	instances, err := c.launchInstances(instType, instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
@@ -257,12 +251,6 @@ func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string
 	if len(instanceIDs) == 0 {
 		return
 	}
-
-	ctx.Log().Infof(
-		"terminating %d EC2 instances: %s",
-		len(instanceIDs),
-		instanceIDs,
-	)
 
 	res, err := c.terminateInstances(instanceIDs, false)
 	if err != nil {
