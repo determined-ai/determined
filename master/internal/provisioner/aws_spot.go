@@ -71,17 +71,59 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	// requests are deleted from the AWS API four hours after they are canceled and their instances
 	// are terminated. In normal usage this shouldn't be a performance issue, but it's important we
 	// avoid endlessly resubmitting requests that will instantly fail.
-	activeSpotRequests, inactiveSpotRequests, err := c.listSpotInstanceRequests(ctx, false)
+	spotRequests, err := c.listSpotInstanceRequests(ctx, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
+	}
+
+
+	// If all requests in the lookbackWindow failed, enter backoff and update backoffStart
+	// If there were no requests in the lookbackWindow, make no update
+	// If there was a good request in the lookbackWindow, exit backoff state
+	sort.SliceStable(spotRequests, func(i, j int) bool {
+		return spotRequests[i].CreateTime.Before(*spotRequests[j].CreateTime)
+	})
+	requestsInLookbackWindow := make([]*ec2.SpotInstanceRequest, 0, 0)
+	for _, request := range spotRequests {
+		if time.Now().Before(request.CreateTime.Add(lookbackWindow)) && *request.Status.Code != "pending-evaluation" {
+			requestsInLookbackWindow = append(requestsInLookbackWindow, request)
+		}
+	}
+	if len(requestsInLookbackWindow) != 0 {
+		successfulRequestFoundInLookbackWindow := false
+		for _, request := range requestsInLookbackWindow {
+			if *request.State == "open" || *request.State == "active" {
+				successfulRequestFoundInLookbackWindow = true
+				break
+			}
+		}
+		if successfulRequestFoundInLookbackWindow {
+			c.spotLoopState.inBackoffState = false
+		} else {
+			if !c.spotLoopState.inBackoffState {
+				c.spotLoopState.inBackoffState = true
+				c.spotLoopState.backoffStart = time.Now()
+			}
+		}
+	}
+
+	activeRequests := make([]*ec2.SpotInstanceRequest, 0, 0)
+	inactiveRequests := make([]*ec2.SpotInstanceRequest, 0, 0)
+
+	for _, request := range spotRequests {
+		if *request.State == "open" || *request.State == "active" {
+			activeRequests = append(activeRequests, request)
+		} else {
+			inactiveRequests = append(inactiveRequests, request)
+		}
 	}
 
 	ctx.Log().
 		WithField("log-type", "listSpot.querySpotRequest").
 		Infof("Retrieved spot requests: %d active requests and %d inactive requests",
-			len(activeSpotRequests), len(inactiveSpotRequests))
+			len(activeRequests), len(inactiveRequests))
 
-	c.cleanup(ctx, activeSpotRequests, inactiveSpotRequests)
+	c.cleanup(ctx, spotRequests, activeRequests, inactiveRequests)
 
 	// Next, update the activeRequestSnapshot. It is the list API response + the previous state
 	// for any requests not included in the response. They might not be included because
@@ -93,12 +135,12 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	// internal state will have been lost, so we always build a fresh snapshot
 	// instead of updating in-place
 	inactiveSpotRequestIds := make(map[string]bool)
-	for _, inactiveRequest := range inactiveSpotRequests {
+	for _, inactiveRequest := range inactiveRequests {
 		inactiveSpotRequestIds[*inactiveRequest.SpotInstanceRequestId] = true
 	}
 
 	newActiveSpotRequestSnapshot := make(map[string]*spotRequest)
-	for _, request := range activeSpotRequests {
+	for _, request := range activeRequests {
 		newActiveSpotRequestSnapshot[*request.SpotInstanceRequestId] = &spotRequest{
 			SpotRequestId: *request.SpotInstanceRequestId,
 			State:         *request.State,
@@ -276,7 +318,7 @@ func (c *awsCluster) launchSpot(
 
 
 
-func (c *awsCluster) cleanup(ctx *actor.Context, activeSpotRequests []*ec2.SpotInstanceRequest, inactiveSpotRequests []*ec2.SpotInstanceRequest) {
+func (c *awsCluster) cleanup(ctx *actor.Context, allSpotRequests []*ec2.SpotInstanceRequest, activeSpotRequests []*ec2.SpotInstanceRequest, inactiveSpotRequests []*ec2.SpotInstanceRequest) {
 	// For requests that are in a terminal state, clean up any orphaned
 	// instances and create error logs if there is user action required.
 	// For requests that might require user attention to fix, log the error,
@@ -286,7 +328,6 @@ func (c *awsCluster) cleanup(ctx *actor.Context, activeSpotRequests []*ec2.SpotI
 	allRequestsInApi := make(map[string]bool)
 	spotRequestsToNotifyUserAbout := make([]*ec2.SpotInstanceRequest, 0, 0)
 
-	allSpotRequests := append(activeSpotRequests, inactiveSpotRequests...)
 	for _, request := range allSpotRequests {
 		allRequestsInApi[*request.SpotInstanceRequestId] = true
 		switch *request.Status.Code {
@@ -439,7 +480,7 @@ func (c *awsCluster) createSpotInstanceRequest(
 func (c *awsCluster) listSpotInstanceRequests(
 	ctx *actor.Context,
 	dryRun bool,
-) (activeRequests []*ec2.SpotInstanceRequest, inactiveRequests []*ec2.SpotInstanceRequest, err error) {
+) (requests []*ec2.SpotInstanceRequest, err error) {
 
 	if dryRun {
 		ctx.Log().Debug("dry run of listActiveSpotInstanceRequests.")
@@ -462,50 +503,7 @@ func (c *awsCluster) listSpotInstanceRequests(
 		return
 	}
 
-
-
-	// If all requests in the lookbackWindow failed, enter backoff and update backoffStart
-	// If there were no requests in the lookbackWindow, make no update
-	// If there was a good request in the lookbackWindow, exit backoff state
-	sort.SliceStable(response.SpotInstanceRequests, func(i, j int) bool {
-		return response.SpotInstanceRequests[i].CreateTime.Before(*response.SpotInstanceRequests[j].CreateTime)
-	})
-	requestsInLookbackWindow := make([]*ec2.SpotInstanceRequest, 0, 0)
-	for _, request := range response.SpotInstanceRequests {
-		if time.Now().Before(request.CreateTime.Add(lookbackWindow)) && *request.Status.Code != "pending-evaluation" {
-			requestsInLookbackWindow = append(requestsInLookbackWindow, request)
-		}
-	}
-	if len(requestsInLookbackWindow) != 0 {
-		successfulRequestFoundInLookbackWindow := false
-		for _, request := range requestsInLookbackWindow {
-			if *request.State == "open" || *request.State == "active" {
-				successfulRequestFoundInLookbackWindow = true
-				break
-
-			}
-		}
-		if successfulRequestFoundInLookbackWindow {
-			c.spotLoopState.inBackoffState = false
-		} else {
-			if !c.spotLoopState.inBackoffState {
-				c.spotLoopState.inBackoffState = true
-				c.spotLoopState.backoffStart = time.Now()
-			}
-		}
-	}
-
-	activeRequests = make([]*ec2.SpotInstanceRequest, 0, 0)
-	inactiveRequests = make([]*ec2.SpotInstanceRequest, 0, 0)
-
-	for _, request := range response.SpotInstanceRequests {
-		if *request.State == "open" || *request.State == "active" {
-			activeRequests = append(activeRequests, request)
-		} else {
-			inactiveRequests = append(inactiveRequests, request)
-		}
-	}
-	return
+	return response.SpotInstanceRequests, nil
 }
 
 func (c *awsCluster) listSpotRequestsById(
