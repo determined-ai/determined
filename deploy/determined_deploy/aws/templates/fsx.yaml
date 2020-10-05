@@ -486,6 +486,10 @@ Resources:
                   - ec2:TerminateInstances
                   - ec2:CreateTags
                   - ec2:RunInstances
+                  - ec2:DescribeSpotPriceHistory
+                  - ec2:CancelSpotInstanceRequests
+                  - ec2:RequestSpotInstances
+                  - ec2:DescribeSpotInstanceRequests
                 Resource: "*"
         - PolicyName: pass-role
           PolicyDocument:
