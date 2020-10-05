@@ -53,7 +53,6 @@ type awsCluster struct {
 	client      *ec2.EC2
 
 	// Only used if spot instances are enabled
-	activeSpotRequests map[string]*spotRequest
 	spotLoopState *spotLoopState
 }
 
@@ -124,8 +123,10 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	}
 
 	if cluster.SpotInstanceEnabled {
-		cluster.activeSpotRequests = make(map[string]*spotRequest)
-		cluster.spotLoopState = &spotLoopState{}
+		cluster.spotLoopState = &spotLoopState{
+			activeSpotRequests:      make(map[string]*spotRequest),
+			onlyLogErrorOnceTracker: make(map[string]bool),
+		}
 	}
 
 	return cluster, nil
@@ -145,9 +146,9 @@ func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {
 
 // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html.
 var ec2InstanceStates = map[string]InstanceState{
-	"pending": Starting,
-	"running": Running,
-	"stopped": Stopped,
+	"pending":  Starting,
+	"running":  Running,
+	"stopped":  Stopped,
 	"stopping": Stopping,
 }
 
