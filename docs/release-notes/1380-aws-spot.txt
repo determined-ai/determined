@@ -1,0 +1,8 @@
+:orphan:
+
+    **New Features**
+
+    - Add support for AWS spot instances.
+
+      - Add an option to the AWS provisioner that allows users to automatically use spot
+        instances for dynamic agents. The maximum spot price can optionally be set.
