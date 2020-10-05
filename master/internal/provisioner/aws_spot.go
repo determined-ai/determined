@@ -16,12 +16,12 @@ import (
 // Spot instances are created asynchronously. You create a spot request, the
 // request is validated and, if there is available capacity at the given price,
 // an instance will be created (spot request fulfilled). We use one-time spot
-// requests rather than persistent requests - this means that if an instance is
+// requests rather than persistent requests - if an instance is
 // shut down, the spot request will not try to automatically launch a new instance.
-// The main reason we do this is that it makes state management slightly simpler
-// since AWS will not be doing any automatic provisioning.
+// We do this so state management is slightly simpler
+// because AWS will not be doing any provisioning outside of our code that we need to account for.
 //
-// The link between spot request and instance is a little complicated. Once the
+// Once the
 // spot request has ben fulfilled, the request will have a pointer to the instance
 // id. If the spot request is cancelled, the instance will continue to run. The
 // spot request will enter the status "request-canceled-and-instance-running".
@@ -29,20 +29,9 @@ import (
 // to capacity, the spot request will enter a terminal state (either cancelled,
 // closed or disabled).
 //
-// The scaleDecider interacts with the awsCluster through list, terminate, and
-// launch calls. With spot, list will return the running spot instances. Terminate
-// will terminate both the instances and the associated spot requests (technically
-// not necessary, but good citizenship). Launch will adjust the number of open spot
-// requests to match the desired cluster size.
-//
-// The main complexity in this code is around spot requests that have not yet been
-// fulfilled. The scaleDecider is not aware of these because list only returns running
-// instances. During list, the awsCluster records how many pending requests exist that
-// the scaleDecider is not aware of. Then during launch, it looks at how many additional
-// instances the scaleDecider is requesting and adjusts the number of spot requests to match.
-//
-// This means that spot is tightly coupled to the current implementation of scaleDecider
-// where there is always a list call prior to a launch call.
+// The main concern in this code is that the Spot Request API is eventually
+// consistent and there may be a 30 second delay between creating a spot request
+// and having it appear in listSpotRequests.
 //
 // In some cases spot requests will never be able to be fulfilled and the user will need to
 // make adjustments (no instances of a given type in a certain AZ, AWS capacity limits hit).
@@ -67,7 +56,6 @@ type spotRequest struct {
 }
 
 type spotLoopState struct {
-	permanentFailure bool
 	onlyLogErrorOnceTracker map[string]bool
 	inBackoffState bool
 	backoffStart time.Time
@@ -81,10 +69,8 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 
 	// This list operation will become slower as the number of spot requests grows. Spot Instance
 	// requests are deleted from the AWS API four hours after they are canceled and their instances
-	// are terminated. In normal usage this shouldn't be a performance issue. The one way it could
-	// be a performance issue is if we have a spot request config that can never be fulfilled and
-	// we enter an endless loop of creating new requests that immediately fail every five seconds.
-	// TODO: Figure out how to avoid ending up in that endless loop
+	// are terminated. In normal usage this shouldn't be a performance issue, but it's important we
+	// avoid endlessly resubmitting requests that will instantly fail.
 	activeSpotRequests, inactiveSpotRequests, err := c.listSpotInstanceRequests(ctx, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
@@ -95,13 +81,9 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 		Infof("Retrieved spot requests: %d active requests and %d inactive requests",
 			len(activeSpotRequests), len(inactiveSpotRequests))
 
-	// Clean up time!
-	// If there are spot requests that are cancelled but still have an active instance, delete the instance
-	// If there are requests that failed and the error indicates that the user need to do something, log it
-	// TODO: Currently the implementation means that cleanup is going to grow indefinitely.
-	c.cleanupInactiveSpotRequests(ctx, activeSpotRequests, inactiveSpotRequests)
+	c.cleanup(ctx, activeSpotRequests, inactiveSpotRequests)
 
-	// Next, update the requestSnapshot. It is the API response + the previous state
+	// Next, update the activeRequestSnapshot. It is the list API response + the previous state
 	// for any requests not included in the response. They might not be included because
 	// the the requests were just submitted and the API hasn't caught up yet. Or they
 	// could have transitioned from active to inactive (in which case we don't want to
@@ -110,7 +92,6 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	// In the case of a master restart, we may have active spot requests, but the
 	// internal state will have been lost, so we always build a fresh snapshot
 	// instead of updating in-place
-
 	inactiveSpotRequestIds := make(map[string]bool)
 	for _, inactiveRequest := range inactiveSpotRequests {
 		inactiveSpotRequestIds[*inactiveRequest.SpotInstanceRequestId] = true
@@ -166,8 +147,6 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 			})
 		}
 	}
-
-
 
 	instancesToReturn, err := c.describeInstancesById(runningSpotInstanceIds, false)
 	if err != nil {
@@ -238,7 +217,9 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 		)
 	}
 
-	// TODO: We could clean up the spot instances here. But it will be cleaned up on the next call to list() anyway
+	// TODO: Race condition - an instance could have been created between listing
+	//       and terminating spot request. We could clean up the spot instances here.
+	//      But it will be cleaned up on the next call to list() anyway.
 }
 
 
@@ -270,8 +251,8 @@ func (c *awsCluster) launchSpot(
 	}
 
 	// Update the internal spotRequest tracker because there can be a large delay
-	// before the API start returning information about this spot request and if
-	// we don't track it internally, we will end up overprovisioning.
+	// before the API starts including these requests in listSpotRequest API calls,
+	// and if we don't track it internally, we will end up overprovisioning.
 	for _, request := range resp.SpotInstanceRequests {
 		c.activeSpotRequests[*request.SpotInstanceRequestId] = &spotRequest{
 			SpotRequestId: *request.SpotInstanceRequestId,
@@ -295,9 +276,11 @@ func (c *awsCluster) launchSpot(
 
 
 
-func (c *awsCluster) cleanupInactiveSpotRequests(ctx *actor.Context, activeSpotRequests []*ec2.SpotInstanceRequest, inactiveSpotRequests []*ec2.SpotInstanceRequest) {
+func (c *awsCluster) cleanup(ctx *actor.Context, activeSpotRequests []*ec2.SpotInstanceRequest, inactiveSpotRequests []*ec2.SpotInstanceRequest) {
 	// For requests that are in a terminal state, clean up any orphaned
-	// instances and create error logs if there is user action required
+	// instances and create error logs if there is user action required.
+	// For requests that might require user attention to fix, log the error,
+	// but make sure we only log the error once
 
 	instancesToTerminate := make([]*string, 0, 0)
 	allRequestsInApi := make(map[string]bool)
@@ -331,7 +314,7 @@ func (c *awsCluster) cleanupInactiveSpotRequests(ctx *actor.Context, activeSpotR
 			continue
 		case
 			"bad-parameters",
-			"constraint-not-fulfillable",  // TODO: This isn't actually an unfulfillable request
+			"constraint-not-fulfillable",
 			"limit-exceeded":
 			// Unfulfillable, requiring user attention
 			if _, ok := c.spotLoopState.onlyLogErrorOnceTracker[*request.SpotInstanceRequestId]; !ok {
@@ -360,7 +343,7 @@ func (c *awsCluster) cleanupInactiveSpotRequests(ctx *actor.Context, activeSpotR
 	}
 
 	// Keep the size of the onlyLogErrorOnceTracker small by removing items after
-	// the AWS API stop keeping track of the request (according to docs, 4 hours
+	// the AWS API stops keeping track of the request (according to docs, 4 hours
 	// after requests enters terminal state)
 	for spotRequestId, _ := range c.spotLoopState.onlyLogErrorOnceTracker {
 		if _, ok := allRequestsInApi[spotRequestId]; !ok {
@@ -481,7 +464,7 @@ func (c *awsCluster) listSpotInstanceRequests(
 
 
 
-	// If all requests in the lookbackWindow failed with a transient error, enter backoff and update backoffStart
+	// If all requests in the lookbackWindow failed, enter backoff and update backoffStart
 	// If there were no requests in the lookbackWindow, make no update
 	// If there was a good request in the lookbackWindow, exit backoff state
 	sort.SliceStable(response.SpotInstanceRequests, func(i, j int) bool {
