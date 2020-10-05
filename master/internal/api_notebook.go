@@ -5,11 +5,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/logs"
+
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -48,35 +46,27 @@ func (a *apiServer) NotebookLogs(
 	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
 	eventManager := a.m.system.Get(cmdManagerAddr.Child("events"))
 
-	logRequest := api.LogsRequest{
+	streamRequest := logs.StreamRequest{
 		Offset: int(req.Offset),
 		Limit:  int(req.Limit),
 		Follow: req.Follow,
 	}
 
-	onLogEntry := func(log *logger.Entry) error {
-		return resp.Send(&apiv1.NotebookLogsResponse{LogEntry: api.LogEntryToProtoLogEntry(log)})
+	onBatch := func(b logs.Batch) error {
+		return b.ForEach(func(r logs.Record) error {
+			return resp.Send(&apiv1.NotebookLogsResponse{
+				LogEntry: logEntryToProtoLogEntry(r.(*logger.Entry)),
+			})
+		})
 	}
 
-	streamID, err := uuid.NewUUID()
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to generate the stream uuid")
-	}
-	logStreamActorAddr := cmdManagerAddr.Child("logStream-" + streamID.String())
-	logStreamActor, created := a.m.system.ActorOf(
-		logStreamActorAddr,
-		api.NewLogStreamActor(
+	return a.m.system.MustActorOf(
+		cmdManagerAddr.Child("logStream-"+uuid.New().String()),
+		logs.NewStreamBatchProcessor(
 			resp.Context(),
+			streamRequest,
 			eventManager,
-			logRequest,
-			onLogEntry,
+			onBatch,
 		),
-	)
-
-	if !created {
-		return errors.New("failed to create actor")
-	}
-
-	// Keep the request context open until the actor stops.
-	return logStreamActor.AwaitTermination()
+	).AwaitTermination()
 }

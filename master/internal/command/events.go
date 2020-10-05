@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/logs"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 
@@ -58,7 +60,7 @@ type event struct {
 	LogEvent *string `json:"log_event"`
 }
 
-type logSubscribers = map[*actor.Ref]webAPI.LogsRequest
+type logSubscribers = map[*actor.Ref]logs.StreamRequest
 
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
@@ -83,7 +85,7 @@ func newEventManager() *eventManager {
 
 func (e *eventManager) removeSusbscribers(ctx *actor.Context) {
 	for actor := range e.logStreams {
-		ctx.Tell(actor, webAPI.CloseStream{})
+		ctx.Tell(actor, logs.CloseStream{})
 	}
 	e.logStreams = nil
 }
@@ -92,7 +94,7 @@ func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg event) {
 	for streamActor, logRequest := range e.logStreams {
 		if eventSatisfiesLogRequest(logRequest, &msg) {
 			entry := eventToLogEntry(&msg)
-			ctx.Tell(streamActor, *entry)
+			ctx.Tell(streamActor, logger.EntriesBatch([]*logger.Entry{entry}))
 		}
 	}
 
@@ -134,33 +136,35 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 		e.processNewLogEvent(ctx, msg)
 
-	case webAPI.LogsRequest:
+	case logs.StreamRequest:
 		if ctx.Sender() == nil {
 			panic(ctxMissingSender)
 		}
 		ctx.Respond(true)
 
 		total := countNonNullRingValues(e.buffer)
-		offset := webAPI.EffectiveOffset(msg.Offset, total)
-		msg.Offset = offset
+		msg.Offset = webAPI.EffectiveOffset(msg.Offset, total)
 
 		matchingEvents := e.getMatchingEvents(msg)
+		var logEntries []*logger.Entry
 		for _, ev := range matchingEvents {
 			logEntry := eventToLogEntry(ev)
 			if logEntry != nil {
-				ctx.Tell(ctx.Sender(), *logEntry)
+				logEntries = append(logEntries, logEntry)
 			}
 		}
+
+		ctx.Tell(ctx.Sender(), logger.EntriesBatch(logEntries))
 
 		limitMet := msg.Limit > 0 && len(matchingEvents) >= msg.Limit
 
 		if msg.Follow && !e.isTerminated && !limitMet {
 			e.logStreams[ctx.Sender()] = msg
 		} else {
-			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})
+			ctx.Tell(ctx.Sender(), logs.CloseStream{})
 		}
 
-	case webAPI.CloseStream:
+	case logs.CloseStream:
 		if ctx.Sender() == nil {
 			panic(ctxMissingSender)
 		}
@@ -258,11 +262,11 @@ func eventToLogEntry(ev *event) *logger.Entry {
 	}
 }
 
-func eventSatisfiesLogRequest(req webAPI.LogsRequest, event *event) bool {
+func eventSatisfiesLogRequest(req logs.StreamRequest, event *event) bool {
 	return event.Seq >= req.Offset
 }
 
-func (e *eventManager) getMatchingEvents(req webAPI.LogsRequest) []*event {
+func (e *eventManager) getMatchingEvents(req logs.StreamRequest) []*event {
 	events := e.buffer
 	var logs []*event
 

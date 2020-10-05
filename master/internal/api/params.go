@@ -1,23 +1,21 @@
 package api
 
-import "math"
-
-// EffectiveOffset translated negative offsets into positive ones.
-func EffectiveOffset(reqOffset int, total int) (offset int) {
+// EffectiveOffset translates negative offsets into positive ones.
+func EffectiveOffset(offset, total int) int {
 	switch {
-	case reqOffset < -total:
+	case offset < -total:
 		return 0
-	case reqOffset < 0:
-		return int(math.Max(float64(total+reqOffset), 0))
+	case offset < 0:
+		return max(total+offset, 0)
 	default:
-		return reqOffset
+		return offset
 	}
 }
 
 // EffectiveLimit computes a hard limit based on the offset and total available items if there is a
 // limit set.
 // Input: non-negative offset
-func EffectiveLimit(limit int, offset int, total int) int {
+func EffectiveLimit(limit, offset, total int) int {
 	if offset < 0 {
 		panic("input offset has to be non-negative")
 	}
@@ -31,9 +29,16 @@ func EffectiveLimit(limit int, offset int, total int) int {
 	}
 }
 
-// EffectiveOffsetNLimit chains EffectiveOffset and EffectiveLimit together.
-func EffectiveOffsetNLimit(reqOffset int, reqLimit int, totalItems int) (offset int, limit int) {
-	offset = EffectiveOffset(reqOffset, totalItems)
-	limit = EffectiveLimit(reqLimit, offset, totalItems)
-	return offset, limit
+// EffectiveOffsetAndLimit calculates effective offset and limit.
+func EffectiveOffsetAndLimit(offset, limit int, totalItems int) (int, int) {
+	eOffset := EffectiveOffset(offset, totalItems)
+	eLimit := EffectiveLimit(limit, eOffset, totalItems)
+	return eOffset, eLimit
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

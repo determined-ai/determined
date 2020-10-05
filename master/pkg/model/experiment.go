@@ -3,6 +3,8 @@ package model
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/logs"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/version"
@@ -391,14 +393,33 @@ type TrialLog struct {
 	TrialID int    `db:"trial_id"`
 	Message string `db:"message"`
 
-	AgentID string `db:"agent_id"`
+	AgentID *string `db:"agent_id"`
 	// In the case of k8s, container_id is a pod name instead.
-	ContainerID string    `db:"container_id"`
-	RankID      int       `db:"rank_id"`
-	Timestamp   time.Time `db:"timestamp"`
-	Level       string    `db:"level"`
-	StdType     int       `db:"std_type"`
-	Source      string    `db:"source"`
+	ContainerID *string    `db:"container_id"`
+	RankID      *int       `db:"rank_id"`
+	Timestamp   *time.Time `db:"timestamp"`
+	Level       *string    `db:"level"`
+	StdType     *int       `db:"std_type"`
+	Source      *string    `db:"source"`
+}
+
+// TrialLogBatch represents a batch of model.TrialLog.
+type TrialLogBatch []*TrialLog
+
+// Size implements logs.Batch.
+func (t TrialLogBatch) Size() int {
+	return len(t)
+}
+
+// ForEach implements logs.Batch.
+func (t TrialLogBatch) ForEach(f func(logs.Record) error) error {
+	for _, tl := range t {
+		err := f(tl)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // SearcherEvent represents a row from the `searcher_events` table.

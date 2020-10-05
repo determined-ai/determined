@@ -6,8 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/internal/logs"
+	"github.com/determined-ai/determined/master/internal/logs/fetchers"
 
 	"github.com/pkg/errors"
 
@@ -21,10 +26,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-const (
-	batchSize     = 1000
-	batchWaitTime = 100 * time.Millisecond
-)
+var trialLogsBatchWaitTime = 100 * time.Millisecond
 
 func trialStatus(d *db.PgDB, trialID int32) (model.State, int, error) {
 	trialStatus := struct {
@@ -50,45 +52,38 @@ func (a *apiServer) TrialLogs(
 		return err
 	}
 
-	offset := api.EffectiveOffset(int(req.Offset), total)
+	onBatch := func(b logs.Batch) error {
+		return b.ForEach(func(r logs.Record) error {
+			trialLog := r.(*model.TrialLog)
+			return resp.Send(&apiv1.TrialLogsResponse{
+				Id:      int32(trialLog.ID) - 1, // WebUI assumes logs are 0-indexed
+				Message: trialLog.Message,
+			})
+		})
+	}
 
-	if limit := int32(total - offset); !req.Follow && (limit < req.Limit || req.Limit == 0) {
-		req.Limit = limit
-	}
-	count := 0
-	for {
-		queryLimit := int(req.Limit) - count
-		if req.Limit == 0 || queryLimit > batchSize {
-			queryLimit = batchSize
+	terminateCheck := logs.TerminationCheckFn(func() (bool, error) {
+		state, _, err := trialStatus(a.m.db, req.TrialId)
+		if err != nil || model.TerminalStates[state] {
+			return true, err
 		}
-		if queryLimit <= 0 {
-			return nil
-		}
-		var logs []*apiv1.TrialLogsResponse
-		if err := a.m.db.QueryProto("stream_logs", &logs, req.TrialId, offset, queryLimit); err != nil {
-			return err
-		}
-		for i, log := range logs {
-			log.Id = int32(offset + i)
-			if err := resp.Send(log); err != nil {
-				return err
-			}
-		}
-		newRecords := len(logs)
-		count += newRecords
-		offset += newRecords
-		if newRecords < queryLimit {
-			state, _, err := trialStatus(a.m.db, req.TrialId)
-			if err != nil || model.TerminalStates[state] {
-				return err
-			}
-		}
-		time.Sleep(batchWaitTime)
-		if err := resp.Context().Err(); err != nil {
-			// context is closed
-			return nil
-		}
-	}
+		return false, nil
+	})
+
+	offset, limit := api.EffectiveOffsetAndLimit(int(req.Offset), int(req.Limit), total)
+
+	return a.m.system.MustActorOf(
+		actor.Addr("logStore-"+uuid.New().String()),
+		logs.NewStoreBatchProcessor(
+			resp.Context(),
+			limit,
+			req.Follow,
+			fetchers.NewPostgresTrialLogsFetcher(a.m.db, int(req.TrialId), offset),
+			onBatch,
+			&terminateCheck,
+			&trialLogsBatchWaitTime,
+		),
+	).AwaitTermination()
 }
 
 func (a *apiServer) GetTrialCheckpoints(

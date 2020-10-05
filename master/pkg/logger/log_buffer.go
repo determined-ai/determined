@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/logs"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -84,6 +86,24 @@ type Entry struct {
 	Message string       `json:"message"`
 	Time    time.Time    `json:"time"`
 	Level   logrus.Level `json:"level"`
+}
+
+// EntriesBatch is a batch of logger.Entry.
+type EntriesBatch []*Entry
+
+// Size implements logs.Batch.
+func (eb EntriesBatch) Size() int {
+	return len(eb)
+}
+
+// ForEach implements logs.Batch.
+func (eb EntriesBatch) ForEach(f func(logs.Record) error) error {
+	for _, e := range eb {
+		if err := f(e); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // LogBuffer is an in-memory buffer based logger.

@@ -97,3 +97,18 @@ func (s *System) ActorOf(address Address, actor Actor) (*Ref, bool) {
 	created := resp.Get().(childCreated)
 	return created.child, created.created
 }
+
+// MustActorOf adds the actor with the provided address.
+// It panics if a new actor was not created.
+func (s *System) MustActorOf(address Address, actor Actor) *Ref {
+	parent := s.Get(address.Parent())
+	if parent == nil {
+		panic("address has no parent")
+	}
+	resp := s.Ask(parent, createChild{address: address, actor: actor})
+	if resp.Empty() {
+		panic("createChild had empty response")
+	}
+	created := resp.Get().(childCreated)
+	return created.child
+}
