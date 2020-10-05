@@ -130,7 +130,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 			if _, ok2 := inactiveSpotRequestIds[previousSpotRequestInfo.SpotRequestId]; !ok2 {
 				// This requests was also not one of the inactive spotRequests returned by the API.
 				// This means that it is a fresh spot request and the API just hasn't updated yet.
-				// Include it in the snapshot as it
+				// Include it in the snapshot as is.
 				newActiveSpotRequestSnapshot[previousSpotRequestInfo.SpotRequestId] = previousSpotRequestInfo
 			}
 		}
