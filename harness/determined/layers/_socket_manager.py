@@ -22,10 +22,9 @@ class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignor
         self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         self.ctx.verify_mode = ssl.CERT_REQUIRED
         self.ctx.check_hostname = True
+        self.ctx.load_default_certs()
         if env.master_cert_file is not None:
             self.ctx.load_verify_locations(cafile=env.master_cert_file)
-        else:
-            self.ctx.load_default_certs()
 
     def _wrap_socket(self, sock: socket.SocketType, host: str) -> socket.SocketType:
         return self.ctx.wrap_socket(sock, server_hostname=host)
