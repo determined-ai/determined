@@ -98,7 +98,6 @@ func (p *Provisioner) SlotsPerInstance() int {
 }
 
 func (p *Provisioner) provision(ctx *actor.Context) {
-	// AWS Spot instance support relies on provider.list always taking place before provider.launch.
 	instances, err := p.provider.list(ctx)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot list instances")
