@@ -7,13 +7,11 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // LogEntry is a log event.
 message LogEntry {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {
-            required: ["id"]
-        }
-    };
-    // The id of the log.
-    int32 id = 1;
-    // The message.
-    string message = 2;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  // The id of the log.
+  int32 id = 1;
+  // The message.
+  string message = 2;
 }

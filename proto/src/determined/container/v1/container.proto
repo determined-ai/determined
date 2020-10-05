@@ -7,29 +7,31 @@ import "determined/device/v1/device.proto";
 
 // The current state of the container.
 enum State {
-    // The container state is unknown.
-    STATE_UNSPECIFIED = 0;
-    // The container has been assigned to an agent but has not started yet.
-    STATE_ASSIGNED = 1;
-    // The container's base image is being pulled from the Docker registry.
-    STATE_PULLING = 2;
-    // The image has been built and the container is being started, but the service in the container is not ready yet.
-    STATE_STARTING = 3;
-    // The service in the container is able to accept requests.
-    STATE_RUNNING = 4;
-    // The container has completely exited or the container has been aborted prior to getting assigned.
-    STATE_TERMINATED = 5;
+  // The container state is unknown.
+  STATE_UNSPECIFIED = 0;
+  // The container has been assigned to an agent but has not started yet.
+  STATE_ASSIGNED = 1;
+  // The container's base image is being pulled from the Docker registry.
+  STATE_PULLING = 2;
+  // The image has been built and the container is being started, but the
+  // service in the container is not ready yet.
+  STATE_STARTING = 3;
+  // The service in the container is able to accept requests.
+  STATE_RUNNING = 4;
+  // The container has completely exited or the container has been aborted prior
+  // to getting assigned.
+  STATE_TERMINATED = 5;
 }
 
-// Container is a Docker container that is either scheduled to run or is currently running on a
-// set of slots.
+// Container is a Docker container that is either scheduled to run or is
+// currently running on a set of slots.
 message Container {
-    // The id of the task that is currently managing this container.
-    string parent = 1;
-    // The unique id of this instance of a container.
-    string id = 2;
-    // The current state that the container is currently in.
-    State state = 3;
-    // A list of devices that is being used by this container.
-    repeated determined.device.v1.Device devices = 4;
+  // The id of the task that is currently managing this container.
+  string parent = 1;
+  // The unique id of this instance of a container.
+  string id = 2;
+  // The current state that the container is currently in.
+  State state = 3;
+  // A list of devices that is being used by this container.
+  repeated determined.device.v1.Device devices = 4;
 }

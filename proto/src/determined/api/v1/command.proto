@@ -10,56 +10,55 @@ import "determined/command/v1/command.proto";
 
 // Get a list of commands.
 message GetCommandsRequest {
-    // Sorts commands by the given field.
-    enum SortBy {
-        // Returns commands in an unsorted list.
-        SORT_BY_UNSPECIFIED = 0;
-        // Returns commands sorted by id.
-        SORT_BY_ID = 1;
-        // Returns commands sorted by description.
-        SORT_BY_DESCRIPTION = 2;
-        // Return commands sorted by start time.
-        SORT_BY_START_TIME = 4;
-
-    }
-    // Sort commands by the given field
-    SortBy sort_by = 1;
-    // Order commands in either ascending or descending order.
-    OrderBy order_by = 2;
-    // Skip the number of commands before returning results. Negative values
-    // denote number of commands to skip from the end before returning results.
-    int32 offset = 3;
-    // Limit the number of commands. A value of 0 denotes no limit.
-    int32 limit = 4;
+  // Sorts commands by the given field.
+  enum SortBy {
+    // Returns commands in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns commands sorted by id.
+    SORT_BY_ID = 1;
+    // Returns commands sorted by description.
+    SORT_BY_DESCRIPTION = 2;
+    // Return commands sorted by start time.
+    SORT_BY_START_TIME = 4;
+  }
+  // Sort commands by the given field
+  SortBy sort_by = 1;
+  // Order commands in either ascending or descending order.
+  OrderBy order_by = 2;
+  // Skip the number of commands before returning results. Negative values
+  // denote number of commands to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of commands. A value of 0 denotes no limit.
+  int32 limit = 4;
 }
 // Response to GetCommandsRequest.
 message GetCommandsResponse {
-    // The list of returned commands.
-    repeated determined.command.v1.Command commands = 1;
-    // Pagination information of the full dataset.
-    Pagination pagination = 2;
+  // The list of returned commands.
+  repeated determined.command.v1.Command commands = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get the requested command.
 message GetCommandRequest {
-    // The id of the command.
-    string command_id = 1;
+  // The id of the command.
+  string command_id = 1;
 }
 // Response to GetCommandRequest.
 message GetCommandResponse {
-    // The requested command.
-    determined.command.v1.Command command = 1;
-    // The command config.
-    google.protobuf.Struct config = 2;
+  // The requested command.
+  determined.command.v1.Command command = 1;
+  // The command config.
+  google.protobuf.Struct config = 2;
 }
 
 // Kill the requested command.
 message KillCommandRequest {
-    // The id of the command.
-    string command_id = 1;
+  // The id of the command.
+  string command_id = 1;
 }
 // Response to KillCommandRequest.
 message KillCommandResponse {
-    // The requested command.
-    determined.command.v1.Command command = 1;
+  // The requested command.
+  determined.command.v1.Command command = 1;
 }

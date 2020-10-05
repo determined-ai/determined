@@ -9,16 +9,16 @@ import "determined/container/v1/container.proto";
 
 // Notebook is a Jupyter notebook in a containerized environment.
 message Notebook {
-    // The id of the notebook.
-    string id = 1;
-    // The description of the notebook.
-    string description = 2;
-    // The time the notebook was started.
-    google.protobuf.Timestamp start_time = 4;
-    // The container running the notebook.
-    determined.container.v1.Container container = 6;
-    // The username of the user that created the notebook.
-    string username = 10;
-    // The service address.
-    string service_address = 11;
+  // The id of the notebook.
+  string id = 1;
+  // The description of the notebook.
+  string description = 2;
+  // The time the notebook was started.
+  google.protobuf.Timestamp start_time = 4;
+  // The container running the notebook.
+  determined.container.v1.Container container = 6;
+  // The username of the user that created the notebook.
+  string username = 10;
+  // The service address.
+  string service_address = 11;
 }

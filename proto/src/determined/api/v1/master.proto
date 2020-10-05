@@ -11,28 +11,28 @@ import "determined/log/v1/log.proto";
 message GetMasterRequest {}
 // Response to GetMasterRequest.
 message GetMasterResponse {
-    // The current version of the master.
-    string version = 1;
-    // The current instance id of the master.
-    string master_id = 2;
-    // The global cluster id of the master.
-    string cluster_id = 3;
-    // The config file loaded by the master.
-    google.protobuf.Struct config = 4;
+  // The current version of the master.
+  string version = 1;
+  // The current instance id of the master.
+  string master_id = 2;
+  // The global cluster id of the master.
+  string cluster_id = 3;
+  // The config file loaded by the master.
+  google.protobuf.Struct config = 4;
 }
 
 // Stream master logs.
 message MasterLogsRequest {
-    // Skip the number of master logs before returning results. Negative values
-    // denote number of master logs to skip from the end before returning results.
-    int32 offset = 3;
-    // Limit the number of master logs. A value of 0 denotes no limit.
-    int32 limit = 4;
-    // Continue following logs until the master stops or the limit is reached.
-    bool follow = 5;
+  // Skip the number of master logs before returning results. Negative values
+  // denote number of master logs to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of master logs. A value of 0 denotes no limit.
+  int32 limit = 4;
+  // Continue following logs until the master stops or the limit is reached.
+  bool follow = 5;
 }
 // Response to MasterLogsRequest.
 message MasterLogsResponse {
-    // The log entry.
-    determined.log.v1.LogEntry log_entry = 1;
+  // The log entry.
+  determined.log.v1.LogEntry log_entry = 1;
 }

@@ -33,3 +33,12 @@ build: $(patsubst %.proto, %.pb.go, $(shell find src/determined -type f -name '*
 .PHONY: check
 check:
 	buf check lint
+
+.PHONY: check-fmt
+check-fmt:
+	git ls-files -z 'src/determined/**/*.proto' | xargs -0 -P8 clang-format --dry-run --Werror
+
+.PHONY: fmt
+fmt:
+	git ls-files -z 'src/determined/**/*.proto' | xargs -0 -P8 clang-format -i
+

@@ -32,9 +32,9 @@ enum State {
 // Checkpoint is an artifact created by a trial during training.
 message Checkpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: {
-          required: ["start_time", "experiment_id", "trial_id", "batch_number"]
-      }
+    json_schema: {
+      required: [ "start_time", "experiment_id", "trial_id", "batch_number" ]
+    }
   };
   // UUID of the checkpoint.
   string uuid = 1;
@@ -43,16 +43,17 @@ message Checkpoint {
   // The ID of the experiment that created this checkpoint.
   int32 experiment_id = 3;
   // The ID of the trial that created this checkpoint.
-  int32 trial_id  = 4;
+  int32 trial_id = 4;
   // Hyperparameter values for the trial that created this checkpoint.
   google.protobuf.Struct hparams = 5;
   // Batch number of this checkpoint.
   int32 batch_number = 6;
   // Timestamp when the checkpoint began being saved to persistent storage.
-  google.protobuf.Timestamp start_time  = 7;
+  google.protobuf.Timestamp start_time = 7;
   // Timestamp when the checkpoint completed being saved to persistent storage.
-  google.protobuf.Timestamp end_time  = 8;
-  // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
+  google.protobuf.Timestamp end_time = 8;
+  // Dictionary of file paths to file sizes in bytes of all files in the
+  // checkpoint.
   map<string, int64> resources = 9;
   // User defined metadata associated with the checkpoint.
   google.protobuf.Struct metadata = 10;

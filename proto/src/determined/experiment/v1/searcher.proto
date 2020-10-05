@@ -5,60 +5,67 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1"
 
 import "google/protobuf/struct.proto";
 
-// WorkloadKind defines the kind of workload that should be executed by trial runners.
+// WorkloadKind defines the kind of workload that should be executed by trial
+// runners.
 enum Unit {
-    // Denotes an unknown Uz.
-    UNIT_UNSPECIFIED = 0;
-    // Unit type "Batches".
-    UNIT_BATCHES = 1;
-    // Unit type "Records".
-    UNIT_RECORDS = 2;
-    // Unit type "Epochs".
-    UNIT_EPOCHS = 3;
+  // Denotes an unknown Uz.
+  UNIT_UNSPECIFIED = 0;
+  // Unit type "Batches".
+  UNIT_BATCHES = 1;
+  // Unit type "Records".
+  UNIT_RECORDS = 2;
+  // Unit type "Epochs".
+  UNIT_EPOCHS = 3;
 }
 
 // TrainingUnits represents a single runnable operation emitted by a searcher.
 message TrainingUnits {
-    // This is the unit the TrainingLength is in terms of.
-    Unit unit = 1;
-    // This is the magnitude of the TrainingLength.
-    int32 count = 2;
+  // This is the unit the TrainingLength is in terms of.
+  Unit unit = 1;
+  // This is the magnitude of the TrainingLength.
+  int32 count = 2;
 }
 
-// RunnableType defines the type of operation that should be executed by trial runners.
+// RunnableType defines the type of operation that should be executed by trial
+// runners.
 enum RunnableType {
-    // Denotes an unknown runnable type.
-    RUNNABLE_TYPE_UNSPECIFIED = 0;
-    // Signals to a trial runner that it should run a train.
-    RUNNABLE_TYPE_TRAIN = 1;
-    // Signals to a trial runner it should compute validation metrics.
-    RUNNABLE_TYPE_VALIDATE = 2;
-    // Signals to the trial runner that the current model state should be checkpointed.
-    RUNNABLE_TYPE_CHECKPOINT = 3;
+  // Denotes an unknown runnable type.
+  RUNNABLE_TYPE_UNSPECIFIED = 0;
+  // Signals to a trial runner that it should run a train.
+  RUNNABLE_TYPE_TRAIN = 1;
+  // Signals to a trial runner it should compute validation metrics.
+  RUNNABLE_TYPE_VALIDATE = 2;
+  // Signals to the trial runner that the current model state should be
+  // checkpointed.
+  RUNNABLE_TYPE_CHECKPOINT = 3;
 }
 
-// RunnableOperation represents a single runnable operation emitted by a searcher.
+// RunnableOperation represents a single runnable operation emitted by a
+// searcher.
 message RunnableOperation {
-    // This is the type of the operation.
-    RunnableType type = 1;
-    // If the type == WORKLOAD_KIND_TRAIN, this is the number of units
-    TrainingUnits length = 2;
+  // This is the type of the operation.
+  RunnableType type = 1;
+  // If the type == WORKLOAD_KIND_TRAIN, this is the number of units
+  TrainingUnits length = 2;
 }
 
-// TrialSimulation is a specific sequence of workloads that were run before the trial was completed.
+// TrialSimulation is a specific sequence of workloads that were run before the
+// trial was completed.
 message TrialSimulation {
-    // The list of operations that were run before the trial was completed.
-    repeated RunnableOperation operations = 1;
-    // The number of times that this trial configuration has occurred during the simulation.
-    int32 occurrences = 2;
+  // The list of operations that were run before the trial was completed.
+  repeated RunnableOperation operations = 1;
+  // The number of times that this trial configuration has occurred during the
+  // simulation.
+  int32 occurrences = 2;
 }
 
-// ExperimentSimulation holds the configuration and results of simulated run of a searcher.
+// ExperimentSimulation holds the configuration and results of simulated run of
+// a searcher.
 message ExperimentSimulation {
-    // The simulated experiment config.
-    google.protobuf.Struct config = 1;
-    // The searcher simulation seed.
-    uint32 seed = 2;
-    // The list of trials in the simulation.
-    repeated TrialSimulation trials = 3;
+  // The simulated experiment config.
+  google.protobuf.Struct config = 1;
+  // The searcher simulation seed.
+  uint32 seed = 2;
+  // The list of trials in the simulation.
+  repeated TrialSimulation trials = 3;
 }

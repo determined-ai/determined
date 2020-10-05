@@ -9,14 +9,14 @@ import "determined/container/v1/container.proto";
 
 // Command is a single container running the configured command.
 message Command {
-    // The id of the command.
-    string id = 1;
-    // The description of the command.
-    string description = 2;
-    // The time the command was started.
-    google.protobuf.Timestamp start_time = 4;
-    // The container running the command.
-    determined.container.v1.Container container = 6;
-    // The username of the user that created the command.
-    string username = 10;
+  // The id of the command.
+  string id = 1;
+  // The description of the command.
+  string description = 2;
+  // The time the command was started.
+  google.protobuf.Timestamp start_time = 4;
+  // The container running the command.
+  determined.container.v1.Container container = 6;
+  // The username of the user that created the command.
+  string username = 10;
 }

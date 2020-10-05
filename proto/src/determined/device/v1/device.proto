@@ -5,22 +5,22 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/devicev1";
 
 // The type of the Device.
 enum Type {
-    // An unspecified device type.
-    TYPE_UNSPECIFIED = 0;
-    // A CPU device.
-    TYPE_CPU = 1;
-    // A GPU device.
-    TYPE_GPU = 2;
+  // An unspecified device type.
+  TYPE_UNSPECIFIED = 0;
+  // A CPU device.
+  TYPE_CPU = 1;
+  // A GPU device.
+  TYPE_GPU = 2;
 }
 
 // Device represents a single computational device on an agent.
 message Device {
-    // The index of the device.
-    int32 id = 1;
-    // The brand name of the device.
-    string brand = 2;
-    // The unique UUID of the device.
-    string uuid = 3;
-    // The type of the Device.
-    Type type = 4;
+  // The index of the device.
+  int32 id = 1;
+  // The brand name of the device.
+  string brand = 2;
+  // The unique UUID of the device.
+  string uuid = 3;
+  // The type of the Device.
+  Type type = 4;
 }

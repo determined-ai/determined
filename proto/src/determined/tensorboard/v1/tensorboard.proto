@@ -9,20 +9,20 @@ import "determined/container/v1/container.proto";
 
 // Tensorboard is a tensorboard instance in a containerized environment.
 message Tensorboard {
-    // The id of the tensorboard.
-    string id = 1;
-    // The description of the tensorboard.
-    string description = 2;
-    // The time the tensorboard was started.
-    google.protobuf.Timestamp start_time = 4;
-    // The container running the tensorboard.
-    determined.container.v1.Container container = 6;
-    // The experiment ids loaded into this tensorboard instance.
-    repeated int32 experiment_ids = 7;
-    // The trial ids loaded into this tensorboard instance.
-    repeated int32 trial_ids = 8;
-    // The username of the user that created the tensorboard.
-    string username = 10;
-    // The service address.
-    string service_address = 11;
+  // The id of the tensorboard.
+  string id = 1;
+  // The description of the tensorboard.
+  string description = 2;
+  // The time the tensorboard was started.
+  google.protobuf.Timestamp start_time = 4;
+  // The container running the tensorboard.
+  determined.container.v1.Container container = 6;
+  // The experiment ids loaded into this tensorboard instance.
+  repeated int32 experiment_ids = 7;
+  // The trial ids loaded into this tensorboard instance.
+  repeated int32 trial_ids = 8;
+  // The username of the user that created the tensorboard.
+  string username = 10;
+  // The service address.
+  string service_address = 11;
 }

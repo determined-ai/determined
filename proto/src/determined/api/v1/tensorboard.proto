@@ -8,67 +8,67 @@ import "determined/tensorboard/v1/tensorboard.proto";
 
 // Get a list of tensorboards.
 message GetTensorboardsRequest {
-    // Sorts tensorboards by the given field.
-    enum SortBy {
-        // Returns tensorboards in an unsorted list.
-        SORT_BY_UNSPECIFIED = 0;
-        // Returns tensorboards sorted by id.
-        SORT_BY_ID = 1;
-        // Returns tensorboards sorted by description.
-        SORT_BY_DESCRIPTION = 2;
-        // Return tensorboards sorted by start time.
-        SORT_BY_START_TIME = 4;
-
-    }
-    // Sort tensorboards by the given field
-    SortBy sort_by = 1;
-    // Order tensorboards in either ascending or descending order.
-    OrderBy order_by = 2;
-    // Skip the number of tensorboards before returning results. Negative values
-    // denote number of tensorboards to skip from the end before returning results.
-    int32 offset = 3;
-    // Limit the number of tensorboards. A value of 0 denotes no limit.
-    int32 limit = 4;
+  // Sorts tensorboards by the given field.
+  enum SortBy {
+    // Returns tensorboards in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns tensorboards sorted by id.
+    SORT_BY_ID = 1;
+    // Returns tensorboards sorted by description.
+    SORT_BY_DESCRIPTION = 2;
+    // Return tensorboards sorted by start time.
+    SORT_BY_START_TIME = 4;
+  }
+  // Sort tensorboards by the given field
+  SortBy sort_by = 1;
+  // Order tensorboards in either ascending or descending order.
+  OrderBy order_by = 2;
+  // Skip the number of tensorboards before returning results. Negative values
+  // denote number of tensorboards to skip from the end before returning
+  // results.
+  int32 offset = 3;
+  // Limit the number of tensorboards. A value of 0 denotes no limit.
+  int32 limit = 4;
 }
 // Response to GetTensorboardsRequest.
 message GetTensorboardsResponse {
-    // The list of returned tensorboards.
-    repeated determined.tensorboard.v1.Tensorboard tensorboards = 1;
-    // Pagination information of the full dataset.
-    Pagination pagination = 2;
+  // The list of returned tensorboards.
+  repeated determined.tensorboard.v1.Tensorboard tensorboards = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get the requested tensorboard.
 message GetTensorboardRequest {
-    // The id of the tensorboard.
-    string tensorboard_id = 1;
+  // The id of the tensorboard.
+  string tensorboard_id = 1;
 }
 // Response to GetTensorboardRequest.
 message GetTensorboardResponse {
-    // The requested tensorboard.
-    determined.tensorboard.v1.Tensorboard tensorboard = 1;
+  // The requested tensorboard.
+  determined.tensorboard.v1.Tensorboard tensorboard = 1;
 }
 
 // Kill the requested tensorboard.
 message KillTensorboardRequest {
-    // The id of the tensorboard.
-    string tensorboard_id = 1;
+  // The id of the tensorboard.
+  string tensorboard_id = 1;
 }
 // Response to KillTensorboardRequest.
 message KillTensorboardResponse {
-    // The requested tensorboard.
-    determined.tensorboard.v1.Tensorboard tensorboard = 1;
+  // The requested tensorboard.
+  determined.tensorboard.v1.Tensorboard tensorboard = 1;
 }
 
 // Request to launch a tensorboard.
 message LaunchTensorboardRequest {
-    // List of source experiment ids.
-    repeated int32 experiment_ids = 1;
-    // List of source trial ids.
-    repeated int32 trial_ids = 2;
+  // List of source experiment ids.
+  repeated int32 experiment_ids = 1;
+  // List of source trial ids.
+  repeated int32 trial_ids = 2;
 }
 // Response to LaunchTensorboardRequest.
 message LaunchTensorboardResponse {
-    // The requested tensorboard.
-    determined.tensorboard.v1.Tensorboard tensorboard = 1;
+  // The requested tensorboard.
+  determined.tensorboard.v1.Tensorboard tensorboard = 1;
 }
