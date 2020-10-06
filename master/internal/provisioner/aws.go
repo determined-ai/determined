@@ -175,6 +175,12 @@ func (c *awsCluster) dryRunRequests() error {
 	return nil
 }
 
+func (c *awsCluster) setup(ctx *actor.Context) {
+	if c.SpotInstanceEnabled {
+		c.attemptToApproximateClockSkew(ctx)
+	}
+}
+
 func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	if c.SpotInstanceEnabled {
 		return c.listSpot(ctx)

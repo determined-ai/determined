@@ -38,6 +38,7 @@ type Provisioner struct {
 
 type provider interface {
 	instanceType() instanceType
+	setup(ctx *actor.Context)
 	list(ctx *actor.Context) ([]*Instance, error)
 	launch(ctx *actor.Context, instanceType instanceType, instanceNum int)
 	terminate(ctx *actor.Context, instanceIDs []string)
@@ -77,6 +78,7 @@ func New(config *Config, cert *tls.Certificate) (*Provisioner, error) {
 func (p *Provisioner) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		p.provider.setup(ctx)
 		actors.NotifyAfter(ctx, actionCooldown, provisionerTick{})
 
 	case provisionerTick:

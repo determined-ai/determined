@@ -69,194 +69,36 @@ type spotLoopState struct {
 	backoffStart time.Time
 	approximateClockSkew *time.Duration
 	launchTimeOffset time.Duration
-
 }
+
 
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	// This list operation will become slower as the number of spot requests grows. Spot Instance
 	// requests are deleted from the AWS API four hours after they are canceled and their instances
 	// are terminated. In normal usage this shouldn't be a performance issue, but it's important we
 	// avoid endlessly resubmitting requests that will instantly fail.
-	if c.spotLoopState.approximateClockSkew == nil {
-		ctx.Log().Infof("new AWS spot provisioner. launching spot request to determined approximate clock skew between local machine and AWS API.")
-		localCreateTime := time.Now()
-		resp, err := c.createSpotInstanceRequest(ctx, 1, false, c.AWSClusterConfig.InstanceType, time.Hour * 100)
-		if err != nil {
-			// TODO: Something other than just throwing error?
-			ctx.Log().Infof("error while launching spot request during clock skew approximation")
-			return nil, err
-		}
-		awsCreateTime := resp.SpotInstanceRequests[0].CreateTime
-		approxClockSkew := awsCreateTime.Sub(localCreateTime)
-		ctx.Log().Infof("AWS API clock is approximately %s ahead of local machine clock", approxClockSkew.String())
-		_, err = c.terminateSpotInstanceRequests(ctx, []*string{resp.SpotInstanceRequests[0].SpotInstanceRequestId}, false)
-		if err != nil {
-			// TODO: Something other than just throwing error? Not cleaning this up is bad. Should at least handle eventual consistency problem
-			ctx.Log().Infof("error while terminating spot request during clock skew approximation")
-			return nil, err
-		}
-		clockSkewRoundedUp := roundDurationUp(approxClockSkew)
-		c.spotLoopState.approximateClockSkew = &clockSkewRoundedUp
-	}
-
 	spotRequests, err := c.listSpotInstanceRequests(ctx, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
 
-	activeRequests := make([]*ec2.SpotInstanceRequest, 0, 0)
-	inactiveRequests := make([]*ec2.SpotInstanceRequest, 0, 0)
-
-	for _, request := range spotRequests {
-		if *request.State == "open" || *request.State == "active" {
-			activeRequests = append(activeRequests, request)
-		} else {
-			inactiveRequests = append(inactiveRequests, request)
-		}
-	}
+	activeRequests, inactiveRequests := c.splitRequestsIntoActiveAndInactive(ctx, spotRequests)
 
 	ctx.Log().
 		WithField("log-type", "listSpot.querySpotRequest").
-		Infof("Retrieved spot requests: %d active requests and %d inactive requests",
+		Debugf("Retrieved spot requests: %d active requests and %d inactive requests",
 			len(activeRequests), len(inactiveRequests))
 
+	c.updateBackoffState(ctx, spotRequests)
 	c.cleanup(ctx, spotRequests)
-
-	// Next, update the activeRequestSnapshot. It is the list API response + the previous state
-	// for any requests not included in the response. They might not be included because
-	// the the requests were just submitted and the API hasn't caught up yet. Or they
-	// could have transitioned from active to inactive (in which case we don't want to
-	// include them in the snapshot).
-
-	// In the case of a master restart, we may have active spot requests, but the
-	// internal state will have been lost, so we always build a fresh snapshot
-	// instead of updating in-place
-	inactiveSpotRequestIds := make(map[string]bool)
-	for _, inactiveRequest := range inactiveRequests {
-		inactiveSpotRequestIds[*inactiveRequest.SpotInstanceRequestId] = true
-	}
-
-	newActiveSpotRequestSnapshot := make(map[string]*spotRequest)
-	for _, request := range activeRequests {
-		newActiveSpotRequestSnapshot[*request.SpotInstanceRequestId] = &spotRequest{
-			SpotRequestId: *request.SpotInstanceRequestId,
-			State:         *request.State,
-			StatusCode:    request.Status.Code,
-			StatusMessage: request.Status.Message,
-			InstanceId:    request.InstanceId,
-			CreationTime: request.CreateTime,
-		}
-	}
-
-	// Go through the previous snapshot and add any spotRequests that are too new to be returned by the EC2 API
-	for _, previousSpotRequestInfo := range c.spotLoopState.activeSpotRequests {
-		if _, ok := newActiveSpotRequestSnapshot[previousSpotRequestInfo.SpotRequestId]; !ok {
-			// This requests was not one of the active spotRequests returned by the API
-			if _, ok2 := inactiveSpotRequestIds[previousSpotRequestInfo.SpotRequestId]; !ok2 {
-				// This requests was also not one of the inactive spotRequests returned by the API.
-				// This means that it is a fresh spot request and the API just hasn't updated yet.
-				// Include it in the snapshot as is.
-				newActiveSpotRequestSnapshot[previousSpotRequestInfo.SpotRequestId] = previousSpotRequestInfo
-			}
-		}
-	}
-
-	ctx.Log().
-		WithField("log-type", "listSpot.updateActiveSpotRequestSnapshot").
-		Infof("built a new snapshot of the active spot requests. there are %d active requests.",
-			len(newActiveSpotRequestSnapshot))
-
-	c.spotLoopState.activeSpotRequests = newActiveSpotRequestSnapshot
-
-	// Take the active spot requests and generate the Instances that will be returned. For spot requests
-	// that have been fulfilled, just read the InstanceId and then query EC2 for details. For unfulfilled
-	// spot instance requests, use placeholder instances so the scaleDecider is aware that more instances
-	// are pending.
-	runningSpotInstanceIds := make([]*string, 0, 0)
-	pendingSpotRequestsAsInstances := make([]*Instance, 0, 0)
-	for _, activeRequest := range c.spotLoopState.activeSpotRequests {
-		if activeRequest.InstanceId != nil {
-			runningSpotInstanceIds = append(runningSpotInstanceIds, activeRequest.InstanceId)
-		} else {
-			pendingSpotRequestsAsInstances = append(pendingSpotRequestsAsInstances, &Instance{
-				ID:         activeRequest.SpotRequestId,
-				LaunchTime: *activeRequest.CreationTime,
-				AgentName:  activeRequest.SpotRequestId,
-				State:      SpotRequestPendingAWS,
-			})
-		}
-	}
-
-	instancesToReturn, err := c.describeInstancesById(runningSpotInstanceIds, false)
+	c.updateActiveRequestSnapshot(ctx, activeRequests, inactiveRequests)
+	instances, err := c.buildInstanceListFromActiveRequestSnapshot(ctx)
 	if err != nil {
-		return []*Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
+		return nil, err
 	}
-	realInstances := c.newInstances(instancesToReturn)
-	for _, inst := range realInstances {
-		if inst.State == Unknown {
-			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
-		}
-	}
-
-	combined := append(realInstances, pendingSpotRequestsAsInstances...)
-	ctx.Log().
-		WithField("log-type", "listSpot.returnCombinedList").
-		Infof("Returning list of instances: %d EC2 instances and %d dummy spot instances for %d total.",
-			len(realInstances), len(pendingSpotRequestsAsInstances), len(combined))
-	return combined, nil
+	return instances, nil
 }
 
-func roundDurationUp(d time.Duration) time.Duration {
-	roundInterval := time.Second * 10
-	rounded := d.Round(roundInterval)
-	if rounded < d {
-		rounded = rounded + roundInterval
-	}
-	return rounded
-}
-
-func (c *awsCluster) checkLookbackWindow(ctx *actor.Context, allSpotRequests []*ec2.SpotInstanceRequest) {
-	// Look back over the lookbackWindow to see if the requests we have been creating have succeeded.
-	// If there are no useful requests. don't update the backoff state. If all requests have failed,
-	// enter backoffState if we aren't in it already. If there are any successful requests in the
-	// window, exit backoffState.
-	if c.spotLoopState.inBackoffState {
-		backoffEnd := c.spotLoopState.backoffStart.Add(backoffDuration)
-		if time.Now().After(backoffEnd) {
-			c.spotLoopState.inBackoffState = false
-		}
-	}
-
-	sort.SliceStable(allSpotRequests, func(i, j int) bool {
-		return allSpotRequests[i].CreateTime.Before(*allSpotRequests[j].CreateTime)
-	})
-
-	requestsInLookbackWindow := make([]*ec2.SpotInstanceRequest, 0, 0)
-	for _, request := range allSpotRequests {
-		// pending-evaluation means the request has neither succeeded not failed, so don't include it.
-		adjustedLocalTime := time.Now().Add(*c.spotLoopState.approximateClockSkew)
-		if adjustedLocalTime.Before(request.CreateTime.Add(lookbackWindow)) && *request.Status.Code != "pending-evaluation" {
-			requestsInLookbackWindow = append(requestsInLookbackWindow, request)
-		}
-	}
-	if len(requestsInLookbackWindow) != 0 {
-		successfulRequestFoundInLookbackWindow := false
-		for _, request := range requestsInLookbackWindow {
-			if *request.State == "open" || *request.State == "active" {
-				successfulRequestFoundInLookbackWindow = true
-				break
-			}
-		}
-		if successfulRequestFoundInLookbackWindow {
-			c.spotLoopState.inBackoffState = false
-		} else {
-			if !c.spotLoopState.inBackoffState {
-				c.spotLoopState.inBackoffState = true
-				c.spotLoopState.backoffStart = time.Now()
-			}
-		}
-	}
-}
 
 
 func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
@@ -276,7 +118,7 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 		}
 	}
 
-	ctx.Log().Infof(
+	ctx.Log().Debugf(
 		"terminating %d EC2 instances and %d spot requests: %s,  %s",
 		len(instancesToTerminate),
 		len(pendingSpotRequestsToTerminate),
@@ -289,10 +131,9 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
 	} else {
 		terminated := c.newInstancesFromTerminateInstancesOutput(terminateInstancesResponse)
-		ctx.Log().Infof(
-			"terminated %d/%d EC2 instances: %s",
+		ctx.Log().Debugf(
+			"terminated %d EC2 instances: %s",
 			len(terminated),
-			len(instancesToTerminate),
 			fmtInstances(terminated),
 		)
 	}
@@ -315,6 +156,7 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 
 
 
+
 func (c *awsCluster) launchSpot(
 	ctx *actor.Context,
 	instanceType instanceType,
@@ -323,7 +165,7 @@ func (c *awsCluster) launchSpot(
 	if c.spotLoopState.inBackoffState {
 		backoffEnd := c.spotLoopState.backoffStart.Add(backoffDuration)
 		if  time.Now().Before(backoffEnd) {
-			ctx.Log().Infof("spot provider refusing to launch spot. spot provider is in ErrorBackoff state because all recent spot requests have failed")
+			ctx.Log().Infof("AWS spot provider refusing to launch spot. spot provider is in ErrorBackoff state because all recent spot requests have failed")
 			return
 		}
 	}
@@ -367,14 +209,216 @@ func (c *awsCluster) launchSpot(
 
 }
 
+func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
+	// Create a spot request to try to approximate how different the local clock is from the AWS API clock
+	// If it fails, we assume
+	if c.spotLoopState.approximateClockSkew == nil {
+		ctx.Log().Infof("new AWS spot provisioner. launching spot request to determined approximate clock skew between local machine and AWS API.")
+		localCreateTime := time.Now()
+		resp, err := c.createSpotInstanceRequest(ctx, 1, false, c.AWSClusterConfig.InstanceType, time.Hour * 100)
+		if err != nil {
+			ctx.Log().
+				WithError(err).
+				Infof("error while launching spot request during clock skew approximation. Non-fatal error, " +
+					"defaulting to assumption that AWS clock and local clock have minimal clock skew")
+			zeroDur := time.Second * 0
+			c.spotLoopState.approximateClockSkew = &zeroDur
+			return
+		}
+		awsCreateTime := resp.SpotInstanceRequests[0].CreateTime
+		approxClockSkew := awsCreateTime.Sub(localCreateTime)
+		ctx.Log().Infof("AWS API clock is approximately %s ahead of local machine clock", approxClockSkew.String())
+		// This spot request is one that is easy to
+		for {
+			ctx.Log().Infof("attempting to clean up spot request used to approximate clock skew")
+			_, err = c.terminateSpotInstanceRequests(ctx, []*string{resp.SpotInstanceRequests[0].SpotInstanceRequestId}, false)
+			if err == nil {
+				ctx.Log().Infof("Successfully cleaned up spot request used to approximate clock skew")
+				break
+			}
+			if awsErr, ok := err.(awserr.Error); ok {
+				ctx.Log().Infof("AWS error while terminating spot request during clock skew approximation, %s, %s", awsErr.Code(), awsErr.Message())
+				if awsErr.Code() != "InvalidSpotInstanceRequestID.NotFound" {
+					return
+				}
+			} else {
+				ctx.Log().Errorf("unknown error while launch spot instances, %s", err.Error())
+				return
+			}
+			time.Sleep(time.Second*2)
+		}
 
+		clockSkewRoundedUp := roundDurationUp(approxClockSkew)
+		c.spotLoopState.approximateClockSkew = &clockSkewRoundedUp
+	}
+
+}
+
+
+
+func (c *awsCluster) splitRequestsIntoActiveAndInactive(ctx *actor.Context, spotRequests []*ec2.SpotInstanceRequest) (activeRequests []*ec2.SpotInstanceRequest, inactiveRequests []*ec2.SpotInstanceRequest){
+	activeRequests = make([]*ec2.SpotInstanceRequest, 0, 0)
+	inactiveRequests = make([]*ec2.SpotInstanceRequest, 0, 0)
+
+	for _, request := range spotRequests {
+		if *request.State == "open" || *request.State == "active" {
+			activeRequests = append(activeRequests, request)
+		} else {
+			inactiveRequests = append(inactiveRequests, request)
+		}
+	}
+	return activeRequests, inactiveRequests
+}
+
+
+func (c *awsCluster) updateActiveRequestSnapshot(ctx *actor.Context, activeRequests []*ec2.SpotInstanceRequest, inactiveRequests []*ec2.SpotInstanceRequest) {
+	// Next, update the activeRequestSnapshot. It is the list API response + the previous state
+	// for any requests not included in the response. They might not be included because
+	// the the requests were just submitted and the API hasn't caught up yet. Or they
+	// could have transitioned from active to inactive (in which case we don't want to
+	// include them in the snapshot).
+
+	// In the case of a master restart, we may have active spot requests, but the
+	// internal state will have been lost, so we always build a fresh snapshot
+	// instead of updating in-place
+	inactiveSpotRequestIds := make(map[string]bool)
+	for _, inactiveRequest := range inactiveRequests {
+		inactiveSpotRequestIds[*inactiveRequest.SpotInstanceRequestId] = true
+	}
+
+	newActiveSpotRequestSnapshot := make(map[string]*spotRequest)
+	for _, request := range activeRequests {
+		newActiveSpotRequestSnapshot[*request.SpotInstanceRequestId] = &spotRequest{
+			SpotRequestId: *request.SpotInstanceRequestId,
+			State:         *request.State,
+			StatusCode:    request.Status.Code,
+			StatusMessage: request.Status.Message,
+			InstanceId:    request.InstanceId,
+			CreationTime: request.CreateTime,
+		}
+	}
+
+	// Go through the previous snapshot and add any spotRequests that are too new to be returned by the EC2 API
+	for _, previousSpotRequestInfo := range c.spotLoopState.activeSpotRequests {
+		if _, ok := newActiveSpotRequestSnapshot[previousSpotRequestInfo.SpotRequestId]; !ok {
+			// This requests was not one of the active spotRequests returned by the API
+			if _, ok2 := inactiveSpotRequestIds[previousSpotRequestInfo.SpotRequestId]; !ok2 {
+				// This requests was also not one of the inactive spotRequests returned by the API.
+				// This means that it is a fresh spot request and the API just hasn't updated yet.
+				// Include it in the snapshot as is.
+				newActiveSpotRequestSnapshot[previousSpotRequestInfo.SpotRequestId] = previousSpotRequestInfo
+			}
+		}
+	}
+
+	ctx.Log().
+		WithField("log-type", "listSpot.updateActiveSpotRequestSnapshot").
+		Debugf("built a new snapshot of the active spot requests. there are %d active requests.",
+			len(newActiveSpotRequestSnapshot))
+
+	c.spotLoopState.activeSpotRequests = newActiveSpotRequestSnapshot
+}
+
+
+func (c *awsCluster) buildInstanceListFromActiveRequestSnapshot(ctx *actor.Context) ([]*Instance, error) {
+	// Take the active spot requests and generate the Instances that will be returned. For spot requests
+	// that have been fulfilled, just read the InstanceId and then query EC2 for details. For unfulfilled
+	// spot instance requests, use placeholder instances so the scaleDecider is aware that more instances
+	// are pending.
+	runningSpotInstanceIds := make([]*string, 0, 0)
+	pendingSpotRequestsAsInstances := make([]*Instance, 0, 0)
+	for _, activeRequest := range c.spotLoopState.activeSpotRequests {
+		if activeRequest.InstanceId != nil {
+			runningSpotInstanceIds = append(runningSpotInstanceIds, activeRequest.InstanceId)
+		} else {
+			pendingSpotRequestsAsInstances = append(pendingSpotRequestsAsInstances, &Instance{
+				ID:         activeRequest.SpotRequestId,
+				LaunchTime: *activeRequest.CreationTime,
+				AgentName:  activeRequest.SpotRequestId,
+				State:      SpotRequestPendingAWS,
+			})
+		}
+	}
+
+	instancesToReturn, err := c.describeInstancesById(runningSpotInstanceIds, false)
+	if err != nil {
+		return []*Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
+	}
+	realInstances := c.newInstances(instancesToReturn)
+	for _, inst := range realInstances {
+		if inst.State == Unknown {
+			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
+		}
+	}
+
+	combined := append(realInstances, pendingSpotRequestsAsInstances...)
+	ctx.Log().
+		WithField("log-type", "listSpot.returnCombinedList").
+		Debugf("Returning list of instances: %d EC2 instances and %d dummy spot instances for %d total.",
+			len(realInstances), len(pendingSpotRequestsAsInstances), len(combined))
+	return combined, nil
+}
+
+
+func roundDurationUp(d time.Duration) time.Duration {
+	roundInterval := time.Second * 10
+	rounded := d.Round(roundInterval)
+	if rounded < d {
+		rounded = rounded + roundInterval
+	}
+	return rounded
+}
+
+func (c *awsCluster) updateBackoffState(ctx *actor.Context, allSpotRequests []*ec2.SpotInstanceRequest) {
+	// Look back over the lookbackWindow to see if the requests we have been creating have succeeded.
+	// If there are no useful requests. don't update the backoff state. If all requests have failed,
+	// enter backoffState if we aren't in it already. If there are any successful requests in the
+	// window, exit backoffState.
+	if c.spotLoopState.inBackoffState {
+		backoffEnd := c.spotLoopState.backoffStart.Add(backoffDuration)
+		if time.Now().After(backoffEnd) {
+			c.spotLoopState.inBackoffState = false
+		}
+	}
+
+	sort.SliceStable(allSpotRequests, func(i, j int) bool {
+		return allSpotRequests[i].CreateTime.Before(*allSpotRequests[j].CreateTime)
+	})
+
+	requestsInLookbackWindow := make([]*ec2.SpotInstanceRequest, 0, 0)
+	for _, request := range allSpotRequests {
+
+		adjustedLocalTime := time.Now().Add(*c.spotLoopState.approximateClockSkew)
+		if adjustedLocalTime.Before(request.CreateTime.Add(lookbackWindow)) {
+			// pending-evaluation means the request has neither succeeded not failed, so don't include it.
+			if *request.Status.Code != "pending-evaluation" {
+				requestsInLookbackWindow = append(requestsInLookbackWindow, request)
+			}
+		}
+	}
+	if len(requestsInLookbackWindow) != 0 {
+		successfulRequestFoundInLookbackWindow := false
+		for _, request := range requestsInLookbackWindow {
+			if *request.State == "open" || *request.State == "active" {
+				successfulRequestFoundInLookbackWindow = true
+				break
+			}
+		}
+		if successfulRequestFoundInLookbackWindow {
+			c.spotLoopState.inBackoffState = false
+		} else {
+			if !c.spotLoopState.inBackoffState {
+				c.spotLoopState.inBackoffState = true
+				c.spotLoopState.backoffStart = time.Now()
+			}
+		}
+	}
+}
 
 
 func (c *awsCluster) cleanup(ctx *actor.Context, allSpotRequests []*ec2.SpotInstanceRequest) {
-	// For requests that are in a terminal state, clean up any orphaned
-	// instances and create error logs if there is user action required.
-	// For requests that might require user attention to fix, log the error,
-	// but make sure we only log the error once
+	// For requests that are in a terminal state, clean up any orphaned instances. For requests that
+	// might require user attention to fix, log the error, but make sure we only log the error once
 
 	instancesToTerminate := make([]*string, 0, 0)
 	allRequestsInApi := make(map[string]bool)
@@ -436,8 +480,7 @@ func (c *awsCluster) cleanup(ctx *actor.Context, allSpotRequests []*ec2.SpotInst
 	}
 
 	// Keep the size of the onlyLogErrorOnceTracker small by removing items after
-	// the AWS API stops keeping track of the request (according to docs, 4 hours
-	// after requests enters terminal state)
+	// the AWS API stops keeping track of the request
 	for spotRequestId, _ := range c.spotLoopState.onlyLogErrorOnceTracker {
 		if _, ok := allRequestsInApi[spotRequestId]; !ok {
 			delete(c.spotLoopState.onlyLogErrorOnceTracker, spotRequestId)
