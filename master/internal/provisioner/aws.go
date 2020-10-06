@@ -13,8 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 const awsAgentID = `$(ec2metadata --instance-id)`
@@ -126,7 +127,7 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 		cluster.spotLoopState = &spotLoopState{
 			activeSpotRequests:      make(map[string]*spotRequest),
 			onlyLogErrorOnceTracker: make(map[string]bool),
-			launchTimeOffset: time.Second * time.Duration(10),
+			launchTimeOffset:        time.Second * time.Duration(10),
 		}
 	}
 
@@ -143,10 +144,10 @@ func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {
 
 // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html.
 var ec2InstanceStates = map[string]InstanceState{
-	"pending":  Starting,
-	"running":  Running,
-	"stopped":  Stopped,
-	"stopping": Stopping,
+	"pending":       Starting,
+	"running":       Running,
+	"stopped":       Stopped,
+	"stopping":      Stopping,
 	"shutting-down": ShuttingDown,
 }
 

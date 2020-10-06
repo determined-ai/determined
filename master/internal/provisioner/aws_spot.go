@@ -3,15 +3,17 @@ package provisioner
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 // Spot instances are created asynchronously. You create a spot request, the
@@ -22,8 +24,7 @@ import (
 // We do this so state management is slightly simpler
 // because AWS will not be doing any provisioning outside of our code that we need to account for.
 //
-// Once the
-// spot request has been fulfilled, the request will have a pointer to the instance
+// Once the spot request has been fulfilled, the request will have a pointer to the instance
 // id. If the spot request is cancelled, the instance will continue to run. The
 // spot request will have the status "request-canceled-and-instance-running".
 // If the instance is stopped or terminated, either manually or automatically by AWS,
@@ -46,7 +47,6 @@ import (
 // More information about the spot instance lifecycle -
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
 
-
 const spotRequestIdPrefix = "sir-"
 const lookbackWindow = time.Minute * 2
 const backoffDuration = time.Minute * 2
@@ -58,19 +58,17 @@ type spotRequest struct {
 	StatusCode    *string
 	StatusMessage *string
 	InstanceId    *string
-	CreationTime *time.Time
-
+	CreationTime  *time.Time
 }
 
 type spotLoopState struct {
-	activeSpotRequests map[string]*spotRequest
+	activeSpotRequests      map[string]*spotRequest
 	onlyLogErrorOnceTracker map[string]bool
-	inBackoffState bool
-	backoffStart time.Time
-	approximateClockSkew *time.Duration
-	launchTimeOffset time.Duration
+	inBackoffState          bool
+	backoffStart            time.Time
+	approximateClockSkew    *time.Duration
+	launchTimeOffset        time.Duration
 }
-
 
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	// This list operation will become slower as the number of spot requests grows. Spot Instance
@@ -98,8 +96,6 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	}
 	return instances, nil
 }
-
-
 
 func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 	if len(instanceIDs) == 0 {
@@ -154,9 +150,6 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 	//       But it will be cleaned up on the next call to list() anyway.
 }
 
-
-
-
 func (c *awsCluster) launchSpot(
 	ctx *actor.Context,
 	instanceType instanceType,
@@ -164,8 +157,9 @@ func (c *awsCluster) launchSpot(
 ) {
 	if c.spotLoopState.inBackoffState {
 		backoffEnd := c.spotLoopState.backoffStart.Add(backoffDuration)
-		if  time.Now().Before(backoffEnd) {
-			ctx.Log().Infof("AWS spot provider refusing to launch spot. spot provider is in ErrorBackoff state because all recent spot requests have failed")
+		if time.Now().Before(backoffEnd) {
+			ctx.Log().Infof("AWS spot provider refusing to launch spot. spot provider is in backoff " +
+				"state because all recent spot requests have failed")
 			return
 		}
 	}
@@ -213,9 +207,10 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 	// Create a spot request to try to approximate how different the local clock is from the AWS API clock
 	// If it fails, we assume
 	if c.spotLoopState.approximateClockSkew == nil {
-		ctx.Log().Infof("new AWS spot provisioner. launching spot request to determined approximate clock skew between local machine and AWS API.")
+		ctx.Log().Infof("new AWS spot provisioner. launching spot request to determined approximate " +
+			"clock skew between local machine and AWS API.")
 		localCreateTime := time.Now()
-		resp, err := c.createSpotInstanceRequest(ctx, 1, false, c.AWSClusterConfig.InstanceType, time.Hour * 100)
+		resp, err := c.createSpotInstanceRequest(ctx, 1, false, c.AWSClusterConfig.InstanceType, time.Hour*100)
 		if err != nil {
 			ctx.Log().
 				WithError(err).
@@ -228,16 +223,20 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 		awsCreateTime := resp.SpotInstanceRequests[0].CreateTime
 		approxClockSkew := awsCreateTime.Sub(localCreateTime)
 		ctx.Log().Infof("AWS API clock is approximately %s ahead of local machine clock", approxClockSkew.String())
-		// This spot request is one that is easy to
 		for {
 			ctx.Log().Infof("attempting to clean up spot request used to approximate clock skew")
-			_, err = c.terminateSpotInstanceRequests(ctx, []*string{resp.SpotInstanceRequests[0].SpotInstanceRequestId}, false)
+			_, err = c.terminateSpotInstanceRequests(ctx,
+				[]*string{resp.SpotInstanceRequests[0].SpotInstanceRequestId},
+				false)
 			if err == nil {
 				ctx.Log().Infof("Successfully cleaned up spot request used to approximate clock skew")
 				break
 			}
 			if awsErr, ok := err.(awserr.Error); ok {
-				ctx.Log().Infof("AWS error while terminating spot request during clock skew approximation, %s, %s", awsErr.Code(), awsErr.Message())
+				ctx.Log().
+					Infof("AWS error while terminating spot request during clock skew approximation, %s, %s",
+						awsErr.Code(),
+						awsErr.Message())
 				if awsErr.Code() != "InvalidSpotInstanceRequestID.NotFound" {
 					return
 				}
@@ -245,7 +244,7 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 				ctx.Log().Errorf("unknown error while launch spot instances, %s", err.Error())
 				return
 			}
-			time.Sleep(time.Second*2)
+			time.Sleep(time.Second * 2)
 		}
 
 		clockSkewRoundedUp := roundDurationUp(approxClockSkew)
@@ -254,9 +253,7 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 
 }
 
-
-
-func (c *awsCluster) splitRequestsIntoActiveAndInactive(ctx *actor.Context, spotRequests []*ec2.SpotInstanceRequest) (activeRequests []*ec2.SpotInstanceRequest, inactiveRequests []*ec2.SpotInstanceRequest){
+func (c *awsCluster) splitRequestsIntoActiveAndInactive(ctx *actor.Context, spotRequests []*ec2.SpotInstanceRequest) (activeRequests []*ec2.SpotInstanceRequest, inactiveRequests []*ec2.SpotInstanceRequest) {
 	activeRequests = make([]*ec2.SpotInstanceRequest, 0, 0)
 	inactiveRequests = make([]*ec2.SpotInstanceRequest, 0, 0)
 
@@ -269,7 +266,6 @@ func (c *awsCluster) splitRequestsIntoActiveAndInactive(ctx *actor.Context, spot
 	}
 	return activeRequests, inactiveRequests
 }
-
 
 func (c *awsCluster) updateActiveRequestSnapshot(ctx *actor.Context, activeRequests []*ec2.SpotInstanceRequest, inactiveRequests []*ec2.SpotInstanceRequest) {
 	// Next, update the activeRequestSnapshot. It is the list API response + the previous state
@@ -294,7 +290,7 @@ func (c *awsCluster) updateActiveRequestSnapshot(ctx *actor.Context, activeReque
 			StatusCode:    request.Status.Code,
 			StatusMessage: request.Status.Message,
 			InstanceId:    request.InstanceId,
-			CreationTime: request.CreateTime,
+			CreationTime:  request.CreateTime,
 		}
 	}
 
@@ -318,7 +314,6 @@ func (c *awsCluster) updateActiveRequestSnapshot(ctx *actor.Context, activeReque
 
 	c.spotLoopState.activeSpotRequests = newActiveSpotRequestSnapshot
 }
-
 
 func (c *awsCluster) buildInstanceListFromActiveRequestSnapshot(ctx *actor.Context) ([]*Instance, error) {
 	// Take the active spot requests and generate the Instances that will be returned. For spot requests
@@ -358,7 +353,6 @@ func (c *awsCluster) buildInstanceListFromActiveRequestSnapshot(ctx *actor.Conte
 			len(realInstances), len(pendingSpotRequestsAsInstances), len(combined))
 	return combined, nil
 }
-
 
 func roundDurationUp(d time.Duration) time.Duration {
 	roundInterval := time.Second * 10
@@ -415,7 +409,6 @@ func (c *awsCluster) updateBackoffState(ctx *actor.Context, allSpotRequests []*e
 		}
 	}
 }
-
 
 func (c *awsCluster) cleanup(ctx *actor.Context, allSpotRequests []*ec2.SpotInstanceRequest) {
 	// For requests that are in a terminal state, clean up any orphaned instances. For requests that
@@ -538,7 +531,7 @@ func (c *awsCluster) createSpotInstanceRequest(
 	}
 	idempotencyToken := uuid.New().String()
 
-	validFrom := time.Now().Local().Add(launchTimeOffset)  // Potential bug with clock skew?
+	validFrom := time.Now().Local().Add(launchTimeOffset) // Potential bug with clock skew?
 	spotInput := &ec2.RequestSpotInstancesInput{
 		ClientToken:                  aws.String(idempotencyToken),
 		DryRun:                       aws.Bool(dryRun),
@@ -606,9 +599,6 @@ func (c *awsCluster) createSpotInstanceRequest(
 	return c.client.RequestSpotInstances(spotInput)
 }
 
-
-
-
 func (c *awsCluster) listSpotInstanceRequests(
 	ctx *actor.Context,
 	dryRun bool,
@@ -675,5 +665,3 @@ func (c *awsCluster) terminateSpotInstanceRequests(
 
 	return c.client.CancelSpotInstanceRequests(input)
 }
-
-

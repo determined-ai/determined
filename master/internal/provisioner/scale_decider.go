@@ -148,10 +148,6 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 		toTerminate[id] = sproto.TerminateLongDisconnectedInstances
 	}
 
-	// TODO: Why do we terminate idle instances here? Does is indicate an error of some
-	//      sort or is is just to reduce resource usage? Should we prioritize shutting
-	//      down spot requests first?
-
 	// Terminate instances that are idle for a long time.
 	var longIdle map[string]bool
 	s.pastIdleInstances, longIdle = findInstancesLongInSameState(

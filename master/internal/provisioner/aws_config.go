@@ -14,7 +14,6 @@ import (
 
 const SpotPriceNotSetPlaceholder = "OnDemand"
 
-
 // AWSClusterConfig describes the configuration for an EC2 cluster managed by Determined.
 type AWSClusterConfig struct {
 	Region string `json:"region"`
@@ -48,7 +47,6 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	},
 	InstanceType:        "p3.8xlarge",
 	SpotInstanceEnabled: false,
-
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
