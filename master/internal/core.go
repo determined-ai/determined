@@ -513,6 +513,7 @@ func (m *Master) Run() error {
 			m.ClusterID,
 			m.MasterID,
 			m.Version,
+			resourcemanagers.GetResourceManagerType(m.config.ResourceManager),
 			m.config.Telemetry.SegmentMasterKey,
 		); err != nil {
 			// We wouldn't want to totally fail just because telemetry failed; just note the error.

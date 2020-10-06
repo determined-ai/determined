@@ -74,3 +74,17 @@ func (rm *ResourceManagers) forward(ctx *actor.Context, msg actor.Message) {
 		ctx.Tell(rm.ref, msg)
 	}
 }
+
+// GetResourceManagerType returns the type of resourceManager being used.
+func GetResourceManagerType(rmConfig *ResourceManagerConfig) string {
+	switch {
+	case rmConfig.AgentRM != nil:
+		return "agents-resourceManager"
+
+	case rmConfig.KubernetesRM != nil:
+		return "kubernetes-resourceManager"
+
+	default:
+		panic("no expected resource manager config is defined")
+	}
+}
