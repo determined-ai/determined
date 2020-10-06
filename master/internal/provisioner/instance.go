@@ -26,6 +26,8 @@ const (
 	Stopping InstanceState = "Stopping"
 	// Stopped describes the instance is stopped.
 	Stopped InstanceState = "Stopped"
+	// ShuttingDown is when the instance is in the process of being terminated
+	ShuttingDown InstanceState = "ShuttingDown"
 	// SpotRequestPendingAWS indicates that the instance is actually a pending AWS spot request
 	SpotRequestPendingAWS InstanceState = "SpotRequestPendingAWS"
 )

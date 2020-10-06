@@ -147,6 +147,7 @@ var ec2InstanceStates = map[string]InstanceState{
 	"running":  Running,
 	"stopped":  Stopped,
 	"stopping": Stopping,
+	"shutting-down": ShuttingDown,
 }
 
 func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
