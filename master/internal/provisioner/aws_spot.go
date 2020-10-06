@@ -142,7 +142,7 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate spot requests")
 	} else {
-		ctx.Log().Infof(
+		ctx.Log().Debugf(
 			"terminated %d spot requests: %s",
 			len(pendingSpotRequestsToTerminate),
 			pendingSpotRequestsToTerminate,
