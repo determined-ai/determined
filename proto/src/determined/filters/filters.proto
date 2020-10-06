@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package determined.filters;
+option go_package = "github.com/determined-ai/determined/proto/pkg/filters";
+
+// `Filter` represents a response filter to be applied to a query.
+//
+//     filter {
+//       field: "level"
+//       operation: OPERATION_EQUAL
+//       values: ["error", "warn"]
+//     }
+//
+// Here `level` represents the field the filter applies to, operation represents
+// the operation which the filter will apply and values represent the RHS values
+// of the operation. This filter, as applied to trial logs, would only return
+// logs where the level is equal to error or warn.
+message Filter {
+  // The operation to apply with a filter.
+  enum Operation {
+    // Checks equality.
+    OPERATION_EQUAL = 0;
+    // Checks inequality.
+    OPERATION_NOT_EQUAL = 1;
+    // Checks less than.
+    OPERATION_LESS = 2;
+    // Checks less than or equal.
+    OPERATION_LESS_EQUAL = 3;
+    // Checks greater than or equal.
+    OPERATION_GREATER_EQUAL = 4;
+    // Checks greater than.
+    OPERATION_GREATER = 5;
+  }
+  // The field or fields to which the filter applies.
+  string field = 1;
+  // The operation for the filter.
+  Operation operation = 2;
+  // The RHS values for the operation.
+  repeated string values = 3;
+}
