@@ -105,50 +105,62 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
   }, [ multiple, onChange, value ]);
 
-  const handleFiltering = useCallback((inputValue: string, option) => {
-    if (inputValue !== filterInput) {
-      setFilterInput(inputValue);
-    }
+  const handleFiltering = (inputValue: string, option: any) => {
+    // if (inputValue !== "") {
+    //   setFilterInput(inputValue);
+    // }
     if (option.key === 'All') {
       return true;
     } else {
       // TODO: Split on pipe (as long as there is only one) so 'ion|' doesn't return results
       return option.key.includes(filterInput);
     }
-  }, [ filterInput ]);
+  };
 
   const handleSearchInputChange = (searchInput: string) => {
+    console.log('Search Input', searchInput);
     setFilterInput(searchInput);
   };
 
-  const handleDropdownVisibleChange = (open: boolean) => {
+  const handleDropdownVisibleChange = useCallback((open: boolean) => {
     if (!open) {
       setFilterInput('');
     }
-  };
+  }, []);
 
-  const handleClear = () => {
+  // const handleClear = useCallback(() => {
+  //   setFilterInput('');
+  //   let newMetric;
+  //   if (validationMetricNames.length > 0) {
+  //     newMetric = validationMetricNames[0];
+  //   } else if (trainingMetricNames.length > 0){
+  //     newMetric = trainingMetricNames[0];
+  //   }
+  //   if (multiple) {
+  //     if (newMetric) {
+  //       (onChange as MultipleHandler)([ newMetric ]);
+  //     } else {
+  //       (onChange as MultipleHandler)([]);
+  //     }
+  //   } else {
+  //     if (newMetric){
+  //       (onChange as SingleHandler)(newMetric);
+  //     }
+  //   }
+  // }, [ onChange, validationMetricNames, trainingMetricNames ]);
+
+  const handleClear = useCallback(() => {
+    console.log('handleClear');
     setFilterInput('');
-    let newMetric;
-    if (validationMetricNames.length > 0) {
-      newMetric = validationMetricNames[0];
-    } else if (trainingMetricNames.length > 0){
-      newMetric = trainingMetricNames[0];
-    }
+
     if (multiple) {
-      if (newMetric) {
-        (onChange as MultipleHandler)([ newMetric ]);
-      } else {
-        (onChange as MultipleHandler)([]);
-      }
-
-    } else {
-
-      if (newMetric){
-        (onChange as SingleHandler)(newMetric);
-      }
-
+      (onChange as MultipleHandler)([ ]);
     }
+  }, [ multiple, onChange ]);
+
+  const handleBlur = () => {
+    // On blur the inputFilter gets cleared
+    console.log('handleBlur');
   };
 
   const allSelector = useMemo(() => {
@@ -165,16 +177,20 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       </Option>
     );
 
-  }, [ filterInput, metricNames ]);
+  }, [ filterInput, metricNames, visibleMetrics ]);
 
-  const selectorPlaceholder = useMemo(() => {
+  const [ maxTagCount, selectorPlaceholder ] = useMemo(() => {
+    console.log('metricValues', metricValues);
     if (metricValues === undefined) {
-      return '';
+      return [ 0, '' ];
     }
-    if (metricValues.length === totalNumMetrics) {
-      return `All ${totalNumMetrics} selected`;
+    if (metricValues.length === 0) {
+      // return [ -1, `None of ${totalNumMetrics} selected` ];
+      return [ -1, 'None selected' ];
+    } else if (metricValues.length === totalNumMetrics) {
+      return [ 0, `All ${totalNumMetrics} selected` ];
     } else {
-      return `${metricValues.length} of ${totalNumMetrics} selected`;
+      return [ 0, `${metricValues.length} of ${totalNumMetrics} selected` ];
     }
   }, [ metricValues, totalNumMetrics ]);
 
@@ -184,11 +200,13 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     dropdownMatchSelectWidth={400}
     filterOption={handleFiltering}
     label="Metrics"
+    maxTagCount={maxTagCount}
     maxTagPlaceholder={selectorPlaceholder}
     mode={multiple ? 'multiple' : undefined}
     showArrow
     style={{ width: 150 }}
     value={metricValues}
+    onBlur={handleBlur}
     onClear={handleClear}
     onDeselect={handleMetricDeselect}
     onDropdownVisibleChange={handleDropdownVisibleChange}
