@@ -22,6 +22,14 @@ spec:
       - name: determined-db-{{ .Release.Name }}
         image: postgres:10.8
         imagePullPolicy: "Always"
+        resources:
+          requests:
+            {{- if .Values.db.cpuRequest }}
+            cpu: {{ .Values.db.cpuRequest | quote }}
+            {{- end }}
+            {{- if .Values.db.memRequest }}
+            memory: {{ .Values.db.memRequest | quote }}
+            {{- end}}
         env:
           - name: POSTGRES_DB
             value: {{ .Values.db.name | quote }}
