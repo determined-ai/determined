@@ -56,9 +56,6 @@ class Build:
     def __init__(self, data: Dict["str", Any]) -> None:
         self.build_num = data["build_num"]
         self.job_name = data["workflows"]["job_name"]
-        self.completed_successfully = data["status"] != "success"
-        if not self.completed_successfully:
-            print(f"Job: {self.job_name} build: {self.build_num} did not succeed.")
 
     def get_artifacts(self) -> Dict[str, str]:
         print(f"fetching artifacts for {self.job_name}", file=sys.stderr)
