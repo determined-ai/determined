@@ -64,7 +64,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     if (!onChange) return;
 
     let metricName;
-    if ((newValue as string) !== 'All' && (newValue as string) !== 'None') {
+    if ((newValue as string) !== 'All') {
       metricName = valueToMetricName(newValue as string);
       if (!metricName) return;
     } else {
@@ -81,18 +81,17 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
         // const newMetric = metricNames.filter((metricName: MetricName) => metricName.name !== 'All' && metricName.name !== 'None');
         (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
         setFilterInput('');
-      } else if (newValue === 'None') {
-        const newMetric: MetricName[] = [];
-        (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
       } else {
         const newMetric = Array.isArray(value) ? [ ...value ] : [];
         if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
         (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
+        setFilterInput('');
       }
 
     } else {
 
       (onChange as SingleHandler)(metricName);
+      setFilterInput('');
     }
   }, [ multiple, onChange, value, filterInput ]);
 
@@ -107,6 +106,9 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ multiple, onChange, value ]);
 
   const handleFiltering = useCallback((inputValue: string, option) => {
+    if (inputValue !== filterInput) {
+      setFilterInput(inputValue);
+    }
     if (option.key === 'All') {
       return true;
     } else {
@@ -117,6 +119,36 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
 
   const handleSearchInputChange = (searchInput: string) => {
     setFilterInput(searchInput);
+  };
+
+  const handleDropdownVisibleChange = (open: boolean) => {
+    if (!open) {
+      setFilterInput('');
+    }
+  };
+
+  const handleClear = () => {
+    setFilterInput('');
+    let newMetric;
+    if (validationMetricNames.length > 0) {
+      newMetric = validationMetricNames[0];
+    } else if (trainingMetricNames.length > 0){
+      newMetric = trainingMetricNames[0];
+    }
+    if (multiple) {
+      if (newMetric) {
+        (onChange as MultipleHandler)([ newMetric ]);
+      } else {
+        (onChange as MultipleHandler)([]);
+      }
+
+    } else {
+
+      if (newMetric){
+        (onChange as SingleHandler)(newMetric);
+      }
+
+    }
   };
 
   const allSelector = useMemo(() => {
@@ -136,6 +168,9 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ filterInput, metricNames ]);
 
   const selectorPlaceholder = useMemo(() => {
+    if (metricValues === undefined) {
+      return '';
+    }
     if (metricValues.length === totalNumMetrics) {
       return `All ${totalNumMetrics} selected`;
     } else {
@@ -144,17 +179,19 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ metricValues, totalNumMetrics ]);
 
   return <SelectFilter
+    allowClear
     disableTags
     dropdownMatchSelectWidth={400}
     filterOption={handleFiltering}
-    // filterOption={true}
     label="Metrics"
     maxTagPlaceholder={selectorPlaceholder}
     mode={multiple ? 'multiple' : undefined}
     showArrow
     style={{ width: 150 }}
     value={metricValues}
+    onClear={handleClear}
     onDeselect={handleMetricDeselect}
+    onDropdownVisibleChange={handleDropdownVisibleChange}
     onSearch={handleSearchInputChange}
     onSelect={handleMetricSelect}>
 
