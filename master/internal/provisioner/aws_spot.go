@@ -371,7 +371,7 @@ func roundDurationUp(d time.Duration) time.Duration {
 
 func (c *awsCluster) updateBackoffState(ctx *actor.Context, allSpotRequests []*ec2.SpotInstanceRequest) {
 	// Look back over the lookbackWindow to see if the requests we have been creating have succeeded.
-	// If there are no useful requests. don't update the backoff state. If all requests have failed,
+	// If there are no useful requests. don't update the backoff state. If all requests have failed with a transient error,
 	// enter backoffState if we aren't in it already. If there are any successful requests in the
 	// window, exit backoffState.
 	if c.spotLoopState.inBackoffState {
@@ -386,6 +386,7 @@ func (c *awsCluster) updateBackoffState(ctx *actor.Context, allSpotRequests []*e
 	})
 
 	requestsInLookbackWindow := make([]*ec2.SpotInstanceRequest, 0, 0)
+	requestsInLookbackWindowWithPotentiallTransientFailures := make([]*ec2.SpotInstanceRequest, 0, 0)
 	for _, request := range allSpotRequests {
 
 		adjustedLocalTime := time.Now().Add(*c.spotLoopState.approximateClockSkew)
@@ -393,24 +394,24 @@ func (c *awsCluster) updateBackoffState(ctx *actor.Context, allSpotRequests []*e
 			// pending-evaluation means the request has neither succeeded not failed, so don't include it.
 			if *request.Status.Code != "pending-evaluation" {
 				requestsInLookbackWindow = append(requestsInLookbackWindow, request)
+				// TODO: Do we really want to backoff on system-error?
+				if *request.Status.Code == "bad-parameters" ||
+					*request.Status.Code == "limit-exceeded" ||
+					*request.Status.Code == "system-error" {
+					requestsInLookbackWindowWithPotentiallTransientFailures = append(requestsInLookbackWindowWithPotentiallTransientFailures, request)
+				}
 			}
 		}
 	}
 	if len(requestsInLookbackWindow) != 0 {
-		successfulRequestFoundInLookbackWindow := false
-		for _, request := range requestsInLookbackWindow {
-			if *request.State == "open" || *request.State == "active" {
-				successfulRequestFoundInLookbackWindow = true
-				break
-			}
-		}
-		if successfulRequestFoundInLookbackWindow {
-			c.spotLoopState.inBackoffState = false
-		} else {
+		if len(requestsInLookbackWindow) == len(requestsInLookbackWindowWithPotentiallTransientFailures) {
+			// All recent requests have failed with these transient errors. We should backoff if we aren't already
 			if !c.spotLoopState.inBackoffState {
 				c.spotLoopState.inBackoffState = true
 				c.spotLoopState.backoffStart = time.Now()
 			}
+		} else {
+			c.spotLoopState.inBackoffState = false
 		}
 	}
 }
