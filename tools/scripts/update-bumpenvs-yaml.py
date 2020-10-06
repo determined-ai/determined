@@ -86,9 +86,14 @@ def get_all_builds(commit: str) -> Dict[str, Build]:
     builds = {}
     for build_meta in req.json():
         if build_meta["vcs_revision"] == commit:
-            build = Build(build_meta)
-            if not build.completed_successfully:
+            if build_meta["status"] != "success":
+                print(
+                    f"Job: {build_meta['workflows']['job_name']} "
+                    f"build: {build_meta['build_num']} did not succeed."
+                )
                 continue
+
+            build = Build(build_meta)
             builds[build.job_name] = build
 
     found = set(builds.keys())
