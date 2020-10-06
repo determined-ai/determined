@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/google/uuid"
@@ -49,6 +50,7 @@ import (
 const spotRequestIdPrefix = "sir-"
 const lookbackWindow = time.Minute * 2
 const backoffDuration = time.Minute * 2
+const clockSkewCorrectionFactor = 2
 
 type spotRequest struct {
 	SpotRequestId string
@@ -65,7 +67,8 @@ type spotLoopState struct {
 	onlyLogErrorOnceTracker map[string]bool
 	inBackoffState bool
 	backoffStart time.Time
-
+	approximateClockSkew *time.Duration
+	launchTimeOffset time.Duration
 
 }
 
@@ -74,6 +77,28 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	// requests are deleted from the AWS API four hours after they are canceled and their instances
 	// are terminated. In normal usage this shouldn't be a performance issue, but it's important we
 	// avoid endlessly resubmitting requests that will instantly fail.
+	if c.spotLoopState.approximateClockSkew == nil {
+		ctx.Log().Infof("new AWS spot provisioner. launching spot request to determined approximate clock skew between local machine and AWS API.")
+		localCreateTime := time.Now()
+		resp, err := c.createSpotInstanceRequest(ctx, 1, false, c.AWSClusterConfig.InstanceType, time.Hour * 100)
+		if err != nil {
+			// TODO: Something other than just throwing error?
+			ctx.Log().Infof("error while launching spot request during clock skew approximation")
+			return nil, err
+		}
+		awsCreateTime := resp.SpotInstanceRequests[0].CreateTime
+		approxClockSkew := awsCreateTime.Sub(localCreateTime)
+		ctx.Log().Infof("AWS API clock is approximately %s ahead of local machine clock", approxClockSkew.String())
+		_, err = c.terminateSpotInstanceRequests(ctx, []*string{resp.SpotInstanceRequests[0].SpotInstanceRequestId}, false)
+		if err != nil {
+			// TODO: Something other than just throwing error? Not cleaning this up is bad. Should at least handle eventual consistency problem
+			ctx.Log().Infof("error while terminating spot request during clock skew approximation")
+			return nil, err
+		}
+		clockSkewRoundedUp := roundDurationUp(approxClockSkew)
+		c.spotLoopState.approximateClockSkew = &clockSkewRoundedUp
+	}
+
 	spotRequests, err := c.listSpotInstanceRequests(ctx, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
@@ -181,6 +206,15 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	return combined, nil
 }
 
+func roundDurationUp(d time.Duration) time.Duration {
+	roundInterval := time.Second * 10
+	rounded := d.Round(roundInterval)
+	if rounded < d {
+		rounded = rounded + roundInterval
+	}
+	return rounded
+}
+
 func (c *awsCluster) checkLookbackWindow(ctx *actor.Context, allSpotRequests []*ec2.SpotInstanceRequest) {
 	// Look back over the lookbackWindow to see if the requests we have been creating have succeeded.
 	// If there are no useful requests. don't update the backoff state. If all requests have failed,
@@ -200,7 +234,8 @@ func (c *awsCluster) checkLookbackWindow(ctx *actor.Context, allSpotRequests []*
 	requestsInLookbackWindow := make([]*ec2.SpotInstanceRequest, 0, 0)
 	for _, request := range allSpotRequests {
 		// pending-evaluation means the request has neither succeeded not failed, so don't include it.
-		if time.Now().Before(request.CreateTime.Add(lookbackWindow)) && *request.Status.Code != "pending-evaluation" {
+		adjustedLocalTime := time.Now().Add(*c.spotLoopState.approximateClockSkew)
+		if adjustedLocalTime.Before(request.CreateTime.Add(lookbackWindow)) && *request.Status.Code != "pending-evaluation" {
 			requestsInLookbackWindow = append(requestsInLookbackWindow, request)
 		}
 	}
@@ -303,7 +338,7 @@ func (c *awsCluster) launchSpot(
 	}
 
 	ctx.Log().Infof("launching %d EC2 spot requests", instanceNum)
-	resp, err := c.createSpotInstanceRequest(ctx, instanceNum, false, instType)
+	resp, err := c.createSpotInstanceRequestCorrectingForClockSkew(ctx, instanceNum, false, instType)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 spot requests")
 		return
@@ -413,11 +448,45 @@ func (c *awsCluster) cleanup(ctx *actor.Context, allSpotRequests []*ec2.SpotInst
 }
 
 // EC2 calls
+func (c *awsCluster) createSpotInstanceRequestCorrectingForClockSkew(
+	ctx *actor.Context,
+	numInstances int,
+	dryRun bool,
+	instanceType ec2InstanceType,
+) (resp *ec2.RequestSpotInstancesOutput, err error) {
+	// Spot requests need to have a "launchTime" that is in the future. We build the
+	// launch time locally while AWS evaluates it on their server, meaning that clock
+	// skew can easily make requests invalid. This function retries launching spot
+	// instances if the error is an invalid parameter (invalid time), increasing how
+	// far in the future we set launchTime
+	maxRetries := 5
+	for numRetries := 0; numRetries <= maxRetries; numRetries += 1 {
+		offset := *c.spotLoopState.approximateClockSkew + c.spotLoopState.launchTimeOffset
+		resp, err := c.createSpotInstanceRequest(ctx, numInstances, dryRun, instanceType, offset)
+		if err == nil {
+			return resp, nil
+		}
+
+		if awsErr, ok := err.(awserr.Error); ok {
+			ctx.Log().Infof("AWS error while launch spot instances, %s, %s", awsErr.Code(), awsErr.Message())
+			if awsErr.Code() == "InvalidTime" {
+				c.spotLoopState.launchTimeOffset = c.spotLoopState.launchTimeOffset * clockSkewCorrectionFactor
+				ctx.Log().Infof("AWS error while launch spot instances - InvalidTime. Increasing launchOffset to %s to correct for clock skew", c.spotLoopState.launchTimeOffset.String())
+			}
+		} else {
+			ctx.Log().Errorf("unknown error while launch spot instances, %s", err.Error())
+			return nil, err
+		}
+	}
+	return nil, err
+}
+
 func (c *awsCluster) createSpotInstanceRequest(
 	ctx *actor.Context,
 	numInstances int,
 	dryRun bool,
 	instanceType ec2InstanceType,
+	launchTimeOffset time.Duration,
 ) (*ec2.RequestSpotInstancesOutput, error) {
 
 	if dryRun {
@@ -425,7 +494,7 @@ func (c *awsCluster) createSpotInstanceRequest(
 	}
 	idempotencyToken := uuid.New().String()
 
-	validFrom := time.Now().Local().Add(time.Second * time.Duration(10))  // Potential bug with clock skew?
+	validFrom := time.Now().Local().Add(launchTimeOffset)  // Potential bug with clock skew?
 	spotInput := &ec2.RequestSpotInstancesInput{
 		ClientToken:                  aws.String(idempotencyToken),
 		DryRun:                       aws.Bool(dryRun),
@@ -492,6 +561,8 @@ func (c *awsCluster) createSpotInstanceRequest(
 
 	return c.client.RequestSpotInstances(spotInput)
 }
+
+
 
 
 func (c *awsCluster) listSpotInstanceRequests(

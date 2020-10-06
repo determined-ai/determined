@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -125,6 +126,7 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 		cluster.spotLoopState = &spotLoopState{
 			activeSpotRequests:      make(map[string]*spotRequest),
 			onlyLogErrorOnceTracker: make(map[string]bool),
+			launchTimeOffset: time.Second * time.Duration(10),
 		}
 	}
 
