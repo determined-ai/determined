@@ -1,5 +1,6 @@
 :orphan:
 
 **Improvments**
+
 - Added support for configuring memory and cpu requirements for the Determined
   database when installing via the Determined Helm Chart.
