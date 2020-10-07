@@ -189,6 +189,17 @@ def make_gcp_parser(subparsers: argparse._SubParsersAction) -> None:
 
 def deploy_gcp(args: argparse.Namespace) -> None:
 
+    # Set local state path as our current working directory. This is a no-op
+    # when the --local-state-path arg isn't used. We do this because Terraform
+    # module directories are populated with relative paths, and we want to
+    # support users running gcp up and down commands from different directories.
+    # Also, because we change the working directory, we ensure that
+    # local_state_path is an absolute path.
+    args.local_state_path = os.path.abspath(args.local_state_path)
+    if not os.path.exists(args.local_state_path):
+        os.makedirs(args.local_state_path)
+    os.chdir(args.local_state_path)
+
     # Set the TF_DATA_DIR where Terraform will store its supporting files
     env = os.environ.copy()
     env["TF_DATA_DIR"] = os.path.join(args.local_state_path, "terraform_data")
