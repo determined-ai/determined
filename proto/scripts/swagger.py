@@ -1,10 +1,17 @@
+"""
+Clean generated swagger files for end-user consumption.  Input files are a file
+to be modified and a patch file to merge into the real file.
+
+usage: swagger.py GENERATED_JSON PATCH_JSON
+"""
+
 import json
 import os
 import sys
-import collections
+from typing import Dict
 
 
-def merge_dict(d1, d2):
+def merge_dict(d1: Dict, d2: Dict) -> None:
     """
     Modifies d1 in-place to contain values from d2.  If any value
     in d1 is a dictionary (or dict-like), *and* the corresponding
@@ -12,8 +19,8 @@ def merge_dict(d1, d2):
     """
 
     for k, v2 in d2.items():
-        v1 = d1.get(k) # returns None if v1 has no value for this key
-        if (isinstance(v1, collections.Mapping) and isinstance(v2, collections.Mapping)):
+        v1 = d1.get(k)
+        if isinstance(v1, dict) and isinstance(v2, dict):
             merge_dict(v1, v2)
         else:
             d1[k] = v2
@@ -25,37 +32,9 @@ def capitalize(s: str) -> str:
     return s[0].upper() + s[1:]
 
 
-def clean(fn: str) -> None:
-    with open(fn, "r") as fp:
-        spec = json.load(fp)
-
-    # Add tag descriptions.
-    spec["tags"] = [
-        {
-            "name": "Authentication",
-            "description": "Login and logout of the cluster",
-        },
-        {
-            "name": "Users",
-            "description": "Manage users",
-        },
-        {
-            "name": "Cluster",
-            "description": "Manage cluster components",
-        },
-        {
-            "name": "Experiments",
-            "description": "Manage experiments",
-        },
-        {
-            "name": "Templates",
-            "description": "Manage templates",
-        },
-        {
-            "name": "Models",
-            "description": "Manage models",
-        }
-    ]
+def clean(path: str, patch: str) -> None:
+    with open(path, "r") as f:
+        spec = json.load(f)
 
     # Update path names to be consistent.
     paths = {}
@@ -74,21 +53,17 @@ def clean(fn: str) -> None:
         if "title" not in value:
             value["title"] = "".join(capitalize(k) for k in key.split(sep="v1"))
 
-    with open("swagger-patch.json", "r") as diff_f:
-        diff = json.load(diff_f)
-        merge_dict(spec, diff)
+    with open(patch, "r") as f:
+        merge_dict(spec, json.load(f))
 
-    with open(fn, "w") as fp:
-        json.dump(spec, fp)
-
-
-def main() -> None:
-    files = []
-    for r, d, f in os.walk(sys.argv[1]):
-        for file in f:
-            if file.endswith(".json"):
-                clean(os.path.join(r, file))
+    with open(path, "w") as f:
+        json.dump(spec, f)
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Incorrect number of arguments.  Usage:", file=sys.stderr)
+        print(__doc__, file=sys.stderr)
+        sys.exit(1)
+    path, patch = sys.argv[1:3]
+    clean(path, patch)

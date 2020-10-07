@@ -1,9 +1,26 @@
 export GO111MODULE := on
 
+# String constants.
+build_path := build/proto/github.com/determined-ai/determined/proto/pkg
+src_path := src/determined
+
+# Pre-defined list of all source files.
+source_files := $(shell find $(src_path) -type f -name '*.proto')
+
+# Currently only one file needs GRPC treatment.
+grpc_in := $(src_path)/api/v1/api.proto
+
+# Currently only one file needs Swagger treatment.
+swagger_in := $(src_path)/api/v1/api.proto
+swagger_out := build/swagger/determined/api/v1/api.swagger.json
+swagger_patch := patches/api.json
+
+.PHONY: build
+build: build/proto.stamp $(swagger_out)
+
 .PHONY: clean
 clean:
-	rm -rf build
-	rm -rf pkg
+	rm -rf build pkg
 
 get-deps:
 	go install github.com/bufbuild/buf/cmd/buf
@@ -12,23 +29,22 @@ get-deps:
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
 
-.PHONY: build-dir
-build-dir:
+build/proto.stamp: $(source_files)
+	rm -rf build/proto pkg
 	mkdir -p build/proto
+	# Protobuf generation.
+	for source in $(source_files) ; do protoc -I src "$$source" --go_out=plugins=grpc:build/proto ; done
+	# GRPC generation.
+	protoc -I src $(grpc_in) --grpc-gateway_out=logtostderr=true:build/proto
+	mv $(build_path) pkg
+	touch $@
 
-%.pb.go: %.proto build-dir
-	protoc -I src $< --go_out=plugins=grpc:build/proto
-
-.PHONY: proto
-build: $(patsubst %.proto, %.pb.go, $(shell find src/determined -type f -name '*.proto'))
-	protoc -I src src/determined/api/v1/api.proto --grpc-gateway_out=logtostderr=true:build/proto
-	rm -rf pkg
-	mkdir -p pkg
-	cp -r build/proto/github.com/determined-ai/determined/proto/pkg/* ./pkg
-	rm -rf build/proto
+build/swagger:
 	mkdir -p build/swagger
-	protoc -I src src/determined/api/v1/api.proto --swagger_out=logtostderr=true:build/swagger
-	python3 scripts/swagger.py build/swagger
+
+$(swagger_out): $(swagger_in) build/swagger
+	protoc -I src $< --swagger_out=logtostderr=true:build/swagger
+	python3 scripts/swagger.py $@ $(swagger_patch)
 
 .PHONY: check
 check:

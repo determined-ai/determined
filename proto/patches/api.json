@@ -1,4 +1,30 @@
 {
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Log in to and out of the cluster"
+    },
+    {
+      "name": "Users",
+      "description": "Manage users"
+    },
+    {
+      "name": "Cluster",
+      "description": "Manage cluster components"
+    },
+    {
+      "name": "Experiments",
+      "description": "Manage experiments"
+    },
+    {
+      "name": "Templates",
+      "description": "Manage templates"
+    },
+    {
+      "name": "Models",
+      "description": "Manage models"
+    }
+  ],
   "paths": {
     "/api/v1/experiments": {
       "post": {
