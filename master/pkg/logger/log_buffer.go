@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/logs"
+	"github.com/determined-ai/determined/master/internal/api"
 
 	"github.com/sirupsen/logrus"
 )
@@ -97,7 +97,7 @@ func (eb EntriesBatch) Size() int {
 }
 
 // ForEach implements logs.Batch.
-func (eb EntriesBatch) ForEach(f func(logs.Record) error) error {
+func (eb EntriesBatch) ForEach(f func(api.Record) error) error {
 	for _, e := range eb {
 		if err := f(e); err != nil {
 			return err

@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/logs"
-
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 
@@ -60,7 +58,7 @@ type event struct {
 	LogEvent *string `json:"log_event"`
 }
 
-type logSubscribers = map[*actor.Ref]logs.StreamRequest
+type logSubscribers = map[*actor.Ref]webAPI.LogsRequest
 
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
@@ -85,7 +83,7 @@ func newEventManager() *eventManager {
 
 func (e *eventManager) removeSusbscribers(ctx *actor.Context) {
 	for actor := range e.logStreams {
-		ctx.Tell(actor, logs.CloseStream{})
+		ctx.Tell(actor, webAPI.CloseStream{})
 	}
 	e.logStreams = nil
 }
@@ -136,7 +134,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 		e.processNewLogEvent(ctx, msg)
 
-	case logs.StreamRequest:
+	case webAPI.LogsRequest:
 		if ctx.Sender() == nil {
 			panic(ctxMissingSender)
 		}
@@ -161,10 +159,10 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		if msg.Follow && !e.isTerminated && !limitMet {
 			e.logStreams[ctx.Sender()] = msg
 		} else {
-			ctx.Tell(ctx.Sender(), logs.CloseStream{})
+			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})
 		}
 
-	case logs.CloseStream:
+	case webAPI.CloseStream:
 		if ctx.Sender() == nil {
 			panic(ctxMissingSender)
 		}
@@ -262,11 +260,11 @@ func eventToLogEntry(ev *event) *logger.Entry {
 	}
 }
 
-func eventSatisfiesLogRequest(req logs.StreamRequest, event *event) bool {
+func eventSatisfiesLogRequest(req webAPI.LogsRequest, event *event) bool {
 	return event.Seq >= req.Offset
 }
 
-func (e *eventManager) getMatchingEvents(req logs.StreamRequest) []*event {
+func (e *eventManager) getMatchingEvents(req webAPI.LogsRequest) []*event {
 	events := e.buffer
 	var logs []*event
 

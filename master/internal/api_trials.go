@@ -11,9 +11,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/master/internal/logs"
-	"github.com/determined-ai/determined/master/internal/logs/fetchers"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -52,14 +49,17 @@ func (a *apiServer) TrialLogs(
 		return err
 	}
 
-	offset, limit := api.EffectiveOffsetAndLimit(int(req.Offset), int(req.Limit), total)
-	fetcher, err := fetchers.NewPostgresTrialLogsFetcher(a.m.db, int(req.TrialId), offset, req.Filters)
-	if err != nil {
+	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
+	fetcher, err := db.NewTrialLogsFetcher(a.m.db, int(req.TrialId), offset, req.Filters)
+	switch {
+	case errors.Is(err, api.ErrUnsupportedFilter):
+		return status.Errorf(codes.InvalidArgument, err.Error())
+	case err != nil:
 		return err
 	}
 
-	onBatch := func(b logs.Batch) error {
-		return b.ForEach(func(r logs.Record) error {
+	onBatch := func(b api.Batch) error {
+		return b.ForEach(func(r api.Record) error {
 			trialLog := r.(*model.TrialLog)
 			return resp.Send(&apiv1.TrialLogsResponse{
 				Id:      int32(trialLog.ID) - 1, // WebUI assumes logs are 0-indexed
@@ -68,7 +68,7 @@ func (a *apiServer) TrialLogs(
 		})
 	}
 
-	terminateCheck := logs.TerminationCheckFn(func() (bool, error) {
+	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
 		state, _, err := trialStatus(a.m.db, req.TrialId)
 		if err != nil || model.TerminalStates[state] {
 			return true, err
@@ -78,7 +78,7 @@ func (a *apiServer) TrialLogs(
 
 	return a.m.system.MustActorOf(
 		actor.Addr("logStore-"+uuid.New().String()),
-		logs.NewStoreBatchProcessor(
+		api.NewLogStoreProcessor(
 			resp.Context(),
 			limit,
 			req.Follow,

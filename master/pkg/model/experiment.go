@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/logs"
+	"github.com/determined-ai/determined/master/internal/api"
 
 	"github.com/pkg/errors"
 
@@ -412,7 +412,7 @@ func (t TrialLogBatch) Size() int {
 }
 
 // ForEach implements logs.Batch.
-func (t TrialLogBatch) ForEach(f func(logs.Record) error) error {
+func (t TrialLogBatch) ForEach(f func(api.Record) error) error {
 	for _, tl := range t {
 		err := f(tl)
 		if err != nil {

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package determined.filters;
-option go_package = "github.com/determined-ai/determined/proto/pkg/filters";
+package determined.filters.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/filtersv1";
 
 import "google/protobuf/timestamp.proto";
 
@@ -22,22 +22,24 @@ import "google/protobuf/timestamp.proto";
 message Filter {
   // The operation to apply with a filter.
   enum Operation {
+    // Unspecified operation.
+    OPERATION_UNSPECIFIED = 0;
     // Checks equality.
-    OPERATION_EQUAL = 0;
+    OPERATION_EQUAL = 1;
     // Checks inequality.
-    OPERATION_NOT_EQUAL = 1;
+    OPERATION_NOT_EQUAL = 2;
     // Checks less than.
-    OPERATION_LESS = 2;
+    OPERATION_LESS = 3;
     // Checks less than or equal.
-    OPERATION_LESS_EQUAL = 3;
-    // Checks greater than or equal.
-    OPERATION_GREATER_EQUAL = 4;
+    OPERATION_LESS_EQUAL = 4;
     // Checks greater than.
     OPERATION_GREATER = 5;
+    // Checks greater than or equal.
+    OPERATION_GREATER_EQUAL = 6;
     // Checks in.
-    OPERATION_IN = 6;
+    OPERATION_IN = 7;
     // Checks not in.
-    OPERATION_NOT_IN = 7;
+    OPERATION_NOT_IN = 8;
   }
   // The field or fields to which the filter applies.
   string field = 1;
@@ -54,14 +56,20 @@ message Filter {
   }
 }
 
+// Integer values in the RHS of a filter.
 message IntValues {
+  // The inner values.
   repeated int32 values = 1;
 }
 
+// Timestamp values in the RHS of a filter.
 message TimestampValues {
+  // The inner values.
   repeated google.protobuf.Timestamp values = 1;
 }
 
+// String values in the RHS of a filter.
 message StringValues {
+  // The inner values.
   repeated string values = 1;
 }

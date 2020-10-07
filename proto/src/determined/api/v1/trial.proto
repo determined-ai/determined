@@ -9,11 +9,14 @@ import "determined/experiment/v1/experiment.proto";
 import "determined/trial/v1/trial.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
-import "determined/filters/filters.proto";
+import "determined/filters/v1/filters.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Stream Trial logs.
 message TrialLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
   // The id of the trial.
   int32 trial_id = 1;
   // Skip the number of trial logs before returning results. Negative values
@@ -25,15 +28,9 @@ message TrialLogsRequest {
   bool follow = 5;
   // Filter the trial logs returned.
   //
-  // The following filters are supported:
-  // 1. `agent_id` using equality and one or many agents IDs.
-  // 2. `container_id` using equality and one or many container IDs.
-  // 3. `rank_id` using equality and one or many rank IDs.
-  // 5. `level` using all operations and any level, one or many with equality or
-  // one with operations describing ordering.
-  // 6. `std_type` using equality and STDOUT or STDERR.
-  // 7. `source` using equality and one or many sources.
-  repeated determined.filters.Filter filters = 6;
+  // Filters on the following fields are supported using all operations:
+  // `agent_id`, `container_id`, `rank_id`, `level`, `std_type` and `source`.
+  repeated determined.filters.v1.Filter filters = 6;
 }
 
 // Response to TrialLogsRequest.
@@ -45,20 +42,21 @@ message TrialLogsResponse {
   int32 id = 1;
   // The log message.
   string message = 2;
-//  // The agent ID.
-//  string agent_id = 3;
-//  // The container ID.
-//  string container_id = 4;
-//  // The process rank.
-//  int32 rank_id = 5;
-//  // The timestamp when the log was recorded.
-//  google.protobuf.Timestamp timestamp = 6;
-//  // The log level.
-//  string level = 7;
-//  // The output stream from which the log was received.
-//  string std_type = 8;
-//  // The source of the log.
-//  string source = 9;
+  // TODO: Adding these breaks webui.
+  //  // The agent ID.
+  //  string agent_id = 3;
+  //  // The container ID.
+  //  string container_id = 4;
+  //  // The process rank.
+  //  int32 rank_id = 5;
+  //  // The timestamp when the log was recorded.
+  //  google.protobuf.Timestamp timestamp = 6;
+  //  // The log level.
+  //  string level = 7;
+  //  // The output stream from which the log was received.
+  //  string std_type = 8;
+  //  // The source of the log.
+  //  string source = 9;
 }
 
 // Get a list of checkpoints for a trial.

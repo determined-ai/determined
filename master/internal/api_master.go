@@ -11,8 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/determined-ai/determined/master/internal/logs"
-	"github.com/determined-ai/determined/master/internal/logs/fetchers"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 
@@ -45,32 +43,28 @@ func (a *apiServer) MasterLogs(
 		return err
 	}
 
-	onBatch := func(b logs.Batch) error {
-		return b.ForEach(func(r logs.Record) error {
+	onBatch := func(b api.Batch) error {
+		return b.ForEach(func(r api.Record) error {
+			lr := r.(*logger.Entry)
 			return resp.Send(&apiv1.MasterLogsResponse{
-				LogEntry: logEntryToProtoLogEntry(r.(*logger.Entry)),
+				LogEntry: &logv1.LogEntry{Id: int32(lr.ID), Message: lr.Message},
 			})
 		})
 	}
 
 	total := a.m.logs.Len()
-	offset, limit := api.EffectiveOffsetAndLimit(int(req.Offset), int(req.Limit), total)
+	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
 	return a.m.system.MustActorOf(
 		actor.Addr("logStore-"+uuid.New().String()),
-		logs.NewStoreBatchProcessor(
+		api.NewLogStoreProcessor(
 			resp.Context(),
 			limit,
 			req.Follow,
-			fetchers.NewMasterLogsFetcher(a.m.logs, offset),
+			logger.NewFetcher(a.m.logs, offset),
 			onBatch,
-			nil, // The only condition that would terminate master logs would terminate us as well, heh.
+			nil,
 			nil,
 		),
 	).AwaitTermination()
-}
-
-// logEntryToProtoLogEntry turns a logger.LogEntry into logv1.LogEntry.
-func logEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
-	return &logv1.LogEntry{Id: int32(logEntry.ID), Message: logEntry.Message}
 }

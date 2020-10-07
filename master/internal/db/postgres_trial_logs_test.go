@@ -1,52 +1,45 @@
-package fetchers
+package db
 
 import (
-	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/api"
+
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
+
+	"github.com/determined-ai/determined/master/pkg/check"
+
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/logs"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/filters"
+	filters "github.com/determined-ai/determined/proto/pkg/filtersv1"
 )
-
-func insertFakeLogs(t *testing.T, db *db.PgDB, trialID int, logs []*model.TrialLog) {
-	assert.NilError(t, db.Exec("TRUNCATE TABLE trial_logs"))
-	assert.NilError(t, db.Exec("ALTER TABLE trial_logs DISABLE TRIGGER ALL"))
-	for i := range logs {
-		logs[i].TrialID = trialID
-	}
-	assert.NilError(t, db.AddTrialLogs(logs))
-	assert.NilError(t, db.Exec("ALTER TABLE trial_logs ENABLE TRIGGER ALL"))
-}
 
 func TestPostgresTrialLogsFetcher(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	db, err := db.MustConnectPostgres("postgres://postgres:postgres@127.0.0.1:5432/determined?sslmode=disable")
+	db, err := MustConnectPostgres(
+		"postgres://postgres:postgres@127.0.0.1:5432/determined?sslmode=disable")
 	assert.NilError(t, err)
 
 	type testCase struct {
-		name    string
-		filters []*filters.Filter
-		logs    []*model.TrialLog
+		name            string
+		filters         []*filters.Filter
+		logs            []*model.TrialLog
 		validationError string
-		matches int
-		checker func(*testing.T) func(record logs.Record) error
+		matches         int
+		checker         func(*testing.T) func(record api.Record) error
 	}
 
 	trialID := 1
 	agent0, agent1, agent2 := "elated-backward-cat", "sad-testfailed-cat", "neutral-cat"
 	rank0, rank1, rank2 := 0, 1, 2
 	time0 := time.Now()
-	time1, time2 := time0.Add(time.Second), time0.Add(2 * time.Second)
+	time1, time2 := time0.Add(time.Second), time0.Add(2*time.Second)
 	tests := []testCase{
 		{
 			name: "categorical text where equals",
@@ -54,7 +47,7 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 				{
 					Field:     "agent_id",
 					Operation: filters.Filter_OPERATION_EQUAL,
-					Values: toFilterStringValues([]string{agent0}),
+					Values:    toFilterStringValues([]string{agent0}),
 				},
 			},
 			logs: []*model.TrialLog{
@@ -66,8 +59,8 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 				},
 			},
 			matches: 1,
-			checker: func(t *testing.T) func(record logs.Record) error {
-				return func(record logs.Record) error {
+			checker: func(t *testing.T) func(record api.Record) error {
+				return func(record api.Record) error {
 					assert.DeepEqual(t, record.(*model.TrialLog).AgentID, &agent0)
 					return nil
 				}
@@ -91,8 +84,8 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 				},
 			},
 			matches: 1,
-			checker: func(t *testing.T) func(record logs.Record) error {
-				return func(record logs.Record) error {
+			checker: func(t *testing.T) func(record api.Record) error {
+				return func(record api.Record) error {
 					assert.DeepEqual(t, record.(*model.TrialLog).AgentID, &agent0)
 					return nil
 				}
@@ -119,8 +112,8 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 				},
 			},
 			matches: 2,
-			checker: func(t *testing.T) func(record logs.Record) error {
-				return func(record logs.Record) error {
+			checker: func(t *testing.T) func(record api.Record) error {
+				return func(record api.Record) error {
 					trialLog := record.(*model.TrialLog)
 					assert.Assert(t, trialLog.AgentID != nil, "agent_id was nil")
 					assert.NilError(t, check.Contains(*trialLog.AgentID, []interface{}{agent0, agent2}),
@@ -150,8 +143,8 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 				},
 			},
 			matches: 1,
-			checker: func(t *testing.T) func(record logs.Record) error {
-				return func(record logs.Record) error {
+			checker: func(t *testing.T) func(record api.Record) error {
+				return func(record api.Record) error {
 					assert.DeepEqual(t, record.(*model.TrialLog).RankID, &rank0)
 					return nil
 				}
@@ -178,8 +171,8 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 				},
 			},
 			matches: 2,
-			checker: func(t *testing.T) func(record logs.Record) error {
-				return func(record logs.Record) error {
+			checker: func(t *testing.T) func(record api.Record) error {
+				return func(record api.Record) error {
 					trialLog := record.(*model.TrialLog)
 					assert.Assert(t, trialLog.RankID != nil, "rank_id was nil")
 					assert.NilError(t, check.Contains(*trialLog.RankID, []interface{}{rank0, rank1}),
@@ -209,8 +202,8 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 				},
 			},
 			matches: 1,
-			checker: func(t *testing.T) func(record logs.Record) error {
-				return func(record logs.Record) error {
+			checker: func(t *testing.T) func(record api.Record) error {
+				return func(record api.Record) error {
 					trialLog := record.(*model.TrialLog)
 					assert.Assert(t, trialLog.Timestamp.After(time1), "timestamp wasn't filtered")
 					return nil
@@ -238,8 +231,8 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 				},
 			},
 			matches: 2,
-			checker: func(t *testing.T) func(record logs.Record) error {
-				return func(record logs.Record) error {
+			checker: func(t *testing.T) func(record api.Record) error {
+				return func(record api.Record) error {
 					trialLog := record.(*model.TrialLog)
 					assert.Assert(t, trialLog.Timestamp.Before(time2), "timestamp wasn't filtered")
 					return nil
@@ -255,18 +248,7 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 					Values:    toFilterStringValues([]string{"12:12:12 not a time"}),
 				},
 			},
-			validationError: "unsupported values *filters.Filter_StringValues for filter timestamp",
-		},
-		{
-			name: "ordered fields only accept ordering operations",
-			filters: []*filters.Filter{
-				{
-					Field:     "timestamp",
-					Operation: filters.Filter_OPERATION_IN,
-					Values:    toFilterTimestampValues([]time.Time{time0}),
-				},
-			},
-			validationError: "unsupported operation OPERATION_IN in filter timestamp",
+			validationError: "unsupported values",
 		},
 		{
 			name: "string fields only accept strings",
@@ -277,18 +259,7 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 					Values:    toFilterIntValues([]int32{1, 2, 3}),
 				},
 			},
-			validationError: "unsupported values *filters.Filter_IntValues for filter agent_id",
-		},
-		{
-			name: "categorical fields only accept categorical operations",
-			filters: []*filters.Filter{
-				{
-					Field:     "agent_id",
-					Operation: filters.Filter_OPERATION_LESS,
-					Values:    toFilterStringValues([]string{"ok"}),
-				},
-			},
-			validationError: "unsupported operation OPERATION_LESS in filter agent_id",
+			validationError: "unsupported values",
 		},
 		{
 			name: "int fields only accept ints",
@@ -299,7 +270,7 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 					Values:    toFilterStringValues([]string{"12:12:12 not a time"}),
 				},
 			},
-			validationError: "unsupported values *filters.Filter_StringValues for filter rank_id",
+			validationError: "unsupported values",
 		},
 		{
 			name: "missing values",
@@ -310,22 +281,32 @@ func TestPostgresTrialLogsFetcher(t *testing.T) {
 					Values:    toFilterTimestampValues(nil),
 				},
 			},
-			validationError: "operation OPERATION_LESS in filter timestamp requires arguments",
+			validationError: "missing arguments",
+		},
+		{
+			name: "too many values",
+			filters: []*filters.Filter{
+				{
+					Field:     "timestamp",
+					Operation: filters.Filter_OPERATION_LESS,
+					Values:    toFilterTimestampValues([]time.Time{time1, time2}),
+				},
+			},
+			validationError: "wrong number of arguments",
 		},
 	}
 
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
-			insertFakeLogs(t, db, trialID, tc.logs)
+			db.insertFakeLogs(t, trialID, tc.logs)
 
-			fetcher, err := NewPostgresTrialLogsFetcher(db, 1, 0, tc.filters)
+			fetcher, err := NewTrialLogsFetcher(db, 1, 0, tc.filters)
 			if tc.validationError != "" {
 				assert.Assert(t, err != nil, "expected validation error but found none")
 				assert.ErrorContains(t, err, tc.validationError)
 				return
-			} else {
-				assert.NilError(t, err, "could not create fetcher")
 			}
+			assert.NilError(t, err, "could not create fetcher")
 
 			batch, err := fetcher.Fetch(10, false)
 			assert.NilError(t, err, "could not fetch batch")
@@ -359,4 +340,17 @@ func toFilterTimestampValues(vals []time.Time) *filters.Filter_TimestampValues {
 		tss = append(tss, ts)
 	}
 	return &filters.Filter_TimestampValues{TimestampValues: &filters.TimestampValues{Values: tss}}
+}
+
+func (db *PgDB) insertFakeLogs(t *testing.T, trialID int, logs []*model.TrialLog) {
+	_, err := db.sql.Exec("TRUNCATE TABLE trial_logs")
+	assert.NilError(t, err)
+	_, err = db.sql.Exec("ALTER TABLE trial_logs DISABLE TRIGGER ALL")
+	assert.NilError(t, err)
+	for i := range logs {
+		logs[i].TrialID = trialID
+	}
+	assert.NilError(t, db.AddTrialLogs(logs))
+	_, err = db.sql.Exec("ALTER TABLE trial_logs ENABLE TRIGGER ALL")
+	assert.NilError(t, err)
 }

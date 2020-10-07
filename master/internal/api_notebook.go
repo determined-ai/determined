@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 
-	"github.com/determined-ai/determined/master/internal/logs"
+	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -46,25 +47,26 @@ func (a *apiServer) NotebookLogs(
 	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
 	eventManager := a.m.system.Get(cmdManagerAddr.Child("events"))
 
-	streamRequest := logs.StreamRequest{
+	logRequest := api.LogsRequest{
 		Offset: int(req.Offset),
 		Limit:  int(req.Limit),
 		Follow: req.Follow,
 	}
 
-	onBatch := func(b logs.Batch) error {
-		return b.ForEach(func(r logs.Record) error {
+	onBatch := func(b api.Batch) error {
+		return b.ForEach(func(r api.Record) error {
+			lr := r.(*logger.Entry)
 			return resp.Send(&apiv1.NotebookLogsResponse{
-				LogEntry: logEntryToProtoLogEntry(r.(*logger.Entry)),
+				LogEntry: &logv1.LogEntry{Id: int32(lr.ID), Message: lr.Message},
 			})
 		})
 	}
 
 	return a.m.system.MustActorOf(
 		cmdManagerAddr.Child("logStream-"+uuid.New().String()),
-		logs.NewStreamBatchProcessor(
+		api.NewLogStreamProcessor(
 			resp.Context(),
-			streamRequest,
+			logRequest,
 			eventManager,
 			onBatch,
 		),
