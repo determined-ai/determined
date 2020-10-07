@@ -223,7 +223,10 @@ const ExperimentDetailsComp: React.FC = () => {
       title={`Experiment ${experimentId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>
         <Col lg={10} span={24} xl={8} xxl={6}>
-          <ExperimentInfoBox experiment={experiment} />
+          <ExperimentInfoBox
+            experiment={experiment}
+            onChange={fetchExperimentDetails}
+          />
         </Col>
         <Col lg={14} span={24} xl={16} xxl={18}>
           <ExperimentChart
