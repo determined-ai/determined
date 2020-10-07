@@ -10,6 +10,12 @@ echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
+use_gpus={{.AgentUseGPUs}}
+if $use_gpus; then
+    echo "#### Starting agent with GPUs"
+    docker_args+=(--gpus all)
+fi
+
 cert_b64={{.MasterCertBase64}}
 if [ -n "$cert_b64" ]; then
     echo "$cert_b64" | base64 --decode > /usr/local/determined/master.crt
@@ -26,7 +32,10 @@ echo "#### PRINTING CONTAINER STARTUP SCRIPT START ####"
 cat /usr/local/determined/container_startup_script
 echo "#### PRINTING CONTAINER STARTUP SCRIPT END ####"
 
-docker run --init --name determined-agent {{.LogOptions}} --restart always --network {{.AgentNetwork}} --runtime={{.AgentDockerRuntime}} --gpus all \
+docker run --init --name determined-agent {{.LogOptions}} \
+    --restart always \
+    --network {{.AgentNetwork}} \
+    --runtime={{.AgentDockerRuntime}} \
     -e DET_AGENT_ID="{{.AgentID}}" \
     -e DET_MASTER_HOST="{{.MasterHost}}" \
     -e DET_MASTER_PORT="{{.MasterPort}}" \
