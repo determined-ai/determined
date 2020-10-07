@@ -412,13 +412,13 @@ The master supports the following configuration settings:
       idle dynamic agents. This string is a sequence of decimal numbers,
       each with optional fraction and a unit suffix, such as "30s",
       "1h", or "1m30s". Valid time units are "s", "m", "h". The default
-      value is ``5m``.
+      value is ``20m``.
 
    -  ``max_agent_starting_period``: How long to wait for agents
       starting before retrying. This string is a sequence of decimal
       numbers, each with optional fraction and a unit suffix, such as
       "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The
-      default value is ``5m``.
+      default value is ``20m``.
 
    -  ``provider: aws``: Specifies running dynamic agents on AWS.
       (*Required*)
