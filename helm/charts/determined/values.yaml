@@ -31,8 +31,12 @@ db:
   port: 5432
 
   # Only used for Determined db deployment. Configures the size
-  # of the PersistentVolumeClaim for the Determined delpoyed database.
+  # of the PersistentVolumeClaim for the Determined deployed database,
+  # as well as the CPU and Memory requirements. Should be adjusted
+  # for scale.
   storageSize: 30Gi
+  cpuRequest: "2"
+  memRequest: "8Gi"
 
 # checkpointStorage controls where checkpoints are stored.
 # supported types include `shared_fs`, `gcs`, and `s3.
@@ -69,7 +73,7 @@ checkpointStorage:
 maxSlotsPerPod:
 
 # Memory and CPU requirements for the master instance should be adjusted for scale.
-masterCpuRequest: "4"
+masterCpuRequest: "2"
 masterMemRequest: "8Gi"
 
 ## Configure the task container defaults. Tasks include trials, commands, tensorboards notebooks and shells.
