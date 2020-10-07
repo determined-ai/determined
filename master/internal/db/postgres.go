@@ -44,6 +44,12 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	}
 }
 
+// MustConnectPostgres connects to a Postgres database immediately or fails.
+func MustConnectPostgres(url string) (*PgDB, error) {
+	sql, err := sqlx.Connect("postgres", url)
+	return &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}}, err
+}
+
 const (
 	// uniqueViolation is the error code that Postgres uses to indicate that an attempted insert/update
 	// violates a uniqueness constraint.  Obtained from:
@@ -1362,7 +1368,9 @@ func (db *PgDB) AddTrialLogs(logs []*model.TrialLog) error {
 	}
 
 	var text strings.Builder
-	text.WriteString("INSERT INTO trial_logs (trial_id, message) VALUES")
+	text.WriteString(`
+INSERT INTO trial_logs (trial_id, message, agent_id, container_id, rank_id, timestamp, level, std_type, source) VALUES
+`)
 
 	args := make([]interface{}, 0, len(logs)*2)
 
@@ -1371,9 +1379,11 @@ func (db *PgDB) AddTrialLogs(logs []*model.TrialLog) error {
 		if i > 0 {
 			text.WriteString(",")
 		}
-		fmt.Fprintf(&text, " ($%d, $%d)", i*2+1, i*2+2)
+		fmt.Fprintf(&text, " ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+			i*9+1, i*9+2, i*9+3, i*9+4, i*9+5, i*9+6, i*9+7, i*9+8, i*9+9)
 
-		args = append(args, log.TrialID, model.RawString(log.Message))
+		args = append(args, log.TrialID, model.RawString(log.Message), log.AgentID, log.ContainerID, log.RankID,
+			log.Timestamp, log.Level, log.StdType, log.Source)
 	}
 
 	if _, err := db.sql.Exec(text.String(), args...); err != nil {
@@ -1957,9 +1967,9 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 }
 
 func (db *PgDB) queryRows(
-	queryName string, p func(*sqlx.Rows, interface{}) error, v interface{}, args ...interface{},
+	query string, p func(*sqlx.Rows, interface{}) error, v interface{}, args ...interface{},
 ) error {
-	rows, err := db.sql.Queryx(db.queries.getOrLoad(queryName), args...)
+	rows, err := db.sql.Queryx(query, args...)
 	if err != nil {
 		return err
 	}
@@ -2003,11 +2013,24 @@ func (db *PgDB) queryRows(
 // with supplied args.
 func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) error {
 	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
-	return db.queryRows(queryName, parser, v, args...)
+	return db.queryRows(db.queries.getOrLoad(queryName), parser, v, args...)
+}
+
+// QueryStr returns the result of the query. Any placeholder parameters are replaced
+// with supplied args.
+func (db *PgDB) QueryStr(query string, v interface{}, args ...interface{}) error {
+	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
+	return db.queryRows(query, parser, v, args...)
 }
 
 // RawQuery returns the result of the query as a raw byte string. Any placeholder parameters are
 // replaced with supplied args.
 func (db *PgDB) RawQuery(queryName string, args ...interface{}) ([]byte, error) {
 	return db.rawQuery(db.queries.getOrLoad(queryName), args...)
+}
+
+// Exec is a passthrough to db.sql.Exec.
+func (db *PgDB) Exec(query string, args ...interface{}) error {
+	_, err := db.sql.Exec(query, args...)
+	return err
 }

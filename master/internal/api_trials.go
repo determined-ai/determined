@@ -52,6 +52,12 @@ func (a *apiServer) TrialLogs(
 		return err
 	}
 
+	offset, limit := api.EffectiveOffsetAndLimit(int(req.Offset), int(req.Limit), total)
+	fetcher, err := fetchers.NewPostgresTrialLogsFetcher(a.m.db, int(req.TrialId), offset, req.Filters)
+	if err != nil {
+		return err
+	}
+
 	onBatch := func(b logs.Batch) error {
 		return b.ForEach(func(r logs.Record) error {
 			trialLog := r.(*model.TrialLog)
@@ -70,15 +76,13 @@ func (a *apiServer) TrialLogs(
 		return false, nil
 	})
 
-	offset, limit := api.EffectiveOffsetAndLimit(int(req.Offset), int(req.Limit), total)
-
 	return a.m.system.MustActorOf(
 		actor.Addr("logStore-"+uuid.New().String()),
 		logs.NewStoreBatchProcessor(
 			resp.Context(),
 			limit,
 			req.Follow,
-			fetchers.NewPostgresTrialLogsFetcher(a.m.db, int(req.TrialId), offset),
+			fetcher,
 			onBatch,
 			&terminateCheck,
 			&trialLogsBatchWaitTime,

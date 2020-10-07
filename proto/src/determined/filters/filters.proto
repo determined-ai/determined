@@ -3,12 +3,16 @@ syntax = "proto3";
 package determined.filters;
 option go_package = "github.com/determined-ai/determined/proto/pkg/filters";
 
+import "google/protobuf/timestamp.proto";
+
 // `Filter` represents a response filter to be applied to a query.
 //
 //     filter {
 //       field: "level"
-//       operation: OPERATION_EQUAL
-//       values: ["error", "warn"]
+//       operation: OPERATION_IN
+//       string_values {
+//         values: ["error", "warn", "fatal"]
+//       }
 //     }
 //
 // Here `level` represents the field the filter applies to, operation represents
@@ -30,11 +34,34 @@ message Filter {
     OPERATION_GREATER_EQUAL = 4;
     // Checks greater than.
     OPERATION_GREATER = 5;
+    // Checks in.
+    OPERATION_IN = 6;
+    // Checks not in.
+    OPERATION_NOT_IN = 7;
   }
   // The field or fields to which the filter applies.
   string field = 1;
   // The operation for the filter.
   Operation operation = 2;
   // The RHS values for the operation.
-  repeated string values = 3;
+  oneof values {
+    // Integer values to a filter.
+    IntValues int_values = 3;
+    // Timestamp values to a filter.
+    TimestampValues timestamp_values = 4;
+    // String values to a filter.
+    StringValues string_values = 5;
+  }
+}
+
+message IntValues {
+  repeated int32 values = 1;
+}
+
+message TimestampValues {
+  repeated google.protobuf.Timestamp values = 1;
+}
+
+message StringValues {
+  repeated string values = 1;
 }

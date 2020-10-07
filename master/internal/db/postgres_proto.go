@@ -38,5 +38,5 @@ func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{})
 		return errors.Wrapf(protojson.Unmarshal(bytes, message),
 			"error converting row to Protobuf struct")
 	}
-	return db.queryRows(queryName, parser, v, args...)
+	return db.queryRows(db.queries.getOrLoad(queryName), parser, v, args...)
 }

@@ -45,20 +45,20 @@ message TrialLogsResponse {
   int32 id = 1;
   // The log message.
   string message = 2;
-  // The agent ID.
-  string agent_id = 3;
-  // The container ID.
-  string container_id = 4;
-  // The process rank.
-  int32 rank_id = 5;
-  // The timestamp when the log was recorded.
-  google.protobuf.Timestamp timestamp = 6;
-  // The log level.
-  string level = 7;
-  // The output stream from which the log was received.
-  string std_type = 8;
-  // The source of the log.
-  string source = 9;
+//  // The agent ID.
+//  string agent_id = 3;
+//  // The container ID.
+//  string container_id = 4;
+//  // The process rank.
+//  int32 rank_id = 5;
+//  // The timestamp when the log was recorded.
+//  google.protobuf.Timestamp timestamp = 6;
+//  // The log level.
+//  string level = 7;
+//  // The output stream from which the log was received.
+//  string std_type = 8;
+//  // The source of the log.
+//  string source = 9;
 }
 
 // Get a list of checkpoints for a trial.
