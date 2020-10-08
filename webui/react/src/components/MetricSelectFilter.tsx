@@ -86,13 +86,6 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ multiple, onChange, value ]);
 
   const handleFiltering = useCallback((search: string, option) => {
-    // Almost identical to callback in SelectFilter, but handles ALL option
-    /*
-     * `option.children` is one of the following:
-     * - undefined
-     * - string
-     * - string[]
-     */
     if (option.key === allOptionId) {
       return true;
     }
