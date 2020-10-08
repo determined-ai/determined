@@ -28,6 +28,18 @@ import { updateFaviconType } from 'utils/browser';
 
 import css from './App.module.scss';
 
+export const duplicateFn = (data, filename) => {
+  const url = window.URL.createObjectURL(data);
+  const element = document.createElement('a');
+  element.setAttribute('download', filename);
+  element.style.display = 'none';
+  element.href = url;
+  document.body.appendChild(element);
+  element.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(element);
+};
+
 const AppView: React.FC = () => {
   const { isAuthenticated } = Auth.useStateContext();
   const ui = UI.useStateContext();
