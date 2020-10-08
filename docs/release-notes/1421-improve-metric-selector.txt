@@ -1,0 +1,8 @@
+:orphan:
+
+**Improvements**
+
+- Allow users to select all metrics in Trial detail page.
+- Allow users to select all results when filtering metrics in the Trial detail page.
+- Allow users to clear all metrics in Trial detail page.
+- Make the text in the dropdown more informative when dropdown is closed.
