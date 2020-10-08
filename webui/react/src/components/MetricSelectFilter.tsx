@@ -23,7 +23,7 @@ interface Props {
 }
 
 const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, value }: Props) => {
-  const [ filterInput, setFilterInput ] = useState('');
+  const [ filterString, setFilterString ] = useState('');
 
   const metricValues = useMemo(() => {
     if (multiple && Array.isArray(value)) return value.map(metric => metricNameToValue(metric));
@@ -45,16 +45,16 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
 
   const visibleMetrics = useMemo(() => {
     return metricNames.filter((metricName: MetricName) => {
-      return (metricName.name.includes(filterInput));
+      return (metricName.name.includes(filterString));
     });
-  }, [ metricNames, filterInput ]);
+  }, [ metricNames, filterString ]);
 
   const handleMetricSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;
 
     if ((newValue as string) === allOptionId) {
       (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
-      setFilterInput('');
+      setFilterString('');
       return;
     }
 
@@ -68,7 +68,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     } else {
       (onChange as SingleHandler)(metricName);
     }
-    setFilterInput('');
+    setFilterString('');
   }, [ multiple, onChange, value, visibleMetrics ]);
 
   const handleMetricDeselect = useCallback((newValue: SelectValue) => {
@@ -107,11 +107,11 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, []);
 
   const handleSearchInputChange = (searchInput: string) => {
-    setFilterInput(searchInput);
+    setFilterString(searchInput);
   };
 
   const handleClear = useCallback(() => {
-    setFilterInput('');
+    setFilterString('');
 
     if (multiple) {
       (onChange as MultipleHandler)([ ]);
@@ -119,7 +119,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ multiple, onChange ]);
 
   const handleBlur = () => {
-    setFilterInput('');
+    setFilterString('');
   };
 
   const allOption = useMemo(() => {
