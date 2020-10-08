@@ -44,15 +44,16 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
 
   const visibleMetrics = useMemo(() => {
     return metricNames.filter((metricName: MetricName) => {
+      console.log('Filtering metricName', filterInput, metricName);
       if (metricName.name.includes(filterInput)) {
         return true;
       }
-      if (metricName.type === MetricType.Training && 'training'.includes(filterInput)) {
-        return true;
-      }
-      if (metricName.type === MetricType.Validation && 'validation'.includes(filterInput)) {
-        return true;
-      }
+      // if (metricName.type === MetricType.Training && 'training'.includes(filterInput)) {
+      //   return true;
+      // }
+      // if (metricName.type === MetricType.Validation && 'validation'.includes(filterInput)) {
+      //   return true;
+      // }
       return false;
 
       // metricName.name !== 'All' && metricName.name !== 'None'
@@ -113,7 +114,21 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       return true;
     } else {
       // TODO: Split on pipe (as long as there is only one) so 'ion|' doesn't return results
-      return option.key.includes(filterInput);
+      let metricNameOnly = option.key;
+      const trainingPrefix = 'training|';
+      const validationPrefix = 'validation|';
+      let typeForSearch = '';
+      if (metricNameOnly.startsWith(trainingPrefix)) {
+        metricNameOnly = metricNameOnly.slice(trainingPrefix.length);
+        typeForSearch = 'training';
+      } else if (metricNameOnly.startsWith(validationPrefix)) {
+        metricNameOnly = metricNameOnly.slice(validationPrefix.length);
+        typeForSearch = 'validation';
+      }
+
+      console.log('handleFiltering', filterInput, option);
+      // return metricNameOnly.includes(filterInput) || typeForSearch.includes(filterInput);
+      return metricNameOnly.includes(filterInput);
     }
   };
 
@@ -122,11 +137,11 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     setFilterInput(searchInput);
   };
 
-  const handleDropdownVisibleChange = useCallback((open: boolean) => {
-    if (!open) {
-      setFilterInput('');
-    }
-  }, []);
+  // const handleDropdownVisibleChange = useCallback((open: boolean) => {
+  //   if (!open) {
+  //     setFilterInput('');
+  //   }
+  // }, []);
 
   // const handleClear = useCallback(() => {
   //   setFilterInput('');
@@ -161,6 +176,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   const handleBlur = () => {
     // On blur the inputFilter gets cleared
     console.log('handleBlur');
+    setFilterInput('');
   };
 
   const allSelector = useMemo(() => {
@@ -204,12 +220,12 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     maxTagPlaceholder={selectorPlaceholder}
     mode={multiple ? 'multiple' : undefined}
     showArrow
-    style={{ width: 150 }}
+    style={{ width: 200 }}
     value={metricValues}
     onBlur={handleBlur}
     onClear={handleClear}
     onDeselect={handleMetricDeselect}
-    onDropdownVisibleChange={handleDropdownVisibleChange}
+    // onDropdownVisibleChange={handleDropdownVisibleChange}
     onSearch={handleSearchInputChange}
     onSelect={handleMetricSelect}>
 
