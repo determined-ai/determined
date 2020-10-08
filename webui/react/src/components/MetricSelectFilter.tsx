@@ -10,6 +10,7 @@ import BadgeTag from './BadgeTag';
 import SelectFilter from './SelectFilter';
 
 const { OptGroup, Option } = Select;
+const allOptionId = 'ALL_RESULTS';
 
 type SingleHandler = (value: MetricName) => void;
 type MultipleHandler = (value: MetricName[]) => void;
@@ -51,7 +52,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   const handleMetricSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;
 
-    if ((newValue as string) === 'All') {
+    if ((newValue as string) === allOptionId) {
       (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
       setFilterInput('');
       return;
@@ -88,7 +89,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
      * - string
      * - string[]
      */
-    if (option.key === 'All') {
+    if (option.key === allOptionId) {
       return true;
     }
 
@@ -130,7 +131,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       allOptionLabel =`All ${numVisibleOptions} results`;
     }
     return (
-      <Option key={'All'} value={'All'}>
+      <Option key={allOptionId} value={allOptionId}>
         <BadgeTag label={allOptionLabel} />
       </Option>
     );

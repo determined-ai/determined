@@ -228,7 +228,6 @@ export enum CheckpointState {
 export enum MetricType {
   Training = 'training',
   Validation = 'validation',
-  Placeholder = 'placeholder',  // Fake metrics like 'ALL' or 'NONE'
 }
 
 export interface MetricName {
