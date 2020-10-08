@@ -47,6 +47,8 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     return metricName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
   };
 
+  // visibleMetrics should always match the list of metrics that antd displays to
+  // the user, including any filtering.
   const visibleMetrics = useMemo(() => {
     return metricNames.filter((metricName: MetricName) => {
       return filterFn(filterString, metricName.name);
@@ -109,7 +111,6 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
 
   const handleClear = useCallback(() => {
     setFilterString('');
-
     if (multiple) {
       (onChange as MultipleHandler)([ ]);
     }
