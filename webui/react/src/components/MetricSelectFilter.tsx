@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
 import { metricNameSorter } from 'utils/data';
-import { metricNameToValue, valueToMetricName } from 'utils/trial';
+import { metricNameFromValue, metricNameToValue, valueToMetricName } from 'utils/trial';
 
 import BadgeTag from './BadgeTag';
 import SelectFilter from './SelectFilter';
@@ -43,9 +43,25 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     return metricNames.length;
   }, [ metricNames ]);
 
+  const filterFn = (search: string, key?: string) => {
+    if (!key) {
+      return false;
+    }
+
+    if (key === allOptionId) {
+      return true;
+    }
+
+    return key.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
+  };
+
   const visibleMetrics = useMemo(() => {
     return metricNames.filter((metricName: MetricName) => {
-      return (metricName.name.includes(filterString));
+      // Don't include the ALL option as an actual metric
+      if (metricName.name === allOptionId) {
+        return false;
+      }
+      return filterFn(filterString, metricName.name);
     });
   }, [ metricNames, filterString ]);
 
@@ -92,18 +108,18 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     if (option.key === allOptionId) {
       return true;
     }
-
-    let label = null;
-    if (option.children) {
-      if (Array.isArray(option.children)) {
-        label = option.children.join(' ');
-      } else if (option.children.props?.label) {
-        label = option.children.props?.label;
-      } else if (typeof option.children === 'string') {
-        label = option.children;
-      }
+    if (!option.value) {
+      // Handle optionGroups that don't have a value to make TS happy. They aren't
+      // impacted by filtering anyway
+      return false;
     }
-    return label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
+    const metricName = metricNameFromValue(option.value);
+    if (metricName === undefined) {
+      // Handle metric values that don't start with 'training|' or 'validation|'. This
+      // shouldn't happen and metricNameFromValue logs an error to console if it does.
+      return false;
+    }
+    return filterFn(search, metricName.name);
   }, []);
 
   const handleSearchInputChange = (searchInput: string) => {

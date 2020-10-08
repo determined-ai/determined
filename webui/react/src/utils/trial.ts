@@ -43,6 +43,26 @@ export const metricNameToValue = (metricName: MetricName): string => {
   return `${metricName.type}|${metricName.name}`;
 };
 
+export const metricNameFromValue = (metricValue: string): MetricName | undefined => {
+  const trainingPrefix = `${MetricType.Training}|`;
+  const validationPrefix = `${MetricType.Validation}|`;
+  if (metricValue.startsWith(trainingPrefix)) {
+    return {
+      name: metricValue.slice(trainingPrefix.length),
+      type: MetricType.Training,
+    };
+  } else if (metricValue.startsWith(validationPrefix)) {
+    return {
+      name: metricValue.slice(validationPrefix.length),
+      type: MetricType.Validation,
+    };
+  } else {
+    console.error("metricNameFromValue was called, but the metricName doesn't appear to " +
+        'be a training metric or a validation metric');
+    return undefined;
+  }
+};
+
 export const valueToMetricName = (value: string): MetricName | undefined => {
   const parts = value.split('|');
   if (parts.length === 2) return { name: parts[1], type: parts[0] as MetricType };
