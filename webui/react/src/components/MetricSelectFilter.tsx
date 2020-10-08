@@ -69,7 +69,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       (onChange as SingleHandler)(metricName);
     }
     setFilterInput('');
-  }, [ multiple, onChange, value, filterInput ]);
+  }, [ multiple, onChange, value, visibleMetrics ]);
 
   const handleMetricDeselect = useCallback((newValue: SelectValue) => {
     if (!onChange || !multiple) return;
@@ -122,7 +122,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     setFilterInput('');
   };
 
-  const allSelector = useMemo(() => {
+  const allOption = useMemo(() => {
     let allOptionLabel;
     const numVisibleOptions = visibleMetrics.length;
     if (numVisibleOptions === totalNumMetrics) {
@@ -136,7 +136,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       </Option>
     );
 
-  }, [ filterInput, metricNames, visibleMetrics ]);
+  }, [ totalNumMetrics, visibleMetrics ]);
 
   const [ maxTagCount, selectorPlaceholder ] = useMemo(() => {
     // This should never happen, but fall back to inoffensive empty placeholder
@@ -172,7 +172,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     onSearch={handleSearchInputChange}
     onSelect={handleMetricSelect}>
 
-    { multiple && visibleMetrics.length > 1 && allSelector}
+    { multiple && visibleMetrics.length > 1 && allOption}
 
     {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
       {validationMetricNames.map(key => {
