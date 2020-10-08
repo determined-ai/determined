@@ -1,0 +1,47 @@
+version: "2"
+checks:
+  argument-count:
+    config:
+      threshold: 4
+  complex-logic:
+    config:
+      threshold: 4
+  file-lines:
+    config:
+      threshold: 250
+  method-complexity:
+    config:
+      threshold: 5
+  method-count:
+    config:
+      threshold: 20
+  method-lines:
+    config:
+      threshold: 25
+  nested-control-flow:
+    config:
+      threshold: 4
+  return-statements:
+    config:
+      threshold: 4
+  similar-code:
+    config:
+      threshold: # language-specific defaults. an override will affect all languages.
+  identical-code:
+    config:
+      threshold: # language-specific defaults. an override will affect all languages.
+plugins: # https://docs.codeclimate.com/docs/list-of-engines
+  fixme:
+    enabled: false
+  govet:
+    enabled: false
+  bandit:
+    enabled: false
+  radon:
+    enabled: false
+  markdownlint:
+    enabled: false
+  shellcheck:
+    enabled: false
+exclude_patterns:
+- "examples/"
