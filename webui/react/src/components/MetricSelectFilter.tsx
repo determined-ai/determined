@@ -43,24 +43,12 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     return metricNames.length;
   }, [ metricNames ]);
 
-  const filterFn = (search: string, key?: string) => {
-    if (!key) {
-      return false;
-    }
-
-    if (key === allOptionId) {
-      return true;
-    }
-
-    return key.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
+  const filterFn = (search: string, metricName: string) => {
+    return metricName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
   };
 
   const visibleMetrics = useMemo(() => {
     return metricNames.filter((metricName: MetricName) => {
-      // Don't include the ALL option as an actual metric
-      if (metricName.name === allOptionId) {
-        return false;
-      }
       return filterFn(filterString, metricName.name);
     });
   }, [ metricNames, filterString ]);
