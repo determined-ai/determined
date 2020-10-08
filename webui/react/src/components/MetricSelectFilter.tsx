@@ -51,25 +51,19 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   const handleMetricSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;
 
-    let metricName;
-    if ((newValue as string) !== 'All') {
-      metricName = valueToMetricName(newValue as string);
-      if (!metricName) return;
-    } else {
-      metricName = {
-        name: newValue as string,
-        type: MetricType.Placeholder,
-      };
+    if ((newValue as string) === 'All') {
+      (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
+      setFilterInput('');
+      return;
     }
 
+    const metricName = valueToMetricName(newValue as string);
+    if (!metricName) return;
+
     if (multiple) {
-      if (newValue === 'All') {
-        (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
-      } else {
-        const newMetric = Array.isArray(value) ? [ ...value ] : [];
-        if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
-        (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
-      }
+      const newMetric = Array.isArray(value) ? [ ...value ] : [];
+      if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
+      (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
     } else {
       (onChange as SingleHandler)(metricName);
     }
@@ -86,27 +80,8 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
   }, [ multiple, onChange, value ]);
 
-  // const handleFiltering = (inputValue: string, option: any) => {
-  //   if (option.key === 'All') {
-  //     return true;
-  //   } else {
-  //     let metricNameOnly = option.key;
-  //     const trainingPrefix = 'training|';
-  //     const validationPrefix = 'validation|';
-  //     if (metricNameOnly.startsWith(trainingPrefix)) {
-  //       metricNameOnly = metricNameOnly.slice(trainingPrefix.length);
-  //     } else if (metricNameOnly.startsWith(validationPrefix)) {
-  //       metricNameOnly = metricNameOnly.slice(validationPrefix.length);
-  //     } else {
-  //       console.log("")
-  //     }
-  //
-  //     console.log('handleFiltering', filterInput, option);
-  //     // return metricNameOnly.includes(filterInput) || typeForSearch.includes(filterInput);
-  //     return metricNameOnly.includes(filterInput);
-  //   }
-  // };
   const handleFiltering = useCallback((search: string, option) => {
+    // Almost identical to callback in SelectFilter, but handles ALL option
     /*
      * `option.children` is one of the following:
      * - undefined
@@ -134,27 +109,6 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     setFilterInput(searchInput);
   };
 
-  // const handleClear = useCallback(() => {
-  //   setFilterInput('');
-  //   let newMetric;
-  //   if (validationMetricNames.length > 0) {
-  //     newMetric = validationMetricNames[0];
-  //   } else if (trainingMetricNames.length > 0){
-  //     newMetric = trainingMetricNames[0];
-  //   }
-  //   if (multiple) {
-  //     if (newMetric) {
-  //       (onChange as MultipleHandler)([ newMetric ]);
-  //     } else {
-  //       (onChange as MultipleHandler)([]);
-  //     }
-  //   } else {
-  //     if (newMetric){
-  //       (onChange as SingleHandler)(newMetric);
-  //     }
-  //   }
-  // }, [ onChange, validationMetricNames, trainingMetricNames ]);
-
   const handleClear = useCallback(() => {
     setFilterInput('');
 
@@ -164,7 +118,6 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ multiple, onChange ]);
 
   const handleBlur = () => {
-    // On blur, the antd clears the filter
     setFilterInput('');
   };
 
@@ -185,7 +138,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ filterInput, metricNames, visibleMetrics ]);
 
   const [ maxTagCount, selectorPlaceholder ] = useMemo(() => {
-    // This should never happen, but fall back to inoffensive empty label
+    // This should never happen, but fall back to inoffensive empty placeholder
     if (metricValues === undefined) {
       return [ 0, '' ];
     }
@@ -213,12 +166,12 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     style={{ width: 200 }}
     value={metricValues}
     onBlur={handleBlur}
-    onClear={multiple ? handleClear : () => {}}
+    onClear={multiple ? handleClear : undefined }
     onDeselect={handleMetricDeselect}
     onSearch={handleSearchInputChange}
     onSelect={handleMetricSelect}>
 
-    {visibleMetrics.length > 1 && allSelector}
+    { multiple && visibleMetrics.length > 1 && allSelector}
 
     {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
       {validationMetricNames.map(key => {
