@@ -1,0 +1,5 @@
+:orphan:
+
+**BUG FIXES**
+
+- WebUI: Preserve the colors used for multiple metrics on the metric chart.
