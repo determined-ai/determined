@@ -86,6 +86,7 @@ Kubernetes, please follow the :ref:`Determined on Kubernetes
 
    installation/kubernetes
    installation/setup-gke-cluster
+   installation/setup-eks-cluster
 
 Notes
 =====

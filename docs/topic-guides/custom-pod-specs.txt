@@ -186,6 +186,14 @@ Example of configuring a pod spec for an individual task:
          # Specify a pull secret for task container image.
          imagePullSecrets:
            name: regcred
+         # Specify a service account that allows writing checkpoints to s3 (for EKS)
+         serviceAccountName: <checkpoint-storage-s3-bucket>
+         # Specify tolerations for scheduling on tainted nodes
+         tolerations:
+           - key: "tained-nodegroup-name"
+             operator: "Equal"
+             value: "true"
+             effect: "NoSchedule"
 
 
 ************

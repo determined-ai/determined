@@ -34,6 +34,8 @@ Kubernetes offering such as `Google Kubernetes Engine (GKE)
 Kubernetes Service (EKS) <https://aws.amazon.com/eks/>`__ on AWS. For
 more info on configuring GKE for use with Determined, refer to our
 :ref:`Instructions for setting up a GKE cluster <setup-gke-cluster>`.
+For info on configuring EKS, refer to our
+:ref:`Instructions for setting up an EKS cluster <setup-eks-cluster>`.
 
 *********************
  What Gets Installed
