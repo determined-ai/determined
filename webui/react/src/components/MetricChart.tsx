@@ -42,7 +42,7 @@ type PlotArguments = [
 const defaultLayout: Partial<Plotly.Layout> = {
   height: 400,
   hovermode: 'x unified',
-  legend: { xanchor: 'right' },
+  legend: { bgcolor: 'rgba(255,255,255,0.75)', xanchor: 'right' },
   margin: { b: 50, l: 50, pad: 6, r: 10, t: 10 },
   showlegend: true,
   xaxis: { hoverformat: '' },
