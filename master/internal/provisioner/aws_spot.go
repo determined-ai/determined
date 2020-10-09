@@ -61,7 +61,7 @@ type spotRequest struct {
 	CreationTime  *time.Time
 }
 
-type spotLoopState struct {
+type spotState struct {
 	activeSpotRequests      map[string]*spotRequest
 	onlyLogErrorOnceTracker map[string]bool
 	inBackoffState          bool

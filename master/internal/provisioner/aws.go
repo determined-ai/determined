@@ -54,13 +54,14 @@ type awsCluster struct {
 	client      *ec2.EC2
 
 	// Only used if spot instances are enabled
-	spotLoopState *spotLoopState
+	spotLoopState *spotState
 }
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	if err := config.AWS.initDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
+
 	// This following AWS session is created using AWS Credentials without explicitly configuration
 	// in the code. However you need to do the following settings.
 	// See https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html
@@ -124,7 +125,7 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	}
 
 	if cluster.SpotInstanceEnabled {
-		cluster.spotLoopState = &spotLoopState{
+		cluster.spotLoopState = &spotState{
 			activeSpotRequests:      make(map[string]*spotRequest),
 			onlyLogErrorOnceTracker: make(map[string]bool),
 			launchTimeOffset:        time.Second * time.Duration(10),
