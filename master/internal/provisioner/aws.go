@@ -54,7 +54,7 @@ type awsCluster struct {
 	client      *ec2.EC2
 
 	// Only used if spot instances are enabled
-	spotLoopState *spotState
+	spotState *spotState
 }
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
@@ -125,10 +125,11 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	}
 
 	if cluster.SpotInstanceEnabled {
-		cluster.spotLoopState = &spotState{
-			activeSpotRequests:      make(map[string]*spotRequest),
-			onlyLogErrorOnceTracker: make(map[string]bool),
-			launchTimeOffset:        time.Second * time.Duration(10),
+		zeroDuration := time.Second * 0
+		cluster.spotState = &spotState{
+			trackedSpotRequests: make(map[string]*spotRequest),
+			approximateClockSkew: &zeroDuration,
+			launchTimeOffset:    time.Second * 10,
 		}
 	}
 
@@ -149,7 +150,7 @@ var ec2InstanceStates = map[string]InstanceState{
 	"running":       Running,
 	"stopped":       Stopped,
 	"stopping":      Stopping,
-	"shutting-down": ShuttingDown,
+	"shutting-down": Terminating,
 }
 
 func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
