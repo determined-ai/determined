@@ -82,7 +82,7 @@ type spotState struct {
 	// to handle the clock skew problem. However, only using launchTimeOffset may lead to
 	// a longer than desired wait before a spot instance request gets fulfilled if the clock
 	// skew is high or if the local clock is ahead of AWS
-	approximateClockSkew *time.Duration
+	approximateClockSkew time.Duration
 
 	// When creating a spot requests, we set the validFrom field to be time.Now() +
 	// approximateClockSkew + launchTimeOffset. If clocks were perfectly synced and API calls
@@ -328,8 +328,6 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 			WithError(err).
 			Infof("error while launching spot request during clock skew approximation. Non-fatal error, " +
 				"defaulting to assumption that AWS clock and local clock have minimal clock skew")
-		zeroDur := time.Second * 0
-		c.spotState.approximateClockSkew = &zeroDur
 		return
 	}
 	awsCreateTime := resp.SpotInstanceRequests[0].CreateTime
@@ -360,7 +358,7 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 		time.Sleep(time.Second * 2)
 	}
 	clockSkewRoundedUp := roundDurationUp(approxClockSkew)
-	c.spotState.approximateClockSkew = &clockSkewRoundedUp
+	c.spotState.approximateClockSkew = clockSkewRoundedUp
 }
 
 // Convert c.spotState.trackedSpotRequests (a map) into a list of Instances. We use a
@@ -439,7 +437,7 @@ func (c *awsCluster) createSpotInstanceRequestCorrectingForClockSkew(
 ) (resp *ec2.RequestSpotInstancesOutput, err error) {
 	maxRetries := 5
 	for numRetries := 0; numRetries <= maxRetries; numRetries += 1 {
-		offset := *c.spotState.approximateClockSkew + c.spotState.launchTimeOffset
+		offset := c.spotState.approximateClockSkew + c.spotState.launchTimeOffset
 		resp, err := c.createSpotInstanceRequest(ctx, numInstances, dryRun, instanceType, offset)
 		if err == nil {
 			return resp, nil
@@ -472,7 +470,7 @@ func (c *awsCluster) createSpotInstanceRequest(
 	}
 	idempotencyToken := uuid.New().String()
 
-	validFrom := time.Now().Local().Add(*c.spotState.approximateClockSkew).Add(launchTimeOffset)
+	validFrom := time.Now().Local().Add(c.spotState.approximateClockSkew).Add(launchTimeOffset)
 	spotInput := &ec2.RequestSpotInstancesInput{
 		ClientToken:                  aws.String(idempotencyToken),
 		DryRun:                       aws.Bool(dryRun),

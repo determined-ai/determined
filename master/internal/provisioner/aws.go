@@ -125,10 +125,9 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	}
 
 	if cluster.SpotInstanceEnabled {
-		zeroDuration := time.Second * 0
 		cluster.spotState = &spotState{
 			trackedSpotRequests: make(map[string]*spotRequest),
-			approximateClockSkew: &zeroDuration,
+			approximateClockSkew: time.Second * 0,
 			launchTimeOffset:    time.Second * 10,
 		}
 	}
