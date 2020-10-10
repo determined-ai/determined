@@ -3,7 +3,10 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/timestamp.proto";
+
 import "determined/experiment/v1/experiment.proto";
+import "determined/log/v1/log.proto";
 import "determined/trial/v1/trial.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
@@ -11,6 +14,9 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Stream Trial logs.
 message TrialLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
   // The id of the trial.
   int32 trial_id = 1;
   // Skip the number of trial logs before returning results. Negative values
@@ -20,7 +26,22 @@ message TrialLogsRequest {
   int32 limit = 4;
   // Continue following logs until the trial stops or the limit is reached.
   bool follow = 5;
+  // Limit the trial logs a subset of agents.
+  repeated string agent_ids = 6;
+  // Limit the trial logs a subset of containers.
+  repeated string container_ids = 7;
+  // Limit the trial logs a subset agents.
+  repeated determined.log.v1.LogLevel level = 8;
+  // Limit the trial logs a subset of output streams.
+  repeated string stdtype = 9;
+  // Limit the trial logs a subset of sources.
+  repeated string source = 10;
+  // Limit the trial logs where the timestamp is before a given time.
+  google.protobuf.Timestamp timestamp_before = 11;
+  // Limit the trial logs where the timestamp is after a given time.
+  google.protobuf.Timestamp timestamp_after = 12;
 }
+
 // Response to TrialLogsRequest.
 message TrialLogsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

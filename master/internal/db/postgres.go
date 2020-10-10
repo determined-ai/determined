@@ -146,8 +146,7 @@ func (db *PgDB) rawQuery(q string, args ...interface{}) ([]byte, error) {
 	return ret, nil
 }
 
-// query executes a query returning a single row and unmarshals the result into
-// obj.
+// query executes a query returning a single row and unmarshals the result into an obj.
 func (db *PgDB) query(q string, obj interface{}, args ...interface{}) error {
 	if err := db.sql.QueryRowx(q, args...).StructScan(obj); err == sql.ErrNoRows {
 		return errors.WithStack(ErrNotFound)
@@ -155,6 +154,12 @@ func (db *PgDB) query(q string, obj interface{}, args ...interface{}) error {
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+// query executes a query returning a single row and unmarshals the result into a slice.
+func (db *PgDB) queryRows(query string, v interface{}, args ...interface{}) error {
+	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
+	return db.queryRowsWithParser(query, parser, v, args...)
 }
 
 // GetClusterID queries the master uuid in the database, first adding it if it doesn't exist.
@@ -1362,18 +1367,24 @@ func (db *PgDB) AddTrialLogs(logs []*model.TrialLog) error {
 	}
 
 	var text strings.Builder
-	text.WriteString("INSERT INTO trial_logs (trial_id, message) VALUES")
+	text.WriteString(`
+INSERT INTO trial_logs
+    (trial_id, message, agent_id, container_id, timestamp, level, stdtype, source)
+VALUES
+`)
 
-	args := make([]interface{}, 0, len(logs)*2)
+	args := make([]interface{}, 0, len(logs)*8)
 
 	for i, log := range logs {
 		// Add an argument to the SQL statement of the form: ($1, $2)
 		if i > 0 {
 			text.WriteString(",")
 		}
-		fmt.Fprintf(&text, " ($%d, $%d)", i*2+1, i*2+2)
+		fmt.Fprintf(&text, " ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+			i*8+1, i*8+2, i*8+3, i*8+4, i*8+5, i*8+6, i*8+7, i*8+8)
 
-		args = append(args, log.TrialID, model.RawString(log.Message))
+		args = append(args, log.TrialID, model.RawString(log.Message), log.AgentID, log.ContainerID,
+			log.Timestamp, log.Level, log.StdType, log.Source)
 	}
 
 	if _, err := db.sql.Exec(text.String(), args...); err != nil {
@@ -1956,10 +1967,10 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	}
 }
 
-func (db *PgDB) queryRows(
-	queryName string, p func(*sqlx.Rows, interface{}) error, v interface{}, args ...interface{},
+func (db *PgDB) queryRowsWithParser(
+	query string, p func(*sqlx.Rows, interface{}) error, v interface{}, args ...interface{},
 ) error {
-	rows, err := db.sql.Queryx(db.queries.getOrLoad(queryName), args...)
+	rows, err := db.sql.Queryx(query, args...)
 	if err != nil {
 		return err
 	}
@@ -2003,7 +2014,7 @@ func (db *PgDB) queryRows(
 // with supplied args.
 func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) error {
 	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
-	return db.queryRows(queryName, parser, v, args...)
+	return db.queryRowsWithParser(db.queries.getOrLoad(queryName), parser, v, args...)
 }
 
 // RawQuery returns the result of the query as a raw byte string. Any placeholder parameters are

@@ -401,6 +401,24 @@ type TrialLog struct {
 	StdType     *string    `db:"stdtype" json:"stdtype"`
 }
 
+// TrialLogBatch represents a batch of model.TrialLog.
+type TrialLogBatch []*TrialLog
+
+// Size implements logs.Batch.
+func (t TrialLogBatch) Size() int {
+	return len(t)
+}
+
+// ForEach implements logs.Batch.
+func (t TrialLogBatch) ForEach(f func(interface{}) error) error {
+	for _, tl := range t {
+		if err := f(tl); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // SearcherEvent represents a row from the `searcher_events` table.
 type SearcherEvent struct {
 	ID           int     `db:"id"`
