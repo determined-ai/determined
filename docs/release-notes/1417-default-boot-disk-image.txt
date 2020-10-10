@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+- The ``boot_disk_source_image`` field for GCP dynamic agents and `image_id` field for AWS
+  dynamic agents are now optional. They default to the latest agent images.

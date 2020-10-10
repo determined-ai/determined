@@ -47,8 +47,9 @@ type GCPClusterConfig struct {
 // DefaultGCPClusterConfig returns the default configuration of the gcp cluster.
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
-		BootDiskSize: 200,
-		LabelKey:     "managed-by",
+		BootDiskSize:        200,
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-825decd",
+		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
 			GPUType:     "nvidia-tesla-v100",
