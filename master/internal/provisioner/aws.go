@@ -53,8 +53,8 @@ type awsCluster struct {
 	ec2UserData []byte
 	client      *ec2.EC2
 
-	// Only used if spot instances are enabled
-	spotState *spotState
+	// State that is only used if spot instances are enabled
+	spot *spotState
 }
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
@@ -125,10 +125,10 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	}
 
 	if cluster.SpotInstanceEnabled {
-		cluster.spotState = &spotState{
-			trackedSpotRequests: make(map[string]*spotRequest),
+		cluster.spot = &spotState{
+			trackedReqs:          newSetOfSpotRequests(),
 			approximateClockSkew: time.Second * 0,
-			launchTimeOffset:    time.Second * 10,
+			launchTimeOffset:     time.Second * 10,
 		}
 	}
 
@@ -337,8 +337,9 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 }
 
 func (c *awsCluster) describeInstancesById(instanceIds []*string, dryRun bool) ([]*ec2.Instance, error) {
+
 	if len(instanceIds) == 0 {
-		return make([]*ec2.Instance, 0, 0), nil
+		return make([]*ec2.Instance, 0), nil
 	}
 	input := &ec2.DescribeInstancesInput{
 		DryRun:      aws.Bool(dryRun),

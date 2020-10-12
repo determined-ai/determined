@@ -12,7 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
-const SpotPriceNotSetPlaceholder = "OnDemand"
+const spotPriceNotSetPlaceholder = "OnDemand"
 
 // AWSClusterConfig describes the configuration for an EC2 cluster managed by Determined.
 type AWSClusterConfig struct {
@@ -73,7 +73,7 @@ func (c *AWSClusterConfig) initDefaultValues() error {
 	}
 
 	if len(c.SpotMaxPrice) == 0 {
-		c.SpotMaxPrice = SpotPriceNotSetPlaceholder
+		c.SpotMaxPrice = spotPriceNotSetPlaceholder
 	}
 	// One common reason that metadata.GetInstanceIdentityDocument() fails is that the master is not
 	// running in EC2. Use a default name here rather than holding up initializing the provider.
@@ -99,7 +99,7 @@ func (c *AWSClusterConfig) UnmarshalJSON(data []byte) error {
 // Validate implements the check.Validatable interface.
 func (c AWSClusterConfig) Validate() []error {
 	var spotPriceIsNotValidNumberErr error
-	if c.SpotInstanceEnabled && c.SpotMaxPrice != SpotPriceNotSetPlaceholder {
+	if c.SpotInstanceEnabled && c.SpotMaxPrice != spotPriceNotSetPlaceholder {
 		spotPriceIsNotValidNumberErr = validateMaxSpotPrice(c.SpotMaxPrice)
 	}
 	return []error{
@@ -126,9 +126,9 @@ func validateMaxSpotPrice(spotMaxPriceInput string) error {
 		if !unicode.IsDigit(char) {
 			return errors.New(
 				fmt.Sprintf("spot max price should only contain digits and, optionally, one decimal point. "+
-					"Received %s, which has the non-digit character %d",
+					"Received %s, which has the non-digit character %s",
 					spotMaxPriceInput,
-					char))
+					string(char)))
 		}
 	}
 	return nil

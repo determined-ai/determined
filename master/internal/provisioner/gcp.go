@@ -147,9 +147,7 @@ func (c *gcpCluster) generateInstanceName() string {
 	return c.NamePrefix + petname.Generate(2, "-")
 }
 
-func (c *gcpCluster) setup(ctx *actor.Context) {
-	return
-}
+func (c *gcpCluster) setup(ctx *actor.Context) {}
 
 func (c *gcpCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	instances, err := c.listInstances()
