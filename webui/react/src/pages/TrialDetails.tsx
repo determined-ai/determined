@@ -9,6 +9,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import BadgeTag from 'components/BadgeTag';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
+import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Message from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -30,7 +31,6 @@ import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
 } from 'types';
 import { clone, numericSorter } from 'utils/data';
-import { humanReadableFloat } from 'utils/string';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
@@ -161,9 +161,7 @@ const TrialDetailsComp: React.FC = () => {
     const metricRenderer = (metricName: MetricName) => {
       const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
-        return value ? <Tooltip title={value}>
-          <span>{humanReadableFloat(value)}</span>
-        </Tooltip> : undefined;
+        return value ? <HumanReadableFloat num={value} /> : undefined;
       };
       return metricCol;
     };

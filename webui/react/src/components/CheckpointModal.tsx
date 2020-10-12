@@ -2,9 +2,10 @@ import { Modal } from 'antd';
 import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import HumanReadableFloat from 'components/HumanReadableFloat';
 import { CheckpointDetail, CheckpointStorageType, ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/date';
-import { humanReadableBytes, humanReadableFloat } from 'utils/string';
+import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/types';
 
 import css from './CheckpointModal.module.scss';
@@ -101,7 +102,9 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
         {renderRow('Location', getStorageLocation(config, checkpoint))}
         {checkpoint.validationMetric && renderRow(
           'Validation Metric',
-          `${humanReadableFloat(checkpoint.validationMetric)} (${config.searcher.metric})`,
+          <>
+            <HumanReadableFloat num={checkpoint.validationMetric} /> {`(${config.searcher.metric})`}
+          </>,
         )}
         {renderRow('Start Time', formatDatetime(checkpoint.startTime))}
         {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
