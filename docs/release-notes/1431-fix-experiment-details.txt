@@ -1,0 +1,5 @@
+:orphan:
+
+**BUG FIXES**
+
+- WebUI: Fix the `humanReadableFloat` bug on Experiment Details page.
