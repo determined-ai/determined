@@ -41,12 +41,12 @@ official_examples = [
         "gan/gan_mnist_pytorch/const.yaml",
     ),
     (
-        "data-layer/data_layer_mnist_estimator",
-        "data-layer/data_layer_mnist_estimator/const.yaml",
+        "data_layer/data_layer_mnist_estimator",
+        "data_layer/data_layer_mnist_estimator/const.yaml",
     ),
     (
-        "data-layer/data_layer_mnist_tf_keras",
-        "data-layer/data_layer_mnist_tf_keras/const.yaml",
+        "data_layer/data_layer_mnist_tf_keras",
+        "data_layer/data_layer_mnist_tf_keras/const.yaml",
     ),
 ]
 
