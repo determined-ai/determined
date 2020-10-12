@@ -17,6 +17,7 @@ from determined_common.api.request import (
     delete,
     do_request,
     get,
+    stream,
     make_url,
     open,
     parse_master_address,

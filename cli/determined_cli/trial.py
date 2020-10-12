@@ -205,6 +205,46 @@ args_description = [
                             "of the log (default is all)",
                         ),
                     ),
+                    Arg(
+                        "--agent-id",
+                        type=str,
+                        action="append",
+                        help="agents to show logs from",
+                    ),
+                    Arg(
+                        "--container-id",
+                        type=str,
+                        action="append",
+                        help="containers to show logs from",
+                    ),
+                    Arg(
+                        "--timestamp-before",
+                        type=str,
+                        help="show logs only from before",
+                    ),
+                    Arg(
+                        "--timestamp-after",
+                        type=str,
+                        help="show logs only from after",
+                    ),
+                    Arg(
+                        "--level",
+                        type=str,
+                        action="append",
+                        help="log levels to show logs from",
+                    ),
+                    Arg(
+                        "--source",
+                        type=str,
+                        action="append",
+                        help="sources to show logs from",
+                    ),
+                    Arg(
+                        "--std-type",
+                        type=str,
+                        action="append",
+                        help="output stream to show logs from",
+                    ),
                 ],
             ),
             Cmd(

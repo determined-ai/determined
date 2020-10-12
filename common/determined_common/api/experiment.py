@@ -6,6 +6,7 @@ import uuid
 from argparse import Namespace
 from typing import Any, Dict, Optional
 
+import simplejson
 from termcolor import colored
 
 from determined_common import api, constants, context, yaml
@@ -25,48 +26,48 @@ def activate_experiment(master_url: str, exp_id: int) -> None:
 
 @authentication_required
 def logs(args: Namespace) -> None:
-    last_offset, last_state = 0, None
-
-    def print_logs(offset: Optional[int], limit: Optional[int] = 5000) -> Any:
-        nonlocal last_offset, last_state
-        path = "trials/{}/logsv2?".format(args.trial_id)
+    def print_logs(
+        offset: Optional[int], limit: Optional[int] = 5000, follow: bool = False
+    ) -> None:
+        path = "/api/v1/trials/{}/logs?".format(args.trial_id)
         if offset is not None:
             path += "&offset={}".format(offset)
         if limit is not None:
             path += "&limit={}".format(limit)
-        logs = api.get(args.master, path).json()
-        for log in logs:
-            print(log["message"], end="")
-            last_state = log["state"]
-        return logs[-1]["id"] if logs else last_offset
+        if follow:
+            path += "&follow=true"
+        for f in [
+            "agent_id",
+            "container_id",
+            "source",
+            "std_type",
+            "level",
+            "timestamp_before",
+            "timestamp_after",
+        ]:
+            if getattr(args, f) is not None:
+                for v in getattr(args, f):
+                    path += "&{}={}".format(f, v)
+        decoder = simplejson.JSONDecoder()  # type: ignore
+        with api.stream(args.master, path) as r:
+            for line in r.iter_lines():
+                log = decoder.decode(line)["result"]
+                print(log["message"], end="")
 
     try:
         if args.head is not None:
             print_logs(0, args.head)
-            return
-        if args.tail is not None:
-            last_offset = print_logs(None, args.tail)
+        elif args.tail is not None:
+            print_logs(-args.tail, args.tail)
         else:
-            while True:
-                new_offset = print_logs(last_offset)
-                if last_offset == new_offset:
-                    break
-                last_offset = new_offset
-
-        if not args.follow:
-            return
-        while True:
-            last_offset = print_logs(last_offset)
-            if last_state in constants.TERMINAL_STATES:
-                break
-            time.sleep(0.2)
+            print_logs(0, 0, args.follow)
     except KeyboardInterrupt:
         pass
     finally:
         print(
             colored(
-                "Trial is in the {} state. To reopen log stream, run: "
-                "det trial logs -f {}".format(last_state, args.trial_id),
+                "Trial log stream ended. To reopen log stream, run: "
+                "det trial logs -f {}".format(args.trial_id),
                 "green",
             )
         )
