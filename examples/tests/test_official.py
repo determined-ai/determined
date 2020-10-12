@@ -5,22 +5,57 @@ import pytest
 
 official_examples = [
     (
+        "tutorials/mnist_pytorch",
+        "tutorials/mnist_pytorch/const.yaml",
+    ),
+    (
+        "tutorials/fashion_mnist_tf_keras",
+        "tutorials/fashion_mnist_tf_keras/const.yaml",
+    ),
+    (
         "computer_vision/cifar10_pytorch",
         "computer_vision/cifar10_pytorch/const.yaml",
+    ),
+    (
+        "computer_vision/mnist_multi_output_pytorch",
+        "computer_vision/mnist_multi_output_pytorch/const.yaml",
+    ),
+    (
+        "computer_vision/mnist_estimator",
+        "computer_vision/mnist_estimator/const.yaml",
+    ),
+    (
+        "computer_vision/mnist_tf_layers",
+        "computer_vision/mnist_tf_layers/const.yaml",
     ),
     (
         "computer_vision/cifar10_tf_keras",
         "computer_vision/cifar10_tf_keras/const.yaml",
     ),
     (
-        "tutorials/fashion_mnist_tf_keras",
-        "tutorials/fashion_mnist_tf_keras/const.yaml",
+        "computer_vision/iris_tf_keras",
+        "computer_vision/iris_tf_keras/const.yaml",
     ),
-    ("computer_vision/iris_tf_keras", "computer_vision/iris_tf_keras/const.yaml"),
-    ("computer_vision/mnist_estimator", "computer_vision/mnist_estimator/const.yaml"),
-    ("computer_vision/mnist_tf_layers", "computer_vision/mnist_tf_layers/const.yaml"),
-    ("tutorials/mnist_pytorch", "tutorials/mnist_pytorch/const.yaml"),
-    ("gan/gan_mnist_pytorch", "gan/gan_mnist_pytorch/const.yaml"),
+    (
+        "computer_vision/unets_tf_keras",
+        "computer_vision/unets_tf_keras/const.yaml",
+    ),
+    (
+        "gan/gan_mnist_pytorch",
+        "gan/gan_mnist_pytorch/const.yaml",
+    ),
+    (
+        "decision-trees/gbt_titanic_estimator",
+        "decision-trees/gbt_titanic_estimator/const.yaml",
+    ),
+    (
+        "data-layer/data_layer_mnist_estimator",
+        "data-layer/data_layer_mnist_estimator/const.yaml",
+    ),
+    (
+        "data-layer/data_layer_mnist_tf_keras",
+        "data-layer/data_layer_mnist_tf_keras/const.yaml",
+    ),
 ]
 
 

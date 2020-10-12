@@ -1,4 +1,4 @@
-description: mnist-tf-keras
+description: data_layer_mnist_tf_keras_const
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz
 hyperparameters:
