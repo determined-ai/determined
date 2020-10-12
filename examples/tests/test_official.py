@@ -41,6 +41,10 @@ official_examples = [
         "gan/gan_mnist_pytorch/const.yaml",
     ),
     (
+        "decision_trees/gbt_titanic_estimator",
+        "decision_trees/gbt_titanic_estimator/const.yaml",
+    ),
+    (
         "data_layer/data_layer_mnist_estimator",
         "data_layer/data_layer_mnist_estimator/const.yaml",
     ),
