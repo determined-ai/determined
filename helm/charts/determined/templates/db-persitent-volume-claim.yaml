@@ -14,4 +14,7 @@ spec:
   resources:
     requests:
       storage: {{ required  "A valid Values.db.storageSize entry is required!" .Values.db.storageSize }}
+  {{- if .Values.db.storageClassName }}
+  storageClassName: {{ .Values.db.storageClassName }}
+  {{ end }}
 {{ end }}
