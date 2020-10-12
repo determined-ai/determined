@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+- Added support for configuring the storageClass that is used when deploying
+  a database using the Determined Helm Chart.
