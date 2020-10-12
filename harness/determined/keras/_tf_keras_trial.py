@@ -363,15 +363,17 @@ class TFKerasTrialController(det.LoopTrialController):
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
     ) -> None:
-        (
-            context.model,
-            compile_args.arguments["optimizer"],
-        ) = keras._get_multi_gpu_model_and_optimizer(
-            pre_compiled_model=context.model,
-            optimizer=compile_args.arguments["optimizer"],
-            env=env,
-            hvd_config=hvd_config,
-        )
+        assert context.model is not None
+        if hvd_config.use:
+            # Horovod doesn't know how to handle string-based optimizers.
+            if isinstance(compile_args.arguments["optimizer"], str):
+                raise det.errors.InvalidExperimentException("string optimizers are not supported")
+
+            compile_args.arguments["optimizer"] = hvd.DistributedOptimizer(
+                compile_args.arguments["optimizer"],
+                aggregation_frequency=hvd_config.aggregation_frequency,
+                average_aggregated_gradients=hvd_config.average_aggregated_gradients,
+            )
 
         if hvd_config.use and version.parse("2.0.0") <= version.parse(
             tf.__version__
