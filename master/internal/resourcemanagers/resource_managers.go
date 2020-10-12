@@ -79,10 +79,10 @@ func (rm *ResourceManagers) forward(ctx *actor.Context, msg actor.Message) {
 func GetResourceManagerType(rmConfig *ResourceManagerConfig) string {
 	switch {
 	case rmConfig.AgentRM != nil:
-		return "agents-resourceManager"
+		return "agentsRM"
 
 	case rmConfig.KubernetesRM != nil:
-		return "kubernetes-resourceManager"
+		return "kubernetesRM"
 
 	default:
 		panic("no expected resource manager config is defined")
