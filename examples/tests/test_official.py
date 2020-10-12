@@ -37,16 +37,8 @@ official_examples = [
         "computer_vision/iris_tf_keras/const.yaml",
     ),
     (
-        "computer_vision/unets_tf_keras",
-        "computer_vision/unets_tf_keras/const.yaml",
-    ),
-    (
         "gan/gan_mnist_pytorch",
         "gan/gan_mnist_pytorch/const.yaml",
-    ),
-    (
-        "decision-trees/gbt_titanic_estimator",
-        "decision-trees/gbt_titanic_estimator/const.yaml",
     ),
     (
         "data-layer/data_layer_mnist_estimator",

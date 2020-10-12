@@ -236,7 +236,9 @@ def test_unets_tf_keras_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_protonet_omniglot_pytorch_accuracy() -> None:
-    config = conf.load_config(conf.meta_learning_examples_path("protonet_omniglot_pytorch/20way1shot.yaml"))
+    config = conf.load_config(
+        conf.meta_learning_examples_path("protonet_omniglot_pytorch/20way1shot.yaml")
+    )
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.meta_learning_examples_path("protonet_omniglot_pytorch"), 1
     )
@@ -311,7 +313,9 @@ def test_gbt_titanic_estimator_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_data_layer_mnist_estimator_accuracy() -> None:
-    config = conf.load_config(conf.data_layer_examples_path("data_layer_mnist_estimator/const.yaml"))
+    config = conf.load_config(
+        conf.data_layer_examples_path("data_layer_mnist_estimator/const.yaml")
+    )
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.data_layer_examples_path("data_layer_mnist_estimator"), 1
     )
