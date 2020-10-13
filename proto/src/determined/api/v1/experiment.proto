@@ -10,6 +10,7 @@ import "google/protobuf/field_mask.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/experiment/v1/experiment.proto";
+import "determined/util/v1/util.proto";
 import "determined/experiment/v1/searcher.proto";
 
 // Get a single experiment.
@@ -225,4 +226,20 @@ message GetExperimentValidationHistoryResponse {
   // the lifetime of an experiment. The historical list of best validations.
   repeated determined.experiment.v1.ValidationHistoryEntry validation_history =
       1;
+}
+
+message PostExperimentRequest {
+  // Experiment context.
+  repeated determined.util.v1.File context = 1;
+  // Experiment config.
+  google.protobuf.Struct config = 2;
+  // Validate the experiment.
+  bool validate_only = 3;
+  // Parent experiment id.
+  int32 parent_id = 4;
+}
+
+message PostExperimentResponse {
+  // The created experiment.
+  determined.experiment.v1.Experiment experiment = 1;
 }

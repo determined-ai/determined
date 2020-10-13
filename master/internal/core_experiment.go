@@ -338,23 +338,29 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	return nil, nil
 }
 
-func (m *Master) parseExperiment(body []byte) (*model.Experiment, bool, error) {
-	var params struct {
-		ConfigBytes   string          `json:"experiment_config"`
-		Template      *string         `json:"template"`
-		ModelDef      archive.Archive `json:"model_definition"`
-		ParentID      *int            `json:"parent_id"`
-		Archived      bool            `json:"archived"`
-		GitRemote     *string         `json:"git_remote"`
-		GitCommit     *string         `json:"git_commit"`
-		GitCommitter  *string         `json:"git_committer"`
-		GitCommitDate *time.Time      `json:"git_commit_date"`
-		ValidateOnly  bool            `json:"validate_only"`
-	}
-	if err := json.Unmarshal(body, &params); err != nil {
-		return nil, false, errors.Wrap(err, "invalid experiment params")
-	}
+type PostExperimentParams struct {
+	ConfigBytes   string          `json:"experiment_config"`
+	Template      *string         `json:"template"`
+	ModelDef      archive.Archive `json:"model_definition"`
+	ParentID      *int            `json:"parent_id"`
+	Archived      bool            `json:"archived"`
+	GitRemote     *string         `json:"git_remote"`
+	GitCommit     *string         `json:"git_commit"`
+	GitCommitter  *string         `json:"git_committer"`
+	GitCommitDate *time.Time      `json:"git_commit_date"`
+	ValidateOnly  bool            `json:"validate_only"`
+}
 
+func (m *Master) parseExperiment(body []byte) (*PostExperimentParams, error) {
+	var params PostExperimentParams
+	if err := json.Unmarshal(body, &params); err != nil {
+		return nil, errors.Wrap(err, "invalid experiment params")
+	}
+	return &params, nil
+}
+
+// TODO rename me.
+func (m *Master) postParseExperiment(params *PostExperimentParams) (*model.Experiment, bool, error) {
 	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
@@ -423,7 +429,12 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 
 	user := c.(*context.DetContext).MustGetUser()
 
-	dbExp, validateOnly, err := m.parseExperiment(body)
+	params, err := m.parseExperiment(body)
+	if err != nil {
+		return nil, err
+	}
+
+	dbExp, validateOnly, err := m.postParseExperiment(params)
 
 	if err != nil {
 		return nil, echo.NewHTTPError(

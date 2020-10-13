@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 
@@ -11,9 +12,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -476,4 +479,56 @@ func (a *apiServer) GetExperimentCheckpoints(
 	a.sort(
 		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+}
+
+// TODO rename me.
+func reqToP(
+	req *apiv1.PostExperimentRequest,
+) (*PostExperimentParams, error) {
+	return nil, nil
+}
+
+func (a *apiServer) PostExperiment(
+	ctx context.Context, req *apiv1.PostExperimentRequest,
+) (*apiv1.PostExperimentResponse, error) {
+	detParams, err := reqToP(req)
+	if err != nil {
+		return nil, err
+	}
+	dbExp, validateOnly, err := a.m.postParseExperiment(detParams)
+
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	if err != nil {
+		return nil, echo.NewHTTPError(
+			http.StatusBadRequest,
+			errors.Wrap(err, "invalid experiment"))
+	}
+
+	if validateOnly {
+		// FIXME. in the old api do we return an error here?
+		return nil, status.Errorf(codes.OK, "it's fine")
+	}
+
+	dbExp.OwnerID = &user.ID
+	e, err := newExperiment(a.m, dbExp)
+	if err != nil {
+		return nil, errors.Wrap(err, "starting experiment")
+	}
+	a.m.system.ActorOf(actor.Addr("experiments", e.ID), e)
+
+	// TODO
+	// c.Response().Header().Set(echo.HeaderLocation, fmt.Sprintf("/experiments/%v", e.ID))
+	// response := model.ExperimentDescriptor{
+	// 	ID:       e.ID,
+	// 	Archived: false,
+	// 	Config:   e.Config,
+	// 	Labels:   make([]string, 0),
+	// }
+	return &apiv1.PostExperimentResponse{Experiment: &experimentv1.Experiment{
+		Id: int32(e.ID),
+	}}, nil
 }
