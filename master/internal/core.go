@@ -279,14 +279,14 @@ func (m *Master) Run() error {
 
 	// Actor structure:
 	// master system
+	// +- Agent Group (actors.Group: agents)
+	//     +- Agent (internal.agent: <agent-id>)
+	//         +- Websocket (actors.WebSocket: <remote-address>)
 	// +- ResourceManagers (scheduler.ResourceManagers: resourceManagers)
 	// Exactly one of the resource managers is enabled at a time.
 	// +- AgentResourceManager (resourcemanagers.AgentResourceManager: agentRM)
 	//     +- Resource Pool (resourcemanagers.ResourcePool: <resource-pool-name>)
-	//        +- Provisioner (provisioner.Provisioner: provisioner)
-	//        +- Agent Group (actors.Group: agents)
-	//            +- Agent (internal.agent: <agent-id>)
-	//                +- Websocket (actors.WebSocket: <remote-address>)
+	//         +- Provisioner (provisioner.Provisioner: provisioner)
 	// +- KubernetesResourceManager (scheduler.KubernetesResourceManager: kubernetesRM)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
