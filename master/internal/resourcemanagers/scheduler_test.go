@@ -3,6 +3,10 @@ package resourcemanagers
 import (
 	"testing"
 
+	image "github.com/determined-ai/determined/master/pkg/tasks"
+
+	"github.com/google/uuid"
+
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
@@ -12,10 +16,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-type (
-	getMaxSlots struct{}
-	getWeight   struct{}
-)
+func newMaxSlot(maxSlot int) *int {
+	return &maxSlot
+}
 
 type mockGroup struct {
 	id       string
@@ -25,83 +28,88 @@ type mockGroup struct {
 
 func (g *mockGroup) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
-	case getMaxSlots:
-		ctx.Respond(g.maxSlots)
-	case getWeight:
-		ctx.Respond(g.weight)
+	case actor.PreStart:
+	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
 
-type mockTask struct {
-	system      *actor.System
-	cluster     *actor.Ref
-	onAllocated func(ResourcesAllocated) error
-
-	id             TaskID
-	slotsNeeded    int
-	label          string
-	group          *mockGroup
-	allocatedAgent *mockAgent
-	nonPreemptible bool
-}
-
 type (
-	AskSchedulerToAddTask struct {
-		task AllocateRequest
-	}
-	ThrowError struct{}
-	ThrowPanic struct{}
-	GetSlots   struct{}
-	GetGroup   struct{}
-	GetLabel   struct{}
+	SendRequestResourcesToResourceManager  struct{}
+	SendResourcesReleasedToResourceManager struct{}
+	ThrowError                             struct{}
+	ThrowPanic                             struct{}
 )
 
 var errMock = errors.New("mock error")
 
+type mockTask struct {
+	rmRef       *actor.Ref
+	onAllocated func(ResourcesAllocated) error
+	onRelease   func(ReleaseResources) error
+
+	id              TaskID
+	group           *mockGroup
+	slotsNeeded     int
+	nonPreemptible  bool
+	label           string
+	resourcePool    string
+	allocatedAgent  *mockAgent
+	containrStarted bool
+}
+
 func (t *mockTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case AskSchedulerToAddTask:
-		msg.task.TaskActor = ctx.Self()
-		if ctx.ExpectingResponse() {
-			ctx.Respond(ctx.Ask(t.cluster, msg.task).Get())
-		} else {
-			ctx.Tell(t.cluster, msg.task)
+	case actor.PreStart:
+	case actor.PostStop:
+	case SendRequestResourcesToResourceManager:
+		task := AllocateRequest{
+			ID:             t.id,
+			Name:           string(t.id),
+			SlotsNeeded:    t.slotsNeeded,
+			NonPreemptible: t.nonPreemptible,
+			Label:          t.label,
+			ResourcePool:   t.resourcePool,
+			TaskActor:      ctx.Self(),
 		}
+		if t.group == nil {
+			task.Group = ctx.Self()
+		} else {
+			task.Group = ctx.Self().System().Get(actor.Addr(t.group.id))
+		}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(ctx.Ask(t.rmRef, task).Get())
+		} else {
+			ctx.Tell(t.rmRef, task)
+		}
+	case SendResourcesReleasedToResourceManager:
+		task := ResourcesReleased{TaskActor: ctx.Self()}
+		if ctx.ExpectingResponse() {
+			ctx.Respond(ctx.Ask(t.rmRef, task).Get())
+		} else {
+			ctx.Tell(t.rmRef, task)
+		}
+	case ThrowError:
+		return errMock
+	case ThrowPanic:
+		panic(errMock)
 
 	case ResourcesAllocated:
 		if t.onAllocated != nil {
 			return t.onAllocated(msg)
 		}
-
-		// Mock a container is started.
-		t.system.Tell(t.cluster, sproto.TaskContainerStateChanged{
-			Container:        cproto.Container{ID: "random-container-name"},
-			ContainerStarted: &sproto.TaskContainerStarted{},
-		})
+		for _, allocation := range msg.Allocations {
+			allocation.Start(ctx, image.TaskSpec{})
+		}
 	case ReleaseResources:
+		if t.onRelease != nil {
+			return t.onRelease(msg)
+		}
+		ctx.Tell(t.rmRef, ResourcesReleased{TaskActor: ctx.Self()})
 
 	case sproto.TaskContainerStateChanged:
-		if msg.Container.State == cproto.Running {
-			t.system.Tell(t.cluster, sproto.TaskContainerStateChanged{
-				Container:        cproto.Container{ID: msg.Container.ID},
-				ContainerStopped: &sproto.TaskContainerStopped{},
-			})
-		}
-
-	case GetSlots:
-		ctx.Respond(t.slotsNeeded)
-	case GetGroup:
-		ctx.Respond(t.group)
-	case GetLabel:
-		ctx.Respond(t.label)
-
-	case ThrowError:
-		return errMock
-	case ThrowPanic:
-		panic(errMock)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -110,6 +118,9 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 }
 
 type mockAgent struct {
+	onStartTaskContainer func(sproto.StartTaskContainer) error
+	onKillTaskContainer  func(sproto.KillTaskContainer) error
+
 	id    string
 	slots int
 	label string
@@ -122,7 +133,7 @@ func newMockAgent(
 	slots int,
 	label string,
 ) *agentState {
-	ref, created := system.ActorOf(actor.Addr(id), &mockAgent{})
+	ref, created := system.ActorOf(actor.Addr(id), &mockAgent{id: id, slots: slots, label: label})
 	assert.Assert(t, created)
 	state := newAgentState(sproto.AddAgent{Agent: ref, Label: label})
 	for i := 0; i < slots; i++ {
@@ -133,18 +144,114 @@ func newMockAgent(
 
 func (m mockAgent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case actor.PreStart:
+	case actor.PostStop:
 	case sproto.StartTaskContainer:
-		if ctx.ExpectingResponse() {
-			ctx.Respond(msg.TaskActor)
+		if m.onStartTaskContainer != nil {
+			return m.onStartTaskContainer(msg)
 		}
-
+	case sproto.KillTaskContainer:
+		if m.onStartTaskContainer != nil {
+			return m.onKillTaskContainer(msg)
+		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
 
-func setupClusterStates(
+func setupResourcePool(
+	t *testing.T,
+	system *actor.System,
+	config *ResourcePoolConfig,
+	mockTasks []*mockTask,
+	mockGroups []*mockGroup,
+	mockAgents []*mockAgent,
+) (*ResourcePool, *actor.Ref) {
+	if config == nil {
+		config = &ResourcePoolConfig{PoolName: "pool"}
+	}
+	rp := NewResourcePool(config, nil, NewFairShareScheduler(), BestFit)
+	rp.taskList, rp.groups, rp.agents = setupSchedulerStates(
+		t, system, mockTasks, mockGroups, mockAgents,
+	)
+	rp.saveNotifications = true
+	ref, created := system.ActorOf(actor.Addr(rp.config.PoolName), rp)
+	assert.Assert(t, created)
+	system.Ask(ref, actor.Ping{}).Get()
+
+	for _, task := range mockTasks {
+		task.rmRef = ref
+	}
+	return rp, ref
+}
+
+func forceAddAgent(
+	t *testing.T,
+	system *actor.System,
+	agents map[*actor.Ref]*agentState,
+	agentID string,
+	numSlots int,
+	numUsedSlots int,
+	numZeroSlotContainers int,
+) *agentState {
+	state := newMockAgent(t, system, agentID, numSlots, "")
+	i := 0
+	for ix := range state.devices {
+		if i < numUsedSlots {
+			id := cproto.ID(uuid.New().String())
+			state.devices[ix] = &id
+		}
+	}
+	for i := 0; i < numZeroSlotContainers; i++ {
+		state.zeroSlotContainers[cproto.ID(uuid.New().String())] = true
+	}
+	agents[state.handler] = state
+	return state
+}
+
+func forceAddTask(
+	t *testing.T,
+	system *actor.System,
+	taskList *taskList,
+	taskID string,
+	numAllocated int,
+	slotsNeeded int,
+) {
+	task := &mockTask{id: TaskID(taskID), slotsNeeded: slotsNeeded}
+	ref, created := system.ActorOf(actor.Addr(taskID), task)
+	assert.Assert(t, created)
+
+	req := &AllocateRequest{
+		ID:          TaskID(taskID),
+		TaskActor:   ref,
+		Group:       ref,
+		SlotsNeeded: slotsNeeded,
+	}
+	taskList.AddTask(req)
+	setTaskAllocations(t, taskList, taskID, numAllocated)
+}
+
+func setTaskAllocations(
+	t *testing.T,
+	taskList *taskList,
+	taskID string,
+	numAllocated int,
+) {
+	req, ok := taskList.GetTaskByID(TaskID(taskID))
+	assert.Check(t, ok)
+	if numAllocated > 0 {
+		allocated := &ResourcesAllocated{ID: TaskID(taskID), Allocations: []Allocation{}}
+		for i := 0; i < numAllocated; i++ {
+			allocated.Allocations = append(allocated.Allocations, containerAllocation{})
+		}
+		taskList.SetAllocations(req.TaskActor, allocated)
+	} else {
+		taskList.SetAllocations(req.TaskActor, nil)
+	}
+}
+
+func setupSchedulerStates(
 	t *testing.T,
 	system *actor.System,
 	mockTasks []*mockTask,
@@ -209,16 +316,41 @@ func setupClusterStates(
 		taskList.AddTask(req)
 
 		if mockTask.allocatedAgent != nil {
+			assert.Assert(t, mockTask.allocatedAgent.slots >= mockTask.slotsNeeded)
 			agentRef := system.Get(actor.Addr(mockTask.allocatedAgent.id))
 			agentState := agents[agentRef]
+			container := newContainer(req, agentState, req.SlotsNeeded)
 
-			allocated := &ResourcesAllocated{ID: req.ID}
-			allocated.Allocations = append(allocated.Allocations, &containerAllocation{
-				req:       req,
-				agent:     agentState,
-				container: newContainer(req, agentState, req.SlotsNeeded),
-			})
+			allocated := &ResourcesAllocated{
+				ID: req.ID,
+				Allocations: []Allocation{
+					containerAllocation{
+						req:       req,
+						agent:     agentState,
+						container: container,
+					},
+				},
+			}
 			taskList.SetAllocations(req.TaskActor, allocated)
+
+			if mockTask.containrStarted {
+				if mockTask.slotsNeeded == 0 {
+					agentState.zeroSlotContainers[container.id] = true
+				} else {
+					i := 0
+					for d, containerID := range agentState.devices {
+						if containerID != nil {
+							continue
+						}
+						if i < mockTask.slotsNeeded {
+							agentState.devices[d] = &container.id
+							i++
+						}
+					}
+					assert.Assert(t, i == mockTask.slotsNeeded,
+						"over allocated to agent %s", mockTask.allocatedAgent.id)
+				}
+			}
 		}
 	}
 
@@ -263,8 +395,4 @@ func assertEqualToRelease(
 	}
 	assert.Equal(t, len(actual), len(expected),
 		"actual tasks and expected tasks must have the same length")
-}
-
-func newMaxSlot(maxSlot int) *int {
-	return &maxSlot
 }

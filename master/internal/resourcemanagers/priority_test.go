@@ -25,7 +25,7 @@ func TestPrioritySchedulerLabels(t *testing.T) {
 	expectedToRelease := []*mockTask{}
 
 	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupClusterStates(t, system, tasks, groups, agents)
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 	toAllocate, toRelease := prioritySchedule(taskList, groupMap, agentMap, BestFit)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
