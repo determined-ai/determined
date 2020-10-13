@@ -1,4 +1,4 @@
-{{- if .Values.db.hostAddress }}
+{{- if or .Values.db.hostAddress .Values.db.disablePVC }}
 {{ else }}
 apiVersion: v1
 kind: PersistentVolumeClaim
