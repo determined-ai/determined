@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import Dict, List, Optional, cast
 
 
 class ExperimentConfig(dict):
@@ -32,3 +32,12 @@ class ExperimentConfig(dict):
 
     def get_data_layer_type(self) -> str:
         return cast(str, self["data_layer"]["type"])
+
+    def get_records_per_epoch(self) -> Optional[int]:
+        records_per_epoch = self.get("records_per_epoch")
+        return int(records_per_epoch) if records_per_epoch is not None else None
+
+    def get_min_validation_period(self) -> Dict:
+        min_validation_period = self.get("min_validation_period", {})
+        assert isinstance(min_validation_period, dict)
+        return min_validation_period

@@ -118,11 +118,26 @@ Callbacks
 =========
 
 To execute arbitrary Python code during the lifecycle of a
-``TFKerasTrial``, implement the standard Keras callback interface
-``tf.keras.callbacks.Callbacks`` and supply them to the ``TFKerasTrial``
-by implementing :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
+``TFKerasTrial``, implement the
+:class:`determined.keras.callbacks.Callback` interface (an extension of
+the ``tf.keras.callbacks.Callbacks`` interface) and supply them to the
+``TFKerasTrial`` by implementing
+:meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
 
 .. autofunction:: determined.keras.TFKerasTrial.keras_callbacks
+
+********************************
+ ``determined.keras.callbacks``
+********************************
+
+.. autoclass:: determined.keras.callbacks.Callback
+   :members:
+
+.. autoclass:: determined.keras.callbacks.DeterminedProgress
+
+.. autoclass:: determined.keras.callbacks.EarlyStopping
+
+.. autoclass:: determined.keras.callbacks.ReduceLROnPlateau
 
 **********
  Examples

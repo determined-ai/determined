@@ -1,3 +1,4 @@
+from determined.keras import callbacks
 from determined.keras._data import (
     _ArrayLikeAdapter,
     _adapt_keras_data,
