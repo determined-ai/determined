@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"os"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -11,8 +12,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
+	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
@@ -40,6 +43,21 @@ func (a *apiServer) KillTensorboard(
 	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId).String(), req, &resp)
 }
 
+func filesToArchive(files []*utilv1.File) archive.Archive {
+	filesArchive := make([]archive.Item, 0)
+	for _, file := range files {
+		item := archive.Item{
+			Path:     file.Path,
+			FileMode: os.FileMode(file.Mode),
+			Content:  file.Content,
+			// TODO
+			// ModifiedTime: file.Mtime.,
+		}
+		filesArchive = append(filesArchive, item)
+	}
+	return filesArchive
+}
+
 func (a *apiServer) LaunchTensorboard(
 	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
 ) (*apiv1.LaunchTensorboardResponse, error) {
@@ -51,7 +69,13 @@ func (a *apiServer) LaunchTensorboard(
 	for _, id := range req.TrialIds {
 		trialIds = append(trialIds, int(id))
 	}
+	commandParams := command.CommandParams{
+		ConfigBytes: req.CommandParams.Config,
+		Template:    &req.CommandParams.Template,
+		UserFiles:   filesToArchive(req.CommandParams.UserFiles),
+	}
 	tensorboardConfig := command.TensorboardRequest{
+		CommandParams: commandParams,
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}

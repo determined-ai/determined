@@ -25,7 +25,7 @@ type commandRequest struct {
 	AgentUserGroup *model.AgentUserGroup
 }
 
-type commandParams struct {
+type CommandParams struct {
 	ConfigBytes json.RawMessage        `json:"config"`
 	Template    *string                `json:"template"`
 	UserFiles   archive.Archive        `json:"user_files"`
@@ -45,7 +45,7 @@ func respondBadRequest(ctx *actor.Context, err error) {
 func parseCommandRequestWithUser(
 	user model.User,
 	db *db.PgDB,
-	params *commandParams,
+	params *CommandParams,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 ) (*commandRequest, error) {
 	config := DefaultConfig(taskContainerDefaults)
@@ -93,7 +93,7 @@ func parseCommandRequestWithUser(
 func parseCommandRequest(
 	c echo.Context,
 	db *db.PgDB,
-	params *commandParams,
+	params *CommandParams,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 ) (*commandRequest, error) {
 	user := c.(*requestContext.DetContext).MustGetUser()

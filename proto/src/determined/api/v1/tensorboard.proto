@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/api/v1/pagination.proto";
 import "determined/tensorboard/v1/tensorboard.proto";
+import "determined/util/v1/util.proto";
 
 // Get a list of tensorboards.
 message GetTensorboardsRequest {
@@ -60,12 +61,26 @@ message KillTensorboardResponse {
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
 }
 
+message CommandParams {
+  // Command config.
+  bytes config = 1;
+
+  // Name of a configuration template.
+  string template = 2;
+
+  // User files.
+  repeated determined.util.v1.File user_files = 3;
+
+}
+
 // Request to launch a tensorboard.
 message LaunchTensorboardRequest {
   // List of source experiment ids.
   repeated int32 experiment_ids = 1;
   // List of source trial ids.
   repeated int32 trial_ids = 2;
+  // Common parameters.
+  CommandParams command_params = 3;
 }
 // Response to LaunchTensorboardRequest.
 message LaunchTensorboardResponse {
