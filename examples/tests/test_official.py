@@ -17,10 +17,6 @@ official_examples = [
         "computer_vision/cifar10_pytorch/const.yaml",
     ),
     (
-        "computer_vision/mnist_multi_output_pytorch",
-        "computer_vision/mnist_multi_output_pytorch/const.yaml",
-    ),
-    (
         "computer_vision/mnist_estimator",
         "computer_vision/mnist_estimator/const.yaml",
     ),

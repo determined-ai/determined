@@ -45,16 +45,6 @@ def test_pytorch_load() -> None:
     )
 
 
-@pytest.mark.e2e_gpu  # type: ignore
-def test_pytorch_const_multi_output() -> None:
-    config = conf.load_config(conf.cv_examples_path("mnist_multi_output_pytorch/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("mnist_multi_output_pytorch"), 1
-    )
-
-
 @pytest.mark.e2e_cpu  # type: ignore
 def test_pytorch_const_warm_start() -> None:
     """
