@@ -1,5 +1,5 @@
 import math
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import tensorflow as tf
@@ -9,6 +9,8 @@ from determined import keras
 from determined_common import check
 
 ArrayLike = Union[np.ndarray, List[np.ndarray], Dict[str, np.ndarray]]
+
+InputData = Union[tf.keras.utils.Sequence, tf.data.Dataset, "SequenceAdapter", tuple]
 
 
 def _is_list_of_numpy_array(x: Any) -> bool:
@@ -75,6 +77,25 @@ class _ArrayLikeAdapter(tf.keras.utils.Sequence):  # type: ignore
                 argument is ignored if x is a Sequence or a Dataset.
         """
 
+        if not (
+            isinstance(x, np.ndarray) or _is_list_of_numpy_array(x) or _is_dict_of_numpy_array(x)
+        ):
+            raise det.errors.InvalidDataTypeException(
+                type(x),
+                "Data which is not tf.data.Datasets or tf.keras.utils.Sequence objects must be a "
+                "numpy array or a list/dict of numpy arrays. See the instructions below for "
+                f"details:\n{keras.TFKerasTrial.build_training_data_loader.__doc__}",
+            )
+        if not (
+            isinstance(y, np.ndarray) or _is_list_of_numpy_array(y) or _is_dict_of_numpy_array(y)
+        ):
+            raise det.errors.InvalidDataTypeException(
+                type(y),
+                "Data which is not tf.data.Datasets or tf.keras.utils.Sequence objects must be a "
+                "numpy array or a list/dict of numpy arrays. See the instructions below for "
+                f"details:\n{keras.TFKerasTrial.build_training_data_loader.__doc__}",
+            )
+
         self._x_length = _length_of_multi_arraylike(x)
         self._y_length = _length_of_multi_arraylike(y)
 
@@ -123,17 +144,125 @@ class _ArrayLikeAdapter(tf.keras.utils.Sequence):  # type: ignore
             )
 
 
-class _SequenceWithOffset(tf.keras.utils.Sequence):  # type: ignore
-    def __init__(self, sequence: tf.keras.utils.Sequence, batch_offset: int = 0):
+class _DeterminedSequenceWrapper(tf.keras.utils.Sequence):  # type: ignore
+    """
+    A Keras Sequence with start offset, sharding, and deterministic shuffling.
+
+    This wrapper uses shuffle-before-shard to get the highest-quality shuffle.
+
+    When training is enabled, this wrapper will report the full length of the dataset, rather than
+    the length of this shard.  This is to work around the fact that some shards might be longer
+    than others, which would cause some workers to iterate through the dataset at different rates.
+    """
+
+    def __init__(
+        self,
+        sequence: tf.keras.utils.Sequence,
+        shard_rank: int,
+        shard_size: int,
+        training: bool,
+        shuffle: Optional[bool] = None,
+        shuffle_seed: Optional[int] = None,
+        prior_batches_trained: Optional[int] = None,
+    ):
+        check.gt_eq(
+            len(sequence),
+            shard_size,
+            "The length of the Keras Sequence used must be greater than or equal to the number "
+            "of workers used in training.",
+        )
+
         self._sequence = sequence
-        self._batch_offset = batch_offset
+        self._shard_rank = shard_rank
+        self._shard_size = shard_size
+        self._shuffle = shuffle
+        self._shuffle_seed = shuffle_seed
+
+        if not training:
+            self._batch_offset = 0
+            self._indices = list(range(shard_rank, len(sequence), shard_size))
+            self._len = len(self._indices)
+            return
+
+        assert shuffle is not None
+        assert shuffle_seed is not None
+        assert prior_batches_trained is not None
+
+        # Even when we are sharded, we'll repeat in a way that his holds true.
+        # Example: suppose the underlying dataset is length 10, and we have 3 shards.
+        #   Each shard will yield 3 sharded epochs before completing a cycle.  At the end of each
+        #   cycle, all shards will be back in their original state.
+        #
+        #   shard 0 yields: 0 3 6 9|2 5 8|1 4 7
+        #   shard 1 yields: 1 4 7|0 3 6 9|2 5 8
+        #   shard 2 yields: 2 5 8|1 4 7|0 3 6 9
+        #
+        # Notice that each shard emits a local epoch that consists of (shard_size) cycles through
+        # the total dataset.
+        self._len = len(sequence)
+
+        self._batch_offset = prior_batches_trained % self._len
+
+        # Pre-calculate the next two epochs in indices that we will produce.  We need two epochs of
+        # indices so that we can always produce one entire epoch of indices starting from any
+        # batch_offset, since the only thread-safe place to reshuffle is in on_epoch_end, and that
+        # always happens after exactly len(self) batches.
+
+        if not shuffle:
+            unmodded = range(shard_rank, self._len * shard_size * 2, shard_size)
+            self._indices = [u % self._len for u in unmodded]
+            return
+
+        self._rng = np.random.RandomState(shuffle_seed)
+
+        # We calculate the shuffled indices for all workers in the set, even though we are only
+        # going to yield one worker's shard of values from this sequence.  This allows us to be
+        # deterministic in our shuffling and to guarantee that the model actually sees all of one
+        # entire global epoch before it starts to see any repeats (with possible overlap in one
+        # batch at every global epoch boundary).
+        self._global_epoch_indices = list(range(self._len))
+        self._rng.shuffle(self._global_epoch_indices)
+
+        # Begin in the correct local epoch's shuffle
+        local_epochs_past = prior_batches_trained // self._len
+        # Because local epochs are sharded from global epochs, we cycle through global epochs once
+        # per shard_size per local epoch.
+        for _ in range(local_epochs_past * shard_size):
+            self._rng.shuffle(self._global_epoch_indices)
+
+        self._indices = []
+        self._gen_local_epoch_of_shuffled_indices()
+        self._gen_local_epoch_of_shuffled_indices()
+
+    def _gen_local_epoch_of_shuffled_indices(self) -> None:
+        new_indices = []
+        offset = self._shard_rank
+        for _ in range(self._shard_size):
+            new_indices += self._global_epoch_indices[offset :: self._shard_size]
+            offset = (offset - len(self._sequence)) % self._shard_size
+            self._rng.shuffle(self._global_epoch_indices)
+        assert offset == self._shard_rank, "offset should have cycled back to its original value"
+        assert len(new_indices) == len(self._sequence), "should have one epochs of new indices"
+        self._indices += new_indices
 
     def __len__(self):  # type: ignore
-        return len(self._sequence)
+        return self._len
 
     def __getitem__(self, index):  # type: ignore
-        index = (index + self._batch_offset) % len(self)
-        return self._sequence[index]
+        return self._sequence[self._indices[index + self._batch_offset]]
+
+    def on_epoch_end(self) -> None:
+        """
+        Keras will synchronize all workers when the sequence runs out, so it is safe to reshuffle
+        indices here; there is no risk of one worker reading indices while another worker is in
+        this call.
+        """
+        if not self._shuffle:
+            return
+
+        # Left-shift self._indices by one epoch and generate another epoch of indices
+        self._indices = self._indices[len(self._sequence) :]
+        self._gen_local_epoch_of_shuffled_indices()
 
 
 class SequenceAdapter:
@@ -145,7 +274,7 @@ class SequenceAdapter:
 
     def __init__(
         self,
-        data: tf.keras.utils.Sequence,
+        sequence: tf.keras.utils.Sequence,
         use_multiprocessing: bool = False,
         workers: int = 1,
         max_queue_size: int = 10,
@@ -169,198 +298,55 @@ class SequenceAdapter:
             max_queue_size: Maximum size for the generator queue. If unspecified, `max_queue_size`
                 will default to 10.
         """
-        self._max_queue_size = max_queue_size
-        if not len(data):
-            raise ValueError("tf.keras.utils.Sequence objects should have a non-zero length.")
-        self._sequence = _SequenceWithOffset(data)
-        self._use_multiprocessing = use_multiprocessing
-        self._workers = workers
 
-    def __len__(self) -> int:
-        return len(self._sequence)
-
-    def start(self, batch_offset: int = 0, is_validation: bool = False) -> None:
-        """
-        Sets a batch offset and starts the pre-processing of data.
-
-        Pre-processing of data only happens if workers >0. If the underlying data type is an
-        iterator, we are unable to set a batch_offset.
-
-        Args:
-            batch_offset: Batch number to start at.
-            is_validation: Whether this iterator will be used for validation. This is necessary
-                because `get_iterator` usually returns an infinite iterator. When `is_validation`
-                is True, the iterator stops at the end of the epoch.
-        """
-        self._is_validation = is_validation
-        self._sequence._batch_offset = batch_offset
-        if self._workers > 0:
-            self._enqueuer = tf.keras.utils.OrderedEnqueuer(
-                self._sequence, use_multiprocessing=self._use_multiprocessing
-            )
-            self._enqueuer.start(workers=self._workers, max_queue_size=self._max_queue_size)
-
-    def get_iterator(self) -> Iterator:
-        """
-        Gets an Iterator over the data.
-
-        `start` must be called prior to calling this function"
-        """
-
-        def _make_finite(iterator: Iterator, num_steps: int) -> Iterator:
-            for _ in range(num_steps):
-                yield next(iterator)
-
-        def _iter_sequence_infinite(sequence: tf.keras.utils.Sequence) -> Iterator:
-            while True:
-                yield from sequence
-
-        if self._is_validation:
-            if self._workers > 0:
-                iterator = self._enqueuer.get()
-                return _make_finite(iterator, len(self._sequence))
-            return iter(self._sequence)
-
-        if self._workers > 0:
-            return self._enqueuer.get()  # type: ignore
-        return _iter_sequence_infinite(self._sequence)
-
-    def stop(self, timeout: Optional[int] = None) -> None:
-        """
-        Stops processing the data.
-
-        If workers is >0, this will stop any related threads and processes.
-        Otherwise this is a no-op.
-
-        Args:
-            timeout: Maximum time to wait.
-        """
-        if self._workers > 0:
-            self._enqueuer.stop(timeout=timeout)
+        self.sequence = sequence
+        self.use_multiprocessing = use_multiprocessing
+        self.workers = workers
+        self.max_queue_size = max_queue_size
 
 
-InputData = Union[tf.keras.utils.Sequence, tf.data.Dataset, SequenceAdapter, tuple]
+def _adapt_data_from_data_loader(
+    input_data: InputData,
+    batch_size: int,
+) -> Union[tf.keras.utils.Sequence, SequenceAdapter, tf.data.Dataset]:
+    if isinstance(input_data, tf.data.Dataset):
+        return input_data
 
+    if isinstance(input_data, (tf.keras.utils.Sequence, SequenceAdapter)):
+        return input_data
 
-def _get_x_y_and_sample_weight(
-    input_data: Union[tf.keras.utils.Sequence, tf.data.Dataset, SequenceAdapter, tuple]
-) -> Tuple[Any, Any, Any]:
-    if isinstance(input_data, (tf.keras.utils.Sequence, tf.data.Dataset, SequenceAdapter)):
-        return input_data, None, None
-
-    elif isinstance(input_data, tuple) and len(input_data) == 2:
-        return input_data[0], input_data[1], None
-
-    elif isinstance(input_data, tuple) and len(input_data) == 3:
-        return input_data[0], input_data[1], input_data[2]
-
-    else:
+    if not isinstance(input_data, tuple) or len(input_data) not in (2, 3):
         raise det.errors.InvalidDataTypeException(
             type(input_data),
             "input_data is invalid type. See the instruction below for details: \n"
             f"{keras.TFKerasTrial.build_training_data_loader.__doc__}",
         )
 
+    x = input_data[0]
+    y = input_data[1]
+    sample_weight = input_data[2] if len(input_data) == 3 else None
 
-def _adapt_keras_data(
+    return _ArrayLikeAdapter(x, y, batch_size, sample_weight)
+
+
+def _adapt_data_from_fit_args(
     x: Any,
-    y: Any = None,
-    sample_weight: Optional[np.ndarray] = None,
-    batch_size: Optional[int] = None,
-    use_multiprocessing: bool = False,
-    workers: int = 1,
-    max_queue_size: int = 10,
-    drop_leftovers: bool = False,
-) -> Union[SequenceAdapter, tf.data.Dataset]:
-    """_adapt_keras_data adapts input and target data to a SequenceAdapter or leaves
-    it as a tf.data.Dataset.
-
-    Args:
-        x: Input data. It could be:
-            1) A Numpy array (or array-like), or a list of arrays (in case the model
-            has multiple inputs).
-            2) A dict mapping input names to the corresponding array, if the model
-            has named inputs.
-            3) A tf.data dataset. Should return a tuple of either (inputs, targets) or
-            (inputs, targets, sample_weights).
-            4) A keras.utils.Sequence returning (inputs, targets) or (inputs, targets,
-            sample weights).
-            5) a det.keras.SequenceAdapter returning (inputs, targets) or (inputs, targets,
-            sample weights).
-
-        y: Target data. Like the input data x, it could be either Numpy array(s).
-            If x is a dataset or keras.utils.Sequence instance, y should not be specified
-            (since targets will be obtained from x).
-
-        use_multiprocessing: If True, use process-based threading. If unspecified,
-            `use_multiprocessing` will default to False. Note that because this implementation
-            relies on multiprocessing, you should not pass non-picklable arguments for the
-            data loaders as they can't be passed easily to children processes. This argument is
-            ignored if x is a tf.data.Dataset or SequenceAdapter.
-
-        sample_weight: Optional Numpy array of weights for the training samples. This argument is
-        ignored if x is a tf.data.Dataset, SequenceAdapter, or tf.keras.Sequence.
-
-        batch_size: Number of samples per gradient update. This argument is ignored if x is a
-        tf.data.Dataset, SequenceAdapter, or tf.keras.Sequence.
-
-        workers: Maximum number of processes to spin up when using process-based threading.
-            If unspecified, workers will default to 1. If 0, will execute the data loading on
-            the main thread. This argument is ignored if x is a tf.data.Dataset or SequenceAdapter.
-
-        max_queue_size: Maximum size for the generator queue. If unspecified, `max_queue_size`
-            will default to 10. This argument is ignored if x is a tf.data.Dataset or
-            SequenceAdapter.
-
-        drop_leftovers: If True, drop the data that cannot complete the last batch. This
-            argument is ignored if x is a Sequence or a Dataset. This argument is ignored if
-            x is a tf.data.Dataset or SequenceAdapter.
+    y: Any,
+    sample_weight: Any,
+    batch_size: int,
+) -> Any:
     """
-
-    def check_y_is_none(y_data: Any) -> None:
+    This is the in-between layer from the Native API to the Trial API.
+    """
+    if isinstance(x, (tf.data.Dataset, tf.keras.utils.Sequence, SequenceAdapter)):
         if y is not None:
             raise det.errors.InvalidDataTypeException(
-                type(y_data),
+                type(y),
                 "If x is a keras.utils.Sequence or a tf.data.Dataset, "
                 "y should not be specified (since targets will be obtained from x)."
                 "See the instruction below for details: "
                 f"\n{keras.TFKerasTrial.build_training_data_loader.__doc__}",
             )
-
-    if isinstance(x, np.ndarray) or _is_list_of_numpy_array(x) or _is_dict_of_numpy_array(x):
-        if not (
-            (isinstance(y, np.ndarray) or _is_list_of_numpy_array(y))
-            and isinstance(batch_size, int)
-        ):
-            raise det.errors.InvalidDataTypeException(
-                type(y),
-                "If x is a numpy array or list/dict of numpy arrays, "
-                "y must also be a numpy array. "
-                "See the instruction below for details: "
-                f"\n{keras.TFKerasTrial.build_training_data_loader.__doc__}",
-            )
-        return SequenceAdapter(
-            _ArrayLikeAdapter(x, y, batch_size, sample_weight, drop_leftovers),
-            use_multiprocessing,
-            workers,
-            max_queue_size,
-        )
-
-    elif isinstance(x, tf.keras.utils.Sequence):
-        check_y_is_none(y)
-        return SequenceAdapter(x, use_multiprocessing, workers, max_queue_size)
-
-    elif isinstance(x, tf.data.Dataset):
         return x
 
-    elif isinstance(x, SequenceAdapter):
-        check_y_is_none(y)
-        return x
-
-    else:
-        raise det.errors.InvalidDataTypeException(
-            type(x),
-            f"x is invalid type. x={x}\n"
-            f"See the instruction below for details: \n"
-            f"\n{keras.TFKerasTrial.build_training_data_loader.__doc__}",
-        )
+    return _ArrayLikeAdapter(x, y, batch_size, sample_weight)

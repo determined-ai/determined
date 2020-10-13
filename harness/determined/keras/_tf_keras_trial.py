@@ -238,26 +238,14 @@ class TFKerasTrialController(det.LoopTrialController):
 
         session = TFKerasTrialController._configure_session(env, hvd_config, trial.session_config())
 
-        training_x, training_y, training_sample_weight = keras._get_x_y_and_sample_weight(
-            input_data=trial.build_training_data_loader()
-        )
-        training_data = keras._adapt_keras_data(
-            x=training_x,
-            y=training_y,
-            sample_weight=training_sample_weight,
+        training_data = keras._adapt_data_from_data_loader(
+            input_data=trial.build_training_data_loader(),
             batch_size=context.get_per_slot_batch_size(),
-            drop_leftovers=True,
         )
 
-        val_x, val_y, val_sample_weight = keras._get_x_y_and_sample_weight(
-            input_data=trial.build_validation_data_loader()
-        )
-        validation_data = keras._adapt_keras_data(
-            x=val_x,
-            y=val_y,
-            sample_weight=val_sample_weight,
+        validation_data = keras._adapt_data_from_data_loader(
+            input_data=trial.build_validation_data_loader(),
             batch_size=context.get_per_slot_batch_size(),
-            drop_leftovers=False,
         )
 
         trial.build_model()
@@ -345,9 +333,8 @@ class TFKerasTrialController(det.LoopTrialController):
         self.model = model
         self.session = session
 
-        self._train_input_manager, self._validation_input_manager = keras._init_input_managers(
-            context=self.context, train_config=train_config
-        )
+        self.training_data = train_config.training_data
+        self.validation_data = train_config.validation_data
 
         # If a load path is provided, load weights and restore the data location.
         self._load()
@@ -406,6 +393,10 @@ class TFKerasTrialController(det.LoopTrialController):
         # entire epoch, and we don't report any metrics in on_epoch_end at all.
         self.model.history = keras.callbacks._DeterminedHistory()
         callbacks = callbacks + [self.model.history]
+
+        if self.context._fit_verbose:
+            # Our implementation of verbose=True.
+            callbacks = [keras.callbacks.DeterminedProgress()] + callbacks
 
         # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
         # because we would have to communicate after every batch to know how many records were in
@@ -540,36 +531,71 @@ class TFKerasTrialController(det.LoopTrialController):
             pass
 
     def _launch_fit(self) -> None:
-        (
-            training_input,
-            batches_per_epoch,
-        ) = self._train_input_manager.get_training_input_and_batches_per_epoch()
+        training_data = self.training_data
+        steps_per_epoch = None
+
+        if isinstance(training_data, keras.SequenceAdapter):
+            self.context._configure_fit(
+                workers=training_data.workers,
+                use_multiprocessing=training_data.use_multiprocessing,
+                max_queue_size=training_data.max_queue_size,
+            )
+            # Use the provided Sequence directly.
+            training_data = training_data.sequence
+
+        if isinstance(training_data, tf.keras.utils.Sequence):
+            training_data = keras._DeterminedSequenceWrapper(
+                sequence=training_data,
+                shard_rank=self.context.distributed.get_rank(),
+                shard_size=self.context.distributed.get_size(),
+                training=True,
+                shuffle=self.context._fit_shuffle,
+                shuffle_seed=self.context.get_trial_seed(),
+                # XXX get the real value
+                prior_batches_trained=0,
+            )
+
+        if isinstance(training_data, tf.data.Dataset):
+            training_data = training_data.repeat()
+            # XXX: is it ok to silently ignore shuffle here?  Seems to be what tf.keras does.
+            steps_per_epoch = sys.maxsize
 
         self.model.fit(
-            training_input,
+            training_data,
             callbacks=self.callback_list,
             shuffle=False,
-            steps_per_epoch=sys.maxsize,
-            initial_epoch=self._train_input_manager.get_initial_epoch(),
+            steps_per_epoch=steps_per_epoch,
             epochs=IMPOSSIBLY_LARGE_EPOCHS,
             validation_split=0,
             verbose=0,
+            use_multiprocessing=self.context._fit_use_multiprocessing,
+            workers=self.context._fit_workers,
+            max_queue_size=self.context._fit_max_queue_size,
         )
 
     def _launch_evaluate(self) -> Any:
-        (
-            validation_data,
-            validation_steps,
-        ) = self._validation_input_manager.get_validation_input_and_num_batches()
+        validation_data = self.validation_data
+
+        if isinstance(validation_data, keras.SequenceAdapter):
+            # Ignore these settings and use the same settings as for the fit call.
+            validation_data = validation_data.sequence
+
+        if isinstance(validation_data, tf.keras.utils.Sequence):
+            validation_data = keras._DeterminedSequenceWrapper(
+                sequence=validation_data,
+                shard_rank=self.context.distributed.get_rank(),
+                shard_size=self.context.distributed.get_size(),
+                training=False,
+            )
 
         metrics_values = self.model.evaluate(
             validation_data,
-            steps=validation_steps,
             verbose=0,
             callbacks=self.callback_list,
+            use_multiprocessing=self.context._fit_use_multiprocessing,
+            workers=self.context._fit_workers,
+            max_queue_size=self.context._fit_max_queue_size,
         )
-
-        _ = self._validation_input_manager.stop_validation_input_and_get_num_inputs()
 
         return metrics_values
 

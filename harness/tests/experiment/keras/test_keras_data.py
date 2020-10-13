@@ -8,56 +8,19 @@ from determined_common import check
 from tests.experiment import utils  # noqa: I100
 
 
-class Empty(Sequence):
-    def __getitem__(self, index: int) -> list:
-        return []
+class IdentitySequence(Sequence):
+    def __init__(self, length: int) -> None:
+        self._length = length
 
     def __len__(self) -> int:
-        return 0
+        return self._length
+
+    def __getitem__(self, index: int) -> int:
+        assert index < self._length
+        return index
 
 
-SEQ = utils.make_xor_data_sequences()[0]
-MULTITHREADING_MULTIPROCESS_SUITE = [
-    (0, False, SEQ),
-    (1, False, SEQ),
-    (1, True, SEQ),
-    (2, False, SEQ),
-    (2, True, SEQ),
-]
-
-
-def test_sequence_offset() -> None:
-    seq = utils.make_xor_data_sequences()[0]
-    offset_seq = keras._SequenceWithOffset(seq, batch_offset=1)
-    assert len(seq) == len(offset_seq)
-
-    for i in range(len(offset_seq)):
-        a = offset_seq[i]
-        b = seq[(i + 1) % len(seq)]
-        assert len(a) == len(b)
-        for i in range(len(a)):
-            assert np.equal(a[i], b[i]).all()
-
-
-@pytest.mark.parametrize("workers,use_multiprocessing,seq", MULTITHREADING_MULTIPROCESS_SUITE)
-def test_sequence_adapter(workers: int, use_multiprocessing: bool, seq: Sequence) -> None:
-    data = keras.SequenceAdapter(seq, workers=workers, use_multiprocessing=use_multiprocessing)
-    assert len(data) == len(seq)
-
-    data.start()
-    iterator = data.get_iterator()
-    assert iterator is not None
-
-    for i in range(len(seq)):
-        a = seq[i]
-        b = next(iterator)
-        assert len(a) == len(b)
-        for i in range(len(a)):
-            assert np.equal(a[i], b[i]).all()
-    data.stop()
-
-
-def test_minial_arraylike_data_adapter() -> None:
+def test_minimal_arraylike_data_adapter() -> None:
     seq = keras._ArrayLikeAdapter(np.array([0]), np.array([1]), batch_size=1)
     assert len(seq) == 1
     assert seq[0] == (np.array([0]), np.array([1]))
@@ -84,71 +47,129 @@ def test_arraylike_data_adapter_with_unmatched_batch_size() -> None:
 
 def test_adapt_invalid_data_type() -> None:
     seqs = utils.make_xor_data_sequences()
-    test = keras._adapt_keras_data(seqs[1], batch_size=1)
+    test = keras._adapt_data_from_data_loader(seqs[1], batch_size=1)
     with pytest.raises(det.errors.InvalidDataTypeException) as err:
-        keras._adapt_keras_data((None, test), batch_size=1)
+        keras._adapt_data_from_data_loader((None, test), batch_size=1)
         assert err is not None
 
 
 def test_adapt_list_of_np_arrays_as_x() -> None:
-    adapted = keras._adapt_keras_data(
+    adapted = keras._adapt_data_from_fit_args(
         x=[np.arange(0, 100), np.arange(100, 200)],
         y=np.arange(200, 300),
+        sample_weight=None,
         batch_size=16,
-        drop_leftovers=False,
     )
-    assert isinstance(adapted, keras.SequenceAdapter)
+    assert isinstance(adapted, Sequence)
     assert len(adapted) == 7
-    batch_x, batch_y = adapted._sequence[3]
+    batch_x, batch_y = adapted[3]
     assert np.array_equal(batch_x[0], np.arange(48, 64))
     assert np.array_equal(batch_x[1], np.arange(148, 164))
     assert np.array_equal(batch_y, np.arange(248, 264))
 
 
 def test_adapt_list_of_np_arrays_as_y() -> None:
-    adapted = keras._adapt_keras_data(
+    adapted = keras._adapt_data_from_fit_args(
         x=np.arange(0, 100),
         y=[np.arange(100, 200), np.arange(200, 300)],
+        sample_weight=None,
         batch_size=16,
-        drop_leftovers=False,
     )
-    assert isinstance(adapted, keras.SequenceAdapter)
+    assert isinstance(adapted, Sequence)
     assert len(adapted) == 7
-    batch_x, batch_y = adapted._sequence[3]
+    batch_x, batch_y = adapted[3]
     assert np.array_equal(batch_x, np.arange(48, 64))
     assert np.array_equal(batch_y[0], np.arange(148, 164))
     assert np.array_equal(batch_y[1], np.arange(248, 264))
 
 
 def test_adapt_dict_of_np_arrays_as_x() -> None:
-    adapted = keras._adapt_keras_data(
+    adapted = keras._adapt_data_from_fit_args(
         x={"k1": np.arange(0, 100), "k2": np.arange(100, 200)},
         y=np.arange(200, 300),
+        sample_weight=None,
         batch_size=16,
-        drop_leftovers=False,
     )
-    assert isinstance(adapted, keras.SequenceAdapter)
+    assert isinstance(adapted, Sequence)
     assert len(adapted) == 7
-    batch_x, batch_y = adapted._sequence[3]
+    batch_x, batch_y = adapted[3]
     assert np.array_equal(batch_x["k1"], np.arange(48, 64))
     assert np.array_equal(batch_x["k2"], np.arange(148, 164))
     assert np.array_equal(batch_y, np.arange(248, 264))
 
 
-def test_adapt_empty_sequence() -> None:
-    sequence = Empty()
-    with pytest.raises(ValueError):
-        keras._adapt_keras_data(sequence, batch_size=1)
+def test_adapt_short_sequence() -> None:
+    sequence = IdentitySequence(3)
+    with pytest.raises(check.CheckFailedError):
+        _ = keras._DeterminedSequenceWrapper(
+            sequence=sequence,
+            shard_rank=0,
+            shard_size=4,
+            training=False,
+        )
 
 
-def test_adapt_sequence() -> None:
-    seqs = utils.make_xor_data_sequences()
-    train = keras._adapt_keras_data(seqs[0], batch_size=1)
-    assert isinstance(train, keras.SequenceAdapter)
-    test = keras._adapt_keras_data(seqs[1], batch_size=1)
-    assert isinstance(test, keras.SequenceAdapter)
-    assert seqs[0] is train._sequence._sequence
-    assert seqs[1] is test._sequence._sequence
+@pytest.mark.parametrize("skip_batches", [0, 50, 350])
+@pytest.mark.parametrize("rank_size", [(0, 1), (0, 3), (1, 3), (2, 3)])
+@pytest.mark.parametrize("shuffle", [False, True])
+def test_sequence_wrapper_training(shuffle, rank_size, skip_batches) -> None:
+    num_epochs = 3
+    epoch_len = 100
+    shuffle_seed = 777
+    rank, size = rank_size
 
-    assert train is keras._adapt_keras_data(train, batch_size=1)
-    assert test is keras._adapt_keras_data(test, batch_size=1)
+    # Calculate the indices we expect to see.
+    epoch_indices = list(range(epoch_len))
+    if shuffle:
+        rng = np.random.RandomState(shuffle_seed)
+        expect = []
+        for _ in range(num_epochs * 10):
+            rng.shuffle(epoch_indices)
+            expect += [*epoch_indices]
+    else:
+        expect = epoch_indices * (num_epochs * 10)
+
+    wrapped_seq = keras._DeterminedSequenceWrapper(
+        sequence=IdentitySequence(epoch_len),
+        shard_rank=rank,
+        shard_size=size,
+        training=True,
+        shuffle=shuffle,
+        shuffle_seed=shuffle_seed,
+        prior_batches_trained=skip_batches,
+    )
+    # Simulate the behavior of the OrderedEnqueuer for a few epochs of data.
+    got = []
+    for _ in range(num_epochs):
+        for i in range(len(wrapped_seq)):
+            got.append(wrapped_seq[i])
+        wrapped_seq.on_epoch_end()
+
+    shard_expect = expect[rank::size]
+    skipped_shard_expect = shard_expect[skip_batches:]
+
+    assert got == skipped_shard_expect[: len(got)]
+
+
+@pytest.mark.parametrize("rank_size", [(0, 1), (0, 3), (1, 3), (2, 3)])
+def test_sequence_wrapper_validation(rank_size) -> None:
+    epoch_len = 100
+    rank, size = rank_size
+
+    shard_expect = list(range(rank, epoch_len, size))
+
+    wrapped_seq = keras._DeterminedSequenceWrapper(
+        sequence=IdentitySequence(epoch_len),
+        shard_rank=rank,
+        shard_size=size,
+        training=False,
+    )
+
+    # Simulate the behavior of the OrderedEnqueuer for one epoch of data.
+    got = [wrapped_seq[i] for i in range(len(wrapped_seq))]
+    assert got == shard_expect
+
+    # Confirm that on_epoch_end is ignored for validation datasets.
+    wrapped_seq.on_epoch_end()
+    got = [wrapped_seq[i] for i in range(len(wrapped_seq))]
+    assert got == shard_expect, "on_epoch_end() should not affect a non-training-mode sequence"
