@@ -14,14 +14,13 @@ import (
 	"github.com/uber/jaeger-client-go/config"
 )
 
-// TraceEnabled configs actors to submit traces to an opentracing backend (specifically Jaeger).
-var TraceEnabled = false
+// traceEnabled configs actors to submit traces to an opentracing backend (specifically Jaeger).
+var traceEnabled = traceEnabledStr == "true"
+var traceEnabledStr = "true"
 
 const (
-	// AskOperation signifies an ask happened in a span.
-	AskOperation = "Ask"
-	// TellOperation signifies an tell happened in a span.
-	TellOperation = "Tell"
+	askOperation = "Ask"
+	tellOperation = "Tell"
 )
 
 // traceSend traces a send to another actor.
@@ -61,22 +60,19 @@ func traceReceive(aContext *Context, r *Ref) func() {
 }
 
 // addTracer adds a opentracing.Tracer to the actor.Ref and returns it.
-func addTracer(ref *Ref) *Ref {
+func addTracer(ref *Ref) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		ref.log.WithError(err).Error(
 			"failed to retrieve hostname for tracer")
-		return ref
 	}
 	tracer, closer, err := initJaeger(
 		fmt.Sprintf("%s-%s%s", hostname, filepath.Base(os.Args[0]), ref.Address().path))
 	if err != nil {
 		ref.log.WithError(err).Error("failed to init tracer")
-		return ref
 	}
 	ref.tracing.tracer = tracer
 	ref.tracing.closer = closer
-	return ref
 }
 
 // closeTracer closes all tracing resources associated with the actor.Ref.
@@ -85,6 +81,8 @@ func closeTracer(ref *Ref) {
 	if err != nil {
 		ref.log.WithError(err).Warn("failed to close tracer")
 	}
+	ref.tracing.tracer = nil
+	ref.tracing.closer = nil
 }
 
 // initJaeger returns an instance of Jaeger Tracer that samples 100% of traces.
@@ -107,7 +105,7 @@ func initJaeger(service string) (opentracing.Tracer, io.Closer, error) {
 
 // Actors that are too noisy to be worth tracing.
 var noisyActors = []string{
-	"notify",
+	"notify-timer-",
 }
 
 func isNoisy(sender *Ref) bool {

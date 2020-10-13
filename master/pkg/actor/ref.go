@@ -84,8 +84,8 @@ func newRef(system *System, parent *Ref, address Address, actor Actor) *Ref {
 		inbox:        newInbox(),
 	}
 
-	if TraceEnabled {
-		ref = addTracer(ref)
+	if traceEnabled {
+		addTracer(ref)
 	}
 
 	go ref.run()
@@ -118,15 +118,15 @@ func (r *Ref) String() string {
 }
 
 func (r *Ref) tell(ctx context.Context, sender *Ref, message Message) {
-	if TraceEnabled {
-		ctx = traceSend(ctx, sender, r, message, TellOperation)
+	if traceEnabled {
+		ctx = traceSend(ctx, sender, r, message, tellOperation)
 	}
 	r.inbox.tell(ctx, r, sender, message)
 }
 
 func (r *Ref) ask(ctx context.Context, sender *Ref, message Message) Response {
-	if TraceEnabled {
-		ctx = traceSend(ctx, sender, r, message, AskOperation)
+	if traceEnabled {
+		ctx = traceSend(ctx, sender, r, message, askOperation)
 	}
 	return r.inbox.ask(ctx, r, sender, message)
 }
@@ -169,24 +169,24 @@ func (r *Ref) deleteChild(address Address) {
 }
 
 func (r *Ref) processMessage() bool {
-	aContext := r.inbox.get()
+	ctx := r.inbox.get()
 
-	r.log.Tracef("get %T, inbox length: %v", aContext.message, r.inbox.len())
+	r.log.Tracef("get %T, inbox length: %v", ctx.message, r.inbox.len())
 
-	if TraceEnabled {
-		defer traceReceive(aContext, r)()
+	if traceEnabled {
+		defer traceReceive(ctx, r)()
 	}
 	defer func() {
-		if aContext.ExpectingResponse() {
-			aContext.Respond(errNoResponse)
+		if ctx.ExpectingResponse() {
+			ctx.Respond(errNoResponse)
 		}
 	}()
 
 	// Handle any internal state change messages first.
-	switch typed := aContext.Message().(type) {
+	switch typed := ctx.Message().(type) {
 	case createChild:
 		child, created := r.createChild(typed.address, typed.actor)
-		aContext.Respond(childCreated{
+		ctx.Respond(childCreated{
 			child:   child,
 			created: created,
 		})
@@ -197,7 +197,7 @@ func (r *Ref) processMessage() bool {
 			return false
 		}
 		r.deleteChild(typed.Child.address)
-		if r.err = r.sendInternalMessage(aContext.Message()); r.err != nil {
+		if r.err = r.sendInternalMessage(ctx.Message()); r.err != nil {
 			return true
 		}
 		return false
@@ -207,7 +207,7 @@ func (r *Ref) processMessage() bool {
 			return false
 		}
 		r.deleteChild(typed.Child.address)
-		if r.err = r.sendInternalMessage(aContext.Message()); r.err != nil {
+		if r.err = r.sendInternalMessage(ctx.Message()); r.err != nil {
 			return true
 		}
 		return false
@@ -216,8 +216,8 @@ func (r *Ref) processMessage() bool {
 	}
 
 	// Any message not handled internally is sent to the actor implementation.
-	if aContext.Sender() == nil || !r.deadChildren[aContext.Sender().address] {
-		r.err = r.actor.Receive(aContext)
+	if ctx.Sender() == nil || !r.deadChildren[ctx.Sender().address] {
+		r.err = r.actor.Receive(ctx)
 	}
 
 	return r.err != nil
@@ -318,7 +318,7 @@ func (r *Ref) close() {
 	}
 
 	// Close all resources used for tracing.
-	if TraceEnabled {
+	if traceEnabled {
 		closeTracer(r)
 	}
 
