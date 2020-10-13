@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 	"time"
@@ -31,12 +32,14 @@ func (r Responses) GetAll() map[*Ref]Message {
 	return results
 }
 
-func askAll(message Message, timeout *time.Duration, sender *Ref, actors []*Ref) Responses {
+func askAll(
+	ctx context.Context, message Message, timeout *time.Duration, sender *Ref, actors []*Ref,
+) Responses {
 	results := make(chan Response, len(actors))
 	wg := sync.WaitGroup{}
 	wg.Add(len(actors))
 	for _, actor := range actors {
-		resp := actor.ask(sender, message)
+		resp := actor.ask(ctx, sender, message)
 		go func() {
 			defer wg.Done()
 			// Wait for the response to be ready before putting into the result channel.
