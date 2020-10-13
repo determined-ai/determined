@@ -15,6 +15,19 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
+
+const spotRequestIdPrefix = "sir-"
+const launchTimeOffsetGrowth = time.Second * 10
+
+type spotRequest struct {
+	SpotRequestId string
+	State         string
+	StatusCode    *string
+	StatusMessage *string
+	InstanceId    *string
+	CreationTime  time.Time
+}
+
 // How Spot Works:
 //
 // Spot instances are created asynchronously. You create a spot request, the request is validated
@@ -51,24 +64,11 @@ import (
 //
 // AWS documentation on the spot instance lifecycle -
 // https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
-
-const spotRequestIdPrefix = "sir-"
-const launchTimeOffsetGrowth = time.Second * 10
-
-type spotRequest struct {
-	SpotRequestId string
-	State         string
-	StatusCode    *string
-	StatusMessage *string
-	InstanceId    *string
-	CreationTime  time.Time
-}
-
-// We need to track state to cover up flaws in the spot API
 type spotState struct {
 	// Keep track of spot requests that haven't entered a terminal state. This map primarily
-	// exists to handle the eventual consistency problem and ensure that we don't
-	// overprovision just because the requests aren't yet visible in the API.
+	// exists to handle problems caused by eventual consistency, where we will create a spot
+	// request but it won't be visible in the AWS API so if we rely solely on the API, we
+	// will think we need to create additional spot requests, leading to overprovisioning.
 	trackedReqs setOfSpotRequests
 
 	// When creating a spot request, the validFrom time needs be in the future when evaluated by
@@ -282,7 +282,7 @@ func (c *awsCluster) launchSpot(
 		ctx.Log().
 			WithField("log-type", "launchSpot.creatingRequest").
 			Infof(
-				"Creating spot request, %s, %s",
+				"creating spot request: %s (state %s)",
 				*request.SpotInstanceRequestId,
 				*request.State,
 			)

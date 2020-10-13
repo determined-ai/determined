@@ -66,11 +66,15 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	// in the code. However you need to do the following settings.
 	// See https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html
 	// 1. Use IAM roles for Amazon EC2
-	//    The following roles on any resources:
+	//    The following permissions on any resources:
 	//    "ec2:DescribeInstances",
 	//    "ec2:TerminateInstances",
 	//    "ec2:CreateTags",
 	//    "ec2:RunInstances".
+	//    If using spot instances, the following permissions will be required
+	//    "ec2:CancelSpotInstanceRequests",
+	//    "ec2:RequestSpotInstances",
+	//    "ec2:DescribeSpotInstanceRequests",
 	// 2. Use a shared credentials file
 	//    In order to be able to connect to AWS, the credentials should be put in the
 	//    file `~/.aws/credential` in the format:
@@ -177,7 +181,7 @@ func (c *awsCluster) dryRunRequests() error {
 	return nil
 }
 
-func (c *awsCluster) setup(ctx *actor.Context) {
+func (c *awsCluster) prestart(ctx *actor.Context) {
 	if c.SpotInstanceEnabled {
 		c.attemptToApproximateClockSkew(ctx)
 	}
