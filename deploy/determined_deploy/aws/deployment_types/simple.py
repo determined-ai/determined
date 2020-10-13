@@ -16,6 +16,7 @@ class Simple(base.DeterminedDeployment):
     template = "simple.yaml"
 
     template_parameter_keys = [
+        constants.cloudformation.ENABLE_CORS,
         constants.cloudformation.KEYPAIR,
         constants.cloudformation.MASTER_INSTANCE_TYPE,
         constants.cloudformation.AGENT_INSTANCE_TYPE,

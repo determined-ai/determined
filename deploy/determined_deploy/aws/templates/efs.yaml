@@ -94,6 +94,11 @@ Parameters:
     Description: Maximum number of agents to launch simultaneously
     Default: 5
 
+  EnableCORS:
+    Type: String
+    Description: Whether to allow CORS requests or not
+    Default: false
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -564,6 +569,8 @@ Resources:
               name: determined
               ssl_mode: verify-ca
               ssl_root_cert: /etc/determined/etc/db_ssl_root_cert.pem
+
+            enable_cors: ${EnableCORS}
 
             provisioner:
               iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
