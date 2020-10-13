@@ -4,8 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/shellv1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+var shellsAddr = actor.Addr("shells")
 
 func (a *apiServer) GetShells(
 	_ context.Context, req *apiv1.GetShellsRequest,
@@ -31,40 +41,28 @@ func (a *apiServer) KillShell(
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
-	// experimentIds := make([]int, 0)
-	// trialIds := make([]int, 0)
-	// for _, id := range req.ExperimentIds {
-	// 	experimentIds = append(experimentIds, int(id))
-	// }
-	// for _, id := range req.TrialIds {
-	// 	trialIds = append(trialIds, int(id))
-	// }
-	// shellConfig := command.ShellRequest{
-	// 	ExperimentIDs: experimentIds,
-	// 	TrialIDs:      trialIds,
-	// }
-	// user, _, err := grpc.GetUser(ctx, a.m.db)
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	// }
 
-	// shellLaunchReq := command.ShellRequestWithUser{
-	// 	Shell: shellConfig,
-	// 	User:  user,
-	// }
-	// actorResp := a.m.system.AskAt(shellsAddr, shellLaunchReq)
-	// if err = api.ProcessActorResponseError(&actorResp); err != nil {
-	// 	return nil, err
-	// }
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
 
-	// shellID := actorResp.Get().(resourcemanagers.TaskID)
-	// shellReq := shellv1.Shell{}
-	// actorResp = a.m.system.AskAt(shellsAddr.Child(shellID), &shellReq)
-	// if err = api.ProcessActorResponseError(&actorResp); err != nil {
-	// 	return nil, err
-	// }
+	shellLaunchReq := command.ShellLaunchRequest{
+		User: user,
+	}
+	actorResp := a.m.system.AskAt(shellsAddr, shellLaunchReq)
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
+	}
+
+	shellID := actorResp.Get().(resourcemanagers.TaskID)
+	shellReq := shellv1.Shell{}
+	actorResp = a.m.system.AskAt(shellsAddr.Child(shellID), &shellReq)
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
+	}
 
 	return &apiv1.LaunchShellResponse{
-		// Shell: actorResp.Get().(*shellv1.Shell),
+		Shell: actorResp.Get().(*shellv1.Shell),
 	}, nil
 }

@@ -9,6 +9,7 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 
 	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -44,6 +45,12 @@ type shellManager struct {
 	taskSpec              *tasks.TaskSpec
 }
 
+// ShellLaunchRequest describes a request to launch a new shell.
+type ShellLaunchRequest struct {
+	commandParams commandParams
+	User          *model.User
+}
+
 func (s *shellManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetShellsRequest:
@@ -52,6 +59,14 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 			resp.Shells = append(resp.Shells, shell.(*shellv1.Shell))
 		}
 		ctx.Respond(resp)
+
+	case ShellLaunchRequest:
+		summary, err := s.processShellLaunchRequest(ctx, msg.User, &msg.commandParams)
+		if err != nil {
+			ctx.Respond(errors.Wrap(err, "failed to launch shell"))
+		} else {
+			ctx.Respond(summary.ID)
+		}
 
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)
