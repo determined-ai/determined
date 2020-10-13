@@ -320,6 +320,9 @@ commands:
       keypair:
         type: string
         default: "integrations-test"
+      enable-cors:
+        type: boolean
+        default: false
       agent-instance-type:
         type: string
         default: "p2.xlarge"
@@ -335,7 +338,8 @@ commands:
               --det-version <<parameters.det-version>> \
               --agent-instance-type <<parameters.agent-instance-type>> \
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
-              --keypair <<parameters.keypair>>
+              --keypair <<parameters.keypair>> \
+              --enable_cors <<parameters.enable-cors>>
 
   terminate-aws-cluster:
     parameters:
@@ -361,6 +365,9 @@ commands:
       max-dynamic-agents:
         type: integer
         default: 1
+      enable_cors:
+        type: boolean
+        default: false
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -369,6 +376,7 @@ commands:
           det-version: <<parameters.det-version>>
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          enable-cors: <<parameters.enable-cors>>
       - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
       - wait-for-master:
@@ -1034,6 +1042,7 @@ jobs:
           det-version: ${CIRCLE_SHA1}
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          enable_cors: true
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
