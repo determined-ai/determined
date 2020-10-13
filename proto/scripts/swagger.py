@@ -36,12 +36,6 @@ def clean(path: str, patch: str) -> None:
     with open(path, "r") as f:
         spec = json.load(f)
 
-    # Update path names to be consistent.
-    paths = {}
-    for key, value in spec["paths"].items():
-        paths[key.replace(".", "_")] = value
-    spec["paths"] = paths
-
     for key, value in spec["definitions"].items():
         # Remove definitions that should be hidden from the user.
         if key == "protobufAny":
