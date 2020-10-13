@@ -161,9 +161,8 @@ def test_cifar10_tf_keras_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("cifar10_tf_keras"), 1
+        config, conf.cv_examples_path("cifar10_tf_keras"), 1, None, 2500
     )
-
     trials = exp.experiment_trials(experiment_id)
     trial_metrics = exp.trial_metrics(trials[0]["id"])
 
@@ -240,9 +239,8 @@ def test_protonet_omniglot_pytorch_accuracy() -> None:
         conf.meta_learning_examples_path("protonet_omniglot_pytorch/20way1shot.yaml")
     )
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.meta_learning_examples_path("protonet_omniglot_pytorch"), 1
+        config, conf.meta_learning_examples_path("protonet_omniglot_pytorch"), 1, None, 2500
     )
-
     trials = exp.experiment_trials(experiment_id)
     trial_metrics = exp.trial_metrics(trials[0]["id"])
 
@@ -277,7 +275,7 @@ def test_gan_mnist_pytorch_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_loss = 0.16
+    target_loss = 0.40
     assert min(validation_losses) < target_loss, (
         "gan_mnist_pytorch did not reach minimum target loss {} in {} steps."
         " full validation loss history: {}".format(
@@ -329,7 +327,7 @@ def test_data_layer_mnist_estimator_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_accuracy = 0.95
+    target_accuracy = 0.94
     assert max(validation_accuracies) > target_accuracy, (
         "data_layer_mnist_estimator did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(

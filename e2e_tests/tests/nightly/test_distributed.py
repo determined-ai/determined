@@ -61,14 +61,6 @@ def test_unets_tf_keras_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
-def test_bert_squad_pytorch_distributed() -> None:
-    config = conf.load_config(conf.nlp_examples_path("bert_squad_pytorch/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("bert_squad_pytorch"), 1)
-
-
-@pytest.mark.distributed  # type: ignore
 def test_bert_glue_pytorch_distributed() -> None:
     config = conf.load_config(conf.nlp_examples_path("bert_glue_pytorch/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -78,10 +70,10 @@ def test_bert_glue_pytorch_distributed() -> None:
 
 @pytest.mark.distributed  # type: ignore
 def test_gaea_pytorch_distributed() -> None:
-    config = conf.load_config(conf.nas_examples_path("gaea_pytorch/distributed.yaml"))
+    config = conf.load_config(conf.nas_examples_path("gaea_pytorch/eval/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
-    exp.run_basic_test_with_temp_config(config, conf.nas_examples_path("gaea_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(config, conf.nas_examples_path("gaea_pytorch/eval"), 1)
 
 
 @pytest.mark.distributed  # type: ignore
