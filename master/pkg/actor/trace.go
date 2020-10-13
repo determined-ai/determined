@@ -19,7 +19,7 @@ var traceEnabled = traceEnabledStr == "true"
 var traceEnabledStr = "false"
 
 const (
-	askOperation = "Ask"
+	askOperation  = "Ask"
 	tellOperation = "Tell"
 )
 
