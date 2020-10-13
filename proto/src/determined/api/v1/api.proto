@@ -514,6 +514,16 @@ service Determined {
       tags: "Shells"
     };
   }
+  // Launch a shell.
+  rpc LaunchShell(LaunchShellRequest) returns (LaunchShellResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/shells"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Shells"
+    };
+  }
 
   // Get a list of commands.
   rpc GetCommands(GetCommandsRequest) returns (GetCommandsResponse) {
@@ -537,6 +547,16 @@ service Determined {
   rpc KillCommand(KillCommandRequest) returns (KillCommandResponse) {
     option (google.api.http) = {
       post: "/api/v1/commands/{command_id}/kill"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Commands"
+    };
+  }
+  // Launch a command.
+  rpc LaunchCommand(LaunchCommandRequest) returns (LaunchCommandResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/commands"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Commands"

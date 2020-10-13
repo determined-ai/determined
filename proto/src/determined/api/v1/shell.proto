@@ -62,3 +62,11 @@ message KillShellResponse {
   // The requested shell.
   determined.shell.v1.Shell shell = 1;
 }
+
+// Request to launch a shell.
+message LaunchShellRequest {}
+// Response to LaunchShellRequest.
+message LaunchShellResponse {
+  // The requested shell.
+  determined.shell.v1.Shell shell = 1;
+}
