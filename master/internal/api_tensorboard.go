@@ -2,7 +2,9 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"os"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,7 +18,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
-	"github.com/golang/protobuf/ptypes"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
@@ -55,23 +56,28 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 			UserID:   int(file.Uid),
 			GroupID:  int(file.Gid),
 		}
-		if mtime, err := ptypes.Timestamp(file.Mtime); err == nil {
-			item.ModifiedTime = archive.UnixTime{Time: mtime}
-		}
+		item.ModifiedTime = archive.UnixTime{Time: time.Unix(file.Mtime, 0)}
 		filesArchive = append(filesArchive, item)
 	}
 	return filesArchive
 }
 
-func apiCmdParamsToCommandParams(apiCmdParams *apiv1.CommandParams) command.CommandParams {
+func apiCmdParamsToCommandParams(apiCmdParams *apiv1.CommandParams) (*command.CommandParams, error) {
 	commandParams := command.CommandParams{
 		ConfigBytes: apiCmdParams.Config,
 		UserFiles:   filesToArchive(apiCmdParams.UserFiles),
 	}
+	if len(apiCmdParams.Data) != 0 {
+		var data map[string]interface{}
+		if err := json.Unmarshal(apiCmdParams.Data, &data); err != nil {
+			return nil, err
+		}
+		commandParams.Data = data
+	}
 	if apiCmdParams.TemplateName != "" {
 		commandParams.Template = &apiCmdParams.TemplateName
 	}
-	return commandParams
+	return &commandParams, nil
 }
 
 func (a *apiServer) LaunchTensorboard(
@@ -85,8 +91,12 @@ func (a *apiServer) LaunchTensorboard(
 	for _, id := range req.TrialIds {
 		trialIds = append(trialIds, int(id))
 	}
+	cmdParams, err := apiCmdParamsToCommandParams(req.CommandParams)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to parse command parameters: %s", err)
+	}
 	tensorboardConfig := command.TensorboardRequest{
-		CommandParams: apiCmdParamsToCommandParams(req.CommandParams),
+		CommandParams: *cmdParams,
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}

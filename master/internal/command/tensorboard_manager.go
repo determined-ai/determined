@@ -158,6 +158,12 @@ func (t *tensorboardManager) processTensorboardRequest(
 	}
 	ctx.Log().Infof("created tensorboard %s", a.Address().Local())
 	summary := summaryResponse.Get().(summary)
+	// REMOVEME
+	// jConfig, err := json.Marshal(summary.Config)
+	// if err != nil {
+	// 	fmt.Println("failed to marshal config")
+	// }
+	// fmt.Printf("config description %s\n", jConfig)
 	return &summary, nil
 }
 

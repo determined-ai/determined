@@ -61,7 +61,8 @@ message KillTensorboardResponse {
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
 }
 
-// CommandParams are common parameters shared between different tasks in Determined.
+// CommandParams are common parameters shared between different tasks in
+// Determined.
 message CommandParams {
   // Command config.
   bytes config = 1;
@@ -69,6 +70,8 @@ message CommandParams {
   string template_name = 2;
   // User files.
   repeated determined.util.v1.File user_files = 3;
+  // Additional data used by commands and shells.
+  bytes data = 4;
 }
 
 // Request to launch a tensorboard.
