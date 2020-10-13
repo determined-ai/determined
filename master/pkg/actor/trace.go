@@ -16,7 +16,7 @@ import (
 
 // traceEnabled configs actors to submit traces to an opentracing backend (specifically Jaeger).
 var traceEnabled = traceEnabledStr == "true"
-var traceEnabledStr = "true"
+var traceEnabledStr = "false"
 
 const (
 	askOperation = "Ask"
