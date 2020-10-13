@@ -64,8 +64,9 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const columns = useMemo(() => {
     const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      return record.latestValidationMetrics && metric &&
-        humanReadableFloat(record.latestValidationMetrics.validationMetrics[metric]);
+      const validationMetrics = record.latestValidationMetrics?.validationMetrics || {};
+      const latestValidationMetric = metric && validationMetrics[metric];
+      return latestValidationMetric && humanReadableFloat(latestValidationMetric);
     };
 
     const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
