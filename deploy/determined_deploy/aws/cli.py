@@ -91,6 +91,11 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="max agent starting time",
     )
     subparser.add_argument(
+        "--min-dynamic-agents",
+        type=int,
+        help="minimum number of dynamic agent instances at one time",
+    )
+    subparser.add_argument(
         "--max-dynamic-agents",
         type=int,
         help="maximum number of dynamic agent instances at one time",
@@ -168,6 +173,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.DB_PASSWORD: args.db_password,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD: args.max_idle_agent_period,
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
+        constants.cloudformation.MIN_DYNAMIC_AGENTS: args.min_dynamic_agents,
         constants.cloudformation.MAX_DYNAMIC_AGENTS: args.max_dynamic_agents,
     }
 

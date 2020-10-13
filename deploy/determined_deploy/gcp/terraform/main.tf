@@ -128,6 +128,7 @@ module "compute" {
   max_agent_starting_period = var.max_agent_starting_period
   gpu_type = var.gpu_type
   gpu_num = var.gpu_num
+  min_dynamic_agents = var.min_dynamic_agents
   max_dynamic_agents = var.max_dynamic_agents
   static_agents = var.static_agents
   min_cpu_platform_master = var.min_cpu_platform_master

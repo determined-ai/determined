@@ -61,6 +61,9 @@ variable "gpu_type" {
 variable "gpu_num" {
 }
 
+variable "min_dynamic_agents" {
+}
+
 variable "max_dynamic_agents" {
 }
 

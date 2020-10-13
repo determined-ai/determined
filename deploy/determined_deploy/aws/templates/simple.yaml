@@ -75,6 +75,11 @@ Parameters:
     Description: How long for agent starting before retrying
     Default: 20m
 
+  MinDynamicAgents:
+    Type: Number
+    Description: Minimum number of agents to launch simultaneously
+    Default: 0
+
   MaxDynamicAgents:
     Type: Number
     Description: Maximum number of agents to launch simultaneously
@@ -424,6 +429,7 @@ Resources:
               master_url: http://local-ipv4:8080
               max_idle_agent_period: ${MaxIdleAgentPeriod}
               max_agent_starting_period: ${MaxAgentStartingPeriod}
+              min_instances: ${MinDynamicAgents}
               max_instances: ${MaxDynamicAgents}
               network_interface:
                 public_ip: true

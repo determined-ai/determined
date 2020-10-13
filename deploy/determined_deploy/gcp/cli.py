@@ -155,6 +155,12 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="number of GPUs per agent instance",
     )
     optional_named.add_argument(
+        "--min-dynamic-agents",
+        type=int,
+        default=constants.defaults.MIN_DYNAMIC_AGENTS,
+        help="minimum number of dynamic agent instances at one time",
+    )
+    optional_named.add_argument(
         "--max-dynamic-agents",
         type=int,
         default=constants.defaults.MAX_DYNAMIC_AGENTS,

@@ -70,6 +70,11 @@ variable "gpu_num" {
   default = 8
 }
 
+variable "min_dynamic_agents" {
+  type = number
+  default = 0
+}
+
 variable "max_dynamic_agents" {
   type = number
   default = 5
