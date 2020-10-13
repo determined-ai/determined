@@ -38,6 +38,13 @@ db:
   cpuRequest: "2"
   memRequest: "8Gi"
 
+  # storageClassName configures the StorageClass used by the PersistentVolumeClaim
+  # for the Determined deployed database. This can be left blank if a default
+  # storage class is specified in the cluster. If dynamic provisioning of
+  # PersistentVolumes is disabled, users must manually create a PersistentVolume
+  # that will match the PersistentVolumeClaim.
+  # storageClassName:
+
 # checkpointStorage controls where checkpoints are stored.
 # supported types include `shared_fs`, `gcs`, and `s3.
 checkpointStorage:
