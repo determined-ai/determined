@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-
 const spotRequestIdPrefix = "sir-"
 const launchTimeOffsetGrowth = time.Second * 10
 
