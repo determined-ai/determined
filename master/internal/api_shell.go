@@ -27,3 +27,44 @@ func (a *apiServer) KillShell(
 	_ context.Context, req *apiv1.KillShellRequest) (resp *apiv1.KillShellResponse, err error) {
 	return resp, a.actorRequest(fmt.Sprintf("/shells/%s", req.ShellId), req, &resp)
 }
+
+func (a *apiServer) LaunchShell(
+	ctx context.Context, req *apiv1.LaunchShellRequest,
+) (*apiv1.LaunchShellResponse, error) {
+	// experimentIds := make([]int, 0)
+	// trialIds := make([]int, 0)
+	// for _, id := range req.ExperimentIds {
+	// 	experimentIds = append(experimentIds, int(id))
+	// }
+	// for _, id := range req.TrialIds {
+	// 	trialIds = append(trialIds, int(id))
+	// }
+	// shellConfig := command.ShellRequest{
+	// 	ExperimentIDs: experimentIds,
+	// 	TrialIDs:      trialIds,
+	// }
+	// user, _, err := grpc.GetUser(ctx, a.m.db)
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	// }
+
+	// shellLaunchReq := command.ShellRequestWithUser{
+	// 	Shell: shellConfig,
+	// 	User:  user,
+	// }
+	// actorResp := a.m.system.AskAt(shellsAddr, shellLaunchReq)
+	// if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	// 	return nil, err
+	// }
+
+	// shellID := actorResp.Get().(resourcemanagers.TaskID)
+	// shellReq := shellv1.Shell{}
+	// actorResp = a.m.system.AskAt(shellsAddr.Child(shellID), &shellReq)
+	// if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	// 	return nil, err
+	// }
+
+	return &apiv1.LaunchShellResponse{
+		// Shell: actorResp.Get().(*shellv1.Shell),
+	}, nil
+}
