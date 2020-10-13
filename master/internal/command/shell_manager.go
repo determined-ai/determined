@@ -10,6 +10,7 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
 
+	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -58,6 +59,45 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (s *shellManager) processShellLaunchRequest(
+	ctx *actor.Context,
+	user *model.User,
+	req *commandParams,
+) (*summary, error) {
+	commandReq, err := parseCommandRequestWithUser(*user, s.db, req, &s.taskSpec.TaskContainerDefaults)
+	if err != nil {
+		return nil, err
+	}
+
+	if commandReq.AgentUserGroup == nil {
+		commandReq.AgentUserGroup = &s.defaultAgentUserGroup
+	}
+
+	var passphrase *string
+	if pwd, ok := commandReq.Data["passphrase"]; ok {
+		if typed, typedOK := pwd.(string); typedOK {
+			passphrase = &typed
+		}
+	}
+	generatedKeys, err := ssh.GenerateKey(passphrase)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.Log().Info("creating shell")
+
+	shell := s.newShell(commandReq, generatedKeys)
+	if err := check.Validate(shell.config); err != nil {
+		return nil, err
+	}
+
+	a, _ := ctx.ActorOf(shell.taskID, shell)
+	summaryResponse := ctx.Ask(a, getSummary{})
+	summary := summaryResponse.Get().(summary)
+	ctx.Log().Infof("created shell %s", a.Address().Local())
+	return &summary, nil
+}
+
 func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
@@ -67,45 +107,18 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		var params CommandParams
-		if err := apiCtx.Bind(&params); err != nil {
+		var req CommandParams
+		if err := apiCtx.Bind(&req); err != nil {
 			respondBadRequest(ctx, err)
 			return
 		}
 
-		req, err := parseCommandRequest(apiCtx, s.db, &params, &s.taskSpec.TaskContainerDefaults)
+		user := apiCtx.(*requestContext.DetContext).MustGetUser()
+		summary, err := s.processShellLaunchRequest(ctx, &user, &req)
 		if err != nil {
 			respondBadRequest(ctx, err)
-			return
 		}
-
-		if req.AgentUserGroup == nil {
-			req.AgentUserGroup = &s.defaultAgentUserGroup
-		}
-
-		var passphrase *string
-		if pwd, ok := req.Data["passphrase"]; ok {
-			if typed, typedOK := pwd.(string); typedOK {
-				passphrase = &typed
-			}
-		}
-		generatedKeys, err := ssh.GenerateKey(passphrase)
-		if err != nil {
-			ctx.Respond(err)
-			return
-		}
-
-		ctx.Log().Info("creating shell")
-
-		shell := s.newShell(req, generatedKeys)
-		if err := check.Validate(shell.config); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-
-		a, _ := ctx.ActorOf(shell.taskID, shell)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, getSummary{})))
-		ctx.Log().Infof("created shell %s", a.Address().Local())
+		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
