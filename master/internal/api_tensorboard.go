@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"os"
 	"time"
 
@@ -21,6 +20,23 @@ import (
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
+
+func filesToArchive(files []*utilv1.File) archive.Archive {
+	filesArchive := make([]archive.Item, 0)
+	for _, file := range files {
+		item := archive.Item{
+			Path:     file.Path,
+			Type:     byte(file.Type),
+			FileMode: os.FileMode(file.Mode),
+			Content:  file.Content,
+			UserID:   int(file.Uid),
+			GroupID:  int(file.Gid),
+		}
+		item.ModifiedTime = archive.UnixTime{Time: time.Unix(file.Mtime, 0)}
+		filesArchive = append(filesArchive, item)
+	}
+	return filesArchive
+}
 
 func (a *apiServer) GetTensorboards(
 	_ context.Context, req *apiv1.GetTensorboardsRequest,
@@ -45,41 +61,6 @@ func (a *apiServer) KillTensorboard(
 	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId).String(), req, &resp)
 }
 
-func filesToArchive(files []*utilv1.File) archive.Archive {
-	filesArchive := make([]archive.Item, 0)
-	for _, file := range files {
-		item := archive.Item{
-			Path:     file.Path,
-			Type:     byte(file.Type),
-			FileMode: os.FileMode(file.Mode),
-			Content:  file.Content,
-			UserID:   int(file.Uid),
-			GroupID:  int(file.Gid),
-		}
-		item.ModifiedTime = archive.UnixTime{Time: time.Unix(file.Mtime, 0)}
-		filesArchive = append(filesArchive, item)
-	}
-	return filesArchive
-}
-
-func apiCmdParamsToCommandParams(apiCmdParams *apiv1.CommandParams) (*command.CommandParams, error) {
-	commandParams := command.CommandParams{
-		ConfigBytes: apiCmdParams.Config,
-		UserFiles:   filesToArchive(apiCmdParams.UserFiles),
-	}
-	if len(apiCmdParams.Data) != 0 {
-		var data map[string]interface{}
-		if err := json.Unmarshal(apiCmdParams.Data, &data); err != nil {
-			return nil, err
-		}
-		commandParams.Data = data
-	}
-	if apiCmdParams.TemplateName != "" {
-		commandParams.Template = &apiCmdParams.TemplateName
-	}
-	return &commandParams, nil
-}
-
 func (a *apiServer) LaunchTensorboard(
 	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
 ) (*apiv1.LaunchTensorboardResponse, error) {
@@ -91,12 +72,13 @@ func (a *apiServer) LaunchTensorboard(
 	for _, id := range req.TrialIds {
 		trialIds = append(trialIds, int(id))
 	}
-	cmdParams, err := apiCmdParamsToCommandParams(req.CommandParams)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to parse command parameters: %s", err)
+	cmdParams := command.CommandParams{ConfigBytes: req.Config, UserFiles: filesToArchive(req.Files)}
+	if req.TemplateName != "" {
+		cmdParams.Template = &req.TemplateName
 	}
+
 	tensorboardConfig := command.TensorboardRequest{
-		CommandParams: *cmdParams,
+		CommandParams: cmdParams,
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}

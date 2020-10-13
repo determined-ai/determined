@@ -26,6 +26,7 @@ type commandRequest struct {
 	AgentUserGroup *model.AgentUserGroup
 }
 
+// CommandParams describes parameters for launching a command.
 type CommandParams struct {
 	ConfigBytes json.RawMessage        `json:"config"`
 	Template    *string                `json:"template"`
