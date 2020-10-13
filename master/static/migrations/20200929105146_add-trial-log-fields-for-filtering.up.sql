@@ -5,4 +5,4 @@ ALTER TABLE public.trial_logs
     ADD COLUMN timestamp timestamp NULL,
     ADD COLUMN level text NULL,
     ADD COLUMN source text NULL,
-    ADD COLUMN std_type smallint NULL;
+    ADD COLUMN stdtype text NULL;
