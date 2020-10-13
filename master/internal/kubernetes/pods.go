@@ -108,7 +108,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.startPodInformer(ctx)
 		p.startNodeInformer(ctx)
 		p.startEventListener(ctx)
-		ctx.Tell(p.cluster, sproto.AddAgent{Agent: ctx.Self()})
+		ctx.Tell(p.cluster, sproto.SetPods{Pods: ctx.Self()})
 
 	case sproto.StartTaskPod:
 		if err := p.receiveStartTaskPod(ctx, msg); err != nil {

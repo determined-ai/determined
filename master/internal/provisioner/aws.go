@@ -213,8 +213,7 @@ func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
 	res := c.newInstances(instances)
 	for _, inst := range res {
 		if inst.State == Unknown {
-			ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-				Errorf("unknown instance state for instance %v", inst.ID)
+			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
 		}
 	}
 	return res, nil
@@ -226,18 +225,16 @@ func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
 	}
 	instances, err := c.launchInstances(instanceNum, false)
 	if err != nil {
-		ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-			WithError(err).Error("cannot launch EC2 instances")
+		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
 		return
 	}
 	launched := c.newInstances(instances.Instances)
-	ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-		Infof(
-			"launched %d/%d EC2 instances: %s",
-			len(launched),
-			instanceNum,
-			fmtInstances(launched),
-		)
+	ctx.Log().Infof(
+		"launched %d/%d EC2 instances: %s",
+		len(launched),
+		instanceNum,
+		fmtInstances(launched),
+	)
 }
 
 func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string) {
@@ -251,18 +248,16 @@ func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string
 	}
 	res, err := c.client.TerminateInstances(input)
 	if err != nil {
-		ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-			WithError(err).Error("cannot terminate EC2 instances")
+		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
 		return
 	}
 	terminated := c.newInstancesFromTerminateInstancesOutput(res)
-	ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-		Infof(
-			"terminated %d/%d EC2 instances: %s",
-			len(terminated),
-			len(instanceIDs),
-			fmtInstances(terminated),
-		)
+	ctx.Log().Infof(
+		"terminated %d/%d EC2 instances: %s",
+		len(terminated),
+		len(instanceIDs),
+		fmtInstances(terminated),
+	)
 }
 
 func (c *awsCluster) newInstances(input []*ec2.Instance) []*Instance {

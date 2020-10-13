@@ -19,3 +19,8 @@ type (
 		PodID container.ID
 	}
 )
+
+// SetPods sets the pods for the kubernetes resource manager.
+type SetPods struct {
+	Pods *actor.Ref
+}

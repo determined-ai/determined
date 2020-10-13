@@ -75,6 +75,8 @@ func New(resourcePool string, config *Config, cert *tls.Certificate) (*Provision
 
 // Receive implements the actor.Actor interface.
 func (p *Provisioner) Receive(ctx *actor.Context) error {
+	ctx.AddLabel("resource-pool", ctx.Self().Parent().Address().Local())
+
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		p.provider.prestart(ctx)
@@ -101,28 +103,25 @@ func (p *Provisioner) SlotsPerInstance() int {
 func (p *Provisioner) provision(ctx *actor.Context) {
 	instances, err := p.provider.list(ctx)
 	if err != nil {
-		ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-			WithError(err).Error("cannot list instances")
+		ctx.Log().WithError(err).Error("cannot list instances")
 		return
 	}
 	if p.scaleDecider.updateInstanceSnapshot(instances) {
-		ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-			Infof("found state changes in %d instances: %s", len(instances), fmtInstances(instances))
+		ctx.Log().Infof("found state changes in %d instances: %s",
+			len(instances), fmtInstances(instances))
 	}
 
 	p.scaleDecider.calculateInstanceStates()
 
 	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
-		ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-			Infof("decided to terminate %d instances: %s",
-				len(toTerminate.InstanceIDs), toTerminate.String())
+		ctx.Log().Infof("decided to terminate %d instances: %s",
+			len(toTerminate.InstanceIDs), toTerminate.String())
 		p.provider.terminate(ctx, toTerminate.InstanceIDs)
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
-		ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-			Infof("decided to launch %d instances (type %s)",
-				numToLaunch, p.provider.instanceType().name())
+		ctx.Log().Infof("decided to launch %d instances (type %s)",
+			numToLaunch, p.provider.instanceType().name())
 		p.provider.launch(ctx, numToLaunch)
 	}
 }

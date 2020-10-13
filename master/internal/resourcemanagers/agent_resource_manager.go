@@ -37,10 +37,11 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				a.pools[config.PoolName] = rpRef
 			}
 		}
-		ctx.AskAll(actor.Ping{}, ctx.Children()...).GetAll()
 
 	case AllocateRequest:
-		a.setDefaultResourcePool(&msg)
+		if len(msg.ResourcePool) == 0 {
+			msg.ResourcePool = a.getDefaultResourcePool(msg)
+		}
 		a.forward(ctx, msg.ResourcePool, msg)
 	case ResourcesReleased:
 		for name := range a.pools {
@@ -52,13 +53,13 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.SetGroupWeight:
 		a.forward(ctx, msg.ResourcePool, msg)
 	case GetTaskSummary:
-		if summary := a.aggregateTaskSummary(a.forwardAll(ctx, msg)); summary != nil {
+		if summary := a.aggregateTaskSummary(a.forwardAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
 		}
 	case GetTaskSummaries:
-		ctx.Respond(a.aggregateTaskSummaries(a.forwardAll(ctx, msg)))
+		ctx.Respond(a.aggregateTaskSummaries(a.forwardAllPools(ctx, msg)))
 	case SetTaskName:
-		a.forwardAll(ctx, msg)
+		a.forwardAllPools(ctx, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -84,14 +85,11 @@ func (a *agentResourceManager) createResourcePool(
 	return ref
 }
 
-func (a *agentResourceManager) setDefaultResourcePool(request *AllocateRequest) {
-	if len(request.ResourcePool) == 0 {
-		if request.SlotsNeeded == 0 {
-			request.ResourcePool = a.config.DefaultCPUResourcePool
-		} else {
-			request.ResourcePool = a.config.DefaultGPUResourcePool
-		}
+func (a *agentResourceManager) getDefaultResourcePool(msg AllocateRequest) string {
+	if msg.SlotsNeeded == 0 {
+		return a.config.DefaultCPUResourcePool
 	}
+	return a.config.DefaultGPUResourcePool
 }
 
 func (a *agentResourceManager) forward(
@@ -113,16 +111,19 @@ func (a *agentResourceManager) forward(
 	}
 }
 
-func (a *agentResourceManager) forwardAll(ctx *actor.Context, msg actor.Message) []actor.Message {
-	respMap := ctx.AskAll(msg, ctx.Children()...).GetAll()
-	resps := make([]actor.Message, 0)
-	for _, resp := range respMap {
-		resps = append(resps, resp)
+func (a *agentResourceManager) forwardAllPools(
+	ctx *actor.Context, msg actor.Message,
+) map[*actor.Ref]actor.Message {
+	if ctx.ExpectingResponse() {
+		return ctx.AskAll(msg, ctx.Children()...).GetAll()
 	}
-	return resps
+	ctx.TellAll(msg, ctx.Children()...)
+	return nil
 }
 
-func (a *agentResourceManager) aggregateTaskSummary(resps []actor.Message) *TaskSummary {
+func (a *agentResourceManager) aggregateTaskSummary(
+	resps map[*actor.Ref]actor.Message,
+) *TaskSummary {
 	for _, resp := range resps {
 		if resp != nil {
 			typed := resp.(TaskSummary)
@@ -133,7 +134,7 @@ func (a *agentResourceManager) aggregateTaskSummary(resps []actor.Message) *Task
 }
 
 func (a *agentResourceManager) aggregateTaskSummaries(
-	resps []actor.Message,
+	resps map[*actor.Ref]actor.Message,
 ) map[TaskID]TaskSummary {
 	summaries := make(map[TaskID]TaskSummary)
 	for _, resp := range resps {

@@ -38,6 +38,13 @@ func (c *Context) Tell(actor *Ref, message Message) {
 	actor.tell(c.inner, c.recipient, message)
 }
 
+// TellAll sends the specified message to all actors (fire-and-forget semantics).
+func (c *Context) TellAll(message Message, actors ...*Ref) {
+	for _, ref := range actors {
+		ref.tell(c.inner, ref, message)
+	}
+}
+
 // Ask sends the specified message to the actor, returning a future to the result of the call. The
 // new context's sender is set to the recipient of this context.
 func (c *Context) Ask(actor *Ref, message Message) Response {

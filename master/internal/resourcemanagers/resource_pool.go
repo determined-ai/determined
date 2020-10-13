@@ -185,6 +185,8 @@ func (rp *ResourcePool) sendScalingInfo(ctx *actor.Context) {
 
 // Receive implements the actor.Actor interface.
 func (rp *ResourcePool) Receive(ctx *actor.Context) error {
+	ctx.AddLabel("resource-pool", rp.config.PoolName)
+
 	reschedule := true
 	defer func() {
 		// Default to scheduling every 500ms if a message was received, but allow messages

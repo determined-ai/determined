@@ -29,7 +29,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case api.WebSocketConnected:
 		id, resourcePool := msg.Ctx.QueryParam("id"), msg.Ctx.QueryParam("resource_pool")
-		if ref, err := a.createAgent(ctx, id, resourcePool); err != nil {
+		if ref, err := a.createAgentActor(ctx, id, resourcePool); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(ctx.Ask(ref, msg).Get())
@@ -49,7 +49,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (a *agents) createAgent(ctx *actor.Context, id, resourcePool string) (*actor.Ref, error) {
+func (a *agents) createAgentActor(ctx *actor.Context, id, resourcePool string) (*actor.Ref, error) {
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
 	}

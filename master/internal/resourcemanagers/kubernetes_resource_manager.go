@@ -3,6 +3,9 @@ package resourcemanagers
 import (
 	"github.com/google/uuid"
 
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -47,8 +50,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
-	case sproto.AddAgent:
-		k.agent = newAgentState(msg)
+	case sproto.SetPods:
+		k.agent = &agentState{
+			handler:            msg.Pods,
+			devices:            make(map[device.Device]*cproto.ID),
+			zeroSlotContainers: make(map[cproto.ID]bool),
+		}
 
 	case
 		groupActorStopped,

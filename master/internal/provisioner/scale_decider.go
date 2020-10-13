@@ -131,7 +131,7 @@ func (s *scaleDecider) calculateInstanceStates() {
 			// Connected agent instances.
 			if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
 				if _, ok := s.idleAgentSnapshot[inst.AgentName]; ok {
-					// Connected idle agent instances
+					// Connected idle agent instances.
 					if t, ok := pastIdle[inst.ID]; ok {
 						if now.After(t.Add(s.maxIdlePeriod)) {
 							s.longIdle[inst.ID] = true

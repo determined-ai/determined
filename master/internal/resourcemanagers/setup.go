@@ -37,7 +37,6 @@ func Setup(
 	return rm
 }
 
-// setupAgentResourceManager setups agent resource manager.
 func setupAgentResourceManager(
 	system *actor.System,
 	echo *echo.Echo,
@@ -56,7 +55,6 @@ func setupAgentResourceManager(
 	return ref
 }
 
-// setupKubernetesResourceManager setups kubernetes resource manager.
 func setupKubernetesResourceManager(
 	system *actor.System,
 	echo *echo.Echo,

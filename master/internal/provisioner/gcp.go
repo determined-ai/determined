@@ -175,9 +175,8 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	res := c.newInstances(instances)
 	for i, inst := range res {
 		if inst.State == Unknown {
-			ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-				Errorf("unknown instance state for instance %v: %v",
-					inst.ID, instances[i])
+			ctx.Log().Errorf("unknown instance state for instance %v: %v",
+				inst.ID, instances[i])
 		}
 	}
 	return res, nil
@@ -207,8 +206,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 
 		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
 		if err != nil {
-			ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-				WithError(err).Errorf("cannot insert GCE instance")
+			ctx.Log().WithError(err).Errorf("cannot insert GCE instance")
 		} else {
 			ops = append(ops, resp)
 		}
@@ -225,7 +223,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 			ops:    ops,
 			postProcess: func(doneOps []*compute.Operation) {
 				inserted := c.newInstancesFromOperations(doneOps)
-				ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).Infof(
+				ctx.Log().Infof(
 					"inserted %d/%d GCE instances: %s",
 					len(inserted),
 					instanceNum,
@@ -234,8 +232,7 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 			},
 		},
 	); !ok {
-		ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-			Error("internal error tracking GCP operation batch")
+		ctx.Log().Error("internal error tracking GCP operation batch")
 		return
 	}
 }
@@ -250,8 +247,7 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 		ClientCtx := context.Background()
 		resp, err := c.client.Instances.Delete(c.Project, c.Zone, inst).Context(ClientCtx).Do()
 		if err != nil {
-			ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-				WithError(err).Errorf("cannot delete GCE instance: %s", inst)
+			ctx.Log().WithError(err).Errorf("cannot delete GCE instance: %s", inst)
 		} else {
 			ops = append(ops, resp)
 		}
@@ -268,7 +264,7 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 			ops:    ops,
 			postProcess: func(doneOps []*compute.Operation) {
 				deleted := c.newInstancesFromOperations(doneOps)
-				ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).Infof(
+				ctx.Log().Infof(
 					"deleted %d/%d GCE instances: %s",
 					len(deleted),
 					len(instances),
@@ -277,8 +273,7 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 			},
 		},
 	); !ok {
-		ctx.Log().WithField("resource-pool", ctx.Self().Parent().Address().Local()).
-			Error("internal error tracking GCP operation batch")
+		ctx.Log().Error("internal error tracking GCP operation batch")
 		return
 	}
 }
