@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/ghodss/yaml"
@@ -48,6 +49,7 @@ func parseCommandRequestWithUser(
 	params *CommandParams,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 ) (*commandRequest, error) {
+	fmt.Printf("command params recevied %v", params)
 	config := DefaultConfig(taskContainerDefaults)
 	if params.Template != nil {
 		template, err := db.TemplateByName(*params.Template)
@@ -77,6 +79,7 @@ func parseCommandRequestWithUser(
 		return nil, errors.Wrapf(err, "cannot find user and group information for user %s", user.Username)
 	}
 
+	fmt.Printf("command params parsed %v", params)
 	return &commandRequest{
 		Config:    config,
 		UserFiles: params.UserFiles,

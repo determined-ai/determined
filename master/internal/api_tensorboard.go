@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
+	"github.com/golang/protobuf/ptypes"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
@@ -48,14 +49,29 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 	for _, file := range files {
 		item := archive.Item{
 			Path:     file.Path,
+			Type:     byte(file.Type),
 			FileMode: os.FileMode(file.Mode),
 			Content:  file.Content,
-			// TODO
-			// ModifiedTime: file.Mtime.,
+			UserID:   int(file.Uid),
+			GroupID:  int(file.Gid),
+		}
+		if mtime, err := ptypes.Timestamp(file.Mtime); err == nil {
+			item.ModifiedTime = archive.UnixTime{Time: mtime}
 		}
 		filesArchive = append(filesArchive, item)
 	}
 	return filesArchive
+}
+
+func apiCmdParamsToCommandParams(apiCmdParams *apiv1.CommandParams) command.CommandParams {
+	commandParams := command.CommandParams{
+		ConfigBytes: apiCmdParams.Config,
+		UserFiles:   filesToArchive(apiCmdParams.UserFiles),
+	}
+	if apiCmdParams.TemplateName != "" {
+		commandParams.Template = &apiCmdParams.TemplateName
+	}
+	return commandParams
 }
 
 func (a *apiServer) LaunchTensorboard(
@@ -69,13 +85,8 @@ func (a *apiServer) LaunchTensorboard(
 	for _, id := range req.TrialIds {
 		trialIds = append(trialIds, int(id))
 	}
-	commandParams := command.CommandParams{
-		ConfigBytes: req.CommandParams.Config,
-		Template:    &req.CommandParams.Template,
-		UserFiles:   filesToArchive(req.CommandParams.UserFiles),
-	}
 	tensorboardConfig := command.TensorboardRequest{
-		CommandParams: commandParams,
+		CommandParams: apiCmdParamsToCommandParams(req.CommandParams),
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}

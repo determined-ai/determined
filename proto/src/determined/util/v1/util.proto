@@ -9,17 +9,17 @@ import "protoc-gen-swagger/options/annotations.proto";
 // File is a Unix file.
 message File {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "path", "type", "content", "mtime" ] }
+    json_schema: { required: [ "path", "type", "content", "mtime", "mode", "uid", "gid" ] }
   };
   // Path to the file or directory.
   string path = 1;
   // File type.
-  int32 type = 2;
+  int32 type = 2; // FIXME We really only want a single byte.
   // base64 encoded contents of the file.
   bytes content = 3;
   // Modified time.
   google.protobuf.Timestamp mtime = 4;
-  // Mode.
+  // File mode.
   int32 mode = 5;
   // User ID.
   int32 uid = 6;
