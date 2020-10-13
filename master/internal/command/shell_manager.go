@@ -108,6 +108,9 @@ func (s *shellManager) processShellLaunchRequest(
 
 	a, _ := ctx.ActorOf(shell.taskID, shell)
 	summaryResponse := ctx.Ask(a, getSummary{})
+	if err := summaryResponse.Error(); err != nil {
+		return nil, err
+	}
 	summary := summaryResponse.Get().(summary)
 	ctx.Log().Infof("created shell %s", a.Address().Local())
 	return &summary, nil

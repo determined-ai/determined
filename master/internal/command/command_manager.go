@@ -7,6 +7,7 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
 
+	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -45,6 +46,38 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (c *commandManager) processCommandLaunchRequest(
+	ctx *actor.Context,
+	user *model.User,
+	req *commandParams,
+) (*summary, error) {
+	commandReq, err := parseCommandRequestWithUser(*user, c.db, req, &c.taskSpec.TaskContainerDefaults)
+	if err != nil {
+		return nil, err
+	}
+
+	if commandReq.AgentUserGroup == nil {
+		commandReq.AgentUserGroup = &c.defaultAgentUserGroup
+	}
+
+	ctx.Log().Info("creating command")
+
+	command := c.newCommand(commandReq)
+	if err := check.Validate(command.config); err != nil {
+		respondBadRequest(ctx, err)
+		return nil, err
+	}
+
+	a, _ := ctx.ActorOf(command.taskID, command)
+	summaryResponse := ctx.Ask(a, getSummary{})
+	if err := summaryResponse.Error(); err != nil {
+		return nil, err
+	}
+	summary := summaryResponse.Get().(summary)
+	ctx.Log().Infof("created command %s", a.Address().Local())
+	return &summary, nil
+}
+
 func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
@@ -54,33 +87,18 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		var params CommandParams
-		if err := apiCtx.Bind(&params); err != nil {
+		var req CommandParams
+		if err := apiCtx.Bind(&req); err != nil {
 			respondBadRequest(ctx, err)
 			return
 		}
 
-		req, err := parseCommandRequest(apiCtx, c.db, &params, &c.taskSpec.TaskContainerDefaults)
+		user := apiCtx.(*requestContext.DetContext).MustGetUser()
+		summary, err := c.processCommandLaunchRequest(ctx, &user, &req)
 		if err != nil {
 			respondBadRequest(ctx, err)
-			return
 		}
-
-		if req.AgentUserGroup == nil {
-			req.AgentUserGroup = &c.defaultAgentUserGroup
-		}
-
-		ctx.Log().Info("creating command")
-
-		command := c.newCommand(req)
-		if err := check.Validate(command.config); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-
-		a, _ := ctx.ActorOf(command.taskID, command)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, getSummary{})))
-		ctx.Log().Infof("created command %s", a.Address().Local())
+		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
