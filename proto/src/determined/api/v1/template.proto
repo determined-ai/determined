@@ -51,7 +51,7 @@ message GetTemplateResponse {
 // created
 message PutTemplateRequest {
   // The template to put.
-  determined.template.v1.Template template = 2;
+  determined.template.v1.Template template = 1;
 }
 // Response to PutTemplateRequest.
 message PutTemplateResponse {
