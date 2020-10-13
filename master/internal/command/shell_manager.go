@@ -47,7 +47,7 @@ type shellManager struct {
 
 // ShellLaunchRequest describes a request to launch a new shell.
 type ShellLaunchRequest struct {
-	commandParams commandParams
+	commandParams *commandParams
 	User          *model.User
 }
 
@@ -61,7 +61,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case ShellLaunchRequest:
-		summary, err := s.processShellLaunchRequest(ctx, msg.User, &msg.commandParams)
+		summary, err := s.processShellLaunchRequest(ctx, msg)
 		if err != nil {
 			ctx.Respond(errors.Wrap(err, "failed to launch shell"))
 		} else {
@@ -76,10 +76,9 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 
 func (s *shellManager) processShellLaunchRequest(
 	ctx *actor.Context,
-	user *model.User,
-	req *commandParams,
+	req ShellLaunchRequest,
 ) (*summary, error) {
-	commandReq, err := parseCommandRequestWithUser(*user, s.db, req, &s.taskSpec.TaskContainerDefaults)
+	commandReq, err := parseCommandRequestWithUser(*req.User, s.db, req.commandParams, &s.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}
@@ -125,14 +124,17 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		var req CommandParams
-		if err := apiCtx.Bind(&req); err != nil {
+		var params commandParams
+		if err := apiCtx.Bind(&params); err != nil {
 			respondBadRequest(ctx, err)
 			return
 		}
-
 		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		summary, err := s.processShellLaunchRequest(ctx, &user, &req)
+		req := ShellLaunchRequest{
+			User:          &user,
+			commandParams: &params,
+		}
+		summary, err := s.processShellLaunchRequest(ctx, req)
 		if err != nil {
 			respondBadRequest(ctx, err)
 		}

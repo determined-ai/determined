@@ -31,6 +31,12 @@ type commandManager struct {
 	taskSpec              *tasks.TaskSpec
 }
 
+// CommandLaunchRequest describes a request to launch a new shell.
+type CommandLaunchRequest struct {
+	commandParams *commandParams
+	User          *model.User
+}
+
 func (c *commandManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetCommandsRequest:
@@ -48,10 +54,9 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 
 func (c *commandManager) processCommandLaunchRequest(
 	ctx *actor.Context,
-	user *model.User,
-	req *commandParams,
+	req CommandLaunchRequest,
 ) (*summary, error) {
-	commandReq, err := parseCommandRequestWithUser(*user, c.db, req, &c.taskSpec.TaskContainerDefaults)
+	commandReq, err := parseCommandRequestWithUser(*req.User, c.db, req.commandParams, &c.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}
@@ -87,14 +92,17 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		var req CommandParams
-		if err := apiCtx.Bind(&req); err != nil {
+		var params commandParams
+		if err := apiCtx.Bind(&params); err != nil {
 			respondBadRequest(ctx, err)
 			return
 		}
-
 		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		summary, err := c.processCommandLaunchRequest(ctx, &user, &req)
+		req := CommandLaunchRequest{
+			User:          &user,
+			commandParams: &params,
+		}
+		summary, err := c.processCommandLaunchRequest(ctx, req)
 		if err != nil {
 			respondBadRequest(ctx, err)
 		}
