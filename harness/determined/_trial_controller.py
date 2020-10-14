@@ -110,10 +110,6 @@ class TrialController(metaclass=abc.ABCMeta):
     def initialize_wrapper(self) -> None:
         pass
 
-    @staticmethod
-    def support_determined_native() -> bool:
-        return False
-
     def _check_if_trial_supports_configurations(self, env: det.EnvContext) -> None:
         if self.env.experiment_config.mixed_precision_enabled():
             check.true(
@@ -121,9 +117,6 @@ class TrialController(metaclass=abc.ABCMeta):
                 "Mixed precision training is not supported for this framework interface. "
                 'Please set `mixed_precision = "O0"`.',
             )
-
-        if env.experiment_config.native_enabled():
-            check.true(self.support_determined_native())
 
         if env.experiment_config.averaging_training_metrics_enabled():
             check.true(self.supports_averaging_training_metrics())
