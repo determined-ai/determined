@@ -147,7 +147,7 @@ const TaskList: React.FC = () => {
 
   const columns = useMemo(() => {
     const nameRenderer: TaskRenderer = (_, record) => {
-      if (record.type !== CommandType.Tensorboard) return record.name;
+      if (record.type !== CommandType.Tensorboard || !record.misc) return record.name;
 
       const info = {
         label: '',
@@ -155,14 +155,14 @@ const TaskList: React.FC = () => {
         plural: '',
         sources: [] as number[],
       };
-      if (record.misc?.experimentIds && record.misc?.experimentIds.length !== 0) {
+      if (record.misc?.experimentIds.length !== 0) {
         info.label = 'Experiment';
         info.path = '/det/experiments';
-        info.sources = record.misc.experimentIds || [];
-      } else if (record.misc?.trialIds && record.misc?.trialIds.length !== 0) {
+        info.sources = record.misc?.experimentIds;
+      } else if (record.misc?.trialIds.length !== 0) {
         info.label = 'Trial';
         info.path = '/det/trials';
-        info.sources = record.misc.trialIds || [];
+        info.sources = record.misc?.trialIds;
       }
       info.plural = info.sources.length > 1 ? 's' : '';
       info.sources.sort(numericSorter);

@@ -91,8 +91,8 @@ export const jsonToGenericCommand = (data: unknown, type: CommandType): Command 
     id: io.id,
     kind: type,
     misc: io.misc ? {
-      experimentIds: io.misc.experiment_ids || undefined,
-      trialIds: io.misc.trial_ids || undefined,
+      experimentIds: io.misc.experiment_ids || [],
+      trialIds: io.misc.trial_ids || [],
     } : undefined,
     registeredTime: io.registered_time,
     serviceAddress: io.service_address || undefined,
