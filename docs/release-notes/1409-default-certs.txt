@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Make the harness not require the master to present a full TLS
-   certificate chain when the certificate is signed by a well-known CA.

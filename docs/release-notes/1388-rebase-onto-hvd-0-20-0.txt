@@ -1,5 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
-- Fix a bug which affected TFKerasTrial using TF2 with gradient_aggregation > 1.
