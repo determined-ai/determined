@@ -28,24 +28,28 @@ import {
 import { ApiSorter, EmptyParams } from 'services/types';
 import { ShirtSize } from 'themes';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
-import { getPath, numericSorter } from 'utils/data';
+import { alphanumericSorter, getPath, numericSorter } from 'utils/data';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
 import css from './TaskList.module.scss';
 import { columns as defaultColumns } from './TaskList.table';
 
-export interface TensorBoardSource {
-  id: number;
-  path: string;
-  type: string;
+enum TensorBoardSourceType {
+  Experiment = 'Experiment',
+  Trial = 'Trial',
 }
 
-export interface SourceInfo {
-  label: string;
+interface TensorBoardSource {
+  id: number;
+  path: string;
+  type: TensorBoardSourceType;
+}
+
+interface SourceInfo {
   path: string;
   plural: string;
-  sources: number[];
+  sources: TensorBoardSource[];
 }
 
 const defaultFilters: TaskFilters<CommandType> = {
@@ -150,27 +154,34 @@ const TaskList: React.FC = () => {
       if (record.type !== CommandType.Tensorboard || !record.misc) return record.name;
 
       const info = {
-        label: '',
         path: '',
         plural: '',
-        sources: [] as number[],
+        sources: [] as TensorBoardSource[],
       };
-      if (record.misc?.experimentIds.length !== 0) {
-        info.label = 'Experiment';
-        info.path = '/det/experiments';
-        info.sources = record.misc?.experimentIds;
-      } else if (record.misc?.trialIds.length !== 0) {
-        info.label = 'Trial';
-        info.path = '/det/trials';
-        info.sources = record.misc?.trialIds;
-      }
+      record.misc.experimentIds.forEach(id => {
+        info.sources.push({
+          id,
+          path: `/det/experiments/${id}`,
+          type: TensorBoardSourceType.Experiment,
+        });
+      });
+      record.misc.trialIds.forEach(id => {
+        info.sources.push({
+          id,
+          path: `/det/trials/${id}`,
+          type: TensorBoardSourceType.Trial,
+        });
+      });
       info.plural = info.sources.length > 1 ? 's' : '';
-      info.sources.sort(numericSorter);
+      info.sources.sort((a, b) => {
+        if (a.type !== b.type) return alphanumericSorter(a.type, b.type);
+        return numericSorter(a.id, b.id);
+      });
 
       return <div className={css.sourceName}>
         <span>{record.name}</span>
         <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
-          Show {info.sources.length} {info.label} Source{info.plural}
+          Show {info.sources.length} Source{info.plural}
         </button>
       </div>;
     };
@@ -329,16 +340,15 @@ const TaskList: React.FC = () => {
         style={{ minWidth: '60rem' }}
         title={`
           ${sourcesModal?.sources.length}
-          TensorBoard ${sourcesModal?.label}
-          Source${sourcesModal?.plural}
+          TensorBoard Source${sourcesModal?.plural}
         `}
         visible={!!sourcesModal}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
           <Grid gap={ShirtSize.medium} minItemWidth={12}>
             {sourcesModal?.sources.map(source => <Link
-              key={source}
-              path={`${sourcesModal?.path}/${source}`}>{sourcesModal?.label} {source}</Link>)}
+              key={source.id}
+              path={source.path}>{source.type} {source.id}</Link>)}
           </Grid>
         </div>
       </Modal>
