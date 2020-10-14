@@ -103,6 +103,7 @@ def make_aws_parser(subparsers: argparse._SubParsersAction) -> None:
     aws_subparsers = parser_aws.add_subparsers(help="command", dest="command")
     make_down_subparser(aws_subparsers)
     make_up_subparser(aws_subparsers)
+    aws_subparsers.required = True
 
 
 def deploy_aws(args: argparse.Namespace) -> None:
