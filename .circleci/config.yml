@@ -365,9 +365,6 @@ commands:
       max-dynamic-agents:
         type: integer
         default: 1
-      enable_cors:
-        type: boolean
-        default: false
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -376,7 +373,6 @@ commands:
           det-version: <<parameters.det-version>>
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
-          enable-cors: <<parameters.enable-cors>>
       - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
       - wait-for-master:
@@ -984,6 +980,9 @@ jobs:
       max-dynamic-agents:
         type: integer
         default: 1
+      enable-cors:
+        type: boolean
+        default: false
     docker:
       - image: determinedai/cimg-base:stable
     steps:
@@ -998,6 +997,7 @@ jobs:
           det-version: ${CIRCLE_SHA1}
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          enable-cors: <<parameters.enable-cors>>
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
@@ -1042,7 +1042,6 @@ jobs:
           det-version: ${CIRCLE_SHA1}
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
-          enable_cors: true
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
@@ -1278,6 +1277,7 @@ workflows:
             - package-and-push-system-local
 
       - deploy:
+          enable-cors: true
           context: aws
           filters:
             branches:
