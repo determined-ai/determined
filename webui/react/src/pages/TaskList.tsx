@@ -155,11 +155,11 @@ const TaskList: React.FC = () => {
         plural: '',
         sources: [] as number[],
       };
-      if (record.misc?.experimentIds) {
+      if (record.misc?.experimentIds && record.misc?.experimentIds.length !== 0) {
         info.label = 'Experiment';
         info.path = '/det/experiments';
         info.sources = record.misc.experimentIds || [];
-      } else if (record.misc?.trialIds) {
+      } else if (record.misc?.trialIds && record.misc?.trialIds.length !== 0) {
         info.label = 'Trial';
         info.path = '/det/trials';
         info.sources = record.misc.trialIds || [];
