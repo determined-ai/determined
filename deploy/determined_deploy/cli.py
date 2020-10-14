@@ -17,9 +17,9 @@ def main() -> None:
         description="Manage Determined deployments.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument('--version',
-        action='version',
-        version="%(prog)s {}".format(determined_deploy.__version__))
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s {}".format(determined_deploy.__version__)
+    )
     subparsers = parser.add_subparsers(help="environment", dest="environment")
 
     determined_deploy.local.cli.make_local_parser(subparsers)
