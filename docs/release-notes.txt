@@ -15,9 +15,11 @@ Version 0.13.6
 
 **Improvements**
 
-- Agent: The ``boot_disk_source_image`` field for GCP dynamic agents and ``image_id`` field for AWS dynamic agents are now optional.
+- Agent: The ``boot_disk_source_image`` field for GCP dynamic agents and ``image_id`` field for AWS dynamic agents are now optional. If omitted, the default value is the Determined agent image that matches the Determined master being used.
 
 - Documentation: Ship Swagger UI with Determined documentation.  The ``/swagger-ui`` endpoint has been renamed to ``/docs/rest-api``.
+
+- Documentation: Add a :ref:`guide on configuring TLS <tls>` in Determined.
 
 - Kubernetes: Add support for configuring memory and CPU requirements for the Determined database when installing via the Determined Helm Chart.
 
@@ -35,7 +37,7 @@ Version 0.13.6
 
 - WebUI: Fix the ability to cancel a batch of experiments.
 
-- WebUI: Fix the issue of the Experiment Details page not rendering when the latest validation metric is not available.
+- WebUI: Fix a bug which caused the Experiment Details page to not render when the latest validation metric is not available.
 
 Version 0.13.5
 ==============
