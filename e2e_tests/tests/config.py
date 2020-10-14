@@ -70,13 +70,6 @@ def set_slots_per_trial(config: Dict[Any, Any], slots: int) -> Dict[Any, Any]:
     return config
 
 
-def set_native_parallel(config: Dict[Any, Any], native_parallel: bool) -> Dict[Any, Any]:
-    config = config.copy()
-    config.setdefault("resources", {})
-    config["resources"]["native_parallel"] = native_parallel
-    return config
-
-
 def set_max_length(config: Dict[Any, Any], max_length: Dict[str, int]) -> Dict[Any, Any]:
     config = config.copy()
     config["searcher"]["max_length"] = max_length

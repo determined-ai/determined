@@ -480,7 +480,6 @@ def test_s3_no_creds(secrets: Dict[str, str]) -> None:
 def test_pytorch_parallel() -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_native_parallel(config, False)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tensor_auto_tuning(config, True)
     config = conf.set_perform_initial_validation(config, True)

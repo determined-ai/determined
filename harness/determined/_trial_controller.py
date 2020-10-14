@@ -100,10 +100,6 @@ class TrialController(metaclass=abc.ABCMeta):
         pass
 
     @staticmethod
-    def supports_multi_gpu_training() -> bool:
-        return False
-
-    @staticmethod
     def supports_mixed_precision() -> bool:
         return False
 
@@ -119,13 +115,6 @@ class TrialController(metaclass=abc.ABCMeta):
         return False
 
     def _check_if_trial_supports_configurations(self, env: det.EnvContext) -> None:
-        if self.env.experiment_config.slots_per_trial() > 1:
-            check.true(
-                self.supports_multi_gpu_training(),
-                "Multi-gpu training is not supported for this "
-                "framework interface. Please set slots_per_task = 1.",
-            )
-
         if self.env.experiment_config.mixed_precision_enabled():
             check.true(
                 self.supports_mixed_precision(),

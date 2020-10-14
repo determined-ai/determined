@@ -97,16 +97,6 @@ def test_pytorch_const_warm_start() -> None:
 
 
 @pytest.mark.parallel  # type: ignore
-def test_pytorch_const_native_parallel() -> None:
-    config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_native_parallel(config, True)
-    config = conf.set_max_length(config, {"batches": 200})
-
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
-
-
-@pytest.mark.parallel  # type: ignore
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 @pytest.mark.parametrize("use_amp", [True, False])  # type: ignore
 def test_pytorch_const_parallel(aggregation_frequency: int, use_amp: bool) -> None:
@@ -115,7 +105,6 @@ def test_pytorch_const_parallel(aggregation_frequency: int, use_amp: bool) -> No
 
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_native_parallel(config, False)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     if use_amp:

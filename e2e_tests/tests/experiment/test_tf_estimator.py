@@ -22,15 +22,10 @@ def test_mnist_estimator_load() -> None:
 
 
 @pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("native_parallel", [True, False])  # type: ignore
 @pytest.mark.parametrize("tf2", [False, True])  # type: ignore
-def test_mnist_estimmator_const_parallel(native_parallel: bool, tf2: bool) -> None:
-    if tf2 and native_parallel:
-        pytest.skip("TF2 native parallel training is not currently supported.")
-
+def test_mnist_estimator_const_parallel(tf2: bool) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single-multi-slot.yaml"))
     config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_native_parallel(config, native_parallel)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     config = conf.set_perform_initial_validation(config, True)

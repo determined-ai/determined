@@ -6,22 +6,6 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("tf2", [False])  # type: ignore
-def test_tf_keras_native_parallel(tf2: bool) -> None:
-    config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_native_parallel(config, True)
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("cifar10_tf_keras"), 1
-    )
-    trials = exp.experiment_trials(experiment_id)
-    assert len(trials) == 1
-
-
 @pytest.mark.parametrize(  # type: ignore
     "tf2",
     [
@@ -67,7 +51,6 @@ def test_tf_keras_const_warm_start(tf2: bool) -> None:
 def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_native_parallel(config, False)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
@@ -98,7 +81,6 @@ def test_tf_keras_single_gpu(tf2: bool) -> None:
 def test_tf_keras_mnist_parallel() -> None:
     config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_native_parallel(config, False)
     config = conf.set_max_length(config, {"batches": 200})
 
     experiment_id = exp.run_basic_test_with_temp_config(
