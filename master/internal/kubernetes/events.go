@@ -92,8 +92,8 @@ func (e *eventListener) modMessage(msg *k8sV1.Event) {
 	}
 
 	for k, v := range replacements {
-		matched, error := regexp.MatchString(k, msg.Message)
-		if error != nil {
+		matched, err := regexp.MatchString(k, msg.Message)
+		if err != nil {
 			break
 		} else if matched {
 			if v == gpuTextReplacement {
