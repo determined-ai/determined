@@ -464,10 +464,6 @@ class EstimatorTrialController(det.LoopTrialController):
         )
 
     @staticmethod
-    def supports_multi_gpu_training() -> bool:
-        return True
-
-    @staticmethod
     def support_determined_native() -> bool:
         return True
 

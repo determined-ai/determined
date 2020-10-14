@@ -107,10 +107,6 @@ class PyTorchTrialController(det.LoopTrialController):
         return True
 
     @staticmethod
-    def supports_multi_gpu_training() -> bool:
-        return True
-
-    @staticmethod
     def supports_mixed_precision() -> bool:
         return True
 
