@@ -182,9 +182,10 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 def make_gcp_parser(subparsers: argparse._SubParsersAction) -> None:
     parser_gcp = subparsers.add_parser("gcp", help="gcp help")
-    gcp_subparsers = parser_gcp.add_subparsers(help="command", dest="command", required=True)
+    gcp_subparsers = parser_gcp.add_subparsers(help="command", dest="command")
     make_up_subparser(gcp_subparsers)
     make_down_subparser(gcp_subparsers)
+    gcp_subparsers.required = True
 
 
 def deploy_gcp(args: argparse.Namespace) -> None:
