@@ -28,7 +28,7 @@ rules:
     verbs: ["watch"]
   - apiGroups: [""]
     resources: ["nodes"]
-    verbs: ["list"]
+    verbs: ["list", "watch"]
 
 
 ---
