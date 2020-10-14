@@ -103,10 +103,6 @@ class PyTorchTrialController(det.LoopTrialController):
         raise NotImplementedError("PyTorchTrial only supports the Trial API")
 
     @staticmethod
-    def support_determined_native() -> bool:
-        return True
-
-    @staticmethod
     def supports_mixed_precision() -> bool:
         return True
 

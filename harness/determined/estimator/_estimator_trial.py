@@ -463,10 +463,6 @@ class EstimatorTrialController(det.LoopTrialController):
             **kwargs,
         )
 
-    @staticmethod
-    def support_determined_native() -> bool:
-        return True
-
     def _check_and_repeat_train_input_fn(self, f: Callable) -> Callable:
         """
         Modifies functions that returns a `tf.data.Dataset` to repeat. This is done
