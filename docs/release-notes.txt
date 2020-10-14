@@ -35,7 +35,7 @@ Version 0.13.6
 
 - WebUI: Fix the ability to cancel a batch of experiments.
 
-- WebUI: Fix the ``humanReadableFloat`` bug on the Experiment Details page.
+- WebUI: Fix the issue of the Experiment Details page not rendering when the latest validation metric is not available.
 
 Version 0.13.5
 ==============
