@@ -11,3 +11,7 @@ lint:
   ignore:
     - google
     - protoc-gen-swagger
+
+breaking:
+  use:
+    - FILE
