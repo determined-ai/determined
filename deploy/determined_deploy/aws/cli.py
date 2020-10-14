@@ -100,7 +100,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
 def make_aws_parser(subparsers: argparse._SubParsersAction) -> None:
     parser_aws = subparsers.add_parser("aws", help="AWS help")
 
-    aws_subparsers = parser_aws.add_subparsers(help="command", dest="command")
+    aws_subparsers = parser_aws.add_subparsers(help="command", dest="command", required=True)
     make_down_subparser(aws_subparsers)
     make_up_subparser(aws_subparsers)
 

@@ -23,7 +23,7 @@ def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--local-state-path",
         type=str,
         default=os.getcwd(),
-        help=argparse.SUPPRESS,
+        help="local directory for storing cluster state",
     )
 
 
@@ -92,7 +92,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--local-state-path",
         type=str,
         default=os.getcwd(),
-        help=argparse.SUPPRESS,
+        help="local directory for storing cluster state",
     )
     optional_named.add_argument(
         "--preemptible",
@@ -182,7 +182,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 def make_gcp_parser(subparsers: argparse._SubParsersAction) -> None:
     parser_gcp = subparsers.add_parser("gcp", help="gcp help")
-    gcp_subparsers = parser_gcp.add_subparsers(help="command", dest="command")
+    gcp_subparsers = parser_gcp.add_subparsers(help="command", dest="command", required=True)
     make_up_subparser(gcp_subparsers)
     make_down_subparser(gcp_subparsers)
 
