@@ -8,6 +8,37 @@
  Version 0.13
 **************
 
+Version 0.13.6
+==============
+
+**Release Date:** October 14, 2020
+
+**Improvements**
+
+- Agent: The ``boot_disk_source_image`` field for GCP dynamic agents and ``image_id`` field for AWS dynamic agents are now optional. If omitted, the default value is the Determined agent image that matches the Determined master being used.
+
+- Documentation: Ship Swagger UI with Determined documentation.  The ``/swagger-ui`` endpoint has been renamed to ``/docs/rest-api``.
+
+- Documentation: Add a :ref:`guide on configuring TLS <tls>` in Determined.
+
+- Kubernetes: Add support for configuring memory and CPU requirements for the Determined database when installing via the Determined Helm Chart.
+
+- Kubernetes: Add support for configuring the `storageClass <https://kubernetes.io/docs/concepts/storage/storage-classes/>`__ that is used when deploying a database using the Determined Helm Chart.
+
+**Bug Fixes**
+
+- Harness: Do not require the master to present a full TLS certificate chain when the certificate is signed by a well-known Certificate Authority.
+
+- Harness: Fix a bug which affected ``TFKerasTrial`` using TensorFlow 2 with ``gradient_aggregation`` > 1.
+
+- Master: Fix a bug where the master instance would fail if an experiment could not be read from the database.
+
+- WebUI: Preserve the colors used for multiple metrics on the metric chart.
+
+- WebUI: Fix the ability to cancel a batch of experiments.
+
+- WebUI: Fix a bug which caused the Experiment Details page to not render when the latest validation metric is not available.
+
 Version 0.13.5
 ==============
 
