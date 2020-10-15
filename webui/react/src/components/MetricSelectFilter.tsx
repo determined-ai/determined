@@ -116,13 +116,6 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     setFilterString(searchInput);
   };
 
-  const handleClear = useCallback(() => {
-    setFilterString('');
-    if (multiple) {
-      (onChange as MultipleHandler)([ ]);
-    }
-  }, [ multiple, onChange ]);
-
   const handleBlur = () => {
     setFilterString('');
   };
@@ -160,7 +153,6 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ metricValues, totalNumMetrics ]);
 
   return <SelectFilter
-    allowClear={multiple}
     disableTags
     dropdownMatchSelectWidth={400}
     filterOption={handleFiltering}
@@ -172,7 +164,6 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     style={{ width: 200 }}
     value={metricValues}
     onBlur={handleBlur}
-    onClear={multiple ? handleClear : undefined }
     onDeselect={handleMetricDeselect}
     onSearch={handleSearchInputChange}
     onSelect={handleMetricSelect}>
