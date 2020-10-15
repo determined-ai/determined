@@ -15,15 +15,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-const spotRequestIdPrefix = "sir-"
+const spotRequestIDPrefix = "sir-"
 const launchTimeOffsetGrowth = time.Second * 10
 
 type spotRequest struct {
-	SpotRequestId string
+	SpotRequestID string
 	State         string
 	StatusCode    *string
 	StatusMessage *string
-	InstanceId    *string
+	InstanceID    *string
 	CreationTime  time.Time
 }
 
@@ -100,7 +100,7 @@ type spotState struct {
 
 // listSpot lists all unfulfilled and fulfilled spot requests. If the spot request has been
 // fulfilled an actual EC2 instance will be returned as an Instance. If the request has not
-// been fulfilled, a fake Instance will be returned where the InstanceId is the SpotRequestId
+// been fulfilled, a fake Instance will be returned where the InstanceID is the SpotRequestID
 // and the state is SpotRequestPendingAWS.
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	activeReqsInAPI, err := c.listActiveSpotInstanceRequests(ctx, false)
@@ -119,7 +119,7 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	missingReqs := c.spot.trackedReqs.copy()
 	missingReqs.deleteIntersection(*activeReqsInAPI)
 
-	newOrInactiveReqs, err := c.listSpotRequestsById(ctx, missingReqs.idsAsListOfPointers(), false)
+	newOrInactiveReqs, err := c.listSpotRequestsByID(ctx, missingReqs.idsAsListOfPointers(), false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
 	}
@@ -191,12 +191,12 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 	instancesToTerminate := newSetOfStrings()
 	pendingSpotReqsToTerminate := newSetOfStrings()
 
-	for _, instanceId := range instanceIDs {
-		if strings.HasPrefix(*instanceId, spotRequestIdPrefix) {
-			spotRequestId := instanceId
-			pendingSpotReqsToTerminate.add(*spotRequestId)
+	for _, instanceID := range instanceIDs {
+		if strings.HasPrefix(*instanceID, spotRequestIDPrefix) {
+			spotRequestID := instanceID
+			pendingSpotReqsToTerminate.add(*spotRequestID)
 		} else {
-			instancesToTerminate.add(*instanceId)
+			instancesToTerminate.add(*instanceID)
 		}
 	}
 
@@ -270,12 +270,12 @@ func (c *awsCluster) launchSpot(
 	// and if we don't track it internally, we will end up overprovisioning.
 	for _, request := range resp.SpotInstanceRequests {
 		c.spot.trackedReqs.add(&spotRequest{
-			SpotRequestId: *request.SpotInstanceRequestId,
+			SpotRequestID: *request.SpotInstanceRequestId,
 			State:         *request.State,
 			StatusCode:    request.Status.Code,
 			StatusMessage: request.Status.Message,
 			CreationTime:  *request.CreateTime,
-			InstanceId:    nil,
+			InstanceID:    nil,
 		})
 
 		ctx.Log().
@@ -346,19 +346,19 @@ func (c *awsCluster) buildInstanceListFromTrackedRequestMap(ctx *actor.Context) 
 	pendingSpotRequestsAsInstances := make([]*Instance, 0)
 
 	for _, activeRequest := range c.spot.trackedReqs.iter() {
-		if activeRequest.InstanceId != nil {
-			runningSpotInstanceIds.add(*activeRequest.InstanceId)
+		if activeRequest.InstanceID != nil {
+			runningSpotInstanceIds.add(*activeRequest.InstanceID)
 		} else {
 			pendingSpotRequestsAsInstances = append(pendingSpotRequestsAsInstances, &Instance{
-				ID:         activeRequest.SpotRequestId,
+				ID:         activeRequest.SpotRequestID,
 				LaunchTime: activeRequest.CreationTime,
-				AgentName:  activeRequest.SpotRequestId,
+				AgentName:  activeRequest.SpotRequestID,
 				State:      SpotRequestPendingAWS,
 			})
 		}
 	}
 
-	instancesToReturn, err := c.describeInstancesById(runningSpotInstanceIds.asListOfPointers(), false)
+	instancesToReturn, err := c.describeInstancesByID(runningSpotInstanceIds.asListOfPointers(), false)
 	if err != nil {
 		return []*Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
 	}
@@ -552,11 +552,11 @@ func (c *awsCluster) listCanceledButInstanceRunningSpotInstanceRequests(
 	ret := newSetOfSpotRequests()
 	for _, req := range response.SpotInstanceRequests {
 		ret.add(&spotRequest{
-			SpotRequestId: *req.SpotInstanceRequestId,
+			SpotRequestID: *req.SpotInstanceRequestId,
 			State:         *req.State,
 			StatusCode:    req.Status.Code,
 			StatusMessage: req.Status.Message,
-			InstanceId:    req.InstanceId,
+			InstanceID:    req.InstanceId,
 			CreationTime:  *req.CreateTime,
 		})
 	}
@@ -599,11 +599,11 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 	ret := newSetOfSpotRequests()
 	for _, req := range response.SpotInstanceRequests {
 		ret.add(&spotRequest{
-			SpotRequestId: *req.SpotInstanceRequestId,
+			SpotRequestID: *req.SpotInstanceRequestId,
 			State:         *req.State,
 			StatusCode:    req.Status.Code,
 			StatusMessage: req.Status.Message,
-			InstanceId:    req.InstanceId,
+			InstanceID:    req.InstanceId,
 			CreationTime:  *req.CreateTime,
 		})
 	}
@@ -615,13 +615,13 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 // of the SpotInstanceRequestIds param= because the spotRequestIds in the input may not
 // yet exist in the AWS API (due to eventual consistency) and we don't want the API call
 // to fail - we want it to return successfully, just excluding those requests.
-func (c *awsCluster) listSpotRequestsById(
+func (c *awsCluster) listSpotRequestsByID(
 	ctx *actor.Context,
 	spotRequestIds []*string,
 	dryRun bool,
 ) (*setOfSpotRequests, error) {
 	if dryRun {
-		ctx.Log().Debug("dry run of listSpotRequestsById.")
+		ctx.Log().Debug("dry run of listSpotRequestsByID.")
 	}
 
 	if len(spotRequestIds) == 0 {
@@ -653,11 +653,11 @@ func (c *awsCluster) listSpotRequestsById(
 	ret := newSetOfSpotRequests()
 	for _, req := range response.SpotInstanceRequests {
 		ret.add(&spotRequest{
-			SpotRequestId: *req.SpotInstanceRequestId,
+			SpotRequestID: *req.SpotInstanceRequestId,
 			State:         *req.State,
 			StatusCode:    req.Status.Code,
 			StatusMessage: req.Status.Message,
-			InstanceId:    req.InstanceId,
+			InstanceID:    req.InstanceId,
 			CreationTime:  *req.CreateTime,
 		})
 	}

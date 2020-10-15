@@ -160,22 +160,21 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 	// We start by terminating unfulfilled spot requests. Then idle instances. Then the
 	// most recently provisioned instances
 	numExceeds := len(s.instanceSnapshot) - s.maxInstanceNum
-	for instId, inst := range s.instanceSnapshot {
+	for instID, inst := range s.instanceSnapshot {
 		if len(toTerminate) >= numExceeds {
 			break
 		}
 		if inst.State == SpotRequestPendingAWS {
-			toTerminate[instId] = sproto.InstanceNumberExceedsMaximum
+			toTerminate[instID] = sproto.InstanceNumberExceedsMaximum
 		}
-
 	}
 
-	for instId := range s.pastIdleInstances {
+	for instID := range s.pastIdleInstances {
 		if len(toTerminate) >= numExceeds {
 			break
 		}
-		delete(s.pastIdleInstances, instId)
-		toTerminate[instId] = sproto.InstanceNumberExceedsMaximum
+		delete(s.pastIdleInstances, instID)
+		toTerminate[instID] = sproto.InstanceNumberExceedsMaximum
 	}
 	instances := make([]*Instance, 0)
 	for _, inst := range s.instanceSnapshot {

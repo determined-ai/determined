@@ -14,18 +14,18 @@ type setOfSpotRequests struct {
 
 // add spotRequest to the set
 func (c *setOfSpotRequests) add(s *spotRequest) *setOfSpotRequests {
-	c.keyMap[s.SpotRequestId] = s
+	c.keyMap[s.SpotRequestID] = s
 	return c
 }
 
 // delete spotRequest from the set
 func (c *setOfSpotRequests) delete(s *spotRequest) *setOfSpotRequests {
-	delete(c.keyMap, s.SpotRequestId)
+	delete(c.keyMap, s.SpotRequestID)
 	return c
 }
 
-// deleteById deletes spotRequest with the given id from the set
-func (c *setOfSpotRequests) deleteById(s string) *setOfSpotRequests {
+// deleteByID deletes spotRequest with the given id from the set
+func (c *setOfSpotRequests) deleteByID(s string) *setOfSpotRequests {
 	delete(c.keyMap, s)
 	return c
 }
@@ -40,12 +40,12 @@ func (c *setOfSpotRequests) deleteIntersection(set2 setOfSpotRequests) *setOfSpo
 
 // contains checks if this spotRequest is in the set
 func (c *setOfSpotRequests) contains(s *spotRequest) bool {
-	_, ok := c.keyMap[s.SpotRequestId]
+	_, ok := c.keyMap[s.SpotRequestID]
 	return ok
 }
 
-// containsId checks if a spotRequest with this id is in the set
-func (c *setOfSpotRequests) containsId(s string) bool {
+// containsID checks if a spotRequest with this id is in the set
+func (c *setOfSpotRequests) containsID(s string) bool {
 	_, ok := c.keyMap[s]
 	return ok
 }
@@ -81,8 +81,8 @@ func (c *setOfSpotRequests) asListInChronologicalOrder() []*spotRequest {
 // idsAsList returns the spotRequest ids as a slice of strings
 func (c *setOfSpotRequests) idsAsList() []string {
 	list := make([]string, 0, len(c.keyMap))
-	for reqId := range c.keyMap {
-		list = append(list, reqId)
+	for reqID := range c.keyMap {
+		list = append(list, reqID)
 	}
 	return list
 }
@@ -90,9 +90,9 @@ func (c *setOfSpotRequests) idsAsList() []string {
 // idsAsListOfPointers returns the spotRequest ids as a slice of string pointers
 func (c *setOfSpotRequests) idsAsListOfPointers() []*string {
 	list := make([]*string, 0, len(c.keyMap))
-	for reqId := range c.keyMap {
+	for reqID := range c.keyMap {
 		b := strings.Builder{}
-		b.WriteString(reqId)
+		b.WriteString(reqID)
 		k := b.String()
 		list = append(list, &k)
 	}

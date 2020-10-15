@@ -190,9 +190,8 @@ func (c *awsCluster) prestart(ctx *actor.Context) {
 func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	if c.SpotInstanceEnabled {
 		return c.listSpot(ctx)
-	} else {
-		return c.listOnDemand(ctx)
 	}
+	return c.listOnDemand(ctx)
 }
 
 func (c *awsCluster) launch(
@@ -340,7 +339,10 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 	return instances, nil
 }
 
-func (c *awsCluster) describeInstancesById(instanceIds []*string, dryRun bool) ([]*ec2.Instance, error) {
+func (c *awsCluster) describeInstancesByID(
+	instanceIds []*string,
+	dryRun bool,
+) ([]*ec2.Instance, error) {
 
 	if len(instanceIds) == 0 {
 		return make([]*ec2.Instance, 0), nil
