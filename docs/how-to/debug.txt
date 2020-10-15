@@ -1,0 +1,104 @@
+.. _debug:
+
+###############################
+ Model Debugging in Determined
+###############################
+
+Deep Learning is hard.  Some problems can seem intractable.  Maybe you remember
+the first time you saw a 200-line TensorFlow stack trace (I remember mine!).
+
+We feel your pain.
+
+This document aims to provide useful guidelines for debugging models with
+Determined.
+
+This document focuses on model debugging, not cluster debugging, so it is
+assumed that you have already successfully :ref:`installed
+Determined<install-cluster>`.
+
+********************************************
+ Training An Existing Model with Determined
+********************************************
+
+You have: a working model and training script (outside Determined).
+
+Your goal: train your model on a Determined cluster.
+
+You've read through the relevant :ref:`tutorials` and you've got something that
+maybe looks like it should work... but it's just not working.  Let's break down
+the problem into a few parts:
+
+ * Getting your Trial class started
+
+ * Testing individual parts of your Trial class
+
+ * Testing the whole Trial class as a unit, locally
+
+ * Running on a Determined cluster
+
+Answer: break down the problem into its individual parts
+
+At a high level, successful model training on a Determined cluster requires the
+following details:
+
+* A working Docker image for the cluster to train your model in.
+* A working Trial implementation of your model.
+
+We will verify each issue one at a time.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Verifying your Docker environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+Model training with Determined requires the following 4 components:
+
+#. A working Docker image
+#. A working Trial implementation
+#. A working Trial
+
+
+
+
+
+Determined launches workloads using Docker containers. The container
+configuration is referred to as the **environment**.
+
+There are three methods to customize the environment that workloads
+execute in:
+
+#. Environment variables
+#. Specifying a startup hook (``startup-hook.sh``)
+#. Using a custom Docker image
+
+.. _environment-variables:
+
+***********************
+ Environment Variables
+***********************
+
+For both trial runners and commands, Determined allows users to
+configure the environment variables inside the container through the
+``environment.environment_variables`` configuration field of the
+experiment config. The format is a list of strings in the format
+``NAME=VALUE``:
+
+.. code:: yaml
+
+   environment:
+     environment_variables:
+       - A=hello world
+       - B=$A
+       - C=${B}
+       # `A`, `B`, and `C` will each have the value `hello_world` in the container.
+
+Variables are set sequentially, which affect variables that depend on
+the expansion of other variables.
+
+Proxy variables set in this way will take precedent over those set using
+the :ref:`agent configuration <agent-configuration>`.
