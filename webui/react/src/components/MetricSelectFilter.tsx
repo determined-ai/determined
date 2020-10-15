@@ -110,7 +110,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     const metricName = metricNameFromValue(option.value);
     if (metricName === undefined) {
       // Handle metric values that don't start with 'training|' or 'validation|'. This
-      // shouldn't happen and metricNameFromValue logs an error to console if it does.
+      // shouldn't ever happen and metricNameFromValue logs an error if it does.
       return false;
     }
     return filterFn(search, metricName.name);
@@ -174,7 +174,7 @@ const MetricSelectFilter: React.FC<Props> = ({
 
     { multiple && visibleMetrics.length > 0 &&
     <Option key={resetOptionId} value={resetOptionId}>
-      <BadgeTag label='Reset To Default Metric' />
+      <BadgeTag label='Reset To Defaults' />
     </Option>}
 
     { multiple && visibleMetrics.length > 1 && allOption}
