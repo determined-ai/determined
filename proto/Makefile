@@ -43,7 +43,7 @@ build/swagger:
 	mkdir -p build/swagger
 
 $(swagger_out): $(swagger_in) build/swagger
-	protoc -I src $< --swagger_out=logtostderr=true:build/swagger
+	protoc -I src $< --swagger_out=logtostderr=true,json_names_for_fields=true:build/swagger
 	python3 scripts/swagger.py $@ $(swagger_patch)
 
 .PHONY: check
