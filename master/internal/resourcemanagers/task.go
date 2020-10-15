@@ -25,6 +25,11 @@ type (
 	GetTaskSummary struct{ ID *TaskID }
 	// GetTaskSummaries returns the summaries of all the tasks in the cluster.
 	GetTaskSummaries struct{}
+	// SetTaskName sets the name of the task.
+	SetTaskName struct {
+		Name        string
+		TaskHandler *actor.Ref
+	}
 )
 
 // Incoming task actor messages; task actors must accept these messages.

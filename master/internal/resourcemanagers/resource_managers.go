@@ -55,7 +55,7 @@ func (rm *ResourceManagers) Receive(ctx *actor.Context) error {
 	case
 		AllocateRequest, ResourcesReleased,
 		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
-		GetTaskSummary, GetTaskSummaries,
+		GetTaskSummary, GetTaskSummaries, SetTaskName,
 		sproto.ConfigureEndpoints, sproto.GetEndpointActorAddress:
 		rm.forward(ctx, msg)
 
