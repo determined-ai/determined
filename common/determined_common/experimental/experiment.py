@@ -17,17 +17,18 @@ class Experiment:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, experiment_id, experiment_data=None):
+    def __init__(self, api_client, experiment_id, experiment_data=None):
         self.id = experiment_id
         self.experiment_data = {}
+        self.api_client = api_client
 
     @classmethod
-    def create_experiment(cls, session, config, context_dir, local=False, test=False, master=""):
+    def create_experiment(cls, api_client, config, context_dir, local=False, test=False, master=""):
         print("Creating Experiment")
         # experiment = api.create_experiment()
         experiment_id = 1  # really should be experiment.id
         print(f"Created Experiment {experiment_id}")
-        return cls(experiment_id)
+        return cls(api_client, experiment_id)
 
     @classmethod
     def get_experiment(cls, api_client, experiment_id):
@@ -35,7 +36,7 @@ class Experiment:
         experiment_id = 1
         experiment_data = {}
 
-        return cls(experiment_id, experiment_data)
+        return cls(experiment_id, api_client, experiment_data)
 
     @property
     def status(self) -> str:
