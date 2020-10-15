@@ -255,7 +255,7 @@ const TaskList: React.FC = () => {
     Modal.confirm({
       content: `
         Are you sure you want to kill
-        all the eligible selected experiments?
+        all the eligible selected tasks?
       `,
       icon: <ExclamationCircleOutlined />,
       okText: 'Kill',
