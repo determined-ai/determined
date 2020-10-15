@@ -343,7 +343,6 @@ func (c *awsCluster) describeInstancesByID(
 	instanceIds []*string,
 	dryRun bool,
 ) ([]*ec2.Instance, error) {
-
 	if len(instanceIds) == 0 {
 		return make([]*ec2.Instance, 0), nil
 	}

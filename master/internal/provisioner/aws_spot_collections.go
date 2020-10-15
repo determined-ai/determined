@@ -33,19 +33,19 @@ func (c *setOfSpotRequests) deleteByID(s string) *setOfSpotRequests {
 // deleteIntersection delete any items that exist in both set and set2 from set.
 func (c *setOfSpotRequests) deleteIntersection(set2 setOfSpotRequests) *setOfSpotRequests {
 	for _, req := range set2.iter() {
-		c.delete(req)
+		c.deleteByID(req.SpotRequestID)
 	}
 	return c
 }
 
 // contains checks if this spotRequest is in the set
-func (c *setOfSpotRequests) contains(s *spotRequest) bool {
+func (c *setOfSpotRequests) contains(s *spotRequest) bool { //nolint:unused
 	_, ok := c.keyMap[s.SpotRequestID]
 	return ok
 }
 
 // containsID checks if a spotRequest with this id is in the set
-func (c *setOfSpotRequests) containsID(s string) bool {
+func (c *setOfSpotRequests) containsID(s string) bool { //nolint:unused
 	_, ok := c.keyMap[s]
 	return ok
 }
@@ -112,7 +112,7 @@ func (c *setOfSpotRequests) numReqs() int {
 }
 
 // string returns a string representation of the set, which is the list of ids separated by commas
-func (c *setOfSpotRequests) string() string {
+func (c *setOfSpotRequests) string() string { //nolint:unused
 	l := c.idsAsList()
 	return strings.Join(l, ",")
 }
@@ -136,13 +136,8 @@ func (c *setOfStrings) add(s string) {
 	c.keyMap[s] = true
 }
 
-// delete a string from the set
-func (c *setOfStrings) delete(s string) {
-	delete(c.keyMap, s)
-}
-
 // contains checks if a string exists in the set
-func (c *setOfStrings) contains(s string) bool {
+func (c *setOfStrings) contains(s string) bool { //nolint:unused
 	_, ok := c.keyMap[s]
 	return ok
 }
