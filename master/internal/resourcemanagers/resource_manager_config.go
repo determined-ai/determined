@@ -15,7 +15,7 @@ import (
 func ResolveConfig(
 	schedulerConf *Config,
 	provisionerConf *provisioner.Config,
-	resourceMangerConf *ResourceManagerConfig,
+	resourceManagerConf *ResourceManagerConfig,
 	resourcePoolsConf *ResourcePoolsConfig,
 ) (*ResourceManagerConfig, *ResourcePoolsConfig, error) {
 	switch {
@@ -30,47 +30,43 @@ func ResolveConfig(
 	}
 
 	switch {
-	case schedulerConf == nil && resourceMangerConf == nil:
-		resourceMangerConf = DefaultRMConfig()
+	case schedulerConf == nil && resourceManagerConf == nil:
+		resourceManagerConf = DefaultRMConfig()
+		resourceManagerConf.AgentRM.DefaultCPUResourcePool = "default"
+		resourceManagerConf.AgentRM.DefaultGPUResourcePool = "default"
 
-	case schedulerConf != nil && resourceMangerConf == nil:
+	case schedulerConf != nil && resourceManagerConf == nil:
 		switch {
 		case schedulerConf.ResourceProvider == nil ||
 			schedulerConf.ResourceProvider.DefaultRPConfig != nil:
-			resourceMangerConf = &ResourceManagerConfig{
+			resourceManagerConf = &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
-					SchedulingPolicy: schedulerConf.Type,
-					FittingPolicy:    schedulerConf.Fit,
+					SchedulingPolicy:       schedulerConf.Type,
+					FittingPolicy:          schedulerConf.Fit,
+					DefaultCPUResourcePool: "default",
+					DefaultGPUResourcePool: "default",
 				},
 			}
 		case schedulerConf.ResourceProvider.KubernetesRPConfig != nil:
-			resourceMangerConf = &ResourceManagerConfig{
+			resourceManagerConf = &ResourceManagerConfig{
 				KubernetesRM: schedulerConf.ResourceProvider.KubernetesRPConfig,
 			}
 		}
 
-	case schedulerConf != nil && resourceMangerConf != nil:
+	case schedulerConf != nil && resourceManagerConf != nil:
 		return nil, nil, errors.New(
 			"cannot specify both the scheduler and resource_manager fields")
 	}
 
-	if resourceMangerConf != nil && resourceMangerConf.AgentRM != nil {
-		if resourceMangerConf.AgentRM.SchedulingPolicy == "" {
-			resourceMangerConf.AgentRM.SchedulingPolicy = DefaultRMConfig().AgentRM.SchedulingPolicy
+	if resourceManagerConf != nil && resourceManagerConf.AgentRM != nil {
+		if resourceManagerConf.AgentRM.SchedulingPolicy == "" {
+			resourceManagerConf.AgentRM.SchedulingPolicy = DefaultRMConfig().AgentRM.SchedulingPolicy
 		}
-		if resourceMangerConf.AgentRM.FittingPolicy == "" {
-			resourceMangerConf.AgentRM.FittingPolicy = DefaultRMConfig().AgentRM.FittingPolicy
-	if resourceMangerConf != nil && resourceMangerConf.AgentRM != nil && resourcePoolsConf != nil {
-		if len(resourceMangerConf.AgentRM.DefaultCPUResourcePool) == 0 {
-			resourceMangerConf.AgentRM.DefaultCPUResourcePool =
-				resourcePoolsConf.ResourcePools[0].PoolName
-		}
-		if len(resourceMangerConf.AgentRM.DefaultGPUResourcePool) == 0 {
-			resourceMangerConf.AgentRM.DefaultGPUResourcePool =
-				resourcePoolsConf.ResourcePools[0].PoolName
+		if resourceManagerConf.AgentRM.FittingPolicy == "" {
+			resourceManagerConf.AgentRM.FittingPolicy = DefaultRMConfig().AgentRM.FittingPolicy
 		}
 	}
-	return resourceMangerConf, resourcePoolsConf, nil
+	return resourceManagerConf, resourcePoolsConf, nil
 }
 
 // DefaultRMConfig returns the default resource manager configuration.
