@@ -24,19 +24,14 @@ build: build-examples build-helm
 	cp -r ./swagger-ui site/html/rest-api
 	cp ../proto/build/swagger/determined/api/v1/api.swagger.json  site/html/rest-api/
 
-.PHONY: set-static-swagger
-set-static-swagger:
-	rm $(swagger_main_script)
-	cp ./swagger-ui/swagger-ui-main-deploy.js $s(swagger_main_script)
-
 .PHONY: clean
 clean:
 	rm -rf site
 
 .PHONY: publish
-publish: clean
-	$(MAKE) build
-	$(MAKE) set-static-swagger
+publish:
+	rm $(swagger_main_script)
+	cp ./swagger-ui/swagger-ui-main-deploy.js $(swagger_main_script)
 	$(MAKE) -C deploy publish
 
 live:
