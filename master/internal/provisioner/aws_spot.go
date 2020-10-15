@@ -303,7 +303,6 @@ func (c *awsCluster) launchSpot(
 	}
 }
 
-
 func (c *awsCluster) setTagsOnInstances(ctx *actor.Context, activeReqs *setOfSpotRequests) error {
 	instanceIDs := activeReqs.instanceIds()
 	if len(instanceIDs) == 0 {
@@ -311,21 +310,21 @@ func (c *awsCluster) setTagsOnInstances(ctx *actor.Context, activeReqs *setOfSpo
 	}
 
 	input := &ec2.CreateTagsInput{
-	   Resources: instanceIDs,
-	   Tags: []*ec2.Tag{
-		   {
-			   Key:   aws.String("Name"),
-			   Value: aws.String(c.InstanceName),
-		   },
-		   {
-			   Key:   aws.String(c.TagKey),
-			   Value: aws.String(c.TagValue),
-		   },
-		   {
-			   Key:   aws.String("determined-master-address"),
-			   Value: aws.String(c.masterURL.String()),
-		   },
-	   },
+		Resources: instanceIDs,
+		Tags: []*ec2.Tag{
+			{
+				Key:   aws.String("Name"),
+				Value: aws.String(c.InstanceName),
+			},
+			{
+				Key:   aws.String(c.TagKey),
+				Value: aws.String(c.TagValue),
+			},
+			{
+				Key:   aws.String("determined-master-address"),
+				Value: aws.String(c.masterURL.String()),
+			},
+		},
 	}
 	_, err := c.client.CreateTags(input)
 	return err
