@@ -107,6 +107,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
+  const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
@@ -292,11 +293,11 @@ If the problem persists please contact support.',
     if (!experimentId) return;
     const updatedConfig = updateStatesFromForm();
     try {
-      const newExperiementId = await forkExperiment({
+      const newExperimentId = await forkExperiment({
         experimentConfig: JSON.stringify(updatedConfig),
         parentId: experimentId,
       });
-      routeAll(`/det/experiments/${newExperiementId}`);
+      routeAll(`/det/experiments/${newExperimentId}`);
     } catch (e) {
       handleError({
         error: e,
@@ -390,6 +391,7 @@ If the problem persists please contact support.',
           return metricName.name === searcherName && metricName.type === MetricType.Validation;
         });
         const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
+        setDefaultMetrics(defaultMetrics);
         const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
         setMetrics(initMetrics);
       } catch (e) {
@@ -428,6 +430,7 @@ If the problem persists please contact support.',
         {Object.values(TrialInfoFilter).map(key => <Option key={key} value={key}>{key}</Option>)}
       </SelectFilter>
       {metrics && <MetricSelectFilter
+        defaultMetricNames={defaultMetrics}
         metricNames={metricNames}
         multiple
         value={metrics}
@@ -460,6 +463,7 @@ If the problem persists please contact support.',
         </Col>
         <Col lg={14} span={24} xl={16} xxl={18}>
           <TrialChart
+            defaultMetricNames={defaultMetrics}
             metricNames={metricNames}
             steps={trial?.steps}
             storageKey={storageChartMetricsKey}

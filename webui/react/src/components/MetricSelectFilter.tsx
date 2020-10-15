@@ -11,18 +11,20 @@ import SelectFilter from './SelectFilter';
 
 const { OptGroup, Option } = Select;
 const allOptionId = 'ALL_RESULTS';
+const resetOptionId = 'RESET_RESULTS';
 
 type SingleHandler = (value: MetricName) => void;
 type MultipleHandler = (value: MetricName[]) => void;
 
 interface Props {
   metricNames: MetricName[];
+  defaultMetricNames: MetricName[];
   multiple?: boolean;
   onChange?: SingleHandler | MultipleHandler;
   value?: MetricName | MetricName[];
 }
 
-const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, value }: Props) => {
+const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, value, defaultMetricNames }: Props) => {
   const [ filterString, setFilterString ] = useState('');
 
   const metricValues = useMemo(() => {
@@ -63,6 +65,11 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       setFilterString('');
       return;
     }
+    if ((newValue as string) === resetOptionId) {
+      (onChange as MultipleHandler)(defaultMetricNames.sort(metricNameSorter));
+      setFilterString('');
+      return;
+    }
 
     const metricName = valueToMetricName(newValue as string);
     if (!metricName) return;
@@ -75,7 +82,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       (onChange as SingleHandler)(metricName);
     }
     setFilterString('');
-  }, [ multiple, onChange, value, visibleMetrics ]);
+  }, [ multiple, onChange, value, visibleMetrics, defaultMetricNames ]);
 
   const handleMetricDeselect = useCallback((newValue: SelectValue) => {
     if (!onChange || !multiple) return;
@@ -88,7 +95,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   }, [ multiple, onChange, value ]);
 
   const handleFiltering = useCallback((search: string, option) => {
-    if (option.key === allOptionId) {
+    if (option.key === allOptionId || option.key === resetOptionId) {
       return true;
     }
     if (!option.value) {
@@ -169,6 +176,11 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     onDeselect={handleMetricDeselect}
     onSearch={handleSearchInputChange}
     onSelect={handleMetricSelect}>
+
+    { multiple && visibleMetrics.length > 0 &&
+    <Option key={resetOptionId} value={resetOptionId}>
+      <BadgeTag label='Reset To Default Metric' />
+    </Option>}
 
     { multiple && visibleMetrics.length > 1 && allOption}
 
