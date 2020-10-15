@@ -47,7 +47,7 @@ type shellManager struct {
 
 // ShellLaunchRequest describes a request to launch a new shell.
 type ShellLaunchRequest struct {
-	commandParams *commandParams
+	commandParams *CommandParams
 	User          *model.User
 }
 
@@ -124,7 +124,7 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		var params commandParams
+		var params CommandParams
 		if err := apiCtx.Bind(&params); err != nil {
 			respondBadRequest(ctx, err)
 			return
