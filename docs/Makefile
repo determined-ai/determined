@@ -13,8 +13,12 @@ build-examples:
 build-helm:
 	make -C ../helm build
 
+.PHONY: build-proto
+build-helm:
+	make -C ../proto build
+
 .PHONY: build
-build: build-examples build-helm
+build: build-examples build-helm build-proto
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
 	mkdir -p site/downloads/helm
