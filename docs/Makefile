@@ -6,16 +6,16 @@ SPHINXBUILD   = sphinx-build
 
 .PHONY: build-examples
 build-examples:
-	make -C ../examples build
+	$(MAKE) -C ../examples build
 
 
 .PHONY: build-helm
 build-helm:
-	make -C ../helm build
+	$(MAKE) -C ../helm build
 
 .PHONY: build-proto
 build-helm:
-	make -C ../proto build
+	$(MAKE) -C ../proto build
 
 .PHONY: build
 build: build-examples build-helm build-proto
