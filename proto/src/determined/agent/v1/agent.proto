@@ -8,30 +8,29 @@ import "google/protobuf/timestamp.proto";
 import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
-
 // Agent is a pool of resources where containers are run.
 message Agent {
-    // The unique id of the agent.
-    string id = 1;
-    // The time when the agent registered with the master.
-    google.protobuf.Timestamp registered_time = 2;
-    // A map of slot id to each slot of this agent.
-    map<string, Slot> slots = 3;
-    // A map of container id to all containers assigned to this agent.
-    map<string, determined.container.v1.Container> containers = 4;
-    // An optional label applied to the agent for scheduling restrictions.
-    string label = 5;
+  // The unique id of the agent.
+  string id = 1;
+  // The time when the agent registered with the master.
+  google.protobuf.Timestamp registered_time = 2;
+  // A map of slot id to each slot of this agent.
+  map<string, Slot> slots = 3;
+  // A map of container id to all containers assigned to this agent.
+  map<string, determined.container.v1.Container> containers = 4;
+  // An optional label applied to the agent for scheduling restrictions.
+  string label = 5;
 }
 
 // Slot wraps a single device on the agent.
 message Slot {
-    // The unqiue id of the slot for a given agent.
-    string id = 1;
-    // The individual resource this slot wraps.
-    determined.device.v1.Device device = 2;
-    // Flag notifying if containers can be scheduled on this slot.
-    bool enabled = 3;
-    // Container that is currently running on this agent. It is unset if there is
-    // no container currently running on this slot.
-    determined.container.v1.Container container = 4;
+  // The unqiue id of the slot for a given agent.
+  string id = 1;
+  // The individual resource this slot wraps.
+  determined.device.v1.Device device = 2;
+  // Flag notifying if containers can be scheduled on this slot.
+  bool enabled = 3;
+  // Container that is currently running on this agent. It is unset if there is
+  // no container currently running on this slot.
+  determined.container.v1.Container container = 4;
 }

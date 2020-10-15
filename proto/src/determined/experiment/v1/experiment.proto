@@ -8,69 +8,78 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // The current state of the experiment.
 enum State {
-    // The state of the experiment is unknown.
-    STATE_UNSPECIFIED = 0;
-    // The experiment is in an active state.
-    STATE_ACTIVE = 1;
-    // The experiment is in a paused state
-    STATE_PAUSED = 2;
-    // The experiment is completed and is shutting down.
-    STATE_STOPPING_COMPLETED = 3;
-    // The experiment is canceled and is shutting down.
-    STATE_STOPPING_CANCELED = 4;
-    // The experiment is errored and is shutting down.
-    STATE_STOPPING_ERROR = 5;
-    // The experiment is completed and is shut down.
-    STATE_COMPLETED = 6;
-    // The experiment is canceled and is shut down.
-    STATE_CANCELED = 7;
-    // The experiment is errored and is shut down.
-    STATE_ERROR = 8;
-    // The experiment has been deleted.
-    STATE_DELETED = 9;
+  // The state of the experiment is unknown.
+  STATE_UNSPECIFIED = 0;
+  // The experiment is in an active state.
+  STATE_ACTIVE = 1;
+  // The experiment is in a paused state
+  STATE_PAUSED = 2;
+  // The experiment is completed and is shutting down.
+  STATE_STOPPING_COMPLETED = 3;
+  // The experiment is canceled and is shutting down.
+  STATE_STOPPING_CANCELED = 4;
+  // The experiment is errored and is shutting down.
+  STATE_STOPPING_ERROR = 5;
+  // The experiment is completed and is shut down.
+  STATE_COMPLETED = 6;
+  // The experiment is canceled and is shut down.
+  STATE_CANCELED = 7;
+  // The experiment is errored and is shut down.
+  STATE_ERROR = 8;
+  // The experiment has been deleted.
+  STATE_DELETED = 9;
 }
 
-// Experiment is a collection of one or more trials that are exploring a user-defined
-// hyperparameter space.
+// Experiment is a collection of one or more trials that are exploring a
+// user-defined hyperparameter space.
 message Experiment {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {
-            required: ["id", "description", "start_time", "end_time", "state", "archived", "num_trials", "username"]
-        }
-    };
-    // The id of the experiment.
-    int32 id = 1;
-    // The description of the experiment.
-    string description = 2;
-    // Labels attached to the experiment.
-    repeated string labels = 3;
-    // The time the experiment was started.
-    google.protobuf.Timestamp start_time = 4;
-    // The time the experiment ended if the experiment is stopped.
-    google.protobuf.Timestamp end_time = 5;
-    // The current state of the experiment.
-    State state = 6;
-    // Boolean denoting whether the experiment was archived.
-    bool archived = 7;
-    // The number of trials linked to the experiment.
-    int32 num_trials = 8;
-    // The current progress of the experiment.
-    double progress = 9;
-    // The username of the user that created the experiment.
-    string username = 10;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "id",
+        "description",
+        "start_time",
+        "end_time",
+        "state",
+        "archived",
+        "num_trials",
+        "username"
+      ]
+    }
+  };
+  // The id of the experiment.
+  int32 id = 1;
+  // The description of the experiment.
+  string description = 2;
+  // Labels attached to the experiment.
+  repeated string labels = 3;
+  // The time the experiment was started.
+  google.protobuf.Timestamp start_time = 4;
+  // The time the experiment ended if the experiment is stopped.
+  google.protobuf.Timestamp end_time = 5;
+  // The current state of the experiment.
+  State state = 6;
+  // Boolean denoting whether the experiment was archived.
+  bool archived = 7;
+  // The number of trials linked to the experiment.
+  int32 num_trials = 8;
+  // The current progress of the experiment.
+  double progress = 9;
+  // The username of the user that created the experiment.
+  string username = 10;
 }
 
-// ValidationHistoryEntry is a single entry for a validation history for an experiment.
+// ValidationHistoryEntry is a single entry for a validation history for an
+// experiment.
 message ValidationHistoryEntry {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {
-            required: ["trial_id", "end_time", "searcher_metric"]
-        }
-    };
-    // The id for the trial associated with this validation entry.
-    int32 trial_id = 1;
-    // The time at which the completed validation was reported.
-    google.protobuf.Timestamp end_time = 2;
-    // The value of the `searcher.metric`, indicated by the experiment config, for the validation.
-    float searcher_metric = 3;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "end_time", "searcher_metric" ] }
+  };
+  // The id for the trial associated with this validation entry.
+  int32 trial_id = 1;
+  // The time at which the completed validation was reported.
+  google.protobuf.Timestamp end_time = 2;
+  // The value of the `searcher.metric`, indicated by the experiment config, for
+  // the validation.
+  float searcher_metric = 3;
 }

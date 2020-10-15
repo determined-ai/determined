@@ -11,21 +11,23 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // Model is a named collection of model versions.
 message Model {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {
-            required: ["name", "metadata", "creation_time", "last_updated_time"]
-        }
-    };
-    // The name of the model.
-    string name = 1 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {min_length: 1}];
-    // The description of the model.
-    string description = 2;
-    // The user-defined metadata of the model.
-    google.protobuf.Struct metadata = 3;
-    // The time the model was created.
-    google.protobuf.Timestamp creation_time = 4;
-    // The time the model was last updated.
-    google.protobuf.Timestamp last_updated_time = 5;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "name", "metadata", "creation_time", "last_updated_time" ]
+    }
+  };
+  // The name of the model.
+  string name = 1 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+    min_length: 1
+  }];
+  // The description of the model.
+  string description = 2;
+  // The user-defined metadata of the model.
+  google.protobuf.Struct metadata = 3;
+  // The time the model was created.
+  google.protobuf.Timestamp creation_time = 4;
+  // The time the model was last updated.
+  google.protobuf.Timestamp last_updated_time = 5;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as

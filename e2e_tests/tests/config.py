@@ -11,10 +11,10 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-TF1_CPU_IMAGE = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-825decd"
-TF2_CPU_IMAGE = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-825decd"
-TF1_GPU_IMAGE = "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-825decd"
-TF2_GPU_IMAGE = "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-825decd"
+TF1_CPU_IMAGE = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-1def2ee"
+TF2_CPU_IMAGE = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-1def2ee"
+TF1_GPU_IMAGE = "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-1def2ee"
+TF2_GPU_IMAGE = "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-1def2ee"
 
 
 def fixtures_path(path: str) -> str:
@@ -67,13 +67,6 @@ def set_slots_per_trial(config: Dict[Any, Any], slots: int) -> Dict[Any, Any]:
     config = config.copy()
     config.setdefault("resources", {})
     config["resources"]["slots_per_trial"] = slots
-    return config
-
-
-def set_native_parallel(config: Dict[Any, Any], native_parallel: bool) -> Dict[Any, Any]:
-    config = config.copy()
-    config.setdefault("resources", {})
-    config["resources"]["native_parallel"] = native_parallel
     return config
 
 

@@ -3,27 +3,27 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-// Pagination provides information about the offset, limit, and total number of records returned
-// in the results.
+// Pagination provides information about the offset, limit, and total number of
+// records returned in the results.
 message Pagination {
-    // The number of records skipped before returning results.
-    int32 offset = 1;
-    // The amount of records limited in the results.
-    int32 limit = 2;
-    // The index of the first record in the dataset.
-    int32 start_index = 3;
-    // The index+1 of the last record in the dataset.
-    int32 end_index = 4;
-    // The total number of values that match the filter.
-    int32 total = 5;
+  // The number of records skipped before returning results.
+  int32 offset = 1;
+  // The amount of records limited in the results.
+  int32 limit = 2;
+  // The index of the first record in the dataset.
+  int32 start_index = 3;
+  // The index+1 of the last record in the dataset.
+  int32 end_index = 4;
+  // The total number of values that match the filter.
+  int32 total = 5;
 }
 
 // Order records in either ascending or descending order.
 enum OrderBy {
-    // Returns records in no specific order.
-    ORDER_BY_UNSPECIFIED = 0;
-    // Returns records in ascending order.
-    ORDER_BY_ASC = 1;
-    // Returns records in descending order.
-    ORDER_BY_DESC = 2;
+  // Returns records in no specific order.
+  ORDER_BY_UNSPECIFIED = 0;
+  // Returns records in ascending order.
+  ORDER_BY_ASC = 1;
+  // Returns records in descending order.
+  ORDER_BY_DESC = 2;
 }

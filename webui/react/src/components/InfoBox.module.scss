@@ -16,6 +16,7 @@
     }
     .content {
       color: var(--theme-colors-monochrome-6);
+      flex-basis: 66%;
       flex-grow: 1;
       font-size: var(--theme-sizes-font-medium);
     }

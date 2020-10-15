@@ -55,7 +55,7 @@ func (rm *ResourceManagers) Receive(ctx *actor.Context) error {
 	case
 		AllocateRequest, ResourcesReleased,
 		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
-		GetTaskSummary, GetTaskSummaries,
+		GetTaskSummary, GetTaskSummaries, SetTaskName,
 		sproto.ConfigureEndpoints, sproto.GetEndpointActorAddress:
 		rm.forward(ctx, msg)
 
@@ -72,5 +72,19 @@ func (rm *ResourceManagers) forward(ctx *actor.Context, msg actor.Message) {
 		ctx.Respond(response.Get())
 	} else {
 		ctx.Tell(rm.ref, msg)
+	}
+}
+
+// GetResourceManagerType returns the type of resourceManager being used.
+func GetResourceManagerType(rmConfig *ResourceManagerConfig) string {
+	switch {
+	case rmConfig.AgentRM != nil:
+		return "agentsRM"
+
+	case rmConfig.KubernetesRM != nil:
+		return "kubernetesRM"
+
+	default:
+		panic("no expected resource manager config is defined")
 	}
 }

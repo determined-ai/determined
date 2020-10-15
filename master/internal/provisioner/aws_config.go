@@ -38,6 +38,19 @@ type AWSClusterConfig struct {
 	SpotMaxPrice        string `json:"spot_max_price"`
 }
 
+var defaultAWSImageID = map[string]string{
+	"ap-northeast-1": "ami-07564bd6cffbb5a9b",
+	"ap-northeast-2": "ami-06e4694b34930383b",
+	"ap-southeast-1": "ami-0b8901d5aa604f982",
+	"ap-southeast-2": "ami-07458aed56b935a93",
+	"us-east-2":      "ami-04fa26fdd9b2a99ea",
+	"us-east-1":      "ami-0b4a3753853b048f7",
+	"us-west-2":      "ami-00c685a830fdf5ab4",
+	"eu-central-1":   "ami-0a825b68986d002b4",
+	"eu-west-2":      "ami-06d3e216931b8d00e",
+	"eu-west-1":      "ami-0c097333b749173b0",
+}
+
 var defaultAWSClusterConfig = AWSClusterConfig{
 	InstanceName:   "determined-ai-agent",
 	RootVolumeSize: 200,
@@ -75,6 +88,15 @@ func (c *AWSClusterConfig) initDefaultValues() error {
 	if len(c.SpotMaxPrice) == 0 {
 		c.SpotMaxPrice = spotPriceNotSetPlaceholder
 	}
+
+	if len(c.ImageID) == 0 {
+		if v, ok := defaultAWSImageID[c.Region]; ok {
+			c.ImageID = v
+		} else {
+			return errors.Errorf("cannot find default image ID in the region %s", c.Region)
+		}
+	}
+
 	// One common reason that metadata.GetInstanceIdentityDocument() fails is that the master is not
 	// running in EC2. Use a default name here rather than holding up initializing the provider.
 	identifier := pkg.DeterminedIdentifier
@@ -103,7 +125,6 @@ func (c AWSClusterConfig) Validate() []error {
 		spotPriceIsNotValidNumberErr = validateMaxSpotPrice(c.SpotMaxPrice)
 	}
 	return []error{
-		check.GreaterThan(len(c.ImageID), 0, "ec2 image ID must be non-empty"),
 		check.GreaterThan(len(c.SSHKeyName), 0, "ec2 key name must be non-empty"),
 		check.GreaterThanOrEqualTo(c.RootVolumeSize, 100, "ec2 root volume size must be >= 100"),
 		spotPriceIsNotValidNumberErr,

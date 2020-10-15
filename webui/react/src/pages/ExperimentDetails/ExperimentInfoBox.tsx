@@ -10,6 +10,9 @@ import InfoBox, { InfoRow } from 'components/InfoBox';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import Section from 'components/Section';
+import TagList from 'components/TagList';
+import tagListCss from 'components/TagList.module.scss';
+import useExperimentTags from 'hooks/useExperimentTags';
 import { CheckpointDetail, CheckpointState, ExperimentDetails } from 'types';
 import { humanReadableFloat } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
@@ -18,9 +21,10 @@ import css from './ExperimentInfoBox.module.scss';
 
 interface Props {
   experiment: ExperimentDetails;
+  onChange?: () => void;
 }
 
-const ExperimentInfoBox: React.FC<Props> = ({ experiment }: Props) => {
+const ExperimentInfoBox: React.FC<Props> = ({ experiment, onChange }: Props) => {
   const config = experiment.config;
   const [ showConfig, setShowConfig ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
@@ -51,10 +55,11 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment }: Props) => {
     return sortedCheckpoints[0];
   }, [ experiment.trials, orderFactor ]);
 
-  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
+  const experimentTags = useExperimentTags(onChange);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
-  const handleShowConfig = useCallback(() => setShowConfig(true), []);
   const handleHideConfig = useCallback(() => setShowConfig(false), []);
+  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
+  const handleShowConfig = useCallback(() => setShowConfig(true), []);
 
   const infoRows: InfoRow[] = [
     {
@@ -98,6 +103,16 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment }: Props) => {
         Download Model
       </Link>,
       label: 'Model Definition',
+    },
+    {
+      content: <TagList
+        className={tagListCss.noMargin}
+        tags={experiment.config.labels || []}
+        onChange={experimentTags.handleTagListChange(experiment.id)}
+        onCreate={experimentTags.handleTagListCreate(experiment.id)}
+        onDelete={experimentTags.handleTagListDelete(experiment.id)}
+      />,
+      label: 'Labels',
     },
   ];
 
