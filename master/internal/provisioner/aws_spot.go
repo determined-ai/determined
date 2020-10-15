@@ -171,8 +171,8 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 			c.spot.trackedReqs.numReqs(),
 			missingReqs.idsAsList())
 
-	// Cleanup CanceledButInstanceRunningRequests to make sure race conditions + eventual
-	// consistency don't lead to us spawning EC2 instance but not cleaning them up
+	// Cleanup CanceledButInstanceRunningRequests because an instance could have been
+	// created between listing and terminating spot requests.
 	canceledButInstanceRunningReqs, err := c.listCanceledButInstanceRunningSpotRequests(ctx, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
@@ -248,10 +248,6 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 				pendingSpotReqsToTerminate.string(),
 			)
 	}
-
-	// TODO: Race condition - an instance could have been created between listing
-	//       and terminating spot request. We could clean up the spot instances here.
-	//       But it will be cleaned up on the next call to list() anyway.
 }
 
 func (c *awsCluster) launchSpot(
