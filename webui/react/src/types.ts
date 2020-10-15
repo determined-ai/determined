@@ -132,8 +132,8 @@ export enum CommandType {
 }
 
 export interface CommandMisc {
-  experimentIds?: number[];
-  trialIds?: number[];
+  experimentIds: number[];
+  trialIds: number[];
 }
 
 export interface CommandConfig {
