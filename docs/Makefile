@@ -8,17 +8,12 @@ SPHINXBUILD   = sphinx-build
 build-examples:
 	$(MAKE) -C ../examples build
 
-
 .PHONY: build-helm
 build-helm:
 	$(MAKE) -C ../helm build
 
-.PHONY: build-proto
-build-helm:
-	$(MAKE) -C ../proto build
-
 .PHONY: build
-build: build-examples build-helm build-proto
+build: build-examples build-helm
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
 	mkdir -p site/downloads/helm
