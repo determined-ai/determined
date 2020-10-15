@@ -41,7 +41,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
     subparser.add_argument(
         "--enable-cors",
-        type=bool,
+        action="store_true",
         help="allow CORS requests or not: true/false",
     )
     subparser.add_argument(
@@ -157,7 +157,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
 
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
-        constants.cloudformation.ENABLE_CORS: "true" if args.enable_cors else "false",
+        constants.cloudformation.ENABLE_CORS: args.enable_cors,
         constants.cloudformation.MASTER_INSTANCE_TYPE: args.master_instance_type,
         constants.cloudformation.AGENT_INSTANCE_TYPE: args.agent_instance_type,
         constants.cloudformation.CLUSTER_ID: args.cluster_id,

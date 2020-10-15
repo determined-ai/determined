@@ -330,16 +330,35 @@ commands:
         type: integer
         default: 1
     steps:
-      - run:
-          name: Deploy AWS cluster
-          command: |
-            det-deploy aws up \
-              --cluster-id <<parameters.cluster-id>> \
-              --det-version <<parameters.det-version>> \
-              --agent-instance-type <<parameters.agent-instance-type>> \
-              --max-dynamic-agents <<parameters.max-dynamic-agents>> \
-              --keypair <<parameters.keypair>> \
-              --enable_cors <<parameters.enable-cors>>
+      - when:
+          condition:
+            equal:
+               [ true, << parameters.enable-cors >> ]
+          steps:
+          - run:
+              name: Deploy AWS cluster
+              command: |
+                det-deploy aws up \
+                  --cluster-id <<parameters.cluster-id>> \
+                  --det-version <<parameters.det-version>> \
+                  --agent-instance-type <<parameters.agent-instance-type>> \
+                  --max-dynamic-agents <<parameters.max-dynamic-agents>> \
+                  --keypair <<parameters.keypair>> \
+                  --enable_cors
+      - when:
+          condition:
+            equal:
+               [ false, << parameters.enable-cors >> ]
+          steps:
+          - run:
+              name: Deploy AWS cluster
+              command: |
+                det-deploy aws up \
+                  --cluster-id <<parameters.cluster-id>> \
+                  --det-version <<parameters.det-version>> \
+                  --agent-instance-type <<parameters.agent-instance-type>> \
+                  --max-dynamic-agents <<parameters.max-dynamic-agents>> \
+                  --keypair <<parameters.keypair>> \
 
   terminate-aws-cluster:
     parameters:
