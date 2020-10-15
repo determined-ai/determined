@@ -1,6 +1,8 @@
 import { MetricName, MetricType, Step } from 'types';
 import { isNumber, metricNameSorter } from 'utils/data';
 
+import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
+
 export const extractMetricValue = (step: Step, metricName: MetricName): number | undefined => {
   if (metricName.type === MetricType.Training) {
     const source = step.avgMetrics || {};
@@ -57,8 +59,27 @@ export const metricNameFromValue = (metricValue: string): MetricName | undefined
       type: MetricType.Validation,
     };
   } else {
-    console.error("metricNameFromValue was called, but the metricName doesn't appear to " +
-        'be a training metric or a validation metric');
+    const errName = 'metricNameFromValueUnrecognizedMetricType';
+    const errSlug = 'metricnamefromvalue-unrecognized-metric-type';
+    const errMessage = `metricNameFromValue was called, but the metricName doesn't appear to " +
+        'be a training metric or a validation metric (${metricValue})`;
+    let silent = true;
+    if (process.env.IS_DEV) {
+      silent = false;
+    }
+    const daErr: DaError = {
+      error: {
+        message: errMessage,
+        name: errName,
+      },
+      id: errSlug,
+      isUserTriggered: false,
+      level: ErrorLevel.Error,
+      message: errMessage,
+      silent: silent,
+      type: ErrorType.Ui,
+    };
+    handleError(daErr);
     return undefined;
   }
 };
