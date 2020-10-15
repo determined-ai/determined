@@ -25,14 +25,14 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 	filesArchive := make([]archive.Item, 0)
 	for _, file := range files {
 		item := archive.Item{
-			Path:     file.Path,
-			Type:     byte(file.Type),
-			FileMode: os.FileMode(file.Mode),
-			Content:  file.Content,
-			UserID:   int(file.Uid),
-			GroupID:  int(file.Gid),
+			Content:      file.Content,
+			FileMode:     os.FileMode(file.Mode),
+			GroupID:      int(file.Gid),
+			ModifiedTime: archive.UnixTime{Time: time.Unix(file.Mtime, 0)},
+			Path:         file.Path,
+			Type:         byte(file.Type),
+			UserID:       int(file.Uid),
 		}
-		item.ModifiedTime = archive.UnixTime{Time: time.Unix(file.Mtime, 0)}
 		filesArchive = append(filesArchive, item)
 	}
 	return filesArchive

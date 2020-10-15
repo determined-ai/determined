@@ -14,13 +14,13 @@ message File {
       required: [ "path", "type", "content", "mtime", "mode", "uid", "gid" ]
     }
   };
-  // Path to the file or directory.
+  // Path to the file.
   string path = 1;
   // File type.
-  int32 type = 2;  // FIXME We really only want a single byte.
+  int32 type = 2;
   // base64 encoded contents of the file.
   bytes content = 3;
-  // Modified time in unix timestamp.
+  // Modified time (Unix timestamp).
   int64 mtime = 4;
   // File mode.
   int32 mode = 5;
