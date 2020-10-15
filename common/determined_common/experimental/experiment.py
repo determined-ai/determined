@@ -30,7 +30,7 @@ class Experiment:
         return cls(experiment_id)
 
     @classmethod
-    def get_experiment(cls, experiment_id):
+    def get_experiment(cls, api_client, experiment_id):
         # experiment = api.get_experiment(experiment_id)
         experiment_id = 1
         experiment_data = {}

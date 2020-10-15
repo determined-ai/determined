@@ -58,7 +58,7 @@ class Determined:
         Get the :class:`~determined.experimental.ExperimentReference` representing the
         experiment with the provided experiment ID.
         """
-        return Experiment(experiment_id, self._session._master)
+        return Experiment.get_experiment(self.api_client, experiment_id)
 
     def get_trial(self, trial_id: int) -> Trial:
         """
