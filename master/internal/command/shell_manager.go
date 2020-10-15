@@ -47,8 +47,8 @@ type shellManager struct {
 
 // ShellLaunchRequest describes a request to launch a new shell.
 type ShellLaunchRequest struct {
-	commandParams *CommandParams
-	User          *model.User
+	*CommandParams
+	User *model.User
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
@@ -78,7 +78,7 @@ func (s *shellManager) processShellLaunchRequest(
 	ctx *actor.Context,
 	req ShellLaunchRequest,
 ) (*summary, error) {
-	commandReq, err := parseCommandRequestWithUser(*req.User, s.db, req.commandParams, &s.taskSpec.TaskContainerDefaults)
+	commandReq, err := parseCommandRequestWithUser(*req.User, s.db, req.CommandParams, &s.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 		user := apiCtx.(*requestContext.DetContext).MustGetUser()
 		req := ShellLaunchRequest{
 			User:          &user,
-			commandParams: &params,
+			CommandParams: &params,
 		}
 		summary, err := s.processShellLaunchRequest(ctx, req)
 		if err != nil {

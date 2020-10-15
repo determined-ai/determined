@@ -33,8 +33,8 @@ type commandManager struct {
 
 // CommandLaunchRequest describes a request to launch a new shell.
 type CommandLaunchRequest struct {
-	commandParams *CommandParams
-	User          *model.User
+	*CommandParams
+	User *model.User
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -56,7 +56,7 @@ func (c *commandManager) processCommandLaunchRequest(
 	ctx *actor.Context,
 	req CommandLaunchRequest,
 ) (*summary, error) {
-	commandReq, err := parseCommandRequestWithUser(*req.User, c.db, req.commandParams, &c.taskSpec.TaskContainerDefaults)
+	commandReq, err := parseCommandRequestWithUser(*req.User, c.db, req.CommandParams, &c.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 		user := apiCtx.(*requestContext.DetContext).MustGetUser()
 		req := CommandLaunchRequest{
 			User:          &user,
-			commandParams: &params,
+			CommandParams: &params,
 		}
 		summary, err := c.processCommandLaunchRequest(ctx, req)
 		if err != nil {
