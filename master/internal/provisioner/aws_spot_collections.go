@@ -78,6 +78,20 @@ func (c *setOfSpotRequests) asListInChronologicalOrder() []*spotRequest {
 	return l
 }
 
+// instanceIds goes through the spotRequests and returns all instanceIds that are not nil
+func (c *setOfSpotRequests) instanceIds() []*string {
+	instanceIDs := make([]*string, 0)
+	for _, req := range c.keyMap {
+		if req.InstanceID != nil {
+			b := strings.Builder{}
+			b.WriteString(*req.InstanceID)
+			i := b.String()
+			instanceIDs = append(instanceIDs, &i)
+		}
+	}
+	return instanceIDs
+}
+
 // idsAsList returns the spotRequest ids as a slice of strings
 func (c *setOfSpotRequests) idsAsList() []string {
 	list := make([]string, 0, len(c.keyMap))

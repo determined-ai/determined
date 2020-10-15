@@ -119,6 +119,13 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 		c.spot.trackedReqs.add(req)
 	}
 
+	err = c.setTagsOnInstances(ctx, activeReqsInAPI)
+	if err != nil {
+		ctx.Log().
+			WithError(err).
+			Error("unable to create tags on ec2 instances created by spot")
+	}
+
 	// If there are requests that we are tracking, but didn't get returned
 	// in listActiveSpotInstanceRequests, query the API for them specifically.
 	// They could be fresh requests that aren't visible in the API yet or they
@@ -294,6 +301,34 @@ func (c *awsCluster) launchSpot(
 				*request.State,
 			)
 	}
+}
+
+
+func (c *awsCluster) setTagsOnInstances(ctx *actor.Context, activeReqs *setOfSpotRequests) error {
+	instanceIDs := activeReqs.instanceIds()
+	if len(instanceIDs) == 0 {
+		return nil
+	}
+
+	input := &ec2.CreateTagsInput{
+	   Resources: instanceIDs,
+	   Tags: []*ec2.Tag{
+		   {
+			   Key:   aws.String("Name"),
+			   Value: aws.String(c.InstanceName),
+		   },
+		   {
+			   Key:   aws.String(c.TagKey),
+			   Value: aws.String(c.TagValue),
+		   },
+		   {
+			   Key:   aws.String("determined-master-address"),
+			   Value: aws.String(c.masterURL.String()),
+		   },
+	   },
+	}
+	_, err := c.client.CreateTags(input)
+	return err
 }
 
 // Create a spot request to try to approximate how different the local clock is
@@ -492,6 +527,14 @@ func (c *awsCluster) createSpotInstanceRequest(
 					{
 						Key:   aws.String(c.TagKey),
 						Value: aws.String(c.TagValue),
+					},
+					{
+						Key:   aws.String("Name"),
+						Value: aws.String(c.InstanceName),
+					},
+					{
+						Key:   aws.String("determined-master-address"),
+						Value: aws.String(c.masterURL.String()),
 					},
 				},
 			},
