@@ -4,5 +4,4 @@ ALTER TABLE public.trial_logs
     DROP COLUMN timestamp,
     DROP COLUMN level,
     DROP COLUMN source,
-    DROP COLUMN stream,
-    DROP COLUMN rank_id;
+    DROP COLUMN stdtype;
