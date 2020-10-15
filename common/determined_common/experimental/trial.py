@@ -4,7 +4,7 @@ from determined_common import api, check
 from determined_common.experimental import checkpoint
 
 
-class TrialReference:
+class Trial:
     """
     Trial reference class used for querying relevant
     :class:`~determined.experimental.Checkpoint` instances.

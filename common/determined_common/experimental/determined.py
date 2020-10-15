@@ -1,11 +1,18 @@
 from typing import Any, Dict, List, Optional
 
+import determined_client
+
 from determined_common import api
 from determined_common.experimental.checkpoint import Checkpoint
-from determined_common.experimental.experiment import ExperimentReference
+from determined_common.experimental.experiment import Experiment
 from determined_common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined_common.experimental.session import Session
-from determined_common.experimental.trial import TrialReference
+from determined_common.experimental.trial import Trial
+
+
+#
+# configuration.host = SERVER_ADDRESS
+# configuration.api_key_prefix['Authorization'] = 'Bearer'
 
 
 class Determined:
@@ -21,25 +28,43 @@ class Determined:
     """
 
     def __init__(
-        self,
-        master: Optional[str] = None,
-        user: Optional[str] = None,
+            self,
+            master: Optional[str] = None,
+            user: Optional[str] = 'determined',
+            password: Optional[str] = '',
     ):
-        self._session = Session(master, user)
+        # migrate to login API - Old replace with code below
+        # self._session = Session(master, user)
 
-    def get_experiment(self, experiment_id: int) -> ExperimentReference:
+        # This is where swagger auth will go
+        self.configuration = determined_client.Configuration()
+        self.configuration.host = master
+        self.configuration.api_key_prefix['Authorization'] = 'Bearer'
+
+        self.api_client = determined_client.ApiClient(self.configuration)
+
+        # Login
+        auth_api = determined_client.AuthenticationApi(self.api_client)
+        api_response = auth_api.determined_login(determined_client.models.V1LoginRequest(user, password))
+        # Set auth token
+        self.configuration.api_key['Authorization'] = api_response.token
+
+    def create_experiment(self, config, context_dir, local=False, test=False):
+        return Experiment.create_experiment(self.api_client, config, context_dir, local, test)
+
+    def get_experiment(self, experiment_id: int) -> Experiment:
         """
         Get the :class:`~determined.experimental.ExperimentReference` representing the
         experiment with the provided experiment ID.
         """
-        return ExperimentReference(experiment_id, self._session._master)
+        return Experiment(experiment_id, self._session._master)
 
-    def get_trial(self, trial_id: int) -> TrialReference:
+    def get_trial(self, trial_id: int) -> Trial:
         """
         Get the :class:`~determined.experimental.TrialReference` representing the
         trial with the provided trial ID.
         """
-        return TrialReference(trial_id, self._session._master)
+        return Trial(trial_id, self._session._master)
 
     def get_checkpoint(self, uuid: str) -> Checkpoint:
         """
@@ -50,7 +75,7 @@ class Determined:
         return Checkpoint.from_json(r["checkpoint"], master=self._session._master)
 
     def create_model(
-        self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
+            self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
     ) -> Model:
         """
         Add a model to the model registry.
@@ -78,11 +103,11 @@ class Determined:
         return Model.from_json(r.json().get("model"), self._session._master)
 
     def get_models(
-        self,
-        sort_by: ModelSortBy = ModelSortBy.NAME,
-        order_by: ModelOrderBy = ModelOrderBy.ASCENDING,
-        name: str = "",
-        description: str = "",
+            self,
+            sort_by: ModelSortBy = ModelSortBy.NAME,
+            order_by: ModelOrderBy = ModelOrderBy.ASCENDING,
+            name: str = "",
+            description: str = "",
     ) -> List[Model]:
         """
         Get a list of all models in the model registry.

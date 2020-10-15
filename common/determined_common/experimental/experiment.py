@@ -1,10 +1,11 @@
 from typing import List, Optional
+import time
 
 from determined_common import api
 from determined_common.experimental import checkpoint
 
 
-class ExperimentReference:
+class Experiment:
     """
     Helper class that supports querying the set of checkpoints associated with an
     experiment.
@@ -16,9 +17,36 @@ class ExperimentReference:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, experiment_id: int, master: str):
+    def __init__(self, experiment_id, experiment_data=None):
         self.id = experiment_id
-        self._master = master
+        self.experiment_data = {}
+
+    @classmethod
+    def create_experiment(cls, session, config, context_dir, local=False, test=False, master=''):
+        print('Creating Experiment')
+        # experiment = api.create_experiment()
+        experiment_id = 1  # really should be experiment.id
+        print(f'Created Experiment {experiment_id}')
+        return cls(experiment_id)
+
+    @classmethod
+    def get_experiment(cls, experiment_id):
+        # experiment = api.get_experiment(experiment_id)
+        experiment_id = 1
+        experiment_data = {}
+
+        return cls(experiment_id, experiment_data)
+
+    @property
+    def status(self) -> str:
+        # status = api.get_experiment_status()
+        status = 'COMPLETED'
+        return status
+
+    def wait_for_completion(self):
+        while self.status == 'ACTIVE':
+            time.sleep(10)
+
 
     def top_checkpoint(
         self,

@@ -1,11 +1,11 @@
 from determined_common.experimental import (
     Checkpoint,
     Determined,
-    ExperimentReference,
+    Experiment,
     Model,
     ModelOrderBy,
     ModelSortBy,
-    TrialReference,
+    Trial,
 )
 from determined.experimental._native import (
     create,
