@@ -502,8 +502,7 @@ The master supports the following configuration settings:
          version of the Determined agent image from a specific project,
          it should be set in the format:
          ``projects/<project-id>/global/images/<image-id>``. Defaults to
-         the latest GCP agent image.
-         (*Optional*)
+         the latest GCP agent image. (*Optional*)
 
       -  ``label_key``: Key for labeling the Determined agent instances.
          Defaults to ``managed-by``.

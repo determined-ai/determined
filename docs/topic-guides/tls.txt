@@ -5,20 +5,20 @@
 ##########################
 
 **Transport Layer Security** (TLS) is a protocol for secure network
-communication. TLS prevents the data being transmitted from
-being modified or read while it is in transit and allows clients to
-verify the identity of the server (in this case, the Determined master).
-Determined can be configured to use TLS for all connections made to the
-master. That means that all CLI and WebUI connections will be secured by
-TLS, as well as connections from agents and tasks to the master.
-Communication between agents that occur as part of
-:ref:`distributed training <multi-gpu-training>` will not use TLS, nor will
-proxied connections from the master to a :ref:`TensorBoard
-<how-to-tensorboard>` or :ref:`notebook <how-to-notebooks>` instance.
+communication. TLS prevents the data being transmitted from being
+modified or read while it is in transit and allows clients to verify the
+identity of the server (in this case, the Determined master). Determined
+can be configured to use TLS for all connections made to the master.
+That means that all CLI and WebUI connections will be secured by TLS, as
+well as connections from agents and tasks to the master. Communication
+between agents that occur as part of :ref:`distributed training
+<multi-gpu-training>` will not use TLS, nor will proxied connections
+from the master to a :ref:`TensorBoard <how-to-tensorboard>` or
+:ref:`notebook <how-to-notebooks>` instance.
 
-*******************************
+*****************
  Configuring TLS
-*******************************
+*****************
 
 Master
 ======
@@ -27,8 +27,8 @@ In order to :ref:`configure the master <master-configuration>` to use
 TLS, set the ``security.tls.cert`` and ``security.tls.key`` options to
 paths to a TLS certificate file and key file.
 
-When TLS is in use, the master will listen on TCP port 8443 by default, rather
-than 8080.
+When TLS is in use, the master will listen on TCP port 8443 by default,
+rather than 8080.
 
 .. note::
 
@@ -52,9 +52,9 @@ configuration, the agent will be unable to verify the identity of the
 master, but the data sent over the connection will still be protected by
 TLS.
 
-When :ref:`dynamic agents <elastic-infra-index>` and TLS are both in use, the
-dynamic agents that the master creates will automatically be configured to
-connect securely to the master over TLS.
+When :ref:`dynamic agents <elastic-infra-index>` and TLS are both in
+use, the dynamic agents that the master creates will automatically be
+configured to connect securely to the master over TLS.
 
 CLI
 ===

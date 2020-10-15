@@ -63,7 +63,8 @@ Each user should also :ref:`install the Determined command-line tools
 Next Steps
 ==========
 
-We recommend starting with the :ref:`quick-start` if you're new to Determined.
+We recommend starting with the :ref:`quick-start` if you're new to
+Determined.
 
 Next, learn more about Determined's Python APIs by following a tutorial.
 Follow the tutorial for your preferred framework:
