@@ -486,6 +486,16 @@ service Determined {
       tags: "Notebooks"
     };
   }
+  // Launch a notebook.
+  rpc LaunchNotebook(LaunchNotebookRequest) returns (LaunchNotebookResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/notebooks"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Notebooks"
+    };
+  }
 
   // Get a list of shells.
   rpc GetShells(GetShellsRequest) returns (GetShellsResponse) {

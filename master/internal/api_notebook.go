@@ -10,11 +10,16 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
+
+var notebooksAddr = actor.Addr("notebooks")
 
 func (a *apiServer) GetNotebooks(
 	_ context.Context, req *apiv1.GetNotebooksRequest,
@@ -79,4 +84,39 @@ func (a *apiServer) NotebookLogs(
 
 	// Keep the request context open until the actor stops.
 	return logStreamActor.AwaitTermination()
+}
+
+func (a *apiServer) LaunchNotebook(
+	ctx context.Context, req *apiv1.LaunchNotebookRequest,
+) (*apiv1.LaunchNotebookResponse, error) {
+
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	cmdParams := command.CommandParams{ConfigBytes: req.Config, UserFiles: filesToArchive(req.Files)}
+	if req.TemplateName != "" {
+		cmdParams.Template = &req.TemplateName
+	}
+
+	notebookLaunchReq := command.NotebookLaunchRequest{
+		CommandParams: &cmdParams,
+		User:          user,
+	}
+	actorResp := a.m.system.AskAt(notebooksAddr, notebookLaunchReq)
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
+	}
+
+	notebookID := actorResp.Get().(resourcemanagers.TaskID)
+	notebookReq := notebookv1.Notebook{}
+	actorResp = a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookReq)
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.LaunchNotebookResponse{
+		Notebook: actorResp.Get().(*notebookv1.Notebook),
+	}, nil
 }

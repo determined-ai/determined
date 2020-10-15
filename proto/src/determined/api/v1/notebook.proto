@@ -8,6 +8,7 @@ import "google/protobuf/struct.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/notebook/v1/notebook.proto";
 import "determined/log/v1/log.proto";
+import "determined/util/v1/util.proto";
 
 // Get a list of notebooks.
 message GetNotebooksRequest {
@@ -81,4 +82,19 @@ message NotebookLogsRequest {
 message NotebookLogsResponse {
   // The Notebook's log entry.
   determined.log.v1.LogEntry log_entry = 1;
+}
+
+// Request to launch a notebook.
+message LaunchNotebookRequest {
+  // Notebook config (JSON).
+  bytes config = 1;
+  // Template name.
+  string template_name = 2;
+  // The files to run with the command.
+  repeated determined.util.v1.File files = 3;
+}
+// Response to LaunchNotebookRequest.
+message LaunchNotebookResponse {
+  // The requested notebook.
+  determined.notebook.v1.Notebook notebook = 1;
 }
