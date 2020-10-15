@@ -29,7 +29,6 @@
     "io-ts": "^2.2.11",
     "js-sha512": "^0.8.0",
     "js-yaml": "^3.14.0",
-    "monaco-editor": "^0.20.0",
     "monaco-editor-webpack-plugin": "^1.9.0",
     "plotly.js": "^1.56.0",
     "portable-fetch": "^3.0.0",
