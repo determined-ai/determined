@@ -1,8 +1,8 @@
 .. _pytorch-mnist-tutorial:
 
-###################################
+########################
  PyTorch MNIST Tutorial
-###################################
+########################
 
 This tutorial describes how to port an existing PyTorch model to
 Determined. We will port a simple image classification model for the

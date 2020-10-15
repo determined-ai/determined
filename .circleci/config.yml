@@ -842,6 +842,16 @@ jobs:
       - run: make -C master test
       - run: make -C agent test
 
+  lint-docs:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-python-venv:
+          extra-requirements-file: "docs/requirements.txt"
+          executor: determinedai/cimg-base:stable
+      - run: make -C docs check
+
   lint-python:
     docker:
       - image: determinedai/cimg-base:stable
@@ -1165,6 +1175,7 @@ workflows:
       - build-and-package-ts-sdk:
           requires:
             - build-proto
+      - lint-docs
       - lint-python
       - lint-go
       - lint-react:

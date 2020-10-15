@@ -75,14 +75,16 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
 
    -  ``cpuRequest``: The CPU requirements for the Determined database.
 
-   -  ``memRequest``: The memory requirements for the Determined database.
+   -  ``memRequest``: The memory requirements for the Determined
+      database.
 
-   -  ``storageClassName``: Optional configuration to indicate StorageClass
-      that should be used by the PersistentVolumeClaim for the Determined
-      deployed database. This can be left blank if a default storage class
-      is specified in the cluster. If dynamic provisioning of PersistentVolumes
-      is disabled, users must manually create a PersistentVolume that will
-      match the PersistentVolumeClaim.
+   -  ``storageClassName``: Optional configuration to indicate
+      StorageClass that should be used by the PersistentVolumeClaim for
+      the Determined deployed database. This can be left blank if a
+      default storage class is specified in the cluster. If dynamic
+      provisioning of PersistentVolumes is disabled, users must manually
+      create a PersistentVolume that will match the
+      PersistentVolumeClaim.
 
 -  ``checkpointStorage``: Specifies where model checkpoints will be
    stored. This can be overridden on a per-experiment basis in the

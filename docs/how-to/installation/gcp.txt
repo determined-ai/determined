@@ -234,10 +234,8 @@ Optional Arguments:
       -  Intel Broadwell
 
    -  -  ``--local-state-path``
-
       -  Directory used to store cluster metadata. The same directory
          cannot be used for multiple clusters at the same time.
-
       -  Current working directory
 
 The following ``gcloud`` commands will help to validate your

@@ -2,8 +2,10 @@
 
 **BUG FIXES**
 
-- WebUI: Show TensorBoard sources correctly when starting TensorBoard from the CLI.
+-  WebUI: Show TensorBoard sources correctly when starting TensorBoard
+   from the CLI.
 
 **NEW FEATURES**
 
-- WebUI: Show both experiment and trial TensorBoard sources simultaneously if applicable on the experiment list page.
+-  WebUI: Show both experiment and trial TensorBoard sources
+   simultaneously if applicable on the experiment list page.

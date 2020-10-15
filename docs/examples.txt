@@ -1,8 +1,8 @@
 .. _examples:
 
-####################################################
+##########
  Examples
-####################################################
+##########
 
 Determined includes several example machine learning models that have
 been ported to Determined's APIs. These examples can be found in the
@@ -10,178 +10,200 @@ been ported to Determined's APIs. These examples can be found in the
 <https://github.com/determined-ai/determined/tree/master/examples>`__;
 download links to each example can also be found below.
 
-Each example consists of a model definition, along with one or more experiment
-configuration files. To run one of these examples, download the appropriate
-``.tgz`` file, extract it, ``cd`` into the directory, and use ``det experiment
-create`` to create a new experiment, passing in the appropriate configuration
-file. For example, here is how to train the ``mnist_pytorch`` example with a
-fixed set of hyperparameters:
+Each example consists of a model definition, along with one or more
+experiment configuration files. To run one of these examples, download
+the appropriate ``.tgz`` file, extract it, ``cd`` into the directory,
+and use ``det experiment create`` to create a new experiment, passing in
+the appropriate configuration file. For example, here is how to train
+the ``mnist_pytorch`` example with a fixed set of hyperparameters:
 
 .. code::
 
-    tar xzvf mnist_pytorch.tgz
-    cd mnist_pytorch
-    det experiment create const.yaml .
+   tar xzvf mnist_pytorch.tgz
+   cd mnist_pytorch
+   det experiment create const.yaml .
 
-For an introduction to using the Trial API, refer to the :ref:`PyTorch MNIST <pytorch-mnist-tutorial>` and
-:ref:`tf.keras MNIST <tf-mnist-tutorial>` tutorials.
+For an introduction to using the Trial API, refer to the :ref:`PyTorch
+MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
+<tf-mnist-tutorial>` tutorials.
 
-Computer Vision
-===============
-
-.. list-table::
-  :header-rows: 1
-
-  * - Framework
-    - Dataset
-    - Filename
-
-  * - PyTorch
-    - CIFAR-10
-    - :download:`cifar10_pytorch.tgz </examples/cifar10_pytorch.tgz>`
-
-  * - PyTorch
-    - MNIST
-    - :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
-
-  * - PyTorch
-    - MNIST
-    - :download:`mnist_multi_output_pytorch.tgz </examples/mnist_multi_output_pytorch.tgz>`
-
-  * - PyTorch
-    - Penn-Fudan Dataset
-    - :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
-
-  * - TensorFlow (Estimator API)
-    - MNIST
-    - :download:`mnist_estimator.tgz </examples/mnist_estimator.tgz>`
-
-  * - TensorFlow (tf.layers via Estimator API)
-    - MNIST
-    - :download:`mnist_tf_layers.tgz </examples/mnist_tf_layers.tgz>`
-
-  * - TensorFlow (tf.keras)
-    - Fashion MNIST
-    - :download:`fashion_mnist_tf_keras.tgz </examples/fashion_mnist_tf_keras.tgz>`
-
-  * - TensorFlow (tf.keras)
-    - CIFAR-10
-    - :download:`cifar10_tf_keras.tgz </examples/cifar10_tf_keras.tgz>`
-
-  * - TensorFlow (tf.keras)
-    - Iris Dataset
-    - :download:`iris_tf_keras.tgz </examples/iris_tf_keras.tgz>`
-
-  * - TensorFlow (tf.keras)
-    - Oxford-IIIT Pet Dataset
-    - :download:`unets_tf_keras.tgz </examples/unets_tf_keras.tgz>`
-
-Natural Language Processing (NLP)
-=================================
+*****************
+ Computer Vision
+*****************
 
 .. list-table::
-  :header-rows: 1
+   :header-rows: 1
 
-  * - Framework
-    - Dataset
-    - Filename
+   -  -  Framework
+      -  Dataset
+      -  Filename
 
-  * - PyTorch
-    - SQuAD
-    - :download:`bert_squad_pytorch.tgz </examples/bert_squad_pytorch.tgz>`
+   -  -  PyTorch
+      -  CIFAR-10
+      -  :download:`cifar10_pytorch.tgz </examples/cifar10_pytorch.tgz>`
 
-  * - PyTorch
-    - GLUE
-    - :download:`bert_glue_pytorch.tgz </examples/bert_glue_pytorch.tgz>`
+   -  -  PyTorch
+      -  MNIST
+      -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
-HP Search Benchmarking
-======================
+   -  -  PyTorch
+      -  MNIST
+      -  :download:`mnist_multi_output_pytorch.tgz
+         </examples/mnist_multi_output_pytorch.tgz>`
 
-.. list-table::
-  :header-rows: 1
+   -  -  PyTorch
+      -  Penn-Fudan Dataset
+      -  :download:`fasterrcnn_coco_pytorch.tgz
+         </examples/fasterrcnn_coco_pytorch.tgz>`
 
-  * - Framework
-    - Dataset
-    - Filename
+   -  -  TensorFlow (Estimator API)
+      -  MNIST
+      -  :download:`mnist_estimator.tgz </examples/mnist_estimator.tgz>`
 
-  * - PyTorch
-    - CIFAR-10
-    - :download:`darts_cifar10_pytorch.tgz </examples/darts_cifar10_pytorch.tgz>`
+   -  -  TensorFlow (tf.layers via Estimator API)
+      -  MNIST
+      -  :download:`mnist_tf_layers.tgz </examples/mnist_tf_layers.tgz>`
 
-  * - PyTorch
-    - Penn Treebank Dataset
-    - :download:`darts_penntreebank_pytorch.tgz </examples/darts_penntreebank_pytorch.tgz>`
+   -  -  TensorFlow (tf.keras)
+      -  Fashion MNIST
+      -  :download:`fashion_mnist_tf_keras.tgz
+         </examples/fashion_mnist_tf_keras.tgz>`
 
-Neural Architecture Search (NAS)
-================================
+   -  -  TensorFlow (tf.keras)
+      -  CIFAR-10
+      -  :download:`cifar10_tf_keras.tgz
+         </examples/cifar10_tf_keras.tgz>`
 
-.. list-table::
-  :header-rows: 1
+   -  -  TensorFlow (tf.keras)
+      -  Iris Dataset
+      -  :download:`iris_tf_keras.tgz </examples/iris_tf_keras.tgz>`
 
-  * - Framework
-    - Dataset
-    - Filename
+   -  -  TensorFlow (tf.keras)
+      -  Oxford-IIIT Pet Dataset
+      -  :download:`unets_tf_keras.tgz </examples/unets_tf_keras.tgz>`
 
-  * - PyTorch
-    - DARTS
-    - :download:`gaea_pytorch.tgz </examples/gaea_pytorch.tgz>`
-
-Meta Learning
-=============
-
-.. list-table::
-  :header-rows: 1
-
-  * - Framework
-    - Dataset
-    - Filename
-
-  * - PyTorch
-    - Omniglot
-    - :download:`protonet_omniglot_pytorch.tgz </examples/protonet_omniglot_pytorch.tgz>`
-
-Generative Adversarial Networks (GANs)
-======================================
+***********************************
+ Natural Language Processing (NLP)
+***********************************
 
 .. list-table::
-  :header-rows: 1
+   :header-rows: 1
 
-  * - Framework
-    - Dataset
-    - Filename
+   -  -  Framework
+      -  Dataset
+      -  Filename
 
-  * - PyTorch
-    - MNIST
-    - :download:`gan_mnist_pytorch.tgz </examples/gan_mnist_pytorch.tgz>`
+   -  -  PyTorch
+      -  SQuAD
+      -  :download:`bert_squad_pytorch.tgz
+         </examples/bert_squad_pytorch.tgz>`
 
-Decision Trees
-==============
+   -  -  PyTorch
+      -  GLUE
+      -  :download:`bert_glue_pytorch.tgz
+         </examples/bert_glue_pytorch.tgz>`
 
-.. list-table::
-  :header-rows: 1
-
-  * - Framework
-    - Dataset
-    - Filename
-
-  * - TensorFlow (Estimator API)
-    - Titanic
-    - :download:`gbt_titanic_estimator.tgz </examples/gbt_titanic_estimator.tgz>`
-
-Data Layer
-==========
+************************
+ HP Search Benchmarking
+************************
 
 .. list-table::
-  :header-rows: 1
+   :header-rows: 1
 
-  * - Framework
-    - Dataset
-    - Filename
+   -  -  Framework
+      -  Dataset
+      -  Filename
 
-  * - TensorFlow (Estimator API)
-    - MNIST
-    - :download:`data_layer_mnist_estimator.tgz </examples/data_layer_mnist_estimator.tgz>`
+   -  -  PyTorch
+      -  CIFAR-10
+      -  :download:`darts_cifar10_pytorch.tgz
+         </examples/darts_cifar10_pytorch.tgz>`
 
-  * - TensorFlow (tf.keras)
-    - MNIST
-    - :download:`data_layer_mnist_tf_keras.tgz </examples/data_layer_mnist_tf_keras.tgz>`
+   -  -  PyTorch
+      -  Penn Treebank Dataset
+      -  :download:`darts_penntreebank_pytorch.tgz
+         </examples/darts_penntreebank_pytorch.tgz>`
+
+**********************************
+ Neural Architecture Search (NAS)
+**********************************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  DARTS
+      -  :download:`gaea_pytorch.tgz </examples/gaea_pytorch.tgz>`
+
+***************
+ Meta Learning
+***************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  Omniglot
+      -  :download:`protonet_omniglot_pytorch.tgz
+         </examples/protonet_omniglot_pytorch.tgz>`
+
+****************************************
+ Generative Adversarial Networks (GANs)
+****************************************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  MNIST
+      -  :download:`gan_mnist_pytorch.tgz
+         </examples/gan_mnist_pytorch.tgz>`
+
+****************
+ Decision Trees
+****************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  TensorFlow (Estimator API)
+      -  Titanic
+      -  :download:`gbt_titanic_estimator.tgz
+         </examples/gbt_titanic_estimator.tgz>`
+
+************
+ Data Layer
+************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  TensorFlow (Estimator API)
+      -  MNIST
+      -  :download:`data_layer_mnist_estimator.tgz
+         </examples/data_layer_mnist_estimator.tgz>`
+
+   -  -  TensorFlow (tf.keras)
+      -  MNIST
+      -  :download:`data_layer_mnist_tf_keras.tgz
+         </examples/data_layer_mnist_tf_keras.tgz>`
