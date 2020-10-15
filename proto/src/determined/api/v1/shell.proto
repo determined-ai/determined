@@ -7,6 +7,7 @@ import "google/protobuf/struct.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/shell/v1/shell.proto";
+import "determined/util/v1/util.proto";
 
 // Get a list of shells.
 message GetShellsRequest {
@@ -64,7 +65,16 @@ message KillShellResponse {
 }
 
 // Request to launch a shell.
-message LaunchShellRequest {}
+message LaunchShellRequest {
+  // Shell config (JSON).
+  bytes config = 1;
+  // Template name.
+  string template_name = 2;
+  // The files to run with the command.
+  repeated determined.util.v1.File files = 3;
+  // Additional data.
+  bytes data = 4;
+}
 // Response to LaunchShellRequest.
 message LaunchShellResponse {
   // The requested shell.

@@ -67,7 +67,7 @@ message LaunchTensorboardRequest {
   repeated int32 experiment_ids = 1;
   // List of source trial ids.
   repeated int32 trial_ids = 2;
-  // Tensorboard config.
+  // Tensorboard config (JSON).
   bytes config = 3;
   // Tensorboard template name.
   string template_name = 4;

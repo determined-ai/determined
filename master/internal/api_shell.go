@@ -2,7 +2,11 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -11,8 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var shellsAddr = actor.Addr("shells")
@@ -47,8 +49,21 @@ func (a *apiServer) LaunchShell(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	cmdParams := command.CommandParams{ConfigBytes: req.Config, UserFiles: filesToArchive(req.Files)}
+	if req.TemplateName != "" {
+		cmdParams.Template = &req.TemplateName
+	}
+	if len(req.Data) != 0 {
+		var data map[string]interface{}
+		if err := json.Unmarshal(req.Data, &data); err != nil {
+			return nil, err
+		}
+		cmdParams.Data = data
+	}
+
 	shellLaunchReq := command.ShellLaunchRequest{
-		User: user,
+		CommandParams: &cmdParams,
+		User:          user,
 	}
 	actorResp := a.m.system.AskAt(shellsAddr, shellLaunchReq)
 	if err = api.ProcessActorResponseError(&actorResp); err != nil {

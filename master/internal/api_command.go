@@ -2,10 +2,22 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/commandv1"
 )
+
+var commandsAddr = actor.Addr("commands")
 
 func (a *apiServer) GetCommands(
 	_ context.Context, req *apiv1.GetCommandsRequest,
@@ -32,32 +44,40 @@ func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {
 
-	// commandConfig := command.CommandRequest{
-	// 	ExperimentIDs: experimentIds,
-	// 	TrialIDs:      trialIds,
-	// }
-	// user, _, err := grpc.GetUser(ctx, a.m.db)
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	// }
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
 
-	// commandLaunchReq := command.CommandRequestWithUser{
-	// 	Command: commandConfig,
-	// 	User:    user,
-	// }
-	// actorResp := a.m.system.AskAt(commandsAddr, commandLaunchReq)
-	// if err = api.ProcessActorResponseError(&actorResp); err != nil {
-	// 	return nil, err
-	// }
+	cmdParams := command.CommandParams{ConfigBytes: req.Config, UserFiles: filesToArchive(req.Files)}
+	if req.TemplateName != "" {
+		cmdParams.Template = &req.TemplateName
+	}
+	if len(req.Data) != 0 {
+		var data map[string]interface{}
+		if err := json.Unmarshal(req.Data, &data); err != nil {
+			return nil, err
+		}
+		cmdParams.Data = data
+	}
 
-	// commandID := actorResp.Get().(resourcemanagers.TaskID)
-	// commandReq := commandv1.Command{}
-	// actorResp = a.m.system.AskAt(commandsAddr.Child(commandID), &commandReq)
-	// if err = api.ProcessActorResponseError(&actorResp); err != nil {
-	// 	return nil, err
-	// }
+	commandLaunchReq := command.CommandLaunchRequest{
+		CommandParams: &cmdParams,
+		User:          user,
+	}
+	actorResp := a.m.system.AskAt(commandsAddr, commandLaunchReq)
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
+	}
+
+	commandID := actorResp.Get().(resourcemanagers.TaskID)
+	commandReq := commandv1.Command{}
+	actorResp = a.m.system.AskAt(commandsAddr.Child(commandID), &commandReq)
+	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+		return nil, err
+	}
 
 	return &apiv1.LaunchCommandResponse{
-		// Command: actorResp.Get().(*commandv1.Command),
+		Command: actorResp.Get().(*commandv1.Command),
 	}, nil
 }
