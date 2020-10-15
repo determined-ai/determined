@@ -158,11 +158,14 @@ const TrialDetailsComp: React.FC = () => {
       return null;
     };
 
-    const metricRenderer = (metricName: MetricName) => (_: string, record: Step) => {
-      const value = extractMetricValue(record, metricName);
-      return value ? <Tooltip title={value}>
-        <span>{humanReadableFloat(value)}</span>
-      </Tooltip> : undefined;
+    const metricRenderer = (metricName: MetricName) => {
+      const metricCol = (_: string, record: Step) => {
+        const value = extractMetricValue(record, metricName);
+        return value ? <Tooltip title={value}>
+          <span>{humanReadableFloat(value)}</span>
+        </Tooltip> : undefined;
+      };
+      return metricCol;
     };
 
     const { metric, smallerIsBetter } = experimentConfig?.searcher || {};

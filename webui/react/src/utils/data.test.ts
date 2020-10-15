@@ -207,6 +207,7 @@ describe('data utility', () => {
   });
 
   testGroups.forEach(group => {
+    /* eslint-disable-next-line jest/valid-title */
     describe(group.fn.name, () => {
       it('should test each type correctly', () => {
         tests.forEach(test => {

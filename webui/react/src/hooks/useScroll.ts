@@ -20,16 +20,6 @@ interface ScrollInfo {
   viewWidth: number;
 }
 
-interface ScrollOptions {
-  behavior?: 'auto' | 'smooth';
-  left?: number;
-  top?: number;
-}
-
-type ResizeHandler = (entries: Element[]) => void;
-type ScrollToFn = (options: ScrollOptions) => Promise<void>;
-type ScrollHook = { scroll: ScrollInfo; scrollTo: ScrollToFn; updateScroll: () => void };
-
 const SCROLL_EVENT = 'scroll';
 
 export const defaultScrollInfo = {
