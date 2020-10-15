@@ -1,5 +1,5 @@
-from typing import List, Optional
 import time
+from typing import List, Optional
 
 from determined_common import api
 from determined_common.experimental import checkpoint
@@ -22,11 +22,11 @@ class Experiment:
         self.experiment_data = {}
 
     @classmethod
-    def create_experiment(cls, session, config, context_dir, local=False, test=False, master=''):
-        print('Creating Experiment')
+    def create_experiment(cls, session, config, context_dir, local=False, test=False, master=""):
+        print("Creating Experiment")
         # experiment = api.create_experiment()
         experiment_id = 1  # really should be experiment.id
-        print(f'Created Experiment {experiment_id}')
+        print(f"Created Experiment {experiment_id}")
         return cls(experiment_id)
 
     @classmethod
@@ -40,13 +40,12 @@ class Experiment:
     @property
     def status(self) -> str:
         # status = api.get_experiment_status()
-        status = 'COMPLETED'
+        status = "COMPLETED"
         return status
 
     def wait_for_completion(self):
-        while self.status == 'ACTIVE':
+        while self.status == "ACTIVE":
             time.sleep(10)
-
 
     def top_checkpoint(
         self,
