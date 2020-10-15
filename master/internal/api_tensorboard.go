@@ -2,6 +2,8 @@ package internal
 
 import (
 	"context"
+	"os"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -11,11 +13,30 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
+	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
+
+func filesToArchive(files []*utilv1.File) archive.Archive {
+	filesArchive := make([]archive.Item, 0)
+	for _, file := range files {
+		item := archive.Item{
+			Content:      file.Content,
+			FileMode:     os.FileMode(file.Mode),
+			GroupID:      int(file.Gid),
+			ModifiedTime: archive.UnixTime{Time: time.Unix(file.Mtime, 0)},
+			Path:         file.Path,
+			Type:         byte(file.Type),
+			UserID:       int(file.Uid),
+		}
+		filesArchive = append(filesArchive, item)
+	}
+	return filesArchive
+}
 
 func (a *apiServer) GetTensorboards(
 	_ context.Context, req *apiv1.GetTensorboardsRequest,
@@ -51,7 +72,13 @@ func (a *apiServer) LaunchTensorboard(
 	for _, id := range req.TrialIds {
 		trialIds = append(trialIds, int(id))
 	}
+	cmdParams := command.CommandParams{ConfigBytes: req.Config, UserFiles: filesToArchive(req.Files)}
+	if req.TemplateName != "" {
+		cmdParams.Template = &req.TemplateName
+	}
+
 	tensorboardConfig := command.TensorboardRequest{
+		CommandParams: cmdParams,
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}

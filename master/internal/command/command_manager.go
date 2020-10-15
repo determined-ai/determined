@@ -54,7 +54,7 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		var params commandParams
+		var params CommandParams
 		if err := apiCtx.Bind(&params); err != nil {
 			respondBadRequest(ctx, err)
 			return
