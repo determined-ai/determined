@@ -583,6 +583,7 @@ jobs:
           at: .
       - run: apk add make curl python3 py3-pip
       - run: pip3 install awscli
+      - run: make -C docs set-static-swagger
       - run: make -C docs/deploy publish
 
   package-and-push-system-local:
