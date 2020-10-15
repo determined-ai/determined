@@ -24,7 +24,17 @@ interface Props {
   value?: MetricName | MetricName[];
 }
 
-const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, value, defaultMetricNames }: Props) => {
+const filterFn = (search: string, metricName: string) => {
+  return metricName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
+};
+
+const MetricSelectFilter: React.FC<Props> = ({
+  metricNames,
+  multiple,
+  onChange,
+  value,
+  defaultMetricNames,
+}: Props) => {
   const [ filterString, setFilterString ] = useState('');
 
   const metricValues = useMemo(() => {
@@ -41,13 +51,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     return metricNames.filter(metric => metric.type === MetricType.Validation);
   }, [ metricNames ]);
 
-  const totalNumMetrics = useMemo(() => {
-    return metricNames.length;
-  }, [ metricNames ]);
-
-  const filterFn = (search: string, metricName: string) => {
-    return metricName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
-  };
+  const totalNumMetrics = useMemo(() => { return metricNames.length; }, [ metricNames ]);
 
   // visibleMetrics should always match the list of metrics that antd displays to
   // the user, including any filtering.
