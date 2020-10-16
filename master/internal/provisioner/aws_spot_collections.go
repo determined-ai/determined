@@ -38,18 +38,6 @@ func (c *setOfSpotRequests) deleteIntersection(set2 setOfSpotRequests) *setOfSpo
 	return c
 }
 
-// contains checks if this spotRequest is in the set
-func (c *setOfSpotRequests) contains(s *spotRequest) bool { //nolint:unused
-	_, ok := c.keyMap[s.SpotRequestID]
-	return ok
-}
-
-// containsID checks if a spotRequest with this id is in the set
-func (c *setOfSpotRequests) containsID(s string) bool { //nolint:unused
-	_, ok := c.keyMap[s]
-	return ok
-}
-
 // copy creates a shallow copy of the set
 func (c *setOfSpotRequests) copy() setOfSpotRequests {
 	set := newSetOfSpotRequests()
@@ -125,12 +113,6 @@ func (c *setOfSpotRequests) numReqs() int {
 	return len(c.keyMap)
 }
 
-// string returns a string representation of the set, which is the list of ids separated by commas
-func (c *setOfSpotRequests) string() string { //nolint:unused
-	l := c.idsAsList()
-	return strings.Join(l, ",")
-}
-
 // newSetOfSpotRequests creates a new, empty setOfSpotRequests
 func newSetOfSpotRequests() setOfSpotRequests {
 	return setOfSpotRequests{
@@ -148,12 +130,6 @@ type setOfStrings struct {
 // add a string to the set
 func (c *setOfStrings) add(s string) {
 	c.keyMap[s] = true
-}
-
-// contains checks if a string exists in the set
-func (c *setOfStrings) contains(s string) bool { //nolint:unused
-	_, ok := c.keyMap[s]
-	return ok
 }
 
 // length returns the number of items in the set
