@@ -31,7 +31,7 @@ type nodeInformer struct {
 func newNodeInformer(clientSet k8sClient.Interface, podsHandler *actor.Ref) *nodeInformer {
 	return &nodeInformer{
 		informer: k8Informers.NewSharedInformerFactoryWithOptions(
-			clientSet, 30, []k8Informers.SharedInformerOption{}...),
+			clientSet, 0, []k8Informers.SharedInformerOption{}...),
 		podsHandler: podsHandler,
 		stop:        make(chan struct{}),
 	}
@@ -79,7 +79,7 @@ func (n *nodeInformer) startNodeInformer(ctx *actor.Context) error {
 		},
 	})
 
-	ctx.Log().Debug("starting node informer,")
+	ctx.Log().Debug("starting node informer")
 	n.informer.Start(n.stop)
 	for !nodeInformer.HasSynced() {
 	}
