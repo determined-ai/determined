@@ -1,0 +1,6 @@
+:orphan:
+
+**BUG FIXES**
+
+-  WebUI: Prevent navigation item tooltips from showing up when hovering
+   outside of the navigation bar.
