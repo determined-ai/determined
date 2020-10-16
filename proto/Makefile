@@ -7,7 +7,6 @@ src_path := src/determined
 # Pre-defined list of all source files.
 source_files := $(shell find $(src_path) -type f -name '*.proto')
 
-# Currently only one file needs GRPC treatment.
 grpc_in := $(src_path)/api/v1/api.proto
 
 # Currently only one file needs Swagger treatment.
