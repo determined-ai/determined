@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
+	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -52,11 +53,14 @@ type pods struct {
 	masterPort int32
 
 	informer                *actor.Ref
+	nodeInformer            *actor.Ref
 	eventListener           *actor.Ref
 	resourceRequestQueue    *actor.Ref
 	podNameToPodHandler     map[string]*actor.Ref
 	containerIDToPodHandler map[string]*actor.Ref
 	podHandlerToMetadata    map[*actor.Ref]podMetadata
+
+	currentNodes map[string]*k8sV1.Node
 
 	podInterface       typedV1.PodInterface
 	configMapInterface typedV1.ConfigMapInterface
@@ -79,6 +83,7 @@ func Initialize(
 		containerIDToPodHandler:  make(map[string]*actor.Ref),
 		podHandlerToMetadata:     make(map[*actor.Ref]podMetadata),
 		leaveKubernetesResources: leaveKubernetesResources,
+		currentNodes:             make(map[string]*k8sV1.Node),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 
@@ -101,6 +106,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 		p.startPodInformer(ctx)
+		p.startNodeInformer(ctx)
 		p.startEventListener(ctx)
 
 	case sproto.StartTaskPod:
@@ -110,6 +116,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 	case podStatusUpdate:
 		p.receivePodStatusUpdate(ctx, msg)
+
+	case nodeStatusUpdate:
+		p.receiveNodeStatusUpdate(ctx, msg)
 
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
@@ -131,6 +140,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		switch msg.Child {
 		case p.informer:
 			return errors.Errorf("pod informer failed")
+		case p.nodeInformer:
+			return errors.Errorf("node informer failed")
 		case p.eventListener:
 			return errors.Errorf("event listener failed")
 		case p.resourceRequestQueue:
@@ -221,6 +232,10 @@ func (p *pods) startPodInformer(ctx *actor.Context) {
 	p.informer, _ = ctx.ActorOf("pod-informer", newInformer(p.podInterface, p.namespace, ctx.Self()))
 }
 
+func (p *pods) startNodeInformer(ctx *actor.Context) {
+	p.nodeInformer, _ = ctx.ActorOf("node-informer", newNodeInformer(p.clientSet, ctx.Self()))
+}
+
 func (p *pods) startEventListener(ctx *actor.Context) {
 	p.eventListener, _ = ctx.ActorOf(
 		"event-listener", newEventListener(p.clientSet, p.namespace, ctx.Self()))
@@ -270,6 +285,16 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 	}
 
 	ctx.Tell(ref, msg)
+}
+
+func (p *pods) receiveNodeStatusUpdate(ctx *actor.Context, msg nodeStatusUpdate) {
+	if msg.updatedNode != nil {
+		p.currentNodes[msg.updatedNode.Name] = msg.updatedNode
+	}
+
+	if msg.deletedNode != nil {
+		delete(p.currentNodes, msg.deletedNode.Name)
+	}
 }
 
 func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
@@ -355,14 +380,8 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)
 	}
 
-	nodes, err := p.clientSet.CoreV1().Nodes().List(metaV1.ListOptions{})
-	if err != nil {
-		ctx.Log().WithError(err).Error("error listing nodes")
-		return nil
-	}
-
 	summary := make(map[string]agent.AgentSummary)
-	for _, node := range nodes.Items {
+	for _, node := range p.currentNodes {
 		gpuResources := node.Status.Capacity["nvidia.com/gpu"]
 		numSlots := gpuResources.Value()
 		if numSlots < 1 {

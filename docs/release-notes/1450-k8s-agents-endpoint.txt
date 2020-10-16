@@ -1,0 +1,9 @@
+:orphan:
+
+**Improvements**
+
+- Improved performance of agents endpoint for Kubernetes deployments, which
+  improves the performance of the cluster page in the WebUI as well as
+  ``det slot list`` and ``det task list`` in the CLI.
+
+- Release version ``0.3.0`` of the Determined Helm chart.
