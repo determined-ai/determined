@@ -22,8 +22,7 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
 /* Authentication */
 
-export const getCurrentUserOld = generateApi<EmptyParams, DetailedUser>(Config.getCurrentUser);
-export const getCurrentUser = generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(Config.getCurrentUserDetApi);
+export const getCurrentUser = generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(Config.getCurrentUser);
 
 export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
 

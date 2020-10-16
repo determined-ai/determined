@@ -61,21 +61,7 @@ export const login: HttpApi<Credentials, void> = {
   postProcess: noOp,
 };
 
-export const getCurrentUser: HttpApi<EmptyParams, DetailedUser> = {
-  httpOptions: () => ({ url: '/users/me' }),
-  name: 'getCurrentUser',
-  postProcess: (response) => {
-    const result = decode<ioTypeDetailedUser>(ioDetailedUser, response.data);
-    return {
-      id: result.id,
-      isActive: result.active,
-      isAdmin: result.admin,
-      username: result.username,
-    };
-  },
-};
-
-export const getCurrentUserDetApi: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
+export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
   name: 'getCurrentUser',
   postProcess: (response) => {
     const user: DetailedUser = {
