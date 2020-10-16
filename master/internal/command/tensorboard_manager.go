@@ -43,7 +43,7 @@ const (
 
 // TensorboardRequest describes a request for a new Tensorboard.
 type TensorboardRequest struct {
-	CommandParams
+	*CommandParams
 
 	ExperimentIDs []int `json:"experiment_ids"`
 	TrialIDs      []int `json:"trial_ids"`
@@ -122,7 +122,7 @@ func (t *tensorboardManager) processTensorboardRequest(
 	req *TensorboardRequest,
 ) (*summary, error) {
 	commandReq, err := parseCommandRequestWithUser(
-		*user, t.db, &req.CommandParams, &t.taskSpec.TaskContainerDefaults)
+		*user, t.db, req.CommandParams, &t.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}

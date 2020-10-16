@@ -79,7 +79,7 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	tensorboardConfig := command.TensorboardRequest{
-		CommandParams: *cmdParams,
+		CommandParams: cmdParams,
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}
