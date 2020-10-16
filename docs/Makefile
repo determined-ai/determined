@@ -1,5 +1,4 @@
 export VERSION := $(shell cat ../VERSION)
-swagger_main_script = ./site/html/rest-api/swagger-ui-main.js
 
 SPHINXOPTS    = -W
 SPHINXBUILD   = sphinx-build
@@ -29,8 +28,7 @@ clean:
 
 .PHONY: publish
 publish:
-	rm $(swagger_main_script)
-	cp ./swagger-ui/swagger-ui-main-deploy.js $(swagger_main_script)
+	cp ./swagger-ui/swagger-ui-main-deploy.js ./site/html/rest-api/swagger-ui-main.js
 	$(MAKE) -C deploy publish
 
 live:
