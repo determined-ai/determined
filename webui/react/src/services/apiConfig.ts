@@ -10,7 +10,6 @@ import {
   jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import {
-  ApiSorter,
   CreateNotebookParams, CreateTensorboardParams,
   DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams,
@@ -23,6 +22,7 @@ import {
   ExperimentDetails, Log, TBSourceType, TrialDetails,
 } from 'types';
 
+import { detApi } from './api';
 import { noOp } from './utils';
 
 /* Helpers */
@@ -66,6 +66,15 @@ export const getCurrentUser: HttpApi<EmptyParams, DetailedUser> = {
       username: result.username,
     };
   },
+};
+
+export const getCurrentUserDetApi: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
+  name: 'getCurrentUser',
+  postProcess: (response) => {
+    const user: DetailedUser = { username: response.user?.username };
+    return user;
+  },
+  request: detApi.Auth.determinedCurrentUser,
 };
 
 export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
