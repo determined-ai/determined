@@ -32,8 +32,9 @@ type protoCommandParams struct {
 }
 
 // prepareLaunchParams prepares command launch parameters.
-func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandParams) (*command.CommandParams, *model.User, error) {
-
+func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandParams) (
+	*command.CommandParams, *model.User, error,
+) {
 	user, _, err := grpc.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)

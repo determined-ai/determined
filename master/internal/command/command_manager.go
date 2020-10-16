@@ -31,7 +31,7 @@ type commandManager struct {
 	taskSpec              *tasks.TaskSpec
 }
 
-// CommandLaunchRequest describes a request to launch a new shell.
+// CommandLaunchRequest describes a request to launch a new command.
 type CommandLaunchRequest struct {
 	*CommandParams
 	User *model.User
@@ -56,7 +56,9 @@ func (c *commandManager) processCommandLaunchRequest(
 	ctx *actor.Context,
 	req CommandLaunchRequest,
 ) (*summary, error) {
-	commandReq, err := parseCommandRequest(*req.User, c.db, req.CommandParams, &c.taskSpec.TaskContainerDefaults)
+	commandReq, err := parseCommandRequest(*req.User, c.db, req.CommandParams,
+		&c.taskSpec.TaskContainerDefaults,
+	)
 	if err != nil {
 		return nil, err
 	}
