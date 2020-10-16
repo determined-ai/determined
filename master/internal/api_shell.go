@@ -2,16 +2,10 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -44,33 +38,18 @@ func (a *apiServer) KillShell(
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
-
-	user, _, err := grpc.GetUser(ctx, a.m.db)
+	cmdParams, user, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+		TemplateName: req.TemplateName,
+		Config:       req.Config,
+		Files:        req.Files,
+		Data:         req.Data,
+	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
-
-	cmdParams := command.CommandParams{UserFiles: filesToArchive(req.Files)}
-	if req.TemplateName != "" {
-		cmdParams.Template = &req.TemplateName
-	}
-	if req.Config != nil {
-		configBytes, err := protojson.Marshal(req.Config)
-		if err != nil {
-			return nil, err
-		}
-		cmdParams.ConfigBytes = configBytes
-	}
-	if len(req.Data) != 0 {
-		var data map[string]interface{}
-		if err := json.Unmarshal(req.Data, &data); err != nil {
-			return nil, err
-		}
-		cmdParams.Data = data
+		return nil, err
 	}
 
 	shellLaunchReq := command.ShellLaunchRequest{
-		CommandParams: &cmdParams,
+		CommandParams: cmdParams,
 		User:          user,
 	}
 	actorResp := a.m.system.AskAt(shellsAddr, shellLaunchReq)

@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -90,26 +89,17 @@ func (a *apiServer) NotebookLogs(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
-
-	user, _, err := grpc.GetUser(ctx, a.m.db)
+	cmdParams, user, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+		TemplateName: req.TemplateName,
+		Config:       req.Config,
+		Files:        req.Files,
+	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
-
-	cmdParams := command.CommandParams{UserFiles: filesToArchive(req.Files)}
-	if req.TemplateName != "" {
-		cmdParams.Template = &req.TemplateName
-	}
-	if req.Config != nil {
-		configBytes, err := protojson.Marshal(req.Config)
-		if err != nil {
-			return nil, err
-		}
-		cmdParams.ConfigBytes = configBytes
+		return nil, err
 	}
 
 	notebookLaunchReq := command.NotebookLaunchRequest{
-		CommandParams: &cmdParams,
+		CommandParams: cmdParams,
 		User:          user,
 	}
 	actorResp := a.m.system.AskAt(notebooksAddr, notebookLaunchReq)

@@ -5,13 +5,8 @@ import (
 	"os"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -74,28 +69,20 @@ func (a *apiServer) LaunchTensorboard(
 		trialIds = append(trialIds, int(id))
 	}
 
-	cmdParams := command.CommandParams{UserFiles: filesToArchive(req.Files)}
-	if req.TemplateName != "" {
-		cmdParams.Template = &req.TemplateName
-	}
-	if req.Config != nil {
-		configBytes, err := protojson.Marshal(req.Config)
-		if err != nil {
-			return nil, err
-		}
-		cmdParams.ConfigBytes = configBytes
+	cmdParams, user, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+		TemplateName: req.TemplateName,
+		Config:       req.Config,
+		Files:        req.Files,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	tensorboardConfig := command.TensorboardRequest{
-		CommandParams: cmdParams,
+		CommandParams: *cmdParams,
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}
-	user, _, err := grpc.GetUser(ctx, a.m.db)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
-
 	tensorboardLaunchReq := command.TensorboardRequestWithUser{
 		Tensorboard: tensorboardConfig,
 		User:        user,
