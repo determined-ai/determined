@@ -9,12 +9,21 @@ export interface HttpOptions {
   body?: Record<keyof unknown, unknown> | string;
 }
 
-export interface HttpApi<Input, Output>{
+interface ApiBase {
   name: string;
-  httpOptions: (params: Input) => HttpOptions;
-  postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
   stubbedResponse?: unknown;
   // middlewares?: Middleware[]; // success/failure middlewares
+}
+
+// Designed for use with Swagger generated api bindings.
+export interface DetApi<Input, DetOutput, Output> extends ApiBase {
+  request: (params: Input) => Promise<DetOutput>;
+  postProcess: (response: DetOutput) => Output;
+  stubbedResponse?: DetOutput;
+}
+export interface HttpApi<Input, Output> extends ApiBase {
+  httpOptions: (params: Input) => HttpOptions;
+  postProcess: (response: AxiosResponse<unknown>) => Output; // io type decoder.
 }
 
 export interface ApiState<T> {

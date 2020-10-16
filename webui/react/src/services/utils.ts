@@ -5,7 +5,7 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
 
-import { HttpApi } from './types';
+import { DetApi, HttpApi } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
@@ -126,3 +126,18 @@ export const consumeStream = async <T = unknown>(
     throw e;
   }
 };
+
+/* eslint-disable-next-line */
+export const noOp = (): void => {}
+
+export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
+  return async function(params: Input & { cancelToken?: CancelToken }): Promise<Output> {
+    try {
+      const response = api.stubbedResponse ? api.stubbedResponse : await api.request(params);
+      return api.postProcess(response);
+    } catch (e) {
+      processApiError(api.name, e);
+      throw e;
+    }
+  };
+}

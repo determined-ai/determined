@@ -2,6 +2,7 @@ import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
 import { decode, ioDetailedUser, ioTypeDetailedUser } from 'ioTypes';
+import * as Api from 'services/api-ts-sdk';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
   jsonToExperimentDetails, jsonToExperiments, jsonToLogs, jsonToNotebook, jsonToNotebooks,
@@ -9,7 +10,9 @@ import {
   jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import {
+  ApiSorter,
   CreateNotebookParams, CreateTensorboardParams,
+  DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams,
   ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams,
@@ -19,6 +22,8 @@ import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
   ExperimentDetails, Log, TBSourceType, TrialDetails,
 } from 'types';
+
+import { noOp } from './utils';
 
 /* Helpers */
 
@@ -46,6 +51,7 @@ export const login: HttpApi<Credentials, void> = {
     };
   },
   name: 'login',
+  postProcess: noOp,
 };
 
 export const getCurrentUser: HttpApi<EmptyParams, DetailedUser> = {
@@ -113,6 +119,7 @@ export const patchExperiment: HttpApi<PatchExperimentParams, void> = {
     };
   },
   name: 'patchExperiment',
+  postProcess: noOp,
 };
 
 export const killExperiment: HttpApi<KillExpParams, void> = {
@@ -123,6 +130,7 @@ export const killExperiment: HttpApi<KillExpParams, void> = {
     };
   },
   name: 'killExperiment',
+  postProcess: noOp,
 };
 
 export const getExperimentSummaries: HttpApi<ExperimentsParams, ExperimentBase[]> = {
@@ -182,6 +190,7 @@ export const killCommand: HttpApi<KillCommandParams, void> = {
     };
   },
   name: 'killCommand',
+  postProcess: noOp,
 };
 
 export const createNotebook: HttpApi<CreateNotebookParams, Command> = {
