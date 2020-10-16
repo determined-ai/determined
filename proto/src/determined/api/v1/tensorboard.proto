@@ -3,6 +3,8 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/struct.proto";
+
 import "determined/api/v1/pagination.proto";
 import "determined/tensorboard/v1/tensorboard.proto";
 import "determined/util/v1/util.proto";
@@ -68,7 +70,7 @@ message LaunchTensorboardRequest {
   // List of source trial ids.
   repeated int32 trial_ids = 2;
   // Tensorboard config (JSON).
-  bytes config = 3;
+  google.protobuf.Struct config = 3;
   // Tensorboard template name.
   string template_name = 4;
   // The files to run with the command.

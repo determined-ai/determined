@@ -67,7 +67,7 @@ message KillCommandResponse {
 // Request to launch a command.
 message LaunchCommandRequest {
   // Command config (JSON).
-  bytes config = 1;
+  google.protobuf.Struct config = 1;
   // Template name.
   string template_name = 2;
   // The files to run with the command.

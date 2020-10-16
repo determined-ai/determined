@@ -7,6 +7,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -72,9 +73,17 @@ func (a *apiServer) LaunchTensorboard(
 	for _, id := range req.TrialIds {
 		trialIds = append(trialIds, int(id))
 	}
-	cmdParams := command.CommandParams{ConfigBytes: req.Config, UserFiles: filesToArchive(req.Files)}
+
+	cmdParams := command.CommandParams{UserFiles: filesToArchive(req.Files)}
 	if req.TemplateName != "" {
 		cmdParams.Template = &req.TemplateName
+	}
+	if req.Config != nil {
+		configBytes, err := protojson.Marshal(req.Config)
+		if err != nil {
+			return nil, err
+		}
+		cmdParams.ConfigBytes = configBytes
 	}
 
 	tensorboardConfig := command.TensorboardRequest{

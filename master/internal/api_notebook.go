@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -95,9 +96,16 @@ func (a *apiServer) LaunchNotebook(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	cmdParams := command.CommandParams{ConfigBytes: req.Config, UserFiles: filesToArchive(req.Files)}
+	cmdParams := command.CommandParams{UserFiles: filesToArchive(req.Files)}
 	if req.TemplateName != "" {
 		cmdParams.Template = &req.TemplateName
+	}
+	if req.Config != nil {
+		configBytes, err := protojson.Marshal(req.Config)
+		if err != nil {
+			return nil, err
+		}
+		cmdParams.ConfigBytes = configBytes
 	}
 
 	notebookLaunchReq := command.NotebookLaunchRequest{
