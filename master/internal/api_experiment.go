@@ -485,7 +485,17 @@ func (a *apiServer) GetExperimentCheckpoints(
 func reqToP(
 	req *apiv1.PostExperimentRequest,
 ) (*PostExperimentParams, error) {
-	return nil, nil
+
+	params := PostExperimentParams{
+		ConfigBytes:  protojson.Format(req.Config),
+		ModelDef:     filesToArchive(req.Context),
+		ValidateOnly: req.ValidateOnly,
+	}
+	if req.ParentId != 0 {
+		parentID := int(req.ParentId)
+		params.ParentID = &parentID
+	}
+	return &params, nil
 }
 
 func (a *apiServer) PostExperiment(
@@ -497,11 +507,6 @@ func (a *apiServer) PostExperiment(
 	}
 	dbExp, validateOnly, err := a.m.postParseExperiment(detParams)
 
-	user, _, err := grpc.GetUser(ctx, a.m.db)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
-
 	if err != nil {
 		return nil, echo.NewHTTPError(
 			http.StatusBadRequest,
@@ -511,6 +516,11 @@ func (a *apiServer) PostExperiment(
 	if validateOnly {
 		// FIXME. in the old api do we return an error here?
 		return nil, status.Errorf(codes.OK, "it's fine")
+	}
+
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
 	dbExp.OwnerID = &user.ID
