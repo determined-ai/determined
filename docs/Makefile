@@ -5,12 +5,11 @@ SPHINXBUILD   = sphinx-build
 
 .PHONY: build-examples
 build-examples:
-	make -C ../examples build
-
+	$(MAKE) -C ../examples build
 
 .PHONY: build-helm
 build-helm:
-	make -C ../helm build
+	$(MAKE) -C ../helm build
 
 .PHONY: build
 build: build-examples build-helm
@@ -28,8 +27,7 @@ clean:
 	rm -rf site
 
 .PHONY: publish
-publish: clean
-	$(MAKE) build
+publish:
 	cp ./swagger-ui/swagger-ui-main-deploy.js ./site/html/rest-api/swagger-ui-main.js
 	$(MAKE) -C deploy publish
 
