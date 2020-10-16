@@ -106,8 +106,7 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	tensorboardID := actorResp.Get().(resourcemanagers.TaskID)
-	tensorboardReq := tensorboardv1.Tensorboard{}
-	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardReq)
+	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardv1.Tensorboard{})
 	if err = api.ProcessActorResponseError(&actorResp); err != nil {
 		return nil, err
 	}

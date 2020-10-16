@@ -79,8 +79,7 @@ func (a *apiServer) LaunchCommand(
 	}
 
 	commandID := actorResp.Get().(resourcemanagers.TaskID)
-	commandReq := commandv1.Command{}
-	actorResp = a.m.system.AskAt(commandsAddr.Child(commandID), &commandReq)
+	actorResp = a.m.system.AskAt(commandsAddr.Child(commandID), &commandv1.Command{})
 	if err = api.ProcessActorResponseError(&actorResp); err != nil {
 		return nil, err
 	}

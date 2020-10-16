@@ -79,8 +79,7 @@ func (a *apiServer) LaunchShell(
 	}
 
 	shellID := actorResp.Get().(resourcemanagers.TaskID)
-	shellReq := shellv1.Shell{}
-	actorResp = a.m.system.AskAt(shellsAddr.Child(shellID), &shellReq)
+	actorResp = a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
 	if err = api.ProcessActorResponseError(&actorResp); err != nil {
 		return nil, err
 	}
