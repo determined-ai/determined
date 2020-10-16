@@ -60,17 +60,22 @@ func (a *apiServer) checkExperimentExists(id int) error {
 	}
 }
 
+func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, error) {
+	exp := &experimentv1.Experiment{}
+	switch err := a.m.db.QueryProto("get_experiment", exp, experimentID); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", experimentID)
+	case err != nil:
+		return nil, errors.Wrapf(err,
+			"error fetching experiment from database: %d", experimentID)
+	}
+	return exp, nil
+}
+
 func (a *apiServer) GetExperiment(
 	_ context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
-	exp := &experimentv1.Experiment{}
-	switch err := a.m.db.QueryProto("get_experiment", exp, req.ExperimentId); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
-	case err != nil:
-		return nil, errors.Wrapf(err,
-			"error fetching experiment from database: %d", req.ExperimentId)
-	}
+	exp, err := a.getExperiment(int(req.ExperimentId))
 
 	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
 	if err != nil {
@@ -530,15 +535,10 @@ func (a *apiServer) PostExperiment(
 	}
 	a.m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
-	// TODO
-	// c.Response().Header().Set(echo.HeaderLocation, fmt.Sprintf("/experiments/%v", e.ID))
-	// response := model.ExperimentDescriptor{
-	// 	ID:       e.ID,
-	// 	Archived: false,
-	// 	Config:   e.Config,
-	// 	Labels:   make([]string, 0),
-	// }
-	return &apiv1.PostExperimentResponse{Experiment: &experimentv1.Experiment{
-		Id: int32(e.ID),
-	}}, nil
+	// DISCUSS if we could convert model.Experiment to proto experiment in memory..
+	protoExp, err := a.getExperiment(dbExp.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.PostExperimentResponse{Experiment: protoExp}, nil
 }
