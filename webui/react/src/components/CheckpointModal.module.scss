@@ -37,7 +37,7 @@
     display: flex;
   }
   .resourceName {
-    flex-shrink: 0;
+    flex-shrink: 1;
     padding-right: var(--theme-sizes-layout-small);
   }
   .resourceSpacer {

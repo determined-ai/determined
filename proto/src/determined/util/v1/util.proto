@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package determined.util.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/utilv1";
+
+import "google/protobuf/timestamp.proto";
+
+import "protoc-gen-swagger/options/annotations.proto";
+
+// File is a Unix file.
+message File {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "path", "type", "content", "mtime", "mode", "uid", "gid" ]
+    }
+  };
+  // Path to the file.
+  string path = 1;
+  // File type.
+  int32 type = 2;
+  // base64 encoded contents of the file.
+  bytes content = 3;
+  // Modified time (Unix timestamp).
+  int64 mtime = 4;
+  // File mode.
+  int32 mode = 5;
+  // User ID.
+  int32 uid = 6;
+  // Group ID.
+  int32 gid = 7;
+}

@@ -8,8 +8,6 @@ import {
   alphanumericSorter, commandStateSorter, stringTimeSorter,
 } from 'utils/data';
 
-import { SourceInfo } from './TaskList';
-
 export const columns: ColumnType<CommandTask>[] = [
   {
     dataIndex: 'id',
@@ -53,13 +51,5 @@ export const columns: ColumnType<CommandTask>[] = [
     className: 'fullCell',
     key: 'action',
     title: '',
-  },
-];
-
-export const sourceColumns: ColumnType<SourceInfo>[] = [
-  {
-    key: 'name',
-    sorter: (a: SourceInfo, b: SourceInfo): number => alphanumericSorter(a.label, b.label),
-    title: 'Name',
   },
 ];

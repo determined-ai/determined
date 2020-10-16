@@ -49,7 +49,7 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
       x: xData,
       y: yData,
     } ];
-  }, [ props.startTime, props.validationHistory ]);
+  }, [ props.startTime, props.validationHistory, validationMetric ]);
 
   return <MetricChart
     data={data}

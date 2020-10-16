@@ -387,14 +387,6 @@ class TFKerasTrialController(det.LoopTrialController):
         else:
             context.model.compile(*compile_args.args, **compile_args.kwargs)
 
-    @staticmethod
-    def support_determined_native() -> bool:
-        return True
-
-    @staticmethod
-    def supports_multi_gpu_training() -> bool:
-        return True
-
     def _load(self) -> None:
         if not self.load_path:
             return

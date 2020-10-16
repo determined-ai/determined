@@ -41,7 +41,7 @@ clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy
 check-%:
 	$(MAKE) -C $(subst -,/,$*) check
 .PHONY: check
-check: check-common check-proto check-harness check-cli check-deploy check-e2e_tests check-tools check-master check-agent check-webui check-examples
+check: check-common check-proto check-harness check-cli check-deploy check-e2e_tests check-tools check-master check-agent check-webui check-examples check-docs
 
 .PHONY: fmt-%
 fmt-%:

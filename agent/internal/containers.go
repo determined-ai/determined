@@ -72,14 +72,6 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			fmt.Sprintf("DET_AGENT_ID=%s", c.Options.AgentID),
 		}
 
-		// The master might be listening over both TLS and non-TLS, in which case it will send out
-		// TLS-related fields to all tasks, since it doesn't keep track of which port each agent used. But
-		// if this agent is using a non-TLS connection, we have to make sure tasks do as well, since we
-		// don't know the TLS port.
-		if !c.Options.Security.TLS.Enabled {
-			c.GlobalEnvVars = append(c.GlobalEnvVars, "DET_USE_TLS=false")
-		}
-
 		c.Labels = map[string]string{
 			dockerContainerTypeLabel: dockerContainerTypeValue,
 			dockerAgentLabel:         c.Options.AgentID,

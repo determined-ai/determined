@@ -42,7 +42,7 @@ type PlotArguments = [
 const defaultLayout: Partial<Plotly.Layout> = {
   height: 400,
   hovermode: 'x unified',
-  legend: { xanchor: 'right' },
+  legend: { bgcolor: 'rgba(255,255,255,0.75)', xanchor: 'right' },
   margin: { b: 50, l: 50, pad: 6, r: 10, t: 10 },
   showlegend: true,
   xaxis: { hoverformat: '' },
@@ -73,20 +73,26 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   }, [ maxRange ]);
 
   const handleRelayout = useCallback((event: PlotRelayoutEvent) => {
-    // Brute force check to keep Typescript happy.
-    if (event['xaxis.range[0]'] != null && event['xaxis.range[1]'] != null &&
-        event['yaxis.range[0]'] != null && event['yaxis.range[1]'] != null) {
-      /*
-      * Preserve the zoom and pan range. When new data comes in
-      * the re-rendering of the plot will render the same zoom level.
-      */
-      setRange({
-        xaxis: [ event['xaxis.range[0]'], event['xaxis.range[1]'] ],
-        yaxis: [ event['yaxis.range[0]'], event['yaxis.range[1]'] ],
-      });
-      setIsZoomed(true);
+    if (!range) {
+      return;
     }
-  }, []);
+
+    /*
+    * Preserve the zoom and pan range. When new data comes in
+    * the re-rendering of the plot will render the same zoom level.
+    */
+    setRange({
+      xaxis: [
+        event['xaxis.range[0]'] || range['xaxis'][0],
+        event['xaxis.range[1]'] || range['xaxis'][1],
+      ],
+      yaxis: [
+        event['yaxis.range[0]'] || range['yaxis'][0],
+        event['yaxis.range[1]'] || range['yaxis'][1],
+      ],
+    });
+    setIsZoomed(true);
+  }, [ range ]);
 
   const renderPlot = useCallback(async (
     elementId: string,
@@ -101,15 +107,18 @@ const MetricChart: React.FC<Props> = (props: Props) => {
     if (isRendered) {
       await Plotly.react.apply(null, args);
     } else {
+      setIsRendered(true);
       const chart: PlotlyHTMLElement = await Plotly.newPlot.apply(null, args);
       chart.on('plotly_doubleclick', handleDoubleClick);
       chart.on('plotly_relayout', handleRelayout);
       chart.on('plotly_legendclick', () => false);
-      setIsRendered(true);
     }
   }, [ handleDoubleClick, handleRelayout, isRendered ]);
 
-  const handleScaleSelect = useCallback((newValue: SelectValue) => setScale(newValue as Scale), []);
+  const handleScaleSelect = useCallback((newValue: SelectValue) => {
+    setScale(newValue as Scale);
+    setIsZoomed(false);
+  }, []);
 
   useEffect(() => {
     let xMin = Number.POSITIVE_INFINITY;
@@ -129,6 +138,11 @@ const MetricChart: React.FC<Props> = (props: Props) => {
       });
     });
 
+    if (scale === Scale.Log) {
+      yMax = Math.log10(yMax);
+      yMin = Math.log10(yMin);
+    }
+
     // Add padding to the ranges.
     const [ xPad, yPad ] = [ (xMax - xMin) * PADDING_PERCENT, (yMax - yMin) * PADDING_PERCENT ];
     const [ xMinEdge, xMaxEdge ] = [ xMin - xPad, xMax + xPad ];
@@ -141,7 +155,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
     setMaxRange(newMaxRange);
 
     if (!isZoomed) setRange(clone(newMaxRange));
-  }, [ isZoomed, props.data ]);
+  }, [ isZoomed, props.data, scale ]);
 
   useEffect(() => {
     const layout = clone(defaultLayout);

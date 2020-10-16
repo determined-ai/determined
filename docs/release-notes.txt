@@ -8,6 +8,53 @@
  Version 0.13
 **************
 
+Version 0.13.6
+==============
+
+**Release Date:** October 14, 2020
+
+**Improvements**
+
+-  Agent: The ``boot_disk_source_image`` field for GCP dynamic agents
+   and ``image_id`` field for AWS dynamic agents are now optional. If
+   omitted, the default value is the Determined agent image that matches
+   the Determined master being used.
+
+-  Documentation: Ship Swagger UI with Determined documentation. The
+   ``/swagger-ui`` endpoint has been renamed to ``/docs/rest-api``.
+
+-  Documentation: Add a :ref:`guide on configuring TLS <tls>` in
+   Determined.
+
+-  Kubernetes: Add support for configuring memory and CPU requirements
+   for the Determined database when installing via the Determined Helm
+   Chart.
+
+-  Kubernetes: Add support for configuring the `storageClass
+   <https://kubernetes.io/docs/concepts/storage/storage-classes/>`__
+   that is used when deploying a database using the Determined Helm
+   Chart.
+
+**Bug Fixes**
+
+-  Harness: Do not require the master to present a full TLS certificate
+   chain when the certificate is signed by a well-known Certificate
+   Authority.
+
+-  Harness: Fix a bug which affected ``TFKerasTrial`` using TensorFlow 2
+   with ``gradient_aggregation`` > 1.
+
+-  Master: Fix a bug where the master instance would fail if an
+   experiment could not be read from the database.
+
+-  WebUI: Preserve the colors used for multiple metrics on the metric
+   chart.
+
+-  WebUI: Fix the ability to cancel a batch of experiments.
+
+-  WebUI: Fix a bug which caused the Experiment Details page to not
+   render when the latest validation metric is not available.
+
 Version 0.13.5
 ==============
 
@@ -15,49 +62,73 @@ Version 0.13.5
 
 **Improvements**
 
-- Security: Use one TCP port for all incoming connections to the master and use TLS for all connections if configured.
+-  Security: Use one TCP port for all incoming connections to the master
+   and use TLS for all connections if configured.
 
-  - **Breaking Change:** The ``http_port`` and ``https_port`` options in the master configuration have been replaced by the single ``port`` option. The ``security.http`` option is no longer accepted; the master can no longer be configured to listen over HTTP and HTTPS simultaneously.
+   -  **Breaking Change:** The ``http_port`` and ``https_port`` options
+      in the master configuration have been replaced by the single
+      ``port`` option. The ``security.http`` option is no longer
+      accepted; the master can no longer be configured to listen over
+      HTTP and HTTPS simultaneously.
 
-- Security: Support configuring TLS encryption when deploying Determined on Kubernetes. For more details please see :ref:`install-on-kubernetes`.
+-  Security: Support configuring TLS encryption when deploying
+   Determined on Kubernetes. For more details please see
+   :ref:`install-on-kubernetes`.
 
-- Agent: Increase default max agent starting and idle timeouts to 20 minutes and increase max disconnected period from 5 to 10 minutes.
+-  Agent: Increase default max agent starting and idle timeouts to 20
+   minutes and increase max disconnected period from 5 to 10 minutes.
 
-- Deployment: Add support for ``det-deploy aws`` in the following new regions: ``ap-northeast-1``, ``eu-central-1``, ``eu-west-1``, ``us-east-2``.
+-  Deployment: Add support for ``det-deploy aws`` in the following new
+   regions: ``ap-northeast-1``, ``eu-central-1``, ``eu-west-1``,
+   ``us-east-2``.
 
-- Docker: Publish new Docker task containers that upgrade TensorFlow versions from 1.15.0 to 1.15.4, and 2.2.0 to 2.2.1.
+-  Docker: Publish new Docker task containers that upgrade TensorFlow
+   versions from 1.15.0 to 1.15.4, and 2.2.0 to 2.2.1.
 
-- Documentation: Add extra documentation and reorganize examples by use case.
+-  Documentation: Add extra documentation and reorganize examples by use
+   case.
 
-- Documentation: Add a ``tf.layers-in-Estimator`` example.
+-  Documentation: Add a ``tf.layers-in-Estimator`` example.
 
-- Kubernetes: Add support for users to specify ``initContainers`` and ``containers`` as part of their custom pod specs. Please see :ref:`custom-pod-specs` for details.
+-  Kubernetes: Add support for users to specify ``initContainers`` and
+   ``containers`` as part of their custom pod specs. Please see
+   :ref:`custom-pod-specs` for details.
 
-- Kubernetes: Publish version 0.2.0 of the Determined Helm chart.
+-  Kubernetes: Publish version 0.2.0 of the Determined Helm chart.
 
-- Native API: Deprecate Native API. Removed related examples and docs.
+-  Native API: Deprecate Native API. Removed related examples and docs.
 
-- Trials: Remove support for ``TensorpackTrial``.
+-  Trials: Remove support for ``TensorpackTrial``.
 
-- WebUI: Improve polling behavior for experiment and trial details pages to avoid hanging indefinitely for very large experiments/trials.
+-  WebUI: Improve polling behavior for experiment and trial details
+   pages to avoid hanging indefinitely for very large
+   experiments/trials.
 
 **Bug Fixes**
 
-- Trials: Fix a bug where if only a subset of workers on a machine executed the ``on_trial_close()`` ``EstimatorTrial`` callback, the container would terminate as soon as one worker exited.
+-  Trials: Fix a bug where if only a subset of workers on a machine
+   executed the ``on_trial_close()`` ``EstimatorTrial`` callback, the
+   container would terminate as soon as one worker exited.
 
-- Trials: Fix a bug where ``det e create --test`` would succeed when there were checkpointing failures.
+-  Trials: Fix a bug where ``det e create --test`` would succeed when
+   there were checkpointing failures.
 
-- WebUI: Fix the issue of multiple selected rows dissappearing after a successful table batch action.
+-  WebUI: Fix the issue of multiple selected rows dissappearing after a
+   successful table batch action.
 
-- WebUI: Remove unused TensorBoard sources column from the task list page.
+-  WebUI: Remove unused TensorBoard sources column from the task list
+   page.
 
-- WebUI: Fix rendering metrics with the same name on the metric chart.
+-  WebUI: Fix rendering metrics with the same name on the metric chart.
 
-- WebUI: Make several fixes to improve select appearance and user experience.
+-  WebUI: Make several fixes to improve select appearance and user
+   experience.
 
-- WebUI: Fix the issue of agent and cluster info not loading on slow connections.
+-  WebUI: Fix the issue of agent and cluster info not loading on slow
+   connections.
 
-- WebUI: Fix the issue where the chart in the Experiment page does not have the metric name in the legend.
+-  WebUI: Fix the issue where the chart in the Experiment page does not
+   have the metric name in the legend.
 
 Version 0.13.4
 ==============
@@ -691,24 +762,17 @@ Version 0.12.10
 **Improvements**
 
 -  WebUI: Add a dedicated page for master logs at ``/det/logs``.
-
 -  WebUI: Provide a Swagger UI for exploring the Determined REST API.
    This can be accessed via the API link on the WebUI.
-
 -  WebUI: Default the Experiments view list length to 25 entries. More
    entries can be shown as needed.
-
 -  WebUI: Improve detection of situations where the WebUI version
    doesn't match the master version as a result of browser caching.
-
 -  CLI: Improve performance when retrieving trial logs.
-
 -  CLI: Add the ``det user rename`` command for administrators to change
    the username of existing users.
-
 -  Expand documentation on :ref:`use-trained-models` by including
    checkpoint metadata management.
-
 -  Reorganize examples by splitting :ref:`model-definitions_trial-api`
    examples into separate folders.
 

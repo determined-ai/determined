@@ -23,16 +23,17 @@ In this topic guide, we will cover:
 #. How to configuring default pod specs.
 #. How to configuring per-task pods specs.
 
-*****************************
-How Determined Uses Pod Specs
-*****************************
+*******************************
+ How Determined Uses Pod Specs
+*******************************
 
-All Determined tasks are launched as pods. Determined pods consists of an
-initContainer named ``determined-init-container`` and a container named
-``determined-container`` which execute the workload. When users provide a
-pod spec, Determined inserts the ``determined-init-container`` and
-``determined-container`` into the provided pod spec. As described below
-users may also configure some of the fields for the ``determined-container``.
+All Determined tasks are launched as pods. Determined pods consists of
+an initContainer named ``determined-init-container`` and a container
+named ``determined-container`` which execute the workload. When users
+provide a pod spec, Determined inserts the ``determined-init-container``
+and ``determined-container`` into the provided pod spec. As described
+below users may also configure some of the fields for the
+``determined-container``.
 
 *****************************
  Ways to Configure Pod Specs
@@ -186,7 +187,14 @@ Example of configuring a pod spec for an individual task:
          # Specify a pull secret for task container image.
          imagePullSecrets:
            name: regcred
-
+         # Specify a service account that allows writing checkpoints to s3 (for EKS)
+         serviceAccountName: <checkpoint-storage-s3-bucket>
+         # Specify tolerations for scheduling on tainted nodes
+         tolerations:
+           - key: "tained-nodegroup-name"
+             operator: "Equal"
+             value: "true"
+             effect: "NoSchedule"
 
 ************
  Next Steps

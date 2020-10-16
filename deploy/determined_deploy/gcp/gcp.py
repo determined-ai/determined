@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -8,8 +9,6 @@ from typing import Any, Dict, List, Optional
 import googleapiclient.discovery
 
 TF_VARS_FILE = "terraform.tfvars.json"
-
-terraform_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraform")
 
 
 def deploy(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
@@ -22,9 +21,11 @@ def dry_run(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
     terraform_plan(configs, env, variables_to_exclude)
 
 
-def terraform_read_variables(configs: Dict) -> Dict:
-    vars_file_path = os.path.join(configs["local_state_path"], TF_VARS_FILE)
+def terraform_dir(configs: Dict) -> str:
+    return os.path.join(configs["local_state_path"], "terraform")
 
+
+def terraform_read_variables(vars_file_path: str) -> Dict:
     if not os.path.exists(vars_file_path):
         print(f"ERROR: Terraform variables file does not exist: {vars_file_path}")
         sys.exit(1)
@@ -35,44 +36,12 @@ def terraform_read_variables(configs: Dict) -> Dict:
         return vars
 
 
-def terraform_write_variables(configs: Dict, variables_to_exclude: List) -> None:
-    vars_file_path = os.path.join(configs["local_state_path"], TF_VARS_FILE)
+def terraform_write_variables(configs: Dict, variables_to_exclude: List) -> str:
+    """Write out given config object as a Terraform variables JSON file.
 
-    tf_vars = {k: configs[k] for k in configs if k not in variables_to_exclude}
-    with open(vars_file_path, "w") as f:
-        json.dump(tf_vars, f)
-
-
-def terraform_init(configs: Dict, env: Dict) -> None:
-    command = ["terraform init"]
-    command += [
-        "-backend-config='path={}'".format(
-            os.path.join(configs["local_state_path"], "terraform.tfstate")
-        )
-    ]
-
-    command += [terraform_dir]
-
-    output = subprocess.Popen(" ".join(command), env=env, shell=True, stdout=sys.stdout)
-    output.wait()
-
-
-def terraform_plan(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
-    command = ["terraform", "plan"]
-
-    for key in configs:
-        if key in variables_to_exclude:
-            continue
-        else:
-            command += ["-var='{}={}'".format(key, configs[key])]
-
-    command += ["-input=false"]
-    command += [terraform_dir]
-
-    run_command(" ".join(command), env)
-
-
-def terraform_apply(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
+    Persist variables to Terraform state directory.  These variables are used
+    on apply / plan, and are required for deprovisioning.
+    """
     det_version = configs.get("det_version")
     if not det_version or not isinstance(det_version, str):
         print("ERROR: Determined version missing or invalid")
@@ -88,15 +57,59 @@ def terraform_apply(configs: Dict, env: Dict, variables_to_exclude: List) -> Non
     if "zone" not in configs:
         configs["zone"] = f"{configs['region']}-b"
 
-    # Persist variables to Terraform state directory.  These variables are used
-    # on apply, and are required for deprovisioning.
-    terraform_write_variables(configs, variables_to_exclude)
+    vars_file_path = os.path.join(configs["local_state_path"], TF_VARS_FILE)
+
+    tf_vars = {k: configs[k] for k in configs if k not in variables_to_exclude}
+    with open(vars_file_path, "w") as f:
+        json.dump(tf_vars, f)
+
+    return vars_file_path
+
+
+def terraform_init(configs: Dict, env: Dict) -> None:
+    # Copy module definitions to local state directory. By using the local state
+    # path as the current working directory and copying module definitions to it
+    # we don't have to rely on users running "det-deploy gcp up/down" from
+    # different directories or with different Python environments.
+    shutil.copytree(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraform"),
+        terraform_dir(configs),
+    )
+
+    command = ["terraform init"]
+    command += [
+        "-backend-config='path={}'".format(
+            os.path.join(configs["local_state_path"], "terraform.tfstate")
+        )
+    ]
+
+    command += [terraform_dir(configs)]
+
+    output = subprocess.Popen(" ".join(command), env=env, shell=True, stdout=sys.stdout)
+    output.wait()
+
+
+def terraform_plan(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
+    vars_file_path = terraform_write_variables(configs, variables_to_exclude)
+
+    command = ["terraform", "plan"]
+
+    command += ["-input=false"]
+    command += [f"-var-file={vars_file_path}"]
+    command += [terraform_dir(configs)]
+
+    run_command(" ".join(command), env)
+
+
+def terraform_apply(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
+    vars_file_path = terraform_write_variables(configs, variables_to_exclude)
 
     command = ["terraform", "apply"]
 
     command += ["-input=false"]
     command += ["-auto-approve"]
-    command += [terraform_dir]
+    command += [f"-var-file={vars_file_path}"]
+    command += [terraform_dir(configs)]
 
     run_command(" ".join(command), env)
 
@@ -190,22 +203,20 @@ def stop_master(compute: Any, tf_vars: Dict) -> None:
     filter = f'name="{master_name(tf_vars)}"'
     instances = list_instances(compute, tf_vars, filter)
 
-    # Bail out if we can't find the master
     if len(instances) == 0:
-        print(f"ERROR: Unable to locate master: {master_name(tf_vars)}")
-        sys.exit(1)
+        print(f"WARNING: Unable to locate master: {master_name(tf_vars)}")
     elif len(instances) > 1:
         print(f"ERROR: Found more than one master named {master_name(tf_vars)}")
         sys.exit(1)
-
-    instance_name = instances[0]["name"]
-    print(f"Stopping master instance: {instance_name}...")
-    response = stop_instance(compute, tf_vars, instance_name)
-    succeeded = wait_for_operations(compute, tf_vars, [response["name"]])
-    if succeeded:
-        print(f"Successfully stopped master instance: {instance_name}")
     else:
-        print(f"\nWARNING: Unable to confirm master instance stopped: {instance_name}\n")
+        instance_name = instances[0]["name"]
+        print(f"Stopping master instance: {instance_name}...")
+        response = stop_instance(compute, tf_vars, instance_name)
+        succeeded = wait_for_operations(compute, tf_vars, [response["name"]])
+        if succeeded:
+            print(f"Successfully stopped master instance: {instance_name}")
+        else:
+            print(f"\nWARNING: Unable to confirm master instance stopped: {instance_name}\n")
 
 
 def terminate_running_agents(compute: Any, tf_vars: Dict) -> None:
@@ -223,7 +234,8 @@ def delete(configs: Dict, env: Dict) -> None:
       2. Terminate all dynamic agents (which aren't managed by Terraform).
       3. Destroy all Terraform-managed resources.
     """
-    tf_vars = terraform_read_variables(configs)
+    vars_file_path = os.path.join(configs["local_state_path"], TF_VARS_FILE)
+    tf_vars = terraform_read_variables(vars_file_path)
 
     keypath = tf_vars.get("keypath")
     if keypath:
@@ -238,7 +250,8 @@ def delete(configs: Dict, env: Dict) -> None:
 
     command += ["-input=false"]
     command += ["-auto-approve"]
-    command += [terraform_dir]
+    command += [f"-var-file={vars_file_path}"]
+    command += [terraform_dir(configs)]
 
     run_command(" ".join(command), env)
 

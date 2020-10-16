@@ -46,6 +46,7 @@ func NewActor(
 	clusterID string,
 	masterID string,
 	masterVersion string,
+	resourceManagerType string,
 	segmentKey string,
 ) (actor.Actor, error) {
 	client, err := analytics.NewWithConfig(
@@ -59,9 +60,10 @@ func NewActor(
 	err = client.Enqueue(analytics.Identify{
 		UserId: clusterID,
 		Traits: analytics.Traits{
-			"go_version":     runtime.Version(),
-			"master_id":      masterID,
-			"master_version": masterVersion,
+			"go_version":            runtime.Version(),
+			"master_id":             masterID,
+			"master_version":        masterVersion,
+			"resource_manager_type": resourceManagerType,
 		},
 	})
 	if err != nil {

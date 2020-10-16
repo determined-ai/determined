@@ -19,13 +19,13 @@ import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
 import Auth from 'contexts/Auth';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import useExperimentTags from 'hooks/useExperimentTags';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { handlePath, openBlank } from 'routes/utils';
 import {
   archiveExperiment, getExperimentList, killExperiment, openOrCreateTensorboard, setExperimentState,
 } from 'services/api';
-import { patchExperiment } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ApiSorter } from 'services/types';
 import {
@@ -140,22 +140,7 @@ const ExperimentList: React.FC = () => {
 
   usePolling(fetchExperiments);
 
-  const updateTags = useCallback(async (id: number, labels: Record<string, boolean | null>) => {
-    await patchExperiment({ body: { labels }, experimentId: id });
-    await fetchExperiments();
-  }, [ fetchExperiments ]);
-
-  const handleTagListChange = useCallback((id: number) => (oldTag: string, newTag: string) => {
-    updateTags(id, { [newTag]: true, [oldTag]: null });
-  }, [ updateTags ]);
-
-  const handleTagListCreate = useCallback((id: number) => (tag: string) => {
-    updateTags(id, { [tag]: true });
-  }, [ updateTags ]);
-
-  const handleTagListDelete = useCallback((id: number) => (tag: string) => {
-    updateTags(id, { [tag]: null });
-  }, [ updateTags ]);
+  const experimentTags = useExperimentTags(fetchExperiments);
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
@@ -165,9 +150,9 @@ const ExperimentList: React.FC = () => {
         {record.name || ''}
         <TagList
           tags={record.labels || []}
-          onChange={handleTagListChange(record.id)}
-          onCreate={handleTagListCreate(record.id)}
-          onDelete={handleTagListDelete(record.id)} />
+          onChange={experimentTags.handleTagListChange(record.id)}
+          onCreate={experimentTags.handleTagListCreate(record.id)}
+          onDelete={experimentTags.handleTagListDelete(record.id)} />
       </div>
     );
 
@@ -186,9 +171,7 @@ const ExperimentList: React.FC = () => {
     return newColumns;
   }, [
     handleActionComplete,
-    handleTagListChange,
-    handleTagListCreate,
-    handleTagListDelete,
+    experimentTags,
     sorter,
   ]);
 

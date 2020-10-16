@@ -64,6 +64,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
+		SetTaskName,
 		AllocateRequest,
 		ResourcesReleased:
 		return k.receiveRequestMsg(ctx)
@@ -111,6 +112,9 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupWeight:
 		// SetGroupWeight is not supported by the Kubernetes RP.
 
+	case SetTaskName:
+		k.receiveSetTaskName(ctx, msg)
+
 	case AllocateRequest:
 		k.addTask(ctx, msg)
 
@@ -142,6 +146,12 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg AllocateRequ
 		msg.TaskActor.Address(), msg.ID,
 	)
 	k.reqList.AddTask(&msg)
+}
+
+func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
+	if task, found := k.reqList.GetTaskByHandler(msg.TaskHandler); found {
+		task.Name = msg.Name
+	}
 }
 
 func (k *kubernetesResourceManager) assignResources(ctx *actor.Context, req *AllocateRequest) {

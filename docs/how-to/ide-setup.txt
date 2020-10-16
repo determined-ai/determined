@@ -7,8 +7,8 @@
 Model developers may develop and debug models with their preferred IDE.
 In this guide, we show how to configure `PyCharm
 <https://www.jetbrains.com/pycharm/>`__ in order to develop and debug
-experiments submitted from Python, i.e. :ref:`this
-pattern <model-definitions_trial-api-create>` for the Trial API.
+experiments submitted from Python, i.e. :ref:`this pattern
+<model-definitions_trial-api-create>` for the Trial API.
 
 ***************
  Prerequisites

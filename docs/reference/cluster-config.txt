@@ -412,13 +412,13 @@ The master supports the following configuration settings:
       idle dynamic agents. This string is a sequence of decimal numbers,
       each with optional fraction and a unit suffix, such as "30s",
       "1h", or "1m30s". Valid time units are "s", "m", "h". The default
-      value is ``5m``.
+      value is ``20m``.
 
    -  ``max_agent_starting_period``: How long to wait for agents
       starting before retrying. This string is a sequence of decimal
       numbers, each with optional fraction and a unit suffix, such as
       "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The
-      default value is ``5m``.
+      default value is ``20m``.
 
    -  ``provider: aws``: Specifies running dynamic agents on AWS.
       (*Required*)
@@ -431,7 +431,8 @@ The master supports the following configuration settings:
       -  ``root_volume_size``: Size of the root volume of the Determined
          agent in GB. We recommend at least 100GB. Defaults to ``200``.
 
-      -  ``image_id``: The AMI ID of the Determined agent. (*Required*)
+      -  ``image_id``: The AMI ID of the Determined agent. Defaults to
+         the latest GCP agent image. (*Optional*)
 
       -  ``tag_key``: Key for tagging the Determined agent instances.
          Defaults to ``managed-by``.
@@ -500,8 +501,8 @@ The master supports the following configuration settings:
          Determined agent that was shared with you. To use a specific
          version of the Determined agent image from a specific project,
          it should be set in the format:
-         ``projects/<project-id>/global/images/<image-id>``.
-         (*Required*)
+         ``projects/<project-id>/global/images/<image-id>``. Defaults to
+         the latest GCP agent image. (*Optional*)
 
       -  ``label_key``: Key for labeling the Determined agent instances.
          Defaults to ``managed-by``.
@@ -670,8 +671,8 @@ The master supports the following configuration settings:
 
 -  ``security``: Specifies security-related configuration settings.
 
-   -  ``tls``: Specifies TLS-related configuration settings. TLS is
-      enabled if certificate and key files are both specified.
+   -  ``tls``: Specifies configuration settings for :ref:`TLS <tls>`.
+      TLS is enabled if certificate and key files are both specified.
 
       -  ``cert``: Certificate file to use for serving TLS.
       -  ``key``: Key file to use for serving TLS.
@@ -728,7 +729,7 @@ The master supports the following configuration settings:
 
 -  ``security``: Security-related configuration settings.
 
-   -  ``tls``: TLS-related configuration settings.
+   -  ``tls``: Configuration settings for :ref:`TLS <tls>`.
 
       -  ``enabled``: Whether to use TLS to connect to the master.
          Defaults to ``false``.

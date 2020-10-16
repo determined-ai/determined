@@ -1,7 +1,6 @@
 description: test_template
 resources:
   agent_label: ""
-  native_parallel: False
   slots: 100
   slots_per_trial: 100
   weight: 1

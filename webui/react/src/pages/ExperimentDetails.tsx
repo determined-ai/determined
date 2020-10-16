@@ -64,8 +64,9 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const columns = useMemo(() => {
     const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      return record.latestValidationMetrics && metric &&
-        humanReadableFloat(record.latestValidationMetrics.validationMetrics[metric]);
+      const validationMetrics = record.latestValidationMetrics?.validationMetrics || {};
+      const latestValidationMetric = metric && validationMetrics[metric];
+      return latestValidationMetric && humanReadableFloat(latestValidationMetric);
     };
 
     const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
@@ -223,7 +224,10 @@ const ExperimentDetailsComp: React.FC = () => {
       title={`Experiment ${experimentId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>
         <Col lg={10} span={24} xl={8} xxl={6}>
-          <ExperimentInfoBox experiment={experiment} />
+          <ExperimentInfoBox
+            experiment={experiment}
+            onChange={fetchExperimentDetails}
+          />
         </Col>
         <Col lg={14} span={24} xl={16} xxl={18}>
           <ExperimentChart

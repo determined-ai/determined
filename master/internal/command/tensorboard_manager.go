@@ -43,7 +43,7 @@ const (
 
 // TensorboardRequest describes a request for a new Tensorboard.
 type TensorboardRequest struct {
-	commandParams
+	CommandParams
 
 	ExperimentIDs []int `json:"experiment_ids"`
 	TrialIDs      []int `json:"trial_ids"`
@@ -122,7 +122,7 @@ func (t *tensorboardManager) processTensorboardRequest(
 	req *TensorboardRequest,
 ) (*summary, error) {
 	commandReq, err := parseCommandRequestWithUser(
-		*user, t.db, &req.commandParams, &t.taskSpec.TaskContainerDefaults)
+		*user, t.db, &req.CommandParams, &t.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}
@@ -158,6 +158,12 @@ func (t *tensorboardManager) processTensorboardRequest(
 	}
 	ctx.Log().Infof("created tensorboard %s", a.Address().Local())
 	summary := summaryResponse.Get().(summary)
+	// REMOVEME
+	// jConfig, err := json.Marshal(summary.Config)
+	// if err != nil {
+	// 	fmt.Println("failed to marshal config")
+	// }
+	// fmt.Printf("config description %s\n", jConfig)
 	return &summary, nil
 }
 

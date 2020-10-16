@@ -544,6 +544,10 @@ func (t *trial) processAllocated(
 				return nil
 			}
 		}
+		ctx.Tell(t.rp, resourcemanagers.SetTaskName{
+			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
+			TaskHandler: ctx.Self(),
+		})
 		ctx.Tell(ctx.Self().Parent(), trialCreated{create: t.create, trialID: t.id})
 	}
 

@@ -23,7 +23,7 @@ def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--local-state-path",
         type=str,
         default=os.getcwd(),
-        help=argparse.SUPPRESS,
+        help="local directory for storing cluster state",
     )
 
 
@@ -92,7 +92,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--local-state-path",
         type=str,
         default=os.getcwd(),
-        help=argparse.SUPPRESS,
+        help="local directory for storing cluster state",
     )
     optional_named.add_argument(
         "--preemptible",
@@ -185,9 +185,21 @@ def make_gcp_parser(subparsers: argparse._SubParsersAction) -> None:
     gcp_subparsers = parser_gcp.add_subparsers(help="command", dest="command")
     make_up_subparser(gcp_subparsers)
     make_down_subparser(gcp_subparsers)
+    gcp_subparsers.required = True
 
 
 def deploy_gcp(args: argparse.Namespace) -> None:
+
+    # Set local state path as our current working directory. This is a no-op
+    # when the --local-state-path arg isn't used. We do this because Terraform
+    # module directories are populated with relative paths, and we want to
+    # support users running gcp up and down commands from different directories.
+    # Also, because we change the working directory, we ensure that
+    # local_state_path is an absolute path.
+    args.local_state_path = os.path.abspath(args.local_state_path)
+    if not os.path.exists(args.local_state_path):
+        os.makedirs(args.local_state_path)
+    os.chdir(args.local_state_path)
 
     # Set the TF_DATA_DIR where Terraform will store its supporting files
     env = os.environ.copy()

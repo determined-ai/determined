@@ -754,7 +754,22 @@ WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', '
 	for rows.Next() {
 		var exp model.Experiment
 		if err = rows.StructScan(&exp); err != nil {
-			return nil, errors.Wrap(err, "reading experiments")
+			items, err := rows.SliceScan()
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to read experiment from db")
+			}
+
+			expID, ok := items[0].(int64)
+			if !ok {
+				return nil, errors.Errorf(
+					"Expected an integer experiment ID, but got: %s", reflect.TypeOf(items[0]))
+			}
+
+			err = db.TerminateExperimentInRestart(int(expID), model.ErrorState)
+			if err != nil {
+				log.WithError(err).Error("failed to mark experiment as errored")
+			}
+			continue
 		}
 		exps = append(exps, &exp)
 	}

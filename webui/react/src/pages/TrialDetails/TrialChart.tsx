@@ -16,6 +16,30 @@ interface Props {
 
 const STORAGE_PATH = 'trial-detail';
 
+// Plotly.js colors imported from node_modules/plotly.js/src/components/color/attributes.js
+const chartColorList = [
+  '#1f77b4',  // muted blue
+  '#ff7f0e',  // safety orange
+  '#2ca02c',  // cooked asparagus green
+  '#d62728',  // brick red
+  '#9467bd',  // muted purple
+  '#8c564b',  // chestnut brown
+  '#e377c2',  // raspberry yogurt pink
+  '#7f7f7f',  // middle gray
+  '#bcbd22',  // curry yellow-green
+  '#17becf',  // blue-teal
+];
+
+const metricColorByKey: { [metricKey: string]: string } = {};
+
+const getMetricColorByKey = (metricKey: string): string => {
+  if (!metricColorByKey[metricKey]) {
+    const index = Object.keys(metricColorByKey).length % chartColorList.length;
+    metricColorByKey[metricKey] = chartColorList[index];
+  }
+  return metricColorByKey[metricKey];
+};
+
 const TrialChart: React.FC<Props> = ({
   metricNames,
   storageKey,
@@ -55,6 +79,7 @@ const TrialChart: React.FC<Props> = ({
           if (!dataMap[metricKey]) {
             dataMap[metricKey] = {
               hovertemplate: '%{text}<extra></extra>',
+              line: { color: getMetricColorByKey(metricKey) },
               mode: 'lines+markers',
               name: `${metric.name} (${metric.type})`,
               text: [],

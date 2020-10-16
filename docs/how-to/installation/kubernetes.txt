@@ -21,8 +21,7 @@ the following prerequisites are satisfied:
    support enabled.
 -  You should have access to the cluster via `kubectl
    <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
--  `Helm 3 <https://helm.sh/docs/intro/install/>`_ should be
-   installed.
+-  `Helm 3 <https://helm.sh/docs/intro/install/>`_ should be installed.
 
 You should also download a copy of the :download:`Determined Helm Chart
 </helm/determined-helm-chart.tgz>` and extract it on your local machine.
@@ -34,6 +33,8 @@ Kubernetes offering such as `Google Kubernetes Engine (GKE)
 Kubernetes Service (EKS) <https://aws.amazon.com/eks/>`__ on AWS. For
 more info on configuring GKE for use with Determined, refer to our
 :ref:`Instructions for setting up a GKE cluster <setup-gke-cluster>`.
+For info on configuring EKS, refer to our :ref:`Instructions for setting
+up an EKS cluster <setup-eks-cluster>`.
 
 *********************
  What Gets Installed

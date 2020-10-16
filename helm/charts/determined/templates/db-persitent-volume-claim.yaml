@@ -1,4 +1,4 @@
-{{- if .Values.db.hostAddress }}
+{{- if or .Values.db.hostAddress .Values.db.disablePVC }}
 {{ else }}
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -14,4 +14,7 @@ spec:
   resources:
     requests:
       storage: {{ required  "A valid Values.db.storageSize entry is required!" .Values.db.storageSize }}
+  {{- if .Values.db.storageClassName }}
+  storageClassName: {{ .Values.db.storageClassName }}
+  {{ end }}
 {{ end }}

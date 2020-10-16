@@ -22,6 +22,14 @@ spec:
       - name: determined-db-{{ .Release.Name }}
         image: postgres:10.8
         imagePullPolicy: "Always"
+        resources:
+          requests:
+            {{- if .Values.db.cpuRequest }}
+            cpu: {{ .Values.db.cpuRequest | quote }}
+            {{- end }}
+            {{- if .Values.db.memRequest }}
+            memory: {{ .Values.db.memRequest | quote }}
+            {{- end}}
         env:
           - name: POSTGRES_DB
             value: {{ .Values.db.name | quote }}
@@ -31,12 +39,14 @@ spec:
             value: {{ .Values.db.password | quote }}
           - name: PGDATA
             value: /var/lib/postgresql/data/pgdata
+        args: ["--max_connections=96", "--shared_buffers=512MB"]
+      {{- if not .Values.db.disablePVC }}
         volumeMounts:
           - mountPath: "/var/lib/postgresql/data"
             name: determined-db-storage
-        args: ["--max_connections=96", "--shared_buffers=512MB"]
       volumes:
         - name: determined-db-storage
           persistentVolumeClaim:
             claimName: determined-db-pvc-{{ .Release.Name }}
+      {{ end }}
 {{ end}}

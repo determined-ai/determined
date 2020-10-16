@@ -81,6 +81,12 @@ func (d *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
 	d.taskList.AddTask(&msg)
 }
 
+func (d *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
+	if task, found := d.taskList.GetTaskByHandler(msg.TaskHandler); found {
+		task.Name = msg.Name
+	}
+}
+
 // allocateResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully allocated.
 func (d *ResourcePool) allocateResources(req *AllocateRequest) bool {
@@ -184,6 +190,7 @@ func (d *ResourcePool) Receive(ctx *actor.Context) error {
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
+		SetTaskName,
 		AllocateRequest,
 		ResourcesReleased:
 		return d.receiveRequestMsg(ctx)
@@ -281,6 +288,9 @@ func (d *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 
 	case sproto.SetGroupWeight:
 		d.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
+
+	case SetTaskName:
+		d.receiveSetTaskName(ctx, msg)
 
 	case AllocateRequest:
 		d.addTask(ctx, msg)

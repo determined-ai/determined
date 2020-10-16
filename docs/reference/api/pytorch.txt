@@ -184,8 +184,7 @@ places in your code:
  Examples
 **********
 
--  :download:`cifar10_pytorch.tgz
-   </examples/cifar10_pytorch.tgz>`
+-  :download:`cifar10_pytorch.tgz </examples/cifar10_pytorch.tgz>`
 -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 -  :download:`fasterrcnn_coco_pytorch.tgz
    </examples/fasterrcnn_coco_pytorch.tgz>`

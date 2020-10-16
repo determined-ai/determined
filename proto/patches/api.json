@@ -1,4 +1,30 @@
 {
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Log in to and out of the cluster"
+    },
+    {
+      "name": "Users",
+      "description": "Manage users"
+    },
+    {
+      "name": "Cluster",
+      "description": "Manage cluster components"
+    },
+    {
+      "name": "Experiments",
+      "description": "Manage experiments"
+    },
+    {
+      "name": "Templates",
+      "description": "Manage templates"
+    },
+    {
+      "name": "Models",
+      "description": "Manage models"
+    }
+  ],
   "paths": {
     "/api/v1/experiments": {
       "post": {
@@ -64,44 +90,6 @@
       "description": "Request to create a new experiment.",
       "title": "GetExperimentResponse"
     },
-
-    "v1File": {
-      "type": "object",
-      "properties": {
-        "path": {
-          "type": "string",
-          "description": "Path to the file and or directory."
-        },
-        "type": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "content": {
-          "type": "string",
-          "format": "byte",
-          "description": "base64 encoded file content."
-        },
-        "mtime": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last modified time"
-        },
-        "mode": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "uid": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "gid": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "title": "File"
-    },
-
     "v1PostExperimentResponse": {
       "type": "object",
       "properties": {

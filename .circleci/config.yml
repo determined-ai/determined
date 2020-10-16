@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.13.6.dev0
+    default: 0.13.7.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -99,11 +99,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-825decd
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-1def2ee
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-825decd
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-1def2ee
 
   login-docker:
     steps:
@@ -842,6 +842,16 @@ jobs:
       - run: make -C master test
       - run: make -C agent test
 
+  lint-docs:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-python-venv:
+          extra-requirements-file: "docs/requirements.txt"
+          executor: determinedai/cimg-base:stable
+      - run: make -C docs check
+
   lint-python:
     docker:
       - image: determinedai/cimg-base:stable
@@ -1061,7 +1071,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.16.13-gke.1"
+        default: "1.16.15-gke.500"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1165,6 +1175,7 @@ workflows:
       - build-and-package-ts-sdk:
           requires:
             - build-proto
+      - lint-docs
       - lint-python
       - lint-go
       - lint-react:
