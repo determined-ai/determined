@@ -100,18 +100,18 @@ documentation](https://docs.determined.ai/latest/reference/cli.html).
 
 ## Training a Sample Model
 
-The `examples/computer_vision/mnist_multi_output_pytorch` directory contains code to train a convnet
+The `tutorials/mnist_pytorch` directory contains code to train a convnet
 on [MNIST](http://yann.lecun.com/exdb/mnist/) using PyTorch. To train a model,
 run
 
 ```sh
-det experiment create <config> examples/computer_vision/mnist_multi_output_pytorch/
+det experiment create <config> tutorials/mnist_pytorch/
 ```
 
 where `<config>` can be
 
-- `examples/computer_vision/mnist_multi_output_pytorch/const.yaml` to train a single model with fixed hyperparameters
-- `examples/computer_vision/mnist_multi_output_pytorch/adaptive.yaml` to train multiple models using an [adaptive hyperparameter search algorithm](https://docs.determined.ai/latest/topic-guides/hp-tuning-det/index.html#adaptive-search)
+- `tutorials/mnist_pytorch/const.yaml` to train a single model with fixed hyperparameters
+- `tutorials/mnist_pytorch/adaptive.yaml` to train multiple models using an [adaptive hyperparameter search algorithm](https://docs.determined.ai/latest/topic-guides/hp-tuning-det/index.html#adaptive-search)
 
 Determined also supports [several other hyperparameter search
 methods](https://docs.determined.ai/latest/topic-guides/hp-tuning-det/index.html#other-supported-methods).
