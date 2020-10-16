@@ -15,6 +15,9 @@ swagger_in := $(src_path)/api/v1/api.proto
 swagger_out := build/swagger/determined/api/v1/api.swagger.json
 swagger_patch := patches/api.json
 
+# Buf image binary
+buf_image := buf.image.bin
+
 .PHONY: build
 build: build/proto.stamp $(swagger_out)
 
@@ -46,9 +49,15 @@ $(swagger_out): $(swagger_in) build/swagger
 	protoc -I src $< --swagger_out=logtostderr=true,json_names_for_fields=true:build/swagger
 	python3 scripts/swagger.py $@ $(swagger_patch)
 
+# Update buf image for breaking change check.
+.PHONY: gen-buf-image
+gen-buf-image:
+	buf image build -o $(buf_image)
+
 .PHONY: check
 check:
 	buf check lint
+	buf check breaking --against-input $(buf_image)
 
 .PHONY: check-fmt
 check-fmt:
