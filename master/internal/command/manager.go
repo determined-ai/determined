@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
-	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -43,7 +42,7 @@ func respondBadRequest(ctx *actor.Context, err error) {
 // - template: The configuration template name.
 // - user_files: The files to run with the command.
 // - data: Additional data for a command.
-func parseCommandRequestWithUser(
+func parseCommandRequest(
 	user model.User,
 	db *db.PgDB,
 	params *CommandParams,
@@ -89,14 +88,4 @@ func parseCommandRequestWithUser(
 		},
 		AgentUserGroup: agentUserGroup,
 	}, nil
-}
-
-func parseCommandRequest(
-	c echo.Context,
-	db *db.PgDB,
-	params *CommandParams,
-	taskContainerDefaults *model.TaskContainerDefaultsConfig,
-) (*commandRequest, error) {
-	user := c.(*requestContext.DetContext).MustGetUser()
-	return parseCommandRequestWithUser(user, db, params, taskContainerDefaults)
 }

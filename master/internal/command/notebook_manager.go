@@ -120,7 +120,7 @@ func (n *notebookManager) processNotebookLaunchRequest(
 	ctx *actor.Context,
 	req NotebookLaunchRequest,
 ) (*summary, error) {
-	commandReq, err := parseCommandRequestWithUser(*req.User, n.db, req.CommandParams, &n.taskSpec.TaskContainerDefaults)
+	commandReq, err := parseCommandRequest(*req.User, n.db, req.CommandParams, &n.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}

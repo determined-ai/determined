@@ -56,7 +56,7 @@ func (c *commandManager) processCommandLaunchRequest(
 	ctx *actor.Context,
 	req CommandLaunchRequest,
 ) (*summary, error) {
-	commandReq, err := parseCommandRequestWithUser(*req.User, c.db, req.CommandParams, &c.taskSpec.TaskContainerDefaults)
+	commandReq, err := parseCommandRequest(*req.User, c.db, req.CommandParams, &c.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}

@@ -78,7 +78,7 @@ func (s *shellManager) processShellLaunchRequest(
 	ctx *actor.Context,
 	req ShellLaunchRequest,
 ) (*summary, error) {
-	commandReq, err := parseCommandRequestWithUser(*req.User, s.db, req.CommandParams, &s.taskSpec.TaskContainerDefaults)
+	commandReq, err := parseCommandRequest(*req.User, s.db, req.CommandParams, &s.taskSpec.TaskContainerDefaults)
 	if err != nil {
 		return nil, err
 	}
