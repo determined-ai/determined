@@ -1,0 +1,67 @@
+description: detr_coco
+environment:
+    image: liamdetermined/development:detr
+hyperparameters:
+    lr: 1e-4
+    lr_backbone: 1e-5
+    global_batch_size: 16
+    weight_decay: 1e-4
+    lr_drop: 200
+    clip_max_norm: 0.1
+
+    # Backbone
+    backbone: resnet50
+    dilation: false
+    position_embedding: sine
+
+    # Transformer
+    enc_layers: 6
+    dec_layers: 6
+    dim_feedforward: 2048
+    hidden_dim: 256
+    dropout: 0.1
+    nheads: 8
+    num_queries: 100
+    pre_norm: false
+
+    # Loss
+    aux_loss: true
+
+    # Matcher
+    set_cost_class: 1
+    set_cost_bbox: 5
+    set_cost_giou: 2
+
+    # Loss Coefficients
+    mask_loss_coef: 1
+    dice_loss_coef: 1
+    bbox_loss_coef: 5
+    giou_loss_coef: 2
+    eos_coef: 0.1
+
+    # Dataset
+    dataset_file: coco
+    coco_path: /data/coco
+    masks: false 
+    num_workers: 2
+
+    device: cuda
+
+min_validation_period:
+    epochs: 1
+records_per_epoch: 117264
+searcher:
+  name: single
+  metric: mAP_50
+  smaller_is_better: false
+  max_length:
+      epochs: 150
+
+bind_mounts:
+    - host_path: /data
+      container_path: /data
+resources:
+    slots_per_trial: 8
+    shm_size: 2000000000
+
+entrypoint: model_def:DETRTrial
