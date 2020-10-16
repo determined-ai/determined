@@ -30,6 +30,14 @@ const dropNonNumericMetrics = (ioMetrics: ioTypeMetric): Record<string, number> 
   return metrics;
 };
 
+export const user = (data: AB.V1User): DetailedUser => {
+  return {
+    isActive: data.active,
+    isAdmin: data.admin,
+    username: data.username,
+  };
+};
+
 export const jsonToUsers = (data: unknown): DetailedUser[] => {
   const io = decode<ioTypeDetailedUsers>(ioDetailedUsers, data);
   return io.map(user => ({

@@ -10,6 +10,7 @@ import {
   jsonToShells, jsonToTaskLogs, jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails,
   jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
+import * as decoder from 'services/decoder';
 import {
   CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams,
@@ -63,14 +64,7 @@ export const login: HttpApi<Credentials, void> = {
 
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
   name: 'getCurrentUser',
-  postProcess: (response) => {
-    const user: DetailedUser = {
-      isActive: response.user.active,
-      isAdmin: response.user.admin,
-      username: response.user.username,
-    };
-    return user;
-  },
+  postProcess: (response) => decoder.user(response.user),
   request: detApi.Auth.determinedCurrentUser,
 };
 
