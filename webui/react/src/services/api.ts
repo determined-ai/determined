@@ -7,7 +7,7 @@ import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
   KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams } from 'services/types';
-import { generateApi, processApiError } from 'services/utils';
+import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials,
   DetailedUser, DeterminedInfo, ExperimentBase, ExperimentDetails,
@@ -20,17 +20,10 @@ import { decodeExperimentList, encodeExperimentState } from './decoder';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
-const ApiConfig : Api.Configuration = { basePath: serverAddress() };
-
-export const detApi = {
-  Auth: new Api.AuthenticationApi(ApiConfig),
-  Experiments: new Api.ExperimentsApi(ApiConfig),
-  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(),
-};
-
 /* Authentication */
 
 export const getCurrentUser = generateApi<EmptyParams, DetailedUser>(Config.getCurrentUser);
+export const getCurrentUserDet = generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(Config.getCurrentUserDetApi);
 
 export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
 
@@ -54,7 +47,7 @@ export const getExperimentList = async (
     const sortBy = Object.values(Api.V1GetExperimentsRequestSortBy).includes(sorter.key) ?
       sorter.key : Api.V1GetExperimentsRequestSortBy.UNSPECIFIED;
 
-    const response = await detApi.Experiments.determinedGetExperiments(
+    const response = await Config.detApi.Experiments.determinedGetExperiments(
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       sortBy as any,
       sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
@@ -96,8 +89,8 @@ export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.p
 export const archiveExperiment = async (id: number, archive = true): Promise<void> => {
   try {
     await archive ?
-      detApi.Experiments.determinedArchiveExperiment(id) :
-      detApi.Experiments.determinedUnarchiveExperiment(id);
+      Config.detApi.Experiments.determinedArchiveExperiment(id) :
+      Config.detApi.Experiments.determinedUnarchiveExperiment(id);
   } catch (e) {
     processApiError('archiveExperiment', e);
     throw e;
@@ -176,7 +169,7 @@ export const login = generateApi<Credentials, void>(Config.login);
 
 export const logout = async (): Promise<Api.V1LogoutResponse> => {
   try {
-    const response = await detApi.Auth.determinedLogout();
+    const response = await Config.detApi.Auth.determinedLogout();
     return response;
   } catch (e) {
     throw processApiError('logout', e);

@@ -16,7 +16,7 @@ interface Props {
 }
 
 const userToSelectOption = (user: User): React.ReactNode =>
-  <Option key={user.id} value={user.username}>{user.username}</Option>;
+  <Option key={user.username} value={user.username}>{user.username}</Option>;
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   const auth = Auth.useStateContext();
@@ -33,12 +33,12 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     const list: React.ReactNode[] = [ <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option> ];
 
     if (authUser) {
-      list.push(<Option key={authUser.id} value={authUser.username}>{authUser.username}</Option>);
+      list.push(<Option key={authUser.username} value={authUser.username}>{authUser.username}</Option>);
     }
 
     if (users.data) {
       const allOtherUsers = users.data
-        .filter(user => (!authUser || user.id !== authUser.id))
+        .filter(user => (!authUser || user.username !== authUser.username))
         .sort((a, b) => a.username.localeCompare(b.username, 'en'))
         .map(userToSelectOption);
       list.push(...allOtherUsers);

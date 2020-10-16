@@ -18,6 +18,9 @@ message LoginRequest {
 }
 // Response to LoginRequest.
 message LoginResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user", "token" ] }
+  };
   // The token to be used when sending results
   string token = 1;
   // The logged in user.
@@ -28,6 +31,9 @@ message LoginResponse {
 message CurrentUserRequest {}
 // Response to CurrentUserRequest.
 message CurrentUserResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user" ] }
+  };
   // The currently logged in user.
   determined.user.v1.User user = 1;
 }

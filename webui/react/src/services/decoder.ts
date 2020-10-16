@@ -98,10 +98,7 @@ export const jsonToGenericCommand = (data: unknown, type: CommandType): Command 
     serviceAddress: io.service_address || undefined,
     state: io.state as CommandState,
     url: undefined,
-    user: {
-      id: io.owner.id,
-      username: io.owner.username,
-    },
+    user: { username: io.owner.username },
   };
   command.url = waitPageUrl(command);
   return command as Command;

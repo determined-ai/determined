@@ -2,6 +2,7 @@ import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
 import { decode, ioDetailedUser, ioTypeDetailedUser } from 'ioTypes';
+import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
@@ -10,8 +11,7 @@ import {
   jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import {
-  CreateNotebookParams, CreateTensorboardParams,
-  DetApi,
+  CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams,
   ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams,
@@ -22,8 +22,15 @@ import {
   ExperimentDetails, Log, TBSourceType, TrialDetails,
 } from 'types';
 
-import { detApi } from './api';
 import { noOp } from './utils';
+
+const ApiConfig : Api.Configuration = { basePath: serverAddress() };
+
+export const detApi = {
+  Auth: new Api.AuthenticationApi(ApiConfig),
+  Experiments: new Api.ExperimentsApi(ApiConfig),
+  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(),
+};
 
 /* Helpers */
 
@@ -71,7 +78,11 @@ export const getCurrentUser: HttpApi<EmptyParams, DetailedUser> = {
 export const getCurrentUserDetApi: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
   name: 'getCurrentUser',
   postProcess: (response) => {
-    const user: DetailedUser = { username: response.user?.username };
+    const user: DetailedUser = {
+      isActive: response.user.active,
+      isAdmin: response.user.admin,
+      username: response.user.username,
+    };
     return user;
   },
   request: detApi.Auth.determinedCurrentUser,
