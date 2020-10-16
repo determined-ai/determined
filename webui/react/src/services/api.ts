@@ -1,6 +1,6 @@
 import { CancelToken } from 'axios';
 
-import { serverAddress } from 'routes/utils';
+// DISCUSS name this AB?
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
@@ -22,7 +22,9 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
 /* Authentication */
 
-export const getCurrentUser = generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(Config.getCurrentUser);
+export const getCurrentUser = generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(
+  Config.getCurrentUser,
+);
 
 export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
 

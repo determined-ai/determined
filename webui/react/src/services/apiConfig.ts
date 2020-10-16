@@ -1,7 +1,6 @@
 import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
-import { decode, ioDetailedUser, ioTypeDetailedUser } from 'ioTypes';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import {
