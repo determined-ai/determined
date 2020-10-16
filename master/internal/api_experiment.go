@@ -492,8 +492,10 @@ func reqToP(
 ) (*PostExperimentParams, error) {
 
 	params := PostExperimentParams{
-		ConfigBytes:  protojson.Format(req.Config),
-		ModelDef:     filesToArchive(req.Context),
+		ConfigBytes: protojson.Format(req.Config),
+		ModelDef:    filesToArchive(req.Context),
+		// TODO we should separate this into a separate endpoint.
+		// should we avoid exposing it till then?
 		ValidateOnly: req.ValidateOnly,
 	}
 	if req.ParentId != 0 {
