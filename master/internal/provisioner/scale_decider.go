@@ -157,15 +157,24 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 	}
 
 	// Terminate instances to keep the number of instances less than than the desired size.
-	// We start by terminating idle instances then terminating the most recently
-	// provisioned instances
+	// We start by terminating unfulfilled spot requests. Then idle instances. Then the
+	// most recently provisioned instances
 	numExceeds := len(s.instanceSnapshot) - s.maxInstanceNum
-	for inst := range s.pastIdleInstances {
+	for instID, inst := range s.instanceSnapshot {
 		if len(toTerminate) >= numExceeds {
 			break
 		}
-		delete(s.pastIdleInstances, inst)
-		toTerminate[inst] = sproto.InstanceNumberExceedsMaximum
+		if inst.State == SpotRequestPendingAWS {
+			toTerminate[instID] = sproto.InstanceNumberExceedsMaximum
+		}
+	}
+
+	for instID := range s.pastIdleInstances {
+		if len(toTerminate) >= numExceeds {
+			break
+		}
+		delete(s.pastIdleInstances, instID)
+		toTerminate[instID] = sproto.InstanceNumberExceedsMaximum
 	}
 	instances := make([]*Instance, 0)
 	for _, inst := range s.instanceSnapshot {
@@ -192,7 +201,7 @@ func (s *scaleDecider) calculateNumInstancesToLaunch() int {
 	numRecentlyLaunched := 0
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
-		case Starting, Running:
+		case Starting, Running, SpotRequestPendingAWS:
 			// Check recently launched unconnected instances.
 			if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
 				continue

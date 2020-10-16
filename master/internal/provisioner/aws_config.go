@@ -2,13 +2,17 @@ package provisioner
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg"
 	"github.com/determined-ai/determined/master/pkg/check"
 )
+
+const spotPriceNotSetPlaceholder = "OnDemand"
 
 // AWSClusterConfig describes the configuration for an EC2 cluster managed by Determined.
 type AWSClusterConfig struct {
@@ -29,6 +33,9 @@ type AWSClusterConfig struct {
 
 	LogGroup  string `json:"log_group"`
 	LogStream string `json:"log_stream"`
+
+	SpotInstanceEnabled bool   `json:"spot_instance_enabled"`
+	SpotMaxPrice        string `json:"spot_max_price"`
 }
 
 var defaultAWSImageID = map[string]string{
@@ -51,7 +58,8 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
-	InstanceType: "p3.8xlarge",
+	InstanceType:        "p3.8xlarge",
+	SpotInstanceEnabled: false,
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
@@ -75,6 +83,10 @@ func (c *AWSClusterConfig) initDefaultValues() error {
 		if c.Region, err = metadata.Region(); err != nil {
 			return err
 		}
+	}
+
+	if len(c.SpotMaxPrice) == 0 {
+		c.SpotMaxPrice = spotPriceNotSetPlaceholder
 	}
 
 	if len(c.ImageID) == 0 {
@@ -108,10 +120,39 @@ func (c *AWSClusterConfig) UnmarshalJSON(data []byte) error {
 
 // Validate implements the check.Validatable interface.
 func (c AWSClusterConfig) Validate() []error {
+	var spotPriceIsNotValidNumberErr error
+	if c.SpotInstanceEnabled && c.SpotMaxPrice != spotPriceNotSetPlaceholder {
+		spotPriceIsNotValidNumberErr = validateMaxSpotPrice(c.SpotMaxPrice)
+	}
 	return []error{
 		check.GreaterThan(len(c.SSHKeyName), 0, "ec2 key name must be non-empty"),
 		check.GreaterThanOrEqualTo(c.RootVolumeSize, 100, "ec2 root volume size must be >= 100"),
+		spotPriceIsNotValidNumberErr,
 	}
+}
+
+func validateMaxSpotPrice(spotMaxPriceInput string) error {
+	// Must have 1 or 0 decimalPoints. All other characters must be digits
+	numDecimalPoints := strings.Count(spotMaxPriceInput, ".")
+	if numDecimalPoints != 0 && numDecimalPoints != 1 {
+		return errors.New(
+			fmt.Sprintf("spot max price should have either 0 or 1 decimal points. "+
+				"Received %s, which has %d decimal points",
+				spotMaxPriceInput,
+				numDecimalPoints))
+	}
+
+	priceWithoutDecimalPoint := strings.Replace(spotMaxPriceInput, ".", "", -1)
+	for _, char := range priceWithoutDecimalPoint {
+		if !unicode.IsDigit(char) {
+			return errors.New(
+				fmt.Sprintf("spot max price should only contain digits and, optionally, one decimal point. "+
+					"Received %s, which has the non-digit character %s",
+					spotMaxPriceInput,
+					string(char)))
+		}
+	}
+	return nil
 }
 
 type ec2NetworkInterface struct {

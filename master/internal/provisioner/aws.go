@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -51,21 +52,29 @@ type awsCluster struct {
 	masterURL   url.URL
 	ec2UserData []byte
 	client      *ec2.EC2
+
+	// State that is only used if spot instances are enabled
+	spot *spotState
 }
 
 func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	if err := config.AWS.initDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
+
 	// This following AWS session is created using AWS Credentials without explicitly configuration
 	// in the code. However you need to do the following settings.
 	// See https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html
 	// 1. Use IAM roles for Amazon EC2
-	//    The following roles on any resources:
+	//    The following permissions on any resources:
 	//    "ec2:DescribeInstances",
 	//    "ec2:TerminateInstances",
 	//    "ec2:CreateTags",
 	//    "ec2:RunInstances".
+	//    If using spot instances, the following permissions will be required
+	//    "ec2:CancelSpotInstanceRequests",
+	//    "ec2:RequestSpotInstances",
+	//    "ec2:DescribeSpotInstanceRequests",
 	// 2. Use a shared credentials file
 	//    In order to be able to connect to AWS, the credentials should be put in the
 	//    file `~/.aws/credential` in the format:
@@ -118,6 +127,15 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 			LogOptions:                   config.AWS.buildDockerLogString(),
 		}),
 	}
+
+	if cluster.SpotInstanceEnabled {
+		cluster.spot = &spotState{
+			trackedReqs:          newSetOfSpotRequests(),
+			approximateClockSkew: time.Second * 0,
+			launchTimeOffset:     time.Second * 10,
+		}
+	}
+
 	return cluster, nil
 }
 
@@ -131,9 +149,11 @@ func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {
 
 // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html.
 var ec2InstanceStates = map[string]InstanceState{
-	"pending": Starting,
-	"running": Running,
-	"stopped": Stopped,
+	"pending":       Starting,
+	"running":       Running,
+	"stopped":       Stopped,
+	"stopping":      Stopping,
+	"shutting-down": Terminating,
 }
 
 func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
@@ -161,7 +181,46 @@ func (c *awsCluster) dryRunRequests() error {
 	return nil
 }
 
+func (c *awsCluster) prestart(ctx *actor.Context) {
+	if c.SpotInstanceEnabled {
+		c.attemptToApproximateClockSkew(ctx)
+	}
+}
+
 func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
+	if c.SpotInstanceEnabled {
+		return c.listSpot(ctx)
+	}
+	return c.listOnDemand(ctx)
+}
+
+func (c *awsCluster) launch(
+	ctx *actor.Context,
+	instanceType instanceType,
+	instanceNum int,
+) {
+	if c.SpotInstanceEnabled {
+		c.launchSpot(ctx, instanceType, instanceNum)
+	} else {
+		c.launchOnDemand(ctx, instanceType, instanceNum)
+	}
+}
+
+func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
+	ids := make([]*string, 0, len(instanceIDs))
+	for _, id := range instanceIDs {
+		idCopy := id
+		ids = append(ids, &idCopy)
+	}
+
+	if c.SpotInstanceEnabled {
+		c.terminateSpot(ctx, ids)
+	} else {
+		c.terminateOnDemand(ctx, ids)
+	}
+}
+
+func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
 	instances, err := c.describeInstances(false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 instances")
@@ -175,7 +234,7 @@ func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	return res, nil
 }
 
-func (c *awsCluster) launch(
+func (c *awsCluster) launchOnDemand(
 	ctx *actor.Context,
 	instanceType instanceType,
 	instanceNum int,
@@ -202,17 +261,12 @@ func (c *awsCluster) launch(
 	)
 }
 
-func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
+func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string) {
 	if len(instanceIDs) == 0 {
 		return
 	}
 
-	ids := make([]*string, 0, len(instanceIDs))
-	for _, id := range instanceIDs {
-		idCopy := id
-		ids = append(ids, &idCopy)
-	}
-	res, err := c.terminateInstances(ids, false)
+	res, err := c.terminateInstances(instanceIDs, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
 		return
@@ -271,6 +325,30 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 				},
 			},
 		},
+	}
+	result, err := c.client.DescribeInstances(input)
+	if err != nil {
+		return nil, err
+	}
+	var instances []*ec2.Instance
+	for _, rsv := range result.Reservations {
+		if rsv.Instances != nil {
+			instances = append(instances, rsv.Instances...)
+		}
+	}
+	return instances, nil
+}
+
+func (c *awsCluster) describeInstancesByID(
+	instanceIds []*string,
+	dryRun bool,
+) ([]*ec2.Instance, error) {
+	if len(instanceIds) == 0 {
+		return make([]*ec2.Instance, 0), nil
+	}
+	input := &ec2.DescribeInstancesInput{
+		DryRun:      aws.Bool(dryRun),
+		InstanceIds: instanceIds,
 	}
 	result, err := c.client.DescribeInstances(input)
 	if err != nil {

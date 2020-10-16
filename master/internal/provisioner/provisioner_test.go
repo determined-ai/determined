@@ -118,6 +118,8 @@ func (c *mockProvider) list(ctx *actor.Context) ([]*Instance, error) {
 	return instances, nil
 }
 
+func (c *mockProvider) prestart(ctx *actor.Context) {}
+
 func (c *mockProvider) launch(ctx *actor.Context, instanceType instanceType, instanceNum int) {
 	c.history = append(c.history, newMockFuncCall("launch", instanceType, instanceNum))
 	for i := 0; i < instanceNum; i++ {
