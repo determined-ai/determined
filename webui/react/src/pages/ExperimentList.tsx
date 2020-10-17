@@ -5,6 +5,7 @@ import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
+import LabelSelectFilter from 'components/LabelSelectFilter';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
@@ -198,6 +199,13 @@ const ExperimentList: React.FC = () => {
     handleFilterChange({ ...filters, username });
   }, [ filters, handleFilterChange ]);
 
+  const handleLabelsChange = useCallback((value: SelectValue[]) => {
+    handleFilterChange({
+      ...filters,
+      labels: value.map(label => label.toString()),
+    });
+  }, [ filters, handleFilterChange ]);
+
   const sendBatchActions = useCallback((action: Action): Promise<void[] | Command> => {
     if (action === Action.OpenTensorBoard) {
       return openOrCreateTensorboard({
@@ -317,6 +325,9 @@ const ExperimentList: React.FC = () => {
               checked={filters.showArchived}
               prefixLabel="Show Archived"
               onChange={handleArchiveChange} />
+            <LabelSelectFilter
+              value={filters.labels}
+              onChange={handleLabelsChange} />
             <StateSelectFilter
               showCommandStates={false}
               value={filters.states}

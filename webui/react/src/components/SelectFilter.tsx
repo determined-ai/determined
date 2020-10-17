@@ -33,6 +33,7 @@ const countOptions = (children: React.ReactNode): number => {
 };
 
 const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
+  className = '',
   disableTags = false,
   dropdownMatchSelectWidth = false,
   enableSearchFilter = true,
@@ -40,7 +41,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
   ...props
 }: PropsWithChildren<Props>) => {
   const [ isOpen, setIsOpen ] = useState(false);
-  const classes = [ css.base ];
+  const classes = [ className, css.base ];
 
   if (disableTags) classes.push(css.disableTags);
 
