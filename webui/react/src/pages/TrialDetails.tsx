@@ -32,6 +32,7 @@ import {
   TrialHyperParameters,
 } from 'types';
 import { clone, numericSorter } from 'utils/data';
+import { hasCheckpoint } from 'utils/step';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
@@ -140,7 +141,7 @@ const TrialDetailsComp: React.FC = () => {
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
-      if (record.checkpoint) {
+      if (record.checkpoint && hasCheckpoint(record)) {
         const checkpoint: CheckpointDetail = {
           ...record.checkpoint,
           batch: record.numBatches + record.priorBatchesProcessed,
@@ -197,7 +198,7 @@ const TrialDetailsComp: React.FC = () => {
     return hasCheckpointOrValidation as string === ALL_VALUE ?
       data : data.filter(step => {
         if (hasCheckpointOrValidation === TrialInfoFilter.HasCheckpoint) {
-          return !!step.checkpoint;
+          return hasCheckpoint(step);
         } else if (hasCheckpointOrValidation === TrialInfoFilter.HasValidation) {
           return !!step.validation;
         } else if (hasCheckpointOrValidation === TrialInfoFilter.HasCheckpointOrValidation) {
