@@ -33,7 +33,7 @@ import {
 } from 'types';
 import { clone, numericSorter } from 'utils/data';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
-import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
+import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
 import css from './TrialDetails.module.scss';
 import { columns as defaultColumns } from './TrialDetails.table';
@@ -349,7 +349,12 @@ If the problem persists please contact support.',
     setPageSize(tablePagination.pageSize);
   }, [ storage ]);
 
-  usePolling(fetchTrialDetails);
+  const stopPolling = usePolling(fetchTrialDetails);
+  useEffect(() => {
+    if (trialDetails.data && terminalRunStates.has(trialDetails.data.state)) {
+      stopPolling();
+    }
+  }, [ trialDetails.data, stopPolling ]);
 
   useEffect(() => {
     return () => trialDetails.source?.cancel();
