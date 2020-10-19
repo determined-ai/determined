@@ -1,6 +1,8 @@
 import time
 from typing import List, Optional
 
+import determined_client
+
 from determined_common import api
 from determined_common.experimental import checkpoint
 
@@ -17,35 +19,49 @@ class Experiment:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, api_client, experiment_id, experiment_data=None):
-        self.id = experiment_id
-        self.experiment_data = {}
+    def __init__(self, api_client, experiment_data=None, config=None):
+        self.id = None
+        self.state = None
+
+        self.config = config
         self.api_client = api_client
+        self.metric = config.get('searcher').get('metric')
+        self.smaller_is_better = config.get('searcher').get('smaller_is_better')
+
+        for attribute in experiment_data.attribute_map:
+            setattr(self, attribute, getattr(experiment_data, attribute))
+
 
     @classmethod
     def create_experiment(cls, api_client, config, context_dir, local=False, test=False, master=""):
         print("Creating Experiment")
+        experiment_api = determined_client.ExperimentsApi(api_client)
+        experiment_api.determined_post_experiment()
         # experiment = api.create_experiment()
-        experiment_id = 1  # really should be experiment.id
-        print(f"Created Experiment {experiment_id}")
-        return cls(api_client, experiment_id)
+        # experiment_id = 1  # really should be experiment.id
+        # print(f"Created Experiment {experiment_id}")
+        # return cls(api_client, experiment_id)
 
     @classmethod
     def get_experiment(cls, api_client, experiment_id):
-        # experiment = api.get_experiment(experiment_id)
-        experiment_id = 1
-        experiment_data = {}
+        experiment_api = determined_client.ExperimentsApi(api_client)
+        api_response = experiment_api.determined_get_experiment(experiment_id)
+        return cls(api_client, api_response.experiment, api_response.config)
 
-        return cls(experiment_id, api_client, experiment_data)
+    # @property
+    # def status(self) -> str:
+    #     # status = api.get_experiment_status()
+    #     status = "COMPLETED"
+    #     return status
 
-    @property
-    def status(self) -> str:
-        # status = api.get_experiment_status()
-        status = "COMPLETED"
-        return status
+    def success(self):
+        if self.state == 'STATE_COMPLETED':
+            return True
+
+        return False
 
     def wait_for_completion(self):
-        while self.status == "ACTIVE":
+        while self.state == "ACTIVE":
             time.sleep(10)
 
     def top_checkpoint(
