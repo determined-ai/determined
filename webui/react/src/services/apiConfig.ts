@@ -24,12 +24,13 @@ import {
 
 import { noOp } from './utils';
 
-const ApiConfig : Api.Configuration = { basePath: serverAddress() };
+const apiConfigParams : Api.ConfigurationParameters = { basePath: serverAddress() };
 
+const ApiConfig = new Api.Configuration(apiConfigParams);
 export const detApi = {
   Auth: new Api.AuthenticationApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
-  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(),
+  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
 };
 
 /* Helpers */
@@ -64,7 +65,7 @@ export const login: HttpApi<Credentials, void> = {
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
   name: 'getCurrentUser',
   postProcess: (response) => decoder.user(response.user),
-  request: detApi.Auth.determinedCurrentUser,
+  request: detApi.Auth.determinedCurrentUser.bind(detApi.Auth),
 };
 
 export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
