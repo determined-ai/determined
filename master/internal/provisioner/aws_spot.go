@@ -235,7 +235,9 @@ func (c *awsCluster) terminateSpot(ctx *actor.Context, instanceIDs []*string) {
 		c.terminateOnDemand(ctx, instancesToTerminate.asListOfPointers())
 	}
 
-	_, err := c.terminateSpotInstanceRequests(ctx, pendingSpotReqsToTerminate.asListOfPointers(), false)
+	_, err := c.terminateSpotInstanceRequests(
+		ctx, pendingSpotReqsToTerminate.asListOfPointers(), false,
+	)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate spot requests")
 	} else {
@@ -260,7 +262,7 @@ func (c *awsCluster) launchSpot(
 	ctx.Log().
 		WithField("log-type", "launchSpot.start").
 		Infof("launching %d EC2 spot requests", instanceNum)
-	resp, err := c.createSpotInstanceRequestsCorrectingForClockSkew(ctx, instanceNum, false, c.InstanceType)
+	resp, err := c.createSpotInstanceRequestsCorrectingForClockSkew(ctx, instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 spot requests")
 		return
@@ -441,12 +443,11 @@ func (c *awsCluster) createSpotInstanceRequestsCorrectingForClockSkew(
 	ctx *actor.Context,
 	numInstances int,
 	dryRun bool,
-	instanceType ec2InstanceType,
 ) (resp *ec2.RequestSpotInstancesOutput, err error) {
 	maxRetries := 5
 	for numRetries := 0; numRetries <= maxRetries; numRetries++ {
 		offset := c.spot.approximateClockSkew + c.spot.launchTimeOffset
-		resp, err = c.createSpotInstanceRequest(ctx, numInstances, instanceType, offset, dryRun)
+		resp, err = c.createSpotInstanceRequest(ctx, numInstances, c.InstanceType, offset, dryRun)
 		if err == nil {
 			return resp, nil
 		}

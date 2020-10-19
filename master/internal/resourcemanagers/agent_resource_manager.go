@@ -42,24 +42,24 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		if len(msg.ResourcePool) == 0 {
 			msg.ResourcePool = a.getDefaultResourcePool(msg)
 		}
-		a.forward(ctx, msg.ResourcePool, msg)
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
 	case ResourcesReleased:
 		for name := range a.pools {
-			a.forward(ctx, name, msg)
+			a.forwardToPool(ctx, name, msg)
 		}
 
 	case sproto.SetGroupMaxSlots:
-		a.forward(ctx, msg.ResourcePool, msg)
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
 	case sproto.SetGroupWeight:
-		a.forward(ctx, msg.ResourcePool, msg)
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
 	case GetTaskSummary:
-		if summary := a.aggregateTaskSummary(a.forwardAllPools(ctx, msg)); summary != nil {
+		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
 		}
 	case GetTaskSummaries:
-		ctx.Respond(a.aggregateTaskSummaries(a.forwardAllPools(ctx, msg)))
+		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
 	case SetTaskName:
-		a.forwardAllPools(ctx, msg)
+		a.forwardToAllPools(ctx, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -92,7 +92,7 @@ func (a *agentResourceManager) getDefaultResourcePool(msg AllocateRequest) strin
 	return a.config.DefaultGPUResourcePool
 }
 
-func (a *agentResourceManager) forward(
+func (a *agentResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
 	if a.pools[resourcePool] == nil {
@@ -111,7 +111,7 @@ func (a *agentResourceManager) forward(
 	}
 }
 
-func (a *agentResourceManager) forwardAllPools(
+func (a *agentResourceManager) forwardToAllPools(
 	ctx *actor.Context, msg actor.Message,
 ) map[*actor.Ref]actor.Message {
 	if ctx.ExpectingResponse() {

@@ -3,12 +3,12 @@ package resourcemanagers
 import (
 	"github.com/google/uuid"
 
-	cproto "github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/device"
-
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/check"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -51,6 +51,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	case sproto.SetPods:
+		check.Panic(check.True(k.agent == nil, "should only set pods once"))
 		k.agent = &agentState{
 			handler:            msg.Pods,
 			devices:            make(map[device.Device]*cproto.ID),

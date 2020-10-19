@@ -47,9 +47,9 @@ func onEC2() bool {
 type awsCluster struct {
 	*AWSClusterConfig
 	resourcePool string
-	masterURL   url.URL
-	ec2UserData []byte
-	client      *ec2.EC2
+	masterURL    url.URL
+	ec2UserData  []byte
+	client       *ec2.EC2
 
 	// State that is only used if spot instances are enabled
 	spot *spotState
@@ -181,7 +181,6 @@ func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
 
 func (c *awsCluster) launch(
 	ctx *actor.Context,
-	instanceType instanceType,
 	instanceNum int,
 ) {
 	if c.SpotInstanceEnabled {

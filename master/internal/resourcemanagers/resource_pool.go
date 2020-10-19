@@ -98,8 +98,8 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
 	rp.taskList.AddTask(&msg)
 }
 
-func (d *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
-	if task, found := d.taskList.GetTaskByHandler(msg.TaskHandler); found {
+func (rp *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
+	if task, found := rp.taskList.GetTaskByHandler(msg.TaskHandler); found {
 		task.Name = msg.Name
 	}
 }
@@ -304,7 +304,7 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
 	case SetTaskName:
-		d.receiveSetTaskName(ctx, msg)
+		rp.receiveSetTaskName(ctx, msg)
 
 	case AllocateRequest:
 		rp.addTask(ctx, msg)

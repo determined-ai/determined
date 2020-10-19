@@ -51,7 +51,9 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-1def2ee",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
-			MachineType: "n1-standard-16",
+			MachineType: "n1-standard-32",
+			GPUType:     "nvidia-tesla-v100",
+			GPUNum:      4,
 		},
 		OperationTimeoutPeriod: Duration(5 * time.Minute),
 	}

@@ -10,7 +10,7 @@ import (
 // DefaultRPsConfig returns the default resources pools configuration.
 func DefaultRPsConfig() *ResourcePoolsConfig {
 	return &ResourcePoolsConfig{
-		ResourcePools: []ResourcePoolConfig{{PoolName: "default"}},
+		ResourcePools: []ResourcePoolConfig{{PoolName: defaultResourcePoolName}},
 	}
 }
 

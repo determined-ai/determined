@@ -10,6 +10,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
+const defaultResourcePoolName = "default"
+
 // ResolveConfig applies backwards compatibility for the old scheduler
 // and provisioner configuration.
 func ResolveConfig(
@@ -23,7 +25,9 @@ func ResolveConfig(
 		resourcePoolsConf = DefaultRPsConfig()
 	case provisionerConf != nil && resourcePoolsConf == nil:
 		resourcePoolsConf = &ResourcePoolsConfig{
-			ResourcePools: []ResourcePoolConfig{{PoolName: "default", Provider: provisionerConf}},
+			ResourcePools: []ResourcePoolConfig{
+				{PoolName: defaultResourcePoolName, Provider: provisionerConf},
+			},
 		}
 	case provisionerConf != nil && resourcePoolsConf != nil:
 		return nil, nil, errors.New("cannot specify both the provisioner and resource_pools fields")
@@ -32,8 +36,8 @@ func ResolveConfig(
 	switch {
 	case schedulerConf == nil && resourceManagerConf == nil:
 		resourceManagerConf = DefaultRMConfig()
-		resourceManagerConf.AgentRM.DefaultCPUResourcePool = "default"
-		resourceManagerConf.AgentRM.DefaultGPUResourcePool = "default"
+		resourceManagerConf.AgentRM.DefaultCPUResourcePool = defaultResourcePoolName
+		resourceManagerConf.AgentRM.DefaultGPUResourcePool = defaultResourcePoolName
 
 	case schedulerConf != nil && resourceManagerConf == nil:
 		switch {
@@ -43,8 +47,8 @@ func ResolveConfig(
 				AgentRM: &AgentResourceManagerConfig{
 					SchedulingPolicy:       schedulerConf.Type,
 					FittingPolicy:          schedulerConf.Fit,
-					DefaultCPUResourcePool: "default",
-					DefaultGPUResourcePool: "default",
+					DefaultCPUResourcePool: defaultResourcePoolName,
+					DefaultGPUResourcePool: defaultResourcePoolName,
 				},
 			}
 		case schedulerConf.ResourceProvider.KubernetesRPConfig != nil:
@@ -121,6 +125,8 @@ func (a AgentResourceManagerConfig) Validate() []error {
 		check.Contains(
 			a.FittingPolicy, []interface{}{"best", "worst"}, "invalid fitting policy",
 		),
+		check.NotEmpty(a.DefaultCPUResourcePool, "default_cpu_resource_pool should be non-empty"),
+		check.NotEmpty(a.DefaultGPUResourcePool, "default_gpu_resource_pool should be non-empty"),
 	}
 }
 
