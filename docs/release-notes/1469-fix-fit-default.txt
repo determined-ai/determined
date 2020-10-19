@@ -2,4 +2,5 @@
 
 **BUG FIXES**
 
-- Fix setting the default values for the `fit` field if the `scheduler` field exists in `master.yaml`.
+-  Fix setting the default values for the `fit` field if the `scheduler`
+   field exists in `master.yaml`.
