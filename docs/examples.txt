@@ -47,11 +47,6 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
    -  -  PyTorch
-      -  MNIST
-      -  :download:`mnist_multi_output_pytorch.tgz
-         </examples/mnist_multi_output_pytorch.tgz>`
-
-   -  -  PyTorch
       -  Penn-Fudan Dataset
       -  :download:`fasterrcnn_coco_pytorch.tgz
          </examples/fasterrcnn_coco_pytorch.tgz>`

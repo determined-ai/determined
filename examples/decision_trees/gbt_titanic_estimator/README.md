@@ -25,4 +25,4 @@ configuration file in place of `const.yaml`.
 
 ## Results
 Training the model with the hyperparameter settings in `const.yaml` should yield
-a validation accuracy of ~83%.
+a validation accuracy of ~74%.

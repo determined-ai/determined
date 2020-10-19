@@ -1,4 +1,4 @@
-description: mnist-estimator-const
+description: data_layer_mnist_estimator_const
 data:
   skip_checkpointing_input: true
 hyperparameters:
