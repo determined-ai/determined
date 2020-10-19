@@ -61,12 +61,12 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case ShellLaunchRequest:
-		summary, err := s.processShellLaunchRequest(ctx, msg)
-		if err != nil {
-			ctx.Respond(errors.Wrap(err, "failed to launch shell"))
-		} else {
-			ctx.Respond(summary.ID)
+		summary, statusCode, err := s.processShellLaunchRequest(ctx, msg)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, errors.Wrap(err, "failed to launch shell").Error()))
+			return nil
 		}
+		ctx.Respond(summary.ID)
 
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)
@@ -77,12 +77,12 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 func (s *shellManager) processShellLaunchRequest(
 	ctx *actor.Context,
 	req ShellLaunchRequest,
-) (*summary, error) {
+) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(*req.User, s.db, req.CommandParams,
 		&s.taskSpec.TaskContainerDefaults,
 	)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if commandReq.AgentUserGroup == nil {
@@ -97,24 +97,24 @@ func (s *shellManager) processShellLaunchRequest(
 	}
 	generatedKeys, err := ssh.GenerateKey(passphrase)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 
 	ctx.Log().Info("creating shell")
 
 	shell := s.newShell(commandReq, generatedKeys)
-	if err := check.Validate(shell.config); err != nil {
-		return nil, err
+	if err = check.Validate(shell.config); err != nil {
+		return nil, http.StatusBadRequest, err
 	}
 
 	a, _ := ctx.ActorOf(shell.taskID, shell)
 	summaryResponse := ctx.Ask(a, getSummary{})
-	if err := summaryResponse.Error(); err != nil {
-		return nil, err
+	if err = summaryResponse.Error(); err != nil {
+		return nil, http.StatusInternalServerError, err
 	}
 	summary := summaryResponse.Get().(summary)
 	ctx.Log().Infof("created shell %s", a.Address().Local())
-	return &summary, nil
+	return &summary, http.StatusOK, err
 }
 
 func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
@@ -136,9 +136,10 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			User:          &user,
 			CommandParams: &params,
 		}
-		summary, err := s.processShellLaunchRequest(ctx, req)
-		if err != nil {
-			respondBadRequest(ctx, err)
+		summary, statusCode, err := s.processShellLaunchRequest(ctx, req)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
+			return
 		}
 		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 

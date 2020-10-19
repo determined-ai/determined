@@ -6,6 +6,7 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 
 	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -46,6 +47,17 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
+	case CommandLaunchRequest:
+		summary, statusCode, err := c.processCommandLaunchRequest(ctx, msg)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(
+				statusCode,
+				errors.Wrap(err, "failed to launch command").Error(),
+			))
+			return nil
+		}
+		ctx.Respond(summary.ID)
+
 	case echo.Context:
 		c.handleAPIRequest(ctx, msg)
 	}
@@ -55,12 +67,12 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 func (c *commandManager) processCommandLaunchRequest(
 	ctx *actor.Context,
 	req CommandLaunchRequest,
-) (*summary, error) {
+) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(*req.User, c.db, req.CommandParams,
 		&c.taskSpec.TaskContainerDefaults,
 	)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if commandReq.AgentUserGroup == nil {
@@ -71,18 +83,17 @@ func (c *commandManager) processCommandLaunchRequest(
 
 	command := c.newCommand(commandReq)
 	if err := check.Validate(command.config); err != nil {
-		respondBadRequest(ctx, err)
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	a, _ := ctx.ActorOf(command.taskID, command)
 	summaryResponse := ctx.Ask(a, getSummary{})
 	if err := summaryResponse.Error(); err != nil {
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 	summary := summaryResponse.Get().(summary)
 	ctx.Log().Infof("created command %s", a.Address().Local())
-	return &summary, nil
+	return &summary, http.StatusOK, nil
 }
 
 func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
@@ -104,9 +115,10 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 			User:          &user,
 			CommandParams: &params,
 		}
-		summary, err := c.processCommandLaunchRequest(ctx, req)
-		if err != nil {
-			respondBadRequest(ctx, err)
+		summary, statusCode, err := c.processCommandLaunchRequest(ctx, req)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
+			return
 		}
 		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 

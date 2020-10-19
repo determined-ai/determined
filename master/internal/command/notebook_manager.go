@@ -119,12 +119,12 @@ type NotebookLaunchRequest struct {
 func (n *notebookManager) processNotebookLaunchRequest(
 	ctx *actor.Context,
 	req NotebookLaunchRequest,
-) (*summary, error) {
+) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(*req.User, n.db, req.CommandParams,
 		&n.taskSpec.TaskContainerDefaults,
 	)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if commandReq.AgentUserGroup == nil {
@@ -135,21 +135,21 @@ func (n *notebookManager) processNotebookLaunchRequest(
 
 	notebook, err := n.newNotebook(commandReq)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 
 	if err = check.Validate(notebook.config); err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	a, _ := ctx.ActorOf(notebook.taskID, notebook)
 	summaryResponse := ctx.Ask(a, getSummary{})
 	if err := summaryResponse.Error(); err != nil {
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 	summary := summaryResponse.Get().(summary)
 	ctx.Log().Infof("created notebook %s", a.Address().Local())
-	return &summary, nil
+	return &summary, http.StatusOK, nil
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -162,12 +162,12 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case NotebookLaunchRequest:
-		summary, err := n.processNotebookLaunchRequest(ctx, msg)
-		if err != nil {
-			ctx.Respond(errors.Wrap(err, "failed to launch Notebook"))
-		} else {
-			ctx.Respond(summary.ID)
+		summary, statusCode, err := n.processNotebookLaunchRequest(ctx, msg)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, errors.Wrap(err, "failed to launch shell").Error()))
+			return nil
 		}
+		ctx.Respond(summary.ID)
 
 	case echo.Context:
 		n.handleAPIRequest(ctx, msg)
@@ -194,9 +194,10 @@ func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Conte
 			User:          &user,
 			CommandParams: &params,
 		}
-		summary, err := n.processNotebookLaunchRequest(ctx, req)
-		if err != nil {
-			respondBadRequest(ctx, err)
+		summary, statusCode, err := n.processNotebookLaunchRequest(ctx, req)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
+			return
 		}
 		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 
