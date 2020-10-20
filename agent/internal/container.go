@@ -27,6 +27,8 @@ type (
 	containerReady      struct{}
 )
 
+type fluentLog map[string]interface{}
+
 func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.Actor {
 	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client}
 }

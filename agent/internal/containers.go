@@ -35,7 +35,17 @@ type containerManager struct {
 	Labels        map[string]string `json:"labels"`
 	Devices       []device.Device   `json:"devices"`
 
-	docker *client.Client
+	fluentPort int
+	docker     *client.Client
+}
+
+func newContainerManager(a *agent, fluentPort int) (*containerManager, error) {
+	return &containerManager{
+		MasterInfo: a.MasterInfo,
+		Options:    a.Options,
+		Devices:    a.Devices,
+		fluentPort: fluentPort,
+	}, nil
 }
 
 func (c *containerManager) Receive(ctx *actor.Context) error {

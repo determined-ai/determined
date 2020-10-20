@@ -41,6 +41,7 @@ type agent struct {
 
 	socket *actor.Ref
 	cm     *actor.Ref
+	fluent *actor.Ref
 }
 
 func (a *agent) addProxy(config *container.Config) {
@@ -97,6 +98,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Ask(a.socket, api.WriteMessage{Message: proto.MasterMessage{ContainerLog: &msg}})
 		}
 
+	case fluentLog:
+		ctx.Tell(a.fluent, msg)
+
 	case actor.ChildFailed:
 		switch msg.Child {
 		case a.socket:
@@ -122,6 +126,10 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		a.handleAPIRequest(ctx, msg)
 
 	case actor.PostStop:
+		if err := a.fluent.StopAndAwaitTermination(); err != nil {
+			ctx.Log().Errorf("error killing logging container %v", err)
+		}
+
 		ctx.Log().Info("agent shut down")
 
 	default:
@@ -241,10 +249,16 @@ func (a *agent) getMasterInfo() error {
 }
 
 func (a *agent) setup(ctx *actor.Context) error {
+	fluentActor, err := newFluentActor(ctx, a.Options)
+	if err != nil {
+		return errors.Wrap(err, "failed to start Fluent daemon")
+	}
+	a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
+
 	ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
 	actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
 
-	if err := a.detect(); err != nil {
+	if err = a.detect(); err != nil {
 		return err
 	}
 	ctx.Log().Info("detected compute devices:")
@@ -252,7 +266,8 @@ func (a *agent) setup(ctx *actor.Context) error {
 		ctx.Log().Infof("\t%s", d.String())
 	}
 
-	if v, err := getNvidiaVersion(); err != nil {
+	v, err := getNvidiaVersion()
+	if err != nil {
 		return err
 	} else if v != "" {
 		ctx.Log().Infof("Nvidia driver version: %s", v)
@@ -266,12 +281,15 @@ func (a *agent) setup(ctx *actor.Context) error {
 		}
 	}
 
-	if err := a.getMasterInfo(); err != nil {
+	if err = a.getMasterInfo(); err != nil {
 		return errors.Wrap(err, "error fetching master info")
 	}
 
-	a.cm, _ = ctx.ActorOf("containers",
-		&containerManager{MasterInfo: a.MasterInfo, Options: a.Options, Devices: a.Devices})
+	cm, err := newContainerManager(a, fluentActor.port)
+	if err != nil {
+		return errors.Wrap(err, "error initializing container manager")
+	}
+	a.cm, _ = ctx.ActorOf("containers", cm)
 
 	if a.MasterHost != "" {
 		if err := a.connectToMaster(ctx); err != nil {
