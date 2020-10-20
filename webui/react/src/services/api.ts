@@ -113,6 +113,16 @@ export const setExperimentState = async (
   });
 };
 
+export const getAllExperimentLabels = async (): Promise<string[]> => {
+  try {
+    const data = await detApi.Experiments.determinedGetExperimentLabels();
+    return data.labels || [];
+  } catch (e) {
+    processApiError('getAllExperimentLabels', e);
+    throw e;
+  }
+};
+
 /* Tasks */
 
 export const getCommands = generateApi<EmptyParams, Command[]>(Config.getCommands);
