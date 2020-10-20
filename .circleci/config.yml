@@ -257,6 +257,11 @@ commands:
           key: det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
+      - run: python --version
+      - run: pip --version
+      - run: pip freeze
+      # Allow this to fail, but it is useful for debugging.
+      - run: sh -c "pip check || true"
 
   run-e2e-tests:
     parameters:
@@ -942,14 +947,21 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
+      - run: python --version
+      - run: pip --version
       - run: pip install wheel
       - run: cd common; python setup.py bdist_wheel -d ../build
       - run: cd cli; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
+      - run: pip freeze
+      # Allow this to fail, but it is useful for debugging.
+      - run: sh -c "pip check || true"
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
       - run: pip install setuptools_scm
       - run: pip install -r cli/tests/requirements.txt
+      - run: pip freeze
+      - run: sh -c "pip check || true"
       - run: pytest cli/tests
 
   test-e2e:

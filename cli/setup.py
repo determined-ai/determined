@@ -18,11 +18,15 @@ setup(
         "packaging",
         "pyOpenSSL>= 19.1.0",
         "python-dateutil",
-        "requests>=2.20.0",
         "ruamel.yaml>=0.15.78",
         "tabulate>=0.8.3",
         "termcolor==1.1.0",
         "determined-common==0.13.7.dev0",
+        # requests<2.22.0 requires urllib3<1.25, which is incompatible with boto3>=1.14.11
+        "requests>=2.22.0",
+        # botocore>1.19.0 has stricter urllib3 requirements than boto3, and pip will not reliably
+        # resolve it until the --use-feature=2020-resolver behavior in pip 20.3, so we list it here.
+        "urllib3>=1.25.4,<1.26",
     ],
     entry_points={"console_scripts": ["det = determined_cli.__main__:main"]},
 )
