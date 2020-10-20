@@ -349,7 +349,7 @@ commands:
                   --agent-instance-type <<parameters.agent-instance-type>> \
                   --max-dynamic-agents <<parameters.max-dynamic-agents>> \
                   --keypair <<parameters.keypair>> \
-                  --enable_cors
+                  --enable-cors
       - when:
           condition:
             equal:
