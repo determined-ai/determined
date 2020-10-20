@@ -112,16 +112,16 @@ type notebookManager struct {
 
 // NotebookLaunchRequest describes a request to launch a new notebook.
 type NotebookLaunchRequest struct {
-	*CommandParams
-	User *model.User
+	CommandParams *CommandParams
+	User          *model.User
 }
 
-func (n *notebookManager) processNotebookLaunchRequest(
+func (n *notebookManager) processLaunchRequest(
 	ctx *actor.Context,
 	req NotebookLaunchRequest,
 ) (*summary, int, error) {
-	commandReq, err := parseCommandRequest(*req.User, n.db, req.CommandParams,
-		&n.taskSpec.TaskContainerDefaults,
+	commandReq, err := parseCommandRequest(
+		*req.User, n.db, req.CommandParams, &n.taskSpec.TaskContainerDefaults,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
@@ -143,11 +143,11 @@ func (n *notebookManager) processNotebookLaunchRequest(
 	}
 
 	a, _ := ctx.ActorOf(notebook.taskID, notebook)
-	summaryResponse := ctx.Ask(a, getSummary{})
-	if err := summaryResponse.Error(); err != nil {
+	resp := ctx.Ask(a, getSummary{})
+	if err := resp.Error(); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	summary := summaryResponse.Get().(summary)
+	summary := resp.Get().(summary)
 	ctx.Log().Infof("created notebook %s", a.Address().Local())
 	return &summary, http.StatusOK, nil
 }
@@ -162,7 +162,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case NotebookLaunchRequest:
-		summary, statusCode, err := n.processNotebookLaunchRequest(ctx, msg)
+		summary, statusCode, err := n.processLaunchRequest(ctx, msg)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode, errors.Wrap(err, "failed to launch shell").Error()))
 			return nil
@@ -194,7 +194,7 @@ func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Conte
 			User:          &user,
 			CommandParams: &params,
 		}
-		summary, statusCode, err := n.processNotebookLaunchRequest(ctx, req)
+		summary, statusCode, err := n.processLaunchRequest(ctx, req)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
 			return

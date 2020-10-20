@@ -87,18 +87,21 @@ func (a *apiServer) LaunchTensorboard(
 		Tensorboard: tensorboardConfig,
 		User:        user,
 	}
-	actorResp := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
-	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
+	if err = api.ProcessActorResponseError(&tensorboardIDFut); err != nil {
 		return nil, err
 	}
 
-	tensorboardID := actorResp.Get().(resourcemanagers.TaskID)
-	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardv1.Tensorboard{})
-	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	tensorboardID := tensorboardIDFut.Get().(resourcemanagers.TaskID)
+	tensorboardFut := a.m.system.AskAt(
+		tensorboardsAddr.Child(tensorboardID),
+		&tensorboardv1.Tensorboard{},
+	)
+	if err = api.ProcessActorResponseError(&tensorboardFut); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchTensorboardResponse{
-		Tensorboard: actorResp.Get().(*tensorboardv1.Tensorboard),
+		Tensorboard: tensorboardFut.Get().(*tensorboardv1.Tensorboard),
 	}, err
 }

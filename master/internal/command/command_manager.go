@@ -34,8 +34,8 @@ type commandManager struct {
 
 // CommandLaunchRequest describes a request to launch a new command.
 type CommandLaunchRequest struct {
-	*CommandParams
-	User *model.User
+	CommandParams *CommandParams
+	User          *model.User
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -48,7 +48,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case CommandLaunchRequest:
-		summary, statusCode, err := c.processCommandLaunchRequest(ctx, msg)
+		summary, statusCode, err := c.processLaunchRequest(ctx, msg)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(
 				statusCode,
@@ -64,7 +64,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (c *commandManager) processCommandLaunchRequest(
+func (c *commandManager) processLaunchRequest(
 	ctx *actor.Context,
 	req CommandLaunchRequest,
 ) (*summary, int, error) {
@@ -87,11 +87,11 @@ func (c *commandManager) processCommandLaunchRequest(
 	}
 
 	a, _ := ctx.ActorOf(command.taskID, command)
-	summaryResponse := ctx.Ask(a, getSummary{})
-	if err := summaryResponse.Error(); err != nil {
+	resp := ctx.Ask(a, getSummary{})
+	if err := resp.Error(); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	summary := summaryResponse.Get().(summary)
+	summary := resp.Get().(summary)
 	ctx.Log().Infof("created command %s", a.Address().Local())
 	return &summary, http.StatusOK, nil
 }
@@ -115,7 +115,7 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 			User:          &user,
 			CommandParams: &params,
 		}
-		summary, statusCode, err := c.processCommandLaunchRequest(ctx, req)
+		summary, statusCode, err := c.processLaunchRequest(ctx, req)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
 			return

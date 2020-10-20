@@ -43,7 +43,7 @@ const (
 
 // TensorboardRequest describes a request for a new Tensorboard.
 type TensorboardRequest struct {
-	*CommandParams
+	CommandParams *CommandParams
 
 	ExperimentIDs []int `json:"experiment_ids"`
 	TrialIDs      []int `json:"trial_ids"`
@@ -105,7 +105,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 	case TensorboardRequestWithUser:
-		summary, statusCode, err := t.processTensorboardRequest(ctx, msg.User, &msg.Tensorboard)
+		summary, statusCode, err := t.processLaunchRequest(ctx, msg.User, &msg.Tensorboard)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode,
 				errors.Wrap(err, "failed to launch Tensorboard").Error(),
@@ -118,7 +118,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (t *tensorboardManager) processTensorboardRequest(
+func (t *tensorboardManager) processLaunchRequest(
 	ctx *actor.Context,
 	user *model.User,
 	req *TensorboardRequest,
@@ -154,18 +154,12 @@ func (t *tensorboardManager) processTensorboardRequest(
 	}
 
 	a, _ := ctx.ActorOf(b.taskID, b)
-	summaryResponse := ctx.Ask(a, getSummary{})
-	if err := summaryResponse.Error(); err != nil {
+	resp := ctx.Ask(a, getSummary{})
+	if err := resp.Error(); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	ctx.Log().Infof("created tensorboard %s", a.Address().Local())
-	summary := summaryResponse.Get().(summary)
-	// REMOVEME
-	// jConfig, err := json.Marshal(summary.Config)
-	// if err != nil {
-	// 	fmt.Println("failed to marshal config")
-	// }
-	// fmt.Printf("config description %s\n", jConfig)
+	summary := resp.Get().(summary)
 	return &summary, http.StatusOK, nil
 }
 
@@ -184,7 +178,7 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 			return
 		}
 		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		summary, statusCode, err := t.processTensorboardRequest(ctx, &user, &req)
+		summary, statusCode, err := t.processLaunchRequest(ctx, &user, &req)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
 			return

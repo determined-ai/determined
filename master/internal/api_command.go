@@ -99,18 +99,18 @@ func (a *apiServer) LaunchCommand(
 		CommandParams: cmdParams,
 		User:          user,
 	}
-	actorResp := a.m.system.AskAt(commandsAddr, commandLaunchReq)
-	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	commandIDFut := a.m.system.AskAt(commandsAddr, commandLaunchReq)
+	if err = api.ProcessActorResponseError(&commandIDFut); err != nil {
 		return nil, err
 	}
 
-	commandID := actorResp.Get().(resourcemanagers.TaskID)
-	actorResp = a.m.system.AskAt(commandsAddr.Child(commandID), &commandv1.Command{})
-	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	commandID := commandIDFut.Get().(resourcemanagers.TaskID)
+	commandFut := a.m.system.AskAt(commandsAddr.Child(commandID), &commandv1.Command{})
+	if err = api.ProcessActorResponseError(&commandFut); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchCommandResponse{
-		Command: actorResp.Get().(*commandv1.Command),
+		Command: commandFut.Get().(*commandv1.Command),
 	}, nil
 }
