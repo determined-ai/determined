@@ -93,15 +93,15 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	tensorboardID := tensorboardIDFut.Get().(resourcemanagers.TaskID)
-	tensorboardFut := a.m.system.AskAt(
+	tensorboard := a.m.system.AskAt(
 		tensorboardsAddr.Child(tensorboardID),
 		&tensorboardv1.Tensorboard{},
 	)
-	if err = api.ProcessActorResponseError(&tensorboardFut); err != nil {
+	if err = api.ProcessActorResponseError(&tensorboard); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchTensorboardResponse{
-		Tensorboard: tensorboardFut.Get().(*tensorboardv1.Tensorboard),
+		Tensorboard: tensorboard.Get().(*tensorboardv1.Tensorboard),
 	}, err
 }

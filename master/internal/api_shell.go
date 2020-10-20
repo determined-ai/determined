@@ -58,12 +58,12 @@ func (a *apiServer) LaunchShell(
 	}
 
 	shellID := shellIDFut.Get().(resourcemanagers.TaskID)
-	shellFut := a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
-	if err = api.ProcessActorResponseError(&shellFut); err != nil {
+	shell := a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
+	if err = api.ProcessActorResponseError(&shell); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchShellResponse{
-		Shell: shellFut.Get().(*shellv1.Shell),
+		Shell: shell.Get().(*shellv1.Shell),
 	}, nil
 }

@@ -105,12 +105,12 @@ func (a *apiServer) LaunchCommand(
 	}
 
 	commandID := commandIDFut.Get().(resourcemanagers.TaskID)
-	commandFut := a.m.system.AskAt(commandsAddr.Child(commandID), &commandv1.Command{})
-	if err = api.ProcessActorResponseError(&commandFut); err != nil {
+	command := a.m.system.AskAt(commandsAddr.Child(commandID), &commandv1.Command{})
+	if err = api.ProcessActorResponseError(&command); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchCommandResponse{
-		Command: commandFut.Get().(*commandv1.Command),
+		Command: command.Get().(*commandv1.Command),
 	}, nil
 }

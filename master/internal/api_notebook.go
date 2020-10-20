@@ -108,12 +108,12 @@ func (a *apiServer) LaunchNotebook(
 	}
 
 	notebookID := notebookIDFut.Get().(resourcemanagers.TaskID)
-	notebookFut := a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookv1.Notebook{})
-	if err = api.ProcessActorResponseError(&notebookFut); err != nil {
+	notebook := a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookv1.Notebook{})
+	if err = api.ProcessActorResponseError(&notebook); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchNotebookResponse{
-		Notebook: notebookFut.Get().(*notebookv1.Notebook),
+		Notebook: notebook.Get().(*notebookv1.Notebook),
 	}, nil
 }
