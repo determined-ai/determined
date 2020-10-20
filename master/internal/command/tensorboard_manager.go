@@ -172,13 +172,22 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		req := TensorboardRequest{}
-		if err := apiCtx.Bind(&req); err != nil {
+		type params struct {
+			CommandParams
+			ExperimentIDs []int `json:"experiment_ids"`
+			TrialIDs      []int `json:"trial_ids"`
+		}
+		boundParams := params{}
+		if err := apiCtx.Bind(&boundParams); err != nil {
 			respondBadRequest(ctx, err)
 			return
 		}
 		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		summary, statusCode, err := t.processLaunchRequest(ctx, &user, &req)
+		summary, statusCode, err := t.processLaunchRequest(ctx, &user, &TensorboardRequest{
+			CommandParams: &boundParams.CommandParams,
+			ExperimentIDs: boundParams.ExperimentIDs,
+			TrialIDs:      boundParams.TrialIDs,
+		})
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
 			return
