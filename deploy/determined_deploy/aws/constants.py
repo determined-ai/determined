@@ -33,6 +33,7 @@ class cloudformation:
     DET_ADDRESS = "DeterminedAddress"
     VERSION = "Version"
     DB_PASSWORD = "DBPassword"
+    ENABLE_CORS = "EnableCORS"
     BOTO3_SESSION = "Boto3Session"
     AGENT_TAG_NAME = "AgentTagName"
     MAX_IDLE_AGENT_PERIOD = "MaxIdleAgentPeriod"

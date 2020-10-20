@@ -320,6 +320,9 @@ commands:
       keypair:
         type: string
         default: "integrations-test"
+      enable-cors:
+        type: boolean
+        default: false
       agent-instance-type:
         type: string
         default: "p2.xlarge"
@@ -327,15 +330,35 @@ commands:
         type: integer
         default: 1
     steps:
-      - run:
-          name: Deploy AWS cluster
-          command: |
-            det-deploy aws up \
-              --cluster-id <<parameters.cluster-id>> \
-              --det-version <<parameters.det-version>> \
-              --agent-instance-type <<parameters.agent-instance-type>> \
-              --max-dynamic-agents <<parameters.max-dynamic-agents>> \
-              --keypair <<parameters.keypair>>
+      - when:
+          condition:
+            equal:
+               [ true, << parameters.enable-cors >> ]
+          steps:
+          - run:
+              name: Deploy AWS cluster
+              command: |
+                det-deploy aws up \
+                  --cluster-id <<parameters.cluster-id>> \
+                  --det-version <<parameters.det-version>> \
+                  --agent-instance-type <<parameters.agent-instance-type>> \
+                  --max-dynamic-agents <<parameters.max-dynamic-agents>> \
+                  --keypair <<parameters.keypair>> \
+                  --enable_cors
+      - when:
+          condition:
+            equal:
+               [ false, << parameters.enable-cors >> ]
+          steps:
+          - run:
+              name: Deploy AWS cluster
+              command: |
+                det-deploy aws up \
+                  --cluster-id <<parameters.cluster-id>> \
+                  --det-version <<parameters.det-version>> \
+                  --agent-instance-type <<parameters.agent-instance-type>> \
+                  --max-dynamic-agents <<parameters.max-dynamic-agents>> \
+                  --keypair <<parameters.keypair>> \
 
   terminate-aws-cluster:
     parameters:
@@ -986,6 +1009,9 @@ jobs:
       max-dynamic-agents:
         type: integer
         default: 1
+      enable-cors:
+        type: boolean
+        default: false
     docker:
       - image: determinedai/cimg-base:stable
     steps:
@@ -1000,6 +1026,7 @@ jobs:
           det-version: ${CIRCLE_SHA1}
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          enable-cors: <<parameters.enable-cors>>
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
@@ -1280,6 +1307,7 @@ workflows:
             - package-and-push-system-local
 
       - deploy:
+          enable-cors: true
           context: aws
           filters:
             branches:

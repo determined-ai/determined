@@ -21,6 +21,7 @@ class Secure(base.DeterminedDeployment):
     template = "secure.yaml"
 
     template_parameter_keys = [
+        constants.cloudformation.ENABLE_CORS,
         constants.cloudformation.KEYPAIR,
         constants.cloudformation.BASTION_ID,
         constants.cloudformation.MASTER_INSTANCE_TYPE,
