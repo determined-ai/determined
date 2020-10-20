@@ -65,7 +65,7 @@ func NewResourcePool(
 
 func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
 	if rp.config.Provider == nil {
-		ctx.Log().Infof("disabling provisioner for resource pool: %s", rp.config.PoolName)
+		ctx.Log().Infof("not enabling provisioner for resource pool: %s", rp.config.PoolName)
 		return nil
 	}
 	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert)

@@ -563,15 +563,20 @@ The master supports the following configuration settings:
 
          -  ``machine_type``: Type of machine for the Determined agents.
             Defaults to ``n1-standard-32``.
+
          -  ``gpu_type``: Type of GPU for the Determined agents. Set it
-            to be an empty string to not using any GPUs. Defaults to an empty string.
+            to be an empty string to not use any GPUs. Defaults to
+            ``nvidia-tesla-v100``.
+
          -  ``gpu_num``: Number of GPUs for the Determined agents.
-            Defaults to 0.
+            Defaults to 4.
+
          -  ``preemptible``: Whether to use preemptible instances.
             Defaults to ``false``.
 
       -  ``min_instances``: Min number of Determined agent instances.
          Defaults to 0.
+
       -  ``max_instances``: Max number of Determined agent instances.
          Defaults to 5.
 

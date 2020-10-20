@@ -91,7 +91,7 @@ Parameters:
 
   MinDynamicAgents:
     Type: Number
-    Description: Minimum number of agents to launch simultaneously
+    Description: Minimum number of agents to keep running
     Default: 0
 
   MaxDynamicAgents:
