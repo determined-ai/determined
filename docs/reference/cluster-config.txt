@@ -212,7 +212,7 @@ The master supports the following configuration settings:
 -  ``scheduler``: Specifies how Determined schedules tasks to agents.
 
    -  ``fit``: The scheduling policy to use when assigning tasks to
-      agents in the cluster.
+      agents in the cluster. Defaults to ``best``.
 
       -  ``best``: The best-fit policy ensures that tasks will be
          preferentially "packed" together on the smallest number of
@@ -222,7 +222,8 @@ The master supports the following configuration settings:
          placed on under-utilized agents.
 
    -  ``type``: The scheduling policy to use when allocating resources
-      between different tasks (experiments, notebooks, etc.).
+      between different tasks (experiments, notebooks, etc.). Defaults
+      to ``fair_share``.
 
       -  ``fair_share``: Tasks receive a proportional amount of the
          available resources depending on the resource they require and
@@ -232,7 +233,7 @@ The master supports the following configuration settings:
          which they arrive at the cluster.
 
    -  ``resource_provider``: The resource provider to use to acquire
-      agents.
+      agents. Defaults to the default resource provider.
 
       -  ``type: default``: The default resource provider includes
          static and dynamic agents.

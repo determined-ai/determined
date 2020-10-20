@@ -53,6 +53,15 @@ func ResolveConfig(
 		return nil, nil, errors.New(
 			"cannot specify both the scheduler and resource_manager fields")
 	}
+
+	if resourceMangerConf != nil && resourceMangerConf.AgentRM != nil {
+		if resourceMangerConf.AgentRM.SchedulingPolicy == "" {
+			resourceMangerConf.AgentRM.SchedulingPolicy = DefaultRMConfig().AgentRM.SchedulingPolicy
+		}
+		if resourceMangerConf.AgentRM.FittingPolicy == "" {
+			resourceMangerConf.AgentRM.FittingPolicy = DefaultRMConfig().AgentRM.FittingPolicy
+		}
+	}
 	return resourceMangerConf, resourcePoolsConf, nil
 }
 
