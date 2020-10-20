@@ -52,18 +52,18 @@ func (a *apiServer) LaunchShell(
 		CommandParams: cmdParams,
 		User:          user,
 	}
-	actorResp := a.m.system.AskAt(shellsAddr, shellLaunchReq)
-	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	shellIDFut := a.m.system.AskAt(shellsAddr, shellLaunchReq)
+	if err = api.ProcessActorResponseError(&shellIDFut); err != nil {
 		return nil, err
 	}
 
-	shellID := actorResp.Get().(resourcemanagers.TaskID)
-	actorResp = a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
-	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	shellID := shellIDFut.Get().(resourcemanagers.TaskID)
+	shellFut := a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
+	if err = api.ProcessActorResponseError(&shellFut); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchShellResponse{
-		Shell: actorResp.Get().(*shellv1.Shell),
+		Shell: shellFut.Get().(*shellv1.Shell),
 	}, nil
 }

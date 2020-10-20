@@ -47,8 +47,8 @@ type shellManager struct {
 
 // ShellLaunchRequest describes a request to launch a new shell.
 type ShellLaunchRequest struct {
-	*CommandParams
-	User *model.User
+	CommandParams *CommandParams
+	User          *model.User
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
@@ -61,7 +61,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case ShellLaunchRequest:
-		summary, statusCode, err := s.processShellLaunchRequest(ctx, msg)
+		summary, statusCode, err := s.processLaunchRequest(ctx, msg)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode, errors.Wrap(err, "failed to launch shell").Error()))
 			return nil
@@ -74,11 +74,12 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (s *shellManager) processShellLaunchRequest(
+func (s *shellManager) processLaunchRequest(
 	ctx *actor.Context,
 	req ShellLaunchRequest,
 ) (*summary, int, error) {
-	commandReq, err := parseCommandRequest(*req.User, s.db, req.CommandParams,
+	commandReq, err := parseCommandRequest(
+		*req.User, s.db, req.CommandParams,
 		&s.taskSpec.TaskContainerDefaults,
 	)
 	if err != nil {
@@ -95,24 +96,24 @@ func (s *shellManager) processShellLaunchRequest(
 			passphrase = &typed
 		}
 	}
-	generatedKeys, err := ssh.GenerateKey(passphrase)
+	keys, err := ssh.GenerateKey(passphrase)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 
 	ctx.Log().Info("creating shell")
 
-	shell := s.newShell(commandReq, generatedKeys)
+	shell := s.newShell(commandReq, keys)
 	if err = check.Validate(shell.config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
 	a, _ := ctx.ActorOf(shell.taskID, shell)
-	summaryResponse := ctx.Ask(a, getSummary{})
-	if err = summaryResponse.Error(); err != nil {
+	resp := ctx.Ask(a, getSummary{})
+	if err = resp.Error(); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	summary := summaryResponse.Get().(summary)
+	summary := resp.Get().(summary)
 	ctx.Log().Infof("created shell %s", a.Address().Local())
 	return &summary, http.StatusOK, err
 }
@@ -136,7 +137,7 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			User:          &user,
 			CommandParams: &params,
 		}
-		summary, statusCode, err := s.processShellLaunchRequest(ctx, req)
+		summary, statusCode, err := s.processLaunchRequest(ctx, req)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
 			return
