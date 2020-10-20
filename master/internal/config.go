@@ -58,7 +58,8 @@ func DefaultConfig() *Config {
 			SegmentMasterKey: DefaultSegmentMasterKey,
 			SegmentWebUIKey:  DefaultSegmentWebUIKey,
 		},
-		EnableCors: false,
+		EnableCors:  false,
+		ClusterName: "",
 	}
 }
 
@@ -79,6 +80,7 @@ type Config struct {
 	Root                  string                            `json:"root"`
 	Telemetry             TelemetryConfig                   `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`
+	ClusterName           string                            `json:"cluster_name"`
 
 	Scheduler   *resourcemanagers.Config `json:"scheduler"`
 	Provisioner *provisioner.Config      `json:"provisioner"`

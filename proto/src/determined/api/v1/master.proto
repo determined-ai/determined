@@ -17,6 +17,8 @@ message GetMasterResponse {
   string master_id = 2;
   // The global cluster id of the master.
   string cluster_id = 3;
+  // The cluster name.
+  string cluster_name = 4;
 }
 
 // Get master config.

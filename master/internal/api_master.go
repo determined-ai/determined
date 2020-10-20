@@ -16,9 +16,10 @@ import (
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
 	return &apiv1.GetMasterResponse{
-		Version:   a.m.Version,
-		MasterId:  a.m.MasterID,
-		ClusterId: a.m.ClusterID,
+		Version:     a.m.Version,
+		MasterId:    a.m.MasterID,
+		ClusterId:   a.m.ClusterID,
+		ClusterName: a.m.config.ClusterName,
 	}, nil
 }
 
