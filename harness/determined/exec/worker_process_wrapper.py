@@ -13,7 +13,7 @@ from typing import List, TextIO
 from determined import constants
 
 
-def forward_stream(src_stream: TextIO, dst_stream: TextIO, rank: int) -> None:
+def forward_stream(src_stream: TextIO, dst_stream: TextIO, rank: str) -> None:
     for line in iter(src_stream.readline, None):
         if line is None:
             break
@@ -23,7 +23,7 @@ def forward_stream(src_stream: TextIO, dst_stream: TextIO, rank: int) -> None:
             break
         line = "[rank={rank}] {line}".format(
             line=line,
-            rank=str(rank),
+            rank=rank,
         )
         os.write(dst_stream.fileno(), line.encode("utf-8"))
 
@@ -46,7 +46,7 @@ def run_all(fwds: List[threading.Thread]) -> None:
 
 
 def main() -> None:
-    rank = os.environ["HOROVOD_RANK"]
+    rank = os.environ.get("HOROVOD_RANK")
     proc = subprocess.Popen(
         [
             sys.executable,
