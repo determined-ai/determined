@@ -44,10 +44,6 @@ export const floatToPercent = (num: number, precision = 2): string => {
   return (num * 100).toFixed(precision) + '%';
 };
 
-export const humanReadableFloat = (num: number, precision = 2): string => {
-  return num.toExponential(precision);
-};
-
 export const humanReadableBytes = (bytes: number): string => {
   return prettyBytes(bytes);
 };

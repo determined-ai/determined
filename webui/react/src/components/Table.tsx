@@ -4,6 +4,7 @@ import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
+import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import {
@@ -53,6 +54,10 @@ export const defaultPaginationConfig = {
 
 export const durationRenderer = (times: StartEndTimes): React.ReactNode => {
   return shortEnglishHumannizer(getDuration(times));
+};
+
+export const humanReadableFloatRenderer = (num: number): React.ReactNode => {
+  return <HumanReadableFloat num={num} />;
 };
 
 export const relativeTimeRenderer = (date: Date): React.ReactNode => {

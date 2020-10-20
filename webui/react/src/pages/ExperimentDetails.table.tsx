@@ -1,10 +1,11 @@
 import { ColumnType } from 'antd/es/table';
 import { ReactNode } from 'react';
 
-import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'components/Table';
+import {
+  durationRenderer, humanReadableFloatRenderer, relativeTimeRenderer, stateRenderer,
+} from 'components/Table';
 import { TrialItem } from 'types';
 import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
-import { humanReadableFloat } from 'utils/string';
 import { getDuration } from 'utils/time';
 
 export const columns: ColumnType<TrialItem>[] = [
@@ -30,9 +31,8 @@ export const columns: ColumnType<TrialItem>[] = [
   },
   {
     key: 'bestValidation',
-    render: (_: string, record: TrialItem): ReactNode => {
-      return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : null;
-    },
+    render: (_: string, record: TrialItem): ReactNode =>
+      record.bestValidationMetric && humanReadableFloatRenderer(record.bestValidationMetric),
     sorter: (a: TrialItem, b: TrialItem): number => {
       return numericSorter(a.bestValidationMetric, b.bestValidationMetric);
     },

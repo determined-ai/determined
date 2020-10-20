@@ -8,6 +8,7 @@ import { useParams } from 'react-router';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
+import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Message from 'components/Message';
 import Page from 'components/Page';
@@ -26,7 +27,6 @@ import { ApiSorter, ApiState } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { numericSorter } from 'utils/data';
-import { humanReadableFloat } from 'utils/string';
 import { upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
@@ -66,7 +66,8 @@ const ExperimentDetailsComp: React.FC = () => {
     const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
       const validationMetrics = record.latestValidationMetrics?.validationMetrics || {};
       const latestValidationMetric = metric && validationMetrics[metric];
-      return latestValidationMetric && humanReadableFloat(latestValidationMetric);
+      return latestValidationMetric &&
+        <HumanReadableFloat num={latestValidationMetric} />;
     };
 
     const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {

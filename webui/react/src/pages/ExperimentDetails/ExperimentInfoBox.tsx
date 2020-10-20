@@ -6,6 +6,7 @@ import MonacoEditor from 'react-monaco-editor';
 import TimeAgo from 'timeago-react';
 
 import CheckpointModal from 'components/CheckpointModal';
+import HumanReadableFloat from 'components/HumanReadableFloat';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
@@ -14,7 +15,6 @@ import TagList from 'components/TagList';
 import tagListCss from 'components/TagList.module.scss';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { CheckpointDetail, CheckpointState, ExperimentDetails } from 'types';
-import { humanReadableFloat } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 
 import css from './ExperimentInfoBox.module.scss';
@@ -70,7 +70,9 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment, onChange }: Props) => 
     },
     {
       content: bestValidation &&
-      `${humanReadableFloat(bestValidation)} (${config.searcher.metric})`,
+        <>
+          <HumanReadableFloat num={bestValidation} /> {`(${config.searcher.metric})`}
+        </>,
       label: 'Best Validation',
     },
     {

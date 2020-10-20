@@ -2,6 +2,7 @@ import { Button, List, Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
+import HumanReadableFloat from 'components/HumanReadableFloat';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
 import {
@@ -10,7 +11,7 @@ import {
 } from 'types';
 import { numericSorter } from 'utils/data';
 import { formatDatetime } from 'utils/date';
-import { humanReadableBytes, humanReadableFloat } from 'utils/string';
+import { humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
 import { checkpointSize, trialDurations } from 'utils/types';
 
@@ -98,7 +99,9 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     },
     {
       content: bestValidation &&
-        `${humanReadableFloat(bestValidation)} (${experiment.config.searcher.metric})`,
+        <>
+          <HumanReadableFloat num={bestValidation} /> {`(${experiment.config.searcher.metric})`}
+        </>,
       label: 'Best Validation',
     },
     {
