@@ -86,10 +86,11 @@ func (m *Master) getInfo(c echo.Context) (interface{}, error) {
 	}
 
 	return &aproto.MasterInfo{
-		ClusterID: m.ClusterID,
-		MasterID:  m.MasterID,
-		Version:   m.Version,
-		Telemetry: telemetryInfo,
+		ClusterID:   m.ClusterID,
+		MasterID:    m.MasterID,
+		Version:     m.Version,
+		Telemetry:   telemetryInfo,
+		ClusterName: m.config.ClusterName,
 	}, nil
 }
 
