@@ -18,16 +18,18 @@ type agentState struct {
 	// Since we only model GPUs as devices/slots and assume each slot can be allocated with
 	// one container, we add one additional field to keep track of zero-slot containers.
 	// We need this field to know if the agent is idle.
-	zeroSlotContainers map[cproto.ID]bool
+	zeroSlotContainers    map[cproto.ID]bool
+	maxZeroSlotContainers *int
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-func newAgentState(msg sproto.AddAgent) *agentState {
+func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers *int) *agentState {
 	return &agentState{
-		handler:            msg.Agent,
-		label:              msg.Label,
-		devices:            make(map[device.Device]*cproto.ID),
-		zeroSlotContainers: make(map[cproto.ID]bool),
+		handler:               msg.Agent,
+		label:                 msg.Label,
+		devices:               make(map[device.Device]*cproto.ID),
+		zeroSlotContainers:    make(map[cproto.ID]bool),
+		maxZeroSlotContainers: maxZeroSlotContainers,
 	}
 }
 
@@ -48,6 +50,14 @@ func (a *agentState) numUsedSlots() (slots int) {
 		}
 	}
 	return slots
+}
+
+func (a *agentState) numZeroSlotContainers() int {
+	return len(a.zeroSlotContainers)
+}
+
+func (a *agentState) idle() bool {
+	return len(a.zeroSlotContainers)+a.numUsedSlots() == 0
 }
 
 func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Device {

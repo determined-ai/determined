@@ -19,8 +19,12 @@ type SoftConstraint func(req *AllocateRequest, agent *agentState) float64
 
 // fittingState is the basis for assigning a task to one or more agents for execution.
 type fittingState struct {
-	Agent        *agentState
-	Score        float64
+	Agent *agentState
+	Score float64
+	// Use hash distances besides scores of fitting here in order to
+	// load balance across agents for tasks that would have no preference
+	// for which agent they go onto if the scores are tied. Use hash distance
+	// as an deterministic pseudorandom function for load balance.
 	HashDistance uint64
 	Slots        int
 }
@@ -66,7 +70,7 @@ func (c candidateList) Swap(i, j int) {
 func findFits(
 	req *AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
-	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewInstanceNum()
+	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewAgentNum()
 	//    to prevent the provisioner from scaling up for jobs that can never be scheduled in
 	//    the current cluster configuration.
 	if fit := findSharedAgentFit(req, agents, fittingMethod); fit != nil {
@@ -104,11 +108,7 @@ func findDedicatedAgentFits(
 	// 2) Multi-agent tasks will receive all the slots on every agent they are scheduled on.
 	agentsByNumSlots := make(map[int][]*agentState)
 	for _, agent := range agentStates {
-		if agent.numUsedSlots() != 0 {
-			continue
-		}
-
-		constraints := []HardConstraint{labelSatisfied}
+		constraints := []HardConstraint{labelSatisfied, agentIdleSatisfied}
 		if isViable(req, agent, constraints...) {
 			agentsByNumSlots[agent.numEmptySlots()] = append(agentsByNumSlots[agent.numEmptySlots()], agent)
 		}
@@ -175,7 +175,7 @@ func findSharedAgentFit(
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {
-		if !isViable(req, agent, slotsSatisfied, labelSatisfied) {
+		if !isViable(req, agent, slotsSatisfied, maxZeroSlotContainersSatisfied, labelSatisfied) {
 			continue
 		}
 

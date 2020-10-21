@@ -14,232 +14,337 @@ func TestIsViable(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	req := &AllocateRequest{SlotsNeeded: 2}
 
-	assert.Assert(t, isViable(req, newMockAgent(t, system, "agent1", 4, ""), slotsSatisfied))
-	assert.Assert(t, !isViable(req, newMockAgent(t, system, "agent2", 1, ""), slotsSatisfied))
+	assert.Assert(t, isViable(req,
+		newFakeAgentState(t, system, "agent1", "", 4, 0, nil, 0), slotsSatisfied))
 	assert.Assert(t, !isViable(req,
-		newMockAgent(t, system, "agent4", 1, ""), slotsSatisfied))
+		newFakeAgentState(t, system, "agent2", "", 1, 0, nil, 0), slotsSatisfied))
+	assert.Assert(t, !isViable(req,
+		newFakeAgentState(t, system, "agent4", "", 1, 0, nil, 0), slotsSatisfied))
 }
 
-func TestFindFit(t *testing.T) {
-	system := actor.NewSystem(t.Name())
-
+func TestFindFits(t *testing.T) {
 	type testCase struct {
-		Name                string
-		SlotsNeeded         int
-		AgentCapacities     []int
-		AgentOccupiedSlots  []int
-		AgentLabels         [2]string
-		FittingMethod       SoftConstraint
-		ExpectedAgentFit    int
-		TaskLabel           string
-		FittingRequirements FittingRequirements
+		Name          string
+		Task          AllocateRequest
+		Agents        []*mockAgent
+		FittingMethod SoftConstraint
+
+		ExpectedAgentFit int
 	}
 
 	testCases := []testCase{
 		{
-			Name:             "2-slot multiple fits",
-			SlotsNeeded:      2,
-			AgentCapacities:  []int{2, 4},
-			FittingMethod:    BestFit,
-			ExpectedAgentFit: 0,
-			FittingRequirements: FittingRequirements{
-				SingleAgent: false,
+			Name: "0-slot multiple fits, idle agents",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
 			},
-		},
-		{
-			Name:             "1-slot multiple fits",
-			SlotsNeeded:      1,
-			AgentCapacities:  []int{1, 4},
 			FittingMethod:    BestFit,
 			ExpectedAgentFit: 0,
 		},
 		{
-			Name:             "1-slot out-of-order multiple fits",
-			SlotsNeeded:      1,
-			AgentCapacities:  []int{4, 1},
+			Name: "0-slot multiple fits, idle agents, out-of-order",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Agents: []*mockAgent{
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+				newMockAgent("agent1", "", 4, 0, nil, 0),
+			},
 			FittingMethod:    BestFit,
 			ExpectedAgentFit: 1,
 		},
 		{
-			Name:             "4-slot single fit",
-			SlotsNeeded:      4,
-			AgentCapacities:  []int{4, 1},
+			Name: "0-slot multiple fits, in-use agents",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 2),
+				newMockAgent("agent2", "", 4, 0, nil, 2),
+			},
 			FittingMethod:    BestFit,
 			ExpectedAgentFit: 0,
 		},
 		{
-			Name:             "4-slot multiple fits",
-			SlotsNeeded:      4,
-			AgentCapacities:  []int{4, 4},
+			Name: "0-slot multiple fits, in-use agents, out-of-order",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Agents: []*mockAgent{
+				newMockAgent("agent2", "", 4, 0, nil, 2),
+				newMockAgent("agent1", "", 4, 0, nil, 2),
+			},
 			FittingMethod:    BestFit,
 			ExpectedAgentFit: 1,
 		},
 		{
-			Name:               "2-slot multiple fits, in-use agents",
-			SlotsNeeded:        2,
-			AgentCapacities:    []int{2, 4},
-			AgentOccupiedSlots: []int{0, 2},
-			FittingMethod:      BestFit,
-			ExpectedAgentFit:   0,
-		},
-		{
-			Name:               "1-slot multiple fits, in-use agents",
-			SlotsNeeded:        1,
-			AgentCapacities:    []int{2, 4},
-			AgentOccupiedSlots: []int{1, 1},
-			FittingMethod:      WorstFit,
-			ExpectedAgentFit:   1,
-		},
-		{
-			Name:               "1-slot multiple fits, in-use agents, out of order",
-			SlotsNeeded:        1,
-			AgentCapacities:    []int{4, 2},
-			AgentOccupiedSlots: []int{1, 1},
-			FittingMethod:      WorstFit,
-			ExpectedAgentFit:   0,
-		},
-		{
-			Name:               "1-slot multiple fits, in-use-agents, odd numbers",
-			SlotsNeeded:        1,
-			AgentCapacities:    []int{2, 5},
-			AgentOccupiedSlots: []int{1, 3},
-			FittingMethod:      WorstFit,
-			ExpectedAgentFit:   0,
-		},
-		{
-			Name:               "2-slot multiple fits, in-use-agents, odd numbers",
-			SlotsNeeded:        2,
-			AgentCapacities:    []int{2, 5},
-			AgentOccupiedSlots: []int{0, 3},
-			FittingMethod:      WorstFit,
-			ExpectedAgentFit:   0,
-		},
-		{
-			Name:               "4-slot multiple fits, unoccupied",
-			SlotsNeeded:        4,
-			AgentCapacities:    []int{4, 4},
-			AgentOccupiedSlots: []int{0, 0},
-			FittingMethod:      WorstFit,
-			ExpectedAgentFit:   1,
-		},
-		{
-			Name:               "4-slot multiple fits, one exact",
-			SlotsNeeded:        4,
-			AgentCapacities:    []int{8, 4},
-			AgentOccupiedSlots: []int{0, 0},
-			FittingMethod:      WorstFit,
-			ExpectedAgentFit:   1,
-			FittingRequirements: FittingRequirements{
-				SingleAgent: false,
+			Name: "0-slot multiple fits, max zero slot containers",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, newIntPtr(2), 0),
+				newMockAgent("agent2", "", 4, 0, newIntPtr(4), 2),
 			},
-		},
-		{
-			Name:               "4-slot multiple fits, one exact, single agent",
-			SlotsNeeded:        4,
-			AgentCapacities:    []int{8, 4},
-			AgentOccupiedSlots: []int{0, 0},
-			FittingMethod:      WorstFit,
-			ExpectedAgentFit:   1,
-			FittingRequirements: FittingRequirements{
-				SingleAgent: true,
-			},
-		},
-		{
-			Name:             "4-slot multiple fits, label hard constraint",
-			SlotsNeeded:      4,
-			AgentCapacities:  []int{4, 4},
-			AgentLabels:      [2]string{"label1", "label2"},
 			FittingMethod:    BestFit,
-			TaskLabel:        "label2",
-			ExpectedAgentFit: 1,
-		},
-		{
-			Name:             "0-slot multiple fits, label hard constraint",
-			SlotsNeeded:      0,
-			AgentCapacities:  []int{4, 4},
-			AgentLabels:      [2]string{"label1", "label2"},
-			FittingMethod:    BestFit,
-			TaskLabel:        "label2",
-			ExpectedAgentFit: 1,
-		},
-		{
-			Name:            "2-slot multiple inexact fits",
-			SlotsNeeded:     2,
-			AgentCapacities: []int{4, 4},
-			FittingMethod:   BestFit,
-			FittingRequirements: FittingRequirements{
-				SingleAgent: false,
-			},
-			ExpectedAgentFit: 1,
-		},
-		{
-			Name:            "2-slot multiple inexact fits, single agent",
-			SlotsNeeded:     2,
-			AgentCapacities: []int{4, 4},
-			FittingMethod:   BestFit,
-			FittingRequirements: FittingRequirements{
-				SingleAgent: true,
-			},
 			ExpectedAgentFit: 0,
 		},
 		{
-			Name:            "2-slot fit, single agent",
-			SlotsNeeded:     2,
-			AgentCapacities: []int{1, 3},
-			FittingMethod:   BestFit,
-			FittingRequirements: FittingRequirements{
-				SingleAgent: true,
+			Name: "0-slot multiple fits, max zero slot containers, out-of-order",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Agents: []*mockAgent{
+				newMockAgent("agent2", "", 4, 0, newIntPtr(4), 2),
+				newMockAgent("agent1", "", 4, 0, newIntPtr(2), 0),
 			},
+			FittingMethod:    BestFit,
 			ExpectedAgentFit: 1,
 		},
 		{
-			Name:            "2-slot fit, no single agent requirement",
-			SlotsNeeded:     2,
-			AgentCapacities: []int{1, 3},
-			FittingMethod:   BestFit,
-			FittingRequirements: FittingRequirements{
-				SingleAgent: false,
+			Name: "0-slot multiple fits, label hard constraint",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0, Label: "label2"},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "label1", 4, 0, nil, 0),
+				newMockAgent("agent2", "label2", 4, 0, nil, 0),
 			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 1,
+		},
+		{
+			Name: "0-slot single fit",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 1),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "0-slot single fit, max zero slot containers",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, newIntPtr(2), 1),
+				newMockAgent("agent2", "", 4, 0, newIntPtr(2), 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "2-slot multiple fits",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 2, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "1-slot multiple fits",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 1, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "1-slot out-of-order multiple fits",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 0),
+				newMockAgent("agent2", "", 1, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 1,
+		},
+		{
+			Name: "4-slot single fit",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 4},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 0),
+				newMockAgent("agent2", "", 1, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "4-slot multiple fits",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "2-slot multiple fits, in-use agents",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 2, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 2, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "1-slot multiple fits, in-use agents",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 2, 1, nil, 0),
+				newMockAgent("agent2", "", 4, 1, nil, 0),
+			},
+			FittingMethod:    WorstFit,
+			ExpectedAgentFit: 1,
+		},
+		{
+			Name: "1-slot multiple fits, in-use agents, out of order",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 1, nil, 0),
+				newMockAgent("agent2", "", 2, 1, nil, 0),
+			},
+			FittingMethod:    WorstFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "1-slot multiple fits, in-use-agents, odd numbers",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 2, 1, nil, 0),
+				newMockAgent("agent2", "", 5, 3, nil, 0),
+			},
+			FittingMethod:    WorstFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "2-slot multiple fits, in-use-agents, odd numbers",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 2, 0, nil, 0),
+				newMockAgent("agent2", "", 5, 3, nil, 0),
+			},
+			FittingMethod:    WorstFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "4-slot multiple fits, unoccupied",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 4},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    WorstFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "4-slot multiple fits, one exact",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 4},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 8, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    WorstFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "4-slot multiple fits, one exact, single agent",
+			Task: AllocateRequest{
+				ID:          "task1",
+				SlotsNeeded: 4,
+				FittingRequirements: FittingRequirements{
+					SingleAgent: true,
+				},
+			},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 8, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    WorstFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "4-slot multiple fits, label hard constraint",
+			Task: AllocateRequest{ID: "task1", Label: "label2", SlotsNeeded: 4},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "label1", 4, 0, nil, 0),
+				newMockAgent("agent2", "label2", 4, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 1,
+		},
+		{
+			Name: "2-slot multiple inexact fits",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "2-slot multiple inexact fits, single agent",
+			Task: AllocateRequest{
+				ID:          "task1",
+				SlotsNeeded: 2,
+				FittingRequirements: FittingRequirements{
+					SingleAgent: true,
+				},
+			},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 4, 0, nil, 0),
+				newMockAgent("agent2", "", 4, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 0,
+		},
+		{
+			Name: "2-slot fit, single agent",
+			Task: AllocateRequest{
+				ID:          "task1",
+				SlotsNeeded: 2,
+				FittingRequirements: FittingRequirements{
+					SingleAgent: true,
+				},
+			},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 1, 0, nil, 0),
+				newMockAgent("agent2", "", 3, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
+			ExpectedAgentFit: 1,
+		},
+		{
+			Name: "2-slot fit, no single agent requirement",
+			Task: AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Agents: []*mockAgent{
+				newMockAgent("agent1", "", 1, 0, nil, 0),
+				newMockAgent("agent2", "", 3, 0, nil, 0),
+			},
+			FittingMethod:    BestFit,
 			ExpectedAgentFit: 1,
 		},
 	}
 
 	for idx := range testCases {
 		tc := testCases[idx]
-		reqID := TaskID(fmt.Sprintf("task%d", idx))
 
 		t.Run(tc.Name, func(t *testing.T) {
-			req := &AllocateRequest{
-				ID:                  reqID,
-				SlotsNeeded:         tc.SlotsNeeded,
-				Label:               tc.TaskLabel,
-				FittingRequirements: tc.FittingRequirements,
+			system := actor.NewSystem(t.Name())
+			agents := []*agentState{}
+			for _, agent := range tc.Agents {
+				agents = append(agents, newFakeAgentState(
+					t,
+					system,
+					agent.id,
+					agent.label,
+					agent.slots,
+					agent.slotsUsed,
+					agent.maxZeroSlotContainers,
+					agent.zeroSlotContainers,
+				))
 			}
-
-			agent1 := newMockAgent(
-				t,
-				system,
-				fmt.Sprintf("agent-%s-a", reqID),
-				tc.AgentCapacities[0],
-				tc.AgentLabels[0],
-			)
-
-			agent2 := newMockAgent(
-				t,
-				system,
-				fmt.Sprintf("agent-%s-b", reqID),
-				tc.AgentCapacities[1],
-				tc.AgentLabels[1],
-			)
-
-			agents, index := byHandler(agent1, agent2)
-			if tc.AgentOccupiedSlots != nil {
-				consumeSlots(index[0], tc.AgentOccupiedSlots[0])
-				consumeSlots(index[1], tc.AgentOccupiedSlots[1])
-			}
-			fits := findFits(req, agents, tc.FittingMethod)
+			agentsByHandler, agentsByIndex := byHandler(agents...)
+			fits := findFits(&tc.Task, agentsByHandler, tc.FittingMethod)
 			assert.Assert(t, len(fits) > 0)
-			assert.Equal(t, fits[0].Agent, index[tc.ExpectedAgentFit])
+			assert.Equal(t, fits[0].Agent, agentsByIndex[tc.ExpectedAgentFit])
 		})
 	}
 }
@@ -300,7 +405,7 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 			var index []*agentState
 			for i, capacity := range tc.AgentCapacities {
 				index = append(index,
-					newMockAgent(t, system, fmt.Sprintf("%s-agent-%d", tc.Name, i), capacity, ""))
+					newFakeAgentState(t, system, fmt.Sprintf("%s-agent-%d", tc.Name, i), "", capacity, 0, nil, 0))
 			}
 			agents, index := byHandler(index...)
 			agentIndex := make(map[*agentState]int)
