@@ -1,9 +1,10 @@
 import time
 from typing import List, Optional
+import yaml
 
 import determined_client
 
-from determined_common import api
+from determined_common import api, context
 from determined_common.experimental import checkpoint
 
 
@@ -19,28 +20,48 @@ class Experiment:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, api_client, experiment_data=None, config=None):
+    def __init__(self, api_client, master, experiment_data=None):
+        self.master = master
+        self.api_client = api_client
+
         self.id = None
         self.state = None
+        self.config = None
 
-        self.config = config
-        self.api_client = api_client
-        self.metric = config.get('searcher').get('metric')
-        self.smaller_is_better = config.get('searcher').get('smaller_is_better')
+        for attribute in experiment_data:
+            setattr(self, attribute, experiment_data[attribute])
 
-        for attribute in experiment_data.attribute_map:
-            setattr(self, attribute, getattr(experiment_data, attribute))
+        self.metric =self.config.get('searcher').get('metric')
+        self.smaller_is_better = self.config.get('searcher').get('smaller_is_better')
 
 
     @classmethod
-    def create_experiment(cls, api_client, config, context_dir, local=False, test=False, master=""):
+    def create_experiment(cls, api_client, config, context_path, local=False, test=False, master=""):
         print("Creating Experiment")
         experiment_api = determined_client.ExperimentsApi(api_client)
-        experiment_api.determined_post_experiment()
-        # experiment = api.create_experiment()
-        # experiment_id = 1  # really should be experiment.id
-        # print(f"Created Experiment {experiment_id}")
-        # return cls(api_client, experiment_id)
+        experiment_context = context.Context.from_local(context_path)
+
+        for e in experiment_context.entries:
+            e.content = e.content.decode("utf-8")
+
+
+        body = {
+            "experiment_config": yaml.safe_dump(config),
+            "model_definition": [e.dict() for e in experiment_context.entries],
+            "validate_only": False,
+        }
+
+        response = experiment_api.determined_post_experiment(body)
+
+        experiment_obj = {}
+        for attribute in response.attribute_map:
+            experiment_obj[attribute] = getattr(response, attribute, getattr(response, attribute))
+
+        experiment = cls(api_client, master, experiment_obj)
+
+        experiment.activate()
+
+
 
     @classmethod
     def get_experiment(cls, api_client, experiment_id):
@@ -63,6 +84,12 @@ class Experiment:
     def wait_for_completion(self):
         while self.state == "ACTIVE":
             time.sleep(10)
+
+    def activate(self):
+        # api.activate_experiment(self.master, self.id)
+        experiment_api = determined_client.ExperimentsApi(self.api_client)
+        experiment_api.determined_patch_experiment(body={"state": "STATE_ACTIVE"}, experiment_id=self.id)
+
 
     def top_checkpoint(
         self,

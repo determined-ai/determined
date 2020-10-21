@@ -1,10 +1,9 @@
-import os
 import sys
 import pathlib
 
 from determined.experimental import Determined
 
-
+# Helper function from Kubeflow Blog Post
 def get_validation_metric(checkpoint):
     config = checkpoint.experiment_config
     searcher = config['searcher']
@@ -24,9 +23,11 @@ def is_better(c1, c2):
     return False
 
 
+# Create Determined Object
 d = Determined(master='latest-master.determined.ai:8080')
-# model_name = 'dummy_model'
 
+# Setup Experiment
+context_dir = pathlib.Path.joinpath(pathlib.Path.cwd(), 'mnist_pytorch')
 config = {'description': 'mnist_pytorch_const',
           'data': {'url': 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz'},
           'hyperparameters': {'learning_rate': 1.0,
@@ -41,40 +42,36 @@ config = {'description': 'mnist_pytorch_const',
                        'smaller_is_better': True},
           'entrypoint': 'model_def:MNistTrial'}
 
-context_dir = pathlib.Path.joinpath(pathlib.Path.cwd(), 'mnist_pytorch')
+# Submit Experiment
+experiment = d.create_experiment(config, context_dir)
+experiment.wait_for_completion()
 
-print(context_dir)
+# Act on Experiment State
+if not experiment.success():
+    print(f'Experiment {experiment.id} did not complete successfully')
+    sys.exit(1)
+print(f'Experiment {experiment.id} completed successfully ')
 
-experiment = d.create_experiment({}, context_dir)
-# experiment.wait_for_completion()
+# Decide to put model into model registry (Code is mostly from Kubeflow blog)
+model_name = 'dummy_model'
+best_checkpoint = experiment.top_checkpoint()
+
+try:
+    model = d.get_model(model_name)
+
+except:  # Model not yet in registry
+    print(f'Registering new Model: {model_name}')
+    model = d.create_model(model_name)
+
+latest_version = model.get_version()
+
+if not latest_version:
+    better = True
+else:
+    better = is_better(latest_version, best_checkpoint)
+
+if better:
+    print(f'Registering new version: {model_name}')
+    model.register_version(best_checkpoint.uuid)
 
 
-
-
-# experiment = d.get_experiment(631)
-#
-# if not experiment.success():
-#     print(f'Experiment {experiment.id} did not complete successfully')
-#     sys.exit(1)
-#
-# print(f'Experiment {experiment.id} completed successfully ')
-
-# best_checkpoint = experiment.top_checkpoint()
-#
-# try:
-#     model = d.get_model(model_name)
-#
-# except:  # Model not yet in registry
-#     print(f'Registering new Model: {model_name}')
-#     model = d.create_model(model_name)
-#
-# latest_version = model.get_version()
-#
-# if not latest_version:
-#     better = True
-# else:
-#     better = is_better(latest_version, best_checkpoint)
-#
-# if better:
-#     print(f'Registering new version: {model_name}')
-#     model.register_version(best_checkpoint.uuid)
