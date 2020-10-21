@@ -394,6 +394,7 @@ type TrialLog struct {
 	AgentID *string `db:"agent_id" json:"agent_id"`
 	// In the case of k8s, container_id is a pod name instead.
 	ContainerID *string    `db:"container_id" json:"container_id"`
+	RankID      *int       `db:"rank_id" json:"rank_id"`
 	Timestamp   *time.Time `db:"timestamp" json:"timestamp"`
 	Level       *string    `db:"level" json:"level"`
 	Source      *string    `db:"source" json:"source"`
