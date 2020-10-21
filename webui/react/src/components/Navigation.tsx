@@ -97,7 +97,9 @@ const Navigation: React.FC = () => {
     setUI({ type: isCollapsed ? UI.ActionType.CollapseChrome : UI.ActionType.ExpandChrome });
   }, [ isCollapsed, setUI ]);
 
-  return showNavigation ? (
+  if (!showNavigation) return null;
+
+  return (
     <CSSTransition
       appear={true}
       classNames={{
@@ -193,7 +195,7 @@ const Navigation: React.FC = () => {
         </footer>
       </nav>
     </CSSTransition>
-  ) : null;
+  );
 };
 
 export default Navigation;

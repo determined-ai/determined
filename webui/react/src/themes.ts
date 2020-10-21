@@ -28,6 +28,7 @@ enum StateColors {
 }
 
 export interface Theme {
+  animationCurve: string;
   colors: {
     action: {
       dark: string;
@@ -46,6 +47,7 @@ export interface Theme {
       normal: string;
     };
     monochrome: string[];
+    overlay: string;
     states: Record<StateColors, string>;
   };
   focus: {
@@ -72,6 +74,7 @@ export interface Theme {
     navigation: {
       minWidth: string;
       maxWidth: string;
+      toolbarHeight: string;
     };
   };
 }
@@ -81,6 +84,7 @@ export interface Theme {
  * Currently two sources of truth due to Ant Design.
  */
 export const lightTheme: Theme = {
+  animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
   colors: {
     action: {
       dark: '#0088cc',
@@ -132,6 +136,7 @@ export const lightTheme: Theme = {
       '#fafafa',  // 16 - Fog
       '#ffffff',  // 17 - White
     ],
+    overlay: 'rgba(255, 255, 255, 0.75)',
     states: {
       active: '#009bde',
       failed: '#cc0000',
@@ -188,6 +193,7 @@ export const lightTheme: Theme = {
     navigation: {
       maxWidth: '24rem',
       minWidth: '5.6rem',
+      toolbarHeight: '5.6rem',
     },
   },
 };
