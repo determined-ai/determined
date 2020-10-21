@@ -26,7 +26,7 @@ const hyperparamsView = (params: Record<string, HyperparameterValue>) => {
   return <List
     dataSource={Object.entries(params)}
     renderItem={([ label, value ]) => {
-      const textValue = isObject(value) ? JSON.stringify(value, null ,2) : value.toString();
+      const textValue = isObject(value) ? JSON.stringify(value, null, 2) : value.toString();
       return <List.Item>{label}: {textValue}</List.Item>;
     }}
     size="small"
