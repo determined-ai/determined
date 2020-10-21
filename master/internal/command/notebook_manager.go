@@ -143,11 +143,11 @@ func (n *notebookManager) processLaunchRequest(
 	}
 
 	a, _ := ctx.ActorOf(notebook.taskID, notebook)
-	resp := ctx.Ask(a, getSummary{})
-	if err := resp.Error(); err != nil {
+	summaryFut := ctx.Ask(a, getSummary{})
+	if err := summaryFut.Error(); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	summary := resp.Get().(summary)
+	summary := summaryFut.Get().(summary)
 	ctx.Log().Infof("created notebook %s", a.Address().Local())
 	return &summary, http.StatusOK, nil
 }

@@ -109,11 +109,11 @@ func (s *shellManager) processLaunchRequest(
 	}
 
 	a, _ := ctx.ActorOf(shell.taskID, shell)
-	resp := ctx.Ask(a, getSummary{})
-	if err = resp.Error(); err != nil {
+	summaryFut := ctx.Ask(a, getSummary{})
+	if err = summaryFut.Error(); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
-	summary := resp.Get().(summary)
+	summary := summaryFut.Get().(summary)
 	ctx.Log().Infof("created shell %s", a.Address().Local())
 	return &summary, http.StatusOK, err
 }

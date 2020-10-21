@@ -154,12 +154,12 @@ func (t *tensorboardManager) processLaunchRequest(
 	}
 
 	a, _ := ctx.ActorOf(b.taskID, b)
-	resp := ctx.Ask(a, getSummary{})
-	if err := resp.Error(); err != nil {
+	summaryFut := ctx.Ask(a, getSummary{})
+	if err := summaryFut.Error(); err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	ctx.Log().Infof("created tensorboard %s", a.Address().Local())
-	summary := resp.Get().(summary)
+	summary := summaryFut.Get().(summary)
 	return &summary, http.StatusOK, nil
 }
 
