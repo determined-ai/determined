@@ -6,10 +6,10 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
 import {
-  Checkpoint, CheckpointDetail, CheckpointState, ExperimentDetails, RunState,
+  Checkpoint, CheckpointDetail, CheckpointState, ExperimentDetails, HyperparameterValue, RunState,
   Step, TrialDetails, ValidationMetrics,
 } from 'types';
-import { numericSorter } from 'utils/data';
+import { isObject, numericSorter } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
@@ -22,10 +22,13 @@ interface Props {
   experiment: ExperimentDetails;
 }
 
-const hyperparamsView = (params: Record<string, React.ReactNode>) => {
+const hyperparamsView = (params: Record<string, HyperparameterValue>) => {
   return <List
     dataSource={Object.entries(params)}
-    renderItem={([ label, value ]) => <List.Item>{label}: {value}</List.Item>}
+    renderItem={([ label, value ]) => {
+      const textValue = isObject(value) ? JSON.stringify(value, null ,2) : value.toString();
+      return <List.Item>{label}: {textValue}</List.Item>;
+    }}
     size="small"
   />;
 };
