@@ -30,8 +30,6 @@ type provisionerTick struct{}
 //    2.2 It checks recently launched instances and avoids provisioning more than needed.
 // 3. The instance providers take actions to launch/terminate instances.
 type Provisioner struct {
-	actor.Actor
-
 	provider     provider
 	scaleDecider *scaleDecider
 }
@@ -40,12 +38,12 @@ type provider interface {
 	instanceType() instanceType
 	prestart(ctx *actor.Context)
 	list(ctx *actor.Context) ([]*Instance, error)
-	launch(ctx *actor.Context, instanceType instanceType, instanceNum int)
+	launch(ctx *actor.Context, instanceNum int)
 	terminate(ctx *actor.Context, instanceIDs []string)
 }
 
 // New creates a new Provisioner.
-func New(config *Config, cert *tls.Certificate) (*Provisioner, error) {
+func New(resourcePool string, config *Config, cert *tls.Certificate) (*Provisioner, error) {
 	if err := config.initMasterAddress(); err != nil {
 		return nil, err
 	}
@@ -53,12 +51,12 @@ func New(config *Config, cert *tls.Certificate) (*Provisioner, error) {
 	switch {
 	case config.AWS != nil:
 		var err error
-		if cluster, err = newAWSCluster(config, cert); err != nil {
+		if cluster, err = newAWSCluster(resourcePool, config, cert); err != nil {
 			return nil, errors.Wrap(err, "cannot create an EC2 cluster")
 		}
 	case config.GCP != nil:
 		var err error
-		if cluster, err = newGCPCluster(config, cert); err != nil {
+		if cluster, err = newGCPCluster(resourcePool, config, cert); err != nil {
 			return nil, errors.Wrap(err, "cannot create a GCP cluster")
 		}
 	}
@@ -69,6 +67,7 @@ func New(config *Config, cert *tls.Certificate) (*Provisioner, error) {
 			time.Duration(config.MaxIdleAgentPeriod),
 			time.Duration(config.MaxAgentStartingPeriod),
 			maxDisconnectPeriod,
+			config.MinInstances,
 			config.MaxInstances,
 		),
 	}, nil
@@ -76,6 +75,8 @@ func New(config *Config, cert *tls.Certificate) (*Provisioner, error) {
 
 // Receive implements the actor.Actor interface.
 func (p *Provisioner) Receive(ctx *actor.Context) error {
+	ctx.AddLabel("resource-pool", ctx.Self().Parent().Address().Local())
+
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		p.provider.prestart(ctx)
@@ -106,13 +107,12 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 		return
 	}
 	if p.scaleDecider.updateInstanceSnapshot(instances) {
-		ctx.Log().Infof("found %d instances: %s", len(instances), fmtInstances(instances))
-	}
-	if !p.scaleDecider.needScale() {
-		return
+		ctx.Log().Infof("found state changes in %d instances: %s",
+			len(instances), fmtInstances(instances))
 	}
 
-	ctx.Log().Debug("scale happening")
+	p.scaleDecider.calculateInstanceStates()
+
 	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
 		ctx.Log().Infof("decided to terminate %d instances: %s",
 			len(toTerminate.InstanceIDs), toTerminate.String())
@@ -120,7 +120,8 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	}
 
 	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
-		ctx.Log().Infof("decided to launch %d instances", numToLaunch)
-		p.provider.launch(ctx, p.provider.instanceType(), numToLaunch)
+		ctx.Log().Infof("decided to launch %d instances (type %s)",
+			numToLaunch, p.provider.instanceType().name())
+		p.provider.launch(ctx, numToLaunch)
 	}
 }

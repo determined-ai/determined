@@ -1,11 +1,12 @@
 package resourcemanagers
 
 import (
+	"crypto/tls"
+
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
-	log "github.com/sirupsen/logrus"
-
-	"github.com/determined-ai/determined/master/internal/agent"
+	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -18,16 +19,18 @@ import (
 
 // ResourcePool manages the agent and task lifecycles.
 type ResourcePool struct {
-	scheduler     Scheduler
-	fittingMethod SoftConstraint
-	agents        map[*actor.Ref]*agentState
+	config *ResourcePoolConfig
+	cert   *tls.Certificate
 
-	taskList *taskList
-	groups   map[*actor.Ref]*group
-
+	scheduler        Scheduler
+	fittingMethod    SoftConstraint
 	provisioner      *actor.Ref
 	slotsPerInstance int
-	scalingInfo      *sproto.ScalingInfo
+
+	agents      map[*actor.Ref]*agentState
+	taskList    *taskList
+	groups      map[*actor.Ref]*group
+	scalingInfo *sproto.ScalingInfo
 
 	reschedule bool
 
@@ -38,30 +41,44 @@ type ResourcePool struct {
 
 // NewResourcePool initializes a new empty default resource provider.
 func NewResourcePool(
+	config *ResourcePoolConfig,
+	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
-	provisioner *actor.Ref,
-	provisionerSlotsPerInstance int,
 ) *ResourcePool {
 	d := &ResourcePool{
+		config: config,
+		cert:   cert,
+
 		scheduler:     scheduler,
 		fittingMethod: fittingMethod,
-		agents:        make(map[*actor.Ref]*agentState),
-		groups:        make(map[*actor.Ref]*group),
 
-		taskList: newTaskList(),
-
-		provisioner:      provisioner,
-		slotsPerInstance: provisionerSlotsPerInstance,
-		scalingInfo:      &sproto.ScalingInfo{},
+		agents:      make(map[*actor.Ref]*agentState),
+		taskList:    newTaskList(),
+		groups:      make(map[*actor.Ref]*group),
+		scalingInfo: &sproto.ScalingInfo{},
 
 		reschedule: false,
 	}
 	return d
 }
 
-func (d *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
-	d.notifyOnStop(ctx, msg.TaskActor, ResourcesReleased{TaskActor: msg.TaskActor})
+func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
+	if rp.config.Provider == nil {
+		ctx.Log().Infof("not enabling provisioner for resource pool: %s", rp.config.PoolName)
+		return nil
+	}
+	p, pRef, err := provisioner.Setup(ctx, rp.config.Provider, rp.config.PoolName, rp.cert)
+	if err != nil {
+		return errors.Wrapf(err, "cannot create resource pool: %s", rp.config.PoolName)
+	}
+	rp.slotsPerInstance = p.SlotsPerInstance()
+	rp.provisioner = pRef
+	return nil
+}
+
+func (rp *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
+	rp.notifyOnStop(ctx, msg.TaskActor, ResourcesReleased{TaskActor: msg.TaskActor})
 
 	if len(msg.ID) == 0 {
 		msg.ID = TaskID(uuid.New().String())
@@ -69,7 +86,7 @@ func (d *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
 	if msg.Group == nil {
 		msg.Group = msg.TaskActor
 	}
-	d.getOrCreateGroup(ctx, msg.Group)
+	rp.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
 		msg.Name = "Unnamed Task"
 	}
@@ -78,19 +95,19 @@ func (d *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
 		"resources are requested by %s (Task ID: %s)",
 		msg.TaskActor.Address(), msg.ID,
 	)
-	d.taskList.AddTask(&msg)
+	rp.taskList.AddTask(&msg)
 }
 
-func (d *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
-	if task, found := d.taskList.GetTaskByHandler(msg.TaskHandler); found {
+func (rp *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
+	if task, found := rp.taskList.GetTaskByHandler(msg.TaskHandler); found {
 		task.Name = msg.Name
 	}
 }
 
 // allocateResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully allocated.
-func (d *ResourcePool) allocateResources(req *AllocateRequest) bool {
-	fits := findFits(req, d.agents, d.fittingMethod)
+func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *AllocateRequest) bool {
+	fits := findFits(req, rp.agents, rp.fittingMethod)
 
 	if len(fits) == 0 {
 		return false
@@ -107,84 +124,89 @@ func (d *ResourcePool) allocateResources(req *AllocateRequest) bool {
 		})
 	}
 
-	allocated := ResourcesAllocated{ID: req.ID, Allocations: allocations}
-	d.taskList.SetAllocations(req.TaskActor, &allocated)
+	allocated := ResourcesAllocated{
+		ID: req.ID, ResourcePool: rp.config.PoolName, Allocations: allocations,
+	}
+	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
-	log.Infof("allocated resources to %s", req.TaskActor.Address())
+	ctx.Log().Infof("allocated resources to %s", req.TaskActor.Address())
 
 	return true
 }
 
-func (d *ResourcePool) releaseResource(handler *actor.Ref) {
-	log.Infof("releasing resources taken by %s", handler.Address())
-	handler.System().Tell(handler, ReleaseResources{})
+func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) {
+	ctx.Log().Infof("releasing resources taken by %s", handler.Address())
+	handler.System().Tell(handler, ReleaseResources{ResourcePool: rp.config.PoolName})
 }
 
-func (d *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
+func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
-	d.taskList.RemoveTaskByHandler(handler)
+	rp.taskList.RemoveTaskByHandler(handler)
 }
 
-func (d *ResourcePool) getOrCreateGroup(
+func (rp *ResourcePool) getOrCreateGroup(
 	ctx *actor.Context, handler *actor.Ref,
 ) *group {
-	if g, ok := d.groups[handler]; ok {
+	if g, ok := rp.groups[handler]; ok {
 		return g
 	}
 	g := &group{handler: handler, weight: 1}
-	d.groups[handler] = g
+	rp.groups[handler] = g
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
 		actors.NotifyOnStop(ctx, handler, groupActorStopped{})
 	}
 	return g
 }
 
-func (d *ResourcePool) notifyOnStop(
+func (rp *ResourcePool) notifyOnStop(
 	ctx *actor.Context, ref *actor.Ref, msg actor.Message,
 ) {
 	done := actors.NotifyOnStop(ctx, ref, msg)
-	if d.saveNotifications {
-		d.notifications = append(d.notifications, done)
+	if rp.saveNotifications {
+		rp.notifications = append(rp.notifications, done)
 	}
 }
 
-func (d *ResourcePool) updateScalingInfo() bool {
-	desiredInstanceNum := calculateDesiredNewInstanceNum(d.taskList, d.slotsPerInstance)
+func (rp *ResourcePool) updateScalingInfo() bool {
+	desiredInstanceNum := calculateDesiredNewInstanceNum(rp.taskList, rp.slotsPerInstance)
 	agents := make(map[string]sproto.AgentSummary)
-	for _, agentState := range d.agents {
+	for _, agentState := range rp.agents {
 		summary := newAgentSummary(agentState)
 		agents[summary.Name] = summary
 	}
-	return d.scalingInfo.Update(desiredInstanceNum, agents)
+	return rp.scalingInfo.Update(desiredInstanceNum, agents)
 }
 
-func (d *ResourcePool) sendScalingInfo(ctx *actor.Context) {
-	if d.provisioner != nil && d.updateScalingInfo() {
-		ctx.Tell(d.provisioner, *d.scalingInfo)
+func (rp *ResourcePool) sendScalingInfo(ctx *actor.Context) {
+	if rp.provisioner != nil && rp.updateScalingInfo() {
+		ctx.Tell(rp.provisioner, *rp.scalingInfo)
 	}
 }
 
 // Receive implements the actor.Actor interface.
-func (d *ResourcePool) Receive(ctx *actor.Context) error {
+func (rp *ResourcePool) Receive(ctx *actor.Context) error {
+	ctx.AddLabel("resource-pool", rp.config.PoolName)
+
 	reschedule := true
 	defer func() {
 		// Default to scheduling every 500ms if a message was received, but allow messages
 		// that don't affect the cluster to be skipped.
-		d.reschedule = d.reschedule || reschedule
+		rp.reschedule = rp.reschedule || reschedule
 	}()
 
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		err := rp.setupProvisioner(ctx)
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
+		return err
 
 	case
-		sproto.ConfigureEndpoints,
 		sproto.AddAgent,
 		sproto.AddDevice,
 		sproto.FreeDevice,
 		sproto.RemoveDevice,
 		sproto.RemoveAgent:
-		return d.receiveAgentMsg(ctx)
+		return rp.receiveAgentMsg(ctx)
 
 	case
 		groupActorStopped,
@@ -193,34 +215,30 @@ func (d *ResourcePool) Receive(ctx *actor.Context) error {
 		SetTaskName,
 		AllocateRequest,
 		ResourcesReleased:
-		return d.receiveRequestMsg(ctx)
+		return rp.receiveRequestMsg(ctx)
 
 	case GetTaskSummary:
 		reschedule = false
-		if resp := getTaskSummary(d.taskList, *msg.ID); resp != nil {
+		if resp := getTaskSummary(rp.taskList, *msg.ID); resp != nil {
 			ctx.Respond(*resp)
 		}
 
 	case GetTaskSummaries:
 		reschedule = false
-		ctx.Respond(getTaskSummaries(d.taskList))
-
-	case sproto.GetEndpointActorAddress:
-		reschedule = false
-		ctx.Respond("/agents")
+		ctx.Respond(getTaskSummaries(rp.taskList))
 
 	case schedulerTick:
-		if d.reschedule {
-			toAllocate, toRelease := d.scheduler.Schedule(d)
+		if rp.reschedule {
+			toAllocate, toRelease := rp.scheduler.Schedule(rp)
 			for _, req := range toAllocate {
-				d.allocateResources(req)
+				rp.allocateResources(ctx, req)
 			}
 			for _, taskActor := range toRelease {
-				d.releaseResource(taskActor)
+				rp.releaseResource(ctx, taskActor)
 			}
-			d.sendScalingInfo(ctx)
+			rp.sendScalingInfo(ctx)
 		}
-		d.reschedule = false
+		rp.reschedule = false
 		reschedule = false
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
@@ -231,32 +249,28 @@ func (d *ResourcePool) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (d *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
+func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case sproto.ConfigureEndpoints:
-		ctx.Log().Infof("initializing endpoints for agents")
-		agent.Initialize(ctx, msg.Echo, ctx.Self())
-
 	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
-		d.agents[msg.Agent] = newAgentState(msg)
+		rp.agents[msg.Agent] = newAgentState(msg)
 
 	case sproto.AddDevice:
 		ctx.Log().Infof("adding device: %s on %s", msg.Device.String(), msg.Agent.Address().Local())
-		state, ok := d.agents[msg.Agent]
+		state, ok := rp.agents[msg.Agent]
 		check.Panic(check.True(ok, "error adding device, agent not found: %s", msg.Agent.Address()))
 		state.devices[msg.Device] = msg.ContainerID
 
 	case sproto.FreeDevice:
 		ctx.Log().Infof("freeing device from container %s: %s on %s",
 			msg.ContainerID, msg.Device.String(), msg.Agent.Address().Local())
-		state, ok := d.agents[msg.Agent]
+		state, ok := rp.agents[msg.Agent]
 		check.Panic(check.True(ok, "error freeing device, agent not found: %s", msg.Agent.Address()))
 
 		if msg.Device.Type == device.ZeroSlot {
 			delete(state.zeroSlotContainers, *msg.ContainerID)
 		} else {
-			id, ok := d.agents[msg.Agent].devices[msg.Device]
+			id, ok := rp.agents[msg.Agent].devices[msg.Device]
 			check.Panic(check.True(ok, "error freeing device, device not found: %s", msg.Device))
 			check.Panic(check.True(id != nil, "error freeing device, device not assigned: %s", msg.Device))
 			state.devices[msg.Device] = nil
@@ -264,13 +278,13 @@ func (d *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 
 	case sproto.RemoveDevice:
 		ctx.Log().Infof("removing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
-		state, ok := d.agents[msg.Agent]
+		state, ok := rp.agents[msg.Agent]
 		check.Panic(check.True(ok, "error removing device, agent not found: %s", msg.Agent.Address()))
 		delete(state.devices, msg.Device)
 
 	case sproto.RemoveAgent:
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
-		delete(d.agents, msg.Agent)
+		delete(rp.agents, msg.Agent)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -278,25 +292,25 @@ func (d *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (d *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
+func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case groupActorStopped:
-		delete(d.groups, msg.Ref)
+		delete(rp.groups, msg.Ref)
 
 	case sproto.SetGroupMaxSlots:
-		d.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
+		rp.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
 	case sproto.SetGroupWeight:
-		d.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
+		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
 	case SetTaskName:
-		d.receiveSetTaskName(ctx, msg)
+		rp.receiveSetTaskName(ctx, msg)
 
 	case AllocateRequest:
-		d.addTask(ctx, msg)
+		rp.addTask(ctx, msg)
 
 	case ResourcesReleased:
-		d.resourcesReleased(ctx, msg.TaskActor)
+		rp.resourcesReleased(ctx, msg.TaskActor)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

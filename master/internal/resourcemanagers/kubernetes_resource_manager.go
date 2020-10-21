@@ -3,10 +3,12 @@ package resourcemanagers
 import (
 	"github.com/google/uuid"
 
-	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/check"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -48,17 +50,13 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
-	case sproto.ConfigureEndpoints:
-		ctx.Log().Infof("initializing endpoints for pods")
-		podsActor := kubernetes.Initialize(
-			msg.System,
-			msg.Echo,
-			ctx.Self(),
-			k.config.Namespace,
-			k.config.MasterServiceName,
-			k.config.LeaveKubernetesResources,
-		)
-		k.agent = newAgentState(sproto.AddAgent{Agent: podsActor})
+	case sproto.SetPods:
+		check.Panic(check.True(k.agent == nil, "should only set pods once"))
+		k.agent = &agentState{
+			handler:            msg.Pods,
+			devices:            make(map[device.Device]*cproto.ID),
+			zeroSlotContainers: make(map[cproto.ID]bool),
+		}
 
 	case
 		groupActorStopped,
@@ -78,10 +76,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case GetTaskSummaries:
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList))
-
-	case sproto.GetEndpointActorAddress:
-		reschedule = false
-		ctx.Respond("/pods")
 
 	case schedulerTick:
 		if k.reschedule {

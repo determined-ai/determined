@@ -3,7 +3,8 @@ package resourcemanagers
 import (
 	"crypto/tls"
 
-	"github.com/determined-ai/determined/master/internal/provisioner"
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -13,9 +14,7 @@ type agentResourceManager struct {
 	poolsConfig *ResourcePoolsConfig
 	cert        *tls.Certificate
 
-	// onlyPool hosts the reference to the only resource pool
-	// since we currently support only one resource pool.
-	onlyPool *actor.Ref
+	pools map[string]*actor.Ref
 }
 
 func newAgentResourceManager(
@@ -25,26 +24,42 @@ func newAgentResourceManager(
 		config:      config,
 		poolsConfig: poolsConfig,
 		cert:        cert,
+		pools:       make(map[string]*actor.Ref),
 	}
 }
 
 func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		for ix := range a.poolsConfig.ResourcePools {
+		for ix, config := range a.poolsConfig.ResourcePools {
 			rpRef := a.createResourcePool(ctx, &a.poolsConfig.ResourcePools[ix], a.cert)
 			if rpRef != nil {
-				a.onlyPool = rpRef
-				return nil
+				a.pools[config.PoolName] = rpRef
 			}
 		}
 
-	case
-		AllocateRequest, ResourcesReleased,
-		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
-		GetTaskSummary, GetTaskSummaries, SetTaskName,
-		sproto.ConfigureEndpoints, sproto.GetEndpointActorAddress:
-		a.forward(ctx, msg)
+	case AllocateRequest:
+		if len(msg.ResourcePool) == 0 {
+			msg.ResourcePool = a.getDefaultResourcePool(msg)
+		}
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
+	case ResourcesReleased:
+		for name := range a.pools {
+			a.forwardToPool(ctx, name, msg)
+		}
+
+	case sproto.SetGroupMaxSlots:
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
+	case sproto.SetGroupWeight:
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
+	case GetTaskSummary:
+		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
+			ctx.Respond(summary)
+		}
+	case GetTaskSummaries:
+		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
+	case SetTaskName:
+		a.forwardToAllPools(ctx, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -52,45 +67,83 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (a *agentResourceManager) forward(ctx *actor.Context, msg actor.Message) {
-	if ctx.ExpectingResponse() {
-		response := ctx.Ask(a.onlyPool, msg)
-		ctx.Respond(response.Get())
-	} else {
-		ctx.Tell(a.onlyPool, msg)
-	}
-}
-
 func (a *agentResourceManager) createResourcePool(
 	ctx *actor.Context, config *ResourcePoolConfig, cert *tls.Certificate,
 ) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
-	var rp *ResourcePool
-	if config.Provider == nil {
-		ctx.Log().Infof("disabling provisioner for resource pool: %s", config.PoolName)
-		rp = NewResourcePool(
-			MakeScheduler(a.config.SchedulingPolicy),
-			MakeFitFunction(a.config.FittingPolicy),
-			nil,
-			0,
-		)
-	} else {
-		p, pRef, err := provisioner.Setup(ctx, config.Provider, cert)
-		if err != nil {
-			ctx.Log().WithError(err).Errorf("cannot create resource pool: %s", config.PoolName)
-			return nil
-		}
-		rp = NewResourcePool(
-			MakeScheduler(a.config.SchedulingPolicy),
-			MakeFitFunction(a.config.FittingPolicy),
-			pRef,
-			p.SlotsPerInstance(),
-		)
-	}
+	rp := NewResourcePool(
+		config,
+		cert,
+		MakeScheduler(a.config.SchedulingPolicy),
+		MakeFitFunction(a.config.FittingPolicy),
+	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {
 		ctx.Log().Errorf("cannot create resource pool actor: %s", config.PoolName)
 		return nil
 	}
 	return ref
+}
+
+func (a *agentResourceManager) getDefaultResourcePool(msg AllocateRequest) string {
+	if msg.SlotsNeeded == 0 {
+		return a.config.DefaultCPUResourcePool
+	}
+	return a.config.DefaultGPUResourcePool
+}
+
+func (a *agentResourceManager) forwardToPool(
+	ctx *actor.Context, resourcePool string, msg actor.Message,
+) {
+	if a.pools[resourcePool] == nil {
+		err := errors.Errorf("cannot find resource pool: %s", resourcePool)
+		ctx.Log().WithError(err).Error("")
+		if ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
+		return
+	}
+	if ctx.ExpectingResponse() {
+		response := ctx.Ask(a.pools[resourcePool], msg)
+		ctx.Respond(response.Get())
+	} else {
+		ctx.Tell(a.pools[resourcePool], msg)
+	}
+}
+
+func (a *agentResourceManager) forwardToAllPools(
+	ctx *actor.Context, msg actor.Message,
+) map[*actor.Ref]actor.Message {
+	if ctx.ExpectingResponse() {
+		return ctx.AskAll(msg, ctx.Children()...).GetAll()
+	}
+	ctx.TellAll(msg, ctx.Children()...)
+	return nil
+}
+
+func (a *agentResourceManager) aggregateTaskSummary(
+	resps map[*actor.Ref]actor.Message,
+) *TaskSummary {
+	for _, resp := range resps {
+		if resp != nil {
+			typed := resp.(TaskSummary)
+			return &typed
+		}
+	}
+	return nil
+}
+
+func (a *agentResourceManager) aggregateTaskSummaries(
+	resps map[*actor.Ref]actor.Message,
+) map[TaskID]TaskSummary {
+	summaries := make(map[TaskID]TaskSummary)
+	for _, resp := range resps {
+		if resp != nil {
+			typed := resp.(map[TaskID]TaskSummary)
+			for id, summary := range typed {
+				summaries[id] = summary
+			}
+		}
+	}
+	return summaries
 }

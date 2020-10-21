@@ -87,7 +87,7 @@ func newRunCmd() *cobra.Command {
 		"Label attached to the agent for scheduling constraints")
 
 	// ResourcePool flags.
-	cmd.Flags().StringVar(&opts.ResourcePool, "resource-pool", "default",
+	cmd.Flags().StringVar(&opts.ResourcePool, "resource-pool", "",
 		"Resource Pool the agent belongs to")
 
 	// Container flags.

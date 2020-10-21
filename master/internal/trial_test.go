@@ -83,10 +83,10 @@ func TestRendezvousInfo(t *testing.T) {
 	rp, created := system.ActorOf(
 		actor.Addr("resourceManagers"),
 		resourcemanagers.NewResourcePool(
+			&resourcemanagers.ResourcePoolConfig{PoolName: "default"},
+			nil,
 			resourcemanagers.NewFairShareScheduler(),
 			resourcemanagers.WorstFit,
-			nil,
-			0,
 		))
 	if !created {
 		t.Fatal("unable to create cluster")
@@ -99,7 +99,7 @@ func TestRendezvousInfo(t *testing.T) {
 
 	// This is the minimal trial to receive scheduler.ContainerStarted messages.
 	trial := &trial{
-		rp:                   rp,
+		rm:                   rp,
 		experiment:           &model.Experiment{},
 		task:                 &resourcemanagers.AllocateRequest{},
 		allocations:          []resourcemanagers.Allocation{mockAllocation{}, mockAllocation{}},

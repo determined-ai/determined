@@ -10,7 +10,7 @@ import (
 // DefaultRPsConfig returns the default resources pools configuration.
 func DefaultRPsConfig() *ResourcePoolsConfig {
 	return &ResourcePoolsConfig{
-		ResourcePools: []ResourcePoolConfig{{PoolName: "default"}},
+		ResourcePools: []ResourcePoolConfig{{PoolName: defaultResourcePoolName}},
 	}
 }
 
@@ -35,9 +35,6 @@ type ResourcePoolsConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (r ResourcePoolsConfig) Validate() []error {
-	if len(r.ResourcePools) != 1 {
-		return []error{errors.New("expected only one resource pool")}
-	}
 	errs := make([]error, 0)
 	poolNames := make(map[string]bool)
 	for ix, rp := range r.ResourcePools {

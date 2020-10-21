@@ -29,13 +29,16 @@ func init() {
 // 2. Names of agents that are equal to the instance names.
 type gcpCluster struct {
 	*GCPClusterConfig
-	masterURL url.URL
-	metadata  []*compute.MetadataItems
+	resourcePool string
+	masterURL    url.URL
+	metadata     []*compute.MetadataItems
 
 	client *compute.Service
 }
 
-func newGCPCluster(config *Config, cert *tls.Certificate) (*gcpCluster, error) {
+func newGCPCluster(
+	resourcePool string, config *Config, cert *tls.Certificate,
+) (*gcpCluster, error) {
 	if err := config.GCP.initDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
@@ -78,6 +81,7 @@ func newGCPCluster(config *Config, cert *tls.Certificate) (*gcpCluster, error) {
 	startupScript := string(mustMakeAgentSetupScript(agentSetupScriptConfig{
 		MasterHost:                   masterURL.Hostname(),
 		MasterPort:                   masterURL.Port(),
+		AgentUseGPUs:                 config.GCP.InstanceType.slots() > 0,
 		AgentNetwork:                 config.AgentDockerNetwork,
 		AgentDockerRuntime:           config.AgentDockerRuntime,
 		AgentDockerImage:             config.AgentDockerImage,
@@ -86,9 +90,11 @@ func newGCPCluster(config *Config, cert *tls.Certificate) (*gcpCluster, error) {
 		MasterCertBase64:             masterCertBase64,
 		AgentID: `$(curl "http://metadata.google.internal/computeMetadata/v1/instance/` +
 			`name" -H "Metadata-Flavor: Google")`,
+		ResourcePool: resourcePool,
 	}))
 
 	cluster := &gcpCluster{
+		resourcePool:     resourcePool,
 		GCPClusterConfig: config.GCP,
 		masterURL:        *masterURL,
 		metadata: []*compute.MetadataItems{
@@ -150,8 +156,20 @@ func (c *gcpCluster) generateInstanceName() string {
 func (c *gcpCluster) prestart(ctx *actor.Context) {}
 
 func (c *gcpCluster) list(ctx *actor.Context) ([]*Instance, error) {
-	instances, err := c.listInstances()
-	if err != nil {
+	clientCtx := context.Background()
+	var instances []*compute.Instance
+	filter := fmt.Sprintf(
+		"(labels.%s=%s) AND (labels.determined-resource-pool=%s)",
+		c.LabelKey, c.LabelValue, c.resourcePool,
+	)
+	req := c.client.Instances.List(c.Project, c.Zone).Filter(filter)
+	if err := req.Pages(
+		clientCtx,
+		func(page *compute.InstanceList) error {
+			instances = append(instances, page.Items...)
+			return nil
+		},
+	); err != nil {
 		return nil, errors.Wrap(err, "cannot list GCE instances")
 	}
 	res := c.newInstances(instances)
@@ -164,19 +182,29 @@ func (c *gcpCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	return res, nil
 }
 
-func (c *gcpCluster) launch(ctx *actor.Context, instanceType instanceType, instanceNum int) {
-	instType, ok := instanceType.(gceInstanceType)
-	if !ok {
-		panic("cannot pass non-gce instanceType to gcpCluster")
-	}
-
+func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 	if instanceNum <= 0 {
 		return
 	}
 
 	var ops []*compute.Operation
 	for i := 0; i < instanceNum; i++ {
-		resp, err := c.insertInstance(instType)
+		clientCtx := context.Background()
+
+		rb := c.merge()
+		rb.Name = c.generateInstanceName()
+		if rb.Labels == nil {
+			rb.Labels = make(map[string]string)
+		}
+		rb.Labels["determined-master-host"] = strings.ReplaceAll(c.masterURL.Hostname(), ".", "-")
+		rb.Labels["determined-master-port"] = c.masterURL.Port()
+		rb.Labels["determined-resource-pool"] = c.resourcePool
+		if rb.Metadata == nil {
+			rb.Metadata = &compute.Metadata{}
+		}
+		rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
+
+		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
 		if err != nil {
 			ctx.Log().WithError(err).Errorf("cannot insert GCE instance")
 		} else {
@@ -216,7 +244,8 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 
 	var ops []*compute.Operation
 	for _, inst := range instances {
-		resp, err := c.deleteInstance(inst)
+		ClientCtx := context.Background()
+		resp, err := c.client.Instances.Delete(c.Project, c.Zone, inst).Context(ClientCtx).Do()
 		if err != nil {
 			ctx.Log().WithError(err).Errorf("cannot delete GCE instance: %s", inst)
 		} else {
@@ -277,41 +306,4 @@ func (c *gcpCluster) newInstancesFromOperations(operations []*compute.Operation)
 		})
 	}
 	return instances
-}
-
-func (c *gcpCluster) listInstances() ([]*compute.Instance, error) {
-	ctx := context.Background()
-	var instances []*compute.Instance
-	filter := fmt.Sprintf("labels.%s=%s", c.LabelKey, c.LabelValue)
-	req := c.client.Instances.List(c.Project, c.Zone).Filter(filter)
-	if err := req.Pages(ctx, func(page *compute.InstanceList) error {
-		instances = append(instances, page.Items...)
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return instances, nil
-}
-
-func (c *gcpCluster) insertInstance(instanceType gceInstanceType) (*compute.Operation, error) {
-	ctx := context.Background()
-
-	rb := c.merge()
-	rb.Name = c.generateInstanceName()
-	if rb.Labels == nil {
-		rb.Labels = make(map[string]string)
-	}
-	rb.Labels["determined-master-host"] = strings.ReplaceAll(c.masterURL.Hostname(), ".", "-")
-	rb.Labels["determined-master-port"] = c.masterURL.Port()
-	if rb.Metadata == nil {
-		rb.Metadata = &compute.Metadata{}
-	}
-	rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
-
-	return c.client.Instances.Insert(c.Project, c.Zone, rb).Context(ctx).Do()
-}
-
-func (c *gcpCluster) deleteInstance(id string) (*compute.Operation, error) {
-	ctx := context.Background()
-	return c.client.Instances.Delete(c.Project, c.Zone, id).Context(ctx).Do()
 }

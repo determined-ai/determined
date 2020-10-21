@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -17,8 +16,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
-
-const awsAgentID = `$(ec2metadata --instance-id)`
 
 func getEC2MetadataSess() (*ec2metadata.EC2Metadata, error) {
 	sess, err := session.NewSession(&aws.Config{})
@@ -49,15 +46,18 @@ func onEC2() bool {
 // 2. Names of agents that are equal to the instance IDs.
 type awsCluster struct {
 	*AWSClusterConfig
-	masterURL   url.URL
-	ec2UserData []byte
-	client      *ec2.EC2
+	resourcePool string
+	masterURL    url.URL
+	ec2UserData  []byte
+	client       *ec2.EC2
 
 	// State that is only used if spot instances are enabled
 	spot *spotState
 }
 
-func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
+func newAWSCluster(
+	resourcePool string, config *Config, cert *tls.Certificate,
+) (*awsCluster, error) {
 	if err := config.AWS.initDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
@@ -111,6 +111,7 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
 
 	cluster := &awsCluster{
+		resourcePool:     resourcePool,
 		AWSClusterConfig: config.AWS,
 		masterURL:        *masterURL,
 		client:           ec2.New(sess),
@@ -120,10 +121,12 @@ func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 			StartupScriptBase64:          startupScriptBase64,
 			ContainerStartupScriptBase64: containerScriptBase64,
 			MasterCertBase64:             masterCertBase64,
+			AgentUseGPUs:                 config.AWS.InstanceType.slots() > 0,
 			AgentDockerRuntime:           config.AgentDockerRuntime,
 			AgentNetwork:                 config.AgentDockerNetwork,
 			AgentDockerImage:             config.AgentDockerImage,
-			AgentID:                      awsAgentID,
+			AgentID:                      `$(ec2metadata --instance-id)`,
+			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.buildDockerLogString(),
 		}),
 	}
@@ -163,24 +166,6 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
 	return Unknown
 }
 
-func (c *awsCluster) dryRunRequests() error {
-	const (
-		DryRunOperationErrorCode  = "DryRunOperation"
-		InstanceLimitExceededCode = "InstanceLimitExceeded"
-	)
-	_, err := c.describeInstances(true)
-	if awsErr, ok := errors.Cause(err).(awserr.Error); !ok ||
-		awsErr.Code() != DryRunOperationErrorCode {
-		return err
-	}
-	_, err = c.launchInstances(c.InstanceType, 1, true)
-	if awsErr, ok := errors.Cause(err).(awserr.Error); !ok ||
-		awsErr.Code() != DryRunOperationErrorCode && awsErr.Code() != InstanceLimitExceededCode {
-		return err
-	}
-	return nil
-}
-
 func (c *awsCluster) prestart(ctx *actor.Context) {
 	if c.SpotInstanceEnabled {
 		c.attemptToApproximateClockSkew(ctx)
@@ -196,13 +181,12 @@ func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
 
 func (c *awsCluster) launch(
 	ctx *actor.Context,
-	instanceType instanceType,
 	instanceNum int,
 ) {
 	if c.SpotInstanceEnabled {
-		c.launchSpot(ctx, instanceType, instanceNum)
+		c.launchSpot(ctx, instanceNum)
 	} else {
-		c.launchOnDemand(ctx, instanceType, instanceNum)
+		c.launchOnDemand(ctx, instanceNum)
 	}
 }
 
@@ -234,20 +218,11 @@ func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
 	return res, nil
 }
 
-func (c *awsCluster) launchOnDemand(
-	ctx *actor.Context,
-	instanceType instanceType,
-	instanceNum int,
-) {
-	instType, ok := instanceType.(ec2InstanceType)
-	if !ok {
-		panic("cannot pass non-ec2InstanceType to ec2Cluster")
-	}
-
+func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
 	if instanceNum <= 0 {
 		return
 	}
-	instances, err := c.launchInstances(instType, instanceNum, false)
+	instances, err := c.launchInstances(instanceNum, false)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot launch EC2 instances")
 		return
@@ -266,7 +241,8 @@ func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string
 		return
 	}
 
-	res, err := c.terminateInstances(instanceIDs, false)
+	input := &ec2.TerminateInstancesInput{InstanceIds: instanceIDs}
+	res, err := c.client.TerminateInstances(input)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
 		return
@@ -311,10 +287,12 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 		DryRun: aws.Bool(dryRun),
 		Filters: []*ec2.Filter{
 			{
-				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
-				Values: []*string{
-					aws.String(c.TagValue),
-				},
+				Name:   aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+				Values: []*string{aws.String(c.TagValue)},
+			},
+			{
+				Name:   aws.String(fmt.Sprintf("tag:%s", "determined-resource-pool")),
+				Values: []*string{aws.String(c.resourcePool)},
 			},
 			{
 				Name: aws.String("instance-state-name"),
@@ -363,11 +341,7 @@ func (c *awsCluster) describeInstancesByID(
 	return instances, nil
 }
 
-func (c *awsCluster) launchInstances(
-	instanceType ec2InstanceType,
-	instanceNum int,
-	dryRun bool,
-) (*ec2.Reservation, error) {
+func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reservation, error) {
 	input := &ec2.RunInstancesInput{
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
@@ -381,7 +355,7 @@ func (c *awsCluster) launchInstances(
 		},
 		DryRun:       aws.Bool(dryRun),
 		ImageId:      aws.String(c.ImageID),
-		InstanceType: aws.String(instanceType.name()),
+		InstanceType: aws.String(c.AWSClusterConfig.InstanceType.name()),
 		KeyName:      aws.String(c.SSHKeyName),
 		MaxCount:     aws.Int64(int64(instanceNum)),
 		MinCount:     aws.Int64(1),
@@ -396,6 +370,10 @@ func (c *awsCluster) launchInstances(
 					{
 						Key:   aws.String(c.TagKey),
 						Value: aws.String(c.TagValue),
+					},
+					{
+						Key:   aws.String("determined-resource-pool"),
+						Value: aws.String(c.resourcePool),
 					},
 					{
 						Key:   aws.String("determined-master-address"),
@@ -431,18 +409,4 @@ func (c *awsCluster) launchInstances(
 	}
 
 	return c.client.RunInstances(input)
-}
-
-func (c *awsCluster) terminateInstances(
-	ids []*string,
-	dryRun bool,
-) (*ec2.TerminateInstancesOutput, error) {
-	if len(ids) == 0 {
-		return &ec2.TerminateInstancesOutput{}, nil
-	}
-	input := &ec2.TerminateInstancesInput{
-		DryRun:      aws.Bool(dryRun),
-		InstanceIds: ids,
-	}
-	return c.client.TerminateInstances(input)
 }

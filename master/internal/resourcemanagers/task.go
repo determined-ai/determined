@@ -16,11 +16,14 @@ type (
 		SlotsNeeded         int
 		NonPreemptible      bool
 		Label               string
+		ResourcePool        string
 		FittingRequirements FittingRequirements
 		TaskActor           *actor.Ref
 	}
 	// ResourcesReleased notifies resource providers to return resources from a task.
-	ResourcesReleased struct{ TaskActor *actor.Ref }
+	ResourcesReleased struct {
+		TaskActor *actor.Ref
+	}
 	// GetTaskSummary returns the summary of the specified task.
 	GetTaskSummary struct{ ID *TaskID }
 	// GetTaskSummaries returns the summaries of all the tasks in the cluster.
@@ -36,11 +39,14 @@ type (
 type (
 	// ResourcesAllocated notifies the task actor of assigned resources.
 	ResourcesAllocated struct {
-		ID          TaskID
-		Allocations []Allocation
+		ID           TaskID
+		ResourcePool string
+		Allocations  []Allocation
 	}
 	// ReleaseResources notifies the task actor to release resources.
-	ReleaseResources struct{}
+	ReleaseResources struct {
+		ResourcePool string
+	}
 )
 
 // TaskID is the ID of a task.

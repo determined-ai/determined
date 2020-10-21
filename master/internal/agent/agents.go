@@ -13,10 +13,10 @@ import (
 )
 
 // Initialize creates a new global agent actor.
-func Initialize(ctx *actor.Context, e *echo.Echo, c *actor.Ref) {
-	ref, ok := ctx.ActorOf("agents", &agents{cluster: c})
+func Initialize(system *actor.System, e *echo.Echo, c *actor.Ref) {
+	ref, ok := system.ActorOf(actor.Addr("agents"), &agents{cluster: c})
 	check.Panic(check.True(ok, "agents address already taken"))
-	e.Any("/agents*", api.Route(ctx.Self().System(), ref))
+	e.Any("/agents*", api.Route(system, ref))
 }
 
 type agents struct {
@@ -28,16 +28,11 @@ type agentsSummary map[string]AgentSummary
 func (a *agents) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case api.WebSocketConnected:
-		id := msg.Ctx.QueryParam("id")
-		if id == "" {
-			ctx.Respond(errors.Errorf("invalid id specified: %s", id))
-			return nil
-		}
-		if ref, ok := ctx.ActorOf(id, &agent{cluster: a.cluster}); ok {
-			ctx.Respond(ctx.Ask(ref, msg).Get())
+		id, resourcePool := msg.Ctx.QueryParam("id"), msg.Ctx.QueryParam("resource_pool")
+		if ref, err := a.createAgentActor(ctx, id, resourcePool); err != nil {
+			ctx.Respond(err)
 		} else {
-			ctx.Respond(errors.Errorf("agent already connected: %s", id))
-			return nil
+			ctx.Respond(ctx.Ask(ref, msg).Get())
 		}
 	case *apiv1.GetAgentsRequest:
 		response := &apiv1.GetAgentsResponse{}
@@ -52,6 +47,23 @@ func (a *agents) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (a *agents) createAgentActor(ctx *actor.Context, id, resourcePool string) (*actor.Ref, error) {
+	if id == "" {
+		return nil, errors.Errorf("invalid agent id specified: %s", id)
+	}
+	if resourcePool == "" {
+		resourcePool = "default"
+	}
+	if a.cluster.Child(resourcePool) == nil {
+		return nil, errors.Errorf("cannot find specified resource pool %s for agent %s", resourcePool, id)
+	}
+	ref, ok := ctx.ActorOf(id, &agent{resourcePool: a.cluster.Child(resourcePool)})
+	if !ok {
+		return nil, errors.Errorf("agent already connected: %s", id)
+	}
+	return ref, nil
 }
 
 func (a *agents) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {

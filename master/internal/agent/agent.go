@@ -23,12 +23,13 @@ import (
 )
 
 type agent struct {
-	address    string
-	cluster    *actor.Ref
-	socket     *actor.Ref
-	slots      *actor.Ref
-	containers map[container.ID]*actor.Ref
-	label      string
+	address          string
+	resourcePool     *actor.Ref
+	socket           *actor.Ref
+	slots            *actor.Ref
+	containers       map[container.ID]*actor.Ref
+	resourcePoolName string
+	label            string
 
 	// uuid is an anonymous ID that is used when reporting telemetry
 	// information to allow agent connection and disconnection events
@@ -42,6 +43,7 @@ type AgentSummary struct {
 	RegisteredTime time.Time    `json:"registered_time"`
 	Slots          SlotsSummary `json:"slots"`
 	NumContainers  int          `json:"num_containers"`
+	ResourcePool   string       `json:"resource_pool"`
 	Label          string       `json:"label"`
 }
 
@@ -49,7 +51,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		a.uuid = uuid.New()
-		a.slots, _ = ctx.ActorOf("slots", &slots{cluster: a.cluster})
+		a.slots, _ = ctx.ActorOf("slots", &slots{resourcePool: a.resourcePool})
 		a.containers = make(map[container.ID]*actor.Ref)
 	case AgentSummary:
 		ctx.Respond(a.summarize(ctx))
@@ -117,7 +119,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 				ContainerStopped: &stopped,
 			})
 		}
-		ctx.Tell(a.cluster, sproto.RemoveAgent{Agent: ctx.Self()})
+		ctx.Tell(a.resourcePool, sproto.RemoveAgent{Agent: ctx.Self()})
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -137,11 +139,12 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	switch {
 	case msg.AgentStarted != nil:
 		telemetry.ReportAgentConnected(ctx.Self().System(), a.uuid, msg.AgentStarted.Devices)
-		ctx.Log().Infof("agent connected ip: %v slots: %d",
-			a.address, len(msg.AgentStarted.Devices))
+		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
+			a.address, msg.AgentStarted.ResourcePool, len(msg.AgentStarted.Devices))
 
-		ctx.Tell(a.cluster, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
+		ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
+		a.resourcePoolName = msg.AgentStarted.ResourcePool
 		a.label = msg.AgentStarted.Label
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
@@ -192,6 +195,7 @@ func (a *agent) summarize(ctx *actor.Context) AgentSummary {
 		RegisteredTime: ctx.Self().RegisteredTime(),
 		Slots:          ctx.Ask(a.slots, SlotsSummary{}).Get().(SlotsSummary),
 		NumContainers:  len(a.containers),
+		ResourcePool:   a.resourcePoolName,
 		Label:          a.label,
 	}
 }

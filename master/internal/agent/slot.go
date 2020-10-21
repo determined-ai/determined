@@ -17,10 +17,10 @@ import (
 )
 
 type slot struct {
-	cluster   *actor.Ref
-	device    device.Device
-	enabled   slotEnabled
-	container *container.Container
+	resourcePool *actor.Ref
+	device       device.Device
+	enabled      slotEnabled
+	container    *container.Container
 }
 
 type slotEnabled struct {
@@ -66,7 +66,7 @@ func (s *slot) Receive(ctx *actor.Context) error {
 		if msg.Container.State == container.Terminated {
 			s.container = nil
 			if s.enabled.Enabled() {
-				ctx.Tell(s.cluster, sproto.FreeDevice{
+				ctx.Tell(s.resourcePool, sproto.FreeDevice{
 					DeviceID: s.deviceID(ctx), ContainerID: &msg.Container.ID,
 				})
 			}
@@ -117,11 +117,11 @@ func (s *slot) patch(ctx *actor.Context) {
 		if s.container != nil {
 			add.ContainerID = &s.container.ID
 		}
-		ctx.Tell(s.cluster, add)
+		ctx.Tell(s.resourcePool, add)
 	} else if !s.enabled.Enabled() && s.enabled.deviceAdded {
 		s.enabled.deviceAdded = false
 		remove := sproto.RemoveDevice{DeviceID: s.deviceID(ctx)}
-		ctx.Tell(s.cluster, remove)
+		ctx.Tell(s.resourcePool, remove)
 		if s.container != nil {
 			ctx.Tell(remove.Agent, sproto.KillTaskContainer{ContainerID: s.container.ID})
 		}

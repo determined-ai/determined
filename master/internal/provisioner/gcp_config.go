@@ -218,6 +218,7 @@ var gceMachineTypes = []string{
 }
 
 var gceGPUTypes = map[string][]int{
+	"":                  {0},
 	"nvidia-tesla-t4":   {1, 2, 4},
 	"nvidia-tesla-p100": {1, 2, 4},
 	"nvidia-tesla-p4":   {1, 2, 4},

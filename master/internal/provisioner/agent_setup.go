@@ -13,10 +13,12 @@ type agentSetupScriptConfig struct {
 	StartupScriptBase64          string
 	ContainerStartupScriptBase64 string
 	MasterCertBase64             string
+	AgentUseGPUs                 bool
 	AgentDockerRuntime           string
 	AgentNetwork                 string
 	AgentDockerImage             string
 	AgentID                      string
+	ResourcePool                 string
 	LogOptions                   string
 }
 

@@ -22,10 +22,12 @@ func TestAgentSetupScript(t *testing.T) {
 		StartupScriptBase64:          encodedScript,
 		ContainerStartupScriptBase64: encodedContainerScript,
 		MasterCertBase64:             encodedMasterCert,
+		AgentUseGPUs:                 true,
 		AgentDockerImage:             "test_docker_image",
 		AgentDockerRuntime:           "runc",
 		AgentNetwork:                 "default",
 		AgentID:                      "test.id",
+		ResourcePool:                 "test-pool",
 	}
 
 	// nolint
@@ -40,6 +42,12 @@ cat /usr/local/determined/startup_script
 echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
+
+use_gpus=true
+if $use_gpus; then
+    echo "#### Starting agent with GPUs"
+    docker_args+=(--gpus all)
+fi
 
 cert_b64=PT09PSBjZXJ0ID09PT0=
 if [ -n "$cert_b64" ]; then
@@ -57,10 +65,14 @@ echo "#### PRINTING CONTAINER STARTUP SCRIPT START ####"
 cat /usr/local/determined/container_startup_script
 echo "#### PRINTING CONTAINER STARTUP SCRIPT END ####"
 
-docker run --init --name determined-agent  --restart always --network default --runtime=runc --gpus all \
+docker run --init --name determined-agent  \
+    --restart always \
+    --network default \
+    --runtime=runc \
     -e DET_AGENT_ID="test.id" \
     -e DET_MASTER_HOST="test.master" \
     -e DET_MASTER_PORT="8080" \
+    -e DET_RESOURCE_POOL="test-pool" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
     "${docker_args[@]}" \

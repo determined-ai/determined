@@ -8,17 +8,14 @@ import (
 	petName "github.com/dustinkirkland/golang-petname"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
-
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-type (
-	mockPodActorPing struct{}
-	deleteMockPod    struct{}
-)
+type deleteMockPod struct{}
 
 type mockPodActor struct {
 	requestQueue *actor.Ref
@@ -43,9 +40,6 @@ func (m *mockPodActor) Receive(ctx *actor.Context) error {
 			podSpec:       &podSpec,
 			configMapSpec: &cmSpec,
 		})
-
-	case mockPodActorPing:
-		ctx.Respond(mockPodActorPing{})
 
 	case deleteMockPod:
 		ctx.Ask(m.requestQueue, deleteKubernetesResources{
@@ -106,7 +100,7 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 
 		podActors = append(podActors, newMockPodActor)
 	}
-	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
+	system.AskAll(actor.Ping{}, podActors...).GetAll()
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
@@ -135,7 +129,7 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 		podActors = append(podActors, newMockPodActor)
 	}
 	system.AskAll(deleteMockPod{}, podActors...)
-	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
+	system.AskAll(actor.Ping{}, podActors...).GetAll()
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
@@ -163,13 +157,13 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 
 		podActors = append(podActors, newMockPodActor)
 	}
-	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
+	system.AskAll(actor.Ping{}, podActors...).GetAll()
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
 
 	system.AskAll(deleteMockPod{}, podActors...)
-	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
+	system.AskAll(actor.Ping{}, podActors...).GetAll()
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
@@ -201,7 +195,7 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 		podActors = append(podActors, newMockPodActor)
 	}
 	system.AskAll(deleteMockPod{}, podActors...)
-	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
+	system.AskAll(actor.Ping{}, podActors...).GetAll()
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)

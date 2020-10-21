@@ -32,12 +32,10 @@ func newInstanceIDSet(instanceIDs []string) map[string]bool {
 }
 
 type mockConfig struct {
-	maxAgentStartingPeriod time.Duration
-	maxIdleAgentPeriod     time.Duration
-	maxDisconnectPeriod    time.Duration
-	instanceType           instanceType
-	maxInstances           int
-	initInstances          []*Instance
+	*Config
+	maxDisconnectPeriod time.Duration
+	instanceType        instanceType
+	initInstances       []*Instance
 }
 
 type mockEnvironment struct {
@@ -48,15 +46,16 @@ type mockEnvironment struct {
 
 func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 	system := actor.NewSystem(t.Name())
-	cluster, err := newMockCluster(setup)
+	cluster, err := newMockProvider(setup)
 	assert.NilError(t, err)
 	p := &Provisioner{
 		provider: cluster,
 		scaleDecider: newScaleDecider(
-			setup.maxIdleAgentPeriod,
-			setup.maxAgentStartingPeriod,
+			time.Duration(setup.MaxIdleAgentPeriod),
+			time.Duration(setup.MaxAgentStartingPeriod),
 			setup.maxDisconnectPeriod,
-			setup.maxInstances,
+			setup.MinInstances,
+			setup.MaxInstances,
 		),
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
@@ -91,14 +90,14 @@ type mockProvider struct {
 	history          []mockFuncCall
 }
 
-func newMockCluster(config *mockConfig) (*mockProvider, error) {
+func newMockProvider(config *mockConfig) (*mockProvider, error) {
 	instMap := make(map[string]*Instance)
 	for _, inst := range config.initInstances {
 		instMap[inst.ID] = inst
 	}
 	cluster := &mockProvider{
 		mockInstanceType: config.instanceType,
-		maxInstances:     config.maxInstances,
+		maxInstances:     config.MaxInstances,
 		instances:        instMap,
 	}
 	return cluster, nil
@@ -120,8 +119,8 @@ func (c *mockProvider) list(ctx *actor.Context) ([]*Instance, error) {
 
 func (c *mockProvider) prestart(ctx *actor.Context) {}
 
-func (c *mockProvider) launch(ctx *actor.Context, instanceType instanceType, instanceNum int) {
-	c.history = append(c.history, newMockFuncCall("launch", instanceType, instanceNum))
+func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) {
+	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
 	for i := 0; i < instanceNum; i++ {
 		name := uuid.New().String()
 		inst := Instance{
@@ -148,7 +147,9 @@ func TestProvisionerScaleUp(t *testing.T) {
 			Name:  "test.instanceType",
 			Slots: 4,
 		},
-		maxInstances:  100,
+		Config: &Config{
+			MaxInstances: 100,
+		},
 		initInstances: []*Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
@@ -171,7 +172,9 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 			Name:  "test.instanceType",
 			Slots: 4,
 		},
-		maxInstances:  1,
+		Config: &Config{
+			MaxInstances: 1,
+		},
 		initInstances: []*Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
@@ -189,13 +192,15 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 
 func TestProvisionerScaleDown(t *testing.T) {
 	setup := &mockConfig{
-		maxIdleAgentPeriod:  50 * time.Millisecond,
 		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
 		},
-		maxInstances: 100,
+		Config: &Config{
+			MaxIdleAgentPeriod: Duration(50 * time.Millisecond),
+			MaxInstances:       100,
+		},
 		initInstances: []*Instance{
 			{
 				ID:         "instance1",
@@ -237,14 +242,16 @@ func TestProvisionerScaleDown(t *testing.T) {
 
 func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	setup := &mockConfig{
-		maxAgentStartingPeriod: 100 * time.Millisecond,
-		maxIdleAgentPeriod:     100 * time.Millisecond,
-		maxDisconnectPeriod:    5 * time.Minute,
+		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
 		},
-		maxInstances: 100,
+		Config: &Config{
+			MaxAgentStartingPeriod: Duration(100 * time.Millisecond),
+			MaxIdleAgentPeriod:     Duration(100 * time.Millisecond),
+			MaxInstances:           100,
+		},
 		initInstances: []*Instance{
 			{
 				ID:         "instance1",
@@ -293,14 +300,16 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 
 func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 	setup := &mockConfig{
-		maxAgentStartingPeriod: 3 * time.Minute,
-		maxIdleAgentPeriod:     50 * time.Millisecond,
-		maxDisconnectPeriod:    50 * time.Millisecond,
+		maxDisconnectPeriod: 50 * time.Millisecond,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
 		},
-		maxInstances: 100,
+		Config: &Config{
+			MaxAgentStartingPeriod: Duration(3 * time.Minute),
+			MaxIdleAgentPeriod:     Duration(50 * time.Millisecond),
+			MaxInstances:           100,
+		},
 		initInstances: []*Instance{
 			{
 				ID:         "disconnectedInstance",

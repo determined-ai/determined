@@ -38,6 +38,7 @@ class cloudformation:
     AGENT_TAG_NAME = "AgentTagName"
     MAX_IDLE_AGENT_PERIOD = "MaxIdleAgentPeriod"
     MAX_AGENT_STARTING_PERIOD = "MaxAgentStartingPeriod"
+    MIN_DYNAMIC_AGENTS = "MinDynamicAgents"
     MAX_DYNAMIC_AGENTS = "MaxDynamicAgents"
     LOG_GROUP = "LogGroup"
     REGION = "Region"

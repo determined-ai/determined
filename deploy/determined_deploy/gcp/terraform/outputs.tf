@@ -22,6 +22,10 @@ output "B3--Agent-Instance-Type" {
   value = "               ${var.agent_instance_type}"
 }
 
+output "B4--Min-Number-of-Dynamic-Agents" {
+  value = "      ${var.min_dynamic_agents}"
+}
+
 output "B4--Max-Number-of-Dynamic-Agents" {
   value = "      ${var.max_dynamic_agents}"
 }

@@ -10,12 +10,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
+const defaultResourcePoolName = "default"
+
 // ResolveConfig applies backwards compatibility for the old scheduler
 // and provisioner configuration.
 func ResolveConfig(
 	schedulerConf *Config,
 	provisionerConf *provisioner.Config,
-	resourceMangerConf *ResourceManagerConfig,
+	resourceManagerConf *ResourceManagerConfig,
 	resourcePoolsConf *ResourcePoolsConfig,
 ) (*ResourceManagerConfig, *ResourcePoolsConfig, error) {
 	switch {
@@ -23,46 +25,52 @@ func ResolveConfig(
 		resourcePoolsConf = DefaultRPsConfig()
 	case provisionerConf != nil && resourcePoolsConf == nil:
 		resourcePoolsConf = &ResourcePoolsConfig{
-			ResourcePools: []ResourcePoolConfig{{PoolName: "default", Provider: provisionerConf}},
+			ResourcePools: []ResourcePoolConfig{
+				{PoolName: defaultResourcePoolName, Provider: provisionerConf},
+			},
 		}
 	case provisionerConf != nil && resourcePoolsConf != nil:
 		return nil, nil, errors.New("cannot specify both the provisioner and resource_pools fields")
 	}
 
 	switch {
-	case schedulerConf == nil && resourceMangerConf == nil:
-		resourceMangerConf = DefaultRMConfig()
+	case schedulerConf == nil && resourceManagerConf == nil:
+		resourceManagerConf = DefaultRMConfig()
+		resourceManagerConf.AgentRM.DefaultCPUResourcePool = defaultResourcePoolName
+		resourceManagerConf.AgentRM.DefaultGPUResourcePool = defaultResourcePoolName
 
-	case schedulerConf != nil && resourceMangerConf == nil:
+	case schedulerConf != nil && resourceManagerConf == nil:
 		switch {
 		case schedulerConf.ResourceProvider == nil ||
 			schedulerConf.ResourceProvider.DefaultRPConfig != nil:
-			resourceMangerConf = &ResourceManagerConfig{
+			resourceManagerConf = &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
-					SchedulingPolicy: schedulerConf.Type,
-					FittingPolicy:    schedulerConf.Fit,
+					SchedulingPolicy:       schedulerConf.Type,
+					FittingPolicy:          schedulerConf.Fit,
+					DefaultCPUResourcePool: defaultResourcePoolName,
+					DefaultGPUResourcePool: defaultResourcePoolName,
 				},
 			}
 		case schedulerConf.ResourceProvider.KubernetesRPConfig != nil:
-			resourceMangerConf = &ResourceManagerConfig{
+			resourceManagerConf = &ResourceManagerConfig{
 				KubernetesRM: schedulerConf.ResourceProvider.KubernetesRPConfig,
 			}
 		}
 
-	case schedulerConf != nil && resourceMangerConf != nil:
+	case schedulerConf != nil && resourceManagerConf != nil:
 		return nil, nil, errors.New(
 			"cannot specify both the scheduler and resource_manager fields")
 	}
 
-	if resourceMangerConf != nil && resourceMangerConf.AgentRM != nil {
-		if resourceMangerConf.AgentRM.SchedulingPolicy == "" {
-			resourceMangerConf.AgentRM.SchedulingPolicy = DefaultRMConfig().AgentRM.SchedulingPolicy
+	if resourceManagerConf != nil && resourceManagerConf.AgentRM != nil {
+		if resourceManagerConf.AgentRM.SchedulingPolicy == "" {
+			resourceManagerConf.AgentRM.SchedulingPolicy = DefaultRMConfig().AgentRM.SchedulingPolicy
 		}
-		if resourceMangerConf.AgentRM.FittingPolicy == "" {
-			resourceMangerConf.AgentRM.FittingPolicy = DefaultRMConfig().AgentRM.FittingPolicy
+		if resourceManagerConf.AgentRM.FittingPolicy == "" {
+			resourceManagerConf.AgentRM.FittingPolicy = DefaultRMConfig().AgentRM.FittingPolicy
 		}
 	}
-	return resourceMangerConf, resourcePoolsConf, nil
+	return resourceManagerConf, resourcePoolsConf, nil
 }
 
 // DefaultRMConfig returns the default resource manager configuration.
@@ -117,6 +125,8 @@ func (a AgentResourceManagerConfig) Validate() []error {
 		check.Contains(
 			a.FittingPolicy, []interface{}{"best", "worst"}, "invalid fitting policy",
 		),
+		check.NotEmpty(a.DefaultCPUResourcePool, "default_cpu_resource_pool should be non-empty"),
+		check.NotEmpty(a.DefaultGPUResourcePool, "default_gpu_resource_pool should be non-empty"),
 	}
 }
 

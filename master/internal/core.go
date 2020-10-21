@@ -27,7 +27,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -280,14 +279,14 @@ func (m *Master) Run() error {
 
 	// Actor structure:
 	// master system
+	// +- Agent Group (actors.Group: agents)
+	//     +- Agent (internal.agent: <agent-id>)
+	//         +- Websocket (actors.WebSocket: <remote-address>)
 	// +- ResourceManagers (scheduler.ResourceManagers: resourceManagers)
 	// Exactly one of the resource managers is enabled at a time.
 	// +- AgentResourceManager (resourcemanagers.AgentResourceManager: agentRM)
 	//     +- Resource Pool (resourcemanagers.ResourcePool: <resource-pool-name>)
-	//        +- Provisioner (provisioner.Provisioner: provisioner)
-	//        +- Agent Group (actors.Group: agents)
-	//            +- Agent (internal.agent: <agent-id>)
-	//                +- Websocket (actors.WebSocket: <remote-address>)
+	//         +- Provisioner (provisioner.Provisioner: provisioner)
 	// +- KubernetesResourceManager (scheduler.KubernetesResourceManager: kubernetesRM)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
@@ -308,27 +307,6 @@ func (m *Master) Run() error {
 	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
-
-	m.rm, _ = m.system.ActorOf(
-		actor.Addr("resourceManagers"),
-		resourcemanagers.NewResourceManagers(
-			m.system, m.config.ResourceManager, m.config.ResourcePoolsConfig, cert,
-		),
-	)
-
-	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
-
-	rwCoordinator := newRWCoordinator()
-	m.rwCoordinator, _ = m.system.ActorOf(actor.Addr("rwCoordinator"), rwCoordinator)
-
-	// Find and restore all non-terminal experiments from the database.
-	toRestore, err := m.db.NonTerminalExperiments()
-	if err != nil {
-		return errors.Wrap(err, "couldn't retrieve experiments to restore")
-	}
-	for _, exp := range toRestore {
-		go m.restoreExperiment(exp)
-	}
 
 	// Used to decide whether we add trailing slash to the paths or not affecting
 	// relative links in web pages hosted under these routes.
@@ -372,25 +350,44 @@ func (m *Master) Run() error {
 	m.echo.HideBanner = true
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
 
+	// Resource Manager.
+	m.rm = resourcemanagers.Setup(
+		m.system, m.echo, m.config.ResourceManager, m.config.ResourcePoolsConfig, cert,
+	)
+	tasksGroup := m.echo.Group("/tasks", authFuncs...)
+	tasksGroup.GET("", api.Route(m.getTasks))
+	tasksGroup.GET("/:task_id", api.Route(m.getTask))
+
+	// Distributed lock server.
+	rwCoordinator := newRWCoordinator()
+	m.rwCoordinator, _ = m.system.ActorOf(actor.Addr("rwCoordinator"), rwCoordinator)
+
+	// Restore non-terminal experiments from the database.
+	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
+	toRestore, err := m.db.NonTerminalExperiments()
+	if err != nil {
+		return errors.Wrap(err, "couldn't retrieve experiments to restore")
+	}
+	for _, exp := range toRestore {
+		go m.restoreExperiment(exp)
+	}
+
+	// Docs and WebUI.
 	webuiRoot := filepath.Join(m.config.Root, "webui")
 	reactRoot := filepath.Join(webuiRoot, "react")
 
 	// Docs.
 	m.echo.Static("/docs/rest-api", filepath.Join(webuiRoot, "docs", "rest-api"))
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
-
 	type fileRoute struct {
 		route string
 		path  string
 	}
-
-	// React WebUI.
 	reactIndexFiles := [...]fileRoute{
 		{"/", "index.html"},
 		{"/det", "index.html"},
 		{"/det/*", "index.html"},
 	}
-
 	reactFiles := [...]fileRoute{
 		{"/security.txt", "security.txt"},
 		{"/.well-known/security.txt", "security.txt"},
@@ -399,14 +396,12 @@ func (m *Master) Run() error {
 		{"/favicon.ico", "favicon.ico"},
 		{"/favicon.ico", "favicon.ico"},
 	}
-
 	reactDirs := [...]fileRoute{
 		{"/favicons", "favicons"},
 		{"/fonts", "fonts"},
 		{"/static", "static"},
 		{"/wait", "wait"},
 	}
-
 	for _, indexRoute := range reactIndexFiles {
 		reactIndexPath := filepath.Join(reactRoot, indexRoute.path)
 		m.echo.GET(indexRoute.route, func(c echo.Context) error {
@@ -416,19 +411,15 @@ func (m *Master) Run() error {
 			return c.File(reactIndexPath)
 		})
 	}
-
 	for _, fileRoute := range reactFiles {
 		m.echo.File(fileRoute.route, filepath.Join(reactRoot, fileRoute.path))
 	}
-
 	for _, dirRoute := range reactDirs {
 		m.echo.Static(dirRoute.route, filepath.Join(reactRoot, dirRoute.path))
 	}
 
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
-	// Support the old experiment creation endpoint under the new API route.
-	m.echo.POST("/api/v1/experiments", api.Route(m.postExperiment), authFuncs...)
 
 	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
@@ -437,6 +428,8 @@ func (m *Master) Run() error {
 	m.echo.GET("/experiment-list", api.Route(m.getExperimentList), authFuncs...)
 	m.echo.GET("/experiment-summaries", api.Route(m.getExperimentSummaries), authFuncs...)
 
+	// Support the old experiment creation endpoint under the new API route.
+	m.echo.POST("/api/v1/experiments", api.Route(m.postExperiment), authFuncs...)
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
 	experimentsGroup.GET("", api.Route(m.getExperiments))
 	experimentsGroup.GET("/:experiment_id", api.Route(m.getExperiment))
@@ -453,10 +446,6 @@ func (m *Master) Run() error {
 
 	searcherGroup := m.echo.Group("/searcher", authFuncs...)
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
-
-	tasksGroup := m.echo.Group("/tasks", authFuncs...)
-	tasksGroup.GET("", api.Route(m.getTasks))
-	tasksGroup.GET("/:task_id", api.Route(m.getTask))
 
 	trialsGroup := m.echo.Group("/trials", authFuncs...)
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
@@ -502,10 +491,6 @@ func (m *Master) Run() error {
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
-
-	// The Echo server registrations must be serialized, so we block until the ResourceProvider is
-	// finished with its ConfigureEndpoints call.
-	m.system.Ask(m.rm, sproto.ConfigureEndpoints{System: m.system, Echo: m.echo}).Get()
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(
