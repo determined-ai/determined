@@ -27,6 +27,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
+var experimentsAddr = actor.Addr("experiments")
+
 func isInList(srcList []string, item string) bool {
 	item = strings.ToLower(item)
 	for _, src := range srcList {
@@ -268,7 +270,7 @@ func (a *apiServer) ActivateExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	switch err = a.actorRequest(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
@@ -286,7 +288,7 @@ func (a *apiServer) PauseExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	switch err = a.actorRequest(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
@@ -304,7 +306,7 @@ func (a *apiServer) CancelExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	err = a.actorRequest(addr, req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.CancelExperimentResponse{}, nil
@@ -320,7 +322,7 @@ func (a *apiServer) KillExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	err = a.actorRequest(addr, req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.KillExperimentResponse{}, nil
@@ -492,10 +494,8 @@ func reqToP(
 ) (*CreateExperimentParams, error) {
 
 	params := CreateExperimentParams{
-		ConfigBytes: protojson.Format(req.Config),
-		ModelDef:    filesToArchive(req.Context),
-		// TODO we should separate this into a separate endpoint.
-		// should we avoid exposing it till then?
+		ConfigBytes:  protojson.Format(req.Config),
+		ModelDef:     filesToArchive(req.Context),
 		ValidateOnly: req.ValidateOnly,
 	}
 	if req.ParentId != 0 {
@@ -535,10 +535,8 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}
-	a.m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
-	// DISCUSS if we could convert model.Experiment to proto experiment in memory..
-	protoExp, err := a.getExperiment(dbExp.ID)
+	protoExp, err := a.getExperiment(e.ID)
 	if err != nil {
 		return nil, err
 	}
