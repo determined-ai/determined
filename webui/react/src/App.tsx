@@ -4,6 +4,7 @@ import React, { useCallback, useEffect } from 'react';
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
+import NavigationToolbar from 'components/NavigationToolbar';
 import Router from 'components/Router';
 import Spinner from 'components/Spinner';
 import Compose from 'Compose';
@@ -89,7 +90,8 @@ const AppView: React.FC = () => {
         {isAuthenticated && <AppContexts />}
         <div className={css.body}>
           <Navigation />
-          <Router routes={appRoutes} />
+          <main><Router routes={appRoutes} /></main>
+          <NavigationToolbar />
         </div>
       </Spinner>
     </div>
