@@ -1369,7 +1369,7 @@ func (db *PgDB) AddTrialLogs(logs []*model.TrialLog) error {
 	var text strings.Builder
 	text.WriteString(`
 INSERT INTO trial_logs
-    (trial_id, message, agent_id, container_id, timestamp, level, stdtype, source)
+    (trial_id, message, agent_id, container_id, rank_id, timestamp, level, stdtype, source)
 VALUES
 `)
 
@@ -1380,11 +1380,11 @@ VALUES
 		if i > 0 {
 			text.WriteString(",")
 		}
-		fmt.Fprintf(&text, " ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
-			i*8+1, i*8+2, i*8+3, i*8+4, i*8+5, i*8+6, i*8+7, i*8+8)
+		fmt.Fprintf(&text, " ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
+			i*9+1, i*9+2, i*9+3, i*9+4, i*9+5, i*9+6, i*9+7, i*9+8, i*9+9)
 
 		args = append(args, log.TrialID, model.RawString(log.Message), log.AgentID, log.ContainerID,
-			log.Timestamp, log.Level, log.StdType, log.Source)
+			log.RankID, log.Timestamp, log.Level, log.StdType, log.Source)
 	}
 
 	if _, err := db.sql.Exec(text.String(), args...); err != nil {

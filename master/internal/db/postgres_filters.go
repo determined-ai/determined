@@ -51,6 +51,10 @@ func filterToParams(f api.Filter) []interface{} {
 		for _, v := range vs {
 			params = append(params, v)
 		}
+	case []int32:
+		for _, v := range vs {
+			params = append(params, v)
+		}
 	case time.Time:
 		params = append(params, vs)
 	default:

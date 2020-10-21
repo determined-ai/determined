@@ -130,6 +130,13 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 			Values:    req.ContainerIds,
 		})
 	}
+	if len(req.RankIds) > 0 {
+		filters = append(filters, api.Filter{
+			Field:     "rank_id",
+			Operation: api.FilterOperationIn,
+			Values:    req.RankIds,
+		})
+	}
 	if len(req.Level) > 0 {
 		var levels []string
 		for _, l := range req.Level {
