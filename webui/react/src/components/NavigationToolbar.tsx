@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
+import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
+import UI from 'contexts/UI';
 
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
@@ -32,6 +34,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
   return (
     <Link className={classes.join(' ')} path={path} {...props}>
       <Icon name={props.icon} size="large" />
+      {status && <div className={css.status}>{status}</div>}
     </Link>
   );
 };
@@ -46,12 +49,18 @@ const OverflowItem: React.FC<OverflowItemProps> = ({ path, ...props }: OverflowI
 };
 
 const NavigationToolbar: React.FC = () => {
+  const { isAuthenticated } = Auth.useStateContext();
+  const ui = UI.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
+
   const cluster = overview.allocation === 0 ? undefined : `${overview.allocation}%`;
+  const showNavigation = isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleOverflowClose = useCallback(() => setIsShowingOverflow(false), []);
+
+  if (!showNavigation) return null;
 
   return (
     <nav className={css.base}>
