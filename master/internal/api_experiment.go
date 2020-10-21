@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"sort"
 	"strings"
 
@@ -12,7 +11,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -515,14 +513,18 @@ func (a *apiServer) CreateExperiment(
 	dbExp, validateOnly, err := a.m.postParseExperiment(detParams)
 
 	if err != nil {
-		return nil, echo.NewHTTPError(
-			http.StatusBadRequest,
-			errors.Wrap(err, "invalid experiment"))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
 
 	if validateOnly {
-		// FIXME. in the old api do we return an error here?
-		return nil, status.Errorf(codes.OK, "it's fine")
+		// old api: return nil, c.NoContent(http.StatusNoContent)
+		// or we can use codes.already exists.
+		// if we don't want to respond with an error we could
+		// 1. change the response to a union that has an OK
+		// 2. convert dbExp to the proto equivelant and respond with that.
+		// return nil, status.Errorf(codes.Aborted, "experiment is valid")
+		// Respond with a {experiment: null}
+		return &apiv1.CreateExperimentResponse{}, nil
 	}
 
 	user, _, err := grpc.GetUser(ctx, a.m.db)
@@ -533,7 +535,7 @@ func (a *apiServer) CreateExperiment(
 	dbExp.OwnerID = &user.ID
 	e, err := newExperiment(a.m, dbExp)
 	if err != nil {
-		return nil, errors.Wrap(err, "starting experiment")
+		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
 
 	protoExp, err := a.getExperiment(e.ID)
