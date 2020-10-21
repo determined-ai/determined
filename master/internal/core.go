@@ -428,8 +428,6 @@ func (m *Master) Run() error {
 	m.echo.GET("/experiment-list", api.Route(m.getExperimentList), authFuncs...)
 	m.echo.GET("/experiment-summaries", api.Route(m.getExperimentSummaries), authFuncs...)
 
-	// Support the old experiment creation endpoint under the new API route.
-	m.echo.POST("/api/v1/experiments", api.Route(m.postExperiment), authFuncs...)
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
 	experimentsGroup.GET("", api.Route(m.getExperiments))
 	experimentsGroup.GET("/:experiment_id", api.Route(m.getExperiment))
