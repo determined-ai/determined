@@ -12,7 +12,7 @@ resources:
 searcher:
   name: single
   metric: val_categorical_accuracy
-  smaller_is_better: true
+  smaller_is_better: false 
   max_length:
     batches: 312
 entrypoint: model_def:IrisTrial

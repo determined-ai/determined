@@ -1,4 +1,4 @@
-description: gaea_eval 
+description: gaea_eval_distributed 
 
 # Recommended settings:
 #   - Nvidia Tesla V100: set batch size to 1024 and slots_per_trial to 8
