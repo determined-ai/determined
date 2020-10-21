@@ -75,6 +75,7 @@ export interface Theme {
       minWidth: string;
       maxWidth: string;
       toolbarHeight: string;
+      topbarHeight: string;
     };
   };
 }
@@ -194,6 +195,7 @@ export const lightTheme: Theme = {
       maxWidth: '24rem',
       minWidth: '5.6rem',
       toolbarHeight: '5.6rem',
+      topbarHeight: '5.6rem',
     },
   },
 };
