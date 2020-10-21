@@ -3,7 +3,7 @@ import React from 'react';
 import {
   CheckpointState, ExperimentDetails, ExperimentOld, RunState, TrialDetails, TrialItem,
 } from 'types';
-import { generateOldExperiments } from 'utils/task';
+import { generateOldExperiment } from 'utils/task';
 
 import TrialInfoBox from './TrialInfoBox';
 
@@ -12,7 +12,7 @@ export default {
   title: 'TrialInfoBox',
 };
 
-const sampleExperiment: ExperimentOld = generateOldExperiments(1)[0];
+const sampleExperiment: ExperimentOld = generateOldExperiment(3);
 
 const sampleTrialItem: TrialItem = {
   bestAvailableCheckpoint: {
