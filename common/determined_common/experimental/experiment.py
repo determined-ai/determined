@@ -1,8 +1,8 @@
 import time
 from typing import List, Optional
-import yaml
 
 import determined_client
+import yaml
 
 from determined_common import api, context
 from determined_common.experimental import checkpoint
@@ -31,19 +31,19 @@ class Experiment:
         for attribute in experiment_data:
             setattr(self, attribute, experiment_data[attribute])
 
-        self.metric =self.config.get('searcher').get('metric')
-        self.smaller_is_better = self.config.get('searcher').get('smaller_is_better')
-
+        self.metric = self.config.get("searcher").get("metric")
+        self.smaller_is_better = self.config.get("searcher").get("smaller_is_better")
 
     @classmethod
-    def create_experiment(cls, api_client, config, context_path, local=False, test=False, master=""):
+    def create_experiment(
+        cls, api_client, config, context_path, local=False, test=False, master=""
+    ):
         print("Creating Experiment")
         experiment_api = determined_client.ExperimentsApi(api_client)
         experiment_context = context.Context.from_local(context_path)
 
         for e in experiment_context.entries:
             e.content = e.content.decode("utf-8")
-
 
         body = {
             "experiment_config": yaml.safe_dump(config),
@@ -61,8 +61,6 @@ class Experiment:
 
         experiment.activate()
 
-
-
     @classmethod
     def get_experiment(cls, api_client, experiment_id):
         experiment_api = determined_client.ExperimentsApi(api_client)
@@ -76,7 +74,7 @@ class Experiment:
     #     return status
 
     def success(self):
-        if self.state == 'STATE_COMPLETED':
+        if self.state == "STATE_COMPLETED":
             return True
 
         return False
@@ -88,8 +86,9 @@ class Experiment:
     def activate(self):
         # api.activate_experiment(self.master, self.id)
         experiment_api = determined_client.ExperimentsApi(self.api_client)
-        experiment_api.determined_patch_experiment(body={"state": "STATE_ACTIVE"}, experiment_id=self.id)
-
+        experiment_api.determined_patch_experiment(
+            body={"state": "STATE_ACTIVE"}, experiment_id=self.id
+        )
 
     def top_checkpoint(
         self,
