@@ -5,12 +5,8 @@ import (
 	"os"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -72,9 +68,14 @@ func (a *apiServer) LaunchTensorboard(
 	for _, id := range req.TrialIds {
 		trialIds = append(trialIds, int(id))
 	}
-	cmdParams := command.CommandParams{ConfigBytes: req.Config, UserFiles: filesToArchive(req.Files)}
-	if req.TemplateName != "" {
-		cmdParams.Template = &req.TemplateName
+
+	cmdParams, user, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+		TemplateName: req.TemplateName,
+		Config:       req.Config,
+		Files:        req.Files,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	tensorboardConfig := command.TensorboardRequest{
@@ -82,28 +83,25 @@ func (a *apiServer) LaunchTensorboard(
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}
-	user, _, err := grpc.GetUser(ctx, a.m.db)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
-
 	tensorboardLaunchReq := command.TensorboardRequestWithUser{
 		Tensorboard: tensorboardConfig,
 		User:        user,
 	}
-	actorResp := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
-	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
+	if err = api.ProcessActorResponseError(&tensorboardIDFut); err != nil {
 		return nil, err
 	}
 
-	tensorboardID := actorResp.Get().(resourcemanagers.TaskID)
-	tensorboardReq := tensorboardv1.Tensorboard{}
-	actorResp = a.m.system.AskAt(tensorboardsAddr.Child(tensorboardID), &tensorboardReq)
-	if err = api.ProcessActorResponseError(&actorResp); err != nil {
+	tensorboardID := tensorboardIDFut.Get().(resourcemanagers.TaskID)
+	tensorboard := a.m.system.AskAt(
+		tensorboardsAddr.Child(tensorboardID),
+		&tensorboardv1.Tensorboard{},
+	)
+	if err = api.ProcessActorResponseError(&tensorboard); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchTensorboardResponse{
-		Tensorboard: actorResp.Get().(*tensorboardv1.Tensorboard),
+		Tensorboard: tensorboard.Get().(*tensorboardv1.Tensorboard),
 	}, err
 }

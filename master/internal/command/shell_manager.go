@@ -9,7 +9,9 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 
+	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -43,6 +45,12 @@ type shellManager struct {
 	taskSpec              *tasks.TaskSpec
 }
 
+// ShellLaunchRequest describes a request to launch a new shell.
+type ShellLaunchRequest struct {
+	CommandParams *CommandParams
+	User          *model.User
+}
+
 func (s *shellManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetShellsRequest:
@@ -52,10 +60,62 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
+	case ShellLaunchRequest:
+		summary, statusCode, err := s.processLaunchRequest(ctx, msg)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, errors.Wrap(err, "failed to launch shell").Error()))
+			return nil
+		}
+		ctx.Respond(summary.ID)
+
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)
 	}
 	return nil
+}
+
+func (s *shellManager) processLaunchRequest(
+	ctx *actor.Context,
+	req ShellLaunchRequest,
+) (*summary, int, error) {
+	commandReq, err := parseCommandRequest(
+		*req.User, s.db, req.CommandParams,
+		&s.taskSpec.TaskContainerDefaults,
+	)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	if commandReq.AgentUserGroup == nil {
+		commandReq.AgentUserGroup = &s.defaultAgentUserGroup
+	}
+
+	var passphrase *string
+	if pwd, ok := commandReq.Data["passphrase"]; ok {
+		if typed, typedOK := pwd.(string); typedOK {
+			passphrase = &typed
+		}
+	}
+	keys, err := ssh.GenerateKey(passphrase)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	ctx.Log().Info("creating shell")
+
+	shell := s.newShell(commandReq, keys)
+	if err = check.Validate(shell.config); err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	a, _ := ctx.ActorOf(shell.taskID, shell)
+	summaryFut := ctx.Ask(a, getSummary{})
+	if err = summaryFut.Error(); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	summary := summaryFut.Get().(summary)
+	ctx.Log().Infof("created shell %s", a.Address().Local())
+	return &summary, http.StatusOK, err
 }
 
 func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
@@ -72,40 +132,17 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			respondBadRequest(ctx, err)
 			return
 		}
-
-		req, err := parseCommandRequest(apiCtx, s.db, &params, &s.taskSpec.TaskContainerDefaults)
-		if err != nil {
-			respondBadRequest(ctx, err)
+		user := apiCtx.(*requestContext.DetContext).MustGetUser()
+		req := ShellLaunchRequest{
+			User:          &user,
+			CommandParams: &params,
+		}
+		summary, statusCode, err := s.processLaunchRequest(ctx, req)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
 			return
 		}
-
-		if req.AgentUserGroup == nil {
-			req.AgentUserGroup = &s.defaultAgentUserGroup
-		}
-
-		var passphrase *string
-		if pwd, ok := req.Data["passphrase"]; ok {
-			if typed, typedOK := pwd.(string); typedOK {
-				passphrase = &typed
-			}
-		}
-		generatedKeys, err := ssh.GenerateKey(passphrase)
-		if err != nil {
-			ctx.Respond(err)
-			return
-		}
-
-		ctx.Log().Info("creating shell")
-
-		shell := s.newShell(req, generatedKeys)
-		if err := check.Validate(shell.config); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-
-		a, _ := ctx.ActorOf(shell.taskID, shell)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, getSummary{})))
-		ctx.Log().Infof("created shell %s", a.Address().Local())
+		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)

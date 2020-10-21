@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
+	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -109,6 +110,48 @@ type notebookManager struct {
 	taskSpec              *tasks.TaskSpec
 }
 
+// NotebookLaunchRequest describes a request to launch a new notebook.
+type NotebookLaunchRequest struct {
+	CommandParams *CommandParams
+	User          *model.User
+}
+
+func (n *notebookManager) processLaunchRequest(
+	ctx *actor.Context,
+	req NotebookLaunchRequest,
+) (*summary, int, error) {
+	commandReq, err := parseCommandRequest(
+		*req.User, n.db, req.CommandParams, &n.taskSpec.TaskContainerDefaults,
+	)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	if commandReq.AgentUserGroup == nil {
+		commandReq.AgentUserGroup = &n.defaultAgentUserGroup
+	}
+
+	ctx.Log().Info("creating notebook")
+
+	notebook, err := n.newNotebook(commandReq)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	if err = check.Validate(notebook.config); err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	a, _ := ctx.ActorOf(notebook.taskID, notebook)
+	summaryFut := ctx.Ask(a, getSummary{})
+	if err := summaryFut.Error(); err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	summary := summaryFut.Get().(summary)
+	ctx.Log().Infof("created notebook %s", a.Address().Local())
+	return &summary, http.StatusOK, nil
+}
+
 func (n *notebookManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetNotebooksRequest:
@@ -117,6 +160,14 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 			resp.Notebooks = append(resp.Notebooks, notebook.(*notebookv1.Notebook))
 		}
 		ctx.Respond(resp)
+
+	case NotebookLaunchRequest:
+		summary, statusCode, err := n.processLaunchRequest(ctx, msg)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, errors.Wrap(err, "failed to launch shell").Error()))
+			return nil
+		}
+		ctx.Respond(summary.ID)
 
 	case echo.Context:
 		n.handleAPIRequest(ctx, msg)
@@ -138,33 +189,17 @@ func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Conte
 			respondBadRequest(ctx, err)
 			return
 		}
-
-		req, err := parseCommandRequest(apiCtx, n.db, &params, &n.taskSpec.TaskContainerDefaults)
-		if err != nil {
-			respondBadRequest(ctx, err)
+		user := apiCtx.(*requestContext.DetContext).MustGetUser()
+		req := NotebookLaunchRequest{
+			User:          &user,
+			CommandParams: &params,
+		}
+		summary, statusCode, err := n.processLaunchRequest(ctx, req)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
 			return
 		}
-
-		if req.AgentUserGroup == nil {
-			req.AgentUserGroup = &n.defaultAgentUserGroup
-		}
-
-		ctx.Log().Info("creating notebook")
-
-		notebook, err := n.newNotebook(req)
-		if err != nil {
-			ctx.Respond(errors.Wrap(err, "creating notebook"))
-			return
-		}
-
-		if err = check.Validate(notebook.config); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-
-		a, _ := ctx.ActorOf(notebook.taskID, notebook)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, getSummary{})))
-		ctx.Log().Infof("created notebook %s", a.Address().Local())
+		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)

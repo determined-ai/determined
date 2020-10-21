@@ -10,11 +10,16 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
+
+var notebooksAddr = actor.Addr("notebooks")
 
 func (a *apiServer) GetNotebooks(
 	_ context.Context, req *apiv1.GetNotebooksRequest,
@@ -79,4 +84,36 @@ func (a *apiServer) NotebookLogs(
 
 	// Keep the request context open until the actor stops.
 	return logStreamActor.AwaitTermination()
+}
+
+func (a *apiServer) LaunchNotebook(
+	ctx context.Context, req *apiv1.LaunchNotebookRequest,
+) (*apiv1.LaunchNotebookResponse, error) {
+	cmdParams, user, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+		TemplateName: req.TemplateName,
+		Config:       req.Config,
+		Files:        req.Files,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	notebookLaunchReq := command.NotebookLaunchRequest{
+		CommandParams: cmdParams,
+		User:          user,
+	}
+	notebookIDFut := a.m.system.AskAt(notebooksAddr, notebookLaunchReq)
+	if err = api.ProcessActorResponseError(&notebookIDFut); err != nil {
+		return nil, err
+	}
+
+	notebookID := notebookIDFut.Get().(resourcemanagers.TaskID)
+	notebook := a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookv1.Notebook{})
+	if err = api.ProcessActorResponseError(&notebook); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.LaunchNotebookResponse{
+		Notebook: notebook.Get().(*notebookv1.Notebook),
+	}, nil
 }

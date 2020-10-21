@@ -43,7 +43,7 @@ const (
 
 // TensorboardRequest describes a request for a new Tensorboard.
 type TensorboardRequest struct {
-	CommandParams
+	CommandParams *CommandParams
 
 	ExperimentIDs []int `json:"experiment_ids"`
 	TrialIDs      []int `json:"trial_ids"`
@@ -105,26 +105,28 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 	case TensorboardRequestWithUser:
-		summary, err := t.processTensorboardRequest(ctx, msg.User, &msg.Tensorboard)
-		if err != nil {
-			ctx.Respond(errors.Wrap(err, "failed to launch tensorboard"))
-		} else {
-			ctx.Respond(summary.ID)
+		summary, statusCode, err := t.processLaunchRequest(ctx, msg.User, &msg.Tensorboard)
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode,
+				errors.Wrap(err, "failed to launch Tensorboard").Error(),
+			))
+			return nil
 		}
+		ctx.Respond(summary.ID)
 	}
 
 	return nil
 }
 
-func (t *tensorboardManager) processTensorboardRequest(
+func (t *tensorboardManager) processLaunchRequest(
 	ctx *actor.Context,
 	user *model.User,
 	req *TensorboardRequest,
-) (*summary, error) {
-	commandReq, err := parseCommandRequestWithUser(
-		*user, t.db, &req.CommandParams, &t.taskSpec.TaskContainerDefaults)
+) (*summary, int, error) {
+	commandReq, err := parseCommandRequest(
+		*user, t.db, req.CommandParams, &t.taskSpec.TaskContainerDefaults)
 	if err != nil {
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	if commandReq.AgentUserGroup == nil {
@@ -133,7 +135,7 @@ func (t *tensorboardManager) processTensorboardRequest(
 
 	if len(req.ExperimentIDs) == 0 && len(req.TrialIDs) == 0 {
 		err = errors.New("must set experiment or trial ids")
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	ctx.Log().Infof("creating tensorboard (experiment id(s): %v trial id(s): %v)",
@@ -143,28 +145,22 @@ func (t *tensorboardManager) processTensorboardRequest(
 
 	if err != nil {
 		err = errors.Wrap(err, "failed to create tensorboard")
-		return nil, err
+		return nil, http.StatusInternalServerError, err
 	}
 
 	if err := check.Validate(b.config); err != nil {
 		err = errors.Wrap(err, "failed to validate tensorboard config")
-		return nil, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	a, _ := ctx.ActorOf(b.taskID, b)
-	summaryResponse := ctx.Ask(a, getSummary{})
-	if err := summaryResponse.Error(); err != nil {
-		return nil, err
+	summaryFut := ctx.Ask(a, getSummary{})
+	if err := summaryFut.Error(); err != nil {
+		return nil, http.StatusInternalServerError, err
 	}
 	ctx.Log().Infof("created tensorboard %s", a.Address().Local())
-	summary := summaryResponse.Get().(summary)
-	// REMOVEME
-	// jConfig, err := json.Marshal(summary.Config)
-	// if err != nil {
-	// 	fmt.Println("failed to marshal config")
-	// }
-	// fmt.Printf("config description %s\n", jConfig)
-	return &summary, nil
+	summary := summaryFut.Get().(summary)
+	return &summary, http.StatusOK, nil
 }
 
 func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
@@ -176,18 +172,27 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
-		req := TensorboardRequest{}
-		if err := apiCtx.Bind(&req); err != nil {
+		type params struct {
+			CommandParams
+			ExperimentIDs []int `json:"experiment_ids"`
+			TrialIDs      []int `json:"trial_ids"`
+		}
+		boundParams := params{}
+		if err := apiCtx.Bind(&boundParams); err != nil {
 			respondBadRequest(ctx, err)
 			return
 		}
 		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		summary, err := t.processTensorboardRequest(ctx, &user, &req)
-		if err != nil {
-			respondBadRequest(ctx, err)
-		} else {
-			ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
+		summary, statusCode, err := t.processLaunchRequest(ctx, &user, &TensorboardRequest{
+			CommandParams: &boundParams.CommandParams,
+			ExperimentIDs: boundParams.ExperimentIDs,
+			TrialIDs:      boundParams.TrialIDs,
+		})
+		if err != nil || statusCode > 200 {
+			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
+			return
 		}
+		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
 
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)

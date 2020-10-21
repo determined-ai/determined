@@ -7,6 +7,7 @@ import "google/protobuf/struct.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/command/v1/command.proto";
+import "determined/util/v1/util.proto";
 
 // Get a list of commands.
 message GetCommandsRequest {
@@ -59,6 +60,23 @@ message KillCommandRequest {
 }
 // Response to KillCommandRequest.
 message KillCommandResponse {
+  // The requested command.
+  determined.command.v1.Command command = 1;
+}
+
+// Request to launch a command.
+message LaunchCommandRequest {
+  // Command config (JSON).
+  google.protobuf.Struct config = 1;
+  // Template name.
+  string template_name = 2;
+  // The files to run with the command.
+  repeated determined.util.v1.File files = 3;
+  // Additional data.
+  bytes data = 4;
+}
+// Response to LaunchCommandRequest.
+message LaunchCommandResponse {
   // The requested command.
   determined.command.v1.Command command = 1;
 }
