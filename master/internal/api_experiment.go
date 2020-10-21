@@ -76,6 +76,9 @@ func (a *apiServer) GetExperiment(
 	_ context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
 	exp, err := a.getExperiment(int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
 
 	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
 	if err != nil {
@@ -486,31 +489,20 @@ func (a *apiServer) GetExperimentCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
-// TODO rename me.
-func reqToP(
-	req *apiv1.CreateExperimentRequest,
-) (*CreateExperimentParams, error) {
-
-	params := CreateExperimentParams{
+func (a *apiServer) CreateExperiment(
+	ctx context.Context, req *apiv1.CreateExperimentRequest,
+) (*apiv1.CreateExperimentResponse, error) {
+	detParams := CreateExperimentParams{
 		ConfigBytes:  protojson.Format(req.Config),
 		ModelDef:     filesToArchive(req.ModelDefinition),
 		ValidateOnly: req.ValidateOnly,
 	}
 	if req.ParentId != 0 {
 		parentID := int(req.ParentId)
-		params.ParentID = &parentID
+		detParams.ParentID = &parentID
 	}
-	return &params, nil
-}
 
-func (a *apiServer) CreateExperiment(
-	ctx context.Context, req *apiv1.CreateExperimentRequest,
-) (*apiv1.CreateExperimentResponse, error) {
-	detParams, err := reqToP(req)
-	if err != nil {
-		return nil, err
-	}
-	dbExp, validateOnly, err := a.m.postParseExperiment(detParams)
+	dbExp, validateOnly, err := a.m.postParseExperiment(&detParams)
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
@@ -521,7 +513,8 @@ func (a *apiServer) CreateExperiment(
 		// or we can use codes.already exists.
 		// if we don't want to respond with an error we could
 		// 1. change the response to a union that has an OK
-		// 2. convert dbExp to the proto equivelant and respond with that.
+		// 2. convert dbExp to the proto equivalent and respond with that.
+		// 3. return an empty or null experiment
 		// return nil, status.Errorf(codes.Aborted, "experiment is valid")
 		// Respond with a {experiment: null}
 		return &apiv1.CreateExperimentResponse{}, nil

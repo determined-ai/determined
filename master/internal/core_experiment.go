@@ -338,6 +338,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	return nil, nil
 }
 
+// CreateExperimentParams defines a request to create an experiment.
 type CreateExperimentParams struct {
 	ConfigBytes   string          `json:"experiment_config"`
 	Template      *string         `json:"template"`
@@ -359,8 +360,9 @@ func (m *Master) parseExperiment(body []byte) (*CreateExperimentParams, error) {
 	return &params, nil
 }
 
-// TODO rename me.
-func (m *Master) postParseExperiment(params *CreateExperimentParams) (*model.Experiment, bool, error) {
+func (m *Master) postParseExperiment(params *CreateExperimentParams) (
+	*model.Experiment, bool, error,
+) {
 	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
