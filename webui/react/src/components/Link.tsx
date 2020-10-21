@@ -11,6 +11,7 @@ export interface Props {
   isButton?: boolean;
   // is this external to the assets hosted by React?
   external?: boolean;
+  label?: string;
   path?: string;
   popout?: boolean;
   onClick?: MouseEventHandler;
@@ -39,6 +40,7 @@ const Link: React.FC<Props> = ({
     <span className={classes.join(' ')}>{props.children}</span>
   ) : (
     <a
+      aria-label={props.label}
       className={classes.join(' ')}
       href={href}
       rel={rel}
