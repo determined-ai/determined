@@ -6,8 +6,8 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
 import {
-  Checkpoint, CheckpointDetail, CheckpointState, ExperimentDetails, HyperparameterValue, RunState,
-  Step, TrialDetails, ValidationMetrics,
+  Checkpoint, CheckpointDetail, CheckpointState, ExperimentDetails, RunState,
+  Step, TrialDetails, TrialHyperParameters, ValidationMetrics,
 } from 'types';
 import { isObject, numericSorter } from 'utils/data';
 import { formatDatetime } from 'utils/date';
@@ -22,7 +22,7 @@ interface Props {
   experiment: ExperimentDetails;
 }
 
-const hyperparamsView = (params: Record<string, HyperparameterValue>) => {
+const hyperparamsView = (params: TrialHyperParameters) => {
   return <List
     dataSource={Object.entries(params)}
     renderItem={([ label, value ]) => {

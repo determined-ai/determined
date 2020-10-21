@@ -274,14 +274,15 @@ export interface ValidationMetrics {
   validationMetrics: Record<string, number>;
 }
 
-export type HyperparameterValue = number | string | boolean | RawJson
+type HyperparameterValue = number | string | boolean | RawJson
+export type TrialHyperParameters = Record<string, HyperparameterValue>
 
 interface TrialBase extends StartEndTimes {
   experimentId: number;
   id: number;
   state: RunState;
   seed: number;
-  hparams: Record<string, HyperparameterValue>;
+  hparams: TrialHyperParameters;
 }
 
 export interface TrialItem extends TrialBase {

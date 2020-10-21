@@ -29,6 +29,7 @@ import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api'
 import { ApiState } from 'services/types';
 import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
+  TrialHyperParameters,
 } from 'types';
 import { clone, numericSorter } from 'utils/data';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
@@ -63,7 +64,7 @@ const setTrialLength = (experimentConfig: RawJson, length: number): void => {
 
 const trialContinueConfig = (
   experimentConfig: RawJson,
-  trialHparams: Record<string, string>,
+  trialHparams: TrialHyperParameters,
   trialId: number,
 ): RawJson => {
   return {
