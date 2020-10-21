@@ -228,21 +228,19 @@ message GetExperimentValidationHistoryResponse {
       1;
 }
 
-// TODO name it CreateExperimentRequest. Or maybe Launch..
 // Request to create a new experiment.
-message PostExperimentRequest {
+message CreateExperimentRequest {
   // Experiment context.
-  repeated determined.util.v1.File context =
-      1;  // DISCUSS what do we call these? we have the same for commands, etc..
+  repeated determined.util.v1.File context = 1;
   // Experiment config.
   google.protobuf.Struct config = 2;
-  // Validate the experiment.
+  // Only validate instead of creating the experiment. A dry run.
   bool validate_only = 3;
   // Parent experiment id.
   int32 parent_id = 4;
 }
-// Response to PostExperimentRequest.
-message PostExperimentResponse {
+// Response to CreateExperimentRequest.
+message CreateExperimentResponse {
   // The created experiment.
   determined.experiment.v1.Experiment experiment = 1;
 }

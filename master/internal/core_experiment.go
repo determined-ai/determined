@@ -338,7 +338,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	return nil, nil
 }
 
-type PostExperimentParams struct {
+type CreateExperimentParams struct {
 	ConfigBytes   string          `json:"experiment_config"`
 	Template      *string         `json:"template"`
 	ModelDef      archive.Archive `json:"model_definition"`
@@ -351,8 +351,8 @@ type PostExperimentParams struct {
 	ValidateOnly  bool            `json:"validate_only"`
 }
 
-func (m *Master) parseExperiment(body []byte) (*PostExperimentParams, error) {
-	var params PostExperimentParams
+func (m *Master) parseExperiment(body []byte) (*CreateExperimentParams, error) {
+	var params CreateExperimentParams
 	if err := json.Unmarshal(body, &params); err != nil {
 		return nil, errors.Wrap(err, "invalid experiment params")
 	}
@@ -360,7 +360,7 @@ func (m *Master) parseExperiment(body []byte) (*PostExperimentParams, error) {
 }
 
 // TODO rename me.
-func (m *Master) postParseExperiment(params *PostExperimentParams) (*model.Experiment, bool, error) {
+func (m *Master) postParseExperiment(params *CreateExperimentParams) (*model.Experiment, bool, error) {
 	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()

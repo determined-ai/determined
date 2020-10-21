@@ -241,7 +241,8 @@ service Determined {
   }
 
   // Create an experiment.
-  rpc PostExperiment(PostExperimentRequest) returns (PostExperimentResponse) {
+  rpc CreateExperiment(CreateExperimentRequest)
+      returns (CreateExperimentResponse) {
     option (google.api.http) = {
       post: "/api/v1/experiments"
       body: "*"

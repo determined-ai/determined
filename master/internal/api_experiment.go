@@ -488,10 +488,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 
 // TODO rename me.
 func reqToP(
-	req *apiv1.PostExperimentRequest,
-) (*PostExperimentParams, error) {
+	req *apiv1.CreateExperimentRequest,
+) (*CreateExperimentParams, error) {
 
-	params := PostExperimentParams{
+	params := CreateExperimentParams{
 		ConfigBytes: protojson.Format(req.Config),
 		ModelDef:    filesToArchive(req.Context),
 		// TODO we should separate this into a separate endpoint.
@@ -505,9 +505,9 @@ func reqToP(
 	return &params, nil
 }
 
-func (a *apiServer) PostExperiment(
-	ctx context.Context, req *apiv1.PostExperimentRequest,
-) (*apiv1.PostExperimentResponse, error) {
+func (a *apiServer) CreateExperiment(
+	ctx context.Context, req *apiv1.CreateExperimentRequest,
+) (*apiv1.CreateExperimentResponse, error) {
 	detParams, err := reqToP(req)
 	if err != nil {
 		return nil, err
@@ -542,5 +542,5 @@ func (a *apiServer) PostExperiment(
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.PostExperimentResponse{Experiment: protoExp}, nil
+	return &apiv1.CreateExperimentResponse{Experiment: protoExp}, nil
 }
