@@ -10,7 +10,6 @@ categorization medium post](https://medium.com/@nickbortolotti/iris-species-cate
 
 ### Configuration Files
 * **const.yaml**: Train the model with constant hyperparameter values.
-* **distributed.yaml**: Same as `const.yaml`, but trains the model with multiple GPUs (distributed training).
 * **adaptive.yaml**: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm.
 
 ## Data:
