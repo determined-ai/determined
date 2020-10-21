@@ -1,0 +1,6 @@
+:orphan:
+
+**BUG FIXES**
+
+-  Fix an issue with boolean hyperparameters not showing up in the
+   WebUI.

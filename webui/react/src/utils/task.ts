@@ -61,41 +61,42 @@ export function generateCommandTask(idx: number): RecentCommandTask {
   };
 }
 
+export const generateOldExperiment = (id = 1): ExperimentOld => {
+  const experimentTask = generateExperimentTask(id);
+  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+  const config = {
+    description: experimentTask.name,
+    resources: {},
+    searcher: { metric: 'val_error', smallerIsBetter: true },
+  };
+  return {
+    ...experimentTask,
+    config: {
+      checkpointPolicy: 'best',
+      checkpointStorage: {
+        hostPath: '/tmp',
+        saveExperimentBest: 0,
+        saveTrialBest: 1,
+        saveTrialLatest: 1,
+        storagePath: 'determined-integration-checkpoints',
+        type: 'shared_fs',
+      },
+      dataLayer: { type: 'shared_fs' },
+      description: experimentTask.name,
+      resources: {},
+      searcher: { metric: 'val_error', smallerIsBetter: true },
+    },
+    configRaw: config,
+    id: id,
+    name: experimentTask.name,
+    userId: user.id,
+    username: user.username,
+  } as ExperimentOld;
+};
 export const generateOldExperiments = (count = 10): ExperimentOld[] => {
   return new Array(Math.floor(count))
     .fill(null)
-    .map((_, idx) => {
-      const experimentTask = generateExperimentTask(idx);
-      const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
-      const config = {
-        description: experimentTask.name,
-        resources: {},
-        searcher: { metric: 'val_error', smallerIsBetter: true },
-      };
-      return {
-        ...experimentTask,
-        config: {
-          checkpointPolicy: 'best',
-          checkpointStorage: {
-            hostPath: '/tmp',
-            saveExperimentBest: 0,
-            saveTrialBest: 1,
-            saveTrialLatest: 1,
-            storagePath: 'determined-integration-checkpoints',
-            type: 'shared_fs',
-          },
-          dataLayer: { type: 'shared_fs' },
-          description: experimentTask.name,
-          resources: {},
-          searcher: { metric: 'val_error', smallerIsBetter: true },
-        },
-        configRaw: config,
-        id: idx,
-        name: experimentTask.name,
-        userId: user.id,
-        username: user.username,
-      } as ExperimentOld;
-    });
+    .map((_, idx) => generateOldExperiment(idx));
 };
 
 export const generateExperiments = (count = 30): ExperimentItem[] => {
