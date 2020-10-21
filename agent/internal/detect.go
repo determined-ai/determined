@@ -15,30 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-// detectDevices returns a slice of Device's representing the devices exposed by the agent.
-// Autoconfigure the devices exposed by the agent.
-//
-// The most common case in deployed installs is to expose all GPU devices present. To support
-// various testing configurations, we also allow the agent to expose fake devices, a subset of CPU
-// resources or a subset of GPU resources, but this is not representative of deployed agents.
-//
-// The current policy is:
-// - Expose all GPUs present on the machine.
-// - If there are no GPUs, expose all CPUs present on the machine after applying the optional mask
-// `cpu_limit`.
-//
-// An error is returned instead if detection failed unexpectedly.
-func detectDevices(visibleGPUs string) ([]device.Device, error) {
-	switch devices, err := detectGPUs(visibleGPUs); {
-	case err != nil:
-		return nil, errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
-	case len(devices) != 0:
-		return devices, nil
-	}
-
-	return detectCPUs()
-}
-
 // detectCPUs returns the list of available CPUs; each core is returned as a single device.
 func detectCPUs() ([]device.Device, error) {
 	switch cpuInfo, err := cpu.Info(); {

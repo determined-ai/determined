@@ -3,6 +3,8 @@ package internal
 import (
 	"encoding/json"
 
+	"github.com/determined-ai/determined/master/pkg/check"
+
 	"github.com/pkg/errors"
 )
 
@@ -14,6 +16,7 @@ type Options struct {
 	MasterPort      int    `json:"master_port"`
 	AgentID         string `json:"agent_id"`
 	ArtificialSlots int    `json:"artificial_slots"`
+	SlotType        string `json:"slot_type"`
 
 	ContainerMasterHost string `json:"container_master_host"`
 	ContainerMasterPort int    `json:"container_master_port"`
@@ -43,6 +46,7 @@ type Options struct {
 func (o Options) Validate() []error {
 	return []error{
 		o.validateTLS(),
+		check.In(o.SlotType, []string{"cpu", "gpu", "auto"}),
 	}
 }
 

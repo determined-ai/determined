@@ -1,0 +1,12 @@
+:orphan:
+
+**Improvements**
+
+-  Support configurable slot type for agents. Previously, we only
+   supported auto-detecting the slot type for agents. It detected the
+   GPUs and if there were no GPUs the agents would fall back to mapping
+   one slot to all the CPUs. Now, this behavior can be configured to one
+   of ``gpu``, ``cpu``, and ``auto`` in the field ``slot_type`` of the
+   agent configuration ``agent.yaml`` and defaults to ``auto``. Also,
+   dynamic agents will be configured to ``gpu``. See the :ref:`Agent
+   configuration <agent-configuration>` for details.

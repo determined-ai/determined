@@ -245,18 +245,37 @@ func (a *agent) setup(ctx *actor.Context) error {
 	ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
 	actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
 
-	if a.ArtificialSlots > 0 {
+	switch {
+	case a.ArtificialSlots > 0:
 		for i := 0; i < a.ArtificialSlots; i++ {
 			id := uuid.New().String()
 			a.Devices = append(a.Devices, device.Device{
 				ID: i, Brand: "Artificial", UUID: id, Type: device.CPU})
 		}
-	} else {
-		d, err := detectDevices(a.Options.VisibleGPUs)
+	case a.SlotType == "gpu":
+		devices, err := detectGPUs(a.Options.VisibleGPUs)
+		if err != nil {
+			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
+		}
+		a.Devices = devices
+	case a.SlotType == "cpu":
+		devices, err := detectCPUs()
 		if err != nil {
 			return err
 		}
-		a.Devices = d
+		a.Devices = devices
+	case a.SlotType == "auto":
+		if devices, err := detectGPUs(a.Options.VisibleGPUs); err != nil {
+			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
+		} else if len(devices) != 0 {
+			a.Devices = devices
+		} else if devices, err = detectCPUs(); err != nil {
+			return err
+		} else {
+			a.Devices = devices
+		}
+	default:
+		panic("unrecognized slot type")
 	}
 	ctx.Log().Info("detected compute devices:")
 	for _, d := range a.Devices {
