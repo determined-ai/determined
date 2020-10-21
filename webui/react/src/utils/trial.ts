@@ -61,12 +61,11 @@ export const metricNameFromValue = (metricValue: string): MetricName | undefined
   } else {
     const errName = 'metricNameFromValueUnrecognizedMetricType';
     const errSlug = 'metricnamefromvalue-unrecognized-metric-type';
-    const errMessage = `metricNameFromValue was called, but the metricName doesn't appear to " +
-        'be a training metric or a validation metric (${metricValue})`;
-    let silent = true;
-    if (process.env.IS_DEV) {
-      silent = false;
-    }
+    const errMessage = `
+      metricNameFromValue was called, but the metricName doesn't appear to 
+      be a training metric or a validation metric (${metricValue})
+    `;
+
     const daErr: DaError = {
       error: {
         message: errMessage,
@@ -76,7 +75,7 @@ export const metricNameFromValue = (metricValue: string): MetricName | undefined
       isUserTriggered: false,
       level: ErrorLevel.Error,
       message: errMessage,
-      silent: silent,
+      silent: !process.env.IS_DEV,
       type: ErrorType.Ui,
     };
     handleError(daErr);
