@@ -231,7 +231,7 @@ message GetExperimentValidationHistoryResponse {
 // Request to create a new experiment.
 message CreateExperimentRequest {
   // Experiment context.
-  repeated determined.util.v1.File context = 1;
+  repeated determined.util.v1.File model_definition = 1;
   // Experiment config.
   google.protobuf.Struct config = 2;
   // Only validate instead of creating the experiment. A dry run.

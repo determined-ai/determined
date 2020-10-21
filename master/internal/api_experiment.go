@@ -493,7 +493,7 @@ func reqToP(
 
 	params := CreateExperimentParams{
 		ConfigBytes:  protojson.Format(req.Config),
-		ModelDef:     filesToArchive(req.Context),
+		ModelDef:     filesToArchive(req.ModelDefinition),
 		ValidateOnly: req.ValidateOnly,
 	}
 	if req.ParentId != 0 {
