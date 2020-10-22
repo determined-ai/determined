@@ -63,13 +63,13 @@ func (a *apiServer) TrialLogs(
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
 	}
 
-	logID := int32(-1)
+	logID := int32(-1) // WebUI assumes logs are 0-indexed
 	onBatch := func(b api.LogBatch) error {
 		return b.ForEach(func(r interface{}) error {
 			trialLog := r.(*model.TrialLog)
 			logID++
 			return resp.Send(&apiv1.TrialLogsResponse{
-				Id:      logID, // WebUI assumes logs are 0-indexed
+				Id:      logID,
 				Message: trialLog.Message,
 			})
 		})
@@ -108,7 +108,7 @@ func (a *apiServer) TrialLogs(
 			lReq,
 			fetch,
 			onBatch,
-			&terminateCheck,
+			terminateCheck,
 			&batchWaitTime,
 		),
 	).AwaitTermination()
@@ -116,28 +116,23 @@ func (a *apiServer) TrialLogs(
 
 func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error) {
 	var filters []api.Filter
-	if len(req.AgentIds) > 0 {
-		filters = append(filters, api.Filter{
-			Field:     "agent_id",
-			Operation: api.FilterOperationIn,
-			Values:    req.AgentIds,
-		})
+
+	addInFilter := func(field string, values interface{}, count int) {
+		if values != nil && count > 0 {
+			filters = append(filters, api.Filter{
+				Field:     field,
+				Operation: api.FilterOperationIn,
+				Values:    values,
+			})
+		}
 	}
-	if len(req.ContainerIds) > 0 {
-		filters = append(filters, api.Filter{
-			Field:     "container_id",
-			Operation: api.FilterOperationIn,
-			Values:    req.ContainerIds,
-		})
-	}
-	if len(req.RankIds) > 0 {
-		filters = append(filters, api.Filter{
-			Field:     "rank_id",
-			Operation: api.FilterOperationIn,
-			Values:    req.RankIds,
-		})
-	}
-	if len(req.Level) > 0 {
+
+	addInFilter("agent_id", req.AgentIds, len(req.AgentIds))
+	addInFilter("container_id", req.ContainerIds, len(req.ContainerIds))
+	addInFilter("rank_id", req.RankIds, len(req.RankIds))
+	addInFilter("stdtype", req.Stdtype, len(req.Stdtype))
+	addInFilter("source", req.Source, len(req.Source))
+	addInFilter("level", func() interface{} {
 		var levels []string
 		for _, l := range req.Level {
 			switch l {
@@ -155,26 +150,9 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 				levels = append(levels, "CRITICAL")
 			}
 		}
-		filters = append(filters, api.Filter{
-			Field:     "level",
-			Operation: api.FilterOperationIn,
-			Values:    levels,
-		})
-	}
-	if len(req.Stdtype) > 0 {
-		filters = append(filters, api.Filter{
-			Field:     "stdtype",
-			Operation: api.FilterOperationIn,
-			Values:    req.Stdtype,
-		})
-	}
-	if len(req.Source) > 0 {
-		filters = append(filters, api.Filter{
-			Field:     "source",
-			Operation: api.FilterOperationIn,
-			Values:    req.Source,
-		})
-	}
+		return levels
+	}(), len(req.Level))
+
 	if req.TimestampBefore != nil {
 		t, err := ptypes.Timestamp(req.TimestampBefore)
 		if err != nil {
@@ -186,6 +164,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 			Values:    t,
 		})
 	}
+
 	if req.TimestampAfter != nil {
 		t, err := ptypes.Timestamp(req.TimestampAfter)
 		if err != nil {

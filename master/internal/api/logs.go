@@ -38,15 +38,17 @@ type LogFetcherFn func(LogsRequest) (LogBatch, error)
 // TerminationCheckFn checks whether the log processing should stop or not.
 type TerminationCheckFn func() (bool, error)
 
-// LogStoreProcessor is a log processor that fetches logs and processes them with an OnLogBatchFn.
-// It handles common logic around limits, offsets and backpressure. The type of batches produced by
-// the Fetcher must match those handled by the OnLogBatchFn or the actor will panic.
+// LogStoreProcessor is a actor that fetches logs and processes them. It handles common
+// logic around limits, offsets and backpressure.
+//
+// The type of batches produced by the LogFetcherFn must match those handled by the
+// OnLogBatchFn or the actor will panic.
 type LogStoreProcessor struct {
 	ctx            context.Context
 	req            LogsRequest
 	fetcher        LogFetcherFn
 	process        OnLogBatchFn
-	terminateCheck *TerminationCheckFn
+	terminateCheck TerminationCheckFn
 	batchWaitTime  *time.Duration
 }
 
@@ -56,7 +58,7 @@ func NewLogStoreProcessor(
 	req LogsRequest,
 	fetcher LogFetcherFn,
 	process OnLogBatchFn,
-	terminateCheck *TerminationCheckFn,
+	terminateCheck TerminationCheckFn,
 	batchWaitTime *time.Duration,
 ) *LogStoreProcessor {
 	return &LogStoreProcessor{
@@ -90,7 +92,7 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 			return errors.Wrapf(err, "failed to fetch logs")
 		case batch == nil, batch.Size() == 0:
 			if l.terminateCheck != nil {
-				terminate, err := (*l.terminateCheck)()
+				terminate, err := l.terminateCheck()
 				switch {
 				case err != nil:
 					return errors.Wrap(err, "failed to check the termination status.")
@@ -126,7 +128,10 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-// LogStreamProcessor handles streaming log messages.
+// LogStreamProcessor handles streaming log messages. Upon start, it notifies another
+// actor which handles the LogsRequest message to start streaming logs conforming to that
+// request to itself. Each time the producing actor receives a batch, it will send it to
+// the LogStreamProcessor to handle it with its OnLogBatchFn.
 type LogStreamProcessor struct {
 	req         LogsRequest
 	ctx         context.Context
