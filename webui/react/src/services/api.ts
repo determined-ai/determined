@@ -1,6 +1,5 @@
 import { CancelToken } from 'axios';
 
-// DISCUSS name this AB?
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
@@ -109,7 +108,7 @@ export const setExperimentState = async (
 
 export const getAllExperimentLabels = async (): Promise<string[]> => {
   try {
-    const data = await detApi.Experiments.determinedGetExperimentLabels();
+    const data = await Config.detApi.Experiments.determinedGetExperimentLabels();
     return data.labels || [];
   } catch (e) {
     processApiError('getAllExperimentLabels', e);
