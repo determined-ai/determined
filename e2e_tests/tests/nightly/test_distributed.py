@@ -70,7 +70,9 @@ def test_bert_glue_pytorch_distributed() -> None:
 
 @pytest.mark.distributed  # type: ignore
 def test_gaea_pytorch_distributed() -> None:
-    config = conf.load_config(conf.nas_examples_path("gaea_pytorch/eval/distributed_no_data_download.yaml"))
+    config = conf.load_config(
+        conf.nas_examples_path("gaea_pytorch/eval/distributed_no_data_download.yaml")
+    )
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.nas_examples_path("gaea_pytorch/eval"), 1)
