@@ -26,6 +26,11 @@ const (
 	cookieName         = "auth"
 )
 
+var unauthenticatedMethods = map[string]bool{
+	"/determined.api.v1.Determined/Login":     true,
+	"/determined.api.v1.Determined/GetMaster": true,
+}
+
 var (
 	// ErrInvalidCredentials notifies that the provided credentials are invalid or missing.
 	ErrInvalidCredentials = status.Error(codes.Unauthenticated, "invalid credentials")
@@ -83,7 +88,7 @@ func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		if info.FullMethod != "/determined.api.v1.Determined/Login" {
+		if !unauthenticatedMethods[info.FullMethod] {
 			if _, _, err := GetUser(ctx, db); err != nil {
 				return nil, err
 			}
