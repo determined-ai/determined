@@ -1,4 +1,4 @@
-description: cifar10_pytorch_const_distributed
+description: cifar10_pytorch_distributed
 hyperparameters:
   learning_rate: 1e-4
   learning_rate_decay: 1e-6

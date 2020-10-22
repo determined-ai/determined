@@ -94,7 +94,7 @@ class AuxiliaryHeadImageNet(nn.Module):
             nn.Conv2d(128, 768, 2, bias=False),
             # NOTE: This batchnorm was omitted in my earlier implementation due to a typo.
             # Commenting it out for consistency with the experiments in the paper.
-            nn.BatchNorm2d(768, momenutm=0.999, eps=0.001),
+            nn.BatchNorm2d(768, momentum=0.999, eps=0.001),
             activation_function(),
         )
         self.classifier = nn.Linear(768, num_classes)

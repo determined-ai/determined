@@ -1,7 +1,7 @@
 # NOTE: this config uses randomly generated data on single GPU.
 # Please use distributed.yaml if you want to run on the
 # the actual imagenet data.
-description: gaea_eval_const 
+description: gaea_eval_distributed_no_gcp 
 
 data:
   # Change bucket_name to GCP bucket with imagenet dataset
@@ -57,9 +57,7 @@ hyperparameters:
 
   init_channels: 48
   layers: 14
-  # Set global_batch_size to 1024
-  # if not using randomly generated data.
-  global_batch_size: 64
+  global_batch_size: 512
   auxiliary: false
   auxiliary_weight: 0.4
   randaugment: true
@@ -71,7 +69,7 @@ hyperparameters:
 resources:
   # We recommend 8 slots with V100
   # and at least 16 slots with K80 GPUs.
-  slots_per_trial: 1
+  slots_per_trial: 8
   shm_size: 30000000000
 
 searcher:

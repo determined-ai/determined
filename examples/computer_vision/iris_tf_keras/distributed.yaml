@@ -6,13 +6,13 @@ hyperparameters:
   learning_rate: 1e-4
   learning_rate_decay: 1e-6
   layer1_dense_size: 16
-  global_batch_size: 480 # per GPU batch size of 30
+  global_batch_size: 30
 resources:
-  slots_per_trial: 16 # Use 16 GPUs to train the model.
+  slots_per_trial: 2 # Use 2 GPUs to train the model.
 searcher:
   name: single
   metric: val_categorical_accuracy
-  smaller_is_better: true
+  smaller_is_better: false
   max_length:
-    batches: 312
+    batches: 2500
 entrypoint: model_def:IrisTrial
