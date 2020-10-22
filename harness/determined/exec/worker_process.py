@@ -5,6 +5,7 @@ import sys
 
 import determined as det
 from determined import ipc, layers, load
+from determined.event_trail import create_event_trail_thread
 
 
 def config_logging(worker_process_env: layers.WorkerProcessContext) -> None:
@@ -30,29 +31,31 @@ def main() -> None:
     if worker_process_env.env.experiment_config.debug_enabled():
         faulthandler.dump_traceback_later(30, repeat=True)
 
-    # Establish the connection to the ZMQBroadcastServer in this container.
-    pub_url = f"tcp://localhost:{worker_process_env.broadcast_pub_port}"
-    sub_url = f"tcp://localhost:{worker_process_env.broadcast_pull_port}"
-    with ipc.ZMQBroadcastClient(pub_url, sub_url) as broadcast_client:
+    with create_event_trail_thread(noop=False) as event_sender:
+        # Establish the connection to the ZMQBroadcastServer in this container.
+        pub_url = f"tcp://localhost:{worker_process_env.broadcast_pub_port}"
+        sub_url = f"tcp://localhost:{worker_process_env.broadcast_pull_port}"
+        with ipc.ZMQBroadcastClient(pub_url, sub_url) as broadcast_client:
 
-        # Wrap the communication layer in a workload.Stream.
-        subrec = layers.SubprocessReceiver(broadcast_client)
+            # Wrap the communication layer in a workload.Stream.
+            subrec = layers.SubprocessReceiver(broadcast_client)
 
-        with det._catch_sys_exit():
-            controller = load.prepare_controller(
-                worker_process_env.env,
-                iter(subrec),
-                worker_process_env.load_path,
-                worker_process_env.rendezvous_info,
-                worker_process_env.hvd_config,
-            )
+            with det._catch_sys_exit():
+                controller = load.prepare_controller(
+                    worker_process_env.env,
+                    iter(subrec),
+                    worker_process_env.load_path,
+                    worker_process_env.rendezvous_info,
+                    worker_process_env.hvd_config,
+                    event_sender,
+                )
 
-            try:
-                controller.run()
+                try:
+                    controller.run()
 
-            except Exception as e:
-                broadcast_client.send_exception_message()
-                raise e
+                except Exception as e:
+                    broadcast_client.send_exception_message()
+                    raise e
 
 
 if __name__ == "__main__":

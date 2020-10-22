@@ -74,6 +74,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+        # TODO: Send TrialInfoEvent
         # Initialize the correct horovod.
         if hvd_config.use:
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
