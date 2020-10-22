@@ -4,9 +4,9 @@
 #  fit: best
 
 ## Configure the task container defaults. Tasks include trials, commands, tensorboards and more.
-## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the 
-## network interface used by distributed (multi-machine) training and ports used by the NCCL and 
-## GLOO libraries during distributed training are configurable. These default to auto-discovery and 
+## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the
+## network interface used by distributed (multi-machine) training and ports used by the NCCL and
+## GLOO libraries during distributed training are configurable. These default to auto-discovery and
 ## random non-privileged ports, respectively.
 #task_container_defaults:
 #  shm_size_bytes: 4294967296
@@ -18,6 +18,9 @@
 ## Elastic AI infrastructure configuration. Configure only one of the
 ## dynamic agent types.
 #provisioner:
+
+## A user friendly name to identify this cluster by.
+#  cluster_name: SF
 
 ## The url of the Determined master.
 #  master_url: <scheme://host:port>
@@ -90,7 +93,6 @@
 #    gpu_num: 4
 #  max_instances: 5
 #  operation_timeout_period: 5m
-
 
 ## Configure default checkpoint storage configuration.
 checkpoint_storage:
