@@ -8,7 +8,7 @@ import UI from 'contexts/UI';
 
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
-import css from './NavigationToolbar.module.scss';
+import css from './NavigationTabbar.module.scss';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -48,7 +48,7 @@ const OverflowItem: React.FC<OverflowItemProps> = ({ path, ...props }: OverflowI
   );
 };
 
-const NavigationToolbar: React.FC = () => {
+const NavigationTabbar: React.FC = () => {
   const { isAuthenticated } = Auth.useStateContext();
   const ui = UI.useStateContext();
   const overview = ClusterOverview.useStateContext();
@@ -100,4 +100,4 @@ const NavigationToolbar: React.FC = () => {
   );
 };
 
-export default NavigationToolbar;
+export default NavigationTabbar;
