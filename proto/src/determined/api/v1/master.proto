@@ -17,8 +17,14 @@ message GetMasterResponse {
   string master_id = 2;
   // The global cluster id of the master.
   string cluster_id = 3;
+}
+
+// Get master config.
+message GetMasterConfigRequest {}
+// Response to GetMasterRequest.
+message GetMasterConfigResponse {
   // The config file loaded by the master.
-  google.protobuf.Struct config = 4;
+  google.protobuf.Struct config = 1;
 }
 
 // Stream master logs.

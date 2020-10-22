@@ -15,17 +15,23 @@ import (
 
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
+	return &apiv1.GetMasterResponse{
+		Version:   a.m.Version,
+		MasterId:  a.m.MasterID,
+		ClusterId: a.m.ClusterID,
+	}, nil
+}
+
+func (a *apiServer) GetMasterConfig(
+	_ context.Context, _ *apiv1.GetMasterConfigRequest) (*apiv1.GetMasterConfigResponse, error) {
 	config, err := a.m.config.Printable()
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing master config")
 	}
 	configStruct := &structpb.Struct{}
 	err = protojson.Unmarshal(config, configStruct)
-	return &apiv1.GetMasterResponse{
-		Version:   a.m.Version,
-		MasterId:  a.m.MasterID,
-		ClusterId: a.m.ClusterID,
-		Config:    configStruct,
+	return &apiv1.GetMasterConfigResponse{
+		Config: configStruct,
 	}, err
 }
 
