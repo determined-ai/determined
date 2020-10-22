@@ -25,3 +25,8 @@ func ValidateRequest(checks ...Check) error {
 func ValidateLimit(limit int32) Check {
 	return func() (bool, string) { return limit >= 0, "Limit must be >= 0" }
 }
+
+// ValidateFollow validates Follow message fields.
+func ValidateFollow(limit int32, follow bool) Check {
+	return func() (bool, string) { return limit == 0 || !follow, "Limit must be = 0 when following" }
+}

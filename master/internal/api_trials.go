@@ -50,9 +50,11 @@ func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer) error {
 	if err := grpc.ValidateRequest(
 		grpc.ValidateLimit(req.Limit),
+		grpc.ValidateFollow(req.Limit, req.Follow),
 	); err != nil {
 		return err
 	}
+
 	_, total, err := trialStatus(a.m.db, req.TrialId)
 	if err != nil {
 		return err
@@ -77,7 +79,7 @@ func (a *apiServer) TrialLogs(
 
 	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
 		switch {
-		case lr.Follow || lr.Limit > batchSize:
+		case lr.Follow, lr.Limit > batchSize:
 			lr.Limit = batchSize
 		case lr.Limit <= 0:
 			return nil, nil

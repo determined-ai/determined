@@ -46,6 +46,7 @@ func (a *apiServer) MasterLogs(
 	req *apiv1.MasterLogsRequest, resp apiv1.Determined_MasterLogsServer) error {
 	if err := grpc.ValidateRequest(
 		grpc.ValidateLimit(req.Limit),
+		grpc.ValidateFollow(req.Limit, req.Follow),
 	); err != nil {
 		return err
 	}

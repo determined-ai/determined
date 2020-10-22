@@ -101,7 +101,7 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 					return nil
 				}
 			}
-			actors.NotifyAfter(ctx, 5*time.Second, tick{})
+			actors.NotifyAfter(ctx, 500*time.Millisecond, tick{})
 		default:
 			l.req.Limit -= batch.Size()
 			l.req.Offset += batch.Size()
