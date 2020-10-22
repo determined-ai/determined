@@ -91,3 +91,7 @@ data:
       enabled: {{ .Values.telemetry.enabled }}
     {{- end }}
     {{- end }}
+
+    {{- if .Values.clusterName }}
+    cluster_name: {{ .Values.clusterName }}
+    {{- end }}
