@@ -352,8 +352,7 @@ The master supports the following configuration settings:
 -  ``root``: Specifies the root directory of the state files. Defaults
    to ``/usr/share/determined/master``.
 
--  ``cluster_name``: Specify a human readable name for this Determined
-   cluster.
+-  ``cluster_name``: Specify a human readable name for this cluster.
 
 -  ``tensorboard_timeout``: Specifies the duration in seconds before
    idle TensorBoard instances are automatically terminated. A
