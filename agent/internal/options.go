@@ -40,6 +40,8 @@ type Options struct {
 	NoProxy    string `json:"no_proxy"`
 
 	Security SecurityOptions `json:"security"`
+
+	FluentLoggingImage string `json:"fluent_logging_image"`
 }
 
 // Validate validates the state of the Options struct.

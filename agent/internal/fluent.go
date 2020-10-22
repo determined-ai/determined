@@ -191,8 +191,8 @@ func startLoggingContainer(ctx *actor.Context, opts Options) (string, int, int, 
 		}
 	}()
 
-	const imageName = "fluent/fluent-bit:1.5"
 	const containerName = "determined-fluent"
+	imageName := opts.FluentLoggingImage
 	exposedPort := nat.Port(fmt.Sprintf("%d/tcp", fluentListenPort))
 
 	// Check for an old container and kill it if present.
