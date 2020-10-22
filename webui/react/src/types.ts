@@ -2,7 +2,6 @@
 export type RawJson = Record<string, any>;
 
 export interface User {
-  id: number;
   username: string;
 }
 

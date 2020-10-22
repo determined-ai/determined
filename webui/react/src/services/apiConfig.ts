@@ -1,15 +1,17 @@
 import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
-import { decode, ioDetailedUser, ioTypeDetailedUser } from 'ioTypes';
+import { serverAddress } from 'routes/utils';
+import * as Api from 'services/api-ts-sdk';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
   jsonToExperimentDetails, jsonToExperiments, jsonToLogs, jsonToNotebook, jsonToNotebooks,
   jsonToShells, jsonToTaskLogs, jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails,
   jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
+import * as decoder from 'services/decoder';
 import {
-  CreateNotebookParams, CreateTensorboardParams,
+  CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams,
   ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams,
@@ -19,6 +21,17 @@ import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
   ExperimentDetails, Log, TBSourceType, TrialDetails,
 } from 'types';
+
+import { noOp } from './utils';
+
+const apiConfigParams : Api.ConfigurationParameters = { basePath: serverAddress() };
+
+const ApiConfig = new Api.Configuration(apiConfigParams);
+export const detApi = {
+  Auth: new Api.AuthenticationApi(ApiConfig),
+  Experiments: new Api.ExperimentsApi(ApiConfig),
+  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
+};
 
 /* Helpers */
 
@@ -46,20 +59,13 @@ export const login: HttpApi<Credentials, void> = {
     };
   },
   name: 'login',
+  postProcess: noOp,
 };
 
-export const getCurrentUser: HttpApi<EmptyParams, DetailedUser> = {
-  httpOptions: () => ({ url: '/users/me' }),
+export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
   name: 'getCurrentUser',
-  postProcess: (response) => {
-    const result = decode<ioTypeDetailedUser>(ioDetailedUser, response.data);
-    return {
-      id: result.id,
-      isActive: result.active,
-      isAdmin: result.admin,
-      username: result.username,
-    };
-  },
+  postProcess: (response) => decoder.user(response.user),
+  request: detApi.Auth.determinedCurrentUser.bind(detApi.Auth),
 };
 
 export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
@@ -113,6 +119,7 @@ export const patchExperiment: HttpApi<PatchExperimentParams, void> = {
     };
   },
   name: 'patchExperiment',
+  postProcess: noOp,
 };
 
 export const killExperiment: HttpApi<KillExpParams, void> = {
@@ -123,6 +130,7 @@ export const killExperiment: HttpApi<KillExpParams, void> = {
     };
   },
   name: 'killExperiment',
+  postProcess: noOp,
 };
 
 export const getExperimentSummaries: HttpApi<ExperimentsParams, ExperimentBase[]> = {
@@ -182,6 +190,7 @@ export const killCommand: HttpApi<KillCommandParams, void> = {
     };
   },
   name: 'killCommand',
+  postProcess: noOp,
 };
 
 export const createNotebook: HttpApi<CreateNotebookParams, Command> = {

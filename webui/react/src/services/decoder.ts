@@ -20,7 +20,7 @@ import {
 } from 'types';
 import { capitalize } from 'utils/string';
 
-import { Determinedexperimentv1State, V1Experiment } from './api-ts-sdk';
+import * as AB from './api-ts-sdk'; // API Bindings
 
 const dropNonNumericMetrics = (ioMetrics: ioTypeMetric): Record<string, number> => {
   const metrics: Record<string, number> = {};
@@ -28,6 +28,14 @@ const dropNonNumericMetrics = (ioMetrics: ioTypeMetric): Record<string, number> 
     if (isNumber(value)) metrics[name] = value;
   });
   return metrics;
+};
+
+export const user = (data: AB.V1User): DetailedUser => {
+  return {
+    isActive: data.active,
+    isAdmin: data.admin,
+    username: data.username,
+  };
 };
 
 export const jsonToUsers = (data: unknown): DetailedUser[] => {
@@ -98,10 +106,7 @@ export const jsonToGenericCommand = (data: unknown, type: CommandType): Command 
     serviceAddress: io.service_address || undefined,
     state: io.state as CommandState,
     url: undefined,
-    user: {
-      id: io.owner.id,
-      username: io.owner.username,
-    },
+    user: { username: io.owner.username },
   };
   command.url = waitPageUrl(command);
   return command as Command;
@@ -267,31 +272,31 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
 };
 
 const experimentStateMap = {
-  [Determinedexperimentv1State.UNSPECIFIED]: RunState.Unspecified,
-  [Determinedexperimentv1State.ACTIVE]: RunState.Active,
-  [Determinedexperimentv1State.PAUSED]: RunState.Paused,
-  [Determinedexperimentv1State.STOPPINGCANCELED]: RunState.StoppingCanceled,
-  [Determinedexperimentv1State.STOPPINGCOMPLETED]: RunState.StoppingCompleted,
-  [Determinedexperimentv1State.STOPPINGERROR]: RunState.StoppingError,
-  [Determinedexperimentv1State.CANCELED]: RunState.Canceled,
-  [Determinedexperimentv1State.COMPLETED]: RunState.Completed,
-  [Determinedexperimentv1State.ERROR]: RunState.Errored,
-  [Determinedexperimentv1State.DELETED]: RunState.Deleted,
+  [AB.Determinedexperimentv1State.UNSPECIFIED]: RunState.Unspecified,
+  [AB.Determinedexperimentv1State.ACTIVE]: RunState.Active,
+  [AB.Determinedexperimentv1State.PAUSED]: RunState.Paused,
+  [AB.Determinedexperimentv1State.STOPPINGCANCELED]: RunState.StoppingCanceled,
+  [AB.Determinedexperimentv1State.STOPPINGCOMPLETED]: RunState.StoppingCompleted,
+  [AB.Determinedexperimentv1State.STOPPINGERROR]: RunState.StoppingError,
+  [AB.Determinedexperimentv1State.CANCELED]: RunState.Canceled,
+  [AB.Determinedexperimentv1State.COMPLETED]: RunState.Completed,
+  [AB.Determinedexperimentv1State.ERROR]: RunState.Errored,
+  [AB.Determinedexperimentv1State.DELETED]: RunState.Deleted,
 };
 
-export const decodeExperimentState = (data: Determinedexperimentv1State): RunState => {
+export const decodeExperimentState = (data: AB.Determinedexperimentv1State): RunState => {
   return experimentStateMap[data];
 };
 
-export const encodeExperimentState = (state: RunState): Determinedexperimentv1State => {
+export const encodeExperimentState = (state: RunState): AB.Determinedexperimentv1State => {
   const stateKey = Object
     .keys(experimentStateMap)
-    .find(key => experimentStateMap[key as unknown as Determinedexperimentv1State] === state);
-  if (stateKey) return stateKey as unknown as Determinedexperimentv1State;
-  return Determinedexperimentv1State.UNSPECIFIED;
+    .find(key => experimentStateMap[key as unknown as AB.Determinedexperimentv1State] === state);
+  if (stateKey) return stateKey as unknown as AB.Determinedexperimentv1State;
+  return AB.Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const decodeExperimentList = (data: V1Experiment[]): ExperimentItem[] => {
+export const decodeExperimentList = (data: AB.V1Experiment[]): ExperimentItem[] => {
   return data.map(item => ({
     archived: item.archived,
     endTime: item.endTime as unknown as string,

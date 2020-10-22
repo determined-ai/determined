@@ -35,7 +35,6 @@ export const ioDetailedUser = io.type({
 
 export const ioDetailedUsers = io.array(ioDetailedUser);
 
-export type ioTypeDetailedUser = io.TypeOf<typeof ioDetailedUser>;
 export type ioTypeDetailedUsers = io.TypeOf<typeof ioDetailedUsers>;
 
 /* Info */

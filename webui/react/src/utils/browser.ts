@@ -1,5 +1,6 @@
-import { detApi, getTrialDetails } from 'services/api';
+import { getTrialDetails } from 'services/api';
 import { V1TrialLogsResponse } from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 
 const updateFavicon = (iconPath: string): void => {

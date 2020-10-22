@@ -1,10 +1,15 @@
 syntax = "proto3";
 
+import "protoc-gen-swagger/options/annotations.proto";
+
 package determined.user.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/userv1";
 
 // User is an account in the determined cluster.
 message User {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "username", "admin", "active" ] }
+  };
   reserved 1;
   reserved "id";
   // The user login name of the user.
