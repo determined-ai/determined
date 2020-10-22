@@ -1,0 +1,68 @@
+.base {
+  background-color: var(--theme-colors-overlay);
+  display: none;
+  height: 100%;
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  width: 100%;
+
+  .sheet {
+    background-color: var(--theme-colors-base-2);
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    width: 100%;
+  }
+  .item {
+    align-items: center;
+    color: var(--theme-colors-monochrome-17);
+    display: flex;
+    height: var(--theme-sizes-navigation-toolbarHeight);
+
+    [class^=Icon_base_] { padding: 0 var(--theme-sizes-layout-big); }
+    .label { font-size: var(--theme-sizes-font-medium); }
+  }
+}
+.sheetEnter {
+  display: flex;
+  opacity: 0;
+
+  .sheet { bottom: -50%; }
+}
+.sheetEnterActive {
+  opacity: 1;
+  transition: opacity var(--theme-animationCurve);
+
+  .sheet {
+    bottom: 0;
+    transition: bottom var(--theme-animationCurve);
+  }
+}
+.sheetEnterDone {
+  display: flex;
+
+  .sheet { bottom: 0; }
+}
+.sheetExit {
+  display: flex;
+  opacity: 1;
+
+  .sheet { bottom: 0; }
+}
+.sheetExitActive {
+  opacity: 0;
+  transition: opacity var(--theme-animationCurve);
+
+  .sheet {
+    bottom: -50%;
+    transition: bottom var(--theme-animationCurve);
+  }
+}
+.sheetExitDone {
+  display: none;
+
+  .sheet { bottom: -50%; }
+}

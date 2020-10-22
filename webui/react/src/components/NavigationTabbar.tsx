@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { CSSTransition } from 'react-transition-group';
 
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
 
+import ActionSheet from './ActionSheet';
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
@@ -15,11 +15,6 @@ interface ToolbarItemProps extends LinkProps {
   icon: string;
   label: string;
   status?: string;
-}
-
-interface OverflowItemProps extends LinkProps {
-  icon: string;
-  label: string;
 }
 
 const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: ToolbarItemProps) => {
@@ -39,15 +34,6 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
   );
 };
 
-const OverflowItem: React.FC<OverflowItemProps> = ({ path, ...props }: OverflowItemProps) => {
-  return (
-    <Link className={css.overflowItem} path={path} {...props}>
-      <Icon name={props.icon} size="large" />
-      <div className={css.label}>{props.label}</div>
-    </Link>
-  );
-};
-
 const NavigationTabbar: React.FC = () => {
   const { isAuthenticated } = Auth.useStateContext();
   const ui = UI.useStateContext();
@@ -58,7 +44,7 @@ const NavigationTabbar: React.FC = () => {
   const showNavigation = isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
-  const handleOverflowClose = useCallback(() => setIsShowingOverflow(false), []);
+  const handleActionSheetCancel = useCallback(() => setIsShowingOverflow(false), []);
 
   if (!showNavigation) return null;
 
@@ -71,31 +57,14 @@ const NavigationTabbar: React.FC = () => {
         <ToolbarItem icon="cluster" label="Cluster" path="/det/cluster" status={cluster} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
-      <CSSTransition
-        classNames={{
-          enter: css.overflowEnter,
-          enterActive: css.overflowEnterActive,
-          enterDone: css.overflowEnterDone,
-          exit: css.overflowExit,
-          exitActive: css.overflowExitActive,
-          exitDone: css.overflowExitDone,
-        }}
-        in={isShowingOverflow}
-        timeout={200}>
-        <div className={css.overflow} onClick={handleOverflowClose}>
-          <div className={css.overflowMenu}>
-            <OverflowItem icon="logs" label="Master Logs" path="/det/logs" popout />
-            <OverflowItem icon="docs" label="Docs" path="/docs" popout />
-            <OverflowItem
-              icon="cloud"
-              label="API (Beta)"
-              noProxy
-              path="/docs/rest-api/"
-              popout />
-            <OverflowItem icon="error" label="Cancel" />
-          </div>
-        </div>
-      </CSSTransition>
+      <ActionSheet
+        actions={[
+          { icon: 'logs', label: 'Master Logs', path: '/det/logs', popout: true },
+          { icon: 'docs', label: 'Docs', path: '/docs', popout: true },
+          { icon: 'cloud', label: 'API (Beta)', path: '/docs/rest-api/', popout: true },
+        ]}
+        show={isShowingOverflow}
+        onCancel={handleActionSheetCancel} />
     </nav>
   );
 };
