@@ -1,0 +1,18 @@
+description: iris_tf_keras_distributed
+data:
+  train_url: http://download.tensorflow.org/data/iris_training.csv
+  test_url: http://download.tensorflow.org/data/iris_test.csv
+hyperparameters:
+  learning_rate: 1e-4
+  learning_rate_decay: 1e-6
+  layer1_dense_size: 16
+  global_batch_size: 30
+resources:
+  slots_per_trial: 2 # Use 2 GPUs to train the model.
+searcher:
+  name: single
+  metric: val_categorical_accuracy
+  smaller_is_better: false
+  max_length:
+    batches: 2500
+entrypoint: model_def:IrisTrial

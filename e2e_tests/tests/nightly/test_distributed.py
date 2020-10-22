@@ -45,6 +45,14 @@ def test_cifar10_tf_keras_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
+def test_iris_tf_keras_distributed() -> None:
+    config = conf.load_config(conf.cv_examples_path("iris_tf_keras/distributed.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("iris_tf_keras"), 1)
+
+
+@pytest.mark.distributed  # type: ignore
 def test_unets_tf_keras_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("unets_tf_keras/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
