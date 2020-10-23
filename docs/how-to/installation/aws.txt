@@ -359,7 +359,8 @@ Master
 -  Allow EC2 to assume role
 -  Allow EC2 to dynamically create and terminate instances with agent
    role
--  Allow EC2 to create and terminate spot instance requests (only required if using spot instances)
+-  Allow EC2 to create and terminate spot instance requests (only
+   required if using spot instances)
 
 .. code:: yaml
 
@@ -485,11 +486,9 @@ Running Determined
       your Determined installation. If it is not, Determined may
       inadvertently manage your non-Determined EC2 instances.
 
-      If using spot instances, Determined also assumes that any EC2 
-      spot instance requests with the configured tag_key:tag_value 
-      pair are managed by the Determined master.
-
-      
+      If using spot instances, Determined also assumes that any EC2 spot
+      instance requests with the configured tag_key:tag_value pair are
+      managed by the Determined master.
 
    .. code:: yaml
 

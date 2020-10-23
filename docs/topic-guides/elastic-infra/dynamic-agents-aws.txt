@@ -64,17 +64,19 @@ permissions:
 -  ``ec2:TerminateInstances``: used to terminate idle Determined agent
    instances.
 
-If using spot instances, the master also needs the following permissions:
+If using spot instances, the master also needs the following
+permissions:
 
-- ``ec2:RequestSpotInstances``: use to provision Determined agent instances 
-  as spot instances.
+-  ``ec2:RequestSpotInstances``: use to provision Determined agent
+   instances as spot instances.
 
-- ``ec2:CancelSpotInstanceRequests``: used to adjust the number of spot 
-  instance requests to match the number of instances needed for the current 
-  workloads.
+-  ``ec2:CancelSpotInstanceRequests``: used to adjust the number of spot
+   instance requests to match the number of instances needed for the
+   current workloads.
 
-- ``ec2:DescribeSpotInstanceRequests``: use to find open spot instance requests 
-  that, once fulfilled, will create Determined agent spot instances.
+-  ``ec2:DescribeSpotInstanceRequests``: use to find open spot instance
+   requests that, once fulfilled, will create Determined agent spot
+   instances.
 
 An example IAM policy with the appropriate permissions is below:
 
@@ -169,7 +171,6 @@ Below you'll find an example configuration. See
      instance_type: p3.8xlarge
      max_instances: 5
      spot: false
-
 
 **************
  Installation
