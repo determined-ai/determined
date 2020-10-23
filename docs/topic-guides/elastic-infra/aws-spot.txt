@@ -59,7 +59,7 @@ Once the spot instance has been created, the hourly price is constant,
 but if you try to create another spot instance, the price may have
 changed. The spot price is typically around 70% less than the on-demand
 price (see `AWS's spot
-advisor<https://aws.amazon.com/ec2/spot/pricing/>` for up-to-date
+advisor<https://aws.amazon.com/ec2/spot/pricing/>_` for up-to-date
 information), but it can technically rise as high as the on-demand
 price.
 
