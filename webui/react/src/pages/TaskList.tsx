@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Table } from 'antd';
+import { Button, Input, Modal } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -7,6 +7,7 @@ import Grid from 'components/Grid';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import ResponsiveTable from 'components/ResponsiveTable';
 import { Indicator } from 'components/Spinner';
 import {
   defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
@@ -319,7 +320,7 @@ const TaskList: React.FC = () => {
             type="primary"
             onClick={handleConfirmation}>Kill</Button>
         </TableBatch>
-        <Table
+        <ResponsiveTable<CommandTask>
           columns={columns}
           dataSource={filteredTasks}
           loading={{

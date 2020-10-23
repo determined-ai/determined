@@ -1,4 +1,4 @@
-import { Button, Col, Form, Input, Modal, Row, Select, Space, Table, Tooltip } from 'antd';
+import { Button, Col, Form, Input, Modal, Row, Select, Space, Tooltip } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import axios from 'axios';
 import yaml from 'js-yaml';
@@ -15,6 +15,7 @@ import Icon from 'components/Icon';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
+import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter, { ALL_VALUE } from 'components/SelectFilter';
 import Spinner, { Indicator } from 'components/Spinner';
@@ -485,7 +486,7 @@ If the problem persists please contact support.',
         </Col>
         <Col span={24}>
           <Section options={options} title="Trial Information">
-            <Table
+            <ResponsiveTable<Step>
               columns={columns}
               dataSource={steps}
               loading={{

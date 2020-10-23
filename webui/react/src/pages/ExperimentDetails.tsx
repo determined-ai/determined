@@ -1,4 +1,4 @@
-import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
+import { Button, Col, Row, Space, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import axios from 'axios';
 import yaml from 'js-yaml';
@@ -12,6 +12,7 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
@@ -242,7 +243,7 @@ const ExperimentDetailsComp: React.FC = () => {
         </Col>
         <Col span={24}>
           <Section title="Trials">
-            <Table
+            <ResponsiveTable<TrialItem>
               columns={columns}
               dataSource={experiment?.trials}
               loading={{
