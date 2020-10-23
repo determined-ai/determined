@@ -176,6 +176,49 @@ end
 	return args, files, nil
 }
 
+func killContainerByName(ctx *actor.Context, c *client.Client, name string) error {
+	containers, err := c.ContainerList(context.Background(), types.ContainerListOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("name", name),
+		),
+	})
+	if err != nil {
+		return err
+	}
+	for _, cont := range containers {
+		ctx.Log().Infof("killing found Fluent Bit container %s", cont.ID)
+		if err = c.ContainerKill(context.Background(), cont.ID, "KILL"); err != nil {
+			return errors.Wrap(err, "failed to kill existing Fluent Bit container")
+		}
+	}
+	return nil
+}
+
+func pullImageByName(ctx *actor.Context, c *client.Client, imageName string) error {
+	_, _, err := c.ImageInspectWithRaw(context.Background(), imageName)
+	switch {
+	case err == nil:
+		// No error means the image is present; do nothing.
+	case client.IsErrNotFound(err):
+		// This error means the call to Docker went fine but the image doesn't exist; pull it now.
+		ctx.Log().Infof("pulling Docker image %s", imageName)
+		pullResponse, pErr := c.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
+		if pErr != nil {
+			return pErr
+		}
+		if _, pErr = ioutil.ReadAll(pullResponse); pErr != nil {
+			return pErr
+		}
+		if pErr = pullResponse.Close(); pErr != nil {
+			return pErr
+		}
+	default:
+		// Something unexpected happened; propagate the error.
+		return err
+	}
+	return nil
+}
+
 // startLoggingContainer starts a Fluent Bit container. It returns the host and port that the agent
 // should use to connect to the daemon, the exposed host port of the container, and the ID of the
 // container.
@@ -195,49 +238,17 @@ func startLoggingContainer(ctx *actor.Context, opts Options) (string, int, int, 
 	imageName := opts.FluentLoggingImage
 	exposedPort := nat.Port(fmt.Sprintf("%d/tcp", fluentListenPort))
 
-	// Check for an old container and kill it if present.
-	containers, err := c.ContainerList(context.Background(), types.ContainerListOptions{
-		Filters: filters.NewArgs(
-			filters.Arg("name", containerName),
-		),
-	})
-	if err != nil {
-		return "", 0, 0, "", err
-	}
-	for _, cont := range containers {
-		ctx.Log().Infof("killing found Fluent Bit container %s", cont.ID)
-		if err = c.ContainerKill(context.Background(), cont.ID, "KILL"); err != nil {
-			return "", 0, 0, "", errors.Wrap(err, "failed to kill existing Fluent Bit container")
-		}
+	if err = killContainerByName(ctx, c, containerName); err != nil {
+		return "", 0, 0, "", errors.Wrap(err, "failed to kill old logging container")
 	}
 
-	// Pull the image.
-	_, _, err = c.ImageInspectWithRaw(context.Background(), imageName)
-	switch {
-	case err == nil:
-		// No error means the image is present; do nothing.
-	case client.IsErrNotFound(err):
-		ctx.Log().Infof("pulling Fluent Bit Docker image %s", imageName)
-
-		// This error means the call to Docker went fine but the image doesn't exist; pull it.
-		pullResponse, pErr := c.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
-		if pErr != nil {
-			return "", 0, 0, "", pErr
-		}
-		if _, pErr = ioutil.ReadAll(pullResponse); pErr != nil {
-			return "", 0, 0, "", pErr
-		}
-		if pErr = pullResponse.Close(); pErr != nil {
-			return "", 0, 0, "", pErr
-		}
-	default:
-		// Something unexpected happened; propagate the error.
+	if err = pullImageByName(ctx, c, imageName); err != nil {
 		return "", 0, 0, "", errors.Wrap(err, "failed to pull logging image")
 	}
 
 	fluentArgs, fluentFiles, err := fluentConfig(opts)
 	if err != nil {
-		return "", 0, 0, "", err
+		return "", 0, 0, "", errors.Wrap(err, "failed to configure Fluent Bit")
 	}
 
 	// Decide what Docker network to use for Fluent Bit. If this agent is itself running inside Docker,
