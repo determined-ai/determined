@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Table } from 'antd';
+import { Button, Input, Modal } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -39,6 +39,7 @@ import {
 
 import css from './ExperimentList.module.scss';
 import { columns as defaultColumns } from './ExperimentList.table';
+import ResponsiveTable from './ResponsiveTable';
 
 enum Action {
   Activate = 'Activate',
@@ -359,7 +360,7 @@ const ExperimentList: React.FC = () => {
             type="primary"
             onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
         </TableBatch>
-        <Table
+        <ResponsiveTable<ExperimentItem>
           columns={columns}
           dataSource={experiments}
           loading={{
