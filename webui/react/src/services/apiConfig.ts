@@ -1,6 +1,7 @@
 import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
+import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import {
@@ -23,14 +24,29 @@ import {
 
 import { noOp } from './utils';
 
-const apiConfigParams : Api.ConfigurationParameters = { basePath: serverAddress() };
+const initialApiConfigParams: Api.ConfigurationParameters = {
+  apiKey: 'Bearer ' + globalStorage.getAuthToken,
+  basePath: serverAddress(),
+};
 
-const ApiConfig = new Api.Configuration(apiConfigParams);
+const ApiConfig = new Api.Configuration(initialApiConfigParams);
 
 export const detApi = {
   Auth: new Api.AuthenticationApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
+};
+
+// Update references to generated API code with new configuration.
+export const updateDetApi = (apiConfig: Api.Configuration): void => {
+  const config: Api.Configuration = {
+    apiKey: 'Bearer ' + globalStorage.getAuthToken,
+    basePath: serverAddress(),
+    ...apiConfig,
+  };
+  detApi.Auth = new Api.AuthenticationApi(config);
+  detApi.Experiments = new Api.ExperimentsApi(config);
+  detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
 };
 
 /* Helpers */

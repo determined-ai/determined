@@ -2,11 +2,12 @@
 
 import { globalStorage } from 'globalStorage';
 import * as Api from 'services/api';
+import { updateDetApi } from 'services/apiConfig';
 
 const setServerAddress = (address: string) => {
   const serverAddress = address.replace(/\/\s*$/, '');
   globalStorage.serverAddress = serverAddress;
-  Api.updateDetApi({ basePath: serverAddress });
+  updateDetApi({ basePath: serverAddress });
 };
 
 window.dev = {

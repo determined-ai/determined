@@ -96,6 +96,18 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
   };
 }
 
+export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
+  return async function(params: Input & ApiCommonParams): Promise<Output> {
+    try {
+      const response = api.stubbedResponse ? api.stubbedResponse : await api.request(params);
+      return api.postProcess(response);
+    } catch (e) {
+      processApiError(api.name, e);
+      throw e;
+    }
+  };
+}
+
 /* gRPC Helpers */
 
 /*
@@ -137,15 +149,3 @@ export const consumeStream = async <T = unknown>(
 
 /* eslint-disable-next-line */
 export const noOp = (): void => {}
-
-export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
-  return async function(params: Input & ApiCommonParams): Promise<Output> {
-    try {
-      const response = api.stubbedResponse ? api.stubbedResponse : await api.request(params);
-      return api.postProcess(response);
-    } catch (e) {
-      processApiError(api.name, e);
-      throw e;
-    }
-  };
-}

@@ -1,6 +1,6 @@
 import { generateContext } from 'contexts';
 import { globalStorage } from 'globalStorage';
-import { updateDetApi } from 'services/api';
+import { updateDetApi } from 'services/apiConfig';
 import { Auth } from 'types';
 
 enum ActionType {

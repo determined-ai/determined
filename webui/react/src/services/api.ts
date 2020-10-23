@@ -1,7 +1,5 @@
 import { CancelToken } from 'axios';
 
-import { globalStorage } from 'globalStorage';
-import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import { ApiSorter, CreateNotebookParams, CreateTensorboardParams, EmptyParams,
@@ -20,28 +18,6 @@ import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 import { decodeExperimentList, encodeExperimentState } from './decoder';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
-
-const initialApiConfig = {
-  apiKey: 'Bearer ' + globalStorage.getAuthToken,
-  basePath: serverAddress(),
-};
-export const detApi = {
-  Auth: new Api.AuthenticationApi(initialApiConfig),
-  Experiments: new Api.ExperimentsApi(initialApiConfig),
-  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(initialApiConfig),
-};
-
-// Update references to generated API code with new configuration.
-export const updateDetApi = (apiConfig: Api.Configuration): void => {
-  const config: Api.Configuration = {
-    apiKey: 'Bearer ' + globalStorage.getAuthToken,
-    basePath: serverAddress(),
-    ...apiConfig,
-  };
-  detApi.Auth = new Api.AuthenticationApi(config);
-  detApi.Experiments = new Api.ExperimentsApi(config);
-  detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
-};
 
 /* Authentication */
 
