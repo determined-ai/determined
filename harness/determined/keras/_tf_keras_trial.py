@@ -519,7 +519,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
         self.multiplexer._checkpoint_end(path)
 
-        return {"framework": f"tensorflow-{tf.__version__}", "format": "tf"}
+        return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_weights"}
 
     def _load(self) -> None:
         self.multiplexer_load_state = None  # type: Optional[Dict]

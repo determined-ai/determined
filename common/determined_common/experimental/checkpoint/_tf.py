@@ -13,24 +13,26 @@ def load_model(
 ) -> AutoTrackable:
     save_format = metadata.get("format", None)
 
-    # Tensorflow 1 favors saved_models for tf.estimators and h5 for tf.keras
-    # models. Tensorflow is moving towards saved_model for both high level
-    # APIs in tf.2.
+    # For tf.estimators we save the entire model using the saved_model format.
+    # For tf.keras we save only the weights also using the saved_model format,
+    # which we call saved_weights.
     if not save_format or cast(str, save_format) == "saved_model":
         return load_saved_model(ckpt_dir, tags=tags)
 
-    elif save_format == "h5":
-        trial_cls, trial_context = experimental._load_trial_on_local(
-            ckpt_dir.joinpath("code"),
-            managed_training=False,
-            config=metadata["experiment_config"],
-            hparams=metadata["hparams"],
+    elif save_format == "saved_weights":
+        return load_keras_model_weights(
+            ckpt_dir=ckpt_dir,
+            checkpoint_filename="determined-keras-model-weights",
+            metadata=metadata,
         )
 
-        trial = cast(TFKerasTrial, trial_cls(trial_context))
-        model = trial.build_model()
-        model.load_weights(str(ckpt_dir.joinpath("determined-keras-model.h5")))
-        return model
+    elif save_format == "h5":
+        # This is how tf.keras models were saved prior to Determined 0.13.X.
+        # TODO (Aaron) fill in comment above.
+        return load_keras_model_weights(
+            ckpt_dir=ckpt_dir, checkpoint_filename="determined-keras-model.h5", metadata=metadata
+        )
+
     else:
         raise AssertionError("Unknown checkpoint format at {}".format(str(ckpt_dir)))
 
@@ -56,3 +58,21 @@ def load_saved_model(ckpt_dir: pathlib.Path, tags: Optional[List[str]] = None) -
 
     saved_model_path = saved_model_paths[0]
     return tf.compat.v1.saved_model.load_v2(str(saved_model_path.parent), tags)
+
+
+def load_keras_model_weights(
+    ckpt_dir: pathlib.Path,
+    checkpoint_filename: str,
+    metadata: Dict[str, Any],
+) -> tf.keras.Model:
+    trial_cls, trial_context = experimental._load_trial_on_local(
+        ckpt_dir.joinpath("code"),
+        managed_training=False,
+        config=metadata["experiment_config"],
+        hparams=metadata["hparams"],
+    )
+
+    trial = cast(TFKerasTrial, trial_cls(trial_context))
+    model = trial.build_model()
+    model.load_weights(str(ckpt_dir.joinpath(checkpoint_filename)))
+    return model
