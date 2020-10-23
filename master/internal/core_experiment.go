@@ -352,14 +352,6 @@ type CreateExperimentParams struct {
 	ValidateOnly  bool            `json:"validate_only"`
 }
 
-func (m *Master) parseExperiment(body []byte) (*CreateExperimentParams, error) {
-	var params CreateExperimentParams
-	if err := json.Unmarshal(body, &params); err != nil {
-		return nil, errors.Wrap(err, "invalid experiment params")
-	}
-	return &params, nil
-}
-
 func (m *Master) postParseExperiment(params *CreateExperimentParams) (
 	*model.Experiment, bool, error,
 ) {
@@ -431,12 +423,12 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 
 	user := c.(*context.DetContext).MustGetUser()
 
-	params, err := m.parseExperiment(body)
-	if err != nil {
-		return nil, err
+	var params CreateExperimentParams
+	if err := json.Unmarshal(body, &params); err != nil {
+		return nil, errors.Wrap(err, "invalid experiment params")
 	}
 
-	dbExp, validateOnly, err := m.postParseExperiment(params)
+	dbExp, validateOnly, err := m.postParseExperiment(&params)
 
 	if err != nil {
 		return nil, echo.NewHTTPError(
