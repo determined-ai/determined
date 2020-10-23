@@ -396,6 +396,10 @@ func (m *Master) Run() error {
 	// Docs and WebUI.
 	webuiRoot := filepath.Join(m.config.Root, "webui")
 	reactRoot := filepath.Join(webuiRoot, "react")
+	reactRootAbs, err := filepath.Abs(reactRoot)
+	if err != nil {
+		return errors.Wrap(err, "failed to get absolute path to react root")
+	}
 	reactIndex := filepath.Join(reactRoot, "index.html")
 
 	// Docs.
@@ -409,7 +413,15 @@ func (m *Master) Run() error {
 		requestedFile := filepath.Join(reactRoot, groupPath)
 		// We do a simple check against directory traversal attacks.
 		// Alternative: https://github.com/cyphar/filepath-securejoin
-		if !strings.Contains(groupPath, "..") && fileExists(requestedFile) {
+		requestedFileAbs, err := filepath.Abs(requestedFile)
+		if err != nil {
+			log.WithError(err).Error("failed to get absolute path to requested file")
+			return c.File(reactIndex)
+		}
+
+		isInReactDir := strings.HasPrefix(requestedFileAbs, reactRootAbs)
+
+		if isInReactDir && fileExists(requestedFile) {
 			return c.File(requestedFile)
 		}
 		return c.File(reactIndex)
