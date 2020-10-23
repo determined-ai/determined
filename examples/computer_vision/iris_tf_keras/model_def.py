@@ -58,13 +58,19 @@ class IrisTrial(keras.TFKerasTrial):
         inputs = Input(shape=(4,))
         dense1 = Dense(self.context.get_hparam("layer1_dense_size"))(inputs)
         dense2 = Dense(NUM_CLASSES, activation="softmax")(dense1)
+
+        # Wrap the model.
         model = self.context.wrap_model(Model(inputs=inputs, outputs=dense2))
 
+        # Create and wrap the optimizer.
+        optimizer = RMSprop(
+            lr=self.context.get_hparam("learning_rate"),
+            decay=self.context.get_hparam("learning_rate_decay"),
+        )
+        optimizer = self.context.wrap_optimizer(optimizer)
+
         model.compile(
-            RMSprop(
-                lr=self.context.get_hparam("learning_rate"),
-                decay=self.context.get_hparam("learning_rate_decay"),
-            ),
+            optimizer,
             categorical_crossentropy,
             [categorical_accuracy],
         )

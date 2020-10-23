@@ -55,9 +55,16 @@ class MnistTrial(TFKerasTrial):
         probs = tf.keras.layers.Dense(10, activation="softmax")(y)
 
         model = tf.keras.models.Model(image, probs, name="mnist")
+
+        # Wrap the model.
         model = self.context.wrap_model(model)
+
+        # Create and wrap the optimizer.
+        optimizer = RMSprop(lr=self.base_learning_rate, decay=self.learning_rate_decay)
+        optimizer = self.context.wrap_optimizer(optimizer)
+
         model.compile(
-            RMSprop(lr=self.base_learning_rate, decay=self.learning_rate_decay),
+            optimizer=optimizer,
             loss="sparse_categorical_crossentropy",
             metrics=["sparse_categorical_accuracy"],
         )
