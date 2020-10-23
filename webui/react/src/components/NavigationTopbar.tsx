@@ -5,7 +5,7 @@ import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 
 import Avatar from './Avatar';
-import DropdownMenu, { Placement } from './DropdownMenu';
+import Dropdown, { Placement } from './Dropdown';
 import Link from './Link';
 import Logo, { LogoTypes } from './Logo';
 import css from './NavigationTopbar.module.scss';
@@ -23,8 +23,8 @@ const NavigationTopbar: React.FC = () => {
     <nav className={css.base}>
       <Logo type={LogoTypes.OnDarkHorizontal} />
       <div className={css.user}>
-        <DropdownMenu
-          menu={<Menu>
+        <Dropdown
+          content={<Menu>
             <Menu.Item>
               <Link path={'/det/logout'}>Sign Out</Link>
             </Menu.Item>
@@ -32,7 +32,7 @@ const NavigationTopbar: React.FC = () => {
           offset={{ x: 0, y: 8 }}
           placement={Placement.BottomRight}>
           <Avatar hideTooltip name={username} />
-        </DropdownMenu>
+        </Dropdown>
       </div>
     </nav>
   );

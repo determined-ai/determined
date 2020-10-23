@@ -10,7 +10,7 @@ import useNotebookLauncher from 'hooks/useNotebookLauncher';
 import useStorage from 'hooks/useStorage';
 
 import Avatar from './Avatar';
-import DropdownMenu, { Placement } from './DropdownMenu';
+import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './Navigation.module.scss';
@@ -123,8 +123,8 @@ const Navigation: React.FC = () => {
               <Button
                 className={css.launchButton}
                 onClick={handleNotebookLaunch}>Launch Notebook</Button>
-              <DropdownMenu
-                menu={(
+              <Dropdown
+                content={(
                   <Menu>
                     {isCollapsed && <Menu.Item onClick={handleNotebookLaunch}>
                       Launch Notebook
@@ -140,7 +140,7 @@ const Navigation: React.FC = () => {
                 <Button className={css.launchIcon}>
                   <Icon name={isShowingCpu ? 'arrow-up': 'arrow-down'} size="tiny" />
                 </Button>
-              </DropdownMenu>
+              </Dropdown>
             </div>
           </section>
           <section className={css.top}>
@@ -165,8 +165,8 @@ const Navigation: React.FC = () => {
           </section>
         </main>
         <footer>
-          <DropdownMenu
-            menu={<Menu>
+          <Dropdown
+            content={<Menu>
               <Menu.Item>
                 <Link path={'/logout'}>Sign Out</Link>
               </Menu.Item>
@@ -177,7 +177,7 @@ const Navigation: React.FC = () => {
               <Avatar hideTooltip name={username} />
               <span>{username}</span>
             </div>
-          </DropdownMenu>
+          </Dropdown>
         </footer>
       </nav>
     </CSSTransition>
