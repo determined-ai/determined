@@ -7,6 +7,7 @@ import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { getCurrentUser, isLoginFailure, login } from 'services/api';
+import { updateDetApi } from 'services/apiConfig';
 import { Credentials } from 'types';
 import { Storage } from 'utils/storage';
 

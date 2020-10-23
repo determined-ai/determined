@@ -35,7 +35,7 @@ export const detApi = {
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
 };
 
-export const updatedApiConfigParams = (apiConfig: Api.ConfigurationParameters):
+export const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
 Api.ConfigurationParameters => {
   return {
     apiKey: 'Bearer ' + globalStorage.getAuthToken,
@@ -85,7 +85,8 @@ export const login: HttpApi<Credentials, LoginResponse> = {
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
   name: 'getCurrentUser',
   postProcess: (response) => decoder.user(response.user),
-  request: detApi.Auth.determinedCurrentUser.bind(detApi.Auth),
+  // We make sure to request using the latest API configuraitonp parameters.
+  request: (params, baseApi) => detApi.Auth.determinedCurrentUser.call(baseApi, params),
 };
 
 export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {

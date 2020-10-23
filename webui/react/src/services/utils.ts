@@ -105,7 +105,7 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
       const baseApi = new Api.BaseAPI(
         updatedApiConfigParams(params.authToken ? { apiKey: 'Bearer ' + params.authToken } : {}),
       );
-      const response = await api.request.bind(baseApi)(params);
+      const response = await api.request(params, baseApi);
       return api.postProcess(response);
     } catch (e) {
       processApiError(api.name, e);
