@@ -6,7 +6,6 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
 
-import { updatedApiConfigParams } from './apiConfig';
 import { ApiCommonParams, DetApi, HttpApi } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -76,7 +75,7 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
       let headers = httpOpts.headers;
       if (!api.unAuthenticated) {
         headers = {
-          Authorization: 'Bearer ' + (params.authToken || globalStorage.getAuthToken),
+          Authorization: 'Bearer ' + (globalStorage.getAuthToken),
           ...headers,
         };
       }
@@ -100,12 +99,7 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
   return async function(params: Input & ApiCommonParams): Promise<Output> {
     try {
-      if (api.stubbedResponse) return api.postProcess(api.stubbedResponse);
-      // update the config
-      const baseApi = new Api.BaseAPI(
-        updatedApiConfigParams(params.authToken ? { apiKey: 'Bearer ' + params.authToken } : {}),
-      );
-      const response = await api.request(params, baseApi);
+      const response = api.stubbedResponse ? api.stubbedResponse : await api.request(params);
       return api.postProcess(response);
     } catch (e) {
       processApiError(api.name, e);

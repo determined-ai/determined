@@ -32,7 +32,8 @@ const DeterminedAuth: React.FC = () => {
     setCanSubmit(false);
     try {
       const { token } = await login(creds as Credentials);
-      const user = await getCurrentUser({ authToken: token });
+      updateDetApi({ apiKey: 'Bearer ' + token });
+      const user = await getCurrentUser({});
       setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, token, user } });
       storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
     } catch (e) {

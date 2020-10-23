@@ -1,11 +1,9 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 
-import { BaseAPI } from 'services/api-ts-sdk';
 import { CommandType, RunState, TBSource } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
-  authToken?: string
 }
 
 export interface HttpOptions {
@@ -24,7 +22,7 @@ interface ApiBase {
 
 // Designed for use with Swagger generated api bindings.
 export interface DetApi<Input, DetOutput, Output> extends ApiBase {
-  request: (params: Input, baseApi: BaseAPI) => Promise<DetOutput>;
+  request: (params: Input) => Promise<DetOutput>;
   postProcess: (response: DetOutput) => Output;
   stubbedResponse?: DetOutput;
 }
