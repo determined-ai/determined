@@ -2,6 +2,7 @@ from typing import Dict
 
 import pytest
 
+from determined_common.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
 
@@ -61,6 +62,9 @@ def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
 
+    # Test exporting a checkpoint.
+    Determined(conf.make_master_url()).get_experiment(experiment_id).top_checkpoint().load()
+
 
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
@@ -75,6 +79,9 @@ def test_tf_keras_single_gpu(tf2: bool) -> None:
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
+
+    # Test exporting a checkpoint.
+    Determined(conf.make_master_url()).get_experiment(experiment_id).top_checkpoint().load()
 
 
 @pytest.mark.parallel  # type: ignore
