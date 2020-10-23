@@ -69,14 +69,14 @@ permissions:
 If using spot instances, the master also needs the following
 permissions:
 
--  ``ec2:RequestSpotInstances``: use to provision Determined agent
+-  ``ec2:RequestSpotInstances``: used to provision Determined agent
    instances as spot instances.
 
 -  ``ec2:CancelSpotInstanceRequests``: used to adjust the number of spot
    instance requests to match the number of instances needed for the
    current workloads.
 
--  ``ec2:DescribeSpotInstanceRequests``: use to find open spot instance
+-  ``ec2:DescribeSpotInstanceRequests``: used to find open spot instance
    requests that, once fulfilled, will create Determined agent spot
    instances.
 
