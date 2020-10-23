@@ -241,8 +241,7 @@ func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string
 		return
 	}
 
-	input := &ec2.TerminateInstancesInput{InstanceIds: instanceIDs}
-	res, err := c.client.TerminateInstances(input)
+	res, err := c.terminateInstances(instanceIDs)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
 		return
@@ -409,4 +408,17 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 	}
 
 	return c.client.RunInstances(input)
+}
+
+
+func (c *awsCluster) terminateInstances(
+	ids []*string,
+) (*ec2.TerminateInstancesOutput, error) {
+	if len(ids) == 0 {
+		return &ec2.TerminateInstancesOutput{}, nil
+	}
+	input := &ec2.TerminateInstancesInput{
+		InstanceIds: ids,
+	}
+	return c.client.TerminateInstances(input)
 }

@@ -479,6 +479,17 @@ The master supports the following configuration settings:
          ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
          ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. Defaults
          to ``p3.8xlarge``.
+      
+      - ``spot``: Whether to use spot instances. Defaults to ``false``.
+
+      - ``spot_max_price``: Optional field indicating the maximum price 
+         per hour that you are willing to pay for a spot instance. The 
+         market price for a spot instance varies based on supply and 
+         demand. If the market price exceeds the ``spot_max_price``, 
+         Determined will not launch instances. This field must be a 
+         string and must not include a currency sign. For example, $2.50 
+         should be represented as ``"2.50"``. Defaults to the on-demand 
+         price for the given instance type.
 
    -  ``provider: gcp``: Specifies running dynamic agents on GCP.
       (*Required*)

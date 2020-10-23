@@ -1,0 +1,32 @@
+.. _aws-spot:
+
+#######################
+ AWS Spot Instances
+#######################
+
+This document describes how AWS spot instances work. Determined handles most details of working with spot instances, but knowing how spot instances work at a high level is helpful for understanding the behavior of Determined when provisioning spot instances.
+
+On-Demand vs Spot
+=================
+
+The standard way to create an EC2 instance is to create an on-demand instance. On-demand instances always have the same price and once you have created one, you are guaranteed to have that instance forever (barring hardware failure). 
+
+The number of EC2 instances desired by customers varies over time. AWS wants to have enough hardware so that during peak usage periods, all customers are able to get as many on-demand instances as they need. This means that during non-peak periods (which is most of the time), AWS has extra hardware capacity sitting around unused. AWS makes these extra instances available to customers via the spot market as spot instances. They can be rented at a much reduced cost, but the trade-off is that, if AWS needs instances to satisfy on-demand users, they can reclaim your spot instance and give it to the on-demand user. If all available instances are in use by on-demand customers, you will not be able to launch any spot instances.
+
+Spot On Determined
+==================
+
+Because they can be reclaimed, using spot instances requires you to have good fault tolerance built into your software. Determined was built with fault-tolerance as a core feature, so using spot instances is usually as easy as setting ``spot: true`` in the master configuration.
+
+However, Determined cannot solve the problem of AWS not having enough capacity. If you are using Determined with spot instances and are expecting instances to be created, but you aren't seeing them get created, it is possible that Determined is sending requests to AWS to create spot instances, but AWS is out of capacity so the requests are stuck until capacity becomes available. Unfortunately, AWS's available capacity at any time is a tightly-guarded secret, so the best Determined can do is request instances and see how AWS responds. If Determined is unable to create spot instances due to lack of AWS capacity, this will be visible in the master logs.
+
+Spot Pricing
+============
+
+Unlike on-demand instances, the market price of a spot instance varies. Once the spot instance has been created, the hourly price is constant, but if you try to create another spot instance, the price may have changed. The spot price is typically around 70% less than the on-demand price (see `AWS's spot advisor<https://aws.amazon.com/ec2/spot/pricing/>` for up-to-date information), but it can technically rise as high as the on-demand price. 
+
+AWS and Determined allow you to specify the maximum price that you are willing to pay for a spot instance and, if the market price is above that number, the spot instance will not be created until the price falls under your maximum price. You can set this value via the ``spot_maximum_price`` field in the master configuration. The market price being above your ``spot_maximum_price`` is another reason why Determined may not be creating spot instances when you expect it to. If this is preventing Determined from creating spot instances, this will be visible in the master logs.
+
+Many users want to reduce costs by using spot, but have deadlines and are not willing to delay their experiments. In this case, it may be best to not set ``spot_maximum_price`` and pay whatever the market price is. Your mileage may vary, but at Determined, we have regularly seen 70% cost reductions when using V100s, without specifying a ``spot_maximum_price``.
+
+

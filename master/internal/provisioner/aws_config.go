@@ -34,7 +34,7 @@ type AWSClusterConfig struct {
 	LogGroup  string `json:"log_group"`
 	LogStream string `json:"log_stream"`
 
-	SpotInstanceEnabled bool   `json:"spot_instance_enabled"`
+	SpotInstanceEnabled bool   `json:"spot"`
 	SpotMaxPrice        string `json:"spot_max_price"`
 }
 
