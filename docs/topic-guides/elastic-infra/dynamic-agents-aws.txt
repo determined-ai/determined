@@ -22,7 +22,9 @@ by the Determined master (See :ref:`aws-cluster-configuration`). This
 pair should be unique to your Determined installation. If it is not,
 Determined may inadvertently manage your non-Determined EC2 instances.
 
-If using spot instances, the same holds true for spot instance requests.
+If using spot instances, Determined also assumes that any EC2 spot
+instance requests with the configured ``tag_key:tag_value`` pair are
+managed by the Determined master.
 
 EC2 AMIs
 ========
