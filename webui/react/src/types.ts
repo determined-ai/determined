@@ -22,6 +22,7 @@ export interface Credentials {
 
 export interface DeterminedInfo {
   clusterId: string;
+  clusterName: string;
   masterId: string;
   telemetry: {
     enabled: boolean;

@@ -41,6 +41,7 @@ export type ioTypeDetailedUsers = io.TypeOf<typeof ioDetailedUsers>;
 
 export const ioDeterminedInfo = io.type({
   cluster_id: io.string,
+  cluster_name: io.string,
   master_id: io.string,
   telemetry: io.type({
     enabled: io.boolean,

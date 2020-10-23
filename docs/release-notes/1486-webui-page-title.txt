@@ -1,0 +1,5 @@
+:orphan:
+
+**Feature**
+
+-  WebUI: made the page/tab title more descriptive.

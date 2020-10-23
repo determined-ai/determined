@@ -1,6 +1,7 @@
 import { notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
@@ -75,6 +76,9 @@ const SignIn: React.FC = () => {
    */
   return auth.checked ?
     <div className={css.base}>
+      <Helmet>
+        <title>Sign In - Determined</title>
+      </Helmet>
       <div className={css.content}>
         <Logo type={LogoTypes.OnLightVertical} />
         <DeterminedAuth />
