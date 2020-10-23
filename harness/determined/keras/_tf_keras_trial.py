@@ -194,15 +194,19 @@ class TFKerasTrialController(det.LoopTrialController):
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
     ) -> None:
-        (
-            context.model,
-            compile_args.arguments["optimizer"],
-        ) = keras._get_multi_gpu_model_and_optimizer(
+        context.model = keras._get_multi_gpu_model_if_using_native_parallel(
             pre_compiled_model=context.model,
-            optimizer=compile_args.arguments["optimizer"],
             env=env,
             hvd_config=hvd_config,
         )
+
+        if "optimizer" in compile_args.arguments:
+            # For backwards compatibility we check if an optimizer is passed as part
+            # of the compile call. If `wrap_optimizer()` is used, we will ignore this
+            # this optimizer.
+            compile_args.arguments["optimizer"] = context._process_optimizer_from_compile(
+                compile_args.arguments["optimizer"]
+            )
 
         if hvd_config.use and version.parse("2.0.0") <= version.parse(
             tf.__version__
@@ -344,6 +348,9 @@ class TFKerasTrialController(det.LoopTrialController):
 
         self.model = model
         self.session = session
+
+        # Configure optimizers, done for backwards compatibility.
+        self.context._select_optimizers()
 
         self._train_input_manager, self._validation_input_manager = keras._init_input_managers(
             context=self.context, train_config=train_config
