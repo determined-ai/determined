@@ -42,7 +42,7 @@ class XORTrial(keras.TFKerasTrial):
         model.add(Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            SGD(lr=self.context.get_hparam("learning_rate")),
+            self.context.wrap_optimizer(SGD(lr=self.context.get_hparam("learning_rate"))),
             binary_crossentropy,
             metrics=[categorical_error],
         )
@@ -77,7 +77,7 @@ class XORTrialWithTrainingMetrics(XORTrial):
         model.add(Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            SGD(lr=self.context.get_hparam("learning_rate")),
+            self.context.wrap_optimizer(SGD(lr=self.context.get_hparam("learning_rate"))),
             binary_crossentropy,
             metrics=[categorical_error, categorical_accuracy, predictions],
         )
@@ -111,7 +111,7 @@ class XORTrialWithCustomObjects(XORTrial):
         model.add(Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            CustomOptimizer(lr=self.context.get_hparam("learning_rate")),
+            self.context.wrap_optimizer(CustomOptimizer(lr=self.context.get_hparam("learning_rate"))),
             loss=self.custom_loss_fn,
             metrics=[categorical_error, categorical_accuracy, predictions],
         )
@@ -127,7 +127,7 @@ class XORTrialWithOptimizerState(XORTrial):
         model.add(Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            Adam(lr=self.context.get_hparam("learning_rate")),
+            self.context.wrap_optimizer(Adam(lr=self.context.get_hparam("learning_rate"))),
             binary_crossentropy,
             metrics=[categorical_error],
         )
