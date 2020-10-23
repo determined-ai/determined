@@ -1509,6 +1509,7 @@ workflows:
           context: aws
           matrix:
             parameters:
+              parallelism: [2]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
               slack-mentions: ["channel"]
