@@ -392,8 +392,6 @@ commands:
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
-      - set-master-cors:
-          enable-cors: true
       - deploy-aws-cluster:
           cluster-id: ${CLUSTER_ID}
           det-version: <<parameters.det-version>>
@@ -548,14 +546,6 @@ commands:
         type: string
     steps:
       - run: echo "export CLUSTER_ID=\"<<parameters.cluster-id>>\"" >> $BASH_ENV
-
-  set-master-cors:
-    parameters:
-      enable-cors:
-        type: boolean
-        default: false
-    steps:
-      - run: echo "export ENABLE_CORS=\"<<parameters.enable-cors>>\"" >> $BASH_ENV
 
   wait-for-master:
     parameters:
