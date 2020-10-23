@@ -66,12 +66,12 @@ type Master struct {
 
 // fileExists checks if a file exists and is not a directory before we
 // try using it to prevent further errors.
-func fileExists(filename string) bool {
+func fileExists(filename string) (bool, error) {
 	info, err := os.Stat(filename)
 	if os.IsNotExist(err) {
-		return false
+		return false, nil
 	}
-	return !info.IsDir()
+	return !info.IsDir(), err
 }
 
 // New creates an instance of the Determined master.
@@ -418,7 +418,15 @@ func (m *Master) Run() error {
 			return c.File(reactIndex)
 		}
 		isInReactDir := strings.HasPrefix(requestedFileAbs, reactRootAbs)
-		if isInReactDir && fileExists(requestedFile) {
+		if !isInReactDir {
+			return echo.NewHTTPError(http.StatusForbidden)
+		}
+		hasMatchingFile, err := fileExists(requestedFile)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check if file exists")
+		}
+
+		if hasMatchingFile {
 			return c.File(requestedFile)
 		}
 		return c.File(reactIndex)
