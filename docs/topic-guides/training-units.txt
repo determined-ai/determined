@@ -4,20 +4,34 @@
  Training Units
 ################
 
-When training a single model or performing a hyperparameter search, we
-need to specify how much data a model should be trained on before
-certain actions are taken (e.g., before training is terminated or before
-a checkpoint of the state of the model is taken). Determined supports a
-flexible system of *training units* to specify this. Specifically,
-Determined supports configuring the following settings in the
-:ref:`experiment-configuration`:
+When training a single model or performing a hyperparameter search, we need to
+specify how much data a model should be trained on before certain actions are
+taken (e.g., before training is terminated or before a checkpoint of the state
+of the model is taken). Determined supports a flexible system of *training
+units* to specify this. Training units can be specified as *records*, *batches*,
+or *epochs*:
+
+- ``records``: A *record* is a single labeled example (sometimes called
+  a sample).
+
+- ``batches``: A *batch* is a group of records. The number of records in a batch
+  is configured via the ``global_batch_size`` hyperparameter.
+
+- ``epochs``: An *epoch* is a single copy of the entire training data set. The
+  number of records in an epoch is configured via the ``records_per_epoch``
+  experiment configuration setting.
+
+Training units must always be positive integers.
+
+Several :ref:`experiment configuration parameters <experiment-configuration>`
+can be specified in terms of training units, including:
 
 -  :ref:`searcher.max_length
    <experiment-configuration_single-searcher-max-length>` in most
    searchers
 
 -  :ref:`searcher.length_per_round
-   <experiment-configuration_length-per-round>` in PBT
+   <experiment-configuration_length-per-round>` when using the ``pbt`` searcher
 
 -  :ref:`min_validation_period
    <experiment-config-min-validation-period>`
@@ -27,50 +41,46 @@ Determined supports configuring the following settings in the
 
 -  :ref:`searcher.budget
    <experiment-configuration_adaptive-advanced-budget>` when using
-   ``adaptive_simple``
+   ``adaptive``
 
-in terms of the following units:
+For example, an experiment that trains a single trial on 10,000 labeled examples
+can be configured as follows:
 
--  ``records``: A *record* is a single labeled example (sometimes called
-   a sample).
+.. code:: yaml
 
--  ``batches``: A *batch* is a group of records (the number of records
-   in a batch is configured via the ``global_batch_size``
-   hyperparameter).
+   searcher:
+     name: single
+     metric: validation_error
+     max_length:
+       records: 10000
+     smaller_is_better: true
 
--  ``epochs``: An *epoch* is typically single copy of the entire
-   training data set.
+More examples and details on each of the types of training units can be seen
+below.
 
-All these configuration settings and all units only accept whole number
-values.
+This feature is designed to allow users to configure their experiments using
+whatever unit is most familiar for the task at hand. In most cases, a value
+expressed using one type of training unit can be converted to a different type
+of training unit with identical behavior, with a few caveats:
 
-The sections below present different configurations that result in the
-same effective training length and behavior but use different training
-units. In general, configurations in terms of one training unit can be
-converted to another and will result in identical behavior except in the
-following cases:
+- Because training units must be positive integers, converting between
+  quantities of different types is not always possible. For example, converting
+  50 ``records`` into batches is not possible if the batch size is 64.
 
--  When a quantity is too granular to be converted to a less granular
-   unit. For example, because training units can only be configured with
-   whole number values, moving from 50 ``records`` and to ``epochs``
-   with 100 records per epoch isn't possible since 0.5 epochs is not
-   allowed.
-
--  When using a variable hyperparameter ``global_batch_size``. These
-   configurations cannot be expressed correctly in terms of batches,
-   since expressing the training length in terms of batches will result
-   in a variable number of records.
+- When doing a hyperparameter search over a range of values for
+  ``global_batch_size``, values specified in ``batches`` will differ between
+  trials of the search, and hence cannot be converted to a fixed number of
+  records or epochs.
 
 -  When using adaptive searchers, such as :ref:`adaptive_asha
    <experiment-configuration-searcher-adaptive>`, a single training unit
    is treated as atomic (unable to be divided into fractional parts)
-   when dividing the ``max_length`` into rungs, which may result in
+   when dividing the ``max_length`` into rungs. This may result in
    unexpected behavior when configuring ``max_length`` in terms of a
-   small number of large epochs or a small number of large batches.
+   small number of large epochs or batches.
 
 To verify your search is working as intended before committing to a full
-run, you can use the preview search feature with the CLI command shown
-below.
+run, you can use the CLI's "preview search" feature:
 
 .. code::
 
@@ -80,33 +90,14 @@ below.
  Epochs
 ********
 
-If you know your model usually takes a set number of epochs to converge,
-in Determined you can specify the ``max_length`` in terms of epochs.
-When using epochs, :ref:`records_per_epoch <config-records-per-epoch>`
-must also be specified. The snippet below describes a searcher that
-trains a single trial on five epochs.
+When using epochs, :ref:`records_per_epoch <config-records-per-epoch>` must also
+be specified. The snippet below configures an experiment that trains a single
+trial on 5 epochs of data, performs validation at least every 2 epochs, and
+checkpoints after every epoch.
 
 .. code:: yaml
 
    records_per_epoch: 10000
-   hyperparameters:
-     global_batch_size: 100
-   searcher:
-     name: single
-     metric: validation_error
-     max_length:
-       epochs: 5
-     smaller_is_better: true
-
-To direct Determined to validate at least every 2 epochs and checkpoint
-at least every epoch, the snippet below also sets
-``min_validation_period`` and ``min_checkpoint_period``.
-
-.. code:: yaml
-
-   records_per_epoch: 10000
-   hyperparameters:
-     global_batch_size: 100
    searcher:
      name: single
      metric: validation_error
@@ -122,30 +113,12 @@ at least every epoch, the snippet below also sets
  Records
 *********
 
-If you know your model usually takes a set number of records (or
-synonymous units, such as inputs or samples) to converge, in Determined
-you can specify the ``max_length`` in terms of records. The snippet
-below describes a searcher that trains a single trial on 50,000 records.
+The snippet below configures an experiment that trains a single trial on 50,000
+records of data, performs validation at least once every 20,000 records, and checkpoints
+at least once after every 10,000 records.
 
 .. code:: yaml
 
-   hyperparameters:
-     global_batch_size: 100
-   searcher:
-     name: single
-     metric: validation_error
-     max_length:
-       records: 50000
-     smaller_is_better: true
-
-To direct Determined to validate at least every 20000 records and
-checkpoint at least every 10000 records, the snippet below also sets
-``min_validation_period`` and ``min_checkpoint_period``.
-
-.. code:: yaml
-
-   hyperparameters:
-     global_batch_size: 100
    searcher:
      name: single
      metric: validation_error
@@ -161,25 +134,10 @@ checkpoint at least every 10000 records, the snippet below also sets
  Batches
 *********
 
-If you know your model usually takes a set number of batches to
-converge, in Determined you can specify the ``max_length`` in terms of
-batches. The snippet below describes a searcher that trains a single
-trial on 500 batches.
-
-.. code:: yaml
-
-   hyperparameters:
-     global_batch_size: 100
-   searcher:
-     name: single
-     metric: validation_error
-     max_length:
-       batches: 500
-     smaller_is_better: true
-
-To direct Determined to validate at least every 200 batches and
-checkpoint at least every 100 batches, the snippet below also sets
-``min_validation_period`` and ``min_checkpoint_period``.
+The number of records in a batch is configured via the ``global_batch_size``
+hyperparameter. The snippet below configures an experiment that trains a
+single trial on 500 batches of data, performs validation at least once every
+200 batches, and checkpoints at least once after every 100 batches.
 
 .. code:: yaml
 
@@ -192,16 +150,17 @@ checkpoint at least every 100 batches, the snippet below also sets
        batches: 500
      smaller_is_better: true
    min_validation_period:
-     batches: 100
+     batches: 200
    min_checkpoint_period:
-     batches: 50
+     batches: 100
 
 .. note::
 
-   Determined will drop any partial batches requested as a result of a
-   configuration in records or epochs. If the global batch size does not
-   even divide the max length, the remaining units will be dropped. For
-   example, a single trial configured to run 10 records with a global
-   batch size of 3 records will only run 9 records. In the corner case
-   that the max length is less than a single global batch size, a single
-   batch will be run.
+   If the amount of data to train a model on is specified using records or
+   epochs and the batch size does not divide evenly into the configured number
+   of inputs, the remaining "partial batch" of data will be dropped
+   (ignored). For example, if an experiment is configured to train a single
+   model on 10 records with a configured batch size of 3, the model will only be
+   trained on 9 records of data. In the corner case that a trial is configured
+   to be trained for less than a single batch of data, a single complete batch
+   will be used instead.
