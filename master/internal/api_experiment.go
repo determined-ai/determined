@@ -502,7 +502,7 @@ func (a *apiServer) CreateExperiment(
 		detParams.ParentID = &parentID
 	}
 
-	dbExp, validateOnly, err := a.m.postParseExperiment(&detParams)
+	dbExp, validateOnly, err := a.m.parseCreateExperiment(&detParams)
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
