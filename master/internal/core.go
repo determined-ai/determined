@@ -412,15 +412,12 @@ func (m *Master) Run() error {
 		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
 		requestedFile := filepath.Join(reactRoot, groupPath)
 		// We do a simple check against directory traversal attacks.
-		// Alternative: https://github.com/cyphar/filepath-securejoin
 		requestedFileAbs, err := filepath.Abs(requestedFile)
 		if err != nil {
 			log.WithError(err).Error("failed to get absolute path to requested file")
 			return c.File(reactIndex)
 		}
-
 		isInReactDir := strings.HasPrefix(requestedFileAbs, reactRootAbs)
-
 		if isInReactDir && fileExists(requestedFile) {
 			return c.File(requestedFile)
 		}

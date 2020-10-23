@@ -16,7 +16,7 @@ type redirect struct {
 var redirects = [...]redirect{
 	{
 		src:    "/",
-		dest:   "/det",
+		dest:   webuiBaseRoute,
 		method: http.MethodGet,
 		code:   http.StatusMovedPermanently,
 	},
