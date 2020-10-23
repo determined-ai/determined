@@ -259,7 +259,8 @@ class TFKerasContext:
         call and are now passed in as part of `self.context.wrap_optimizers()`.
         """
         check.check_len(
-            self.optimizers, 0,
+            self.optimizers,
+            0,
             "context._select_optimizers() called multiple times. Should be only called "
             "once by TFKerasTrialController.",
         )
