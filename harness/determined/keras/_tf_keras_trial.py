@@ -358,6 +358,10 @@ class TFKerasTrialController(det.LoopTrialController):
         # Configure optimizers, done for backwards compatibility.
         self.context._select_optimizers()
 
+        keras._check_if_aggregation_frequency_will_work(
+            model=self.model, hvd_config=self.hvd_config
+        )
+
         self._train_input_manager, self._validation_input_manager = keras._init_input_managers(
             context=self.context, train_config=train_config
         )
