@@ -67,15 +67,15 @@ AWS and Determined allow you to specify the maximum price that you are
 willing to pay for a spot instance and, if the market price is above
 that number, the spot instance will not be created until the price falls
 under your maximum price. You can set this value via the
-``spot_maximum_price`` field in the master configuration. The market
-price being above your ``spot_maximum_price`` is another reason why
+``spot_max_price`` field in the master configuration. The market
+price being above your ``spot_max_price`` is another reason why
 Determined may not be creating spot instances when you expect it to. If
 this is preventing Determined from creating spot instances, this will be
 visible in the master logs.
 
 Many users want to reduce costs by using spot, but have deadlines and
 are not willing to delay their experiments. In this case, it may be best
-to not set ``spot_maximum_price`` and pay whatever the market price is.
+to not set ``spot_max_price`` and pay whatever the market price is.
 Your mileage may vary, but at Determined, we have regularly seen 70%
 cost reductions when using V100s, without specifying a
-``spot_maximum_price``.
+``spot_max_price``.

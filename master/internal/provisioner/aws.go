@@ -410,7 +410,6 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 	return c.client.RunInstances(input)
 }
 
-
 func (c *awsCluster) terminateInstances(
 	ids []*string,
 ) (*ec2.TerminateInstancesOutput, error) {
