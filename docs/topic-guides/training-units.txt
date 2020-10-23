@@ -26,6 +26,12 @@ Training units must always be positive integers.
 Several :ref:`experiment configuration parameters <experiment-configuration>`
 can be specified in terms of training units, including:
 
+-  :ref:`min_validation_period
+   <experiment-config-min-validation-period>`
+
+-  :ref:`min_checkpoint_period
+   <experiment-config-min-checkpoint-period>`
+
 -  :ref:`searcher.max_length
    <experiment-configuration_single-searcher-max-length>` in most
    searchers
@@ -33,15 +39,9 @@ can be specified in terms of training units, including:
 -  :ref:`searcher.length_per_round
    <experiment-configuration_length-per-round>` when using the ``pbt`` searcher
 
--  :ref:`min_validation_period
-   <experiment-config-min-validation-period>`
-
--  :ref:`min_checkpoint_period
-   <experiment-config-min-checkpoint-period>`
-
 -  :ref:`searcher.budget
-   <experiment-configuration_adaptive-advanced-budget>` when using
-   ``adaptive``
+   <experiment-configuration_adaptive-advanced-budget>` when using the
+   ``adaptive`` searcher
 
 For example, an experiment that trains a single trial on 10,000 labeled examples
 can be configured as follows:
@@ -91,9 +91,11 @@ run, you can use the CLI's "preview search" feature:
 ********
 
 When using epochs, :ref:`records_per_epoch <config-records-per-epoch>` must also
-be specified. The snippet below configures an experiment that trains a single
-trial on 5 epochs of data, performs validation at least every 2 epochs, and
-checkpoints after every epoch.
+be specified.
+
+The snippet below configures an experiment that trains a single trial on 5
+epochs of data, performs validation at least every 2 epochs, and checkpoints
+after every epoch.
 
 .. code:: yaml
 
@@ -135,9 +137,13 @@ at least once after every 10,000 records.
 *********
 
 The number of records in a batch is configured via the ``global_batch_size``
-hyperparameter. The snippet below configures an experiment that trains a
-single trial on 500 batches of data, performs validation at least once every
-200 batches, and checkpoints at least once after every 100 batches.
+hyperparameter. When doing a hyperparameter search that explores multiple batch
+sizes, this can result in different trials using different values for fields
+expressed using batches. This may or may not be desirable behavior.
+
+The snippet below configures an experiment that trains a single trial on 500
+batches of data, performs validation at least once every 200 batches, and
+checkpoints at least once after every 100 batches.
 
 .. code:: yaml
 
