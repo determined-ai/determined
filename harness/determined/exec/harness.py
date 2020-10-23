@@ -31,7 +31,6 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Any, Dict, Iterator, Optional
 
 import simplejson
 
@@ -60,33 +59,13 @@ ENVIRONMENT_VARIABLE_KEYS = {
 }
 
 
-@contextlib.contextmanager
-def maybe_load_checkpoint(
-    storage_mgr: storage.StorageManager, checkpoint: Optional[Dict[str, Any]]
-) -> Iterator[Optional[pathlib.Path]]:
-    """
-    Either wrap a storage_mgr.restore_path() context manager, or be a noop
-    context manager if there is no checkpoint to load.
-    """
-
-    if checkpoint is None:
-        yield None
-
-    else:
-        metadata = storage.StorageMetadata.from_json(checkpoint)
-        logging.info("Restoring trial from checkpoint {}".format(metadata.storage_id))
-
-        with storage_mgr.restore_path(metadata) as path:
-            yield pathlib.Path(path)
-
-
 def build_and_run_training_pipeline(env: det.EnvContext) -> None:
-
-    # Create the socket manager. The socket manager will connect to the master and read messages
-    # until it receives the rendezvous_info.
-    #
-    # TODO(ryan): Pull profiler hooks out of SocketManager and into their own layer.
-    with layers.SocketManager(env) as socket_mgr:
+    with contextlib.ExitStack() as stack:
+        # Create the socket manager. The socket manager will connect to the master and read messages
+        # until it receives the rendezvous_info.
+        #
+        # TODO(ryan): Pull profiler hooks out of SocketManager and into their own layer.
+        socket_mgr = stack.enter_context(layers.SocketManager(env))
 
         # Create the storage manager. This is used to download the initial checkpoint here in
         # build_training_pipeline and also used by the workload manager to create and store
@@ -122,29 +101,34 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
         )
         logging.info(f"Horovod config: {hvd_config.__dict__}.")
 
-        # Load the checkpoint, if necessary. Any possible sinks to this pipeline will need access
-        # to this checkpoint.
-        with maybe_load_checkpoint(storage_mgr, env.latest_checkpoint) as load_path:
+        if env.latest_checkpoint is None:
+            load_path = None  # Optional[pathlib.Path]
+        else:
+            # Load the checkpoint. Any sinks to this pipeline will need access to load_path.
+            metadata = storage.StorageMetadata.from_json(env.latest_checkpoint)
+            logging.info("Restoring trial from checkpoint {}".format(metadata.storage_id))
+            load_path = pathlib.Path(stack.enter_context(storage_mgr.restore_path(metadata)))
 
-            # Horovod distributed training is done inside subprocesses.
-            if hvd_config.use:
-                subproc = layers.SubprocessLauncher(
-                    env, iter(workload_mgr), load_path, socket_mgr.get_rendezvous_info(), hvd_config
-                )
-                subproc.run()
-            else:
-                if env.experiment_config.debug_enabled():
-                    faulthandler.dump_traceback_later(30, repeat=True)
+        # Horovod distributed training is done inside subprocesses.
+        if hvd_config.use:
+            subproc = layers.SubprocessLauncher(
+                env, iter(workload_mgr), load_path, socket_mgr.get_rendezvous_info(), hvd_config
+            )
+            subproc.run()
+        else:
+            if env.experiment_config.debug_enabled():
+                faulthandler.dump_traceback_later(30, repeat=True)
 
-                with det._catch_sys_exit():
-                    controller = load.prepare_controller(
-                        env,
-                        iter(workload_mgr),
-                        load_path,
-                        socket_mgr.get_rendezvous_info(),
-                        hvd_config,
-                    )
-                    controller.run()
+            stack.enter_context(det._catch_sys_exit())
+
+            controller = load.prepare_controller(
+                env,
+                iter(workload_mgr),
+                load_path,
+                socket_mgr.get_rendezvous_info(),
+                hvd_config,
+            )
+            controller.run()
 
 
 def main() -> None:
