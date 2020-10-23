@@ -14,7 +14,10 @@ from packaging import version
 from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
 from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
-from tensorflow.python.keras.saving.hdf5_format import load_optimizer_weights_from_hdf5_group
+from tensorflow.python.keras.saving.hdf5_format import (
+    load_optimizer_weights_from_hdf5_group,
+    save_optimizer_weights_to_hdf5_group,
+)
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
@@ -25,49 +28,52 @@ from determined_common import check
 IMPOSSIBLY_LARGE_EPOCHS = sys.maxsize
 
 
-def load_optimizer_weights(model: Model, load_path: pathlib.Path) -> None:
+def load_optimizer_weights(
+    model: Model, h5group: Any, optimizer: Optional[tf.keras.optimizers.Optimizer]
+) -> None:
     """
     Load the optimizer states from a tf.keras model saved with
     tf.keras.models.save_model(). Ignores and prints a warning message when
     encountering a graph network. This implementation is lifted from
     tf.keras.models.load_model().
     """
-    f = h5py.File(str(load_path), mode="r")
-    if "optimizer_weights" in f:
-        tf2_2_or_newer = version.parse(tf.__version__) >= version.parse("2.2.0")
-        if model._is_graph_network or tf2_2_or_newer:  # pylint: disable=protected-access
-            if tf2_2_or_newer:
-                try:
-                    model.optimizer._create_all_weights(model.trainable_variables)
-                except (NotImplementedError, AttributeError):
-                    logging.warning(
-                        "Error when creating the weights of optimizer, making it "
-                        "impossible to restore the saved optimizer state. As a result, "
-                        "your model is starting with a freshly initialized optimizer."
-                    )
-            else:
-                # Build train function (to get weight updates).  Models that aren't
-                # graph networks must wait until they are called with data to
-                # _make_train_function() and so can't load optimizer weights.
-                model._make_train_function()
+    tf2_2_or_newer = version.parse(tf.__version__) >= version.parse("2.2.0")
+    if model._is_graph_network or tf2_2_or_newer:  # pylint: disable=protected-access
+        if not optimizer:
+            optimizer = model.optimizer
 
-            optimizer_weight_values = load_optimizer_weights_from_hdf5_group(f)
+        if tf2_2_or_newer:
             try:
-                model.optimizer.set_weights(optimizer_weight_values)
-            except ValueError:
+                optimizer._create_all_weights(model.trainable_variables)
+            except (NotImplementedError, AttributeError):
                 logging.warning(
-                    "Error in loading the saved optimizer "
-                    "state. As a result, your model is "
-                    "starting with a freshly initialized "
-                    "optimizer."
+                    "Error when creating the weights of optimizer, making it "
+                    "impossible to restore the saved optimizer state. As a result, "
+                    "your model is starting with a freshly initialized optimizer."
                 )
         else:
+            # Build train function (to get weight updates).  Models that aren't
+            # graph networks must wait until they are called with data to
+            # _make_train_function() and so can't load optimizer weights.
+            model._make_train_function()
+
+        optimizer_weight_values = load_optimizer_weights_from_hdf5_group(h5group)
+        try:
+            optimizer.set_weights(optimizer_weight_values)
+        except ValueError:
             logging.warning(
-                "Sequential models without an `input_shape` "
-                "passed to the first layer cannot reload their "
-                "optimizer state. As a result, your model is "
-                "starting with a freshly initialized optimizer."
+                "Error in loading the saved optimizer "
+                "state. As a result, your model is "
+                "starting with a freshly initialized "
+                "optimizer."
             )
+    else:
+        logging.warning(
+            "Sequential models without an `input_shape` "
+            "passed to the first layer cannot reload their "
+            "optimizer state. As a result, your model is "
+            "starting with a freshly initialized optimizer."
+        )
 
 
 class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
@@ -478,10 +484,17 @@ class TFKerasTrialController(det.LoopTrialController):
 
         path.mkdir(parents=True, exist_ok=True)
 
-        assert self.context.model is not None
-        self.model.save(path.joinpath("determined-keras-model.h5"), save_format="h5")
+        # Save model weights.
+        check.is_not_none(self.context.model)
+        self.model.save_weights(path.joinpath("determined-keras-model-weights"), save_format="tf")
 
-        # Save RNG state
+        # Save optimizer(s) weights.
+        with h5py.File(path.joinpath("determined-keras-optimizer-weights.h5"), "w") as h5file:
+            for idx, optimizer in enumerate(self.context.optimizers):
+                opt_group = h5file.create_group(f"optimizer-{idx}")
+                save_optimizer_weights_to_hdf5_group(opt_group, optimizer)
+
+        # Save RNG state.
         rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
         if version.parse(tf.__version__) < version.parse("2.0.0"):
             rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
@@ -492,32 +505,53 @@ class TFKerasTrialController(det.LoopTrialController):
         with open(path.joinpath("rng_state.pkl"), "wb") as f:
             pickle.dump(rng_state, f)
 
+        # Save user code.
+        det.util.write_user_code(path)
+
+        # Save callback(s) state.
         callbacks_state = self.multiplexer._get_state()
         with path.joinpath("determined-callbacks.v1.pkl").open("wb") as f:
             pickle.dump(callbacks_state, f)
 
-        det.util.write_user_code(path)
-
         self.multiplexer._checkpoint_end(path)
 
-        return {"framework": f"tensorflow-{tf.__version__}", "format": "h5"}
+        return {"framework": f"tensorflow-{tf.__version__}", "format": "tf"}
 
     def _load(self) -> None:
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if not self.load_path:
             return
 
-        # Load model.
+        # Find model code path, we check multiple naming conventions for backwards compatibility.
         if self.load_path.joinpath("determined-keras-model.h5").exists():
-            full_ckpt_path = self.load_path.joinpath("determined-keras-model.h5")
+            model_weights_checkpoint_path = self.load_path.joinpath("determined-keras-model.h5")
+            optimizer_weights_checkpoint_path = model_weights_checkpoint_path
+        elif self.load_path.joinpath("determined-keras-optimizer-weights.h5").exists():
+            model_weights_checkpoint_path = self.load_path.joinpath(
+                "determined-keras-model-weights"
+            )
+            optimizer_weights_checkpoint_path = self.load_path.joinpath(
+                "determined-keras-optimizer-weights.h5"
+            )
         else:
-            full_ckpt_path = self.load_path.joinpath("determined-keras-model")
+            model_weights_checkpoint_path = self.load_path.joinpath("determined-keras-model")
+            optimizer_weights_checkpoint_path = model_weights_checkpoint_path
 
-        logging.info(f"Restoring checkpoint from {full_ckpt_path}")
-        self.model.load_weights(str(full_ckpt_path))
-        load_optimizer_weights(self.model, full_ckpt_path)
+        # Load model weights.
+        logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
+        self.model.load_weights(str(model_weights_checkpoint_path))
 
-        # Load RNG state
+        # Load optimizer(s) weights.
+        logging.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
+        with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
+            if "optimizer_weights" in h5file:
+                load_optimizer_weights(self.model, h5file["optimizer_weights"], None)
+
+            for idx, optimizer in enumerate(self.context.optimizers):
+                if f"optimizer-{idx}" in h5file:
+                    load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
+
+        # Load RNG state.
         try:
             with open(self.load_path.joinpath("rng_state.pkl"), "rb") as f:
                 rng_state = pickle.load(f)
@@ -532,7 +566,7 @@ class TFKerasTrialController(det.LoopTrialController):
                 generator = tf.random.Generator.from_state(state, algorithm)
                 tf.random.set_global_generator(generator)
         except IOError:
-            logging.warn("Checkpoint did not include RNG state")
+            logging.warning("Checkpoint did not include RNG state.")
 
         # Load callbacks.
         cb_state_path = self.load_path.joinpath("determined-callbacks.v1.pkl")
