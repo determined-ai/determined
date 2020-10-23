@@ -407,7 +407,9 @@ func (m *Master) Run() error {
 	webuiGroup.GET("/*", func(c echo.Context) error {
 		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
 		requestedFile := filepath.Join(reactRoot, groupPath)
-		if fileExists(requestedFile) {
+		// We do a simple check against directory traversal attacks.
+		// Alternative: https://github.com/cyphar/filepath-securejoin
+		if !strings.Contains(groupPath, "..") && fileExists(requestedFile) {
 			return c.File(requestedFile)
 		}
 		return c.File(reactIndex)
