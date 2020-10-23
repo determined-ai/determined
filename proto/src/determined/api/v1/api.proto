@@ -148,6 +148,16 @@ service Determined {
       tags: "Cluster"
     };
   }
+  // Get master config.
+  rpc GetMasterConfig(GetMasterConfigRequest)
+      returns (GetMasterConfigResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/master/config"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
+  }
   // Stream master logs.
   rpc MasterLogs(MasterLogsRequest) returns (stream MasterLogsResponse) {
     option (google.api.http) = {
