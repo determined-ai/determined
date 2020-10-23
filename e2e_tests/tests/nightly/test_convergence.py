@@ -161,7 +161,7 @@ def test_cifar10_tf_keras_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("cifar10_tf_keras"), 1, None, 2500
+        config, conf.cv_examples_path("cifar10_tf_keras"), 1, None, 3500
     )
     trials = exp.experiment_trials(experiment_id)
     trial_metrics = exp.trial_metrics(trials[0]["id"])
@@ -233,6 +233,7 @@ def test_unets_tf_keras_accuracy() -> None:
     )
 
 
+"""
 @pytest.mark.nightly  # type: ignore
 def test_protonet_omniglot_pytorch_accuracy() -> None:
     config = conf.load_config(
@@ -257,6 +258,7 @@ def test_protonet_omniglot_pytorch_accuracy() -> None:
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
         )
     )
+"""
 
 
 @pytest.mark.nightly  # type: ignore
