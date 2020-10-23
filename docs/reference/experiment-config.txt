@@ -1243,7 +1243,7 @@ end of an epoch occurs when the training data loader runs out of
 records).
 
 For a more detailed look at training units in Determined, check out the
-:ref:`topic guide<topic-guides_training-units>`.
+:ref:`topic guide <topic-guides_training-units>`.
 
 .. _migration-guide_remove-steps:
 
