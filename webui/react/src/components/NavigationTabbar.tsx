@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
+import useNotebookLauncher from 'hooks/useNotebookLauncher';
 
 import ActionSheet from './ActionSheet';
 import Icon from './Icon';
@@ -38,6 +39,7 @@ const NavigationTabbar: React.FC = () => {
   const { isAuthenticated } = Auth.useStateContext();
   const ui = UI.useStateContext();
   const overview = ClusterOverview.useStateContext();
+  const notebookLauncher = useNotebookLauncher();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
 
   const cluster = overview.allocation === 0 ? undefined : `${overview.allocation}%`;
@@ -45,6 +47,10 @@ const NavigationTabbar: React.FC = () => {
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleActionSheetCancel = useCallback(() => setIsShowingOverflow(false), []);
+  const handleLaunchNotebook = useCallback((cpuOnly = false) => {
+    cpuOnly ? notebookLauncher.launchCpuOnlyNotebook() : notebookLauncher.launchNotebook();
+    setIsShowingOverflow(false);
+  }, [ notebookLauncher ]);
 
   if (!showNavigation) return null;
 
@@ -59,6 +65,16 @@ const NavigationTabbar: React.FC = () => {
       </div>
       <ActionSheet
         actions={[
+          {
+            icon: 'notebook',
+            label: 'Launch Notebook',
+            onClick: () => handleLaunchNotebook(),
+          },
+          {
+            icon: 'notebook',
+            label: 'Launch CPU-only Notebook',
+            onClick: () => handleLaunchNotebook(true),
+          },
           { icon: 'logs', label: 'Master Logs', path: '/det/logs', popout: true },
           { icon: 'docs', label: 'Docs', path: '/docs', popout: true },
           { icon: 'cloud', label: 'API (Beta)', path: '/docs/rest-api/', popout: true },
