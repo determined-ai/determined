@@ -24,12 +24,10 @@ import {
 
 import { noOp } from './utils';
 
-const initialApiConfigParams: Api.ConfigurationParameters = {
+const ApiConfig = new Api.Configuration({
   apiKey: 'Bearer ' + globalStorage.getAuthToken,
   basePath: serverAddress(),
-};
-
-const ApiConfig = new Api.Configuration(initialApiConfigParams);
+});
 
 export const detApi = {
   Auth: new Api.AuthenticationApi(ApiConfig),
@@ -37,13 +35,18 @@ export const detApi = {
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
 };
 
-// Update references to generated API code with new configuration.
-export const updateDetApi = (apiConfig: Api.Configuration): void => {
-  const config: Api.Configuration = {
+export const updatedApiConfigParams = (apiConfig: Api.ConfigurationParameters):
+Api.ConfigurationParameters => {
+  return {
     apiKey: 'Bearer ' + globalStorage.getAuthToken,
     basePath: serverAddress(),
     ...apiConfig,
   };
+};
+
+// Update references to generated API code with new configuration.
+export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
+  const config = updatedApiConfigParams(apiConfig);
   detApi.Auth = new Api.AuthenticationApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
