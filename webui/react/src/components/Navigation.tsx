@@ -6,10 +6,8 @@ import { CSSTransition } from 'react-transition-group';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import useNotebookLauncher from 'hooks/useNotebookLauncher';
 import useStorage from 'hooks/useStorage';
-import { openCommand } from 'routes/utils';
-import { createNotebook } from 'services/api';
 
 import Avatar from './Avatar';
 import DropdownMenu, { Placement } from './DropdownMenu';
@@ -56,6 +54,7 @@ const Navigation: React.FC = () => {
   const ui = UI.useStateContext();
   const setUI = UI.useActionContext();
   const storage = useStorage('navigation');
+  const notebookLauncher = useNotebookLauncher();
   const [ isCollapsed, setIsCollapsed ] = useState(storage.getWithDefault(STORAGE_KEY, false));
   const [ isShowingCpu, setIsShowingCpu ] = useState(false);
 
@@ -66,25 +65,12 @@ const Navigation: React.FC = () => {
   const username = user?.username || 'Anonymous';
   const cluster = overview.allocation === 0 ? undefined : `${overview.allocation}%`;
 
-  const launchNotebook = useCallback(async (slots: number) => {
-    try {
-      const notebook = await createNotebook({ slots });
-      openCommand(notebook);
-    } catch (e) {
-      handleError({
-        error: e,
-        level: ErrorLevel.Error,
-        message: e.message,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to Launch Notebook',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
-
-  const handleNotebookLaunch = useCallback(() => launchNotebook(1), [ launchNotebook ]);
-  const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), [ launchNotebook ]);
+  const handleNotebookLaunch = useCallback(() => {
+    notebookLauncher.launchNotebook();
+  }, [ notebookLauncher ]);
+  const handleCpuNotebookLaunch = useCallback(() => {
+    notebookLauncher.launchCpuOnlyNotebook();
+  }, [ notebookLauncher ]);
   const handleVisibleChange = useCallback((visible: boolean) => setIsShowingCpu(visible), []);
 
   const handleCollapse = useCallback(() => {
