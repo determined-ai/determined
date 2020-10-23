@@ -233,14 +233,13 @@ def test_unets_tf_keras_accuracy() -> None:
     )
 
 
-"""
 @pytest.mark.nightly  # type: ignore
 def test_protonet_omniglot_pytorch_accuracy() -> None:
     config = conf.load_config(
         conf.meta_learning_examples_path("protonet_omniglot_pytorch/20way1shot.yaml")
     )
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.meta_learning_examples_path("protonet_omniglot_pytorch"), 1, None, 2500
+        config, conf.meta_learning_examples_path("protonet_omniglot_pytorch"), 1, None, 3500
     )
     trials = exp.experiment_trials(experiment_id)
     trial_metrics = exp.trial_metrics(trials[0]["id"])
@@ -258,7 +257,6 @@ def test_protonet_omniglot_pytorch_accuracy() -> None:
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
         )
     )
-"""
 
 
 @pytest.mark.nightly  # type: ignore
