@@ -25,9 +25,8 @@ import { handlePath } from 'routes/utils';
 import { getExperimentDetails, isNotFound } from 'services/api';
 import { ApiSorter, ApiState } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
-import { clone } from 'utils/data';
-import { numericSorter } from 'utils/data';
-import { upgradeConfig } from 'utils/types';
+import { clone, numericSorter } from 'utils/data';
+import { terminalRunStates, upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
 import { columns as defaultColumns } from './ExperimentDetails.table';
@@ -174,7 +173,12 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
-  usePolling(fetchExperimentDetails);
+  const stopPolling = usePolling(fetchExperimentDetails);
+  useEffect(() => {
+    if (experimentDetails.data && terminalRunStates.has(experimentDetails.data.state)) {
+      stopPolling();
+    }
+  }, [ experimentDetails.data, stopPolling ]);
 
   useEffect(() => {
     return () => experimentDetails.source?.cancel();
