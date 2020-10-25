@@ -1,13 +1,15 @@
-# After fine-tuning for 150 steps, model should achieve F1 = 88.52 per https://github.com/huggingface/transformers/tree/master/examples/question-answering
-description: ALBERT_SQuAD_PyTorch
+description: ALBert_SQuAD_PyTorch_1node
+environment:
+  environment_variables:
+    - DET_TRAINING_JOB=ALBERT_SQuAD_PyTorch_dist_1gpu
 hyperparameters:
-    global_batch_size: 12
-    learning_rate: 3e-5
-    lr_scheduler_epoch_freq: 1
-    model_type: 'bert'
+    model_type: 'albert'
+    do_lower_case: true
+    global_batch_size: 2  # 2*8
+    learning_rate: 5e-5
     adam_epsilon: 1e-8
     weight_decay: 0
-    num_warmup_steps: 0
+    num_warmup_steps: 550  # 10% of total training
     max_seq_length: 384
     doc_stride: 128
     max_query_length: 64
@@ -15,22 +17,28 @@ hyperparameters:
     max_answer_length: 30
     null_score_diff_threshold: 0.0
     max_grad_norm: 1.0
-    num_training_steps: 15000 # This is the number of optimizer steps. Set it
-                              # to max_length.batches (assuming we step every
-                              # batch in the LR scheduler definition)
+    num_training_steps: 5500 # This is the number of optimizer steps. Train for 2 epochs
 searcher:
     name: single
     metric: f1
-    max_length:
-        records: 180000 # There are ~90k examples in the training set, and we run for
-                        # 2 epochs as in the huggingface repo.
+    max_steps: 165 # There are ~132k examples in the training set, and we run for
+                   # 2 epochs as in the huggingface repo. We get 165 by:
+                   # 132k / global_batch_size / (100 batches per step) * 2 epochs
     smaller_is_better: false
-min_validation_period:
-    records: 12000 # Validation is fairly costly (~10 minutes per), but
-                   # relative to overall runtime it's not that high, so
-                   # validate often to give more frequent feedback.
+min_validation_period: 406 # Validation is fairly costly (~10 minutes per), but
+                          # relative to overall runtime it's not that high, so
+                          # validate often to give more frequent feedback.
 data:
-    pretrained_model_name: "bert-base-uncased"
+    pretrained_model_name: "albert-xxlarge-v2"
     download_data: False
-    task: "SQuAD1.1"
-entrypoint: model_def:BertSQuADPyTorch
+    task: "SQuAD2.0"  # SQuaD 2.0 has 132198 example.
+optimizations:
+    aggregation_frequency: 24
+resources:
+    slots_per_trial: 1
+entrypoint: model_def:AlbertSQuADPyTorch
+max_restarts: 0
+bind_mounts:
+    - host_path: /home/ubuntu/dtrain-fsx/albert-cache/
+      container_path: /mnt/data
+      read_only: false
