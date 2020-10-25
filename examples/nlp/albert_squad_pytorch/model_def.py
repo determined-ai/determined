@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 import determined as det
-from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, LRScheduler
+from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, PyTorchTrialContext, LRScheduler
 import data
 import constants
 import os
@@ -22,7 +22,7 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
 class AlbertSQuADPyTorch(PyTorchTrial):
-    def __init__(self, context: det.TrialContext):
+    def __init__(self, context: PyTorchTrialContext):
         self.context = context
         self.download_directory = f"/mnt/data/data-rank{self.context.distributed.get_rank()}"
         self.eval_files_directory = f"{self.download_directory}/eval"
