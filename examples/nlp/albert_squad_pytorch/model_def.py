@@ -114,16 +114,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             batch_size=self.context.get_per_slot_batch_size(),
         )
 
-
-    def create_lr_scheduler(self, optimizer: torch.optim.Optimizer):
-        scheduler = get_linear_schedule_with_warmup(
-            optimizer,
-            num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
-            num_training_steps=self.context.get_hparam("num_training_steps"),
-        )
-        return LRScheduler(scheduler, LRScheduler.StepMode.STEP_EVERY_BATCH)
-
-    def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int):
+    def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
         inputs = {
             "input_ids": batch[0],
             "attention_mask": batch[1],
@@ -131,11 +122,20 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             "start_positions": batch[3],
             "end_positions": batch[4],
         }
-        outputs = model(**inputs)
+        outputs = self.model(**inputs)
         loss = outputs[0]
+
+        self.context.backward(loss)
+        self.context.step_optimizer(
+            self.optimizer,
+            clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
+                params, self.context.get_hparam("max_grad_norm")
+            )
+        )
+
         return {"loss": loss}
 
-    def evaluate_full_dataset(self, data_loader: DataLoader, model: nn.Module):
+    def evaluate_full_dataset(self, data_loader: DataLoader):
         all_results = []
         for batch in data_loader:
             # TODO: Add torch.no_grad()?
@@ -145,7 +145,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
                 "token_type_ids": batch[2].cuda(),
             }
             feature_indices = batch[3]
-            outputs = model(**inputs)
+            outputs = self.model(**inputs)
             for i, feature_index in enumerate(feature_indices):
                 eval_feature = self.validation_features[feature_index.item()]
                 unique_id = int(eval_feature.unique_id)
@@ -186,6 +186,3 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         )
         results = squad_evaluate(self.validation_examples, predictions)
         return results
-
-    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
-        return {"clip_grads": ClipGradsL2Norm(self.context.get_hparam("max_grad_norm"))}
