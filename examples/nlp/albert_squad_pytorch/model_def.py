@@ -103,12 +103,6 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             # model_name=self.context.get_data_config().get("pretrained_model_name")
         )
 
-        # TODO: Add SequentialSampler?
-        """
-        # Note that DistributedSampler samples randomly
-        eval_sampler = SequentialSampler(dataset)
-        eval_dataloader = DataLoader(dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
-        """
         return DataLoader(
             self.validation_dataset,
             batch_size=self.context.get_per_slot_batch_size(),
@@ -138,7 +132,6 @@ class AlbertSQuADPyTorch(PyTorchTrial):
     def evaluate_full_dataset(self, data_loader: DataLoader):
         all_results = []
         for batch in data_loader:
-            # TODO: Add torch.no_grad()?
             inputs = {
                 "input_ids": batch[0].cuda(),
                 "attention_mask": batch[1].cuda(),
