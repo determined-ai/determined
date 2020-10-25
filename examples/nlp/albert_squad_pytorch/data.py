@@ -4,6 +4,20 @@ import urllib.request
 import os
 import torch
 
+from pathlib import Path
+
+BIND_MOUNT_LOC = Path("/mnt/data")  # TODO: Read this dynamically from experiment config
+
+
+def data_directory(use_bind_mount, rank):
+    base_dir = BIND_MOUNT_LOC if use_bind_mount else Path("/tmp")
+    return base_dir / f"data-rank{rank}"
+
+
+def cache_dir(use_bind_mount, rank):
+    base_dir = BIND_MOUNT_LOC if use_bind_mount else Path("/tmp")
+    return base_dir / f"{rank}"
+
 def load_and_cache_examples(data_dir: str, tokenizer, task, max_seq_length, doc_stride, max_query_length, evaluate=False, model_name=None):
     if (task == "SQuAD1.1"):
         train_url = "https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json"

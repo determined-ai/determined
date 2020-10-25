@@ -5,7 +5,6 @@ import torch.nn as nn
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
 import data
 import constants
-import os
 
 from transformers import (
     AdamW,
@@ -19,12 +18,13 @@ from transformers.data.metrics.squad_metrics import (
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
+USE_BIND_DIR = True  # TODO: Make this dynamic
+
 
 class AlbertSQuADPyTorch(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
-        self.download_directory = f"/mnt/data/data-rank{self.context.distributed.get_rank()}"
-        # self.eval_files_directory = f"{self.download_directory}/eval"
+        self.download_directory = data.data_directory(USE_BIND_DIR, self.context.distributed.get_rank())
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
             self.context.get_hparam("model_type")
         ]
