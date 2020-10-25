@@ -2,7 +2,6 @@ from typing import Dict, Sequence, Union
 import torch
 import torch.nn as nn
 
-import determined as det
 from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, PyTorchTrialContext, LRScheduler
 import data
 import constants
