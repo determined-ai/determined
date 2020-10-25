@@ -1,12 +1,9 @@
+# After X amount of time, model should hit X/X F1/EM
 description: ALBert_SQuAD_PyTorch_1node
-environment:
-  environment_variables:
-    - DET_TRAINING_JOB=ALBERT_SQuAD_PyTorch_dist_1gpu
 hyperparameters:
-    model_type: 'albert'
-    do_lower_case: true
     global_batch_size: 2  # 2*8
     learning_rate: 5e-5
+    model_type: 'albert'
     adam_epsilon: 1e-8
     weight_decay: 0
     num_warmup_steps: 550  # 10% of total training
@@ -18,6 +15,7 @@ hyperparameters:
     null_score_diff_threshold: 0.0
     max_grad_norm: 1.0
     num_training_steps: 5500 # This is the number of optimizer steps. Train for 2 epochs
+    do_lower_case: true
 searcher:
     name: single
     metric: f1
