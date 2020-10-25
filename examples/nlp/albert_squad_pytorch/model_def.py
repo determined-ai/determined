@@ -24,7 +24,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
         self.download_directory = f"/mnt/data/data-rank{self.context.distributed.get_rank()}"
-        self.eval_files_directory = f"{self.download_directory}/eval"
+        # self.eval_files_directory = f"{self.download_directory}/eval"
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
             self.context.get_hparam("model_type")
         ]
@@ -33,6 +33,51 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             do_lower_case=self.context.get_hparam("do_lower_case"),
             cache_dir=None
         )
+
+        # TODO: Make cache configurable
+        cache_dir_per_rank = f"/mnt/data/{self.context.distributed.get_rank()}"
+
+        config = self.config_class.from_pretrained(
+            self.context.get_data_config().get("pretrained_model_name"),
+            cache_dir=cache_dir_per_rank,
+        )
+        self.model = self.context.wrap_model(self.model_class.from_pretrained(
+            self.context.get_data_config().get("pretrained_model_name"),
+            from_tf=bool(".ckpt" in self.context.get_data_config().get("pretrained_model_name")),
+            config=config,
+            cache_dir=cache_dir_per_rank,
+        ))
+
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {
+                "params": [
+                    p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": self.context.get_hparam("weight_decay"),
+            },
+            {
+                "params": [
+                    p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": 0.0,
+            },
+        ]
+        self.optimizer = self.context.wrap_optimizer(AdamW(
+            optimizer_grouped_parameters,
+            lr=self.context.get_hparam("learning_rate"),
+            eps=self.context.get_hparam("adam_epsilon")
+        ))
+
+        self.lr_scheduler = self.context.wrap_lr_scheduler(
+            get_linear_schedule_with_warmup(
+                self.optimizer,
+                num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
+                num_training_steps=self.context.get_hparam("num_training_steps"),
+            ),
+            LRScheduler.StepMode.STEP_EVERY_BATCH
+        )
+
 
     def build_training_data_loader(self):
         train_dataset, _, _ = data.load_and_cache_examples(
@@ -69,43 +114,6 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             batch_size=self.context.get_per_slot_batch_size(),
         )
 
-    def build_model(self):
-        cache_dir_per_rank = f"/mnt/data/{self.context.distributed.get_rank()}"
-
-        config = self.config_class.from_pretrained(
-            self.context.get_data_config().get("pretrained_model_name"),
-            cache_dir=cache_dir_per_rank,
-        )
-        model = self.model_class.from_pretrained(
-            self.context.get_data_config().get("pretrained_model_name"),
-            from_tf=bool(".ckpt" in self.context.get_data_config().get("pretrained_model_name")),
-            config=config,
-            cache_dir=cache_dir_per_rank,
-        )
-        return model
-
-    def optimizer(self, model: nn.Module):
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {
-                "params": [
-                    p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)
-                ],
-                "weight_decay": self.context.get_hparam("weight_decay"),
-            },
-            {
-                "params": [
-                    p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)
-                ],
-                "weight_decay": 0.0,
-            },
-        ]
-        optimizer = AdamW(
-            optimizer_grouped_parameters,
-            lr=self.context.get_hparam("learning_rate"),
-            eps=self.context.get_hparam("adam_epsilon")
-        )
-        return optimizer
 
     def create_lr_scheduler(self, optimizer: torch.optim.Optimizer):
         scheduler = get_linear_schedule_with_warmup(
