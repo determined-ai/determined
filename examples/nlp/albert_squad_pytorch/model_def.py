@@ -35,7 +35,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         )
 
         # TODO: Make cache configurable
-        cache_dir_per_rank = f"/mnt/data/{self.context.distributed.get_rank()}"
+        cache_dir_per_rank = data.cache_dir(USE_BIND_DIR, self.context.distributed.get_rank())
 
         config = self.config_class.from_pretrained(
             self.context.get_data_config().get("pretrained_model_name"),
@@ -152,11 +152,9 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         output_null_log_odds_file = None
 
         task = self.context.get_data_config().get("task")
-        if (task == "SQuAD1.1"):
-            # output_null_log_odds_file = None
+        if task == "SQuAD1.1":
             version_2_with_negative = False
-        elif (task == "SQuAD2.0"):
-            # output_null_log_odds_file = os.path.join(self.eval_files_directory, "null_odds_{}.json".format(prefix))
+        elif task == "SQuAD2.0":
             version_2_with_negative = True
         else:
             raise NameError("Incompatible dataset detected")

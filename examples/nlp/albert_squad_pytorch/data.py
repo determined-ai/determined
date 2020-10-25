@@ -13,7 +13,6 @@ def data_directory(use_bind_mount, rank):
     base_dir = BIND_MOUNT_LOC if use_bind_mount else Path("/tmp")
     return base_dir / f"data-rank{rank}"
 
-
 def cache_dir(use_bind_mount, rank):
     base_dir = BIND_MOUNT_LOC if use_bind_mount else Path("/tmp")
     return base_dir / f"{rank}"
