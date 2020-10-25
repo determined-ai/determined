@@ -1,5 +1,5 @@
 # After fine-tuning for 150 steps, model should achieve F1 = 88.52 per https://github.com/huggingface/transformers/tree/master/examples/question-answering
-description: Bert_SQuAD_PyTorch
+description: ALBERT_SQuAD_PyTorch
 hyperparameters:
     global_batch_size: 12
     learning_rate: 3e-5
