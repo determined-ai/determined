@@ -24,5 +24,9 @@ module.exports = {
     ...reactEslint.env,
     'cypress/globals': true,
   },
-  rules,
+  rules: {
+    ...rules,
+    // disable until https://github.com/cypress-io/eslint-plugin-cypress/issues/43 is resolved.
+    'cypress/no-unnecessary-waiting': 'off',
+  },
 };
