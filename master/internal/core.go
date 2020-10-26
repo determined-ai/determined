@@ -68,10 +68,15 @@ type Master struct {
 // try using it to prevent further errors.
 func fileExists(filename string) (bool, error) {
 	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
+	switch {
+	case os.IsNotExist(err):
 		return false, nil
+	case os.IsPermission(err):
+		return false, nil
+	case err != nil:
+		return false, err
 	}
-	return !info.IsDir(), err
+	return !info.IsDir(), nil
 }
 
 // New creates an instance of the Determined master.
