@@ -476,6 +476,8 @@ validation metrics should be computed more frequently.
    The name of the validation metric used to evaluate the performance of
    a hyperparameter configuration.
 
+.. _experiment-configuration_single-searcher-max-length:
+
 ``max_length``
    The length of the trial, in terms of records, batches, or epochs (see
    :ref:`Training Units <experiment-configuration_training_units>`).
@@ -745,6 +747,8 @@ poor ones.
    this to a multiple of ``divisor^(max_rungs-1)``, which is 4^(5-1) =
    256 with the default values.
 
+.. _experiment-configuration_adaptive-advanced-budget:
+
 ``budget``
    The total training length across all trials, in terms of the same
    unit (see :ref:`Training Units
@@ -821,6 +825,8 @@ restore models.
 ``population_size``
    The number of trials (i.e., different hyperparameter configurations)
    to keep active at a time.
+
+.. _experiment-configuration_length-per-round:
 
 ``length_per_round``
    The length to train each trial during a round, in terms of records,
@@ -1235,6 +1241,9 @@ configuration fields that are expressed in epochs. Actual epoch
 boundaries are still determined by the dataset itself (specifically, the
 end of an epoch occurs when the training data loader runs out of
 records).
+
+For a more detailed look at training units in Determined, check out the
+:ref:`topic guide <topic-guides_training-units>`.
 
 .. _migration-guide_remove-steps:
 
