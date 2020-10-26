@@ -32,8 +32,8 @@ search experiments in the distributed setting.
 Synchronous Searchers
 =====================
 
-Note: Adaptive (Simple) and Adaptive (Advanced) will be deprecated.
-We recommend using the state-of-the-art Adaptive (ASHA).
+Note: Adaptive (Simple) and Adaptive (Advanced) will be deprecated. We
+recommend using the state-of-the-art Adaptive (ASHA).
 
 Determined also offers two synchronous adaptive searchers that differ in
 their level of configurability.
