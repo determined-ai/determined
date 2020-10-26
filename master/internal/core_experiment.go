@@ -338,23 +338,23 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	return nil, nil
 }
 
-func (m *Master) parseExperiment(body []byte) (*model.Experiment, bool, error) {
-	var params struct {
-		ConfigBytes   string          `json:"experiment_config"`
-		Template      *string         `json:"template"`
-		ModelDef      archive.Archive `json:"model_definition"`
-		ParentID      *int            `json:"parent_id"`
-		Archived      bool            `json:"archived"`
-		GitRemote     *string         `json:"git_remote"`
-		GitCommit     *string         `json:"git_commit"`
-		GitCommitter  *string         `json:"git_committer"`
-		GitCommitDate *time.Time      `json:"git_commit_date"`
-		ValidateOnly  bool            `json:"validate_only"`
-	}
-	if err := json.Unmarshal(body, &params); err != nil {
-		return nil, false, errors.Wrap(err, "invalid experiment params")
-	}
+// CreateExperimentParams defines a request to create an experiment.
+type CreateExperimentParams struct {
+	ConfigBytes   string          `json:"experiment_config"`
+	Template      *string         `json:"template"`
+	ModelDef      archive.Archive `json:"model_definition"`
+	ParentID      *int            `json:"parent_id"`
+	Archived      bool            `json:"archived"`
+	GitRemote     *string         `json:"git_remote"`
+	GitCommit     *string         `json:"git_commit"`
+	GitCommitter  *string         `json:"git_committer"`
+	GitCommitDate *time.Time      `json:"git_commit_date"`
+	ValidateOnly  bool            `json:"validate_only"`
+}
 
+func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
+	*model.Experiment, bool, error,
+) {
 	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
@@ -423,7 +423,12 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 
 	user := c.(*context.DetContext).MustGetUser()
 
-	dbExp, validateOnly, err := m.parseExperiment(body)
+	var params CreateExperimentParams
+	if err = json.Unmarshal(body, &params); err != nil {
+		return nil, errors.Wrap(err, "invalid experiment params")
+	}
+
+	dbExp, validateOnly, err := m.parseCreateExperiment(&params)
 
 	if err != nil {
 		return nil, echo.NewHTTPError(

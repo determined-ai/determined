@@ -101,8 +101,5 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 	}
 	apiV1 := e.Group("/api/v1")
 	apiV1.Any("/*", handler, middleware.RemoveTrailingSlash())
-	// We explicitly set this route here to make sure another route handler with them same path but
-	// different method doesn't take over GET.
-	apiV1.GET("/experiments", handler, middleware.RemoveTrailingSlash())
 	return nil
 }

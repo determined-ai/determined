@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -23,6 +24,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
+
+var experimentsAddr = actor.Addr("experiments")
 
 func isInList(srcList []string, item string) bool {
 	item = strings.ToLower(item)
@@ -57,16 +60,24 @@ func (a *apiServer) checkExperimentExists(id int) error {
 	}
 }
 
+func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, error) {
+	exp := &experimentv1.Experiment{}
+	switch err := a.m.db.QueryProto("get_experiment", exp, experimentID); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", experimentID)
+	case err != nil:
+		return nil, errors.Wrapf(err,
+			"error fetching experiment from database: %d", experimentID)
+	}
+	return exp, nil
+}
+
 func (a *apiServer) GetExperiment(
 	_ context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
-	exp := &experimentv1.Experiment{}
-	switch err := a.m.db.QueryProto("get_experiment", exp, req.ExperimentId); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
-	case err != nil:
-		return nil, errors.Wrapf(err,
-			"error fetching experiment from database: %d", req.ExperimentId)
+	exp, err := a.getExperiment(int(req.ExperimentId))
+	if err != nil {
+		return nil, err
 	}
 
 	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
@@ -260,7 +271,7 @@ func (a *apiServer) ActivateExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	switch err = a.actorRequest(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
@@ -278,7 +289,7 @@ func (a *apiServer) PauseExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	switch err = a.actorRequest(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
@@ -296,7 +307,7 @@ func (a *apiServer) CancelExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	err = a.actorRequest(addr, req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.CancelExperimentResponse{}, nil
@@ -312,7 +323,7 @@ func (a *apiServer) KillExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	err = a.actorRequest(addr, req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.KillExperimentResponse{}, nil
@@ -476,4 +487,47 @@ func (a *apiServer) GetExperimentCheckpoints(
 	a.sort(
 		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+}
+
+func (a *apiServer) CreateExperiment(
+	ctx context.Context, req *apiv1.CreateExperimentRequest,
+) (*apiv1.CreateExperimentResponse, error) {
+	detParams := CreateExperimentParams{
+		ConfigBytes:  req.Config,
+		ModelDef:     filesToArchive(req.ModelDefinition),
+		ValidateOnly: req.ValidateOnly,
+	}
+	if req.ParentId != 0 {
+		parentID := int(req.ParentId)
+		detParams.ParentID = &parentID
+	}
+
+	dbExp, validateOnly, err := a.m.parseCreateExperiment(&detParams)
+
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
+	}
+
+	if validateOnly {
+		return &apiv1.CreateExperimentResponse{}, nil
+	}
+
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	dbExp.OwnerID = &user.ID
+	e, err := newExperiment(a.m, dbExp)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
+	}
+
+	protoExp, err := a.getExperiment(e.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.CreateExperimentResponse{
+		Experiment: protoExp, Config: protoutils.ToStruct(e.Config),
+	}, nil
 }
