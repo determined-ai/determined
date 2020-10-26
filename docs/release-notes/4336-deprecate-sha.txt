@@ -2,4 +2,6 @@
 
 **Improvements**
 
-- Deprecate SHA as HP Search algorithm. Users should use state-of-the-art ASHA.
+
+-  Deprecate SHA as HP Search algorithm. Users should use
+   state-of-the-art ASHA.
