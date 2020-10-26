@@ -489,8 +489,10 @@ class TFKerasTrialController(det.LoopTrialController):
         path.mkdir(parents=True, exist_ok=True)
 
         # Save model weights.
-        check.is_not_none(self.context.model)
-        self.model.save_weights(path.joinpath("determined-keras-model-weights"), save_format="tf")
+        check.is_not_none(self.model)
+        self.model.save_weights(
+            str(path.joinpath("determined-keras-model-weights")), save_format="tf"
+        )
 
         # Save optimizer(s) weights.
         with h5py.File(path.joinpath("determined-keras-optimizer-weights.h5"), "w") as h5file:
@@ -607,16 +609,36 @@ class TFKerasTrialController(det.LoopTrialController):
             validation_steps,
         ) = self._validation_input_manager.get_validation_input_and_num_batches()
 
-        metrics_values = self.model.evaluate(
-            validation_data,
-            steps=validation_steps,
-            verbose=0,
-            callbacks=self.callback_list,
-        )
+        evaluate_kwargs = {
+            "steps": validation_steps,
+            "verbose": 0,
+            "callbacks": self.callback_list,
+        }
+
+        # Starting in TF 2.2 users may define custom test_step() that do
+        # not use the model metrics.
+        use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
+        if not use_model_metrics:
+            evaluate_kwargs["return_dict"] = True
+
+        metrics_values = self.model.evaluate(validation_data, **evaluate_kwargs)
+        logging.debug(f"Worker finished model.evaluate() with metrics: {metrics_values}.")
+
+        # If the model was compiled with metrics=None, metrics_value will be a single value.
+        if not isinstance(metrics_values, (tuple, list, dict)):
+            metrics_values = (metrics_values,)
+
+        if use_model_metrics:
+            metrics = make_logs(self.model, {}, metrics_values, ModeKeys.TEST, prefix="val_")
+        else:
+            check.is_instance(metrics_values, dict)
+            metrics = {}
+            for metric_name in metrics_values.keys():
+                metrics[f"val_{metric_name}"] = metrics_values[metric_name]
 
         _ = self._validation_input_manager.stop_validation_input_and_get_num_inputs()
 
-        return metrics_values
+        return metrics
 
     def _control_loop(self) -> None:
         for wkld, args, response_func in self.workloads:
@@ -652,7 +674,7 @@ class TFKerasTrialController(det.LoopTrialController):
             return logs
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
-        logging.debug(f"allreducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}")
+        logging.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
         return {key: np.array(hvd.allreduce(logs[key])) for key in keys}
 
     def _post_train_batch_end(self, num_inputs: int, logs: Dict) -> None:
@@ -709,7 +731,7 @@ class TFKerasTrialController(det.LoopTrialController):
         self.model.reset_metrics()
 
     def _compute_validation_metrics(self) -> workload.Response:
-        metrics_values = self._launch_evaluate()
+        metrics = self._launch_evaluate()
         num_inputs = self.multiplexer.get_test_inputs()
 
         if self.hvd_config.use:
@@ -718,12 +740,6 @@ class TFKerasTrialController(det.LoopTrialController):
                 # Horovod will promote an int to a tensor in eager mode.
                 num_inputs = num_inputs.numpy()
 
-        # If the model was compiled with metrics=None, metrics_value will be a single value.
-        if not isinstance(metrics_values, (tuple, list)):
-            metrics_values = (metrics_values,)
-
-        # metrics_values is already allreduced since before the on_test_end callback.
-        metrics = make_logs(self.model, {}, metrics_values, ModeKeys.TEST, prefix="val_")
         metrics = self._allreduce_logs(metrics)
         check.gt(len(metrics), 0)
 
