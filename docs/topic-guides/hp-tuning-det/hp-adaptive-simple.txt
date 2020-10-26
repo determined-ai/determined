@@ -4,7 +4,7 @@
  Hyperparameter Search: Adaptive (Simple)
 ##########################################
 
-Note: Adaptive (Simple) will be deprecated. We recommend users to use
+Note: Adaptive (Simple) will be deprecated. We recommend using
 the state-of-the-art Adaptive (ASHA) searcher.
 
 The ``adaptive_simple`` searcher takes two intuitive configuration

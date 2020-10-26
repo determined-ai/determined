@@ -659,7 +659,7 @@ large-scale experiments with hundreds or thousands of trials.
 Adaptive (Simple)
 =================
 
-Note: Adaptive (Simple) will be deprecated. We recommend users to use
+Note: Adaptive (Simple) will be deprecated. We recommend using
 the state-of-the-art Adaptive (ASHA) searcher.
 
 The ``adaptive_simple`` search method is a simpler interface to the
@@ -730,7 +730,7 @@ configure for most applications of hyperparameter search.
 Adaptive (Advanced)
 ===================
 
-Note: Adaptive (Advanced) will be deprecated. We recommend users to use
+Note: Adaptive (Advanced) will be deprecated. We recommend using
 the state-of-the-art Adaptive (ASHA) searcher.
 
 The ``adaptive`` search method is a theoretically principled and
