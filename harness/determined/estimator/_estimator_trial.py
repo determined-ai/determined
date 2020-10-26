@@ -59,8 +59,8 @@ class RNGStateHook(estimator.RunHook):
                 rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
             else:
                 generator = tf.random.get_global_generator()
-                rng_state["tf2_rng_global_algorithm"] = self.generator.algorithm
-                rng_state["tf2_rng_global_state"] = self.generator.state
+                rng_state["tf2_rng_global_algorithm"] = generator.algorithm
+                rng_state["tf2_rng_global_state"] = generator.state
         with open(checkpoint_dir + "/rng_state.pkl", "wb") as f:
             pickle.dump(rng_state, f)
 
