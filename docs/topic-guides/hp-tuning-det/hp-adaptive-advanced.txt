@@ -4,6 +4,8 @@
  Hyperparameter Search: Adaptive (Advanced)
 ############################################
 
+Note: To be deprecated. Recommended to use state-of-the-art Adaptive (ASHA).
+
 The ``adaptive`` search method employs the same underlying algorithm as
 the :ref:`Adaptive (Simple)
 <topic-guides_hp-tuning-det_adaptive-simple>` method, but it allows
