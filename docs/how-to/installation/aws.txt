@@ -357,7 +357,7 @@ Master
 ------
 
 -  Allow EC2 to assume role
--  Allow EC2 to describe, create and terminate instances with agent role
+-  Allow EC2 to describe, create, and terminate instances with agent role
 -  Allow EC2 to describe, create, and terminate spot instance requests
    (only required if using spot instances)
 
