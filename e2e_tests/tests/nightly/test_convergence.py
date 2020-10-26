@@ -161,7 +161,7 @@ def test_cifar10_tf_keras_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("cifar10_tf_keras"), 1, None, 3500
+        config, conf.cv_examples_path("cifar10_tf_keras"), 1, None, 6000
     )
     trials = exp.experiment_trials(experiment_id)
     trial_metrics = exp.trial_metrics(trials[0]["id"])
@@ -239,7 +239,7 @@ def test_protonet_omniglot_pytorch_accuracy() -> None:
         conf.meta_learning_examples_path("protonet_omniglot_pytorch/20way1shot.yaml")
     )
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.meta_learning_examples_path("protonet_omniglot_pytorch"), 1, None, 3500
+        config, conf.meta_learning_examples_path("protonet_omniglot_pytorch"), 1, None, 6000
     )
     trials = exp.experiment_trials(experiment_id)
     trial_metrics = exp.trial_metrics(trials[0]["id"])
