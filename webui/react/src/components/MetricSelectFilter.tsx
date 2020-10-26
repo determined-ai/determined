@@ -1,13 +1,13 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { createRef, useCallback, useMemo, useRef, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
 import { metricNameSorter } from 'utils/data';
 import { metricNameFromValue, metricNameToValue, valueToMetricName } from 'utils/trial';
 
 import BadgeTag from './BadgeTag';
-import SelectFilter from './SelectFilter';
+import SelectFilter, { SelectFilterHandles } from './SelectFilter';
 
 const { OptGroup, Option } = Select;
 const allOptionId = 'ALL_RESULTS';
@@ -36,6 +36,7 @@ const MetricSelectFilter: React.FC<Props> = ({
   defaultMetricNames,
 }: Props) => {
   const [ filterString, setFilterString ] = useState('');
+  const selectRef = useRef<Select<SelectValue>>(null);
 
   const metricValues = useMemo(() => {
     if (multiple && Array.isArray(value)) return value.map(metric => metricNameToValue(metric));
@@ -66,10 +67,12 @@ const MetricSelectFilter: React.FC<Props> = ({
 
     if ((newValue as string) === allOptionId) {
       (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
+      selectRef.current?.blur();
       return;
     }
     if ((newValue as string) === resetOptionId) {
       (onChange as MultipleHandler)(defaultMetricNames.sort(metricNameSorter));
+      selectRef.current?.blur();
       return;
     }
 
@@ -162,6 +165,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     maxTagCount={maxTagCount}
     maxTagPlaceholder={selectorPlaceholder}
     mode={multiple ? 'multiple' : undefined}
+    ref={selectRef}
     showArrow
     style={{ width: 200 }}
     value={metricValues}
