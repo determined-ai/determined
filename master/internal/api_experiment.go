@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -531,4 +532,124 @@ func (a *apiServer) CreateExperiment(
 	return &apiv1.CreateExperimentResponse{
 		Experiment: protoExp, Config: protoutils.ToStruct(e.Config),
 	}, nil
+}
+
+var metricsStreamPeriod = 30 * time.Second
+
+func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
+	resp apiv1.Determined_MetricNamesServer) error {
+	experimentID := int(req.ExperimentId)
+	seenTrain := make(map[string]bool)
+	seenValid := make(map[string]bool)
+
+	// Get searcher metric, include in first response
+	confBytes, err := a.m.db.ExperimentConfigRaw(experimentID)
+	if err != nil {
+		return errors.Wrapf(err,
+			"error fetching experiment config from database: %d", experimentID)
+	}
+
+	var conf map[string]interface{}
+	var searcher map[string]interface{}
+	var searcherMetric string
+	err = json.Unmarshal(confBytes, &conf)
+	if err != nil {
+		return errors.Wrapf(err,
+			"error unmarshalling experiment config: %d", experimentID)
+	}
+	searcher = conf["searcher"].(map[string]interface{})
+	searcherMetric = searcher["metric"].(string)
+
+	for {
+		var response apiv1.MetricNamesResponse
+		response.SearcherMetric = searcherMetric
+
+		newTrain, newValid, err := a.m.db.MetricNames(experimentID)
+		if err != nil {
+			return errors.Wrapf(err,
+				"error fetching metric names for experiment: %d", experimentID)
+		}
+		for _, name := range newTrain {
+			if seen := seenTrain[name]; !seen {
+				response.TrainingMetrics = append(response.TrainingMetrics, name)
+				seenTrain[name] = true
+			}
+		}
+		for _, name := range newValid {
+			if seen := seenValid[name]; !seen {
+				response.ValidationMetrics = append(response.ValidationMetrics, name)
+				seenValid[name] = true
+			}
+		}
+
+		if err := resp.Send(&response); err != nil {
+			return err
+		}
+
+		experiment, _ := a.getExperiment(experimentID)
+		if experiment.State == experimentv1.State_STATE_COMPLETED {
+			return nil
+		}
+
+		time.Sleep(metricsStreamPeriod)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
+	resp apiv1.Determined_MetricBatchesServer) error {
+	experimentID := int(req.ExperimentId)
+	trainingMetric := req.TrainingMetric
+	validationMetric := req.ValidationMetric
+	if len(trainingMetric) == 0 && len(validationMetric) == 0 {
+		return errors.New(
+			"must provide a training metric, or a validation metric: neither provided")
+	}
+	if len(trainingMetric) > 0 && len(validationMetric) > 0 {
+		return errors.New(
+			"must provide a training metric, or a validation metric: not both")
+	}
+	var metricType string
+	var metricName string
+	if len(trainingMetric) > 0 {
+		metricType = "training"
+		metricName = trainingMetric
+	} else {
+		metricType = "validation"
+		metricName = validationMetric
+	}
+
+	var startTime time.Time
+	for {
+		var response apiv1.MetricBatchesResponse
+
+		newBatches, endTime, err := a.m.db.MetricBatches(experimentID, trainingMetric,
+			validationMetric, startTime)
+		if err != nil {
+			return errors.Wrapf(err,
+				"error fetching batches recorded for %s metric %s in experiment %d",
+				metricType, metricName, experimentID)
+		}
+		startTime = endTime
+
+		response.Batches = newBatches
+
+		if err := resp.Send(&response); err != nil {
+			return errors.Wrapf(err, "error sending batches recorded for metrics")
+		}
+
+		experiment, _ := a.getExperiment(experimentID)
+		if experiment.State == experimentv1.State_STATE_COMPLETED {
+			return nil
+		}
+
+		time.Sleep(metricsStreamPeriod)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
 }
