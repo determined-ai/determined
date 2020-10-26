@@ -39,11 +39,10 @@ good fault tolerance built into your software. Determined was built with
 fault-tolerance as a core feature, so using spot instances is usually as
 easy as setting ``spot: true`` in the master configuration.
 
-AWS might not always have the capacity to fulfill spot requests.
-When AWS is out of capacity, the Determined cluster will wait
-until AWS has capacity and can fulfill the requests. This will
-be visible in the master logs.
-
+AWS might not always have the capacity to fulfill spot requests. When
+AWS is out of capacity, the Determined cluster will wait until AWS has
+capacity and can fulfill the requests. This will be visible in the
+master logs.
 
 **************
  Spot Pricing
