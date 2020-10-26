@@ -66,12 +66,10 @@ const MetricSelectFilter: React.FC<Props> = ({
 
     if ((newValue as string) === allOptionId) {
       (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
-      setFilterString('');
       return;
     }
     if ((newValue as string) === resetOptionId) {
       (onChange as MultipleHandler)(defaultMetricNames.sort(metricNameSorter));
-      setFilterString('');
       return;
     }
 
@@ -85,7 +83,6 @@ const MetricSelectFilter: React.FC<Props> = ({
     } else {
       (onChange as SingleHandler)(metricName);
     }
-    setFilterString('');
   }, [ multiple, onChange, value, visibleMetrics, defaultMetricNames ]);
 
   const handleMetricDeselect = useCallback((newValue: SelectValue) => {
@@ -157,6 +154,7 @@ const MetricSelectFilter: React.FC<Props> = ({
   }, [ metricValues, totalNumMetrics ]);
 
   return <SelectFilter
+    autoClearSearchValue={false}
     disableTags
     dropdownMatchSelectWidth={400}
     filterOption={handleFiltering}
