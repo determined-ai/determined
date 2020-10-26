@@ -1,13 +1,14 @@
-import { Select, Space } from 'antd';
+import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js/lib/core';
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
 import { clone } from 'utils/data';
 import { capitalize, generateAlphaNumeric } from 'utils/string';
 
 import css from './MetricChart.module.scss';
+import ResponsiveFilters from './ResponsiveFilters';
 import Section from './Section';
 import SelectFilter from './SelectFilter';
 
@@ -20,6 +21,7 @@ interface Props {
   title: string;
   xLabel: string;
   yLabel: string;
+  metricsSelected?: boolean;
 }
 
 interface Range {
@@ -66,6 +68,11 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   const [ isRendered, setIsRendered ] = useState(false);
   const [ isZoomed, setIsZoomed ] = useState(false);
   const resize = useResize(chartRef);
+
+  const hasFiltersApplied = useMemo(() => {
+    console.log('metricsSelected', props.metricsSelected);
+    return props.metricsSelected || scale !== Scale.Linear;
+  }, [ props.metricsSelected, scale ]);
 
   const handleDoubleClick = useCallback(() => {
     setRange(clone(maxRange));
@@ -194,21 +201,24 @@ const MetricChart: React.FC<Props> = (props: Props) => {
     Plotly.Plots.resize(chartRef.current);
   }, [ resize ]);
 
-  const chartOptions = (
-    <Space size="small">
-      {props.options}
-      <SelectFilter
-        enableSearchFilter={false}
-        label="Scale"
-        showSearch={false}
-        value={scale}
-        onSelect={handleScaleSelect}>
-        {Object.values(Scale).map(scale => (
-          <Option key={scale} value={scale}>{capitalize(scale)}</Option>
-        ))}
-      </SelectFilter>
-    </Space>
+  const scaleOptions = (
+    <SelectFilter
+      enableSearchFilter={false}
+      label="Scale"
+      showSearch={false}
+      value={scale}
+      onSelect={handleScaleSelect}>
+      {Object.values(Scale).map(scale => (
+        <Option key={scale} value={scale}>{capitalize(scale)}</Option>
+      ))}
+    </SelectFilter>
   );
+  const chartOptions = props.options ? (
+    <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
+      {props.options}
+      {scaleOptions}
+    </ResponsiveFilters>
+  ) : scaleOptions;
 
   return (
     <Section bodyBorder maxHeight options={chartOptions} title={props.title}>

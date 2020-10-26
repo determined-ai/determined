@@ -15,6 +15,7 @@ import Icon from 'components/Icon';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
+import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter, { ALL_VALUE } from 'components/SelectFilter';
@@ -110,6 +111,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ contError, setContError ] = useState<string>();
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
+  const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
@@ -129,6 +131,12 @@ const TrialDetailsComp: React.FC = () => {
     storageMetricsPath && `${storageMetricsPath}/${STORAGE_CHART_METRICS_KEY}`;
   const storageTableMetricsKey =
     storageMetricsPath && `${storageMetricsPath}/${STORAGE_TABLE_METRICS_KEY}`;
+
+  const hasFiltersApplied = useMemo(() => {
+    const metricsApplied = JSON.stringify(metrics) !== JSON.stringify(defaultMetrics);
+    const checkpointValidationFilterApplied = hasCheckpointOrValidation as string !== ALL_VALUE;
+    return metricsApplied || checkpointValidationFilterApplied;
+  }, [ hasCheckpointOrValidation, metrics, defaultMetrics ]);
 
   const metricNames = useMemo(() => extractMetricNames(trial?.steps), [ trial?.steps ]);
 
@@ -402,6 +410,7 @@ If the problem persists please contact support.',
         const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
         setDefaultMetrics(defaultMetrics);
         const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
+        setDefaultMetrics(defaultMetrics);
         setMetrics(initMetrics);
       } catch (e) {
         if (axios.isCancel(e)) return;
@@ -432,7 +441,7 @@ If the problem persists please contact support.',
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
   const options = (
-    <Space size="middle">
+    <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
       <SelectFilter
         dropdownMatchSelectWidth={300}
         label="Show"
@@ -447,7 +456,7 @@ If the problem persists please contact support.',
         multiple
         value={metrics}
         onChange={handleMetricChange} />}
-    </Space>
+    </ResponsiveFilters>
   );
 
   return (
