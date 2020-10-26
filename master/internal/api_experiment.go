@@ -509,14 +509,6 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if validateOnly {
-		// old api: return nil, c.NoContent(http.StatusNoContent)
-		// or we can use codes.already exists.
-		// if we don't want to respond with an error we could
-		// 1. change the response to a union that has an OK
-		// 2. convert dbExp to the proto equivalent and respond with that.
-		// 3. return an empty or null experiment
-		// return nil, status.Errorf(codes.Aborted, "experiment is valid")
-		// Respond with a {experiment: null}
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
 
