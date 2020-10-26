@@ -6,6 +6,7 @@ import { ALL_VALUE, CommandType, TaskFilters, TaskType } from 'types';
 import { capitalize } from 'utils/string';
 
 import IconFilterButtons from './IconFilterButtons';
+import ResponsiveFilters from './ResponsiveFilters';
 import SelectFilter from './SelectFilter';
 import StateSelectFilter from './StateSelectFilter';
 import css from './TaskFilter.module.scss';
@@ -76,7 +77,7 @@ const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
   }, [ filters.types, showExperiments ]);
 
   return (
-    <div className={css.base}>
+    <ResponsiveFilters hasFiltersApplied={false}>
       <IconFilterButtons buttons={filterTypeConfig} onClick={handleTypeClick} />
       <StateSelectFilter
         showCommandStates={showCommandStates}
@@ -91,7 +92,7 @@ const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
         onSelect={handleLimitSelect}>
         {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
       </SelectFilter>}
-    </div>
+    </ResponsiveFilters>
   );
 };
 
