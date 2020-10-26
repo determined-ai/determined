@@ -39,16 +39,11 @@ good fault tolerance built into your software. Determined was built with
 fault-tolerance as a core feature, so using spot instances is usually as
 easy as setting ``spot: true`` in the master configuration.
 
-However, Determined cannot solve the problem of AWS not having enough
-capacity. If you are using Determined with spot instances and are
-expecting instances to be created, but you aren't seeing them get
-created, it is possible that Determined is sending requests to AWS to
-create spot instances, but AWS is out of capacity so the requests are
-stuck until capacity becomes available. Unfortunately, AWS's available
-capacity at any time is a tightly-guarded secret, so the best Determined
-can do is request instances and see how AWS responds. If Determined is
-unable to create spot instances due to lack of AWS capacity, this will
+AWS might not always have the capacity to fulfill spot requests.
+When AWS is out of capacity, the Determined cluster will wait
+until AWS has capacity and can fulfill the requests. This will
 be visible in the master logs.
+
 
 **************
  Spot Pricing
