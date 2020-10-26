@@ -46,10 +46,14 @@ func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, l
 		EndIndex:   endIndex,
 		Total:      total,
 	}
-	rv.Elem().Set(rv.Elem().Slice(int(startIndex), int(endIndex)))
-	return grpc.ValidateRequest(
+	err := grpc.ValidateRequest(
 		func() (bool, string) { return 0 <= startIndex && startIndex <= total, "offset out of bounds" },
 	)
+	if err != nil {
+		return err
+	}
+	rv.Elem().Set(rv.Elem().Slice(int(startIndex), int(endIndex)))
+	return nil
 }
 
 // sort sorts the provided slice in place. The second parameter denotes whether sorting should be
