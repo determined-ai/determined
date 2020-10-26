@@ -115,6 +115,21 @@ Parameters:
     Description: Whether to allow CORS requests or not
     Default: false
 
+  MasterTLSCert:
+    Type: String
+    Description: Base64-encoded TLS certificate for the master
+    Default: false
+
+  MasterTLSKey:
+    Type: String
+    Description: Base64-encoded TLS key for the master
+    Default: false
+
+  MasterCertName:
+    Type: String
+    Description: Hostname to verify the master's TLS certificate against
+    Default: ""
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -227,6 +242,24 @@ Resources:
       GroupId: !GetAtt MasterSecurityGroup.GroupId
       FromPort: 8080
       ToPort: 8080
+      IpProtocol: tcp
+      CidrIp: !Ref InboundCIDRRange
+
+  MasterSecurityGroupTLSIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8443
+      ToPort: 8443
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  MasterSecurityGroupTLSIngressUI:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8443
+      ToPort: 8443
       IpProtocol: tcp
       CidrIp: !Ref InboundCIDRRange
 
@@ -591,6 +624,16 @@ Resources:
 
             #!/bin/bash
             mkdir -p /usr/local/determined/etc
+
+            scheme=http
+            port=8080
+            if [ -n "${MasterTLSCert}" ] && [ -n "${MasterTLSKey}" ]; then
+              scheme=https
+              port=8443
+              base64 -d <<<${MasterTLSCert} | tee /usr/local/determined/etc/master.crt
+              base64 -d <<<${MasterTLSKey} | tee /usr/local/determined/etc/master.key
+            fi
+
             cat << EOF > /usr/local/determined/etc/master.yaml
             checkpoint_storage:
               type: s3
@@ -611,6 +654,7 @@ Resources:
             enable_cors: ${EnableCORS}
 
             provisioner:
+              master_cert_name: ${MasterCertName}
               iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
               image_id: ${AgentAmi}
               agent_docker_image: determinedai/determined-agent:${Version}
@@ -618,7 +662,7 @@ Resources:
               instance_type: ${AgentInstanceType}
               log_group: ${LogGroup}
               log_stream: determined-agent
-              master_url: http://local-ipv4:8080
+              master_url: $scheme://local-ipv4:$port
               max_idle_agent_period: ${MaxIdleAgentPeriod}
               max_agent_starting_period: ${MaxAgentStartingPeriod}
               min_instances: ${MinDynamicAgents}
@@ -641,6 +685,16 @@ Resources:
                 mkdir /mnt/fsx
                 mount -t lustre -o noatime,flock ${FSx}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSx.LustreMountName} /mnt/fsx
             EOF
+
+            if [ "$scheme" = https ]; then
+              cat << EOF >> /usr/local/determined/etc/master.yaml
+
+            security:
+              tls:
+                cert: /etc/determined/master.crt
+                key: /etc/determined/master.key
+            EOF
+            fi
 
             apt-get remove docker docker-engine docker.io containerd runc
             apt-get update
@@ -673,8 +727,10 @@ Resources:
                 --log-driver=awslogs \
                 --log-opt awslogs-group=${LogGroup} \
                 --log-opt awslogs-stream=determined-master \
-                -p 8080:8080 \
+                -p "$port":"$port" \
                 -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
+                -v /usr/local/determined/etc/master.crt:/etc/determined/master.crt \
+                -v /usr/local/determined/etc/master.key:/etc/determined/master.key \
                 -v /usr/local/determined/etc/AmazonRootCA1.pem:/etc/determined/etc/db_ssl_root_cert.pem \
                 determinedai/determined-master:${Version}
             --//

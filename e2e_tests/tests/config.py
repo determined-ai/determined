@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from determined_common import yaml
 
+MASTER_SCHEME = "http"
 MASTER_IP = "localhost"
 MASTER_PORT = "8080"
 DET_VERSION = None
@@ -60,7 +61,7 @@ def load_config(config_path: str) -> Any:
 
 
 def make_master_url(suffix: str = "") -> str:
-    return "http://{}:{}/{}".format(MASTER_IP, MASTER_PORT, suffix)
+    return "{}://{}:{}/{}".format(MASTER_SCHEME, MASTER_IP, MASTER_PORT, suffix)
 
 
 def set_slots_per_trial(config: Dict[Any, Any], slots: int) -> Dict[Any, Any]:

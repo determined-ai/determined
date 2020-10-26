@@ -16,6 +16,9 @@ class VPC(base.DeterminedDeployment):
 
     template_parameter_keys = [
         constants.cloudformation.ENABLE_CORS,
+        constants.cloudformation.MASTER_TLS_CERT,
+        constants.cloudformation.MASTER_TLS_KEY,
+        constants.cloudformation.MASTER_CERT_NAME,
         constants.cloudformation.KEYPAIR,
         constants.cloudformation.MASTER_INSTANCE_TYPE,
         constants.cloudformation.AGENT_INSTANCE_TYPE,
