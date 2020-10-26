@@ -232,8 +232,8 @@ message GetExperimentValidationHistoryResponse {
 message CreateExperimentRequest {
   // Experiment context.
   repeated determined.util.v1.File model_definition = 1;
-  // Experiment config.
-  google.protobuf.Struct config = 2;
+  // Experiment config (YAML).
+  string config = 2;
   // Only validate instead of creating the experiment. A dry run.
   bool validate_only = 3;
   // Parent experiment id.
@@ -243,4 +243,6 @@ message CreateExperimentRequest {
 message CreateExperimentResponse {
   // The created experiment.
   determined.experiment.v1.Experiment experiment = 1;
+  // The created experiment config.
+  google.protobuf.Struct config = 2;
 }

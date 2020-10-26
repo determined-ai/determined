@@ -500,7 +500,7 @@ func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
 	detParams := CreateExperimentParams{
-		ConfigBytes:  protojson.Format(req.Config),
+		ConfigBytes:  req.Config,
 		ModelDef:     filesToArchive(req.ModelDefinition),
 		ValidateOnly: req.ValidateOnly,
 	}
@@ -534,5 +534,7 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.CreateExperimentResponse{Experiment: protoExp}, nil
+	return &apiv1.CreateExperimentResponse{
+		Experiment: protoExp, Config: protoutils.ToStruct(e.Config),
+	}, nil
 }
