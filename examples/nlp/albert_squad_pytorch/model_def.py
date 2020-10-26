@@ -15,6 +15,7 @@ from transformers.data.metrics.squad_metrics import (
     compute_predictions_logits,
     squad_evaluate,
 )
+from radam import RAdam
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -34,7 +35,6 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             cache_dir=None
         )
 
-        # TODO: Make cache configurable
         cache_dir_per_rank = data.cache_dir(USE_BIND_DIR, self.context.distributed.get_rank())
 
         config = self.config_class.from_pretrained(
@@ -63,11 +63,27 @@ class AlbertSQuADPyTorch(PyTorchTrial):
                 "weight_decay": 0.0,
             },
         ]
-        self.optimizer = self.context.wrap_optimizer(AdamW(
-            optimizer_grouped_parameters,
-            lr=self.context.get_hparam("learning_rate"),
-            eps=self.context.get_hparam("adam_epsilon")
-        ))
+
+        if self.context.get_hparam("use_radam"):
+            lr = self.context.get_hparam("learning_rate")
+            eps = self.context.get_hparam("adam_epsilon")
+            print(f"Using RAdam with params: lr={lr}, ε={eps}")
+            optimizer = RAdam(
+                optimizer_grouped_parameters,
+                lr=lr,
+                eps=eps
+            )
+        else:
+            lr = self.context.get_hparam("learning_rate")
+            eps = self.context.get_hparam("adam_epsilon")
+            print(f"Using AdamW with params: lr={lr}, ε={eps}")
+            optimizer = AdamW(
+                optimizer_grouped_parameters,
+                lr=lr,
+                eps=eps,
+            )
+
+        self.optimizer = self.context.wrap_optimizer(optimizer)
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
             get_linear_schedule_with_warmup(
@@ -119,6 +135,9 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         outputs = self.model(**inputs)
         loss = outputs[0]
 
+        if self.context.distributed.get_rank() == 0:
+            print(f"LR (epoch={epoch_idx}, batch={batch_idx}): ", self.lr_scheduler.get_last_lr())
+
         self.context.backward(loss)
         self.context.step_optimizer(
             self.optimizer,
@@ -127,7 +146,9 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             )
         )
 
+        # return {"loss": loss, "lr": float(self.lr_scheduler.get_lr())}
         return {"loss": loss}
+
 
     def evaluate_full_dataset(self, data_loader: DataLoader):
         all_results = []
@@ -159,6 +180,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         else:
             raise NameError("Incompatible dataset detected")
 
+        # TODO: Make verbose logging configurable
         verbose_logging = False
         predictions = compute_predictions_logits(
             self.validation_examples,

@@ -15,9 +15,9 @@ def data_directory(use_bind_mount, rank):
 
 def cache_dir(use_bind_mount, rank):
     base_dir = BIND_MOUNT_LOC if use_bind_mount else Path("/tmp")
-    return base_dir / f"{rank}"
+    return base_dir / f"cache/{rank}"
 
-def load_and_cache_examples(data_dir: str, tokenizer, task, max_seq_length, doc_stride, max_query_length, evaluate=False, model_name=None):
+def load_and_cache_examples(data_dir: Path, tokenizer, task, max_seq_length, doc_stride, max_query_length, evaluate=False, model_name=None):
     if (task == "SQuAD1.1"):
         train_url = "https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json"
         validation_url = "https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json"
@@ -33,17 +33,22 @@ def load_and_cache_examples(data_dir: str, tokenizer, task, max_seq_length, doc_
     else:
         raise NameError("Incompatible dataset detected")
 
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
+    if not data_dir.exists():
+        data_dir.mkdir(parents=True)
+        # os.makedirs(data_dir)
     if evaluate:
         # TODO: Cache instead of always downloading
         with urllib.request.urlopen(validation_url) as url:
-            with open(data_dir + "/" + validation_file, 'w') as f:
+            val_path = data_dir / validation_file
+            with val_path.open('w') as f:
+            # with open(data_dir  / validation_file, 'w') as f:
                 f.write(url.read().decode())
 
     else:
         with urllib.request.urlopen(train_url) as url:
-            with open(data_dir + "/" + train_file, 'w') as f:
+            train_path = data_dir / train_file
+            # with open(data_dir + "/" + train_file, 'w') as f:
+            with train_path.open('w') as f:
                 f.write(url.read().decode())
 
 
@@ -51,7 +56,7 @@ def load_and_cache_examples(data_dir: str, tokenizer, task, max_seq_length, doc_
     # Load data features from cache or dataset file
     version = "0000"
     cached_features_file = os.path.join(
-        data_dir,
+        str(data_dir.absolute()),
         "cached_{}_{}_{}_{}".format(
             "dev" if evaluate else "train",
             model_name,
@@ -61,7 +66,7 @@ def load_and_cache_examples(data_dir: str, tokenizer, task, max_seq_length, doc_
     )
 
     # Init features and dataset from cache if it exists
-    overwrite_cache = False
+    overwrite_cache = False  # TODO: Make cache wipe configurable
     if os.path.exists(cached_features_file) and not overwrite_cache:
         print("Loading features from cached file %s", cached_features_file)
         features_and_dataset = torch.load(cached_features_file)

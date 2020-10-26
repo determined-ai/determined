@@ -1,13 +1,13 @@
 # After fine-tuning for 150 steps, model should achieve F1 = 88.52 per https://github.com/huggingface/transformers/tree/master/examples/question-answering
-description: ALBert_SQuAD_PyTorch_64gpu
+description: ALBert_SQuAD_PyTorch_8gpu_more_steps
 hyperparameters:
-    global_batch_size: 128
-    learning_rate: 2.1e-4
+    global_batch_size: 16
+    learning_rate: 5e-5
     model_type: 'albert'
     do_lower_case: true
     adam_epsilon: 1e-8
     weight_decay: 0
-    num_warmup_steps: 540
+    num_warmup_steps: 1620
     max_seq_length: 384
     doc_stride: 128
     max_query_length: 64
@@ -15,10 +15,10 @@ hyperparameters:
     max_answer_length: 30
     null_score_diff_threshold: 0.0
     max_grad_norm: 1.0
-    num_training_steps: 1032 # This is the number of optimizer steps. Train for 2 epochs
+    num_training_steps: 16500 # This is the number of optimizer steps. Train for 2 epochs
     use_radam: false
 resources:
-    slots_per_trial: 64
+    slots_per_trial: 8
 searcher:
     name: single
     metric: f1
@@ -27,15 +27,13 @@ searcher:
     smaller_is_better: false
 min_validation_period:
     records: 80000
-reproducibility:
-  experiment_seed: 1600666494
 data:
     pretrained_model_name: "albert-xxlarge-v2"
     download_data: False
     task: "SQuAD2.0"  # SQuaD 2.0 has 132198 example.
 entrypoint: model_def:AlbertSQuADPyTorch
 optimizations:
-    aggregation_frequency: 2
+    aggregation_frequency: 3
 max_restarts: 0
 bind_mounts:
     - host_path: /home/ubuntu/dtrain-fsx/albert-cache/

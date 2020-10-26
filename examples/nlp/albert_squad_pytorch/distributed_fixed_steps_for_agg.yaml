@@ -1,5 +1,5 @@
 # After fine-tuning for 150 steps, model should achieve F1 = 88.52 per https://github.com/huggingface/transformers/tree/master/examples/question-answering
-description: ALBert_SQuAD_PyTorch_64gpu
+description: ALBert_SQuAD_PyTorch_64gpu_more_steps
 hyperparameters:
     global_batch_size: 128
     learning_rate: 2.1e-4
@@ -7,7 +7,7 @@ hyperparameters:
     do_lower_case: true
     adam_epsilon: 1e-8
     weight_decay: 0
-    num_warmup_steps: 540
+    num_warmup_steps: 1080
     max_seq_length: 384
     doc_stride: 128
     max_query_length: 64
@@ -15,7 +15,7 @@ hyperparameters:
     max_answer_length: 30
     null_score_diff_threshold: 0.0
     max_grad_norm: 1.0
-    num_training_steps: 1032 # This is the number of optimizer steps. Train for 2 epochs
+    num_training_steps: 2064 # This is the number of optimizer steps. Train for 2 epochs
     use_radam: false
 resources:
     slots_per_trial: 64
