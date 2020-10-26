@@ -43,7 +43,10 @@ class RNGStateHook(estimator.RunHook):
                 if "tf_rng_global_seed" in self.rng_state:
                     tf.random.set_random_seed(self.rng_state["tf_rng_global_seed"])
             else:
-                if "tf2_rng_global_algorithm" in self.rng_state and tf2_rng_global_state in self.rng_state:
+                if (
+                    "tf2_rng_global_algorithm" in self.rng_state
+                    and "tf2_rng_global_state" in self.rng_state
+                ):
                     algorithm = self.rng_state["tf2_rng_global_algorithm"]
                     state = self.rng_state["tf2_rng_global_state"]
                     generator = tf.random.Generator.from_state(state, algorithm)
