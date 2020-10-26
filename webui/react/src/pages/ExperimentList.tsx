@@ -7,6 +7,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import LabelSelectFilter from 'components/LabelSelectFilter';
 import Page from 'components/Page';
+import ResponsiveFilters from 'components/ResponsiveFilters';
+import ResponsiveTable from 'components/ResponsiveTable';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
@@ -39,7 +41,6 @@ import {
 
 import css from './ExperimentList.module.scss';
 import { columns as defaultColumns } from './ExperimentList.table';
-import ResponsiveTable from './ResponsiveTable';
 
 enum Action {
   Activate = 'Activate',
@@ -83,6 +84,10 @@ const ExperimentList: React.FC = () => {
   const [ search, setSearch ] = useState('');
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+
+  const hasFiltersApplied = useMemo(() => {
+    return filters.showArchived || !filters.states.includes(ALL_VALUE) || !!filters.username;
+  }, [ filters ]);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -319,7 +324,7 @@ const ExperimentList: React.FC = () => {
             placeholder="name"
             prefix={<Icon name="search" size="small" />}
             onChange={handleSearchChange} />
-          <div className={css.filters}>
+          <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
             <Toggle
               checked={filters.showArchived}
               prefixLabel="Show Archived"
@@ -332,7 +337,7 @@ const ExperimentList: React.FC = () => {
               value={filters.states}
               onChange={handleStateChange} />
             <UserSelectFilter value={filters.username} onChange={handleUserChange} />
-          </div>
+          </ResponsiveFilters>
         </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>

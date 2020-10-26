@@ -8,11 +8,6 @@
     justify-content: space-between;
     margin-bottom: var(--theme-sizes-layout-medium);
   }
-  .filters {
-    align-items: center;
-    display: flex;
-  }
-  .filters > *:not(:first-child) { margin-left: var(--theme-sizes-layout-enormous); }
   .search {
     margin-right: var(--theme-sizes-layout-medium);
     max-width: 30rem;
