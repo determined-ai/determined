@@ -64,21 +64,6 @@ type Master struct {
 	trialLogger   *actor.Ref
 }
 
-// fileExists checks if a file exists and is not a directory before we
-// try using it to prevent further errors.
-func fileExists(filename string) (bool, error) {
-	info, err := os.Stat(filename)
-	switch {
-	case os.IsNotExist(err):
-		return false, nil
-	case os.IsPermission(err):
-		return false, nil
-	case err != nil:
-		return false, err
-	}
-	return !info.IsDir(), nil
-}
-
 // New creates an instance of the Determined master.
 func New(version string, logStore *logger.LogBuffer, config *Config) *Master {
 	logger.SetLogrus(config.Log)
@@ -426,14 +411,22 @@ func (m *Master) Run() error {
 		if !isInReactDir {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
-		hasMatchingFile, err := fileExists(requestedFile)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check if file exists")
-		}
 
+		var hasMatchingFile bool
+		stat, err := os.Stat(requestedFile)
+		switch {
+		case os.IsNotExist(err):
+		case os.IsPermission(err):
+			hasMatchingFile = false
+		case err != nil:
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check if file exists")
+		default:
+			hasMatchingFile = !stat.IsDir()
+		}
 		if hasMatchingFile {
 			return c.File(requestedFile)
 		}
+
 		return c.File(reactIndex)
 	})
 
