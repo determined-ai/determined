@@ -20,7 +20,7 @@
 #provisioner:
 
 ## A user friendly name to identify this cluster by.
-#  cluster_name: SF
+#  cluster_name: Dev
 
 ## The url of the Determined master.
 #  master_url: <scheme://host:port>
