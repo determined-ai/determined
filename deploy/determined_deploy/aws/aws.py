@@ -1,9 +1,9 @@
 import sys
-from typing import Dict, List, Optional, Tuple
 import time
-import tqdm
+from typing import Dict, List, Optional, Tuple
 
 import boto3
+import tqdm
 from botocore.exceptions import ClientError, WaiterError
 
 from determined_deploy.aws import constants
@@ -63,7 +63,9 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
         print("Agents and Spot Requests Terminated")
     else:
         print("Terminating Running Agents")
-        terminate_running_agents(stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session)
+        terminate_running_agents(
+            stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session
+        )
         print("Agents Terminated")
 
     # Third, empty the bucket that was created for this stack.
@@ -129,7 +131,9 @@ def update_stack(
     if stack_uses_spot(stack_name, boto3_session):
         clean_up_spot(stack_name, boto3_session, disable_tqdm=True)
     else:
-        terminate_running_agents(stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session)
+        terminate_running_agents(
+            stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session
+        )
 
     try:
         if parameters:
@@ -217,7 +221,7 @@ def stack_uses_spot(stack_name: str, boto3_session: boto3.session.Session) -> bo
         return False
 
     spot_enabled_str_val = params[constants.cloudformation.SPOT_ENABLED]
-    if spot_enabled_str_val.lower() == 'true':
+    if spot_enabled_str_val.lower() == "true":
         return True
     else:
         return False
@@ -285,8 +289,14 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
 
     response = ec2.describe_instances(
         Filters=[
-            {"Name": "tag:Name", "Values": [agent_tag_name]},  # TODO: This does not follow our normal logic for selecting instances managed by Determined
-            {"Name": "instance-state-name", "Values": ["running"]},  # TODO: Shouldn't this catch instances that are spinning up?
+            {
+                "Name": "tag:Name",
+                "Values": [agent_tag_name],
+            },  # TODO: This does not follow our normal logic for selecting instances managed by Determined
+            {
+                "Name": "instance-state-name",
+                "Values": ["running"],
+            },  # TODO: Shouldn't this catch instances that are spinning up?
         ]
     )
 
@@ -310,19 +320,15 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
 
 
 # EC2 Spot
-def list_spot_requests_for_stack(stack_name: str, boto3_session: boto3.session.Session) -> List[Dict]:
+def list_spot_requests_for_stack(
+    stack_name: str, boto3_session: boto3.session.Session
+) -> List[Dict]:
     tag_key, tag_val = get_management_tag_key_value(stack_name)
     ec2 = boto3_session.client("ec2")
     response = ec2.describe_spot_instance_requests(
         Filters=[
-            {
-                'Name': f'tag:{tag_key}',
-                'Values': [tag_val]
-            },
-            {
-                'Name': f'state',
-                'Values': ['open', 'active']
-            }
+            {"Name": f"tag:{tag_key}", "Values": [tag_val]},
+            {"Name": f"state", "Values": ["open", "active"]},
         ]
     )
     spot_requests = response["SpotInstanceRequests"]
@@ -339,9 +345,9 @@ def list_spot_requests_for_stack(stack_name: str, boto3_session: boto3.session.S
     return reqs
 
 
-
-
-def delete_spot_requests_and_agents(stack_name: str, boto3_session: boto3.session.Session) -> List[str]:
+def delete_spot_requests_and_agents(
+    stack_name: str, boto3_session: boto3.session.Session
+) -> List[str]:
     """
     List all spot requests. Any requests that have an associated instance,
     terminate the instances (this will automatically cancel the spot
@@ -371,7 +377,9 @@ def delete_spot_requests_and_agents(stack_name: str, boto3_session: boto3.sessio
     return instances_to_del
 
 
-def clean_up_spot(stack_name: str, boto3_session: boto3.session.Session, disable_tqdm: bool = False):
+def clean_up_spot(
+    stack_name: str, boto3_session: boto3.session.Session, disable_tqdm: bool = False
+):
 
     # The spot API is eventually consistent and the only way to guarantee
     # that we don't leave any spot requests alive (that may eventually be
@@ -384,10 +392,13 @@ def clean_up_spot(stack_name: str, boto3_session: boto3.session.Session, disable
 
     all_terminated_instance_ids = set()
 
-    format_str = '{l_bar}{bar}| (remaining time: {remaining})'
-    pbar = tqdm.tqdm(total=SPOT_WAIT_SECONDS,
-                     desc="Cleaning up spot instances and spot instance requests",
-                     bar_format=format_str, disable=disable_tqdm)
+    format_str = "{l_bar}{bar}| (remaining time: {remaining})"
+    pbar = tqdm.tqdm(
+        total=SPOT_WAIT_SECONDS,
+        desc="Cleaning up spot instances and spot instance requests",
+        bar_format=format_str,
+        disable=disable_tqdm,
+    )
     progress_bar_state = 0
     while True:
         elapsed_time = time.time() - start_time
@@ -420,8 +431,6 @@ def clean_up_spot(stack_name: str, boto3_session: boto3.session.Session, disable
             except WaiterError as e:
                 if n == NUM_WAITS - 1:
                     raise e
-
-
 
 
 # S3

@@ -1,7 +1,7 @@
 import argparse
 import re
 import sys
-from typing import Dict, Type, Union, Callable
+from typing import Callable, Dict, Type, Union
 
 import boto3
 
@@ -17,7 +17,9 @@ def validate_spot_max_price() -> Callable:
             if not (char.isdigit() or char == "."):
                 raise argparse.ArgumentTypeError("must only contain digits and a decimal point")
         return s
+
     return validate
+
 
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
     subparser = subparsers.add_parser("down", help="delete CloudFormation stack")
