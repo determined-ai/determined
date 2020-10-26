@@ -328,19 +328,19 @@ def list_spot_requests_for_stack(
     response = ec2.describe_spot_instance_requests(
         Filters=[
             {"Name": f"tag:{tag_key}", "Values": [tag_val]},
-            {"Name": f"state", "Values": ["open", "active"]},
+            {"Name": "state", "Values": ["open", "active"]},
         ]
     )
     spot_requests = response["SpotInstanceRequests"]
     reqs = []
     for s in spot_requests:
-        req = dict(
-            id=s["SpotInstanceRequestId"],
-            state=s["State"],
-            statusCode=s["Status"]["Code"],
-            statusMessage=s["Status"]["Message"],
-            instanceId=s.get("InstanceId", None),
-        )
+        req = {
+            "id": s["SpotInstanceRequestId"],
+            "state": s["State"],
+            "statusCode": s["Status"]["Code"],
+            "statusMessage": s["Status"]["Message"],
+            "instanceId": s.get("InstanceId", None),
+        }
         reqs.append(req)
     return reqs
 
