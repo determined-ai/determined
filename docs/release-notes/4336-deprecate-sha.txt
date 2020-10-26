@@ -2,5 +2,4 @@
 
 **Improvements**
 
--   Deprecate Adaptive (Simple) and Adaptive (Advanced)
-    as HP Search algoriths in favor of Adaptive (ASHA).
+-   Deprecate Adaptive (Simple) and Adaptive (Advanced) as HP Search algorithms in favor of Adaptive (ASHA).
