@@ -25,7 +25,7 @@ def run_all(ts: List[threading.Thread]) -> None:
         t.join()
 
 
-def main() -> None:
+def main() -> int:
     rank = os.environ.get("HOROVOD_RANK")
     proc = subprocess.Popen(
         [
@@ -47,6 +47,8 @@ def main() -> None:
             ]
         )
 
+    return proc.returncode
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
