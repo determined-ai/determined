@@ -661,9 +661,9 @@ Adaptive (Simple)
 
 .. warning::
 
-   Adaptive (Simple) will be deprecated. We recommend using the
-   state-of-the-art :ref:`Adaptive (ASHA)
-   <experiment-configuration-searcher-adaptive>` searcher.
+   Adaptive (Simple) is deprecated and will be removed in a future
+   release. We recommend using the state-of-the-art :ref:`Adaptive
+   (ASHA) <experiment-configuration-searcher-adaptive>` searcher.
 
 The ``adaptive_simple`` search method is a simpler interface to the
 :ref:`adaptive <experiment-configuration-searcher-adaptive>` search
@@ -735,9 +735,9 @@ Adaptive (Advanced)
 
 .. warning::
 
-   Adaptive (Advanced) will be deprecated. We recommend using the
-   state-of-the-art :ref:`Adaptive (ASHA)
-   <experiment-configuration-searcher-adaptive>` searcher.
+   Adaptive (Advanced) is deprecated and will be removed in a future
+   release. We recommend using the state-of-the-art :ref:`Adaptive
+   (ASHA) <experiment-configuration-searcher-adaptive>` searcher.
 
 The ``adaptive`` search method is a theoretically principled and
 empirically state-of-the-art method that adaptively allocates resources

@@ -2,5 +2,5 @@
 
 **Improvements**
 
--  Deprecation notice for Adaptive (Simple) and Adaptive (Advanced) HP
-   Search algorithms.
+-  Adaptive (Simple) and Adaptive (Advanced) HP Search algorithms are
+   deprecated and will be removed in a future release.

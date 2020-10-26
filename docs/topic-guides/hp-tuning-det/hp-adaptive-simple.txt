@@ -6,9 +6,9 @@
 
 .. warning::
 
-   Adaptive (Simple) will be deprecated. We recommend using the
-   state-of-the-art :ref:`Adaptive (ASHA)
-   <topic-guides_hp-tuning-det_adaptive-asha>` searcher.
+   Adaptive (Simple) is deprecated and will be removed in a future
+   release. We recommend using the state-of-the-art :ref:`Adaptive
+   (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>` searcher.
 
 The ``adaptive_simple`` searcher takes two intuitive configuration
 options capturing how many configurations to search and a maximum

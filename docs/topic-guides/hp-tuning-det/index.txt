@@ -34,9 +34,10 @@ Synchronous Searchers
 
 .. warning::
 
-   Adaptive (Simple) and Adaptive (Advanced) will be deprecated. We
-   recommend using the state-of-the-art :ref:`Adaptive (ASHA)
-   <topic-guides_hp-tuning-det_adaptive-asha>` searcher.
+   Adaptive (Simple) and Adaptive (Advanced) are deprecated and will be
+   removed in a future release. We recommend using the state-of-the-art
+   :ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`
+   searcher.
 
 Determined also offers two synchronous adaptive searchers that differ in
 their level of configurability.
