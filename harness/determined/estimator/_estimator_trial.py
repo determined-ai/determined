@@ -40,21 +40,24 @@ class RNGStateHook(estimator.RunHook):
             random.setstate(self.rng_state["random_rng_state"])
 
             if version.parse(tf.__version__) < version.parse("2.0.0"):
-                tf.random.set_random_seed(self.rng_state["tf_rng_global_seed"])
+                if "tf_rng_global_seed" in self.rng_state:
+                    tf.random.set_random_seed(self.rng_state["tf_rng_global_seed"])
             else:
-                algorithm = self.rng_state["tf2_rng_global_algorithm"]
-                state = self.rng_state["tf2_rng_global_state"]
-                generator = tf.random.Generator.from_state(state, algorithm)
-                tf.random.set_global_generator(generator)
+                if "tf2_rng_global_algorithm" in self.rng_state and tf2_rng_global_state in self.rng_state:
+                    algorithm = self.rng_state["tf2_rng_global_algorithm"]
+                    state = self.rng_state["tf2_rng_global_state"]
+                    generator = tf.random.Generator.from_state(state, algorithm)
+                    tf.random.set_global_generator(generator)
 
     def on_checkpoint_end(self, checkpoint_dir: str) -> None:
         rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
-        if version.parse(tf.__version__) < version.parse("2.0.0"):
-            rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
-        else:
-            generator = tf.random.get_global_generator()
-            rng_state["tf2_rng_global_algorithm"] = generator.algorithm
-            rng_state["tf2_rng_global_state"] = generator.state
+        if tf.executing_eagerly():
+            if version.parse(tf.__version__) < version.parse("2.0.0"):
+                rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
+            else:
+                generator = tf.random.get_global_generator()
+                rng_state["tf2_rng_global_algorithm"] = self.generator.algorithm
+                rng_state["tf2_rng_global_state"] = self.generator.state
         with open(checkpoint_dir + "/rng_state.pkl", "wb") as f:
             pickle.dump(rng_state, f)
 
