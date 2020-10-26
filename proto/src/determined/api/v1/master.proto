@@ -14,13 +14,7 @@ message GetMasterRequest {}
 message GetMasterResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [
-        "version",
-        "master_id",
-        "cluster_id",
-        "config",
-        "cluster_name"
-      ]
+      required: [ "version", "master_id", "cluster_id", "cluster_name" ]
     }
   };
   // The current version of the master.
@@ -37,6 +31,9 @@ message GetMasterResponse {
 message GetMasterConfigRequest {}
 // Response to GetMasterRequest.
 message GetMasterConfigResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "config" ] }
+  };
   // The config file loaded by the master.
   google.protobuf.Struct config = 1;
 }
