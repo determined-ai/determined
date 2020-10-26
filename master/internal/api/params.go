@@ -7,11 +7,8 @@ import (
 )
 
 type Pagination struct {
-	Offset     int
-	Limit      int
-	Total      int
-	StartIndex int
-	EndIndex   int
+	StartIndex int // Inclusive
+	EndIndex   int // Exclusive
 }
 
 // Paginate calculates pagination values. Negative offsets denotes that offsets should be
@@ -31,11 +28,8 @@ func Paginate(total, offset, limit int) (*Pagination, error) {
 	}
 
 	p := Pagination{
-		Offset:     offset,
-		Limit:      limit,
 		StartIndex: startIndex,
 		EndIndex:   endIndex,
-		Total:      total,
 	}
 	return &p, nil
 }
