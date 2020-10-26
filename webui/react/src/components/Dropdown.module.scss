@@ -16,6 +16,7 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   .content > :global(.ant-menu),
   .content > * {
     background-color: var(--theme-colors-monochrome-17);
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
     border-radius: var(--theme-sizes-border-radius);
     box-shadow: var(--theme-shadow);
   }
@@ -27,70 +28,84 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
 }
 .base.arrow > .content::after {
   background-color: var(--theme-colors-monochrome-17);
+  border-color: var(--theme-colors-monochrome-13);
+  border-style: solid;
   content: '';
   height: var(--theme-sizes-layout-medium);
   position: absolute;
   width: var(--theme-sizes-layout-medium);
 }
 .base.arrow.bottom > .content::after {
+  border-width: var(--theme-sizes-border-width) 0 0 var(--theme-sizes-border-width);
   left: 50%;
   top: 0;
-  transform: translate(-0.4rem, -0.4rem)  rotate(45deg);
+  transform: translate(-0.4rem, -0.4rem) rotate(45deg);
 }
 .base.arrow.bottomLeft > .content::after {
+  border-width: var(--theme-sizes-border-width) 0 0 var(--theme-sizes-border-width);
   left: 0;
   top: 0;
-  transform: translate(0.8rem, -0.4rem)  rotate(45deg);
+  transform: translate(0.8rem, -0.4rem) rotate(45deg);
 }
 .base.arrow.bottomRight > .content::after {
+  border-width: var(--theme-sizes-border-width) 0 0 var(--theme-sizes-border-width);
   right: 0;
   top: 0;
-  transform: translate(-0.8rem, -0.4rem)  rotate(45deg);
+  transform: translate(-0.8rem, -0.4rem) rotate(45deg);
 }
 .base.arrow.left > .content::after {
+  border-width: var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0 0;
   right: 0;
   top: 50%;
-  transform: translate(-0.4rem, -0.4rem)  rotate(45deg);
+  transform: translate(0.4rem, -0.4rem) rotate(45deg);
 }
 .base.arrow.leftTop > .content::after {
+  border-width: var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0 0;
   right: 0;
   top: 0;
-  transform: translate(-0.4rem, 0.8rem)  rotate(45deg);
+  transform: translate(0.4rem, 0.8rem) rotate(45deg);
 }
 .base.arrow.leftBottom > .content::after {
+  border-width: var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0 0;
   bottom: 0;
   right: 0;
-  transform: translate(-0.4rem, -0.8rem)  rotate(45deg);
+  transform: translate(0.4rem, -0.8rem) rotate(45deg);
 }
 .base.arrow.right > .content::after {
+  border-width: 0 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width);
   left: 0;
   top: 50%;
-  transform: translate(-0.4rem, -0.4rem)  rotate(45deg);
+  transform: translate(-0.4rem, -0.4rem) rotate(45deg);
 }
 .base.arrow.rightTop > .content::after {
+  border-width: 0 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width);
   left: 0;
   top: 0;
-  transform: translate(-0.4rem, 0.8rem)  rotate(45deg);
+  transform: translate(-0.4rem, 0.8rem) rotate(45deg);
 }
 .base.arrow.rightBottom > .content::after {
+  border-width: 0 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width);
   bottom: 0;
   left: 0;
-  transform: translate(-0.4rem, -0.8rem)  rotate(45deg);
+  transform: translate(-0.4rem, -0.8rem) rotate(45deg);
 }
 .base.arrow.top > .content::after {
+  border-width: 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;
   bottom: 0;
   left: 50%;
-  transform: translate(-0.4rem, 0.4rem)  rotate(45deg);
+  transform: translate(-0.4rem, 0.4rem) rotate(45deg);
 }
 .base.arrow.topLeft > .content::after {
+  border-width: 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;
   bottom: 0;
   left: 0;
-  transform: translate(0.8rem, 0.4rem)  rotate(45deg);
+  transform: translate(0.8rem, 0.4rem) rotate(45deg);
 }
 .base.arrow.topRight > .content::after {
+  border-width: 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;
   bottom: 0;
   right: 0;
-  transform: translate(-0.8rem, 0.4rem)  rotate(45deg);
+  transform: translate(-0.8rem, 0.4rem) rotate(45deg);
 }
 .base.visible {
   .content {

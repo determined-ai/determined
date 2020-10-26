@@ -94,7 +94,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
 
   return (
     <div className={classes.join(' ')}>
-      <Label>{props.label}</Label>
+      <Label style={{ textAlign: 'right' }}>{props.label}</Label>
       <Select
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={enableSearchFilter ? handleFilter : true}
