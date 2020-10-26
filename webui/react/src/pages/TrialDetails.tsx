@@ -1,4 +1,4 @@
-import { Button, Col, Form, Input, Modal, Row, Select, Space, Tooltip } from 'antd';
+import { Button, Col, Form, Input, Modal, Row, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import axios from 'axios';
 import yaml from 'js-yaml';

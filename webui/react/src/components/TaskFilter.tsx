@@ -9,7 +9,6 @@ import IconFilterButtons from './IconFilterButtons';
 import ResponsiveFilters from './ResponsiveFilters';
 import SelectFilter from './SelectFilter';
 import StateSelectFilter from './StateSelectFilter';
-import css from './TaskFilter.module.scss';
 import UserSelectFilter from './UserSelectFilter';
 
 const { Option } = Select;

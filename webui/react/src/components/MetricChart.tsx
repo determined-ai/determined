@@ -70,7 +70,6 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   const resize = useResize(chartRef);
 
   const hasFiltersApplied = useMemo(() => {
-    console.log('metricsSelected', props.metricsSelected);
     return props.metricsSelected || scale !== Scale.Linear;
   }, [ props.metricsSelected, scale ]);
 
