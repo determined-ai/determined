@@ -22,10 +22,6 @@ interface Props<T = SelectValue> extends SelectProps<T> {
   ref?: React.Ref<Select<SelectValue>>;
 }
 
-export interface SelectFilterHandles {
-  blur: () => void;
-}
-
 export const ALL_VALUE = 'all';
 
 const countOptions = (children: React.ReactNode): number => {
@@ -43,7 +39,7 @@ const countOptions = (children: React.ReactNode): number => {
   return count;
 };
 
-const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef((
+const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function SelectFilter(
   {
     className = '',
     disableTags = false,
@@ -53,10 +49,10 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef((
     ...props
   }: PropsWithChildren<Props>,
   ref?: React.Ref<Select<SelectValue>>,
-) => {
+) {
 
   const [ isOpen, setIsOpen ] = useState(false);
-  const classes = [ css.base ];
+  const classes = [ className, css.base ];
 
   if (disableTags) classes.push(css.disableTags);
 

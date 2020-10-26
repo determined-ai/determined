@@ -1,13 +1,13 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { createRef, useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
 import { metricNameSorter } from 'utils/data';
 import { metricNameFromValue, metricNameToValue, valueToMetricName } from 'utils/trial';
 
 import BadgeTag from './BadgeTag';
-import SelectFilter, { SelectFilterHandles } from './SelectFilter';
+import SelectFilter from './SelectFilter';
 
 const { OptGroup, Option } = Select;
 const allOptionId = 'ALL_RESULTS';
