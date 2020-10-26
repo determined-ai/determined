@@ -2,4 +2,5 @@
 
 **NEW FEATURES**
 
--  Add option to assign a user friendly name to Determined cluster through master config file.
+-  Add option to assign a user friendly name to Determined cluster
+   through master config file.
