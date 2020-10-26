@@ -2,7 +2,8 @@
 
 **Improvements**
 
-- Allow users to select all metrics in Trial detail page.
-- Allow users to select all results when filtering metrics in the Trial detail page.
-- Allow users to reset selected metrics back to default selection in Trial detail page.
-- Make the text in the dropdown more informative when dropdown is closed.
+- Improve metric selector in Trial detail page.
+  - Users can now select all metrics, select all results that match filter, and reset
+    selected metrics back to defaults. Selecting an option while filtering will no
+    longer close the selector and clear the filter. Also made the text shown when
+    dropdown is closed mor informative.
