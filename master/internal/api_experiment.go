@@ -72,21 +72,6 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 	return exp, nil
 }
 
-func (a *apiServer) getExperimentConfig(experimentID int) (*map[string]interface{}, error) {
-	confBytes, err := a.m.db.ExperimentConfigRaw(experimentID)
-	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error fetching experiment config from database: %d", experimentID)
-	}
-	var conf map[string]interface{}
-	err = json.Unmarshal(confBytes, &conf)
-	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error unmarshalling experiment config: %d", experimentID)
-	}
-	return &conf, nil
-}
-
 func (a *apiServer) GetExperiment(
 	_ context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
@@ -94,9 +79,17 @@ func (a *apiServer) GetExperiment(
 	if err != nil {
 		return nil, err
 	}
-	conf, err := a.getExperimentConfig(int(req.ExperimentId))
+
+	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err,
+			"error fetching experiment config from database: %d", req.ExperimentId)
+	}
+	var conf map[string]interface{}
+	err = json.Unmarshal(confBytes, &conf)
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error unmarshalling experiment config: %d", req.ExperimentId)
 	}
 	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
 }
@@ -516,6 +509,14 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if validateOnly {
+		// old api: return nil, c.NoContent(http.StatusNoContent)
+		// or we can use codes.already exists.
+		// if we don't want to respond with an error we could
+		// 1. change the response to a union that has an OK
+		// 2. convert dbExp to the proto equivalent and respond with that.
+		// 3. return an empty or null experiment
+		// return nil, status.Errorf(codes.Aborted, "experiment is valid")
+		// Respond with a {experiment: null}
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
 
