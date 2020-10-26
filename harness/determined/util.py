@@ -70,12 +70,6 @@ def _dict_to_list(dict_of_lists: Dict[str, List]) -> List[Dict[str, Any]]:
 def validate_batch_metrics(batch_metrics: List[Dict[str, Any]]) -> None:
     metric_dict = _list_to_dict(batch_metrics)
 
-    # We expect that every batch has a metric named "loss".
-    check.true(
-        any(v for v in metric_dict if v.startswith("loss")),
-        "model did not compute 'loss' training metric",
-    )
-
     # We expect that all batches have the same set of metrics.
     metric_dict_keys = metric_dict.keys()
     for idx, metric_dict in zip(range(len(batch_metrics)), batch_metrics):
