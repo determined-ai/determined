@@ -199,8 +199,6 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.SPOT_MAX_PRICE: args.spot_max_price,
     }
 
-    print(det_configs)
-
     deployment_object = deployment_type_map[args.deployment_type](det_configs)
 
     if args.dry_run:

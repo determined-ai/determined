@@ -310,7 +310,7 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
 
 
 # EC2 Spot
-def list_spot_requests_for_stack(stack_name: str, boto3_session: boto3.session.Session):  # TODO: Add return type
+def list_spot_requests_for_stack(stack_name: str, boto3_session: boto3.session.Session) -> List[Dict]:
     tag_key, tag_val = get_management_tag_key_value(stack_name)
     ec2 = boto3_session.client("ec2")
     response = ec2.describe_spot_instance_requests(
@@ -333,7 +333,7 @@ def list_spot_requests_for_stack(stack_name: str, boto3_session: boto3.session.S
             state=s["State"],
             statusCode=s["Status"]["Code"],
             statusMessage=s["Status"]["Message"],
-            instanceId=s.get("InstanceId", None),  # TODO: Test this doesn't fail if there isn't an associated spot instance
+            instanceId=s.get("InstanceId", None),
         )
         reqs.append(req)
     return reqs
@@ -349,7 +349,7 @@ def delete_spot_requests_and_agents(stack_name: str, boto3_session: boto3.sessio
     the spot requests.
 
     Returns the list of instance_ids that were deleted so at the end of spot
-    cleanup, we have wait until all instances have been terminated.
+    cleanup, we can wait until all instances have been terminated.
     """
     spot_reqs = list_spot_requests_for_stack(stack_name, boto3_session)
     instances_to_del = []
@@ -434,13 +434,3 @@ def empty_bucket(bucket_name: str, boto3_session: boto3.session.Session) -> None
     except ClientError as e:
         if e.response["Error"]["Code"] != "NoSuchBucket":
             raise e
-
-
-
-if __name__ == '__main__':
-    REGION = "us-east-1"
-    STACK_NAME = "armand-spot-det-deploy-3"
-    # STACK_NAME = "armand-0-13-6"
-    boto3_session = boto3.Session(region_name=REGION)
-
-    clean_up_spot(STACK_NAME, boto3_session)
