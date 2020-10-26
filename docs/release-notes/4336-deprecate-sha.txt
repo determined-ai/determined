@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  Adaptive (Simple) and Adaptive (Advanced) HP Search algorithms are
+   deprecated and will be removed in a future release.
