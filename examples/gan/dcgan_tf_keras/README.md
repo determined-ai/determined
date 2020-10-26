@@ -1,4 +1,4 @@
-# PyTorch MNIST GAN Example
+# DCGAN Tensorflow Keras GAN Example
 
 This example demonstrates how to build a simple GAN on the MNIST dataset using
 Determined's Tensorflow Keras API. This example is adapted from this [Tensorflow Tutorial](https://www.tensorflow.org/tutorials/generative/dcgan).
