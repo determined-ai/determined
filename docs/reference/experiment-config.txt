@@ -659,8 +659,8 @@ large-scale experiments with hundreds or thousands of trials.
 Adaptive (Simple)
 =================
 
-Note: Adaptive (Simple) will be deprecated.
-We recommend users to use the state-of-the-art Adaptive (ASHA) searcher.
+Note: Adaptive (Simple) will be deprecated. We recommend users to use
+the state-of-the-art Adaptive (ASHA) searcher.
 
 The ``adaptive_simple`` search method is a simpler interface to the
 :ref:`adaptive <experiment-configuration-searcher-adaptive>` search
@@ -730,8 +730,8 @@ configure for most applications of hyperparameter search.
 Adaptive (Advanced)
 ===================
 
-Note: Adaptive (Advanced) will be deprecated.
-We recommend users to use the state-of-the-art Adaptive (ASHA) searcher.
+Note: Adaptive (Advanced) will be deprecated. We recommend users to use
+the state-of-the-art Adaptive (ASHA) searcher.
 
 The ``adaptive`` search method is a theoretically principled and
 empirically state-of-the-art method that adaptively allocates resources
