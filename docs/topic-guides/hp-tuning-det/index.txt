@@ -29,27 +29,6 @@ hyperparameter configurations in a principled fashion.
 asynchronous search functionality more suitable for large-scale HP
 search experiments in the distributed setting.
 
-Synchronous Searchers
-=====================
-
-Determined also offers two synchronous adaptive searchers that differ in
-their level of configurability.
-
-Adaptive (Simple) and Adaptive (Advanced) build on the two prototypical
-adaptive downsampling approaches, `Successive Halving
-<https://arxiv.org/pdf/1502.07943.pdf>`_ (SHA) and `Hyperband
-<https://arxiv.org/abs/1603.06560>`_.
-
-#. :ref:`Adaptive (Simple) <topic-guides_hp-tuning-det_adaptive-simple>`
-   is easier to configure and provides sensible default settings for
-   most situations. This searcher requires just two intuitive settings:
-   the number of configurations to evaluate, and the maximum allowed
-   resource budget per configuration.
-
-#. :ref:`Adaptive (Advanced)
-   <topic-guides_hp-tuning-det_adaptive-advanced>` allows users to
-   control the adaptive search behavior in a more fine-grained way.
-
 *************************
  Other Supported Methods
 *************************
