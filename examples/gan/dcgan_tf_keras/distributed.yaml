@@ -1,0 +1,21 @@
+description: dc_gan
+hyperparameters:
+  noise_dim: 128
+  global_batch_size: 1024
+  discriminator_lr: 0.00003
+  generator_lr: 0.00003
+records_per_epoch: 50000
+searcher:
+  name: single
+  metric: "val_d_loss"
+  smaller_is_better: true
+  max_length:
+    epochs: 50
+entrypoint: determined_model_def:DCGanTrial
+resources:
+  slots_per_trial: 4
+environment:
+  # This model only works with Tensorflow 2.2+.
+  image:
+     cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-1def2ee"
+     gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-1def2ee"
