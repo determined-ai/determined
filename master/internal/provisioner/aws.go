@@ -131,7 +131,7 @@ func newAWSCluster(
 		}),
 	}
 
-	if cluster.SpotInstanceEnabled {
+	if cluster.SpotEnabled {
 		cluster.spot = &spotState{
 			trackedReqs:          newSetOfSpotRequests(),
 			approximateClockSkew: time.Second * 0,
@@ -167,13 +167,13 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
 }
 
 func (c *awsCluster) prestart(ctx *actor.Context) {
-	if c.SpotInstanceEnabled {
+	if c.SpotEnabled {
 		c.attemptToApproximateClockSkew(ctx)
 	}
 }
 
 func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
-	if c.SpotInstanceEnabled {
+	if c.SpotEnabled {
 		return c.listSpot(ctx)
 	}
 	return c.listOnDemand(ctx)
@@ -183,7 +183,7 @@ func (c *awsCluster) launch(
 	ctx *actor.Context,
 	instanceNum int,
 ) {
-	if c.SpotInstanceEnabled {
+	if c.SpotEnabled {
 		c.launchSpot(ctx, instanceNum)
 	} else {
 		c.launchOnDemand(ctx, instanceNum)
@@ -197,7 +197,7 @@ func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
 		ids = append(ids, &idCopy)
 	}
 
-	if c.SpotInstanceEnabled {
+	if c.SpotEnabled {
 		c.terminateSpot(ctx, ids)
 	} else {
 		c.terminateOnDemand(ctx, ids)
