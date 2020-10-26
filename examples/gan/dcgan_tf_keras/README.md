@@ -8,7 +8,7 @@ a custom `train_step()` and `test_step()`. This functionality was first added in
 ## Files
 * **dc_gan.py**: The code code defining the model.
 * **data.py**: The data loading and preparation code for the model.
-* **determined_model_def.py**: Organizes the model into Determined's Tensorflow Keras API.
+* **model_def.py**: Organizes the model into Determined's Tensorflow Keras API.
 * **export.py**: Exports a trained checkpoint and uses it to generate images.
 
 
