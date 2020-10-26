@@ -1,13 +1,23 @@
 import argparse
 import re
 import sys
-from typing import Dict, Type, Union
+from typing import Dict, Type, Union, Callable
 
 import boto3
 
 from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import base, secure, simple, vpc
 
+
+def validate_spot_max_price() -> Callable:
+    def validate(s: str) -> str:
+        if s.count(".") > 1:
+            raise argparse.ArgumentTypeError("must have one or zero decimal points")
+        for char in s:
+            if not (char.isdigit() or char == "."):
+                raise argparse.ArgumentTypeError("must only contain digits and a decimal point")
+        return s
+    return validate
 
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
     subparser = subparsers.add_parser("down", help="delete CloudFormation stack")
@@ -101,6 +111,16 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="maximum number of dynamic agent instances at one time",
     )
     subparser.add_argument(
+        "--spot",
+        action="store_true",
+        help="whether to use spot instances or not",
+    )
+    subparser.add_argument(
+        "--spot-max-price",
+        type=validate_spot_max_price(),
+        help="maximum hourly price for the spot instance (do not include the dollar sign)",
+    )
+    subparser.add_argument(
         "--dry-run",
         action="store_true",
         help="print deployment template",
@@ -175,7 +195,11 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
         constants.cloudformation.MIN_DYNAMIC_AGENTS: args.min_dynamic_agents,
         constants.cloudformation.MAX_DYNAMIC_AGENTS: args.max_dynamic_agents,
+        constants.cloudformation.SPOT_ENABLED: args.spot,
+        constants.cloudformation.SPOT_MAX_PRICE: args.spot_max_price,
     }
+
+    print(det_configs)
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)
 

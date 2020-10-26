@@ -32,6 +32,8 @@ class Secure(base.DeterminedDeployment):
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD,
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD,
         constants.cloudformation.MAX_DYNAMIC_AGENTS,
+        constants.cloudformation.SPOT_ENABLED,
+        constants.cloudformation.SPOT_MAX_PRICE,
     ]
 
     def deploy(self) -> None:
