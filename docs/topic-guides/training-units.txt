@@ -80,8 +80,9 @@ with a few caveats:
 -  When using adaptive searchers, such as :ref:`adaptive_asha
    <experiment-configuration-searcher-adaptive>`, a single training unit
    is treated as atomic (unable to be divided into fractional parts)
-   when dividing the ``max_length`` into rungs. This may result in
-   unexpected behavior when configuring ``max_length`` in terms of a
+   when dividing ``max_length`` into the series of rounds (or rungs) by
+   which we early-stop underperforming trials. This rounding may result
+   in unexpected behavior when configuring ``max_length`` in terms of a
    small number of large epochs or batches.
 
 To verify your search is working as intended before committing to a full
