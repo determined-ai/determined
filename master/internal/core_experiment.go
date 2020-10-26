@@ -424,7 +424,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	user := c.(*context.DetContext).MustGetUser()
 
 	var params CreateExperimentParams
-	if err := json.Unmarshal(body, &params); err != nil {
+	if err = json.Unmarshal(body, &params); err != nil {
 		return nil, errors.Wrap(err, "invalid experiment params")
 	}
 
