@@ -41,6 +41,11 @@ nfpms:
           postinstall: packaging/debian/master.postinst
           preremove: packaging/debian/master.prerm
           postremove: packaging/debian/master.postrm
+        files:
+          "packaging/LICENSE": "/usr/share/doc/determined-master/copyright"
+      rpm:
+        files:
+          "packaging/LICENSE": "/usr/share/licenses/determined-master/LICENSE"
 
 release:
   github:
@@ -58,5 +63,6 @@ dockers:
       - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
     extra_files:
       - "packaging/master.yaml"
+      - "packaging/LICENSE"
       - "build"
       - "static"

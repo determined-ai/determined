@@ -11,8 +11,11 @@ build-examples:
 build-helm:
 	$(MAKE) -C ../helm build
 
+reference/attributions.txt: $(shell find ../tools/scripts/licenses -type f)
+	../tools/scripts/gen-attributions.py sphinx > $@
+
 .PHONY: build
-build: build-examples build-helm
+build: build-examples build-helm reference/attributions.txt
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
 	mkdir -p site/downloads/helm

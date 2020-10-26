@@ -11,6 +11,7 @@ ENV NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=utility
 # discussion and the origin of this workaround). Even when not necessary, it should be harmless.
 RUN ldconfig
 
+COPY packaging/LICENSE /usr/share/doc/determined-agent/copyright
 COPY packaging/entrypoint.sh /run/determined/workdir/entrypoint.sh
 RUN chmod +x /run/determined/workdir/entrypoint.sh
 

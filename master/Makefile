@@ -45,11 +45,14 @@ pre-package:
 	cp ../cli/dist/*.whl build/wheels/
 	cp ../harness/dist/*.whl build/wheels/
 
+packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
+	../tools/scripts/gen-attributions.py agent > $@
+
 .PHONY: package
 package: export DET_SEGMENT_MASTER_KEY ?=
 package: export DET_SEGMENT_WEBUI_KEY ?=
 package: export GORELEASER_CURRENT_TAG := $(VERSION)
-package:
+package: packaging/LICENSE
 	goreleaser --snapshot --rm-dist
 
 .PHONY: release
