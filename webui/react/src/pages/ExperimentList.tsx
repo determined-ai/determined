@@ -178,11 +178,13 @@ const ExperimentList: React.FC = () => {
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
+    setPagination(prev => ({ ...prev, offset: 0 }));
   }, []);
 
   const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
+    setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
   const handleArchiveChange = useCallback((value: boolean): void => {
