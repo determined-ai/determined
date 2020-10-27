@@ -304,7 +304,7 @@ class DeterminedControlHook(estimator.RunHook):
         rng_state = None
         try:
             with open(checkpoint_dir + "/rng_state.pkl", "rb") as f:
-                self.rng_state = pickle.load(f)
+                rng_state = pickle.load(f)
         except IOError:
             logging.info("No RNG state found in checkpoint_dir")
             return
