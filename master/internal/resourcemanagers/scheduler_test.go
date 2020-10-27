@@ -46,18 +46,16 @@ type (
 var errMock = errors.New("mock error")
 
 type mockTask struct {
-	rmRef       *actor.Ref
-	onAllocated func(ResourcesAllocated) error
-	onRelease   func(ReleaseResources) error
+	rmRef *actor.Ref
 
-	id              TaskID
-	group           *mockGroup
-	slotsNeeded     int
-	nonPreemptible  bool
-	label           string
-	resourcePool    string
-	allocatedAgent  *mockAgent
-	containrStarted bool
+	id               TaskID
+	group            *mockGroup
+	slotsNeeded      int
+	nonPreemptible   bool
+	label            string
+	resourcePool     string
+	allocatedAgent   *mockAgent
+	containerStarted bool
 }
 
 func (t *mockTask) Receive(ctx *actor.Context) error {
@@ -97,16 +95,10 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 		panic(errMock)
 
 	case ResourcesAllocated:
-		if t.onAllocated != nil {
-			return t.onAllocated(msg)
-		}
 		for _, allocation := range msg.Allocations {
 			allocation.Start(ctx, image.TaskSpec{})
 		}
 	case ReleaseResources:
-		if t.onRelease != nil {
-			return t.onRelease(msg)
-		}
 		ctx.Tell(t.rmRef, ResourcesReleased{TaskActor: ctx.Self()})
 
 	case sproto.TaskContainerStateChanged:
@@ -118,9 +110,6 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 }
 
 type mockAgent struct {
-	onStartTaskContainer func(sproto.StartTaskContainer) error
-	onKillTaskContainer  func(sproto.KillTaskContainer) error
-
 	id    string
 	slots int
 	label string
@@ -142,18 +131,12 @@ func newMockAgent(
 	return state
 }
 
-func (m mockAgent) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
+func (m *mockAgent) Receive(ctx *actor.Context) error {
+	switch ctx.Message().(type) {
 	case actor.PreStart:
 	case actor.PostStop:
 	case sproto.StartTaskContainer:
-		if m.onStartTaskContainer != nil {
-			return m.onStartTaskContainer(msg)
-		}
 	case sproto.KillTaskContainer:
-		if m.onStartTaskContainer != nil {
-			return m.onKillTaskContainer(msg)
-		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -333,7 +316,7 @@ func setupSchedulerStates(
 			}
 			taskList.SetAllocations(req.TaskActor, allocated)
 
-			if mockTask.containrStarted {
+			if mockTask.containerStarted {
 				if mockTask.slotsNeeded == 0 {
 					agentState.zeroSlotContainers[container.id] = true
 				} else {

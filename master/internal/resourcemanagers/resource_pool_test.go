@@ -101,9 +101,9 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 		{id: "agent2", slots: 1},
 	}
 	tasks := []*mockTask{
-		{id: "pre-allocated-cpu-task1", slotsNeeded: 0, allocatedAgent: agents[0], containrStarted: true},
-		{id: "pre-allocated-cpu-task2", slotsNeeded: 0, allocatedAgent: agents[1], containrStarted: true},
-		{id: "pre-allocated-gpu-task3", slotsNeeded: 1, allocatedAgent: agents[1], containrStarted: true},
+		{id: "allocated-cpu-task1", slotsNeeded: 0, allocatedAgent: agents[0], containerStarted: true},
+		{id: "allocated-cpu-task2", slotsNeeded: 0, allocatedAgent: agents[1], containerStarted: true},
+		{id: "allocated-gpu-task3", slotsNeeded: 1, allocatedAgent: agents[1], containerStarted: true},
 		{id: "unallocated-gpu-task4", slotsNeeded: 1},
 		{id: "unallocated-gpu-task5", slotsNeeded: 5},
 	}
