@@ -242,13 +242,16 @@ Determined run:
 
 .. code::
 
-   helm install <name for your deployment> --wait determined-helm-chart
+   helm install <name for your deployment> determined-helm-chart
 
 ``determined-helm-chart`` is a relative path to where the
 :download:`Determined Helm Chart </helm/determined-helm-chart.tgz>` is
-located. Helm will install Determined within the default namespace. If
-you wish to install Determined into a non-default namespace, add ``-n
-<namespace name>`` to the command shown above.
+located. It may take a few minutes for all resources to come up. If you
+encounter issues during installation please follow our list of
+:ref:`useful kubectl commands <useful-kubectl-commands>`. Helm will
+install Determined within the default namespace. If you wish to install
+Determined into a non-default namespace, add ``-n <namespace name>`` to
+the command shown above.
 
 Once the installation has completed, instructions will be displayed for
 discovering the IP address assigned to the Determined master. The IP
