@@ -1034,7 +1034,7 @@ jobs:
           determined-deploy: true
           executor: determinedai/cimg-base:stable
       - deploy-aws-cluster:
-          cluster-id: determined-${CIRCLE_BRANCH}
+          cluster-id: determined-${CIRCLE_BRANCH////--}
           det-version: ${CIRCLE_SHA1}
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
