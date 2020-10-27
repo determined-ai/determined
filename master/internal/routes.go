@@ -22,11 +22,12 @@ var redirects = [...]redirect{
 	},
 }
 
-func setupEchoRoutes(m *Master) {
-	for _, aRedirect := range redirects {
-		aRedirect := aRedirect
-		m.echo.Router().Add(aRedirect.method, aRedirect.src, func(c echo.Context) error {
-			return c.Redirect(aRedirect.code, aRedirect.dest)
-		})
+func setupEchoRedirects(m *Master) {
+	for idx := range redirects {
+		func(r redirect) {
+			m.echo.Router().Add(r.method, r.src, func(c echo.Context) error {
+				return c.Redirect(r.code, r.dest)
+			})
+		}(redirects[idx])
 	}
 }

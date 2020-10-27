@@ -330,7 +330,7 @@ func (m *Master) Run() error {
 		},
 		RedirectCode: http.StatusMovedPermanently,
 	}))
-	setupEchoRoutes(m)
+	setupEchoRedirects(m)
 
 	if m.config.EnableCors {
 		m.echo.Use(api.CORSWithTargetedOrigin)
