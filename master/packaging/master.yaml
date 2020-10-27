@@ -19,9 +19,6 @@
 ## dynamic agent types.
 #provisioner:
 
-## A user friendly name to identify this cluster by.
-#  cluster_name: Dev
-
 ## The url of the Determined master.
 #  master_url: <scheme://host:port>
 
@@ -113,6 +110,9 @@ db:
   port: 5432
   name: determined
   # password: database_password
+
+## A user friendly name to identify this cluster by.
+# cluster_name: Dev
 
 ## Configure whether we collect anonymous information about the usage of
 ## Determined.
