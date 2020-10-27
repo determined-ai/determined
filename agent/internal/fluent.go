@@ -278,6 +278,10 @@ func startLoggingContainer(
 				// A port of 0 makes Docker automatically assign a free port, which we read back below.
 				exposedPort: []nat.PortBinding{{HostIP: "127.0.0.1", HostPort: "0"}},
 			},
+			Resources: container.Resources{
+				Memory:   1 << 30,
+				NanoCPUs: 1000000000,
+			},
 		},
 		nil,
 		containerName,
