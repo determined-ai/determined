@@ -1,7 +1,8 @@
 swagger_client = "src/services/swagger"
 export PROJECT_ROOT := "../../"
-# eg ./ for serving from root
+# Set the path React is going to be served from eg ./ for serving from root.
 export PUBLIC_URL ?= /det
+SERVER_ADDRESS := http://localhost:8080
 
 .PHONY: default
 default: get-deps
@@ -38,7 +39,7 @@ clean:
 
 .PHONY: live
 live:
-	npm start
+	SERVER_ADDRESS=$(SERVER_ADDRESS) npm start
 
 .PHONY: check
 check:
