@@ -87,15 +87,6 @@ which is supported on `GKE
 and `EKS
 <https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html>`_.
 
-Sidecars and InitContainers
-===========================
-
-Determined on Kubernetes supports user-provided pod template specs.
-However, specifying `init containers
-<https://kubernetes.io/docs/concepts/workloads/pods/init-containers/>`_
-and `sidecar containers
-<https://www.magalix.com/blog/the-sidecar-pattern>`_ is not supported.
-
 .. _useful-kubectl-commands:
 
 **********************************
