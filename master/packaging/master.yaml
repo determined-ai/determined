@@ -4,9 +4,9 @@
 #  fit: best
 
 ## Configure the task container defaults. Tasks include trials, commands, tensorboards and more.
-## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the 
-## network interface used by distributed (multi-machine) training and ports used by the NCCL and 
-## GLOO libraries during distributed training are configurable. These default to auto-discovery and 
+## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the
+## network interface used by distributed (multi-machine) training and ports used by the NCCL and
+## GLOO libraries during distributed training are configurable. These default to auto-discovery and
 ## random non-privileged ports, respectively.
 #task_container_defaults:
 #  shm_size_bytes: 4294967296
@@ -91,7 +91,6 @@
 #  max_instances: 5
 #  operation_timeout_period: 5m
 
-
 ## Configure default checkpoint storage configuration.
 checkpoint_storage:
   type: shared_fs
@@ -111,6 +110,9 @@ db:
   port: 5432
   name: determined
   # password: database_password
+
+## A user friendly name to identify this cluster by.
+# cluster_name: Dev
 
 ## Configure whether we collect anonymous information about the usage of
 ## Determined.

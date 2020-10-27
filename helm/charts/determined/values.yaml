@@ -120,3 +120,6 @@ enterpriseEdition: false
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:
   enabled: true
+
+## A user friendly name to identify this cluster by.
+# clusterName: Dev

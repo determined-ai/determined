@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/log/v1/log.proto";
 
@@ -11,18 +12,28 @@ import "determined/log/v1/log.proto";
 message GetMasterRequest {}
 // Response to GetMasterRequest.
 message GetMasterResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "version", "master_id", "cluster_id", "cluster_name" ]
+    }
+  };
   // The current version of the master.
   string version = 1;
   // The current instance id of the master.
   string master_id = 2;
   // The global cluster id of the master.
   string cluster_id = 3;
+  // The cluster name.
+  string cluster_name = 4;
 }
 
 // Get master config.
 message GetMasterConfigRequest {}
 // Response to GetMasterRequest.
 message GetMasterConfigResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "config" ] }
+  };
   // The config file loaded by the master.
   google.protobuf.Struct config = 1;
 }

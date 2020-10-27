@@ -22,10 +22,11 @@ type TelemetryInfo struct {
 
 // MasterInfo contains the master information that the agent has connected to.
 type MasterInfo struct {
-	Version   string        `json:"version"`
-	MasterID  string        `json:"master_id"`
-	ClusterID string        `json:"cluster_id"`
-	Telemetry TelemetryInfo `json:"telemetry"`
+	Version     string        `json:"version"`
+	MasterID    string        `json:"master_id"`
+	ClusterID   string        `json:"cluster_id"`
+	ClusterName string        `json:"cluster_name"`
+	Telemetry   TelemetryInfo `json:"telemetry"`
 }
 
 // MasterMessage is a union type for all messages sent from agents.
