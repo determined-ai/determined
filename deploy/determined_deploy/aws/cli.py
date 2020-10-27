@@ -197,7 +197,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
         constants.cloudformation.MIN_DYNAMIC_AGENTS: args.min_dynamic_agents,
         constants.cloudformation.MAX_DYNAMIC_AGENTS: args.max_dynamic_agents,
-        constants.cloudformation.SPOT_ENABLED: str(args.spot).lower(),
+        constants.cloudformation.SPOT_ENABLED: args.spot,
         constants.cloudformation.SPOT_MAX_PRICE: args.spot_max_price,
     }
 
