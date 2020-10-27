@@ -11,8 +11,8 @@ To have Determined configure an externally accessible load balancer for the
 maser, please set "Values.useNodePortForMaster" to false.
 {{ else }}
 
-The IP address of the Determined master is External-IP of determined-master-service-{{ .Release.Name }},
-which you can lookup by running (may take a few minutes for the ip address to be assigned):
+The IP address of the Determined master is the external IP of determined-master-service-{{ .Release.Name }},
+which you can lookup by running (it may take a few minutes for the ip address to be assigned):
 
 kubectl get service determined-master-service-{{ .Release.Name }} -n {{ .Release.Namespace }}
 
