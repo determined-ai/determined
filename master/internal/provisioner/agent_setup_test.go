@@ -49,7 +49,7 @@ then
     echo "#### Starting agent with GPUs"
     docker_args+=(--gpus all)
 else
-    echo "#### Starting agent with no GPUs"
+    echo "#### Starting agent with only CPUs"
 fi
 
 cert_b64=PT09PSBjZXJ0ID09PT0=

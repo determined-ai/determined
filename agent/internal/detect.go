@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/pkg/errors"
 	"github.com/shirou/gopsutil/cpu"
 	log "github.com/sirupsen/logrus"
@@ -15,7 +17,45 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-// detectCPUs returns the list of available CPUs; each core is returned as a single device.
+func (a *agent) detect() error {
+	switch {
+	case a.ArtificialSlots > 0:
+		for i := 0; i < a.ArtificialSlots; i++ {
+			id := uuid.New().String()
+			a.Devices = append(a.Devices, device.Device{
+				ID: i, Brand: "Artificial", UUID: id, Type: device.CPU})
+		}
+	case a.SlotType == "gpu":
+		devices, err := detectGPUs(a.Options.VisibleGPUs)
+		if err != nil {
+			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
+		}
+		a.Devices = devices
+	case a.SlotType == "cpu":
+		devices, err := detectCPUs()
+		if err != nil {
+			return err
+		}
+		a.Devices = devices
+	case a.SlotType == "auto":
+		devices, err := detectGPUs(a.Options.VisibleGPUs)
+		if err != nil {
+			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
+		}
+		if len(devices) == 0 {
+			devices, err = detectCPUs()
+			if err != nil {
+				return err
+			}
+		}
+		a.Devices = devices
+	default:
+		panic("unrecognized slot type")
+	}
+	return nil
+}
+
+// detectCPUs returns the list of available CPUs; all the cores are returned as a single device.
 func detectCPUs() ([]device.Device, error) {
 	switch cpuInfo, err := cpu.Info(); {
 	case err != nil:
