@@ -185,7 +185,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
 
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
-        constants.cloudformation.ENABLE_CORS: args.enable_cors,  # TODO: Has this been tested? Based on spot handling of bools, I wouldn't expect this to work correctly...
+        constants.cloudformation.ENABLE_CORS: args.enable_cors,
         constants.cloudformation.MASTER_INSTANCE_TYPE: args.master_instance_type,
         constants.cloudformation.AGENT_INSTANCE_TYPE: args.agent_instance_type,
         constants.cloudformation.CLUSTER_ID: args.cluster_id,
