@@ -481,6 +481,7 @@ The master supports the following configuration settings:
          to ``p3.8xlarge``.
 
       -  ``spot``: Whether to use spot instances. Defaults to ``false``.
+         See :ref:`aws-spot` for more details.
 
       -  ``spot_max_price``: Optional field indicating the maximum price
          per hour that you are willing to pay for a spot instance. The

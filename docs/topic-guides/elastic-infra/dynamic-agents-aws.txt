@@ -9,6 +9,10 @@ deployment of Determined with dynamic agents on AWS. See
 :ref:`elastic-infra-index` for an overview of using elastic
 infrastructure in Determined.
 
+Determined is able to launch dynamic agents as spot instances, which can
+be much cheaper than using standard on-demand instances. For more
+details on spot instances, see :ref:`aws-spot`.
+
 *********************
  System Requirements
 *********************
