@@ -1,8 +1,7 @@
 #!/bin/bash -ex
 
-## Pre release hook. Run from the root of the project. Any arguments passed in are directly
-## sent to `bumpversion`
-
+# Buf image binary
+BUF_IMAGE=buf.image.bin
 PROJECT_ROOT=$(pwd)
 
 if [[ $(git diff --shortstat 2> /dev/null | tail -n1) != "" ]]; then
@@ -14,13 +13,9 @@ elif [[ $(git status --porcelain 2>/dev/null| grep "^??") ]]; then
 fi
 
 ## lock in current protobuf state
-# Buf image binary
-BUF_IMAGE=buf.image.bin
 cd proto
+make check
 make gen-buf-image
 git add $BUF_IMAGE
-git commit -m "lock backward buf compatibility check" || echo "buf image is already up to date"
+git commit -m "chore: lock api state for backward compatibility check" || echo "buf image is already up to date"
 cd $PROJECT_ROOT
-
-## bump version
-bumpversion $@
