@@ -4,6 +4,7 @@ provider "google" {
   project = var.project_id
   region = var.region
   zone = var.zone != null ? var.zone : "${var.region}-b"
+  version = "~> 3.44.0"
 }
 
 provider "google-beta" {
@@ -11,6 +12,7 @@ provider "google-beta" {
   project = var.project_id
   region = var.region
   zone = var.zone != null ? var.zone : "${var.region}-b"
+  version = "~> 3.44.0"
 }
 
 locals {
