@@ -24,47 +24,6 @@ from determined_common import check
 VERY_LARGE_NUMBER = 9999999999999999
 
 
-class RNGStateHook(estimator.RunHook):
-    def __init__(self, checkpoint_dir: pathlib.Path):
-        try:
-            self.rng_state = None
-            with open(checkpoint_dir.joinpath("rng_state.pkl"), "rb") as f:
-                self.rng_state = pickle.load(f)
-        except IOError:
-            logging.debug("No RNG state found in checkpoint_dir")
-
-    def after_create_session(self, session, coord):  # type: ignore
-        if self.rng_state is not None:
-            logging.info("Restoring RNG state from checkpoint")
-            np.random.set_state(self.rng_state["np_rng_state"])
-            random.setstate(self.rng_state["random_rng_state"])
-
-            if version.parse(tf.__version__) < version.parse("2.0.0"):
-                if "tf_rng_global_seed" in self.rng_state:
-                    tf.random.set_random_seed(self.rng_state["tf_rng_global_seed"])
-            else:
-                if (
-                    "tf2_rng_global_algorithm" in self.rng_state
-                    and "tf2_rng_global_state" in self.rng_state
-                ):
-                    algorithm = self.rng_state["tf2_rng_global_algorithm"]
-                    state = self.rng_state["tf2_rng_global_state"]
-                    generator = tf.random.Generator.from_state(state, algorithm)
-                    tf.random.set_global_generator(generator)
-
-    def on_checkpoint_end(self, checkpoint_dir: str) -> None:
-        rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
-        if tf.executing_eagerly():
-            if version.parse(tf.__version__) < version.parse("2.0.0"):
-                rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
-            else:
-                generator = tf.random.get_global_generator()
-                rng_state["tf2_rng_global_algorithm"] = generator.algorithm
-                rng_state["tf2_rng_global_state"] = generator.state
-        with open(checkpoint_dir + "/rng_state.pkl", "wb") as f:
-            pickle.dump(rng_state, f)
-
-
 class DeterminedEarlyStoppingHook(tf.compat.v1.train.SessionRunHook):  # type: ignore
     """
     DeterminedEarlyStoppingHook converts a stop request, so that Determined can
@@ -82,7 +41,7 @@ class DeterminedEarlyStoppingHook(tf.compat.v1.train.SessionRunHook):  # type: i
             self.context.set_stop_requested(True)
 
 
-class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
+class DeterminedControlHook(estimator.RunHook):
     """
     DeterminedControlHook takes control of the train_and_evaluate() loop between
     training steps to communicate with the main harness process and, in certain
@@ -335,6 +294,48 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
 
+    def on_checkpoint_load(self, checkpoint_dir: str) -> None:
+        self.load_rng_state_from_checkpoint(checkpoint_dir)
+
+    def on_checkpoint_end(self, checkpoint_dir: str) -> None:
+        self.save_rng_state_with_checkpoint(checkpoint_dir)
+
+    def load_rng_state_from_checkpoint(self, checkpoint_dir: str) -> None:
+        rng_state = None
+        try:
+            with open(checkpoint_dir + "/rng_state.pkl", "rb") as f:
+                self.rng_state = pickle.load(f)
+        except IOError:
+            logging.info("No RNG state found in checkpoint_dir")
+            return
+
+        if rng_state is not None:
+            logging.info("Restoring RNG state from checkpoint")
+            np.random.set_state(rng_state["np_rng_state"])
+            random.setstate(rng_state["random_rng_state"])
+
+            if version.parse(tf.__version__) < version.parse("2.0.0"):
+                if "tf_rng_global_seed" in rng_state:
+                    tf.random.set_random_seed(rng_state["tf_rng_global_seed"])
+            else:
+                if "tf2_rng_global_algorithm" in rng_state and "tf2_rng_global_state" in rng_state:
+                    algorithm = rng_state["tf2_rng_global_algorithm"]
+                    state = rng_state["tf2_rng_global_state"]
+                    generator = tf.random.Generator.from_state(state, algorithm)
+                    tf.random.set_global_generator(generator)
+
+    def save_rng_state_with_checkpoint(self, checkpoint_dir: str) -> None:
+        rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
+        if tf.executing_eagerly():
+            if version.parse(tf.__version__) < version.parse("2.0.0"):
+                rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
+            else:
+                generator = tf.random.get_global_generator()
+                rng_state["tf2_rng_global_algorithm"] = generator.algorithm
+                rng_state["tf2_rng_global_state"] = generator.state
+        with open(checkpoint_dir + "/rng_state.pkl", "wb") as f:
+            pickle.dump(rng_state, f)
+
 
 class EstimatorTrialController(det.LoopTrialController):
     def __init__(
@@ -576,8 +577,6 @@ class EstimatorTrialController(det.LoopTrialController):
         self._init_val_hooks()
         self._init_paths()
 
-        self.train_hooks.append(RNGStateHook(self.estimator_dir))
-
         self.estimator = tf.estimator.Estimator(
             model_fn=self._set_default_session_before_building_model(self.estimator._model_fn),
             config=self._init_run_config(self.estimator.config),
@@ -724,6 +723,7 @@ class EstimatorTrialController(det.LoopTrialController):
         be used to initialize an Estimator. We also update the paths in
         the CheckpointState metadata file to the new directory location.
         """
+
         # Add suffix so that horovod processes don't overwrite each other.
         suffix = str(0) if not self.hvd_config.use else str(hvd.local_rank())
         if self.load_path is None:
