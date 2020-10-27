@@ -654,7 +654,7 @@ Resources:
               max_agent_starting_period: ${MaxAgentStartingPeriod}
               min_instances: ${MinDynamicAgents}
               max_instances: ${MaxDynamicAgents}
-              spot_instance_enabled: ${SpotEnabled}
+              spot: ${SpotEnabled}
               spot_max_price: "${SpotMaxPrice}"
               network_interface:
                 public_ip: false
