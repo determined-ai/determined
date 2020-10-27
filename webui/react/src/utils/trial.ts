@@ -1,6 +1,8 @@
 import { MetricName, MetricType, Step } from 'types';
 import { isNumber, metricNameSorter } from 'utils/data';
 
+import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
+
 export const extractMetricValue = (step: Step, metricName: MetricName): number | undefined => {
   if (metricName.type === MetricType.Training) {
     const source = step.avgMetrics || {};
@@ -41,6 +43,44 @@ export const extractMetricNames = (steps: Step[] = []): MetricName[] => {
 
 export const metricNameToValue = (metricName: MetricName): string => {
   return `${metricName.type}|${metricName.name}`;
+};
+
+export const metricNameFromValue = (metricValue: string): MetricName | undefined => {
+  const trainingPrefix = `${MetricType.Training}|`;
+  const validationPrefix = `${MetricType.Validation}|`;
+  if (metricValue.startsWith(trainingPrefix)) {
+    return {
+      name: metricValue.slice(trainingPrefix.length),
+      type: MetricType.Training,
+    };
+  } else if (metricValue.startsWith(validationPrefix)) {
+    return {
+      name: metricValue.slice(validationPrefix.length),
+      type: MetricType.Validation,
+    };
+  } else {
+    const errName = 'metricNameFromValueUnrecognizedMetricType';
+    const errSlug = 'metricnamefromvalue-unrecognized-metric-type';
+    const errMessage = `
+      metricNameFromValue was called, but the metricName doesn't appear to 
+      be a training metric or a validation metric (${metricValue})
+    `;
+
+    const daErr: DaError = {
+      error: {
+        message: errMessage,
+        name: errName,
+      },
+      id: errSlug,
+      isUserTriggered: false,
+      level: ErrorLevel.Error,
+      message: errMessage,
+      silent: !process.env.IS_DEV,
+      type: ErrorType.Ui,
+    };
+    handleError(daErr);
+    return undefined;
+  }
 };
 
 export const valueToMetricName = (value: string): MetricName | undefined => {

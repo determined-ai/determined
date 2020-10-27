@@ -1,6 +1,12 @@
 import { Select } from 'antd';
 import { SelectProps, SelectValue } from 'antd/es/select';
-import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
+import React, {
+  forwardRef,
+  PropsWithChildren,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 
 import Icon from './Icon';
 import Label from './Label';
@@ -13,6 +19,7 @@ interface Props<T = SelectValue> extends SelectProps<T> {
   enableSearchFilter?: boolean;
   label: string;
   style?: React.CSSProperties;
+  ref?: React.Ref<Select<SelectValue>>;
 }
 
 export const ALL_VALUE = 'all';
@@ -32,14 +39,18 @@ const countOptions = (children: React.ReactNode): number => {
   return count;
 };
 
-const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
-  className = '',
-  disableTags = false,
-  dropdownMatchSelectWidth = false,
-  enableSearchFilter = true,
-  showSearch = true,
-  ...props
-}: PropsWithChildren<Props>) => {
+const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function SelectFilter(
+  {
+    className = '',
+    disableTags = false,
+    dropdownMatchSelectWidth = false,
+    enableSearchFilter = true,
+    showSearch = true,
+    ...props
+  }: PropsWithChildren<Props>,
+  ref?: React.Ref<Select<SelectValue>>,
+) {
+
   const [ isOpen, setIsOpen ] = useState(false);
   const classes = [ className, css.base ];
 
@@ -90,6 +101,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
         getPopupContainer={getPopupContainer}
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}
+        ref={ref}
         showSearch={showSearch}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
         onDropdownVisibleChange={handleDropdownVisibleChange}
@@ -98,6 +110,6 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
       </Select>
     </div>
   );
-};
+});
 
 export default SelectFilter;
