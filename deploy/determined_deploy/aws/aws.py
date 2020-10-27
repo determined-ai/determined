@@ -373,7 +373,7 @@ def delete_spot_requests_and_agents(
 
 def clean_up_spot(
     stack_name: str, boto3_session: boto3.session.Session, disable_tqdm: bool = False
-):
+) -> None:
 
     # The spot API is eventually consistent and the only way to guarantee
     # that we don't leave any spot requests alive (that may eventually be
@@ -393,7 +393,7 @@ def clean_up_spot(
         bar_format=format_str,
         disable=disable_tqdm,
     )
-    progress_bar_state = 0
+    progress_bar_state = 0.0
     while True:
         elapsed_time = time.time() - start_time
         if elapsed_time >= SPOT_WAIT_SECONDS:
