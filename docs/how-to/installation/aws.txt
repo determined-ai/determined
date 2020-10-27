@@ -189,9 +189,11 @@ Spinning up the Cluster
       -  False
 
    -  -  ``--spot-max-price``
-      -  A maximum price for the spot instances. If the price
-         on the spot market exceeds this value, Determined will
-         not create new instances. Optional
+
+      -  A maximum price for the spot instances. If the price on the
+         spot market exceeds this value, Determined will not create new
+         instances. Optional
+
       -  The on-demand price for the instance type.
 
    -  -  ``--dry-run``
