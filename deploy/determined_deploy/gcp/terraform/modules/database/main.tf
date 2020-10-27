@@ -15,6 +15,7 @@ resource "random_integer" "naming_int" {
 resource "google_sql_database_instance" "db_instance" {
   name   = "det-db-instance-${var.unique_id}-${random_integer.naming_int.result}"
   database_version = var.db_version
+  deletion_protection = false
 
   depends_on = [var.network_self_link, var.service_networking_connection]
 
