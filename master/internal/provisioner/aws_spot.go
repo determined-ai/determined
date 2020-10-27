@@ -126,6 +126,16 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 			Error("unable to create tags on ec2 instances created by spot")
 	}
 
+	reqsToNotifyUserAbout := newSetOfSpotRequests()
+	for _, req := range activeReqsInAPI.iter() {
+		switch *req.StatusCode {
+		case
+			"capacity-not-available",
+			"price-too-low":
+			reqsToNotifyUserAbout.add(req)
+		}
+	}
+
 	// If there are requests that we are tracking, but didn't get returned
 	// in listActiveSpotInstanceRequests, query the API for them specifically.
 	// They could be fresh requests that aren't visible in the API yet or they
@@ -140,7 +150,6 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 
 	// If any of the tracked requests failed and requires users intervention, notify the user via error
 	// logs. Also stop tracking any request that is in a terminal state.
-	reqsToNotifyUserAbout := newSetOfSpotRequests()
 	numReqsNoLongerTracked := 0
 	for _, req := range newOrInactiveReqs.iter() {
 		missingReqs.delete(req)
@@ -186,11 +195,16 @@ func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	}
 
 	if canceledButInstanceRunningReqs.numReqs() > 0 {
-		ctx.Log().Infof(
+		ctx.Log().Debugf(
 			"terminating EC2 instances associated with canceled spot requests: %s",
 			strings.Join(canceledButInstanceRunningReqs.idsAsList(), ","),
 		)
-		c.terminateOnDemand(ctx, canceledButInstanceRunningReqs.idsAsListOfPointers())
+		_, err = c.terminateInstances(canceledButInstanceRunningReqs.instanceIds())
+		if err != nil {
+			ctx.Log().
+				WithError(err).
+				Debugf("cannot terminate EC2 instances associated with canceled spot requests")
+		}
 	}
 
 	instances, err := c.buildInstanceListFromTrackedReqs(ctx)

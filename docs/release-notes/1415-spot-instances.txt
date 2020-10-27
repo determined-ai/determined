@@ -1,0 +1,7 @@
+:orphan:
+
+**Feature**
+
+-  Allow users to launch EC2 instances as spot instances to reduce costs
+   by up to 90%. This can be enabled simply by setting ``spot: true`` in
+   the :ref:`cluster-configuration`.

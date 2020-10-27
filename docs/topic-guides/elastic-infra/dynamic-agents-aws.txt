@@ -9,6 +9,10 @@ deployment of Determined with dynamic agents on AWS. See
 :ref:`elastic-infra-index` for an overview of using elastic
 infrastructure in Determined.
 
+Determined is able to launch dynamic agents as spot instances, which can
+be much cheaper than using standard on-demand instances. For more
+details on spot instances, see :ref:`aws-spot`.
+
 *********************
  System Requirements
 *********************
@@ -21,6 +25,10 @@ EC2 instances with the configured ``tag_key:tag_value`` pair are managed
 by the Determined master (See :ref:`aws-cluster-configuration`). This
 pair should be unique to your Determined installation. If it is not,
 Determined may inadvertently manage your non-Determined EC2 instances.
+
+If using spot instances, Determined also assumes that any EC2 spot
+instance requests with the configured ``tag_key:tag_value`` pair are
+managed by the Determined master.
 
 EC2 AMIs
 ========
@@ -62,6 +70,20 @@ permissions:
 -  ``ec2:TerminateInstances``: used to terminate idle Determined agent
    instances.
 
+If using spot instances, the master also needs the following
+permissions:
+
+-  ``ec2:RequestSpotInstances``: used to provision Determined agent
+   instances as spot instances.
+
+-  ``ec2:CancelSpotInstanceRequests``: used to adjust the number of spot
+   instance requests to match the number of instances needed for the
+   current workloads.
+
+-  ``ec2:DescribeSpotInstanceRequests``: used to find open spot instance
+   requests that, once fulfilled, will create Determined agent spot
+   instances.
+
 An example IAM policy with the appropriate permissions is below:
 
 .. code:: json
@@ -76,7 +98,10 @@ An example IAM policy with the appropriate permissions is below:
             "ec2:DescribeInstances",
             "ec2:TerminateInstances",
             "ec2:CreateTags",
-            "ec2:RunInstances"
+            "ec2:RunInstances",
+            "ec2:CancelSpotInstanceRequests",
+            "ec2:RequestSpotInstances",
+            "ec2:DescribeSpotInstanceRequests",
           ],
           "Resource": "*"
         }
@@ -151,6 +176,7 @@ Below you'll find an example configuration. See
        subnet_id: <subnet ID>
      instance_type: p3.8xlarge
      max_instances: 5
+     spot: false
 
 **************
  Installation

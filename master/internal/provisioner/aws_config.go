@@ -34,8 +34,8 @@ type AWSClusterConfig struct {
 	LogGroup  string `json:"log_group"`
 	LogStream string `json:"log_stream"`
 
-	SpotInstanceEnabled bool   `json:"spot_instance_enabled"`
-	SpotMaxPrice        string `json:"spot_max_price"`
+	SpotEnabled  bool   `json:"spot"`
+	SpotMaxPrice string `json:"spot_max_price"`
 }
 
 var defaultAWSImageID = map[string]string{
@@ -58,8 +58,8 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
-	InstanceType:        "p3.8xlarge",
-	SpotInstanceEnabled: false,
+	InstanceType: "p3.8xlarge",
+	SpotEnabled:  false,
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
@@ -121,7 +121,7 @@ func (c *AWSClusterConfig) UnmarshalJSON(data []byte) error {
 // Validate implements the check.Validatable interface.
 func (c AWSClusterConfig) Validate() []error {
 	var spotPriceIsNotValidNumberErr error
-	if c.SpotInstanceEnabled && c.SpotMaxPrice != spotPriceNotSetPlaceholder {
+	if c.SpotEnabled && c.SpotMaxPrice != spotPriceNotSetPlaceholder {
 		spotPriceIsNotValidNumberErr = validateMaxSpotPrice(c.SpotMaxPrice)
 	}
 	return []error{
