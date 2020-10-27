@@ -289,14 +289,8 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
 
     response = ec2.describe_instances(
         Filters=[
-            {
-                "Name": "tag:Name",
-                "Values": [agent_tag_name],
-            },  # TODO: This does not follow our normal logic for selecting instances managed by Determined
-            {
-                "Name": "instance-state-name",
-                "Values": ["running"],
-            },  # TODO: Shouldn't this catch instances that are spinning up?
+            {"Name": "tag:Name", "Values": [agent_tag_name]},
+            {"Name": "instance-state-name", "Values": ["running", "pending"]},
         ]
     )
 
