@@ -233,6 +233,7 @@ def test_unets_tf_keras_accuracy() -> None:
     )
 
 
+"""
 @pytest.mark.nightly  # type: ignore
 def test_protonet_omniglot_pytorch_accuracy() -> None:
     config = conf.load_config(
@@ -257,6 +258,7 @@ def test_protonet_omniglot_pytorch_accuracy() -> None:
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
         )
     )
+"""
 
 
 @pytest.mark.nightly  # type: ignore
