@@ -44,6 +44,7 @@ func fluentConfig(opts Options) ([]string, archive.Archive, error) {
 	luaCode := `
 -- Do some tweaking of values that can't be expressed with the normal filters.
 function run(tag, timestamp, record)
+    record.rank_id = tonumber(record.rank_id)
     record.trial_id = tonumber(record.trial_id)
 
     -- TODO: Only do this if it's not a partial record.
@@ -63,11 +64,16 @@ end
 
 	parserConfig := `
 [PARSER]
+  Name rank_id
+  Format regex
+  # Look for a rank ID from the beginning of the line (e.g., "[rank=0] xxx").
+  Regex ^\[rank=(?<rank_id>([0-9]+))\] (?<log>.*)
+
+[PARSER]
   Name log_level
   Format regex
-  # Parse out something that looks like a log level at the start of the line (e.g., "INFO: xxx"); if
-  # nothing is found, return an empty log level and the full message back.
-  Regex ((?<level>^(DEBUG|INFO|WARNING|ERROR|CRITICAL)): |(?<level>))(?<log>.*)
+  # Look for a log level at the start of the line (e.g., "INFO: xxx").
+  Regex ^(?<level>(DEBUG|INFO|WARNING|ERROR|CRITICAL)): (?<log>.*)
 `
 
 	files = append(files,
@@ -90,7 +96,14 @@ end
 `, parserConfigPath)
 
 	filterConfig := fmt.Sprintf(`
-# Attempt to parse the log level out of output lines.
+# Attempt to parse the rank ID and log level out of output lines.
+[FILTER]
+  Name parser
+  Match *
+  Key_Name log
+  Parser rank_id
+  Reserve_Data true
+
 [FILTER]
   Name parser
   Match *

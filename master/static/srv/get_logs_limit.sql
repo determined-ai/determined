@@ -7,6 +7,7 @@ WITH logs AS (
             coalesce(to_char(timestamp, '[YYYY-MM-DD"T"HH24:MI:SS"Z"]' ), '[UNKNOWN TIME]')
             || ' '
             || coalesce(substring(container_id, 1, 8), '[UNKNOWN CONTAINER]')
+            || coalesce(' [rank=' || (rank_id::text) || ']', '')
             || ' || '
             || coalesce(level || ': ', '')
             || encode(log, 'escape')
