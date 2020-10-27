@@ -54,8 +54,10 @@ const MetricSelectFilter: React.FC<Props> = ({
 
   const totalNumMetrics = useMemo(() => { return metricNames.length; }, [ metricNames ]);
 
-  // visibleMetrics should always match the list of metrics that antd displays to
-  // the user, including any filtering.
+  /*
+   * visibleMetrics should always match the list of metrics that antd displays to
+   * the user, including any filtering.
+   */
   const visibleMetrics = useMemo(() => {
     return metricNames.filter((metricName: MetricName) => {
       return filterFn(filterString, metricName.name);
@@ -103,14 +105,18 @@ const MetricSelectFilter: React.FC<Props> = ({
       return true;
     }
     if (!option.value) {
-      // Handle optionGroups that don't have a value to make TS happy. They aren't
-      // impacted by filtering anyway
+      /*
+       * Handle optionGroups that don't have a value to make TS happy. They aren't
+       * impacted by filtering anyway
+       */
       return false;
     }
     const metricName = metricNameFromValue(option.value);
     if (metricName === undefined) {
-      // Handle metric values that don't start with 'training|' or 'validation|'. This
-      // shouldn't ever happen and metricNameFromValue logs an error if it does.
+      /*
+       * Handle metric values that don't start with 'training|' or 'validation|'. This
+       * shouldn't ever happen and metricNameFromValue logs an error if it does.
+       */
       return false;
     }
     return filterFn(search, metricName.name);
