@@ -84,3 +84,11 @@ def test_gan_mnist_pytorch_distributed() -> None:
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("gan_mnist_pytorch"), 1)
+
+
+@pytest.mark.distributed  # type: ignore
+def test_mmdetection_pytorch_distributed() -> None:
+    config = conf.load_config(conf.cv_examples_path("mmdetection/distributed_fake_data.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("mmdetection"), 1)
