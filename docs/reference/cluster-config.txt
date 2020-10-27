@@ -430,6 +430,17 @@ The master supports the following configuration settings:
       "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The
       default value is ``20m``.
 
+   -  ``min_instances``: Min number of Determined agent instances.
+      Defaults to 0.
+
+   -  ``max_instances``: Max number of Determined agent instances.
+      Defaults to 5.
+
+   -  ``max_zero_slot_containers_per_agent``: Max number of task
+      containers that do not take any slots. This applies to tasks, such
+      as Tensorboard, CPU-only notebooks, and etc,. Defaults to no
+      limit.
+
    -  ``provider: aws``: Specifies running dynamic agents on AWS.
       (*Required*)
 
@@ -485,9 +496,6 @@ The master supports the following configuration settings:
          -  ``subnet_id``: The ID of the subnet to run the Determined
             agents in. Defaults to the default subnet of the default
             VPC.
-
-      -  ``max_instances``: Maximum number of dynamic agent instances.
-         Defaults to ``5``.
 
       -  ``instance_type``: AWS instance type to use for dynamic agents.
          This must be one of the following: ``g4dn.xlarge``,
@@ -602,12 +610,6 @@ The master supports the following configuration settings:
 
          -  ``preemptible``: Whether to use preemptible instances.
             Defaults to ``false``.
-
-      -  ``min_instances``: Min number of Determined agent instances.
-         Defaults to 0.
-
-      -  ``max_instances``: Max number of Determined agent instances.
-         Defaults to 5.
 
       -  ``operation_timeout_period``: The timeout period for tracking a
          GCP operation. This string is a sequence of decimal numbers,

@@ -1,0 +1,8 @@
+:orphan:
+
+**Improvements**
+
+-  Improve the experience of scheduling and scaling zero-slot tasks.
+   Users can now configure ``max_zero_slot_containers_per_agent`` in the
+   field ``provisioner`` of the master configuration. It defaults to no
+   limit for zero-slot containers.
