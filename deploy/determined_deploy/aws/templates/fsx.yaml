@@ -98,6 +98,18 @@ Parameters:
     Description: Maximum number of agents to launch simultaneously
     Default: 5
 
+  SpotEnabled:
+    Type: String
+    Description: Whether to use spot instances or not
+    Default: false
+
+  SpotMaxPrice:
+    Type: String
+    Description: |
+      The maximum hourly price you are willing to pay for the spot instance.
+      Should be a number without a currency option, e.g. "5.00"
+    Default: ''
+
   EnableCORS:
     Type: String
     Description: Whether to allow CORS requests or not
@@ -611,6 +623,8 @@ Resources:
               max_agent_starting_period: ${MaxAgentStartingPeriod}
               min_instances: ${MinDynamicAgents}
               max_instances: ${MaxDynamicAgents}
+              spot: ${SpotEnabled}
+              spot_max_price: "${SpotMaxPrice}"
               network_interface:
                 public_ip: true
                 security_group_id: ${AgentSecurityGroup.GroupId}

@@ -184,6 +184,18 @@ Spinning up the Cluster
       -  Maximum number of dynamic agent instances at one time.
       -  5
 
+   -  -  ``--spot``
+      -  Use spot instances.
+      -  False
+
+   -  -  ``--spot-max-price``
+
+      -  A maximum price for the spot instances. If the price on the
+         spot market exceeds this value, Determined will not create new
+         instances. Optional
+
+      -  The on-demand price for the instance type.
+
    -  -  ``--dry-run``
       -  Print the template but do not execute it.
       -  False
