@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Pagination contains resolved pagination indecies.
 type Pagination struct {
 	StartIndex int // Inclusive
 	EndIndex   int // Exclusive
@@ -22,9 +23,8 @@ func Paginate(total, offset, limit int) (*Pagination, error) {
 	if limit == 0 || endIndex > total {
 		endIndex = total
 	}
-	check := func() (bool, string) { return 0 <= startIndex && startIndex <= total, "offset out of bounds" }
-	if ok, message := check(); !ok {
-		return nil, errors.New(message)
+	if !(0 <= startIndex && startIndex <= total) {
+		return nil, errors.New("offset out of bounds")
 	}
 
 	p := Pagination{

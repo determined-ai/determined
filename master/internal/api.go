@@ -31,7 +31,7 @@ func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, l
 	total := int32(rv.Elem().Len())
 	pagination, err := api.Paginate(int(total), int(offset), int(limit))
 	if err != nil {
-		return err
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 	*p = &apiv1.Pagination{
 		Offset:     offset,
@@ -40,7 +40,7 @@ func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, l
 		EndIndex:   int32(pagination.EndIndex),
 		Total:      total,
 	}
-	rv.Elem().Set(rv.Elem().Slice(int(pagination.StartIndex), int(pagination.EndIndex)))
+	rv.Elem().Set(rv.Elem().Slice(pagination.StartIndex, pagination.EndIndex))
 	return nil
 }
 
