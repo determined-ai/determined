@@ -1316,7 +1316,7 @@ workflows:
       - test-e2e-webui:
           requires:
             - build-and-package-ts-sdk
-            - package-and-push-system-local
+            - build-react
 
       - deploy:
           enable-cors: true
