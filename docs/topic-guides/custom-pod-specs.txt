@@ -69,43 +69,11 @@ As part of their pod spec, users can specify ``initContainers`` and
 ``containers``. Additionally users can configure the
 ``determined-container`` that executes the task (e.g., training), by
 setting the container name in the pod spec to ``determined-container``.
-For the ``determined-container``, Determined does not currently support
+For the ``determined-container``, Determined currently supports
 configuring:
 
--  Container Image - Please see :ref:`container-images` for how to
-   specify custom docker images.
-
--  Container Command.
-
--  Container Args.
-
--  Container WorkingDir - Determined sets the working directory to be
-   ``/run/determined/workdir``.
-
--  Container Ports.
-
--  Container EnvFrom.
-
--  Container Env - Please see :ref:`environment-variables` for how to
-   set environment variables.
-
--  Container LivelinessProbe.
-
--  Container ReadinessProbe.
-
--  Container StartupProbe.
-
--  Container Lifecycle.
-
--  Container TerminationMessagePath.
-
--  Container TerminationMessagePolicy.
-
--  Container ImagePullPolicy - Please see :ref:`force_pull_image
-   <exp-environment-image>` for how to configure. Defaults to
-   ``PullIfNotPresent``.
-
--  Container SecurityContext.
+-  Resource requests and limits (except GPU resources).
+-  Volume mounts and volumes.
 
 *******************************
  Configuring Default Pod Specs
