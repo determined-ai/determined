@@ -32,9 +32,12 @@ fmt:
 test:
 	go test ./...
 
+packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
+	../tools/scripts/gen-attributions.py agent > $@
+
 .PHONY: package
 package: export GORELEASER_CURRENT_TAG := $(VERSION)
-package:
+package: packaging/LICENSE
 	goreleaser --snapshot --rm-dist
 
 .PHONY: release
