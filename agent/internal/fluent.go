@@ -176,33 +176,40 @@ end
 	return args, files, nil
 }
 
-func killContainerByName(ctx *actor.Context, c *client.Client, name string) error {
-	containers, err := c.ContainerList(context.Background(), types.ContainerListOptions{
+func killContainer(ctx *actor.Context, c *client.Client, containerID string) error {
+	if err := c.ContainerKill(context.Background(), containerID, "KILL"); err != nil {
+		return errors.Wrap(err, "failed to kill container")
+	}
+	return nil
+}
+
+func killContainerByName(ctx *actor.Context, docker *client.Client, name string) error {
+	containers, err := docker.ContainerList(context.Background(), types.ContainerListOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("name", name),
 		),
 	})
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to list containers by name")
 	}
 	for _, cont := range containers {
-		ctx.Log().Infof("killing found Fluent Bit container %s", cont.ID)
-		if err = c.ContainerKill(context.Background(), cont.ID, "KILL"); err != nil {
-			return errors.Wrap(err, "failed to kill existing Fluent Bit container")
+		ctx.Log().WithFields(logrus.Fields{"name": name, "id": cont.ID}).Infof("killing Docker container")
+		if err = killContainer(ctx, docker, cont.ID); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func pullImageByName(ctx *actor.Context, c *client.Client, imageName string) error {
-	_, _, err := c.ImageInspectWithRaw(context.Background(), imageName)
+func pullImageByName(ctx *actor.Context, docker *client.Client, imageName string) error {
+	_, _, err := docker.ImageInspectWithRaw(context.Background(), imageName)
 	switch {
 	case err == nil:
 		// No error means the image is present; do nothing.
 	case client.IsErrNotFound(err):
 		// This error means the call to Docker went fine but the image doesn't exist; pull it now.
 		ctx.Log().Infof("pulling Docker image %s", imageName)
-		pullResponse, pErr := c.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
+		pullResponse, pErr := docker.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
 		if pErr != nil {
 			return pErr
 		}
@@ -222,27 +229,20 @@ func pullImageByName(ctx *actor.Context, c *client.Client, imageName string) err
 // startLoggingContainer starts a Fluent Bit container. It returns the host and port that the agent
 // should use to connect to the daemon, the exposed host port of the container, and the ID of the
 // container.
-func startLoggingContainer(ctx *actor.Context, opts Options) (string, int, int, string, error) {
-	c, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.40"))
-	if err != nil {
-		return "", 0, 0, "", errors.Wrap(err, "error connecting to Docker daemon")
-	}
-
-	defer func() {
-		if cErr := c.Close(); cErr != nil {
-			logrus.WithError(cErr).Warn("failed to close Docker connection")
-		}
-	}()
-
+func startLoggingContainer(
+	ctx *actor.Context,
+	docker *client.Client,
+	opts Options,
+) (string, int, int, string, error) {
 	const containerName = "determined-fluent"
 	imageName := opts.FluentLoggingImage
 	exposedPort := nat.Port(fmt.Sprintf("%d/tcp", fluentListenPort))
 
-	if err = killContainerByName(ctx, c, containerName); err != nil {
+	if err := killContainerByName(ctx, docker, containerName); err != nil {
 		return "", 0, 0, "", errors.Wrap(err, "failed to kill old logging container")
 	}
 
-	if err = pullImageByName(ctx, c, imageName); err != nil {
+	if err := pullImageByName(ctx, docker, imageName); err != nil {
 		return "", 0, 0, "", errors.Wrap(err, "failed to pull logging image")
 	}
 
@@ -254,7 +254,7 @@ func startLoggingContainer(ctx *actor.Context, opts Options) (string, int, int, 
 	// Decide what Docker network to use for Fluent Bit. If this agent is itself running inside Docker,
 	// use one of the networks that this container is using. If not, use the default network
 	// ("bridge").
-	dockerNet, err := getDockerNetwork(c)
+	dockerNet, err := getDockerNetwork(docker)
 	if err != nil {
 		return "", 0, 0, "", errors.Wrap(err, "failed to get Docker network")
 	}
@@ -264,7 +264,7 @@ func startLoggingContainer(ctx *actor.Context, opts Options) (string, int, int, 
 	}
 	ctx.Log().Infof("running Fluent Bit on Docker network %q", fluentDockerNet)
 
-	createResponse, err := c.ContainerCreate(
+	createResponse, err := docker.ContainerCreate(
 		context.Background(),
 		&container.Config{
 			Image:        imageName,
@@ -288,7 +288,7 @@ func startLoggingContainer(ctx *actor.Context, opts Options) (string, int, int, 
 
 	filesReader, _ := archive.ToIOReader(fluentFiles)
 
-	err = c.CopyToContainer(context.Background(),
+	err = docker.CopyToContainer(context.Background(),
 		createResponse.ID,
 		"/",
 		filesReader,
@@ -298,12 +298,12 @@ func startLoggingContainer(ctx *actor.Context, opts Options) (string, int, int, 
 		return "", 0, 0, "", err
 	}
 
-	err = c.ContainerStart(context.Background(), createResponse.ID, types.ContainerStartOptions{})
+	err = docker.ContainerStart(context.Background(), createResponse.ID, types.ContainerStartOptions{})
 	if err != nil {
 		return "", 0, 0, "", err
 	}
 
-	container, _ := c.ContainerInspect(context.Background(), createResponse.ID)
+	container, _ := docker.ContainerInspect(context.Background(), createResponse.ID)
 	portStr := container.NetworkSettings.Ports[exposedPort][0].HostPort
 	hostPort, _ := strconv.Atoi(portStr)
 	ctx.Log().Infof("Fluent Bit listening on host port %d", hostPort)
@@ -320,25 +320,10 @@ func startLoggingContainer(ctx *actor.Context, opts Options) (string, int, int, 
 	return addr, port, hostPort, createResponse.ID, nil
 }
 
-func killContainer(containerID string) error {
-	c, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.40"))
-	if err != nil {
-		return errors.Wrap(err, "error connecting to Docker daemon")
-	}
-
-	defer func() {
-		if cErr := c.Close(); cErr != nil {
-			logrus.WithError(cErr).Warn("failed to close Docker connection")
-		}
-	}()
-
-	return c.ContainerKill(context.Background(), containerID, "KILL")
-}
-
 // getDockerNetwork returns the name of one of the Docker networks attached to the container that
 // this process is in. It returns an empty string if it does not seem to be running inside Docker or
 // is in Docker but on the host network, which should be treated equivalently.
-func getDockerNetwork(c *client.Client) (string, error) {
+func getDockerNetwork(docker *client.Client) (string, error) {
 	f, err := os.Open("/proc/self/cgroup")
 	if err != nil {
 		return "", errors.Wrap(err, "error opening cgroup file")
@@ -366,7 +351,7 @@ func getDockerNetwork(c *client.Client) (string, error) {
 		return "", nil
 	}
 
-	info, err := c.ContainerInspect(context.Background(), cid)
+	info, err := docker.ContainerInspect(context.Background(), cid)
 	if err != nil {
 		return "", errors.Wrap(err, "error inspecting this container")
 	}
@@ -388,11 +373,17 @@ type fluentActor struct {
 	client      *fluent.Fluent
 	port        int
 	containerID string
+	docker      *client.Client
 }
 
 func newFluentActor(ctx *actor.Context, opts Options) (*fluentActor, error) {
+	docker, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.40"))
+	if err != nil {
+		return nil, errors.Wrap(err, "error connecting to Docker daemon")
+	}
+
 	t0 := time.Now()
-	addr, port, hostPort, cid, err := startLoggingContainer(ctx, opts)
+	addr, port, hostPort, cid, err := startLoggingContainer(ctx, docker, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -422,6 +413,7 @@ func newFluentActor(ctx *actor.Context, opts Options) (*fluentActor, error) {
 		client:      client,
 		port:        hostPort,
 		containerID: cid,
+		docker:      docker,
 	}, nil
 }
 
@@ -431,7 +423,7 @@ func (f *fluentActor) Receive(ctx *actor.Context) error {
 		return f.client.Post("determined.agent", msg)
 	case actor.PostStop:
 		t0 := time.Now()
-		err := killContainer(f.containerID)
+		err := killContainer(ctx, f.docker, f.containerID)
 		ctx.Log().Infof("Fluent Bit killed in %s", time.Since(t0))
 		return err
 	}
