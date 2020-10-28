@@ -522,6 +522,7 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
+	a.m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
 	protoExp, err := a.getExperiment(e.ID)
 	if err != nil {
