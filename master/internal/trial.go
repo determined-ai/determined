@@ -106,6 +106,7 @@ type (
 // Trial-specific external messages.
 type trialMessage struct {
 	RendezvousInfo *rendezvousInfoMessage `union:"type,RENDEZVOUS_INFO" json:"-"`
+	RunWorkload    *runWorkload           `union:"type,RUN_WORKLOAD" json:"-"`
 }
 
 func (m trialMessage) MarshalJSON() ([]byte, error) {
@@ -143,6 +144,10 @@ type rendezvousAddress struct {
 	ContainerIP   string `json:"container_ip"`
 	HostPort      int    `json:"host_port"`
 	HostIP        string `json:"host_ip"`
+}
+
+type runWorkload struct {
+	Workload workload.Workload `json:"workload"`
 }
 
 // terminatedContainerWithState records the terminatedContainer message with some state about the
@@ -708,8 +713,8 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 		var msg interface{}
 		if terminateNow {
 			w = *t.sequencer.TerminateWorkload()
-			msg = &tasks.TaskSpec{
-				RunWorkload: &tasks.RunWorkload{
+			msg = &trialMessage{
+				RunWorkload: &runWorkload{
 					Workload: w,
 				},
 			}
@@ -720,8 +725,8 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 			if err := saveWorkload(t.db, w); err != nil {
 				ctx.Log().WithError(err).Error("failed to save workload to the database")
 			}
-			msg = &tasks.TaskSpec{
-				RunWorkload: &tasks.RunWorkload{
+			msg = &trialMessage{
+				RunWorkload: &runWorkload{
 					Workload: w,
 				},
 			}
