@@ -1,6 +1,39 @@
 package api
 
-import "math"
+import (
+	"math"
+
+	"github.com/pkg/errors"
+)
+
+// Pagination contains resolved pagination indecies.
+type Pagination struct {
+	StartIndex int // Inclusive
+	EndIndex   int // Exclusive
+}
+
+// Paginate calculates pagination values. Negative offsets denotes that offsets should be
+// calculated from the end.
+// Input offset: the number of entries you wish to skip.
+func Paginate(total, offset, limit int) (*Pagination, error) {
+	startIndex := offset
+	if offset < 0 {
+		startIndex = total + offset
+	}
+	endIndex := startIndex + limit
+	if limit == 0 || endIndex > total {
+		endIndex = total
+	}
+	if !(0 <= startIndex && startIndex <= total) {
+		return nil, errors.New("offset out of bounds")
+	}
+
+	p := Pagination{
+		StartIndex: startIndex,
+		EndIndex:   endIndex,
+	}
+	return &p, nil
+}
 
 // EffectiveOffset translated negative offsets into positive ones.
 func EffectiveOffset(reqOffset int, total int) (offset int) {
