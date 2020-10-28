@@ -11,12 +11,12 @@ from determined.keras import TFKerasTrial
 def load_model(
     ckpt_dir: pathlib.Path, metadata: Dict[str, Any], tags: Optional[List[str]] = None
 ) -> AutoTrackable:
-    save_format = metadata.get("format", None)
+    save_format = metadata.get("format", "saved_model")
 
     # For tf.estimators we save the entire model using the saved_model format.
     # For tf.keras we save only the weights also using the saved_model format,
     # which we call saved_weights.
-    if not save_format or cast(str, save_format) == "saved_model":
+    if cast(str, save_format) == "saved_model":
         return load_saved_model(ckpt_dir, tags=tags)
 
     elif save_format == "saved_weights":
