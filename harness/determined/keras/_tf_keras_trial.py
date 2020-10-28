@@ -496,7 +496,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # Save optimizer(s) weights.
         with h5py.File(path.joinpath("determined-keras-optimizer-weights.h5"), "w") as h5file:
-            for idx, optimizer in enumerate(self.context.optimizers):
+            for idx, optimizer in enumerate(self.context._optimizers):
                 opt_group = h5file.create_group(f"optimizer-{idx}")
                 save_optimizer_weights_to_hdf5_group(opt_group, optimizer)
 
@@ -552,8 +552,9 @@ class TFKerasTrialController(det.LoopTrialController):
         with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
             if "optimizer_weights" in h5file:
                 load_optimizer_weights(self.model, h5file["optimizer_weights"], None)
+                return
 
-            for idx, optimizer in enumerate(self.context.optimizers):
+            for idx, optimizer in enumerate(self.context._optimizers):
                 if f"optimizer-{idx}" in h5file:
                     load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
 

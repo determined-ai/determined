@@ -36,7 +36,7 @@ class TFKerasContext:
         self.compile_args = None  # type: Optional[inspect.BoundArguments]
         self.train_config = None  # type: Optional[TFKerasTrainConfig]
 
-        self.optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
+        self._optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
         self._wrapped_optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
         self._compiled_optimizer = None  # type: Optional[tf.keras.optimizers.Optimizer]
 
@@ -216,8 +216,7 @@ class TFKerasContext:
         hvd.require_horovod_type("tensorflow.keras", "TFKerasContext.wrap_optimizer was called.")
         if optimizer == self._compiled_optimizer:
             logging.debug(
-                "Skipping wrapping optimizer as it was already wrapped during the compile call or"
-                "a previous wrap_optimizer() call."
+                "Skipping wrapping optimizer as it was already wrapped during the compile call."
             )
             wrapped_optimizer = optimizer
         else:
@@ -259,7 +258,7 @@ class TFKerasContext:
         call and are now passed in as part of `self.context.wrap_optimizers()`.
         """
         check.check_len(
-            self.optimizers,
+            self._optimizers,
             0,
             "context._select_optimizers() called multiple times. Should be only called "
             "once by TFKerasTrialController.",
@@ -267,7 +266,7 @@ class TFKerasContext:
 
         if len(self._wrapped_optimizers) > 0:
             logging.debug(f"Using wrapped optimizers: {self._wrapped_optimizers}.")
-            self.optimizers = self._wrapped_optimizers
+            self._optimizers = self._wrapped_optimizers
             return
 
         check.is_not_none(
@@ -280,7 +279,7 @@ class TFKerasContext:
         if self._compiled_optimizer:
             logging.info("Please switch over to using `optimizer = self.context.wrap_optimizer()`.")
             logging.debug(f"Using compiled optimizer: {self._compiled_optimizer}.")
-            self.optimizers = [self._compiled_optimizer]
+            self._optimizers = [self._compiled_optimizer]
 
 
 class TFKerasTrialContext(det.TrialContext, TFKerasContext):
