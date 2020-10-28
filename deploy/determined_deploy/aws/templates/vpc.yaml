@@ -72,7 +72,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.13.7rc0
+    Default: 0.13.7rc1
 
   DBPassword:
     Type: String
