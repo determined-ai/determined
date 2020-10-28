@@ -31,8 +31,9 @@ const SignIn: React.FC = () => {
   const ui = UI.useStateContext();
   const setUI = UI.useActionContext();
 
-  let queries: Queries = queryString.parse(location.search);
-  queries = handleRelayState<Queries>(queries);
+  const queries: Queries = queryString.parse(location.search);
+  const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
+  const ssoQueryString = queryString.stringify(ssoQueries);
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -92,7 +93,7 @@ const SignIn: React.FC = () => {
         {samlSso &&
           <Button
             className={css.ssoButton}
-            href={samlUrl(samlSso.ssoUrl, queryString.stringify(queries))}
+            href={samlUrl(samlSso.ssoUrl, ssoQueryString)}
             type="primary">
             Sign in with Okta
           </Button>
