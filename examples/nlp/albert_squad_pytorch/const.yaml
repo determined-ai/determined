@@ -6,7 +6,7 @@ hyperparameters:
     model_type: 'albert'
     adam_epsilon: 1e-8
     weight_decay: 0
-    num_warmup_steps: 550  # 10% of total training
+    num_warmup_steps: 13220  # 10% of total training
     max_seq_length: 384
     doc_stride: 128
     max_query_length: 64
@@ -14,9 +14,11 @@ hyperparameters:
     max_answer_length: 30
     null_score_diff_threshold: 0.0
     max_grad_norm: 1.0
-    num_training_steps: 5500 # This is the number of optimizer steps. Train for 2 epochs
+    num_training_steps: 132198 # This is the number of optimizer steps. Train for 2 epochs
     do_lower_case: true
     use_radam: false
+resources:
+    slots_per_trial: 1
 searcher:
     name: single
     metric: f1
@@ -33,16 +35,6 @@ entrypoint: model_def:AlbertSQuADPyTorch
 optimizations:
     aggregation_frequency: 24
 max_restarts: 0
-resources:
-    slots_per_trial: 1
-
-
-environment:
-  force_pull_image: false
-  image:
-#    cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0c9e956"
-    gpu: "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0c9e956"
-
 bind_mounts:
     - host_path: /home/ubuntu/dtrain-fsx/albert-cache/
       container_path: /mnt/data

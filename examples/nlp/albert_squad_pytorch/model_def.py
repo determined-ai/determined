@@ -135,8 +135,8 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         outputs = self.model(**inputs)
         loss = outputs[0]
 
-        if self.context.distributed.get_rank() == 0:
-            print(f"LR (epoch={epoch_idx}, batch={batch_idx}): ", self.lr_scheduler.get_last_lr())
+        # if self.context.distributed.get_rank() == 0:
+        #     print(f"LR (epoch={epoch_idx}, batch={batch_idx}): ", self.lr_scheduler.get_last_lr())
 
         self.context.backward(loss)
         self.context.step_optimizer(
@@ -146,8 +146,8 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             )
         )
 
-        # return {"loss": loss, "lr": float(self.lr_scheduler.get_lr())}
-        return {"loss": loss}
+        return {"loss": loss, "lr": float(self.lr_scheduler.get_lr()[0])}
+        # return {"loss": loss}
 
 
     def evaluate_full_dataset(self, data_loader: DataLoader):
