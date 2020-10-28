@@ -9,15 +9,16 @@ func TestPaginate(t *testing.T) {
 		Total       int
 		Offset      int
 		Limit       int
+		StartIndex  int
 		ReturnCount int
 		Err         bool
 	}{
-		{10, 0, 0, 10, false},
-		{10, 1, 0, 9, false},
-		{10, 1, 1, 1, false},
-		{10, -1, 0, 1, false},
-		{10, -2, 1, 1, false},
-		{10, 13, 0, 7, true},
+		{10, 0, 0, 0, 10, false},
+		{10, 1, 0, 1, 9, false},
+		{10, 1, 1, 1, 1, false},
+		{10, -1, 0, 9, 1, false},
+		{10, -2, 1, 8, 1, false},
+		{10, 13, 0, 0, 7, true},
 	}
 
 	for _, tb := range tables {
@@ -42,6 +43,9 @@ func TestPaginate(t *testing.T) {
 		}
 		if p.StartIndex < 0 || p.StartIndex > tb.Total-1 {
 			errReporter("StartIndex out of range")
+		}
+		if p.StartIndex != tb.StartIndex {
+			errReporter("Unexpected start index")
 		}
 		retCount := p.EndIndex - p.StartIndex
 		if retCount != tb.ReturnCount {
