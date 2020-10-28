@@ -190,9 +190,11 @@ def deploy_aws(args: argparse.Namespace) -> None:
 
     if args.deployment_type != constants.deployment_types.SIMPLE:
         if args.agent_subnet_id != "":
-            raise ValueError(f"The agent-subnet-id can only be set if the deployment-type=simple. "
-                             f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
-                             f"deployment-type={args.deployment_type}.")
+            raise ValueError(
+                f"The agent-subnet-id can only be set if the deployment-type=simple. "
+                f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
+                f"deployment-type={args.deployment_type}."
+            )
 
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
