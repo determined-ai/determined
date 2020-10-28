@@ -22,7 +22,7 @@ def test_gaea_pytorch_const() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_mmdetection() -> None:
-    config = conf.load_config(conf.cv_examples_path("mmdetection/const_fake_data.yaml"))
+    config = conf.load_config(conf.cv_examples_path("mmdetection_pytorch/const_fake_data.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("mmdetection"), 1)
