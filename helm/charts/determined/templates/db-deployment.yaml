@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: determined-db-{{ .Release.Name }}
-        image: postgres:10.8
+        image: postgres:10.14
         imagePullPolicy: "Always"
         resources:
           requests:
