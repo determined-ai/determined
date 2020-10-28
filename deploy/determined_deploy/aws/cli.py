@@ -76,6 +76,11 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="inbound IP Range in CIDR format",
     )
     subparser.add_argument(
+        "--agent-subnet-id",
+        type=str,
+        help="subnet to deploy agents into. Optional. Only used with simple deployment type",
+    )
+    subparser.add_argument(
         "--det-version",
         type=str,
         help=argparse.SUPPRESS,
@@ -183,6 +188,12 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.deployment_types.FSX: vpc.FSx,
     }  # type: Dict[str, Union[Type[base.DeterminedDeployment]]]
 
+    if args.deployment_type != constants.deployment_types.SIMPLE:
+        if args.agent_subnet_id != "":
+            raise ValueError(f"The agent-subnet-id can only be set if the deployment-type=simple. "
+                             f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
+                             f"deployment-type={args.deployment_type}.")
+
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
         constants.cloudformation.ENABLE_CORS: args.enable_cors,
@@ -199,6 +210,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.MAX_DYNAMIC_AGENTS: args.max_dynamic_agents,
         constants.cloudformation.SPOT_ENABLED: args.spot,
         constants.cloudformation.SPOT_MAX_PRICE: args.spot_max_price,
+        constants.cloudformation.SUBNET_ID_KEY: args.agent_subnet_id,
     }
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)
