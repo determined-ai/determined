@@ -19,7 +19,7 @@ module.exports = {
     '@storybook/addon-links',
     '@storybook/addon-knobs',
   ],
-  stories: ['../src/**/*.stories.(ts|tsx)'],
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
   webpackFinal: async (config, { configType }) => {
     // `configType` has a value of 'DEVELOPMENT' or 'PRODUCTION'
     // You can change the configuration based on that.
