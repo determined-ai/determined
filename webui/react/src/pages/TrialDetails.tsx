@@ -111,7 +111,6 @@ const TrialDetailsComp: React.FC = () => {
   const [ contError, setContError ] = useState<string>();
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
