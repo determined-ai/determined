@@ -126,8 +126,9 @@ Building the Model
 The :meth:`~determined.keras.TFKerasTrial.build_model` method returns a
 compiled ``tf.keras.Model`` object. The Fashion MNIST model code uses
 the Keras Sequential API and we can continue to use that API in our
-implementation of ``build_model``. The only minor difference is that the
-model needs to be wrapped by calling :func:`self.context.wrap_model()
+implementation of ``build_model``. The only minor differences is that
+the model needs to be wrapped by calling
+:func:`self.context.wrap_model()
 <determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled
 and the optimizer needs to be wrapped by calling
 :func:`self.context.wrap_optimizer()
@@ -148,7 +149,7 @@ and the optimizer needs to be wrapped by calling
        model = self.context.wrap_model(model)
 
        # Create and wrap optimizer.
-       optimizer = tf.keras.optimizers.Adam(name="Adam")
+       optimizer = tf.keras.optimizers.Adam()
        optimizer = self.context.wrap_optimizer(optimizer)
 
        model.compile(

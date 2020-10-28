@@ -15,10 +15,11 @@ parser.add_argument('--master-url', type=str, default="", help='URL of the Deter
 parser.add_argument('--noise-dim', type=int, default=128, help='Needs to match noise dim during training.')
 
 
-def generate_and_plot_images(model, test_input):
+def generate_and_plot_images(generator: tf.keras.Sequential, noise_dim: int) -> None:
     # Notice `training` is set to False.
     # This is so all layers run in inference mode (batchnorm).
-    predictions = model(test_input, training=False)
+    seed = tf.random.normal([16, noise_dim])
+    predictions = generator(seed, training=False)
 
     plt.figure(figsize=(4,4))
 
@@ -29,16 +30,19 @@ def generate_and_plot_images(model, test_input):
     plt.show()
 
 
-def export_model():
-    args = parser.parse_args()
+def export_model(experiment_id: int, master_url: str) -> tf.keras.Model:
     checkpoint = (
-        Determined(master=args.master_url).get_experiment(args.experiment_id).top_checkpoint()
+        Determined(master=master_url).get_experiment(experiment_id).top_checkpoint()
     )
-
     model = checkpoint.load()
-    seed = tf.random.normal([16, args.noise_dim])
-    generate_and_plot_images(model.generator, seed)
+    return model
+
+
+def main():
+    args = parser.parse_args()
+    model = export_model(args.experiment_id, args.master_url)
+    generate_and_plot_images(model.generator, args.noise_dim)
 
 
 if __name__ == "__main__":
-    export_model()
+    main()
