@@ -28,6 +28,7 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.MAX_DYNAMIC_AGENTS,
         constants.cloudformation.SPOT_ENABLED,
         constants.cloudformation.SPOT_MAX_PRICE,
+        constants.cloudformation.SUBNET_ID_KEY,
     ]
 
     def deploy(self) -> None:

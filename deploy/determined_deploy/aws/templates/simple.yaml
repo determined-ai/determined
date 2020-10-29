@@ -55,6 +55,11 @@ Parameters:
     Description: Ip range for Inbound
     Default: 0.0.0.0/0
 
+  SubnetId:
+    Type: String
+    Description: The subnet to deploy instances into. Optional.
+    Default: ''
+
   Version:
     Type: String
     Description: Determined version or commit for master docker image
@@ -448,6 +453,7 @@ Resources:
               network_interface:
                 public_ip: true
                 security_group_id: ${AgentSecurityGroup.GroupId}
+                subnet_id: ${SubnetId}
               provider: aws
               root_volume_size: 200
               ssh_key_name: ${Keypair}
