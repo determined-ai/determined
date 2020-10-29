@@ -1,16 +1,17 @@
 import sys
 from argparse import ONE_OR_MORE, FileType, Namespace
 from collections import namedtuple
+from pathlib import Path
 from typing import Any, Dict, List
 
 from termcolor import colored
 
-from determined_common import api
+from determined_common import api, constants, context
 from determined_common.api.authentication import authentication_required
 from determined_common.check import check_eq
 
 from . import render
-from .command import Command, parse_config, render_event_stream
+from .command import CONTEXT_DESC, Command, parse_config, render_event_stream
 from .declarative_argparse import Arg, Cmd
 
 Tensorboard = namedtuple(
@@ -43,6 +44,10 @@ def start_tensorboard(args: Namespace) -> None:
         "trial_ids": args.trial_ids,
         "experiment_ids": args.experiment_ids,
     }
+
+    if args.context is not None:
+        req_body["user_files"], _ = context.read_context(args.context, constants.MAX_CONTEXT_SIZE)
+
     resp = api.post(args.master, "tensorboard", body=req_body).json()
 
     if args.detach:
@@ -151,6 +156,7 @@ args_description = [
                      "allowed per TensorBoard instance"),
             Arg("--no-browser", action="store_true",
                 help="don't open TensorBoard in a browser after startup"),
+            Arg("-c", "--context", default=None, type=Path, help=CONTEXT_DESC),
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID")
         ]),
