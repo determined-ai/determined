@@ -46,7 +46,7 @@ pre-package:
 	cp ../harness/dist/*.whl build/wheels/
 
 packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
-	../tools/scripts/gen-attributions.py agent > $@
+	../tools/scripts/gen-attributions.py agent $@
 
 .PHONY: package
 package: export DET_SEGMENT_MASTER_KEY ?=
