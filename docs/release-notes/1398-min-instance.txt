@@ -1,9 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Support minimum instance number in dynamic agents. The master will
-   try to scale up the cluster to keep the total number above the
-   configured value. You can now configure it using the
-   ``min_instances`` field in the ``provisioner`` field in the master
-   configuration.
