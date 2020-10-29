@@ -11,7 +11,7 @@ checks:
       threshold: 500
   method-complexity:
     config:
-      threshold: 5
+      threshold: 10
   method-count:
     config:
       threshold: 20
@@ -23,7 +23,7 @@ checks:
       threshold: 4
   return-statements:
     config:
-      threshold: 4
+      threshold: 5
   similar-code:
     config:
       threshold: # language-specific defaults. an override will affect all languages.
