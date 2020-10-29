@@ -342,7 +342,12 @@ func startLoggingContainer(
 // is in Docker but on the host network, which should be treated equivalently.
 func getDockerNetwork(docker *client.Client) (string, error) {
 	f, err := os.Open("/proc/self/cgroup")
-	if err != nil {
+
+	switch {
+	// If the file is not found, we're probably running natively on non-Linux, which is fine.
+	case errors.Is(err, os.ErrNotExist):
+		return "", nil
+	case err != nil:
 		return "", errors.Wrap(err, "error opening cgroup file")
 	}
 
