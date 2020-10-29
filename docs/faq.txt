@@ -201,6 +201,20 @@ model to use :ref:`Estimator Trial <estimator-trial>`. `Example of
 converting a Tensorflow graph into an Estimator
 <https://github.com/determined-ai/determined/blob/master/examples/computer_vision/mnist_tf_layers/model_def.py>`_.
 
+Can I train using Tensorflow 2 in Determined?
+=============================================
+
+Yes Determined support both Tensorflow 1 and 2. The version of
+Tensorflow used is configured by the version of Tesnsorflow that is
+installed in docker image used for training. Determined offers pre-built
+docker images for Tensorflow 1 and 2:
+
+-  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.7.0``
+-  ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.7.0``
+
+Please see :ref:`container-images` for more details about configuring
+training environments.
+
 *****************
  PyTorch Support
 *****************
