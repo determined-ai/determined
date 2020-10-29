@@ -71,12 +71,10 @@ func NewLogStoreProcessor(
 	}
 }
 
-type (
-	tick struct{}
-)
 
 // Receive implements the actor.Actor interface.
 func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
+	type tick struct{}
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.Tell(ctx.Self(), tick{})
