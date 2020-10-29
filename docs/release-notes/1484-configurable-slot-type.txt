@@ -6,7 +6,9 @@
    supported auto-detecting the slot type for agents. It detected the
    GPUs and if there were no GPUs the agents would fall back to mapping
    one slot to all the CPUs. Now, this behavior can be configured to one
-   of ``gpu``, ``cpu``, and ``auto`` in the field ``slot_type`` of the
-   agent configuration ``agent.yaml`` and defaults to ``auto``. Also,
-   dynamic agents will be configured to ``gpu``. See the :ref:`Agent
-   configuration <agent-configuration>` for details.
+   of ``auto``, ``gpu``, ``cpu``, and ``none`` in the field
+   ``slot_type`` of the agent configuration ``agent.yaml``. Dynamic
+   agents having GPUs will be configured to ``gpu`` while those agents
+   having no GPUs will be configured to ``none``. For static agents this
+   field defaults to ``auto``. See the :ref:`Agent configuration
+   <agent-configuration>` for details.

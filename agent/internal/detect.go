@@ -25,6 +25,8 @@ func (a *agent) detect() error {
 			a.Devices = append(a.Devices, device.Device{
 				ID: i, Brand: "Artificial", UUID: id, Type: device.CPU})
 		}
+	case a.SlotType == "none":
+		a.Devices = []device.Device{}
 	case a.SlotType == "gpu":
 		devices, err := detectGPUs(a.Options.VisibleGPUs)
 		if err != nil {

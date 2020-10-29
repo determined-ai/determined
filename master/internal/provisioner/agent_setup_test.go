@@ -48,8 +48,10 @@ if $use_gpus
 then
     echo "#### Starting agent with GPUs"
     docker_args+=(--gpus all)
+    docker_args+=(-e DET_SLOT_TYPE=gpu)
 else
     echo "#### Starting agent with only CPUs"
+    docker_args+=(-e DET_SLOT_TYPE=none)
 fi
 
 cert_b64=PT09PSBjZXJ0ID09PT0=
@@ -76,7 +78,6 @@ docker run --init --name determined-agent  \
     -e DET_MASTER_HOST="test.master" \
     -e DET_MASTER_PORT="8080" \
     -e DET_RESOURCE_POOL="test-pool" \
-    -e DET_SLOT_TYPE=gpu \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
     "${docker_args[@]}" \
