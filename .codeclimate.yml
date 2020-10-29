@@ -37,9 +37,9 @@ plugins: # https://docs.codeclimate.com/docs/list-of-engines
       strings:
       - FIXME
   bandit:
-    enabled: true
+    enabled: false
   radon:
-    enabled: true
+    enabled: false
     config:
       python_version: 3
   markdownlint:
