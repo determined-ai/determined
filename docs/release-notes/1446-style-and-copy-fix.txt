@@ -1,7 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  WebUI: Allow long checkpoint names to wrap in the checkpoint modal.
--  WebUI: Correct the confirmation message when performing batch
-   operations for tasks.
