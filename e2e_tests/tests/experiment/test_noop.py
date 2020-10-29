@@ -252,36 +252,42 @@ def test_startup_hook() -> None:
     )
 
 
-@pytest.mark.e2e_cpu  # type: ignore
-def test_rng_restore() -> None:
+def _test_rng_restore(fixture: str, metrics: list) -> None:
+    """
+    This test confirms that an experiment can be restarted from a checkpoint
+    with the same RNG state. It requires a test fixture that will emit
+    random numbers from all of the RNGs used in the relevant framework as
+    metrics. The experiment must have a const.yaml, run for at least 3 steps,
+    checkpoint every step, and keep the first checkpoint (either by having
+    metrics get worse over time, or by configuring the experiment to keep all
+    checkpoints).
+    """
     experiment = exp.run_basic_test(
-        conf.fixtures_path("pytorch_no_op/const.yaml"),
-        conf.fixtures_path("pytorch_no_op"),
+        conf.fixtures_path(fixture + "/const.yaml"),
+        conf.fixtures_path(fixture),
         1,
     )
 
     first_trial = exp.experiment_trials(experiment)[0]
 
-    assert len(first_trial["steps"]) == 3
+    assert len(first_trial["steps"]) >= 3
 
     first_step = first_trial["steps"][0]
-    first_checkpoint_id = first_trial["steps"][0]["checkpoint"]["id"]
+    first_checkpoint_id = first_step["checkpoint"]["id"]
 
-    config_base = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
+    config_base = conf.load_config(conf.fixtures_path(fixture + "/const.yaml"))
     config_obj = copy.deepcopy(config_base)
     config_obj["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
 
-    experiment2 = exp.run_basic_test_with_temp_config(
-        config_obj, conf.fixtures_path("pytorch_no_op"), 1
-    )
+    experiment2 = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path(fixture), 1)
 
     second_trial = exp.experiment_trials(experiment2)[0]
 
-    assert len(second_trial["steps"]) == 3
+    assert len(second_trial["steps"]) >= 3
     assert second_trial["warm_start_checkpoint_id"] == first_checkpoint_id
 
     for step in range(0, 2):
-        for metric in ["np_rand", "rand_rand", "torch_rand"]:
+        for metric in metrics:
             first_metric = first_trial["steps"][step + 1]["validation"]["metrics"][
                 "validation_metrics"
             ][metric]
@@ -291,44 +297,27 @@ def test_rng_restore() -> None:
             assert (
                 first_metric == second_metric
             ), f"failures on iteration: {step} with metric: {metric}"
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.tensorflow1_cpu  # type: ignore
+@pytest.mark.tensorflow2_cpu  # type: ignore
+def test_keras_rng_restore() -> None:
+    _test_rng_restore("keras_no_op", ["val_rand_rand", "val_np_rand", "val_tf_rand"])
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.tensorflow1_cpu  # type: ignore
+@pytest.mark.tensorflow2_cpu  # type: ignore
+def test_estimator_rng_restore() -> None:
+    _test_rng_restore("estimator_no_op", ["rand_rand", "np_rand", "tf_rand"])
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_pytorch_cpu_rng_restore() -> None:
+    _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand"])
 
 
 @pytest.mark.e2e_gpu  # type: ignore
-def test_gpu_restore() -> None:
-    experiment = exp.run_basic_test(
-        conf.fixtures_path("pytorch_no_op/const.yaml"),
-        conf.fixtures_path("pytorch_no_op"),
-        1,
-    )
-
-    first_trial = exp.experiment_trials(experiment)[0]
-
-    assert len(first_trial["steps"]) == 3
-
-    first_step = first_trial["steps"][0]
-    second_checkpoint_id = first_step["checkpoint"]["id"]
-
-    config_base = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
-    config_obj = copy.deepcopy(config_base)
-    config_obj["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
-
-    experiment2 = exp.run_basic_test_with_temp_config(
-        config_obj, conf.fixtures_path("pytorch_no_op"), 1
-    )
-
-    second_trial = exp.experiment_trials(experiment2)[0]
-
-    assert len(second_trial["steps"]) == 3
-    assert second_trial["warm_start_checkpoint_id"] == second_checkpoint_id
-
-    for step in range(0, 2):
-        for metric in ["np_rand", "rand_rand", "torch_rand", "gpu_rand"]:
-            first_metric = first_trial["steps"][step + 1]["validation"]["metrics"][
-                "validation_metrics"
-            ][metric]
-            second_metric = second_trial["steps"][step]["validation"]["metrics"][
-                "validation_metrics"
-            ][metric]
-            assert (
-                first_metric == second_metric
-            ), f"failures on iteration: {step} with metric: {metric}"
+def test_pytorch_gpu_rng_restore() -> None:
+    _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand", "gpu_rand"])
