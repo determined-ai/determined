@@ -122,15 +122,11 @@ export const patchExperiment: HttpApi<PatchExperimentParams, void> = {
   postProcess: noOp,
 };
 
-export const killExperiment: HttpApi<KillExpParams, void> = {
-  httpOptions: (params) => {
-    return {
-      method: 'POST',
-      url: `/experiments/${params.experimentId.toString()}/kill`,
-    };
-  },
+export const killExperiment: DetApi<KillExpParams, Api.V1KillExperimentResponse, void> = {
   name: 'killExperiment',
   postProcess: noOp,
+  request: (params: KillExpParams) => detApi.Experiments
+    .determinedKillExperiment(params.experimentId),
 };
 
 export const getExperimentSummaries: HttpApi<ExperimentsParams, ExperimentBase[]> = {
