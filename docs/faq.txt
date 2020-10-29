@@ -191,8 +191,8 @@ tasks that do not have an ``agent_label`` or that specify a different
  TensorFlow Support
 ********************
 
-Can I train a TensorFlow Core model in Determined?
-==================================================
+Can I use TensorFlow Core models with Determined?
+=================================================
 
 Determined has support for TensorFlow models that use the :ref:`tf.keras
 <tf-keras-trial>` or :ref:`Estimator <estimator-trial>` APIs. For models
@@ -201,18 +201,20 @@ model to use :ref:`Estimator Trial <estimator-trial>`. `Example of
 converting a TensorFlow graph into an Estimator
 <https://github.com/determined-ai/determined/blob/master/examples/computer_vision/mnist_tf_layers/model_def.py>`_.
 
-Can I train using TensorFlow 2 with Determined?
-===============================================
+Can I use TensorFlow 2 with Determined?
+=======================================
 
-Yes; Determined support both TensorFlow 1 and 2. The version of
-TensorFlow used is configured by the version of TesnsorFlow that is
-installed in the Docker image used for training. Determined offers
-pre-built Docker images for TensorFlow 1 and 2:
+Yes; Determined supports both TensorFlow 1 and 2. The version of TensorFlow that
+is used for a particular experiment is controlled by the container image that
+has been configured for that experiment. Determined provides prebuilt Docker
+images that include TensorFlow 1 and 2, respectively:
 
--  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.7.0``
+-  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.7.0`` (default)
 -  ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.7.0``
 
-Please see :ref:`container-images` for more details about configuring
+To change the container image used for an experiment, specify
+:ref:`environment.image <exp-environment-image>` in the experiment configuration
+file. Please see :ref:`container-images` for more details about configuring
 training environments.
 
 *****************
