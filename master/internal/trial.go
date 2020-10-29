@@ -630,7 +630,8 @@ func (t *trial) processAllocated(
 	for rank, a := range msg.Allocations {
 		t.containerRanks[a.Summary().ID] = rank
 		taskSpec := *t.taskSpec
-		taskSpec.StartContainer = &tasks.StartContainer{
+		taskSpec.AgentUserGroup = t.agentUserGroup
+		taskSpec.SetInner(&tasks.StartTrial{
 			ExperimentConfig:    t.experiment.Config,
 			ModelDefinition:     t.modelDefinition,
 			HParams:             t.create.Hparams,
@@ -639,10 +640,9 @@ func (t *trial) processAllocated(
 			InitialWorkload:     w,
 			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
 			AdditionalFiles:     additionalFiles,
-			AgentUserGroup:      t.agentUserGroup,
 			IsMultiAgent:        len(t.allocations) > 1,
 			Rank:                rank,
-		}
+		})
 		a.Start(ctx, taskSpec)
 	}
 

@@ -58,7 +58,7 @@ func (r *RuntimeItem) UnmarshalJSON(data []byte) error {
 }
 
 // For returns the value for the provided device type.
-func (r *RuntimeItem) For(deviceType device.Type) string {
+func (r RuntimeItem) For(deviceType device.Type) string {
 	switch deviceType {
 	case device.CPU:
 		return r.CPU

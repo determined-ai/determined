@@ -129,15 +129,15 @@ func createPodWithMockQueue() (
 	map[string]*actor.Ref,
 ) {
 	startCmd := tasks.StartCommand{
-		AgentUserGroup: createAgentUserGroup(),
-		Config:         model.CommandConfig{Description: "test-config"},
+		Config: model.CommandConfig{Description: "test-config"},
 	}
 	task := tasks.TaskSpec{
-		TaskID:       "task",
-		ContainerID:  "container",
-		ClusterID:    "cluster",
-		StartCommand: &startCmd,
+		TaskID:         "task",
+		ContainerID:    "container",
+		ClusterID:      "cluster",
+		AgentUserGroup: createAgentUserGroup(),
 	}
+	task.SetInner(&startCmd)
 	system := actor.NewSystem("test-sys")
 	podMap, actorMap := createReceivers(system)
 

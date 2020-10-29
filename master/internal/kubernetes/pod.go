@@ -173,19 +173,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 }
 
 func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
-	var err error
-	switch {
-	case p.taskSpec.StartCommand != nil:
-		err = p.createPodSpecForCommand(ctx)
-	case p.taskSpec.StartContainer != nil:
-		err = p.createPodSpecForTrial(ctx)
-	case p.taskSpec.GCCheckpoints != nil:
-		err = p.createPodSpecForGC(ctx)
-	default:
-		return errors.Errorf("unexpected task spec received")
-	}
-
-	if err != nil {
+	if err := p.createPodSpec(ctx); err != nil {
 		return err
 	}
 
