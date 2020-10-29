@@ -126,8 +126,10 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		a.handleAPIRequest(ctx, msg)
 
 	case actor.PostStop:
-		if err := a.fluent.StopAndAwaitTermination(); err != nil {
-			ctx.Log().Errorf("error killing logging container %v", err)
+		if a.fluent != nil {
+			if err := a.fluent.StopAndAwaitTermination(); err != nil {
+				ctx.Log().Errorf("error killing logging container %v", err)
+			}
 		}
 
 		ctx.Log().Info("agent shut down")
