@@ -8,6 +8,47 @@
  Version 0.13
 **************
 
+Version 0.13.7
+==============
+
+**Release Date:** October 29, 2020
+
+-  Deprecate the :ref:`simple <topic-guides_hp-tuning-det_adaptive-simple>` and :ref:`advanced <topic-guides_hp-tuning-det_adaptive-advanced>` adaptive hyperparameter search algorithms. They will be removed in a future release. Both algorithms have been replaced with :ref:`topic-guides_hp-tuning-det_adaptive-asha`, which will give state-of-the-art performance with better scalability.
+
+**New Features**
+
+-  Allow Determined clusters running on Amazon Web Services to use spot instances to reduce costs. This can be enabled by setting ``spot: true`` in the :ref:`cluster-configuration`.
+
+-  Support `MMDetection <https://github.com/open-mmlab/mmdetection>`__, a popular library for object detection, in Determined. MMDetection allows users to easily train state-of-the-art object detection models; with Determined, users can take things one step further with cutting edge distributed training and hyperparameter search to further boost performance. See the `Determined implementation of MMDetection <https://github.com/determined-ai/determined/tree/master/examples/computer_vision/mmdetection_pytorch>`__ for more information on how to get started.
+
+-  Allow the experiments list page to be filtered by labels. Selecting more than one label will filter experiments by the intersection of the selected labels.
+
+**Improvements**
+
+-  Documentation: Add a guide for :ref:`setup-eks-cluster` for Determined.
+
+-  Master: Support a minimum instance number for dynamic agents. The master will attempt to scale the cluster to at least the configured value at all times. This is configurable via ``provisioner.min_instances`` in the :ref:`cluster-configuration`. Note that this is likely to increase your cloud instance spend.
+
+-  Kubernetes: Improve the performance of the `/agents` endpoint for Kubernetes deployments. This will improve the performance of the cluster page in the WebUI, as well as when using ``det slot list`` and ``det task list`` via the CLI.
+
+-  Kubernetes: Release version ``0.3.0`` of the Determined Helm chart.
+
+-  WebUI: Improve metric selection on the trial detail page. This should improve filtering for trials with many metrics.
+
+-  WebUI: Use scientific notation when appropriate for floating point metric values.
+
+-  WebUI: Show both experiment and trial TensorBoard sources when applicable.
+
+**Bug Fixes**
+
+-  WebUI: Fix an issue where TensorBoard sources did not display properly for TensorBoards started via the CLI.
+
+-  WebUI: Fix an issue with rendering boolean hyperparameters in the WebUI.
+
+-  CLI: Fix an issue where trial IDs were occasionally not displayed when running ``det task list`` or ``det slot list`` in the CLI.
+
+-  Master: Fix the default values for the ``fit`` field if the ``scheduler`` is set in the :ref:`cluster-configuration`.
+
 Version 0.13.6
 ==============
 

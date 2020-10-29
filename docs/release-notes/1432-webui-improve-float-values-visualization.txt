@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  WebUI: improved how float are visualized with decimal and scientific
-   notation.

@@ -1,6 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  Fix issue where trial ids were sometimes not displayed when running
-   ``det task list`` or ``det slot list`` in the CLI.
