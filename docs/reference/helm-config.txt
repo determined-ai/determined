@@ -78,6 +78,10 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
    -  ``memRequest``: The memory requirements for the Determined
       database.
 
+   -  ``useNodePortForDB``: Optional configuration that configures
+      whether ClusterIP or NodePort service type is used for the
+      Determined database. By default ClusterIP is used.
+
    -  ``storageClassName``: Optional configuration to indicate
       StorageClass that should be used by the PersistentVolumeClaim for
       the Determined deployed database. This can be left blank if a

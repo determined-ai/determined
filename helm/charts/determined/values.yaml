@@ -38,6 +38,11 @@ db:
   cpuRequest: "2"
   memRequest: "8Gi"
 
+  # useNodePortForDB configures whether ClusterIP or NodePort service
+  # type is used for the Determined deployed db. By default ClusterIP
+  # is used.
+  useNodePortForDB: false
+
   # storageClassName configures the StorageClass used by the PersistentVolumeClaim
   # for the Determined deployed database. This can be left blank if a default
   # storage class is specified in the cluster. If dynamic provisioning of
