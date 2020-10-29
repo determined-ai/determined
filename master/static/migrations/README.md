@@ -8,14 +8,15 @@ https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
 
 ```bash
 
-export DET_DB_PASSWORD=my-postgres-password
+export MIGRATION_TITLE='my-migration-title'
+export DET_DB_PASSWORD=postgres
 export CONNECTION_STRING=postgres://postgres:${DET_DB_PASSWORD}@localhost:5432/determined'?'sslmode=disable
 
 # Create template migration files.
 migrate \
   -database ${CONNECTION_STRING} \
   -verbose \
-  create -ext sql -dir $(pwd) title-of-my-migation
+  create -ext sql -dir $(pwd) ${MIGRATION_TITLE}
 
 # Edit template sql files.
 
