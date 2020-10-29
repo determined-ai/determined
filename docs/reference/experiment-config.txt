@@ -1004,17 +1004,17 @@ more information on customizing the trial environment, refer to
 ``image``
    The Docker image to use when executing the workload. This image must
    be accessible via ``docker pull`` to every Determined agent machine
-   in the cluster. Users can use different container images for GPU vs.
-   CPU agents differently by specifying a dict with two keys, ``cpu``
-   and ``gpu``. Default values:
+   in the cluster. Users can configure different container images for
+   GPU vs. CPU agents by specifying a dict with two keys, ``cpu`` and
+   ``gpu``. Default values:
 
-   -  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.7.0``
-      for CPU agents
    -  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.7.0``
-      for GPU agents.
+      for agents with GPUs.
+   -  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.7.0``
+      for agents with only CPUs.
 
 ``force_pull_image``
-   Forcibly pull the image from the Docker registry and bypass the
+   Forcibly pull the image from the Docker registry, bypassing the
    Docker cache. Defaults to ``false``.
 
 ``registry_auth``
