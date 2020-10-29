@@ -38,9 +38,9 @@ message TrialLogsRequest {
   repeated string stdtype = 10;
   // Limit the trial logs to a subset of sources.
   repeated string source = 11;
-  // Limit the trial logs where the timestamp is before a given time.
+  // Limit the trial logs to ones with a timestamp before a given time.
   google.protobuf.Timestamp timestamp_before = 12;
-  // Limit the trial logs where the timestamp is after a given time.
+  // Limit the trial logs to ones with a timestamp after a given time.
   google.protobuf.Timestamp timestamp_after = 13;
 }
 
