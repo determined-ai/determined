@@ -193,7 +193,14 @@ func killContainer(ctx *actor.Context, c *client.Client, containerID string) err
 	if err := c.ContainerKill(context.Background(), containerID, "KILL"); err != nil {
 		return errors.Wrap(err, "failed to kill container")
 	}
-	return nil
+	waitChan, errChan := c.ContainerWait(context.Background(), containerID, "removed")
+
+	select {
+	case err := <-errChan:
+		return errors.Wrap(err, "failed to wait for container")
+	case <-waitChan:
+		return nil
+	}
 }
 
 func killContainerByName(ctx *actor.Context, docker *client.Client, name string) error {
