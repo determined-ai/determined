@@ -147,7 +147,7 @@ def test_mnist_tf_layers_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_error = 0.03
+    target_error = 0.04
     assert min(validation_errors) < target_error, (
         "mnist_estimator did not reach minimum target error {} in {} steps."
         " full validation error history: {}".format(
@@ -229,31 +229,6 @@ def test_unets_tf_keras_accuracy() -> None:
         "unets_tf_keras did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
             target_accuracy, len(trial_metrics["steps"]), validation_accuracies
-        )
-    )
-
-
-@pytest.mark.nightly  # type: ignore
-def test_gan_mnist_pytorch_accuracy() -> None:
-    config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.gan_examples_path("gan_mnist_pytorch"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0]["id"])
-
-    validation_losses = [
-        step["validation"]["metrics"]["validation_metrics"]["loss"]
-        for step in trial_metrics["steps"]
-        if step.get("validation")
-    ]
-
-    target_loss = 0.40
-    assert min(validation_losses) < target_loss, (
-        "gan_mnist_pytorch did not reach minimum target loss {} in {} steps."
-        " full validation loss history: {}".format(
-            target_loss, len(trial_metrics["steps"]), validation_losses
         )
     )
 
