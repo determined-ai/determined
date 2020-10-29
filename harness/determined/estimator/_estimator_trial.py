@@ -306,8 +306,8 @@ class DeterminedControlHook(estimator.RunHook):
             with open(checkpoint_dir + "/rng_state.pkl", "rb") as f:
                 rng_state = pickle.load(f)
         except IOError:
-            # This is expected if it's a checkpoint from before the
-            # on_checkpoint_end hook was added above
+            # backward compatibility: this is expected if it's a checkpoint
+            # from before the on_checkpoint_end hook was added above
             logging.warn("No RNG state found in checkpoint_dir")
             return
 
