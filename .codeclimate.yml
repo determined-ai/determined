@@ -2,13 +2,13 @@ version: "2"
 checks:
   argument-count:
     config:
-      threshold: 4
+      threshold: 6
   complex-logic:
     config:
       threshold: 4
   file-lines:
     config:
-      threshold: 250
+      threshold: 500
   method-complexity:
     config:
       threshold: 5
@@ -17,7 +17,7 @@ checks:
       threshold: 20
   method-lines:
     config:
-      threshold: 25
+      threshold: 100
   nested-control-flow:
     config:
       threshold: 4
@@ -45,3 +45,6 @@ plugins: # https://docs.codeclimate.com/docs/list-of-engines
     enabled: false
 exclude_patterns:
 - "examples/"
+- "proto/src/google"
+- "proto/src/protoc-gen-swagger"
+- "proto/src/protoc-gen-swagger"
