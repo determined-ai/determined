@@ -191,23 +191,23 @@ tasks that do not have an ``agent_label`` or that specify a different
  TensorFlow Support
 ********************
 
-Can I train a Tensorflow Core model in Determined?
+Can I train a TensorFlow Core model in Determined?
 ==================================================
 
 Determined has support for TensorFlow models that use the :ref:`tf.keras
 <tf-keras-trial>` or :ref:`Estimator <estimator-trial>` APIs. For models
 that use the low-level TensorFlow Core APIs, we recommend porting your
 model to use :ref:`Estimator Trial <estimator-trial>`. `Example of
-converting a Tensorflow graph into an Estimator
+converting a TensorFlow graph into an Estimator
 <https://github.com/determined-ai/determined/blob/master/examples/computer_vision/mnist_tf_layers/model_def.py>`_.
 
-Can I train using Tensorflow 2 in Determined?
-=============================================
+Can I train using TensorFlow 2 with Determined?
+===============================================
 
-Yes Determined support both Tensorflow 1 and 2. The version of
-Tensorflow used is configured by the version of Tesnsorflow that is
-installed in docker image used for training. Determined offers pre-built
-docker images for Tensorflow 1 and 2:
+Yes; Determined support both TensorFlow 1 and 2. The version of
+TensorFlow used is configured by the version of TesnsorFlow that is
+installed in the Docker image used for training. Determined offers
+pre-built Docker images for TensorFlow 1 and 2:
 
 -  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.7.0``
 -  ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.7.0``

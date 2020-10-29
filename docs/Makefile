@@ -12,7 +12,7 @@ build-helm:
 	$(MAKE) -C ../helm build
 
 reference/attributions.txt: $(shell find ../tools/scripts/licenses -type f)
-	python ../tools/scripts/gen-attributions.py sphinx > $@
+	../tools/scripts/gen-attributions.py sphinx > $@
 
 .PHONY: build
 build: build-examples build-helm reference/attributions.txt
