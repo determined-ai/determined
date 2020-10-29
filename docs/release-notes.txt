@@ -27,7 +27,7 @@ Version 0.13.7
 
 **Improvements**
 
--  Documentation: Add a guide for :ref:`setup-eks-cluster` for Determined.
+-  Documentation: Add a guide for :ref:`setup-eks-cluster`.
 
 -  Master: Support a minimum instance number for dynamic agents. The master will attempt to scale the cluster to at least the configured value at all times. This is configurable via ``provisioner.min_instances`` in the :ref:`cluster-configuration`. Note that this is likely to increase your cloud instance spend.
 
