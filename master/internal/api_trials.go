@@ -65,7 +65,7 @@ func (a *apiServer) TrialLogs(
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
 	}
 
-	logID := int32(-1) // WebUI assumes logs are 0-indexed
+	logID := int32(-1) // WebUI assumes logs are 0-indexed.
 	onBatch := func(b api.LogBatch) error {
 		return b.ForEach(func(r interface{}) error {
 			trialLog := r.(*model.TrialLog)
