@@ -32,17 +32,20 @@ checks:
       threshold: # language-specific defaults. an override will affect all languages.
 plugins: # https://docs.codeclimate.com/docs/list-of-engines
   fixme:
-    enabled: false
-  govet:
-    enabled: false
+    enabled: true
+    config:
+      strings:
+      - FIXME
   bandit:
-    enabled: false
+    enabled: true
   radon:
-    enabled: false
+    enabled: true
+    config:
+      python_version: 3
   markdownlint:
-    enabled: false
+    enabled: true
   shellcheck:
-    enabled: false
+    enabled: true
 exclude_patterns:
 - "examples/"
 - "proto/src/google"
