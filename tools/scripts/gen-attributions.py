@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """
 gen-attributions.py: a tool for generating various OSS attributions docs.
@@ -6,7 +6,7 @@ gen-attributions.py: a tool for generating various OSS attributions docs.
 See tools/scripts/README.md for instructions on how to format license files.
 
 usage:
-    gen-attributions.py BUILD_TYPE > OUTPUT_FILE
+    gen-attributions.py BUILD_TYPE [OUTPUT_FILE]
 
 where BUILD_TYPE is one of:
     sphix   -- generate an ReST file for the sphinx documentation
@@ -214,7 +214,7 @@ def read_dir(path: str) -> List[License]:
     return licenses
 
 
-def main(build_type: str) -> int:
+def main(build_type: str, path_out: Optional[str]) -> int:
     if build_type not in ("master", "agent", "sphinx"):
         print(__doc__, file=sys.stderr)
         return 1
@@ -236,16 +236,21 @@ def main(build_type: str) -> int:
 
     gen = post_process(gen)
 
-    print(gen)
+    # Only write the output when we are sure we will not hit any other errors, to play nice
+    # with build systems that look at timestamps on files.
+    file_out = open(path_out, "w") if path_out is not None else sys.stdout
+    with file_out:
+        print(gen, file=file_out)
 
     return 0
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         print(__doc__, file=sys.stderr)
         sys.exit(1)
 
     build_type = sys.argv[1]
+    path_out = sys.argv[2] if len(sys.argv) == 3 else None
 
-    sys.exit(main(build_type))
+    sys.exit(main(build_type, path_out))
