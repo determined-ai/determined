@@ -71,7 +71,6 @@ func NewLogStoreProcessor(
 	}
 }
 
-
 // Receive implements the actor.Actor interface.
 func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 	type tick struct{}
