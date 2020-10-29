@@ -3,6 +3,9 @@ from typing import List, Optional
 
 import determined_client
 import yaml
+from determined_client.models.determinedexperimentv1_state import (
+    Determinedexperimentv1State as States,
+)
 
 from determined_common import api, context
 from determined_common.experimental import checkpoint
@@ -20,19 +23,17 @@ class Experiment:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, api_client, master, experiment_data=None):
+    def __init__(self, api_client, master, config=None, experiment_data=None):
         self.master = master
         self.api_client = api_client
+        self.experiments_api = determined_client.ExperimentsApi(self.api_client)
 
         self.id = None
-        self.state = None
-        self.config = None
+        self.config = config
 
         for attribute in experiment_data:
-            setattr(self, attribute, experiment_data[attribute])
-
-        self.metric = self.config.get("searcher").get("metric")
-        self.smaller_is_better = self.config.get("searcher").get("smaller_is_better")
+            if attribute != "state":
+                setattr(self, attribute, experiment_data[attribute])
 
     @classmethod
     def create_experiment(
@@ -40,55 +41,67 @@ class Experiment:
     ):
         print("Creating Experiment")
         experiment_api = determined_client.ExperimentsApi(api_client)
-        experiment_context = context.Context.from_local(context_path)
+        model_definition = cls._path_to_files(context_path)
+        create_experiment_request = determined_client.models.V1CreateExperimentRequest(
+            config=yaml.safe_dump(config), validate_only=False, model_definition=model_definition
+        )
 
-        for e in experiment_context.entries:
-            e.content = e.content.decode("utf-8")
-
-        body = {
-            "experiment_config": yaml.safe_dump(config),
-            "model_definition": [e.dict() for e in experiment_context.entries],
-            "validate_only": False,
-        }
-
-        response = experiment_api.determined_post_experiment(body)
-
+        response = experiment_api.determined_create_experiment(create_experiment_request)
+        config = response.config
+        experiment = response.experiment
         experiment_obj = {}
-        for attribute in response.attribute_map:
-            experiment_obj[attribute] = getattr(response, attribute, getattr(response, attribute))
-
-        experiment = cls(api_client, master, experiment_obj)
+        for attribute in experiment.attribute_map:
+            experiment_obj[attribute] = getattr(
+                experiment, attribute, getattr(experiment, attribute)
+            )
+        experiment = cls(api_client, master, config, experiment_obj)
 
         experiment.activate()
+        return experiment
 
     @classmethod
-    def get_experiment(cls, api_client, experiment_id):
+    def get_experiment(cls, api_client, experiment_id, master=""):
         experiment_api = determined_client.ExperimentsApi(api_client)
-        api_response = experiment_api.determined_get_experiment(experiment_id)
-        return cls(api_client, api_response.experiment, api_response.config)
+        response = experiment_api.determined_get_experiment(experiment_id)
 
-    # @property
-    # def status(self) -> str:
-    #     # status = api.get_experiment_status()
-    #     status = "COMPLETED"
-    #     return status
+        config = response.config
+        experiment = response.experiment
+
+        experiment_obj = {}
+        for attribute in experiment.attribute_map:
+            experiment_obj[attribute] = getattr(
+                experiment, attribute, getattr(experiment, attribute)
+            )
+
+        return cls(api_client, master, config, experiment_obj)
+
+    @property
+    def state(self):
+        experiment = self.experiments_api.determined_get_experiment(self.id)
+        return experiment.experiment.state
 
     def success(self):
-        if self.state == "STATE_COMPLETED":
+        if self.state == States.COMPLETED:
+            return True
+
+        return False
+
+    def is_active(self):
+        if self.state == States.ACTIVE:
             return True
 
         return False
 
     def wait_for_completion(self):
-        while self.state == "ACTIVE":
+        while self.state == States.ACTIVE:
             time.sleep(10)
 
     def activate(self):
-        # api.activate_experiment(self.master, self.id)
         experiment_api = determined_client.ExperimentsApi(self.api_client)
-        experiment_api.determined_patch_experiment(
-            body={"state": "STATE_ACTIVE"}, experiment_id=self.id
-        )
+        experiment_api.determined_activate_experiment(self.id)
+
+        while self.state == States.PAUSED:
+            time.sleep(1)
 
     def top_checkpoint(
         self,
@@ -145,36 +158,49 @@ class Experiment:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
-        r = api.get(
-            self._master,
-            "/api/v1/experiments/{}/checkpoints".format(self.id),
-            params={
-                "states": checkpoint.CheckpointState.COMPLETED.value,
-                "validation_states": checkpoint.CheckpointState.COMPLETED.value,
-            },
-        )
-        checkpoints = r.json()["checkpoints"]
+        checkpoint_response = self.experiments_api.determined_get_experiment_checkpoints(self.id)
+        checkpoints = checkpoint_response.checkpoints
 
         if not checkpoints:
             raise AssertionError("No checkpoint found for experiment {}".format(self.id))
 
         if not sort_by:
-            sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
-            smaller_is_better = checkpoints[0]["experimentConfig"]["searcher"]["smaller_is_better"]
+            sort_by = checkpoints[0].experiment_config["searcher"]["metric"]
+            smaller_is_better = checkpoints[0].experiment_config["searcher"]["smaller_is_better"]
 
         checkpoints.sort(
-            reverse=not smaller_is_better, key=lambda x: x["metrics"]["validationMetrics"][sort_by]
+            reverse=not smaller_is_better, key=lambda x: x.metrics.validation_metrics[sort_by]
         )
 
         # Ensure returned checkpoints are from distinct trials.
         t_ids = set()
         checkpoint_refs = []
         for ckpt in checkpoints:
-            if ckpt["trialId"] not in t_ids:
-                checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._master))
-                t_ids.add(ckpt["trialId"])
+            if ckpt.trial_id not in t_ids:
+                # checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._master))
+                checkpoint_refs.append(
+                    checkpoint.Checkpoint.from_spec(ckpt, self.api_client.configuration.host)
+                )
+                t_ids.add(ckpt.trial_id)
 
         return checkpoint_refs[:limit]
 
     def __repr__(self) -> str:
         return "Experiment(id={})".format(self.id)
+
+    @staticmethod
+    def _path_to_files(path):
+        files = []
+        for item in context.read_context(path)[0]:
+            content = item["content"].decode("ascii")
+            file = determined_client.models.V1File(
+                path=item["path"],
+                type=item["type"],
+                content=content,
+                mtime=item["mtime"],
+                uid=item["uid"],
+                gid=item["gid"],
+                mode=item["mode"],
+            )
+            files.append(file)
+        return files

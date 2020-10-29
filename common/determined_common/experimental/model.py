@@ -3,6 +3,8 @@ import enum
 import json
 from typing import Any, Dict, List, Optional
 
+import determined_client
+
 from determined_common import api
 from determined_common.experimental.checkpoint import Checkpoint
 
@@ -224,3 +226,36 @@ class Model:
             data.get("metadata", {}),
             master,
         )
+
+    @classmethod
+    def from_spec(cls, model_object, master):
+        return cls(
+            model_object.name,
+            model_object.description,
+            model_object.creation_time,
+            model_object.last_updated_time,
+            model_object.metadata,
+            master,
+        )
+
+    @classmethod
+    def get_model(cls, api_client, name):
+        model_api = determined_client.ModelsApi(api_client)
+        response = model_api.determined_get_model(name)
+        return cls.from_spec(response.model, api_client.configuration.host)
+
+    @classmethod
+    def create_model(cls, api_client, name, description, metadata):
+        models_api = determined_client.ModelsApi(api_client)
+
+        if not description:
+            description = ""
+        if not metadata:
+            metadata = {}
+
+        model_body = determined_client.models.v1_model.V1Model(
+            name=name, description=description, metadata=metadata
+        )
+
+        model_response = models_api.determined_post_model(model_name=name, body=model_body)
+        return Model.from_spec(model_response.model, api_client.configuration.host)

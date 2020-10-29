@@ -3,28 +3,8 @@ import pathlib
 
 from determined.experimental import Determined
 
-# Helper function from Kubeflow Blog Post
-def get_validation_metric(checkpoint):
-    config = checkpoint.experiment_config
-    searcher = config['searcher']
-    smaller_is_better = bool(searcher['smaller_is_better'])
-    metric_name = searcher['metric']
-
-    metrics = checkpoint.validation['metrics']
-    metric = metrics['validationMetrics'][metric_name]
-    return metric, smaller_is_better
-
-
-def is_better(c1, c2):
-    m1, smaller_is_better = get_validation_metric(c1)
-    m2, _ = get_validation_metric(c2)
-    if smaller_is_better and m1 < m2:
-        return True
-    return False
-
-
 # Create Determined Object
-d = Determined(master='latest-master.determined.ai:8080')
+d = Determined()
 
 # Setup Experiment
 context_dir = pathlib.Path.joinpath(pathlib.Path.cwd(), 'mnist_pytorch')
@@ -52,26 +32,45 @@ if not experiment.success():
     sys.exit(1)
 print(f'Experiment {experiment.id} completed successfully ')
 
-# Decide to put model into model registry (Code is mostly from Kubeflow blog)
-model_name = 'dummy_model'
 best_checkpoint = experiment.top_checkpoint()
 
-try:
-    model = d.get_model(model_name)
+print(best_checkpoint)
 
-except:  # Model not yet in registry
-    print(f'Registering new Model: {model_name}')
-    model = d.create_model(model_name)
+# Coming Soon
+# try:
+#     model = d.get_model(model_name)
+#
+# except:  # Model not yet in registry
+#     print(f'Registering new Model: {model_name}')
+#     model = d.create_model(model_name)
 
-latest_version = model.get_version()
+# latest_version = model.get_version()
 
-if not latest_version:
-    better = True
-else:
-    better = is_better(latest_version, best_checkpoint)
+# if not latest_version:
+#     better = True
+# else:
+#     better = is_better(latest_version, best_checkpoint)
+#
+# if better:
+#     print(f'Registering new version: {model_name}')
+#     model.register_version(best_checkpoint.uuid)
 
-if better:
-    print(f'Registering new version: {model_name}')
-    model.register_version(best_checkpoint.uuid)
 
-
+# Helper function from Kubeflow Blog Post
+# def get_validation_metric(checkpoint):
+#     config = checkpoint.experiment_config
+#     searcher = config['searcher']
+#     smaller_is_better = bool(searcher['smaller_is_better'])
+#     metric_name = searcher['metric']
+#
+#     metrics = checkpoint.validation['metrics']
+#     metric = metrics['validationMetrics'][metric_name]
+#     return metric, smaller_is_better
+#
+#
+# def is_better(c1, c2):
+#     m1, smaller_is_better = get_validation_metric(c1)
+#     m2, _ = get_validation_metric(c2)
+#     if smaller_is_better and m1 < m2:
+#         return True
+#     return False

@@ -28,7 +28,7 @@ class Determined:
 
     def __init__(
         self,
-        master: Optional[str] = None,
+        master: Optional[str] = "http://localhost:8080",
         user: Optional[str] = "determined",
         password: Optional[str] = "",
     ):
@@ -72,8 +72,9 @@ class Determined:
         Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
-        r = api.get(self._session._master, "/api/v1/checkpoints/{}".format(uuid)).json()
-        return Checkpoint.from_json(r["checkpoint"], master=self._session._master)
+        return Checkpoint.get_checkpoint(self.api_client, uuid)
+        # r = api.get(self._session._master, "/api/v1/checkpoints/{}".format(uuid)).json()
+        # return Checkpoint.from_json(r["checkpoint"], master=self._session._master)
 
     def create_model(
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
@@ -86,13 +87,14 @@ class Determined:
             description (string, optional): A description of the model.
             metadata (dict, optional): Dictionary of metadata to add to the model.
         """
-        r = api.post(
-            self._session._master,
-            "/api/v1/models/{}".format(name),
-            body={"description": description, "metadata": metadata},
-        )
-
-        return Model.from_json(r.json().get("model"), self._session._master)
+        return Model.create_model(self.api_client, name, description, metadata)
+        # r = api.post(
+        #     self._session._master,
+        #     "/api/v1/models/{}".format(name),
+        #     body={"description": description, "metadata": metadata},
+        # )
+        #
+        # return Model.from_json(r.json().get("model"), self._session._master)
 
     def get_model(self, name: str) -> Model:
         """
@@ -100,8 +102,9 @@ class Determined:
         with the provided name. If no model with that name is found in the registry,
         an exception is raised.
         """
-        r = api.get(self._session._master, "/api/v1/models/{}".format(name))
-        return Model.from_json(r.json().get("model"), self._session._master)
+        # r = api.get(self._session._master, "/api/v1/models/{}".format(name))
+        # return Model.from_json(r.json().get("model"), self._session._master)
+        return Model.get_model(self.api_client, name)
 
     def get_models(
         self,

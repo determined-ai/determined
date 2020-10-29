@@ -4,6 +4,8 @@ import pathlib
 import shutil
 from typing import Any, Dict, List, Optional, cast
 
+import determined_client
+
 from determined_common import api, constants, storage
 from determined_common.storage import shared
 
@@ -343,3 +345,37 @@ class Checkpoint(object):
             model_name=data.get("model_name"),
             master=master,
         )
+
+    @classmethod
+    def from_spec(cls, checkpoint_object, master):
+        validation = {
+            "metrics": checkpoint_object.metrics,
+            "state": checkpoint_object.validation_state,
+        }
+
+        return cls(
+            checkpoint_object.uuid,
+            checkpoint_object.experiment_config,
+            checkpoint_object.experiment_id,
+            checkpoint_object.trial_id,
+            checkpoint_object.hparams,
+            checkpoint_object.batch_number,
+            checkpoint_object.start_time,
+            checkpoint_object.end_time,
+            checkpoint_object.resources,
+            validation,
+            checkpoint_object.metadata,
+            framework=checkpoint_object.framework,
+            format=checkpoint_object.format,
+            determined_version=checkpoint_object.determined_version,
+            # model_version=checkpoint_object.model_version,
+            # model_name=checkpoint_object.model_name,
+            master=master,
+        )
+
+    @classmethod
+    def get_checkpoint(cls, api_client, uuid, master=""):
+        checkpoint_api = determined_client.CheckpointsApi(api_client)
+        response = checkpoint_api.determined_get_checkpoint(uuid)
+
+        return cls.from_spec(response.checkpoint, api_client.configuration.host)
