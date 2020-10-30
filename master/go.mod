@@ -29,7 +29,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/labstack/gommon v0.0.0-20180613044413-d6898124de91
-	github.com/lib/pq v1.2.0
+	github.com/lib/pq v1.8.0
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/o1egl/paseto v1.0.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
