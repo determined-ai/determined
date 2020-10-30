@@ -98,3 +98,13 @@ func (s *System) ActorOf(address Address, actor Actor) (*Ref, bool) {
 	created := resp.Get().(childCreated)
 	return created.child, created.created
 }
+
+// MustActorOf adds the actor with the provided address.
+// It panics if a new actor was not created.
+func (s *System) MustActorOf(address Address, actor Actor) *Ref {
+	ref, created := s.ActorOf(address, actor)
+	if !created {
+		panic("actor was not created")
+	}
+	return ref
+}

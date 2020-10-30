@@ -55,9 +55,9 @@ func EffectiveLimit(limit int, offset int, total int) int {
 		panic("input offset has to be non-negative")
 	}
 	switch {
-	case limit <= 0:
+	case limit < 0:
 		return -1
-	case limit > total-offset:
+	case limit > total-offset, limit == 0: // Since limit is non-optional, 0 represents unsupplied.
 		return total - offset
 	default:
 		return limit
