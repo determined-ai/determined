@@ -67,7 +67,7 @@ Cypress.Commands.add('login', (credentials) => {
       expect(response.body).to.have.property('token');
       saveAuthToken(response.body.token);
     });
-  cy.checkLoggedIn(credentials.username, true);
+  cy.checkLoggedIn(credentials.username);
 });
 
 Cypress.Commands.add('logout', () => {
