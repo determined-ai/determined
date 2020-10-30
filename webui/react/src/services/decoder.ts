@@ -52,6 +52,7 @@ export const jsonToDeterminedInfo = (data: unknown): DeterminedInfo => {
   const io = decode<ioTypeDeterminedInfo>(ioDeterminedInfo, data);
   return {
     clusterId: io.cluster_id,
+    clusterName: io.cluster_name,
     masterId: io.master_id,
     telemetry: {
       enabled: io.telemetry.enabled,
