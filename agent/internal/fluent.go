@@ -29,6 +29,9 @@ import (
 var fluentEnvVarNames = []string{"DET_TRIAL_ID", "DET_CONTAINER_ID"}
 
 const fluentListenPort = 24224
+const localhost = "localhost"
+const localhostIP = "127.0.0.1"
+const hostMode = "host"
 
 // fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
 // an appropriate configuration.
@@ -139,8 +142,8 @@ end
 	// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
 	// diretcly into an IP address before passing it to Fluent Bit.
 	fluentMasterHost := opts.MasterHost
-	if fluentMasterHost == "localhost" {
-		fluentMasterHost = "127.0.0.1"
+	if fluentMasterHost == localhost {
+		fluentMasterHost = localhostIP
 	}
 
 	outputConfig := fmt.Sprintf(`
@@ -295,8 +298,8 @@ func startLoggingContainer(
 
 	// If we're connecting to a master on this host, Fluent Bit inside the Docker container won't be
 	// able to reach the master to post its logs unless running in host mode.
-	if opts.MasterHost == "localhost" || opts.MasterHost == "127.0.0.1" {
-		fluentDockerNet = "host"
+	if opts.MasterHost == localhost || opts.MasterHost == localhostIP {
+		fluentDockerNet = hostMode
 	}
 
 	ctx.Log().Infof("running Fluent Bit on Docker network %q", fluentDockerNet)
@@ -313,7 +316,7 @@ func startLoggingContainer(
 			NetworkMode: container.NetworkMode(fluentDockerNet),
 			PortBindings: nat.PortMap{
 				// A port of 0 makes Docker automatically assign a free port, which we read back below.
-				exposedPort: []nat.PortBinding{{HostIP: "127.0.0.1", HostPort: "0"}},
+				exposedPort: []nat.PortBinding{{HostIP: localhostIP, HostPort: "0"}},
 			},
 			Resources: container.Resources{
 				Memory:   1 << 30,
@@ -346,7 +349,7 @@ func startLoggingContainer(
 
 	hostPort := fluentListenPort
 	container, _ := docker.ContainerInspect(context.Background(), createResponse.ID)
-	if fluentDockerNet != "host" {
+	if fluentDockerNet != hostMode {
 		portStr := container.NetworkSettings.Ports[exposedPort][0].HostPort
 		hostPort, _ = strconv.Atoi(portStr)
 	}
@@ -355,7 +358,7 @@ func startLoggingContainer(
 	// to Fluent Bit, depending on whether this agent is running inside Docker or not.
 	addr := container.NetworkSettings.Networks[fluentDockerNet].IPAddress
 	port := fluentListenPort
-	if dockerNet == "" || dockerNet == "host" {
+	if dockerNet == "" || dockerNet == hostMode {
 		addr = "localhost"
 		port = hostPort
 	}
