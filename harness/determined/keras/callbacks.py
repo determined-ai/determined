@@ -155,7 +155,9 @@ class _MultiplexerBase(tf.keras.callbacks.Callback):  # type: ignore
         load_state: Optional[Dict],
     ) -> None:
         self.all_callbacks = callbacks
-        self.callbacks = [cb for cb in callbacks if is_chief or not cb._chief_worker_only]
+        self.callbacks = [
+            cb for cb in callbacks if is_chief or not getattr(cb, "_chief_worker_only", False)
+        ]
         self.is_chief = is_chief
         self.batch_size = batch_size
         self.batches_per_epoch = batches_per_epoch
@@ -467,6 +469,9 @@ class DeterminedProgress(Callback):
 
 class _DeterminedHistory(Callback):
     """Like tf.keras.callbacks.History but based on validations and stateful."""
+
+    _chief_worker_only = False
+    _supports_tf_logs = True
 
     def __init__(self) -> None:
         self.history = {}  # type: Dict

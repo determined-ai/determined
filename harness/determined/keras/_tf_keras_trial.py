@@ -629,6 +629,8 @@ class TFKerasTrialController(det.LoopTrialController):
 
         if self.hvd_config.use:
             num_inputs = hvd.allreduce(num_inputs, average=False)
+            if tf.executing_eagerly():
+                num_inputs = num_inputs.numpy()  # type: ignore
 
         # Return only the latest metrics, which is the running average for all trained batches in
         # the step (Keras does not report individual logs, only running averages at any point).
@@ -667,6 +669,8 @@ class TFKerasTrialController(det.LoopTrialController):
 
         if self.hvd_config.use:
             num_inputs = hvd.allreduce(num_inputs, average=False)
+            if tf.executing_eagerly():
+                num_inputs = num_inputs.numpy()  # type: ignore
 
         # If the model was compiled with metrics=None, metrics_value will be a single value.
         if not isinstance(metrics_values, (tuple, list)):
