@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined-cli",
-    version="0.13.7rc5",
+    version="0.13.7",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -21,7 +21,7 @@ setup(
         "ruamel.yaml>=0.15.78",
         "tabulate>=0.8.3",
         "termcolor==1.1.0",
-        "determined-common==0.13.7rc5",
+        "determined-common==0.13.7",
         # requests<2.22.0 requires urllib3<1.25, which is incompatible with boto3>=1.14.11
         "requests>=2.22.0",
         # botocore>1.19.0 has stricter urllib3 requirements than boto3, and pip will not reliably

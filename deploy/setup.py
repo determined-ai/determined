@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined-deploy",
-    version="0.13.7rc5",
+    version="0.13.7",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -18,7 +18,7 @@ setup(
         "google-api-python-client>=1.12.1",
         "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
         "docker-compose>=1.13.0",
-        "determined-common==0.13.7rc5",
+        "determined-common==0.13.7",
         # requests<2.22.0 requires urllib3<1.25, which is incompatible with boto3>=1.14.11
         "requests>=2.22.0",
         # botocore>1.19.0 has stricter urllib3 requirements than boto3, and pip will not reliably
