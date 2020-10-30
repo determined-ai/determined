@@ -301,7 +301,7 @@ def test_data_layer_mnist_tf_keras_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_accuracy = 0.93
+    target_accuracy = 0.97
     assert max(validation_accuracies) > target_accuracy, (
         "data_layer_mnist_tf_keras did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
