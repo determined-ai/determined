@@ -8,7 +8,8 @@ import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { openCommand } from 'routes/utils';
 import {
-  archiveExperiment, killTask, openOrCreateTensorboard, setExperimentState,
+  activateExperiment, archiveExperiment, cancelExperiment,
+  killTask, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { AnyTask, CommandTask, ExperimentTask, RunState, TBSourceType } from 'types';
 import { capitalize } from 'utils/string';
@@ -49,22 +50,16 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
     try {
       switch (params.key) { // Cases should match menu items.
         case 'activate':
-          await setExperimentState({
-            experimentId: id,
-            state: RunState.Active,
-          });
+          await activateExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
         case 'archive':
           if (!isExperimentTask(task)) break;
-          await archiveExperiment(id);
+          await archiveExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
         case 'cancel':
-          await setExperimentState({
-            experimentId: id,
-            state: RunState.StoppingCanceled,
-          });
+          await cancelExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
         case 'openOrCreateTensorboard': {
@@ -80,15 +75,12 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           if (isExperiment && onComplete) onComplete();
           break;
         case 'pause':
-          await setExperimentState({
-            experimentId: id,
-            state: RunState.Paused,
-          });
+          await pauseExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
         case 'unarchive':
           if (!isExperimentTask(task)) break;
-          await archiveExperiment(id, false);
+          await unarchiveExperiment({ experimentId: id });
           if (onComplete) onComplete();
       }
     } catch (e) {

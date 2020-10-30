@@ -1,6 +1,6 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 
-import { CommandType, RunState, TBSource } from 'types';
+import { CommandType, TBSource } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -58,7 +58,7 @@ export interface SingleEntityParams {
 export type ExperimentDetailsParams = SingleEntityParams;
 export type TrialDetailsParams = SingleEntityParams;
 
-export interface KillExpParams {
+export interface ExperimentIdParams {
   experimentId: number;
 }
 
@@ -72,14 +72,11 @@ export interface KillCommandParams {
   commandType: CommandType;
 }
 
-export interface PatchExperimentParams {
-  experimentId: number;
-  body: Record<keyof unknown, unknown> | string;
-}
-
-export interface PatchExperimentState {
-  experimentId: number;
-  state: RunState;
+export interface PatchExperimentParams extends ExperimentIdParams {
+  body: Partial<{
+    description: string,
+    labels: string[],
+  }>
 }
 
 export interface CreateNotebookParams {
