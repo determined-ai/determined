@@ -78,9 +78,9 @@ message TrialLogsFieldsResponse {
   // The distinct rank IDs present in the logs.
   repeated int32 rank_ids = 3;
   // The distinct stdtypes present in the logs.
-  repeated string stdtype = 4;
+  repeated string stdtypes = 4;
   // The distinct sources present in the logs.
-  repeated string source = 5;
+  repeated string sources = 5;
 }
 
 // Get a list of checkpoints for a trial.
