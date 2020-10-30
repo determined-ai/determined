@@ -1,0 +1,349 @@
+# NOTE: this config uses randomly generated data on single GPU.
+# Please use distributed.yaml if you want to run on the
+# the actual imagenet data.
+description: ofa_pytorch
+
+data:
+  # Change bucket_name to GCP bucket with imagenet dataset
+  # Data folder structure assumed to be imagenet/train and 
+  # imagenet/validation for the two data splits.
+  #
+  # If bucket_name is null, we will run with randomly 
+  # generated data.
+  bucket_name: determined-ai-datasets
+  # We recommend num_workers_train to be set to 16
+  # when running with slots_per_trial=8
+  num_workers_train: 2
+  num_workers_val: 2
+  # If streaming is true, we will send request to bucket
+  # every time an image is requested.  If false, we will
+  # save data to disk and load that the next time the
+  # image is requested.  We recommend streaming=true
+  # to avoid having to mount directories to docker container 
+  # and guarantee good performance regardless of disk speed.
+  streaming: true
+  # This folder is only used if streaming is false.
+  # This should probably match the container_path
+  # in a provided bind mount.
+  data_download_dir: null
+
+# Uncomment this if you want to mount a host directory to the 
+# docker container.
+#bind_mounts:
+#  - host_path: /tmp
+#    container_path: /mnt/data
+#    read_only: false
+
+min_validation_period:
+  batches: 500
+
+hyperparameters:
+  global_batch_size: 2048
+  n_classes: 1000
+  # Batch norm
+  bn_momentum: 0.1
+  bn_eps: 1e-5
+  dropout: 0.1
+  init_policy: he_fout
+  label_smoothing_rate: 0.1
+  weight_decay: 4e-5
+  kd_ratio: 1. # Knowledge distillation ratio
+  # Optimizer
+  learning_rate: 0.4
+  momentum: 0.9
+  # Choices include linear and cosine
+  lr_scheduler: cosine
+  lr_epochs: 150
+  warmup_epochs: 5
+
+  # Search space
+  b1_depth:
+    type: categorical
+    vals:
+      - 2
+      - 3
+      - 4
+  b2_depth:
+    type: categorical
+    vals:
+      - 2
+      - 3
+      - 4
+  b3_depth:
+    type: categorical
+    vals:
+      - 2
+      - 3
+      - 4
+  b4_depth:
+    type: categorical
+    vals:
+      - 2
+      - 3
+      - 4
+  b5_depth:
+    type: categorical
+    vals:
+      - 2
+      - 3
+      - 4
+
+  b11_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b11_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b12_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b12_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b13_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b13_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b14_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b14_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b21_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b21_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b22_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b22_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b23_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b23_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b24_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b24_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b31_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b31_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b32_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b32_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b33_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b33_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b34_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b34_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b41_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b41_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b42_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b42_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b43_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b43_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b44_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b44_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b51_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b51_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b52_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b52_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b53_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b53_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+  b54_ks:
+    type: categorical
+    vals:
+      - 3
+      - 5
+      - 7
+  b54_expand:
+    type: categorical
+    vals:
+      - 3
+      - 4
+      - 6
+
+resources:
+  # We recommend 8 slots with V100
+  # and at least 16 slots with K80 GPUs.
+  slots_per_trial: 16
+  shm_size: 4000000000
+
+searcher:
+  name: single
+  metric: top1_accuracy 
+  smaller_is_better: false 
+  max_length:
+    batches: 100000 # 1.2 million images in training set of imagenet
+
+optimizations:
+  aggregation_frequency:  1
+
+max_restarts: 0
+entrypoint: model_def:OFATrial
