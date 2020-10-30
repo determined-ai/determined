@@ -190,13 +190,13 @@ func (a *apiServer) TrialLogsFields(
 			return nil, err
 		}
 
-		return api.Log{Inner: &fields}, err
+		return api.ToLogBatchOfOne(&fields), err
 	}
 
 	onBatch := func(b api.LogBatch) error {
 		return b.ForEach(func(r interface{}) error {
 			return resp.Send(
-				r.(api.Log).Inner.(*apiv1.TrialLogsFieldsResponse))
+				r.(*apiv1.TrialLogsFieldsResponse))
 		})
 	}
 

@@ -34,6 +34,12 @@ type Log struct {
 	Inner interface{}
 }
 
+// ToLogBatchOfOne wraps a single entry as a batch of one that implements
+// LogBatch.
+func ToLogBatchOfOne(x interface{}) Log {
+	return Log{x}
+}
+
 // ForEach implements LogBatch.
 func (l Log) ForEach(f func(interface{}) error) error {
 	return f(l.Inner)
