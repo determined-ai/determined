@@ -181,6 +181,46 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 	return filters, nil
 }
 
+func (a *apiServer) TrialLogsFields(
+	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer) error {
+	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+		var fields apiv1.TrialLogsFieldsResponse
+		err := a.m.db.QueryProto("get_trial_log_fields", &fields, req.TrialId)
+		if err != nil {
+			return nil, err
+		}
+
+		return api.Log{Inner: &fields}, err
+	}
+
+	onBatch := func(b api.LogBatch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(
+				r.(api.Log).Inner.(*apiv1.TrialLogsFieldsResponse))
+		})
+	}
+
+	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
+		state, _, err := trialStatus(a.m.db, req.TrialId)
+		if err != nil || model.TerminalStates[state] {
+			return true, err
+		}
+		return false, nil
+	})
+
+	return a.m.system.MustActorOf(
+		actor.Addr("logStore-"+uuid.New().String()),
+		api.NewLogStoreProcessor(
+			resp.Context(),
+			api.LogsRequest{Follow: req.Follow},
+			fetch,
+			onBatch,
+			terminateCheck,
+			&batchWaitTime,
+		),
+	).AwaitTermination()
+}
+
 func (a *apiServer) GetTrialCheckpoints(
 	_ context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {

@@ -29,6 +29,21 @@ type LogBatch interface {
 	Size() int
 }
 
+// Log is a wrapper for a single log that implements LogBatch.
+type Log struct {
+	Inner interface{}
+}
+
+// ForEach implements LogBatch.
+func (l Log) ForEach(f func(interface{}) error) error {
+	return f(l.Inner)
+}
+
+// Size implements LogBatch.
+func (l Log) Size() int {
+	return 1
+}
+
 // OnLogBatchFn is a callback called on each batch of logs.
 type OnLogBatchFn func(LogBatch) error
 

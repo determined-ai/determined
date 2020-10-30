@@ -12,7 +12,7 @@ import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-// Stream Trial logs.
+// Stream trial logs.
 message TrialLogsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id" ] }
@@ -24,7 +24,7 @@ message TrialLogsRequest {
   int32 offset = 3;
   // Limit the number of trial logs. A value of 0 denotes no limit.
   int32 limit = 4;
-  // Continue following logs until the trial stops or the limit is reached.
+  // Continue following logs until the trial stops.
   bool follow = 5;
   // Limit the trial logs to a subset of agents.
   repeated string agent_ids = 6;
@@ -53,6 +53,34 @@ message TrialLogsResponse {
   int32 id = 1;
   // The log message.
   string message = 2;
+}
+
+// Stream distinct trial log fields.
+message TrialLogsFieldsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // Continue following fields until the trial stops.
+  bool follow = 2;
+}
+
+// Response to TrialLogFieldsRequest.
+message TrialLogsFieldsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "message" ] }
+  };
+  // The distinct agent IDs present in the logs.
+  repeated string agent_ids = 1;
+  // The distinct container IDs present in the logs.
+  repeated string container_ids = 2;
+  // The distinct rank IDs present in the logs.
+  repeated int32 rank_ids = 3;
+  // The distinct stdtypes present in the logs.
+  repeated string stdtype = 4;
+  // The distinct sources present in the logs.
+  repeated string source = 5;
 }
 
 // Get a list of checkpoints for a trial.
