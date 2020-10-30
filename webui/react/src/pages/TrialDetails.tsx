@@ -11,7 +11,7 @@ import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
-import Message from 'components/Message';
+import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -415,7 +415,10 @@ If the problem persists please contact support.',
     const message = isNotFound(trialDetails.error) ?
       `Unable to find Trial ${trialId}` :
       `Unable to fetch Trial ${trialId}`;
-    return <Message message={trialDetails.error.message} title={message} />;
+    return <Message
+      message={trialDetails.error.message}
+      title={message}
+      type={MessageType.Warning} />;
   }
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
