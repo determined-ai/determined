@@ -236,7 +236,7 @@ def num_error_trials(experiment_id: int) -> int:
 
 def trial_logs(trial_id: int) -> List[str]:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "trials/{}/logs".format(trial_id))
+    r = api.get(conf.make_master_url(), "trials/{}/logsv2?offset=0".format(trial_id))
     assert r.status_code == requests.codes.ok, r.text
     return [t["message"] for t in r.json()]
 
