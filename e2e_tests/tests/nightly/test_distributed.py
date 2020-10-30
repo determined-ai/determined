@@ -94,3 +94,12 @@ def test_gan_mnist_pytorch_distributed() -> None:
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("gan_mnist_pytorch"), 1)
+
+
+@pytest.mark.distributed. # type: ignore
+def test_protonet_omniglot_pytorch_distributed() -> None:
+    config = conf.load_config(conf.meta_learning_examples_path("protonet_omniglot_pytorch/20way1shot.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.meta_learning_examples_path("protonet_omniglot_pytorch"), 1, None, 3600)
+
