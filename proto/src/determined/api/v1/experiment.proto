@@ -253,7 +253,7 @@ message MetricNamesRequest {
   int32 experiment_id = 1;
 }
 
-// Request to MetricNamesRequest.
+// Response to MetricNamesRequest.
 message MetricNamesResponse {
   // The name of the searcher metric
   string searcher_metric = 1;
@@ -274,7 +274,7 @@ message MetricBatchesRequest {
   string validation_metric = 3;
 }
 
-// Request to MetricBatchesRequest.
+// Response to MetricBatchesRequest.
 message MetricBatchesResponse {
   // Milestones (in batches processed) at which the specified metric is
   // recorded.
