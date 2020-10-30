@@ -71,7 +71,7 @@ def test_cifar10_pytorch_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_accuracy = 0.74
+    target_accuracy = 0.73
     assert max(validation_accuracies) > target_accuracy, (
         "cifar10_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
@@ -172,7 +172,7 @@ def test_cifar10_tf_keras_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_accuracy = 0.74
+    target_accuracy = 0.73
     assert max(validation_accuracies) > target_accuracy, (
         "cifar10_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
@@ -276,7 +276,7 @@ def test_data_layer_mnist_estimator_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_accuracy = 0.94
+    target_accuracy = 0.93
     assert max(validation_accuracies) > target_accuracy, (
         "data_layer_mnist_estimator did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
