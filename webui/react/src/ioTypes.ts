@@ -37,6 +37,10 @@ export const ioDetailedUsers = io.array(ioDetailedUser);
 
 export type ioTypeDetailedUsers = io.TypeOf<typeof ioDetailedUsers>;
 
+export const ioLogin = io.type({ token: io.string });
+
+export type ioTypeLogin = io.TypeOf<typeof ioLogin>;
+
 /* Info */
 
 export const ioDeterminedInfo = io.type({

@@ -1,18 +1,13 @@
 describe('Task List', () => {
   const recordSelector = 'tr.ant-table-row';
-
-  before(() => {
+  beforeEach(() => {
     cy.login();
     cy.visit('/det/tasks');
   });
 
   describe('Notebooks', () => {
-    before(() => {
-      cy.visit('/det/tasks');
-      cy.get('button[aria-label="Notebook"]').click();
-    });
-
     it('should launch notebooks', () => {
+      cy.get('button[aria-label="Notebook"]').click();
       cy.server();
       cy.route('POST', /\/notebook.*/).as('createRequest');
       cy.get('[class*="Navigation_launch_"] button').contains(/launch notebook/i).click().click();
@@ -22,6 +17,7 @@ describe('Task List', () => {
     });
 
     it('should terminate notebook', () => {
+      cy.get('button[aria-label="Notebook"]').click();
       cy.server();
       cy.route('DELETE', /\/notebook.*/).as('terminateRequest');
       cy.get(`${recordSelector}:first-child .ant-dropdown-trigger`).click();
@@ -30,19 +26,11 @@ describe('Task List', () => {
       cy.visit('/det/tasks');
       cy.get(recordSelector).contains(/terminated/i).should('be.visible');
     });
-
-    after(() => {
-      cy.get('button[aria-label="Notebook"]').click();
-    });
   });
 
   describe('Tensorboards', () => {
-    before(() => {
-      cy.visit('/det/tasks');
-      cy.get('button[aria-label="Tensorboard"]').click();
-    });
-
     it('should launch tensorboard', () => {
+      cy.get('button[aria-label="Tensorboard"]').click();
       cy.server();
       cy.route('POST', /\/tensorboard.*/).as('createRequest');
       cy.visit('/det/experiments');
@@ -56,6 +44,7 @@ describe('Task List', () => {
     });
 
     it('should terminate tensorboard', () => {
+      cy.get('button[aria-label="Tensorboard"]').click();
       cy.server();
       cy.route('DELETE', /\/tensorboard.*/).as('terminateRequest');
       cy.get(`${recordSelector}:first-child .ant-dropdown-trigger`).click();
@@ -63,10 +52,6 @@ describe('Task List', () => {
       cy.wait('@terminateRequest');
       cy.visit('/det/tasks');
       cy.get(recordSelector).contains(/terminated/i).should('be.visible');
-    });
-
-    after(() => {
-      cy.get('button[aria-label="Tensorboard"]').click();
     });
   });
 

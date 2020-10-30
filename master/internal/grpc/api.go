@@ -66,7 +66,7 @@ func newGRPCGatewayMux() *runtime.ServeMux {
 }
 
 // RegisterHTTPProxy registers grpc-gateway with the master echo server.
-func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certificate) error {
+func RegisterHTTPProxy(e *echo.Echo, port int, cert *tls.Certificate) error {
 	addr := fmt.Sprintf(":%d", port)
 	var opts []grpc.DialOption
 	if cert == nil {
@@ -84,10 +84,6 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 	}
 	handler := func(c echo.Context) error {
 		request := c.Request()
-		if origin := request.Header.Get("Origin"); enableCORS && origin != "" {
-			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
-			c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
-		}
 		if c.Request().Header.Get("Authorization") == "" {
 			if cookie, err := c.Cookie(cookieName); err == nil {
 				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))

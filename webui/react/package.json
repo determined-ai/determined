@@ -15,7 +15,6 @@
     "storybook": "NODE_PATH=src start-storybook -p 9009 -s public",
     "build-storybook": "NODE_PATH=src build-storybook -s public -o build-storybook"
   },
-  "proxy": "http://localhost:8080",
   "dependencies": {
     "@types/react-helmet": "^6.1.0",
     "ansi-to-html": "^0.6.14",

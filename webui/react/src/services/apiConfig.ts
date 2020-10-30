@@ -1,20 +1,20 @@
 import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
+import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import {
-  jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
-  jsonToExperimentDetails, jsonToExperiments, jsonToLogs, jsonToNotebook, jsonToNotebooks,
-  jsonToShells, jsonToTaskLogs, jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails,
-  jsonToTrialLogs,jsonToUsers,
+  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails, jsonToExperiments,
+  jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
+  jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails, jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
   CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams,
-  ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams,
-  TaskLogsParams, TrialDetailsParams, TrialLogsParams,
+  ForkExperimentParams, KillCommandParams, KillExpParams, LoginResponse, LogsParams,
+  PatchExperimentParams, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import { HttpApi } from 'services/types';
 import {
@@ -24,13 +24,32 @@ import {
 
 import { noOp } from './utils';
 
-const apiConfigParams : Api.ConfigurationParameters = { basePath: serverAddress() };
+const ApiConfig = new Api.Configuration({
+  apiKey: 'Bearer ' + globalStorage.getAuthToken,
+  basePath: serverAddress(),
+});
 
-const ApiConfig = new Api.Configuration(apiConfigParams);
 export const detApi = {
   Auth: new Api.AuthenticationApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
+};
+
+const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
+Api.ConfigurationParameters => {
+  return {
+    apiKey: 'Bearer ' + globalStorage.getAuthToken,
+    basePath: serverAddress(),
+    ...apiConfig,
+  };
+};
+
+// Update references to generated API code with new configuration.
+export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
+  const config = updatedApiConfigParams(apiConfig);
+  detApi.Auth = new Api.AuthenticationApi(config);
+  detApi.Experiments = new Api.ExperimentsApi(config);
+  detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
 };
 
 /* Helpers */
@@ -50,22 +69,24 @@ export const commandToEndpoint: Record<CommandType, string> = {
 
 /* Authentication */
 
-export const login: HttpApi<Credentials, void> = {
+export const login: HttpApi<Credentials, LoginResponse> = {
   httpOptions: ({ password, username }) => {
     return {
       body: { password: saltAndHashPassword(password), username },
       method: 'POST',
-      url: '/login?cookie=true',
+      url: '/login',
     };
   },
   name: 'login',
-  postProcess: noOp,
+  postProcess: (response) => jsonToLogin(response.data),
+  unAuthenticated: true,
 };
 
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
   name: 'getCurrentUser',
   postProcess: (response) => decoder.user(response.user),
-  request: detApi.Auth.determinedCurrentUser.bind(detApi.Auth),
+  // We make sure to request using the latest API configuraitonp parameters.
+  request: (params) => detApi.Auth.determinedCurrentUser(params),
 };
 
 export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
@@ -99,7 +120,7 @@ export const forkExperiment: HttpApi<ForkExperimentParams, number> = {
         experiment_config: params.experimentConfig,
         parent_id: params.parentId,
       },
-      headers: { 'content-type': 'application/json', 'withCredentials': true },
+      headers: { 'content-type': 'application/json' },
       method: 'POST',
       url: '/experiments',
     };
@@ -113,7 +134,7 @@ export const patchExperiment: HttpApi<PatchExperimentParams, void> = {
   httpOptions: (params) => {
     return {
       body: params.body,
-      headers: { 'content-type': 'application/merge-patch+json', 'withCredentials': true },
+      headers: { 'content-type': 'application/merge-patch+json' },
       method: 'PATCH',
       url: `/experiments/${params.experimentId.toString()}`,
     };

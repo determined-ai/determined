@@ -2,9 +2,9 @@ import { CancelToken } from 'axios';
 
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
-import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
-  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
-  KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState,
+import { ApiSorter, CreateNotebookParams, CreateTensorboardParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams, KillCommandParams,
+  KillExpParams, LoginResponse, LogsParams, PatchExperimentParams, PatchExperimentState,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
@@ -154,7 +154,7 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
   });
 };
 
-export const login = generateApi<Credentials, void>(Config.login);
+export const login = generateApi<Credentials, LoginResponse>(Config.login);
 
 /*
  * Login is an exception where the caller will perform the error handling,

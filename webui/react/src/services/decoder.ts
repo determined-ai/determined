@@ -3,13 +3,12 @@ import { isNumber } from 'util';
 import dayjs from 'dayjs';
 
 import {
-  decode, ioAgents, ioDetailedUsers, ioDeterminedInfo,
-  ioExperiment, ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog,
-  ioLogs, ioTaskLogs, ioTrialDetails, ioTypeAgents,
-  ioTypeCheckpoint, ioTypeDetailedUsers, ioTypeDeterminedInfo,
+  decode, ioAgents, ioDetailedUsers, ioDeterminedInfo, ioExperiment, ioExperimentDetails,
+  ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogin, ioLogs, ioTaskLogs,
+  ioTrialDetails, ioTypeAgents, ioTypeCheckpoint, ioTypeDetailedUsers, ioTypeDeterminedInfo,
   ioTypeExperiment, ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
-  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeMetric, ioTypeStep,
-  ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeValidationMetrics,
+  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLog, ioTypeLogin, ioTypeLogs, ioTypeMetric,
+  ioTypeStep, ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeValidationMetrics,
 } from 'ioTypes';
 import { waitPageUrl } from 'routes/utils';
 import {
@@ -21,6 +20,7 @@ import {
 import { capitalize } from 'utils/string';
 
 import * as AB from './api-ts-sdk'; // API Bindings
+import { LoginResponse } from './types';
 
 const dropNonNumericMetrics = (ioMetrics: ioTypeMetric): Record<string, number> => {
   const metrics: Record<string, number> = {};
@@ -46,6 +46,11 @@ export const jsonToUsers = (data: unknown): DetailedUser[] => {
     isAdmin: user.admin,
     username: user.username,
   }));
+};
+
+export const jsonToLogin = (data: unknown): LoginResponse => {
+  const io = decode<ioTypeLogin>(ioLogin, data);
+  return { token: io.token };
 };
 
 export const jsonToDeterminedInfo = (data: unknown): DeterminedInfo => {
@@ -252,7 +257,7 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
     startTime: io.start_time,
     state: io.state as RunState,// TODO add checkpoint decoder
     totalBatchesProcessed: io.total_batches_processed || 0,
-    url: `/det/trials/${io.id}`,
+    url: `/trials/${io.id}`,
   };
 };
 
@@ -308,7 +313,7 @@ export const decodeExperimentList = (data: AB.V1Experiment[]): ExperimentItem[] 
     progress: item.progress != null ? item.progress : undefined,
     startTime: item.startTime as unknown as string,
     state: decodeExperimentState(item.state),
-    url: `/det/experiments/${item.id}`,
+    url: `/experiments/${item.id}`,
     username: item.username,
   }));
 };

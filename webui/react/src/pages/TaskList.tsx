@@ -161,14 +161,14 @@ const TaskList: React.FC = () => {
       record.misc.experimentIds.forEach(id => {
         info.sources.push({
           id,
-          path: `/det/experiments/${id}`,
+          path: `/experiments/${id}`,
           type: TensorBoardSourceType.Experiment,
         });
       });
       record.misc.trialIds.forEach(id => {
         info.sources.push({
           id,
-          path: `/det/trials/${id}`,
+          path: `/trials/${id}`,
           type: TensorBoardSourceType.Trial,
         });
       });

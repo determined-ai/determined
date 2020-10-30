@@ -38,7 +38,7 @@ const Router: React.FC<Props> = (props: Props) => {
             key={route.id}
             {...route}
             render={({ location }): ReactNode => <Redirect to={{
-              pathname: '/det/login',
+              pathname: '/login',
               state: { loginRedirect: clone(location) },
             }} />}
           />;

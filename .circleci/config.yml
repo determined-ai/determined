@@ -784,6 +784,19 @@ jobs:
       - react-get-deps
       - run: make -C webui/react check
 
+  build-react-preview:
+    docker:
+      - image: cimg/node:12.16
+    environment:
+      PUBLIC_URL: /0
+    steps:
+      - checkout
+      - react-get-deps
+      - run: make -C webui/react build
+      - store_artifacts:
+          path: webui/react/build
+          destination: /
+
   build-react:
     docker:
       - image: cimg/node:12.16
@@ -1255,6 +1268,9 @@ workflows:
       - build-and-package-ts-sdk:
           requires:
             - build-proto
+      - build-react-preview:
+          requires:
+            - build-and-package-ts-sdk
       - build-react:
           requires:
             - build-and-package-ts-sdk

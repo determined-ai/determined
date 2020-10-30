@@ -159,18 +159,18 @@ const Navigation: React.FC = () => {
             </div>
           </section>
           <section className={css.top}>
-            <NavigationItem icon="dashboard" label="Dashboard" path="/det/dashboard" />
-            <NavigationItem icon="experiment" label="Experiments" path="/det/experiments" />
-            <NavigationItem icon="tasks" label="Tasks" path="/det/tasks" />
-            <NavigationItem icon="cluster" label="Cluster" path="/det/cluster" status={cluster} />
+            <NavigationItem icon="dashboard" label="Dashboard" path="/dashboard" />
+            <NavigationItem icon="experiment" label="Experiments" path="/experiments" />
+            <NavigationItem icon="tasks" label="Tasks" path="/tasks" />
+            <NavigationItem icon="cluster" label="Cluster" path="/cluster" status={cluster} />
           </section>
           <section className={css.bottom}>
-            <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
-            <NavigationItem icon="docs" label="Docs" noProxy path="/docs" popout />
+            <NavigationItem icon="logs" label="Master Logs" path="/logs" popout />
+            <NavigationItem external icon="docs" label="Docs" path="/docs" popout />
             <NavigationItem
+              external
               icon="cloud"
               label="API (Beta)"
-              noProxy
               path="/docs/rest-api/"
               popout />
             <NavigationItem
@@ -183,7 +183,7 @@ const Navigation: React.FC = () => {
           <DropdownMenu
             menu={<Menu>
               <Menu.Item>
-                <Link path={'/det/logout'}>Sign Out</Link>
+                <Link path={'/logout'}>Sign Out</Link>
               </Menu.Item>
             </Menu>}
             offset={isCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}

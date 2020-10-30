@@ -82,7 +82,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           break;
         case 'viewLogs': {
           const taskType = (task as CommandTask).type.toLocaleLowerCase();
-          const path = `/det/${taskType}/${task.id}/logs?id=${task.name}`;
+          const path = `/${taskType}/${task.id}/logs?id=${task.name}`;
           openBlank(path);
           break;
         }

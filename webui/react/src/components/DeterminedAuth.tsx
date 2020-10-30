@@ -7,6 +7,7 @@ import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { getCurrentUser, isLoginFailure, login } from 'services/api';
+import { updateDetApi } from 'services/apiConfig';
 import { Credentials } from 'types';
 import { Storage } from 'utils/storage';
 
@@ -30,9 +31,10 @@ const DeterminedAuth: React.FC = () => {
     setUI({ type: UI.ActionType.ShowSpinner });
     setCanSubmit(false);
     try {
-      await login(creds as Credentials);
+      const { token } = await login(creds as Credentials);
+      updateDetApi({ apiKey: 'Bearer ' + token });
       const user = await getCurrentUser({});
-      setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
+      setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, token, user } });
       storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
     } catch (e) {
       const isBadCredentialsSync = isLoginFailure(e);

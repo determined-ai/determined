@@ -31,5 +31,13 @@ declare namespace Cypress {
      * @example cy.dataCy('greeting')
     */
     dataCy(value: string): Chainable<Element>;
+    /**
+     * save local storage.
+    */
+    saveLocalStorageCache(keys?: string[]): Chainable<Element>;
+    /**
+     * restore a previously saved local storage.
+    */
+    restoreLocalStorageCache(keys?: string[]): Chainable<Element>;
   }
 }

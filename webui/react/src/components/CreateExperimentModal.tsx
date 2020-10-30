@@ -36,7 +36,7 @@ const CreateExperimentModal: React.FC<Props> = (
       yaml.safeLoad(config);
       const configId = await forkExperiment({ experimentConfig: config, parentId });
       onVisibleChange(false);
-      routeAll(`/det/experiments/${configId}`);
+      routeAll(`/experiments/${configId}`);
     } catch (e) {
       let errorMessage = 'Failed to config using the provided config.';
       if (e.name === 'YAMLException') {

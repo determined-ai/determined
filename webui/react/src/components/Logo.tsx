@@ -4,6 +4,7 @@ import logoOnDarkHorizontal from 'assets/logo-on-dark-horizontal.svg';
 import logoOnDarkVertical from 'assets/logo-on-dark-vertical.svg';
 import logoOnLightHorizontal from 'assets/logo-on-light-horizontal.svg';
 import logoOnLightVertical from 'assets/logo-on-light-vertical.svg';
+import { reactHostAddress, serverAddress } from 'routes/utils';
 import { PropsWithClassName } from 'types';
 
 import css from './Logo.module.scss';
@@ -27,9 +28,11 @@ const logos: Record<LogoTypes, string> = {
 };
 
 const Logo: React.FC<PropsWithClassName<Props>> = (props: PropsWithClassName<Props>) => {
+  let alt = 'Determined AI Logo';
+  if (reactHostAddress() !== serverAddress()) alt += ` (Server: ${serverAddress()})`;
   return (
     <img
-      alt="Determined AI Logo"
+      alt={alt}
       className={`${css.base} ${css[props.type]}`}
       src={logos[props.type]} />
   );

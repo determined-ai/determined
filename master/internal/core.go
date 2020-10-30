@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -39,7 +40,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-const defaultAskTimeout = 2 * time.Second
+const (
+	defaultAskTimeout = 2 * time.Second
+	webuiBaseRoute    = "/det"
+)
 
 // Master manages the Determined master state.
 type Master struct {
@@ -143,7 +147,7 @@ func (m *Master) startServers(cert *tls.Certificate) error {
 	}
 
 	// Initialize listeners and multiplexing.
-	if err := grpc.RegisterHTTPProxy(m.echo, m.config.Port, m.config.EnableCors, cert); err != nil {
+	if err := grpc.RegisterHTTPProxy(m.echo, m.config.Port, cert); err != nil {
 		return errors.Wrap(err, "failed to register gRPC gateway")
 	}
 
@@ -313,6 +317,7 @@ func (m *Master) Run() error {
 	// relative links in web pages hosted under these routes.
 	staticWebDirectoryPaths := map[string]bool{
 		"/docs":          true,
+		webuiBaseRoute:   true,
 		"/docs/rest-api": true,
 	}
 
@@ -325,6 +330,11 @@ func (m *Master) Run() error {
 		},
 		RedirectCode: http.StatusMovedPermanently,
 	}))
+	setupEchoRedirects(m)
+
+	if m.config.EnableCors {
+		m.echo.Use(api.CORSWithTargetedOrigin)
+	}
 
 	// Add resistance to common HTTP attacks.
 	//
@@ -376,48 +386,49 @@ func (m *Master) Run() error {
 	// Docs and WebUI.
 	webuiRoot := filepath.Join(m.config.Root, "webui")
 	reactRoot := filepath.Join(webuiRoot, "react")
+	reactRootAbs, err := filepath.Abs(reactRoot)
+	if err != nil {
+		return errors.Wrap(err, "failed to get absolute path to react root")
+	}
+	reactIndex := filepath.Join(reactRoot, "index.html")
 
 	// Docs.
 	m.echo.Static("/docs/rest-api", filepath.Join(webuiRoot, "docs", "rest-api"))
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
-	type fileRoute struct {
-		route string
-		path  string
-	}
-	reactIndexFiles := [...]fileRoute{
-		{"/", "index.html"},
-		{"/det", "index.html"},
-		{"/det/*", "index.html"},
-	}
-	reactFiles := [...]fileRoute{
-		{"/security.txt", "security.txt"},
-		{"/.well-known/security.txt", "security.txt"},
-		{"/color.less", "color.less"},
-		{"/manifest.json", "manifest.json"},
-		{"/favicon.ico", "favicon.ico"},
-		{"/favicon.ico", "favicon.ico"},
-	}
-	reactDirs := [...]fileRoute{
-		{"/favicons", "favicons"},
-		{"/fonts", "fonts"},
-		{"/static", "static"},
-		{"/wait", "wait"},
-	}
-	for _, indexRoute := range reactIndexFiles {
-		reactIndexPath := filepath.Join(reactRoot, indexRoute.path)
-		m.echo.GET(indexRoute.route, func(c echo.Context) error {
-			c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			c.Response().Header().Set("Pragma", "no-cache")
-			c.Response().Header().Set("Expires", "0")
-			return c.File(reactIndexPath)
-		})
-	}
-	for _, fileRoute := range reactFiles {
-		m.echo.File(fileRoute.route, filepath.Join(reactRoot, fileRoute.path))
-	}
-	for _, dirRoute := range reactDirs {
-		m.echo.Static(dirRoute.route, filepath.Join(reactRoot, dirRoute.path))
-	}
+
+	webuiGroup := m.echo.Group(webuiBaseRoute)
+	webuiGroup.File("/", reactIndex)
+	webuiGroup.GET("/*", func(c echo.Context) error {
+		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
+		requestedFile := filepath.Join(reactRoot, groupPath)
+		// We do a simple check against directory traversal attacks.
+		requestedFileAbs, err := filepath.Abs(requestedFile)
+		if err != nil {
+			log.WithError(err).Error("failed to get absolute path to requested file")
+			return c.File(reactIndex)
+		}
+		isInReactDir := strings.HasPrefix(requestedFileAbs, reactRootAbs)
+		if !isInReactDir {
+			return echo.NewHTTPError(http.StatusForbidden)
+		}
+
+		var hasMatchingFile bool
+		stat, err := os.Stat(requestedFile)
+		switch {
+		case os.IsNotExist(err):
+		case os.IsPermission(err):
+			hasMatchingFile = false
+		case err != nil:
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check if file exists")
+		default:
+			hasMatchingFile = !stat.IsDir()
+		}
+		if hasMatchingFile {
+			return c.File(requestedFile)
+		}
+
+		return c.File(reactIndex)
+	})
 
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
