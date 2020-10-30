@@ -80,7 +80,9 @@ export const getExperimentDetails =
 export const getTrialDetails =
   generateApi<TrialDetailsParams, TrialDetails>(Config.getTrialDetails);
 
-export const killExperiment = generateApi<KillExpParams, void>(Config.killExperiment);
+export const killExperiment = generateDetApi<KillExpParams, Api.V1KillExperimentResponse, void>(
+  Config.killExperiment,
+);
 
 export const forkExperiment = generateApi<ForkExperimentParams, number>(Config.forkExperiment);
 
