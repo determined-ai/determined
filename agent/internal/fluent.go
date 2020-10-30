@@ -133,6 +133,16 @@ end
   Call run
 `, opts.AgentID, luaPath)
 
+	// HACK: If a host resolves to both IPv4 and IPv6 addresses, Fluent Bit seems to only try IPv6 and
+	// fail if that connection doesn't work. IPv6 doesn't play well with Docker and many Linux
+	// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and [::1]
+	// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
+	// diretcly into an IP address before passing it to Fluent Bit.
+	fluentMasterHost := opts.MasterHost
+	if fluentMasterHost == "localhost" {
+		fluentMasterHost = "127.0.0.1"
+	}
+
 	outputConfig := fmt.Sprintf(`
 # TMP: Output to stdout as well.
 [OUTPUT]
@@ -149,7 +159,7 @@ end
   Format json
   Json_date_key timestamp
   Json_date_format iso8601
-`, opts.MasterHost, opts.MasterPort)
+`, fluentMasterHost, opts.MasterPort)
 
 	if opts.Security.TLS.Enabled {
 		outputConfig += "  tls On\n"
@@ -282,6 +292,13 @@ func startLoggingContainer(
 	if fluentDockerNet == "" {
 		fluentDockerNet = "bridge"
 	}
+
+	// If we're connecting to a master on this host, Fluent Bit inside the Docker container won't be
+	// able to reach the master to post its logs unless running in host mode.
+	if opts.MasterHost == "localhost" || opts.MasterHost == "127.0.0.1" {
+		fluentDockerNet = "host"
+	}
+
 	ctx.Log().Infof("running Fluent Bit on Docker network %q", fluentDockerNet)
 
 	createResponse, err := docker.ContainerCreate(
@@ -327,19 +344,23 @@ func startLoggingContainer(
 		return "", 0, 0, "", err
 	}
 
+	hostPort := fluentListenPort
 	container, _ := docker.ContainerInspect(context.Background(), createResponse.ID)
-	portStr := container.NetworkSettings.Ports[exposedPort][0].HostPort
-	hostPort, _ := strconv.Atoi(portStr)
-	ctx.Log().Infof("Fluent Bit listening on host port %d", hostPort)
+	if fluentDockerNet != "host" {
+		portStr := container.NetworkSettings.Ports[exposedPort][0].HostPort
+		hostPort, _ = strconv.Atoi(portStr)
+	}
 
 	// We'll need to use either the container-internal or the host-visible address and port to connect
 	// to Fluent Bit, depending on whether this agent is running inside Docker or not.
 	addr := container.NetworkSettings.Networks[fluentDockerNet].IPAddress
 	port := fluentListenPort
-	if dockerNet == "" {
+	if dockerNet == "" || dockerNet == "host" {
 		addr = "localhost"
 		port = hostPort
 	}
+
+	ctx.Log().Infof("Fluent Bit listening on host port %d", hostPort)
 
 	return addr, port, hostPort, createResponse.ID, nil
 }
@@ -386,9 +407,6 @@ func getDockerNetwork(docker *client.Client) (string, error) {
 	}
 
 	for name := range info.NetworkSettings.Networks {
-		if name == "host" {
-			name = ""
-		}
 		return name, nil
 	}
 
