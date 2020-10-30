@@ -74,7 +74,7 @@ func NewLogStoreProcessor(
 // Receive implements the actor.Actor interface.
 func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 	type tick struct{}
-	switch msg := ctx.Message().(type) {
+	switch ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.Tell(ctx.Self(), tick{})
 
@@ -120,7 +120,7 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 
 	default:
-		return status.Errorf(codes.Internal, fmt.Sprintf("received unsupported message %v", msg))
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
@@ -179,7 +179,7 @@ func (l *LogStreamProcessor) Receive(ctx *actor.Context) error {
 		ctx.Tell(l.logStore, CloseStream{})
 
 	default:
-		return status.Errorf(codes.Internal, fmt.Sprintf("received unsupported message %v", msg))
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }

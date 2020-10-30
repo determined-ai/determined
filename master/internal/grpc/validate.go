@@ -28,5 +28,7 @@ func ValidateLimit(limit int32) Check {
 
 // ValidateFollow validates Follow message fields.
 func ValidateFollow(limit int32, follow bool) Check {
-	return func() (bool, string) { return limit == 0 || !follow, "Limit must be = 0 when following" }
+	return func() (bool, string) {
+		return limit == 0 || !follow, "Limit cannot be specified when following"
+	}
 }
