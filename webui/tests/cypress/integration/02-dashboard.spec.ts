@@ -1,10 +1,6 @@
 describe('Dashboard', () => {
 
   beforeEach(() => {
-    cy.login();
-  });
-
-  before(() => {
     cy.visit('/');
   });
 
