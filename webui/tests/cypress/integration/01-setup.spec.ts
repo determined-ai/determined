@@ -1,10 +1,15 @@
-import { DEFAULT_WAIT_TIME } from '../constants';
+import { DEFAULT_WAIT_TIME, STORAGE_KEY_AUTH } from '../constants';
 
 describe('setup', () => {
   const recordSelector = 'tr.ant-table-row';
 
-  beforeEach(() => {
+  before(() => {
     cy.login();
+    cy.saveLocalStorageCache([ STORAGE_KEY_AUTH ]);
+  });
+
+  beforeEach(() => {
+    cy.restoreLocalStorageCache([ STORAGE_KEY_AUTH ]);
     cy.visit('/det/experiments');
   });
 
