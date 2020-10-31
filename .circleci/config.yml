@@ -1325,7 +1325,7 @@ workflows:
             - build-go
           matrix:
             parameters:
-              parallelism: [4]
+              parallelism: [3]
               tf1: [true]
               mark: ["e2e_cpu"]
 
