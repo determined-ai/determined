@@ -1,7 +1,14 @@
+import { STORAGE_KEY_AUTH } from '../constants';
+
 describe('Task List', () => {
   const recordSelector = 'tr.ant-table-row';
-  beforeEach(() => {
+  before(() => {
     cy.login();
+    cy.saveLocalStorageCache([ STORAGE_KEY_AUTH ]);
+  });
+
+  beforeEach(() => {
+    cy.restoreLocalStorageCache([ STORAGE_KEY_AUTH ]);
     cy.visit('/det/tasks');
   });
 
