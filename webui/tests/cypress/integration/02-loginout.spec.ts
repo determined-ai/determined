@@ -9,6 +9,10 @@ describe('Sign in/out', () => {
     cy.login();
   });
 
+  after(() => {
+    cy.login();
+  });
+
   it('should be logged in React side', () => {
     cy.visit('/det');
     cy.checkLoggedIn();

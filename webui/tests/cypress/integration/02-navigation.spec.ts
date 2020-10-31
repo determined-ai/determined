@@ -1,20 +1,9 @@
-import { STORAGE_KEY_AUTH } from '../constants';
-
 describe('Navigation', () => {
-  before(() => {
-    cy.login();
-    cy.saveLocalStorageCache([ STORAGE_KEY_AUTH ]);
-  });
-
   const pageTitleSelector = '[class*="Page_base_"]';
   const sectionTitleSelector = '[class*="Section_title_"]';
   const navSelector = '[class*="Navigation_base_"]';
 
   describe('paths', () => {
-
-    beforeEach(() => {
-      cy.restoreLocalStorageCache([ STORAGE_KEY_AUTH ]);
-    });
 
     it('path / should display dashboard', () => {
       cy.visit('/');
@@ -56,7 +45,6 @@ describe('Navigation', () => {
 
   describe('side menu buttons', () => {
     beforeEach(() => {
-      cy.restoreLocalStorageCache([ STORAGE_KEY_AUTH ]);
       cy.visit('/det');
     });
 
