@@ -44,7 +44,7 @@ describe('Navigation', () => {
   });
 
   describe('side menu buttons', () => {
-    beforeEach(() => {
+    before(() => {
       cy.visit('/det');
     });
 
