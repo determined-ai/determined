@@ -748,4 +748,16 @@ service Determined {
       tags: "Experiments"
     };
   }
+
+  // Get a snapshot of a metric across all trials at a certain point of
+  // progress.
+  rpc TrialsSnapshot(TrialsSnapshotRequest)
+      returns (stream TrialsSnapshotResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/metrics-stream/trials-snapshot"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
 }

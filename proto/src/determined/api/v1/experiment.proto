@@ -278,9 +278,9 @@ enum MetricType {
 message MetricBatchesRequest {
   // The id of the experiment.
   int32 experiment_id = 1;
-  // A metric name
+  // A metric name.
   string metric_name = 2;
-  // The type of metric
+  // The type of metric.
   MetricType metric_type = 3;
 }
 
@@ -289,4 +289,31 @@ message MetricBatchesResponse {
   // Milestones (in batches processed) at which the specified metric is
   // recorded.
   repeated int32 batches = 1;
+}
+
+// Request metrics from all trials at a progress point of progress.
+message TrialsSnapshotRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // The point of progress at which to query metrics.
+  int32 batches_processed = 2;
+  // A metric name.
+  string metric_name = 3;
+  // The type of metric.
+  MetricType metric_type = 4;
+}
+
+// Response to TrialSnapshotResponse
+message TrialsSnapshotResponse {
+  // Metric value and metadata for a trial that has progress this far.
+  message Trial {
+    // The id of the trial.
+    int32 trial_id = 1;
+    // A dictionary of hyperparameter values for this trial.
+    google.protobuf.Struct hparams = 2;
+    // The value of the metric in this trial at this point.
+    double metric = 3;
+  }
+  // A list of trials.
+  repeated Trial trials = 1;
 }
