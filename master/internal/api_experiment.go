@@ -622,6 +622,8 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		metricName = validationMetric
 	}
 
+	seenBatches := make(map[int32]bool)
+
 	var startTime time.Time
 	for {
 		var response apiv1.MetricBatchesResponse
@@ -635,7 +637,12 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		}
 		startTime = endTime
 
-		response.Batches = newBatches
+		for _, batch := range newBatches {
+			if seen := seenBatches[batch]; !seen {
+				response.Batches = append(response.Batches, batch)
+				seenBatches[batch] = true
+			}
+		}
 
 		if err := resp.Send(&response); err != nil {
 			return errors.Wrapf(err, "error sending batches recorded for metrics")
