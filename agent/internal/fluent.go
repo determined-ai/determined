@@ -202,22 +202,9 @@ end
 	return args, files, nil
 }
 
-func killContainer(ctx *actor.Context, c *client.Client, containerID string) error {
-	if err := c.ContainerKill(context.Background(), containerID, "KILL"); err != nil {
-		return errors.Wrap(err, "failed to kill container")
-	}
-	waitChan, errChan := c.ContainerWait(context.Background(), containerID, "removed")
-
-	select {
-	case err := <-errChan:
-		return errors.Wrap(err, "failed to wait for container")
-	case <-waitChan:
-		return nil
-	}
-}
-
 func killContainerByName(ctx *actor.Context, docker *client.Client, name string) error {
 	containers, err := docker.ContainerList(context.Background(), types.ContainerListOptions{
+		All: true,
 		Filters: filters.NewArgs(
 			filters.Arg("name", name),
 		),
@@ -226,8 +213,13 @@ func killContainerByName(ctx *actor.Context, docker *client.Client, name string)
 		return errors.Wrap(err, "failed to list containers by name")
 	}
 	for _, cont := range containers {
-		ctx.Log().WithFields(logrus.Fields{"name": name, "id": cont.ID}).Infof("killing Docker container")
-		if err = killContainer(ctx, docker, cont.ID); err != nil {
+		ctx.Log().WithFields(logrus.Fields{"name": name, "id": cont.ID}).Infof(
+			"killing and removing Docker container",
+		)
+		err := docker.ContainerRemove(
+			context.Background(), cont.ID, types.ContainerRemoveOptions{Force: true},
+		)
+		if err != nil {
 			return err
 		}
 	}
@@ -473,7 +465,9 @@ func (f *fluentActor) Receive(ctx *actor.Context) error {
 		return f.client.Post("determined.agent", msg)
 	case actor.PostStop:
 		t0 := time.Now()
-		err := killContainer(ctx, f.docker, f.containerID)
+		err := f.docker.ContainerRemove(
+			context.Background(), f.containerID, types.ContainerRemoveOptions{Force: true},
+		)
 		ctx.Log().Infof("Fluent Bit killed in %s", time.Since(t0))
 		return err
 	}
