@@ -14,7 +14,6 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -245,18 +244,8 @@ func (a *agent) setup(ctx *actor.Context) error {
 	ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
 	actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
 
-	if a.ArtificialSlots > 0 {
-		for i := 0; i < a.ArtificialSlots; i++ {
-			id := uuid.New().String()
-			a.Devices = append(a.Devices, device.Device{
-				ID: i, Brand: "Artificial", UUID: id, Type: device.CPU})
-		}
-	} else {
-		d, err := detectDevices(a.Options.VisibleGPUs)
-		if err != nil {
-			return err
-		}
-		a.Devices = d
+	if err := a.detect(); err != nil {
+		return err
 	}
 	ctx.Log().Info("detected compute devices:")
 	for _, d := range a.Devices {

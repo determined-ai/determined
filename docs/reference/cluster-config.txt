@@ -747,6 +747,20 @@ The master supports the following configuration settings:
    index, UUID, PCI bus ID, or board serial number. The 0-based index of
    NVIDIA GPUs can be obtained via the ``nvidia-smi`` command.
 
+-  ``slot_type``: The slot type that should be exposed. Dynamic agents
+   having GPUs will be configured to ``gpu`` while those agents having
+   no GPUs will be configured to ``none``. For static agents this field
+   defaults to ``auto``.
+
+   -  ``auto``: Automatically detects the slot type. The agent will
+      detect if there are GPUs. If there are GPUs, it maps each GPU to
+      one slot. Otherwise, it maps all the CPUs to a slot.
+
+   -  ``none``: The agent will not create any slots for detected
+      devices.
+
+   -  ``gpu``: The agent will map each detected GPU to a slot.
+
 -  ``http_proxy``: The HTTP proxy address for the agent's containers.
 
 -  ``https_proxy``: The HTTPS proxy address for the agent's containers.

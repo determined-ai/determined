@@ -44,9 +44,14 @@ chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
 use_gpus=true
-if $use_gpus; then
+if $use_gpus
+then
     echo "#### Starting agent with GPUs"
     docker_args+=(--gpus all)
+    docker_args+=(-e DET_SLOT_TYPE=gpu)
+else
+    echo "#### Starting agent with only CPUs"
+    docker_args+=(-e DET_SLOT_TYPE=none)
 fi
 
 cert_b64=PT09PSBjZXJ0ID09PT0=

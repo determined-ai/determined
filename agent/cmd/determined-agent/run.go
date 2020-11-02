@@ -97,6 +97,7 @@ func newRunCmd() *cobra.Command {
 		"Master port that containers started by this agent will connect to")
 
 	// Device flags.
+	cmd.Flags().StringVar(&opts.SlotType, "slot-type", "auto", "slot type to expose")
 	cmd.Flags().StringVar(&opts.VisibleGPUs, "visible-gpus", "", "GPUs to expose as slots")
 
 	// Security flags.
