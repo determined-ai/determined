@@ -35,6 +35,9 @@ type agent struct {
 	// information to allow agent connection and disconnection events
 	// to be correlated.
 	uuid uuid.UUID
+
+	// opts are addition agent options the master sends to the agent.
+	opts *aproto.MasterSetAgentOptions
 }
 
 // AgentSummary summarizes the state on an agent.
@@ -66,6 +69,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		} else {
 			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
 		}
+		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{MasterSetAgentOptions: a.opts}})
 	case sproto.KillTaskContainer:
 		ctx.Log().Infof("killing container id: %s", msg.ContainerID)
 		killMsg := aproto.SignalContainer{
@@ -75,12 +79,13 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case aproto.SignalContainer:
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
 	case sproto.StartTaskContainer:
-		start := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
 			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
 			msg.TaskActor.Address())
 
-		ctx.Ask(a.socket, start)
+		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{
+			StartContainer: &msg.StartContainer,
+		}})
 		ctx.Tell(a.slots, msg.StartContainer)
 		a.containers[msg.Container.ID] = msg.TaskActor
 	case aproto.MasterMessage:

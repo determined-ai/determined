@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/determined-ai/determined/master v0.0.0
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1

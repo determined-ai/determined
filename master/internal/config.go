@@ -38,6 +38,9 @@ func DefaultConfig() *Config {
 		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
 			ShmSizeBytes: 4294967296,
 			NetworkMode:  "bridge",
+			LogDriverOptions: model.LogDriverOptions{
+				DefaultLogDriver: &model.DefaultLogDriverOptions{},
+			},
 		},
 		TensorBoardTimeout: 5 * 60,
 		Security: SecurityConfig{

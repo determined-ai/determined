@@ -42,7 +42,7 @@ type containerManager struct {
 
 func newContainerManager(a *agent, fluentPort int) (*containerManager, error) {
 	return &containerManager{
-		MasterInfo: a.MasterInfo,
+		MasterInfo: a.MasterSetAgentOptions.MasterInfo,
 		Options:    a.Options,
 		Devices:    a.Devices,
 		fluentPort: fluentPort,
@@ -58,9 +58,9 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		}
 		c.docker = d
 
-		masterScheme := insecureScheme
+		masterScheme := httpInsecureScheme
 		if c.Options.Security.TLS.Enabled {
-			masterScheme = secureScheme
+			masterScheme = httpSecureScheme
 		}
 
 		masterHost := c.Options.ContainerMasterHost

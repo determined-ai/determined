@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -26,12 +28,14 @@ const localhost = "localhost"
 
 // fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
 // an appropriate configuration.
-func fluentConfig(opts Options) ([]string, archive.Archive, error) {
+func fluentConfig(
+	opts Options,
+	masterSetOpts aproto.MasterSetAgentOptions,
+) ([]string, archive.Archive, error) {
 	const baseDir = "/run/determined/fluent/"
 	const luaPath = baseDir + "tonumber.lua"
 	const configPath = baseDir + "fluent.conf"
 	const parserConfigPath = baseDir + "parsers.conf"
-	const masterCertPath = baseDir + "master.crt"
 
 	var files archive.Archive
 
@@ -154,7 +158,15 @@ end
 		fluentMasterPort = opts.ContainerMasterPort
 	}
 
-	outputConfig := fmt.Sprintf(`
+	var outputConfig string
+	const (
+		tlsOn         = "  tls On\n"
+		tlsVerifyOff  = "  tls.verify Off\n"
+		tlsCaCertFile = "  tls.ca_file %s\n"
+	)
+	switch {
+	case masterSetOpts.LogDriverOptions.DefaultLogDriver != nil:
+		outputConfig = fmt.Sprintf(`
 [OUTPUT]
   Name http
   Match *
@@ -165,33 +177,79 @@ end
   Format json
   Json_date_key timestamp
   Json_date_format iso8601
-`, fluentMasterHost, fluentMasterPort)
+	`, fluentMasterHost, fluentMasterPort)
 
-	if opts.Security.TLS.Enabled {
-		outputConfig += "  tls On\n"
-		if a := opts.Security.TLS.MasterCertName; a != "" {
-			outputConfig += "  tls.vhost " + a + "\n"
-		}
-		if opts.Security.TLS.SkipVerify {
-			outputConfig += "  tls.verify Off\n"
-		}
-		if opts.Security.TLS.MasterCert != "" {
-			outputConfig += "  tls.ca_file " + masterCertPath + "\n"
+		const masterCertPath = baseDir + "master.crt"
+		if opts.Security.TLS.Enabled {
+			outputConfig += tlsOn
+			if a := opts.Security.TLS.MasterCertName; a != "" {
+				outputConfig += "  tls.vhost " + a + "\n"
+			}
+			if opts.Security.TLS.SkipVerify {
+				outputConfig += tlsVerifyOff
+			}
+			if opts.Security.TLS.MasterCert != "" {
+				outputConfig += fmt.Sprintf(tlsCaCertFile, masterCertPath)
 
-			certBytes, cErr := ioutil.ReadFile(opts.Security.TLS.MasterCert)
-			if cErr != nil {
-				return nil, nil, cErr
+				certBytes, cErr := ioutil.ReadFile(opts.Security.TLS.MasterCert)
+				if cErr != nil {
+					return nil, nil, cErr
+				}
+
+				files = append(files,
+					archive.Item{
+						Path:     masterCertPath,
+						Type:     tar.TypeReg,
+						FileMode: 0444,
+						Content:  certBytes,
+					},
+				)
+			}
+		}
+	case masterSetOpts.LogDriverOptions.ElasticLogDriver != nil:
+		elasticOpts := masterSetOpts.LogDriverOptions.ElasticLogDriver
+		outputConfig = fmt.Sprintf(`
+[OUTPUT]
+  Name  es
+  Match *
+  Host  %s
+  Port  %d
+  Logstash_Format True
+  Logstash_Prefix triallogs
+  Time_Key @fluent_timestamp
+`, elasticOpts.Host, elasticOpts.Port)
+
+		elasticSecOpts := elasticOpts.Security
+		if elasticSecOpts.Username != nil && elasticSecOpts.Password != nil {
+			outputConfig += fmt.Sprintf(`
+  HTTPUser   %s
+  HTTPPasswd %s
+`, *elasticOpts.Security.Username, *elasticOpts.Security.Password)
+		}
+
+		const elasticCertPath = baseDir + "elastic.crt"
+		if elasticSecOpts.TLS.Enabled {
+			outputConfig += tlsOn
+
+			if elasticSecOpts.TLS.SkipVerify {
+				outputConfig += tlsVerifyOff
 			}
 
-			files = append(files,
-				archive.Item{
-					Path:     masterCertPath,
-					Type:     tar.TypeReg,
-					FileMode: 0444,
-					Content:  certBytes,
-				},
-			)
+			if elasticSecOpts.TLS.CertBytes != nil {
+				outputConfig += fmt.Sprintf(tlsCaCertFile, elasticCertPath)
+				files = append(files,
+					archive.Item{
+						Path:     elasticCertPath,
+						Type:     tar.TypeReg,
+						FileMode: 0444,
+						Content:  elasticSecOpts.TLS.CertBytes,
+					},
+				)
+			}
 		}
+
+	default:
+		panic("no log driver set for agent")
 	}
 
 	files = append(files,
@@ -262,6 +320,7 @@ func startLoggingContainer(
 	ctx *actor.Context,
 	docker *client.Client,
 	opts Options,
+	masterSetOpts aproto.MasterSetAgentOptions,
 ) (int, string, error) {
 	const containerName = "determined-fluent"
 	imageName := opts.Fluent.Image
@@ -274,7 +333,7 @@ func startLoggingContainer(
 		return 0, "", errors.Wrap(err, "failed to pull logging image")
 	}
 
-	fluentArgs, fluentFiles, err := fluentConfig(opts)
+	fluentArgs, fluentFiles, err := fluentConfig(opts, masterSetOpts)
 	if err != nil {
 		return 0, "", errors.Wrap(err, "failed to configure Fluent Bit")
 	}
@@ -330,30 +389,36 @@ func startLoggingContainer(
 // fluentActor manages the lifecycle of the Fluent Bit container that is run by the agent for the
 // purpose of forwarding container logs.
 type fluentActor struct {
-	opts        Options
-	port        int
-	containerID string
-	docker      *client.Client
+	opts          Options
+	masterSetOpts aproto.MasterSetAgentOptions
+	port          int
+	containerID   string
+	docker        *client.Client
 }
 
-func newFluentActor(ctx *actor.Context, opts Options) (*fluentActor, error) {
+func newFluentActor(
+	ctx *actor.Context,
+	opts Options,
+	masterSetOpts aproto.MasterSetAgentOptions,
+) (*fluentActor, error) {
 	docker, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.40"))
 	if err != nil {
 		return nil, errors.Wrap(err, "error connecting to Docker daemon")
 	}
 
 	t0 := time.Now()
-	hostPort, cid, err := startLoggingContainer(ctx, docker, opts)
+	hostPort, cid, err := startLoggingContainer(ctx, docker, opts, masterSetOpts)
 	if err != nil {
 		return nil, err
 	}
 	ctx.Log().Infof("Fluent Bit started in %s", time.Since(t0))
 
 	return &fluentActor{
-		opts:        opts,
-		port:        hostPort,
-		containerID: cid,
-		docker:      docker,
+		opts:          opts,
+		masterSetOpts: masterSetOpts,
+		port:          hostPort,
+		containerID:   cid,
+		docker:        docker,
 	}, nil
 }
 

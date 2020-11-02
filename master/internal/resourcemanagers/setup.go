@@ -6,6 +6,8 @@ import (
 	"github.com/labstack/echo"
 	"github.com/sirupsen/logrus"
 
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
+
 	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 
@@ -18,12 +20,13 @@ func Setup(
 	echo *echo.Echo,
 	rmConfig *ResourceManagerConfig,
 	poolsConfig *ResourcePoolsConfig,
+	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *actor.Ref {
 	var ref *actor.Ref
 	switch {
 	case rmConfig.AgentRM != nil:
-		ref = setupAgentResourceManager(system, echo, rmConfig.AgentRM, poolsConfig, cert)
+		ref = setupAgentResourceManager(system, echo, rmConfig.AgentRM, poolsConfig, opts, cert)
 	case rmConfig.KubernetesRM != nil:
 		ref = setupKubernetesResourceManager(system, echo, rmConfig.KubernetesRM)
 	default:
@@ -42,6 +45,7 @@ func setupAgentResourceManager(
 	echo *echo.Echo,
 	rmConfig *AgentResourceManagerConfig,
 	poolsConfig *ResourcePoolsConfig,
+	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
@@ -51,7 +55,7 @@ func setupAgentResourceManager(
 	system.Ask(ref, actor.Ping{}).Get()
 
 	logrus.Infof("initializing endpoints for agents")
-	agent.Initialize(system, echo, ref)
+	agent.Initialize(system, echo, ref, opts)
 	return ref
 }
 
