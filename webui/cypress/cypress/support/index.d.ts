@@ -13,7 +13,7 @@ declare namespace Cypress {
      * @example
      * cy.logout()
      */
-    logout(): Chainable<any>;
+    // logout(): Chainable<any>;
     /**
      * Check that the application is in a logged in state
      * @example

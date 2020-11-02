@@ -4,6 +4,7 @@ describe('Experiment List', () => {
   const toggleSelector = '[class*="Toggle_base_"] button';
 
   beforeEach(() => {
+    cy.login();
     cy.visit('/det/experiments');
     cy.wait(5000);
   });

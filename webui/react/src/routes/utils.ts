@@ -15,7 +15,7 @@ export const serverAddress = (path = ''): string => {
   if (!!path && isFullPath(path)) return path;
 
   // Prioritize dynamically set address.
-  const customServer = globalStorage.getServerAddress
+  const customServer = globalStorage.serverAddress
     || process.env.SERVER_ADDRESS as string;
 
   return (customServer || reactHostAddress()) + path;

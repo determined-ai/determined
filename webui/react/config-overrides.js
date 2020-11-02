@@ -15,7 +15,6 @@ const webpack = require('webpack');
 const jestConfig = require('./jest.config');
 
 const IS_DEV = process.env.NODE_ENV === 'development';
-const SERVER_ADDRESS = IS_DEV ? 'http://localhost:8080' : process.env.SERVER_ADDRESS;
 
 const webpackConfig = override(
   // Disable eslint for webpack config.
@@ -69,7 +68,7 @@ const webpackConfig = override(
     new webpack.DefinePlugin({
       'process.env.VERSION': '"0.13.9.dev0"',
       'process.env.IS_DEV': JSON.stringify(IS_DEV),
-      'process.env.SERVER_ADDRESS': JSON.stringify(SERVER_ADDRESS),
+      'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
     })
   ),
 

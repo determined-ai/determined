@@ -38,22 +38,14 @@ Cypress.Commands.add('checkLoggedIn', (username = null, visit = true) => {
   // cluster page link in the top bar, which should be present if and only if
   // the user is logged in.
   username = username || ACCOUNT_USERNAME;
-  if (visit) cy.visit('/');
+  if (visit) cy.visit('/det/dashboard');
   cy.get('#avatar').should('exist');
   cy.get('#avatar').should('have.text', username.charAt(0).toUpperCase());
 });
 
 Cypress.Commands.add('checkLoggedOut', () => {
-  cy.visit('/');
-  cy.request({
-    failOnStatusCode: false,
-    headers: { Authorization: 'Bearer ' + retreiveAuthToken() },
-    method: 'GET',
-    url: '/users/me',
-  })
-    .then(response => {
-      expect(response.status).to.equal(401);
-    });
+  cy.visit('/det');
+  cy.url().should('include', '/login');
 });
 
 // TODO use Cypress.env to share (and bring in) some of the contants used.
@@ -62,6 +54,7 @@ Cypress.Commands.add('login', (credentials) => {
     password: saltAndHashPassword(ACCOUNT_PASSWORD),
     username: ACCOUNT_USERNAME,
   };
+  cy.visit('/det/login');
   cy.request('POST', '/login', credentials)
     .then(response => {
       expect(response.body).to.have.property('token');

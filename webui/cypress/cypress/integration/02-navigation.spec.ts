@@ -4,6 +4,9 @@ describe('Navigation', () => {
   const navSelector = '[class*="Navigation_base_"]';
 
   describe('paths', () => {
+    beforeEach(() => {
+      cy.login();
+    });
 
     it('path / should display dashboard', () => {
       cy.visit('/');
@@ -44,7 +47,8 @@ describe('Navigation', () => {
   });
 
   describe('side menu buttons', () => {
-    before(() => {
+    beforeEach(() => {
+      cy.login();
       cy.visit('/det');
     });
 

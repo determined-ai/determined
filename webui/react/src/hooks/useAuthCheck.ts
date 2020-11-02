@@ -16,7 +16,7 @@ const useAuthCheck = (): (() => void) => {
 
   useEffect(() => {
     const checkAuth = async (signal: AbortSignal): Promise<void> => {
-      const authToken = globalStorage.getAuthToken;
+      const authToken = globalStorage.authToken;
       if (!authToken) {
         setAuth({ type: Auth.ActionType.MarkChecked });
         return;

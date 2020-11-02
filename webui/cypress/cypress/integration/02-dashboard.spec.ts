@@ -1,7 +1,8 @@
 describe('Dashboard', () => {
 
   beforeEach(() => {
-    cy.visit('/');
+    cy.login();
+    cy.visit('/det');
   });
 
   describe('Recent Tasks', () => {

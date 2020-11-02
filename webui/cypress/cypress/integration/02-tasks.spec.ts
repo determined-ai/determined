@@ -6,6 +6,7 @@ describe('Task List', () => {
   const overflowSelector = '.ant-dropdown .ant-dropdown-menu-item';
 
   beforeEach(() => {
+    cy.login();
     cy.visit('/det/tasks');
     cy.clearLocalStorage();
     cy.wait(5000);
