@@ -33,12 +33,6 @@ func (a *agent) detect() error {
 			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
 		}
 		a.Devices = devices
-	case a.SlotType == "cpu":
-		devices, err := detectCPUs()
-		if err != nil {
-			return err
-		}
-		a.Devices = devices
 	case a.SlotType == "auto":
 		devices, err := detectGPUs(a.Options.VisibleGPUs)
 		if err != nil {

@@ -759,8 +759,6 @@ The master supports the following configuration settings:
    -  ``none``: The agent will not create any slots for detected
       devices.
 
-   -  ``cpu``: The agent will map all the detected CPUs to a slot.
-
    -  ``gpu``: The agent will map each detected GPU to a slot.
 
 -  ``http_proxy``: The HTTP proxy address for the agent's containers.
