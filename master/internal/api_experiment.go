@@ -539,8 +539,6 @@ var metricsStreamPeriod = 30 * time.Second
 func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	resp apiv1.Determined_MetricNamesServer) error {
 	experimentID := int(req.ExperimentId)
-	seenTrain := make(map[string]bool)
-	seenValid := make(map[string]bool)
 
 	// Get searcher metric, include in first response
 	confBytes, err := a.m.db.ExperimentConfigRaw(experimentID)
@@ -560,15 +558,22 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	searcher = conf["searcher"].(map[string]interface{})
 	searcherMetric = searcher["metric"].(string)
 
+	seenTrain := make(map[string]bool)
+	seenValid := make(map[string]bool)
+	var tStartTime time.Time
+	var vStartTime time.Time
 	for {
 		var response apiv1.MetricNamesResponse
 		response.SearcherMetric = searcherMetric
 
-		newTrain, newValid, err := a.m.db.MetricNames(experimentID)
+		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.MetricNames(experimentID, tStartTime, vStartTime)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching metric names for experiment: %d", experimentID)
 		}
+		tStartTime = tEndTime
+		vStartTime = vEndTime
+
 		for _, name := range newTrain {
 			if seen := seenTrain[name]; !seen {
 				response.TrainingMetrics = append(response.TrainingMetrics, name)
@@ -623,7 +628,6 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	}
 
 	seenBatches := make(map[int32]bool)
-
 	var startTime time.Time
 	for {
 		var response apiv1.MetricBatchesResponse
