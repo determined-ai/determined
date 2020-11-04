@@ -61,6 +61,8 @@ GROUP BY name;`, experimentID, sStartTime)
 		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
 			"error querying training metric names for experiment %d", experimentID)
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var row namesWrapper
 		err = rows.StructScan(&row)
@@ -89,6 +91,8 @@ GROUP BY name;`, experimentID, vStartTime)
 		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
 			"error querying validation metric names for experiment %d", experimentID)
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var row namesWrapper
 		err = rows.StructScan(&row)
