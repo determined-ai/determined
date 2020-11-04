@@ -5,7 +5,7 @@ import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
-import Message from 'components/Message';
+import Message, { MessageType } from 'components/Message';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
@@ -127,7 +127,7 @@ const TrialLogs: React.FC = () => {
   }, [ id, trial.hasLoaded ]);
 
   if (trial.errorCount > 0 && !trial.isLoading) {
-    return <Message title={`Unable to find Trial ${trialId}`} />;
+    return <Message title={`Unable to find Trial ${trialId}`} type={MessageType.Warning} />;
   }
 
   return (
