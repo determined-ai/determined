@@ -1,6 +1,7 @@
 from typing import Dict, Sequence, Union
 import torch
 import torch.nn as nn
+import time
 
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
 import data
@@ -15,7 +16,7 @@ from transformers.data.metrics.squad_metrics import (
     compute_predictions_logits,
     squad_evaluate,
 )
-from radam import RAdam
+from radam import RAdam, PlainRAdam
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -67,8 +68,8 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         if self.context.get_hparam("use_radam"):
             lr = self.context.get_hparam("learning_rate")
             eps = self.context.get_hparam("adam_epsilon")
-            print(f"Using RAdam with params: lr={lr}, ε={eps}")
-            optimizer = RAdam(
+            print(f"Using PlainRAdam with params: lr={lr}, ε={eps}")
+            optimizer = PlainRAdam(
                 optimizer_grouped_parameters,
                 lr=lr,
                 eps=eps
@@ -146,13 +147,21 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             )
         )
 
-        return {"loss": loss, "lr": float(self.lr_scheduler.get_lr()[0])}
+        return {"loss": loss, "lr": float(self.lr_scheduler.get_last_lr()[0])}
         # return {"loss": loss}
 
 
     def evaluate_full_dataset(self, data_loader: DataLoader):
+        def eval_print(s):
+            print("[EVALUATE_FULL_DATASET]", f"(rank={self.context.distributed.get_rank()})", s)
+
+        eval_print(f"start={time.time()}")
         all_results = []
+
+        batch_idx = 0
         for batch in data_loader:
+            batch_idx += 1
+            batch_start = time.time()
             inputs = {
                 "input_ids": batch[0].cuda(),
                 "attention_mask": batch[1].cuda(),
@@ -167,7 +176,10 @@ class AlbertSQuADPyTorch(PyTorchTrial):
                 start_logits, end_logits = output
                 result = SquadResult(unique_id, start_logits, end_logits)
                 all_results.append(result)
+            batch_end = time.time()
+            eval_print(f"Batch {batch_idx} took {batch_end-batch_start} seconds")
 
+        eval_print(f"squad_results_available={time.time()}")
         output_prediction_file = None
         output_nbest_file = None
         output_null_log_odds_file = None
@@ -178,7 +190,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         elif task == "SQuAD2.0":
             version_2_with_negative = True
         else:
-            raise NameError("Incompatible dataset detected")
+            raise NameError(f"Incompatible dataset '{task}' detected")
 
         # TODO: Make verbose logging configurable
         verbose_logging = False
@@ -197,5 +209,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             self.context.get_hparam("null_score_diff_threshold"),
             self.tokenizer,
         )
+        eval_print(f"prediction_logits_available={time.time()}")
         results = squad_evaluate(self.validation_examples, predictions)
+        eval_print(f"end={time.time()}")
         return results
