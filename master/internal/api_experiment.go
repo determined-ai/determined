@@ -566,7 +566,8 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 		var response apiv1.MetricNamesResponse
 		response.SearcherMetric = searcherMetric
 
-		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.MetricNames(experimentID, tStartTime, vStartTime)
+		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.MetricNames(experimentID,
+			tStartTime, vStartTime)
 		if err != nil {
 			return errors.Wrapf(err,
 				"error fetching metric names for experiment: %d", experimentID)

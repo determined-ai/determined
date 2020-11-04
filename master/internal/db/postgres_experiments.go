@@ -41,8 +41,8 @@ func (db *PgDB) ExperimentLabelUsage() (labelUsage map[string]int, err error) {
 
 // MetricNames returns the set of training and validation metric names that have been recorded for
 // an experiment.
-func (db *PgDB) MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error) {
-
+func (db *PgDB) MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (
+	training []string, validation []string, sEndTime time.Time, vEndTime time.Time, err error) {
 	type namesWrapper struct {
 		Name    string    `db:"name"`
 		EndTime time.Time `db:"end_time"`
