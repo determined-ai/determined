@@ -6,7 +6,6 @@ import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Message, { MessageType } from 'components/Message';
-import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import { getTrialDetails } from 'services/api';
@@ -29,7 +28,6 @@ const TrialLogs: React.FC = () => {
   const { experimentId: experimentIdParam, trialId: trialIdParam } = useParams<Params>();
   const history = useHistory();
   const trialId = parseInt(trialIdParam);
-  const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ offset, setOffset ] = useState(-TAIL_SIZE);
   const [ oldestId, setOldestId ] = useState(Number.MAX_SAFE_INTEGER);
@@ -112,8 +110,6 @@ const TrialLogs: React.FC = () => {
       history.replace(`/experiments/${experimentId}/trials/${trialId}/logs`);
     }
   }, [ experimentId, experimentIdParam, history, trialId ]);
-
-  useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
 
   useEffect(() => {
     if (!trial.hasLoaded) return;

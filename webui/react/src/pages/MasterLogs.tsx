@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
-import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import { getMasterLogs } from 'services/api';
@@ -9,7 +8,6 @@ import { LogsParams } from 'services/types';
 import { Log } from 'types';
 
 const MasterLogs: React.FC = () => {
-  const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ logIdRange, setLogIdRange ] =
@@ -36,10 +34,6 @@ const MasterLogs: React.FC = () => {
   }, [ fetchOlderLogs ]);
 
   usePolling(fetchNewerLogs);
-
-  useEffect(() => {
-    setUI({ type: UI.ActionType.HideChrome });
-  }, [ setUI ]);
 
   useEffect(() => {
     if (!logsResponse.data || logsResponse.data.length === 0) return;

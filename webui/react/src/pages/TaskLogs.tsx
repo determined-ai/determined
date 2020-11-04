@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
-import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import { getTaskLogs } from 'services/api';
@@ -24,7 +23,6 @@ const TaskLogs: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
   const queries: Queries = queryString.parse(location.search);
   const title = `${capitalize(taskType)} Logs${queries.id ? ` (${queries.id})` : ''}`;
-  const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ logIdRange, setLogIdRange ] =
@@ -56,10 +54,6 @@ const TaskLogs: React.FC = () => {
   }, [ fetchOlderLogs ]);
 
   usePolling(fetchNewerLogs);
-
-  useEffect(() => {
-    setUI({ type: UI.ActionType.HideChrome });
-  }, [ setUI ]);
 
   useEffect(() => {
     if (!logsResponse.data || logsResponse.data.length === 0) return;
