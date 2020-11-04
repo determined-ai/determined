@@ -1,16 +1,13 @@
-import os
 import subprocess
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 import pytest
-import simplejson
 import tensorflow as tf
 from packaging import version
 
 import determined as det
 from determined import workload
-from determined.exec import harness
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import tf_keras_one_var_model, tf_keras_xor_model  # noqa: I100
 
@@ -96,17 +93,11 @@ class TestKerasTrial:
             "global_batch_size": 4,
             "trial_type": "default",
         }
-        os.environ["DET_HPARAMS"] = simplejson.dumps(self.hparams)
 
     def teardown_method(self) -> None:
         # Reset the default graph state after each invocation so tests can
         # fully rely on the graph-level seed for determinism.
         tf.compat.v1.reset_default_graph()
-
-        # Cleanup leftover environment variable state.
-        for key in harness.ENVIRONMENT_VARIABLE_KEYS:
-            if key in os.environ:
-                del os.environ[key]
 
     # The following unit tests are run with a specific trial implementation.
 
@@ -153,7 +144,8 @@ class TestKerasTrial:
                 # Calculate what the loss should be.
                 loss = trial_class.calc_loss(w, batch)
 
-                assert metrics["metrics"]["avg_metrics"]["loss"] == pytest.approx(loss)
+                epsilon = 0.0001
+                assert abs(metrics["metrics"]["avg_metrics"]["loss"] - loss) < epsilon
 
                 # Update what the weight should be.
                 w = w - hparams["learning_rate"] * trial_class.calc_gradient(w, batch)
@@ -168,9 +160,15 @@ class TestKerasTrial:
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         hparams = {"learning_rate": 0.001, "global_batch_size": 3, "dataset_range": 10}
+        exp_config = utils.make_default_exp_config(hparams, scheduling_unit=100)
+        exp_config["records_per_epoch"] = 100
         # TODO(DET-2436): Add a unit test for native implementation with tf dataset.
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class, hparams, make_workloads(), trial_seed=self.trial_seed
+            trial_class,
+            hparams,
+            make_workloads(),
+            exp_config=exp_config,
+            trial_seed=self.trial_seed,
         )
         controller.run()
 
@@ -180,6 +178,7 @@ class TestKerasTrial:
                 trial_class,
                 hparams,
                 make_workloads(),
+                exp_config=exp_config,
                 load_path=checkpoint_dir,
                 trial_seed=self.trial_seed,
             )
@@ -206,7 +205,8 @@ class TestKerasTrial:
             for older, newer in zip(validation_metrics, validation_metrics[1:]):
                 assert newer["val_categorical_error"] <= older["val_categorical_error"]
 
-            assert validation_metrics[-1]["val_categorical_error"] == pytest.approx(0.0)
+            epsilon = 0.0001
+            assert abs(validation_metrics[-1]["val_categorical_error"]) < epsilon
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
@@ -297,6 +297,35 @@ class TestKerasTrial:
             hparams,
             make_workloads(),
             scheduling_unit=5,
+        )
+        controller.run()
+
+    def test_callbacks(self):
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            yield from trainer.send(steps=15, validation_freq=4, scheduling_unit=5)
+            training_metrics, validation_metrics = trainer.result()
+
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        hparams = {
+            "learning_rate": 0.001,
+            "global_batch_size": 3,
+            "dataset_range": 10,
+            # 15 steps * 5 batches per step * 3 records per batch // 12 records per epoch
+            "epochs": 15 * 5 * 3 // 12,
+            # steps // validation_freq
+            "validations": 3,
+        }
+        exp_config = utils.make_default_exp_config(hparams, scheduling_unit=100)
+        exp_config["records_per_epoch"] = 12
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            tf_keras_one_var_model.OneVarTrial,
+            hparams,
+            make_workloads(),
+            exp_config=exp_config,
         )
         controller.run()
 

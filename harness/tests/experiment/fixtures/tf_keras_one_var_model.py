@@ -8,6 +8,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD
 
 from determined import keras
+from tests.experiment.fixtures import keras_cb_checker
 
 
 def make_one_var_tf_dataset_loader(hparams: Dict[str, Any], batch_size: int):
@@ -66,3 +67,15 @@ class OneVarTrial(keras.TFKerasTrial):
     @staticmethod
     def calc_loss(w, values):
         return np.mean([(v - w * v) ** 2 for v in values])
+
+    def keras_callbacks(self):
+        epochs = self.context.get_hparams().get("epochs")
+        validations = self.context.get_hparams().get("validations")
+        # Include a bunch of callbacks just to make sure they work.
+        return [
+            keras_cb_checker.CBChecker(epochs=epochs, validations=validations),
+            keras.TFKerasTensorBoard(),
+            keras.callbacks.ReduceLROnPlateau(monitor="val_loss"),
+            keras.callbacks.EarlyStopping(restore_best_weights=True),
+        ]
+        return
