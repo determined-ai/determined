@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -26,6 +27,7 @@ import (
 	proto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -42,6 +44,9 @@ type agent struct {
 	socket *actor.Ref
 	cm     *actor.Ref
 	fluent *actor.Ref
+
+	masterProto  string
+	masterClient *http.Client
 }
 
 func (a *agent) addProxy(config *container.Config) {
@@ -98,8 +103,8 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Ask(a.socket, api.WriteMessage{Message: proto.MasterMessage{ContainerLog: &msg}})
 		}
 
-	case fluentLog:
-		ctx.Tell(a.fluent, msg)
+	case model.TrialLog:
+		return a.postTrialLog(msg)
 
 	case actor.ChildFailed:
 		switch msg.Child {
@@ -220,24 +225,29 @@ func (a *agent) tlsConfig() (*tls.Config, error) {
 	}, nil
 }
 
-func (a *agent) getMasterInfo() error {
+func (a *agent) makeMasterClient() error {
 	tlsConfig, err := a.tlsConfig()
 	if err != nil {
 		return errors.Wrap(err, "failed to construct TLS config")
 	}
 
-	masterProto := insecureScheme
+	a.masterProto = insecureScheme
 	if tlsConfig != nil {
-		masterProto = secureScheme
+		a.masterProto = secureScheme
 	}
-	client := &http.Client{
+	a.masterClient = &http.Client{
 		Transport: &http.Transport{
 			Proxy:           http.DefaultTransport.(*http.Transport).Proxy,
 			TLSClientConfig: tlsConfig,
 		},
 	}
+	return nil
+}
 
-	resp, err := client.Get(fmt.Sprintf("%s://%s:%d/info", masterProto, a.MasterHost, a.MasterPort))
+func (a *agent) getMasterInfo() error {
+	resp, err := a.masterClient.Get(
+		fmt.Sprintf("%s://%s:%d/info", a.masterProto, a.MasterHost, a.MasterPort),
+	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get master info")
 	}
@@ -281,6 +291,10 @@ func (a *agent) setup(ctx *actor.Context) error {
 		} else {
 			a.MasterPort = 80
 		}
+	}
+
+	if err = a.makeMasterClient(); err != nil {
+		return errors.Wrap(err, "error connecting to master")
 	}
 
 	if err = a.getMasterInfo(); err != nil {
@@ -336,6 +350,26 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
 		Version: a.Version, Devices: a.Devices, ResourcePool: a.ResourcePool, Label: a.Label}}
 	ctx.Ask(a.socket, api.WriteMessage{Message: started})
+	return nil
+}
+
+func (a *agent) postTrialLog(log model.TrialLog) error {
+	j, err := json.Marshal([]model.TrialLog{log})
+	if err != nil {
+		return err
+	}
+
+	resp, err := a.masterClient.Post(
+		fmt.Sprintf("%s://%s:%d/trial_logs", a.masterProto, a.MasterHost, a.MasterPort),
+		"application/json",
+		bytes.NewReader(j),
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed to post trial log")
+	}
+	if err := resp.Body.Close(); err != nil {
+		return errors.Wrap(err, "failed to read master response for trial log")
+	}
 	return nil
 }
 

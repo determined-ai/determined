@@ -139,8 +139,10 @@ func newRunCmd() *cobra.Command {
 		"Addresses that the agent's containers should not proxy")
 
 	// Logging flags.
-	cmd.Flags().StringVar(&opts.FluentLoggingImage, "fluent-logging-image", "fluent/fluent-bit:1.5",
+	cmd.Flags().StringVar(&opts.Fluent.Image, "fluent-image", "fluent/fluent-bit:1.5",
 		"Docker image to use for the managed Fluent Bit daemon")
+	cmd.Flags().IntVar(&opts.Fluent.Port, "fluent-port", 24224,
+		"TCP port for the Fluent Bit daemon to listen on")
 
 	return cmd
 }

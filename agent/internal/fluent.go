@@ -2,21 +2,15 @@ package internal
 
 import (
 	"archive/tar"
-	"bufio"
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
-	"github.com/fluent/fluent-logger-golang/fluent"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -27,11 +21,6 @@ import (
 // The names of environment variables whose values should be included in log entries that Docker or
 // the agent sends to the Fluent Bit logger.
 var fluentEnvVarNames = []string{"DET_TRIAL_ID", "DET_CONTAINER_ID"}
-
-const fluentListenPort = 24224
-const localhost = "localhost"
-const localhostIP = "127.0.0.1"
-const hostMode = "host"
 
 // fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
 // an appropriate configuration.
@@ -142,16 +131,11 @@ end
 	// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
 	// diretcly into an IP address before passing it to Fluent Bit.
 	fluentMasterHost := opts.MasterHost
-	if fluentMasterHost == localhost {
-		fluentMasterHost = localhostIP
+	if fluentMasterHost == "localhost" {
+		fluentMasterHost = "127.0.0.1"
 	}
 
 	outputConfig := fmt.Sprintf(`
-# TMP: Output to stdout as well.
-[OUTPUT]
-  Name stdout
-  Match *
-
 [OUTPUT]
   Name http
   Match *
@@ -202,7 +186,7 @@ end
 	return args, files, nil
 }
 
-func killContainerByName(ctx *actor.Context, docker *client.Client, name string) error {
+func removeContainerByName(ctx *actor.Context, docker *client.Client, name string) error {
 	containers, err := docker.ContainerList(context.Background(), types.ContainerListOptions{
 		All: true,
 		Filters: filters.NewArgs(
@@ -251,65 +235,38 @@ func pullImageByName(ctx *actor.Context, docker *client.Client, imageName string
 	return nil
 }
 
-// startLoggingContainer starts a Fluent Bit container. It returns the host and port that the agent
-// should use to connect to the daemon, the exposed host port of the container, and the ID of the
-// container.
+// startLoggingContainer starts a Fluent Bit container running in host mode. It returns the port
+// that Fluent Bit is listening on and the ID of the container.
 func startLoggingContainer(
 	ctx *actor.Context,
 	docker *client.Client,
 	opts Options,
-) (string, int, int, string, error) {
+) (int, string, error) {
 	const containerName = "determined-fluent"
-	imageName := opts.FluentLoggingImage
-	exposedPort := nat.Port(fmt.Sprintf("%d/tcp", fluentListenPort))
+	imageName := opts.Fluent.Image
 
-	if err := killContainerByName(ctx, docker, containerName); err != nil {
-		return "", 0, 0, "", errors.Wrap(err, "failed to kill old logging container")
+	if err := removeContainerByName(ctx, docker, containerName); err != nil {
+		return 0, "", errors.Wrap(err, "failed to kill old logging container")
 	}
 
 	if err := pullImageByName(ctx, docker, imageName); err != nil {
-		return "", 0, 0, "", errors.Wrap(err, "failed to pull logging image")
+		return 0, "", errors.Wrap(err, "failed to pull logging image")
 	}
 
 	fluentArgs, fluentFiles, err := fluentConfig(opts)
 	if err != nil {
-		return "", 0, 0, "", errors.Wrap(err, "failed to configure Fluent Bit")
+		return 0, "", errors.Wrap(err, "failed to configure Fluent Bit")
 	}
-
-	// Decide what Docker network to use for Fluent Bit. If this agent is itself running inside Docker,
-	// use one of the networks that this container is using. If not, use the default network
-	// ("bridge").
-	dockerNet, err := getDockerNetwork(docker)
-	if err != nil {
-		return "", 0, 0, "", errors.Wrap(err, "failed to get Docker network")
-	}
-	fluentDockerNet := dockerNet
-	if fluentDockerNet == "" {
-		fluentDockerNet = "bridge"
-	}
-
-	// If we're connecting to a master on this host, Fluent Bit inside the Docker container won't be
-	// able to reach the master to post its logs unless running in host mode.
-	if opts.MasterHost == localhost || opts.MasterHost == localhostIP {
-		fluentDockerNet = hostMode
-	}
-
-	ctx.Log().Infof("running Fluent Bit on Docker network %q", fluentDockerNet)
 
 	createResponse, err := docker.ContainerCreate(
 		context.Background(),
 		&container.Config{
-			Image:        imageName,
-			Cmd:          fluentArgs,
-			ExposedPorts: nat.PortSet{exposedPort: struct{}{}},
+			Image: imageName,
+			Cmd:   fluentArgs,
 		},
 		&container.HostConfig{
 			AutoRemove:  true,
-			NetworkMode: container.NetworkMode(fluentDockerNet),
-			PortBindings: nat.PortMap{
-				// A port of 0 makes Docker automatically assign a free port, which we read back below.
-				exposedPort: []nat.PortBinding{{HostIP: localhostIP, HostPort: "0"}},
-			},
+			NetworkMode: "host",
 			Resources: container.Resources{
 				Memory:   1 << 30,
 				NanoCPUs: 1000000000,
@@ -319,7 +276,7 @@ func startLoggingContainer(
 		containerName,
 	)
 	if err != nil {
-		return "", 0, 0, "", err
+		return 0, "", err
 	}
 
 	filesReader, _ := archive.ToIOReader(fluentFiles)
@@ -331,88 +288,23 @@ func startLoggingContainer(
 		types.CopyToContainerOptions{},
 	)
 	if err != nil {
-		return "", 0, 0, "", err
+		return 0, "", err
 	}
 
 	err = docker.ContainerStart(context.Background(), createResponse.ID, types.ContainerStartOptions{})
 	if err != nil {
-		return "", 0, 0, "", err
+		return 0, "", err
 	}
 
-	hostPort := fluentListenPort
-	container, _ := docker.ContainerInspect(context.Background(), createResponse.ID)
-	if fluentDockerNet != hostMode {
-		portStr := container.NetworkSettings.Ports[exposedPort][0].HostPort
-		hostPort, _ = strconv.Atoi(portStr)
-	}
+	ctx.Log().Infof("Fluent Bit listening on host port %d", opts.Fluent.Port)
 
-	// We'll need to use either the container-internal or the host-visible address and port to connect
-	// to Fluent Bit, depending on whether this agent is running inside Docker or not.
-	addr := container.NetworkSettings.Networks[fluentDockerNet].IPAddress
-	port := fluentListenPort
-	if dockerNet == "" || dockerNet == hostMode {
-		addr = "localhost"
-		port = hostPort
-	}
-
-	ctx.Log().Infof("Fluent Bit listening on host port %d", hostPort)
-
-	return addr, port, hostPort, createResponse.ID, nil
-}
-
-// getDockerNetwork returns the name of one of the Docker networks attached to the container that
-// this process is in. It returns an empty string if it does not seem to be running inside Docker or
-// is in Docker but on the host network, which should be treated equivalently.
-func getDockerNetwork(docker *client.Client) (string, error) {
-	f, err := os.Open("/proc/self/cgroup")
-
-	switch {
-	// If the file is not found, we're probably running natively on non-Linux, which is fine.
-	case errors.Is(err, os.ErrNotExist):
-		return "", nil
-	case err != nil:
-		return "", errors.Wrap(err, "error opening cgroup file")
-	}
-
-	// This regex matches lines like "12:pids:/docker/<container ID>".
-	re := regexp.MustCompile(`^[0-9]+:[a-z_=]+:/docker/([0-9a-f]+)$`)
-
-	var cid string
-	lines := bufio.NewScanner(f)
-	for lines.Scan() {
-		if err = lines.Err(); err != nil {
-			return "", errors.Wrap(err, "error reading cgroup file")
-		}
-		line := lines.Text()
-
-		match := re.FindStringSubmatch(line)
-		if match != nil {
-			cid = match[1]
-			break
-		}
-	}
-
-	if cid == "" {
-		return "", nil
-	}
-
-	info, err := docker.ContainerInspect(context.Background(), cid)
-	if err != nil {
-		return "", errors.Wrap(err, "error inspecting this container")
-	}
-
-	for name := range info.NetworkSettings.Networks {
-		return name, nil
-	}
-
-	return "", errors.New("running in a container but no networks found")
+	return opts.Fluent.Port, createResponse.ID, nil
 }
 
 // fluentActor manages the lifecycle of the Fluent Bit container that is run by the agent for the
 // purpose of forwarding container logs.
 type fluentActor struct {
 	opts        Options
-	client      *fluent.Fluent
 	port        int
 	containerID string
 	docker      *client.Client
@@ -425,34 +317,14 @@ func newFluentActor(ctx *actor.Context, opts Options) (*fluentActor, error) {
 	}
 
 	t0 := time.Now()
-	addr, port, hostPort, cid, err := startLoggingContainer(ctx, docker, opts)
+	hostPort, cid, err := startLoggingContainer(ctx, docker, opts)
 	if err != nil {
 		return nil, err
 	}
 	ctx.Log().Infof("Fluent Bit started in %s", time.Since(t0))
 
-	config := fluent.Config{
-		FluentHost:         addr,
-		FluentPort:         port,
-		SubSecondPrecision: true,
-		RequestAck:         true,
-	}
-
-	var client *fluent.Fluent
-	const retries = 5
-	for i := 0; i < retries; i++ {
-		client, err = fluent.New(config)
-		if err != nil {
-			if i == retries-1 {
-				return nil, errors.Wrap(err, "failed to connect to Fluent Bit")
-			}
-			time.Sleep(time.Second)
-		}
-	}
-
 	return &fluentActor{
 		opts:        opts,
-		client:      client,
 		port:        hostPort,
 		containerID: cid,
 		docker:      docker,
@@ -460,9 +332,7 @@ func newFluentActor(ctx *actor.Context, opts Options) (*fluentActor, error) {
 }
 
 func (f *fluentActor) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case fluentLog:
-		return f.client.Post("determined.agent", msg)
+	switch ctx.Message().(type) {
 	case actor.PostStop:
 		t0 := time.Now()
 		err := f.docker.ContainerRemove(

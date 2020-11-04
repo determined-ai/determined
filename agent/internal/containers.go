@@ -15,6 +15,7 @@ import (
 	proto "github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -89,7 +90,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			dockerMasterLabel:        c.MasterInfo.MasterID,
 		}
 
-	case proto.ContainerLog, proto.ContainerStateChanged, fluentLog:
+	case proto.ContainerLog, proto.ContainerStateChanged, model.TrialLog:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case proto.StartContainer:

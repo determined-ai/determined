@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -15,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type containerActor struct {
@@ -23,16 +26,14 @@ type containerActor struct {
 	client        *client.Client
 	docker        *actor.Ref
 	containerInfo *types.ContainerJSON
-	// Extra values to inject into each Fluent log entry.
-	extraFluentValues map[string]string
+
+	baseTrialLog model.TrialLog
 }
 
 type (
 	getContainerSummary struct{}
 	containerReady      struct{}
 )
-
-type fluentLog map[string]interface{}
 
 func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.Actor {
 	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client}
@@ -41,18 +42,26 @@ func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.A
 // getExtraFluentValues computes the container-specific extra fields to be injected into each Fluent
 // log entry. We configure Docker to send these fields itself, but we need to compute and add them
 // ourselves for agent-inserted logs.
-func getExtraFluentValues(spec *cproto.Spec) map[string]string {
-	ret := make(map[string]string)
-	for _, n := range fluentEnvVarNames {
-		ret[n] = ""
+func getBaseTrialLog(spec *cproto.Spec) model.TrialLog {
+	level := "INFO"
+	stdtype := "stdout"
+	log := model.TrialLog{
+		Level:   &level,
+		StdType: &stdtype,
 	}
 	for _, env := range spec.RunSpec.ContainerConfig.Env {
 		split := strings.SplitN(env, "=", 2)
-		if _, ok := ret[split[0]]; ok {
-			ret[split[0]] = split[1]
+		value := split[1]
+		switch split[0] {
+		case "DET_TRIAL_ID":
+			log.TrialID, _ = strconv.Atoi(value)
+		case "DET_CONTAINER_ID":
+			log.ContainerID = &value
+		case "DET_AGENT_ID":
+			log.AgentID = &value
 		}
 	}
-	return ret
+	return log
 }
 
 func (c *containerActor) Receive(ctx *actor.Context) error {
@@ -62,7 +71,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		c.transition(ctx, cproto.Pulling)
 		pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
 		ctx.Tell(c.docker, pull)
-		c.extraFluentValues = getExtraFluentValues(c.spec)
+		c.baseTrialLog = getBaseTrialLog(c.spec)
 
 	case getContainerSummary:
 		ctx.Respond(c.Container)
@@ -121,7 +130,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		msg.Container = c.Container
 		ctx.Log().Debug(msg)
 		if c.spec.RunSpec.UseFluentLogging {
-			ctx.Tell(ctx.Self().Parent(), c.makeFluentLog(msg))
+			ctx.Tell(ctx.Self().Parent(), c.makeTrialLog(msg))
 		} else {
 			ctx.Tell(ctx.Self().Parent(), msg)
 		}
@@ -151,7 +160,11 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (c *containerActor) makeFluentLog(log aproto.ContainerLog) fluentLog {
+func (c *containerActor) makeTrialLog(log aproto.ContainerLog) model.TrialLog {
+	l := c.baseTrialLog
+	timestamp := time.Now()
+	l.Timestamp = &timestamp
+
 	var source string
 	var msg string
 	switch {
@@ -176,16 +189,12 @@ func (c *containerActor) makeFluentLog(log aproto.ContainerLog) fluentLog {
 	default:
 		panic("unknown log message received")
 	}
+	msg += "\n"
 
-	f := fluentLog{
-		"log":     msg,
-		"source":  source,
-		"stdtype": "stdout",
-	}
-	for key, val := range c.extraFluentValues {
-		f[key] = val
-	}
-	return f
+	l.Log = &msg
+	l.Source = &source
+
+	return l
 }
 
 func (c *containerActor) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
