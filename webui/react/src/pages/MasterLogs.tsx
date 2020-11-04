@@ -70,8 +70,8 @@ const MasterLogs: React.FC = () => {
   return (
     <LogViewer
       noWrap
+      pageProps={{ title: 'Master Logs' }}
       ref={logsRef}
-      title="Master Logs"
       onScrollToTop={handleScrollToTop} />
   );
 };

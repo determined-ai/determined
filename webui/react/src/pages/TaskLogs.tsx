@@ -91,8 +91,8 @@ const TaskLogs: React.FC = () => {
     <LogViewer
       disableLevel
       noWrap
+      pageProps={{ title }}
       ref={logsRef}
-      title={title}
       onScrollToTop={handleScrollToTop} />
   );
 };

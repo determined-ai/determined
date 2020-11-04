@@ -143,8 +143,8 @@ const TrialLogs: React.FC = () => {
       isDownloading={isDownloading}
       isLoading={isLoading}
       noWrap
+      pageProps={{ title }}
       ref={logsRef}
-      title={title}
       onDownload={handleDownloadLogs}
       onScrollToTop={handleScrollToTop} />
   );

@@ -28,7 +28,7 @@ export const Default = (): React.ReactNode => {
     ]);
   });
 
-  return <LogViewer ref={logsRef} title="Default" />;
+  return <LogViewer pageProps={{ title: 'Default' }} ref={logsRef} />;
 };
 
 const ansiText = `Standard colors:
@@ -91,7 +91,7 @@ export const Ansi = (): React.ReactNode => {
     ]);
   });
 
-  return <LogViewer ref={logsRef} title="ANSI Characters" />;
+  return <LogViewer pageProps={{ title: 'ANSI Characters' }} ref={logsRef} />;
 };
 
 export const DefaultDownload = (): React.ReactNode => {
