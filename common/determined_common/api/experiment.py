@@ -5,6 +5,7 @@ import time
 import uuid
 from argparse import Namespace
 from typing import Any, Dict, Optional
+from urllib.parse import urlencode
 
 import simplejson
 from termcolor import colored
@@ -30,12 +31,13 @@ def logs(args: Namespace) -> None:
         offset: Optional[int], limit: Optional[int] = 5000, follow: bool = False
     ) -> None:
         path = "/api/v1/trials/{}/logs?".format(args.trial_id)
+        query = {}  # type: Dict[str, Any]
         if offset is not None:
-            path += "&offset={}".format(offset)
+            query["offset"] = offset
         if limit is not None:
-            path += "&limit={}".format(limit)
+            query["limit"] = limit
         if follow:
-            path += "&follow=true"
+            query["follow"] = "true"
         for f in [
             "agent_id",
             "container_id",
@@ -45,13 +47,12 @@ def logs(args: Namespace) -> None:
             "timestamp_before",
             "timestamp_after",
         ]:
-            if getattr(args, f) is not None:
-                for v in getattr(args, f):
-                    path += "&{}={}".format(f, v)
-        decoder = simplejson.JSONDecoder()  # type: ignore
-        with api.stream(args.master, path) as r:
+            if getattr(args, f, None) is not None:
+                query[f] = getattr(args, f)
+        path += urlencode(query, doseq=True)
+        with api.get(args.master, path, stream=True) as r:
             for line in r.iter_lines():
-                log = decoder.decode(line)["result"]
+                log = simplejson.loads(line)["result"]
                 print(log["message"], end="")
 
     try:

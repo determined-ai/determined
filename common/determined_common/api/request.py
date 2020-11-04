@@ -121,27 +121,19 @@ def get(
     params: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    stream: bool = False,
 ) -> requests.Response:
     """
     Send a GET request to the remote API.
     """
     return do_request(
-        "GET", host, path, params=params, headers=headers, authenticated=authenticated
-    )
-
-
-def stream(
-    host: str,
-    path: str,
-    params: Optional[Dict[str, Any]] = None,
-    headers: Optional[Dict[str, str]] = None,
-    authenticated: bool = True,
-) -> requests.Response:
-    """
-    Send a GET request to the remote API and streams the response body.
-    """
-    return do_request(
-        "GET", host, path, params=params, headers=headers, authenticated=authenticated, stream=True
+        "GET",
+        host,
+        path,
+        params=params,
+        headers=headers,
+        authenticated=authenticated,
+        stream=stream,
     )
 
 
