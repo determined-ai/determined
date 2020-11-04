@@ -12,6 +12,7 @@ import numpy as np
 import tensorflow as tf
 from packaging import version
 from tensorflow.keras.models import Model
+from tensorflow.python.framework.ops import EagerTensor
 from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
 from tensorflow.python.keras.saving.hdf5_format import load_optimizer_weights_from_hdf5_group
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
@@ -627,8 +628,9 @@ class TFKerasTrialController(det.LoopTrialController):
 
         if self.hvd_config.use:
             num_inputs = hvd.allreduce(num_inputs, average=False)
-            if tf.executing_eagerly():
-                num_inputs = num_inputs.numpy()  # type: ignore
+            if isinstance(num_inputs, EagerTensor):
+                # Horovod will promote an int to a tensor in eager mode.
+                num_inputs = num_inputs.numpy()
 
         # Return only the latest metrics, which is the running average for all trained batches in
         # the step (Keras does not report individual logs, only running averages at any point).
@@ -667,8 +669,9 @@ class TFKerasTrialController(det.LoopTrialController):
 
         if self.hvd_config.use:
             num_inputs = hvd.allreduce(num_inputs, average=False)
-            if tf.executing_eagerly():
-                num_inputs = num_inputs.numpy()  # type: ignore
+            if isinstance(num_inputs, EagerTensor):
+                # Horovod will promote an int to a tensor in eager mode.
+                num_inputs = num_inputs.numpy()
 
         # If the model was compiled with metrics=None, metrics_value will be a single value.
         if not isinstance(metrics_values, (tuple, list)):
