@@ -1,3 +1,4 @@
+import pathlib
 from typing import Any, Dict, List, Optional
 
 import tensorflow as tf
@@ -349,10 +350,10 @@ class _MultiplexerBase(tf.keras.callbacks.Callback):  # type: ignore
         return {"self": vars(self.state), "callbacks": cb_state}
 
     # Must be triggered externally.
-    def _checkpoint_end(self, checkpoint_dir: str) -> None:
+    def _checkpoint_end(self, checkpoint_dir: pathlib.Path) -> None:
         for cb in self.callbacks:
             if isinstance(cb, Callback):
-                cb.on_checkpoint_end(checkpoint_dir)
+                cb.on_checkpoint_end(str(checkpoint_dir))
 
     # Must be triggered externally.
     def set_batches_requested(self, batches_requested: int) -> None:

@@ -484,15 +484,13 @@ class TFKerasTrialController(det.LoopTrialController):
         with open(path.joinpath("rng_state.pkl"), "wb") as f:
             pickle.dump(rng_state, f)
 
-        det.util.write_user_code(path)
-
         callbacks_state = self.multiplexer._get_state()
         with path.joinpath("determined-callbacks.v1.pkl").open("wb") as f:
             pickle.dump(callbacks_state, f)
 
         det.util.write_user_code(path)
 
-        self.multiplexer._checkpoint_end(str(path))
+        self.multiplexer._checkpoint_end(path)
 
         return {"framework": f"tensorflow-{tf.__version__}", "format": "h5"}
 
