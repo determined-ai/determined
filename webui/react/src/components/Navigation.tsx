@@ -163,7 +163,7 @@ const Navigation: React.FC = () => {
             <NavigationItem icon="experiment" label="Experiments" path="/experiments" />
             <NavigationItem icon="tasks" label="Tasks" path="/tasks" />
             <NavigationItem icon="cluster" label="Cluster" path="/cluster" status={cluster} />
-            <NavigationItem icon="logs" label="Master Logs" path="/logs" popout />
+            <NavigationItem icon="logs" label="Master Logs" path="/logs" />
           </section>
           <section className={css.bottom}>
             <NavigationItem external icon="docs" label="Docs" path="/docs" popout />
