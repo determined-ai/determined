@@ -94,7 +94,7 @@ func (a *agentResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
 	if a.pools[resourcePool] == nil {
-		err := errors.Errorf("cannot find resource pool %s for message %s from actor %s",
+		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
 			resourcePool, ctx.Message(), ctx.Sender().Address().String())
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
