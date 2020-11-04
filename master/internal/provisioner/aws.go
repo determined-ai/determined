@@ -125,6 +125,7 @@ func newAWSCluster(
 			AgentDockerRuntime:           config.AgentDockerRuntime,
 			AgentNetwork:                 config.AgentDockerNetwork,
 			AgentDockerImage:             config.AgentDockerImage,
+			AgentFluentImage:             config.AgentFluentImage,
 			AgentID:                      `$(ec2metadata --instance-id)`,
 			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.buildDockerLogString(),

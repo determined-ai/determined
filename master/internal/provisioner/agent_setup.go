@@ -17,6 +17,7 @@ type agentSetupScriptConfig struct {
 	AgentDockerRuntime           string
 	AgentNetwork                 string
 	AgentDockerImage             string
+	AgentFluentImage             string
 	AgentID                      string
 	ResourcePool                 string
 	LogOptions                   string
