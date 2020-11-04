@@ -143,7 +143,18 @@ const TrialLogs: React.FC = () => {
       isDownloading={isDownloading}
       isLoading={isLoading}
       noWrap
-      pageProps={{ title }}
+      pageProps={{
+        backPath: `/trials/${trialId}`,
+        breadcrumb: [
+          { breadcrumbName: 'Experiments', path: '/experiments' },
+          {
+            breadcrumbName: `Experiment ${trial.data?.experimentId}`,
+            path: `/experiments/${trial.data?.experimentId}`,
+          },
+          { breadcrumbName: `Trial ${trialId}`, path: `/trials/${trialId}` },
+        ],
+        title,
+      }}
       ref={logsRef}
       onDownload={handleDownloadLogs}
       onScrollToTop={handleScrollToTop} />
