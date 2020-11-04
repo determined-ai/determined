@@ -503,7 +503,7 @@ class TFKerasTrialController(det.LoopTrialController):
         # Save RNG state.
         rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
         if version.parse(tf.__version__) < version.parse("2.0.0"):
-            rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
+            rng_state["tf_rng_global_seed"] = tf.compat.v1.random.get_seed(0)[0]
         else:
             generator = tf.random.get_global_generator()
             rng_state["tf2_rng_global_algorithm"] = generator.algorithm
@@ -566,7 +566,7 @@ class TFKerasTrialController(det.LoopTrialController):
             random.setstate(rng_state["random_rng_state"])
 
             if version.parse(tf.__version__) < version.parse("2.0.0"):
-                tf.random.set_random_seed(rng_state["tf_rng_global_seed"])
+                tf.compat.v1.random.set_random_seed(rng_state["tf_rng_global_seed"])
             else:
                 algorithm = rng_state["tf2_rng_global_algorithm"]
                 state = rng_state["tf2_rng_global_state"]
