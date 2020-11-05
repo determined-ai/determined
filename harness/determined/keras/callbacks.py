@@ -413,11 +413,11 @@ class DeterminedProgress(Callback):
         # Don't report more often than 10% increments.
         percent_10 = int((batches / total) * 10) * 10
         if percent_10 <= self.percent_reported:
-            print(f"{percent_10} <= {self.percent_reported}")
             return
 
         # When you do report, report to 1% accuracy.
         percent = int((batches / total) * 100)
+        self.percent_reported = percent
 
         if training:
             report = (
