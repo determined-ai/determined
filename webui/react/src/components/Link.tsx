@@ -9,6 +9,7 @@ export interface Props {
   disabled?: boolean;
   inherit?: boolean;
   isButton?: boolean;
+  // is this external to the assets hosted by React?
   external?: boolean;
   path?: string;
   popout?: boolean;
