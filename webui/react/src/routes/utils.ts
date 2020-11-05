@@ -3,21 +3,20 @@ import { MouseEvent, MouseEventHandler } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
-import { Command, CommandType } from 'types';
+import { Command, CommandTask, CommandType } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
 import { RouteConfig } from './types';
 
 // serverAddress returns determined cluster (master) address.
-export const serverAddress = (aPath = ''): string => {
-  if (!!aPath && isFullPath(aPath)) return aPath;
+export const serverAddress = (path = ''): string => {
+  if (!!path && isFullPath(path)) return path;
 
   // Prioritize dynamically set address.
   const customServer = globalStorage.getServerAddress
     || process.env.SERVER_ADDRESS as string;
 
-  const path = aPath ? process.env.PUBLIC_URL + aPath : '';
   return (customServer || reactHostAddress()) + path;
 };
 
@@ -58,7 +57,7 @@ export const waitPageUrl = (command: Partial<Command>): string | undefined => {
   if (!eventUrl || !proxyUrl) return;
   const event = encodeURIComponent(eventUrl);
   const jump = encodeURIComponent(proxyUrl);
-  return serverAddress(`/wait/index.html?event=${event}&jump=${jump}`);
+  return `/wait/index.html?event=${event}&jump=${jump}`;
 };
 
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
@@ -67,10 +66,10 @@ export const openBlank = (url: string): void => {
   window.open(url, '_blank', windowOpenFeatures.join(','));
 };
 
-export const openCommand = (command: Command): void => {
+export const openCommand = (command: Command | CommandTask): void => {
   const url = waitPageUrl(command);
   if (!url) throw new Error('command cannot be opened');
-  openBlank(url);
+  openBlank(process.env.PUBLIC_URL + url);
 };
 
 export const handlePath = (
@@ -132,6 +131,17 @@ export const routeAll = (path: string): void => {
   }
 };
 
-export const linkPath = (path: string, external = false): string => {
-  return (external || isFullPath(path) ? '' : process.env.PUBLIC_URL) + path;
+export const linkPath = (aPath: string, external = false): string => {
+  if (isFullPath(aPath)) return aPath;
+  let path;
+  if (external) {
+    if (isAbsolutePath(aPath)) {
+      path = serverAddress() + aPath;
+    } else {
+      path = aPath;
+    }
+  } else {
+    path = process.env.PUBLIC_URL + aPath;
+  }
+  return path;
 };

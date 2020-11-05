@@ -101,7 +101,7 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment, onChange }: Props) => 
       label: 'Duration',
     },
     {
-      content: <Link isButton path={`/experiments/${experiment.id}/model_def`}>
+      content: <Link external isButton path={`/experiments/${experiment.id}/model_def`}>
         Download Model
       </Link>,
       label: 'Model Definition',
