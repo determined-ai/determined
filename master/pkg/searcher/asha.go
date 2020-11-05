@@ -243,7 +243,7 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 }
 
 func (s *asyncHalvingSearch) trialExitedEarly(
-	ctx context, requestID RequestID, exitedReason *workload.ExitedReason,
+	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
 	s.closedTrials[requestID] = true

@@ -72,7 +72,9 @@ func (s *tournamentSearch) trialClosed(ctx context, requestID RequestID) ([]Oper
 	return s.markCreates(subSearch, ops), err
 }
 
-func (s *tournamentSearch) trialExitedEarly(ctx context, requestID RequestID, exitedReason *workload.ExitedReason) ([]Operation, error) {
+func (s *tournamentSearch) trialExitedEarly(
+	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
+) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
 	ops, err := subSearch.trialExitedEarly(ctx, requestID, exitedReason)
 	return s.markCreates(subSearch, ops), err
