@@ -6,12 +6,10 @@ import (
 	"github.com/labstack/echo"
 	"github.com/sirupsen/logrus"
 
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
-
 	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/kubernetes"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
 )
 
 // Setup setups the actor and endpoints for resource managers.
@@ -55,7 +53,7 @@ func setupAgentResourceManager(
 	system.Ask(ref, actor.Ping{}).Get()
 
 	logrus.Infof("initializing endpoints for agents")
-	agent.Initialize(system, echo, ref, opts)
+	agent.Initialize(system, echo, opts)
 	return ref
 }
 

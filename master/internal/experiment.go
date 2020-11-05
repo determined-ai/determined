@@ -100,6 +100,11 @@ type experiment struct {
 // the returned object's ID appropriately.
 func newExperiment(master *Master, expModel *model.Experiment) (*experiment, error) {
 	conf := expModel.Config
+
+	if err := sproto.ValidateRP(master.system, conf.Resources.ResourcePool); err != nil {
+		return nil, err
+	}
+
 	method := searcher.NewSearchMethod(conf.Searcher)
 	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
 

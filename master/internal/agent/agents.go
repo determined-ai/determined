@@ -3,34 +3,29 @@ package agent
 import (
 	"net/http"
 
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
-
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // Initialize creates a new global agent actor.
 func Initialize(
-	system *actor.System, e *echo.Echo, c *actor.Ref,
-	opts *aproto.MasterSetAgentOptions,
+	system *actor.System, e *echo.Echo, opts *aproto.MasterSetAgentOptions,
 ) {
-	_, ok := system.ActorOf(actor.Addr("agents"), &agents{
-		cluster: c,
-		opts:    opts,
-	})
+	_, ok := system.ActorOf(sproto.AgentsAddr, &agents{opts: opts})
 	check.Panic(check.True(ok, "agents address already taken"))
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
 	e.Any("/agents*", api.Route(system, nil))
 }
 
 type agents struct {
-	cluster *actor.Ref
-	opts    *aproto.MasterSetAgentOptions
+	opts *aproto.MasterSetAgentOptions
 }
 
 type agentsSummary map[string]AgentSummary
@@ -66,13 +61,14 @@ func (a *agents) createAgentActor(
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
 	}
 	if resourcePool == "" {
+		ctx.Log().Info("resource pool is empty; using default resource pool: default")
 		resourcePool = "default"
 	}
-	if a.cluster.Child(resourcePool) == nil {
-		return nil, errors.Errorf("cannot find specified resource pool %s for agent %s", resourcePool, id)
+	if err := sproto.ValidateRP(ctx.Self().System(), resourcePool); err != nil {
+		return nil, errors.Wrapf(err, "cannot find specified resource pool for agent %s", id)
 	}
 	ref, ok := ctx.ActorOf(id, &agent{
-		resourcePool:     a.cluster.Child(resourcePool),
+		resourcePool:     sproto.GetRP(ctx.Self().System(), resourcePool),
 		resourcePoolName: resourcePool,
 		opts:             opts,
 	})

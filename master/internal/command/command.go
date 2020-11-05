@@ -88,7 +88,6 @@ type command struct {
 	addresses      []container.Address
 
 	proxy       *actor.Ref
-	rps         *actor.Ref
 	eventStream *actor.Ref
 }
 
@@ -100,7 +99,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Initialize an event stream manager.
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager())
 		// Schedule the command with the cluster.
-		c.rps = ctx.Self().System().Get(actor.Addr("resourceManagers"))
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
 
 		c.task = &resourcemanagers.AllocateRequest{
@@ -108,13 +106,16 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Name:           c.config.Description,
 			SlotsNeeded:    c.config.Resources.Slots,
 			Label:          c.config.Resources.AgentLabel,
+			ResourcePool:   c.config.Resources.ResourcePool,
 			NonPreemptible: true,
 			FittingRequirements: resourcemanagers.FittingRequirements{
 				SingleAgent: true,
 			},
 			TaskActor: ctx.Self(),
 		}
-		ctx.Tell(c.rps, *c.task)
+		if err := ctx.Ask(sproto.GetRM(ctx.Self().System()), *c.task).Error(); err != nil {
+			return err
+		}
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
 
 	case actor.PostStop:
@@ -328,7 +329,10 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	c.exitStatus = &exitStatus
 	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
 
-	ctx.Tell(c.rps, resourcemanagers.ResourcesReleased{TaskActor: ctx.Self()})
+	ctx.Tell(
+		sproto.GetRM(ctx.Self().System()),
+		resourcemanagers.ResourcesReleased{TaskActor: ctx.Self()},
+	)
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 

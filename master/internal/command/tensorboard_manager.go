@@ -124,7 +124,8 @@ func (t *tensorboardManager) processLaunchRequest(
 	req *TensorboardRequest,
 ) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(
-		*user, t.db, req.CommandParams, &t.taskSpec.TaskContainerDefaults)
+		ctx.Self().System(), t.db, *user, req.CommandParams, &t.taskSpec.TaskContainerDefaults,
+	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
