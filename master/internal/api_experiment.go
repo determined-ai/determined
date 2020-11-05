@@ -612,7 +612,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	validationMetric := req.ValidationMetric
 	if len(trainingMetric) == 0 && len(validationMetric) == 0 {
 		return errors.New(
-			"must provide a training metric, or a validation metric: neither provided")
+			"must provide a training metric or a validation metric, neither provided")
 	}
 	if len(trainingMetric) > 0 && len(validationMetric) > 0 {
 		return errors.New(
