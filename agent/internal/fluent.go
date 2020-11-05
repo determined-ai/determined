@@ -265,8 +265,13 @@ func startLoggingContainer(
 			Cmd:   fluentArgs,
 		},
 		&container.HostConfig{
-			AutoRemove:  true,
+			// Set autoremove to reduce the number of states that the container is likely to be in and what
+			// we have to do to manage it cleanly. Restart on failure could be useful, but it conflcts with
+			// autoremove; we may want to consider switching to that instead at some point.
+			AutoRemove: true,
+			// Always use host mode to simplify the space of networking scenarios we have to consider.
 			NetworkMode: "host",
+			// Provide some reasonable resource limits on the container just to be safe.
 			Resources: container.Resources{
 				Memory:   1 << 30,
 				NanoCPUs: 1000000000,
