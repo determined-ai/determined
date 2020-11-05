@@ -353,7 +353,7 @@ func simulateOperationComplete(
 		}
 
 		if trial.EarlyExit != nil && opIndex == *trial.EarlyExit {
-			ops, err = method.trialExitedEarly(ctx, operation.RequestID)
+			ops, err = method.trialExitedEarly(ctx, operation.RequestID, exitedReason *workload.ExitedReason)
 		} else {
 			ops, err = method.trainCompleted(ctx, operation.RequestID, operation)
 		}

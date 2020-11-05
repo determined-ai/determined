@@ -39,6 +39,6 @@ func (s *randomSearch) progress(unitsCompleted float64) float64 {
 
 // trialExitedEarly does nothing since random does not take actions based on
 // search status or progress.
-func (s *randomSearch) trialExitedEarly(context, RequestID) ([]Operation, error) {
+func (s *randomSearch) trialExitedEarly(context, RequestID, exitedReason *workload.ExitedReason) ([]Operation, error) {
 	return nil, nil
 }

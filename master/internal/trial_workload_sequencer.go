@@ -48,7 +48,7 @@ type trialWorkloadSequencerState struct {
 	needPostValidationCkpt bool
 
 	exitingEarly      bool
-	userRequestedStop bool
+	gracefulStop      bool
 
 	curOpIdx  int
 	curStepID int
@@ -73,7 +73,7 @@ func (s *trialWorkloadSequencerState) deepCopy() trialWorkloadSequencerState {
 		needInitialValidation:   s.needInitialValidation,
 		needPostValidationCkpt:  s.needPostValidationCkpt,
 		exitingEarly:            s.exitingEarly,
-		userRequestedStop:       s.userRequestedStop,
+		gracefulStop:            s.gracefulStop,
 		totalBatchesProcessed:   s.totalBatchesProcessed,
 		curOpIdx:                s.curOpIdx,
 		curStepID:               s.curStepID,
@@ -183,8 +183,8 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	}
 	if msg.ExitedReason != nil {
 		s.exitingEarly = true
-		if *msg.ExitedReason == workload.UserCanceled {
-			s.userRequestedStop = true
+		if (*msg.ExitedReason == workload.UserCanceled || *msg.ExitedReason == workload.InvalidHP) {
+			s.gracefulStop = true
 		} else {
 			return nil, nil, nil
 		}
@@ -432,7 +432,7 @@ func (s *trialWorkloadSequencer) minCheckpointNeeded() bool {
 }
 
 func (s *trialWorkloadSequencer) postUserCancellationCheckpointNeeded() bool {
-	return s.userRequestedStop && s.batchesSinceLastCkpt != 0
+	return s.gracefulStop && s.batchesSinceLastCkpt != 0
 }
 
 func (s *trialWorkloadSequencer) postValidationCheckpointNeeded() bool {

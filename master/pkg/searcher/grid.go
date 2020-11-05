@@ -39,7 +39,7 @@ func (s *gridSearch) progress(unitsCompleted float64) float64 {
 
 // trialExitedEarly does nothing since grid does not take actions based on
 // search status or progress.
-func (s *gridSearch) trialExitedEarly(context, RequestID) ([]Operation, error) {
+func (s *gridSearch) trialExitedEarly(context, RequestID, exitedReason *workload.ExitedReason) ([]Operation, error) {
 	return nil, nil
 }
 
