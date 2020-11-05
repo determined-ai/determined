@@ -540,23 +540,12 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	resp apiv1.Determined_MetricNamesServer) error {
 	experimentID := int(req.ExperimentId)
 
-	// Get searcher metric, include in first response
-	confBytes, err := a.m.db.ExperimentConfigRaw(experimentID)
+	config, err := a.m.db.ExperimentConfig(experimentID)
 	if err != nil {
 		return errors.Wrapf(err,
 			"error fetching experiment config from database: %d", experimentID)
 	}
-
-	var conf map[string]interface{}
-	var searcher map[string]interface{}
-	var searcherMetric string
-	err = json.Unmarshal(confBytes, &conf)
-	if err != nil {
-		return errors.Wrapf(err,
-			"error unmarshalling experiment config: %d", experimentID)
-	}
-	searcher = conf["searcher"].(map[string]interface{})
-	searcherMetric = searcher["metric"].(string)
+	searcherMetric := config.Searcher.Metric
 
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
@@ -608,24 +597,10 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	resp apiv1.Determined_MetricBatchesServer) error {
 	experimentID := int(req.ExperimentId)
-	trainingMetric := req.TrainingMetric
-	validationMetric := req.ValidationMetric
-	if len(trainingMetric) == 0 && len(validationMetric) == 0 {
-		return errors.New(
-			"must provide a training metric or a validation metric, neither provided")
-	}
-	if len(trainingMetric) > 0 && len(validationMetric) > 0 {
-		return errors.New(
-			"must provide a training metric or a validation metric, not both")
-	}
-	var metricType string
-	var metricName string
-	if len(trainingMetric) > 0 {
-		metricType = "training"
-		metricName = trainingMetric
-	} else {
-		metricType = "validation"
-		metricName = validationMetric
+	metricName := req.MetricName
+	metricType := req.MetricType
+	if metricName == "" {
+		return errors.New("Must provide metric name")
 	}
 
 	seenBatches := make(map[int32]bool)
@@ -633,12 +608,18 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	for {
 		var response apiv1.MetricBatchesResponse
 
-		newBatches, endTime, err := a.m.db.MetricBatches(experimentID, trainingMetric,
-			validationMetric, startTime)
+		var newBatches []int32
+		var endTime time.Time
+		var err error
+		if metricType == apiv1.MetricType_training {
+			newBatches, endTime, err = a.m.db.TrainingMetricBatches(experimentID, metricName,
+				startTime)
+		} else {
+			newBatches, endTime, err = a.m.db.ValidationMetricBatches(experimentID, metricName,
+				startTime)
+		}
 		if err != nil {
-			return errors.Wrapf(err,
-				"error fetching batches recorded for %s metric %s in experiment %d",
-				metricType, metricName, experimentID)
+			return errors.Wrapf(err, "error fetching batches recorded for metric")
 		}
 		startTime = endTime
 
@@ -650,7 +631,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		}
 
 		if err := resp.Send(&response); err != nil {
-			return errors.Wrapf(err, "error sending batches recorded for metrics")
+			return errors.Wrapf(err, "error sending batches recorded for metric")
 		}
 
 		experiment, _ := a.getExperiment(experimentID)

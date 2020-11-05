@@ -263,15 +263,23 @@ message MetricNamesResponse {
   repeated string validation_metrics = 3;
 }
 
+
+enum MetricType {
+  // For metrics emitted during training.
+  training = 0;
+  // For metrics emitted during validation.
+  validation = 1;
+}
+
 // Request the milestones (in batches processed) at which a metric is recorded
 // by an experiment.
 message MetricBatchesRequest {
   // The id of the experiment.
   int32 experiment_id = 1;
-  // A training metric name (this or validation_metric required, not both).
-  string training_metric = 2;
-  // A validation metric name (this or training_metric required, not both).
-  string validation_metric = 3;
+  // A metric name
+  string metric_name = 2;
+  // The type of metric
+  MetricType metric_type = 3;
 }
 
 // Response to MetricBatchesRequest.

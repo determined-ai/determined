@@ -14,7 +14,7 @@ from tests import experiment as exp
 def test_streaming_metrics_api() -> None:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
 
-    pool = mp.pool.ThreadPool(processes=2)
+    pool = mp.pool.ThreadPool(processes=3)
 
     experiment_id = exp.create_experiment(
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
@@ -25,14 +25,20 @@ def test_streaming_metrics_api() -> None:
     # of the API calls on a single experiment, we spawn them all in threads.
 
     metric_names_thread = pool.apply_async(request_metric_names, (experiment_id,))
-    metric_batches_thread = pool.apply_async(request_metric_batches, (experiment_id,))
+    train_metric_batches_thread = pool.apply_async(request_train_metric_batches,
+        (experiment_id,))
+    valid_metric_batches_thread = pool.apply_async(request_valid_metric_batches,
+        (experiment_id,))
 
     metric_names_results = metric_names_thread.get()
-    metric_batches_results = metric_batches_thread.get()
+    train_metric_batches_results = train_metric_batches_thread.get()
+    valid_metric_batches_results = valid_metric_batches_thread.get()
     if metric_names_results is not None:
         pytest.fail("metric-names: %s. Results: %s" % metric_names_results)
-    if metric_batches_results is not None:
-        pytest.fail("metric-batches: %s. Results: %s" % metric_batches_results)
+    if train_metric_batches_results is not None:
+        pytest.fail("metric-batches (training): %s. Results: %s" % train_metric_batches_results)
+    if valid_metric_batches_results is not None:
+        pytest.fail("metric-batches (training): %s. Results: %s" % valid_metric_batches_results)
 
 
 def request_metric_names(experiment_id):  # type: ignore
@@ -70,11 +76,11 @@ def request_metric_names(experiment_id):  # type: ignore
     return None
 
 
-def request_metric_batches(experiment_id):  # type: ignore
+def request_train_metric_batches(experiment_id):  # type: ignore
     response = api.get(
         conf.make_master_url(),
         "api/v1/experiments/{}/metrics-stream/batches".format(experiment_id),
-        params={"training_metric": "loss"},
+        params={"metric_name": "loss", "metric_type": "training"},
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
 
@@ -90,5 +96,29 @@ def request_metric_batches(experiment_id):  # type: ignore
                 return ("batch appears twice", results)
             accumulated.add(batch)
     if accumulated != {100, 200, 300, 400}:
+        return ("unexpected set of batches", results)
+    return None
+
+
+def request_valid_metric_batches(experiment_id):  # type: ignore
+    response = api.get(
+        conf.make_master_url(),
+        "api/v1/experiments/{}/metrics-stream/batches".format(experiment_id),
+        params={"metric_name": "accuracy", "metric_type": "validation"},
+    )
+    results = [message["result"] for message in map(json.loads, response.text.splitlines())]
+
+    # First let's verify an empty response was sent back before any real work was done
+    if results[0]["batches"] != []:
+        return ("unexpected batches in first response", results)
+
+    # Then we verify that all expected responses are eventually received exactly once
+    accumulated = set()
+    for i in range(1, len(results)):
+        for batch in results[i]["batches"]:
+            if batch in accumulated:
+                return ("batch appears twice", results)
+            accumulated.add(batch)
+    if accumulated != {200, 400}:
         return ("unexpected set of batches", results)
     return None
