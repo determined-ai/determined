@@ -676,7 +676,7 @@ class TFKerasTrialController(det.LoopTrialController):
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
         logging.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
-        return {key: np.array(hvd.allreduce(logs[key])) for key in keys}
+        return {key: np.array(hvd.allreduce(logs[key], name=key)) for key in keys}
 
     def _post_train_batch_end(self, num_inputs: int, logs: Dict) -> None:
         # Remove default keras metrics we aren't interested in like "batch" and "size".
@@ -695,7 +695,7 @@ class TFKerasTrialController(det.LoopTrialController):
             )
 
         if self.hvd_config.use:
-            num_inputs = hvd.allreduce(num_inputs, average=False)
+            num_inputs = hvd.allreduce(num_inputs, average=False, name="train_num_inputs")
             if isinstance(num_inputs, EagerTensor):
                 # Horovod will promote an int to a tensor in eager mode.
                 num_inputs = num_inputs.numpy()
@@ -736,7 +736,7 @@ class TFKerasTrialController(det.LoopTrialController):
         num_inputs = self.multiplexer.get_test_inputs()
 
         if self.hvd_config.use:
-            num_inputs = hvd.allreduce(num_inputs, average=False)
+            num_inputs = hvd.allreduce(num_inputs, average=False, name="validation_num_inputs")
             if isinstance(num_inputs, EagerTensor):
                 # Horovod will promote an int to a tensor in eager mode.
                 num_inputs = num_inputs.numpy()
