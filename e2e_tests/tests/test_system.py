@@ -553,3 +553,40 @@ def test_distributed_logging() -> None:
         assert exp.check_if_string_present_in_trial_logs(
             t_id, "finished train_batch for rank {}".format(i)
         )
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_disable_and_enable_slots() -> None:
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "slot",
+        "list",
+        "--json",
+    ]
+    output = subprocess.check_output(command).decode()
+    slots = json.loads(output)
+    assert len(slots) == 1
+
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "slot",
+        "disable",
+        slots[0]["agent_id"],
+        slots[0]["slot_id"],
+    ]
+    subprocess.check_call(command)
+
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "slot",
+        "enable",
+        slots[0]["agent_id"],
+        slots[0]["slot_id"],
+    ]
+    subprocess.check_call(command)
