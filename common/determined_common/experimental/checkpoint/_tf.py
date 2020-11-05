@@ -27,8 +27,7 @@ def load_model(
         )
 
     elif save_format == "h5":
-        # This is how tf.keras models were saved prior to Determined 0.13.X.
-        # TODO (Aaron) fill in comment above.
+        # This is how tf.keras models were saved prior to Determined 0.13.8.
         return load_keras_model_weights(
             ckpt_dir=ckpt_dir, checkpoint_filename="determined-keras-model.h5", metadata=metadata
         )

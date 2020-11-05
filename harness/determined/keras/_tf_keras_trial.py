@@ -29,7 +29,7 @@ IMPOSSIBLY_LARGE_EPOCHS = sys.maxsize
 
 
 def load_optimizer_weights(
-    model: Model, h5group: Any, optimizer: Optional[tf.keras.optimizers.Optimizer]
+    model: Model, h5group: Any, optimizer: tf.keras.optimizers.Optimizer
 ) -> None:
     """
     Load the optimizer states from a tf.keras model saved with
@@ -39,9 +39,6 @@ def load_optimizer_weights(
     """
     tf2_2_or_newer = version.parse(tf.__version__) >= version.parse("2.2.0")
     if model._is_graph_network or tf2_2_or_newer:  # pylint: disable=protected-access
-        if not optimizer:
-            optimizer = model.optimizer
-
         if tf2_2_or_newer:
             try:
                 optimizer._create_all_weights(model.trainable_variables)
@@ -488,8 +485,9 @@ class TFKerasTrialController(det.LoopTrialController):
 
         path.mkdir(parents=True, exist_ok=True)
 
-        # Save model weights.
-        check.is_not_none(self.model)
+        # Save model weights. We use `tf` format because `h5` does not support
+        # models that subclass `tf.keras.Model` and define custom `call()`
+        # and/or `train_step()` functions.
         self.model.save_weights(
             str(path.joinpath("determined-keras-model-weights")), save_format="tf"
         )
@@ -551,12 +549,13 @@ class TFKerasTrialController(det.LoopTrialController):
         logging.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
         with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
             if "optimizer_weights" in h5file:
-                load_optimizer_weights(self.model, h5file["optimizer_weights"], None)
-                return
-
-            for idx, optimizer in enumerate(self.context._optimizers):
-                if f"optimizer-{idx}" in h5file:
-                    load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
+                load_optimizer_weights(
+                    self.model, h5file["optimizer_weights"], self.model.optimizer
+                )
+            else:
+                for idx, optimizer in enumerate(self.context._optimizers):
+                    if f"optimizer-{idx}" in h5file:
+                        load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
 
         # Load RNG state.
         try:
@@ -610,19 +609,18 @@ class TFKerasTrialController(det.LoopTrialController):
             validation_steps,
         ) = self._validation_input_manager.get_validation_input_and_num_batches()
 
-        evaluate_kwargs = {
-            "steps": validation_steps,
-            "verbose": 0,
-            "callbacks": self.callback_list,
-        }
-
         # Starting in TF 2.2 users may define custom test_step() that do
         # not use the model metrics.
         use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
-        if not use_model_metrics:
-            evaluate_kwargs["return_dict"] = True
+        evaluate_kwargs = {} if not use_model_metrics else {"return_dict": True}
 
-        metrics_values = self.model.evaluate(validation_data, **evaluate_kwargs)
+        metrics_values = self.model.evaluate(
+            validation_data,
+            steps=validation_steps,
+            verbose=0,
+            callbacks=self.callback_list,
+            **evaluate_kwargs,
+        )
         logging.debug(f"Worker finished model.evaluate() with metrics: {metrics_values}.")
 
         # If the model was compiled with metrics=None, metrics_value will be a single value.
@@ -633,9 +631,7 @@ class TFKerasTrialController(det.LoopTrialController):
             metrics = make_logs(self.model, {}, metrics_values, ModeKeys.TEST, prefix="val_")
         else:
             check.is_instance(metrics_values, dict)
-            metrics = {}
-            for metric_name in metrics_values.keys():
-                metrics[f"val_{metric_name}"] = metrics_values[metric_name]
+            metrics = {f"val_{k}": v for k, v in metrics_values.items()}
 
         _ = self._validation_input_manager.stop_validation_input_and_get_num_inputs()
 

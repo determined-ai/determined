@@ -1,5 +1,6 @@
 import datetime
 import logging
+import multiprocessing
 import os
 import re
 import subprocess
@@ -13,6 +14,7 @@ import pytest
 import requests
 
 import determined_common.api.authentication as auth
+from determined import experimental
 from determined_common import api, yaml
 from tests import cluster
 from tests import config as conf
@@ -615,3 +617,16 @@ def s3_checkpoint_config_no_creds() -> Dict[str, str]:
 
 def root_user_home_bind_mount() -> Dict[str, str]:
     return {"host_path": "/tmp", "container_path": "/root"}
+
+
+def _export_and_load_model(experiment_id: int) -> None:
+    experimental.Determined(conf.make_master_url()).get_experiment(
+        experiment_id
+    ).top_checkpoint().load()
+
+
+def export_and_load_model(experiment_id: int) -> None:
+    p = multiprocessing.Process(target=_export_and_load_model, args=(experiment_id,))
+    p.start()
+    p.join()
+    assert p.exitcode == 0, p.exitcode

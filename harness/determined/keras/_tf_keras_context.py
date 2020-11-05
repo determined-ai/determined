@@ -193,6 +193,22 @@ class TFKerasContext:
         logging.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
         return dataset
 
+    def _get_horovod_optimizer_if_using_horovod(
+        self, optimizer: tf.keras.optimizers.Optimizer
+    ) -> tf.keras.optimizers.Optimizer:
+        if not self.hvd_config.use:
+            return optimizer
+
+        # Horovod doesn't know how to handle string-based optimizers.
+        if isinstance(optimizer, str):
+            raise det.errors.InvalidExperimentException("string optimizers are not supported")
+
+        return hvd.DistributedOptimizer(
+            optimizer,
+            aggregation_frequency=self.hvd_config.aggregation_frequency,
+            average_aggregated_gradients=self.hvd_config.average_aggregated_gradients,
+        )
+
     def wrap_optimizer(
         self, optimizer: tf.keras.optimizers.Optimizer
     ) -> tf.keras.optimizers.Optimizer:
@@ -220,9 +236,8 @@ class TFKerasContext:
             )
             wrapped_optimizer = optimizer
         else:
-            wrapped_optimizer = keras._get_horovod_optimizer_if_using_horovod(
+            wrapped_optimizer = self._get_horovod_optimizer_if_using_horovod(
                 optimizer=optimizer,
-                hvd_config=self.hvd_config,
             )
         self._wrapped_optimizers.append(wrapped_optimizer)
 
@@ -243,9 +258,8 @@ class TFKerasContext:
             )
             wrapped_optimizer = optimizer
         else:
-            wrapped_optimizer = keras._get_horovod_optimizer_if_using_horovod(
+            wrapped_optimizer = self._get_horovod_optimizer_if_using_horovod(
                 optimizer=optimizer,
-                hvd_config=self.hvd_config,
             )
         self._compiled_optimizer = wrapped_optimizer
 

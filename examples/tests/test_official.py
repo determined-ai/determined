@@ -37,6 +37,10 @@ official_examples = [
         "gan/gan_mnist_pytorch/const.yaml",
     ),
     (
+        "gan/dcgan_tf_keras",
+        "gan/dcgan_tf_keras/const.yaml",
+    ),
+    (
         "decision_trees/gbt_titanic_estimator",
         "decision_trees/gbt_titanic_estimator/const.yaml",
     ),

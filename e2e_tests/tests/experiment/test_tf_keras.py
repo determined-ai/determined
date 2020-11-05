@@ -2,7 +2,6 @@ from typing import Dict
 
 import pytest
 
-from determined import experimental
 from tests import config as conf
 from tests import experiment as exp
 
@@ -63,9 +62,7 @@ def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
     assert len(trials) == 1
 
     # Test exporting a checkpoint.
-    experimental.Determined(conf.make_master_url()).get_experiment(
-        experiment_id
-    ).top_checkpoint().load()
+    exp.export_and_load_model(experiment_id)
 
 
 @pytest.mark.e2e_gpu  # type: ignore
@@ -83,9 +80,7 @@ def test_tf_keras_single_gpu(tf2: bool) -> None:
     assert len(trials) == 1
 
     # Test exporting a checkpoint.
-    experimental.Determined(conf.make_master_url()).get_experiment(
-        experiment_id
-    ).top_checkpoint().load()
+    exp.export_and_load_model(experiment_id)
 
 
 @pytest.mark.parallel  # type: ignore
@@ -153,13 +148,12 @@ def test_tf_keras_mnist_data_layer_parallel(
     )
 
 
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.parallel  # type: ignore
 def run_tf_keras_dcgan_example() -> None:
     config = conf.load_config(conf.gan_examples_path("dcgan_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_min_validation_period(config, {"batches": 1000})
+    config = conf.set_min_validation_period(config, {"batches": 200})
+    config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf2_image(config)
 
-    exp.run_basic_test_with_temp_config(
-        config, conf.data_layer_examples_path("data_layer_mnist_tf_keras"), 1
-    )
+    exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("dcgan_tf_keras"), 1)
