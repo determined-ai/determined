@@ -450,7 +450,10 @@ If the problem persists please contact support.',
           breadcrumbName: `Experiment ${experimentId}`,
           path: `/experiments/${experimentId}`,
         },
-        { breadcrumbName: `Trial ${trialId}`, path: `/trials/${trialId}` },
+        {
+          breadcrumbName: `Trial ${trialId}`,
+          path: `/experiments/${experimentId}/trials/${trialId}`,
+        },
       ]}
       options={<TrialActions
         trial={trial}

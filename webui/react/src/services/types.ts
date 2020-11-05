@@ -99,6 +99,7 @@ export interface TaskLogsParams extends LogsParams {
 }
 
 export interface TrialLogsParams extends LogsParams {
+  experimentId: number;
   trialId: number;
 }
 
