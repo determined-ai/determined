@@ -599,8 +599,11 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	experimentID := int(req.ExperimentId)
 	metricName := req.MetricName
 	metricType := req.MetricType
+	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return errors.New("must specify a metric type")
+	}
 	if metricName == "" {
-		return errors.New("Must provide metric name")
+		return errors.New("must provide metric name")
 	}
 
 	seenBatches := make(map[int32]bool)
@@ -611,7 +614,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var newBatches []int32
 		var endTime time.Time
 		var err error
-		if metricType == apiv1.MetricType_training {
+		if metricType == apiv1.MetricType_METRIC_TYPE_TRAINING {
 			newBatches, endTime, err = a.m.db.TrainingMetricBatches(experimentID, metricName,
 				startTime)
 		} else {

@@ -25,10 +25,8 @@ def test_streaming_metrics_api() -> None:
     # of the API calls on a single experiment, we spawn them all in threads.
 
     metric_names_thread = pool.apply_async(request_metric_names, (experiment_id,))
-    train_metric_batches_thread = pool.apply_async(request_train_metric_batches,
-        (experiment_id,))
-    valid_metric_batches_thread = pool.apply_async(request_valid_metric_batches,
-        (experiment_id,))
+    train_metric_batches_thread = pool.apply_async(request_train_metric_batches, (experiment_id,))
+    valid_metric_batches_thread = pool.apply_async(request_valid_metric_batches, (experiment_id,))
 
     metric_names_results = metric_names_thread.get()
     train_metric_batches_results = train_metric_batches_thread.get()
@@ -80,7 +78,7 @@ def request_train_metric_batches(experiment_id):  # type: ignore
     response = api.get(
         conf.make_master_url(),
         "api/v1/experiments/{}/metrics-stream/batches".format(experiment_id),
-        params={"metric_name": "loss", "metric_type": "training"},
+        params={"metric_name": "loss", "metric_type": "METRIC_TYPE_TRAINING"},
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
 
@@ -104,7 +102,7 @@ def request_valid_metric_batches(experiment_id):  # type: ignore
     response = api.get(
         conf.make_master_url(),
         "api/v1/experiments/{}/metrics-stream/batches".format(experiment_id),
-        params={"metric_name": "accuracy", "metric_type": "validation"},
+        params={"metric_name": "accuracy", "metric_type": "METRIC_TYPE_VALIDATION"},
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
 

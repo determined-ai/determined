@@ -78,7 +78,7 @@ INNER JOIN steps s ON t.id=s.trial_id
 LEFT OUTER JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
 WHERE t.experiment_id=$1
   AND v.end_time > $2
-GROUP BY name;`, experimentID, vStartTime)
+GROUP BY name;`, &rows, experimentID, vStartTime)
 	if err != nil {
 		return nil, nil, sEndTime, vEndTime, errors.Wrapf(err,
 			"error querying validation metric names for experiment %d", experimentID)
