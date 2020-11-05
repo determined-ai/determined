@@ -9,5 +9,5 @@ if [[ -z "$(git status --porcelain)" ]]; then
     echo "buf image is already up to date"
     exit 0
 fi
-git add --all
+git add --update
 git commit -m "chore: lock api state for backward compatibility check"
