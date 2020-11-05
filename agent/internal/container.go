@@ -20,6 +20,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+const (
+	agentIDEnvVar     = "DET_AGENT_ID"
+	containerIDEnvVar = "DET_CONTAINER_ID"
+	trialIDEnvVar     = "DET_TRIAL_ID"
+)
+
 type containerActor struct {
 	cproto.Container
 	spec          *cproto.Spec
@@ -53,12 +59,12 @@ func getBaseTrialLog(spec *cproto.Spec) model.TrialLog {
 		split := strings.SplitN(env, "=", 2)
 		value := split[1]
 		switch split[0] {
-		case "DET_TRIAL_ID":
-			log.TrialID, _ = strconv.Atoi(value)
-		case "DET_CONTAINER_ID":
-			log.ContainerID = &value
-		case "DET_AGENT_ID":
+		case agentIDEnvVar:
 			log.AgentID = &value
+		case containerIDEnvVar:
+			log.ContainerID = &value
+		case trialIDEnvVar:
+			log.TrialID, _ = strconv.Atoi(value)
 		}
 	}
 	return log

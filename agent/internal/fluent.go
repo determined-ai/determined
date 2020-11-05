@@ -20,7 +20,7 @@ import (
 
 // The names of environment variables whose values should be included in log entries that Docker or
 // the agent sends to the Fluent Bit logger.
-var fluentEnvVarNames = []string{"DET_TRIAL_ID", "DET_CONTAINER_ID"}
+var fluentEnvVarNames = []string{containerIDEnvVar, trialIDEnvVar}
 
 // fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
 // an appropriate configuration.
@@ -111,8 +111,8 @@ end
   Remove container_id
   Remove container_name
   # Rename environment variables to normal names.
-  Rename DET_TRIAL_ID trial_id
-  Rename DET_CONTAINER_ID container_id
+  Rename %s container_id
+  Rename %s trial_id
 
   Add agent_id %s
   Rename source stdtype
@@ -123,7 +123,7 @@ end
   Match *
   Script %s
   Call run
-`, opts.AgentID, luaPath)
+`, containerIDEnvVar, trialIDEnvVar, opts.AgentID, luaPath)
 
 	// HACK: If a host resolves to both IPv4 and IPv6 addresses, Fluent Bit seems to only try IPv6 and
 	// fail if that connection doesn't work. IPv6 doesn't play well with Docker and many Linux
