@@ -74,7 +74,8 @@ export const login: HttpApi<Credentials, LoginResponse> = {
     return {
       body: { password: saltAndHashPassword(password), username },
       method: 'POST',
-      url: '/login',
+      // task websocket connections still depend on cookies for authentication.
+      url: '/login?cookie=true',
     };
   },
   name: 'login',
