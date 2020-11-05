@@ -6,7 +6,7 @@ import React from 'react';
 
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { openBlank, openCommand } from 'routes/utils';
+import { openCommand } from 'routes/utils';
 import {
   archiveExperiment, killTask, openOrCreateTensorboard, setExperimentState,
 } from 'services/api';
