@@ -4,6 +4,7 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
+import { useHistory } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import BadgeTag from 'components/BadgeTag';
@@ -42,6 +43,7 @@ import TrialChart from './TrialDetails/TrialChart';
 const { Option } = Select;
 
 interface Params {
+  experimentId?: string;
   trialId: string;
 }
 
@@ -87,8 +89,9 @@ const STORAGE_CHART_METRICS_KEY = 'metrics/chart';
 const STORAGE_TABLE_METRICS_KEY = 'metrics/table';
 
 const TrialDetailsComp: React.FC = () => {
-  const { trialId: trialIdParam } = useParams<Params>();
+  const { experimentId: experimentIdParam, trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
+  const history = useHistory();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilter = storage.getWithDefault(
@@ -384,6 +387,11 @@ If the problem persists please contact support.',
           id: experimentId,
         });
         setExperiment(response);
+
+        // Experiment id does not exist in route, reroute to the one with it
+        if (!experimentIdParam) {
+          history.replace(`/experiments/${experimentId}/trials/${trialId}`);
+        }
 
         // Default to selecting config search metric only.
         const searcherName = response.config?.searcher?.metric;
