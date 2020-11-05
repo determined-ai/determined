@@ -44,14 +44,12 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
 	case ResourcesReleased:
-		for name := range a.pools {
-			a.forwardToPool(ctx, name, msg)
-		}
+		a.forwardToAllPools(ctx, msg)
 
 	case sproto.SetGroupMaxSlots:
-		a.forwardToPool(ctx, msg.ResourcePool, msg)
+		a.forwardToAllPools(ctx, msg)
 	case sproto.SetGroupWeight:
-		a.forwardToPool(ctx, msg.ResourcePool, msg)
+		a.forwardToAllPools(ctx, msg)
 	case GetTaskSummary:
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
@@ -96,7 +94,8 @@ func (a *agentResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
 	if a.pools[resourcePool] == nil {
-		err := errors.Errorf("cannot find resource pool: %s", resourcePool)
+		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
+			resourcePool, ctx.Message(), ctx.Sender().Address().String())
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
