@@ -521,6 +521,40 @@ class TFKerasTrialController(det.LoopTrialController):
 
         return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_weights"}
 
+    def _load_model_weights(self, model_weights_checkpoint_path: pathlib.Path) -> None:
+        logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
+        self.model.load_weights(str(model_weights_checkpoint_path))
+
+    def _load_optimizers_weights(self, optimizer_weights_checkpoint_path: pathlib.Path) -> None:
+        logging.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
+        with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
+            if "optimizer_weights" in h5file:
+                load_optimizer_weights(
+                    self.model, h5file["optimizer_weights"], self.model.optimizer
+                )
+                return
+
+            for idx, optimizer in enumerate(self.context._optimizers):
+                if f"optimizer-{idx}" in h5file:
+                    load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
+
+    def _load_model_and_optimizer_weights_v1(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model"))
+        self._load_optimizers_weights(self.load_path.joinpath("determined-keras-model"))
+
+    def _load_model_and_optimizer_weights_v2(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model.h5"))
+        self._load_optimizers_weights(self.load_path.joinpath("determined-keras-model.h5"))
+
+    def _load_model_and_optimizer_weights_v3(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model-weights"))
+        self._load_optimizers_weights(
+            self.load_path.joinpath("determined-keras-optimizer-weights.h5")
+        )
+
     def _load(self) -> None:
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if not self.load_path:
@@ -528,34 +562,11 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # Find model code path, we check multiple naming conventions for backwards compatibility.
         if self.load_path.joinpath("determined-keras-model.h5").exists():
-            model_weights_checkpoint_path = self.load_path.joinpath("determined-keras-model.h5")
-            optimizer_weights_checkpoint_path = model_weights_checkpoint_path
+            self._load_model_and_optimizer_weights_v2()
         elif self.load_path.joinpath("determined-keras-optimizer-weights.h5").exists():
-            model_weights_checkpoint_path = self.load_path.joinpath(
-                "determined-keras-model-weights"
-            )
-            optimizer_weights_checkpoint_path = self.load_path.joinpath(
-                "determined-keras-optimizer-weights.h5"
-            )
+            self._load_model_and_optimizer_weights_v3()
         else:
-            model_weights_checkpoint_path = self.load_path.joinpath("determined-keras-model")
-            optimizer_weights_checkpoint_path = model_weights_checkpoint_path
-
-        # Load model weights.
-        logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
-        self.model.load_weights(str(model_weights_checkpoint_path))
-
-        # Load optimizer(s) weights.
-        logging.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
-        with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
-            if "optimizer_weights" in h5file:
-                load_optimizer_weights(
-                    self.model, h5file["optimizer_weights"], self.model.optimizer
-                )
-            else:
-                for idx, optimizer in enumerate(self.context._optimizers):
-                    if f"optimizer-{idx}" in h5file:
-                        load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
+            self._load_model_and_optimizer_weights_v1()
 
         # Load RNG state.
         try:
@@ -612,7 +623,7 @@ class TFKerasTrialController(det.LoopTrialController):
         # Starting in TF 2.2 users may define custom test_step() that do
         # not use the model metrics.
         use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
-        evaluate_kwargs = {} if not use_model_metrics else {"return_dict": True}
+        evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
 
         metrics_values = self.model.evaluate(
             validation_data,

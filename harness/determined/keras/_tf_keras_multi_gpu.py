@@ -6,7 +6,6 @@ from tensorflow.python.keras.engine import sequential
 
 import determined as det
 from determined import horovod, util
-from determined.horovod import hvd
 
 
 def _get_multi_gpu_model_if_using_native_parallel(
