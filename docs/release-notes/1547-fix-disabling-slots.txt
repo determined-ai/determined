@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Fix not being able to disable slots.
