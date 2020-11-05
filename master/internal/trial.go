@@ -662,7 +662,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	}
 
 	if msg.ExitedReason != nil {
-        ctx.Log().Info("exiting trial early: %v", *msg.ExitedReason)
+		ctx.Log().Info("exiting trial early: %v", *msg.ExitedReason)
 		ctx.Tell(ctx.Self().Parent(), trialExitedEarly{t.id, msg.ExitedReason})
 		t.earlyExit = true
 		if *msg.ExitedReason == workload.Errored {

@@ -47,8 +47,8 @@ type trialWorkloadSequencerState struct {
 	needInitialValidation  bool
 	needPostValidationCkpt bool
 
-	exitingEarly      bool
-	gracefulStop      bool
+	exitingEarly bool
+	gracefulStop bool
 
 	curOpIdx  int
 	curStepID int
@@ -183,7 +183,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	}
 	if msg.ExitedReason != nil {
 		s.exitingEarly = true
-		if (*msg.ExitedReason == workload.UserCanceled || *msg.ExitedReason == workload.InvalidHP) {
+		if *msg.ExitedReason == workload.UserCanceled || *msg.ExitedReason == workload.InvalidHP {
 			s.gracefulStop = true
 		} else {
 			return nil, nil, nil
