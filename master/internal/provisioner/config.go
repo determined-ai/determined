@@ -50,6 +50,7 @@ type Config struct {
 	AgentDockerNetwork     string            `json:"agent_docker_network"`
 	AgentDockerRuntime     string            `json:"agent_docker_runtime"`
 	AgentDockerImage       string            `json:"agent_docker_image"`
+	AgentFluentImage       string            `json:"agent_fluent_image"`
 	AWS                    *AWSClusterConfig `union:"provider,aws" json:"-"`
 	GCP                    *GCPClusterConfig `union:"provider,gcp" json:"-"`
 	MaxIdleAgentPeriod     Duration          `json:"max_idle_agent_period"`
@@ -63,6 +64,7 @@ func DefaultConfig() *Config {
 	return &Config{
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
+		AgentFluentImage:       "fluent/fluent-bit:1.6",
 		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: Duration(20 * time.Minute),
 		MinInstances:           0,

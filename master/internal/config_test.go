@@ -48,6 +48,7 @@ provisioner:
 		Provisioner: &provisioner.Config{
 			AgentDockerRuntime:     "runc",
 			AgentDockerNetwork:     "default",
+			AgentFluentImage:       "fluent/fluent-bit:1.6",
 			MaxIdleAgentPeriod:     provisioner.Duration(30 * time.Second),
 			MaxAgentStartingPeriod: provisioner.Duration(30 * time.Second),
 			MaxInstances:           5,

@@ -27,7 +27,8 @@ type RunSpec struct {
 	NetworkingConfig network.NetworkingConfig
 	ChecksConfig     ChecksConfig
 
-	Archives []RunArchive
+	Archives         []RunArchive
+	UseFluentLogging bool
 }
 
 // ChecksConfig describes the configuration for multiple readiness checks.
