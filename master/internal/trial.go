@@ -633,7 +633,7 @@ func (t *trial) processAllocated(
 }
 
 func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.CompletedMessage) error {
-	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason == workload.UserCanceled || *msg.ExitedReason == workload.InvalidHP) {
+	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason != workload.Errored) {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
@@ -662,7 +662,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	}
 
 	if msg.ExitedReason != nil {
-		ctx.Log().Info("exiting trial early: %v", *msg.ExitedReason)
+		ctx.Log().Infof("exiting trial early: %v", msg.ExitedReason)
 		ctx.Tell(ctx.Self().Parent(), trialExitedEarly{t.id, msg.ExitedReason})
 		t.earlyExit = true
 		if *msg.ExitedReason == workload.Errored {
