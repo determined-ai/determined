@@ -10,13 +10,14 @@ import routes from './routes';
 import { RouteConfig } from './types';
 
 // serverAddress returns determined cluster (master) address.
-export const serverAddress = (path = ''): string => {
-  if (!!path && isFullPath(path)) return path;
+export const serverAddress = (aPath = ''): string => {
+  if (!!aPath && isFullPath(aPath)) return aPath;
 
   // Prioritize dynamically set address.
   const customServer = globalStorage.getServerAddress
     || process.env.SERVER_ADDRESS as string;
 
+  const path = aPath ? process.env.PUBLIC_URL + aPath : '';
   return (customServer || reactHostAddress()) + path;
 };
 
@@ -57,7 +58,7 @@ export const waitPageUrl = (command: Partial<Command>): string | undefined => {
   if (!eventUrl || !proxyUrl) return;
   const event = encodeURIComponent(eventUrl);
   const jump = encodeURIComponent(proxyUrl);
-  return serverAddress(`/wait?event=${event}&jump=${jump}`);
+  return serverAddress(`/wait/index.html?event=${event}&jump=${jump}`);
 };
 
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
@@ -132,5 +133,5 @@ export const routeAll = (path: string): void => {
 };
 
 export const linkPath = (path: string, external = false): string => {
-  return (external ? '' : process.env.PUBLIC_URL) + path;
+  return (external || isFullPath(path) ? '' : process.env.PUBLIC_URL) + path;
 };
