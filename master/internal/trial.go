@@ -292,6 +292,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.restore(ctx)
 		t.replaying = false
 
+	case sproto.ContainerLog:
+		t.processContainerLog(ctx, msg)
+
 	case trialAborted:
 		// This is to handle trial being aborted. It does nothing here but requires
 		// the code below this switch statement to handle releasing resources in
@@ -945,17 +948,32 @@ func (t *trial) processContainerTerminated(
 	}
 }
 
-func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
+func (t *trial) canLog(ctx *actor.Context, msg string) bool {
 	// Log messages should never come in before the trial ID is set, since no trial runners are
 	// launched until after the trial ID is set. But for futureproofing, we will log an error while
 	// we protect the database.
 	if !t.idSet {
 		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg)
-		return
+		return false
 	}
 
 	if t.logger == nil {
 		// A trial created for a unit test does not have a logger.
+		return false
+	}
+	return true
+}
+
+func (t *trial) processContainerLog(ctx *actor.Context, msg sproto.ContainerLog) {
+	if !t.canLog(ctx, msg.String()) {
+		return
+	}
+
+	ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: msg.String() + "\n"})
+}
+
+func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
+	if !t.canLog(ctx, msg) {
 		return
 	}
 
