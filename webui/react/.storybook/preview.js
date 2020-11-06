@@ -7,4 +7,4 @@ import ThemeDecorator from "storybook/ThemeDecorator"
 
 addDecorator(ThemeDecorator);
 
-export const parameters = { layout: 'fullscreen' };
+export const parameters = { layout: 'centered' };
