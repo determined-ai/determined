@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getAllExperimentLabels } from 'services/api';
 import { alphanumericSorter } from 'utils/data';
 
-import style from './LabelSelectFilter.module.scss';
 import SelectFilter from './SelectFilter';
 
 interface Props {
@@ -78,7 +77,6 @@ const LabelSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   }, [ labels ]);
 
   return <SelectFilter
-    className={style.select}
     disableTags
     dropdownMatchSelectWidth={200}
     label="Labels"
