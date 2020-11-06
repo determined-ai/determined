@@ -9,6 +9,7 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import { RecentCommandTask, RecentTask } from 'types';
 import { percent } from 'utils/number';
 import { canBeOpened, isExperimentTask } from 'utils/task';
+import { openCommand } from 'wait';
 
 import css from './TaskCard.module.scss';
 
@@ -22,15 +23,16 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
 
   const iconName = isExperimentTask(props) ?
     'experiment' : (props as RecentCommandTask).type.toLowerCase();
-  if (canBeOpened(props) && props.url) classes.push(css.link);
+  if (canBeOpened(props)) classes.push(css.link);
 
   return (
     <div className={classes.join(' ')}>
       <Link
         disabled={!canBeOpened(props)}
         inherit
-        path={props.url || '#'}
-        popout={!isExperimentTask(props)}>
+        path={props.url ? props.url : undefined}
+        popout={!isExperimentTask(props)}
+        onClick={!isExperimentTask(props) ? (() => openCommand(props)) : undefined}>
         {isExperimentTask(props) && <div className={css.progressBar}>
           <ProgressBar barOnly percent={(props.progress || 0) * 100} state={props.state} />
         </div>}

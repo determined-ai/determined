@@ -142,7 +142,7 @@ export interface CommandConfig {
 
 // The command type is shared between Commands, Notebooks, Tensorboards, and Shells.
 export interface Command {
-  kind: CommandType;
+  kind: CommandType; // TODO rename to type
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
   id: string;
@@ -151,7 +151,6 @@ export interface Command {
   registeredTime: string;
   serviceAddress?: string;
   state: CommandState;
-  url: string;
 }
 
 export enum CheckpointStorageType {
@@ -342,6 +341,7 @@ export interface Task {
   name: string;
   id: string;
   url?: string;
+  serviceAddress?: string;
   startTime: string;
 }
 

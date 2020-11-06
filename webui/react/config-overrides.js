@@ -14,7 +14,21 @@ const path = require('path');
 const webpack = require('webpack');
 const jestConfig = require('./jest.config');
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_DEV = process.env.DET_NODE_ENV === 'development';
+
+function customOverride(config, env) {
+  let configPatch = {};
+  if (IS_DEV) {
+    configPatch = {
+    mode: 'development',
+    optimization: {},
+    }
+  }
+  return {
+    ...config,
+    ...configPatch
+  }
+}
 
 const webpackConfig = override(
   // Disable eslint for webpack config.
@@ -49,8 +63,7 @@ const webpackConfig = override(
    * https://github.com/mzohaibqc/antd-theme-webpack-plugin
    */
   addWebpackPlugin(
-    new AntDesignThemePlugin({
-      antDir: path.join(__dirname, './node_modules/antd'),
+    new AntDesignThemePlugin({ antDir: path.join(__dirname, './node_modules/antd'),
       stylesDir: path.join(__dirname, './src/styles'),
       varFile: path.join(__dirname, './src/styles/variables.less'),
       mainLessFile: path.join(__dirname, './src/styles/index.less'),
@@ -90,7 +103,10 @@ const webpackConfig = override(
 );
 
 module.exports = {
-  webpack: webpackConfig,
+  webpack: (config, env) => {
+    const c = webpackConfig(config, env);
+    return customOverride(c);
+  },
   jest: (config, env) => ({...config, ...jestConfig}),
   // devServer: (config, env) => config,
 }

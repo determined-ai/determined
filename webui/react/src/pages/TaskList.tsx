@@ -22,7 +22,6 @@ import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { openCommand } from 'routes/utils';
 import {
   getCommands, getNotebooks, getShells, getTensorboards, killTask,
 } from 'services/api';
@@ -32,6 +31,7 @@ import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types
 import { alphanumericSorter, getPath, numericSorter } from 'utils/data';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
+import { openCommand } from 'wait';
 
 import css from './TaskList.module.scss';
 import { columns as defaultColumns } from './TaskList.table';

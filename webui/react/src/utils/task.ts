@@ -1,5 +1,4 @@
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { openCommand } from 'routes/utils';
 import { createNotebook } from 'services/api';
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
@@ -7,6 +6,7 @@ import {
   RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
+import { openCommand } from 'wait';
 
 export const launchNotebook = async (slots: number): Promise<void> => {
   try {
@@ -155,7 +155,7 @@ export const isExperimentTask = (task: AnyTask): task is ExperimentTask => {
 export const canBeOpened = (task: AnyTask): boolean => {
   if (isExperimentTask(task)) return true;
   if (terminalCommandStates.has(task.state)) return false;
-  return !!task.url;
+  return !!task.serviceAddress;
 };
 
 const matchesSearch = <T extends AnyTask | ExperimentItem>(task: T, search = ''): boolean => {

@@ -25,7 +25,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import { handlePath, openCommand } from 'routes/utils';
+import { handlePath } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, getExperimentList,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
@@ -38,6 +38,7 @@ import {
 import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
+import { openCommand } from 'wait';
 
 import css from './ExperimentList.module.scss';
 import { columns as defaultColumns } from './ExperimentList.table';

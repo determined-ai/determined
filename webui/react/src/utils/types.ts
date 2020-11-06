@@ -1,5 +1,5 @@
 import {
-  AnyTask, Checkpoint, Command, CommandState, CommandType, ExperimentHyperParams,
+  AnyTask, Checkpoint, Command, CommandState, CommandTask, CommandType, ExperimentHyperParams,
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
   TBSource, TBSourceType,
 } from 'types';
@@ -20,10 +20,10 @@ export const commandToTask = (command: Command): RecentCommandTask => {
     },
     misc: command.misc,
     name,
+    serviceAddress: command.serviceAddress,
     startTime: command.registeredTime,
     state: command.state as CommandState,
     type: command.kind,
-    url: command.url,
     username: command.user.username,
   };
   return task;
@@ -138,6 +138,11 @@ export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
 // differentiate Experiment from Task
 export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
   return 'config' in obj && 'archived' in obj;
+};
+
+// differentiate Experiment from Task
+export const isCommandTask = (obj: Command | CommandTask): obj is CommandTask => {
+  return 'type' in obj;
 };
 
 // used when properties are named differently between objects.
