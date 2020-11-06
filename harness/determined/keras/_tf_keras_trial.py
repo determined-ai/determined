@@ -609,8 +609,12 @@ class TFKerasTrialController(det.LoopTrialController):
                 self.train_workload_metrics = []
                 self.train_workload_len = wkld.num_batches
                 self.multiplexer.set_batches_requested(wkld.num_batches)
+                # Reset metrics before a training step.
+                self.model._corrected_reset_metrics()
                 break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                # Reset metrics before a validation step.
+                self.model._corrected_reset_metrics()
                 response_func(
                     det.util.wrap_metrics(
                         self._compute_validation_metrics(), self.context.get_stop_requested()
@@ -684,10 +688,6 @@ class TFKerasTrialController(det.LoopTrialController):
         self.train_response_func = None
 
         self._control_loop()
-
-        # Always reset metrics before starting a new training step.
-        assert self.model is not None
-        self.model.reset_metrics()
 
     def _compute_validation_metrics(self) -> workload.Response:
         metrics_values = self._launch_evaluate()

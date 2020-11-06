@@ -33,6 +33,9 @@ class XORTrial(keras.TFKerasTrial):
 
     def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
+        # Keras sequences have an end-of-epoch slowdown when using off-thread execution. We use
+        # 1-batch epochs, so we turn off workers entirely
+        self.context._configure_fit(workers=0)
 
     def build_model(self) -> Sequential:
         model = Sequential()
@@ -58,11 +61,11 @@ class XORTrial(keras.TFKerasTrial):
 
     def build_training_data_loader(self) -> keras.InputData:
         train, _ = make_xor_data_sequences(batch_size=4)
-        return keras.SequenceAdapter(train, workers=0)
+        return train
 
     def build_validation_data_loader(self) -> keras.InputData:
         _, test = make_xor_data_sequences(batch_size=4)
-        return keras.SequenceAdapter(test, workers=0)
+        return test
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
         return [StopVeryEarlyCallback()] if self.context.env.hparams.get("stop_early") else []

@@ -196,6 +196,14 @@ class TFKerasContext:
                 if train_fn:
                     train_fn()
 
+            def reset_metrics(self) -> None:
+                # We dismiss all keras-initiated reset_metrics() since it is called on epoch
+                # boundaries, and those calls happen at the wrong times when using Sequences.
+                pass
+
+            def _corrected_reset_metrics(self) -> None:
+                self.model._reset_metrics()
+
         return _WrappedModel()
 
     def wrap_dataset(self, dataset: Any, shard_dataset: bool = True) -> Any:
