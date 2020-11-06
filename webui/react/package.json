@@ -39,7 +39,7 @@
     "react-helmet": "^6.1.0",
     "react-monaco-editor": "^0.37.0",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "^3.4.3",
+    "react-scripts": "^3.4.4",
     "react-transition-group": "^4.4.1",
     "screenfull": "^5.0.2",
     "smoothscroll-polyfill": "^0.4.4",
