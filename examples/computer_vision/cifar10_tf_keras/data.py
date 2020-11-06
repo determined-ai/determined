@@ -1,4 +1,6 @@
 import os
+import tarfile
+import urllib.request
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -32,7 +34,9 @@ def augment_data(
     return datagen.flow(data, labels, batch_size=batch_size, shuffle=shuffle)
 
 
-def get_data(data_path: str) -> Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
+def get_data(
+    data_path: str,
+) -> Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]]:
     num_train_samples = 50000
 
     train_data = np.empty((num_train_samples, 3, 32, 32), dtype="uint8")
@@ -56,3 +60,34 @@ def get_data(data_path: str) -> Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.nd
         test_data = test_data.transpose(0, 2, 3, 1)
 
     return (train_data, train_labels), (test_data, test_labels)
+
+
+def download_data(download_directory: str, url: str) -> str:
+    os.makedirs(download_directory, exist_ok=True)
+    filepath = os.path.join(download_directory, "data.tar.gz")
+    urllib.request.urlretrieve(url, filename=filepath)
+    tar = tarfile.open(filepath)
+    tar.extractall(path=download_directory)
+    return os.path.join(download_directory, "cifar-10-batches-py")
+
+
+def get_training_data(
+    data_directory, batch_size, width_shift_range, height_shift_range, horizontal_flip
+):
+    (train_data, train_labels), (_, _) = get_data(data_directory)
+
+    # Setup training data loader.
+    data_augmentation = {
+        "width_shift_range": width_shift_range,
+        "height_shift_range": height_shift_range,
+        "horizontal_flip": horizontal_flip,
+    }
+
+    # Returns a tf.keras.Sequence.
+    train = augment_data(train_data, train_labels, batch_size, data_augmentation)
+    return train
+
+
+def get_validation_data(data_directory):
+    (_, _), (test_data, test_labels) = get_data(data_directory)
+    return preprocess_data(test_data), preprocess_labels(test_labels)
