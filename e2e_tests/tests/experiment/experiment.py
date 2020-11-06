@@ -620,14 +620,18 @@ def root_user_home_bind_mount() -> Dict[str, str]:
 
 
 def _export_and_load_model(experiment_id: int, master_url: str) -> None:
-    experimental.Determined(master_url).get_experiment(
-        experiment_id
-    ).top_checkpoint().load()
+    experimental.Determined(master_url).get_experiment(experiment_id).top_checkpoint().load()
 
 
 def export_and_load_model(experiment_id: int) -> None:
-    ctx = multiprocessing.get_context('spawn')
-    p = ctx.Process(target=_export_and_load_model, args=(experiment_id, conf.make_master_url(),))
+    ctx = multiprocessing.get_context("spawn")
+    p = ctx.Process(
+        target=_export_and_load_model,
+        args=(
+            experiment_id,
+            conf.make_master_url(),
+        ),
+    )
     p.start()
     p.join()
     assert p.exitcode == 0, p.exitcode
