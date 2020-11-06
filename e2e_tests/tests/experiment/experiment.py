@@ -624,6 +624,8 @@ def _export_and_load_model(experiment_id: int, master_url: str) -> None:
 
 
 def export_and_load_model(experiment_id: int) -> None:
+    # We run this in a subprocess to avoid module name collisions
+    # when performing checkpoint export of different models.
     ctx = multiprocessing.get_context("spawn")
     p = ctx.Process(
         target=_export_and_load_model,
