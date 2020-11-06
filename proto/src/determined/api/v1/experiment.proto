@@ -317,3 +317,48 @@ message TrialsSnapshotResponse {
   // A list of trials.
   repeated Trial trials = 1;
 }
+
+// Request a sample of metrics over time for a sample of trials.
+message TrialsSampleRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // A metric name.
+  string metric_name = 2;
+  // The type of metric.
+  MetricType metric_type = 3;
+  // Maximum number of trials to fetch data for.
+  int32 max_trials = 4;
+  // Maximum number of initial / historical data points.
+  int32 max_datapoints = 5;
+  // Beginning of window (inclusive) to fetch data for.
+  int32 start_batches = 6;
+  // Ending of window (inclusive) to fetch data for.
+  int32 end_batches = 7;
+}
+
+// Response to TrialsSampleRequest
+message TrialsSampleResponse {
+  // One datapoint in a series of metrics from a trial.
+  message DataPoint {
+    // Total batches processed by the time this measurement is taken.
+    int32 batches = 1;
+    // Value of the requested metric at this point in the trial.
+    double value = 2;
+  }
+  // Metadata and metrics stream from a trial.
+  message Trial {
+    // The id of the trial.
+    int32 trial_id = 1;
+    // Hyperparamters values for this specific trial.
+    google.protobuf.Struct hparams = 2;
+    // A possibly down-sampled series of metric readings through the progress of
+    // the trial.
+    repeated DataPoint data = 3;
+  }
+  // A historical or incremental series of data points for the trials.
+  repeated Trial trials = 1;
+  // IDs of trials that are newly included in the data.
+  repeated int32 promoted_trials = 2;
+  // IDs of trials that are no loger included in the top N trials.
+  repeated int32 demoted_trials = 3;
+}

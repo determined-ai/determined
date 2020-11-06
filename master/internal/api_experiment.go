@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -694,6 +696,175 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 
 		if err := resp.Send(&response); err != nil {
 			return errors.Wrapf(err, "error sending batches recorded for metrics")
+		}
+
+		experiment, _ := a.getExperiment(experimentID)
+		if experiment.State == experimentv1.State_STATE_COMPLETED {
+			return nil
+		}
+
+		time.Sleep(metricsStreamPeriod)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherConfig) (
+	trials []int32, err error) {
+	type Ranking string
+	const (
+		ByMetricOfInterest Ranking = "ByMetricOfInterest"
+		ByTrainingLength   Ranking = "ByTrainingLength"
+	)
+	var ranking Ranking
+
+	switch {
+	case s.RandomConfig != nil:
+		ranking = ByMetricOfInterest
+	case s.GridConfig != nil:
+		ranking = ByMetricOfInterest
+	case s.SyncHalvingConfig != nil:
+		ranking = ByTrainingLength
+	case s.AdaptiveConfig != nil:
+		ranking = ByTrainingLength
+	case s.AdaptiveSimpleConfig != nil:
+		ranking = ByTrainingLength
+	case s.AsyncHalvingConfig != nil:
+		ranking = ByTrainingLength
+	case s.AdaptiveASHAConfig != nil:
+		ranking = ByTrainingLength
+	case s.SingleConfig != nil:
+		return nil, errors.New("single-trial experiments are not supported for trial sampling")
+	case s.PBTConfig != nil:
+		return nil, errors.New("population-based training not supported for trial sampling")
+	default:
+		return nil, errors.New("unable to detect a searcher algorithm for trial sampling")
+	}
+	switch ranking {
+	case ByMetricOfInterest:
+		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+	case ByTrainingLength:
+		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+	default:
+		panic("Invalid state in trial sampling")
+	}
+}
+
+func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
+	resp apiv1.Determined_TrialsSampleServer) error {
+	experimentID := int(req.ExperimentId)
+	maxTrials := int(req.MaxTrials)
+	if maxTrials == 0 {
+		maxTrials = 25
+	}
+	maxDatapoints := int(req.MaxDatapoints)
+	if maxDatapoints == 0 {
+		maxDatapoints = 1000
+	}
+	startBatches := int(req.StartBatches)
+	endBatches := int(req.EndBatches)
+	if endBatches <= 0 {
+		endBatches = math.MaxInt32
+	}
+
+	metricName := req.MetricName
+	metricType := req.MetricType
+	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return errors.New("must specify a metric type")
+	}
+	if metricName == "" {
+		return errors.New("must provide metric name")
+	}
+
+	config, err := a.m.db.ExperimentConfig(experimentID)
+	if err != nil {
+		return errors.Wrapf(err, "error fetching experiment config from database")
+	}
+	searcherConfig := config.Searcher
+
+	trialCursors := make(map[int32]time.Time)
+	currentTrials := make(map[int32]bool)
+	var zeroTime time.Time
+	for {
+		var response apiv1.TrialsSampleResponse
+		var promotedTrials []int32
+		var demotedTrials []int32
+		var trials []*apiv1.TrialsSampleResponse_Trial
+
+		seenThisRound := make(map[int32]bool)
+
+		var metricSeries []lttb.Point
+		var endTime time.Time
+		trialIDs, err := a.topTrials(experimentID, maxTrials, searcherConfig)
+		if err != nil {
+			return errors.Wrapf(err, "error determining top trials")
+		}
+		for _, trialID := range trialIDs {
+			var trial apiv1.TrialsSampleResponse_Trial
+			trial.TrialId = trialID
+
+			if _, current := currentTrials[trialID]; !current {
+				promotedTrials = append(promotedTrials, trialID)
+				currentTrials[trialID] = true
+
+				var trialConfig *model.Trial
+				trialConfig, err = a.m.db.TrialByID(int(trialID))
+				if err != nil {
+					return errors.Wrapf(err, "error fetching trial metadata")
+				}
+				trial.Hparams = protoutils.ToStruct(trialConfig.HParams)
+			}
+			seenThisRound[trialID] = true
+
+			startTime, seenBefore := trialCursors[trialID]
+			if !seenBefore {
+				startTime = zeroTime
+			}
+			if metricType == apiv1.MetricType_METRIC_TYPE_TRAINING {
+				metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+					metricName, startBatches, endBatches)
+			} else {
+				metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+					metricName, startBatches, endBatches)
+			}
+			if err != nil {
+				return errors.Wrapf(err, "error fetching time series of metrics")
+			}
+			if len(metricSeries) > 0 {
+				// if we get empty results, the endTime is incorrectly zero
+				trialCursors[trialID] = endTime
+			}
+			if !seenBefore {
+				metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+			}
+
+			for _, in := range metricSeries {
+				var out apiv1.TrialsSampleResponse_DataPoint
+				out.Batches = int32(in.X)
+				out.Value = in.Y
+				trial.Data = append(trial.Data, &out)
+			}
+			trials = append(trials, &trial)
+		}
+		for oldTrial := range currentTrials {
+			if !seenThisRound[oldTrial] {
+				demotedTrials = append(demotedTrials, oldTrial)
+				delete(trialCursors, oldTrial)
+			}
+		}
+		// Deletes from currentTrials have to happen when not looping over currentTrials
+		for _, oldTrial := range demotedTrials {
+			delete(currentTrials, oldTrial)
+		}
+
+		response.Trials = trials
+		response.PromotedTrials = promotedTrials
+		response.DemotedTrials = demotedTrials
+
+		if err := resp.Send(&response); err != nil {
+			return errors.Wrap(err, "error sending sample of trial metric streams")
 		}
 
 		experiment, _ := a.getExperiment(experimentID)
