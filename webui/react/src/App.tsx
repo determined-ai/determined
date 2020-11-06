@@ -2,6 +2,7 @@ import { Button, notification } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
 import { setupAnalytics } from 'Analytics';
+import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import Router from 'components/Router';
 import Spinner from 'components/Spinner';
@@ -63,6 +64,7 @@ const AppView: React.FC = () => {
       const message = 'New WebUI Version';
       const description = <div>
         WebUI version <b>v{info.version}</b> is available.
+        Read <Link external path="/docs/release-notes.html">release notes</Link> in our docs.
       </div>;
       notification.warn({
         btn,
