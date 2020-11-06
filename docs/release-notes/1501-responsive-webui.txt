@@ -5,6 +5,5 @@
 -  WebUI: Update the WebUI to support responsive designs.
 
    -  Add mobile-friendly navigation top bar and tab bar.
-   -  Update table to be fluid and scrollable.
-   -  Collapse section filters into a button and a dropdown when viewing
-      in a narrow breakpoint.
+   -  Update tables to be fluid and scrollable.
+   -  Collapse various filters into a dropdown button.

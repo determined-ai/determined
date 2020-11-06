@@ -33,7 +33,7 @@ import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
   TrialHyperParameters,
 } from 'types';
-import { clone, numericSorter } from 'utils/data';
+import { clone, isEqual, numericSorter } from 'utils/data';
 import { hasCheckpoint } from 'utils/step';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
@@ -132,7 +132,7 @@ const TrialDetailsComp: React.FC = () => {
     storageMetricsPath && `${storageMetricsPath}/${STORAGE_TABLE_METRICS_KEY}`;
 
   const hasFiltersApplied = useMemo(() => {
-    const metricsApplied = JSON.stringify(metrics) !== JSON.stringify(defaultMetrics);
+    const metricsApplied = !isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = hasCheckpointOrValidation as string !== ALL_VALUE;
     return metricsApplied || checkpointValidationFilterApplied;
   }, [ hasCheckpointOrValidation, metrics, defaultMetrics ]);

@@ -26,7 +26,7 @@ const NavigationTopbar: React.FC = () => {
         <Dropdown
           content={<Menu>
             <Menu.Item>
-              <Link path={'/det/logout'}>Sign Out</Link>
+              <Link path={'/logout'}>Sign Out</Link>
             </Menu.Item>
           </Menu>}
           offset={{ x: 0, y: 8 }}
