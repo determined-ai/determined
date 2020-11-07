@@ -13,6 +13,7 @@ import css from './Table.module.scss';
 export default {
   component: Table,
   decorators: [ RouterDecorator ],
+  parameters: { layout: 'padded' },
   title: 'Table',
 };
 

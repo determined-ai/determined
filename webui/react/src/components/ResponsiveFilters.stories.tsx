@@ -8,7 +8,7 @@ const { Option } = Select;
 
 export default {
   component: ResponsiveFilters,
-  parameters: { layout: 'centered' },
+  parameters: { layout: 'padded' },
   title: 'ResponsiveFilters',
 };
 
@@ -17,17 +17,7 @@ const options = new Array(10).fill(null).map((_, index) => (
 ));
 
 export const Default = (): React.ReactNode => (
-  <div>
-    <div style={{
-      color: '#999999',
-      fontSize: 14,
-      fontStyle: 'italic',
-      marginBottom: 10,
-      textAlign: 'center',
-      width: '100%',
-    }}>
-      Reduce this browser width to see the responsive effect.
-    </div>
+  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
     <ResponsiveFilters>
       {new Array(4).fill(null).map((_, index) => (
         <SelectFilter key={index} label={`Filter ${index}`} value={0}>{options}</SelectFilter>

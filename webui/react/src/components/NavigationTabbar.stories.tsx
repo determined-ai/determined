@@ -8,7 +8,12 @@ import NavigationTabbar from './NavigationTabbar';
 
 export default {
   component: NavigationTabbar,
-  decorators: [ AuthDecorator, ClusterOverviewDecorator, RouterDecorator, UIDecorator ],
+  decorators: [
+    AuthDecorator,
+    ClusterOverviewDecorator,
+    RouterDecorator,
+    UIDecorator ],
+  parameters: { layout: 'fullscreen' },
   title: 'NavigationTabbar',
 };
 
@@ -23,20 +28,8 @@ const NavigationTabbarLoggedIn = () => {
 };
 
 export const Default = (): React.ReactNode => (
-  <div style={{
-    border: 'solid 1px #cccccc',
-    display: 'flex',
-    flexDirection: 'column',
-    height: 480,
-    position: 'relative',
-    width: 320,
-  }}>
-    <div style={{
-      alignItems: 'center',
-      display: 'flex',
-      flexGrow: 1,
-      justifyContent: 'center',
-    }}>Content Area</div>
+  <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{ flexGrow: 1, height: 'calc(100vh - 56px)' }} />
     <NavigationTabbarLoggedIn />
   </div>
 );

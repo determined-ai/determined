@@ -8,7 +8,12 @@ import NavigationTopbar from './NavigationTopbar';
 
 export default {
   component: NavigationTopbar,
-  decorators: [ AuthDecorator, ClusterOverviewDecorator, RouterDecorator, UIDecorator ],
+  decorators: [
+    AuthDecorator,
+    ClusterOverviewDecorator,
+    RouterDecorator,
+    UIDecorator ],
+  parameters: { layout: 'fullscreen' },
   title: 'NavigationTopbar',
 };
 
@@ -23,14 +28,5 @@ const NavigationTopbarLoggedIn = () => {
 };
 
 export const Default = (): React.ReactNode => (
-  <div style={{
-    border: 'solid 1px #cccccc',
-    display: 'flex',
-    flexDirection: 'column',
-    height: 480,
-    position: 'relative',
-    width: 320,
-  }}>
-    <NavigationTopbarLoggedIn />
-  </div>
+  <NavigationTopbarLoggedIn />
 );

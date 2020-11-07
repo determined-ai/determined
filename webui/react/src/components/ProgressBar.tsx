@@ -7,7 +7,7 @@ import { floatToPercent } from 'utils/string';
 
 import css from './ProgressBar.module.scss';
 
-interface Props {
+export interface Props {
   barOnly?: boolean;
   percent: number;
   state: RunState | CommandState;

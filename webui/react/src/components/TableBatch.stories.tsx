@@ -7,6 +7,7 @@ import TableBatch from './TableBatch';
 export default {
   component: TableBatch,
   decorators: [ withKnobs ],
+  parameters: { layout: 'padded' },
   title: 'TableBatch',
 };
 
