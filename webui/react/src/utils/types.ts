@@ -56,11 +56,13 @@ export const activeCommandStates = [
   CommandState.Terminating,
 ];
 
-export const activeRunStates = [
-  RunState.Active,
-  RunState.StoppingCanceled,
-  RunState.StoppingCompleted,
-  RunState.StoppingError,
+export const activeRunStates: Array<
+  'STATE_ACTIVE' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
+> = [
+  'STATE_ACTIVE',
+  'STATE_STOPPING_CANCELED',
+  'STATE_STOPPING_COMPLETED',
+  'STATE_STOPPING_ERROR',
 ];
 
 export const killableRunStates = [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];

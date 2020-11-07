@@ -70,6 +70,23 @@ export interface ExperimentIdParams {
   experimentId: number;
 }
 
+export interface GetExperimentsParams {
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'
+  | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS'
+  | 'SORT_BY_USER';
+  orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
+  offset?: number;
+  limit?: number;
+  description?: string;
+  labels?: Array<string>;
+  archived?: boolean;
+  states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED'
+  | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
+  | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
+  users?: Array<string>;
+  options?: never;
+}
+
 export interface ForkExperimentParams {
   parentId: number;
   experimentConfig: string;

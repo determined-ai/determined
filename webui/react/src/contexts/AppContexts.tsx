@@ -8,10 +8,10 @@ import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import {
-  getAgents, getCommands, getExperimentSummaries, getNotebooks,
+  getAgents, getCommands, getExperiments, getNotebooks,
   getShells, getTensorboards, getUsers,
 } from 'services/api';
-import { EmptyParams, ExperimentsParams } from 'services/types';
+import { EmptyParams, GetExperimentsParams } from 'services/types';
 import { Command, DetailedUser, ExperimentBase } from 'types';
 import { activeRunStates } from 'utils/types';
 
@@ -36,7 +36,7 @@ const AppContexts: React.FC = () => {
   const [ tensorboardsResponse, triggerTensorboardsRequest ] =
     useRestApi<EmptyParams, Command[]>(getTensorboards, {});
   const [ activeExperimentsResponse, triggerActiveExperimentsRequest ] =
-    useRestApi<ExperimentsParams, ExperimentBase[]>(getExperimentSummaries, {});
+    useRestApi<GetExperimentsParams, ExperimentBase[]>(getExperiments, {});
 
   const fetchAgents = useCallback(async (): Promise<void> => {
     try {
