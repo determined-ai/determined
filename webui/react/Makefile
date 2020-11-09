@@ -3,7 +3,6 @@ export PROJECT_ROOT := "../../"
 # Set the path React is going to be served from eg ./ for serving from root.
 export PUBLIC_URL ?= /det
 
-
 .PHONY: default
 default: get-deps
 	$(MAKE) build
