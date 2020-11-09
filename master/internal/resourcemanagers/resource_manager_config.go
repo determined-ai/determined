@@ -93,41 +93,19 @@ func ResolveConfig(
 			resourceManagerConf.AgentRM.Scheduler = defaultSchedulerConfig()
 		}
 
-		// Fill in default fitting policy if unspecified.
-		if resourceManagerConf.AgentRM.Scheduler.FittingPolicy == "" {
-			resourceManagerConf.AgentRM.Scheduler.FittingPolicy = defaultFitPolicy
-		}
+		// Fill in default fitting policy and default priority if unspecified.
+		fillInSchedulerDefaults(resourceManagerConf.AgentRM.Scheduler)
 
-		// Set default scheduling priority if it is not specified and priority scheduler
-		// is being used.
-		prioritySchedulerConf := resourceManagerConf.AgentRM.Scheduler.Priority
-		if prioritySchedulerConf != nil && prioritySchedulerConf.DefaultPriority == nil {
-			defaultPriority := DefaultSchedulingPriority
-			prioritySchedulerConf.DefaultPriority = &defaultPriority
-		}
-
-		// If a pool specifies a scheduler unique for that pool we overwrite the
-		// scheduler specified as part of the ResourceManager config and replace
-		// it completely. We go through the pools if they specify a scheduler and
-		// fill in defaults the same way we do for the ResourceManager.
+		// If a pool specifies a scheduler, that pool will ignore the ResourceManager
+		// scheduler (e.g., it does not use the values in the ResourceManager scheduler
+		// as defaults). For pools that specify a scheduler, we fill in defaults the
+		// same way we do for the ResourceManager.
 		if resourcePoolsConf != nil {
 			for _, resourcePool := range resourcePoolsConf.ResourcePools {
 				if resourcePool.Scheduler == nil {
 					continue
 				}
-
-				if resourcePool.Scheduler.FittingPolicy == "" {
-					resourcePool.Scheduler.FittingPolicy = defaultFitPolicy
-				}
-
-				if resourcePool.Scheduler.Priority == nil {
-					continue
-				}
-
-				if resourcePool.Scheduler.Priority.DefaultPriority == nil {
-					defaultPriority := DefaultSchedulingPriority
-					resourcePool.Scheduler.Priority.DefaultPriority = &defaultPriority
-				}
+				fillInSchedulerDefaults(resourcePool.Scheduler)
 			}
 		}
 	}

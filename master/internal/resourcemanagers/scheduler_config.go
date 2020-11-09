@@ -2,16 +2,12 @@ package resourcemanagers
 
 import (
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
 const (
-	// MinUserSchedulingPriority is the smallest priority users may specify.
-	MinUserSchedulingPriority = 1
-	// MaxUserSchedulingPriority is the largest priority users may specify.
-	MaxUserSchedulingPriority = 99
-	// DefaultSchedulingPriority is the default scheduling policy if users do not specify one.
-	DefaultSchedulingPriority = 42
+	defaultSchedulingPriority = 42
 
 	fairShareScheduling = "fair_share"
 	priorityScheduling  = "priority"
@@ -54,6 +50,17 @@ func (s SchedulerConfig) Validate() []error {
 	}
 }
 
+func fillInSchedulerDefaults(s *SchedulerConfig) {
+	if s.FittingPolicy == "" {
+		s.FittingPolicy = defaultFitPolicy
+	}
+
+	if s.Priority != nil && s.Priority.DefaultPriority == nil {
+		defaultPriority := defaultSchedulingPriority
+		s.Priority.DefaultPriority = &defaultPriority
+	}
+}
+
 func (s *SchedulerConfig) getType() string {
 	switch {
 	case s.FairShare != nil:
@@ -76,15 +83,5 @@ type PrioritySchedulerConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (p PrioritySchedulerConfig) Validate() []error {
-	errors := make([]error, 0)
-
-	if p.DefaultPriority != nil {
-		errors = append(errors, check.GreaterThanOrEqualTo(
-			*p.DefaultPriority, MinUserSchedulingPriority,
-			"scheduling priority must be greater than 0 and less than 100"))
-		errors = append(errors, check.LessThanOrEqualTo(
-			*p.DefaultPriority, MaxUserSchedulingPriority,
-			"scheduling priority must be greater than 0 and less than 100"))
-	}
-	return errors
+	return model.ValidatePrioritySetting(p.DefaultPriority)
 }

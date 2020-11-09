@@ -11,6 +11,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
+const (
+	// MinUserSchedulingPriority is the smallest priority users may specify.
+	MinUserSchedulingPriority = 1
+	// MaxUserSchedulingPriority is the largest priority users may specify.
+	MaxUserSchedulingPriority = 99
+)
+
 // ExperimentConfig is the defaulted configuration.
 type ExperimentConfig struct {
 	Description              string                    `json:"description"`
@@ -186,17 +193,35 @@ type ResourcesConfig struct {
 	NativeParallel bool    `json:"native_parallel"`
 	ShmSize        *int    `json:"shm_size,omitempty"`
 	AgentLabel     string  `json:"agent_label"`
+	Priority       *int    `json:"priority,omitempty"`
+}
+
+// ValidatePrioritySetting checks that priority if set is within a valid range.
+func ValidatePrioritySetting(priority *int) []error {
+	errs := make([]error, 0)
+
+	if priority != nil {
+		errs = append(errs, check.GreaterThanOrEqualTo(
+			*priority, MinUserSchedulingPriority,
+			"scheduling priority must be greater than 0 and less than 100"))
+		errs = append(errs, check.LessThanOrEqualTo(
+			*priority, MaxUserSchedulingPriority,
+			"scheduling priority must be greater than 0 and less than 100"))
+	}
+	return errs
 }
 
 // Validate implements the check.Validatable interface.
 func (r ResourcesConfig) Validate() []error {
-	return []error{
+	errs := []error{
 		check.GreaterThan(r.SlotsPerTrial, 0, "slots_per_trial must be > 0"),
 		check.GreaterThan(r.Weight, float64(0), "weight must be > 0"),
 		check.GreaterThanOrEqualTo(
 			r.MaxSlots, r.SlotsPerTrial, "max_slots must be >= slots_per_trial"),
 		check.GreaterThanOrEqualTo(r.ShmSize, 0, "shm_size must be >= 0"),
 	}
+	errs = append(errs, ValidatePrioritySetting(r.Priority)...)
+	return errs
 }
 
 // OptimizationsConfig configures performance optimizations for Horovod training.
