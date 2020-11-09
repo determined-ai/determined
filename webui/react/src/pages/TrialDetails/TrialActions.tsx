@@ -70,7 +70,7 @@ const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Pr
     },
     {
       button: <Button key={Action.Logs}>
-        <Link path={`/trials/${trial.id}/logs`} popout>Logs</Link>
+        <Link path={`/experiments/${trial.experimentId}/trials/${trial.id}/logs`} popout>Logs</Link>
       </Button>,
     },
   ];

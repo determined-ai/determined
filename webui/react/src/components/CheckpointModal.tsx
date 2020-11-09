@@ -88,10 +88,12 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
           'Source', (
             <div className={css.source}>
               <Link path={`/experiments/${checkpoint.experimentId}`}>
-              Experiment {checkpoint.experimentId}
+                Experiment {checkpoint.experimentId}
               </Link>
               <span className={css.sourceDivider} />
-              <Link path={`/trials/${checkpoint.trialId}`}>Trial {checkpoint.trialId}</Link>
+              <Link path={`/experiments/${checkpoint.experimentId}/trials/${checkpoint.trialId}`}>
+                Trial {checkpoint.trialId}
+              </Link>
               <span className={css.sourceDivider} />
               <span>Batch {checkpoint.batch}</span>
             </div>

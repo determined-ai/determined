@@ -4,8 +4,20 @@ const routes: RouteConfig[] = [
   {
     id: 'trialLogs',
     needAuth: true,
+    path: '/experiments/:experimentId/trials/:trialId/logs',
+    title: 'Trial Logs',
+  },
+  {
+    id: 'trialLogs',
+    needAuth: true,
     path: '/trials/:trialId/logs',
     title: 'Trial Logs',
+  },
+  {
+    id: 'trialDetails',
+    needAuth: true,
+    path: '/experiments/:experimentId/trials/:trialId',
+    title: 'Trial',
   },
   {
     id: 'trialDetails',

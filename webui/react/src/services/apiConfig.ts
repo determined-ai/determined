@@ -267,7 +267,7 @@ export const getTaskLogs: HttpApi<TaskLogsParams, Log[]> = {
 export const getTrialLogs: HttpApi<TrialLogsParams, Log[]> = {
   httpOptions: (params: TrialLogsParams) => ({
     url: [
-      `/trials/${params.trialId}/logs`,
+      `/experiments/${params.experimentId}/trials/${params.trialId}/logs`,
       buildQuery(params),
     ].join('?'),
   }),

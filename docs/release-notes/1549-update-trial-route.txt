@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  WebUI: Update trial details url to include experiment id.
