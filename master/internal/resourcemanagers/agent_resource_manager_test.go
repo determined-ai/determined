@@ -13,8 +13,7 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 
 	// Set up one CPU resource pool and one GPU resource pool.
 	rmConfig := &AgentResourceManagerConfig{
-		SchedulingPolicy:       "fair_share",
-		FittingPolicy:          "best",
+		Scheduler:              defaultSchedulerConfig(),
 		DefaultCPUResourcePool: "cpu-pool",
 		DefaultGPUResourcePool: "gpu-pool",
 	}

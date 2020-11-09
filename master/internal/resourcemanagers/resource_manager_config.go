@@ -36,17 +36,43 @@ func ResolveConfig(
 	switch {
 	case schedulerConf == nil && resourceManagerConf == nil:
 		resourceManagerConf = DefaultRMConfig()
-		resourceManagerConf.AgentRM.DefaultCPUResourcePool = defaultResourcePoolName
-		resourceManagerConf.AgentRM.DefaultGPUResourcePool = defaultResourcePoolName
 
 	case schedulerConf != nil && resourceManagerConf == nil:
 		switch {
 		case schedulerConf.ResourceProvider == nil ||
 			schedulerConf.ResourceProvider.DefaultRPConfig != nil:
+
+			// Fill in defaults for the old scheduler format.
+			if schedulerConf.Type == "" {
+				schedulerConf.Type = fairShareScheduling
+			}
+			if schedulerConf.Fit == "" {
+				schedulerConf.Fit = defaultFitPolicy
+			}
+			schedulerPolicyConf := &SchedulerConfig{
+				FittingPolicy: schedulerConf.Fit,
+			}
+
+			switch schedulerConf.Type {
+			case fairShareScheduling:
+				schedulerPolicyConf.FairShare = &FairShareSchedulerConfig{}
+			case priorityScheduling:
+				schedulerPolicyConf.Priority = &PrioritySchedulerConfig{
+					Preemption: schedulerConf.Preemption,
+				}
+
+				if schedulerConf.DefaultPriority != nil {
+					schedulerPolicyConf.Priority.DefaultPriority = schedulerConf.DefaultPriority
+				}
+			default:
+				return nil, nil, errors.Errorf(
+					"unsupported scheduler type %s; "+
+						"scheduler type must be `fair_share` or `priority`", schedulerConf.Type)
+			}
+
 			resourceManagerConf = &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
-					SchedulingPolicy:       schedulerConf.Type,
-					FittingPolicy:          schedulerConf.Fit,
+					Scheduler:              schedulerPolicyConf,
 					DefaultCPUResourcePool: defaultResourcePoolName,
 					DefaultGPUResourcePool: defaultResourcePoolName,
 				},
@@ -63,13 +89,49 @@ func ResolveConfig(
 	}
 
 	if resourceManagerConf != nil && resourceManagerConf.AgentRM != nil {
-		if resourceManagerConf.AgentRM.SchedulingPolicy == "" {
-			resourceManagerConf.AgentRM.SchedulingPolicy = DefaultRMConfig().AgentRM.SchedulingPolicy
+		if resourceManagerConf.AgentRM.Scheduler == nil {
+			resourceManagerConf.AgentRM.Scheduler = defaultSchedulerConfig()
 		}
-		if resourceManagerConf.AgentRM.FittingPolicy == "" {
-			resourceManagerConf.AgentRM.FittingPolicy = DefaultRMConfig().AgentRM.FittingPolicy
+
+		// Fill in default fitting policy if unspecified.
+		if resourceManagerConf.AgentRM.Scheduler.FittingPolicy == "" {
+			resourceManagerConf.AgentRM.Scheduler.FittingPolicy = defaultFitPolicy
+		}
+
+		// Set default scheduling priority if it is not specified and priority scheduler
+		// is being used.
+		prioritySchedulerConf := resourceManagerConf.AgentRM.Scheduler.Priority
+		if prioritySchedulerConf != nil && prioritySchedulerConf.DefaultPriority == nil {
+			defaultPriority := DefaultSchedulingPriority
+			prioritySchedulerConf.DefaultPriority = &defaultPriority
+		}
+
+		// If a pool specifies a scheduler unique for that pool we overwrite the
+		// scheduler specified as part of the ResourceManager config and replace
+		// it completely. We go through the pools if they specify a scheduler and
+		// fill in defaults the same way we do for the ResourceManager.
+		if resourcePoolsConf != nil {
+			for _, resourcePool := range resourcePoolsConf.ResourcePools {
+				if resourcePool.Scheduler == nil {
+					continue
+				}
+
+				if resourcePool.Scheduler.FittingPolicy == "" {
+					resourcePool.Scheduler.FittingPolicy = defaultFitPolicy
+				}
+
+				if resourcePool.Scheduler.Priority == nil {
+					continue
+				}
+
+				if resourcePool.Scheduler.Priority.DefaultPriority == nil {
+					defaultPriority := DefaultSchedulingPriority
+					resourcePool.Scheduler.Priority.DefaultPriority = &defaultPriority
+				}
+			}
 		}
 	}
+
 	return resourceManagerConf, resourcePoolsConf, nil
 }
 
@@ -83,8 +145,9 @@ func DefaultRMConfig() *ResourceManagerConfig {
 // DefaultAgentRMConfig returns the default determined resource manager configuration.
 func DefaultAgentRMConfig() *AgentResourceManagerConfig {
 	return &AgentResourceManagerConfig{
-		SchedulingPolicy: "fair_share",
-		FittingPolicy:    "best",
+		Scheduler:              defaultSchedulerConfig(),
+		DefaultGPUResourcePool: defaultResourcePoolName,
+		DefaultCPUResourcePool: defaultResourcePoolName,
 	}
 }
 
@@ -110,21 +173,14 @@ func (r *ResourceManagerConfig) UnmarshalJSON(data []byte) error {
 
 // AgentResourceManagerConfig hosts configuration fields for the determined resource manager.
 type AgentResourceManagerConfig struct {
-	SchedulingPolicy       string `json:"scheduling_policy"`
-	FittingPolicy          string `json:"fitting_policy"`
-	DefaultCPUResourcePool string `json:"default_cpu_resource_pool"`
-	DefaultGPUResourcePool string `json:"default_gpu_resource_pool"`
+	Scheduler              *SchedulerConfig `json:"scheduler"`
+	DefaultCPUResourcePool string           `json:"default_cpu_resource_pool"`
+	DefaultGPUResourcePool string           `json:"default_gpu_resource_pool"`
 }
 
 // Validate implements the check.Validatable interface.
 func (a AgentResourceManagerConfig) Validate() []error {
 	return []error{
-		check.Contains(
-			a.SchedulingPolicy, []interface{}{"priority", "fair_share"}, "invalid scheduling policy",
-		),
-		check.Contains(
-			a.FittingPolicy, []interface{}{"best", "worst"}, "invalid fitting policy",
-		),
 		check.NotEmpty(a.DefaultCPUResourcePool, "default_cpu_resource_pool should be non-empty"),
 		check.NotEmpty(a.DefaultGPUResourcePool, "default_gpu_resource_pool should be non-empty"),
 	}

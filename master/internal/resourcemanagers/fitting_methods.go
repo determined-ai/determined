@@ -32,9 +32,9 @@ func WorstFit(_ *AllocateRequest, agent *agentState) float64 {
 // MakeFitFunction returns the corresponding fitting function.
 func MakeFitFunction(fittingPolicy string) func(*AllocateRequest, *agentState) float64 {
 	switch fittingPolicy {
-	case "worst":
+	case worst:
 		return WorstFit
-	case "best":
+	case best:
 		return BestFit
 	default:
 		panic(fmt.Sprintf("invalid scheduler fit: %s", fittingPolicy))
