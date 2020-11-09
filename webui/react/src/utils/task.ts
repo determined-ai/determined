@@ -1,9 +1,32 @@
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { openBlank } from 'routes/utils';
+import { createNotebook } from 'services/api';
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
   ExperimentItem, ExperimentOld, ExperimentTask, RecentCommandTask, RecentEvent,
   RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
+import { commandToTask } from 'utils/types';
+
+export const launchNotebook = async (slots: number): Promise<void> => {
+  try {
+    const notebook = await createNotebook({ slots });
+    const task = commandToTask(notebook);
+    if (task.url) openBlank(task.url);
+    else throw new Error('Notebook URL not available.');
+  } catch (e) {
+    handleError({
+      error: e,
+      level: ErrorLevel.Error,
+      message: e.message,
+      publicMessage: 'Please try again later.',
+      publicSubject: 'Unable to Launch Notebook',
+      silent: false,
+      type: ErrorType.Server,
+    });
+  }
+};
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {

@@ -6,8 +6,8 @@ import { CSSTransition } from 'react-transition-group';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
-import useNotebookLauncher from 'hooks/useNotebookLauncher';
 import useStorage from 'hooks/useStorage';
+import { launchNotebook } from 'utils/task';
 
 import Avatar from './Avatar';
 import Dropdown, { Placement } from './Dropdown';
@@ -54,7 +54,6 @@ const Navigation: React.FC = () => {
   const ui = UI.useStateContext();
   const setUI = UI.useActionContext();
   const storage = useStorage('navigation');
-  const notebookLauncher = useNotebookLauncher();
   const [ isCollapsed, setIsCollapsed ] = useState(storage.getWithDefault(STORAGE_KEY, false));
   const [ isShowingCpu, setIsShowingCpu ] = useState(false);
 
@@ -65,12 +64,8 @@ const Navigation: React.FC = () => {
   const username = user?.username || 'Anonymous';
   const cluster = overview.allocation === 0 ? undefined : `${overview.allocation}%`;
 
-  const handleNotebookLaunch = useCallback(() => {
-    notebookLauncher.launchNotebook();
-  }, [ notebookLauncher ]);
-  const handleCpuNotebookLaunch = useCallback(() => {
-    notebookLauncher.launchCpuOnlyNotebook();
-  }, [ notebookLauncher ]);
+  const handleNotebookLaunch = useCallback(() => launchNotebook(1), []);
+  const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), []);
   const handleVisibleChange = useCallback((visible: boolean) => setIsShowingCpu(visible), []);
 
   const handleCollapse = useCallback(() => {
