@@ -95,7 +95,7 @@ const TaskLogs: React.FC = () => {
         backPath: '/tasks',
         breadcrumb: [
           { breadcrumbName: 'Tasks', path: '/tasks' },
-          { breadcrumbName: `${capitalize(taskType)} ${taskId.substr(0, 6)}`, path: '#' },
+          { breadcrumbName: `${capitalize(taskType)} ${taskId.substr(0, 4)}`, path: '#' },
         ],
         title,
       }}
