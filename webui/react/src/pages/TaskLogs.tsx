@@ -91,7 +91,14 @@ const TaskLogs: React.FC = () => {
     <LogViewer
       disableLevel
       noWrap
-      pageProps={{ title }}
+      pageProps={{
+        backPath: '/tasks',
+        breadcrumb: [
+          { breadcrumbName: 'Tasks', path: '/tasks' },
+          { breadcrumbName: `${capitalize(taskType)} ${taskId.substr(0, 6)}`, path: '#' },
+        ],
+        title,
+      }}
       ref={logsRef}
       onScrollToTop={handleScrollToTop} />
   );
