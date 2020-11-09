@@ -11,6 +11,8 @@ interface Props {
   hasFiltersApplied?: boolean;
 }
 
+const BREAKPOINT = 768;
+
 const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Props) => {
   const resize = useResize();
   const classes = [ css.base ];
@@ -18,7 +20,7 @@ const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Pro
   if (hasFiltersApplied) classes.push(css.filtersApplied);
 
   const content = <div className={css.content}>{children}</div>;
-  const wrappedContent = resize.width < 768 ? (
+  const wrappedContent = resize.width < BREAKPOINT ? (
     <Dropdown
       content={content}
       disableAutoDismiss
