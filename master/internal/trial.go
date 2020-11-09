@@ -293,7 +293,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.replaying = false
 
 	case sproto.ContainerLog:
-		t.processLog(ctx, msg)
+		t.processContainerLog(ctx, msg)
 
 	case trialAborted:
 		// This is to handle trial being aborted. It does nothing here but requires
@@ -933,11 +933,7 @@ func (t *trial) processContainerTerminated(
 	t.killAndRemoveSocket(ctx, msg.Container.ID)
 
 	exitMsg := msg.ContainerStopped.String()
-	t.processLog(ctx, sproto.ContainerLog{
-		Container:  msg.Container,
-		Timestamp:  time.Now(),
-		AuxMessage: &exitMsg,
-	})
+	t.insertLog(ctx, msg.Container, exitMsg)
 
 	// Terminate the task if the container never started (since this prevents the gang
 	// from ever being able to start), if the leader of the gang has exited out, or if
@@ -952,21 +948,51 @@ func (t *trial) processContainerTerminated(
 	}
 }
 
-func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
+func (t *trial) canLog(ctx *actor.Context, msg string) bool {
 	// Log messages should never come in before the trial ID is set, since no trial runners are
 	// launched until after the trial ID is set. But for futureproofing, we will log an error while
 	// we protect the database.
 	if !t.idSet {
-		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg.String())
-		return
+		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg)
+		return false
 	}
 
 	if t.logger == nil {
 		// A trial created for a unit test does not have a logger.
+		return false
+	}
+	return true
+}
+
+func (t *trial) processContainerLog(ctx *actor.Context, msg sproto.ContainerLog) {
+	if !t.canLog(ctx, msg.String()) {
 		return
 	}
 
 	ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: msg.String() + "\n"})
+}
+
+func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
+	if !t.canLog(ctx, msg) {
+		return
+	}
+
+	cid := string(container.ID)
+	now := time.Now()
+	msg += "\n"
+	level := "INFO"
+	source := "master"
+	stdType := "stdout"
+	ctx.Tell(t.logger, model.TrialLog{
+		TrialID: t.id,
+		Log:     &msg,
+
+		ContainerID: &cid,
+		Timestamp:   &now,
+		Level:       &level,
+		Source:      &source,
+		StdType:     &stdType,
+	})
 }
 
 func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped {

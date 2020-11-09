@@ -23,6 +23,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 		MaxInstances:           5,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
+		AgentFluentImage:       "fluent/fluent-bit:1.6",
 	}
 	assert.DeepEqual(t, config, expected)
 }
@@ -32,6 +33,7 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 "master_url": "http://test.master",
 "provider": "aws",
 "agent_docker_image": "test_image",
+"agent_fluent_image": "fluent_image",
 "region": "test.region3",
 "image_id": "test.image3",
 "ssh_key_name": "test-key3",
@@ -52,6 +54,7 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 	unmarshaled := Config{
 		MasterURL:              "http://test.master:8080",
 		AgentDockerImage:       "test_image",
+		AgentFluentImage:       "fluent_image",
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		AWS:                    &awsConfig,
@@ -103,6 +106,7 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 		MasterURL:              "http://test.master:8080",
 		AWS:                    &awsConfig,
 		AgentDockerImage:       "test_image",
+		AgentFluentImage:       "fluent/fluent-bit:1.6",
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     Duration(30 * time.Second),
@@ -136,6 +140,7 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 		MasterURL:              "http://test.master:8080",
 		GCP:                    &expected,
 		AgentDockerImage:       "test_image",
+		AgentFluentImage:       "fluent/fluent-bit:1.6",
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
