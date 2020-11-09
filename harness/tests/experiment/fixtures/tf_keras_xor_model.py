@@ -33,6 +33,8 @@ class XORTrial(keras.TFKerasTrial):
 
     def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
+        # In-memory Sequences work best with workers=0.
+        self.context.configure_fit(verbose=False, workers=0)
 
     def build_model(self) -> Sequential:
         model = Sequential()
@@ -58,11 +60,11 @@ class XORTrial(keras.TFKerasTrial):
 
     def build_training_data_loader(self) -> keras.InputData:
         train, _ = make_xor_data_sequences(batch_size=4)
-        return keras.SequenceAdapter(train, workers=0)
+        return train
 
     def build_validation_data_loader(self) -> keras.InputData:
         _, test = make_xor_data_sequences(batch_size=4)
-        return keras.SequenceAdapter(test, workers=0)
+        return test
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
         return [StopVeryEarlyCallback()] if self.context.env.hparams.get("stop_early") else []

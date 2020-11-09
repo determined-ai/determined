@@ -245,30 +245,39 @@ class TFKerasTrialController(det.LoopTrialController):
 
         session = TFKerasTrialController._configure_session(env, hvd_config, trial.session_config())
 
+        training_data_loader = trial.build_training_data_loader()
+        validation_data_loader = trial.build_validation_data_loader()
+
+        trial.build_model()
+        check.is_not_none(context.model, "Please call wrap_model(...).")
+
         training_x, training_y, training_sample_weight = keras._get_x_y_and_sample_weight(
-            input_data=trial.build_training_data_loader()
+            input_data=training_data_loader
         )
         training_data = keras._adapt_keras_data(
             x=training_x,
             y=training_y,
             sample_weight=training_sample_weight,
             batch_size=context.get_per_slot_batch_size(),
+            use_multiprocessing=context._fit_use_multiprocessing,
+            workers=context._fit_workers,
+            max_queue_size=context._fit_max_queue_size,
             drop_leftovers=True,
         )
 
         val_x, val_y, val_sample_weight = keras._get_x_y_and_sample_weight(
-            input_data=trial.build_validation_data_loader()
+            input_data=validation_data_loader
         )
         validation_data = keras._adapt_keras_data(
             x=val_x,
             y=val_y,
             sample_weight=val_sample_weight,
             batch_size=context.get_per_slot_batch_size(),
+            use_multiprocessing=context._fit_use_multiprocessing,
+            workers=context._fit_workers,
+            max_queue_size=context._fit_max_queue_size,
             drop_leftovers=False,
         )
-
-        trial.build_model()
-        check.is_not_none(context.model, "Please call wrap_model(...).")
 
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         compile_args = cast(inspect.BoundArguments, context.compile_args)
@@ -420,6 +429,10 @@ class TFKerasTrialController(det.LoopTrialController):
         # entire epoch, and we don't report any metrics in on_epoch_end at all.
         self.model.history = keras.callbacks._DeterminedHistory()
         callbacks = callbacks + [self.model.history]
+
+        if self.context._fit_verbose:
+            # Our implementation of verbose=True.
+            callbacks = [keras.callbacks._DeterminedProgress()] + callbacks
 
         # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
         # because we would have to communicate after every batch to know how many records were in
@@ -605,6 +618,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
         self.model.fit(
             training_input,
+            class_weight=self.context._fit_class_weight,
             callbacks=self.callback_list,
             shuffle=False,
             steps_per_epoch=sys.maxsize,
@@ -847,9 +861,6 @@ class TFKerasTrial(det.Trial):
             <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple
             of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
-            5) A :class:`determined.keras.SequenceAdapter` returning a tuple of either
-            ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
-
         When using ``tf.data.Dataset``, you must wrap the dataset using
         :meth:`determined.keras.TFKerasTrialContext.wrap_dataset`. This wrapper is used
         to shard the dataset for distributed training. For optimal performance, users
@@ -884,9 +895,6 @@ class TFKerasTrial(det.Trial):
             4) A `keras.utils.Sequence
             <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple
             of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
-
-            5) A :class:`determined.keras.SequenceAdapter` returning a tuple of either
-            (inputs, targets) or (inputs, targets, sample weights).
 
         When using ``tf.data.Dataset``, you must wrap the dataset using
         :meth:`determined.keras.TFKerasTrialContext.wrap_dataset`. This wrapper is used

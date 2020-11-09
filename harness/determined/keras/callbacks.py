@@ -372,19 +372,20 @@ class _MultiplexerBase(tf.keras.callbacks.Callback):  # type: ignore
         self.want_train_workload_begin = True
 
 
-class DeterminedProgress(Callback):
+class _DeterminedProgress(Callback):
     """
     A Determined-friendly replacement for the usual verbose=1 behavior.
 
-    To use it with a TFKerasTrial, simply pass it as one of the keras_callbacks:
+    It is enabled by default, but it can be disabled with ``context.configure_fit()``:
 
     .. code-block:: python
 
        class MyTFKerasTrial(TFKerasTrial):
            ...
 
-           def keras_callbacks(self):
-               return [DeterminedProgess()]
+           def __init__(self, context):
+               ...
+               context.configure_fit(verbose=False)
     """
 
     _chief_worker_only = True
