@@ -246,3 +246,47 @@ message CreateExperimentResponse {
   // The created experiment config.
   google.protobuf.Struct config = 2;
 }
+
+// Request for the set of metrics recorded by an experiment.
+message MetricNamesRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+}
+
+// Response to MetricNamesRequest.
+message MetricNamesResponse {
+  // The name of the searcher metric
+  string searcher_metric = 1;
+  // List of training metric names.
+  repeated string training_metrics = 2;
+  // List of validation metric names.
+  repeated string validation_metrics = 3;
+}
+
+// To distinguish the 2 different categories of metrics.
+enum MetricType {
+  // Zero-value (not allowed).
+  METRIC_TYPE_UNSPECIFIED = 0;
+  // For metrics emitted during training.
+  METRIC_TYPE_TRAINING = 1;
+  // For metrics emitted during validation.
+  METRIC_TYPE_VALIDATION = 2;
+}
+
+// Request the milestones (in batches processed) at which a metric is recorded
+// by an experiment.
+message MetricBatchesRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // A metric name
+  string metric_name = 2;
+  // The type of metric
+  MetricType metric_type = 3;
+}
+
+// Response to MetricBatchesRequest.
+message MetricBatchesResponse {
+  // Milestones (in batches processed) at which the specified metric is
+  // recorded.
+  repeated int32 batches = 1;
+}

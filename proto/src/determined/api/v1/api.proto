@@ -726,4 +726,26 @@ service Determined {
       tags: "Checkpoints"
     };
   }
+
+  // Get the set of metric names recorded for an experiment.
+  rpc MetricNames(MetricNamesRequest) returns (stream MetricNamesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/metrics-stream/metric-names"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
+  // Get the milestones (in batches processed) at which a metric is recorded by
+  // an experiment.
+  rpc MetricBatches(MetricBatchesRequest)
+      returns (stream MetricBatchesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/metrics-stream/batches"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
 }

@@ -1,6 +1,7 @@
 appdirs
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
+pytest-timeout
 pexpect
 torch==1.4
 torchvision==0.5.0
