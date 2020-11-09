@@ -92,11 +92,19 @@ class UNetsTrial(TFKerasTrial):
         ]
 
         model = self.unet_model(self.context.get_hparam("OUTPUT_CHANNELS"))
+
+        # Wrap the model.
         model = self.context.wrap_model(model)
 
-        model.compile(optimizer=tf.keras.optimizers.Adam(name='Adam'),
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")])
+        # Create and wrap optimizer.
+        optimizer = tf.keras.optimizers.Adam()
+        optimizer = self.context.wrap_optimizer(optimizer)
+
+        model.compile(
+            optimizer=optimizer,
+            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")]
+        )
         return model
 
     def build_training_data_loader(self):

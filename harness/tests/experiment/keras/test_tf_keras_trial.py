@@ -27,6 +27,7 @@ def test_executing_eagerly():
     scope="function",
     params=[
         tf_keras_xor_model.XORTrial,
+        tf_keras_xor_model.XORTrialOldOptimizerAPI,
         tf_keras_xor_model.XORTrialWithTrainingMetrics,
         tf_keras_xor_model.XORTrialWithCustomObjects,
         tf_keras_xor_model.XORTrialWithDataLayer,

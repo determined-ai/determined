@@ -92,9 +92,16 @@ class CIFARTrial(keras.TFKerasTrial):
         model.add(Dropout(self.layer3_dropout))
         model.add(Dense(NUM_CLASSES, name="label"))
         model.add(Activation("softmax"))
+
+        # Wrap the model.
         model = self.context.wrap_model(model)
+
+        # Create and wrap the optimizer.
+        optimizer = RMSprop(lr=self.base_learning_rate, decay=self.learning_rate_decay)
+        optimizer = self.context.wrap_optimizer(optimizer)
+
         model.compile(
-            RMSprop(lr=self.base_learning_rate, decay=self.learning_rate_decay),
+            optimizer,
             categorical_crossentropy,
             [categorical_accuracy, categorical_error],
         )

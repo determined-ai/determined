@@ -97,7 +97,7 @@ writing ``tf.keras`` trial definitions, as well as functions to wrap the
 model and dataset.
 
 .. autoclass:: determined.keras.TFKerasTrialContext
-   :members: wrap_model, wrap_dataset
+   :members: wrap_model, wrap_dataset, wrap_optimizer
    :member-order: bysource
 
    TFKerasTrialContext always has a

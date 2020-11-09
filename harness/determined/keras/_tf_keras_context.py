@@ -7,6 +7,7 @@ import tensorflow as tf
 import determined as det
 from determined import _data_layer, errors, horovod, keras
 from determined.horovod import hvd
+from determined_common import check
 
 
 class TFKerasTrainConfig(NamedTuple):
@@ -35,6 +36,10 @@ class TFKerasContext:
         self.compile_args = None  # type: Optional[inspect.BoundArguments]
         self.train_config = None  # type: Optional[TFKerasTrainConfig]
 
+        self._optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
+        self._wrapped_optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
+        self._compiled_optimizer = None  # type: Optional[tf.keras.optimizers.Optimizer]
+
     def _wrap_model_with_train_fn(self, model: Any, train_fn: Optional[Callable]) -> Any:
         class _WrappedModel(type(model)):  # type: ignore
             def __init__(wrapper) -> None:
@@ -52,12 +57,6 @@ class TFKerasContext:
             def compile(wrapper, *args: Any, **kwargs: Any) -> None:
                 bound_arguments = inspect.signature(model.compile).bind(*args, **kwargs)
                 bound_arguments.apply_defaults()
-
-                if "optimizer" not in bound_arguments.arguments:
-                    raise errors.InvalidExperimentException(
-                        "Must have 'optimizer' in arguments of .compile()."
-                    )
-
                 self.compile_args = bound_arguments
 
             def fit_generator(wrapper, *args: Any, **kwargs: Any) -> None:
@@ -193,6 +192,108 @@ class TFKerasContext:
         dataset = dataset.shard(hvd.size(), hvd.rank())
         logging.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
         return dataset
+
+    def _get_horovod_optimizer_if_using_horovod(
+        self, optimizer: tf.keras.optimizers.Optimizer
+    ) -> tf.keras.optimizers.Optimizer:
+        if not self.hvd_config.use:
+            return optimizer
+
+        # Horovod doesn't know how to handle string-based optimizers.
+        if isinstance(optimizer, str):
+            raise det.errors.InvalidExperimentException("string optimizers are not supported")
+
+        return hvd.DistributedOptimizer(
+            optimizer,
+            aggregation_frequency=self.hvd_config.aggregation_frequency,
+            average_aggregated_gradients=self.hvd_config.average_aggregated_gradients,
+        )
+
+    def wrap_optimizer(
+        self, optimizer: tf.keras.optimizers.Optimizer
+    ) -> tf.keras.optimizers.Optimizer:
+        """
+        This should be user to wrap ``tf.keras.optimizers.Optimizer`` objects. Users
+        should use the output use the output of this wrapper as the new instance of
+        their optimizer. If users create multiple optimizers, users should wrap each
+        optimizer independently.
+
+        Args:
+            optimizer: tf.keras.optimizers.Optimizer
+        """
+        if not self.env.managed_training:
+            return optimizer
+
+        logging.debug(f"Processing wrapped optimizer {optimizer}.")
+        if not self.hvd_config.use:
+            self._wrapped_optimizers.append(optimizer)
+            return optimizer
+
+        hvd.require_horovod_type("tensorflow.keras", "TFKerasContext.wrap_optimizer was called.")
+        if optimizer == self._compiled_optimizer:
+            logging.debug(
+                "Skipping wrapping optimizer as it was already wrapped during the compile call."
+            )
+            wrapped_optimizer = optimizer
+        else:
+            wrapped_optimizer = self._get_horovod_optimizer_if_using_horovod(
+                optimizer=optimizer,
+            )
+        self._wrapped_optimizers.append(wrapped_optimizer)
+
+        return wrapped_optimizer
+
+    def _process_optimizer_from_compile(
+        self, optimizer: tf.keras.optimizers.Optimizer
+    ) -> tf.keras.optimizers.Optimizer:
+        logging.debug(f"Processing compiled optimizer {optimizer}.")
+        if not self.hvd_config.use:
+            self._compiled_optimizer = optimizer
+            return optimizer
+
+        if optimizer in self._wrapped_optimizers:
+            logging.debug(
+                "Skipping wrapping optimizer that is part of the compile "
+                "call as it was already wrapped explicitly via wrap_optimizer()."
+            )
+            wrapped_optimizer = optimizer
+        else:
+            wrapped_optimizer = self._get_horovod_optimizer_if_using_horovod(
+                optimizer=optimizer,
+            )
+        self._compiled_optimizer = wrapped_optimizer
+
+        return wrapped_optimizer
+
+    def _select_optimizers(self) -> None:
+        """
+        Selects the optimizers that are going to be used. This is done for backwards
+        compatibility as previously optimizers were passed in as part of the compile()
+        call and are now passed in as part of `self.context.wrap_optimizers()`.
+        """
+        check.check_len(
+            self._optimizers,
+            0,
+            "context._select_optimizers() called multiple times. Should be only called "
+            "once by TFKerasTrialController.",
+        )
+
+        if len(self._wrapped_optimizers) > 0:
+            logging.debug(f"Using wrapped optimizers: {self._wrapped_optimizers}.")
+            self._optimizers = self._wrapped_optimizers
+            return
+
+        check.is_not_none(
+            self._compiled_optimizer,
+            "Please use `optimizer = self.context.wrap_optimizer(optimizer)` to wrap your "
+            "optimizer. If using multiple optimizer, you should wrap your optimizer "
+            "separately (calling wrap_optimizer() once for each optimizer).",
+        )
+
+        if self._compiled_optimizer:
+            logging.info("Please switch over to using `optimizer = self.context.wrap_optimizer()`.")
+            logging.debug(f"Using compiled optimizer: {self._compiled_optimizer}.")
+            self._optimizers = [self._compiled_optimizer]
 
 
 class TFKerasTrialContext(det.TrialContext, TFKerasContext):

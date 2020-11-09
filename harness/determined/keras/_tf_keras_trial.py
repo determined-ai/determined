@@ -14,7 +14,10 @@ from packaging import version
 from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
 from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
-from tensorflow.python.keras.saving.hdf5_format import load_optimizer_weights_from_hdf5_group
+from tensorflow.python.keras.saving.hdf5_format import (
+    load_optimizer_weights_from_hdf5_group,
+    save_optimizer_weights_to_hdf5_group,
+)
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
@@ -25,49 +28,49 @@ from determined_common import check
 IMPOSSIBLY_LARGE_EPOCHS = sys.maxsize
 
 
-def load_optimizer_weights(model: Model, load_path: pathlib.Path) -> None:
+def load_optimizer_weights(
+    model: Model, h5group: Any, optimizer: tf.keras.optimizers.Optimizer
+) -> None:
     """
     Load the optimizer states from a tf.keras model saved with
     tf.keras.models.save_model(). Ignores and prints a warning message when
     encountering a graph network. This implementation is lifted from
     tf.keras.models.load_model().
     """
-    f = h5py.File(str(load_path), mode="r")
-    if "optimizer_weights" in f:
-        tf2_2_or_newer = version.parse(tf.__version__) >= version.parse("2.2.0")
-        if model._is_graph_network or tf2_2_or_newer:  # pylint: disable=protected-access
-            if tf2_2_or_newer:
-                try:
-                    model.optimizer._create_all_weights(model.trainable_variables)
-                except (NotImplementedError, AttributeError):
-                    logging.warning(
-                        "Error when creating the weights of optimizer, making it "
-                        "impossible to restore the saved optimizer state. As a result, "
-                        "your model is starting with a freshly initialized optimizer."
-                    )
-            else:
-                # Build train function (to get weight updates).  Models that aren't
-                # graph networks must wait until they are called with data to
-                # _make_train_function() and so can't load optimizer weights.
-                model._make_train_function()
-
-            optimizer_weight_values = load_optimizer_weights_from_hdf5_group(f)
+    tf2_2_or_newer = version.parse(tf.__version__) >= version.parse("2.2.0")
+    if model._is_graph_network or tf2_2_or_newer:  # pylint: disable=protected-access
+        if tf2_2_or_newer:
             try:
-                model.optimizer.set_weights(optimizer_weight_values)
-            except ValueError:
+                optimizer._create_all_weights(model.trainable_variables)
+            except (NotImplementedError, AttributeError):
                 logging.warning(
-                    "Error in loading the saved optimizer "
-                    "state. As a result, your model is "
-                    "starting with a freshly initialized "
-                    "optimizer."
+                    "Error when creating the weights of optimizer, making it "
+                    "impossible to restore the saved optimizer state. As a result, "
+                    "your model is starting with a freshly initialized optimizer."
                 )
         else:
+            # Build train function (to get weight updates).  Models that aren't
+            # graph networks must wait until they are called with data to
+            # _make_train_function() and so can't load optimizer weights.
+            model._make_train_function()
+
+        optimizer_weight_values = load_optimizer_weights_from_hdf5_group(h5group)
+        try:
+            optimizer.set_weights(optimizer_weight_values)
+        except ValueError:
             logging.warning(
-                "Sequential models without an `input_shape` "
-                "passed to the first layer cannot reload their "
-                "optimizer state. As a result, your model is "
-                "starting with a freshly initialized optimizer."
+                "Error in loading the saved optimizer "
+                "state. As a result, your model is "
+                "starting with a freshly initialized "
+                "optimizer."
             )
+    else:
+        logging.warning(
+            "Sequential models without an `input_shape` "
+            "passed to the first layer cannot reload their "
+            "optimizer state. As a result, your model is "
+            "starting with a freshly initialized optimizer."
+        )
 
 
 class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
@@ -194,15 +197,19 @@ class TFKerasTrialController(det.LoopTrialController):
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
     ) -> None:
-        (
-            context.model,
-            compile_args.arguments["optimizer"],
-        ) = keras._get_multi_gpu_model_and_optimizer(
+        context.model = keras._get_multi_gpu_model_if_using_native_parallel(
             pre_compiled_model=context.model,
-            optimizer=compile_args.arguments["optimizer"],
             env=env,
             hvd_config=hvd_config,
         )
+
+        if "optimizer" in compile_args.arguments:
+            # For backwards compatibility we check if an optimizer is passed as part
+            # of the compile call. If `wrap_optimizer()` is used, we will ignore this
+            # this optimizer.
+            compile_args.arguments["optimizer"] = context._process_optimizer_from_compile(
+                compile_args.arguments["optimizer"]
+            )
 
         if hvd_config.use and version.parse("2.0.0") <= version.parse(
             tf.__version__
@@ -345,6 +352,13 @@ class TFKerasTrialController(det.LoopTrialController):
         self.model = model
         self.session = session
 
+        # Configure optimizers, done for backwards compatibility.
+        self.context._select_optimizers()
+
+        keras._check_if_aggregation_frequency_will_work(
+            model=self.model, hvd_config=self.hvd_config
+        )
+
         self._train_input_manager, self._validation_input_manager = keras._init_input_managers(
             context=self.context, train_config=train_config
         )
@@ -471,13 +485,23 @@ class TFKerasTrialController(det.LoopTrialController):
 
         path.mkdir(parents=True, exist_ok=True)
 
-        assert self.context.model is not None
-        self.model.save(path.joinpath("determined-keras-model.h5"), save_format="h5")
+        # Save model weights. We use `tf` format because `h5` does not support
+        # models that subclass `tf.keras.Model` and define custom `call()`
+        # and/or `train_step()` functions.
+        self.model.save_weights(
+            str(path.joinpath("determined-keras-model-weights")), save_format="tf"
+        )
 
-        # Save RNG state
+        # Save optimizer(s) weights.
+        with h5py.File(path.joinpath("determined-keras-optimizer-weights.h5"), "w") as h5file:
+            for idx, optimizer in enumerate(self.context._optimizers):
+                opt_group = h5file.create_group(f"optimizer-{idx}")
+                save_optimizer_weights_to_hdf5_group(opt_group, optimizer)
+
+        # Save RNG state.
         rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
         if version.parse(tf.__version__) < version.parse("2.0.0"):
-            rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
+            rng_state["tf_rng_global_seed"] = tf.compat.v1.random.get_seed(0)[0]
         else:
             generator = tf.random.get_global_generator()
             rng_state["tf2_rng_global_algorithm"] = generator.algorithm
@@ -485,32 +509,66 @@ class TFKerasTrialController(det.LoopTrialController):
         with open(path.joinpath("rng_state.pkl"), "wb") as f:
             pickle.dump(rng_state, f)
 
+        # Save user code.
+        det.util.write_user_code(path)
+
+        # Save callback(s) state.
         callbacks_state = self.multiplexer._get_state()
         with path.joinpath("determined-callbacks.v1.pkl").open("wb") as f:
             pickle.dump(callbacks_state, f)
 
-        det.util.write_user_code(path)
-
         self.multiplexer._checkpoint_end(path)
 
-        return {"framework": f"tensorflow-{tf.__version__}", "format": "h5"}
+        return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_weights"}
+
+    def _load_model_weights(self, model_weights_checkpoint_path: pathlib.Path) -> None:
+        logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
+        self.model.load_weights(str(model_weights_checkpoint_path))
+
+    def _load_optimizers_weights(self, optimizer_weights_checkpoint_path: pathlib.Path) -> None:
+        logging.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
+        with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
+            if "optimizer_weights" in h5file:
+                load_optimizer_weights(
+                    self.model, h5file["optimizer_weights"], self.model.optimizer
+                )
+                return
+
+            for idx, optimizer in enumerate(self.context._optimizers):
+                if f"optimizer-{idx}" in h5file:
+                    load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
+
+    def _load_model_and_optimizer_weights_v1(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model"))
+        self._load_optimizers_weights(self.load_path.joinpath("determined-keras-model"))
+
+    def _load_model_and_optimizer_weights_v2(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model.h5"))
+        self._load_optimizers_weights(self.load_path.joinpath("determined-keras-model.h5"))
+
+    def _load_model_and_optimizer_weights_v3(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model-weights"))
+        self._load_optimizers_weights(
+            self.load_path.joinpath("determined-keras-optimizer-weights.h5")
+        )
 
     def _load(self) -> None:
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if not self.load_path:
             return
 
-        # Load model.
+        # Find model code path, we check multiple naming conventions for backwards compatibility.
         if self.load_path.joinpath("determined-keras-model.h5").exists():
-            full_ckpt_path = self.load_path.joinpath("determined-keras-model.h5")
+            self._load_model_and_optimizer_weights_v2()
+        elif self.load_path.joinpath("determined-keras-optimizer-weights.h5").exists():
+            self._load_model_and_optimizer_weights_v3()
         else:
-            full_ckpt_path = self.load_path.joinpath("determined-keras-model")
+            self._load_model_and_optimizer_weights_v1()
 
-        logging.info(f"Restoring checkpoint from {full_ckpt_path}")
-        self.model.load_weights(str(full_ckpt_path))
-        load_optimizer_weights(self.model, full_ckpt_path)
-
-        # Load RNG state
+        # Load RNG state.
         try:
             with open(self.load_path.joinpath("rng_state.pkl"), "rb") as f:
                 rng_state = pickle.load(f)
@@ -518,14 +576,14 @@ class TFKerasTrialController(det.LoopTrialController):
             random.setstate(rng_state["random_rng_state"])
 
             if version.parse(tf.__version__) < version.parse("2.0.0"):
-                tf.random.set_random_seed(rng_state["tf_rng_global_seed"])
+                tf.compat.v1.random.set_random_seed(rng_state["tf_rng_global_seed"])
             else:
                 algorithm = rng_state["tf2_rng_global_algorithm"]
                 state = rng_state["tf2_rng_global_state"]
                 generator = tf.random.Generator.from_state(state, algorithm)
                 tf.random.set_global_generator(generator)
         except IOError:
-            logging.warn("Checkpoint did not include RNG state")
+            logging.warning("Checkpoint did not include RNG state.")
 
         # Load callbacks.
         cb_state_path = self.load_path.joinpath("determined-callbacks.v1.pkl")
@@ -562,16 +620,33 @@ class TFKerasTrialController(det.LoopTrialController):
             validation_steps,
         ) = self._validation_input_manager.get_validation_input_and_num_batches()
 
+        # Starting in TF 2.2 users may define custom test_step() that do
+        # not use the model metrics.
+        use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
+        evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
+
         metrics_values = self.model.evaluate(
             validation_data,
             steps=validation_steps,
             verbose=0,
             callbacks=self.callback_list,
+            **evaluate_kwargs,
         )
+        logging.debug(f"Worker finished model.evaluate() with metrics: {metrics_values}.")
+
+        # If the model was compiled with metrics=None, metrics_value will be a single value.
+        if not isinstance(metrics_values, (tuple, list, dict)):
+            metrics_values = (metrics_values,)
+
+        if use_model_metrics:
+            metrics = make_logs(self.model, {}, metrics_values, ModeKeys.TEST, prefix="val_")
+        else:
+            check.is_instance(metrics_values, dict)
+            metrics = {f"val_{k}": v for k, v in metrics_values.items()}
 
         _ = self._validation_input_manager.stop_validation_input_and_get_num_inputs()
 
-        return metrics_values
+        return metrics
 
     def _control_loop(self) -> None:
         for wkld, args, response_func in self.workloads:
@@ -607,8 +682,8 @@ class TFKerasTrialController(det.LoopTrialController):
             return logs
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
-        logging.debug(f"allreducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}")
-        return {key: np.array(hvd.allreduce(logs[key])) for key in keys}
+        logging.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
+        return {key: np.array(hvd.allreduce(logs[key], name=key)) for key in keys}
 
     def _post_train_batch_end(self, num_inputs: int, logs: Dict) -> None:
         # Remove default keras metrics we aren't interested in like "batch" and "size".
@@ -627,7 +702,7 @@ class TFKerasTrialController(det.LoopTrialController):
             )
 
         if self.hvd_config.use:
-            num_inputs = hvd.allreduce(num_inputs, average=False)
+            num_inputs = hvd.allreduce(num_inputs, average=False, name="train_num_inputs")
             if isinstance(num_inputs, EagerTensor):
                 # Horovod will promote an int to a tensor in eager mode.
                 num_inputs = num_inputs.numpy()
@@ -664,21 +739,15 @@ class TFKerasTrialController(det.LoopTrialController):
         self.model.reset_metrics()
 
     def _compute_validation_metrics(self) -> workload.Response:
-        metrics_values = self._launch_evaluate()
+        metrics = self._launch_evaluate()
         num_inputs = self.multiplexer.get_test_inputs()
 
         if self.hvd_config.use:
-            num_inputs = hvd.allreduce(num_inputs, average=False)
+            num_inputs = hvd.allreduce(num_inputs, average=False, name="validation_num_inputs")
             if isinstance(num_inputs, EagerTensor):
                 # Horovod will promote an int to a tensor in eager mode.
                 num_inputs = num_inputs.numpy()
 
-        # If the model was compiled with metrics=None, metrics_value will be a single value.
-        if not isinstance(metrics_values, (tuple, list)):
-            metrics_values = (metrics_values,)
-
-        # metrics_values is already allreduced since before the on_test_end callback.
-        metrics = make_logs(self.model, {}, metrics_values, ModeKeys.TEST, prefix="val_")
         metrics = self._allreduce_logs(metrics)
         check.gt(len(metrics), 0)
 

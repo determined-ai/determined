@@ -60,8 +60,10 @@ class NoopKerasTrial(TFKerasTrial):
             ]
         )
         model = self.context.wrap_model(model)
+        optimizer = self.context.wrap_optimizer(tf.keras.optimizers.SGD())
         model.compile(
             loss=tf.keras.losses.MeanSquaredError(),
+            optimizer=optimizer,
             metrics=[
                 RandomMetric(name="rand_rand"),
                 NumPyRandomMetric(name="np_rand"),
