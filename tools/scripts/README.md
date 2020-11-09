@@ -40,7 +40,6 @@ be registered in the determined repo. Here is the process:
    in the repository, replacing the `old` values with the `new` values for
    every image type identified in `bumpenvs.yaml`.
 
-
 ## `gen-attributions.py`: Automated OSS Compliance
 
 OSS License compliance is is important for being good OSS citizens and it is
@@ -83,3 +82,10 @@ The relevant metadata are:
 * `Webui`: boolean indicating if this is a dependency of the WebUI
 
 For instructions on how to use `gen-attributions.py`, just run it with no arguments.
+
+## `lock-api-state.sh`: Lock-in current API state
+
+We use [buf.build](https://docs.buf.build/) to provide backward compatibility check
+for API changes in Determined. By running this script on each release, we store a
+snapshot of the API state and on each following change `buf` compares the new state
+with the old to ensure that backward compatibility is preserved.

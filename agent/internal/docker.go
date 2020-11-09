@@ -28,6 +28,7 @@ import (
 type dockerActor struct {
 	*client.Client
 	credentialStores map[string]*credentialStore
+	spec             *container.Spec
 }
 
 type (
@@ -217,35 +218,36 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg container.RunSpec) {
 		containerStarted{dockerID: response.ID, containerInfo: containerInfo},
 	)
 
-	logs, err := d.ContainerLogs(
-		context.Background(),
-		containerID,
-		types.ContainerLogsOptions{
-			ShowStdout: true,
-			ShowStderr: true,
-			Since:      "",
-			Timestamps: false,
-			Follow:     true,
-			Tail:       "all",
-			Details:    true,
-		},
-	)
-	if err != nil {
-		sendErr(ctx, errors.Wrap(err, "error grabbing container logs"))
-		return
-	}
+	if !d.spec.RunSpec.UseFluentLogging {
+		logs, lErr := d.ContainerLogs(
+			context.Background(),
+			containerID,
+			types.ContainerLogsOptions{
+				ShowStdout: true,
+				ShowStderr: true,
+				Since:      "",
+				Timestamps: false,
+				Follow:     true,
+				Tail:       "all",
+				Details:    true,
+			},
+		)
+		if lErr != nil {
+			sendErr(ctx, errors.Wrap(lErr, "error grabbing container logs"))
+			return
+		}
 
-	stdout := demultiplexer{ctx: ctx, stdType: stdcopy.Stdout}
-	stderr := demultiplexer{ctx: ctx, stdType: stdcopy.Stderr}
-	if _, err = stdcopy.StdCopy(stdout, stderr, logs); err != nil {
-		sendErr(ctx, errors.Wrap(err, "error scanning logs"))
-		return
+		stdout := demultiplexer{ctx: ctx, stdType: stdcopy.Stdout}
+		stderr := demultiplexer{ctx: ctx, stdType: stdcopy.Stderr}
+		if _, lErr = stdcopy.StdCopy(stdout, stderr, logs); lErr != nil {
+			sendErr(ctx, errors.Wrap(lErr, "error scanning logs"))
+			return
+		}
+		if lErr = logs.Close(); lErr != nil {
+			sendErr(ctx, errors.Wrap(lErr, "error closing log stream"))
+			return
+		}
 	}
-	if err = logs.Close(); err != nil {
-		sendErr(ctx, errors.Wrap(err, "error closing log stream"))
-		return
-	}
-
 	select {
 	case err = <-eerr:
 		sendErr(ctx, errors.Wrap(err, "error while waiting for container to exit"))

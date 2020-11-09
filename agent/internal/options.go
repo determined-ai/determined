@@ -40,6 +40,8 @@ type Options struct {
 	NoProxy    string `json:"no_proxy"`
 
 	Security SecurityOptions `json:"security"`
+
+	Fluent FluentOptions `json:"fluent"`
 }
 
 // Validate validates the state of the Options struct.
@@ -91,4 +93,10 @@ func (t TLSOptions) Validate() []error {
 		errs = append(errs, errors.New("cannot specify a master cert file with verification off"))
 	}
 	return errs
+}
+
+// FluentOptions stores configurable Fluent Bit-related options.
+type FluentOptions struct {
+	Image string `json:"image"`
+	Port  int    `json:"port"`
 }

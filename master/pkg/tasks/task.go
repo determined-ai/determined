@@ -316,7 +316,8 @@ func startContainer(t TaskSpec) container.Spec {
 				Mounts:          mounts,
 				PublishAllPorts: true,
 			},
-			Archives: TrialArchives(t),
+			Archives:         TrialArchives(t),
+			UseFluentLogging: true,
 		},
 	}
 	spec.RunSpec.HostConfig.ShmSize = t.TaskContainerDefaults.ShmSizeBytes

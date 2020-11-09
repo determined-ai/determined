@@ -24,6 +24,7 @@ func TestAgentSetupScript(t *testing.T) {
 		MasterCertBase64:             encodedMasterCert,
 		AgentUseGPUs:                 true,
 		AgentDockerImage:             "test_docker_image",
+		AgentFluentImage:             "fluent-test",
 		AgentDockerRuntime:           "runc",
 		AgentNetwork:                 "default",
 		AgentID:                      "test.id",
@@ -78,6 +79,7 @@ docker run --init --name determined-agent  \
     -e DET_MASTER_HOST="test.master" \
     -e DET_MASTER_PORT="8080" \
     -e DET_RESOURCE_POOL="test-pool" \
+    -e DET_FLUENT_IMAGE="fluent-test" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
     "${docker_args[@]}" \

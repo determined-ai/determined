@@ -397,6 +397,7 @@ type TrialLog struct {
 	RankID      *int       `db:"rank_id" json:"rank_id"`
 	Timestamp   *time.Time `db:"timestamp" json:"timestamp"`
 	Level       *string    `db:"level" json:"level"`
+	Log         *string    `db:"log" json:"log"`
 	Source      *string    `db:"source" json:"source"`
 	StdType     *string    `db:"stdtype" json:"stdtype"`
 }

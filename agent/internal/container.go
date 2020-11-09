@@ -1,8 +1,13 @@
 package internal
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -12,6 +17,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/model"
+)
+
+const (
+	agentIDEnvVar     = "DET_AGENT_ID"
+	containerIDEnvVar = "DET_CONTAINER_ID"
+	trialIDEnvVar     = "DET_TRIAL_ID"
 )
 
 type containerActor struct {
@@ -20,6 +32,8 @@ type containerActor struct {
 	client        *client.Client
 	docker        *actor.Ref
 	containerInfo *types.ContainerJSON
+
+	baseTrialLog model.TrialLog
 }
 
 type (
@@ -31,13 +45,39 @@ func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.A
 	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client}
 }
 
+// getExtraFluentValues computes the container-specific extra fields to be injected into each Fluent
+// log entry. We configure Docker to send these fields itself, but we need to compute and add them
+// ourselves for agent-inserted logs.
+func getBaseTrialLog(spec *cproto.Spec) model.TrialLog {
+	level := "INFO"
+	stdtype := "stdout"
+	log := model.TrialLog{
+		Level:   &level,
+		StdType: &stdtype,
+	}
+	for _, env := range spec.RunSpec.ContainerConfig.Env {
+		split := strings.SplitN(env, "=", 2)
+		value := split[1]
+		switch split[0] {
+		case agentIDEnvVar:
+			log.AgentID = &value
+		case containerIDEnvVar:
+			log.ContainerID = &value
+		case trialIDEnvVar:
+			log.TrialID, _ = strconv.Atoi(value)
+		}
+	}
+	return log
+}
+
 func (c *containerActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
+		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client, spec: c.spec})
 		c.transition(ctx, cproto.Pulling)
 		pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
 		ctx.Tell(c.docker, pull)
+		c.baseTrialLog = getBaseTrialLog(c.spec)
 
 	case getContainerSummary:
 		ctx.Respond(c.Container)
@@ -95,8 +135,11 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	case aproto.ContainerLog:
 		msg.Container = c.Container
 		ctx.Log().Debug(msg)
-		ctx.Tell(ctx.Self().Parent(), msg)
-
+		if c.spec.RunSpec.UseFluentLogging {
+			ctx.Tell(ctx.Self().Parent(), c.makeTrialLog(msg))
+		} else {
+			ctx.Tell(ctx.Self().Parent(), msg)
+		}
 	case actor.ChildStopped:
 
 	case actor.ChildFailed:
@@ -121,6 +164,43 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (c *containerActor) makeTrialLog(log aproto.ContainerLog) model.TrialLog {
+	l := c.baseTrialLog
+	timestamp := time.Now()
+	l.Timestamp = &timestamp
+
+	var source string
+	var msg string
+	switch {
+	case log.AuxMessage != nil:
+		source = "agent"
+		msg = *log.AuxMessage
+	case log.PullMessage != nil:
+		source = "pull"
+		buf := new(bytes.Buffer)
+		if err := log.PullMessage.Display(buf, false); err != nil {
+			msg = err.Error()
+		} else {
+			msg = buf.String()
+			// Docker disables printing the progress bar in non-terminal mode.
+			if msg == "" && log.PullMessage.Progress != nil {
+				msg = log.PullMessage.Progress.String()
+			}
+			msg = strings.TrimSpace(msg)
+		}
+	case log.RunMessage != nil:
+		panic(fmt.Sprintf("unexpected run message from container on Fluent logging: %v", log.RunMessage))
+	default:
+		panic("unknown log message received")
+	}
+	msg += "\n"
+
+	l.Log = &msg
+	l.Source = &source
+
+	return l
 }
 
 func (c *containerActor) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
