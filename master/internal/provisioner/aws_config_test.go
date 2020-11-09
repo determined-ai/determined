@@ -48,7 +48,13 @@ func TestUnmarshalAWSClusterConfig(t *testing.T) {
 	"tag_value": "agent",
 	"root_volume_size": 120,
 	"instance_type": "p2.xlarge",
-	"iam_instance_profile_arn": "test_instance_profile"
+	"iam_instance_profile_arn": "test_instance_profile",
+	"custom_tags": [
+		{
+			"key": "key1",
+			"value": "value1",
+		}
+	]
 }`,
 		AWSClusterConfig{
 			Region:       "test.region",
@@ -65,6 +71,12 @@ func TestUnmarshalAWSClusterConfig(t *testing.T) {
 			RootVolumeSize:        120,
 			InstanceType:          "p2.xlarge",
 			IamInstanceProfileArn: "test_instance_profile",
+			CustomTags: []*ec2Tag{
+				{
+					Key: "key1",
+					Value: "value1",
+				},
+			},
 		},
 	}
 

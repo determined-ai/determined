@@ -36,6 +36,8 @@ type AWSClusterConfig struct {
 
 	SpotEnabled  bool   `json:"spot"`
 	SpotMaxPrice string `json:"spot_max_price"`
+
+	CustomTags []*ec2Tag `json:"custom_tags"`
 }
 
 var defaultAWSImageID = map[string]string{
@@ -159,6 +161,11 @@ type ec2NetworkInterface struct {
 	PublicIP        bool   `json:"public_ip"`
 	SubnetID        string `json:"subnet_id"`
 	SecurityGroupID string `json:"security_group_id"`
+}
+
+type ec2Tag struct {
+	Key string `json:"key"`
+	Value string `json:"value"`
 }
 
 type ec2InstanceType string

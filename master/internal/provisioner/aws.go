@@ -125,6 +125,7 @@ func newAWSCluster(
 			AgentDockerRuntime:           config.AgentDockerRuntime,
 			AgentNetwork:                 config.AgentDockerNetwork,
 			AgentDockerImage:             config.AgentDockerImage,
+			AgentFluentImage:             config.AgentFluentImage,
 			AgentID:                      `$(ec2metadata --instance-id)`,
 			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.buildDockerLogString(),
@@ -382,6 +383,16 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 			},
 		},
 		UserData: aws.String(base64.StdEncoding.EncodeToString(c.ec2UserData)),
+	}
+
+	if c.CustomTags != nil {
+		for _, tag := range c.CustomTags {
+			customTag := &ec2.Tag{
+				Key: aws.String(tag.Key),
+				Value: aws.String(tag.Value),
+			}
+			input.TagSpecifications[0].Tags = append(input.TagSpecifications[0].Tags, customTag)
+		}
 	}
 
 	input.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{
