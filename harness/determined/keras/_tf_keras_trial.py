@@ -21,7 +21,7 @@ from tensorflow.python.keras.saving.hdf5_format import (
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
-from determined import horovod, ipc, keras, util, workload
+from determined import horovod, keras, util, workload
 from determined.horovod import hvd
 from determined_common import check
 
@@ -762,25 +762,6 @@ class TFKerasTrialController(det.LoopTrialController):
             return workload.Skipped()
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
-
-    def _global_barrier(self) -> None:
-        # Executes a barrier by communicating directly between worker processes via ZMQ.
-        logging.debug(f"Worker {self.context.distributed.get_rank()} entering global barrier.")
-        if self.is_chief:
-            self.train_process_comm_chief = cast(
-                ipc.ZMQBroadcastServer, self.train_process_comm_chief
-            )
-            self.train_process_comm_chief.gather_with_polling(lambda: None)
-            self.train_process_comm_chief.broadcast(None)
-        else:
-            self.train_process_comm_worker = cast(
-                ipc.ZMQBroadcastClient, self.train_process_comm_worker
-            )
-            self.train_process_comm_worker.send([None])
-            # Synchronize with the chief so that there is no risk of accidentally calling send()
-            # for a future gather before all workers have called send() on this gather.
-            _ = self.train_process_comm_worker.recv()
-        logging.debug(f"Worker {self.context.distributed.get_rank()} exiting global barrier.")
 
     def _stop_training_check(self) -> None:
         # Detect when users set stop_training and convert it to a set_stop_requested.
