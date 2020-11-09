@@ -56,10 +56,10 @@ const NavigationTabbar: React.FC = () => {
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
-        <ToolbarItem icon="dashboard" label="Dashboard" path="/det/dashboard" />
-        <ToolbarItem icon="experiment" label="Experiments" path="/det/experiments" />
-        <ToolbarItem icon="tasks" label="Tasks" path="/det/tasks" />
-        <ToolbarItem icon="cluster" label="Cluster" path="/det/cluster" status={cluster} />
+        <ToolbarItem icon="dashboard" label="Dashboard" path="/dashboard" />
+        <ToolbarItem icon="experiment" label="Experiments" path="/experiments" />
+        <ToolbarItem icon="tasks" label="Tasks" path="/tasks" />
+        <ToolbarItem icon="cluster" label="Cluster" path="/cluster" status={cluster} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
       <ActionSheet
@@ -74,7 +74,7 @@ const NavigationTabbar: React.FC = () => {
             label: 'Launch CPU-only Notebook',
             onClick: () => handleLaunchNotebook(true),
           },
-          { icon: 'logs', label: 'Master Logs', path: '/det/logs', popout: true },
+          { icon: 'logs', label: 'Master Logs', path: '/logs', popout: true },
           { icon: 'docs', label: 'Docs', path: '/docs', popout: true },
           { icon: 'cloud', label: 'API (Beta)', path: '/docs/rest-api/', popout: true },
         ]}
