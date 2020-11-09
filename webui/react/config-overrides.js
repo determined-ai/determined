@@ -12,6 +12,12 @@ const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
 const jestConfig = require('./jest.config');
+const process = require('process');
+
+const IS_DEV = process.env.NODE_ENV === 'development';
+// Set the path React is going to be served from eg ./ for serving from root.
+const PUBLIC_URL = IS_DEV ? '/det' : process.env.PUBLIC_URL;
+const SERVER_ADDRESS = IS_DEV ? 'http://localhost:8080' : process.env.SERVER_ADDRESS;
 
 const webpackConfig = override(
   // Disable eslint for webpack config.
@@ -45,7 +51,7 @@ const webpackConfig = override(
         // TODO: Near future, add more colors to override in browser dynamically.
       ],
       indexFileName: 'index.html',
-      publicPath: process.env.PUBLIC_URL,
+      publicPath: PUBLIC_URL,
     })
   ),
 
@@ -53,8 +59,8 @@ const webpackConfig = override(
   addWebpackPlugin(
     new webpack.DefinePlugin({
       'process.env.VERSION': '"0.13.8.dev0"',
-      'process.env.IS_DEV': JSON.stringify(process.env.NODE_ENV === 'development'),
-      'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
+      'process.env.IS_DEV': JSON.stringify(IS_DEV),
+      'process.env.SERVER_ADDRESS': JSON.stringify(SERVER_ADDRESS),
     })
   ),
 
