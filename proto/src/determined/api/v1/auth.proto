@@ -21,7 +21,7 @@ message LoginResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "user", "token" ] }
   };
-  // The token to be used when sending results
+  // The token to be used when sending results.
   string token = 1;
   // The logged in user.
   determined.user.v1.User user = 2;
