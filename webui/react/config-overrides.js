@@ -15,8 +15,6 @@ const jestConfig = require('./jest.config');
 const process = require('process');
 
 const IS_DEV = process.env.NODE_ENV === 'development';
-// Set the path React is going to be served from eg ./ for serving from root.
-const PUBLIC_URL = IS_DEV ? '/det' : process.env.PUBLIC_URL;
 const SERVER_ADDRESS = IS_DEV ? 'http://localhost:8080' : process.env.SERVER_ADDRESS;
 
 const webpackConfig = override(
@@ -51,7 +49,7 @@ const webpackConfig = override(
         // TODO: Near future, add more colors to override in browser dynamically.
       ],
       indexFileName: 'index.html',
-      publicPath: PUBLIC_URL,
+      publicPath: process.env.PUBLIC_URL,
     })
   ),
 
