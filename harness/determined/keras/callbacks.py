@@ -441,6 +441,7 @@ class DeterminedProgress(Callback):
         self.train_len = batches_requested
         self.batches = 0
         self.state.trained_total = total_batches_trained
+        self.percent_reported = -1
         self._report(logs=None, training=True, batches=self.batches, total=self.train_len)
 
     def on_train_batch_end(self, batch: int, logs: Dict) -> None:
@@ -450,6 +451,7 @@ class DeterminedProgress(Callback):
 
     def on_test_begin(self, logs: Dict) -> None:
         self.batches = 0
+        self.percent_reported = -1
         self._report(logs=None, training=False, batches=0, total=self.state.validation_len)
 
     def on_test_batch_end(self, batch: int, logs: Dict) -> None:
