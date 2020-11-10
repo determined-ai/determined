@@ -1,6 +1,6 @@
 import React, { MouseEvent, MouseEventHandler, PropsWithChildren, useCallback } from 'react';
 
-import { handlePath, windowOpenFeatures } from 'routes/utils';
+import { handlePath, linkPath, windowOpenFeatures } from 'routes/utils';
 
 import css from './Link.module.scss';
 
@@ -29,7 +29,7 @@ const Link: React.FC<Props> = ({
   if (props.inherit) classes.push(css.inherit);
   if (props.isButton) classes.push('ant-btn');
 
-  const href = (external ? '' : process.env.PUBLIC_URL) + (props.path || '#');
+  const href = props.path ? linkPath(props.path, external) : undefined;
   const handleClick = useCallback((event: MouseEvent) => {
     handlePath(event, { external, onClick, path: props.path, popout });
   }, [ onClick, popout, props.path, external ]);

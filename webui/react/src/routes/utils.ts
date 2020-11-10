@@ -1,3 +1,4 @@
+import { option } from 'fp-ts/lib/Option';
 import { pathToRegexp } from 'path-to-regexp';
 import { MouseEvent, MouseEventHandler } from 'react';
 
@@ -84,7 +85,7 @@ export const handlePath = (
   event.persist();
   event.preventDefault();
 
-  const href = (options.external ? '' : process.env.PUBLIC_URL) + (options.path || '#');
+  const href = options.path ? linkPath(options.path, options.external) : undefined;
 
   if (options.onClick) {
     options.onClick(event);
@@ -129,4 +130,8 @@ export const routeAll = (path: string): void => {
   } else {
     history.push(getReactPath(path), { loginRedirect: clone(window.location) });
   }
+};
+
+export const linkPath = (path: string, external = false): string => {
+  return (external ? '' : process.env.PUBLIC_URL) + path;
 };
