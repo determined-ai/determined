@@ -117,7 +117,7 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 			switch err := l.process(batch); {
 			case err != nil:
 				return fmt.Errorf("failed while processing batch: %w", err)
-			case l.req.Limit <= 0:
+			case !l.req.Follow && l.req.Limit <= 0:
 				ctx.Self().Stop()
 				return nil
 			}
