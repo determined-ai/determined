@@ -1,6 +1,7 @@
 import { pathToRegexp } from 'path-to-regexp';
 import { MouseEvent, MouseEventHandler } from 'react';
 
+import handleError, { ErrorType } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
 import { Command, CommandTask, CommandType } from 'types';
@@ -67,8 +68,11 @@ export const openBlank = (url: string): void => {
 };
 
 export const openCommand = (command: Command | CommandTask): void => {
-  const url = waitPageUrl(command);
-  if (!url) throw new Error('command cannot be opened');
+  const url = command.url || waitPageUrl(command);
+  if (!url) {
+    handleError({ message: 'command cannot be opened', silent: true, type: ErrorType.Unknown });
+    return;
+  }
   openBlank(process.env.PUBLIC_URL + url);
 };
 
