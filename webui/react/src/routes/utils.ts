@@ -78,18 +78,21 @@ export const handlePath = (
     onClick?: MouseEventHandler,
     path?: string,
     popout?: boolean,
+    external?: boolean,
   } = {},
 ): void => {
   event.persist();
   event.preventDefault();
 
+  const href = (options.external ? '' : process.env.PUBLIC_URL) + (options.path || '#');
+
   if (options.onClick) {
     options.onClick(event);
-  } else if (options.path) {
+  } else if (href) {
     if (event.button === 1 || event.metaKey || event.ctrlKey || options.popout) {
-      openBlank(options.path);
+      openBlank(href);
     } else {
-      routeAll(options.path);
+      routeAll(href);
     }
   }
 };

@@ -29,17 +29,17 @@ const Link: React.FC<Props> = ({
   if (props.inherit) classes.push(css.inherit);
   if (props.isButton) classes.push('ant-btn');
 
-  const path = (external ? '' : process.env.PUBLIC_URL) + (props.path || '#');
+  const href = (external ? '' : process.env.PUBLIC_URL) + (props.path || '#');
   const handleClick = useCallback((event: MouseEvent) => {
-    handlePath(event, { onClick, path, popout });
-  }, [ onClick, popout, path ]);
+    handlePath(event, { external, onClick, path: props.path, popout });
+  }, [ onClick, popout, props.path, external ]);
 
   return props.disabled ? (
     <span className={classes.join(' ')}>{props.children}</span>
   ) : (
     <a
       className={classes.join(' ')}
-      href={path}
+      href={href}
       rel={rel}
       onClick={handleClick}>
       {props.children}
