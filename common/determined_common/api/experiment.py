@@ -4,7 +4,7 @@ import sys
 import time
 import uuid
 from argparse import Namespace
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
 
 import simplejson
@@ -27,10 +27,34 @@ def activate_experiment(master_url: str, exp_id: int) -> None:
 
 @authentication_required
 def logs(args: Namespace) -> None:
+    def to_levels_above(level: str) -> List[str]:
+        # We should just be using the generated client instead and this is why.
+        levels = [
+            "LOG_LEVEL_TRACE",
+            "LOG_LEVEL_DEBUG",
+            "LOG_LEVEL_INFO",
+            "LOG_LEVEL_WARNING",
+            "LOG_LEVEL_ERROR",
+            "LOG_LEVEL_CRITICAL",
+        ]
+        if level == "TRACE":
+            return levels
+        elif level == "DEBUG":
+            return levels[1:]
+        elif level == "INFO":
+            return levels[2:]
+        elif level == "WARNING":
+            return levels[3:]
+        elif level == "ERROR":
+            return levels[4:]
+        elif level == "CRITICAL":
+            return levels[5:]
+        else:
+            raise Exception("invalid log level: {}".format(level))
+
     def print_logs(
         offset: Optional[int], limit: Optional[int] = 5000, follow: bool = False
     ) -> None:
-        path = "/api/v1/trials/{}/logs?".format(args.trial_id)
         query = {}  # type: Dict[str, Any]
         if offset is not None:
             query["offset"] = offset
@@ -39,17 +63,21 @@ def logs(args: Namespace) -> None:
         if follow:
             query["follow"] = "true"
         for f in [
-            "agent_id",
-            "container_id",
-            "source",
-            "std_type",
-            "level",
+            "agent_ids",
+            "container_ids",
+            "rank_ids",
+            "sources",
+            "stdtypes",
             "timestamp_before",
             "timestamp_after",
         ]:
             if getattr(args, f, None) is not None:
                 query[f] = getattr(args, f)
-        path += urlencode(query, doseq=True)
+
+        if getattr(args, "level", None) is not None:
+            query["levels"] = to_levels_above(args.level)
+
+        path = "/api/v1/trials/{}/logs?{}".format(args.trial_id, urlencode(query, doseq=True))
         with api.get(args.master, path, stream=True) as r:
             for line in r.iter_lines():
                 log = simplejson.loads(line)["result"]

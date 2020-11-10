@@ -234,16 +234,19 @@ args_description = [
                     ),
                     Arg(
                         "--level",
-                        action="append",
-                        help="log levels to show logs from (repeat for multiple values)",
+                        dest="level",
+                        help="show logs with this level or higher "
+                        + "(TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)",
                     ),
                     Arg(
                         "--source",
+                        dest="sources",
                         action="append",
                         help="sources to show logs from (repeat for multiple values)",
                     ),
                     Arg(
                         "--stdtype",
+                        dest="stdtypes",
                         action="append",
                         help="output stream to show logs from (repeat for multiple values)",
                     ),

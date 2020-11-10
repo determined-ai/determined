@@ -33,11 +33,11 @@ message TrialLogsRequest {
   // Limit the trial logs to a subset of ranks.
   repeated int32 rank_ids = 8;
   // Limit the trial logs to a subset of agents.
-  repeated determined.log.v1.LogLevel level = 9;
+  repeated determined.log.v1.LogLevel levels = 9;
   // Limit the trial logs to a subset of output streams.
-  repeated string stdtype = 10;
+  repeated string stdtypes = 10;
   // Limit the trial logs to a subset of sources.
-  repeated string source = 11;
+  repeated string sources = 11;
   // Limit the trial logs to ones with a timestamp before a given time.
   google.protobuf.Timestamp timestamp_before = 12;
   // Limit the trial logs to ones with a timestamp after a given time.
