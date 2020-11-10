@@ -486,3 +486,26 @@ type SearcherEvent struct {
 	EventType    string  `db:"event_type"`
 	Content      JSONObj `db:"content"`
 }
+
+// HPImportanceTrialData is the input to the hyperparameter importance algorithm.
+type HPImportanceTrialData struct {
+	TrialID int                    `db:"trial_id"`
+	Hparams map[string]interface{} `db:"hparams"`
+	Batches int                    `db:"batches"`
+	Metric  float64                `db:"metric"`
+}
+
+// ExperimentHPImportance is hyperparameter importance for an experiment, and consists of
+// independent measurements of importance for any of the metrics recorded by the experiment.
+type ExperimentHPImportance struct {
+	TrainingMetrics   map[string]MetricHPImportance `json:"training_metrics"`
+	ValidationMetrics map[string]MetricHPImportance `json:"validation_metrics"`
+}
+
+// MetricHPImportance is hyperparameter importance with respect to a specific metric.
+type MetricHPImportance struct {
+	Error              string             `json:"error"`
+	Status             string             `json:"state"`
+	ExperimentProgress float64            `json:"experiment_progress"`
+	HpImportance       map[string]float64 `json:"hp_importance"`
+}

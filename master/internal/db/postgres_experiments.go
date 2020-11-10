@@ -52,10 +52,14 @@ func (db *PgDB) ExperimentLabelUsage() (labelUsage map[string]int, err error) {
 	return labelUsage, nil
 }
 
-// GetExperimentState returns the current state of the experiment.
-func (db *PgDB) GetExperimentState(experimentID int) (state model.State, err error) {
-	err = db.sql.Get(&state, "SELECT state FROM experiments WHERE id=$1", experimentID)
-	return state, err
+// GetExperimentStatus returns the current state of the experiment.
+func (db *PgDB) GetExperimentStatus(experimentID int) (state model.State, progress float64,
+	err error) {
+	row := db.sql.QueryRow(
+		"SELECT state, COALESCE(progress, 0) as progress FROM experiments WHERE id=$1",
+		experimentID)
+	err = row.Scan(&state, &progress)
+	return state, progress, err
 }
 
 // MetricNames returns the set of training and validation metric names that have been recorded for
@@ -395,4 +399,147 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	defer rows.Close()
 	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
 	return metricSeries, maxEndTime, nil
+}
+
+type hpImportanceDataWrapper struct {
+	TrialID int     `db:"trial_id"`
+	Hparams []byte  `db:"hparams"`
+	Batches int     `db:"batches"`
+	Metric  float64 `db:"metric"`
+}
+
+func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (*model.HPImportanceTrialData, error) {
+	entry := model.HPImportanceTrialData{
+		TrialID: r.TrialID,
+		Batches: r.Batches,
+		Metric:  r.Metric,
+	}
+
+	err := json.Unmarshal(r.Hparams, &entry.Hparams) // FIXME this seems backwards?
+	if err != nil {
+		return nil, err
+	}
+	return &entry, nil
+}
+
+// FetchHPImportanceTrainingData retrieves all the data needed by the hyperparameter importance
+// algorithm to measure the relative importance of various hyperparameters for one specific training
+// metric across all the trials in an experiment.
+func (db *PgDB) FetchHPImportanceTrainingData(experimentID int, metric string) (
+	*[]model.HPImportanceTrialData, error) {
+	var rows []hpImportanceDataWrapper
+	var results []model.HPImportanceTrialData
+	// TODO: aren't we ignoring overtraining by taking the last?
+	err := db.queryRows(`
+SELECT
+  t.id AS trial_id,
+  t.hparams AS hparams,
+  (s.prior_batches_processed + s.num_batches) AS batches,
+  s.metrics->'avg_metrics'->$1 AS metric
+FROM trials t
+  INNER JOIN steps s ON t.id=s.trial_id
+  INNER JOIN (
+    SELECT
+      t.id as trial_id,
+	  s.id AS step_id,
+	  max(s.prior_batches_processed + s.num_batches) AS batches
+    FROM trials t
+  	INNER JOIN steps s ON t.id=s.trial_id
+    WHERE t.experiment_id=$2
+	  AND s.state = 'COMPLETED'
+    GROUP BY t.id, s.id
+  ) filter
+	ON s.id = filter.step_id
+	AND t.id = filter.trial_id`, &rows, metric, experimentID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get training metrics for hyperparameter importance")
+	}
+	for _, row := range rows {
+		result, err := unmarshalHPImportanceHParams(row)
+		if err != nil {
+			return nil, errors.Wrap(err,
+				"Failed to process training metrics for hyperparameter importance")
+		}
+		results = append(results, *result)
+	}
+	return &results, nil
+}
+
+// FetchHPImportanceValidationData retrieves all the data needed by the hyperparameter importance
+// algorithm to measure the relative importance of various hyperparameters for one specific
+// validation metric across all the trials in an experiment.
+func (db *PgDB) FetchHPImportanceValidationData(experimentID int, metric string) (
+	*[]model.HPImportanceTrialData, error) {
+	var rows []hpImportanceDataWrapper
+	var results []model.HPImportanceTrialData
+	err := db.queryRows(`
+SELECT
+  t.id AS trial_id,
+  t.hparams AS hparams,
+  (s.prior_batches_processed + s.num_batches) AS batches,
+  v.metrics->'validation_metrics'->$1 as metric
+FROM trials t
+  INNER JOIN steps s ON t.id=s.trial_id
+  RIGHT JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+  INNER JOIN (
+    SELECT
+      t.id as trial_id,
+      s.id AS step_id,
+      max(s.prior_batches_processed + s.num_batches) AS batches
+    FROM trials t
+      INNER JOIN steps s ON t.id=s.trial_id
+      RIGHT JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+    WHERE t.experiment_id=$2
+      AND v.state = 'COMPLETED'
+    GROUP BY t.id, s.id
+  ) filter
+	ON s.id = filter.step_id
+	AND t.id = filter.trial_id`, &rows, metric, experimentID)
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"failed to get validation metrics for hyperparameter importance")
+	}
+	for _, row := range rows {
+		result, err := unmarshalHPImportanceHParams(row)
+		if err != nil {
+			return nil, errors.Wrap(err,
+				"Failed to process validation metrics for hyperparameter importance")
+		}
+		results = append(results, *result)
+	}
+	return &results, nil
+}
+
+// GetHPImportance returns the hyperparameter importance data and status for an experiment.
+func (db *PgDB) GetHPImportance(experimentID int) (result model.ExperimentHPImportance, err error) {
+	var jsonString []byte
+	err = db.sql.Get(&jsonString, "SELECT hpimportance FROM experiments WHERE id=$1", experimentID)
+	if err != nil {
+		return result, errors.Wrap(err, "Error retrieving hyperparameter importance")
+	}
+	if len(jsonString) > 0 {
+		err = json.Unmarshal(jsonString, &result)
+		if err != nil {
+			return result, errors.Wrap(err, "Error unmarshaling hyperparameter importance")
+		}
+	}
+	if result.TrainingMetrics == nil {
+		result.TrainingMetrics = make(map[string]model.MetricHPImportance)
+	}
+	if result.ValidationMetrics == nil {
+		result.ValidationMetrics = make(map[string]model.MetricHPImportance)
+	}
+	return result, err
+}
+
+// SetHPImportance writes the current hyperparameter importance data and status to the database.
+// It should only be called from the HPImportance manager actor, to ensure coherence.
+func (db *PgDB) SetHPImportance(experimentID int, value model.ExperimentHPImportance) error {
+	jsonString, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	_, err = db.sql.Exec("UPDATE experiments SET hpimportance=$1 WHERE id=$2",
+		jsonString, experimentID)
+	return err
 }

@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -83,6 +84,7 @@ type experiment struct {
 	modelDefinition     archive.Archive
 	rm                  *actor.Ref
 	trialLogger         *actor.Ref
+	hpImportance        *actor.Ref
 	db                  *db.PgDB
 	searcher            *searcher.Searcher
 	warmStartCheckpoint *model.Checkpoint
@@ -141,6 +143,7 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		modelDefinition:     modelDefinition,
 		rm:                  master.rm,
 		trialLogger:         master.trialLogger,
+		hpImportance:        master.hpImportance,
 		db:                  master.db,
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
@@ -310,6 +313,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		})
 		ops, err := e.searcher.InitialOperations()
 		e.processOperations(ctx, ops, err)
+		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
 		e.processOperations(ctx, ops, err)
@@ -328,6 +332,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
+		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
 	case trialExitedEarly:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.exitedReason)
 		e.processOperations(ctx, ops, err)
@@ -428,6 +433,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			experiment:     e.Experiment,
 		})
 
+		ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
+
 		// Discard searcher events for all terminal experiments (even failed ones).
 		// This is safe because we never try to restore the state of the searcher for
 		// terminated experiments.
@@ -450,6 +457,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case *apiv1.PauseExperimentRequest:
 		switch ok := e.updateState(ctx, model.PausedState); ok {
 		case true:
+			ctx.Tell(e.hpImportance, hpimportance.ExperimentPaused{ID: e.ID})
 			ctx.Respond(&apiv1.PauseExperimentResponse{})
 		default:
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,

@@ -32,6 +32,7 @@ import (
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -70,6 +71,7 @@ type Master struct {
 	proxy           *actor.Ref
 	trialLogger     *actor.Ref
 	trialLogBackend TrialLogBackend
+	hpImportance  *actor.Ref
 }
 
 // New creates an instance of the Determined master.
@@ -601,6 +603,9 @@ func (m *Master) Run(ctx context.Context) error {
 	} else {
 		log.Info("telemetry reporting is disabled")
 	}
+
+	hpi := hpimportance.NewManager(m.db)
+	m.hpImportance, _ = m.system.ActorOf(actor.Addr(hpimportance.RootAddr), hpi)
 
 	return m.startServers(ctx, cert)
 }

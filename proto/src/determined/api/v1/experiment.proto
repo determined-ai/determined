@@ -430,3 +430,34 @@ message TrialsSampleResponse {
   // IDs of trials that are no loger included in the top N trials.
   repeated int32 demoted_trials = 3;
 }
+
+// Retrieve
+message GetHPImportanceRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 2;
+}
+
+// Response to GetHPImportanceRequest
+message GetHPImportanceResponse {
+  // Hyperparameter importance as computed with respect for one specific metric.
+  message MetricHPImportance {
+    // A map between hyperparameter names and their relative importance.
+    map<string,double> hp_importance = 1;
+    // The approximate portion of the experiment that was complete when the data was read.
+    double experiment_progress = 2;
+    // The current status of any on-going computation. 'pending' means a request is queued, even if
+    // complete results from a previous computation are included. 'in_progress' means a new
+    // computation is ongoing (again, even if previous results are included). 'complete' means
+    // the current results are the latest available and no further action has been triggered.
+    // 'failed' means there was some error during computation (see 'error').
+    string status = 3;
+    // A description of why computation failed. Empty unless the state is (or was) 'failed'.
+    string error = 4;
+  }
+  // A map of training metric names to their respective entries.
+  map<string,MetricHPImportance> training_metrics = 1;
+  // A map of validation metric names to their respective entries.
+  map<string,MetricHPImportance> validation_metrics = 2;
+}
