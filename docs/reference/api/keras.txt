@@ -36,43 +36,18 @@ models:
 #. A ``keras.utils.Sequence`` returning a tuple of either (inputs,
    targets) or (inputs, targets, sample weights).
 
-#. A :class:`determined.keras.SequenceAdapter` returning a tuple of
-   either (inputs, targets) or (inputs, targets, sample weights).
-
 Loading data is done by defining
 :meth:`~determined.keras.TFKerasTrial.build_training_data_loader` and
 :meth:`~determined.keras.TFKerasTrial.build_validation_data_loader`
 methods. Each should return one of the supported data types mentioned
 above.
 
-Optimizing Keras Sequences
-==========================
+Passing Additional arguments to ``model.fit()``
+===============================================
 
-To optimize performance of ``tf.keras.Sequence`` which are created from
-generators, Determined provides ``determined.keras.SequenceAdapter``.
-
-.. autoclass:: determined.keras.SequenceAdapter
-   :members: __init__
-
-**Usage Examples**
-
--  Use main Python process with no multithreading and no multiprocessing
-
-.. code::
-
-   SequenceAdapter(sequence, workers=0, use_multiprocessing=False)
-
--  Use one background process
-
-.. code::
-
-   SequenceAdapter(sequence, workers=1, use_multiprocessing=True)
-
--  Use two background threads
-
-.. code::
-
-   SequenceAdapter(sequence, workers=2, use_multiprocessing=False)
+The ``TFKerasTrial`` interface allows the user to configure how
+``model.fit`` is called by calling :meth:`self.context.configure_fit()
+<determined.keras.TFKerasTrialContext.configure_fit>`.
 
 Required Wrappers
 =================
@@ -97,7 +72,7 @@ writing ``tf.keras`` trial definitions, as well as functions to wrap the
 model and dataset.
 
 .. autoclass:: determined.keras.TFKerasTrialContext
-   :members: wrap_model, wrap_dataset, wrap_optimizer
+   :members: wrap_model, wrap_dataset, wrap_optimizer, configure_fit
    :member-order: bysource
 
    TFKerasTrialContext always has a
@@ -132,8 +107,6 @@ the ``tf.keras.callbacks.Callbacks`` interface) and supply them to the
 
 .. autoclass:: determined.keras.callbacks.Callback
    :members:
-
-.. autoclass:: determined.keras.callbacks.DeterminedProgress
 
 .. autoclass:: determined.keras.callbacks.EarlyStopping
 

@@ -16,6 +16,15 @@ class TFKerasTrainConfig(NamedTuple):
     callbacks: List[tf.keras.callbacks.Callback]
 
 
+class _ArgNotProvided:
+    """A singleton to distinguish between None and unprovided arguments."""
+
+    pass
+
+
+_arg_not_provided = _ArgNotProvided()
+
+
 class TFKerasContext:
     """
     Base context class that contains runtime information for any Determined
@@ -39,6 +48,56 @@ class TFKerasContext:
         self._optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
         self._wrapped_optimizers = []  # type: List[tf.keras.optimizers.Optimizer]
         self._compiled_optimizer = None  # type: Optional[tf.keras.optimizers.Optimizer]
+
+        # The following attributes may be configured via configure_fit().  Defaults match the
+        # normal keras.fit() defaults.
+        self._fit_verbose = True
+        self._fit_class_weight = None
+        self._fit_workers = 1
+        self._fit_use_multiprocessing = False
+        self._fit_max_queue_size = 10
+
+    def configure_fit(
+        self,
+        verbose: Optional[bool] = None,
+        class_weight: Any = _arg_not_provided,
+        workers: Optional[int] = None,
+        use_multiprocessing: Optional[bool] = None,
+        max_queue_size: Optional[bool] = None,
+    ) -> None:
+        """
+        Configure parameters of ``model.fit()``.  See the `Keras documentation
+        <https://keras.io/api/>`__ for the meaning of each parameter.
+
+        Note that the output of ``verbose=True`` will be visually different in Determined than with
+        Keras, for better rendering in trial logs.
+
+        Note that if ``configure_fit()`` is called multiple times, any keyword arguments which are
+        not provided in the second call will not overwrite any settings configured by the first
+        call.
+
+        **Usage Example**
+
+        .. code:: python
+
+           class MyTFKerasTrial(det.keras.TFKerasTrial):
+               def __init__(self, context):
+                   ...
+                   self.context.configure_fit(verbose=False, workers=5)
+
+                   # It is safe to call configure_fit() multiple times.
+                   self.context.configure_fit(use_multiprocessing=True)
+        """
+        if verbose is not None:
+            self._fit_verbose = verbose
+        if not isinstance(class_weight, _ArgNotProvided):
+            self._fit_class_weight = class_weight
+        if workers is not None:
+            self._fit_workers = workers
+        if use_multiprocessing is not None:
+            self._fit_use_multiprocessing = use_multiprocessing
+        if max_queue_size is not None:
+            self._fit_max_queue_size = max_queue_size
 
     def _wrap_model_with_train_fn(self, model: Any, train_fn: Optional[Callable]) -> Any:
         class _WrappedModel(type(model)):  # type: ignore
@@ -83,6 +142,14 @@ class TFKerasContext:
                     training_data=training_data,
                     validation_data=validation_data,
                     callbacks=fit_generator_args.arguments["callbacks"],
+                )
+
+                self.configure_fit(
+                    verbose=fit_generator_args.arguments["verbose"],
+                    class_weight=fit_generator_args.arguments["class_weight"],
+                    workers=fit_generator_args.arguments["workers"],
+                    use_multiprocessing=fit_generator_args.arguments["use_multiprocessing"],
+                    max_queue_size=fit_generator_args.arguments["max_queue_size"],
                 )
 
                 if train_fn:
@@ -155,6 +222,14 @@ class TFKerasContext:
                     training_data=training_data,
                     validation_data=validation_data,
                     callbacks=fit_args.arguments["callbacks"],
+                )
+
+                self.configure_fit(
+                    verbose=fit_args.arguments["verbose"],
+                    class_weight=fit_args.arguments["class_weight"],
+                    workers=fit_args.arguments["workers"],
+                    use_multiprocessing=fit_args.arguments["use_multiprocessing"],
+                    max_queue_size=fit_args.arguments["max_queue_size"],
                 )
 
                 if train_fn:
