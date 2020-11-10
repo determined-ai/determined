@@ -614,12 +614,15 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		var newBatches []int32
 		var endTime time.Time
 		var err error
-		if metricType == apiv1.MetricType_METRIC_TYPE_TRAINING {
+		switch metricType {
+		case apiv1.MetricType_METRIC_TYPE_TRAINING:
 			newBatches, endTime, err = a.m.db.TrainingMetricBatches(experimentID, metricName,
 				startTime)
-		} else {
+		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 			newBatches, endTime, err = a.m.db.ValidationMetricBatches(experimentID, metricName,
 				startTime)
+		default:
+			panic("Invalid metric type")
 		}
 		if err != nil {
 			return errors.Wrapf(err, "error fetching batches recorded for metric")
@@ -635,6 +638,62 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 
 		if err := resp.Send(&response); err != nil {
 			return errors.Wrapf(err, "error sending batches recorded for metric")
+		}
+
+		experiment, _ := a.getExperiment(experimentID)
+		if experiment.State == experimentv1.State_STATE_COMPLETED {
+			return nil
+		}
+
+		time.Sleep(metricsStreamPeriod)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
+	resp apiv1.Determined_TrialsSnapshotServer) error {
+	experimentID := int(req.ExperimentId)
+	batchesProcessed := int(req.BatchesProcessed)
+	metricName := req.MetricName
+	metricType := req.MetricType
+	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return errors.New("must specify a metric type")
+	}
+	if metricName == "" {
+		return errors.New("must provide metric name")
+	}
+
+	var startTime time.Time
+	for {
+		var response apiv1.TrialsSnapshotResponse
+
+		var newTrials []*apiv1.TrialsSnapshotResponse_Trial
+		var endTime time.Time
+		var err error
+		switch metricType {
+		case apiv1.MetricType_METRIC_TYPE_TRAINING:
+			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
+				batchesProcessed, metricName, startTime)
+		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
+				batchesProcessed, metricName, startTime)
+		default:
+			panic("Invalid metric type")
+		}
+		if err != nil {
+			return errors.Wrapf(err,
+				"error fetching snapshots of metrics for %s metric %s in experiment %d at %d batches",
+				metricType, metricName, experimentID, batchesProcessed)
+		}
+		startTime = endTime
+
+		response.Trials = newTrials
+
+		if err := resp.Send(&response); err != nil {
+			return errors.Wrapf(err, "error sending batches recorded for metrics")
 		}
 
 		experiment, _ := a.getExperiment(experimentID)

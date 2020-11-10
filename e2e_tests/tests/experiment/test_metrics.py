@@ -14,7 +14,7 @@ from tests import experiment as exp
 def test_streaming_metrics_api() -> None:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
 
-    pool = mp.pool.ThreadPool(processes=3)
+    pool = mp.pool.ThreadPool(processes=5)
 
     experiment_id = exp.create_experiment(
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
@@ -27,16 +27,25 @@ def test_streaming_metrics_api() -> None:
     metric_names_thread = pool.apply_async(request_metric_names, (experiment_id,))
     train_metric_batches_thread = pool.apply_async(request_train_metric_batches, (experiment_id,))
     valid_metric_batches_thread = pool.apply_async(request_valid_metric_batches, (experiment_id,))
+    train_trials_snapshot_thread = pool.apply_async(request_train_trials_snapshot, (experiment_id,))
+    valid_trials_snapshot_thread = pool.apply_async(request_valid_trials_snapshot, (experiment_id,))
 
     metric_names_results = metric_names_thread.get()
     train_metric_batches_results = train_metric_batches_thread.get()
     valid_metric_batches_results = valid_metric_batches_thread.get()
+    train_trials_snapshot_results = train_trials_snapshot_thread.get()
+    valid_trials_snapshot_results = valid_trials_snapshot_thread.get()
+
     if metric_names_results is not None:
         pytest.fail("metric-names: %s. Results: %s" % metric_names_results)
     if train_metric_batches_results is not None:
         pytest.fail("metric-batches (training): %s. Results: %s" % train_metric_batches_results)
     if valid_metric_batches_results is not None:
-        pytest.fail("metric-batches (training): %s. Results: %s" % valid_metric_batches_results)
+        pytest.fail("metric-batches (validation): %s. Results: %s" % valid_metric_batches_results)
+    if train_trials_snapshot_results is not None:
+        pytest.fail("trials-snapshot (training): %s. Results: %s" % train_trials_snapshot_results)
+    if valid_trials_snapshot_results is not None:
+        pytest.fail("trials-snapshot (validation): %s. Results: %s" % valid_trials_snapshot_results)
 
 
 def request_metric_names(experiment_id):  # type: ignore
@@ -119,4 +128,72 @@ def request_valid_metric_batches(experiment_id):  # type: ignore
             accumulated.add(batch)
     if accumulated != {200, 400}:
         return ("unexpected set of batches", results)
+    return None
+
+
+def request_train_trials_snapshot(experiment_id):  # type: ignore
+    response = api.get(
+        conf.make_master_url(),
+        "api/v1/experiments/{}/metrics-stream/trials-snapshot".format(experiment_id),
+        params={
+            "metric_name": "loss",
+            "metric_type": "METRIC_TYPE_TRAINING",
+            "batches_processed": 100,
+        },
+    )
+    results = [message["result"] for message in map(json.loads, response.text.splitlines())]
+
+    # First let's verify an empty response was sent back before any real work was done
+    if results[0]["trials"] != []:
+        return ("unexpected trials in first response", results)
+
+    # Then we verify that we receive the expected number of trials and the right types
+    trials = set()
+    for i in range(1, len(results)):
+        for trial in results[i]["trials"]:
+            trials.add(trial["trialId"])
+            for param in ["dropout1", "dropout2", "learning_rate"]:
+                if type(trial["hparams"][param]) != float:
+                    return ("hparam %s of unexpected type" % param, results)
+            for param in ["global_batch_size", "n_filters1", "n_filters2"]:
+                if type(trial["hparams"][param]) != int:
+                    return ("hparam %s of unexpected type" % param, results)
+            if type(trial["metric"]) != float:
+                return ("metric of unexpected type", results)
+    if len(trials) != 5:
+        return ("unexpected number of trials received", results)
+    return None
+
+
+def request_valid_trials_snapshot(experiment_id):  # type: ignore
+    response = api.get(
+        conf.make_master_url(),
+        "api/v1/experiments/{}/metrics-stream/trials-snapshot".format(experiment_id),
+        params={
+            "metric_name": "accuracy",
+            "metric_type": "METRIC_TYPE_VALIDATION",
+            "batches_processed": 200,
+        },
+    )
+    results = [message["result"] for message in map(json.loads, response.text.splitlines())]
+
+    # First let's verify an empty response was sent back before any real work was done
+    if results[0]["trials"] != []:
+        return ("unexpected trials in first response", results)
+
+    # Then we verify that we receive the expected number of trials and the right types
+    trials = set()
+    for i in range(1, len(results)):
+        for trial in results[i]["trials"]:
+            trials.add(trial["trialId"])
+            for param in ["dropout1", "dropout2", "learning_rate"]:
+                if type(trial["hparams"][param]) != float:
+                    return ("hparam %s of unexpected type" % param, results)
+            for param in ["global_batch_size", "n_filters1", "n_filters2"]:
+                if type(trial["hparams"][param]) != int:
+                    return ("hparam %s of unexpected type" % param, results)
+            if type(trial["metric"]) != float:
+                return ("metric of unexpected type", results)
+    if len(trials) != 5:
+        return ("unexpected number of trials received", results)
     return None
