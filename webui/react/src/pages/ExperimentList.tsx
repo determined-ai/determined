@@ -259,7 +259,7 @@ const ExperimentList: React.FC = () => {
       await fetchExperiments();
     } catch (e) {
       const publicSubject = action === Action.OpenTensorBoard ?
-        'Unable to Open TensorBoard for Selected Experiments' :
+        'Unable to View TensorBoard for Selected Experiments' :
         `Unable to ${action} Selected Experiments`;
       handleError({
         error: e,

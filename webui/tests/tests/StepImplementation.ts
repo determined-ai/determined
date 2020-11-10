@@ -129,11 +129,6 @@ export default class StepImplementation {
     }
   }
 
-  @Step('Navigate to sign in page')
-  public async navigateToSignIn() {
-    await goto(`${BASE_URL}/login`);
-  }
-
   @Step('Navigate to dashboard page')
   public async navigateToDashboard() {
     await goto(`${BASE_URL}/dashboard`);
@@ -144,9 +139,23 @@ export default class StepImplementation {
     await goto(`${BASE_URL}/experiments`);
   }
 
+  @Step('Navigate to experiment <id> page')
+  public async navigateToExperimentDetail(id: string) {
+    try {
+      await goto(`${BASE_URL}/experiments/${id}`);
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
   @Step('Navigate to task list page')
   public async navigateToTaskList() {
     await goto(`${BASE_URL}/tasks`);
+  }
+
+  @Step('Navigate to master logs page')
+  public async navigateToMasterLogs() {
+    await goto(`${BASE_URL}/logs`);
   }
 
   /* Table Steps */
@@ -162,6 +171,11 @@ export default class StepImplementation {
     await click(text(column));
   }
 
+  @Step('Select all table rows')
+  public async selectAllTableRows() {
+    await click($('th input[type=checkbox]'));
+  }
+
   @Step('Table batch should have following buttons <table>')
   public async checkTableBatchButton(table: Table) {
     for (var row of table.getTableRows()) {
@@ -173,11 +187,30 @@ export default class StepImplementation {
     }
   }
 
+  @Step('<action> all table rows')
+  public async actionOnAllExperiments(action: string) {
+    try {
+      await click(button(action, within($('[class*=TableBatch_base]'))));
+      // Wait for the modal to animate in
+      await waitFor(async () => !(await $('.ant-modal.zoom-enter').exists()));
+      await click(button(action, within($('.ant-modal-body'))));
+      // Wait for the modal to animate away
+      await waitFor(async () => !(await $('.ant-modal.zoom-leave').exists()));
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
   /* Notebook and TensorBoard Steps */
 
   @Step('Launch notebook')
   public async launchNotebook() {
-    await click(button('Launch Notebook'));
+    try {
+      await click(button('Launch Notebook'), { waitForEvents: ['targetNavigated'] });
+      await /http(.*)(wait|proxy)/;
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Launch cpu-only notebook')
@@ -186,11 +219,22 @@ export default class StepImplementation {
     await click(text('Launch CPU-only Notebook'));
   }
 
-  @Step('Close wait page')
+  @Step('Launch tensorboard')
+  public async launchTensorboard() {
+    try {
+      await click(button('View in TensorBoard'), { waitForEvents: ['targetNavigated'] });
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
+  @Step('Close current tab')
   public async closeWaitPage() {
-    await switchTo(/http(.*)(wait|proxy)/);
-    await closeTab();
-    await switchTo(/Determined/);
+    try {
+      await closeTab();
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   /* Dashboard Page Steps */
@@ -203,25 +247,10 @@ export default class StepImplementation {
 
   /* Experiment List Page Steps */
 
-  @Step('Pause all experiments')
-  public async pauseAllExperiments() {
-    await click(button('Pause', within($('[class*=TableBatch_base]'))));
-    // Wait for the modal to complete animation
-    await waitFor(1000);
-    await click(button('Pause', within($('.ant-modal-body'))));
-    // Wait for the table batch to animate away
-    await waitFor(1000);
-  }
-
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
     await click(tableCell({ row: parseInt(row) + 1, col: 11 }));
     await click(text(action, within($('.ant-dropdown'))));
-  }
-
-  @Step('Select all table rows')
-  public async selectAllTableRows() {
-    await click($('th input[type=checkbox]'));
   }
 
   @Step('Toggle show archived button')

@@ -1,8 +1,14 @@
 describe('Task List', () => {
-  const recordSelector = 'tr.ant-table-row';
+  const notebookLaunchSelector =
+    '[class*="Navigation_launch_"] button[class*="Navigation_launchButton_"]';
+  const recordSelector = 'tr[data-row-key]';
+  const batchSelector = '[class*="TableBatch_actions_"] button';
+  const overflowSelector = '.ant-dropdown .ant-dropdown-menu-item';
 
   beforeEach(() => {
     cy.visit('/det/tasks');
+    cy.clearLocalStorage();
+    cy.wait(5000);
   });
 
   describe('Notebooks', () => {
@@ -10,7 +16,8 @@ describe('Task List', () => {
       cy.get('button[aria-label="Notebook"]').click();
       cy.server();
       cy.route('POST', /\/notebook.*/).as('createRequest');
-      cy.get('[class*="Navigation_launch_"] button').contains(/launch notebook/i).click().click();
+      cy.get(notebookLaunchSelector).click();
+      cy.get(notebookLaunchSelector).click();
       cy.wait('@createRequest');
       cy.visit('/det/tasks');
       cy.get(recordSelector).should('have.lengthOf', 2);
@@ -18,8 +25,8 @@ describe('Task List', () => {
 
     it('should terminate notebook', () => {
       cy.get('button[aria-label="Notebook"]').click();
-      cy.get(`${recordSelector}:first-child .ant-dropdown-trigger`).click();
-      cy.get('.ant-dropdown .ant-dropdown-menu-item').contains(/kill/i).click();
+      cy.get(`${recordSelector}:first .ant-dropdown-trigger`).click();
+      cy.get(overflowSelector).contains(/kill/i).click();
       // Using the server/route approach to detect endpoint calls does not work with new API
       cy.wait(5000);
       cy.visit('/det/tasks');
@@ -34,8 +41,8 @@ describe('Task List', () => {
       cy.route('POST', /\/tensorboard.*/).as('createRequest');
       cy.visit('/det/experiments');
       cy.get('thead input[type=checkbox]').click();
-      cy.get('[class*="TableBatch_actions_"] button')
-        .contains(/view in tensorBoard/i)
+      cy.get(batchSelector)
+        .contains(/view in tensorboard/i)
         .click();
       cy.wait('@createRequest');
       cy.visit('/det/tasks');
@@ -44,8 +51,8 @@ describe('Task List', () => {
 
     it('should terminate tensorboard', () => {
       cy.get('button[aria-label="Tensorboard"]').click();
-      cy.get(`${recordSelector}:first-child .ant-dropdown-trigger`).click();
-      cy.get('.ant-dropdown .ant-dropdown-menu-item').contains(/kill/i).click();
+      cy.get(`${recordSelector}:first .ant-dropdown-trigger`).click();
+      cy.get(overflowSelector).contains(/kill/i).click();
       // Using the server/route approach to detect endpoint calls does not work with new API
       cy.wait(5000);
       cy.visit('/det/tasks');
@@ -56,7 +63,9 @@ describe('Task List', () => {
   describe('batch buttons', () => {
     it('should have 1 button', () => {
       cy.get('thead input[type=checkbox]').click();
-      cy.get('[class*="TableBatch_actions_"] button').should('have.lengthOf', 1);
+      cy.get(batchSelector).should('have.lengthOf', 1);
+      cy.get(batchSelector).click();
+      cy.get('.ant-modal-body button').contains(/kill/i).click();
     });
   });
 });

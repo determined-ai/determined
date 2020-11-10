@@ -24,7 +24,7 @@ Specification to test the task list page.
   |aria-label |count|
   |-----------|-----|
   |Notebook   |2    |
-  |Tensorboard|0    |
+  |Tensorboard|2    |
   |Shell      |0    |
   |Command    |0    |
 
