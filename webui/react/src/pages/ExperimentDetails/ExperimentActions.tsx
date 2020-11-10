@@ -53,7 +53,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
   });
 
   const handleArchive = useCallback((archive: boolean) => async (): Promise<void> => {
-    setButtonStates(state => ({ ...state, archive }));
+    setButtonStates(state => ({ ...state, archive: true }));
     try {
       await archiveExperiment(experiment.id, archive);
       onSettled();
