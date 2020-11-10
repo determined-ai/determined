@@ -6,7 +6,7 @@ import React from 'react';
 
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { openBlank, openCommand } from 'routes/utils';
+import { openCommand } from 'routes/utils';
 import {
   archiveExperiment, killTask, openOrCreateTensorboard, setExperimentState,
 } from 'services/api';
@@ -15,6 +15,7 @@ import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
+import Link from './Link';
 import css from './TaskActionDropdown.module.scss';
 
 interface Props {
@@ -23,6 +24,11 @@ interface Props {
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
+
+const taskPath = (task: CommandTask): string => {
+  const taskType = task.type.toLocaleLowerCase();
+  return`/${taskType}/${task.id}/logs?id=${task.name}`;
+};
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   const id = isNumber(task.id) ? task.id : parseInt(task.id);
@@ -80,12 +86,6 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           });
           if (onComplete) onComplete();
           break;
-        case 'viewLogs': {
-          const taskType = (task as CommandTask).type.toLocaleLowerCase();
-          const path = `/${taskType}/${task.id}/logs?id=${task.name}`;
-          openBlank(path);
-          break;
-        }
         case 'unarchive':
           if (!isExperimentTask(task)) break;
           await archiveExperiment(id, false);
@@ -115,7 +115,9 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   if (isExperiment) {
     menuItems.push(<Menu.Item key="openOrCreateTensorboard">Open Tensorboard</Menu.Item>);
   } else {
-    menuItems.push(<Menu.Item key="viewLogs">View Logs</Menu.Item>);
+    menuItems.push(<Menu.Item key="viewLogs">
+      <Link external path={taskPath(task as CommandTask)}>View Logs</Link>
+    </Menu.Item>);
   }
 
   if (menuItems.length === 0) {

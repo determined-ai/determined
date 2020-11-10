@@ -11,12 +11,12 @@ import Info from '../contexts/Info';
 import Link from './Link';
 import css from './Page.module.scss';
 
-interface BreadCrumbRoute {
+export interface BreadCrumbRoute {
   path: string;
   breadcrumbName: string;
 }
 
-interface Props extends CommonProps {
+export interface Props extends CommonProps {
   breadcrumb?: BreadCrumbRoute[];
   backPath?: string;
   headerInfo?: React.ReactNode;

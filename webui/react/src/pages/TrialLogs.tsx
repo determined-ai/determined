@@ -6,7 +6,6 @@ import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Message, { MessageType } from 'components/Message';
-import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import { getTrialDetails } from 'services/api';
@@ -29,7 +28,6 @@ const TrialLogs: React.FC = () => {
   const { experimentId: experimentIdParam, trialId: trialIdParam } = useParams<Params>();
   const history = useHistory();
   const trialId = parseInt(trialIdParam);
-  const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ offset, setOffset ] = useState(-TAIL_SIZE);
   const [ oldestId, setOldestId ] = useState(Number.MAX_SAFE_INTEGER);
@@ -113,8 +111,6 @@ const TrialLogs: React.FC = () => {
     }
   }, [ experimentId, experimentIdParam, history, trialId ]);
 
-  useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
-
   useEffect(() => {
     if (!trial.hasLoaded) return;
 
@@ -147,8 +143,19 @@ const TrialLogs: React.FC = () => {
       isDownloading={isDownloading}
       isLoading={isLoading}
       noWrap
+      pageProps={{
+        backPath: `/trials/${trialId}`,
+        breadcrumb: [
+          { breadcrumbName: 'Experiments', path: '/experiments' },
+          {
+            breadcrumbName: `Experiment ${trial.data?.experimentId}`,
+            path: `/experiments/${trial.data?.experimentId}`,
+          },
+          { breadcrumbName: `Trial ${trialId}`, path: `/trials/${trialId}` },
+        ],
+        title,
+      }}
       ref={logsRef}
-      title={title}
       onDownload={handleDownloadLogs}
       onScrollToTop={handleScrollToTop} />
   );
