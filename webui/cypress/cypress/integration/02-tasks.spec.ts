@@ -1,5 +1,6 @@
 describe('Task List', () => {
   const recordSelector = 'tr.ant-table-row';
+
   beforeEach(() => {
     cy.visit('/det/tasks');
   });
