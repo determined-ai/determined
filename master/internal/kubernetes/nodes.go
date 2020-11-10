@@ -63,19 +63,31 @@ func (n *nodeInformer) startNodeInformer(ctx *actor.Context) error {
 	nodeInformer := n.informer.Core().V1().Nodes().Informer()
 	nodeInformer.AddEventHandler(&cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			node := obj.(*k8sV1.Node)
-			ctx.Log().Debugf("node added %s", node.Name)
-			ctx.Tell(n.podsHandler, nodeStatusUpdate{updatedNode: node})
+			node, ok := obj.(*k8sV1.Node)
+			if ok {
+				ctx.Log().Debugf("node added %s", node.Name)
+				ctx.Tell(n.podsHandler, nodeStatusUpdate{updatedNode: node})
+			} else {
+				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node", obj)
+			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			node := newObj.(*k8sV1.Node)
-			ctx.Log().Debugf("node updated %s", node.Name)
-			ctx.Tell(n.podsHandler, nodeStatusUpdate{updatedNode: node})
+			node, ok := newObj.(*k8sV1.Node)
+			if ok {
+				ctx.Log().Debugf("node updated %s", node.Name)
+				ctx.Tell(n.podsHandler, nodeStatusUpdate{updatedNode: node})
+			} else {
+				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node", newObj)
+			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			node := obj.(*k8sV1.Node)
-			ctx.Log().Debugf("node stopped %s", node.Name)
-			ctx.Tell(n.podsHandler, nodeStatusUpdate{deletedNode: node})
+			node, ok := obj.(*k8sV1.Node)
+			if ok {
+				ctx.Log().Debugf("node stopped %s", node.Name)
+				ctx.Tell(n.podsHandler, nodeStatusUpdate{deletedNode: node})
+			} else {
+				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node", obj)
+			}
 		},
 	})
 
