@@ -79,7 +79,7 @@ Determined agents need the following network access:
       firewall rules allow access to this data.
 
 -  Inbound and outbound TCP on all ports to and from each Determined
-   agent:
+   agent.  The details are as follows:
 
    -  Inbound and outbound TCP ports 1734 and 1750 are used for synchronization between trial containers.
 
@@ -87,10 +87,10 @@ Determined agents need the following network access:
 
    -  Inbound and outbound TCP port 12355 is used for GLOO rendezvous between trial containers.
 
-   -  Inbound and outbound ephemeral ports in the range 1024-65536 are used for communication between trials via GLOO.
+   -  Inbound and outbound ephemeral TCP ports in the range 1024-65536 are used for communication between trials via GLOO.  This range is configured by the configuration parameter ``task_container_defaults.gloo_port_range`` inside ``master.yaml`` as described in the :ref:`cluster-configuration` guide.
 
-   -  For every GPU on each agent machine, an inbound and outbound ephemeral TCP port in the range 1024-65536 is used for communication between trials via NCCL.
+   -  For every GPU on each agent machine, an inbound and outbound ephemeral TCP port in the range 1024-65536 is used for communication between trials via NCCL.  This range is configured by the configuration parameter ``task_container_defaults.nccl_port_range`` inside ``master.yaml`` as described in the :ref:`cluster-configuration` guide.
 
    -  Two additional ephemeral TCP ports in the range 1024-65536 are used for additional intra-trial communication between trial containers.
 
-   -  For Tensorboards, an inbound and outbound TCP port between 2600 - 2900 is used to connect the master and the tensorboard container.
+   -  For Tensorboards, an inbound and outbound TCP port between 2600-2900 is used to connect the master and the tensorboard container.
