@@ -137,6 +137,9 @@ const TrialLogs: React.FC = () => {
     return <Message title={`Unable to find Trial ${trialId}`} type={MessageType.Warning} />;
   }
 
+  const experimentDetailPath = `/experiments/${trial.data?.experimentId}`;
+  const trialDetailPath = `${experimentDetailPath}/trials/${trialId}`;
+
   return (
     <LogViewer
       disableLevel
@@ -144,16 +147,16 @@ const TrialLogs: React.FC = () => {
       isLoading={isLoading}
       noWrap
       pageProps={{
-        backPath: `/trials/${trialId}`,
+        backPath: trialDetailPath,
         breadcrumb: [
           { breadcrumbName: 'Experiments', path: '/experiments' },
           {
             breadcrumbName: `Experiment ${trial.data?.experimentId}`,
-            path: `/experiments/${trial.data?.experimentId}`,
+            path: experimentDetailPath,
           },
           {
             breadcrumbName: `Trial ${trialId}`,
-            path: `/experiments/${trial.data?.experimentId}/trials/${trialId}`,
+            path: trialDetailPath,
           },
           { breadcrumbName: 'Logs', path: '#' },
         ],
