@@ -22,7 +22,7 @@ message GetShellsRequest {
     // Return shells sorted by start time.
     SORT_BY_START_TIME = 4;
   }
-  // Sort shells by the given field
+  // Sort shells by the given field.
   SortBy sort_by = 1;
   // Order shells in either ascending or descending order.
   OrderBy order_by = 2;

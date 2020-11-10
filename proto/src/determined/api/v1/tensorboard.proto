@@ -22,7 +22,7 @@ message GetTensorboardsRequest {
     // Return tensorboards sorted by start time.
     SORT_BY_START_TIME = 4;
   }
-  // Sort tensorboards by the given field
+  // Sort tensorboards by the given field.
   SortBy sort_by = 1;
   // Order tensorboards in either ascending or descending order.
   OrderBy order_by = 2;

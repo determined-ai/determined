@@ -18,7 +18,7 @@ message GetAgentsRequest {
     // Returns agents sorted by time.
     SORT_BY_TIME = 2;
   }
-  // Sort agents by the given field
+  // Sort agents by the given field.
   SortBy sort_by = 1;
   // Order agents in either ascending or descending order.
   OrderBy order_by = 2;

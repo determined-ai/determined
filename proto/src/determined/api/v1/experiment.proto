@@ -38,8 +38,8 @@ message GetExperimentsRequest {
     SORT_BY_DESCRIPTION = 2;
     // Return experiments sorted by start time.
     SORT_BY_START_TIME = 4;
-    // Return experiments sorted by end time. Experiments without end times are
-    // returned after experiments that are.
+    // Return experiments sorted by end time. Experiments without end_time are
+    // returned after the ones with end_time.
     SORT_BY_END_TIME = 5;
     // Return experiments sorted by state.
     SORT_BY_STATE = 6;
@@ -187,7 +187,7 @@ message GetExperimentCheckpointsRequest {
   }
   // The experiment id.
   int32 id = 1;
-  // Sort checkpoints by the given field
+  // Sort checkpoints by the given field.
   SortBy sort_by = 2;
   // Order checkpoints in either ascending or descending order.
   OrderBy order_by = 3;
@@ -255,7 +255,7 @@ message MetricNamesRequest {
 
 // Response to MetricNamesRequest.
 message MetricNamesResponse {
-  // The name of the searcher metric
+  // The name of the searcher metric.
   string searcher_metric = 1;
   // List of training metric names.
   repeated string training_metrics = 2;

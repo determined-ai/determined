@@ -16,7 +16,7 @@ message GetTemplatesRequest {
     // Returns templates sorted by name.
     SORT_BY_NAME = 1;
   }
-  // Sort templates by the given field
+  // Sort templates by the given field.
   SortBy sort_by = 1;
   // Order templates in either ascending or descending order.
   OrderBy order_by = 2;
@@ -47,8 +47,7 @@ message GetTemplateResponse {
   determined.template.v1.Template template = 1;
 }
 
-// Update the requested template. If one does not exist, a new template is
-// created
+// Update or create (upsert) the requested template.
 message PutTemplateRequest {
   // The template to put.
   determined.template.v1.Template template = 1;
