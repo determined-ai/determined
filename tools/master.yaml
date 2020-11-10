@@ -1,9 +1,10 @@
 task_container_defaults:
   network_mode: host
-  log_driver:
-    backend: elastic
-    host: host.docker.internal
-    port: 9200
+
+logging:
+  backend: elastic
+  host: 127.0.0.1
+  port: 9200
 
 checkpoint_storage:
   type: shared_fs

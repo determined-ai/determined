@@ -20,8 +20,8 @@ type AgentMessage struct {
 // This is generally useful for configurations that are not _agent_ specific but
 // cluster-wide.
 type MasterSetAgentOptions struct {
-	MasterInfo       MasterInfo
-	LogDriverOptions model.LogDriverOptions
+	MasterInfo     MasterInfo
+	LoggingOptions model.LoggingConfig
 }
 
 // StartContainer notifies the agent to start a container with the provided spec.

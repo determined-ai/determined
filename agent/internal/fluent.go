@@ -136,28 +136,6 @@ end
   Call run
 `, containerIDEnvVar, trialIDEnvVar, opts.AgentID, luaPath)
 
-	fluentMasterHost := opts.MasterHost
-	fluentMasterPort := opts.MasterPort
-
-	// HACK: If a host resolves to both IPv4 and IPv6 addresses, Fluent Bit seems to only try IPv6 and
-	// fail if that connection doesn't work. IPv6 doesn't play well with Docker and many Linux
-	// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and [::1]
-	// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
-	// diretcly into an IP address before passing it to Fluent Bit.
-	if fluentMasterHost == localhost {
-		fluentMasterHost = "127.0.0.1"
-		if opts.Security.TLS.MasterCertName == "" {
-			opts.Security.TLS.MasterCertName = localhost
-		}
-	}
-
-	if opts.ContainerMasterHost != "" {
-		fluentMasterHost = opts.ContainerMasterHost
-	}
-	if opts.ContainerMasterPort != 0 {
-		fluentMasterPort = opts.ContainerMasterPort
-	}
-
 	var outputConfig string
 	const (
 		tlsOn         = "  tls On\n"
@@ -165,7 +143,29 @@ end
 		tlsCaCertFile = "  tls.ca_file %s\n"
 	)
 	switch {
-	case masterSetOpts.LogDriverOptions.DefaultLogDriver != nil:
+	case masterSetOpts.LoggingOptions.DefaultLoggingConfig != nil:
+		fluentMasterHost := opts.MasterHost
+		fluentMasterPort := opts.MasterPort
+
+		// HACK: If a host resolves to both IPv4 and IPv6 addresses, Fluent Bit seems to only try IPv6 and
+		// fail if that connection doesn't work. IPv6 doesn't play well with Docker and many Linux
+		// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and [::1]
+		// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
+		// diretcly into an IP address before passing it to Fluent Bit.
+		if fluentMasterHost == localhost {
+			fluentMasterHost = "127.0.0.1"
+			if opts.Security.TLS.MasterCertName == "" {
+				opts.Security.TLS.MasterCertName = localhost
+			}
+		}
+
+		if opts.ContainerMasterHost != "" {
+			fluentMasterHost = opts.ContainerMasterHost
+		}
+		if opts.ContainerMasterPort != 0 {
+			fluentMasterPort = opts.ContainerMasterPort
+		}
+
 		outputConfig = fmt.Sprintf(`
 [OUTPUT]
   Name http
@@ -206,8 +206,15 @@ end
 				)
 			}
 		}
-	case masterSetOpts.LogDriverOptions.ElasticLogDriver != nil:
-		elasticOpts := masterSetOpts.LogDriverOptions.ElasticLogDriver
+	case masterSetOpts.LoggingOptions.ElasticLoggingConfig != nil:
+		elasticOpts := masterSetOpts.LoggingOptions.ElasticLoggingConfig
+
+		fluentElasticHost := elasticOpts.Host
+		// HACK: Also a hack, described above in detail.
+		if fluentElasticHost == "localhost" {
+			fluentElasticHost = "127.0.0.1"
+		}
+
 		outputConfig = fmt.Sprintf(`
 [OUTPUT]
   Name  es
@@ -217,7 +224,7 @@ end
   Logstash_Format True
   Logstash_Prefix triallogs
   Time_Key @fluent_timestamp
-`, elasticOpts.Host, elasticOpts.Port)
+`, fluentElasticHost, elasticOpts.Port)
 
 		elasticSecOpts := elasticOpts.Security
 		if elasticSecOpts.Username != nil && elasticSecOpts.Password != nil {

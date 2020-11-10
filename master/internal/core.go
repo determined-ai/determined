@@ -390,8 +390,8 @@ func (m *Master) Run() error {
 
 	// Resource Manager.
 	agentOpts := &aproto.MasterSetAgentOptions{
-		MasterInfo:       m.Info(),
-		LogDriverOptions: m.config.TaskContainerDefaults.LogDriverOptions,
+		MasterInfo:     m.Info(),
+		LoggingOptions: m.config.Logging,
 	}
 	m.rm = resourcemanagers.Setup(
 		m.system, m.echo, m.config.ResourceManager, m.config.ResourcePoolsConfig, agentOpts, cert,

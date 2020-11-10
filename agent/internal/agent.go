@@ -313,8 +313,6 @@ func (a *agent) setup(ctx *actor.Context) error {
 	}
 	a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
 
-	actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
-
 	if err = a.detect(); err != nil {
 		return err
 	}
