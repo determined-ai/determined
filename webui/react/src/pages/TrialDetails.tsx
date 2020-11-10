@@ -425,7 +425,15 @@ If the problem persists please contact support.',
     };
 
     fetchExperimentDetails();
-  }, [ experimentId, metricNames, trialDetails.source, storage, storageTableMetricsKey ]);
+  }, [
+    experimentId,
+    experimentIdParam,
+    history,
+    metricNames,
+    trialDetails.source,
+    trialId,
+    storage,
+    storageTableMetricsKey ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
   if (trialDetails.error !== undefined) {
