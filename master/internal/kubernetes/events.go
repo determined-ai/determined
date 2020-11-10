@@ -74,7 +74,7 @@ func (e *eventListener) startEventListener(ctx *actor.Context) error {
 	for event := range watch.ResultChan() {
 		newEvent, ok := event.Object.(*k8sV1.Event)
 		if !ok {
-			ctx.Log().Warnf("error converting object type %T to *k8sV1.Event", event)
+			ctx.Log().Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
 			continue
 		}
 		e.modMessage(newEvent)

@@ -71,7 +71,7 @@ func (i *informer) startInformer(ctx *actor.Context) error {
 	for event := range watch.ResultChan() {
 		pod, ok := event.Object.(*k8sV1.Pod)
 		if !ok {
-			ctx.Log().Errorf("error converting event of type %T to *k8sV1.Pod", event)
+			ctx.Log().Errorf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
 			continue
 		}
 

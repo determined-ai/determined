@@ -68,7 +68,7 @@ func (n *nodeInformer) startNodeInformer(ctx *actor.Context) error {
 				ctx.Log().Debugf("node added %s", node.Name)
 				ctx.Tell(n.podsHandler, nodeStatusUpdate{updatedNode: node})
 			} else {
-				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node", obj)
+				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node: %+v", obj, obj)
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
@@ -77,7 +77,7 @@ func (n *nodeInformer) startNodeInformer(ctx *actor.Context) error {
 				ctx.Log().Debugf("node updated %s", node.Name)
 				ctx.Tell(n.podsHandler, nodeStatusUpdate{updatedNode: node})
 			} else {
-				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node", newObj)
+				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node: %+v", newObj, newObj)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -86,7 +86,7 @@ func (n *nodeInformer) startNodeInformer(ctx *actor.Context) error {
 				ctx.Log().Debugf("node stopped %s", node.Name)
 				ctx.Tell(n.podsHandler, nodeStatusUpdate{deletedNode: node})
 			} else {
-				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node", obj)
+				ctx.Log().Warnf("error converting event of type %T to *k8sV1.Node: %+v", obj, obj)
 			}
 		},
 	})
