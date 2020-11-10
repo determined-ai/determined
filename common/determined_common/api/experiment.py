@@ -37,19 +37,9 @@ def logs(args: Namespace) -> None:
             "LOG_LEVEL_ERROR",
             "LOG_LEVEL_CRITICAL",
         ]
-        if level == "TRACE":
-            return levels
-        elif level == "DEBUG":
-            return levels[1:]
-        elif level == "INFO":
-            return levels[2:]
-        elif level == "WARNING":
-            return levels[3:]
-        elif level == "ERROR":
-            return levels[4:]
-        elif level == "CRITICAL":
-            return levels[5:]
-        else:
+        try:
+            return levels[levels.index("LOG_LEVEL_" + level):]
+        except ValueError:
             raise Exception("invalid log level: {}".format(level))
 
     def print_logs(
