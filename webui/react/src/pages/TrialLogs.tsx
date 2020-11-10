@@ -151,7 +151,10 @@ const TrialLogs: React.FC = () => {
             breadcrumbName: `Experiment ${trial.data?.experimentId}`,
             path: `/experiments/${trial.data?.experimentId}`,
           },
-          { breadcrumbName: `Trial ${trialId}`, path: `/trials/${trialId}` },
+          {
+            breadcrumbName: `Trial ${trialId}`,
+            path: `/experiments/${trial.data?.experimentId}/trials/${trialId}`,
+          },
           { breadcrumbName: 'Logs', path: '#' },
         ],
         title,
