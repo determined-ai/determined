@@ -6,21 +6,31 @@
     & > * { margin-left: var(--theme-sizes-layout-enormous); }
 
     @media only screen and (max-width: $breakpoint-tablet) {
-      display: table;
+      align-items: stretch;
+      display: flex;
       flex-direction: column;
-      max-width: 32rem;
+      // max-width: 32rem;
       padding: var(--theme-sizes-layout-big);
-      width: calc(100vw - 2 * var(--theme-sizes-layout-big));
+      // width: calc(100vw - 2 * var(--theme-sizes-layout-big));
 
       & > * {
-        display: table-row;
+        align-items: stretch;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
         margin-left: 0;
       }
-      & > * > * {
-        display: table-cell;
+      & > * > [class^=Label_base_] {
+        margin-left: 0;
+        padding: var(--theme-sizes-layout-big) 0 var(--theme-sizes-layout-medium) 0;
+        text-align: left;
       }
-      & > *:not(:first-child) > * { padding: var(--theme-sizes-layout-medium) 0 0 var(--theme-sizes-layout-medium); }
-      & > * > *:not(:first-child) { padding-left: var(--theme-sizes-layout-medium); }
+      & > *:first-child > [class^=Label_base_] {
+        padding: 0 0 var(--theme-sizes-layout-medium) 0;
+      }
+      & > * > *:not(:first-child) {
+        margin-left: 0;
+      }
     }
   }
   .close {

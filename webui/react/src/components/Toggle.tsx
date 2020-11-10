@@ -21,7 +21,7 @@ const Toggle: React.FC<Props> = ({ onChange, ...props }: Props) => {
 
   return (
     <div className={css.base} onClick={handleClick}>
-      {props.prefixLabel && <Label style={{ textAlign: 'right' }}>{props.prefixLabel}</Label>}
+      {props.prefixLabel && <Label>{props.prefixLabel}</Label>}
       <Switch checked={checked} />
       {props.suffixLabel && <Label>{props.suffixLabel}</Label>}
     </div>

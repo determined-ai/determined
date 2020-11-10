@@ -11,10 +11,6 @@ export const Default = (): React.ReactNode => (
   <Label>Default Label</Label>
 );
 
-export const AlignRight = (): React.ReactNode => (
-  <Label style={{ textAlign: 'right', width: 300 }}>Label Aligned Right</Label>
-);
-
 export const TextOnly = (): React.ReactNode => (
   <Label type={LabelTypes.TextOnly}>TextOnly Label</Label>
 );

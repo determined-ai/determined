@@ -3,7 +3,6 @@ import React, { useCallback } from 'react';
 
 import Icon from './Icon';
 import css from './IconFilterButtons.module.scss';
-import Label from './Label';
 
 interface FilterButton {
   active: boolean;
@@ -26,7 +25,6 @@ const FilterButtons: React.FC<Props> = ({ buttons, onClick }: Props) => {
 
   return (
     <div className={css.base}>
-      <Label />
       <div>
         <div className={css.buttons}>
           {buttons.map(button => {
