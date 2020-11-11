@@ -34,12 +34,17 @@ const Cluster: React.FC = () => {
   return (
     <Page id="cluster" title="Cluster">
       <Grid minItemWidth={50}>
-        {Object.values(ResourceType).map((resourceType, idx) => (
-          <ResourceChart
-            key={idx}
-            resources={availableResources[resourceType]}
-            title={resourceType + 's'} />
-        ))}
+        {Object.values(ResourceType)
+          .filter((resourceType) => (
+            resourceType !== ResourceType.UNSPECIFIED
+          ))
+          .map((resourceType, idx) => (
+            <ResourceChart
+              key={idx}
+              resources={availableResources[resourceType]}
+              title={resourceType + 's'} />
+          ))
+        }
       </Grid>
     </Page>
   );

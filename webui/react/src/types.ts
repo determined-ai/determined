@@ -34,7 +34,8 @@ export interface DeterminedInfo {
 
 export enum ResourceType {
   CPU = 'CPU',
-  GPU = 'GPU'
+  GPU = 'GPU',
+  UNSPECIFIED = 'UNSPECIFIED',
 }
 
 export const resourceTypes: ResourceType[] = [
@@ -43,22 +44,20 @@ export const resourceTypes: ResourceType[] = [
 ];
 
 export enum ResourceState { // This is almost CommandState
-  Free = 'FREE',
+  Unspecified = 'UNSPECIFIED',
   Assigned = 'ASSIGNED',
   Pulling = 'PULLING',
   Starting = 'STARTING',
   Running = 'RUNNING',
-  Terminating = 'TERMINATING',
   Terminated = 'TERMINATED',
 }
 
 export const resourceStates: ResourceState[] = [
-  ResourceState.Free,
+  ResourceState.Unspecified,
   ResourceState.Assigned,
   ResourceState.Pulling,
   ResourceState.Starting,
   ResourceState.Running,
-  ResourceState.Terminating,
   ResourceState.Terminated,
 ];
 
