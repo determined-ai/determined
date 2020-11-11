@@ -128,3 +128,7 @@ telemetry:
 
 ## A user friendly name to identify this cluster by.
 # clusterName: Dev
+
+# users sets user options, including the default password for all users
+users:
+  password: "test"
