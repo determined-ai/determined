@@ -8,9 +8,8 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useStorage from 'hooks/useStorage';
-import { openBlank } from 'routes/utils';
+import { openCommand } from 'routes/utils';
 import { createNotebook } from 'services/api';
-import { commandToTask } from 'utils/types';
 
 import Avatar from './Avatar';
 import DropdownMenu, { Placement } from './DropdownMenu';
@@ -70,9 +69,7 @@ const Navigation: React.FC = () => {
   const launchNotebook = useCallback(async (slots: number) => {
     try {
       const notebook = await createNotebook({ slots });
-      const task = commandToTask(notebook);
-      if (task.url) openBlank(task.url);
-      else throw new Error('Notebook URL not available.');
+      openCommand(notebook);
     } catch (e) {
       handleError({
         error: e,

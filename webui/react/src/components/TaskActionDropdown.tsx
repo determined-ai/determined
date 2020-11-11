@@ -116,7 +116,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
     menuItems.push(<Menu.Item key="openOrCreateTensorboard">Open Tensorboard</Menu.Item>);
   } else {
     menuItems.push(<Menu.Item key="viewLogs">
-      <Link external path={taskPath(task as CommandTask)}>View Logs</Link>
+      <Link path={taskPath(task as CommandTask)}>View Logs</Link>
     </Menu.Item>);
   }
 

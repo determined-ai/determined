@@ -1,9 +1,10 @@
 import { pathToRegexp } from 'path-to-regexp';
 import { MouseEvent, MouseEventHandler } from 'react';
 
+import handleError, { ErrorType } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
-import { Command, CommandType } from 'types';
+import { Command, CommandTask, CommandType } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
@@ -57,7 +58,7 @@ export const waitPageUrl = (command: Partial<Command>): string | undefined => {
   if (!eventUrl || !proxyUrl) return;
   const event = encodeURIComponent(eventUrl);
   const jump = encodeURIComponent(proxyUrl);
-  return serverAddress(`/wait?event=${event}&jump=${jump}`);
+  return `/wait/index.html?event=${event}&jump=${jump}`;
 };
 
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
@@ -66,10 +67,13 @@ export const openBlank = (url: string): void => {
   window.open(url, '_blank', windowOpenFeatures.join(','));
 };
 
-export const openCommand = (command: Command): void => {
-  const url = waitPageUrl(command);
-  if (!url) throw new Error('command cannot be opened');
-  openBlank(url);
+export const openCommand = (command: Command | CommandTask): void => {
+  const url = command.url || waitPageUrl(command);
+  if (!url) {
+    handleError({ message: 'command cannot be opened', silent: true, type: ErrorType.Unknown });
+    return;
+  }
+  openBlank(process.env.PUBLIC_URL + url);
 };
 
 export const handlePath = (
@@ -131,6 +135,17 @@ export const routeAll = (path: string): void => {
   }
 };
 
-export const linkPath = (path: string, external = false): string => {
-  return (external ? '' : process.env.PUBLIC_URL) + path;
+export const linkPath = (aPath: string, external = false): string => {
+  if (isFullPath(aPath)) return aPath;
+  let path;
+  if (external) {
+    if (isAbsolutePath(aPath)) {
+      path = serverAddress() + aPath;
+    } else {
+      path = aPath;
+    }
+  } else {
+    path = process.env.PUBLIC_URL + aPath;
+  }
+  return path;
 };

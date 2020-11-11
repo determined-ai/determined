@@ -26,6 +26,7 @@ export enum ErrorLevel {
 export enum ErrorType {
   Server = 'server', // internal apis and server errors.
   Auth = 'auth',
+  Unknown = 'unknown',
   Ui = 'ui',
   Input = 'input',
   ApiBadResponse = 'apiBadResponse',
