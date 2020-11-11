@@ -87,12 +87,28 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
   }, [ experiment.id, onSettled ]);
 
   const handleStateChange = useCallback((targetState: RunState) => async (): Promise<void> => {
-    setButtonStates(state => ({ ...state, [targetState]: true }));
+    let action: Action;
+    switch (targetState) {
+      case RunState.Active:
+        action = Action.Activate;
+        break;
+      case RunState.Paused:
+        action = Action.Pause;
+        break;
+      case RunState.Canceled:
+      case RunState.StoppingCanceled:
+        action = Action.Cancel;
+        break;
+      default:
+        // unsupported targetState.
+        return;
+    }
+    setButtonStates(state => ({ ...state, [action]: true }));
     try {
       await setExperimentState({ experimentId: experiment.id, state: targetState });
       onSettled();
     } finally {
-      setButtonStates(state => ({ ...state, [targetState]: false }));
+      setButtonStates(state => ({ ...state, [action]: false }));
     }
   }, [ experiment.id, onSettled ]);
 
