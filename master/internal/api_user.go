@@ -129,7 +129,7 @@ func (a *apiServer) SetUserPassword(
 		return nil, grpc.ErrPermissionDenied
 	}
 	user := &model.User{Username: req.Username}
-	if err = user.UpdatePasswordHash(req.Password); err != nil {
+	if err = user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
 		return nil, err
 	}
 	switch err = a.m.db.UpdateUser(user, []string{"password_hash"}, nil); {
