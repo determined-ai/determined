@@ -180,7 +180,7 @@ end
   Format json
   Json_date_key timestamp
   Json_date_format iso8601
-	`, fluentMasterHost, fluentMasterPort)
+`, fluentMasterHost, fluentMasterPort)
 
 		const masterCertPath = baseDir + "master.crt"
 		if opts.Security.TLS.Enabled {
