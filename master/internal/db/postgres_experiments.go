@@ -283,7 +283,7 @@ SELECT t.id FROM (
   GROUP BY t.id
   ORDER BY best_metric %s
   LIMIT $3
-);`, aggregate, order), metric, experimentID, maxTrials)
+) t;`, aggregate, order), metric, experimentID, maxTrials)
 	return trials, err
 }
 
