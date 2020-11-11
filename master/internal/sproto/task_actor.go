@@ -52,6 +52,12 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
+	// SetGroupPriority sets the priority of the group in the priority scheduler.
+	SetGroupPriority struct {
+		Priority     *int
+		ResourcePool string
+		Handler      *actor.Ref
+	}
 )
 
 func (c ContainerLog) String() string {
