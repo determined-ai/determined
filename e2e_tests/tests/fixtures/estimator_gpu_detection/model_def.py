@@ -22,7 +22,7 @@ class Model(tensorpack.ModelDesc):  # type: ignore
 
     def __init__(self, hparams: Dict[str, Any]) -> None:
         self.hparams = hparams
-        self.image_size = hparams.get("image_size", 28)
+        self.image_size = 28
 
     def inputs(self) -> List[tf.TensorSpec]:
         """
@@ -134,9 +134,6 @@ class MnistTensorpackInEstimator(EstimatorTrial):
     def __init__(self, context: EstimatorTrialContext) -> None:
         self.context = context
 
-        # Create a unique download directory for each rank so they don't overwrite each other.
-        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
-
     def build_estimator(self) -> tf.estimator.Estimator:
         estimator = tf.estimator.Estimator(
             model_fn=make_model_fn(self.context), config=None, params=None
@@ -144,15 +141,7 @@ class MnistTensorpackInEstimator(EstimatorTrial):
         return estimator
 
     def _dataflow_to_dataset(self, train: bool) -> tf.data.Dataset:
-        data_subset = "train" if train else "test"
-        if self.context.get_hparams().get("synthetic_data", False):
-            image_size = self.context.get_hparams().get("image_size", 28)
-            input_dataflow = tensorpack.dataflow.FakeData(
-                [[image_size, image_size], [self.context.get_per_slot_batch_size()]], size=1000
-            )
-        else:
-            input_dataflow = tensorpack.dataset.Mnist(data_subset, dir=self.download_directory)
-
+        input_dataflow = tensorpack.dataflow.FakeData([[28, 28], [1]], size=1000)
         input_dataset = tensorpack.input_source.TFDatasetInput.dataflow_to_dataset(
             input_dataflow, types=[tf.float32, tf.int64]
         )
