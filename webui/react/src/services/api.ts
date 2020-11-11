@@ -90,9 +90,11 @@ export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.p
 
 export const archiveExperiment = async (id: number, archive = true): Promise<void> => {
   try {
-    await archive ?
-      Config.detApi.Experiments.determinedArchiveExperiment(id) :
-      Config.detApi.Experiments.determinedUnarchiveExperiment(id);
+    if (archive) {
+      await Config.detApi.Experiments.determinedArchiveExperiment(id);
+    } else {
+      await Config.detApi.Experiments.determinedUnarchiveExperiment(id);
+    }
   } catch (e) {
     processApiError('archiveExperiment', e);
     throw e;
