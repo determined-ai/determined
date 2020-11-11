@@ -757,6 +757,11 @@ class TFKerasTrialController(det.LoopTrialController):
         num_inputs = self.multiplexer.get_test_inputs()
 
         if self.hvd_config.use:
+            # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
+            # may hang when called minutes apart by different workers which may happen if
+            # workers complete evaluation at different speeds.
+            self._global_barrier()
+
             num_inputs = hvd.allreduce(num_inputs, average=False, name="validation_num_inputs")
             if isinstance(num_inputs, EagerTensor):
                 # Horovod will promote an int to a tensor in eager mode.

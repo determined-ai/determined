@@ -294,3 +294,22 @@ class LoopTrialController(TrialController):
                 srv_pub_url=f"tcp://{chief_ip_address}:{srv_pub_port}",
                 srv_pull_url=f"tcp://{chief_ip_address}:{srv_pull_port}",
             )
+
+    def _global_barrier(self) -> None:
+        # Executes a barrier by communicating directly between worker processes via ZMQ.
+        logging.debug(f"Worker {self.context.distributed.get_rank()} entering global barrier.")
+        if self.is_chief:
+            self.train_process_comm_chief = cast(
+                ipc.ZMQBroadcastServer, self.train_process_comm_chief
+            )
+            self.train_process_comm_chief.gather_with_polling(lambda: None)
+            self.train_process_comm_chief.broadcast(None)
+        else:
+            self.train_process_comm_worker = cast(
+                ipc.ZMQBroadcastClient, self.train_process_comm_worker
+            )
+            self.train_process_comm_worker.send([None])
+            # Synchronize with the chief so that there is no risk of accidentally calling send()
+            # for a future gather before all workers have called send() on this gather.
+            _ = self.train_process_comm_worker.recv()
+        logging.debug(f"Worker {self.context.distributed.get_rank()} exiting global barrier.")
