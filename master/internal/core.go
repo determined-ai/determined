@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/elastic"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
@@ -330,7 +332,20 @@ func (m *Master) Run() error {
 	//             +- Websocket (actors.WebSocket: <remote-address>)
 	m.system = actor.NewSystem("master")
 
-	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(m.db))
+	var trialLogPersister TrialLogPersister
+	switch {
+	case m.config.Logging.DefaultLoggingConfig != nil:
+		trialLogPersister = m.db
+	case m.config.Logging.ElasticLoggingConfig != nil:
+		es, sErr := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
+		if sErr != nil {
+			return sErr
+		}
+		trialLogPersister = es
+	default:
+		panic("unsupported logging backend")
+	}
+	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(trialLogPersister))
 
 	userService, err := user.New(m.db, m.system)
 	if err != nil {

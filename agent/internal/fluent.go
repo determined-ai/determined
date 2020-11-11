@@ -24,7 +24,10 @@ import (
 // the agent sends to the Fluent Bit logger.
 var fluentEnvVarNames = []string{containerIDEnvVar, trialIDEnvVar}
 
-const localhost = "localhost"
+const (
+	localhost    = "localhost"
+	ipv4Loopback = "127.0.0.1"
+)
 
 // fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
 // an appropriate configuration.
@@ -153,7 +156,7 @@ end
 		// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
 		// diretcly into an IP address before passing it to Fluent Bit.
 		if fluentMasterHost == localhost {
-			fluentMasterHost = "127.0.0.1"
+			fluentMasterHost = ipv4Loopback
 			if opts.Security.TLS.MasterCertName == "" {
 				opts.Security.TLS.MasterCertName = localhost
 			}
@@ -211,8 +214,8 @@ end
 
 		fluentElasticHost := elasticOpts.Host
 		// HACK: Also a hack, described above in detail.
-		if fluentElasticHost == "localhost" {
-			fluentElasticHost = "127.0.0.1"
+		if fluentElasticHost == localhost {
+			fluentElasticHost = ipv4Loopback
 		}
 
 		outputConfig = fmt.Sprintf(`
