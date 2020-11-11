@@ -226,7 +226,8 @@ end
   Port  %d
   Logstash_Format True
   Logstash_Prefix triallogs
-  Time_Key @fluent_timestamp
+  Time_Key timestamp
+  Time_Key_Nanos On
 `, fluentElasticHost, elasticOpts.Port)
 
 		elasticSecOpts := elasticOpts.Security
