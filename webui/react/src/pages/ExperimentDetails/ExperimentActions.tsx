@@ -53,27 +53,27 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
   });
 
   const handleArchive = useCallback((archive: boolean) => async (): Promise<void> => {
-    setButtonStates(state => ({ ...state, archive: true }));
+    setButtonStates(state => ({ ...state, Archive: true }));
     try {
       await archiveExperiment(experiment.id, archive);
       onSettled();
     } finally {
-      setButtonStates(state => ({ ...state, archive: false }));
+      setButtonStates(state => ({ ...state, Archive: false }));
     }
   }, [ experiment.id, onSettled ]);
 
   const handleKill = useCallback(async () => {
-    setButtonStates(state => ({ ...state, kill: true }));
+    setButtonStates(state => ({ ...state, Kill: true }));
     try {
       await killExperiment({ experimentId: experiment.id });
       onSettled();
     } finally {
-      setButtonStates(state => ({ ...state, kill: false }));
+      setButtonStates(state => ({ ...state, Kill: false }));
     }
   }, [ experiment.id, onSettled ]);
 
   const handleCreateTensorboard = useCallback(async () => {
-    setButtonStates(state => ({ ...state, tensorboard: true }));
+    setButtonStates(state => ({ ...state, Tensorboard: true }));
     try {
       const tensorboard = await openOrCreateTensorboard({
         ids: [ experiment.id ],
@@ -82,7 +82,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
       openCommand(tensorboard);
       onSettled();
     } finally {
-      setButtonStates(state => ({ ...state, tensorboard: false }));
+      setButtonStates(state => ({ ...state, Tensorboard: false }));
     }
   }, [ experiment.id, onSettled ]);
 
