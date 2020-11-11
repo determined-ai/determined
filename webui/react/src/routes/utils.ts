@@ -78,18 +78,21 @@ export const handlePath = (
     onClick?: MouseEventHandler,
     path?: string,
     popout?: boolean,
+    external?: boolean,
   } = {},
 ): void => {
   event.persist();
   event.preventDefault();
 
+  const href = options.path ? linkPath(options.path, options.external) : undefined;
+
   if (options.onClick) {
     options.onClick(event);
-  } else if (options.path) {
+  } else if (href) {
     if (event.button === 1 || event.metaKey || event.ctrlKey || options.popout) {
-      openBlank(options.path);
+      openBlank(href);
     } else {
-      routeAll(options.path);
+      routeAll(href);
     }
   }
 };
@@ -126,4 +129,8 @@ export const routeAll = (path: string): void => {
   } else {
     history.push(getReactPath(path), { loginRedirect: clone(window.location) });
   }
+};
+
+export const linkPath = (path: string, external = false): string => {
+  return (external ? '' : process.env.PUBLIC_URL) + path;
 };
