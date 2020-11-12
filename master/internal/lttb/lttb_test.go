@@ -35,19 +35,3 @@ func TestLTTB(t *testing.T) {
 		t.Errorf("Unexpected result from LTTB, expected %v, actual %v", expected, actual)
 	}
 }
-
-func TestScale(t *testing.T) {
-	input := make([]Point, 1000000)
-	for i := 0; i < len(input); i++ {
-		input[i] = Point{float64(i), rand.Float64()}
-	}
-
-	start := time.Now()
-	Downsample(input, 1000)
-	finish := time.Now()
-	elapsed := finish.Sub(start)
-
-	if elapsed > (50 * time.Millisecond) {
-		t.Errorf("Downsampling from 1M to 1K expected to be less than 50ms. Took %s", elapsed)
-	}
-}
