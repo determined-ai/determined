@@ -45,7 +45,7 @@ func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
 func (s SchedulerConfig) Validate() []error {
 	return []error{
 		check.Contains(
-			s.FittingPolicy, []interface{}{"best", "worst"}, "invalid fitting policy",
+			s.FittingPolicy, []interface{}{best, worst}, "invalid fitting policy",
 		),
 	}
 }
