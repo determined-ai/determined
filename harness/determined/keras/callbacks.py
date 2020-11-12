@@ -1,9 +1,12 @@
+import logging
 import pathlib
 from typing import Any, Dict, List, Optional
 
 import tensorflow as tf
 from packaging import version
 from tensorflow.python.keras.utils import tf_utils
+
+from determined import tensorboard
 
 
 class Callback(tf.keras.callbacks.Callback):  # type: ignore
@@ -644,3 +647,57 @@ class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type
 
     def load_state(self, state: Any) -> None:
         _tf_keras_callback_load_state(self, state)
+
+
+class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
+    """
+    This is a thin wrapper over the TensorBoard callback that ships with ``tf.keras``.  For more
+    information, see the :ref:`TensorBoard Guide <how-to-tensorboard>` or the upstream docs for
+    `tf.keras.callbacks.TensorBoard
+    <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard>`__.
+
+    Note that if a ``log_dir`` argument is passed to the constructor, it will be ignored.
+    """
+
+    # TensorBoard uses on_epoch_end but we manually take care of that.
+    _skip_epoch_end_check = True
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        self.workload_end_count = 0
+        user_log_dir = kwargs.pop("log_dir", None)
+        if user_log_dir is not None:
+            logging.warning(
+                f"arg log_dir={user_log_dir} to det.keras.callbacks.TensorBoard will be ignored"
+            )
+        log_dir = str(tensorboard.get_base_path({}).resolve())
+        tf.keras.callbacks.TensorBoard.__init__(self, log_dir=log_dir, *args, **kwargs)
+
+    def _write_logs(self, *args: Any) -> None:
+        """
+        _write_logs calls the original _write_logs() function from the Keras
+        TensorBoard callback. After the logs are flushed to disk, we close and
+        reopen the tf event writer so that it serializes the next set of logs
+        to a new file. This allows the tensorboard manager to treat the
+        written files as immutable and upload them to persistent storage
+        without later having to append to them. This behavior is useful for
+        tensorboard backed by S3.
+        """
+        tf.keras.callbacks.TensorBoard._write_logs(self, *args)
+        self.writer.close()
+        self.writer.reopen()
+
+    def get_state(self) -> Any:
+        return {"workload_end_count": self.workload_end_count}
+
+    def load_state(self, state: Any) -> None:
+        self.workload_end_count = state["workload_end_count"]
+
+    # Translate train workload hooks into epoch hooks.
+    def on_train_workload_begin(
+        self, total_batches_trained: int, batches_requested: Optional[int], logs: Dict
+    ) -> None:
+        tf.keras.callbacks.TensorBoard.on_epoch_begin(self, self.workload_end_count, logs)
+
+    def on_train_workload_end(self, total_batches_trained: int, logs: Dict) -> None:
+        tf.keras.callbacks.TensorBoard.on_epoch_end(self, self.workload_end_count, logs)
+        self.workload_end_count += 1

@@ -26,3 +26,9 @@
       :class:`~determined.keras.callbacks.ReduceLROnPlateau` are both
       based on ``on_test_end``, which can be tuned using
       ``min_validation_period``.
+
+**Deprecated Features**
+
+-  Deprecate the name ``det.keras.TFKerasTensorBoard`` in favor of
+   ``det.keras.callbacks.TensorBoard``. The old name will be removed
+   eventually, and user code should be updated accordingly.

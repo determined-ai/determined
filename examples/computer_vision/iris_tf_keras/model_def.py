@@ -78,7 +78,7 @@ class IrisTrial(keras.TFKerasTrial):
         return model
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-        return [keras.TFKerasTensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
+        return [keras.callbacks.TensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
     def build_training_data_loader(self) -> keras.InputData:
         # Ignore header line and read the training CSV observations into a pandas DataFrame.

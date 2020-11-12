@@ -74,7 +74,7 @@ class OneVarTrial(keras.TFKerasTrial):
         # Include a bunch of callbacks just to make sure they work.
         return [
             keras_cb_checker.CBChecker(epochs=epochs, validations=validations),
-            keras.TFKerasTensorBoard(),
+            keras.callbacks.TensorBoard(),
             keras.callbacks.ReduceLROnPlateau(monitor="val_loss"),
             keras.callbacks.EarlyStopping(restore_best_weights=True),
         ]
