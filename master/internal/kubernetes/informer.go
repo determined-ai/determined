@@ -69,7 +69,12 @@ func (i *informer) startInformer(ctx *actor.Context) error {
 
 	ctx.Log().Info("pod informer is starting")
 	for event := range watch.ResultChan() {
-		pod := event.Object.(*k8sV1.Pod)
+		pod, ok := event.Object.(*k8sV1.Pod)
+		if !ok {
+			ctx.Log().Errorf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+			continue
+		}
+
 		if pod.Namespace != i.namespace {
 			continue
 		}
