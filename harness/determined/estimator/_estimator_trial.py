@@ -769,7 +769,7 @@ class EstimatorTrialController(det.LoopTrialController):
 
         for callback in self.train_hooks:
             if isinstance(callback, estimator.RunHook):
-                callback.on_checkpoint_end(metrics)
+                callback.on_validation_end(metrics)
 
         return {"validation_metrics": metrics}
 
