@@ -1,10 +1,8 @@
 package lttb
 
 import (
-	"math/rand"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestLTTB(t *testing.T) {
