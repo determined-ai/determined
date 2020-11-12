@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 import tempfile
@@ -231,18 +232,27 @@ class TestXORTrial:
                 assert int(fp.readline()) == steps / validation_freq
 
     def test_custom_hook(self, tmp_path: Path) -> None:
+        validation_metrics = {}
+
         def make_workloads(checkpoint_dir: pathlib.Path) -> workload.Stream:
+            nonlocal validation_metrics
             trainer = utils.TrainAndValidate()
 
             yield from trainer.send(steps=10, validation_freq=5, scheduling_unit=5)
             yield workload.checkpoint_workload(), [
                 checkpoint_dir
             ], workload.ignore_workload_response
+            _, validation_metrics = trainer.result()
+
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         def verify_callback(checkpoint_dir: pathlib.Path, checkpoint_num: int) -> None:
             with open(str(checkpoint_dir.joinpath("custom.log")), "r") as fp:
                 assert int(fp.readline()) == checkpoint_num
+            with open(str(checkpoint_dir.joinpath("custom_metrics.log")), "r") as fp:
+                metrics = json.load(fp)
+                for metric_name in metrics:
+                    assert metrics[metric_name] == str(validation_metrics[-1][metric_name])
 
         checkpoint_dir1 = tmp_path.joinpath("checkpoint1")
         controller = utils.make_trial_controller_from_trial_implementation(

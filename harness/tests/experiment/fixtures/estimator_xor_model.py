@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Any, Callable, Dict, Tuple, Union
 
@@ -203,6 +204,7 @@ class XORTrialWithHooks(XORTrial):
 class CustomHook(estimator.RunHook):
     def __init__(self):
         self._num_checkpoints = 0
+        self._latest_metrics = {}  # type: Dict[str, Any]
 
     def on_checkpoint_load(self, checkpoint_dir: str) -> None:
         with open(os.path.join(checkpoint_dir, "custom.log"), "r") as fp:
@@ -212,6 +214,13 @@ class CustomHook(estimator.RunHook):
         self._num_checkpoints += 1
         with open(os.path.join(checkpoint_dir, "custom.log"), "w") as fp:
             fp.write(f"{self._num_checkpoints}")
+        with open(os.path.join(checkpoint_dir, "custom_metrics.log"), "w") as fp:
+            print(f"latest metrics {self._latest_metrics}")
+            json.dump(self._latest_metrics, fp)
+
+    def on_validation_end(self, validation_metrics: Dict[str, Any]) -> None:
+        for metric in validation_metrics:
+            self._latest_metrics[metric] = str(validation_metrics[metric])
 
 
 class XORTrialWithCustomHook(XORTrial):
