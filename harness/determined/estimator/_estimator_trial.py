@@ -767,6 +767,10 @@ class EstimatorTrialController(det.LoopTrialController):
         if not self.is_chief:
             return workload.Skipped()
 
+        for callback in self.train_hooks:
+            if isinstance(callback, estimator.RunHook):
+                callback.on_checkpoint_end(metrics)
+
         return {"validation_metrics": metrics}
 
     def average_metrics(self, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:

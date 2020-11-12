@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 import tensorflow as tf
 
 
@@ -26,6 +28,16 @@ class RunHook(tf.estimator.SessionRunHook):  # type: ignore
         .. warning::
             If distributed or parallel training is enabled, this callback is executed
             only on the chief GPU (rank = 0) which performs the checkpoint.
+        """
+        pass
+
+    def on_validation_end(self, validation_metrics: Dict[str, Any]) -> None:
+        """
+        Run after every validation..
+
+        .. warning::
+            If distributed or parallel training is enabled, this callback is executed
+            only on the chief GPU (rank = 0).
         """
         pass
 
