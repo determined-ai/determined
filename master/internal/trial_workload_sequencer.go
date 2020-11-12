@@ -295,7 +295,7 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 		return s.validate(), nil
 	}
 
-	if s.postUserCancellationCheckpointNeeded() {
+	if s.postGracefulStopCheckpointNeeded() {
 		return s.checkpoint(), nil
 	}
 
@@ -372,7 +372,7 @@ func (s *trialWorkloadSequencer) RollBackSequencer() int {
 func (s *trialWorkloadSequencer) UpToDate() bool {
 	// If all operations for the last asked-for step are done, then the trial has no more workloads
 	// to run at the moment.
-	return len(s.ops) == s.curOpIdx || s.exitingEarly && !s.postUserCancellationCheckpointNeeded()
+	return len(s.ops) == s.curOpIdx || s.exitingEarly && !s.postGracefulStopCheckpointNeeded()
 }
 
 func (s trialWorkloadSequencer) train(numBatches int) workload.Workload {
@@ -431,7 +431,7 @@ func (s *trialWorkloadSequencer) minCheckpointNeeded() bool {
 	return s.minCheckpointPeriod.EqualWithinBatch(s.batchesSinceLastCkpt, s.unitContext)
 }
 
-func (s *trialWorkloadSequencer) postUserCancellationCheckpointNeeded() bool {
+func (s *trialWorkloadSequencer) postGracefulStopCheckpointNeeded() bool {
 	return s.gracefulStop && s.batchesSinceLastCkpt != 0
 }
 
