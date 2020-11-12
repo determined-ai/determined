@@ -146,19 +146,20 @@ TensorFlow Keras
 
 To add TensorBoard support for models that use
 :class:`~determined.keras.TFKerasTrial`, add a
-:class:`~determined.keras.TFKerasTensorBoard` callback to your trial
+:class:`determined.keras.callabacks.TensorBoard` callback to your trial
 class:
 
 .. code:: python
 
-   from determined.keras import TFKerasTensorBoard, TFKerasTrial
+   from determined.keras import TFKerasTrial
+   from determined.keras.callbacks import TensorBoard
 
 
    class MyModel(TFKerasTrial):
        ...
 
        def keras_callbacks(self):
-           return [TFKerasTensorBoard()]
+           return [TensorBoard()]
 
 Estimator
 =========

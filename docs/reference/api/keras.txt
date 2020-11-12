@@ -112,6 +112,8 @@ the ``tf.keras.callbacks.Callbacks`` interface) and supply them to the
 
 .. autoclass:: determined.keras.callbacks.ReduceLROnPlateau
 
+.. autoclass:: determined.keras.callbacks.TensorBoard
+
 **********
  Examples
 **********

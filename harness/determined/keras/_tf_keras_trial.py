@@ -407,7 +407,9 @@ class TFKerasTrialController(det.LoopTrialController):
 
         if self.env.experiment_config.get_records_per_epoch() is None:
             for cb in callbacks:
-                if util.is_overridden(cb.on_epoch_end, tf.keras.callbacks.Callback):
+                if util.is_overridden(cb.on_epoch_end, tf.keras.callbacks.Callback) and not getattr(
+                    cb, "_skip_epoch_end_check", False
+                ):
                     if isinstance(cb, keras.callbacks.Callback):
                         # New callbacks must obey the rules.
                         raise AssertionError(
