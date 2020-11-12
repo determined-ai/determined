@@ -13,6 +13,7 @@ SELECT
     COALESCE(c.format, '') as format,
     COALESCE(c.determined_version, '') as determined_version,
     v.metrics AS metrics,
+    (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric,
     'STATE_' || v.state AS validation_state,
     'STATE_' || c.state AS state
 FROM checkpoints c
