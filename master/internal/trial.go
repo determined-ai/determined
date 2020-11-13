@@ -633,7 +633,8 @@ func (t *trial) processAllocated(
 }
 
 func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.CompletedMessage) error {
-	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason != workload.Errored) {
+	if !t.replaying && (msg.ExitedReason == nil ||
+		*msg.ExitedReason == workload.UserCanceled || *msg.ExitedReason == workload.InvalidHP) {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
