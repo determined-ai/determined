@@ -1,6 +1,5 @@
-import enum
 import logging
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
 
 import torch
 import torch.nn as nn
@@ -17,10 +16,6 @@ except ImportError:
     if torch.cuda.is_available():
         logging.warning("Failed to import apex.")
     pass
-
-
-class _WarningLogs(enum.Enum):
-    FAILED_MOVING_TO_DEVICE = 1
 
 
 class PyTorchTrialContext(det.TrialContext):
@@ -44,8 +39,9 @@ class PyTorchTrialContext(det.TrialContext):
         super().__init__(*args, **kwargs)
 
         self._init_device()
-        # Track whether a warning logging category has already been issued to the user.
-        self.warning_logged = {_WarningLogs.FAILED_MOVING_TO_DEVICE: False}
+
+        # Track which types we have issued warnings for in to_device().
+        self._to_device_warned_types = set()  # type: Set[Type]
 
         # The following attributes are initialized during the lifetime of
         # a PyTorchTrialContext.
@@ -233,9 +229,7 @@ class PyTorchTrialContext(det.TrialContext):
         allocated device. This method aims at providing a function for the data generated
         on the fly.
         """
-        return pytorch.to_device(
-            data, self.device, self.warning_logged[_WarningLogs.FAILED_MOVING_TO_DEVICE]
-        )
+        return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
     def configure_apex_amp(
         self,

@@ -1,4 +1,7 @@
+import logging
+import multiprocessing
 import typing
+from logging import handlers
 
 import numpy as np
 import pytest
@@ -161,3 +164,27 @@ def test_to_device() -> None:
 
     assert to_device(data_structure, "cpu") == data_structure
     assert np.array_equal(to_device(np.array([0, 1, 2]), "cpu"), np.array([0, 1, 2]))
+
+
+@pytest.mark.parametrize("dedup_between_calls", [True, False])
+def test_to_device_warnings(dedup_between_calls) -> None:
+    queue = multiprocessing.Queue()
+
+    # Run as a subprocess in order to not disturb any logging setup in the main process.
+    def call_to_device():
+        logger = logging.getLogger()
+        # Capture warning logs as elements in a queue.
+        logger.addHandler(handlers.QueueHandler(queue))
+
+        warned_types = set() if dedup_between_calls else None
+        to_device(["string_data", "string_data"], "cpu", warned_types)
+        to_device(["string_data", "string_data"], "cpu", warned_types)
+
+    p = multiprocessing.Process(target=call_to_device)
+    p.start()
+    p.join()
+
+    assert queue.qsize() == 1 if dedup_between_calls else 2
+    while queue.qsize():
+        msg = queue.get().message
+        assert "not able to move data" in msg
