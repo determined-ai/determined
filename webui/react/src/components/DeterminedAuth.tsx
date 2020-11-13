@@ -96,7 +96,7 @@ const DeterminedAuth: React.FC = () => {
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;
-        <Link path={'/docs/topic-guides/users.html'} popout>docs</Link>
+        <Link external path={'/docs/topic-guides/users.html'} popout>docs</Link>
       </p>
     </div>
   );
