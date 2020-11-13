@@ -69,11 +69,18 @@ func (a *agentResourceManager) createResourcePool(
 	ctx *actor.Context, config *ResourcePoolConfig, cert *tls.Certificate,
 ) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
+
+	scheduler := a.config.Scheduler
+	if config.Scheduler != nil {
+		scheduler = config.Scheduler
+		ctx.Log().Infof("pool %s using local scheduling config", config.PoolName)
+	}
+
 	rp := NewResourcePool(
 		config,
 		cert,
-		MakeScheduler(a.config.SchedulingPolicy),
-		MakeFitFunction(a.config.FittingPolicy),
+		MakeScheduler(scheduler.getType()),
+		MakeFitFunction(scheduler.FittingPolicy),
 	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {

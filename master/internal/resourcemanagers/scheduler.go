@@ -15,9 +15,9 @@ type Scheduler interface {
 // MakeScheduler returns the corresponding scheduler implementation.
 func MakeScheduler(schedulingPolicy string) Scheduler {
 	switch schedulingPolicy {
-	case "priority":
+	case priorityScheduling:
 		return NewPriorityScheduler()
-	case "fair_share":
+	case fairShareScheduling:
 		return NewFairShareScheduler()
 	default:
 		panic(fmt.Sprintf("invalid scheduler: %s", schedulingPolicy))
