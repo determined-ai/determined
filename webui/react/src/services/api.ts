@@ -35,7 +35,10 @@ export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
 
 /* Agent */
 
-export const getAgents = generateApi<EmptyParams, Agent[]>(Config.getAgents);
+export const getAgents =
+  generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> (
+    Config.getAgents,
+  );
 
 /* Experiments */
 

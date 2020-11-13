@@ -210,7 +210,7 @@ const stateColorMapping = {
   [CommandState.Running]: 'active',
   [CommandState.Terminating]: 'inactive',
   [CommandState.Terminated]: 'inactive',
-  [ResourceState.Free]: 'inactive',
+  [ResourceState.Unspecified]: 'inactive',
 };
 
 export const getStateColorCssVar = (

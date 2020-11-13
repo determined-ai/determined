@@ -29,7 +29,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo => {
   const tally = clone(initialTally) as Tally;
 
   resources.forEach(resource => {
-    const state = resource.container ? resource.container.state : ResourceState.Free;
+    const state = resource.container ? resource.container.state : ResourceState.Unspecified;
     tally[state] += 1;
   });
 
@@ -38,7 +38,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo => {
   const colors: string[] = [];
   Object.entries(tally).forEach(([ rsState, rsValue ]) => {
     if (rsValue === 0) return;
-    labels.push(rsState);
+    labels.push(rsState === ResourceState.Unspecified ? 'FREE' : rsState);
     values.push(rsValue);
     colors.push(getStateColor(rsState as CommandState));
   });

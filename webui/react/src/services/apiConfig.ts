@@ -30,6 +30,7 @@ const ApiConfig = new Api.Configuration({
 
 export const detApi = {
   Auth: new Api.AuthenticationApi(ApiConfig),
+  Cluster: new Api.ClusterApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
 };
@@ -47,6 +48,7 @@ Api.ConfigurationParameters => {
 export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   const config = updatedApiConfigParams(apiConfig);
   detApi.Auth = new Api.AuthenticationApi(config);
+  detApi.Cluster = new Api.ClusterApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
 };
@@ -106,10 +108,12 @@ export const getInfo: HttpApi<EmptyParams, DeterminedInfo> = {
 
 /* Agent */
 
-export const getAgents: HttpApi<EmptyParams, Agent[]> = {
-  httpOptions: () => ({ url: '/agents' }),
+export const getAgents:
+DetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> = {
   name: 'getAgents',
-  postProcess: (response) => jsonToAgents(response.data),
+  postProcess: (response) => jsonToAgents(response.agents || []),
+  request: () => detApi.Cluster
+    .determinedGetAgents(),
 };
 
 /* Experiment */
