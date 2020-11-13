@@ -38,7 +38,7 @@ def logs(args: Namespace) -> None:
             "LOG_LEVEL_CRITICAL",
         ]
         try:
-            return levels[levels.index("LOG_LEVEL_" + level):]
+            return levels[levels.index("LOG_LEVEL_" + level) :]
         except ValueError:
             raise Exception("invalid log level: {}".format(level))
 
