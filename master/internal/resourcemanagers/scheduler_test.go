@@ -114,7 +114,7 @@ type mockAgent struct {
 	label                 string
 	slots                 int
 	slotsUsed             int
-	maxZeroSlotContainers *int
+	maxZeroSlotContainers int
 	zeroSlotContainers    int
 }
 
@@ -123,7 +123,7 @@ func newMockAgent(
 	label string,
 	slots int,
 	slotsUsed int,
-	maxZeroSlotContainers *int,
+	maxZeroSlotContainers int,
 	zeroSlotContainers int,
 ) *mockAgent {
 	return &mockAgent{
@@ -185,7 +185,7 @@ func forceAddAgent(
 ) *agentState {
 	ref, created := system.ActorOf(actor.Addr(agentID), &mockAgent{id: agentID, slots: numSlots})
 	assert.Assert(t, created)
-	state := newAgentState(sproto.AddAgent{Agent: ref}, nil)
+	state := newAgentState(sproto.AddAgent{Agent: ref}, 100)
 	for i := 0; i < numSlots; i++ {
 		state.devices[device.Device{ID: i}] = nil
 	}
@@ -210,7 +210,7 @@ func newFakeAgentState(
 	label string,
 	slots int,
 	slotsUsed int,
-	maxZeroSlotContainers *int,
+	maxZeroSlotContainers int,
 	zeroSlotContainers int,
 ) *agentState {
 	ref, created := system.ActorOf(actor.Addr(id), &mockAgent{id: id, slots: slots, label: label})
@@ -295,10 +295,11 @@ func setupSchedulerStates(
 		assert.Assert(t, created)
 
 		agent := &agentState{
-			handler:            ref,
-			label:              mockAgent.label,
-			devices:            make(map[device.Device]*cproto.ID),
-			zeroSlotContainers: make(map[cproto.ID]bool),
+			handler:               ref,
+			label:                 mockAgent.label,
+			devices:               make(map[device.Device]*cproto.ID),
+			zeroSlotContainers:    make(map[cproto.ID]bool),
+			maxZeroSlotContainers: mockAgent.maxZeroSlotContainers,
 		}
 		for i := 0; i < mockAgent.slots; i++ {
 			agent.devices[device.Device{ID: i}] = nil

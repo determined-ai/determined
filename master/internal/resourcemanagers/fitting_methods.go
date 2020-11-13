@@ -1,6 +1,8 @@
 package resourcemanagers
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Hard Constraints
 
@@ -14,19 +16,16 @@ func labelSatisfied(req *AllocateRequest, agent *agentState) bool {
 
 func maxZeroSlotContainersSatisfied(req *AllocateRequest, agent *agentState) bool {
 	if req.SlotsNeeded == 0 {
-		if agent.maxZeroSlotContainers == nil {
-			return true
-		}
-		if *agent.maxZeroSlotContainers == 0 {
+		if agent.maxZeroSlotContainers == 0 {
 			return false
 		}
-		return agent.numZeroSlotContainers() < *agent.maxZeroSlotContainers
+		return agent.numZeroSlotContainers() < agent.maxZeroSlotContainers
 	}
 	return true
 }
 
-func agentIdleSatisfied(_ *AllocateRequest, agent *agentState) bool {
-	return agent.idle()
+func agentSlotUnusedSatisfied(_ *AllocateRequest, agent *agentState) bool {
+	return agent.numUsedSlots() == 0
 }
 
 // Soft Constraints
@@ -36,39 +35,29 @@ func agentIdleSatisfied(_ *AllocateRequest, agent *agentState) bool {
 // offers the fewest slots. This method should be used when the cluster is dominated by multi-slot
 // applications.
 func BestFit(req *AllocateRequest, agent *agentState) float64 {
-	if req.SlotsNeeded == 0 {
-		if agent.maxZeroSlotContainers == nil {
-			if agent.numZeroSlotContainers() == 0 {
-				return 0
-			}
-			return 1.0
-		}
-		if *agent.maxZeroSlotContainers == 0 {
-			return 0.0
-		}
-		return 1.0 / (1.0 + float64(*agent.maxZeroSlotContainers-agent.numZeroSlotContainers()))
+	switch {
+	case agent.numUsedSlots() != 0 || req.SlotsNeeded != 0:
+		return 1.0 / (1.0 + float64(agent.numEmptySlots()))
+	case agent.maxZeroSlotContainers == 0:
+		return 1.0 - 1.0/float64(agent.numZeroSlotContainers()+1)
+	default:
+		return 1.0 / (1.0 + float64(agent.maxZeroSlotContainers-agent.numZeroSlotContainers()))
 	}
-	return 1.0 / (1.0 + float64(agent.numEmptySlots()))
 }
 
 // WorstFit returns a float affinity score between 0 and 1 for the affinity between the task and
 // the agent. This method attempts to allocate tasks to the agent that is least utilized. This
 // method should be used when the cluster is dominated by single-slot applications.
 func WorstFit(req *AllocateRequest, agent *agentState) float64 {
-	if req.SlotsNeeded == 0 {
-		if agent.maxZeroSlotContainers == nil {
-			if agent.numZeroSlotContainers() == 0 {
-				return 1.0
-			}
-			return 0
-		}
-		if *agent.maxZeroSlotContainers == 0 {
-			return 0
-		}
-		return float64(*agent.maxZeroSlotContainers-agent.numZeroSlotContainers()) /
-			float64(*agent.maxZeroSlotContainers)
+	switch {
+	case agent.numUsedSlots() != 0 || req.SlotsNeeded != 0:
+		return float64(agent.numEmptySlots()) / float64(agent.numSlots())
+	case agent.maxZeroSlotContainers == 0:
+		return 1.0 / float64(agent.numZeroSlotContainers()+1)
+	default:
+		return float64(agent.maxZeroSlotContainers-agent.numZeroSlotContainers()) /
+			float64(agent.maxZeroSlotContainers)
 	}
-	return float64(agent.numEmptySlots()) / float64(agent.numSlots())
 }
 
 // MakeFitFunction returns the corresponding fitting function.

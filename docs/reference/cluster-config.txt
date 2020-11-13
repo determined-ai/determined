@@ -436,11 +436,6 @@ The master supports the following configuration settings:
    -  ``max_instances``: Max number of Determined agent instances.
       Defaults to 5.
 
-   -  ``max_cpu_containers_per_agent``: Max number of task
-      containers that only consumes CPUs. This applies to tasks, such
-      as Tensorboard, CPU-only notebooks, and etc,. Defaults to no
-      limit.
-
    -  ``provider: aws``: Specifies running dynamic agents on AWS.
       (*Required*)
 

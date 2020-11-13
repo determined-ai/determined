@@ -3,7 +3,7 @@ package resourcemanagers
 // calculateDesiredNewAgentNum calculates the new instances based on pending tasks and
 // slots per instance.
 func calculateDesiredNewAgentNum(
-	taskList *taskList, slotsPerAgent int, maxZeroSlotTasksPerAgent *int,
+	taskList *taskList, slotsPerAgent int, maxZeroSlotTasksPerAgent int,
 ) int {
 	slotSum := 0
 	allTasks := 0
@@ -30,24 +30,22 @@ func calculateDesiredNewAgentNum(
 		}
 	}
 
-	num1, num2 := 0, 0
+	numAgentByZeroSlot, numAgentBySlot := 0, 0
 	switch {
 	case zeroSlotTasks == 0:
-		num1 = 0
-	case maxZeroSlotTasksPerAgent == nil:
-		num1 = 1
-	case *maxZeroSlotTasksPerAgent == 0:
-		num1 = 0
+		numAgentByZeroSlot = 0
+	case maxZeroSlotTasksPerAgent == 0:
+		numAgentByZeroSlot = 0
 	default:
-		num1 = (zeroSlotTasks + *maxZeroSlotTasksPerAgent - 1) / *maxZeroSlotTasksPerAgent
+		numAgentByZeroSlot = (zeroSlotTasks + maxZeroSlotTasksPerAgent - 1) / maxZeroSlotTasksPerAgent
 	}
 	switch {
 	case slotSum == 0:
-		num2 = 0
+		numAgentBySlot = 0
 	case slotsPerAgent == 0:
-		num2 = 0
+		numAgentBySlot = 0
 	default:
-		num2 = (slotSum + slotsPerAgent - 1) / slotsPerAgent
+		numAgentBySlot = (slotSum + slotsPerAgent - 1) / slotsPerAgent
 	}
-	return max(num1, num2)
+	return max(numAgentByZeroSlot, numAgentBySlot)
 }

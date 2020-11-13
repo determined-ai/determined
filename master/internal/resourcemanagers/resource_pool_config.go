@@ -1,6 +1,8 @@
 package resourcemanagers
 
 import (
+	"encoding/json"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/provisioner"
@@ -10,7 +12,17 @@ import (
 // DefaultRPsConfig returns the default resources pools configuration.
 func DefaultRPsConfig() *ResourcePoolsConfig {
 	return &ResourcePoolsConfig{
-		ResourcePools: []ResourcePoolConfig{{PoolName: defaultResourcePoolName}},
+		ResourcePools: []ResourcePoolConfig{{
+			PoolName:                 defaultResourcePoolName,
+			MaxCPUContainersPerAgent: 100,
+		}},
+	}
+}
+
+// DefaultRPConfig returns the default resources pool configuration.
+func DefaultRPConfig() *ResourcePoolConfig {
+	return &ResourcePoolConfig{
+		MaxCPUContainersPerAgent: 100,
 	}
 }
 
@@ -20,16 +32,24 @@ type ResourcePoolConfig struct {
 	Description              string              `json:"description"`
 	Provider                 *provisioner.Config `json:"provider"`
 	Scheduler                *SchedulerConfig    `json:"scheduler,omitempty"`
-	MaxCPUContainersPerAgent *int                `json:"max_cpu_containers_per_agent"`
+	MaxCPUContainersPerAgent int                 `json:"max_cpu_containers_per_agent"`
 }
 
 // Validate implements the check.Validatable interface.
 func (r ResourcePoolConfig) Validate() []error {
 	return []error{
 		check.True(len(r.PoolName) != 0, "resource pool name cannot be empty"),
-		check.True(r.MaxCPUContainersPerAgent == nil || *r.MaxCPUContainersPerAgent >= 0,
-			"resource pool max cpu containers per agent should be nil or >= 0"),
+		check.True(r.MaxCPUContainersPerAgent >= 0,
+			"resource pool max cpu containers per agent should be >= 0"),
 	}
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (r *ResourcePoolConfig) UnmarshalJSON(data []byte) error {
+	if err := json.Unmarshal(data, r); err != nil {
+		return err
+	}
+	return errors.Wrap(json.Unmarshal(data, DefaultRPConfig()), "failed to parse resource pool")
 }
 
 // ResourcePoolsConfig hosts the configuration for resource pools

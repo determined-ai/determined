@@ -19,11 +19,11 @@ type agentState struct {
 	// one container, we add one additional field to keep track of zero-slot containers.
 	// We need this field to know if the agent is idle.
 	zeroSlotContainers    map[cproto.ID]bool
-	maxZeroSlotContainers *int
+	maxZeroSlotContainers int
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers *int) *agentState {
+func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *agentState {
 	return &agentState{
 		handler:               msg.Agent,
 		label:                 msg.Label,
@@ -57,7 +57,7 @@ func (a *agentState) numZeroSlotContainers() int {
 }
 
 func (a *agentState) idle() bool {
-	return len(a.zeroSlotContainers)+a.numUsedSlots() == 0
+	return len(a.zeroSlotContainers) == 0 && a.numUsedSlots() == 0
 }
 
 func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Device {

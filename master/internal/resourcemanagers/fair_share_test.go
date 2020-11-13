@@ -240,9 +240,9 @@ func TestFairShareNilgroup(t *testing.T) {
 
 func TestFairShareLabels(t *testing.T) {
 	agents := []*mockAgent{
-		{id: "agent1", slots: 4, label: ""},
-		{id: "agent2", slots: 4, label: "label1"},
-		{id: "agent3", slots: 4, label: "label2"},
+		{id: "agent1", slots: 4, label: "", maxZeroSlotContainers: 100},
+		{id: "agent2", slots: 4, label: "label1", maxZeroSlotContainers: 100},
+		{id: "agent3", slots: 4, label: "label2", maxZeroSlotContainers: 100},
 	}
 	groups := []*mockGroup{
 		{id: "group1", maxSlots: newMaxSlot(1), weight: 1},
