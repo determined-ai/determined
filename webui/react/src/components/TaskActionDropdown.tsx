@@ -8,8 +8,8 @@ import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { openCommand } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment,
-  killTask, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
+  activateExperiment, archiveExperiment, cancelExperiment, killExperiment, killTask,
+  openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { AnyTask, CommandTask, ExperimentTask, RunState, TBSourceType } from 'types';
 import { capitalize } from 'utils/string';
@@ -54,7 +54,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           if (onComplete) onComplete();
           break;
         case 'archive':
-          if (!isExperimentTask(task)) break;
+          if (!isExperiment) break;
           await archiveExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
@@ -71,15 +71,19 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           break;
         }
         case 'kill':
-          await killTask(task);
-          if (isExperiment && onComplete) onComplete();
+          if (isExperiment) {
+            await killExperiment({ experimentId: id });
+            if (onComplete) onComplete();
+          } else {
+            await killTask(task as CommandTask);
+          }
           break;
         case 'pause':
           await pauseExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
         case 'unarchive':
-          if (!isExperimentTask(task)) break;
+          if (!isExperiment) break;
           await unarchiveExperiment({ experimentId: id });
           if (onComplete) onComplete();
       }

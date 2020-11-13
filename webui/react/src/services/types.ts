@@ -58,6 +58,10 @@ export interface SingleEntityParams {
 export type ExperimentDetailsParams = SingleEntityParams;
 export type TrialDetailsParams = SingleEntityParams;
 
+export interface CommandIdParams {
+  commandId: string;
+}
+
 export interface ExperimentIdParams {
   experimentId: number;
 }
@@ -65,11 +69,6 @@ export interface ExperimentIdParams {
 export interface ForkExperimentParams {
   parentId: number;
   experimentConfig: string;
-}
-
-export interface KillCommandParams {
-  commandId: string;
-  commandType: CommandType;
 }
 
 export interface PatchExperimentParams extends ExperimentIdParams {
