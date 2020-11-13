@@ -1,4 +1,4 @@
-import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
+import { Button, Col, Row, Space, Table, Tabs, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import axios from 'axios';
 import yaml from 'js-yaml';
@@ -30,6 +30,8 @@ import { terminalRunStates, upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
 import { columns as defaultColumns } from './ExperimentDetails.table';
+
+const { TabPane } = Tabs;
 
 interface Params {
   experimentId: string;
@@ -227,53 +229,60 @@ const ExperimentDetailPage: React.FC = () => {
         {experiment.archived && <Badge>ARCHIVED</Badge>}
       </Space>}
       title={`Experiment ${experimentId}`}>
-      <Row className={css.topRow} gutter={[ 16, 16 ]}>
-        <Col lg={10} span={24} xl={8} xxl={6}>
-          <ExperimentInfoBox
-            experiment={experiment}
-            onChange={fetchExperimentDetails}
-          />
-        </Col>
-        <Col lg={14} span={24} xl={16} xxl={18}>
-          <ExperimentChart
-            startTime={experiment.startTime}
-            validationHistory={experiment.validationHistory}
-            validationMetric={experimentConfig?.searcher.metric} />
-        </Col>
-        <Col span={24}>
-          <Section title="Trials">
-            <Table
-              columns={columns}
-              dataSource={experiment?.trials}
-              loading={{
-                indicator: <Indicator />,
-                spinning: experimentDetails.isLoading,
-              }}
-              pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
-              rowClassName={defaultRowClassName()}
-              rowKey="id"
-              showSorterTooltip={false}
-              size="small"
-              onChange={handleTableChange}
-              onRow={handleTableRow} />
-          </Section>
-        </Col>
-      </Row>
-      {activeCheckpoint && <CheckpointModal
-        checkpoint={activeCheckpoint}
-        config={experiment.config}
-        show={showCheckpoint}
-        title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
-        onHide={handleCheckpointDismiss} />}
-      <CreateExperimentModal
-        config={forkModalConfig}
-        okText="Fork"
-        parentId={id}
-        title={`Fork Experiment ${id}`}
-        visible={forkModalVisible}
-        onCancel={handleForkModalCancel}
-        onConfigChange={setForkModalConfig}
-        onVisibleChange={setForkModalVisible} />
+      <Tabs className={css.base} defaultActiveKey="overview">
+        <TabPane key="overview" tab="Overview">
+          <Row className={css.topRow} gutter={[ 16, 16 ]}>
+            <Col lg={10} span={24} xl={8} xxl={6}>
+              <ExperimentInfoBox
+                experiment={experiment}
+                onChange={fetchExperimentDetails}
+              />
+            </Col>
+            <Col lg={14} span={24} xl={16} xxl={18}>
+              <ExperimentChart
+                startTime={experiment.startTime}
+                validationHistory={experiment.validationHistory}
+                validationMetric={experimentConfig?.searcher.metric} />
+            </Col>
+            <Col span={24}>
+              <Section title="Trials">
+                <Table
+                  columns={columns}
+                  dataSource={experiment?.trials}
+                  loading={{
+                    indicator: <Indicator />,
+                    spinning: experimentDetails.isLoading,
+                  }}
+                  pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
+                  rowClassName={defaultRowClassName()}
+                  rowKey="id"
+                  showSorterTooltip={false}
+                  size="small"
+                  onChange={handleTableChange}
+                  onRow={handleTableRow} />
+              </Section>
+            </Col>
+          </Row>
+          {activeCheckpoint && <CheckpointModal
+            checkpoint={activeCheckpoint}
+            config={experiment.config}
+            show={showCheckpoint}
+            title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
+            onHide={handleCheckpointDismiss} />}
+          <CreateExperimentModal
+            config={forkModalConfig}
+            okText="Fork"
+            parentId={id}
+            title={`Fork Experiment ${id}`}
+            visible={forkModalVisible}
+            onCancel={handleForkModalCancel}
+            onConfigChange={setForkModalConfig}
+            onVisibleChange={setForkModalVisible} />
+        </TabPane>
+        <TabPane key="visualization" tab="Visualization">
+          Visualization
+        </TabPane>
+      </Tabs>
     </Page>
   );
 };

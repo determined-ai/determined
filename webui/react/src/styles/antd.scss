@@ -95,6 +95,12 @@ html {
     padding: var(--theme-sizes-layout-medium) 0;
   }
 
+  /* Picker */
+
+  .ant-picker {
+    border-radius: var(--theme-sizes-border-radius);
+  }
+
   /* Select */
 
   .ant-select > .ant-select-arrow {
@@ -214,9 +220,17 @@ html {
     }
   }
 
-  /* Picker */
+  /* Tabs */
 
-  .ant-picker {
-    border-radius: var(--theme-sizes-border-radius);
+  .ant-tabs {
+    height: 100%;
+  }
+  .ant-tabs > .ant-tabs-nav {
+    margin: 0;
+  }
+  .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content {
+    height: 100%;
+    overflow: auto;
+    padding: var(--theme-sizes-layout-big) 0;
   }
 }
