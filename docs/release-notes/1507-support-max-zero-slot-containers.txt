@@ -2,7 +2,7 @@
 
 **Improvements**
 
--  Improve the experience of scheduling and scaling zero-slot tasks.
-   Users can now configure ``max_zero_slot_containers_per_agent`` in the
+-  Improve the experience of scheduling and scaling CPU tasks.
+   Users can now configure ``max_cpu_containers_per_agent`` in the
    field ``provisioner`` of the master configuration. It defaults to no
-   limit for zero-slot containers.
+   limit.
