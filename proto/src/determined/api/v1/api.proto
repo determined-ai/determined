@@ -732,7 +732,7 @@ service Determined {
       get: "/api/v1/experiments/{experiment_id}/metrics-stream/metric-names"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
 
@@ -744,7 +744,7 @@ service Determined {
       get: "/api/v1/experiments/{experiment_id}/metrics-stream/batches"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
 
@@ -756,7 +756,7 @@ service Determined {
       get: "/api/v1/experiments/{experiment_id}/metrics-stream/trials-snapshot"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
 }
