@@ -31,8 +31,6 @@ enum TabType {
   Visualization = 'visualization',
 }
 
-const { TabPane } = Tabs;
-
 interface Params {
   experimentId: string;
   tab?: TabType;
