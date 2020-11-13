@@ -206,7 +206,7 @@ func (s *syncHalvingSearch) progress(unitsCompleted float64) float64 {
 }
 
 func (s *syncHalvingSearch) trialExitedEarly(
-	ctx context, requestID RequestID,
+	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
 	return s.promoteSync(ctx, requestID, shaExitedMetricValue)

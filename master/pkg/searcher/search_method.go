@@ -43,7 +43,9 @@ type SearchMethod interface {
 	// receive completed workloads, they should internally track progress.
 	progress(totalUnitsCompleted float64) float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
-	trialExitedEarly(ctx context, requestID RequestID) ([]Operation, error)
+	trialExitedEarly(
+		ctx context, requestID RequestID, exitedReason workload.ExitedReason,
+	) ([]Operation, error)
 	// SearchMethod embeds the InUnits interface because it is in terms of a specific unit.
 	model.InUnits
 }
@@ -98,6 +100,6 @@ func (defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, error) 
 }
 
 func (defaultSearchMethod) trialExitedEarly( //nolint: unused
-	context, RequestID) ([]Operation, error) {
+	context, RequestID, workload.ExitedReason) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
 }

@@ -85,4 +85,6 @@ const (
 	Errored ExitedReason = "ERRORED"
 	// UserCanceled signals the searcher that the user requested a cancelation.
 	UserCanceled ExitedReason = "USER_CANCELED"
+	// InvalidHP signals the searcher that the user raised an InvalidHP exception.
+	InvalidHP ExitedReason = "INVALID_HP"
 )
