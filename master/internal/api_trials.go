@@ -132,11 +132,11 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 	addInFilter("agent_id", req.AgentIds, len(req.AgentIds))
 	addInFilter("container_id", req.ContainerIds, len(req.ContainerIds))
 	addInFilter("rank_id", req.RankIds, len(req.RankIds))
-	addInFilter("stdtype", req.Stdtype, len(req.Stdtype))
-	addInFilter("source", req.Source, len(req.Source))
+	addInFilter("stdtype", req.Stdtypes, len(req.Stdtypes))
+	addInFilter("source", req.Sources, len(req.Sources))
 	addInFilter("level", func() interface{} {
 		var levels []string
-		for _, l := range req.Level {
+		for _, l := range req.Levels {
 			switch l {
 			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
 				levels = append(levels, "DEBUG")
@@ -153,7 +153,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 			}
 		}
 		return levels
-	}(), len(req.Level))
+	}(), len(req.Levels))
 
 	if req.TimestampBefore != nil {
 		t, err := ptypes.Timestamp(req.TimestampBefore)

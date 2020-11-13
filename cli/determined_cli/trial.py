@@ -205,6 +205,51 @@ args_description = [
                             "of the log (default is all)",
                         ),
                     ),
+                    Arg(
+                        "--agent-id",
+                        dest="agent_ids",
+                        action="append",
+                        help="agents to show logs from (repeat for multiple values)",
+                    ),
+                    Arg(
+                        "--container-id",
+                        dest="container_ids",
+                        action="append",
+                        help="containers to show logs from (repeat for multiple values)",
+                    ),
+                    Arg(
+                        "--rank-id",
+                        dest="rank_ids",
+                        type=int,
+                        action="append",
+                        help="containers to show logs from (repeat for multiple values)",
+                    ),
+                    Arg(
+                        "--timestamp-before",
+                        help="show logs only from before (RFC 3339 format)",
+                    ),
+                    Arg(
+                        "--timestamp-after",
+                        help="show logs only from after (RFC 3339 format)",
+                    ),
+                    Arg(
+                        "--level",
+                        dest="level",
+                        help="show logs with this level or higher "
+                        + "(TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+                    ),
+                    Arg(
+                        "--source",
+                        dest="sources",
+                        action="append",
+                        help="sources to show logs from (repeat for multiple values)",
+                    ),
+                    Arg(
+                        "--stdtype",
+                        dest="stdtypes",
+                        action="append",
+                        help="output stream to show logs from (repeat for multiple values)",
+                    ),
                 ],
             ),
             Cmd(

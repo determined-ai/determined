@@ -75,6 +75,7 @@ def do_request(
     body: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    stream: bool = False,
 ) -> requests.Response:
     if headers is None:
         h = {}  # type: Dict[str, str]
@@ -95,6 +96,7 @@ def do_request(
             json=body,
             headers=h,
             verify=_master_cert_bundle,
+            stream=stream,
         )
     except requests.exceptions.SSLError:
         raise
@@ -119,12 +121,19 @@ def get(
     params: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    stream: bool = False,
 ) -> requests.Response:
     """
     Send a GET request to the remote API.
     """
     return do_request(
-        "GET", host, path, params=params, headers=headers, authenticated=authenticated
+        "GET",
+        host,
+        path,
+        params=params,
+        headers=headers,
+        authenticated=authenticated,
+        stream=stream,
     )
 
 

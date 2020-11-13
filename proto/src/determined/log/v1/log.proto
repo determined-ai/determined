@@ -9,16 +9,18 @@ import "protoc-gen-swagger/options/annotations.proto";
 enum LogLevel {
   // Unspecified log level.
   LOG_LEVEL_UNSPECIFIED = 0;
+  // A log level of TRACE.
+  LOG_LEVEL_TRACE = 1;
   // A log level of DEBUG.
-  LOG_LEVEL_DEBUG = 1;
+  LOG_LEVEL_DEBUG = 2;
   // A log level of INFO.
-  LOG_LEVEL_INFO = 2;
+  LOG_LEVEL_INFO = 3;
   // A log level of WARNING.
-  LOG_LEVEL_WARNING = 3;
+  LOG_LEVEL_WARNING = 4;
   // A log level of ERROR.
-  LOG_LEVEL_ERROR = 4;
+  LOG_LEVEL_ERROR = 5;
   // A log level of CRITICAL.
-  LOG_LEVEL_CRITICAL = 5;
+  LOG_LEVEL_CRITICAL = 6;
 }
 
 // LogEntry is a log event.

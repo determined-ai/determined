@@ -4,8 +4,10 @@ import sys
 import time
 import uuid
 from argparse import Namespace
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+from urllib.parse import urlencode
 
+import simplejson
 from termcolor import colored
 
 from determined_common import api, constants, context, yaml
@@ -25,48 +27,66 @@ def activate_experiment(master_url: str, exp_id: int) -> None:
 
 @authentication_required
 def logs(args: Namespace) -> None:
-    last_offset, last_state = 0, None
+    def to_levels_above(level: str) -> List[str]:
+        # We should just be using the generated client instead and this is why.
+        levels = [
+            "LOG_LEVEL_TRACE",
+            "LOG_LEVEL_DEBUG",
+            "LOG_LEVEL_INFO",
+            "LOG_LEVEL_WARNING",
+            "LOG_LEVEL_ERROR",
+            "LOG_LEVEL_CRITICAL",
+        ]
+        try:
+            return levels[levels.index("LOG_LEVEL_" + level) :]
+        except ValueError:
+            raise Exception("invalid log level: {}".format(level))
 
-    def print_logs(offset: Optional[int], limit: Optional[int] = 5000) -> Any:
-        nonlocal last_offset, last_state
-        path = "trials/{}/logsv2?".format(args.trial_id)
+    def print_logs(
+        offset: Optional[int], limit: Optional[int] = 5000, follow: bool = False
+    ) -> None:
+        query = {}  # type: Dict[str, Any]
         if offset is not None:
-            path += "&offset={}".format(offset)
+            query["offset"] = offset
         if limit is not None:
-            path += "&limit={}".format(limit)
-        logs = api.get(args.master, path).json()
-        for log in logs:
-            print(log["message"], end="")
-            last_state = log["state"]
-        return logs[-1]["id"] if logs else last_offset
+            query["limit"] = limit
+        if follow:
+            query["follow"] = "true"
+        for f in [
+            "agent_ids",
+            "container_ids",
+            "rank_ids",
+            "sources",
+            "stdtypes",
+            "timestamp_before",
+            "timestamp_after",
+        ]:
+            if getattr(args, f, None) is not None:
+                query[f] = getattr(args, f)
+
+        if getattr(args, "level", None) is not None:
+            query["levels"] = to_levels_above(args.level)
+
+        path = "/api/v1/trials/{}/logs?{}".format(args.trial_id, urlencode(query, doseq=True))
+        with api.get(args.master, path, stream=True) as r:
+            for line in r.iter_lines():
+                log = simplejson.loads(line)["result"]
+                print(log["message"], end="")
 
     try:
         if args.head is not None:
             print_logs(0, args.head)
-            return
-        if args.tail is not None:
-            last_offset = print_logs(None, args.tail)
+        elif args.tail is not None:
+            print_logs(-args.tail, args.tail)
         else:
-            while True:
-                new_offset = print_logs(last_offset)
-                if last_offset == new_offset:
-                    break
-                last_offset = new_offset
-
-        if not args.follow:
-            return
-        while True:
-            last_offset = print_logs(last_offset)
-            if last_state in constants.TERMINAL_STATES:
-                break
-            time.sleep(0.2)
+            print_logs(0, 0, args.follow)
     except KeyboardInterrupt:
         pass
     finally:
         print(
             colored(
-                "Trial is in the {} state. To reopen log stream, run: "
-                "det trial logs -f {}".format(last_state, args.trial_id),
+                "Trial log stream ended. To reopen log stream, run: "
+                "det trial logs -f {}".format(args.trial_id),
                 "green",
             )
         )
