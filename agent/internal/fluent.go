@@ -22,6 +22,8 @@ import (
 // the agent sends to the Fluent Bit logger.
 var fluentEnvVarNames = []string{containerIDEnvVar, trialIDEnvVar}
 
+const localhost = "localhost"
+
 // fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
 // an appropriate configuration.
 func fluentConfig(opts Options) ([]string, archive.Archive, error) {
@@ -133,8 +135,11 @@ end
 	// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and [::1]
 	// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
 	// diretcly into an IP address before passing it to Fluent Bit.
-	if fluentMasterHost == "localhost" {
+	if fluentMasterHost == localhost {
 		fluentMasterHost = "127.0.0.1"
+		if opts.Security.TLS.MasterCertName == "" {
+			opts.Security.TLS.MasterCertName = localhost
+		}
 	}
 
 	if opts.ContainerMasterHost != "" {
@@ -159,7 +164,9 @@ end
 
 	if opts.Security.TLS.Enabled {
 		outputConfig += "  tls On\n"
-
+		if a := opts.Security.TLS.MasterCertName; a != "" {
+			outputConfig += "  tls.vhost " + a + "\n"
+		}
 		if opts.Security.TLS.SkipVerify {
 			outputConfig += "  tls.verify Off\n"
 		}
