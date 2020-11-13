@@ -13,4 +13,5 @@ type group struct {
 	handler  *actor.Ref
 	maxSlots *int
 	weight   float64
+	priority *int
 }

@@ -287,6 +287,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			Handler:  ctx.Self(),
 		})
 		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
+		ctx.Tell(e.rm, sproto.SetGroupPriority{
+			Priority: e.Config.Resources.Priority,
+			Handler:  ctx.Self(),
+		})
 		ops, err := e.searcher.InitialOperations()
 		e.processOperations(ctx, ops, err)
 	case trialCreated:

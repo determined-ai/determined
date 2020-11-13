@@ -171,3 +171,36 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 		},
 	})
 }
+
+func TestSettingGroupPriority(t *testing.T) {
+	system := actor.NewSystem(t.Name())
+	defaultPriority := 50
+	config := ResourcePoolConfig{
+		Scheduler: &SchedulerConfig{
+			Priority: &PrioritySchedulerConfig{
+				DefaultPriority: &defaultPriority,
+			},
+		},
+	}
+
+	rp, ref := setupResourcePool(t, system, &config, nil, nil, nil)
+
+	// Test setting a non-default priority for a group.
+	groupRefOne, created := system.ActorOf(actor.Addr("group1"), &mockGroup{})
+	assert.Assert(t, created)
+	updatedPriority := 22
+	system.Tell(ref, sproto.SetGroupPriority{Priority: &updatedPriority, Handler: groupRefOne})
+
+	// Test leaving the default priority for a group.
+	groupRefTwo, created := system.ActorOf(actor.Addr("group2"), &mockGroup{})
+	assert.Assert(t, created)
+	system.Tell(ref, sproto.SetGroupPriority{Priority: nil, Handler: groupRefTwo})
+
+	for _, n := range rp.notifications {
+		<-n
+	}
+
+	assert.NilError(t, ref.StopAndAwaitTermination())
+	assert.Equal(t, *rp.groups[groupRefOne].priority, updatedPriority)
+	assert.Equal(t, *rp.groups[groupRefTwo].priority, defaultPriority)
+}

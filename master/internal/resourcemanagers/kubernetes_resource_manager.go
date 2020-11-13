@@ -62,6 +62,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
+		sproto.SetGroupPriority,
 		SetTaskName,
 		AllocateRequest,
 		ResourcesReleased:
@@ -103,8 +104,8 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case sproto.SetGroupWeight:
-		// SetGroupWeight is not supported by the Kubernetes RP.
+	case sproto.SetGroupWeight, sproto.SetGroupPriority:
+		// SetGroupWeight and SetGroupPriority are not supported by the Kubernetes RP.
 
 	case SetTaskName:
 		k.receiveSetTaskName(ctx, msg)

@@ -151,6 +151,14 @@ func (rp *ResourcePool) getOrCreateGroup(
 		return g
 	}
 	g := &group{handler: handler, weight: 1}
+
+	if rp.config.Scheduler.Priority != nil {
+		if rp.config.Scheduler.Priority.DefaultPriority == nil {
+			panic("default priority is not configured")
+		}
+		g.priority = rp.config.Scheduler.Priority.DefaultPriority
+	}
+
 	rp.groups[handler] = g
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
 		actors.NotifyOnStop(ctx, handler, groupActorStopped{})
@@ -212,6 +220,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		groupActorStopped,
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
+		sproto.SetGroupPriority,
 		SetTaskName,
 		AllocateRequest,
 		ResourcesReleased:
@@ -302,6 +311,17 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 
 	case sproto.SetGroupWeight:
 		rp.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
+
+	case sproto.SetGroupPriority:
+		group := rp.getOrCreateGroup(ctx, msg.Handler)
+		if msg.Priority != nil {
+			group.priority = msg.Priority
+		}
+
+		if rp.config.Scheduler.Priority != nil {
+			ctx.Log().Infof("setting priority for group of %s to %d",
+				msg.Handler.Address().String(), *group.priority)
+		}
 
 	case SetTaskName:
 		rp.receiveSetTaskName(ctx, msg)

@@ -32,7 +32,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		for ix, config := range a.poolsConfig.ResourcePools {
-			rpRef := a.createResourcePool(ctx, &a.poolsConfig.ResourcePools[ix], a.cert)
+			rpRef := a.createResourcePool(ctx, a.poolsConfig.ResourcePools[ix], a.cert)
 			if rpRef != nil {
 				a.pools[config.PoolName] = rpRef
 			}
@@ -46,10 +46,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
-	case sproto.SetGroupMaxSlots:
+	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority:
 		a.forwardToAllPools(ctx, msg)
-	case sproto.SetGroupWeight:
-		a.forwardToAllPools(ctx, msg)
+
 	case GetTaskSummary:
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
@@ -66,21 +65,25 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 }
 
 func (a *agentResourceManager) createResourcePool(
-	ctx *actor.Context, config *ResourcePoolConfig, cert *tls.Certificate,
+	ctx *actor.Context, config ResourcePoolConfig, cert *tls.Certificate,
 ) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
 
-	scheduler := a.config.Scheduler
+	// We pass the config here in by value so that in the case where we replace
+	// the scheduler config with the global scheduler config (when the pool does
+	// not define one for itself) we do not modify the original data structures.
 	if config.Scheduler != nil {
-		scheduler = config.Scheduler
 		ctx.Log().Infof("pool %s using local scheduling config", config.PoolName)
+	} else {
+		config.Scheduler = a.config.Scheduler
+		ctx.Log().Infof("pool %s using global scheduling config", config.PoolName)
 	}
 
 	rp := NewResourcePool(
-		config,
+		&config,
 		cert,
-		MakeScheduler(scheduler.getType()),
-		MakeFitFunction(scheduler.FittingPolicy),
+		MakeScheduler(config.Scheduler.getType()),
+		MakeFitFunction(config.Scheduler.FittingPolicy),
 	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {
