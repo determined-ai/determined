@@ -12,9 +12,10 @@ func TestSharedFSConfigValidate(t *testing.T) {
 		StoragePath *string
 	}
 	type testCase struct {
-		name    string
-		fields  fields
-		wantErr bool
+		name            string
+		fields          fields
+		wantErr         bool
+		pathInContainer string
 	}
 
 	storage1 := "/host_path/storage"
@@ -29,6 +30,7 @@ func TestSharedFSConfigValidate(t *testing.T) {
 			fields: fields{
 				HostPath: "/host_path",
 			},
+			pathInContainer: "/determined_shared_fs",
 		},
 		{
 			name: "valid absolute storage_path",
@@ -36,6 +38,7 @@ func TestSharedFSConfigValidate(t *testing.T) {
 				HostPath:    "/host_path",
 				StoragePath: &storage1,
 			},
+			pathInContainer: "/determined_shared_fs/storage",
 		},
 		{
 			name: "valid relative storage_path",
@@ -43,6 +46,7 @@ func TestSharedFSConfigValidate(t *testing.T) {
 				HostPath:    "/host_path",
 				StoragePath: &storage2,
 			},
+			pathInContainer: "/determined_shared_fs/storage",
 		},
 		{
 			name: "invalid relative host_path",
@@ -84,6 +88,13 @@ func TestSharedFSConfigValidate(t *testing.T) {
 			}
 			if err := check.Validate(c); (err != nil) != tc.wantErr {
 				t.Errorf("config.Validate() error = %v, wantErr %v", err, tc.wantErr)
+			}
+			if !tc.wantErr && c.PathInContainer() != tc.pathInContainer {
+				t.Errorf(
+					"config.PathInContainer() return = %v, expected %v",
+					c.PathInContainer(),
+					tc.pathInContainer,
+				)
 			}
 		})
 	}
