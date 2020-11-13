@@ -456,10 +456,14 @@ func (m *Master) Run() error {
 	webuiGroup := m.echo.Group(webuiBaseRoute)
 	webuiGroup.File("/", reactIndex)
 	webuiGroup.GET("/*", func(c echo.Context) error {
+		var (
+			requestedFileAbs string
+			stat             os.FileInfo
+		)
 		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
 		requestedFile := filepath.Join(reactRoot, groupPath)
 		// We do a simple check against directory traversal attacks.
-		requestedFileAbs, err := filepath.Abs(requestedFile)
+		requestedFileAbs, err = filepath.Abs(requestedFile)
 		if err != nil {
 			log.WithError(err).Error("failed to get absolute path to requested file")
 			return c.File(reactIndex)
@@ -470,7 +474,7 @@ func (m *Master) Run() error {
 		}
 
 		var hasMatchingFile bool
-		stat, err := os.Stat(requestedFile)
+		stat, err = os.Stat(requestedFile)
 		switch {
 		case os.IsNotExist(err):
 		case os.IsPermission(err):
