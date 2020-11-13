@@ -235,7 +235,7 @@ const ExperimentDetailPage: React.FC = () => {
             <Col lg={10} span={24} xl={8} xxl={6}>
               <ExperimentInfoBox
                 experiment={experiment}
-                onChange={fetchExperimentDetails}
+                onTagsChange={fetchExperimentDetails}
               />
             </Col>
             <Col lg={14} span={24} xl={16} xxl={18}>
