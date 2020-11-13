@@ -112,6 +112,10 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(
 		&opts.Security.TLS.MasterCert, "security-tls-master-cert", "", "CA cert file for the master",
 	)
+	cmd.Flags().StringVar(
+		&opts.Security.TLS.MasterCertName, "security-tls-master-cert-name", "",
+		"expected address in the master TLS certificate (if different than the one used for connecting)",
+	)
 
 	// Debug flags.
 	cmd.Flags().IntVar(&opts.ArtificialSlots, "artificial-slots", 0, "")

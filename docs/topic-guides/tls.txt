@@ -52,6 +52,15 @@ configuration, the agent will be unable to verify the identity of the
 master, but the data sent over the connection will still be protected by
 TLS.
 
+If the master's certificate does not contain the address that the agent
+is using to connect to the master (but is otherwise valid), set the
+``security.tls.master_cert_name`` option to one of the addresses in the
+certificate. For example, the master's certificate may contain a DNS
+hostname corresponding to the public IP address of the master, while the
+agent connects to the master using its private IP address to prevent
+traffic from being routed over the public Internet. In that case, the
+option should be set to the DNS name contained in the certificate.
+
 When :ref:`dynamic agents <elastic-infra-index>` and TLS are both in
 use, the dynamic agents that the master creates will automatically be
 configured to connect securely to the master over TLS.
