@@ -28,6 +28,7 @@ type ExportableCheckpoint struct {
 	DeterminedVersion string          `db:"determined_version" json:"determined_version"`
 	ValidationMetrics json.RawMessage `db:"metrics" json:"metrics"`
 	ValidationState   string          `db:"validation_state" json:"validation_state"`
+	SearcherMetric    float64         `db:"searcher_metric" json:"searcher_metric"`
 }
 
 func (m *Master) getCheckpoint(c echo.Context) (interface{}, error) {

@@ -14,7 +14,8 @@ SELECT
     COALESCE(c.format, '') as format,
     COALESCE(c.determined_version, '') as determined_version,
     v.metrics AS metrics,
-    'STATE_' || v.state AS validation_state
+    'STATE_' || v.state AS validation_state,
+    (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8 AS searcher_metric
 FROM checkpoints c
 JOIN steps s ON c.step_id = s.id AND c.trial_id = s.trial_id
 LEFT JOIN validations v ON v.step_id = s.id AND v.trial_id = s.trial_id
