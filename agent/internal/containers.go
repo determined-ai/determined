@@ -83,6 +83,10 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			fmt.Sprintf("DET_AGENT_ID=%s", c.Options.AgentID),
 		}
 
+		if a := c.Options.Security.TLS.MasterCertName; a != "" {
+			c.GlobalEnvVars = append(c.GlobalEnvVars, fmt.Sprintf("DET_MASTER_CERT_NAME=%s", a))
+		}
+
 		c.Labels = map[string]string{
 			dockerContainerTypeLabel: dockerContainerTypeValue,
 			dockerAgentLabel:         c.Options.AgentID,

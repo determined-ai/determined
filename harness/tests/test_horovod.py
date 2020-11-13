@@ -24,6 +24,7 @@ def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvCont
         master_port=0,
         use_tls=False,
         master_cert_file=None,
+        master_cert_name=None,
         container_id="",
         hparams={"global_batch_size": 32},
         latest_checkpoint=None,
