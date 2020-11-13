@@ -4,7 +4,8 @@ import React, { useCallback, useState } from 'react';
 import { ConditionalButton } from 'components/types';
 import { openCommand } from 'routes/utils';
 import {
-  archiveExperiment, killExperiment, openOrCreateTensorboard, setExperimentState,
+  activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
+  openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
@@ -52,13 +53,23 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
     Tensorboard: false,
   });
 
-  const handleArchive = useCallback((archive: boolean) => async (): Promise<void> => {
+  const handleArchive = useCallback(() => async (): Promise<void> => {
     setBtnLoadingStates(state => ({ ...state, Archive: true }));
     try {
-      await archiveExperiment(experiment.id, archive);
+      await archiveExperiment({ experimentId: experiment.id });
       onSettled();
     } finally {
       setBtnLoadingStates(state => ({ ...state, Archive: false }));
+    }
+  }, [ experiment.id, onSettled ]);
+
+  const handleUnarchive = useCallback(() => async (): Promise<void> => {
+    setBtnLoadingStates(state => ({ ...state, Archive: false }));
+    try {
+      await unarchiveExperiment({ experimentId: experiment.id });
+      onSettled();
+    } finally {
+      setBtnLoadingStates(state => ({ ...state, Archive: true }));
     }
   }, [ experiment.id, onSettled ]);
 
@@ -105,7 +116,14 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
     }
     setBtnLoadingStates(state => ({ ...state, [action]: true }));
     try {
-      await setExperimentState({ experimentId: experiment.id, state: targetState });
+      switch (targetState) {
+        case RunState.StoppingCanceled:
+          return await cancelExperiment({ experimentId: experiment.id });
+        case RunState.Paused:
+          return await pauseExperiment({ experimentId: experiment.id });
+        case RunState.Active:
+          return await activateExperiment({ experimentId: experiment.id });
+      }
       onSettled();
     } finally {
       setBtnLoadingStates(state => ({ ...state, [action]: false }));
@@ -162,14 +180,14 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
       button: <Button
         key="archive"
         loading={btnLoadingStates.Archive}
-        onClick={handleArchive(true)}>Archive</Button>,
+        onClick={handleArchive()}>Archive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && !exp.archived,
     },
     {
       button: <Button
         key="unarchive"
         loading={btnLoadingStates.Archive}
-        onClick={handleArchive(false)}>Unarchive</Button>,
+        onClick={handleUnarchive()}>Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
     },
   ];

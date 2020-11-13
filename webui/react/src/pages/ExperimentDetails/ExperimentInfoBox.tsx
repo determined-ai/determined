@@ -111,8 +111,6 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment, onChange }: Props) => 
         className={tagListCss.noMargin}
         tags={experiment.config.labels || []}
         onChange={experimentTags.handleTagListChange(experiment.id)}
-        onCreate={experimentTags.handleTagListCreate(experiment.id)}
-        onDelete={experimentTags.handleTagListDelete(experiment.id)}
       />,
       label: 'Labels',
     },
