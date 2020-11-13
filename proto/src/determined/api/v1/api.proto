@@ -766,7 +766,7 @@ service Determined {
       get: "/api/v1/experiments/{experiment_id}/metrics-stream/trials-sample"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
 }
