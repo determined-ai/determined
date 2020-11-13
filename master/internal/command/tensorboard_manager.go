@@ -249,11 +249,7 @@ func (t *tensorboardManager) newTensorBoard(
 				HostPath:      c.SharedFSConfig.HostPath,
 				Propagation:   model.DefaultSharedFSPropagation,
 			}] = true
-
-			logBasePath = model.DefaultSharedFSContainerPath
-			if c.SharedFSConfig.StoragePath != nil {
-				logBasePath = fmt.Sprintf("%s/%s", logBasePath, *c.SharedFSConfig.StoragePath)
-			}
+			logBasePath = c.SharedFSConfig.PathInContainer()
 
 		case c.S3Config != nil:
 			if c.S3Config.AccessKey != nil {

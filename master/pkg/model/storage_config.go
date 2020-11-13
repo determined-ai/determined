@@ -105,6 +105,21 @@ func (s SharedFSConfig) Validate() []error {
 	return []error{sErr}
 }
 
+// PathInContainer caclulates where the full StoragePath will be inside the container.
+func (s SharedFSConfig) PathInContainer() string {
+	if s.StoragePath == nil {
+		return DefaultSharedFSContainerPath
+	}
+	if filepath.IsAbs(*s.StoragePath) {
+		relPath, err := filepath.Rel(s.HostPath, *s.StoragePath)
+		if err != nil {
+			panic("detected unvalidated sharedfs config")
+		}
+		return filepath.Join(DefaultSharedFSContainerPath, relPath)
+	}
+	return filepath.Join(DefaultSharedFSContainerPath, *s.StoragePath)
+}
+
 // HDFSConfig configures storing checkpoints in HDFS.
 type HDFSConfig struct {
 	URL  string  `json:"hdfs_url"`
