@@ -23,6 +23,7 @@ The full list of reference guides can be found below:
    :maxdepth: 1
 
    api/index
+   Rest API Reference <../rest-api/index.html#http://>
    cluster-config
    cli
    command-notebook-config
