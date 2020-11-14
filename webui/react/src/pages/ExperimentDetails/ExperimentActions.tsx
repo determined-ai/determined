@@ -14,10 +14,11 @@ export enum Action {
   Activate = 'Activate',
   Archive = 'Archive',
   Cancel = 'Cancel',
-  Kill = 'Kill',
   Fork = 'Fork',
+  Kill = 'Kill',
   Pause = 'Pause',
   Tensorboard = 'Tensorboard',
+  Unarchive = 'Unarchive',
 }
 
 interface Props {
@@ -51,6 +52,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
     Kill: false,
     Pause: false,
     Tensorboard: false,
+    Unarchive: false,
   });
 
   const handleArchive = useCallback(() => async (): Promise<void> => {
@@ -64,12 +66,12 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
   }, [ experiment.id, onSettled ]);
 
   const handleUnarchive = useCallback(() => async (): Promise<void> => {
-    setBtnLoadingStates(state => ({ ...state, Archive: false }));
+    setBtnLoadingStates(state => ({ ...state, Unarchive: true }));
     try {
       await unarchiveExperiment({ experimentId: experiment.id });
       onSettled();
     } finally {
-      setBtnLoadingStates(state => ({ ...state, Archive: true }));
+      setBtnLoadingStates(state => ({ ...state, Unarchive: false }));
     }
   }, [ experiment.id, onSettled ]);
 
@@ -186,7 +188,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
     {
       button: <Button
         key="unarchive"
-        loading={btnLoadingStates.Archive}
+        loading={btnLoadingStates.Unarchive}
         onClick={handleUnarchive()}>Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
     },
