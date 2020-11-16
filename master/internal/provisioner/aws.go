@@ -388,7 +388,7 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 	if c.CustomTags != nil {
 		for _, tag := range c.CustomTags {
 			customTag := &ec2.Tag{
-				Key: aws.String(tag.Key),
+				Key:   aws.String(tag.Key),
 				Value: aws.String(tag.Value),
 			}
 			input.TagSpecifications[0].Tags = append(input.TagSpecifications[0].Tags, customTag)

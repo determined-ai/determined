@@ -164,7 +164,7 @@ type ec2NetworkInterface struct {
 }
 
 type ec2Tag struct {
-	Key string `json:"key"`
+	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 

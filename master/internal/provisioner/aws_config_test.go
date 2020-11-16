@@ -73,7 +73,7 @@ func TestUnmarshalAWSClusterConfig(t *testing.T) {
 			IamInstanceProfileArn: "test_instance_profile",
 			CustomTags: []*ec2Tag{
 				{
-					Key: "key1",
+					Key:   "key1",
 					Value: "value1",
 				},
 			},
