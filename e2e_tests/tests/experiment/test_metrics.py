@@ -140,6 +140,16 @@ def request_valid_metric_batches(experiment_id):  # type: ignore
     return None
 
 
+def validate_hparam_types(hparams: dict) -> Union[None, str]:
+    for hparam in ["dropout1", "dropout2", "learning_rate"]:
+        if type(hparams[hparam]) != float:
+            return "hparam %s of unexpected type" % hparam
+    for hparam in ["global_batch_size", "n_filters1", "n_filters2"]:
+        if type(hparams[hparam]) != int:
+            return "hparam %s of unexpected type" % hparam
+    return None
+
+
 def request_train_trials_snapshot(experiment_id):  # type: ignore
     response = api.get(
         conf.make_master_url(),
@@ -161,26 +171,11 @@ def request_train_trials_snapshot(experiment_id):  # type: ignore
     for i in range(1, len(results)):
         for trial in results[i]["trials"]:
             trials.add(trial["trialId"])
-            for param in ["dropout1", "dropout2", "learning_rate"]:
-                if type(trial["hparams"][param]) != float:
-                    return ("hparam %s of unexpected type" % param, results)
-            for param in ["global_batch_size", "n_filters1", "n_filters2"]:
-                if type(trial["hparams"][param]) != int:
-                    return ("hparam %s of unexpected type" % param, results)
+            validate_hparam_types(trial["hparams"])
             if type(trial["metric"]) != float:
                 return ("metric of unexpected type", results)
     if len(trials) != 5:
         return ("unexpected number of trials received", results)
-    return None
-
-
-def validate_hparam_types(hparams: dict) -> Union[None, str]:
-    for hparam in ["dropout1", "dropout2", "learning_rate"]:
-        if type(hparams[hparam]) != float:
-            return "hparam %s of unexpected type" % hparam
-    for hparam in ["global_batch_size", "n_filters1", "n_filters2"]:
-        if type(hparams[hparam]) != int:
-            return "hparam %s of unexpected type" % hparam
     return None
 
 

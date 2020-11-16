@@ -713,10 +713,10 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 
 func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherConfig) (
 	trials []int32, err error) {
-	type Ranking string
+	type Ranking int
 	const (
-		ByMetricOfInterest Ranking = "ByMetricOfInterest"
-		ByTrainingLength   Ranking = "ByTrainingLength"
+		ByMetricOfInterest Ranking = 1
+		ByTrainingLength   Ranking = 2
 	)
 	var ranking Ranking
 
@@ -750,6 +750,60 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherC
 	default:
 		panic("Invalid state in trial sampling")
 	}
+}
+
+func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
+	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
+	trialCursors map[int32]time.Time) (*apiv1.TrialsSampleResponse_Trial, error) {
+	var metricSeries []lttb.Point
+	var endTime time.Time
+	var zeroTime time.Time
+	var err error
+	var trial apiv1.TrialsSampleResponse_Trial
+	trial.TrialId = trialID
+
+	if _, current := currentTrials[trialID]; !current {
+		var trialConfig *model.Trial
+		trialConfig, err = a.m.db.TrialByID(int(trialID))
+		if err != nil {
+			return nil, errors.Wrapf(err, "error fetching trial metadata")
+		}
+		trial.Hparams = protoutils.ToStruct(trialConfig.HParams)
+	}
+
+	startTime, seenBefore := trialCursors[trialID]
+	if !seenBefore {
+		startTime = zeroTime
+	}
+	switch metricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches)
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches)
+	default:
+		panic("Invalid metric type")
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "error fetching time series of metrics")
+	}
+	if len(metricSeries) > 0 {
+		// if we get empty results, the endTime is incorrectly zero
+		trialCursors[trialID] = endTime
+	}
+	if !seenBefore {
+		metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+	}
+
+	for _, in := range metricSeries {
+		out := apiv1.TrialsSampleResponse_DataPoint{
+			Batches: int32(in.X),
+			Value:   in.Y,
+		}
+		trial.Data = append(trial.Data, &out)
+	}
+	return &trial, nil
 }
 
 func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
@@ -786,7 +840,6 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 
 	trialCursors := make(map[int32]time.Time)
 	currentTrials := make(map[int32]bool)
-	var zeroTime time.Time
 	for {
 		var response apiv1.TrialsSampleResponse
 		var promotedTrials []int32
@@ -795,58 +848,24 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 
 		seenThisRound := make(map[int32]bool)
 
-		var metricSeries []lttb.Point
-		var endTime time.Time
 		trialIDs, err := a.topTrials(experimentID, maxTrials, searcherConfig)
 		if err != nil {
 			return errors.Wrapf(err, "error determining top trials")
 		}
 		for _, trialID := range trialIDs {
-			var trial apiv1.TrialsSampleResponse_Trial
-			trial.TrialId = trialID
+			trial, err := a.fetchTrialSample(trialID, metricName, metricType, maxDatapoints,
+				startBatches, endBatches, currentTrials, trialCursors)
+			if err != nil {
+				return err
+			}
 
 			if _, current := currentTrials[trialID]; !current {
 				promotedTrials = append(promotedTrials, trialID)
 				currentTrials[trialID] = true
-
-				var trialConfig *model.Trial
-				trialConfig, err = a.m.db.TrialByID(int(trialID))
-				if err != nil {
-					return errors.Wrapf(err, "error fetching trial metadata")
-				}
-				trial.Hparams = protoutils.ToStruct(trialConfig.HParams)
 			}
 			seenThisRound[trialID] = true
 
-			startTime, seenBefore := trialCursors[trialID]
-			if !seenBefore {
-				startTime = zeroTime
-			}
-			if metricType == apiv1.MetricType_METRIC_TYPE_TRAINING {
-				metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
-					metricName, startBatches, endBatches)
-			} else {
-				metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
-					metricName, startBatches, endBatches)
-			}
-			if err != nil {
-				return errors.Wrapf(err, "error fetching time series of metrics")
-			}
-			if len(metricSeries) > 0 {
-				// if we get empty results, the endTime is incorrectly zero
-				trialCursors[trialID] = endTime
-			}
-			if !seenBefore {
-				metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
-			}
-
-			for _, in := range metricSeries {
-				var out apiv1.TrialsSampleResponse_DataPoint
-				out.Batches = int32(in.X)
-				out.Value = in.Y
-				trial.Data = append(trial.Data, &out)
-			}
-			trials = append(trials, &trial)
+			trials = append(trials, trial)
 		}
 		for oldTrial := range currentTrials {
 			if !seenThisRound[oldTrial] {

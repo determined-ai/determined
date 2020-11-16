@@ -316,8 +316,8 @@ SELECT t.id FROM (
 }
 
 type metricsSeriesWrapper struct {
-	Batches int       `db:"batches" json:"batches"`
-	Value   float64   `db:"value" json:"value"`
+	Batches int       `db:"batches"`
+	Value   float64   `db:"value"`
 	EndTime time.Time `db:"end_time"`
 }
 
