@@ -6,19 +6,19 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-type priorityScheduler struct{}
+type roundRobinScheduler struct{}
 
-// NewPriorityScheduler creates a new scheduler that schedules tasks via round-robin of groups
+// NewRoundRobinScheduler creates a new scheduler that schedules tasks via round-robin of groups
 // sorted low to high by their current allocated slots.
-func NewPriorityScheduler() Scheduler {
-	return &priorityScheduler{}
+func NewRoundRobinScheduler() Scheduler {
+	return &roundRobinScheduler{}
 }
 
-func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*AllocateRequest, []*actor.Ref) {
-	return prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+func (p *roundRobinScheduler) Schedule(rp *ResourcePool) ([]*AllocateRequest, []*actor.Ref) {
+	return roundRobinSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-func prioritySchedule(
+func roundRobinSchedule(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
 	agents map[*actor.Ref]*agentState,

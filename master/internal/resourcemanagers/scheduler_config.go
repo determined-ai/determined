@@ -9,8 +9,9 @@ import (
 const (
 	defaultSchedulingPriority = 42
 
-	fairShareScheduling = "fair_share"
-	priorityScheduling  = "priority"
+	fairShareScheduling  = "fair_share"
+	priorityScheduling   = "priority"
+	roundRobinScheduling = "round_robin"
 
 	best             = "best"
 	worst            = "worst"
@@ -26,9 +27,10 @@ func defaultSchedulerConfig() *SchedulerConfig {
 
 // SchedulerConfig holds the configurations for scheduling policies.
 type SchedulerConfig struct {
-	FairShare     *FairShareSchedulerConfig `union:"type,fair_share" json:"-"`
-	Priority      *PrioritySchedulerConfig  `union:"type,priority" json:"-"`
-	FittingPolicy string                    `json:"fitting_policy"`
+	FairShare     *FairShareSchedulerConfig  `union:"type,fair_share" json:"-"`
+	Priority      *PrioritySchedulerConfig   `union:"type,priority" json:"-"`
+	RoundRobin    *RoundRobinSchedulerConfig `union:"type,round_robin" json:"-"`
+	FittingPolicy string                     `json:"fitting_policy"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -67,6 +69,8 @@ func (s *SchedulerConfig) getType() string {
 		return fairShareScheduling
 	case s.Priority != nil:
 		return priorityScheduling
+	case s.RoundRobin != nil:
+		return roundRobinScheduling
 	default:
 		panic("neither scheduler type configured")
 	}
@@ -80,6 +84,9 @@ type PrioritySchedulerConfig struct {
 	Preemption      bool `json:"preemption"`
 	DefaultPriority *int `json:"default_priority"`
 }
+
+// RoundRobinSchedulerConfig holds the configurations for the round robing scheduler.
+type RoundRobinSchedulerConfig struct{}
 
 // Validate implements the check.Validatable interface.
 func (p PrioritySchedulerConfig) Validate() []error {

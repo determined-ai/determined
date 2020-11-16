@@ -64,6 +64,8 @@ func ResolveConfig(
 				if schedulerConf.DefaultPriority != nil {
 					schedulerPolicyConf.Priority.DefaultPriority = schedulerConf.DefaultPriority
 				}
+			case roundRobinScheduling:
+				schedulerPolicyConf.RoundRobin = &RoundRobinSchedulerConfig{}
 			default:
 				return nil, nil, errors.Errorf(
 					"unsupported scheduler type %s; "+
