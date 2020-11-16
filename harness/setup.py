@@ -24,7 +24,7 @@ setup(
         "numpy>=1.16.2",
         "psutil",
         "pyzmq>=18.1.0",
-        "yogadl==0.1.2",
+        "yogadl==0.1.3",
     ],
     extras_require={
         "tf-114-cuda100": ["tensorflow-gpu==1.14.0"],
