@@ -377,6 +377,11 @@ The master supports the following configuration settings:
       to ``http`` as scheme, local IP address as host, and ``8080`` as
       port.
 
+   -  ``master_cert_name``: A hostname for which the master's TLS
+      certificate is valid, if the host specified by the ``master_url``
+      option is an IP address or is not contained in the certificate.
+      See :ref:`tls` for more information.
+
    -  ``startup_script``: One or more shell commands that will be run
       during agent instance start up. These commands are executed as
       root as soon as the agent cloud instance has started and before

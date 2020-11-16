@@ -19,6 +19,7 @@ func TestAgentSetupScript(t *testing.T) {
 	conf := agentSetupScriptConfig{
 		MasterHost:                   "test.master",
 		MasterPort:                   "8080",
+		MasterCertName:               "certname",
 		StartupScriptBase64:          encodedScript,
 		ContainerStartupScriptBase64: encodedContainerScript,
 		MasterCertBase64:             encodedMasterCert,
@@ -78,6 +79,7 @@ docker run --init --name determined-agent  \
     -e DET_AGENT_ID="test.id" \
     -e DET_MASTER_HOST="test.master" \
     -e DET_MASTER_PORT="8080" \
+    -e DET_SECURITY_TLS_MASTER_CERT_NAME="certname" \
     -e DET_RESOURCE_POOL="test-pool" \
     -e DET_FLUENT_IMAGE="fluent-test" \
     -v /var/run/docker.sock:/var/run/docker.sock \
