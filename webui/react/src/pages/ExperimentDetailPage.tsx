@@ -2,7 +2,7 @@ import { Space, Tabs } from 'antd';
 import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import { useHistory, useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CreateExperimentModal from 'components/CreateExperimentModal';
@@ -20,16 +20,31 @@ import { terminalRunStates, upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
 import ExperimentOverview from './ExperimentDetails/ExperimentOverview';
+import ExperimentVisualization, {
+  VisualizationType,
+} from './ExperimentDetails/ExperimentVisualization';
 
 const { TabPane } = Tabs;
 
-interface Params {
-  experimentId: string;
+enum TabType {
+  Overview = 'overview',
+  Visualization = 'visualization',
 }
 
+interface Params {
+  experimentId: string;
+  tab?: TabType;
+  viz?: VisualizationType;
+}
+
+const TAB_KEYS = Object.values(TabType);
+const DEFAULT_TAB_KEY = TabType.Overview;
+
 const ExperimentDetailPage: React.FC = () => {
-  const { experimentId } = useParams<Params>();
-  const id = parseInt(experimentId);
+  const { experimentId, tab, viz } = useParams<Params>();
+  const history = useHistory();
+  const defaultTabKey = tab && TAB_KEYS.indexOf(tab) ? tab : DEFAULT_TAB_KEY;
+  const [ tabKey, setTabKey ] = useState(defaultTabKey);
   const [ forkModalVisible, setForkModalVisible ] = useState(false);
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
   const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentDetails>>({
@@ -39,6 +54,8 @@ const ExperimentDetailPage: React.FC = () => {
     source: axios.CancelToken.source(),
   });
 
+  const id = parseInt(experimentId);
+  const basePath = `/experiments/${experimentId}/hp`;
   const experiment = experimentDetails.data;
 
   const fetchExperimentDetails = useCallback(async () => {
@@ -71,9 +88,20 @@ const ExperimentDetailPage: React.FC = () => {
     setFreshForkConfig();
   }, [ setFreshForkConfig ]);
 
+  const handleTabChange = useCallback(key => {
+    setTabKey(key);
+    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+  }, [ basePath, history ]);
+
   const showForkModal = useCallback((): void => {
     setForkModalVisible(true);
   }, [ setForkModalVisible ]);
+
+  useEffect(() => {
+    if (tab && (!TAB_KEYS.includes(tab) || tab === DEFAULT_TAB_KEY)) {
+      history.replace(basePath);
+    }
+  }, [ basePath, history, tab ]);
 
   const stopPolling = usePolling(fetchExperimentDetails);
   useEffect(() => {
@@ -131,12 +159,15 @@ const ExperimentDetailPage: React.FC = () => {
         {experiment.archived && <Badge>ARCHIVED</Badge>}
       </Space>}
       title={`Experiment ${experimentId}`}>
-      <Tabs className={css.base} defaultActiveKey="overview">
+      <Tabs className={css.base} defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <ExperimentOverview experiment={experiment} onTagsChange={fetchExperimentDetails} />
         </TabPane>
         <TabPane key="visualization" tab="Visualization">
-          Visualization
+          <ExperimentVisualization
+            basePath={`${basePath}/${TabType.Visualization}`}
+            experiment={experiment}
+            type={viz} />
         </TabPane>
       </Tabs>
       <CreateExperimentModal
