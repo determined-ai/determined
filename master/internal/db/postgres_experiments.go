@@ -7,8 +7,16 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+)
+
+const (
+	asc  = "" // This is blank because ascending is the default
+	desc = "DESC"
+	max  = "max"
+	min  = "min"
 )
 
 // ExperimentLabelUsage returns a flattened and deduplicated list of all the
@@ -251,4 +259,127 @@ ORDER BY v.end_time;`, &rows, metricName, experimentID, batchesProcessed, startT
 	}
 
 	return trials, endTime, nil
+}
+
+// TopTrialsByMetric chooses the subset of trials from an experiment that recorded the best values
+// for the specified metric at any point during the trial.
+func (db *PgDB) TopTrialsByMetric(experimentID int, maxTrials int, metric string,
+	smallerIsBetter bool) (trials []int32, err error) {
+	order := desc
+	aggregate := max
+	if smallerIsBetter {
+		order = asc
+		aggregate = min
+	}
+	err = db.sql.Select(&trials, fmt.Sprintf(`
+SELECT t.id FROM (
+  SELECT t.id,
+    %s((v.metrics->'validation_metrics'->$1)::text::numeric) as best_metric
+  FROM trials t
+    INNER JOIN steps s ON t.id=s.trial_id
+    RIGHT JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+  WHERE t.experiment_id=$2
+    AND v.state = 'COMPLETED'
+  GROUP BY t.id
+  ORDER BY best_metric %s
+  LIMIT $3
+) t;`, aggregate, order), metric, experimentID, maxTrials)
+	return trials, err
+}
+
+// TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest
+// number of batches, using the specified metric as a tie breaker.
+func (db *PgDB) TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
+	smallerIsBetter bool) (trials []int32, err error) {
+	order := desc
+	aggregate := max
+	if smallerIsBetter {
+		order = asc
+		aggregate = min
+	}
+
+	err = db.sql.Select(&trials, fmt.Sprintf(`
+SELECT t.id FROM (
+  SELECT t.id,
+    max(s.prior_batches_processed) as progress,
+    %s((v.metrics->'validation_metrics'->$1)::text::numeric) as best_metric
+  FROM trials t
+    INNER JOIN steps s ON t.id=s.trial_id
+    RIGHT JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+  WHERE t.experiment_id=$2
+    AND v.state = 'COMPLETED'
+  GROUP BY t.id
+  ORDER BY progress DESC, best_metric %s
+  LIMIT $3
+) t;`, aggregate, order), metric, experimentID, maxTrials)
+	return trials, err
+}
+
+type metricsSeriesWrapper struct {
+	Batches int       `db:"batches"`
+	Value   float64   `db:"value"`
+	EndTime time.Time `db:"end_time"`
+}
+
+// TrainingMetricsSeries returns a time-series of the specified training metric in the specified
+// trial.
+func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
+	startBatches int, endBatches int) (metricSeries []lttb.Point, endTime time.Time,
+	err error) {
+	var rows []metricsSeriesWrapper
+	err = db.queryRows(`
+SELECT 
+  (prior_batches_processed + num_batches) AS batches,
+  s.metrics->'avg_metrics'->$1 AS value,
+  s.end_time as end_time
+FROM trials t
+  INNER JOIN steps s ON t.id=s.trial_id
+WHERE t.id=$2
+  AND s.state = 'COMPLETED'
+  AND (prior_batches_processed + num_batches) >= $3
+  AND (prior_batches_processed + num_batches) <= $4
+  AND s.end_time > $5
+ORDER BY batches;`, &rows, metricName, trialID, startBatches, endBatches, startTime)
+	if err != nil {
+		return nil, endTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+	}
+	for _, row := range rows {
+		metricSeries = append(metricSeries, lttb.Point{X: float64(row.Batches), Y: row.Value})
+		if row.EndTime.After(endTime) {
+			endTime = row.EndTime
+		}
+	}
+	return metricSeries, endTime, nil
+}
+
+// ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
+// trial.
+func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
+	startBatches int, endBatches int) (metricSeries []lttb.Point, endTime time.Time,
+	err error) {
+	var rows []metricsSeriesWrapper
+	err = db.queryRows(`
+SELECT 
+  (prior_batches_processed + num_batches) AS batches,
+  v.metrics->'validation_metrics'->$1 AS value,
+  v.end_time as end_time
+FROM trials t
+  INNER JOIN steps s ON t.id=s.trial_id
+  LEFT OUTER JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+WHERE t.id=$2
+  AND v.state = 'COMPLETED'
+  AND (prior_batches_processed + num_batches) >= $3
+  AND (prior_batches_processed + num_batches) <= $4
+  AND v.end_time > $5
+ORDER BY batches;`, &rows, metricName, trialID, startBatches, endBatches, startTime)
+	if err != nil {
+		return nil, endTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+	}
+	for _, row := range rows {
+		metricSeries = append(metricSeries, lttb.Point{X: float64(row.Batches), Y: row.Value})
+		if row.EndTime.After(endTime) {
+			endTime = row.EndTime
+		}
+	}
+	return metricSeries, endTime, nil
 }

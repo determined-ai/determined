@@ -759,4 +759,14 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Get a sample of the metrics over time for a sample of the trials.
+  rpc TrialsSample(TrialsSampleRequest) returns (stream TrialsSampleResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/metrics-stream/trials-sample"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }
