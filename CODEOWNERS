@@ -1,34 +1,34 @@
 # Scheduler
-/master/internal/scheduler/    @aaron276h @rb-determined-ai
+/master/internal/scheduler/    @aaron276h
 
 # Provisioner
 /master/internal/provisioner/  @shiyuann
 
 # Model registry
-/master/pkg/model              @eecsliu @katport
-/proto/pkg/modelv1             @eecsliu @katport
+#/master/pkg/model
+#/proto/pkg/modelv1
 
 # WebUI
-/webui/                        @hkang1 @hamidzr
+/webui/                        @hamidzr
 
 # Experiment/trial actors
-/master/internal/trial.go      @rb-determined-ai @dzhu @aaron276h
-/master/internal/experiment.go @rb-determined-ai @dzhu @aaron276h
+/master/internal/trial.go      @aaron276h
+/master/internal/experiment.go @aaron276h
 
 # Actor infrastructure
-/master/pkg/actor              @dzhu
+#/master/pkg/actor
 
 # HP Search
-/master/pkg/searcher/          @stoksc @liamcli
+#/master/pkg/searcher/          @stoksc
 
 # Checkpoint export
 # 
 
 # Restart
-/master/internal/experiment.go @rb-determined-ai @stoksc
+/master/internal/experiment.go @stoksc
 
 # CLI
-/cli/                          @dzhu
+#/cli/
 
 # API
 /proto/                        @hamidzr
@@ -37,39 +37,39 @@
 /master/internal/api*.go       @hamidzr
 
 # Kubernetes
-/master/internal/kubernetes/   @aaron276h @dzhu @rb-determined-ai
+/master/internal/kubernetes/   @aaron276h
 
 # Agent, container
 /agent/                        @stoksc
 
 # Harness, container
-/harness/                      @rb-determined-ai @aaron276h @shiyuann
+/harness/                      @aaron276h @shiyuann
 
 # D-train
-/harness/determined/horovod.py                @aaron276h @armandmcqueen
-/harness/determined/ipc.py                    @aaron276h @armandmcqueen
-/harness/determined/layers/_worker_process.py @aaron276h @armandmcqueen
-/harness/determined/_trial_controller.py      @aaron276h @armandmcqueen
-/harness/determined/exec/worker_process.py    @aaron276h @armandmcqueen
+/harness/determined/horovod.py                @aaron276h
+/harness/determined/ipc.py                    @aaron276h
+/harness/determined/layers/_worker_process.py @aaron276h
+/harness/determined/_trial_controller.py      @aaron276h
+/harness/determined/exec/worker_process.py    @aaron276h
 
 # Tensorboard
-/master/internal/command/tensorboard_manager.go  @eecsliu
+#/master/internal/command/tensorboard_manager.go
 
 # Notebooks
-/master/internal/command/notebook_manager.go     @naren-determined @armandmcqueen
+#/master/internal/command/notebook_manager.go
 
 # Commands/shell
-/master/internal/command/command_manager.go      @dzhu
-/master/internal/command/shell_manager.go        @dzhu
+#/master/internal/command/command_manager.go
+#/master/internal/command/shell_manager.go
 
 # CI infrastructure
-/.circleci/                    @aaron276h @rb-determined-ai @dzhu
+/.circleci/                    @aaron276h
 
 # Build/packaging
-packaging/                     @dzhu @rb-determined-ai
+#packaging/
 
 # Documentation
-/docs/                         @neilconway
+#/docs/
 
 # Deployment
-/deploy/                       @davidhershey @seanr15
+#/deploy/
