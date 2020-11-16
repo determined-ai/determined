@@ -1,7 +1,6 @@
 package resourcemanagers
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -9,7 +8,7 @@ import (
 
 type roundRobinScheduler struct{}
 
-// NewPriorityScheduler creates a new scheduler that schedules tasks via round-robin of groups
+// NewRoundRobinScheduler creates a new scheduler that schedules tasks via round-robin of groups
 // sorted low to high by their current allocated slots.
 func NewRoundRobinScheduler() Scheduler {
 	return &roundRobinScheduler{}
@@ -25,7 +24,6 @@ func roundRobinSchedule(
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 ) ([]*AllocateRequest, []*actor.Ref) {
-	fmt.Println("scheduling round robin")
 	var states []*groupState
 	groupMapping := make(map[*group]*groupState)
 	for it := taskList.iterator(); it.next(); {
