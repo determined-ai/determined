@@ -11,6 +11,7 @@ const (
 
 	fairShareScheduling = "fair_share"
 	priorityScheduling  = "priority"
+	roundRobinScheduling = "round_robin"
 
 	best             = "best"
 	worst            = "worst"
@@ -28,6 +29,7 @@ func defaultSchedulerConfig() *SchedulerConfig {
 type SchedulerConfig struct {
 	FairShare     *FairShareSchedulerConfig `union:"type,fair_share" json:"-"`
 	Priority      *PrioritySchedulerConfig  `union:"type,priority" json:"-"`
+	RoundRobin	  *RoundRobinSchedulerConfig `union:"type,round_robin" json:'-'`
 	FittingPolicy string                    `json:"fitting_policy"`
 }
 
@@ -67,6 +69,8 @@ func (s *SchedulerConfig) getType() string {
 		return fairShareScheduling
 	case s.Priority != nil:
 		return priorityScheduling
+	case s.RoundRobin != nil:
+		return roundRobinScheduling
 	default:
 		panic("neither scheduler type configured")
 	}
@@ -80,6 +84,9 @@ type PrioritySchedulerConfig struct {
 	Preemption      bool `json:"preemption"`
 	DefaultPriority *int `json:"default_priority"`
 }
+
+// RoundRobingSchedulerConfig holds the configurations for the round robing scheudler.
+type RoundRobinSchedulerConfig struct{}
 
 // Validate implements the check.Validatable interface.
 func (p PrioritySchedulerConfig) Validate() []error {

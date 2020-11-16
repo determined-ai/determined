@@ -6,7 +6,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-func TestPrioritySchedulerLabels(t *testing.T) {
+func TestRoundRobinSchedulerLabels(t *testing.T) {
 	agents := []*mockAgent{
 		{id: "agent1", slots: 4, label: ""},
 		{id: "agent2", slots: 4, label: "label1"},
@@ -26,7 +26,7 @@ func TestPrioritySchedulerLabels(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-	toAllocate, toRelease := prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	toAllocate, toRelease := roundRobinSchedule(taskList, groupMap, agentMap, BestFit)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
