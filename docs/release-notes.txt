@@ -23,8 +23,14 @@ Version 0.13.8
    is no public information about which availability zones have GPU
    instances so trial and error is the suggested approach).
 
--  Security: Allow the agent to use different addresses for master
-   certificate verification and connecting to the master.
+-  Security: Allow the master to use a TLS certificate that is valid for
+   a different name than the agents use to connect to it. This ability
+   is useful in situations where the master is accessed using multiple
+   different addresses (e.g., private and public IP addresses of a cloud
+   instance). The agent now accepts a
+   ``--security-tls-master-cert-name`` option to override the expected
+   name in the master's TLS certificate. The CLI uses the
+   ``DET_MASTER_CERT_NAME`` environment variable for the same purpose."
 
 -  API: Add support for models that subclass ``tf.keras.Model`` when
    using the Determined TFKerasTrial API. This is a new feature that
