@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	batchWaitTime = 100 * time.Millisecond
+	batchWaitTime              = 100 * time.Millisecond
 	distinctFieldBatchWaitTime = 5 * time.Second
 )
 
