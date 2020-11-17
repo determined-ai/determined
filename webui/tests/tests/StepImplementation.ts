@@ -13,7 +13,10 @@ console.log('BASE_URL', BASE_URL);
 export default class StepImplementation {
   @BeforeSuite()
   public async beforeSuite() {
-    await openBrowser({ headless: HEADLESS });
+    const browserArgs = HEADLESS
+      ? { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }
+      : undefined;
+    await openBrowser(browserArgs);
   }
 
   @AfterSuite()
