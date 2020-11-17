@@ -15,6 +15,13 @@ import simplejson
 import determined as det
 from determined_common import check, util
 
+try:
+    from tensorflow.python.framework.ops import EagerTensor
+
+    EagerTensorImported = True
+except Exception:
+    EagerTensorImported = False
+
 
 @util.preserve_random_state
 def download_gcs_blob_with_backoff(blob: Any, n_retries: int = 32, max_backoff: int = 32) -> Any:
@@ -139,6 +146,8 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
         # Objects that provide their own custom JSON serialization.
         if hasattr(obj, "__json__"):
             return obj.__json__()
+        if EagerTensorImported and isinstance(obj, EagerTensor):
+            return obj._numpy().tolist()
 
         raise TypeError("Unserializable object {} of type {}".format(obj, type(obj)))
 
