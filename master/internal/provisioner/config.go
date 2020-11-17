@@ -45,6 +45,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 // Config describes config for provisioner.
 type Config struct {
 	MasterURL              string            `json:"master_url"`
+	MasterCertName         string            `json:"master_cert_name"`
 	StartupScript          string            `json:"startup_script"`
 	ContainerStartupScript string            `json:"container_startup_script"`
 	AgentDockerNetwork     string            `json:"agent_docker_network"`

@@ -222,6 +222,7 @@ func (a *agent) tlsConfig() (*tls.Config, error) {
 		InsecureSkipVerify: a.Options.Security.TLS.SkipVerify, //nolint:gosec
 		MinVersion:         tls.VersionTLS12,
 		RootCAs:            pool,
+		ServerName:         a.Options.Security.TLS.MasterCertName,
 	}, nil
 }
 

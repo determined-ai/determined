@@ -25,9 +25,10 @@ class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignor
         self.ctx.load_default_certs()
         if env.master_cert_file is not None:
             self.ctx.load_verify_locations(cafile=env.master_cert_file)
+        self.master_cert_name = env.master_cert_name
 
     def _wrap_socket(self, sock: socket.SocketType, host: str) -> socket.SocketType:
-        return self.ctx.wrap_socket(sock, server_hostname=host)
+        return self.ctx.wrap_socket(sock, server_hostname=self.master_cert_name or host)
 
 
 class SocketManager(workload.Source):
