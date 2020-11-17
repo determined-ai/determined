@@ -1,0 +1,21 @@
+task_container_defaults:
+  network_mode: host
+
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp
+  storage_path: determined-checkpoint
+  save_experiment_best: 0
+  save_trial_best: 1
+  save_trial_latest: 1
+
+db:
+  user: postgres
+  host: localhost
+  port: 5433
+  name: determined
+  password: postgres
+
+root: build
+port: 8081
+enable_cors: true

@@ -1,0 +1,32 @@
+{
+  "name": "webui-e2e-test",
+  "version": "1.0.0",
+  "description": "Determined WebUI end-to-end tests",
+  "main": "tests/",
+  "repository": "https://github.com/determined-ai/determined.git",
+  "author": "support@determined.ai",
+  "license": "LicenseRef-LICENSE",
+  "private": true,
+  "devDependencies": {
+    "@cypress/webpack-preprocessor": "^5.4.1",
+    "@typescript-eslint/eslint-plugin": "^3.2.0",
+    "@typescript-eslint/parser": "^3.2.0",
+    "cypress": "~4.8.0",
+    "eslint": "^7.2.0",
+    "eslint-plugin-cypress": "^2.11.1",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-sort-keys-fix": "^1.1.1",
+    "js-sha512": "^0.8.0",
+    "ts-loader": "^7.0.5",
+    "typescript": "^3.9.5",
+    "webpack": "^4.43.0"
+  },
+  "scripts": {
+    "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
+    "test": "make test",
+    "lint": "eslint \"cypress/integration/**/*.{js,jsx,ts,tsx}\""
+  },
+  "resolutions": {
+    "lodash": "^4.17.19"
+  }
+}
