@@ -55,7 +55,7 @@ const webpackConfig = override(
   // Webapp version is hardcoded but handled by `bumpversion`
   addWebpackPlugin(
     new webpack.DefinePlugin({
-      'process.env.VERSION': '"0.13.8rc1"',
+      'process.env.VERSION': '"0.13.8rc2"',
       'process.env.IS_DEV': JSON.stringify(IS_DEV),
       'process.env.SERVER_ADDRESS': JSON.stringify(SERVER_ADDRESS),
     })
