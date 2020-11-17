@@ -16,7 +16,7 @@ const defaultResizeInfo = {
 
 export const DEFAULT_RESIZE_THROTTLE_TIME = 500;
 
-const useResize = (ref?: RefObject<HTMLElement> | undefined): ResizeInfo => {
+const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
   const element = ref ? ref.current : document.body;
   const [ resizeInfo, setResizeInfo ] = useState<ResizeInfo>(defaultResizeInfo);
 

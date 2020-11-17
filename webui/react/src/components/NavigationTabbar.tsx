@@ -75,8 +75,20 @@ const NavigationTabbar: React.FC = () => {
             onClick: () => handleLaunchNotebook(true),
           },
           { icon: 'logs', label: 'Master Logs', path: '/logs', popout: true },
-          { icon: 'docs', label: 'Docs', path: '/docs', popout: true },
-          { icon: 'cloud', label: 'API (Beta)', path: '/docs/rest-api/', popout: true },
+          {
+            external: true,
+            icon: 'docs',
+            label: 'Docs',
+            path: '/docs',
+            popout: true,
+          },
+          {
+            external: true,
+            icon: 'cloud',
+            label: 'API (Beta)',
+            path: '/docs/rest-api/',
+            popout: true,
+          },
         ]}
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel} />

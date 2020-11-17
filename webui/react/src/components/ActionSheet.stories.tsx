@@ -21,8 +21,20 @@ const ActionSheetContainer = () => {
         { icon: 'notebook', label: 'Launch Notebook' },
         { icon: 'notebook', label: 'Launch CPU-only Notebook' },
         { icon: 'logs', label: 'Master Logs', path: '/logs', popout: true },
-        { icon: 'docs', label: 'Docs', path: '/docs', popout: true },
-        { icon: 'cloud', label: 'API (Beta)', path: '/docs/rest-api/', popout: true },
+        {
+          external: true,
+          icon: 'docs',
+          label: 'Docs',
+          path: '/docs',
+          popout: true,
+        },
+        {
+          external: true,
+          icon: 'cloud',
+          label: 'API (Beta)',
+          path: '/docs/rest-api/',
+          popout: true,
+        },
       ]}
       show={isShowing} />
   );
