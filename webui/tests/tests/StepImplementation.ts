@@ -1,14 +1,33 @@
-
+/* eslint-disable-next-line no-unused-vars */
 import { Step, Table, BeforeSuite, AfterSuite } from 'gauge-ts';
-import { $, button, checkBox, clear, click, closeBrowser, evaluate, focus, goto, into, link, near, openBrowser, press, tableCell, text, textBox, toLeftOf, within, write } from 'taiko';
+import {
+  $,
+  button,
+  checkBox,
+  clear,
+  click,
+  closeBrowser,
+  evaluate,
+  focus,
+  goto,
+  into,
+  link,
+  near,
+  openBrowser,
+  press,
+  tableCell,
+  text,
+  textBox,
+  toLeftOf,
+  within,
+  write,
+} from 'taiko';
 import assert = require('assert');
 
 const HEADLESS = process.env.HEADLESS === 'true';
 const HOST = process.env.DET_MASTER || 'localhost:8080';
 const BASE_PATH = process.env.PUBLIC_URL || '/det';
 const BASE_URL = `${HOST}${BASE_PATH}`;
-
-console.log('BASE_URL', BASE_URL);
 
 export default class StepImplementation {
   @BeforeSuite()
@@ -22,7 +41,7 @@ export default class StepImplementation {
   @AfterSuite()
   public async afterSuite() {
     await closeBrowser();
-  };
+  }
 
   @Step('Sign in as <username> with <password>')
   public async signInWithPassword(username: string, password: string) {
@@ -85,9 +104,14 @@ export default class StepImplementation {
 
   @Step('Add task <item>')
   public async addTask(item: string) {
-    await write(item, into(textBox({
-      class: 'new-todo'
-    })));
+    await write(
+      item,
+      into(
+        textBox({
+          class: 'new-todo',
+        }),
+      ),
+    );
     await press('Enter');
   }
 
@@ -126,7 +150,7 @@ export default class StepImplementation {
   @Step('Must not have <table>')
   public async mustNotHave(table: Table) {
     for (var row of table.getTableRows()) {
-      assert.ok(!await text(row.getCell('description')).exists(0, 0));
+      assert.ok(!(await text(row.getCell('description')).exists(0, 0)));
     }
   }
 
