@@ -6,8 +6,8 @@ get-deps:
 
 .PHONY: clean-test-artifacts
 clean-test-artifacts:
-	rm -rf cypress/screenshots/*
-	rm -rf cypress/videos/*
+	rm -rf reports/*
+	rm -rf logs/*
 
 .PHONY: clean
 clean: clean-test-artifacts
