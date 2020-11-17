@@ -15,6 +15,10 @@ Version 0.13.8
 
 **New Features**
 
+-  CLI: Support filtering trial logs by individual fields. Log entries
+   for trials can now be filtered by container ID, agent ID, log level,
+   and other fields. See ``det trial logs --help`` for more information.
+
 -  Deployment: When using the ``simple`` deployment type with
    ``det-deploy aws``, you can now use the ``--agent-subnet-id`` flag to
    specify which existing subnet to launch agents in. As each subnet is
