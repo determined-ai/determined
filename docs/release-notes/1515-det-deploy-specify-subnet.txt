@@ -1,8 +1,0 @@
-:orphan:
-
-**Feature**
-
--  When using `det-deploy aws`, you can now specify the subnet that the
-   agents should be launched into (if you are using the simple
-   deployment type). This allows users to explicitly pick a
-   subnet/availability zone that has GPU instances.

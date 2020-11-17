@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Fix issue that occasionally made TFKerasTrial hang for multi-GPU
-   training during COMPUTE_VALIDATION_STEP.
