@@ -113,6 +113,7 @@ class _CacheableDecorator:
                 secret_key=self._env.experiment_config["data_layer"].get("secret_key"),
                 endpoint_url=self._env.experiment_config["data_layer"].get("endpoint_url"),
                 coordinator_cert_file=self._env.master_cert_file,
+                coordinator_cert_name=self._env.master_cert_name,
             )
             self._storage = storage.S3Storage(storage_config, tensorflow_config=session_config)
 
@@ -131,6 +132,7 @@ class _CacheableDecorator:
                 url=rw_coordinator_url,
                 local_cache_dir=str(local_cache_path),
                 coordinator_cert_file=self._env.master_cert_file,
+                coordinator_cert_name=self._env.master_cert_name,
             )
             self._storage = storage.GCSStorage(storage_config, tensorflow_config=session_config)
 
