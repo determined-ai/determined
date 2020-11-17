@@ -15,45 +15,50 @@ Version 0.13.8
 
 **New Features**
 
--  Deployment: When using ``det-deploy aws``, you can now specify the 
-   subnet that the agents should be launched into (if you are using the 
-   simple deployment type). This allows users to explicitly pick a
-   subnet/availability zone that has GPU instances.
+-  Deployment: When using the ``simple`` deployment type with
+   ``det-deploy aws``, you can now use the ``--agent-subnet-id`` flag to
+   specify which existing subnet to launch agents in. As each subnet is
+   associated with a single availability zone, this allows users to
+   explicitly choose an availability zone that has GPU instances (there
+   is no public information about which availability zones have GPU
+   instances so trial and error is the suggested approach).
 
--  Security: Allow the agent to use different addresses for master 
+-  Security: Allow the agent to use different addresses for master
    certificate verification and connecting to the master.
 
 -  API: Add support for models that subclass ``tf.keras.Model`` when
    using the Determined TFKerasTrial API. This is a new feature that
-   became available starting in Tensorflow 2.2, allowing user to
-   further customize their training process.
+   became available starting in Tensorflow 2.2, allowing user to further
+   customize their training process.
 
 **Improvements**
 
--  **Breaking Change:** API: Perform salting and hashing on server-side for
-   the password change endpoint. This makes this endpoint consistent with
-   the new login endpoint described at
+-  **Breaking Change:** API: Perform salting and hashing on server-side
+   for the password change endpoint. This makes this endpoint consistent
+   with the new login endpoint described at
    https://docs.determined.ai/latest/rest-api/ .
 
--  **Breaking Change:** Logging: Start using Fluent Bit for handling trial 
-   logs internally. The agent machines now need to have access to the 
-   ``fluent/fluent-bit:1.6`` Docker image. If the Determined agent machines 
-   are able to connect to Docker Hub, they will pull it automatically and 
-   no changes are required; if not, the image must be manually made 
-   available beforehand. The Determined agent accepts a 
-   ``--fluent-logging-image`` option to specify an alternate name for the 
-   image.
+-  **Breaking Change:** Logging: Start using Fluent Bit for handling
+   trial logs internally. The agent machines now need to have access to
+   the ``fluent/fluent-bit:1.6`` Docker image. If the Determined agent
+   machines are able to connect to Docker Hub, they will pull it
+   automatically and no changes are required; if not, the image must be
+   manually made available beforehand. The Determined agent accepts a
+   ``--fluent-logging-image`` option to specify an alternate name for
+   the image. This change is part of an effort to improve the handling
+   of trial logs by increasing scalability and allowing more options for
+   log storage.
 
--  Agent: Support configurable slot types for agents. Previously, 
-   Determined only supported auto-detecting the slot type for agents. If  
-   Determined did not detect any GPUs, the agents would fall back to 
-   mapping one slot to all the CPUs.  With this change, this behavior can 
-   be configured to one of ``auto``, ``gpu``, and ``none`` in the field 
-   ``slot_type`` of the agent configuration ``agent.yaml``. Dynamic agents 
-   having GPUs will be configured to ``gpu`` while those agents having no 
-   GPUs will be configured to ``none``. For static agents this field 
-   defaults to ``auto``. See 
-   :ref:`Agent configuration <agent-configuration>` for details.
+-  Agent: Support configurable slot types for agents. Previously,
+   Determined only supported auto-detecting the slot type for agents. If
+   Determined did not detect any GPUs, the agents would fall back to
+   mapping one slot to all the CPUs. With this change, this behavior can
+   be configured to one of ``auto``, ``gpu``, and ``none`` in the field
+   ``slot_type`` of the agent configuration ``agent.yaml``. Dynamic
+   agents having GPUs will be configured to ``gpu`` while those agents
+   having no GPUs will be configured to ``none``. For static agents this
+   field defaults to ``auto``. See :ref:`Agent configuration
+   <agent-configuration>` for details.
 
 -  API: Add ``self.context.wrap_optimizer()`` to the Determined
    TFKerasTrial API. Please see :ref:`tf-keras-trial` for detail.
@@ -61,19 +66,23 @@ Version 0.13.8
 -  API: Add tf.keras DCGAN example that subclasses ``tf.keras.Model``.
 
 -  API: Add ``self.context.configure_fit()`` to the Determined
-   TFKerasTrial API. Please see :ref:`tf-keras-trial` for detail.
+   TFKerasTrial API. Many parameters which would be passed to
+   ``model.fit()``, such as ``class_weight``, ``verbose``, or
+   ``workers``, can now be passed to ``configure_fit()`` and will be
+   honored by ``TFKerasTrial``. Please see :ref:`tf-keras-trial` for
+   detail.
 
--  Kubernetes: Add option to configure the service type of the Determined
-   deployed database in the Determined Helm Chart. This is useful if your
-   cluster does not support ClusterIP, which is the service type that is
-   used by default.
+-  Kubernetes: Add option to configure the service type of the
+   Determined deployed database in the Determined Helm Chart. This is
+   useful if your cluster does not support ClusterIP, which is the
+   service type that is used by default.
 
 -  WebUI: Make the page/tab title more descriptive.
 
 -  WebUI: Add navigation sidebar, breadcrumb, and back buttons to log
    view pages.
 
--  WebUI: Update the trial and master log buttons to open in the same 
+-  WebUI: Update the trial and master log buttons to open in the same
    page by default, with the option to open in a new tab.
 
 -  WebUI: Update trial details URL to include the experiment id.
@@ -89,7 +98,7 @@ Version 0.13.8
       and :class:`determined.keras.callbacks.ReduceLROnPlateau`, which
       address this shortcoming. User-defined callbacks may subclass
       :class:`determined.keras.callbacks.Callback` (and define
-      ``get_state`` and ``load_state`` methods) to also benefit from 
+      ``get_state`` and ``load_state`` methods) to also benefit from
       this and other new features.
 
    -  Previously, Keras Callbacks which relied on ``on_epoch_end`` in
@@ -108,7 +117,7 @@ Version 0.13.8
 -  API: Fix issue that occasionally made TFKerasTrial hang for multi-GPU
    training during ``COMPUTE_VALIDATION_STEP``.
 
--  Kubernetes: Gracefully handle cases where the Kubernetes API server 
+-  Kubernetes: Gracefully handle cases where the Kubernetes API server
    responds with unexpected object types.
 
 -  Scheduler: Fix not being able to find resource pools for experiments.
@@ -118,7 +127,7 @@ Version 0.13.8
 -  WebUI: Prevent navigation item tooltips from showing up when hovering
    outside of the navigation bar.
 
--  WebUI: Fix an issue where the experiment archive action button was 
+-  WebUI: Fix an issue where the experiment archive action button was
    out of sync.
 
 -  WebUI: Fix experiment actions to not display a loading spinner.
@@ -130,9 +139,9 @@ Version 0.13.8
    eventually, and user code should be updated accordingly.
 
 -  API: Deprecated the old ``det.keras.SequenceAdapter``.
-   ``SequenceAdapter`` will be removed in a future version. Users
-   should use ``self.context.configure_fit()`` instead, which is both
-   more capable and more similar to the normal ``tf.keras`` APIs.
+   ``SequenceAdapter`` will be removed in a future version. Users should
+   use ``self.context.configure_fit()`` instead, which is both more
+   capable and more similar to the normal ``tf.keras`` APIs.
 
 Version 0.13.7
 ==============
