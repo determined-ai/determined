@@ -24,6 +24,7 @@ type mockGroup struct {
 	id       string
 	maxSlots *int
 	weight   float64
+	priority *int
 }
 
 func (g *mockGroup) Receive(ctx *actor.Context) error {
@@ -326,6 +327,7 @@ func setupSchedulerStates(
 			handler:  ref,
 			maxSlots: mockGroup.maxSlots,
 			weight:   mockGroup.weight,
+			priority: mockGroup.priority,
 		}
 		groups[ref] = group
 		groupActors[mockGroup] = ref

@@ -79,3 +79,28 @@ func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Devic
 	check.Panic(check.True(len(devices) == slots, "not enough devices"))
 	return devices
 }
+
+func (a *agentState) deepCopy() *agentState {
+	copiedAgent := &agentState{
+		handler:            a.handler,
+		label:              a.label,
+		devices:            make(map[device.Device]*cproto.ID),
+		zeroSlotContainers: make(map[cproto.ID]bool),
+	}
+
+	for originalDevice, id := range a.devices {
+		copiedDevice := device.Device{
+			ID:    originalDevice.ID,
+			Brand: originalDevice.Brand,
+			UUID:  originalDevice.UUID,
+			Type:  originalDevice.Type,
+		}
+		copiedAgent.devices[copiedDevice] = id
+	}
+
+	for originalKey, originalValue := range a.zeroSlotContainers {
+		copiedAgent.zeroSlotContainers[originalKey] = originalValue
+	}
+
+	return copiedAgent
+}
