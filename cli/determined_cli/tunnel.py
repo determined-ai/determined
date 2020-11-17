@@ -5,6 +5,7 @@ This is used to tunnel ssh connections through the master, where the hostname in
 should be the shell ID of the shell in question.
 """
 
+import argparse
 import http.client
 import io
 import os
@@ -12,7 +13,7 @@ import socket
 import ssl
 import sys
 import threading
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from determined_common.api import request
 
@@ -22,6 +23,10 @@ class HTTPSProxyConnection(http.client.HTTPSConnection):
     A connection class that applies TLS to the entire connection, even for CONNECT requests.
     """
 
+    def __init__(self, cert_name: Optional[str], *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._cert_name = cert_name
+
     def connect(self) -> None:
         self.sock = self._create_connection(  # type: ignore
             (self.host, self.port), self.timeout, self.source_address  # type: ignore
@@ -29,8 +34,11 @@ class HTTPSProxyConnection(http.client.HTTPSConnection):
         self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
         # This is what differs from the base class: we wrap the socket *before* setting up the
-        # tunnel and verify against the proxy's hostname rather than the target's.
-        self.sock = self._context.wrap_socket(self.sock, server_hostname=self.host)  # type: ignore
+        # tunnel and verify against the proxy's hostname rather than the target's.  We also support
+        # matching the host name against an externally-provided hostname.
+        self.sock = self._context.wrap_socket(  # type: ignore
+            self.sock, server_hostname=self._cert_name or self.host
+        )
 
         if self._tunnel_host:  # type: ignore
             self._tunnel()  # type: ignore
@@ -93,14 +101,16 @@ class Copier(threading.Thread):
                 pass
 
 
-def http_connect_tunnel(master: str, service: str, master_cert: Optional[str]) -> None:
+def http_connect_tunnel(
+    master: str, service: str, cert_file: Optional[str], cert_name: Optional[str]
+) -> None:
     parsed_master = request.parse_master_address(master)
     assert parsed_master.hostname is not None, "Failed to parse master address: {}".format(master)
 
     if parsed_master.scheme == "https":
-        context = ssl.create_default_context(cafile=master_cert)
+        context = ssl.create_default_context(cafile=cert_file)
         client = HTTPSProxyConnection(
-            parsed_master.hostname, parsed_master.port, context=context
+            cert_name, parsed_master.hostname, parsed_master.port, context=context
         )  # type: http.client.HTTPConnection
     else:
         client = http.client.HTTPConnection(parsed_master.hostname, parsed_master.port)
@@ -129,14 +139,11 @@ def http_connect_tunnel(master: str, service: str, master_cert: Optional[str]) -
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (3, 4):
-        print(
-            "usage: {} MASTER_ADDR SERVICE_UUID [MASTER_CERT]".format(sys.argv[0]), file=sys.stderr
-        )
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Tunnel through a Determined master")
+    parser.add_argument("master_addr")
+    parser.add_argument("service_uuid")
+    parser.add_argument("--cert-file")
+    parser.add_argument("--cert-name")
+    args = parser.parse_args()
 
-    master = sys.argv[1]
-    service = sys.argv[2]
-    master_cert = None if len(sys.argv) < 4 else sys.argv[3]
-
-    http_connect_tunnel(master, service, master_cert)
+    http_connect_tunnel(args.master_addr, args.service_uuid, args.cert_file, args.cert_name)
