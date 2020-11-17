@@ -23,6 +23,11 @@ Version 0.13.8
 -  Security: Allow the agent to use different addresses for master 
    certificate verification and connecting to the master.
 
+-  API: Add support for models that subclass ``tf.keras.Model`` when
+   using the Determined TFKerasTrial API. This is a new feature that
+   became available starting in Tensorflow 2.2, allowing user to
+   further customize their training process.
+
 **Improvements**
 
 -  **Breaking Change:** API: Perform salting and hashing on server-side for
@@ -53,16 +58,15 @@ Version 0.13.8
 -  API: Add ``self.context.wrap_optimizer()`` to the Determined
    TFKerasTrial API. Please see :ref:`tf-keras-trial` for detail.
 
--  API: Add support for models that subclass ``tf.keras.Model`` when 
-   using the Determined TFKerasTrial API.
-
 -  API: Add tf.keras DCGAN example that subclasses ``tf.keras.Model``.
 
 -  API: Add ``self.context.configure_fit()`` to the Determined
    TFKerasTrial API. Please see :ref:`tf-keras-trial` for detail.
 
--  Kubernetes: Add option to configure the service type of the Determined 
-   deployed database in the Determined Helm Chart.
+-  Kubernetes: Add option to configure the service type of the Determined
+   deployed database in the Determined Helm Chart. This is useful if your
+   cluster does not support ClusterIP, which is the service type that is
+   used by default.
 
 -  WebUI: Make the page/tab title more descriptive.
 
