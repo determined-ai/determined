@@ -402,10 +402,20 @@ service Determined {
       tags: [ "Trials", "Experiments" ]
     };
   }
-  // Stream Trial logs.
+  // Stream trial logs.
   rpc TrialLogs(TrialLogsRequest) returns (stream TrialLogsResponse) {
     option (google.api.http) = {
       get: "/api/v1/trials/{trial_id}/logs"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Experiments", "Trials" ]
+    };
+  }
+  // Stream trial log fields.
+  rpc TrialLogsFields(TrialLogsFieldsRequest)
+      returns (stream TrialLogsFieldsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/logs/fields"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Experiments", "Trials" ]
