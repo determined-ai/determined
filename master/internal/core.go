@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -294,6 +296,15 @@ func (m *Master) Run() error {
 	cert, err := m.config.Security.TLS.ReadCertificate()
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
+	}
+	if cert != nil {
+		hashBytes := sha256.Sum256(cert.Certificate[0])
+		hash := hex.EncodeToString(hashBytes[:])
+		var chunks []string
+		for i := 0; i < len(hash); i += 2 {
+			chunks = append(chunks, hash[i:i+2])
+		}
+		log.Infof("using a TLS certificate with SHA256 hash %s", strings.Join(chunks, ":"))
 	}
 	m.taskSpec = &tasks.TaskSpec{
 		ClusterID:             m.ClusterID,

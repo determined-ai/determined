@@ -2,10 +2,18 @@ package internal
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"net"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -246,8 +254,9 @@ type SecurityConfig struct {
 
 // TLSConfig is the configuration for setting up serving over TLS.
 type TLSConfig struct {
-	Cert string `json:"cert"`
-	Key  string `json:"key"`
+	AutoGenerateNames string `json:"autogenerate_names"`
+	Cert              string `json:"cert"`
+	Key               string `json:"key"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -263,7 +272,52 @@ func (t *TLSConfig) Validate() []error {
 
 // Enabled returns whether this configuration makes it possible to enable TLS.
 func (t *TLSConfig) Enabled() bool {
-	return t.Cert != "" && t.Key != ""
+	return t.AutoGenerateNames != "" || (t.Cert != "" && t.Key != "")
+}
+
+func generateCert(hosts []string) (*tls.Certificate, error) {
+	// Code derived from generate_cert.go in the Go distribution.
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		fmt.Println(0)
+		return nil, errors.Wrap(err, "failed to generate private key")
+	}
+
+	notBefore := time.Now()
+	notAfter := notBefore.Add(365 * 24 * time.Hour)
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		fmt.Println(1)
+		return nil, errors.Wrap(err, "failed to generate serial number")
+	}
+
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Determined AI"},
+		},
+		NotBefore:             notBefore,
+		NotAfter:              notAfter,
+		BasicConstraintsValid: true,
+	}
+	for _, h := range hosts {
+		if ip := net.ParseIP(h); ip != nil {
+			template.IPAddresses = append(template.IPAddresses, ip)
+		} else {
+			template.DNSNames = append(template.DNSNames, h)
+		}
+	}
+
+	certBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	if err != nil {
+		fmt.Println(2)
+		return nil, errors.Wrap(err, "failed to create certificate")
+	}
+	return &tls.Certificate{
+		Certificate: [][]byte{certBytes},
+		PrivateKey:  priv,
+	}, nil
 }
 
 // ReadCertificate returns the certificate described by this configuration (nil if it does not allow
@@ -272,6 +326,10 @@ func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
 	if !t.Enabled() {
 		return nil, nil
 	}
+	if t.AutoGenerateNames != "" {
+		return generateCert(strings.Split(t.AutoGenerateNames, ","))
+	}
+
 	cert, err := tls.LoadX509KeyPair(t.Cert, t.Key)
 	return &cert, err
 }

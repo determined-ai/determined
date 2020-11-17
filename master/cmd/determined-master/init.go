@@ -98,6 +98,9 @@ func registerConfig() {
 		defaults.Security.TLS.Cert, "TLS cert file")
 	registerString(flags, name("security", "tls", "key"),
 		defaults.Security.TLS.Key, "TLS key file")
+	registerString(flags, name("security", "tls", "autogenerate-names"),
+		defaults.Security.TLS.AutoGenerateNames, "use an automatically generated certificate valid"+
+			" for the given names (comma-separated list)")
 
 	registerInt(flags, name("port"),
 		defaults.Port, "server port")
