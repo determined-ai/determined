@@ -52,6 +52,25 @@ configuration, the agent will be unable to verify the identity of the
 master, but the data sent over the connection will still be protected by
 TLS.
 
+If the master's certificate does not contain the address that the agent
+is using to connect to the master (but is otherwise valid), set the
+``security.tls.master_cert_name`` option to one of the addresses in the
+certificate. For example, the master's certificate may contain a DNS
+hostname corresponding to the public IP address of the master, while the
+agent connects to the master using its private IP address to prevent
+traffic from being routed over the public Internet. In that case, the
+option should be set to the DNS name contained in the certificate.
+
+.. note::
+
+   Due to a limitation of `Fluent Bit <https://fluentbit.io>`, which
+   Determined uses internally, the certificate must be valid for at
+   least one hostname that is not an IP address and the
+   ``security.tls.master_cert_name`` option must be set to that hostname
+   if the agent is configured to connect to the master using an IP
+   address. The hostname does not need to be an actual DNS name for the
+   master---it is only used for certificate verification.
+
 When :ref:`dynamic agents <elastic-infra-index>` and TLS are both in
 use, the dynamic agents that the master creates will automatically be
 configured to connect securely to the master over TLS.

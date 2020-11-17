@@ -81,9 +81,10 @@ type SecurityOptions struct {
 
 // TLSOptions is the TLS connection configuration for the agent.
 type TLSOptions struct {
-	Enabled    bool   `json:"enabled"`
-	SkipVerify bool   `json:"skip_verify"`
-	MasterCert string `json:"master_cert"`
+	Enabled        bool   `json:"enabled"`
+	SkipVerify     bool   `json:"skip_verify"`
+	MasterCert     string `json:"master_cert"`
+	MasterCertName string `json:"master_cert_name"`
 }
 
 // Validate implements the check.Validatable interface.

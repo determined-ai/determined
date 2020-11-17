@@ -99,13 +99,8 @@ The master can secure all incoming connections using `TLS
 ability requires a TLS private key and certificate to be provided; set
 the options ``security.tls.cert`` and ``security.tls.key`` to paths to a
 PEM-encoded TLS certificate and private key, respectively, to do so. If
-TLS is enabled, the default port becomes 8443 rather than 8080.
-
-.. note::
-
-   To use Determined with TLS, you may need a private Certificate
-   Authority and Split-Horizon DNS, depending on where your
-   infrastructure resides.
+TLS is enabled, the default port becomes 8443 rather than 8080. See
+:ref:`tls` for more information.
 
 .. _agent-network-proxy:
 
@@ -381,6 +376,11 @@ The master supports the following configuration settings:
       we will replace the above alias host with its real value. Defaults
       to ``http`` as scheme, local IP address as host, and ``8080`` as
       port.
+
+   -  ``master_cert_name``: A hostname for which the master's TLS
+      certificate is valid, if the host specified by the ``master_url``
+      option is an IP address or is not contained in the certificate.
+      See :ref:`tls` for more information.
 
    -  ``startup_script``: One or more shell commands that will be run
       during agent instance start up. These commands are executed as
@@ -819,3 +819,7 @@ The master supports the following configuration settings:
          reduce the security of your Determined cluster.
 
       -  ``master_cert``: CA cert file for the master when using TLS.
+
+      -  ``master_cert_name``: A hostname for which the master's TLS
+         certificate is valid, if the value of the ``master_host``
+         option is an IP address or is not contained in the certificate.
