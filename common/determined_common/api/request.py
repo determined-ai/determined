@@ -41,6 +41,10 @@ def get_master_cert_bundle() -> Optional[str]:
     return _master_cert_bundle
 
 
+def get_master_cert_name() -> Optional[str]:
+    return _master_cert_name
+
+
 def parse_master_address(master_address: str) -> parse.ParseResult:
     if master_address.startswith("https://"):
         default_port = 443
