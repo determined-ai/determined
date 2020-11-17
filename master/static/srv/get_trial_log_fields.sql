@@ -1,20 +1,20 @@
-select array_to_json(array_remove(array(
-               select distinct agent_id
-               from trial_logs where trial_id = $1
-           ), NULL)) as agent_ids,
+SELECT array_to_json(array_remove(array(
+               SELECT DISTINCT agent_id
+               FROM trial_logs WHERE trial_id = $1
+           ), NULL)) AS agent_ids,
        array_to_json(array_remove(array(
-               select distinct container_id
-               from trial_logs where trial_id = $1
-           ), NULL)) as container_ids,
+               SELECT DISTINCT container_id
+               FROM trial_logs WHERE trial_id = $1
+           ), NULL)) AS container_ids,
        array_to_json(array_remove(array(
-               select distinct rank_id
-               from trial_logs where trial_id = $1
-           ), NULL)) as rank_ids,
+               SELECT DISTINCT rank_id
+               FROM trial_logs WHERE trial_id = $1
+           ), NULL)) AS rank_ids,
        array_to_json(array_remove(array(
-               select distinct stdtype
-               from trial_logs where trial_id = $1
-           ), NULL)) as stdtypes,
+               SELECT DISTINCT stdtype
+               FROM trial_logs WHERE trial_id = $1
+           ), NULL)) AS stdtypes,
        array_to_json(array_remove(array(
-               select distinct source
-               from trial_logs where trial_id = $1
-           ), NULL)) as sources;
+               SELECT DISTINCT source
+               FROM trial_logs WHERE trial_id = $1
+           ), NULL)) AS sources;

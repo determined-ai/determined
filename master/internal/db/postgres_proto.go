@@ -2,8 +2,6 @@ package db
 
 import (
 	"encoding/json"
-	"fmt"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -26,7 +24,6 @@ func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{})
 			switch parsed := value.(type) {
 			case []byte:
 				var marshaled interface{}
-				fmt.Println(string(parsed))
 				if err := json.Unmarshal(parsed, &marshaled); err != nil {
 					return errors.Wrapf(err, "error parsing field: %s", key)
 				}

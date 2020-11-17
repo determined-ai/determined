@@ -60,7 +60,7 @@ message TrialLogsFieldsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id" ] }
   };
-  // The id of the trial.
+  // The ID of the trial.
   int32 trial_id = 1;
   // Continue following fields until the trial stops.
   bool follow = 2;
