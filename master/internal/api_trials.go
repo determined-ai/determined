@@ -32,7 +32,10 @@ const (
 	batchSize = 1000
 )
 
-var batchWaitTime = 100 * time.Millisecond
+var (
+	batchWaitTime = 100 * time.Millisecond
+	distinctFieldBatchWaitTime = 5 * time.Second
+)
 
 func trialStatus(d *db.PgDB, trialID int32) (model.State, int, error) {
 	trialStatus := struct {
@@ -216,7 +219,7 @@ func (a *apiServer) TrialLogsFields(
 			fetch,
 			onBatch,
 			terminateCheck,
-			&batchWaitTime,
+			&distinctFieldBatchWaitTime,
 		),
 	).AwaitTermination()
 }
