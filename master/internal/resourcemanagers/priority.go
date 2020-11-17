@@ -9,7 +9,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-type priorityScheduler struct{}
+type priorityScheduler struct{
+	preemptionEnabled bool
+}
 
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler() Scheduler {
@@ -51,9 +53,10 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 ) ([]*AllocateRequest, []*actor.Ref) {
 	// All pending zero slot tasks get scheduled right away.
 	toAllocate := getAllPendingZeroSlotTasks(taskList, label)
+	toRelease := make([]*actor.Ref, 0)
 
 	// Sort tasks by priorities and timestamps.
-	priorityToPendingTasksMap, _ := sortTasksByPriorityAndTimestamp(taskList, groups, label)
+	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(taskList, groups, label)
 
 	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
@@ -62,28 +65,77 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 		allocationRequests := priorityToPendingTasksMap[priority]
 		log.Infof("processing priority %d with %d pending tasks", priority, len(allocationRequests))
 
-		successfulAllocations := make([]*AllocateRequest, 0)
-		for _, allocationRequest := range allocationRequests {
-			log.Infof("trying to schedule task: %s", allocationRequest.ID)
-			fits := findFits(allocationRequest, localAgentsState, fittingMethod)
-			if len(fits) == 0 {
-				continue
-			}
-			log.Infof("successfully scheduled task: %s", allocationRequest.ID)
-			simulateFitsPlacement(fits)
-			successfulAllocations = append(successfulAllocations, allocationRequest)
+		successfulAllocations, unSuccessfulAllocations := trySchedulingPendingTasksInPriority(
+			allocationRequests, localAgentsState, fittingMethod)
+
+		// Only add these tasks to the lists of tasks to start if there has been
+		// no preemption to start tasks of higher priority.
+		if len(toRelease) == 0 {
+			toAllocate = append(toAllocate, successfulAllocations...)
 		}
-		toAllocate = append(toAllocate, successfulAllocations...)
-		// If not all requests were fulfilled we do not scheduler lower priority tasks.
-		if len(successfulAllocations) < len(allocationRequests) {
+
+		// All pending tasks in this priority were successfully scheduled.
+		if len(unSuccessfulAllocations) == 0 {
+			continue
+		}
+
+		if !p.preemptionEnabled {
 			log.Infof(
-				"scheduled only %d tasks in priority level thus breaking out",
+				"scheduled only %d tasks in priority level and preemption thus breaking out",
 				len(successfulAllocations))
 			break
 		}
+
+		for _, prioritizedAllocation := range unSuccessfulAllocations {
+			// Check if we still need to preempt tasks to schedule this task.
+			if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(fits) > 0 {
+				simulateFitsPlacement(fits)
+				continue
+			}
+
+
+
+
+		}
 	}
 
-	return toAllocate, make([]*actor.Ref, 0)
+	return toAllocate, toRelease
+}
+
+func trySchedulingTaskViaPreemption(
+	allocationRequest *AllocateRequest,
+	priority int,
+	agents map[*actor.Ref]*agentState,
+	priorityToScheduledTaskMap map[int][]*AllocateRequest,
+) (bool, map[*actor.Ref]*agentState) {
+	localAgentsState := deepCopyAgents(agents)
+	taskPlacedViaPreemption := false
+
+
+	return taskPlacedViaPreemption, localAgentsState
+}
+
+func trySchedulingPendingTasksInPriority(
+	allocationRequests []*AllocateRequest,
+	agents map[*actor.Ref]*agentState,
+	fittingMethod SoftConstraint,
+) ([]*AllocateRequest, []*AllocateRequest) {
+	successfulAllocations := make([]*AllocateRequest, 0)
+	unSuccessfulAllocations := make([]*AllocateRequest, 0)
+
+	for _, allocationRequest := range allocationRequests {
+		log.Infof("trying to schedule task: %s", allocationRequest.ID)
+		fits := findFits(allocationRequest, agents, fittingMethod)
+		if len(fits) == 0 {
+			unSuccessfulAllocations = append(unSuccessfulAllocations, allocationRequest)
+			continue
+		}
+		simulateFitsPlacement(fits)
+		successfulAllocations = append(successfulAllocations, allocationRequest)
+		log.Infof("successfully scheduled task: %s", allocationRequest.ID)
+	}
+
+	return successfulAllocations, unSuccessfulAllocations
 }
 
 func getAllPendingZeroSlotTasks(taskList *taskList, label string) []*AllocateRequest {
@@ -100,6 +152,7 @@ func getAllPendingZeroSlotTasks(taskList *taskList, label string) []*AllocateReq
 			pendingZeroSlotTasks = append(pendingZeroSlotTasks, req)
 		}
 	}
+
 	return pendingZeroSlotTasks
 }
 
