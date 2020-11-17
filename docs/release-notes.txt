@@ -15,9 +15,10 @@ Version 0.13.8
 
 **New Features**
 
--  CLI: Support filtering trial logs by individual fields. Log entries
-   for trials can now be filtered by container ID, agent ID, log level,
-   and other fields. See ``det trial logs --help`` for more information.
+-  API: Add support for models that subclass ``tf.keras.Model`` when
+   using the Determined TFKerasTrial API. This is a new feature that
+   became available starting in Tensorflow 2.2, allowing user to further
+   customize their training process.
 
 -  Deployment: When using the ``simple`` deployment type with
    ``det-deploy aws``, you can now use the ``--agent-subnet-id`` flag to
@@ -27,6 +28,11 @@ Version 0.13.8
    is no public information about which availability zones have GPU
    instances so trial and error is the suggested approach).
 
+-  Logs: Support filtering trial logs by individual fields in the CLI.
+   Log entries for trials can now be filtered by container ID, agent ID,
+   log level, and other fields. See ``det trial logs --help`` for more
+   information.
+
 -  Security: Allow the master to use a TLS certificate that is valid for
    a different name than the agents use to connect to it. This ability
    is useful in situations where the master is accessed using multiple
@@ -35,11 +41,6 @@ Version 0.13.8
    ``--security-tls-master-cert-name`` option to override the expected
    name in the master's TLS certificate. The CLI uses the
    ``DET_MASTER_CERT_NAME`` environment variable for the same purpose."
-
--  API: Add support for models that subclass ``tf.keras.Model`` when
-   using the Determined TFKerasTrial API. This is a new feature that
-   became available starting in Tensorflow 2.2, allowing user to further
-   customize their training process.
 
 **Improvements**
 
