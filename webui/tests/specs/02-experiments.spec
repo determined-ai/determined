@@ -1,4 +1,5 @@
 # Experiment List
+Tags: parallelizable
 
 Specification to test the experiment list page.
 

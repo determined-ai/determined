@@ -1,4 +1,5 @@
 # Authentication
+Tags: parallelizable
 
 Specification to test authentication related operations.
 
