@@ -502,7 +502,7 @@ commands:
             --mount type=bind,source=$(pwd)/webui,target=/webui \
             -w /webui/tests \
             --env DET_MASTER=determined-master:8080 \
-            calebai/gauge-taiko-ts:1.0.0
+            determinedai/gauge-taiko-ts
 
   set-master-address-aws:
     parameters:
