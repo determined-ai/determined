@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-type priorityScheduler struct{
+type priorityScheduler struct {
 	preemptionEnabled bool
 }
 
@@ -53,10 +55,11 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 ) ([]*AllocateRequest, []*actor.Ref) {
 	// All pending zero slot tasks get scheduled right away.
 	toAllocate := getAllPendingZeroSlotTasks(taskList, label)
-	toRelease := make([]*actor.Ref, 0)
+	toRelease := make(map[*actor.Ref]bool)
 
 	// Sort tasks by priorities and timestamps.
-	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(taskList, groups, label)
+	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
+		taskList, groups, label)
 
 	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
@@ -93,26 +96,66 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 				continue
 			}
 
+			taskPlaced, updatedLocalAgentState, preemptedTasks := trySchedulingTaskViaPreemption(
+				taskList, prioritizedAllocation, priority, fittingMethod, localAgentsState,
+				priorityToScheduledTaskMap, toRelease)
 
-
-
+			if taskPlaced {
+				localAgentsState = updatedLocalAgentState
+				for preemptedTask := range preemptedTasks {
+					toRelease[preemptedTask] = true
+				}
+			}
 		}
 	}
 
-	return toAllocate, toRelease
+	toReleaseSlice := make([]*actor.Ref, 0, len(toRelease))
+	for k := range toRelease {
+		toReleaseSlice = append(toReleaseSlice, k)
+	}
+
+	return toAllocate, toReleaseSlice
 }
 
 func trySchedulingTaskViaPreemption(
+	taskList *taskList,
 	allocationRequest *AllocateRequest,
-	priority int,
+	allocationPriority int,
+	fittingMethod SoftConstraint,
 	agents map[*actor.Ref]*agentState,
 	priorityToScheduledTaskMap map[int][]*AllocateRequest,
-) (bool, map[*actor.Ref]*agentState) {
+	tasksAlreadyPreempted map[*actor.Ref]bool,
+) (bool, map[*actor.Ref]*agentState, map[*actor.Ref]bool) {
 	localAgentsState := deepCopyAgents(agents)
-	taskPlacedViaPreemption := false
+	preemptedTasks := make(map[*actor.Ref]bool)
 
+	for priority := model.MaxUserSchedulingPriority; priority > allocationPriority; priority-- {
+		if _, ok := priorityToScheduledTaskMap[priority]; !ok {
+			continue
+		}
 
-	return taskPlacedViaPreemption, localAgentsState
+		preemptionCandidates := priorityToScheduledTaskMap[priority]
+		for _, preemptionCandidate := range preemptionCandidates {
+			if preemptionCandidate.NonPreemptible || preemptionCandidate.SlotsNeeded == 0 {
+				continue
+			}
+
+			if _, ok := tasksAlreadyPreempted[preemptionCandidate.TaskActor]; ok {
+				continue
+			}
+
+			resourcesAllocated := taskList.GetAllocations(preemptionCandidate.TaskActor)
+			simulateTaskRemoval(localAgentsState, resourcesAllocated)
+			preemptedTasks[preemptionCandidate.TaskActor] = true
+
+			if fits := findFits(allocationRequest, localAgentsState, fittingMethod); len(fits) > 0 {
+				simulateFitsPlacement(fits)
+				return true, localAgentsState, preemptedTasks
+			}
+		}
+	}
+
+	return false, localAgentsState, preemptedTasks
 }
 
 func trySchedulingPendingTasksInPriority(
@@ -224,6 +267,25 @@ func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentStat
 func simulateFitsPlacement(fits []*fittingState) {
 	for _, fit := range fits {
 		fit.Agent.allocateFreeDevices(fit.Slots, "simulation")
+	}
+}
+
+func simulateTaskRemoval(
+	agents map[*actor.Ref]*agentState,
+	resourcesAllocated *ResourcesAllocated,
+) {
+	for _, allocation := range resourcesAllocated.Allocations {
+		allocation := allocation.(containerAllocation)
+		for _, allocatedDevice := range allocation.devices {
+			// Local devices are a deep copy of the originals so we loop over trying to find
+			// the device that matches. If we assume homogeneous devices can just search for
+			// the first available device.
+			for localDevice, localContainer := range agents[allocation.agent.handler].devices {
+				if allocatedDevice.ID == localDevice.ID && localContainer != nil {
+					agents[allocation.agent.handler].devices[localDevice] = nil
+				}
+			}
+		}
 	}
 }
 
