@@ -1,6 +1,0 @@
-:orphan:
-
-**NEW FEATURES**
-
--  Add option to configure the service type of the Determined deployed
-   database in the Determined Helm Chart.
