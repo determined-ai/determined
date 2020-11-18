@@ -3,6 +3,8 @@ Tags: parallelizable
 
 Specification to test the experiment list page.
 
+## Sign in
+
 * Sign in as "user-w-pw" with "special-pw"
 * Navigate to experiment list page
 
@@ -21,13 +23,13 @@ Specification to test the experiment list page.
   |Cancel             |false   |
   |Kill               |false   |
 
-## Filter archived experiments
+## Filter experiments by archived
 
 * Toggle show archived button
 * Should have "4" table rows
 * Toggle show archived button
 * Should have "3" table rows
 
-___
+## Sign out
 
 * Sign out

@@ -3,6 +3,8 @@ Tags: parallelizable
 
 Specification to test navigation.
 
+## Sign in
+
 * Sign in as "user-w-pw" with "special-pw"
 
 ## Navigate to top navigation routes
@@ -19,6 +21,6 @@ Specification to test navigation.
   |Docs       |/docs          |true    |Documentation|
   |API (Beta) |/docs/rest-api |true    |Swagger UI   |
 
-___
+## Sign out
 
 * Sign out
