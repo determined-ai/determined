@@ -1,6 +1,17 @@
-/* eslint-disable-next-line no-unused-vars */
-import { Step, Table, BeforeSuite, AfterSuite } from 'gauge-ts';
+/* eslint-disable no-unused-vars */
 import {
+  AfterScenario,
+  AfterSuite,
+  BeforeScenario,
+  BeforeSuite,
+  ExecutionContext,
+  Step,
+  Table,
+} from 'gauge-ts';
+/* eslint-enable no-unused-vars */
+import assert = require('assert');
+
+const {
   $,
   button,
   checkBox,
@@ -15,32 +26,50 @@ import {
   near,
   openBrowser,
   press,
+  screencast,
   tableCell,
   text,
   textBox,
   toLeftOf,
   within,
   write,
-} from 'taiko';
-import assert = require('assert');
+} = require('taiko');
 
 const HEADLESS = process.env.HEADLESS === 'true';
 const HOST = process.env.DET_MASTER || 'localhost:8080';
 const BASE_PATH = process.env.PUBLIC_URL || '/det';
 const BASE_URL = `${HOST}${BASE_PATH}`;
+const SCREENCAST = process.env.SCREENCAST === 'true';
 
 export default class StepImplementation {
   @BeforeSuite()
   public async beforeSuite() {
     const browserArgs = HEADLESS
       ? { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }
-      : undefined;
+      : { headless: false };
     await openBrowser(browserArgs);
   }
 
   @AfterSuite()
   public async afterSuite() {
     await closeBrowser();
+  }
+
+  @BeforeScenario()
+  public async startScreencast(context: ExecutionContext) {
+    if (SCREENCAST) {
+      const spec = context.getCurrentSpec().getName();
+      const scenario = context.getCurrentScenario().getName();
+      const filename = `screencasts/${spec} -- ${scenario}.gif`;
+      await screencast.startScreencast(filename);
+    }
+  }
+
+  @AfterScenario()
+  public async stopScreencast() {
+    if (SCREENCAST) {
+      await screencast.stopScreencast();
+    }
   }
 
   @Step('Sign in as <username> with <password>')
@@ -97,7 +126,7 @@ export default class StepImplementation {
   }
 
   @Step('<action> experiment row <row>')
-  public async unpauseExperiment(action: string, row: string) {
+  public async modifyExperiment(action: string, row: string) {
     await click(tableCell({ row: parseInt(row), col: 11 }));
     await click(text(action));
   }
