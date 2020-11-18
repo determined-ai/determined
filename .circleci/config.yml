@@ -496,7 +496,7 @@ commands:
     steps:
       - run: python webui/tests/bin/createUserAndExperiments.py
       - run: |
-          mkdir -p webui/tests/screencasts
+          mkdir -p webui/tests/reports/screencasts
           docker run \
             --name e2e_gauge \
             --network=determined_default \
@@ -769,7 +769,7 @@ jobs:
       - run-e2e-webui-tests
       - dump-local-cluster-logs
       - store_test_results:
-          path: webui/tests/logs/
+          path: webui/tests/reports/xml-report/
       - store_artifacts:
           path: webui/tests/reports/
 
