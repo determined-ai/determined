@@ -4,17 +4,25 @@
  Model Debugging in Determined
 ###############################
 
-Deep Learning is hard.  Some problems can seem intractable.  Maybe you remember
-the first time you saw a 200-line TensorFlow stack trace (I remember mine!).
+Deep Learning is hard. Some problems can seem intractable. Maybe you
+remember the first time you saw a 200-line TensorFlow stack trace (I
+remember mine!).
 
 We feel your pain.
 
-This document aims to provide useful guidelines for debugging models with
-Determined.
+This document aims to provide useful guidelines for debugging models
+with Determined. It is organized into two sections:
 
-This document focuses on model debugging, not cluster debugging, so it is
-assumed that you have already successfully :ref:`installed
-Determined<install-cluster>`.
+   -  Identifying Root Causes
+   -  Solutions to Common Issues
+
+Hopefully, this document will help you become a power user of
+Determined, but if you get stuck please don't hesitate to contact us on
+TODO:ref-support-channels!
+
+This document focuses on model debugging, not cluster debugging, so it
+is assumed that you have already successfully :ref:`installed Determined
+<install-cluster>`.
 
 ********************************************
  Training An Existing Model with Determined
@@ -24,81 +32,309 @@ You have: a working model and training script (outside Determined).
 
 Your goal: train your model on a Determined cluster.
 
-You've read through the relevant :ref:`tutorials` and you've got something that
-maybe looks like it should work... but it's just not working.  Let's break down
-the problem into a few parts:
+You've read through the relevant :ref:`tutorials` and you've got
+something that maybe looks like it should work... but it's just not
+working. Let's break down the problem into a few parts:
 
- * Getting your Trial class started
+   -  Verifying your Trial class
 
- * Testing individual parts of your Trial class
+         -  Testing individual parts of your Trial class
+         -  Testing the whole Trial class as a unit, locally
+         -  Running on a Determined cluster
 
- * Testing the whole Trial class as a unit, locally
+   -  Verifying your Docker Environment
 
- * Running on a Determined cluster
+#########################
+ Identifying Root Causes
+#########################
 
-Answer: break down the problem into its individual parts
+********************************************
+ My training job does not run to completion
+********************************************
 
-At a high level, successful model training on a Determined cluster requires the
-following details:
+This is a huge category of problems, many of which can be difficult to
+distinguish from one another. Here is a list of tests to help you
+identify what might be causing your issue.
 
-* A working Docker image for the cluster to train your model in.
-* A working Trial implementation of your model.
+TODO: mini toc
 
-We will verify each issue one at a time.
+Model-related issues
+====================
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- Verifying your Docker environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Does the original code run locally?
+--------------------------------------
 
+This step assumes you have have ported your model from some code outside
+of Determined. If your Trial code is not based on any such code, skip to
+Step 2.
 
+Probably you already know your code works, but this is a reminder to
+double-check before proceeding.
 
+2. Does each method of your Trial class work locally?
+-----------------------------------------------------
 
+This step assumes you have a working local environment for training. If
+you do not, skip to Step 4.
 
+**How to test:** You should create some simple tests to verify that each
+method of your Trial is doing what you think it ought to be doing. There
+are some simple and practical examples of what these tests might look
+like for ``PyTorchTrial`` and ``TFKerasTrial`` in the
+:meth:`determined.TrainContext.from_config` documentation, but
+ultimately only you know what a reasonable test for your Trial needs to
+look like.
 
+**How to diagnose failures:** If you hit any issues running the methods
+of your Trial code locally, there are most likely errors in your Trial
+class, or possibly in the ``hyperparameters`` section of your config
+file and your Trial class. Ideally, breaking it down method-by-method
+like this makes finding and solving issues much faster.
+
+3. Does local test mode work?
+-----------------------------
+
+This step assumes you have a working local environment for training. If
+you do not, skip to Step 4.
+
+**How to test:** Simply create an experiment, passing ``--local --test``
+on the command line:
+
+.. code:: bash
+
+   det experiment create myconfig.yaml my_model_dir --local --test
+
+**How to diagnose failures:** Local test mode does very few things; it
+builds a model, runs a single batch of training data, evaluates the
+model, and saves a checkpoint (to a dummy location). If your per-method
+checks in Step 2 were all successful but local test mode does not work,
+you may not be implementing your framework's Trial class correctly
+(double-check the documentation) or you may have found a bug in an
+invalid assumption in Determined.
+
+TODO point to #support.
+
+Docker- or Cluster-related issues
+=================================
+
+4. Does the original code run in a Notebook or Shell?
+-----------------------------------------------------
+
+This step is basically identical to Step 1, except we are going to run
+the original code on the Determined cluster rather than locally.
+
+**How to test:** First launch a Notebook or Shell on the cluster,
+passing the root directory containing your model and training scripts as
+a ``--context`` option on the command line.
+
+Note that changes made to the ``--context`` directory while inside the
+Notebook or Shell will not affect the original files outside of the
+Notebook or Shell; see TODO for more details.
+
+If you prefer to interact with your model via a Jupyter Notebook, try:
+
+.. code:: bash
+
+   det notebook start --context my_model_dir
+   # Your browser should automatically open the notebook.
+
+If you prefer to interact with your model via ssh, try:
+
+.. code:: bash
+
+   det shell start --context my_model_dir
+   # Your terminal should automatically connect to the shell.
+
+Once you are on the cluster, testing is identical to Step 1.
+
+**How to diagnose failures:**
+   -  If you are unable to start the container with a message about the
+      context directory exceeding the maximum allowed size, it is
+      because the ``--context`` directory has an upper limit of around
+      128MB. If you need files larger than that as part of your model
+      definition, have a look at TODO:how-to-get-files-into-a-container.
+
+   -  You may be referencing files which exist locally but outside of
+      the ``--context`` directory. If they are small, you may be able to
+      just copy them into the ``--context`` directory, see
+      TODO:how-to-get-files-into-a-container
+
+   -  If you hit dependency errors, you may have dependencies installed
+      locally that are not installed in the Docker environment used on
+      the cluster. See TODO:customizing-commands
+
+   -  If you have environment variables that you need set for your model
+      to work, see TODO:customizing-commands
+
+5. Does each method of your Trial class work in a Notebook or Shell?
+--------------------------------------------------------------------
+
+This step is basically identical to Step 2, except we are going to run
+the original code on the Determined cluster rather than locally.
+
+**How to test:** Launch a Notebook or Shell as in Step 4.
+
+Once you are on the cluster, testing is identical to Step 2.
+
+**How to diagnose failures:** Failure diagnosis is a combination of the
+failure diagnosis for Step 2 and for Step 4.
+
+6. Does local test mode work in a Notebook or Shell?
+----------------------------------------------------
+
+This step is basically identical to Step 3, except we are going to run
+the original code on the Determined cluster rather than locally.
+
+**How to test:** Launch a Notebook or Shell as in Step 4.
+
+Once you are on the cluster, testing is identical to Step 3, with the
+important caveat that the model definition argument to ``det experiment
+create`` (the second positional argument) should always be
+``/run/determined/workdir`` (or ``.`` if you have not changed the
+working directory from when you first connected to the cluster).
+
+This is because the ``--context`` you passed when creating the Shell or
+Notebook will be copied to ``/run/determined/workdir`` inside the
+container, exactly the same as the model definition argument to ``det
+experiment create`` would.
+
+**How to diagnose failures:** Failure diagnosis is a combination of the
+failure diagnosis for both Step 3 and Step 4.
+
+Higher-level issues
+===================
+
+7. Does cluster test mode work with (slots_per_trial=1)?
+--------------------------------------------------------
+
+This step is conceptually similar to Step 6, except instead of launching
+the command from an interactive environment, we will submit it to the
+cluster and let Determined manage everything.
+
+**How to test:** If you had to make any customizations to your command
+environment while testing Steps 3, 4, or 5, make sure that you have made
+the same customizations in your experiment config. Then also confirm
+that your experiment config either does not specify
+``resources.slots_per_trial`` at all, or that it is set to 1, like:
+
+.. code:: yaml
+
+   resources:
+     slots_per_trial: 1
+
+Then create an experiment with the ``--test`` flag (but not the
+``--local`` flag):
+
+.. code:: bash
+
+   det experiment create myconfig.yaml my_model_dir --test
+
+**How to diagnose failures:** If you were able to run local test mode
+inside a Notebook or Shell, but you are unable to successfully submit an
+experiment, you should focus on making sure that any customizations you
+made to get it to work in the Notebook or Shell have been properly
+replicated in your experiment config:
+
+   -  Environment variables are set TODO:ref
+
+   -  If you need a custom docker image, that is set in the experiment
+      config.
+
+   -  Any ``pip``-installed packages are either built into a custom
+      docker or they are being pip-installed in a file called
+      ``startup-hook.sh``, which in the root of the model definition
+      directory.
+
+   -  Any custom bind mounts to run in the interactive environment are
+      also specified in the experiment config.
+
+If no missing customizations are to blame, there are still several new
+layers introduced with a cluster-managed experiment that would not cause
+issues with local training mode:
+
+   -  The ``checkpoint_storage`` settings are used for cluster-managed
+      trainings. If ``checkpoint_storage`` was neither configured in the
+      experiment in the experiment config nor in the master config, you
+      will may see a message like ``host_path must be an absolute
+      path``. To correct it, simply provie a ``checkpoint_storage``
+      configuration in one of those locations (TODO: ref).
+
+   -  The experiment config is fully validated for cluster-managed
+      expermients. If you get errors related to ``unmarshaling JSON``
+      when trying to submit the experiment to the cluster, that is an
+      indication that the experiment config has errors. Please review
+      the TODO: experiment-config-reference
+
+   -  The configured ``checkpoint_storage`` settings are validated
+      before training starts for an expriment on the cluster. If you get
+      a message saying ``Checkpoint storage validation failed``, please
+      review the validity of the ``checkpoint_storage`` settings.
+
+   -  TODO: what other issues would you hit here?
+
+Again, if you are unable to identify the root cause of the issue yourself,
+please do not hesitate to contact Determined through our community
+support channels! TODO: link to support
+
+8. Does a single gpu experiment work?
+-------------------------------------
+
+This step is just like to Step 7, except it introduces hyperparameter
+search and will execute full training for each trial.
+
+**How to test:** Configuration should be identical to Step 7.  Again,
+confirm that your experiment config either does not specify
+``resources.slots_per_trial`` at all, or that it is set to 1, like:
+
+.. code:: yaml
+
+   resources:
+     slots_per_trial: 1
+
+Then create an experiment without either of ``--test`` or ``--local`` flags
+(probably you will find the ``--follow`` or ``-f`` flag to be helpful):
+
+.. code:: bash
+
+   det experiment create myconfig.yaml my_model_dir -f
+
+**How to diagnose failures:** If Step 7 worked but Step 8 does not,
+there are a few high-level categories of issues to check for:
+
+   -  Does
+
+9. Does cluster test mode work with (slots_per_trial>1)?
+--------------------------------------------------------
+
+10. Does a multi-gpu experiment work?
+-------------------------------------
+
+***********************
+ I am seeing slowdowns
+***********************
+
+************************
+ I am seeing OOM errors
+************************
+
+###############
+ Fixing Issues
+###############
+
+*************************************
+ Data issues when running on cluster
+*************************************
+
+If this is your issue, you can
+   choose to either add some ``pip install --user PACKAGE`` lines to a
+   ``startup-hook.sh`` TODO:docs or build a custom environment TODO:ref.
+   The startup-hook.sh option is easier but will be slower at runtime. A
+   custom environment is more effort and may require assistance from
+   your Determined cluster administrator, but it will be faster at
+   runtime.
 
 Model training with Determined requires the following 4 components:
 
 #. A working Docker image
 #. A working Trial implementation
 #. A working Trial
-
-
-
-
-
-Determined launches workloads using Docker containers. The container
-configuration is referred to as the **environment**.
-
-There are three methods to customize the environment that workloads
-execute in:
-
-#. Environment variables
-#. Specifying a startup hook (``startup-hook.sh``)
-#. Using a custom Docker image
-
-.. _environment-variables:
-
-***********************
- Environment Variables
-***********************
-
-For both trial runners and commands, Determined allows users to
-configure the environment variables inside the container through the
-``environment.environment_variables`` configuration field of the
-experiment config. The format is a list of strings in the format
-``NAME=VALUE``:
-
-.. code:: yaml
-
-   environment:
-     environment_variables:
-       - A=hello world
-       - B=$A
-       - C=${B}
-       # `A`, `B`, and `C` will each have the value `hello_world` in the container.
-
-Variables are set sequentially, which affect variables that depend on
-the expansion of other variables.
-
-Proxy variables set in this way will take precedent over those set using
-the :ref:`agent configuration <agent-configuration>`.

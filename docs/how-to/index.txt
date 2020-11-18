@@ -38,3 +38,4 @@ The full list of our how-to guides can be found below:
    tensorboard
    use-trained-models
    rest-apis
+   debug

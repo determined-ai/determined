@@ -26,7 +26,9 @@ class _TrainContext(metaclass=abc.ABCMeta):
 
         .. code-block:: python
 
-            config = { ... }
+            with open("my_config.yaml") as f:
+                config = yaml.safe_load(f)
+
             context = det.pytorch.PyTorchTrialContext.from_config(config)
             my_trial = MyPyTorchTrial(context)
 
