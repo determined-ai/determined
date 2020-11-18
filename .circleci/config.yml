@@ -185,6 +185,9 @@ commands:
       determined:
         type: boolean
         default: false
+      model-hub: 
+        type: boolean
+        default: false
       extras-requires:
         type: string
         default: ""
@@ -210,6 +213,9 @@ commands:
             if [ "<<parameters.determined>>" = "true" ]; then
               cat harness/setup.py >> /tmp/cachefile
             fi
+            if [ "<<parameters.model-hub>>" = "true" ]; then
+              cat model_hub/setup.py >> /tmp/cachefile
+            fi
             echo <<parameters.extras-requires>> >> /tmp/cachefile
             if [ -n <<parameters.extra-requirements-file>> ]; then
               cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
@@ -224,6 +230,11 @@ commands:
             - install-wheel:
                 package-name: determined
                 package-location: ~/project/harness
+          condition: <<parameters.model-hub>>
+          steps:
+            - install-wheel:
+                package-name: model-hub
+                package-location: ~/project/model_hub
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -763,6 +774,7 @@ jobs:
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.1 torch==1.8"
+          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C examples build
@@ -777,6 +789,7 @@ jobs:
             - cli/dist
             - common/dist
             - harness/dist
+            - model_hub/dist
             - docs/site/html
       - store_artifacts:
           path: docs/site/html
@@ -837,6 +850,9 @@ jobs:
       - run: make package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
+      - run: make -C model_hub build-docker
+      - run: make -C model_hub publish-docker
+      - run: make -C model_hub update-config-envs
 
   package-and-push-system-rc:
     docker:
@@ -861,6 +877,9 @@ jobs:
       - run: make package
       - run: make -C master publish
       - run: make -C agent publish
+      - run: make -C model_hub build-docker
+      - run: make -C model_hub publish-docker
+      - run: make -C model_hub update-config-envs
 
   package-and-push-system-release:
     docker:
@@ -884,6 +903,9 @@ jobs:
       - pre-package-and-push-system
       - run: make -C master release
       - run: make -C agent release
+      - run: make -C model_hub build-docker
+      - run: make -C model_hub publish-docker
+      - run: make -C model_hub update-config-envs
 
   publish-helm:
     docker:
@@ -1144,12 +1166,14 @@ jobs:
       - setup-python-venv:
           determined: true
           extras-requires: "torch==1.7.1"
+          model-hub: true
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C cli check
       - run: make -C common check
       - run: make -C harness check
       - run: make -C deploy check
+      - run: make -C model_hub check
       - run: make -C e2e_tests check
       - run: make -C examples check
       - run: make -C tools check
@@ -1178,6 +1202,20 @@ jobs:
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
+
+  test-unit-model-hub:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined-common: true
+          determined: true
+          model-hub: true
+          extras-requires: "tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0"
+          extra-requirements-file: "model_hub/tests/requirements.txt"
+          executor: determinedai/cimg-base:stable
+      - run: make -C model_hub test
 
   test-examples:
     docker:
@@ -1595,6 +1633,7 @@ workflows:
             - build-bindings
       - test-unit-harness
       - test-unit-harness-tf2
+      - test-unit-model-hub
       - test-examples
 
   test-intg:
@@ -1984,7 +2023,7 @@ workflows:
       - publish-python-package:
           matrix:
             parameters:
-              path: ["harness", "common", "cli", "deploy"]
+              path: ["harness", "common", "cli", "deploy", "model_hub"]
           context: determined-production
           filters: *release-and-rc-filters
 

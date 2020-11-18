@@ -63,6 +63,10 @@ def features_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/features", path)
 
 
+def model_hub_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../model-hub/examples", path)
+
+
 def load_config(config_path: str) -> Any:
     with open(config_path) as f:
         config = yaml.safe_load(f)
