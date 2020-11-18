@@ -17,7 +17,7 @@ type priorityScheduler struct {
 
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler() Scheduler {
-	return &priorityScheduler{}
+	return &priorityScheduler{preemptionEnabled: true}
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*AllocateRequest, []*actor.Ref) {
@@ -92,6 +92,9 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 		for _, prioritizedAllocation := range unSuccessfulAllocations {
 			// Check if we still need to preempt tasks to schedule this task.
 			if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(fits) > 0 {
+				log.Infof(
+					"Not preempting tasks for task %s as it will be able to launch "+
+						"once all other tasks are preempted", prioritizedAllocation.Name)
 				simulateFitsPlacement(fits)
 				continue
 			}
@@ -101,6 +104,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 				priorityToScheduledTaskMap, toRelease)
 
 			if taskPlaced {
+				log.Infof("Preempted %d tasks for task: %s", len(preemptedTasks), prioritizedAllocation.Name)
 				localAgentsState = updatedLocalAgentState
 				for preemptedTask := range preemptedTasks {
 					toRelease[preemptedTask] = true
@@ -275,7 +279,7 @@ func simulateTaskRemoval(
 	resourcesAllocated *ResourcesAllocated,
 ) {
 	for _, allocation := range resourcesAllocated.Allocations {
-		allocation := allocation.(containerAllocation)
+		allocation := allocation.(*containerAllocation)
 		for _, allocatedDevice := range allocation.devices {
 			// Local devices are a deep copy of the originals so we loop over trying to find
 			// the device that matches. If we assume homogeneous devices can just search for
