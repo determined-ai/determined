@@ -1,8 +1,0 @@
-:orphan:
-
-**Feature**
-
--  WebUI: Add navigation sidebar, breadcrumb, and back button to log
-   view pages
--  WebUI: Update trial and master log buttons to open in the same page
-   by default with option to open in a new tab.

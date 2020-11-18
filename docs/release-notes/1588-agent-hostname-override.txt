@@ -1,6 +1,0 @@
-:orphan:
-
-**Features**
-
--  Allow the agent to use different addresses for master certificate
-   verification and connecting to the master.

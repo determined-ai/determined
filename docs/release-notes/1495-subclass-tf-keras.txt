@@ -1,9 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Added ``self.context.wrap_optimizer()`` to the Determined
-   TFKerasTrial API. Please see :ref:`tf-keras-trial` for detail.
--  Added support for models that subclass ``tf.keras.Model`` when using
-   the Determined TFKerasTrial API.
--  Added tf.keras DCGAN example that subclasses ``tf.keras.Model``.

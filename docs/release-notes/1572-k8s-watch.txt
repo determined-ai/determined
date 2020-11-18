@@ -1,6 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Gracefully handle cases where the Kubernetes API server responds with
-   unexpected object types.
