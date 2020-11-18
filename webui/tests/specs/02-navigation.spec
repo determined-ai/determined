@@ -1,4 +1,5 @@
 # Navigation
+Tags: parallelizable
 
 Specification to test navigation.
 

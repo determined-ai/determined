@@ -1,4 +1,5 @@
 # Dashboard
+Tags: parallelizable
 
 Specification to test the dashboard page.
 
