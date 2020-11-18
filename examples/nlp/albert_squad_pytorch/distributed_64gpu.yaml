@@ -36,6 +36,6 @@ entrypoint: model_def:AlbertSQuADPyTorch
 optimizations:
     aggregation_frequency: 2
 bind_mounts:
-    - host_path: /home/ubuntu/dtrain-fsx/albert-cache/
+    - host_path: /tmp/
       container_path: /mnt/data
       read_only: false

@@ -7,8 +7,6 @@ import torch
 from pathlib import Path
 
 
-
-
 def data_directory(using_bind_mount: bool, rank: int, bind_mount_path: Path = None):
     base_dir = bind_mount_path if using_bind_mount else Path("/tmp")
     return base_dir / f"data-rank{rank}"
