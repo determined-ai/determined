@@ -11,6 +11,7 @@ import {
 /* eslint-enable no-unused-vars */
 
 import assert = require('assert');
+import { closeTab, currentURL, openTab, switchTo } from 'taiko';
 
 const {
   $,
@@ -99,17 +100,68 @@ export default class StepImplementation {
     await button('Sign In').exists();
   }
 
+  /* Navigation Steps */
+
+  @Step('Navigate to the following routes <table>')
+  public async navigateWithTable(table: Table) {
+    for (var row of table.getTableRows()) {
+      const label = row.getCell('label');
+      await click(link(label, within($('[class*=Navigation_base]'))));
+
+      const external = row.getCell('external') === 'true';
+      if (external) {
+        const title = row.getCell('title');
+        const titleRegex = new RegExp(title, 'i');
+        await switchTo(titleRegex);
+      }
+
+      const path = row.getCell('route');
+      const url = await currentURL();
+      assert.ok(url.includes(path));
+
+      if (external) {
+        await closeTab();
+      }
+    }
+  }
+
   @Step('Navigate to sign in page')
   public async navigateToSignIn() {
     await goto(`${BASE_URL}/login`);
   }
 
+  @Step('Navigate to dashboard page')
+  public async navigateToDashboard() {
+    await goto(`${BASE_URL}/dashboard`);
+  }
+
   @Step('Navigate to experiment list page')
-  public async navigateToExperiments() {
+  public async navigateToExperimentList() {
     await goto(`${BASE_URL}/experiments`);
   }
 
-  @Step('Must have <count> table rows')
+  @Step('Navigate to task list page')
+  public async navigateToTaskList() {
+    await goto(`${BASE_URL}/tasks`);
+  }
+
+  @Step('Current url should match <path>')
+  public async checkUrl(path: string) {
+    const url = await currentURL();
+    assert.ok(url.includes(path));
+  }
+
+  /* Dashboard Page Steps */
+
+  @Step('Should have <count> recent task cards')
+  public async checkRecentTasks(count: string) {
+    const expectedCount = parseInt(count);
+    await assert.strictEqual((await $('[class*=TaskCard_base]').elements()).length, expectedCount);
+  }
+
+  /* Experiment List Page Steps */
+
+  @Step('Should have <count> table rows')
   public async checkExperimentCount(count: string) {
     const expectedCount = parseInt(count);
     await assert.strictEqual((await $('tr[data-row-key]').elements()).length, expectedCount);
@@ -122,17 +174,39 @@ export default class StepImplementation {
 
   @Step('Pause all experiments')
   public async pauseAllExperiments() {
-    await click($('th input[type=checkbox]'));
-    await click(button('Pause'));
+    await click(button('Pause', within($('[class*=TableBatch_base]'))));
     // Wait for the modal to complete animation
     await waitFor(1000);
     await click(button('Pause', within($('.ant-modal-body'))));
+    // Wait for the table batch to animate away
+    await waitFor(1000);
   }
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
     await click(tableCell({ row: parseInt(row) + 1, col: 11 }));
-    await click(text(action));
+    await click(text(action, within($('.ant-dropdown'))));
+  }
+
+  @Step('Table batch should have following buttons <table>')
+  public async checkTableBatchButton(table: Table) {
+    for (var row of table.getTableRows()) {
+      const label = row.getCell('table batch buttons');
+      const disabled = row.getCell('disabled') === 'true';
+      const batchButton = await button(label, within($('[class*=TableBatch_base]')));
+      await batchButton.exists();
+      assert.strictEqual(await batchButton.isDisabled(), disabled);
+    }
+  }
+
+  @Step('Select all table rows')
+  public async selectAllTableRows() {
+    await click($('th input[type=checkbox]'));
+  }
+
+  @Step('Toggle show archived button')
+  public async toggleShowArchived() {
+    await click(button({ class: 'ant-switch' }));
   }
 
   @Step('Add task <item>')
@@ -173,7 +247,7 @@ export default class StepImplementation {
     await click(link(type));
   }
 
-  @Step('Must have <table>')
+  @Step('Should have <table>')
   public async mustHave(table: Table) {
     for (var row of table.getTableRows()) {
       assert.ok(await text(row.getCell('description')).exists());
