@@ -22,11 +22,11 @@ These should run on any GPUs with sufficient memory, but these examples were opt
 
 For all configurations, we get an Exact Match of about 85.8 and an F1 of 88.9. The 64 GPU configuration uses RAdam, which helps with the larger batch size and also improves the results slightly.
 
-| GPUs | Throughput (img/s) | Exact Match | F1    |
-|------|--------------------|-------------|-------|
-| 1    | 2                  | 85.76       | 88.87 |
-| 8    | 15.8               | 85.76       | 88.87 |
-| 64   | 92.75              | 86.24       | 89.06 |
+| GPUs | Throughput (examples/s) | Exact Match | F1    |
+|------|-------------------------|-------------|-------|
+| 1    | 2                       | 85.76       | 88.87 |
+| 8    | 15.8                    | 85.76       | 88.87 |
+| 64   | 92.75                   | 86.24       | 89.06 |
 
 
 
