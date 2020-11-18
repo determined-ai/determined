@@ -9,6 +9,7 @@ import {
   Table,
 } from 'gauge-ts';
 /* eslint-enable no-unused-vars */
+
 import assert = require('assert');
 
 const {
@@ -31,6 +32,7 @@ const {
   text,
   textBox,
   toLeftOf,
+  waitFor,
   within,
   write,
 } = require('taiko');
@@ -122,12 +124,14 @@ export default class StepImplementation {
   public async pauseAllExperiments() {
     await click($('th input[type=checkbox]'));
     await click(button('Pause'));
+    // Wait for the modal to complete animation
+    await waitFor(1000);
     await click(button('Pause', within($('.ant-modal-body'))));
   }
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    await click(tableCell({ row: parseInt(row), col: 11 }));
+    await click(tableCell({ row: parseInt(row) + 1, col: 11 }));
     await click(text(action));
   }
 
