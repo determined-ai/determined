@@ -1,6 +1,6 @@
 # PyTorch Fine-Tuning ALBERT on SQuAD 2.0 Question-Answering Example
 
-This example shows how to fine-tune the largest variant of ALBERT on the SQuAD 2.0 question-answering dataset using
+This example shows how to fine-tune ALBERT (xxlarge-v2) on the SQuAD 2.0 question-answering dataset using
 Determined's PyTorch API. This example is adapted from [Huggingface's SQuAD
 example](https://github.com/huggingface/transformers/blob/master/examples/question-answering/run_squad.py).
 
@@ -15,28 +15,19 @@ example](https://github.com/huggingface/transformers/blob/master/examples/questi
 * **distributed_8gpu.yaml**: Train the model on 8 GPUs (distributed training) while maintaining the same accuracy
 * **distributed_64gpu.yaml**: Train the model on 64 GPUs (distributed training) while using the RAdam optimizer. 
 
-These should run on any GPUs with sufficient memory, but they were optimized on V100-16GB GPUs with 25 Gbit/s networking.
+These should run on any GPUs with sufficient memory, but these examples were optimized on V100-16GB GPUs with 25 Gbit/s networking.
 
 
 ## Results
 
-Accuracy and throughput table
+For all configurations, we get an Exact Match of about 85.8 and an F1 of 88.9. The 64 GPU configuration uses RAdam, which helps with the larger batch size and also improves the results slightly.
 
-Scaling efficiency table
+| GPUs | Throughput (img/s) | Exact Match | F1    |
+|------|--------------------|-------------|-------|
+| 1    | 2                  | 85.76       | 88.87 |
+| 8    | 15.8               | 85.76       | 88.87 |
+| 64   | 92.75              | 86.24       | 89.06 |
 
-1 GPU
-Throughput = 2 img/s
-Time-to-process 2 epochs = 36.67 hours
-
-8 GPUS
-Throughput = 15.8 img/s
-Time-to-process 2 epochs = 4.64 hours
-After 2 epochs, model should hit 85.76/88.87 F1/EM
-
-64 GPUs
-Throughput = 91.43 img/s
-Time-to-process 2 epochs = 0.8 hours
-After 2 epochs, model should hit 86.24/89.06 F1/EM
 
 
 ### Caching
