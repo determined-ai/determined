@@ -1,4 +1,4 @@
-# After X amount of time, model should hit X/X F1/EM
+# After 2 epochs, model should hit 85.76/88.87 F1/EM
 description: ALBert_SQuAD_PyTorch_1gpu
 hyperparameters:
     global_batch_size: 2
@@ -29,7 +29,8 @@ min_validation_period:
     records: 80000
 data:
     pretrained_model_name: "albert-xxlarge-v2"
-    download_data: False
+    use_bind_mount: True
+    bind_mount_path: /mnt/data
     task: "SQuAD2.0"  # SQuaD 2.0 has 132198 example.
 entrypoint: model_def:AlbertSQuADPyTorch
 optimizations:

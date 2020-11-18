@@ -1,13 +1,6 @@
-# Fine-Tuning ALBERT on SQuAD 2.0
+# PyTorch Fine-Tuning ALBERT on SQuAD 2.0 Question-Answering Example
 
-
-
-
----
-# OLD
-# PyTorch Fine-Tuning BERT on SQuAD Question-Answering Example
-
-This example shows how to fine-tune BERT on the SQuAD question-answering dataset using
+This example shows how to fine-tune the largest variant of ALBERT on the SQuAD 2.0 question-answering dataset using
 Determined's PyTorch API. This example is adapted from [Huggingface's SQuAD
 example](https://github.com/huggingface/transformers/blob/master/examples/question-answering/run_squad.py).
 
@@ -18,16 +11,48 @@ example](https://github.com/huggingface/transformers/blob/master/examples/questi
 * **startup-hook.sh**: Additional dependencies that Determined will automatically install into each container for this experiment.
 
 ### Configuration Files
-* **const.yaml**: Train the model with constant hyperparameter values.
-* **distributed.yaml**: Same as `const.yaml`, but trains the model with multiple GPUs (distributed training).
+* **const.yaml**: Train the model on 1 GPU.
+* **distributed_8gpu.yaml**: Train the model on 8 GPUs (distributed training) while maintaining the same accuracy
+* **distributed_64gpu.yaml**: Train the model on 64 GPUs (distributed training) while using the RAdam optimizer. 
+
+These should run on any GPUs with sufficient memory, but they were optimized on V100-16GB GPUs with 25 Gbit/s networking.
+
+
+## Results
+
+Accuracy and throughput table
+
+Scaling efficiency table
+
+1 GPU
+Throughput = 2 img/s
+Time-to-process 2 epochs = 36.67 hours
+
+8 GPUS
+Throughput = 15.8 img/s
+Time-to-process 2 epochs = 4.64 hours
+After 2 epochs, model should hit 85.76/88.87 F1/EM
+
+64 GPUs
+Throughput = 91.43 img/s
+Time-to-process 2 epochs = 0.8 hours
+After 2 epochs, model should hit 86.24/89.06 F1/EM
+
+
+### Caching
+
+Extracting features from the dataset is quite time-consuming so this code will cache the extracted features to a file and not re-extract the features if that file is present. With containers, files that are saved to the container's file system are deleted when the container closes, so to reuse the cache file across experiments, you will need to set up a `bind_mount` in the experiment configuration, which allows the container to write to the host machine's file system.  
+
+This caching works when you are running repeated experiments with the same agents, but in a cloud environment when you want to shut down VMs when they aren't in use, the cache will be emprt on any newly created VMs. To avoid this, you can have the cloud VMs use a network attached filesystem (e.g. EFS or FSx for Lustre on AWS) and bind mount a directory on the filesystem (for more details, see [our docs](https://docs.determined.ai/latest/tutorials/data-access.html#distributed-file-system))
+
+All of the experiment configs in this directory set up `bind_mounts`. In our setup, a network file system is available on the VM at `/home/ubuntu/dtrain-fsx` and in the experiment we bind mount `/home/ubuntu/dtrain-fsx/albert-cache` to `/mnt/data`. This means that when the model code writes to `/mnt/data/`, it will be writing to the network file system. 
+
+In order for the code to know where to save and look for the cache file, make sure to set the `data.use_bind_mount` and `data.bind_mount_path` fields correctly in the experiment configuration.
 
 ### Data
 The data used for this script was fetched based on Huggingface's [SQuAD page](https://github.com/huggingface/transformers/tree/master/examples/question-answering).
 
-There are two options to access the data:
-
-* You can download the training data from [Huggingface's SQuAD page](https://github.com/huggingface/transformers/tree/master/examples/question-answering). The data needs to be available at the same path on all of the agents where Determined is running. The absolute file path will need to be uncommented and updated in `const.yaml` and `distributed.yaml` in the `bind_mounts` section. Then when running, Determined will look for the absolute path to mount to the `container_path` specified in the yaml files.
-* If the dataset does not exist during runtime and `download_data` in the yaml files is set to True, the project will automatically download the data and save to the provided `data_dir` directory for future use.
+The data will be automatically downloaded and saved before training. If you use a `bind_mount`, the data will be saved between experiments and will not need to be downloaded again.
 
 ## To Run
 If you have not yet installed Determined, installation instructions can be found
@@ -37,6 +62,4 @@ Run the following command: `det -m <master host:port> experiment create -f
 const.yaml .`. The other configurations can be run by specifying the appropriate
 configuration file in place of `const.yaml`.
 
-## Results
-Training the model with the hyperparameter settings in `const.yaml` should yield
-F1 = 88.52 per [Huggingface SQuAD](https://github.com/huggingface/transformers/tree/master/examples/question-answering).
+

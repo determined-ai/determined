@@ -6,16 +6,18 @@ import torch
 
 from pathlib import Path
 
-BIND_MOUNT_LOC = Path("/mnt/data")  # TODO: Read this dynamically from experiment config
 
 
-def data_directory(use_bind_mount, rank):
-    base_dir = BIND_MOUNT_LOC if use_bind_mount else Path("/tmp")
+
+def data_directory(using_bind_mount: bool, rank: int, bind_mount_path: Path = None):
+    base_dir = bind_mount_path if using_bind_mount else Path("/tmp")
     return base_dir / f"data-rank{rank}"
 
-def cache_dir(use_bind_mount, rank):
-    base_dir = BIND_MOUNT_LOC if use_bind_mount else Path("/tmp")
+
+def cache_dir(using_bind_mount: bool, rank: int, bind_mount_path: Path = None):
+    base_dir = bind_mount_path if using_bind_mount else Path("/tmp")
     return base_dir / f"cache/{rank}"
+
 
 def load_and_cache_examples(data_dir: Path, tokenizer, task, max_seq_length, doc_stride, max_query_length, evaluate=False, model_name=None):
     if (task == "SQuAD1.1"):
@@ -35,38 +37,30 @@ def load_and_cache_examples(data_dir: Path, tokenizer, task, max_seq_length, doc
 
     if not data_dir.exists():
         data_dir.mkdir(parents=True)
-        # os.makedirs(data_dir)
     if evaluate:
         # TODO: Cache instead of always downloading
         with urllib.request.urlopen(validation_url) as url:
             val_path = data_dir / validation_file
             with val_path.open('w') as f:
-            # with open(data_dir  / validation_file, 'w') as f:
                 f.write(url.read().decode())
 
     else:
         with urllib.request.urlopen(train_url) as url:
             train_path = data_dir / train_file
-            # with open(data_dir + "/" + train_file, 'w') as f:
             with train_path.open('w') as f:
                 f.write(url.read().decode())
 
-
-    # TODO: Cache these examples
     # Load data features from cache or dataset file
-    version = "0000"
     cached_features_file = os.path.join(
         str(data_dir.absolute()),
-        "cached_{}_{}_{}_{}".format(
+        "cache_{}_{}".format(
             "dev" if evaluate else "train",
             model_name,
-            str(max_seq_length),
-            version
         ),
     )
 
     # Init features and dataset from cache if it exists
-    overwrite_cache = False  # TODO: Make cache wipe configurable
+    overwrite_cache = False  # Set to True to do a cache wipe (TODO: Make cache wipe configurable)
     if os.path.exists(cached_features_file) and not overwrite_cache:
         print("Loading features from cached file %s", cached_features_file)
         features_and_dataset = torch.load(cached_features_file)

@@ -1,13 +1,13 @@
-# After fine-tuning for 150 steps, model should achieve F1 = 88.52 per https://github.com/huggingface/transformers/tree/master/examples/question-answering
-description: ALBert_SQuAD_PyTorch_64gpu_lr21
+# After 2 epochs, model should hit 86.24/89.06 F1/EM
+description: ALBert_SQuAD_PyTorch_64gpu
 hyperparameters:
     global_batch_size: 128
-    learning_rate: 2.1e-4
+    learning_rate: 0.0002
     model_type: 'albert'
     do_lower_case: true
     adam_epsilon: 1e-8
     weight_decay: 0
-    num_warmup_steps: 1032
+    num_warmup_steps: 206
     max_seq_length: 384
     doc_stride: 128
     max_query_length: 64
@@ -16,7 +16,7 @@ hyperparameters:
     null_score_diff_threshold: 0.0
     max_grad_norm: 1.0
     num_training_steps: 2064 # This is the number of optimizer steps. Train for 2 epochs
-    use_radam: false
+    use_radam: true
 resources:
     slots_per_trial: 64
 searcher:
@@ -29,12 +29,12 @@ min_validation_period:
     records: 100000
 data:
     pretrained_model_name: "albert-xxlarge-v2"
-    download_data: False
+    use_bind_mount: True
+    bind_mount_path: /mnt/data
     task: "SQuAD2.0"  # SQuaD 2.0 has 132198 example.
 entrypoint: model_def:AlbertSQuADPyTorch
 optimizations:
     aggregation_frequency: 2
-max_restarts: 0
 bind_mounts:
     - host_path: /home/ubuntu/dtrain-fsx/albert-cache/
       container_path: /mnt/data

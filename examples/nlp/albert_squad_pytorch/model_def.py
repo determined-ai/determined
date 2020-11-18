@@ -2,6 +2,7 @@ from typing import Dict, Sequence, Union
 import torch
 import torch.nn as nn
 import time
+from pathlib import Path
 
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
 import data
@@ -16,17 +17,21 @@ from transformers.data.metrics.squad_metrics import (
     compute_predictions_logits,
     squad_evaluate,
 )
-from radam import RAdam, PlainRAdam
+from radam import PlainRAdam
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
-
-USE_BIND_DIR = True  # TODO: Make this dynamic
 
 
 class AlbertSQuADPyTorch(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
-        self.download_directory = data.data_directory(USE_BIND_DIR, self.context.distributed.get_rank())
+        data_config = self.context.get_data_config()
+        self.using_bind_mount = data_config.get("use_bind_mount", False)
+        self.bind_mount_path = Path(data_config.get("bind_mount_path")) if self.using_bind_mount else None
+
+        self.download_directory = data.data_directory(self.using_bind_mount,
+                                                      self.context.distributed.get_rank(),
+                                                      self.bind_mount_path)
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
             self.context.get_hparam("model_type")
         ]
@@ -36,7 +41,9 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             cache_dir=None
         )
 
-        cache_dir_per_rank = data.cache_dir(USE_BIND_DIR, self.context.distributed.get_rank())
+        cache_dir_per_rank = data.cache_dir(self.using_bind_mount,
+                                            self.context.distributed.get_rank(),
+                                            self.bind_mount_path)
 
         config = self.config_class.from_pretrained(
             self.context.get_data_config().get("pretrained_model_name"),
@@ -117,7 +124,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             doc_stride=self.context.get_hparam("doc_stride"),
             max_query_length=self.context.get_hparam("max_query_length"),
             evaluate=True,
-            # model_name=self.context.get_data_config().get("pretrained_model_name")
+            model_name=self.context.get_data_config().get("pretrained_model_name")
         )
 
         return DataLoader(
@@ -136,9 +143,6 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         outputs = self.model(**inputs)
         loss = outputs[0]
 
-        # if self.context.distributed.get_rank() == 0:
-        #     print(f"LR (epoch={epoch_idx}, batch={batch_idx}): ", self.lr_scheduler.get_last_lr())
-
         self.context.backward(loss)
         self.context.step_optimizer(
             self.optimizer,
@@ -146,22 +150,12 @@ class AlbertSQuADPyTorch(PyTorchTrial):
                 params, self.context.get_hparam("max_grad_norm")
             )
         )
-
         return {"loss": loss, "lr": float(self.lr_scheduler.get_last_lr()[0])}
-        # return {"loss": loss}
-
 
     def evaluate_full_dataset(self, data_loader: DataLoader):
-        def eval_print(s):
-            print("[EVALUATE_FULL_DATASET]", f"(rank={self.context.distributed.get_rank()})", s)
-
-        eval_print(f"start={time.time()}")
         all_results = []
 
-        batch_idx = 0
         for batch in data_loader:
-            batch_idx += 1
-            batch_start = time.time()
             inputs = {
                 "input_ids": batch[0].cuda(),
                 "attention_mask": batch[1].cuda(),
@@ -176,10 +170,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
                 start_logits, end_logits = output
                 result = SquadResult(unique_id, start_logits, end_logits)
                 all_results.append(result)
-            batch_end = time.time()
-            eval_print(f"Batch {batch_idx} took {batch_end-batch_start} seconds")
 
-        eval_print(f"squad_results_available={time.time()}")
         output_prediction_file = None
         output_nbest_file = None
         output_null_log_odds_file = None
@@ -209,7 +200,5 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             self.context.get_hparam("null_score_diff_threshold"),
             self.tokenizer,
         )
-        eval_print(f"prediction_logits_available={time.time()}")
         results = squad_evaluate(self.validation_examples, predictions)
-        eval_print(f"end={time.time()}")
         return results
