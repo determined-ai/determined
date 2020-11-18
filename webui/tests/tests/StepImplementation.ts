@@ -10,29 +10,31 @@ import {
 } from 'gauge-ts';
 /* eslint-enable no-unused-vars */
 
-import assert = require('assert');
-import { closeTab, currentURL, openTab, switchTo } from 'taiko';
+import * as assert from 'assert';
 
+/*
+ * A require is used here to allow for plugins
+ * such as screencast to come through.
+ * Using an import will not work.
+ */
 const {
   $,
   button,
-  checkBox,
   clear,
   click,
   closeBrowser,
-  evaluate,
+  closeTab,
+  currentURL,
   focus,
   goto,
-  into,
   link,
   near,
   openBrowser,
-  press,
   screencast,
+  switchTo,
   tableCell,
   text,
   textBox,
-  toLeftOf,
   waitFor,
   within,
   write,
@@ -75,6 +77,8 @@ export default class StepImplementation {
     }
   }
 
+  /* Authentication Steps */
+
   @Step('Sign in as <username> with <password>')
   public async signInWithPassword(username: string, password: string) {
     await goto(`${BASE_URL}/login`);
@@ -90,7 +94,7 @@ export default class StepImplementation {
 
   @Step('Sign in as <username> without password')
   public async signIn(username: string) {
-    this.signInWithPassword(username, '');
+    await this.signInWithPassword(username, '');
   }
 
   @Step('Sign out')
@@ -145,10 +149,48 @@ export default class StepImplementation {
     await goto(`${BASE_URL}/tasks`);
   }
 
-  @Step('Current url should match <path>')
-  public async checkUrl(path: string) {
-    const url = await currentURL();
-    assert.ok(url.includes(path));
+  /* Table Steps */
+
+  @Step('Should have <count> table rows')
+  public async checkTableRowCount(count: string) {
+    const expectedCount = parseInt(count);
+    await assert.strictEqual((await $('tr[data-row-key]').elements()).length, expectedCount);
+  }
+
+  @Step('Sort table by column <column>')
+  public async sortTableByColumn(column: string) {
+    await click(text(column));
+  }
+
+  @Step('Table batch should have following buttons <table>')
+  public async checkTableBatchButton(table: Table) {
+    for (var row of table.getTableRows()) {
+      const label = row.getCell('table batch buttons');
+      const disabled = row.getCell('disabled') === 'true';
+      const batchButton = await button(label, within($('[class*=TableBatch_base]')));
+      await batchButton.exists();
+      assert.strictEqual(await batchButton.isDisabled(), disabled);
+    }
+  }
+
+  /* Notebook and TensorBoard Steps */
+
+  @Step('Launch notebook')
+  public async launchNotebook() {
+    await click(button('Launch Notebook'));
+  }
+
+  @Step('Launch cpu-only notebook')
+  public async launchCpuNotebook() {
+    await click($('[class*=Navigation_launchIcon]'));
+    await click(text('Launch CPU-only Notebook'));
+  }
+
+  @Step('Close wait page')
+  public async closeWaitPage() {
+    await switchTo(/http(.*)(wait|proxy)/);
+    await closeTab();
+    await switchTo(/Determined/);
   }
 
   /* Dashboard Page Steps */
@@ -160,17 +202,6 @@ export default class StepImplementation {
   }
 
   /* Experiment List Page Steps */
-
-  @Step('Should have <count> table rows')
-  public async checkExperimentCount(count: string) {
-    const expectedCount = parseInt(count);
-    await assert.strictEqual((await $('tr[data-row-key]').elements()).length, expectedCount);
-  }
-
-  @Step('Sort table by column <column>')
-  public async sortTableByColumn(column: string) {
-    await click(text(column));
-  }
 
   @Step('Pause all experiments')
   public async pauseAllExperiments() {
@@ -188,17 +219,6 @@ export default class StepImplementation {
     await click(text(action, within($('.ant-dropdown'))));
   }
 
-  @Step('Table batch should have following buttons <table>')
-  public async checkTableBatchButton(table: Table) {
-    for (var row of table.getTableRows()) {
-      const label = row.getCell('table batch buttons');
-      const disabled = row.getCell('disabled') === 'true';
-      const batchButton = await button(label, within($('[class*=TableBatch_base]')));
-      await batchButton.exists();
-      assert.strictEqual(await batchButton.isDisabled(), disabled);
-    }
-  }
-
   @Step('Select all table rows')
   public async selectAllTableRows() {
     await click($('th input[type=checkbox]'));
@@ -209,61 +229,16 @@ export default class StepImplementation {
     await click(button({ class: 'ant-switch' }));
   }
 
-  @Step('Add task <item>')
-  public async addTask(item: string) {
-    await write(
-      item,
-      into(
-        textBox({
-          class: 'new-todo',
-        }),
-      ),
-    );
-    await press('Enter');
-  }
+  /* Task List Page Steps */
 
-  @Step('Must display <message>')
-  public async checkDisplay(message: string) {
-    assert.ok(await text(message).exists(0, 0));
-  }
-
-  @Step('Add tasks <table>')
-  public async addTasks(table: Table) {
+  @Step('Filter tasks by type <table>')
+  public async filterTasksByType(table: Table) {
     for (var row of table.getTableRows()) {
-      await write(row.getCell('description'));
-      await press('Enter');
+      const ariaLabel = row.getCell('aria-label');
+      const count = row.getCell('count');
+      await click($(`[aria-label=${ariaLabel}]`));
+      await this.checkTableRowCount(count);
+      await click($(`[aria-label=${ariaLabel}]`));
     }
-  }
-
-  @Step('Complete tasks <table>')
-  public async completeTasks(table: Table) {
-    for (var row of table.getTableRows()) {
-      await click(checkBox(toLeftOf(row.getCell('description'))));
-    }
-  }
-
-  @Step('View <type> tasks')
-  public async viewTasks(type: string) {
-    await click(link(type));
-  }
-
-  @Step('Should have <table>')
-  public async mustHave(table: Table) {
-    for (var row of table.getTableRows()) {
-      assert.ok(await text(row.getCell('description')).exists());
-    }
-  }
-
-  @Step('Must not have <table>')
-  public async mustNotHave(table: Table) {
-    for (var row of table.getTableRows()) {
-      assert.ok(!(await text(row.getCell('description')).exists(0, 0)));
-    }
-  }
-
-  @Step('Clear all tasks')
-  public async clearAllTasks() {
-    // @ts-ignore
-    await evaluate(() => localStorage.clear());
   }
 }
