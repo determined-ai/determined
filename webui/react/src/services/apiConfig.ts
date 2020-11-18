@@ -11,9 +11,10 @@ import {
 } from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
-  CreateNotebookParams, CreateTensorboardParams, DetApi, EmptyParams, ExperimentDetailsParams,
-  ExperimentIdParams, ExperimentsParams, ForkExperimentParams, KillCommandParams, LoginResponse,
-  LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
+  CommandIdParams, CreateNotebookParams, CreateTensorboardParams, DetApi, EmptyParams,
+  ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, ForkExperimentParams,
+  LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
+  TrialLogsParams,
 } from 'services/types';
 import { HttpApi } from 'services/types';
 import {
@@ -31,8 +32,12 @@ const ApiConfig = new Api.Configuration({
 export const detApi = {
   Auth: new Api.AuthenticationApi(ApiConfig),
   Cluster: new Api.ClusterApi(ApiConfig),
+  Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
+  Notebooks: new Api.NotebooksApi(ApiConfig),
+  Shells: new Api.ShellsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
+  Tensorboards: new Api.TensorboardsApi(ApiConfig),
 };
 
 const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
@@ -49,8 +54,12 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   const config = updatedApiConfigParams(apiConfig);
   detApi.Auth = new Api.AuthenticationApi(config);
   detApi.Cluster = new Api.ClusterApi(config);
+  detApi.Commands = new Api.CommandsApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
+  detApi.Notebooks = new Api.NotebooksApi(config);
+  detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
+  detApi.Tensorboards = new Api.TensorboardsApi(config);
 };
 
 /* Helpers */
@@ -240,15 +249,36 @@ export const getTensorboards: HttpApi<EmptyParams, Command[]> = {
   postProcess: (response) => jsonToTensorboards(response.data),
 };
 
-export const killCommand: HttpApi<KillCommandParams, void> = {
-  httpOptions: (params) => {
-    return {
-      method: 'DELETE',
-      url: `${commandToEndpoint[params.commandType]}/${params.commandId}`,
-    };
-  },
+export const killCommand:
+DetApi<CommandIdParams, Api.V1KillCommandResponse, void> = {
   name: 'killCommand',
   postProcess: noOp,
+  request: (params: CommandIdParams) => detApi.Commands
+    .determinedKillCommand(params.commandId),
+};
+
+export const killNotebook:
+DetApi<CommandIdParams, Api.V1KillNotebookResponse, void> = {
+  name: 'killNotebook',
+  postProcess: noOp,
+  request: (params: CommandIdParams) => detApi.Notebooks
+    .determinedKillNotebook(params.commandId),
+};
+
+export const killShell:
+DetApi<CommandIdParams, Api.V1KillShellResponse, void> = {
+  name: 'killShell',
+  postProcess: noOp,
+  request: (params: CommandIdParams) => detApi.Shells
+    .determinedKillShell(params.commandId),
+};
+
+export const killTensorboard:
+DetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> = {
+  name: 'killTensorboard',
+  postProcess: noOp,
+  request: (params: CommandIdParams) => detApi.Tensorboards
+    .determinedKillTensorboard(params.commandId),
 };
 
 export const createNotebook: HttpApi<CreateNotebookParams, Command> = {

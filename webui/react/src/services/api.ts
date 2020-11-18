@@ -1,19 +1,17 @@
-import { CancelToken } from 'axios';
-
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
-  ApiSorter, CreateNotebookParams, CreateTensorboardParams, EmptyParams, ExperimentDetailsParams,
-  ExperimentIdParams, ExperimentsParams, ForkExperimentParams, KillCommandParams, LoginResponse,
-  LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
+  ApiSorter, CommandIdParams, CreateNotebookParams, CreateTensorboardParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, ForkExperimentParams,
+  LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
+  TrialLogsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
-  Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials,
-  DetailedUser, DeterminedInfo, ExperimentBase, ExperimentDetails,
-  ExperimentFilters, ExperimentItem, Log, Pagination, RunState, TrialDetails,
+  Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
+  ExperimentBase, ExperimentDetails, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
+  TrialDetails,
 } from 'types';
-import { isExperimentTask } from 'utils/task';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
 import { decodeExperimentList, encodeExperimentState } from './decoder';
@@ -139,7 +137,25 @@ export const getNotebooks = generateApi<EmptyParams, Command[]>(Config.getNotebo
 export const getShells = generateApi<EmptyParams, Command[]>(Config.getShells);
 export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTensorboards);
 
-export const killCommand = generateApi<KillCommandParams, void>(Config.killCommand);
+export const killCommand =
+  generateDetApi<CommandIdParams, Api.V1KillCommandResponse, void> (
+    Config.killCommand,
+  );
+
+export const killNotebook =
+  generateDetApi<CommandIdParams, Api.V1KillNotebookResponse, void> (
+    Config.killNotebook,
+  );
+
+export const killShell =
+  generateDetApi<CommandIdParams, Api.V1KillShellResponse, void> (
+    Config.killShell,
+  );
+
+export const killTensorboard =
+  generateDetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> (
+    Config.killTensorboard,
+  );
 
 export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
 
@@ -157,15 +173,17 @@ export const openOrCreateTensorboard = async (
   return createTensorboard(params);
 };
 
-export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
-  if (isExperimentTask(task)) {
-    return await killExperiment({ cancelToken, experimentId: parseInt(task.id) });
+export const killTask = async (task: CommandTask): Promise<void> => {
+  switch (task.type) {
+    case CommandType.Command:
+      return await killCommand({ commandId: task.id });
+    case CommandType.Notebook:
+      return await killNotebook({ commandId: task.id });
+    case CommandType.Shell:
+      return await killShell({ commandId: task.id });
+    case CommandType.Tensorboard:
+      return await killTensorboard({ commandId: task.id });
   }
-  return await killCommand({
-    cancelToken,
-    commandId: task.id,
-    commandType: (task as CommandTask).type,
-  });
 };
 
 export const login = generateApi<Credentials, LoginResponse>(Config.login);
@@ -185,8 +203,7 @@ export const login = generateApi<Credentials, LoginResponse>(Config.login);
 
 export const logout = async (): Promise<Api.V1LogoutResponse> => {
   try {
-    const response = await Config.detApi.Auth.determinedLogout();
-    return response;
+    return await Config.detApi.Auth.determinedLogout();
   } catch (e) {
     throw processApiError('logout', e);
   }

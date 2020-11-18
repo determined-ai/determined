@@ -23,7 +23,7 @@ import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import { openCommand } from 'routes/utils';
 import {
-  getCommands, getNotebooks, getShells, getTensorboards, killCommand,
+  getCommands, getNotebooks, getShells, getTensorboards, killTask,
 } from 'services/api';
 import { ApiSorter, EmptyParams } from 'services/types';
 import { ShirtSize } from 'themes';
@@ -237,7 +237,7 @@ const TaskList: React.FC = () => {
     try {
       const promises = selectedTasks
         .filter(task => isTaskKillable(task))
-        .map(task => killCommand({ commandId: task.id, commandType: task.type }));
+        .map(task => killTask(task));
       await Promise.all(promises);
 
       /*
