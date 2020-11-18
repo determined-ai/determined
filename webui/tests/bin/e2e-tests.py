@@ -17,7 +17,6 @@ root = subprocess.check_output(
 root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
-results_dir = tests_dir.joinpath("results")
 test_cluster_dir = tests_dir.joinpath("test-cluster")
 
 CLUSTER_CMD_PREFIX = ["make", "-C", str(test_cluster_dir)]
@@ -41,11 +40,6 @@ def run_ignore_failure(cmd: List[str], config):
         run(cmd, config)
     except subprocess.CalledProcessError:
         pass
-
-
-def setup_results_dir(config):
-    run_ignore_failure(["rm", "-r", str(results_dir)], config)
-    run(["mkdir", "-p", str(results_dir)], config)
 
 
 def setup_cluster(logfile, config):
@@ -79,7 +73,6 @@ def det_cluster(config):
 
 def pre_e2e_tests(config):
     # TODO add a check for cluster condition
-    setup_results_dir(config)
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
         config,
@@ -106,7 +99,6 @@ def run_dev_tests(config):
     run(["npx", "gauge", "run", "--env", "dev", "specs"], config)
 
 def e2e_tests(config):
-    setup_results_dir(config)
     with det_cluster(config):
         pre_e2e_tests(config)
         run_e2e_tests(config)
