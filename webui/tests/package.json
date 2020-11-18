@@ -3,7 +3,7 @@
   "description": "Starter template for writing TypeScript tests for Gauge",
   "scripts": {
     "lint": "eslint \"tests/**/*.{js,jsx,ts,tsx}\"",
-    "test": "gauge run specs"
+    "test": "make dev-tests"
   },
   "dependencies": {
     "gauge-ts": "0.1.0"
