@@ -63,5 +63,6 @@ searcher:
         batches: 100 
 resources:
     shm_size: 2000000000
+    slots_per_trial: 2
 
 entrypoint: model_def:DETRTrial
