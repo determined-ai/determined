@@ -59,13 +59,14 @@ func (a *apiServer) TrialLogs(
 	if err != nil {
 		return err
 	}
+	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
 	filters, err := constructTrialLogsFilters(req)
 	if err != nil {
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
 	}
 
-	logID := int32(-1) // WebUI assumes logs are 0-indexed.
+	logID := int32(offset - 1) // WebUI assumes logs are 0-indexed.
 	onBatch := func(b api.LogBatch) error {
 		return b.ForEach(func(r interface{}) error {
 			trialLog := r.(*model.TrialLog)
@@ -101,7 +102,6 @@ func (a *apiServer) TrialLogs(
 		return false, nil
 	})
 
-	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 	lReq := api.LogsRequest{Offset: offset, Limit: limit, Follow: req.Follow, Filters: filters}
 	return a.m.system.MustActorOf(
 		actor.Addr("logStore-"+uuid.New().String()),
