@@ -17,8 +17,9 @@ root = subprocess.check_output(
 root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
-screencasts_dir = tests_dir.joinpath("screencasts")
+reports_dir = tests_dir.joinpath("reports")
 test_cluster_dir = tests_dir.joinpath("test-cluster")
+screencasts_dir = reports_dir.joinpath("screencasts")
 
 CLUSTER_CMD_PREFIX = ["make", "-C", str(test_cluster_dir)]
 
