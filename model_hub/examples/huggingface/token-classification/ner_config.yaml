@@ -1,0 +1,36 @@
+description: ner_trial
+hyperparameters:
+  use_apex_amp: false
+  pretrained_model_name_or_path: bert-base-uncased
+  model_mode: token-classification
+  finetuning_task: ner
+  # Training Args
+  global_batch_size: 16
+  learning_rate: 5e-5
+  adam_epsilon: 1e-8
+  weight_decay: 0
+  lr_scheduler_type: linear
+  num_warmup_steps: 750
+  num_training_steps: 1000
+environment:
+    image: determinedai/model-hub-transformers:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b-transformers-4.2.2-datasets-1.2.1-0.14.4.dev0
+resources:
+  slots_per_trial: 2
+records_per_epoch: 14041
+searcher:
+  name: single
+  metric: accuracy_score
+  max_length:
+    batches: 100
+  smaller_is_better: false
+data:
+  dataset_name: conll2003
+  dataset_config_name: null
+  train_file: null
+  validation_file: null
+  preprocessing_num_workers: null
+  cache_dir: null
+  overwrite_cache: false
+  pad_to_max_length: false
+  label_all_tokens: false
+entrypoint: ner_trial:NERTrial
