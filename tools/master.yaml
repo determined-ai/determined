@@ -17,5 +17,5 @@ db:
   password: postgres
 
 root: build
-
 enable_cors: true
+cluster_name: dev

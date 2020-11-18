@@ -10,6 +10,7 @@ import (
 type agentSetupScriptConfig struct {
 	MasterHost                   string
 	MasterPort                   string
+	MasterCertName               string
 	StartupScriptBase64          string
 	ContainerStartupScriptBase64 string
 	MasterCertBase64             string
@@ -17,6 +18,7 @@ type agentSetupScriptConfig struct {
 	AgentDockerRuntime           string
 	AgentNetwork                 string
 	AgentDockerImage             string
+	AgentFluentImage             string
 	AgentID                      string
 	ResourcePool                 string
 	LogOptions                   string

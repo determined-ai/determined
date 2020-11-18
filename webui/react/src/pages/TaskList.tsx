@@ -21,9 +21,9 @@ import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { openBlank } from 'routes/utils';
+import { openCommand } from 'routes/utils';
 import {
-  getCommands, getNotebooks, getShells, getTensorboards, killCommand,
+  getCommands, getNotebooks, getShells, getTensorboards, killTask,
 } from 'services/api';
 import { ApiSorter, EmptyParams } from 'services/types';
 import { ShirtSize } from 'themes';
@@ -161,14 +161,14 @@ const TaskList: React.FC = () => {
       record.misc.experimentIds.forEach(id => {
         info.sources.push({
           id,
-          path: `/det/experiments/${id}`,
+          path: `/experiments/${id}`,
           type: TensorBoardSourceType.Experiment,
         });
       });
       record.misc.trialIds.forEach(id => {
         info.sources.push({
           id,
-          path: `/det/trials/${id}`,
+          path: `/trials/${id}`,
           type: TensorBoardSourceType.Trial,
         });
       });
@@ -237,7 +237,7 @@ const TaskList: React.FC = () => {
     try {
       const promises = selectedTasks
         .filter(task => isTaskKillable(task))
-        .map(task => killCommand({ commandId: task.id, commandType: task.type }));
+        .map(task => killTask(task));
       await Promise.all(promises);
 
       /*
@@ -292,7 +292,7 @@ const TaskList: React.FC = () => {
   const handleTableRow = useCallback((record: CommandTask) => ({
     onClick: (event: React.MouseEvent) => {
       if (isAlternativeAction(event) || !canBeOpened(record)) return;
-      openBlank(record.url as string);
+      openCommand(record);
     },
   }), []);
 

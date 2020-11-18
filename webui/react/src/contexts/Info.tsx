@@ -4,6 +4,7 @@ import { DeterminedInfo } from 'types';
 const contextProvider = generateContext<DeterminedInfo>({
   initialState: {
     clusterId: '',
+    clusterName: '',
     masterId: '',
     telemetry: { enabled: false },
     version: process.env.VERSION || '',

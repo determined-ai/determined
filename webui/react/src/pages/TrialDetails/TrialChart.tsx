@@ -9,6 +9,7 @@ import { MetricName, MetricType, Step } from 'types';
 interface Props {
   id?: string;
   metricNames: MetricName[];
+  defaultMetricNames: MetricName[];
   steps?: Step[];
   storageKey?: string;
   validationMetric?: string;
@@ -44,6 +45,7 @@ const TrialChart: React.FC<Props> = ({
   metricNames,
   storageKey,
   validationMetric,
+  defaultMetricNames,
   ...props
 }: Props) => {
   const storage = useStorage(STORAGE_PATH);
@@ -111,6 +113,7 @@ const TrialChart: React.FC<Props> = ({
     data={data}
     id={props.id}
     options={<MetricSelectFilter
+      defaultMetricNames={defaultMetricNames}
       metricNames={metricNames}
       multiple
       value={metrics}

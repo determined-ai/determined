@@ -61,6 +61,9 @@ def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
 
+    # Test exporting a checkpoint.
+    exp.export_and_load_model(experiment_id)
+
 
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
@@ -75,6 +78,9 @@ def test_tf_keras_single_gpu(tf2: bool) -> None:
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
+
+    # Test exporting a checkpoint.
+    exp.export_and_load_model(experiment_id)
 
 
 @pytest.mark.parallel  # type: ignore
@@ -140,3 +146,14 @@ def test_tf_keras_mnist_data_layer_parallel(
     exp.run_basic_test_with_temp_config(
         config, conf.data_layer_examples_path("data_layer_mnist_tf_keras"), 1
     )
+
+
+@pytest.mark.parallel  # type: ignore
+def run_tf_keras_dcgan_example() -> None:
+    config = conf.load_config(conf.gan_examples_path("dcgan_tf_keras/const.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_min_validation_period(config, {"batches": 200})
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_tf2_image(config)
+
+    exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("dcgan_tf_keras"), 1)

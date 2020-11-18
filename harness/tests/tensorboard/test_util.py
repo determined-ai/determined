@@ -12,6 +12,7 @@ def get_dummy_env() -> det.EnvContext:
         master_port=0,
         use_tls=False,
         master_cert_file=None,
+        master_cert_name=None,
         container_id="",
         experiment_config={"resources": {"slots_per_trial": 1, "native_parallel": False}},
         initial_workload=workload.Workload(

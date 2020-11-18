@@ -2,6 +2,7 @@ import { Button, notification } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
 import { setupAnalytics } from 'Analytics';
+import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import Router from 'components/Router';
 import Spinner from 'components/Spinner';
@@ -20,11 +21,10 @@ import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import appRoutes from 'routes';
-import { parseUrl } from 'routes/utils';
 import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { DeterminedInfo } from 'types';
-import { updateFaviconType } from 'utils/browser';
+import { refreshPage, updateFaviconType } from 'utils/browser';
 
 import css from './App.module.scss';
 
@@ -60,22 +60,13 @@ const AppView: React.FC = () => {
 
     // Check to make sure the WebUI version matches the platform version.
     if (info.version !== process.env.VERSION) {
-      /*
-       * The method of cache busting here is to send a query string as most
-       * modern browsers treat different URLs as different files, causing a
-       * request of a fresh copy. The previous method of using `location.reload`
-       * with a `forceReload` boolean has been deprecated and not reliable.
-       */
-      const handleRefresh = (): void => {
-        const now = Date.now();
-        const url = parseUrl(window.location.href);
-        url.search = url.search ? `${url.search}&ts=${now}` : `ts=${now}`;
-        window.location.href = url.toString();
-      };
-      const btn = <Button type="primary" onClick={handleRefresh}>Update Now</Button>;
+      const btn = <Button type="primary" onClick={refreshPage}>Update Now</Button>;
       const message = 'New WebUI Version';
       const description = <div>
         WebUI version <b>v{info.version}</b> is available.
+        Check out what&apos;s new in our <Link external path="/docs/release-notes.html">
+          release notes
+        </Link>.
       </div>;
       notification.warn({
         btn,

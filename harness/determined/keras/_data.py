@@ -138,9 +138,7 @@ class _SequenceWithOffset(tf.keras.utils.Sequence):  # type: ignore
 
 class SequenceAdapter:
     """
-    A class to assist to optimize the performance of loading data with
-    ``tf.keras.utils.Sequence`` and help with restoring and saving iterators for
-    a dataset.
+    Deprecated: use context.configure_fit() instead.
     """
 
     def __init__(
@@ -150,25 +148,7 @@ class SequenceAdapter:
         workers: int = 1,
         max_queue_size: int = 10,
     ):
-        """
-        Multiprocessing or multithreading for native Python generators is not supported.
-        If you want these performance accelerations, please consider using a Sequence.
-
-        Args:
-            sequence: A ``tf.keras.utils.Sequence`` that holds the data.
-
-            use_multiprocessing: If True, use process-based threading. If unspecified,
-                `use_multiprocessing` will default to False. Note that because this implementation
-                relies on multiprocessing, you should not pass non-picklable arguments for the
-                data loaders as they can't be passed easily to children processes.
-
-            workers: Maximum number of processes to spin up when using process-based threading.
-                If unspecified, workers will default to 1. If 0, will execute the data loading on
-                the main thread.
-
-            max_queue_size: Maximum size for the generator queue. If unspecified, `max_queue_size`
-                will default to 10.
-        """
+        # TODO: Issue a deprecation warning after #1545 or #1564 land.
         self._max_queue_size = max_queue_size
         if not len(data):
             raise ValueError("tf.keras.utils.Sequence objects should have a non-zero length.")
@@ -285,8 +265,6 @@ def _adapt_keras_data(
             (inputs, targets, sample_weights).
             4) A keras.utils.Sequence returning (inputs, targets) or (inputs, targets,
             sample weights).
-            5) a det.keras.SequenceAdapter returning (inputs, targets) or (inputs, targets,
-            sample weights).
 
         y: Target data. Like the input data x, it could be either Numpy array(s).
             If x is a dataset or keras.utils.Sequence instance, y should not be specified
@@ -296,25 +274,24 @@ def _adapt_keras_data(
             `use_multiprocessing` will default to False. Note that because this implementation
             relies on multiprocessing, you should not pass non-picklable arguments for the
             data loaders as they can't be passed easily to children processes. This argument is
-            ignored if x is a tf.data.Dataset or SequenceAdapter.
+            ignored if x is a tf.data.Dataset.
 
         sample_weight: Optional Numpy array of weights for the training samples. This argument is
-        ignored if x is a tf.data.Dataset, SequenceAdapter, or tf.keras.Sequence.
+        ignored if x is a tf.data.Dataset or tf.keras.Sequence.
 
         batch_size: Number of samples per gradient update. This argument is ignored if x is a
-        tf.data.Dataset, SequenceAdapter, or tf.keras.Sequence.
+        tf.data.Dataset or tf.keras.Sequence.
 
         workers: Maximum number of processes to spin up when using process-based threading.
             If unspecified, workers will default to 1. If 0, will execute the data loading on
-            the main thread. This argument is ignored if x is a tf.data.Dataset or SequenceAdapter.
+            the main thread. This argument is ignored if x is a tf.data.Dataset.
 
         max_queue_size: Maximum size for the generator queue. If unspecified, `max_queue_size`
-            will default to 10. This argument is ignored if x is a tf.data.Dataset or
-            SequenceAdapter.
+            will default to 10. This argument is ignored if x is a tf.data.Dataset.
 
         drop_leftovers: If True, drop the data that cannot complete the last batch. This
             argument is ignored if x is a Sequence or a Dataset. This argument is ignored if
-            x is a tf.data.Dataset or SequenceAdapter.
+            x is a tf.data.Dataset.
     """
 
     def check_y_is_none(y_data: Any) -> None:

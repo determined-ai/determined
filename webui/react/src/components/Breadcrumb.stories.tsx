@@ -14,11 +14,11 @@ export const Default = (): React.ReactNode => (
     <Breadcrumb.Item>
       <Space align="center" size="small">
         <Icon name="experiment" size="small" />
-        <Link path="/det/experiments">Experiments</Link>
+        <Link path="/experiments">Experiments</Link>
       </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/det/experiments/3">Experiment 3</Link>
+      <Link path="/experiments/3">Experiment 3</Link>
     </Breadcrumb.Item>
   </Breadcrumb>
 );
@@ -27,14 +27,14 @@ export const TrialDetail = (): React.ReactNode => (
     <Breadcrumb.Item>
       <Space align="center" size="small">
         <Icon name="experiment" size="small" />
-        <Link path="/det/experiments">Experiments</Link>
+        <Link path="/experiments">Experiments</Link>
       </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/det/experiments/3"> Experiment 3</Link>
+      <Link path="/experiments/3"> Experiment 3</Link>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/det/trials/34">Trial 34</Link>
+      <Link path="/experiments/3/trials/34">Trial 34</Link>
     </Breadcrumb.Item>
   </Breadcrumb>
 );

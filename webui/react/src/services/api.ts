@@ -1,18 +1,17 @@
-import { CancelToken } from 'axios';
-
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
-import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
-  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
-  KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState,
-  TaskLogsParams, TrialDetailsParams, TrialLogsParams } from 'services/types';
+import {
+  ApiSorter, CommandIdParams, CreateNotebookParams, CreateTensorboardParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, ForkExperimentParams,
+  LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
+  TrialLogsParams,
+} from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
-  Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials,
-  DetailedUser, DeterminedInfo, ExperimentBase, ExperimentDetails,
-  ExperimentFilters, ExperimentItem, Log, Pagination, RunState, TrialDetails,
+  Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
+  ExperimentBase, ExperimentDetails, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
+  TrialDetails,
 } from 'types';
-import { isExperimentTask } from 'utils/task';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
 import { decodeExperimentList, encodeExperimentState } from './decoder';
@@ -21,9 +20,10 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
 /* Authentication */
 
-export const getCurrentUser = generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(
-  Config.getCurrentUser,
-);
+export const getCurrentUser =
+  generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser> (
+    Config.getCurrentUser,
+  );
 
 export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
 
@@ -33,7 +33,10 @@ export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
 
 /* Agent */
 
-export const getAgents = generateApi<EmptyParams, Agent[]>(Config.getAgents);
+export const getAgents =
+  generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> (
+    Config.getAgents,
+  );
 
 /* Experiments */
 
@@ -80,31 +83,42 @@ export const getExperimentDetails =
 export const getTrialDetails =
   generateApi<TrialDetailsParams, TrialDetails>(Config.getTrialDetails);
 
-export const killExperiment = generateApi<KillExpParams, void>(Config.killExperiment);
-
 export const forkExperiment = generateApi<ForkExperimentParams, number>(Config.forkExperiment);
 
-export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.patchExperiment);
+export const archiveExperiment =
+  generateDetApi<ExperimentIdParams, Api.V1ArchiveExperimentResponse, void> (
+    Config.archiveExperiment,
+  );
 
-export const archiveExperiment = async (id: number, archive = true): Promise<void> => {
-  try {
-    await archive ?
-      Config.detApi.Experiments.determinedArchiveExperiment(id) :
-      Config.detApi.Experiments.determinedUnarchiveExperiment(id);
-  } catch (e) {
-    processApiError('archiveExperiment', e);
-    throw e;
-  }
-};
+export const unarchiveExperiment =
+  generateDetApi<ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void> (
+    Config.unarchiveExperiment,
+  );
 
-export const setExperimentState = async (
-  { state, ...rest }: PatchExperimentState,
-): Promise<void> => {
-  return await patchExperiment({
-    body: { state },
-    ...rest,
-  });
-};
+export const activateExperiment =
+  generateDetApi<ExperimentIdParams, Api.V1ActivateExperimentResponse, void> (
+    Config.activateExperiment,
+  );
+
+export const pauseExperiment =
+  generateDetApi<ExperimentIdParams, Api.V1PauseExperimentResponse, void> (
+    Config.pauseExperiment,
+  );
+
+export const cancelExperiment =
+  generateDetApi<ExperimentIdParams, Api.V1CancelExperimentResponse, void> (
+    Config.cancelExperiment,
+  );
+
+export const killExperiment =
+  generateDetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void> (
+    Config.killExperiment,
+  );
+
+export const patchExperiment =
+  generateDetApi<PatchExperimentParams, Api.V1KillExperimentResponse, void> (
+    Config.patchExperiment,
+  );
 
 export const getAllExperimentLabels = async (): Promise<string[]> => {
   try {
@@ -123,7 +137,25 @@ export const getNotebooks = generateApi<EmptyParams, Command[]>(Config.getNotebo
 export const getShells = generateApi<EmptyParams, Command[]>(Config.getShells);
 export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTensorboards);
 
-export const killCommand = generateApi<KillCommandParams, void>(Config.killCommand);
+export const killCommand =
+  generateDetApi<CommandIdParams, Api.V1KillCommandResponse, void> (
+    Config.killCommand,
+  );
+
+export const killNotebook =
+  generateDetApi<CommandIdParams, Api.V1KillNotebookResponse, void> (
+    Config.killNotebook,
+  );
+
+export const killShell =
+  generateDetApi<CommandIdParams, Api.V1KillShellResponse, void> (
+    Config.killShell,
+  );
+
+export const killTensorboard =
+  generateDetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> (
+    Config.killTensorboard,
+  );
 
 export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
 
@@ -141,18 +173,20 @@ export const openOrCreateTensorboard = async (
   return createTensorboard(params);
 };
 
-export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
-  if (isExperimentTask(task)) {
-    return await killExperiment({ cancelToken, experimentId: parseInt(task.id) });
+export const killTask = async (task: CommandTask): Promise<void> => {
+  switch (task.type) {
+    case CommandType.Command:
+      return await killCommand({ commandId: task.id });
+    case CommandType.Notebook:
+      return await killNotebook({ commandId: task.id });
+    case CommandType.Shell:
+      return await killShell({ commandId: task.id });
+    case CommandType.Tensorboard:
+      return await killTensorboard({ commandId: task.id });
   }
-  return await killCommand({
-    cancelToken,
-    commandId: task.id,
-    commandType: (task as CommandTask).type,
-  });
 };
 
-export const login = generateApi<Credentials, void>(Config.login);
+export const login = generateApi<Credentials, LoginResponse>(Config.login);
 
 /*
  * Login is an exception where the caller will perform the error handling,
@@ -169,8 +203,7 @@ export const login = generateApi<Credentials, void>(Config.login);
 
 export const logout = async (): Promise<Api.V1LogoutResponse> => {
   try {
-    const response = await Config.detApi.Auth.determinedLogout();
-    return response;
+    return await Config.detApi.Auth.determinedLogout();
   } catch (e) {
     throw processApiError('logout', e);
   }

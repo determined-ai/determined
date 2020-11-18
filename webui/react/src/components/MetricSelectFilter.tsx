@@ -1,27 +1,42 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
 import { metricNameSorter } from 'utils/data';
-import { metricNameToValue, valueToMetricName } from 'utils/trial';
+import { metricNameFromValue, metricNameToValue, valueToMetricName } from 'utils/trial';
 
 import BadgeTag from './BadgeTag';
 import SelectFilter from './SelectFilter';
 
 const { OptGroup, Option } = Select;
+const allOptionId = 'ALL_RESULTS';
+const resetOptionId = 'RESET_RESULTS';
 
-type SingleHander = (value: MetricName) => void;
+type SingleHandler = (value: MetricName) => void;
 type MultipleHandler = (value: MetricName[]) => void;
 
 interface Props {
   metricNames: MetricName[];
+  defaultMetricNames: MetricName[];
   multiple?: boolean;
-  onChange?: SingleHander | MultipleHandler;
+  onChange?: SingleHandler | MultipleHandler;
   value?: MetricName | MetricName[];
 }
 
-const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, value }: Props) => {
+const filterFn = (search: string, metricName: string) => {
+  return metricName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
+};
+
+const MetricSelectFilter: React.FC<Props> = ({
+  metricNames,
+  multiple,
+  onChange,
+  value,
+  defaultMetricNames,
+}: Props) => {
+  const [ filterString, setFilterString ] = useState('');
+  const selectRef = useRef<Select<SelectValue>>(null);
 
   const metricValues = useMemo(() => {
     if (multiple && Array.isArray(value)) return value.map(metric => metricNameToValue(metric));
@@ -37,8 +52,31 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     return metricNames.filter(metric => metric.type === MetricType.Validation);
   }, [ metricNames ]);
 
+  const totalNumMetrics = useMemo(() => { return metricNames.length; }, [ metricNames ]);
+
+  /*
+   * visibleMetrics should always match the list of metrics that antd displays to
+   * the user, including any filtering.
+   */
+  const visibleMetrics = useMemo(() => {
+    return metricNames.filter((metricName: MetricName) => {
+      return filterFn(filterString, metricName.name);
+    });
+  }, [ metricNames, filterString ]);
+
   const handleMetricSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;
+
+    if ((newValue as string) === allOptionId) {
+      (onChange as MultipleHandler)(visibleMetrics.sort(metricNameSorter));
+      selectRef.current?.blur();
+      return;
+    }
+    if ((newValue as string) === resetOptionId) {
+      (onChange as MultipleHandler)(defaultMetricNames.sort(metricNameSorter));
+      selectRef.current?.blur();
+      return;
+    }
 
     const metricName = valueToMetricName(newValue as string);
     if (!metricName) return;
@@ -48,9 +86,9 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
       (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
     } else {
-      (onChange as SingleHander)(metricName);
+      (onChange as SingleHandler)(metricName);
     }
-  }, [ multiple, onChange, value ]);
+  }, [ multiple, onChange, value, visibleMetrics, defaultMetricNames ]);
 
   const handleMetricDeselect = useCallback((newValue: SelectValue) => {
     if (!onChange || !multiple) return;
@@ -62,16 +100,93 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
   }, [ multiple, onChange, value ]);
 
+  const handleFiltering = useCallback((search: string, option) => {
+    if (option.key === allOptionId || option.key === resetOptionId) {
+      return true;
+    }
+    if (!option.value) {
+      /*
+       * Handle optionGroups that don't have a value to make TS happy. They aren't
+       * impacted by filtering anyway
+       */
+      return false;
+    }
+    const metricName = metricNameFromValue(option.value);
+    if (metricName === undefined) {
+      /*
+       * Handle metric values that don't start with 'training|' or 'validation|'. This
+       * shouldn't ever happen and metricNameFromValue logs an error if it does.
+       */
+      return false;
+    }
+    return filterFn(search, metricName.name);
+  }, []);
+
+  const handleSearchInputChange = (searchInput: string) => {
+    setFilterString(searchInput);
+  };
+
+  const handleBlur = () => {
+    setFilterString('');
+  };
+
+  const allOption = useMemo(() => {
+    let allOptionLabel;
+    const numVisibleOptions = visibleMetrics.length;
+    if (numVisibleOptions === totalNumMetrics) {
+      allOptionLabel = 'All';
+    } else {
+      allOptionLabel =`All ${numVisibleOptions} results`;
+    }
+    return (
+      <Option key={allOptionId} value={allOptionId}>
+        <BadgeTag label={allOptionLabel} />
+      </Option>
+    );
+
+  }, [ totalNumMetrics, visibleMetrics ]);
+
+  const [ maxTagCount, selectorPlaceholder ] = useMemo(() => {
+    // This should never happen, but fall back to inoffensive empty placeholder
+    if (metricValues === undefined) {
+      return [ 0, '' ];
+    }
+    if (metricValues.length === 0) {
+      // If we set maxTagCount=0 in this case, this placeholder will not be displayed.
+      return [ -1, 'None selected' ];
+    } else if (metricValues.length === totalNumMetrics) {
+      // If we set maxTagCount=-1 in these cases, it will display tags instead of the placeholder.
+      return [ 0, `All ${totalNumMetrics} selected` ];
+    } else {
+      return [ 0, `${metricValues.length} of ${totalNumMetrics} selected` ];
+    }
+  }, [ metricValues, totalNumMetrics ]);
+
   return <SelectFilter
+    autoClearSearchValue={false}
     disableTags
     dropdownMatchSelectWidth={400}
+    filterOption={handleFiltering}
     label="Metrics"
+    maxTagCount={maxTagCount}
+    maxTagPlaceholder={selectorPlaceholder}
     mode={multiple ? 'multiple' : undefined}
+    ref={selectRef}
     showArrow
-    style={{ width: 150 }}
+    style={{ width: 200 }}
     value={metricValues}
+    onBlur={handleBlur}
     onDeselect={handleMetricDeselect}
+    onSearch={handleSearchInputChange}
     onSelect={handleMetricSelect}>
+
+    { multiple && visibleMetrics.length > 0 &&
+    <Option key={resetOptionId} value={resetOptionId}>
+      <BadgeTag label='Reset to Default' />
+    </Option>}
+
+    { multiple && visibleMetrics.length > 1 && allOption}
+
     {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
       {validationMetricNames.map(key => {
         const value = metricNameToValue(key);

@@ -97,6 +97,7 @@ func newRunCmd() *cobra.Command {
 		"Master port that containers started by this agent will connect to")
 
 	// Device flags.
+	cmd.Flags().StringVar(&opts.SlotType, "slot-type", "auto", "slot type to expose")
 	cmd.Flags().StringVar(&opts.VisibleGPUs, "visible-gpus", "", "GPUs to expose as slots")
 
 	// Security flags.
@@ -110,6 +111,10 @@ func newRunCmd() *cobra.Command {
 	)
 	cmd.Flags().StringVar(
 		&opts.Security.TLS.MasterCert, "security-tls-master-cert", "", "CA cert file for the master",
+	)
+	cmd.Flags().StringVar(
+		&opts.Security.TLS.MasterCertName, "security-tls-master-cert-name", "",
+		"expected address in the master TLS certificate (if different than the one used for connecting)",
 	)
 
 	// Debug flags.
@@ -136,6 +141,12 @@ func newRunCmd() *cobra.Command {
 		"The FTP proxy address for the agent's containers")
 	cmd.Flags().StringVar(&opts.NoProxy, "no-proxy", "",
 		"Addresses that the agent's containers should not proxy")
+
+	// Logging flags.
+	cmd.Flags().StringVar(&opts.Fluent.Image, "fluent-image", "fluent/fluent-bit:1.6",
+		"Docker image to use for the managed Fluent Bit daemon")
+	cmd.Flags().IntVar(&opts.Fluent.Port, "fluent-port", 24224,
+		"TCP port for the Fluent Bit daemon to listen on")
 
 	return cmd
 }

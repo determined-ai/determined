@@ -4,6 +4,7 @@ import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
+import { useHistory } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import BadgeTag from 'components/BadgeTag';
@@ -11,7 +12,7 @@ import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
-import Message from 'components/Message';
+import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -24,8 +25,7 @@ import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes/utils';
-import { forkExperiment } from 'services/api';
-import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
+import { forkExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
@@ -43,6 +43,7 @@ import TrialChart from './TrialDetails/TrialChart';
 const { Option } = Select;
 
 interface Params {
+  experimentId?: string;
   trialId: string;
 }
 
@@ -88,8 +89,9 @@ const STORAGE_CHART_METRICS_KEY = 'metrics/chart';
 const STORAGE_TABLE_METRICS_KEY = 'metrics/table';
 
 const TrialDetailsComp: React.FC = () => {
-  const { trialId: trialIdParam } = useParams<Params>();
+  const { experimentId: experimentIdParam, trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
+  const history = useHistory();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilter = storage.getWithDefault(
@@ -108,6 +110,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
+  const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
@@ -293,11 +296,11 @@ If the problem persists please contact support.',
     if (!experimentId) return;
     const updatedConfig = updateStatesFromForm();
     try {
-      const newExperiementId = await forkExperiment({
+      const newExperimentId = await forkExperiment({
         experimentConfig: JSON.stringify(updatedConfig),
         parentId: experimentId,
       });
-      routeAll(`/det/experiments/${newExperiementId}`);
+      routeAll(`/experiments/${newExperimentId}`);
     } catch (e) {
       handleError({
         error: e,
@@ -385,12 +388,18 @@ If the problem persists please contact support.',
         });
         setExperiment(response);
 
+        // Experiment id does not exist in route, reroute to the one with it
+        if (!experimentIdParam) {
+          history.replace(`/experiments/${experimentId}/trials/${trialId}`);
+        }
+
         // Default to selecting config search metric only.
         const searcherName = response.config?.searcher?.metric;
         const defaultMetric = metricNames.find(metricName => {
           return metricName.name === searcherName && metricName.type === MetricType.Validation;
         });
         const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
+        setDefaultMetrics(defaultMetrics);
         const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
         setMetrics(initMetrics);
       } catch (e) {
@@ -414,7 +423,10 @@ If the problem persists please contact support.',
     const message = isNotFound(trialDetails.error) ?
       `Unable to find Trial ${trialId}` :
       `Unable to fetch Trial ${trialId}`;
-    return <Message message={trialDetails.error.message} title={message} />;
+    return <Message
+      message={trialDetails.error.message}
+      title={message}
+      type={MessageType.Warning} />;
   }
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
@@ -429,6 +441,7 @@ If the problem persists please contact support.',
         {Object.values(TrialInfoFilter).map(key => <Option key={key} value={key}>{key}</Option>)}
       </SelectFilter>
       {metrics && <MetricSelectFilter
+        defaultMetricNames={defaultMetrics}
         metricNames={metricNames}
         multiple
         value={metrics}
@@ -438,14 +451,17 @@ If the problem persists please contact support.',
 
   return (
     <Page
-      backPath={`/det/experiments/${experimentId}`}
+      backPath={`/experiments/${experimentId}`}
       breadcrumb={[
-        { breadcrumbName: 'Experiments', path: '/det/experiments' },
+        { breadcrumbName: 'Experiments', path: '/experiments' },
         {
           breadcrumbName: `Experiment ${experimentId}`,
-          path: `/det/experiments/${experimentId}`,
+          path: `/experiments/${experimentId}`,
         },
-        { breadcrumbName: `Trial ${trialId}`, path: `/det/trials/${trialId}` },
+        {
+          breadcrumbName: `Trial ${trialId}`,
+          path: `/experiments/${experimentId}/trials/${trialId}`,
+        },
       ]}
       options={<TrialActions
         trial={trial}
@@ -461,6 +477,7 @@ If the problem persists please contact support.',
         </Col>
         <Col lg={14} span={24} xl={16} xxl={18}>
           <TrialChart
+            defaultMetricNames={defaultMetrics}
             metricNames={metricNames}
             steps={trial?.steps}
             storageKey={storageChartMetricsKey}

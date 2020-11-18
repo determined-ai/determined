@@ -26,6 +26,7 @@ export enum ErrorLevel {
 export enum ErrorType {
   Server = 'server', // internal apis and server errors.
   Auth = 'auth',
+  Unknown = 'unknown',
   Ui = 'ui',
   Input = 'input',
   ApiBadResponse = 'apiBadResponse',
@@ -76,7 +77,7 @@ const handleError = (e: DaError): DaError => {
 
   if (e.type === ErrorType.Auth) {
     if (!window.location.pathname.endsWith('login')) {
-      history.replace('/det/logout', { loginRedirect: clone(window.location ) });
+      history.replace('/logout', { loginRedirect: clone(window.location ) });
     }
     return e;
   }

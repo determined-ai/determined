@@ -54,5 +54,6 @@ The full list of our topic guides can be found below:
 .. toctree::
    :maxdepth: 1
 
-   dynamic-agents-aws
    dynamic-agents-gcp
+   dynamic-agents-aws
+   aws-spot

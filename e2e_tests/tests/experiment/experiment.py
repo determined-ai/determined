@@ -1,5 +1,6 @@
 import datetime
 import logging
+import multiprocessing
 import os
 import re
 import subprocess
@@ -13,6 +14,7 @@ import pytest
 import requests
 
 import determined_common.api.authentication as auth
+from determined import experimental
 from determined_common import api, yaml
 from tests import cluster
 from tests import config as conf
@@ -236,7 +238,7 @@ def num_error_trials(experiment_id: int) -> int:
 
 def trial_logs(trial_id: int) -> List[str]:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "trials/{}/logs".format(trial_id))
+    r = api.get(conf.make_master_url(), "trials/{}/logsv2?offset=0".format(trial_id))
     assert r.status_code == requests.codes.ok, r.text
     return [t["message"] for t in r.json()]
 
@@ -615,3 +617,23 @@ def s3_checkpoint_config_no_creds() -> Dict[str, str]:
 
 def root_user_home_bind_mount() -> Dict[str, str]:
     return {"host_path": "/tmp", "container_path": "/root"}
+
+
+def _export_and_load_model(experiment_id: int, master_url: str) -> None:
+    experimental.Determined(master_url).get_experiment(experiment_id).top_checkpoint().load()
+
+
+def export_and_load_model(experiment_id: int) -> None:
+    # We run this in a subprocess to avoid module name collisions
+    # when performing checkpoint export of different models.
+    ctx = multiprocessing.get_context("spawn")
+    p = ctx.Process(
+        target=_export_and_load_model,
+        args=(
+            experiment_id,
+            conf.make_master_url(),
+        ),
+    )
+    p.start()
+    p.join()
+    assert p.exitcode == 0, p.exitcode

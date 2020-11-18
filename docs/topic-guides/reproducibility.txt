@@ -97,3 +97,12 @@ the default session configuration:
 
    Disabling thread parallelism may negatively affect performance. Only
    enable this feature if you understand and accept this trade-off.
+
+*********************
+ Pausing Experiments
+*********************
+
+TensorFlow does not fully support the extraction or restoration of a
+single, global RNG state. Consequently, pausing experiments that use a
+TensorFlow-based framework may introduce an additional source of
+entropy.

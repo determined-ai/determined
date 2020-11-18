@@ -121,6 +121,15 @@ html {
   .ant-select-focused.ant-select:not(.ant-select-customize-input) .ant-select-selector {
     box-shadow: var(--theme-focus-shadow);
   }
+  .ant-select-multiple {
+    .ant-select-selection-placeholder {
+      color: rgba(0, 0, 0, 0.65);
+      opacity: 1;
+    }
+    .ant-select-selector .ant-select-selection-search:first-child .ant-select-selection-search-input {
+      margin-left: 0;
+    }
+  }
 
   /* Space */
 
@@ -189,7 +198,7 @@ html {
     min-width: var(--theme-sizes-layout-giant);
     padding: 0;
     position: relative;
-    
+
     & > * {
       align-items: center;
       display: flex;

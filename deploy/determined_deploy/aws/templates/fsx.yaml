@@ -2,36 +2,36 @@ Description:  This template deploys a VPC, with a public and private subnet, and
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-0349224eed420a3b5
-      Agent: ami-07564bd6cffbb5a9b
+      Master: ami-0b8cd500f483d09ee
+      Agent: ami-01094af1846f7e057
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-0cd876b15dcf9249d
-    #   Agent: ami-06e4694b34930383b
+    #   Master: ami-07b7be0099924913e
+    #   Agent: ami-068b19daf956a4ca5
     # ap-southeast-1:
-    #   Master: ami-0e841276b0f027389
-    #   Agent: ami-0b8901d5aa604f982
+    #   Master: ami-028a5cff2f5a0f6c3
+    #   Agent: ami-01b7af9433b415dac
     # ap-southeast-2:
-    #   Master: ami-0257304d38f0c6e7d
-    #   Agent: ami-07458aed56b935a93
+    #   Master: ami-041e1cc8f4c429789
+    #   Agent: ami-07fc663f38164369e
     eu-central-1:
-      Master: ami-0db63f4dee2d55b7a
-      Agent: ami-0a825b68986d002b4
+      Master: ami-0d971d62e4d019dcc
+      Agent: ami-00c716e5005603cb0
     eu-west-1:
-      Master: ami-08f3064d8481f3782
-      Agent: ami-0c097333b749173b0
+      Master: ami-09b9e380df60300c8
+      Agent: ami-0da48b82961b59fba
     # eu-west-2:
-    #   Master: ami-0b48089553c9d7962
-    #   Agent: ami-06d3e216931b8d00e
+    #   Master: ami-071884cefc7e770ba
+    #   Agent: ami-0d49b45685428fda1
     us-east-1:
-      Master: ami-0f40c8f97004632f9
-      Agent: ami-0b4a3753853b048f7
+      Master: ami-0739f8cdb239fe9ae
+      Agent: ami-0fa3c95101db75a3c
     us-east-2:
-      Master: ami-05692172625678b4e
-      Agent: ami-04fa26fdd9b2a99ea
+      Master: ami-0ebc8f6f580a04647
+      Agent: ami-0d7b699aa2315ee2d
     us-west-2:
-      Master: ami-09456e8683eb4d259
-      Agent: ami-00c685a830fdf5ab4
+      Master: ami-008b09448b998a562
+      Agent: ami-0888d917ee7cc9be9
 
 Parameters:
   VpcCIDR:
@@ -97,6 +97,18 @@ Parameters:
     Type: Number
     Description: Maximum number of agents to launch simultaneously
     Default: 5
+
+  SpotEnabled:
+    Type: String
+    Description: Whether to use spot instances or not
+    Default: false
+
+  SpotMaxPrice:
+    Type: String
+    Description: |
+      The maximum hourly price you are willing to pay for the spot instance.
+      Should be a number without a currency option, e.g. "5.00"
+    Default: ''
 
   EnableCORS:
     Type: String
@@ -611,6 +623,8 @@ Resources:
               max_agent_starting_period: ${MaxAgentStartingPeriod}
               min_instances: ${MinDynamicAgents}
               max_instances: ${MaxDynamicAgents}
+              spot: ${SpotEnabled}
+              spot_max_price: "${SpotMaxPrice}"
               network_interface:
                 public_ip: true
                 security_group_id: ${AgentSecurityGroup.GroupId}

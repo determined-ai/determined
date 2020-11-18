@@ -10,6 +10,7 @@ import "google/protobuf/field_mask.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/experiment/v1/experiment.proto";
+import "determined/util/v1/util.proto";
 import "determined/experiment/v1/searcher.proto";
 
 // Get a single experiment.
@@ -37,8 +38,8 @@ message GetExperimentsRequest {
     SORT_BY_DESCRIPTION = 2;
     // Return experiments sorted by start time.
     SORT_BY_START_TIME = 4;
-    // Return experiments sorted by end time. Experiments without end times are
-    // returned after experiments that are.
+    // Return experiments sorted by end time. Experiments without end_time are
+    // returned after the ones with end_time.
     SORT_BY_END_TIME = 5;
     // Return experiments sorted by state.
     SORT_BY_STATE = 6;
@@ -186,7 +187,7 @@ message GetExperimentCheckpointsRequest {
   }
   // The experiment id.
   int32 id = 1;
-  // Sort checkpoints by the given field
+  // Sort checkpoints by the given field.
   SortBy sort_by = 2;
   // Order checkpoints in either ascending or descending order.
   OrderBy order_by = 3;
@@ -225,4 +226,139 @@ message GetExperimentValidationHistoryResponse {
   // the lifetime of an experiment. The historical list of best validations.
   repeated determined.experiment.v1.ValidationHistoryEntry validation_history =
       1;
+}
+
+// Request to create a new experiment.
+message CreateExperimentRequest {
+  // Experiment context.
+  repeated determined.util.v1.File model_definition = 1;
+  // Experiment config (YAML).
+  string config = 2;
+  // Only validate instead of creating the experiment. A dry run.
+  bool validate_only = 3;
+  // Parent experiment id.
+  int32 parent_id = 4;
+}
+// Response to CreateExperimentRequest.
+message CreateExperimentResponse {
+  // The created experiment.
+  determined.experiment.v1.Experiment experiment = 1;
+  // The created experiment config.
+  google.protobuf.Struct config = 2;
+}
+
+// Request for the set of metrics recorded by an experiment.
+message MetricNamesRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+}
+
+// Response to MetricNamesRequest.
+message MetricNamesResponse {
+  // The name of the searcher metric.
+  string searcher_metric = 1;
+  // List of training metric names.
+  repeated string training_metrics = 2;
+  // List of validation metric names.
+  repeated string validation_metrics = 3;
+}
+
+// To distinguish the 2 different categories of metrics.
+enum MetricType {
+  // Zero-value (not allowed).
+  METRIC_TYPE_UNSPECIFIED = 0;
+  // For metrics emitted during training.
+  METRIC_TYPE_TRAINING = 1;
+  // For metrics emitted during validation.
+  METRIC_TYPE_VALIDATION = 2;
+}
+
+// Request the milestones (in batches processed) at which a metric is recorded
+// by an experiment.
+message MetricBatchesRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // A metric name.
+  string metric_name = 2;
+  // The type of metric.
+  MetricType metric_type = 3;
+}
+
+// Response to MetricBatchesRequest.
+message MetricBatchesResponse {
+  // Milestones (in batches processed) at which the specified metric is
+  // recorded.
+  repeated int32 batches = 1;
+}
+
+// Request metrics from all trials at a progress point of progress.
+message TrialsSnapshotRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // The point of progress at which to query metrics.
+  int32 batches_processed = 2;
+  // A metric name.
+  string metric_name = 3;
+  // The type of metric.
+  MetricType metric_type = 4;
+}
+
+// Response to TrialSnapshotResponse
+message TrialsSnapshotResponse {
+  // Metric value and metadata for a trial that has progress this far.
+  message Trial {
+    // The id of the trial.
+    int32 trial_id = 1;
+    // A dictionary of hyperparameter values for this trial.
+    google.protobuf.Struct hparams = 2;
+    // The value of the metric in this trial at this point.
+    double metric = 3;
+  }
+  // A list of trials.
+  repeated Trial trials = 1;
+}
+
+// Request a sample of metrics over time for a sample of trials.
+message TrialsSampleRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // A metric name.
+  string metric_name = 2;
+  // The type of metric.
+  MetricType metric_type = 3;
+  // Maximum number of trials to fetch data for.
+  int32 max_trials = 4;
+  // Maximum number of initial / historical data points.
+  int32 max_datapoints = 5;
+  // Beginning of window (inclusive) to fetch data for.
+  int32 start_batches = 6;
+  // Ending of window (inclusive) to fetch data for.
+  int32 end_batches = 7;
+}
+
+// Response to TrialsSampleRequest
+message TrialsSampleResponse {
+  // One datapoint in a series of metrics from a trial.
+  message DataPoint {
+    // Total batches processed by the time this measurement is taken.
+    int32 batches = 1;
+    // Value of the requested metric at this point in the trial.
+    double value = 2;
+  }
+  // Metadata and metrics stream from a trial.
+  message Trial {
+    // The id of the trial.
+    int32 trial_id = 1;
+    // Hyperparamters values for this specific trial.
+    google.protobuf.Struct hparams = 2;
+    // A possibly down-sampled series of metric readings through the progress of
+    // the trial.
+    repeated DataPoint data = 3;
+  }
+  // A historical or incremental series of data points for the trials.
+  repeated Trial trials = 1;
+  // IDs of trials that are newly included in the data.
+  repeated int32 promoted_trials = 2;
+  // IDs of trials that are no loger included in the top N trials.
+  repeated int32 demoted_trials = 3;
 }

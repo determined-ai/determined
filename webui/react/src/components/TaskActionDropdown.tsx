@@ -6,15 +6,17 @@ import React from 'react';
 
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { openBlank, openCommand } from 'routes/utils';
+import { openCommand } from 'routes/utils';
 import {
-  archiveExperiment, killTask, openOrCreateTensorboard, setExperimentState,
+  activateExperiment, archiveExperiment, cancelExperiment, killExperiment, killTask,
+  openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { AnyTask, CommandTask, ExperimentTask, RunState, TBSourceType } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
+import Link from './Link';
 import css from './TaskActionDropdown.module.scss';
 
 interface Props {
@@ -23,6 +25,11 @@ interface Props {
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
+
+const taskPath = (task: CommandTask): string => {
+  const taskType = task.type.toLocaleLowerCase();
+  return`/${taskType}/${task.id}/logs?id=${task.name}`;
+};
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   const id = isNumber(task.id) ? task.id : parseInt(task.id);
@@ -43,22 +50,16 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
     try {
       switch (params.key) { // Cases should match menu items.
         case 'activate':
-          await setExperimentState({
-            experimentId: id,
-            state: RunState.Active,
-          });
+          await activateExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
         case 'archive':
-          if (!isExperimentTask(task)) break;
-          await archiveExperiment(id);
+          if (!isExperiment) break;
+          await archiveExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
         case 'cancel':
-          await setExperimentState({
-            experimentId: id,
-            state: RunState.StoppingCanceled,
-          });
+          await cancelExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
         case 'openOrCreateTensorboard': {
@@ -70,25 +71,20 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           break;
         }
         case 'kill':
-          await killTask(task);
-          if (isExperiment && onComplete) onComplete();
+          if (isExperiment) {
+            await killExperiment({ experimentId: id });
+            if (onComplete) onComplete();
+          } else {
+            await killTask(task as CommandTask);
+          }
           break;
         case 'pause':
-          await setExperimentState({
-            experimentId: id,
-            state: RunState.Paused,
-          });
+          await pauseExperiment({ experimentId: id });
           if (onComplete) onComplete();
           break;
-        case 'viewLogs': {
-          const taskType = (task as CommandTask).type.toLocaleLowerCase();
-          const path = `/det/${taskType}/${task.id}/logs?id=${task.name}`;
-          openBlank(path);
-          break;
-        }
         case 'unarchive':
-          if (!isExperimentTask(task)) break;
-          await archiveExperiment(id, false);
+          if (!isExperiment) break;
+          await unarchiveExperiment({ experimentId: id });
           if (onComplete) onComplete();
       }
     } catch (e) {
@@ -115,7 +111,9 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   if (isExperiment) {
     menuItems.push(<Menu.Item key="openOrCreateTensorboard">Open Tensorboard</Menu.Item>);
   } else {
-    menuItems.push(<Menu.Item key="viewLogs">View Logs</Menu.Item>);
+    menuItems.push(<Menu.Item key="viewLogs">
+      <Link path={taskPath(task as CommandTask)}>View Logs</Link>
+    </Menu.Item>);
   }
 
   if (menuItems.length === 0) {

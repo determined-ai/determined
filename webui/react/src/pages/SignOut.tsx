@@ -28,7 +28,7 @@ const SignOut: React.FC = () => {
         });
       }
       setAuth({ type: Auth.ActionType.Reset });
-      history.push('/det/login', location.state);
+      history.push('/login', location.state);
     };
 
     if (!isSigningOut) signOut();

@@ -2,9 +2,21 @@
 // For examples of custom commands please read more here:
 // https://on.cypress.io/custom-commands
 // ***********************************************
-import { ACCOUNT_PASSWORD, ACCOUNT_USERNAME, API_PATH } from '../constants';
+import { ACCOUNT_PASSWORD, ACCOUNT_USERNAME, API_PATH, STORAGE_KEY_AUTH } from '../constants';
 
 const sha512 = require('js-sha512').sha512;
+
+const saveAuthToken = (token) => {
+  return window.localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(token));
+};
+
+const retreiveAuthToken = () => {
+  return JSON.parse(window.localStorage.getItem(STORAGE_KEY_AUTH));
+};
+
+const removeAuthToken = () => {
+  window.localStorage.removeItem(STORAGE_KEY_AUTH);
+};
 
 const saltAndHashPassword = password => {
   if (!password) return '';
@@ -35,6 +47,7 @@ Cypress.Commands.add('checkLoggedOut', () => {
   cy.visit('/');
   cy.request({
     failOnStatusCode: false,
+    headers: { Authorization: 'Bearer ' + retreiveAuthToken() },
     method: 'GET',
     url: '/users/me',
   })
@@ -44,7 +57,7 @@ Cypress.Commands.add('checkLoggedOut', () => {
 });
 
 // TODO use Cypress.env to share (and bring in) some of the contants used.
-Cypress.Commands.add('login', credentials => {
+Cypress.Commands.add('login', (credentials) => {
   credentials = credentials || {
     password: saltAndHashPassword(ACCOUNT_PASSWORD),
     username: ACCOUNT_USERNAME,
@@ -52,22 +65,33 @@ Cypress.Commands.add('login', credentials => {
   cy.request('POST', '/login', credentials)
     .then(response => {
       expect(response.body).to.have.property('token');
-      return cy.setCookie('auth', response.body.token);
+      saveAuthToken(response.body.token);
     });
-  cy.getCookie('auth')
-    .should('exist')
-    .should('have.property', 'value');
-  cy.checkLoggedIn(credentials.username);
+  cy.checkLoggedIn(credentials.username, true);
 });
 
 Cypress.Commands.add('logout', () => {
   cy.request({
     failOnStatusCode: false, // make this command idempotent
+    headers: { Authorization: 'Bearer ' + retreiveAuthToken() },
     method: 'POST',
     url: `${API_PATH}/auth/logout`,
-  })
-    .then(() => {
-      return cy.clearCookie('auth');
-    });
+  }).then(removeAuthToken);
   cy.checkLoggedOut();
+});
+
+// Keep local storage.
+const LOCAL_STORAGE_MEMORY = {};
+Cypress.Commands.add('saveLocalStorageCache', (keys) => {
+  keys = keys || Object.keys(localStorage);
+  keys.forEach(key => {
+    LOCAL_STORAGE_MEMORY[key] = localStorage[key];
+  });
+});
+
+Cypress.Commands.add('restoreLocalStorageCache', (keys) => {
+  keys = keys || Object.keys(LOCAL_STORAGE_MEMORY);
+  keys.forEach(key => {
+    localStorage.setItem(key, LOCAL_STORAGE_MEMORY[key]);
+  });
 });

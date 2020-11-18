@@ -1,6 +1,9 @@
 # Build directory
 build/
 
+# Generated LICENSE file
+packaging/LICENSE
+
 # Dist directory
 dist/
 

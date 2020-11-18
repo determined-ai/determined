@@ -66,7 +66,7 @@ func newGRPCGatewayMux() *runtime.ServeMux {
 }
 
 // RegisterHTTPProxy registers grpc-gateway with the master echo server.
-func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certificate) error {
+func RegisterHTTPProxy(e *echo.Echo, port int, cert *tls.Certificate) error {
 	addr := fmt.Sprintf(":%d", port)
 	var opts []grpc.DialOption
 	if cert == nil {
@@ -84,10 +84,6 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 	}
 	handler := func(c echo.Context) error {
 		request := c.Request()
-		if origin := request.Header.Get("Origin"); enableCORS && origin != "" {
-			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
-			c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
-		}
 		if c.Request().Header.Get("Authorization") == "" {
 			if cookie, err := c.Cookie(cookieName); err == nil {
 				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
@@ -101,8 +97,5 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 	}
 	apiV1 := e.Group("/api/v1")
 	apiV1.Any("/*", handler, middleware.RemoveTrailingSlash())
-	// We explicitly set this route here to make sure another route handler with them same path but
-	// different method doesn't take over GET.
-	apiV1.GET("/experiments", handler, middleware.RemoveTrailingSlash())
 	return nil
 }

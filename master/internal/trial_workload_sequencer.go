@@ -47,8 +47,8 @@ type trialWorkloadSequencerState struct {
 	needInitialValidation  bool
 	needPostValidationCkpt bool
 
-	exitingEarly      bool
-	userRequestedStop bool
+	exitingEarly bool
+	gracefulStop bool
 
 	curOpIdx  int
 	curStepID int
@@ -73,7 +73,7 @@ func (s *trialWorkloadSequencerState) deepCopy() trialWorkloadSequencerState {
 		needInitialValidation:   s.needInitialValidation,
 		needPostValidationCkpt:  s.needPostValidationCkpt,
 		exitingEarly:            s.exitingEarly,
-		userRequestedStop:       s.userRequestedStop,
+		gracefulStop:            s.gracefulStop,
 		totalBatchesProcessed:   s.totalBatchesProcessed,
 		curOpIdx:                s.curOpIdx,
 		curStepID:               s.curStepID,
@@ -183,8 +183,8 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	}
 	if msg.ExitedReason != nil {
 		s.exitingEarly = true
-		if *msg.ExitedReason == workload.UserCanceled {
-			s.userRequestedStop = true
+		if *msg.ExitedReason == workload.UserCanceled || *msg.ExitedReason == workload.InvalidHP {
+			s.gracefulStop = true
 		} else {
 			return nil, nil, nil
 		}
@@ -295,7 +295,7 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 		return s.validate(), nil
 	}
 
-	if s.postUserCancellationCheckpointNeeded() {
+	if s.postGracefulStopCheckpointNeeded() {
 		return s.checkpoint(), nil
 	}
 
@@ -372,7 +372,7 @@ func (s *trialWorkloadSequencer) RollBackSequencer() int {
 func (s *trialWorkloadSequencer) UpToDate() bool {
 	// If all operations for the last asked-for step are done, then the trial has no more workloads
 	// to run at the moment.
-	return len(s.ops) == s.curOpIdx || s.exitingEarly && !s.postUserCancellationCheckpointNeeded()
+	return len(s.ops) == s.curOpIdx || s.exitingEarly && !s.postGracefulStopCheckpointNeeded()
 }
 
 func (s trialWorkloadSequencer) train(numBatches int) workload.Workload {
@@ -431,8 +431,8 @@ func (s *trialWorkloadSequencer) minCheckpointNeeded() bool {
 	return s.minCheckpointPeriod.EqualWithinBatch(s.batchesSinceLastCkpt, s.unitContext)
 }
 
-func (s *trialWorkloadSequencer) postUserCancellationCheckpointNeeded() bool {
-	return s.userRequestedStop && s.batchesSinceLastCkpt != 0
+func (s *trialWorkloadSequencer) postGracefulStopCheckpointNeeded() bool {
+	return s.gracefulStop && s.batchesSinceLastCkpt != 0
 }
 
 func (s *trialWorkloadSequencer) postValidationCheckpointNeeded() bool {

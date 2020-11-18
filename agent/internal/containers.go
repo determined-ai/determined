@@ -15,6 +15,7 @@ import (
 	proto "github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -35,7 +36,17 @@ type containerManager struct {
 	Labels        map[string]string `json:"labels"`
 	Devices       []device.Device   `json:"devices"`
 
-	docker *client.Client
+	fluentPort int
+	docker     *client.Client
+}
+
+func newContainerManager(a *agent, fluentPort int) (*containerManager, error) {
+	return &containerManager{
+		MasterInfo: a.MasterInfo,
+		Options:    a.Options,
+		Devices:    a.Devices,
+		fluentPort: fluentPort,
+	}, nil
 }
 
 func (c *containerManager) Receive(ctx *actor.Context) error {
@@ -72,6 +83,10 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			fmt.Sprintf("DET_AGENT_ID=%s", c.Options.AgentID),
 		}
 
+		if a := c.Options.Security.TLS.MasterCertName; a != "" {
+			c.GlobalEnvVars = append(c.GlobalEnvVars, fmt.Sprintf("DET_MASTER_CERT_NAME=%s", a))
+		}
+
 		c.Labels = map[string]string{
 			dockerContainerTypeLabel: dockerContainerTypeValue,
 			dockerAgentLabel:         c.Options.AgentID,
@@ -79,7 +94,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			dockerMasterLabel:        c.MasterInfo.MasterID,
 		}
 
-	case proto.ContainerLog, proto.ContainerStateChanged:
+	case proto.ContainerLog, proto.ContainerStateChanged, model.TrialLog:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case proto.StartContainer:
@@ -147,6 +162,18 @@ func (c *containerManager) overwriteSpec(
 
 	spec.RunSpec.HostConfig.DeviceRequests = append(
 		spec.RunSpec.HostConfig.DeviceRequests, c.gpuDeviceRequests(cont)...)
+
+	if spec.RunSpec.UseFluentLogging {
+		spec.RunSpec.HostConfig.LogConfig = dcontainer.LogConfig{
+			Type: "fluentd",
+			Config: map[string]string{
+				"fluentd-address":              "localhost:" + strconv.Itoa(c.fluentPort),
+				"fluentd-sub-second-precision": "true",
+				"env":                          strings.Join(fluentEnvVarNames, ","),
+				"labels":                       dockerContainerParentLabel,
+			},
+		}
+	}
 
 	return spec
 }

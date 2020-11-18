@@ -1,12 +1,24 @@
 import argparse
 import re
 import sys
-from typing import Dict, Type, Union
+from typing import Callable, Dict, Type, Union
 
 import boto3
 
 from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import base, secure, simple, vpc
+
+
+def validate_spot_max_price() -> Callable:
+    def validate(s: str) -> str:
+        if s.count(".") > 1:
+            raise argparse.ArgumentTypeError("must have one or zero decimal points")
+        for char in s:
+            if not (char.isdigit() or char == "."):
+                raise argparse.ArgumentTypeError("must only contain digits and a decimal point")
+        return s
+
+    return validate
 
 
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -64,6 +76,11 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="inbound IP Range in CIDR format",
     )
     subparser.add_argument(
+        "--agent-subnet-id",
+        type=str,
+        help="subnet to deploy agents into. Optional. Only used with simple deployment type",
+    )
+    subparser.add_argument(
         "--det-version",
         type=str,
         help=argparse.SUPPRESS,
@@ -99,6 +116,16 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--max-dynamic-agents",
         type=int,
         help="maximum number of dynamic agent instances at one time",
+    )
+    subparser.add_argument(
+        "--spot",
+        action="store_true",
+        help="whether to use spot instances or not",
+    )
+    subparser.add_argument(
+        "--spot-max-price",
+        type=validate_spot_max_price(),
+        help="maximum hourly price for the spot instance (do not include the dollar sign)",
     )
     subparser.add_argument(
         "--dry-run",
@@ -161,6 +188,14 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.deployment_types.FSX: vpc.FSx,
     }  # type: Dict[str, Union[Type[base.DeterminedDeployment]]]
 
+    if args.deployment_type != constants.deployment_types.SIMPLE:
+        if args.agent_subnet_id != "":
+            raise ValueError(
+                f"The agent-subnet-id can only be set if the deployment-type=simple. "
+                f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
+                f"deployment-type={args.deployment_type}."
+            )
+
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
         constants.cloudformation.ENABLE_CORS: args.enable_cors,
@@ -175,6 +210,9 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
         constants.cloudformation.MIN_DYNAMIC_AGENTS: args.min_dynamic_agents,
         constants.cloudformation.MAX_DYNAMIC_AGENTS: args.max_dynamic_agents,
+        constants.cloudformation.SPOT_ENABLED: args.spot,
+        constants.cloudformation.SPOT_MAX_PRICE: args.spot_max_price,
+        constants.cloudformation.SUBNET_ID_KEY: args.agent_subnet_id,
     }
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)

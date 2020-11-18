@@ -5,6 +5,7 @@ describe('setup', () => {
 
   before(() => {
     cy.login();
+    cy.visit('/det');
   });
 
   beforeEach(() => {
@@ -51,6 +52,7 @@ describe('setup', () => {
     cy.contains('Canceled');
     cy.get('body').should('not.contain', /archived/i);
     cy.contains('Archive').click();
+    cy.reload(); // polling is stopped on terminated experiments.
     cy.contains(/unarchive/i);
     cy.visit('/det/experiments');
     cy.get(recordSelector).should('have.lengthOf', 3);

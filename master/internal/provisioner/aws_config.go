@@ -34,21 +34,21 @@ type AWSClusterConfig struct {
 	LogGroup  string `json:"log_group"`
 	LogStream string `json:"log_stream"`
 
-	SpotInstanceEnabled bool   `json:"spot_instance_enabled"`
-	SpotMaxPrice        string `json:"spot_max_price"`
+	SpotEnabled  bool   `json:"spot"`
+	SpotMaxPrice string `json:"spot_max_price"`
 }
 
 var defaultAWSImageID = map[string]string{
-	"ap-northeast-1": "ami-07564bd6cffbb5a9b",
-	"ap-northeast-2": "ami-06e4694b34930383b",
-	"ap-southeast-1": "ami-0b8901d5aa604f982",
-	"ap-southeast-2": "ami-07458aed56b935a93",
-	"us-east-2":      "ami-04fa26fdd9b2a99ea",
-	"us-east-1":      "ami-0b4a3753853b048f7",
-	"us-west-2":      "ami-00c685a830fdf5ab4",
-	"eu-central-1":   "ami-0a825b68986d002b4",
-	"eu-west-2":      "ami-06d3e216931b8d00e",
-	"eu-west-1":      "ami-0c097333b749173b0",
+	"ap-northeast-1": "ami-01094af1846f7e057",
+	"ap-northeast-2": "ami-068b19daf956a4ca5",
+	"ap-southeast-1": "ami-01b7af9433b415dac",
+	"ap-southeast-2": "ami-07fc663f38164369e",
+	"us-east-2":      "ami-0d7b699aa2315ee2d",
+	"us-east-1":      "ami-0fa3c95101db75a3c",
+	"us-west-2":      "ami-0888d917ee7cc9be9",
+	"eu-central-1":   "ami-00c716e5005603cb0",
+	"eu-west-2":      "ami-0d49b45685428fda1",
+	"eu-west-1":      "ami-0da48b82961b59fba",
 }
 
 var defaultAWSClusterConfig = AWSClusterConfig{
@@ -58,8 +58,8 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
-	InstanceType:        "p3.8xlarge",
-	SpotInstanceEnabled: false,
+	InstanceType: "p3.8xlarge",
+	SpotEnabled:  false,
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
@@ -121,7 +121,7 @@ func (c *AWSClusterConfig) UnmarshalJSON(data []byte) error {
 // Validate implements the check.Validatable interface.
 func (c AWSClusterConfig) Validate() []error {
 	var spotPriceIsNotValidNumberErr error
-	if c.SpotInstanceEnabled && c.SpotMaxPrice != spotPriceNotSetPlaceholder {
+	if c.SpotEnabled && c.SpotMaxPrice != spotPriceNotSetPlaceholder {
 		spotPriceIsNotValidNumberErr = validateMaxSpotPrice(c.SpotMaxPrice)
 	}
 	return []error{

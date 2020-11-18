@@ -23,7 +23,7 @@ message GetNotebooksRequest {
     // Return notebooks sorted by start time.
     SORT_BY_START_TIME = 4;
   }
-  // Sort notebooks by the given field
+  // Sort notebooks by the given field.
   SortBy sort_by = 1;
   // Order notebooks in either ascending or descending order.
   OrderBy order_by = 2;

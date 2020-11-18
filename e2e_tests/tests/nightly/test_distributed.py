@@ -29,6 +29,16 @@ def test_cifar10_pytorch_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
+def test_mmdetection_pytorch_distributed() -> None:
+    config = conf.load_config(
+        conf.cv_examples_path("mmdetection_pytorch/distributed_fake_data.yaml")
+    )
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("mmdetection_pytorch"), 1)
+
+
+@pytest.mark.distributed  # type: ignore
 def test_mnist_estimator_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("mnist_estimator/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

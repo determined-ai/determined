@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Documentation: Add a guide for :ref:`setting up an EKS cluster
-   <setup-eks-cluster>` for Determined.

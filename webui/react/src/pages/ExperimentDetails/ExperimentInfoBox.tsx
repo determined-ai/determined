@@ -101,7 +101,7 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment, onChange }: Props) => 
       label: 'Duration',
     },
     {
-      content: <Link isButton path={`/experiments/${experiment.id}/model_def`}>
+      content: <Link external isButton path={`/experiments/${experiment.id}/model_def`}>
         Download Model
       </Link>,
       label: 'Model Definition',
@@ -111,8 +111,6 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment, onChange }: Props) => 
         className={tagListCss.noMargin}
         tags={experiment.config.labels || []}
         onChange={experimentTags.handleTagListChange(experiment.id)}
-        onCreate={experimentTags.handleTagListCreate(experiment.id)}
-        onDelete={experimentTags.handleTagListDelete(experiment.id)}
       />,
       label: 'Labels',
     },

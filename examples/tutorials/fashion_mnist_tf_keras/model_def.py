@@ -28,9 +28,16 @@ class FashionMNISTTrial(TFKerasTrial):
                 keras.layers.Dense(10),
             ]
         )
+
+        # Wrap the model.
         model = self.context.wrap_model(model)
+
+        # Create and wrap the optimizer.
+        optimizer = tf.keras.optimizers.Adam()
+        optimizer = self.context.wrap_optimizer(optimizer)
+        
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(name='Adam'),
+            optimizer=optimizer,
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")],
         )

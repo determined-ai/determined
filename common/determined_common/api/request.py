@@ -8,28 +8,41 @@ import lomond
 import requests
 import simplejson
 
+import determined_common.requests
 from determined_common.api import authentication, errors
 
 # The path to a file containing an SSL certificate to trust specifically for the master, if any.
 _master_cert_bundle = None
 
+# The name we use to verify the master.
+_master_cert_name = None
 
-def set_master_cert_bundle(path: str) -> None:
+
+def set_master_cert_bundle(path: Optional[str]) -> None:
     global _master_cert_bundle
     _master_cert_bundle = path
+
+
+def set_master_cert_name(name: Optional[str]) -> None:
+    global _master_cert_name
+    _master_cert_name = name
 
 
 # Set the bundle if one is specified by the environment. This is done on import since we can't
 # always count on having an entry point we control (e.g., if someone is importing this code in a
 # notebook).
-try:
-    set_master_cert_bundle(os.environ["DET_MASTER_CERT_FILE"])
-except KeyError:
-    pass
+set_master_cert_bundle(os.environ.get("DET_MASTER_CERT_FILE"))
+
+# Set the master servername from the environment.
+set_master_cert_name(os.environ.get("DET_MASTER_CERT_NAME"))
 
 
 def get_master_cert_bundle() -> Optional[str]:
     return _master_cert_bundle
+
+
+def get_master_cert_name() -> Optional[str]:
+    return _master_cert_name
 
 
 def parse_master_address(master_address: str) -> parse.ParseResult:
@@ -75,6 +88,7 @@ def do_request(
     body: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    stream: bool = False,
 ) -> requests.Response:
     if headers is None:
         h = {}  # type: Dict[str, str]
@@ -88,13 +102,15 @@ def do_request(
         h = add_token_to_headers(h)
 
     try:
-        r = requests.request(
+        r = determined_common.requests.request(
             method,
             make_url(host, path),
             params=params,
             json=body,
             headers=h,
             verify=_master_cert_bundle,
+            stream=stream,
+            server_hostname=_master_cert_name,
         )
     except requests.exceptions.SSLError:
         raise
@@ -119,12 +135,19 @@ def get(
     params: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    stream: bool = False,
 ) -> requests.Response:
     """
     Send a GET request to the remote API.
     """
     return do_request(
-        "GET", host, path, params=params, headers=headers, authenticated=authenticated
+        "GET",
+        host,
+        path,
+        params=params,
+        headers=headers,
+        authenticated=authenticated,
+        stream=stream,
     )
 
 

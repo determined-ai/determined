@@ -99,7 +99,8 @@ The master can secure all incoming connections using `TLS
 ability requires a TLS private key and certificate to be provided; set
 the options ``security.tls.cert`` and ``security.tls.key`` to paths to a
 PEM-encoded TLS certificate and private key, respectively, to do so. If
-TLS is enabled, the default port becomes 8443 rather than 8080.
+TLS is enabled, the default port becomes 8443 rather than 8080. See
+:ref:`tls` for more information.
 
 .. _agent-network-proxy:
 
@@ -322,9 +323,9 @@ The master supports the following configuration settings:
       specifying a dict with two keys, ``cpu`` and ``gpu``. Default
       values:
 
-      -  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.7.0``
+      -  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.8.0``
          for CPU agents
-      -  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.7.0``
+      -  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.8.0``
          for GPU agents.
 
    -  ``force_pull_image``: Defines the default policy for forcibly
@@ -352,6 +353,9 @@ The master supports the following configuration settings:
 -  ``root``: Specifies the root directory of the state files. Defaults
    to ``/usr/share/determined/master``.
 
+-  ``cluster_name`` (optional): Specify a human readable name for this
+   cluster.
+
 -  ``tensorboard_timeout``: Specifies the duration in seconds before
    idle TensorBoard instances are automatically terminated. A
    TensorBoard instance is considered to be idle if it does not receive
@@ -372,6 +376,11 @@ The master supports the following configuration settings:
       we will replace the above alias host with its real value. Defaults
       to ``http`` as scheme, local IP address as host, and ``8080`` as
       port.
+
+   -  ``master_cert_name``: A hostname for which the master's TLS
+      certificate is valid, if the host specified by the ``master_url``
+      option is an IP address or is not contained in the certificate.
+      See :ref:`tls` for more information.
 
    -  ``startup_script``: One or more shell commands that will be run
       during agent instance start up. These commands are executed as
@@ -479,6 +488,18 @@ The master supports the following configuration settings:
          ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
          ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. Defaults
          to ``p3.8xlarge``.
+
+      -  ``spot``: Whether to use spot instances. Defaults to ``false``.
+         See :ref:`aws-spot` for more details.
+
+      -  ``spot_max_price``: Optional field indicating the maximum price
+         per hour that you are willing to pay for a spot instance. The
+         market price for a spot instance varies based on supply and
+         demand. If the market price exceeds the ``spot_max_price``,
+         Determined will not launch instances. This field must be a
+         string and must not include a currency sign. For example, $2.50
+         should be represented as ``"2.50"``. Defaults to the on-demand
+         price for the given instance type.
 
    -  ``provider: gcp``: Specifies running dynamic agents on GCP.
       (*Required*)
@@ -726,6 +747,20 @@ The master supports the following configuration settings:
    index, UUID, PCI bus ID, or board serial number. The 0-based index of
    NVIDIA GPUs can be obtained via the ``nvidia-smi`` command.
 
+-  ``slot_type``: The slot type that should be exposed. Dynamic agents
+   having GPUs will be configured to ``gpu`` while those agents having
+   no GPUs will be configured to ``none``. For static agents this field
+   defaults to ``auto``.
+
+   -  ``auto``: Automatically detects the slot type. The agent will
+      detect if there are GPUs. If there are GPUs, it maps each GPU to
+      one slot. Otherwise, it maps all the CPUs to a slot.
+
+   -  ``none``: The agent will not create any slots for detected
+      devices.
+
+   -  ``gpu``: The agent will map each detected GPU to a slot.
+
 -  ``http_proxy``: The HTTP proxy address for the agent's containers.
 
 -  ``https_proxy``: The HTTPS proxy address for the agent's containers.
@@ -747,3 +782,7 @@ The master supports the following configuration settings:
          reduce the security of your Determined cluster.
 
       -  ``master_cert``: CA cert file for the master when using TLS.
+
+      -  ``master_cert_name``: A hostname for which the master's TLS
+         certificate is valid, if the value of the ``master_host``
+         option is an IP address or is not contained in the certificate.

@@ -3,46 +3,46 @@ Description:  This template deploys a VPC, with a public and private subnet. It 
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-0349224eed420a3b5
-      Agent: ami-07564bd6cffbb5a9b
-      Bastion: ami-002f145bfc0915873
+      Master: ami-0b8cd500f483d09ee
+      Agent: ami-01094af1846f7e057
+      Bastion: ami-0f475b2993ac825b7
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-0cd876b15dcf9249d
-    #   Agent: ami-06e4694b34930383b
-    #   Bastion: ami-0e95717ef0e92866b
+    #   Master: ami-07b7be0099924913e
+    #   Agent: ami-068b19daf956a4ca5
+    #   Bastion: ami-0eebe903cd90a3ddd
     # ap-southeast-1:
-    #   Master: ami-0e841276b0f027389
-    #   Agent: ami-0b8901d5aa604f982
-    #   Bastion: ami-0173e2856f6e1048d
+    #   Master: ami-028a5cff2f5a0f6c3
+    #   Agent: ami-01b7af9433b415dac
+    #   Bastion: ami-03060465516794b47
     # ap-southeast-2:
-    #   Master: ami-0257304d38f0c6e7d
-    #   Agent: ami-07458aed56b935a93
-    #   Bastion: ami-03646f515d078ec29
+    #   Master: ami-041e1cc8f4c429789
+    #   Agent: ami-07fc663f38164369e
+    #   Bastion: ami-001dbdb48850e6f54
     eu-central-1:
-      Master: ami-0db63f4dee2d55b7a
-      Agent: ami-0a825b68986d002b4
-      Bastion: ami-05ef33ae54898e90c
+      Master: ami-0d971d62e4d019dcc
+      Agent: ami-00c716e5005603cb0
+      Bastion: ami-01d4d9d5d6b52b25e
     eu-west-1:
-      Master: ami-08f3064d8481f3782
-      Agent: ami-0c097333b749173b0
-      Bastion: ami-06868ad5a3642e4d7
+      Master: ami-09b9e380df60300c8
+      Agent: ami-0da48b82961b59fba
+      Bastion: ami-0b85dae948397feb4
     # eu-west-2:
-    #   Master: ami-0b48089553c9d7962
-    #   Agent: ami-06d3e216931b8d00e
-    #   Bastion: ami-0584b3a74f9c23f6a
+    #   Master: ami-071884cefc7e770ba
+    #   Agent: ami-0d49b45685428fda1
+    #   Bastion: ami-05e1a611b1e866695
     us-east-1:
-      Master: ami-0f40c8f97004632f9
-      Agent: ami-0b4a3753853b048f7
-      Bastion: ami-013da1cc4ae87618c
+      Master: ami-0739f8cdb239fe9ae
+      Agent: ami-0fa3c95101db75a3c
+      Bastion: ami-08b277333b9511393
     us-east-2:
-      Master: ami-05692172625678b4e
-      Agent: ami-04fa26fdd9b2a99ea
-      Bastion: ami-0fa9de1596e76fb6c
+      Master: ami-0ebc8f6f580a04647
+      Agent: ami-0d7b699aa2315ee2d
+      Bastion: ami-0b9e40918b9df07e4
     us-west-2:
-      Master: ami-09456e8683eb4d259
-      Agent: ami-00c685a830fdf5ab4
-      Bastion: ami-0c1ab2d66f996cd4b
+      Master: ami-008b09448b998a562
+      Agent: ami-0888d917ee7cc9be9
+      Bastion: ami-08f6a7b1c02ad4ece
 
 Parameters:
   VpcCIDR:
@@ -92,7 +92,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.13.7.dev0
+    Default: 0.13.8.dev0
 
   DBPassword:
     Type: String
@@ -118,6 +118,18 @@ Parameters:
     Type: Number
     Description: Maximum number of agents to launch simultaneously
     Default: 5
+
+  SpotEnabled:
+    Type: String
+    Description: Whether to use spot instances or not
+    Default: false
+
+  SpotMaxPrice:
+    Type: String
+    Description: |
+      The maximum hourly price you are willing to pay for the spot instance.
+      Should be a number without a currency option, e.g. "5.00"
+    Default: ''
 
   EnableCORS:
     Type: String
@@ -642,6 +654,8 @@ Resources:
               max_agent_starting_period: ${MaxAgentStartingPeriod}
               min_instances: ${MinDynamicAgents}
               max_instances: ${MaxDynamicAgents}
+              spot: ${SpotEnabled}
+              spot_max_price: "${SpotMaxPrice}"
               network_interface:
                 public_ip: false
                 security_group_id: ${AgentSecurityGroup.GroupId}

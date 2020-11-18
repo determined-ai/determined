@@ -106,6 +106,7 @@ type (
 // Trial-specific external messages.
 type trialMessage struct {
 	RendezvousInfo *rendezvousInfoMessage `union:"type,RENDEZVOUS_INFO" json:"-"`
+	RunWorkload    *runWorkload           `union:"type,RUN_WORKLOAD" json:"-"`
 }
 
 func (m trialMessage) MarshalJSON() ([]byte, error) {
@@ -143,6 +144,10 @@ type rendezvousAddress struct {
 	ContainerIP   string `json:"container_ip"`
 	HostPort      int    `json:"host_port"`
 	HostIP        string `json:"host_ip"`
+}
+
+type runWorkload struct {
+	Workload workload.Workload `json:"workload"`
 }
 
 // terminatedContainerWithState records the terminatedContainer message with some state about the
@@ -288,7 +293,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.replaying = false
 
 	case sproto.ContainerLog:
-		t.processLog(ctx, msg)
+		t.processContainerLog(ctx, msg)
 
 	case trialAborted:
 		// This is to handle trial being aborted. It does nothing here but requires
@@ -628,7 +633,8 @@ func (t *trial) processAllocated(
 }
 
 func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.CompletedMessage) error {
-	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason == workload.UserCanceled) {
+	if !t.replaying && (msg.ExitedReason == nil ||
+		*msg.ExitedReason == workload.UserCanceled || *msg.ExitedReason == workload.InvalidHP) {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
@@ -657,7 +663,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	}
 
 	if msg.ExitedReason != nil {
-		ctx.Log().Info("exiting trial early")
+		ctx.Log().Infof("exiting trial early: %v", msg.ExitedReason)
 		ctx.Tell(ctx.Self().Parent(), trialExitedEarly{t.id, msg.ExitedReason})
 		t.earlyExit = true
 		if *msg.ExitedReason == workload.Errored {
@@ -708,8 +714,8 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 		var msg interface{}
 		if terminateNow {
 			w = *t.sequencer.TerminateWorkload()
-			msg = &tasks.TaskSpec{
-				RunWorkload: &tasks.RunWorkload{
+			msg = &trialMessage{
+				RunWorkload: &runWorkload{
 					Workload: w,
 				},
 			}
@@ -720,8 +726,8 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 			if err := saveWorkload(t.db, w); err != nil {
 				ctx.Log().WithError(err).Error("failed to save workload to the database")
 			}
-			msg = &tasks.TaskSpec{
-				RunWorkload: &tasks.RunWorkload{
+			msg = &trialMessage{
+				RunWorkload: &runWorkload{
 					Workload: w,
 				},
 			}
@@ -928,11 +934,7 @@ func (t *trial) processContainerTerminated(
 	t.killAndRemoveSocket(ctx, msg.Container.ID)
 
 	exitMsg := msg.ContainerStopped.String()
-	t.processLog(ctx, sproto.ContainerLog{
-		Container:  msg.Container,
-		Timestamp:  time.Now(),
-		AuxMessage: &exitMsg,
-	})
+	t.insertLog(ctx, msg.Container, exitMsg)
 
 	// Terminate the task if the container never started (since this prevents the gang
 	// from ever being able to start), if the leader of the gang has exited out, or if
@@ -947,21 +949,51 @@ func (t *trial) processContainerTerminated(
 	}
 }
 
-func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
+func (t *trial) canLog(ctx *actor.Context, msg string) bool {
 	// Log messages should never come in before the trial ID is set, since no trial runners are
 	// launched until after the trial ID is set. But for futureproofing, we will log an error while
 	// we protect the database.
 	if !t.idSet {
-		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg.String())
-		return
+		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg)
+		return false
 	}
 
 	if t.logger == nil {
 		// A trial created for a unit test does not have a logger.
+		return false
+	}
+	return true
+}
+
+func (t *trial) processContainerLog(ctx *actor.Context, msg sproto.ContainerLog) {
+	if !t.canLog(ctx, msg.String()) {
 		return
 	}
 
 	ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: msg.String() + "\n"})
+}
+
+func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
+	if !t.canLog(ctx, msg) {
+		return
+	}
+
+	cid := string(container.ID)
+	now := time.Now()
+	msg += "\n"
+	level := "INFO"
+	source := "master"
+	stdType := "stdout"
+	ctx.Tell(t.logger, model.TrialLog{
+		TrialID: t.id,
+		Log:     &msg,
+
+		ContainerID: &cid,
+		Timestamp:   &now,
+		Level:       &level,
+		Source:      &source,
+		StdType:     &stdType,
+	})
 }
 
 func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped {

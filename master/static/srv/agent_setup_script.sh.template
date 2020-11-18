@@ -11,9 +11,14 @@ chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
 use_gpus={{.AgentUseGPUs}}
-if $use_gpus; then
+if $use_gpus
+then
     echo "#### Starting agent with GPUs"
     docker_args+=(--gpus all)
+    docker_args+=(-e DET_SLOT_TYPE=gpu)
+else
+    echo "#### Starting agent with only CPUs"
+    docker_args+=(-e DET_SLOT_TYPE=none)
 fi
 
 cert_b64={{.MasterCertBase64}}
@@ -39,7 +44,9 @@ docker run --init --name determined-agent {{.LogOptions}} \
     -e DET_AGENT_ID="{{.AgentID}}" \
     -e DET_MASTER_HOST="{{.MasterHost}}" \
     -e DET_MASTER_PORT="{{.MasterPort}}" \
+    -e DET_SECURITY_TLS_MASTER_CERT_NAME="{{.MasterCertName}}" \
     -e DET_RESOURCE_POOL="{{.ResourcePool}}" \
+    -e DET_FLUENT_IMAGE="{{.AgentFluentImage}}" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
     "${docker_args[@]}" \

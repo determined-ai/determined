@@ -387,9 +387,37 @@ func (c *Checkpoint) IsNew() bool {
 
 // TrialLog represents a row from the `trial_logs` table.
 type TrialLog struct {
-	ID      int    `db:"id"`
-	TrialID int    `db:"trial_id"`
-	Message string `db:"message"`
+	ID      int    `db:"id" json:"id"`
+	TrialID int    `db:"trial_id" json:"trial_id"`
+	Message string `db:"message" json:"message"`
+
+	AgentID *string `db:"agent_id" json:"agent_id"`
+	// In the case of k8s, container_id is a pod name instead.
+	ContainerID *string    `db:"container_id" json:"container_id"`
+	RankID      *int       `db:"rank_id" json:"rank_id"`
+	Timestamp   *time.Time `db:"timestamp" json:"timestamp"`
+	Level       *string    `db:"level" json:"level"`
+	Log         *string    `db:"log" json:"log"`
+	Source      *string    `db:"source" json:"source"`
+	StdType     *string    `db:"stdtype" json:"stdtype"`
+}
+
+// TrialLogBatch represents a batch of model.TrialLog.
+type TrialLogBatch []*TrialLog
+
+// Size implements logs.Batch.
+func (t TrialLogBatch) Size() int {
+	return len(t)
+}
+
+// ForEach implements logs.Batch.
+func (t TrialLogBatch) ForEach(f func(interface{}) error) error {
+	for _, tl := range t {
+		if err := f(tl); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // SearcherEvent represents a row from the `searcher_events` table.

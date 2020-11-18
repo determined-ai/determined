@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -14,6 +16,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -23,6 +27,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
+
+var experimentsAddr = actor.Addr("experiments")
 
 func isInList(srcList []string, item string) bool {
 	item = strings.ToLower(item)
@@ -57,16 +63,24 @@ func (a *apiServer) checkExperimentExists(id int) error {
 	}
 }
 
+func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, error) {
+	exp := &experimentv1.Experiment{}
+	switch err := a.m.db.QueryProto("get_experiment", exp, experimentID); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", experimentID)
+	case err != nil:
+		return nil, errors.Wrapf(err,
+			"error fetching experiment from database: %d", experimentID)
+	}
+	return exp, nil
+}
+
 func (a *apiServer) GetExperiment(
 	_ context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
-	exp := &experimentv1.Experiment{}
-	switch err := a.m.db.QueryProto("get_experiment", exp, req.ExperimentId); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
-	case err != nil:
-		return nil, errors.Wrapf(err,
-			"error fetching experiment from database: %d", req.ExperimentId)
+	exp, err := a.getExperiment(int(req.ExperimentId))
+	if err != nil {
+		return nil, err
 	}
 
 	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
@@ -260,7 +274,7 @@ func (a *apiServer) ActivateExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	switch err = a.actorRequest(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
@@ -278,7 +292,7 @@ func (a *apiServer) PauseExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	switch err = a.actorRequest(addr, req, &resp); {
 	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
@@ -296,7 +310,7 @@ func (a *apiServer) CancelExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	err = a.actorRequest(addr, req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.CancelExperimentResponse{}, nil
@@ -312,7 +326,7 @@ func (a *apiServer) KillExperiment(
 		return nil, err
 	}
 
-	addr := actor.Addr("experiments", req.Id).String()
+	addr := experimentsAddr.Child(req.Id).String()
 	err = a.actorRequest(addr, req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.KillExperimentResponse{}, nil
@@ -476,4 +490,411 @@ func (a *apiServer) GetExperimentCheckpoints(
 	a.sort(
 		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+}
+
+func (a *apiServer) CreateExperiment(
+	ctx context.Context, req *apiv1.CreateExperimentRequest,
+) (*apiv1.CreateExperimentResponse, error) {
+	detParams := CreateExperimentParams{
+		ConfigBytes:  req.Config,
+		ModelDef:     filesToArchive(req.ModelDefinition),
+		ValidateOnly: req.ValidateOnly,
+	}
+	if req.ParentId != 0 {
+		parentID := int(req.ParentId)
+		detParams.ParentID = &parentID
+	}
+
+	dbExp, validateOnly, err := a.m.parseCreateExperiment(&detParams)
+
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
+	}
+
+	if validateOnly {
+		return &apiv1.CreateExperimentResponse{}, nil
+	}
+
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	dbExp.OwnerID = &user.ID
+	e, err := newExperiment(a.m, dbExp)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
+	}
+	a.m.system.ActorOf(actor.Addr("experiments", e.ID), e)
+
+	protoExp, err := a.getExperiment(e.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.CreateExperimentResponse{
+		Experiment: protoExp, Config: protoutils.ToStruct(e.Config),
+	}, nil
+}
+
+var metricsStreamPeriod = 30 * time.Second
+
+func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
+	resp apiv1.Determined_MetricNamesServer) error {
+	experimentID := int(req.ExperimentId)
+
+	config, err := a.m.db.ExperimentConfig(experimentID)
+	if err != nil {
+		return errors.Wrapf(err,
+			"error fetching experiment config from database: %d", experimentID)
+	}
+	searcherMetric := config.Searcher.Metric
+
+	seenTrain := make(map[string]bool)
+	seenValid := make(map[string]bool)
+	var tStartTime time.Time
+	var vStartTime time.Time
+	for {
+		var response apiv1.MetricNamesResponse
+		response.SearcherMetric = searcherMetric
+
+		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.MetricNames(experimentID,
+			tStartTime, vStartTime)
+		if err != nil {
+			return errors.Wrapf(err,
+				"error fetching metric names for experiment: %d", experimentID)
+		}
+		tStartTime = tEndTime
+		vStartTime = vEndTime
+
+		for _, name := range newTrain {
+			if seen := seenTrain[name]; !seen {
+				response.TrainingMetrics = append(response.TrainingMetrics, name)
+				seenTrain[name] = true
+			}
+		}
+		for _, name := range newValid {
+			if seen := seenValid[name]; !seen {
+				response.ValidationMetrics = append(response.ValidationMetrics, name)
+				seenValid[name] = true
+			}
+		}
+
+		if err := resp.Send(&response); err != nil {
+			return err
+		}
+
+		experiment, _ := a.getExperiment(experimentID)
+		if experiment.State == experimentv1.State_STATE_COMPLETED {
+			return nil
+		}
+
+		time.Sleep(metricsStreamPeriod)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
+	resp apiv1.Determined_MetricBatchesServer) error {
+	experimentID := int(req.ExperimentId)
+	metricName := req.MetricName
+	metricType := req.MetricType
+	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return errors.New("must specify a metric type")
+	}
+	if metricName == "" {
+		return errors.New("must provide metric name")
+	}
+
+	seenBatches := make(map[int32]bool)
+	var startTime time.Time
+	for {
+		var response apiv1.MetricBatchesResponse
+
+		var newBatches []int32
+		var endTime time.Time
+		var err error
+		switch metricType {
+		case apiv1.MetricType_METRIC_TYPE_TRAINING:
+			newBatches, endTime, err = a.m.db.TrainingMetricBatches(experimentID, metricName,
+				startTime)
+		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+			newBatches, endTime, err = a.m.db.ValidationMetricBatches(experimentID, metricName,
+				startTime)
+		default:
+			panic("Invalid metric type")
+		}
+		if err != nil {
+			return errors.Wrapf(err, "error fetching batches recorded for metric")
+		}
+		startTime = endTime
+
+		for _, batch := range newBatches {
+			if seen := seenBatches[batch]; !seen {
+				response.Batches = append(response.Batches, batch)
+				seenBatches[batch] = true
+			}
+		}
+
+		if err := resp.Send(&response); err != nil {
+			return errors.Wrapf(err, "error sending batches recorded for metric")
+		}
+
+		experiment, _ := a.getExperiment(experimentID)
+		if experiment.State == experimentv1.State_STATE_COMPLETED {
+			return nil
+		}
+
+		time.Sleep(metricsStreamPeriod)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
+	resp apiv1.Determined_TrialsSnapshotServer) error {
+	experimentID := int(req.ExperimentId)
+	batchesProcessed := int(req.BatchesProcessed)
+	metricName := req.MetricName
+	metricType := req.MetricType
+	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return errors.New("must specify a metric type")
+	}
+	if metricName == "" {
+		return errors.New("must provide metric name")
+	}
+
+	var startTime time.Time
+	for {
+		var response apiv1.TrialsSnapshotResponse
+
+		var newTrials []*apiv1.TrialsSnapshotResponse_Trial
+		var endTime time.Time
+		var err error
+		switch metricType {
+		case apiv1.MetricType_METRIC_TYPE_TRAINING:
+			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
+				batchesProcessed, metricName, startTime)
+		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
+				batchesProcessed, metricName, startTime)
+		default:
+			panic("Invalid metric type")
+		}
+		if err != nil {
+			return errors.Wrapf(err,
+				"error fetching snapshots of metrics for %s metric %s in experiment %d at %d batches",
+				metricType, metricName, experimentID, batchesProcessed)
+		}
+		startTime = endTime
+
+		response.Trials = newTrials
+
+		if err := resp.Send(&response); err != nil {
+			return errors.Wrapf(err, "error sending batches recorded for metrics")
+		}
+
+		experiment, _ := a.getExperiment(experimentID)
+		if experiment.State == experimentv1.State_STATE_COMPLETED {
+			return nil
+		}
+
+		time.Sleep(metricsStreamPeriod)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherConfig) (
+	trials []int32, err error) {
+	type Ranking int
+	const (
+		ByMetricOfInterest Ranking = 1
+		ByTrainingLength   Ranking = 2
+	)
+	var ranking Ranking
+
+	switch {
+	case s.RandomConfig != nil:
+		ranking = ByMetricOfInterest
+	case s.GridConfig != nil:
+		ranking = ByMetricOfInterest
+	case s.SyncHalvingConfig != nil:
+		ranking = ByTrainingLength
+	case s.AdaptiveConfig != nil:
+		ranking = ByTrainingLength
+	case s.AdaptiveSimpleConfig != nil:
+		ranking = ByTrainingLength
+	case s.AsyncHalvingConfig != nil:
+		ranking = ByTrainingLength
+	case s.AdaptiveASHAConfig != nil:
+		ranking = ByTrainingLength
+	case s.SingleConfig != nil:
+		return nil, errors.New("single-trial experiments are not supported for trial sampling")
+	case s.PBTConfig != nil:
+		return nil, errors.New("population-based training not supported for trial sampling")
+	default:
+		return nil, errors.New("unable to detect a searcher algorithm for trial sampling")
+	}
+	switch ranking {
+	case ByMetricOfInterest:
+		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+	case ByTrainingLength:
+		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+	default:
+		panic("Invalid state in trial sampling")
+	}
+}
+
+func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
+	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
+	trialCursors map[int32]time.Time) (*apiv1.TrialsSampleResponse_Trial, error) {
+	var metricSeries []lttb.Point
+	var endTime time.Time
+	var zeroTime time.Time
+	var err error
+	var trial apiv1.TrialsSampleResponse_Trial
+	trial.TrialId = trialID
+
+	if _, current := currentTrials[trialID]; !current {
+		var trialConfig *model.Trial
+		trialConfig, err = a.m.db.TrialByID(int(trialID))
+		if err != nil {
+			return nil, errors.Wrapf(err, "error fetching trial metadata")
+		}
+		trial.Hparams = protoutils.ToStruct(trialConfig.HParams)
+	}
+
+	startTime, seenBefore := trialCursors[trialID]
+	if !seenBefore {
+		startTime = zeroTime
+	}
+	switch metricType {
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches)
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+			metricName, startBatches, endBatches)
+	default:
+		panic("Invalid metric type")
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "error fetching time series of metrics")
+	}
+	if len(metricSeries) > 0 {
+		// if we get empty results, the endTime is incorrectly zero
+		trialCursors[trialID] = endTime
+	}
+	if !seenBefore {
+		metricSeries = lttb.Downsample(metricSeries, maxDatapoints)
+	}
+
+	for _, in := range metricSeries {
+		out := apiv1.TrialsSampleResponse_DataPoint{
+			Batches: int32(in.X),
+			Value:   in.Y,
+		}
+		trial.Data = append(trial.Data, &out)
+	}
+	return &trial, nil
+}
+
+func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
+	resp apiv1.Determined_TrialsSampleServer) error {
+	experimentID := int(req.ExperimentId)
+	maxTrials := int(req.MaxTrials)
+	if maxTrials == 0 {
+		maxTrials = 25
+	}
+	maxDatapoints := int(req.MaxDatapoints)
+	if maxDatapoints == 0 {
+		maxDatapoints = 1000
+	}
+	startBatches := int(req.StartBatches)
+	endBatches := int(req.EndBatches)
+	if endBatches <= 0 {
+		endBatches = math.MaxInt32
+	}
+
+	metricName := req.MetricName
+	metricType := req.MetricType
+	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
+		return errors.New("must specify a metric type")
+	}
+	if metricName == "" {
+		return errors.New("must provide metric name")
+	}
+
+	config, err := a.m.db.ExperimentConfig(experimentID)
+	if err != nil {
+		return errors.Wrapf(err, "error fetching experiment config from database")
+	}
+	searcherConfig := config.Searcher
+
+	trialCursors := make(map[int32]time.Time)
+	currentTrials := make(map[int32]bool)
+	for {
+		var response apiv1.TrialsSampleResponse
+		var promotedTrials []int32
+		var demotedTrials []int32
+		var trials []*apiv1.TrialsSampleResponse_Trial
+
+		seenThisRound := make(map[int32]bool)
+
+		trialIDs, err := a.topTrials(experimentID, maxTrials, searcherConfig)
+		if err != nil {
+			return errors.Wrapf(err, "error determining top trials")
+		}
+		for _, trialID := range trialIDs {
+			trial, err := a.fetchTrialSample(trialID, metricName, metricType, maxDatapoints,
+				startBatches, endBatches, currentTrials, trialCursors)
+			if err != nil {
+				return err
+			}
+
+			if _, current := currentTrials[trialID]; !current {
+				promotedTrials = append(promotedTrials, trialID)
+				currentTrials[trialID] = true
+			}
+			seenThisRound[trialID] = true
+
+			trials = append(trials, trial)
+		}
+		for oldTrial := range currentTrials {
+			if !seenThisRound[oldTrial] {
+				demotedTrials = append(demotedTrials, oldTrial)
+				delete(trialCursors, oldTrial)
+			}
+		}
+		// Deletes from currentTrials have to happen when not looping over currentTrials
+		for _, oldTrial := range demotedTrials {
+			delete(currentTrials, oldTrial)
+		}
+
+		response.Trials = trials
+		response.PromotedTrials = promotedTrials
+		response.DemotedTrials = demotedTrials
+
+		if err := resp.Send(&response); err != nil {
+			return errors.Wrap(err, "error sending sample of trial metric streams")
+		}
+
+		experiment, _ := a.getExperiment(experimentID)
+		if experiment.State == experimentv1.State_STATE_COMPLETED {
+			return nil
+		}
+
+		time.Sleep(metricsStreamPeriod)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
 }

@@ -4,6 +4,12 @@
  Hyperparameter Search: Adaptive (Simple)
 ##########################################
 
+.. warning::
+
+   Adaptive (Simple) is deprecated and will be removed in a future
+   release. We recommend using the state-of-the-art :ref:`Adaptive
+   (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>` searcher.
+
 The ``adaptive_simple`` searcher takes two intuitive configuration
 options capturing how many configurations to search and a maximum
 resource budget allowed per configuration:

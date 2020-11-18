@@ -13,6 +13,8 @@ type Config struct {
 	Type             string                  `json:"type"`
 	Fit              string                  `json:"fit"`
 	ResourceProvider *ResourceProviderConfig `json:"resource_provider"`
+	Preemption       bool                    `json:"preemption"`
+	DefaultPriority  *int                    `json:"default_priority"`
 }
 
 // ResourceProviderConfig hosts configuration fields for the resource manager.

@@ -14,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -23,33 +22,26 @@ type apiServer struct {
 	m *Master
 }
 
-// paginate returns a subset of the values given the offset and limit. Negative offsets denotes that
-// offsets should be calculated from the end.
+// paginate returns a paginated subset of the values and sets the pagination response.
 func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, limit int32) error {
 	rv := reflect.ValueOf(values)
 	if rv.Elem().Kind() != reflect.Slice {
 		return errors.Errorf("error paginating non-slice type: %T", rv.Kind())
 	}
 	total := int32(rv.Elem().Len())
-	startIndex := offset
-	if offset < 0 {
-		startIndex = total + offset
-	}
-	endIndex := startIndex + limit
-	if limit == 0 || endIndex > total {
-		endIndex = total
+	pagination, err := api.Paginate(int(total), int(offset), int(limit))
+	if err != nil {
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 	*p = &apiv1.Pagination{
 		Offset:     offset,
 		Limit:      limit,
-		StartIndex: startIndex,
-		EndIndex:   endIndex,
+		StartIndex: int32(pagination.StartIndex),
+		EndIndex:   int32(pagination.EndIndex),
 		Total:      total,
 	}
-	rv.Elem().Set(rv.Elem().Slice(int(startIndex), int(endIndex)))
-	return grpc.ValidateRequest(
-		func() (bool, string) { return 0 <= startIndex && startIndex <= total, "offset out of bounds" },
-	)
+	rv.Elem().Set(rv.Elem().Slice(pagination.StartIndex, pagination.EndIndex))
+	return nil
 }
 
 // sort sorts the provided slice in place. The second parameter denotes whether sorting should be

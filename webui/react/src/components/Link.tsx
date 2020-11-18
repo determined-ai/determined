@@ -1,7 +1,6 @@
 import React, { MouseEvent, MouseEventHandler, PropsWithChildren, useCallback } from 'react';
 
-import { handlePath, windowOpenFeatures } from 'routes/utils';
-import { serverAddress } from 'routes/utils';
+import { handlePath, linkPath, windowOpenFeatures } from 'routes/utils';
 
 import css from './Link.module.scss';
 
@@ -10,38 +9,38 @@ export interface Props {
   disabled?: boolean;
   inherit?: boolean;
   isButton?: boolean;
-  noProxy?: boolean;
+  // is this external to the assets hosted by React?
+  external?: boolean;
   path?: string;
   popout?: boolean;
   onClick?: MouseEventHandler;
 }
 
 const Link: React.FC<Props> = ({
-  noProxy,
-  path = '#',
+  external,
   popout,
   onClick,
   ...props
 }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowOpenFeatures.join(' ');
-  const linkPath = noProxy ? serverAddress(true, path) : path;
 
   if (props.className) classes.push(props.className);
   if (!props.disabled) classes.push(css.link);
   if (props.inherit) classes.push(css.inherit);
   if (props.isButton) classes.push('ant-btn');
 
+  const href = props.path ? linkPath(props.path, external) : undefined;
   const handleClick = useCallback((event: MouseEvent) => {
-    handlePath(event, { onClick, path: linkPath, popout });
-  }, [ onClick, popout, linkPath ]);
+    handlePath(event, { external, onClick, path: props.path, popout });
+  }, [ onClick, popout, props.path, external ]);
 
   return props.disabled ? (
     <span className={classes.join(' ')}>{props.children}</span>
   ) : (
     <a
       className={classes.join(' ')}
-      href={linkPath}
+      href={href}
       rel={rel}
       onClick={handleClick}>
       {props.children}

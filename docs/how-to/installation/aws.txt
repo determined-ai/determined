@@ -184,6 +184,18 @@ Spinning up the Cluster
       -  Maximum number of dynamic agent instances at one time.
       -  5
 
+   -  -  ``--spot``
+      -  Use spot instances.
+      -  False
+
+   -  -  ``--spot-max-price``
+
+      -  A maximum price for the spot instances. If the price on the
+         spot market exceeds this value, Determined will not create new
+         instances. Optional
+
+      -  The on-demand price for the instance type.
+
    -  -  ``--dry-run``
       -  Print the template but do not execute it.
       -  False
@@ -357,8 +369,10 @@ Master
 ------
 
 -  Allow EC2 to assume role
--  Allow EC2 to dynamically create and terminate instances with agent
+-  Allow EC2 to describe, create, and terminate instances with agent
    role
+-  Allow EC2 to describe, create, and terminate spot instance requests
+   (only required if using spot instances)
 
 .. code:: yaml
 
@@ -385,6 +399,9 @@ Master
                    - ec2:TerminateInstances
                    - ec2:CreateTags
                    - ec2:RunInstances
+                   - ec2:CancelSpotInstanceRequests      # Only required if using spot instances
+                   - ec2:RequestSpotInstances            # Only required if using spot instances
+                   - ec2:DescribeSpotInstanceRequests    # Only required if using spot instances
                  Resource: "*"
          - PolicyName: pass-role
            PolicyDocument:
@@ -480,6 +497,10 @@ Running Determined
       managed by the Determined master. This pair should be unique to
       your Determined installation. If it is not, Determined may
       inadvertently manage your non-Determined EC2 instances.
+
+      If using spot instances, Determined also assumes that any EC2 spot
+      instance requests with the configured tag_key:tag_value pair are
+      managed by the Determined master.
 
    .. code:: yaml
 

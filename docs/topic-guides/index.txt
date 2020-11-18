@@ -26,8 +26,9 @@ explanation. Below you will find some suggested starting guides.
 **Elastic Infrastructure**
 
 -  :ref:`elastic-infra-index`
--  :ref:`dynamic-agents-aws`
 -  :ref:`dynamic-agents-gcp`
+-  :ref:`dynamic-agents-aws`
+-  :ref:`aws-spot`
 
 **Model Definitions**
 
@@ -63,10 +64,12 @@ The full list of our topic guides can be found below:
    aws
    gcp
    elastic-infra/index
-   elastic-infra/dynamic-agents-aws
    elastic-infra/dynamic-agents-gcp
+   elastic-infra/dynamic-agents-aws
+   elastic-infra/aws-spot
    terminology-concepts
    tls
+   training-units
    user-interfaces
    users
    yaml

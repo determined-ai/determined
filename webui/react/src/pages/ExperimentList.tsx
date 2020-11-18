@@ -25,7 +25,8 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { handlePath, openBlank } from 'routes/utils';
 import {
-  archiveExperiment, getExperimentList, killExperiment, openOrCreateTensorboard, setExperimentState,
+  activateExperiment, archiveExperiment, cancelExperiment, getExperimentList,
+  killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ApiSorter } from 'services/types';
@@ -152,8 +153,7 @@ const ExperimentList: React.FC = () => {
         <TagList
           tags={record.labels || []}
           onChange={experimentTags.handleTagListChange(record.id)}
-          onCreate={experimentTags.handleTagListCreate(record.id)}
-          onDelete={experimentTags.handleTagListDelete(record.id)} />
+        />
       </div>
     );
 
@@ -178,11 +178,13 @@ const ExperimentList: React.FC = () => {
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
+    setPagination(prev => ({ ...prev, offset: 0 }));
   }, []);
 
   const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
+    setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
   const handleArchiveChange = useCallback((value: boolean): void => {
@@ -217,20 +219,17 @@ const ExperimentList: React.FC = () => {
       .map(experiment => {
         switch (action) {
           case Action.Activate:
-            return setExperimentState({ experimentId: experiment.id, state: RunState.Active });
+            return activateExperiment({ experimentId: experiment.id });
           case Action.Archive:
-            return archiveExperiment(experiment.id);
+            return archiveExperiment({ experimentId: experiment.id });
           case Action.Cancel:
-            return setExperimentState({
-              experimentId: experiment.id,
-              state: RunState.StoppingCanceled,
-            });
+            return cancelExperiment({ experimentId: experiment.id });
           case Action.Kill:
             return killExperiment({ experimentId: experiment.id });
           case Action.Pause:
-            return setExperimentState({ experimentId: experiment.id, state: RunState.Paused });
+            return pauseExperiment({ experimentId: experiment.id });
           case Action.Unarchive:
-            return archiveExperiment(experiment.id, false);
+            return unarchiveExperiment({ experimentId: experiment.id });
           default:
             return Promise.resolve();
         }

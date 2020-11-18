@@ -14,5 +14,12 @@
 // ***********************************************************
 
 import './commands';
+import { STORAGE_KEY_AUTH } from '../constants';
 
-Cypress.Cookies.defaults({ whitelist: /auth/ });
+const _clear = Cypress.LocalStorage.clear;
+Cypress.LocalStorage.clear = function(aKeys) {
+  const keysToKeep = new Set([ STORAGE_KEY_AUTH ]);
+  const keys = (aKeys.length ? aKeys : Object.keys(window.localStorage))
+    .filter(key => !keysToKeep.has(key));
+  return _clear(keys);
+};

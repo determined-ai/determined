@@ -1,7 +1,9 @@
 import sys
-from typing import Dict, List, Optional
+import time
+from typing import Dict, List, Optional, Tuple
 
 import boto3
+import tqdm
 from botocore.exceptions import ClientError, WaiterError
 
 from determined_deploy.aws import constants
@@ -55,9 +57,16 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
 
     # Second, terminate the agents so nothing can write to the checkpoint bucket. We create agent
     # instances outside of cloudformation, so we have to manually terminate them.
-    print("Terminating Running Agents")
-    terminate_running_agents(stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session)
-    print("Agents Terminated")
+    if stack_uses_spot(stack_name, boto3_session):
+        print("Terminating Running Agents and Pending Spot Requests")
+        clean_up_spot(stack_name, boto3_session)
+        print("Agents and Spot Requests Terminated")
+    else:
+        print("Terminating Running Agents")
+        terminate_running_agents(
+            stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session
+        )
+        print("Agents Terminated")
 
     # Third, empty the bucket that was created for this stack.
     bucket_name = get_output(stack_name, boto3_session).get(
@@ -118,7 +127,13 @@ def update_stack(
     stack_output = get_output(stack_name, boto3_session)
 
     stop_master(stack_output[constants.cloudformation.MASTER_ID], boto3_session)
-    terminate_running_agents(stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session)
+
+    if stack_uses_spot(stack_name, boto3_session):
+        clean_up_spot(stack_name, boto3_session, disable_tqdm=True)
+    else:
+        terminate_running_agents(
+            stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session
+        )
 
     try:
         if parameters:
@@ -188,6 +203,36 @@ def get_output(stack_name: str, boto3_session: boto3.session.Session) -> Dict[st
     return response_dict
 
 
+def get_params(stack_name: str, boto3_session: boto3.session.Session) -> Dict[str, str]:
+    cfn = boto3_session.client("cloudformation")
+    response = cfn.describe_stacks(StackName=stack_name)
+    response_dict = {}
+    params = response["Stacks"][0]["Parameters"]
+    for param_obj in params:
+        k = param_obj["ParameterKey"]
+        v = param_obj["ParameterValue"]
+        response_dict[k] = v
+    return response_dict
+
+
+def stack_uses_spot(stack_name: str, boto3_session: boto3.session.Session) -> bool:
+    params = get_params(stack_name, boto3_session)
+    if constants.cloudformation.SPOT_ENABLED not in params.keys():
+        return False
+
+    spot_enabled_str_val = params[constants.cloudformation.SPOT_ENABLED]
+    if spot_enabled_str_val.lower() == "true":
+        return True
+    else:
+        return False
+
+
+def get_management_tag_key_value(stack_name: str) -> Tuple[str, str]:
+    tag_key = f"det-{stack_name}"
+    tag_val = f"det-agent-{stack_name}"
+    return tag_key, tag_val
+
+
 def deploy_stack(
     stack_name: str,
     template_body: str,
@@ -245,7 +290,7 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
     response = ec2.describe_instances(
         Filters=[
             {"Name": "tag:Name", "Values": [agent_tag_name]},
-            {"Name": "instance-state-name", "Values": ["running"]},
+            {"Name": "instance-state-name", "Values": ["running", "pending"]},
         ]
     )
 
@@ -260,6 +305,120 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
         ec2.terminate_instances(InstanceIds=instance_ids)
         for n in range(NUM_WAITS):
             print("Waiting For Agents To Terminate")
+            try:
+                waiter.wait(InstanceIds=instance_ids, WaiterConfig={"Delay": 10})
+                break
+            except WaiterError as e:
+                if n == NUM_WAITS - 1:
+                    raise e
+
+
+# EC2 Spot
+def list_spot_requests_for_stack(
+    stack_name: str, boto3_session: boto3.session.Session
+) -> List[Dict]:
+    tag_key, tag_val = get_management_tag_key_value(stack_name)
+    ec2 = boto3_session.client("ec2")
+    response = ec2.describe_spot_instance_requests(
+        Filters=[
+            {"Name": f"tag:{tag_key}", "Values": [tag_val]},
+            {"Name": "state", "Values": ["open", "active"]},
+        ]
+    )
+    spot_requests = response["SpotInstanceRequests"]
+    reqs = []
+    for s in spot_requests:
+        req = {
+            "id": s["SpotInstanceRequestId"],
+            "state": s["State"],
+            "statusCode": s["Status"]["Code"],
+            "statusMessage": s["Status"]["Message"],
+            "instanceId": s.get("InstanceId", None),
+        }
+        reqs.append(req)
+    return reqs
+
+
+def delete_spot_requests_and_agents(
+    stack_name: str, boto3_session: boto3.session.Session
+) -> List[str]:
+    """
+    List all spot requests. Any requests that have an associated instance,
+    terminate the instances (this will automatically cancel the spot
+    request). Any requests that do not have an associated instance, cancel
+    the spot requests.
+
+    Returns the list of instance_ids that were deleted so at the end of spot
+    cleanup, we can wait until all instances have been terminated.
+    """
+    spot_reqs = list_spot_requests_for_stack(stack_name, boto3_session)
+    instances_to_del = []
+    requests_to_term = []
+    for req in spot_reqs:
+        if req["instanceId"] is not None:
+            instances_to_del.append(req["instanceId"])
+        else:
+            requests_to_term.append(req["id"])
+
+    ec2 = boto3_session.client("ec2")
+
+    if len(instances_to_del) > 0:
+        ec2.terminate_instances(InstanceIds=instances_to_del)
+
+    if len(requests_to_term) > 0:
+        ec2.cancel_spot_instance_requests(SpotInstanceRequestIds=requests_to_term)
+
+    return instances_to_del
+
+
+def clean_up_spot(
+    stack_name: str, boto3_session: boto3.session.Session, disable_tqdm: bool = False
+) -> None:
+
+    # The spot API is eventually consistent and the only way to guarantee
+    # that we don't leave any spot requests alive (that may eventually be
+    # fulfilled and lead to running EC2 instances) is to wait a long enough
+    # period that any created spot requests will have shown up in the API.
+    # 60 seconds seems like a relatively safe amount of time.
+    SPOT_WAIT_SECONDS = 60
+
+    start_time = time.time()
+
+    all_terminated_instance_ids = set()
+
+    format_str = "{l_bar}{bar}| (remaining time: {remaining})"
+    pbar = tqdm.tqdm(
+        total=SPOT_WAIT_SECONDS,
+        desc="Cleaning up spot instances and spot instance requests",
+        bar_format=format_str,
+        disable=disable_tqdm,
+    )
+    progress_bar_state = 0.0
+    while True:
+        elapsed_time = time.time() - start_time
+        if elapsed_time >= SPOT_WAIT_SECONDS:
+            pbar.update(SPOT_WAIT_SECONDS - progress_bar_state)  # Exit TQDM with it showing 100%
+            pbar.close()
+            break
+
+        tqdm_update = elapsed_time - progress_bar_state
+        pbar.update(tqdm_update)
+        progress_bar_state = elapsed_time
+
+        instance_ids = delete_spot_requests_and_agents(stack_name, boto3_session)
+        for i in instance_ids:
+            all_terminated_instance_ids.add(i)
+
+    # Final cleanup
+    instance_ids = delete_spot_requests_and_agents(stack_name, boto3_session)
+    for i in instance_ids:
+        all_terminated_instance_ids.add(i)
+
+    if len(instance_ids) > 0:
+        ec2 = boto3_session.client("ec2")
+        waiter = ec2.get_waiter("instance_terminated")
+        for n in range(NUM_WAITS):
+            print("Waiting For Spot Agents To Terminate")
             try:
                 waiter.wait(InstanceIds=instance_ids, WaiterConfig={"Delay": 10})
                 break

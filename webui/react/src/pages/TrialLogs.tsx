@@ -1,12 +1,11 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router';
+import { useHistory, useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
-import Message from 'components/Message';
-import UI from 'contexts/UI';
+import Message, { MessageType } from 'components/Message';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import { getTrialDetails } from 'services/api';
@@ -19,16 +18,16 @@ import { Log, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
 interface Params {
+  experimentId?: string;
   trialId: string;
 }
 
 const THROTTLE_TIME = 500;
 
 const TrialLogs: React.FC = () => {
-  const { trialId } = useParams<Params>();
-  const id = parseInt(trialId);
-  const title = `Trial ${id} Logs`;
-  const setUI = UI.useActionContext();
+  const { experimentId: experimentIdParam, trialId: trialIdParam } = useParams<Params>();
+  const history = useHistory();
+  const trialId = parseInt(trialIdParam);
   const logsRef = useRef<LogViewerHandles>(null);
   const [ offset, setOffset ] = useState(-TAIL_SIZE);
   const [ oldestId, setOldestId ] = useState(Number.MAX_SAFE_INTEGER);
@@ -36,7 +35,10 @@ const TrialLogs: React.FC = () => {
   const [ isDownloading, setIsDownloading ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
-  const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id });
+  const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
+
+  const title = `Trial ${trialId} Logs`;
+  const experimentId = trial.data?.experimentId;
 
   const handleScrollToTop = useCallback(() => {
     if (oldestReached) return;
@@ -44,7 +46,7 @@ const TrialLogs: React.FC = () => {
     let buffer: Log[] = [];
 
     consumeStream<V1TrialLogsResponse>(
-      detApi.StreamingExperiments.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
+      detApi.StreamingExperiments.determinedTrialLogs(trialId, offset - TAIL_SIZE, TAIL_SIZE),
       event => buffer.push(jsonToTrialLog(event)),
     ).then(() => {
       if (!logsRef.current) return;
@@ -57,7 +59,7 @@ const TrialLogs: React.FC = () => {
       }
       buffer = [];
     });
-  }, [ id, offset, oldestId, oldestReached ]);
+  }, [ offset, oldestId, oldestReached, trialId ]);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (downloadModal) {
@@ -68,14 +70,14 @@ const TrialLogs: React.FC = () => {
     setIsDownloading(true);
 
     try {
-      await downloadTrialLogs(id);
+      await downloadTrialLogs(trialId);
     } catch (e) {
       handleError({
         error: e,
         message: 'trial log download failed.',
         publicMessage: `
-          Failed to download trial ${id} logs.
-          If the problem persists please try our CLI "det trial logs ${id}"
+          Failed to download trial ${trialId} logs.
+          If the problem persists please try our CLI "det trial logs ${trialId}"
         `,
         publicSubject: 'Download Failed',
         type: ErrorType.Ui,
@@ -83,26 +85,31 @@ const TrialLogs: React.FC = () => {
     }
 
     setIsDownloading(false);
-  }, [ downloadModal, id ]);
+  }, [ downloadModal, trialId ]);
 
   const handleDownloadLogs = useCallback(() => {
     const modal = Modal.confirm({
       content: <div>
         We recommend using the Determined CLI to download trial logs:
         <code className="block">
-          det trial logs {id} &gt; experiment_{trial.data?.experimentId}_trial_{trialId}_logs.txt
+          det trial logs {trialId} &gt; experiment_{experimentId}_trial_{trialId}_logs.txt
         </code>
       </div>,
       icon: <ExclamationCircleOutlined />,
       okText: 'Proceed to Download',
       onOk: handleDownloadConfirm,
-      title: `Confirm Download for Trial ${id} Logs`,
+      title: `Confirm Download for Trial ${trialId} Logs`,
       width: 640,
     });
     setDownloadModal(modal);
-  }, [ handleDownloadConfirm, id, trial.data, trialId ]);
+  }, [ experimentId, handleDownloadConfirm, trialId ]);
 
-  useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
+  useEffect(() => {
+    // Experiment id does not exist in route, reroute to the one with it
+    if (!experimentIdParam && experimentId) {
+      history.replace(`/experiments/${experimentId}/trials/${trialId}/logs`);
+    }
+  }, [ experimentId, experimentIdParam, history, trialId ]);
 
   useEffect(() => {
     if (!trial.hasLoaded) return;
@@ -116,7 +123,7 @@ const TrialLogs: React.FC = () => {
     });
 
     consumeStream<V1TrialLogsResponse>(
-      detApi.StreamingExperiments.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
+      detApi.StreamingExperiments.determinedTrialLogs(trialId, -TAIL_SIZE, 0, true),
       event => {
         buffer.push(jsonToTrialLog(event));
         throttleFunc();
@@ -124,11 +131,14 @@ const TrialLogs: React.FC = () => {
     );
 
     return (): void => throttleFunc.cancel();
-  }, [ id, trial.hasLoaded ]);
+  }, [ trial.hasLoaded, trialId ]);
 
   if (trial.errorCount > 0 && !trial.isLoading) {
-    return <Message title={`Unable to find Trial ${trialId}`} />;
+    return <Message title={`Unable to find Trial ${trialId}`} type={MessageType.Warning} />;
   }
+
+  const experimentDetailPath = `/experiments/${trial.data?.experimentId}`;
+  const trialDetailPath = `${experimentDetailPath}/trials/${trialId}`;
 
   return (
     <LogViewer
@@ -136,8 +146,23 @@ const TrialLogs: React.FC = () => {
       isDownloading={isDownloading}
       isLoading={isLoading}
       noWrap
+      pageProps={{
+        backPath: trialDetailPath,
+        breadcrumb: [
+          { breadcrumbName: 'Experiments', path: '/experiments' },
+          {
+            breadcrumbName: `Experiment ${trial.data?.experimentId}`,
+            path: experimentDetailPath,
+          },
+          {
+            breadcrumbName: `Trial ${trialId}`,
+            path: trialDetailPath,
+          },
+          { breadcrumbName: 'Logs', path: '#' },
+        ],
+        title,
+      }}
       ref={logsRef}
-      title={title}
       onDownload={handleDownloadLogs}
       onScrollToTop={handleScrollToTop} />
   );

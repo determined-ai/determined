@@ -1,8 +1,4 @@
 describe('Navigation', () => {
-  before(() => {
-    cy.login();
-  });
-
   const pageTitleSelector = '[class*="Page_base_"]';
   const sectionTitleSelector = '[class*="Section_title_"]';
   const navSelector = '[class*="Navigation_base_"]';
@@ -48,7 +44,7 @@ describe('Navigation', () => {
   });
 
   describe('side menu buttons', () => {
-    beforeEach(() => {
+    before(() => {
       cy.visit('/det');
     });
 

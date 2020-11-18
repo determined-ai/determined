@@ -58,14 +58,16 @@ func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error)
 }
 
 // TrialExitedEarly indicates to the searcher that the trial with the given trialID exited early.
-func (s *Searcher) TrialExitedEarly(trialID int) ([]Operation, error) {
+func (s *Searcher) TrialExitedEarly(
+	trialID int, exitedReason *workload.ExitedReason,
+) ([]Operation, error) {
 	requestID, ok := s.eventLog.RequestIDs[trialID]
 	if !ok {
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
 
 	s.eventLog.TrialExitedEarly(requestID)
-	operations, err := s.method.trialExitedEarly(s.context(), requestID)
+	operations, err := s.method.trialExitedEarly(s.context(), requestID, *exitedReason)
 	s.eventLog.OperationsCreated(operations...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", trialID)

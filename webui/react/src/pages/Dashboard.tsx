@@ -132,7 +132,7 @@ const Dashboard: React.FC = () => {
   const taskFilter = <TaskFilter filters={filters} onChange={handleFilterChange} />;
 
   return (
-    <Page className={css.base} id="dashboard">
+    <Page className={css.base} docTitle="Overview" id="dashboard">
       <Section title="Overview">
         <div className={css.overview}>
           <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>

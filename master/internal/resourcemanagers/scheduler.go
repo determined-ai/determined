@@ -15,10 +15,12 @@ type Scheduler interface {
 // MakeScheduler returns the corresponding scheduler implementation.
 func MakeScheduler(schedulingPolicy string) Scheduler {
 	switch schedulingPolicy {
-	case "priority":
-		return NewPriorityScheduler()
-	case "fair_share":
+	case priorityScheduling:
+		return NewRoundRobinScheduler()
+	case fairShareScheduling:
 		return NewFairShareScheduler()
+	case roundRobinScheduling:
+		return NewRoundRobinScheduler()
 	default:
 		panic(fmt.Sprintf("invalid scheduler: %s", schedulingPolicy))
 	}

@@ -8,6 +8,8 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
+    Type,
     TypeVar,
     Union,
     cast,
@@ -375,28 +377,36 @@ def data_length(data: _Data) -> int:
     raise TypeError("Data of incorrect type: {}".format(type(data)))
 
 
-def to_device(data: _Data, device: torch.device, log_warning: bool = False) -> TorchData:
+def to_device(
+    data: _Data, device: torch.device, warned_types: Optional[Set[Type]] = None
+) -> TorchData:
     """
-    Accept np.ndarray, torch.Tensor, list, or dictionary. Recursively convert
-    any ndarrays to tensors and call .to() on any tensors or data types that
-    have custom serialization logic defined via a callable to() attribute.
+    Accept np.ndarray, torch.Tensor, list, or dictionary. Recursively convert any ndarrays to
+    tensors and call .to() on any tensors or data types that have custom serialization logic
+    defined via a callable to() attribute.
 
-    If the data cannot be moved to device, optionally log a warning and return
-    the original data.
+    If the data cannot be moved to device, log a warning (only once per type) and return the
+    original data.
     """
+    # Never print errors recursively.
+    if warned_types is None:
+        warned_types = set()
+
     if isinstance(data, dict):
-        return {name: to_device(d, device, log_warning) for name, d in data.items()}  # type: ignore
+        return {k: to_device(v, device, warned_types) for k, v in data.items()}  # type: ignore
     if isinstance(data, list):
-        return [to_device(d, device, log_warning) for d in data]  # type: ignore
+        return [to_device(d, device, warned_types) for d in data]  # type: ignore
     if isinstance(data, tuple):
-        return tuple(to_device(d, device, log_warning) for d in data)  # type: ignore
+        return tuple(to_device(d, device, warned_types) for d in data)  # type: ignore
     if isinstance(data, np.ndarray):
         return torch.from_numpy(data).to(device)
     if hasattr(data, "to") and callable(data.to):  # type: ignore
         return data.to(device)  # type: ignore
 
-    if log_warning:
-        logging.warning(f"Was not able to move data item of type '{type(data)}' to device.")
-        log_warning = False
+    if type(data) not in warned_types:
+        warned_types.add(type(data))
+        logging.warning(
+            f"Was not able to move data item of type '{type(data).__name__}' to device."
+        )
 
     return data

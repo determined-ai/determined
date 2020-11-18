@@ -1,19 +1,22 @@
 import { Breadcrumb, PageHeader } from 'antd';
 import { Route } from 'antd/lib/breadcrumb/Breadcrumb';
 import React, { useCallback } from 'react';
+import { Helmet } from 'react-helmet';
 
 import history from 'routes/history';
 import { CommonProps } from 'types';
 
+import Info from '../contexts/Info';
+
 import Link from './Link';
 import css from './Page.module.scss';
 
-interface BreadCrumbRoute {
+export interface BreadCrumbRoute {
   path: string;
   breadcrumbName: string;
 }
 
-interface Props extends CommonProps {
+export interface Props extends CommonProps {
   breadcrumb?: BreadCrumbRoute[];
   backPath?: string;
   headerInfo?: React.ReactNode;
@@ -22,6 +25,7 @@ interface Props extends CommonProps {
   subTitle?: React.ReactNode;
   title?: string;
   showDivider?: boolean;
+  docTitle?: string;
 }
 
 const breadCrumbRender = (route: Route, params: unknown, routes: Route[]) => {
@@ -33,9 +37,28 @@ const breadCrumbRender = (route: Route, params: unknown, routes: Route[]) => {
   );
 };
 
+const getFullDocTitle = (title?: string, clusterName?: string) => {
+  const segmentList = [];
+  if (title) {
+    segmentList.push(title);
+  }
+  if (clusterName) {
+    segmentList.push(clusterName);
+  }
+  segmentList.push('Determined');
+
+  return segmentList.join(' - ');
+};
+
 const Page: React.FC<Props> = (props: Props) => {
-  const showHeader = props.breadcrumb || props.title || props.backPath;
   const classes = [ props.className, css.base ];
+  const info = Info.useStateContext();
+  const showHeader = props.breadcrumb || props.title || props.backPath;
+
+  const docTitle = getFullDocTitle(
+    props.docTitle || props.title,
+    info.clusterName,
+  );
 
   const handleBack = useCallback(() => {
     if (props.backPath) history.push(props.backPath);
@@ -43,6 +66,9 @@ const Page: React.FC<Props> = (props: Props) => {
 
   return (
     <main className={classes.join(' ')} id={props.id}>
+      <Helmet>
+        <title>{docTitle}</title>
+      </Helmet>
       {props.breadcrumb && <div className={css.breadcrumbs}>
         <Breadcrumb itemRender={breadCrumbRender} routes={props.breadcrumb} />
       </div>}

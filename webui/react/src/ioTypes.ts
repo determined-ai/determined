@@ -37,10 +37,15 @@ export const ioDetailedUsers = io.array(ioDetailedUser);
 
 export type ioTypeDetailedUsers = io.TypeOf<typeof ioDetailedUsers>;
 
+export const ioLogin = io.type({ token: io.string });
+
+export type ioTypeLogin = io.TypeOf<typeof ioLogin>;
+
 /* Info */
 
 export const ioDeterminedInfo = io.type({
   cluster_id: io.string,
+  cluster_name: io.string,
   master_id: io.string,
   telemetry: io.type({
     enabled: io.boolean,

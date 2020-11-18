@@ -3,6 +3,8 @@ package internal
 import (
 	"encoding/json"
 
+	"github.com/determined-ai/determined/master/pkg/check"
+
 	"github.com/pkg/errors"
 )
 
@@ -14,6 +16,7 @@ type Options struct {
 	MasterPort      int    `json:"master_port"`
 	AgentID         string `json:"agent_id"`
 	ArtificialSlots int    `json:"artificial_slots"`
+	SlotType        string `json:"slot_type"`
 
 	ContainerMasterHost string `json:"container_master_host"`
 	ContainerMasterPort int    `json:"container_master_port"`
@@ -37,12 +40,15 @@ type Options struct {
 	NoProxy    string `json:"no_proxy"`
 
 	Security SecurityOptions `json:"security"`
+
+	Fluent FluentOptions `json:"fluent"`
 }
 
 // Validate validates the state of the Options struct.
 func (o Options) Validate() []error {
 	return []error{
 		o.validateTLS(),
+		check.In(o.SlotType, []string{"gpu", "auto", "none"}),
 	}
 }
 
@@ -75,9 +81,10 @@ type SecurityOptions struct {
 
 // TLSOptions is the TLS connection configuration for the agent.
 type TLSOptions struct {
-	Enabled    bool   `json:"enabled"`
-	SkipVerify bool   `json:"skip_verify"`
-	MasterCert string `json:"master_cert"`
+	Enabled        bool   `json:"enabled"`
+	SkipVerify     bool   `json:"skip_verify"`
+	MasterCert     string `json:"master_cert"`
+	MasterCertName string `json:"master_cert_name"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -87,4 +94,10 @@ func (t TLSOptions) Validate() []error {
 		errs = append(errs, errors.New("cannot specify a master cert file with verification off"))
 	}
 	return errs
+}
+
+// FluentOptions stores configurable Fluent Bit-related options.
+type FluentOptions struct {
+	Image string `json:"image"`
+	Port  int    `json:"port"`
 }

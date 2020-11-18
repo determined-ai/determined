@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -14,7 +15,6 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -27,6 +27,7 @@ import (
 	proto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -42,6 +43,10 @@ type agent struct {
 
 	socket *actor.Ref
 	cm     *actor.Ref
+	fluent *actor.Ref
+
+	masterProto  string
+	masterClient *http.Client
 }
 
 func (a *agent) addProxy(config *container.Config) {
@@ -98,6 +103,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Ask(a.socket, api.WriteMessage{Message: proto.MasterMessage{ContainerLog: &msg}})
 		}
 
+	case model.TrialLog:
+		return a.postTrialLog(msg)
+
 	case actor.ChildFailed:
 		switch msg.Child {
 		case a.socket:
@@ -123,6 +131,12 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		a.handleAPIRequest(ctx, msg)
 
 	case actor.PostStop:
+		if a.fluent != nil {
+			if err := a.fluent.StopAndAwaitTermination(); err != nil {
+				ctx.Log().Errorf("error killing logging container %v", err)
+			}
+		}
+
 		ctx.Log().Info("agent shut down")
 
 	default:
@@ -208,27 +222,33 @@ func (a *agent) tlsConfig() (*tls.Config, error) {
 		InsecureSkipVerify: a.Options.Security.TLS.SkipVerify, //nolint:gosec
 		MinVersion:         tls.VersionTLS12,
 		RootCAs:            pool,
+		ServerName:         a.Options.Security.TLS.MasterCertName,
 	}, nil
 }
 
-func (a *agent) getMasterInfo() error {
+func (a *agent) makeMasterClient() error {
 	tlsConfig, err := a.tlsConfig()
 	if err != nil {
 		return errors.Wrap(err, "failed to construct TLS config")
 	}
 
-	masterProto := insecureScheme
+	a.masterProto = insecureScheme
 	if tlsConfig != nil {
-		masterProto = secureScheme
+		a.masterProto = secureScheme
 	}
-	client := &http.Client{
+	a.masterClient = &http.Client{
 		Transport: &http.Transport{
 			Proxy:           http.DefaultTransport.(*http.Transport).Proxy,
 			TLSClientConfig: tlsConfig,
 		},
 	}
+	return nil
+}
 
-	resp, err := client.Get(fmt.Sprintf("%s://%s:%d/info", masterProto, a.MasterHost, a.MasterPort))
+func (a *agent) getMasterInfo() error {
+	resp, err := a.masterClient.Get(
+		fmt.Sprintf("%s://%s:%d/info", a.masterProto, a.MasterHost, a.MasterPort),
+	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get master info")
 	}
@@ -242,28 +262,25 @@ func (a *agent) getMasterInfo() error {
 }
 
 func (a *agent) setup(ctx *actor.Context) error {
+	fluentActor, err := newFluentActor(ctx, a.Options)
+	if err != nil {
+		return errors.Wrap(err, "failed to start Fluent daemon")
+	}
+	a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
+
 	ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
 	actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
 
-	if a.ArtificialSlots > 0 {
-		for i := 0; i < a.ArtificialSlots; i++ {
-			id := uuid.New().String()
-			a.Devices = append(a.Devices, device.Device{
-				ID: i, Brand: "Artificial", UUID: id, Type: device.CPU})
-		}
-	} else {
-		d, err := detectDevices(a.Options.VisibleGPUs)
-		if err != nil {
-			return err
-		}
-		a.Devices = d
+	if err = a.detect(); err != nil {
+		return err
 	}
 	ctx.Log().Info("detected compute devices:")
 	for _, d := range a.Devices {
 		ctx.Log().Infof("\t%s", d.String())
 	}
 
-	if v, err := getNvidiaVersion(); err != nil {
+	v, err := getNvidiaVersion()
+	if err != nil {
 		return err
 	} else if v != "" {
 		ctx.Log().Infof("Nvidia driver version: %s", v)
@@ -277,12 +294,19 @@ func (a *agent) setup(ctx *actor.Context) error {
 		}
 	}
 
-	if err := a.getMasterInfo(); err != nil {
+	if err = a.makeMasterClient(); err != nil {
+		return errors.Wrap(err, "error connecting to master")
+	}
+
+	if err = a.getMasterInfo(); err != nil {
 		return errors.Wrap(err, "error fetching master info")
 	}
 
-	a.cm, _ = ctx.ActorOf("containers",
-		&containerManager{MasterInfo: a.MasterInfo, Options: a.Options, Devices: a.Devices})
+	cm, err := newContainerManager(a, fluentActor.port)
+	if err != nil {
+		return errors.Wrap(err, "error initializing container manager")
+	}
+	a.cm, _ = ctx.ActorOf("containers", cm)
 
 	if a.MasterHost != "" {
 		if err := a.connectToMaster(ctx); err != nil {
@@ -327,6 +351,26 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
 		Version: a.Version, Devices: a.Devices, ResourcePool: a.ResourcePool, Label: a.Label}}
 	ctx.Ask(a.socket, api.WriteMessage{Message: started})
+	return nil
+}
+
+func (a *agent) postTrialLog(log model.TrialLog) error {
+	j, err := json.Marshal([]model.TrialLog{log})
+	if err != nil {
+		return err
+	}
+
+	resp, err := a.masterClient.Post(
+		fmt.Sprintf("%s://%s:%d/trial_logs", a.masterProto, a.MasterHost, a.MasterPort),
+		"application/json",
+		bytes.NewReader(j),
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed to post trial log")
+	}
+	if err := resp.Body.Close(); err != nil {
+		return errors.Wrap(err, "failed to read master response for trial log")
+	}
 	return nil
 }
 

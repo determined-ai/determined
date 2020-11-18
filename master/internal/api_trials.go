@@ -2,9 +2,16 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/protobuf/ptypes"
+
+	"github.com/determined-ai/determined/proto/pkg/logv1"
+
+	"github.com/google/uuid"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,8 +29,12 @@ import (
 )
 
 const (
-	batchSize     = 1000
-	batchWaitTime = 100 * time.Millisecond
+	batchSize = 1000
+)
+
+var (
+	batchWaitTime              = 100 * time.Millisecond
+	distinctFieldBatchWaitTime = 5 * time.Second
 )
 
 func trialStatus(d *db.PgDB, trialID int32) (model.State, int, error) {
@@ -42,53 +53,175 @@ func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer) error {
 	if err := grpc.ValidateRequest(
 		grpc.ValidateLimit(req.Limit),
+		grpc.ValidateFollow(req.Limit, req.Follow),
 	); err != nil {
 		return err
 	}
+
 	_, total, err := trialStatus(a.m.db, req.TrialId)
 	if err != nil {
 		return err
 	}
 
-	offset := api.EffectiveOffset(int(req.Offset), total)
+	filters, err := constructTrialLogsFilters(req)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
+	}
 
-	if limit := int32(total - offset); !req.Follow && (limit < req.Limit || req.Limit == 0) {
-		req.Limit = limit
+	logID := int32(-1) // WebUI assumes logs are 0-indexed.
+	onBatch := func(b api.LogBatch) error {
+		return b.ForEach(func(r interface{}) error {
+			trialLog := r.(*model.TrialLog)
+			logID++
+			return resp.Send(&apiv1.TrialLogsResponse{
+				Id:      logID,
+				Message: trialLog.Message,
+			})
+		})
 	}
-	count := 0
-	for {
-		queryLimit := int(req.Limit) - count
-		if req.Limit == 0 || queryLimit > batchSize {
-			queryLimit = batchSize
+
+	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+		switch {
+		case lr.Follow, lr.Limit > batchSize:
+			lr.Limit = batchSize
+		case lr.Limit <= 0:
+			return nil, nil
 		}
-		if queryLimit <= 0 {
-			return nil
+
+		b, err := a.m.db.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters)
+		if err != nil {
+			return nil, err
 		}
-		var logs []*apiv1.TrialLogsResponse
-		if err := a.m.db.QueryProto("stream_logs", &logs, req.TrialId, offset, queryLimit); err != nil {
-			return err
+
+		return model.TrialLogBatch(b), err
+	}
+
+	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
+		state, _, err := trialStatus(a.m.db, req.TrialId)
+		if err != nil || model.TerminalStates[state] {
+			return true, err
 		}
-		for i, log := range logs {
-			log.Id = int32(offset + i)
-			if err := resp.Send(log); err != nil {
-				return err
+		return false, nil
+	})
+
+	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
+	lReq := api.LogsRequest{Offset: offset, Limit: limit, Follow: req.Follow, Filters: filters}
+	return a.m.system.MustActorOf(
+		actor.Addr("logStore-"+uuid.New().String()),
+		api.NewLogStoreProcessor(
+			resp.Context(),
+			lReq,
+			fetch,
+			onBatch,
+			terminateCheck,
+			&batchWaitTime,
+		),
+	).AwaitTermination()
+}
+
+func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error) {
+	var filters []api.Filter
+
+	addInFilter := func(field string, values interface{}, count int) {
+		if values != nil && count > 0 {
+			filters = append(filters, api.Filter{
+				Field:     field,
+				Operation: api.FilterOperationIn,
+				Values:    values,
+			})
+		}
+	}
+
+	addInFilter("agent_id", req.AgentIds, len(req.AgentIds))
+	addInFilter("container_id", req.ContainerIds, len(req.ContainerIds))
+	addInFilter("rank_id", req.RankIds, len(req.RankIds))
+	addInFilter("stdtype", req.Stdtypes, len(req.Stdtypes))
+	addInFilter("source", req.Sources, len(req.Sources))
+	addInFilter("level", func() interface{} {
+		var levels []string
+		for _, l := range req.Levels {
+			switch l {
+			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
+				levels = append(levels, "DEBUG")
+			case logv1.LogLevel_LOG_LEVEL_DEBUG:
+				levels = append(levels, "DEBUG")
+			case logv1.LogLevel_LOG_LEVEL_INFO:
+				levels = append(levels, "INFO")
+			case logv1.LogLevel_LOG_LEVEL_WARNING:
+				levels = append(levels, "WARNING")
+			case logv1.LogLevel_LOG_LEVEL_ERROR:
+				levels = append(levels, "ERROR")
+			case logv1.LogLevel_LOG_LEVEL_CRITICAL:
+				levels = append(levels, "CRITICAL")
 			}
 		}
-		newRecords := len(logs)
-		count += newRecords
-		offset += newRecords
-		if newRecords < queryLimit {
-			state, _, err := trialStatus(a.m.db, req.TrialId)
-			if err != nil || model.TerminalStates[state] {
-				return err
-			}
+		return levels
+	}(), len(req.Levels))
+
+	if req.TimestampBefore != nil {
+		t, err := ptypes.Timestamp(req.TimestampBefore)
+		if err != nil {
+			return nil, err
 		}
-		time.Sleep(batchWaitTime)
-		if err := resp.Context().Err(); err != nil {
-			// context is closed
-			return nil
-		}
+		filters = append(filters, api.Filter{
+			Field:     "timestamp",
+			Operation: api.FilterOperationLessThan,
+			Values:    t,
+		})
 	}
+
+	if req.TimestampAfter != nil {
+		t, err := ptypes.Timestamp(req.TimestampAfter)
+		if err != nil {
+			return nil, err
+		}
+		filters = append(filters, api.Filter{
+			Field:     "timestamp",
+			Operation: api.FilterOperationGreaterThan,
+			Values:    t,
+		})
+	}
+	return filters, nil
+}
+
+func (a *apiServer) TrialLogsFields(
+	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer) error {
+	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+		var fields apiv1.TrialLogsFieldsResponse
+		err := a.m.db.QueryProto("get_trial_log_fields", &fields, req.TrialId)
+		if err != nil {
+			return nil, err
+		}
+
+		return api.ToLogBatchOfOne(&fields), err
+	}
+
+	onBatch := func(b api.LogBatch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(
+				r.(*apiv1.TrialLogsFieldsResponse))
+		})
+	}
+
+	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
+		state, _, err := trialStatus(a.m.db, req.TrialId)
+		if err != nil || model.TerminalStates[state] {
+			return true, err
+		}
+		return false, nil
+	})
+
+	return a.m.system.MustActorOf(
+		actor.Addr("logStore-"+uuid.New().String()),
+		api.NewLogStoreProcessor(
+			resp.Context(),
+			api.LogsRequest{Follow: req.Follow},
+			fetch,
+			onBatch,
+			terminateCheck,
+			&distinctFieldBatchWaitTime,
+		),
+	).AwaitTermination()
 }
 
 func (a *apiServer) GetTrialCheckpoints(

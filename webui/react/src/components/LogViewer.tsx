@@ -18,19 +18,19 @@ import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
 import { capitalize } from 'utils/string';
 
 import css from './LogViewer.module.scss';
-import Page from './Page';
+import Page, { Props as PageProps } from './Page';
 
 interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
   disableLineNumber?: boolean;
+  pageProps: Partial<PageProps>;
   isDownloading?: boolean;
   isLoading?: boolean;
   noWrap?: boolean;
   onDownload?: () => void;
   onScrollToTop?: (oldestLogId: number) => void;
   ref?: React.Ref<LogViewerHandles>;
-  title: string;
 }
 
 interface ViewerLog extends Log {
@@ -411,7 +411,7 @@ const LogViewer: React.FC<Props> = forwardRef((
       const linesLabel = logs.length === 1 ? 'entry' : 'entries';
       notification.open({
         description: `${logs.length} ${linesLabel} copied to the clipboard.`,
-        message: `Available ${props.title} Copied`,
+        message: `Available ${props.pageProps.title} Copied`,
       });
     } catch (e) {
       notification.warn({
@@ -419,7 +419,7 @@ const LogViewer: React.FC<Props> = forwardRef((
         message: 'Unable to Copy to Clipboard',
       });
     }
-  }, [ formatClipboardHeader, logs, props.title ]);
+  }, [ formatClipboardHeader, logs, props.pageProps.title ]);
 
   const handleFullScreen = useCallback(() => {
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
@@ -479,7 +479,7 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   return (
     <Spinner spinning={!!props.isLoading}>
-      <Page options={logOptions} title={props.title}>
+      <Page {...props.pageProps} options={logOptions}>
         <div className={css.base} ref={baseRef}>
           <div className={css.container} ref={container}>
             <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>

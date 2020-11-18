@@ -39,7 +39,7 @@ const sampleTrialItem: TrialItem = {
   startTime: Date.now.toString(),
   state: RunState.Completed,
   totalBatchesProcessed: 10000,
-  url: '/det/trials/1',
+  url: '/experiments/1/trials/1',
 };
 
 const trialDetails: TrialDetails = {

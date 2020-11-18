@@ -5,6 +5,24 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/logv1";
 
 import "protoc-gen-swagger/options/annotations.proto";
 
+// LogLevel specifies the level for a log.
+enum LogLevel {
+  // Unspecified log level.
+  LOG_LEVEL_UNSPECIFIED = 0;
+  // A log level of TRACE.
+  LOG_LEVEL_TRACE = 1;
+  // A log level of DEBUG.
+  LOG_LEVEL_DEBUG = 2;
+  // A log level of INFO.
+  LOG_LEVEL_INFO = 3;
+  // A log level of WARNING.
+  LOG_LEVEL_WARNING = 4;
+  // A log level of ERROR.
+  LOG_LEVEL_ERROR = 5;
+  // A log level of CRITICAL.
+  LOG_LEVEL_CRITICAL = 6;
+}
+
 // LogEntry is a log event.
 message LogEntry {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

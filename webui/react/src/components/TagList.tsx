@@ -12,17 +12,13 @@ const TAG_MAX_LENGTH = 20;
 interface Props {
   className?: string;
   tags: string[];
-  onChange?: (oldTag: string, newTag: string) => void;
-  onCreate?: (tag: string) => void;
-  onDelete?: (tag: string) => void;
+  onChange?: (tags: string[]) => void;
 }
 
 const EditableTagList: React.FC<Props> = ({
   className,
   tags,
   onChange,
-  onCreate,
-  onDelete,
 }: Props) => {
   const initialState = {
     editInputIndex: -1,
@@ -37,8 +33,10 @@ const EditableTagList: React.FC<Props> = ({
   const editInputRef = useRef<Input>(null);
 
   const handleClose = useCallback(removedTag => {
-    if (onDelete) onDelete(removedTag);
-  }, [ onDelete ]);
+    if (onChange) {
+      onChange(tags.filter(tag => tag !== removedTag));
+    }
+  }, [ onChange, tags ]);
 
   const handleTagPlus = useCallback(() => {
     setState(state => ({ ...state, inputVisible: true }));
@@ -64,9 +62,11 @@ const EditableTagList: React.FC<Props> = ({
   const handleInputConfirm = useCallback(() => {
     const { inputValue } = state;
     const newTag = inputValue.trim();
-    if (onCreate && newTag && tags.indexOf(newTag) === -1) onCreate(newTag);
+    if (onChange && newTag && tags.indexOf(newTag) === -1) {
+      onChange([ newTag, ...tags ]);
+    }
     setState(state => ({ ...state, inputValue: '', inputVisible: false }));
-  }, [ onCreate, state, tags ]);
+  }, [ onChange, state, tags ]);
 
   const handleEditInputFocus = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
     e.persist();
@@ -81,8 +81,12 @@ const EditableTagList: React.FC<Props> = ({
     const { editInputValue, editOldInputValue } = state;
     const oldTag = editOldInputValue.trim();
     const newTag = editInputValue.trim();
-    if (onChange && oldTag && newTag && tags.indexOf(newTag) === -1) {
-      onChange(oldTag, newTag);
+    if (onChange && oldTag && newTag) {
+      const updatedTags = tags.filter(tag => tag !== oldTag);
+      if (updatedTags.indexOf(newTag) === -1) {
+        updatedTags.push(newTag);
+      }
+      onChange(updatedTags);
     }
     setState(state => ({
       ...state,

@@ -86,6 +86,24 @@ type Entry struct {
 	Level   logrus.Level `json:"level"`
 }
 
+// EntriesBatch is a batch of logger.Entry.
+type EntriesBatch []*Entry
+
+// Size implements logs.Batch.
+func (eb EntriesBatch) Size() int {
+	return len(eb)
+}
+
+// ForEach implements logs.Batch.
+func (eb EntriesBatch) ForEach(f func(interface{}) error) error {
+	for _, e := range eb {
+		if err := f(e); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // LogBuffer is an in-memory buffer based logger.
 type LogBuffer struct {
 	lock         sync.RWMutex

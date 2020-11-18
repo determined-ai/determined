@@ -1,23 +1,33 @@
 import { pathToRegexp } from 'path-to-regexp';
 import { MouseEvent, MouseEventHandler } from 'react';
 
+import handleError, { ErrorType } from 'ErrorHandler';
+import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
-import { Command, CommandType } from 'types';
+import { Command, CommandTask, CommandType } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
+import { RouteConfig } from './types';
 
-export const serverAddress = (avoidDevProxy = false, path = ''): string => {
-  if (!!path && !isAbsolutePath(path)) return path;
+// serverAddress returns determined cluster (master) address.
+export const serverAddress = (path = ''): string => {
+  if (!!path && isFullPath(path)) return path;
 
-  const address = avoidDevProxy && process.env.IS_DEV
-    ? 'http://localhost:8080'
-    : `${window.location.protocol}//${window.location.host}`;
-  return address + path;
+  // Prioritize dynamically set address.
+  const customServer = globalStorage.getServerAddress
+    || process.env.SERVER_ADDRESS as string;
+
+  return (customServer || reactHostAddress()) + path;
+};
+
+export const reactHostAddress = (): string => {
+  return `${window.location.protocol}//${window.location.host}`;
 };
 
 export const isFullPath = (url: string): boolean => url.startsWith('http');
 
+// whether the input is pathed from / or not.
 export const isAbsolutePath = (url: string): boolean => url.startsWith('/');
 
 export const ensureAbsolutePath = (url: string): string => isAbsolutePath(url) ? url : '/' + url;
@@ -48,7 +58,7 @@ export const waitPageUrl = (command: Partial<Command>): string | undefined => {
   if (!eventUrl || !proxyUrl) return;
   const event = encodeURIComponent(eventUrl);
   const jump = encodeURIComponent(proxyUrl);
-  return serverAddress(true, `/wait?event=${event}&jump=${jump}`);
+  return `/wait/index.html?event=${event}&jump=${jump}`;
 };
 
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
@@ -57,10 +67,13 @@ export const openBlank = (url: string): void => {
   window.open(url, '_blank', windowOpenFeatures.join(','));
 };
 
-export const openCommand = (command: Command): void => {
-  const url = waitPageUrl(command);
-  if (!url) throw new Error('command cannot be opened');
-  openBlank(url);
+export const openCommand = (command: Command | CommandTask): void => {
+  const url = command.url || waitPageUrl(command);
+  if (!url) {
+    handleError({ message: 'command cannot be opened', silent: true, type: ErrorType.Unknown });
+    return;
+  }
+  openBlank(process.env.PUBLIC_URL + url);
 };
 
 export const handlePath = (
@@ -69,41 +82,43 @@ export const handlePath = (
     onClick?: MouseEventHandler,
     path?: string,
     popout?: boolean,
+    external?: boolean,
   } = {},
 ): void => {
   event.persist();
   event.preventDefault();
 
+  const href = options.path ? linkPath(options.path, options.external) : undefined;
+
   if (options.onClick) {
     options.onClick(event);
-  } else if (options.path) {
+  } else if (href) {
     if (event.button === 1 || event.metaKey || event.ctrlKey || options.popout) {
-      openBlank(options.path);
+      openBlank(href);
     } else {
-      routeAll(options.path);
+      routeAll(href);
     }
   }
 };
 
-// Is the path going to be served from the same host?
-const isDetRoute = (url: string): boolean => {
-  if (!isFullPath(url)) return true;
-  if (process.env.IS_DEV) {
-    // dev live is served on a different port
-    return parseUrl(url).hostname === window.location.hostname;
-  }
-  return parseUrl(url).host === window.location.host;
+// Given a react url returns the react route path.
+const getReactPath = (url: string): string => {
+  return parseUrl(url).pathname.replace(process.env.PUBLIC_URL, '');
 };
 
-const isReactRoute = (url: string): boolean => {
-  if (!isDetRoute(url)) return false;
-
+const findReactRoute = (url: string): RouteConfig | undefined => {
+  if (isFullPath(url)) {
+    if (!url.startsWith(reactHostAddress())) return undefined;
+    // Fit it into a relative path
+    url = url.replace(reactHostAddress(), '');
+  }
   // Check to see if the path matches any of the defined app routes.
-  const pathname = parseUrl(url).pathname;
-  return !!routes
+  const pathname = getReactPath(url);
+  return routes
     .filter(route => route.path !== '*')
     .find(route => {
-      return route.exact ? pathname === route.path : !!pathToRegexp(route.path).exec(pathname);
+      const routeRegex = pathToRegexp(route.path);
+      return routeRegex.test(pathname);
     });
 };
 
@@ -112,9 +127,25 @@ const routeToExternalUrl = (path: string): void => {
 };
 
 export const routeAll = (path: string): void => {
-  if (!isReactRoute(path)) {
+  const matchingReactRoute = findReactRoute(path);
+  if (!matchingReactRoute) {
     routeToExternalUrl(path);
   } else {
-    history.push(path, { loginRedirect: clone(window.location) });
+    history.push(getReactPath(path), { loginRedirect: clone(window.location) });
   }
+};
+
+export const linkPath = (aPath: string, external = false): string => {
+  if (isFullPath(aPath)) return aPath;
+  let path;
+  if (external) {
+    if (isAbsolutePath(aPath)) {
+      path = serverAddress() + aPath;
+    } else {
+      path = aPath;
+    }
+  } else {
+    path = process.env.PUBLIC_URL + aPath;
+  }
+  return path;
 };

@@ -82,7 +82,9 @@ def _open_shell(master: str, shell: Command, additional_opts: List[str]) -> None
         python = sys.executable
         proxy_cmd = "{} -m determined_cli.tunnel {} %h".format(python, master)
         if request.get_master_cert_bundle():
-            proxy_cmd += ' "{}"'.format(request.get_master_cert_bundle())
+            proxy_cmd += ' --cert-file "{}"'.format(request.get_master_cert_bundle())
+        if request.get_master_cert_name():
+            proxy_cmd += ' --cert-name "{}"'.format(request.get_master_cert_name())
 
         username = shell.agent_user_group["user"] or "root"
 

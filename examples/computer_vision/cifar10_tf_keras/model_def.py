@@ -92,9 +92,16 @@ class CIFARTrial(keras.TFKerasTrial):
         model.add(Dropout(self.layer3_dropout))
         model.add(Dense(NUM_CLASSES, name="label"))
         model.add(Activation("softmax"))
+
+        # Wrap the model.
         model = self.context.wrap_model(model)
+
+        # Create and wrap the optimizer.
+        optimizer = RMSprop(lr=self.base_learning_rate, decay=self.learning_rate_decay)
+        optimizer = self.context.wrap_optimizer(optimizer)
+
         model.compile(
-            RMSprop(lr=self.base_learning_rate, decay=self.learning_rate_decay),
+            optimizer,
             categorical_crossentropy,
             [categorical_accuracy, categorical_error],
         )
@@ -102,7 +109,7 @@ class CIFARTrial(keras.TFKerasTrial):
         return model
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-        return [keras.TFKerasTensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
+        return [keras.callbacks.TensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
     def build_training_data_loader(self) -> keras.InputData:
         """

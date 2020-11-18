@@ -99,7 +99,7 @@ service Determined {
     };
   }
 
-  // Get a list of users
+  // Get a list of users.
   rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) {
     option (google.api.http) = {
       get: "/api/v1/users"
@@ -127,7 +127,7 @@ service Determined {
       tags: "Users"
     };
   }
-  // Set the requested user's passwords.
+  // Set the requested user's password.
   rpc SetUserPassword(SetUserPasswordRequest)
       returns (SetUserPasswordResponse) {
     option (google.api.http) = {
@@ -167,7 +167,7 @@ service Determined {
       tags: "Cluster"
     };
   }
-  // Get a set of agents from the cluster
+  // Get a set of agents from the cluster.
   rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) {
     option (google.api.http) = {
       get: "/api/v1/agents"
@@ -185,7 +185,7 @@ service Determined {
       tags: "Cluster"
     };
   }
-  // Get the set of slots for the agent with the given id.
+  // Get all the slots for an agent.
   rpc GetSlots(GetSlotsRequest) returns (GetSlotsResponse) {
     option (google.api.http) = {
       get: "/api/v1/agents/{agent_id}/slots"
@@ -194,7 +194,7 @@ service Determined {
       tags: "Cluster"
     };
   }
-  // Get the requested slot for the agent with the given id.
+  // Get the requested slot for an agent.
   rpc GetSlot(GetSlotRequest) returns (GetSlotResponse) {
     option (google.api.http) = {
       get: "/api/v1/agents/{agent_id}/slots/{slot_id}"
@@ -240,6 +240,17 @@ service Determined {
     };
   }
 
+  // Create an experiment.
+  rpc CreateExperiment(CreateExperimentRequest)
+      returns (CreateExperimentResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Get the requested experiment.
   rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {
     option (google.api.http) = {
@@ -337,7 +348,7 @@ service Determined {
       tags: "Experiments"
     };
   }
-  // Patch experiment fields.
+  // Patch an experiment's fields.
   rpc PatchExperiment(PatchExperimentRequest)
       returns (PatchExperimentResponse) {
     option (google.api.http) = {
@@ -391,7 +402,7 @@ service Determined {
       tags: [ "Trials", "Experiments" ]
     };
   }
-  // Stream Trial logs.
+  // Stream trial logs.
   rpc TrialLogs(TrialLogsRequest) returns (stream TrialLogsResponse) {
     option (google.api.http) = {
       get: "/api/v1/trials/{trial_id}/logs"
@@ -400,7 +411,17 @@ service Determined {
       tags: [ "Experiments", "Trials" ]
     };
   }
-  // Kill an trial.
+  // Stream trial log fields.
+  rpc TrialLogsFields(TrialLogsFieldsRequest)
+      returns (stream TrialLogsFieldsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/logs/fields"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Experiments", "Trials" ]
+    };
+  }
+  // Kill a trial.
   rpc KillTrial(KillTrialRequest) returns (KillTrialResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/{id}/kill"
@@ -439,8 +460,7 @@ service Determined {
       tags: "Templates"
     };
   }
-  // Update the requested template. If one does not exist, a new template is
-  // created
+  // Update or create (upsert) the requested template.
   rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) {
     option (google.api.http) = {
       put: "/api/v1/templates/{template.name}"
@@ -450,7 +470,7 @@ service Determined {
       tags: "Templates"
     };
   }
-  // Delete the template with the given id.
+  // Delete a template.
   rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) {
     option (google.api.http) = {
       delete: "/api/v1/templates/{template_name}"
@@ -643,7 +663,7 @@ service Determined {
       tags: "Models"
     };
   }
-  // Patch model fields
+  // Patch a model's fields.
   rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) {
     option (google.api.http) = {
       patch: "/api/v1/models/{model.name}"
@@ -672,7 +692,7 @@ service Determined {
       tags: "Models"
     };
   }
-  // Get the versions for the requested model.
+  // Get a list of versions for the requested model.
   rpc GetModelVersions(GetModelVersionsRequest)
       returns (GetModelVersionsResponse) {
     option (google.api.http) = {
@@ -713,6 +733,50 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"
+    };
+  }
+
+  // Get the set of metric names recorded for an experiment.
+  rpc MetricNames(MetricNamesRequest) returns (stream MetricNamesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/metrics-stream/metric-names"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Get the milestones (in batches processed) at which a metric is recorded by
+  // an experiment.
+  rpc MetricBatches(MetricBatchesRequest)
+      returns (stream MetricBatchesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/metrics-stream/batches"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Get a snapshot of a metric across all trials at a certain point of
+  // progress.
+  rpc TrialsSnapshot(TrialsSnapshotRequest)
+      returns (stream TrialsSnapshotResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/metrics-stream/trials-snapshot"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Get a sample of the metrics over time for a sample of the trials.
+  rpc TrialsSample(TrialsSampleRequest) returns (stream TrialsSampleResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/metrics-stream/trials-sample"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
     };
   }
 }

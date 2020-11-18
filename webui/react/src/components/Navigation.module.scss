@@ -374,6 +374,16 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     span { opacity: 0; }
   }
 }
+.collapsedExit {
+  .navItem {
+    .label { display: block; }
+  }
+}
+.collapsedEnterDone {
+  .navItem {
+    .label { display: none; }
+  }
+}
 .collapsedExitActive {
   flex-basis: var(--theme-sizes-navigation-maxWidth);
   transition: flex-basis $transition-props;

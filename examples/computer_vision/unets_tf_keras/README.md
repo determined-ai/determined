@@ -25,5 +25,9 @@ const.yaml .`. The other configurations can be run by specifying the appropriate
 configuration file in place of `const.yaml`.
 
 ## Results
+Note: The purpose of these graphs is to show a Unets model running in Determined 
+for a set number of epochs, demonstrating the acceleration of model training time 
+achieved with Determined’s distributed training.
+
 ![Single GPU vs. Distributed Training with Determined AI](Cumulative_Batches.png)
 ![Single GPU vs. Distributed Training Validation Accuracy](Validation_Accuracy.png)

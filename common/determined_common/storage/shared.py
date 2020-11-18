@@ -21,6 +21,7 @@ def _full_storage_path(
     if storage_path is None:
         return host_path if container_path is None else container_path
 
+    # Note that os.path.join() will just return storage_path when it is absolute.
     abs_path = os.path.normpath(os.path.join(host_path, storage_path))
     check.true(abs_path.startswith(host_path), "storage path must be a subdirectory of host path.")
     storage_path = os.path.relpath(abs_path, host_path)

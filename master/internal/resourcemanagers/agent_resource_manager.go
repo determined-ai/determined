@@ -32,7 +32,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		for ix, config := range a.poolsConfig.ResourcePools {
-			rpRef := a.createResourcePool(ctx, &a.poolsConfig.ResourcePools[ix], a.cert)
+			rpRef := a.createResourcePool(ctx, a.poolsConfig.ResourcePools[ix], a.cert)
 			if rpRef != nil {
 				a.pools[config.PoolName] = rpRef
 			}
@@ -44,14 +44,11 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
 	case ResourcesReleased:
-		for name := range a.pools {
-			a.forwardToPool(ctx, name, msg)
-		}
+		a.forwardToAllPools(ctx, msg)
 
-	case sproto.SetGroupMaxSlots:
-		a.forwardToPool(ctx, msg.ResourcePool, msg)
-	case sproto.SetGroupWeight:
-		a.forwardToPool(ctx, msg.ResourcePool, msg)
+	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority:
+		a.forwardToAllPools(ctx, msg)
+
 	case GetTaskSummary:
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
@@ -68,14 +65,25 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 }
 
 func (a *agentResourceManager) createResourcePool(
-	ctx *actor.Context, config *ResourcePoolConfig, cert *tls.Certificate,
+	ctx *actor.Context, config ResourcePoolConfig, cert *tls.Certificate,
 ) *actor.Ref {
 	ctx.Log().Infof("creating resource pool: %s", config.PoolName)
+
+	// We pass the config here in by value so that in the case where we replace
+	// the scheduler config with the global scheduler config (when the pool does
+	// not define one for itself) we do not modify the original data structures.
+	if config.Scheduler != nil {
+		ctx.Log().Infof("pool %s using local scheduling config", config.PoolName)
+	} else {
+		config.Scheduler = a.config.Scheduler
+		ctx.Log().Infof("pool %s using global scheduling config", config.PoolName)
+	}
+
 	rp := NewResourcePool(
-		config,
+		&config,
 		cert,
-		MakeScheduler(a.config.SchedulingPolicy),
-		MakeFitFunction(a.config.FittingPolicy),
+		MakeScheduler(config.Scheduler.getType()),
+		MakeFitFunction(config.Scheduler.FittingPolicy),
 	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {
@@ -96,7 +104,8 @@ func (a *agentResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
 	if a.pools[resourcePool] == nil {
-		err := errors.Errorf("cannot find resource pool: %s", resourcePool)
+		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
+			resourcePool, ctx.Message(), ctx.Sender().Address().String())
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)

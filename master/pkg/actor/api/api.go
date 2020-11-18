@@ -14,26 +14,30 @@ var (
 	upgrader = websocket.Upgrader{}
 )
 
-// Route returns an echo handler for routing requests to actors in the actor system. Requests are
-// routed to the actor with the same path as the request path.
+// Route aims at routing HTTP and websocket requests to an actor. It returns an
+// echo handler function to register with endpoints. Requests will be routed to
+// the specified actor reference if presented. Otherwise, it will use the same
+// path as the request path to locate the actor path.
 func Route(system *actor.System, recipient *actor.Ref) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		if ctx.IsWebSocket() {
-			return handleWSRequest(system, recipient, ctx)
+		// Locate the recipient actor using the request path if no recipient is presented.
+		var addr actor.Address
+		if recipient != nil {
+			addr = recipient.Address()
+		} else {
+			addr = parseAddr(ctx.Request().URL.Path)
 		}
-		return handleRequest(system, recipient, ctx)
+
+		// Route the requests to the actor.
+		if ctx.IsWebSocket() {
+			return handleWSRequest(system, addr, ctx)
+		}
+		return handleRequest(system, addr, ctx)
 	}
 }
 
-func handleWSRequest(system *actor.System, recipient *actor.Ref, ctx echo.Context) error {
-	var addr actor.Address
-	if recipient != nil {
-		addr = recipient.Address()
-	} else {
-		addr = parseAddr(ctx.Request().URL.Path)
-	}
-
-	switch resp := system.AskAt(addr, WebSocketConnected{Ctx: ctx}); {
+func handleWSRequest(system *actor.System, recipient actor.Address, ctx echo.Context) error {
+	switch resp := system.AskAt(recipient, WebSocketConnected{Ctx: ctx}); {
 	case resp.Source() == nil, resp.Empty():
 		// The actor could not be found or the actor did not respond.
 		return echo.ErrNotFound
@@ -53,15 +57,8 @@ func handleWSRequest(system *actor.System, recipient *actor.Ref, ctx echo.Contex
 	}
 }
 
-func handleRequest(system *actor.System, recipient *actor.Ref, ctx echo.Context) error {
-	var addr actor.Address
-	if recipient != nil {
-		addr = recipient.Address()
-	} else {
-		addr = parseAddr(ctx.Request().URL.Path)
-	}
-
-	switch resp := system.AskAt(addr, ctx); {
+func handleRequest(system *actor.System, recipient actor.Address, ctx echo.Context) error {
+	switch resp := system.AskAt(recipient, ctx); {
 	case resp.Source() == nil, resp.Empty():
 		// The actor could not be found or the actor did not respond.
 		return echo.ErrNotFound

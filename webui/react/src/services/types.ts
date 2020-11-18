@@ -1,9 +1,13 @@
-import { AxiosResponse, CancelTokenSource, Method } from 'axios';
+import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 
-import { CommandType, RunState, TBSource } from 'types';
+import { CommandType, TBSource } from 'types';
+
+export interface ApiCommonParams {
+  cancelToken?: CancelToken,
+}
 
 export interface HttpOptions {
-  url?: string;
+  url: string;
   method?: Method;
   headers?: Record<string, unknown>;
   body?: Record<keyof unknown, unknown> | string;
@@ -12,6 +16,7 @@ export interface HttpOptions {
 interface ApiBase {
   name: string;
   stubbedResponse?: unknown;
+  unAuthenticated?: boolean;
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
@@ -33,6 +38,10 @@ export interface ApiState<T> {
   source?: CancelTokenSource;
 }
 
+export interface LoginResponse {
+  token: string;
+}
+
 export interface ApiSorter<T = string> {
   descend: boolean;
   key: T;
@@ -49,9 +58,11 @@ export interface SingleEntityParams {
 export type ExperimentDetailsParams = SingleEntityParams;
 export type TrialDetailsParams = SingleEntityParams;
 
-// TODO in the following types the default id should probably be just "id"
+export interface CommandIdParams {
+  commandId: string;
+}
 
-export interface KillExpParams {
+export interface ExperimentIdParams {
   experimentId: number;
 }
 
@@ -60,19 +71,11 @@ export interface ForkExperimentParams {
   experimentConfig: string;
 }
 
-export interface KillCommandParams {
-  commandId: string;
-  commandType: CommandType;
-}
-
-export interface PatchExperimentParams {
-  experimentId: number;
-  body: Record<keyof unknown, unknown> | string;
-}
-
-export interface PatchExperimentState {
-  experimentId: number;
-  state: RunState;
+export interface PatchExperimentParams extends ExperimentIdParams {
+  body: Partial<{
+    description: string,
+    labels: string[],
+  }>
 }
 
 export interface CreateNotebookParams {
@@ -92,6 +95,7 @@ export interface TaskLogsParams extends LogsParams {
 }
 
 export interface TrialLogsParams extends LogsParams {
+  experimentId: number;
   trialId: number;
 }
 

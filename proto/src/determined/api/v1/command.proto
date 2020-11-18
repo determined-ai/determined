@@ -22,7 +22,7 @@ message GetCommandsRequest {
     // Return commands sorted by start time.
     SORT_BY_START_TIME = 4;
   }
-  // Sort commands by the given field
+  // Sort commands by the given field.
   SortBy sort_by = 1;
   // Order commands in either ascending or descending order.
   OrderBy order_by = 2;

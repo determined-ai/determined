@@ -52,6 +52,12 @@ type (
 		ResourcePool string
 		Handler      *actor.Ref
 	}
+	// SetGroupPriority sets the priority of the group in the priority scheduler.
+	SetGroupPriority struct {
+		Priority     *int
+		ResourcePool string
+		Handler      *actor.Ref
+	}
 )
 
 func (c ContainerLog) String() string {
@@ -78,5 +84,5 @@ func (c ContainerLog) String() string {
 	}
 	shortID := c.Container.ID[:8]
 	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
-	return fmt.Sprintf("[%s] %s [%s] || %s", timestamp, shortID, c.Container.State, msg)
+	return fmt.Sprintf("[%s] %s || %s", timestamp, shortID, msg)
 }

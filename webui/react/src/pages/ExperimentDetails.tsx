@@ -10,7 +10,7 @@ import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
-import Message from 'components/Message';
+import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
@@ -202,18 +202,18 @@ const ExperimentDetailsComp: React.FC = () => {
     const message = isNotFound(experimentDetails.error) ?
       `Unable to find Experiment ${experimentId}` :
       `Unable to fetch Experiment ${experimentId}`;
-    return <Message title={message} />;
+    return <Message title={message} type={MessageType.Warning} />;
   }
   if (!experiment) return <Spinner />;
 
   return (
     <Page
-      backPath={'/det/experiments'}
+      backPath={'/experiments'}
       breadcrumb={[
-        { breadcrumbName: 'Experiments', path: '/det/experiments' },
+        { breadcrumbName: 'Experiments', path: '/experiments' },
         {
           breadcrumbName: `Experiment ${experimentId}`,
-          path: `/det/experiments/${experimentId}`,
+          path: `/experiments/${experimentId}`,
         },
       ]}
       options={<ExperimentActions

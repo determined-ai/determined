@@ -4,7 +4,8 @@ import React, { useCallback, useState } from 'react';
 import { ConditionalButton } from 'components/types';
 import { openCommand } from 'routes/utils';
 import {
-  archiveExperiment, killExperiment, openOrCreateTensorboard, setExperimentState,
+  activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
+  openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
@@ -13,10 +14,11 @@ export enum Action {
   Activate = 'Activate',
   Archive = 'Archive',
   Cancel = 'Cancel',
-  Kill = 'Kill',
   Fork = 'Fork',
+  Kill = 'Kill',
   Pause = 'Pause',
   Tensorboard = 'Tensorboard',
+  Unarchive = 'Unarchive',
 }
 
 interface Props {
@@ -42,7 +44,7 @@ const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => 
 };
 
 const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: Props) => {
-  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
+  const [ btnLoadingStates, setBtnLoadingStates ] = useState<ButtonLoadingStates>({
     Activate: false,
     Archive: false,
     Cancel: false,
@@ -50,30 +52,41 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
     Kill: false,
     Pause: false,
     Tensorboard: false,
+    Unarchive: false,
   });
 
-  const handleArchive = useCallback((archive: boolean) => async (): Promise<void> => {
-    setButtonStates(state => ({ ...state, archive }));
+  const handleArchive = useCallback(() => async (): Promise<void> => {
+    setBtnLoadingStates(state => ({ ...state, Archive: true }));
     try {
-      await archiveExperiment(experiment.id, archive);
+      await archiveExperiment({ experimentId: experiment.id });
       onSettled();
     } finally {
-      setButtonStates(state => ({ ...state, archive: false }));
+      setBtnLoadingStates(state => ({ ...state, Archive: false }));
+    }
+  }, [ experiment.id, onSettled ]);
+
+  const handleUnarchive = useCallback(() => async (): Promise<void> => {
+    setBtnLoadingStates(state => ({ ...state, Unarchive: true }));
+    try {
+      await unarchiveExperiment({ experimentId: experiment.id });
+      onSettled();
+    } finally {
+      setBtnLoadingStates(state => ({ ...state, Unarchive: false }));
     }
   }, [ experiment.id, onSettled ]);
 
   const handleKill = useCallback(async () => {
-    setButtonStates(state => ({ ...state, kill: true }));
+    setBtnLoadingStates(state => ({ ...state, Kill: true }));
     try {
       await killExperiment({ experimentId: experiment.id });
       onSettled();
     } finally {
-      setButtonStates(state => ({ ...state, kill: false }));
+      setBtnLoadingStates(state => ({ ...state, Kill: false }));
     }
   }, [ experiment.id, onSettled ]);
 
   const handleCreateTensorboard = useCallback(async () => {
-    setButtonStates(state => ({ ...state, tensorboard: true }));
+    setBtnLoadingStates(state => ({ ...state, Tensorboard: true }));
     try {
       const tensorboard = await openOrCreateTensorboard({
         ids: [ experiment.id ],
@@ -82,17 +95,40 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
       openCommand(tensorboard);
       onSettled();
     } finally {
-      setButtonStates(state => ({ ...state, tensorboard: false }));
+      setBtnLoadingStates(state => ({ ...state, Tensorboard: false }));
     }
   }, [ experiment.id, onSettled ]);
 
   const handleStateChange = useCallback((targetState: RunState) => async (): Promise<void> => {
-    setButtonStates(state => ({ ...state, [targetState]: true }));
+    let action: Action;
+    switch (targetState) {
+      case RunState.Active:
+        action = Action.Activate;
+        break;
+      case RunState.Paused:
+        action = Action.Pause;
+        break;
+      case RunState.Canceled:
+      case RunState.StoppingCanceled:
+        action = Action.Cancel;
+        break;
+      default:
+        // unsupported targetState.
+        return;
+    }
+    setBtnLoadingStates(state => ({ ...state, [action]: true }));
     try {
-      await setExperimentState({ experimentId: experiment.id, state: targetState });
+      switch (targetState) {
+        case RunState.StoppingCanceled:
+          return await cancelExperiment({ experimentId: experiment.id });
+        case RunState.Paused:
+          return await pauseExperiment({ experimentId: experiment.id });
+        case RunState.Active:
+          return await activateExperiment({ experimentId: experiment.id });
+      }
       onSettled();
     } finally {
-      setButtonStates(state => ({ ...state, [targetState]: false }));
+      setBtnLoadingStates(state => ({ ...state, [action]: false }));
     }
   }, [ experiment.id, onSettled ]);
 
@@ -104,7 +140,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
         okText="Yes"
         title="Are you sure you want to kill the experiment?"
         onConfirm={handleKill}>
-        <Button danger loading={buttonStates.Kill} type="primary">Kill</Button>
+        <Button danger loading={btnLoadingStates.Kill} type="primary">Kill</Button>
       </Popconfirm>,
       showIf: (exp): boolean => killableRunStates.includes(exp.state),
     },
@@ -115,21 +151,21 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
         okText="Yes"
         title="Are you sure you want to cancel the experiment?"
         onConfirm={handleStateChange(RunState.StoppingCanceled)}>
-        <Button danger loading={buttonStates.Cancel}>Cancel</Button>
+        <Button danger loading={btnLoadingStates.Cancel}>Cancel</Button>
       </Popconfirm>,
       showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
     },
     {
       button: <Button
         key="pause"
-        loading={buttonStates.Pause}
+        loading={btnLoadingStates.Pause}
         onClick={handleStateChange(RunState.Paused)}>Pause</Button>,
       showIf: (exp): boolean => exp.state === RunState.Active,
     },
     {
       button: <Button
         key="activate"
-        loading={buttonStates.Activate}
+        loading={btnLoadingStates.Activate}
         type="primary"
         onClick={handleStateChange(RunState.Active)}>Activate</Button>,
       showIf: (exp): boolean => exp.state === RunState.Paused,
@@ -138,22 +174,22 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
     {
       button: <Button
         key="tensorboard"
-        loading={buttonStates.Tensorboard}
+        loading={btnLoadingStates.Tensorboard}
         onClick={handleCreateTensorboard}>View in Tensorboard</Button>,
       showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
     },
     {
       button: <Button
         key="archive"
-        loading={buttonStates.Archive}
-        onClick={handleArchive(true)}>Archive</Button>,
+        loading={btnLoadingStates.Archive}
+        onClick={handleArchive()}>Archive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && !exp.archived,
     },
     {
       button: <Button
         key="unarchive"
-        loading={buttonStates.Archive}
-        onClick={handleArchive(false)}>Unarchive</Button>,
+        loading={btnLoadingStates.Unarchive}
+        onClick={handleUnarchive()}>Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
     },
   ];

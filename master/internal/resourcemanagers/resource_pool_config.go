@@ -19,6 +19,7 @@ type ResourcePoolConfig struct {
 	PoolName    string              `json:"pool_name"`
 	Description string              `json:"description"`
 	Provider    *provisioner.Config `json:"provider"`
+	Scheduler   *SchedulerConfig    `json:"scheduler,omitempty"`
 }
 
 // Validate implements the check.Validatable interface.

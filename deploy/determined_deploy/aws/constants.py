@@ -42,6 +42,8 @@ class cloudformation:
     MAX_DYNAMIC_AGENTS = "MaxDynamicAgents"
     LOG_GROUP = "LogGroup"
     REGION = "Region"
+    SPOT_ENABLED = "SpotEnabled"
+    SPOT_MAX_PRICE = "SpotMaxPrice"
 
 
 class misc:

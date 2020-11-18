@@ -81,10 +81,12 @@ func newGCPCluster(
 	startupScript := string(mustMakeAgentSetupScript(agentSetupScriptConfig{
 		MasterHost:                   masterURL.Hostname(),
 		MasterPort:                   masterURL.Port(),
+		MasterCertName:               config.MasterCertName,
 		AgentUseGPUs:                 config.GCP.InstanceType.slots() > 0,
 		AgentNetwork:                 config.AgentDockerNetwork,
 		AgentDockerRuntime:           config.AgentDockerRuntime,
 		AgentDockerImage:             config.AgentDockerImage,
+		AgentFluentImage:             config.AgentFluentImage,
 		StartupScriptBase64:          startupScriptBase64,
 		ContainerStartupScriptBase64: containerScriptBase64,
 		MasterCertBase64:             masterCertBase64,

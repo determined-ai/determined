@@ -31,6 +31,11 @@ nfpms:
           postinstall: packaging/debian/agent.postinst
           preremove: packaging/debian/agent.prerm
           postremove: packaging/debian/agent.postrm
+        files:
+          "packaging/LICENSE": "/usr/share/doc/determined-agent/copyright"
+      rpm:
+        files:
+          "packaging/LICENSE": "/usr/share/licenses/determined-agent/LICENSE"
 
 release:
   github:
@@ -48,3 +53,4 @@ dockers:
       - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
     extra_files:
       - packaging/entrypoint.sh
+      - packaging/LICENSE

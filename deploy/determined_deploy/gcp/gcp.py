@@ -71,6 +71,9 @@ def terraform_init(configs: Dict, env: Dict) -> None:
     # path as the current working directory and copying module definitions to it
     # we don't have to rely on users running "det-deploy gcp up/down" from
     # different directories or with different Python environments.
+    if os.path.exists(terraform_dir(configs)):
+        shutil.rmtree(terraform_dir(configs))
+
     shutil.copytree(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraform"),
         terraform_dir(configs),

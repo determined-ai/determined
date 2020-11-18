@@ -92,7 +92,7 @@ func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg event) {
 	for streamActor, logRequest := range e.logStreams {
 		if eventSatisfiesLogRequest(logRequest, &msg) {
 			entry := eventToLogEntry(&msg)
-			ctx.Tell(streamActor, *entry)
+			ctx.Tell(streamActor, logger.EntriesBatch([]*logger.Entry{entry}))
 		}
 	}
 
@@ -141,16 +141,17 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(true)
 
 		total := countNonNullRingValues(e.buffer)
-		offset := webAPI.EffectiveOffset(msg.Offset, total)
-		msg.Offset = offset
+		msg.Offset = webAPI.EffectiveOffset(msg.Offset, total)
 
 		matchingEvents := e.getMatchingEvents(msg)
+		var logEntries []*logger.Entry
 		for _, ev := range matchingEvents {
 			logEntry := eventToLogEntry(ev)
 			if logEntry != nil {
-				ctx.Tell(ctx.Sender(), *logEntry)
+				logEntries = append(logEntries, logEntry)
 			}
 		}
+		ctx.Tell(ctx.Sender(), logger.EntriesBatch(logEntries))
 
 		limitMet := msg.Limit > 0 && len(matchingEvents) >= msg.Limit
 

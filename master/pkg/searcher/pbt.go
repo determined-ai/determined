@@ -208,7 +208,9 @@ func (s *pbtSearch) progress(unitsCompleted float64) float64 {
 		s.LengthPerRound.MultInt(s.PopulationSize).MultInt(s.NumRounds).Units)
 }
 
-func (s *pbtSearch) trialExitedEarly(ctx context, requestID RequestID) ([]Operation, error) {
+func (s *pbtSearch) trialExitedEarly(
+	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
+) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
 	s.metrics[requestID] = pbtExitedMetricValue
 	return s.runNewTrials(ctx, requestID)

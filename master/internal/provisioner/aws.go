@@ -118,6 +118,7 @@ func newAWSCluster(
 		ec2UserData: mustMakeAgentSetupScript(agentSetupScriptConfig{
 			MasterHost:                   masterURL.Hostname(),
 			MasterPort:                   masterURL.Port(),
+			MasterCertName:               config.MasterCertName,
 			StartupScriptBase64:          startupScriptBase64,
 			ContainerStartupScriptBase64: containerScriptBase64,
 			MasterCertBase64:             masterCertBase64,
@@ -125,13 +126,14 @@ func newAWSCluster(
 			AgentDockerRuntime:           config.AgentDockerRuntime,
 			AgentNetwork:                 config.AgentDockerNetwork,
 			AgentDockerImage:             config.AgentDockerImage,
+			AgentFluentImage:             config.AgentFluentImage,
 			AgentID:                      `$(ec2metadata --instance-id)`,
 			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.buildDockerLogString(),
 		}),
 	}
 
-	if cluster.SpotInstanceEnabled {
+	if cluster.SpotEnabled {
 		cluster.spot = &spotState{
 			trackedReqs:          newSetOfSpotRequests(),
 			approximateClockSkew: time.Second * 0,
@@ -167,13 +169,13 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
 }
 
 func (c *awsCluster) prestart(ctx *actor.Context) {
-	if c.SpotInstanceEnabled {
+	if c.SpotEnabled {
 		c.attemptToApproximateClockSkew(ctx)
 	}
 }
 
 func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
-	if c.SpotInstanceEnabled {
+	if c.SpotEnabled {
 		return c.listSpot(ctx)
 	}
 	return c.listOnDemand(ctx)
@@ -183,7 +185,7 @@ func (c *awsCluster) launch(
 	ctx *actor.Context,
 	instanceNum int,
 ) {
-	if c.SpotInstanceEnabled {
+	if c.SpotEnabled {
 		c.launchSpot(ctx, instanceNum)
 	} else {
 		c.launchOnDemand(ctx, instanceNum)
@@ -197,7 +199,7 @@ func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
 		ids = append(ids, &idCopy)
 	}
 
-	if c.SpotInstanceEnabled {
+	if c.SpotEnabled {
 		c.terminateSpot(ctx, ids)
 	} else {
 		c.terminateOnDemand(ctx, ids)
@@ -241,8 +243,7 @@ func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string
 		return
 	}
 
-	input := &ec2.TerminateInstancesInput{InstanceIds: instanceIDs}
-	res, err := c.client.TerminateInstances(input)
+	res, err := c.terminateInstances(instanceIDs)
 	if err != nil {
 		ctx.Log().WithError(err).Error("cannot terminate EC2 instances")
 		return
@@ -409,4 +410,16 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 	}
 
 	return c.client.RunInstances(input)
+}
+
+func (c *awsCluster) terminateInstances(
+	ids []*string,
+) (*ec2.TerminateInstancesOutput, error) {
+	if len(ids) == 0 {
+		return &ec2.TerminateInstancesOutput{}, nil
+	}
+	input := &ec2.TerminateInstancesInput{
+		InstanceIds: ids,
+	}
+	return c.client.TerminateInstances(input)
 }

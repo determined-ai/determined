@@ -1,9 +1,7 @@
-r"""
-"""
-
 import inspect
 import logging
 import pathlib
+import pickle
 import random
 import sys
 from abc import abstractmethod
@@ -14,177 +12,152 @@ import numpy as np
 import tensorflow as tf
 from packaging import version
 from tensorflow.keras.models import Model
-from tensorflow.python.keras.callbacks import make_logs
-from tensorflow.python.keras.saving.hdf5_format import load_optimizer_weights_from_hdf5_group
+from tensorflow.python.framework.ops import EagerTensor
+from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
+from tensorflow.python.keras.saving.hdf5_format import (
+    load_optimizer_weights_from_hdf5_group,
+    save_optimizer_weights_to_hdf5_group,
+)
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
-from determined import horovod, keras, workload
+from determined import horovod, keras, util, workload
 from determined.horovod import hvd
 from determined_common import check
 
 IMPOSSIBLY_LARGE_EPOCHS = sys.maxsize
 
 
-def load_optimizer_weights(model: Model, load_path: pathlib.Path) -> None:
+def load_optimizer_weights(
+    model: Model, h5group: Any, optimizer: tf.keras.optimizers.Optimizer
+) -> None:
     """
     Load the optimizer states from a tf.keras model saved with
     tf.keras.models.save_model(). Ignores and prints a warning message when
     encountering a graph network. This implementation is lifted from
     tf.keras.models.load_model().
     """
-    f = h5py.File(str(load_path), mode="r")
-    if "optimizer_weights" in f:
-        tf2_2_or_newer = version.parse(tf.__version__) >= version.parse("2.2.0")
-        if model._is_graph_network or tf2_2_or_newer:  # pylint: disable=protected-access
-            if tf2_2_or_newer:
-                try:
-                    model.optimizer._create_all_weights(model.trainable_variables)
-                except (NotImplementedError, AttributeError):
-                    logging.warning(
-                        "Error when creating the weights of optimizer, making it "
-                        "impossible to restore the saved optimizer state. As a result, "
-                        "your model is starting with a freshly initialized optimizer."
-                    )
-            else:
-                # Build train function (to get weight updates).  Models that aren't
-                # graph networks must wait until they are called with data to
-                # _make_train_function() and so can't load optimizer weights.
-                model._make_train_function()
-
-            optimizer_weight_values = load_optimizer_weights_from_hdf5_group(f)
+    tf2_2_or_newer = version.parse(tf.__version__) >= version.parse("2.2.0")
+    if model._is_graph_network or tf2_2_or_newer:  # pylint: disable=protected-access
+        if tf2_2_or_newer:
             try:
-                model.optimizer.set_weights(optimizer_weight_values)
-            except ValueError:
+                optimizer._create_all_weights(model.trainable_variables)
+            except (NotImplementedError, AttributeError):
                 logging.warning(
-                    "Error in loading the saved optimizer "
-                    "state. As a result, your model is "
-                    "starting with a freshly initialized "
-                    "optimizer."
+                    "Error when creating the weights of optimizer, making it "
+                    "impossible to restore the saved optimizer state. As a result, "
+                    "your model is starting with a freshly initialized optimizer."
                 )
         else:
+            # Build train function (to get weight updates).  Models that aren't
+            # graph networks must wait until they are called with data to
+            # _make_train_function() and so can't load optimizer weights.
+            model._make_train_function()
+
+        optimizer_weight_values = load_optimizer_weights_from_hdf5_group(h5group)
+        try:
+            optimizer.set_weights(optimizer_weight_values)
+        except ValueError:
             logging.warning(
-                "Sequential models without an `input_shape` "
-                "passed to the first layer cannot reload their "
-                "optimizer state. As a result, your model is "
-                "starting with a freshly initialized optimizer."
+                "Error in loading the saved optimizer "
+                "state. As a result, your model is "
+                "starting with a freshly initialized "
+                "optimizer."
             )
-
-
-class DeterminedEarlyStoppingCallback(tf.keras.callbacks.Callback):  # type: ignore
-    """
-    DeterminedEarlyStoppingCallback converts a stop request, so that Determined
-    can handle the stop request by finishing the step and checkpointing.
-    """
-
-    def __init__(self, tf_keras_trial_controller: "TFKerasTrialController") -> None:
-        self.tf_keras_trial_controller = tf_keras_trial_controller
-
-    def _convert_stop_training(self) -> None:
-        # We use stop_training to exit out of the training loop, but we set
-        # expect_terminate when we do so.
-        if self.model.stop_training and not self.tf_keras_trial_controller.expect_terminate:
-            self.model.stop_training = False
-            self.tf_keras_trial_controller.context.set_stop_requested(True)
-
-    def on_epoch_end(self, _: int, logs: Any = None) -> None:
-        self._convert_stop_training()
-
-    def on_train_end(self, _: int, logs: Any = None) -> None:
-        self._convert_stop_training()
-
-
-class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
-    """
-    WaitForInstructionsCallback allows a separate process to control this trial.
-    This callback, which is triggered from inside the model.fit(), checks with the
-    main process if it should stay inside the fit loop (training step or checkpoint)
-    or if it should exit the fit() loop (validation).
-    """
-
-    # Set the callback to run on all workers.
-    _chief_worker_only = False
-
-    def __init__(self, tf_keras_trial_controller: "TFKerasTrialController") -> None:
-        self.tf_keras_trial_controller = tf_keras_trial_controller
-        self.batches_processed = 0
-        self.metrics = []  # type: List[Dict[str, Any]]
-
-    def on_train_batch_end(self, _: int, logs: Any = None) -> None:
-        check.is_in("loss", logs)
-
-        # Remove default keras metrics we aren't interested in like "batch" and
-        # "size".
-        self.metrics.append({k: v for k, v in logs.items() if k not in {"batch", "size"}})
-        self.batches_processed += 1
-        if self.batches_processed != self.tf_keras_trial_controller.num_batches:
-            return
-
-        check.is_not_none(
-            self.tf_keras_trial_controller.train_response_func,
-            "Callback should avoid calling model.predict(), "
-            "as this will affect Determined training behavior",
-        )
-        response_func = cast(
-            workload.ResponseFunc, self.tf_keras_trial_controller.train_response_func
+    else:
+        logging.warning(
+            "Sequential models without an `input_shape` "
+            "passed to the first layer cannot reload their "
+            "optimizer state. As a result, your model is "
+            "starting with a freshly initialized optimizer."
         )
 
-        # TODO(DET-1278): Average training metrics across GPUs when using Horovod.
-        num_inputs = (
-            self.tf_keras_trial_controller.num_batches * self.tf_keras_trial_controller.batch_size
-        )
 
-        if self.tf_keras_trial_controller.is_chief:
-            response = {
-                "metrics": det.util.make_metrics(num_inputs, self.metrics),
-                "stop_requested": self.tf_keras_trial_controller.context.get_stop_requested(),
-            }
-            response_func(response)
-        else:
-            response_func(workload.Skipped())
+class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
+    """
+    Extend _MultiplexerBase with the logic for triggering on_train_workload_end, and on_test_end
+    and based on master-requested workloads.
+    """
 
-        self.tf_keras_trial_controller.train_response_func = None
-        self.metrics = []
-        self.batches_processed = 0
+    def __init__(self, trial_controller: "TFKerasTrialController", *arg: Any, **kwarg: Any) -> None:
+        super().__init__(*arg, **kwarg)
+        self.trial_controller = trial_controller
+        self.test_inputs = 0
 
-        self.tf_keras_trial_controller.run()
+    def on_train_begin(self, logs: Optional[Dict] = None) -> None:
+        super().on_train_begin()
+        self.trial_controller._control_loop()
 
-        if self.model.stop_training and version.parse(tf.__version__) >= version.parse("2.2.0"):
-            # Starting with TF 2.2, `model.stop_training` is only checked at the end of epochs.
-            raise det.errors.WorkerFinishedGracefully
+    def on_train_batch_end(self, batch: int, logs: Optional[Dict] = None) -> None:
+        super().on_train_batch_end(batch, logs)
+        assert isinstance(logs, dict)
+
+        # Keras helpfully records the observed batch size as logs["size"].  Keras internal code
+        # handles the case where logs is not present (see BaseLogger callback).  I (rb) can't
+        # figure out where that would originate from, so we will include reasonable fallback
+        # behavior for that case.
+        num_inputs = logs.get("size", self.batch_size)
+
+        self.trial_controller._post_train_batch_end(num_inputs, logs)
+
+    def on_test_begin(self, logs: Optional[Dict] = None) -> None:
+        super().on_test_begin(logs)
+        self.test_inputs = 0
+
+    def on_test_batch_end(self, batch: int, logs: Optional[Dict] = None) -> None:
+        super().on_test_batch_end(batch, logs)
+        assert isinstance(logs, dict)
+        self.test_inputs += logs.get("size", self.batch_size)
+
+    def _corrected_test_end(self, logs: Dict) -> None:
+        super()._corrected_test_end(logs)
+        self.trial_controller._stop_training_check()
+
+    def get_test_inputs(self) -> int:
+        return self.test_inputs
+
+    def _corrected_epoch_end(self, epoch: int, logs: Dict) -> None:
+        super()._corrected_epoch_end(epoch, logs)
+        self.trial_controller._stop_training_check()
+
+    def on_train_end(self, logs: Optional[Dict] = None) -> None:
+        # Ignore on_train_end when we manage the training loop, since in TF 2.0 (but not 2.1!) will
+        # trigger an exta on_train_end when we raise the WorkerFinishedGracefully exception.
+        pass
+
+    def _corrected_train_end(self, logs: Optional[Dict] = None) -> None:
+        super().on_train_end(logs)
 
 
 class TFKerasTrialController(det.LoopTrialController):
-    def __init__(
-        self,
-        model: tf.keras.models.Model,
-        session: tf.compat.v1.ConfigProto,
-        train_config: keras.TFKerasTrainConfig,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(*args, **kwargs)
+    @staticmethod
+    def supports_averaging_training_metrics() -> bool:
+        return True
 
-        self.model = model
-        self.session = session
+    @staticmethod
+    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+        # Initialize the correct horovod.
+        if hvd_config.use:
+            hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
+            hvd.init()
 
-        self._train_input_manager, self._validation_input_manager = keras._init_input_managers(
-            context=self.context, train_config=train_config
-        )
+        # Start with a clean graph.
+        tf.compat.v1.reset_default_graph()
 
-        # If callbacks are set to None, then use an empty list.
-        self.tf_keras_callbacks = train_config.callbacks or []
+        TFKerasTrialController._set_random_seeds(env.trial_seed)
 
-        # If a load path is provided, load weights and restore the data location.
-        self._load()
+        # For the Native API we must configure the Session before running user code.
+        if env.experiment_config.native_enabled():
+            session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
+            TFKerasTrialController._configure_session(env, hvd_config, session_config)
 
-        self.fit_loop_started = False
-
-        # Store the response_func for train_for_step workloads while we do the training.
-        self.train_response_func = None  # type: Optional[workload.ResponseFunc]
-
-        self.model.stop_training = False
-        self.expect_terminate = False
+    @staticmethod
+    def _set_random_seeds(seed: int) -> None:
+        # Set identical random seeds on all training processes. When using horovod, each worker will
+        # start at a unique offset in the dataset, ensuring it's processing a unique training batch.
+        random.seed(seed)
+        np.random.seed(seed)
+        tf.compat.v1.set_random_seed(seed)
 
     @staticmethod
     def _configure_session(
@@ -218,29 +191,39 @@ class TFKerasTrialController(det.LoopTrialController):
             return None
 
     @staticmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        # Initialize the correct horovod.
-        if hvd_config.use:
-            hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
-            hvd.init()
+    def compile_model(
+        context: keras.TFKerasContext,
+        compile_args: inspect.BoundArguments,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+    ) -> None:
+        context.model = keras._get_multi_gpu_model_if_using_native_parallel(
+            pre_compiled_model=context.model,
+            env=env,
+            hvd_config=hvd_config,
+        )
 
-        # Start with a clean graph.
-        tf.compat.v1.reset_default_graph()
+        if "optimizer" in compile_args.arguments:
+            # For backwards compatibility we check if an optimizer is passed as part
+            # of the compile call. If `wrap_optimizer()` is used, we will ignore this
+            # this optimizer.
+            compile_args.arguments["optimizer"] = context._process_optimizer_from_compile(
+                compile_args.arguments["optimizer"]
+            )
 
-        TFKerasTrialController._set_random_seeds(env.trial_seed)
+        if hvd_config.use and version.parse("2.0.0") <= version.parse(
+            tf.__version__
+        ) < version.parse("2.2.0"):
+            logging.info(
+                "Calling `model.compile(...)` with `experimental_run_tf_function=False` to ensure "
+                "TensorFlow calls `optimizer.get_gradients()` to compute gradients."
+            )
 
-        # For the Native API we must configure the Session before running user code.
-        if env.experiment_config.native_enabled():
-            session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
-            TFKerasTrialController._configure_session(env, hvd_config, session_config)
-
-    @staticmethod
-    def _set_random_seeds(seed: int) -> None:
-        # Set identical random seeds on all training processes. When using horovod, each worker will
-        # start at a unique offset in the dataset, ensuring it's processing a unique training batch.
-        random.seed(seed)
-        np.random.seed(seed)
-        tf.compat.v1.set_random_seed(seed)
+            context.model.compile(
+                *compile_args.args, **compile_args.kwargs, experimental_run_tf_function=False
+            )
+        else:
+            context.model.compile(*compile_args.args, **compile_args.kwargs)
 
     @staticmethod
     def from_trial(
@@ -262,30 +245,39 @@ class TFKerasTrialController(det.LoopTrialController):
 
         session = TFKerasTrialController._configure_session(env, hvd_config, trial.session_config())
 
+        training_data_loader = trial.build_training_data_loader()
+        validation_data_loader = trial.build_validation_data_loader()
+
+        trial.build_model()
+        check.is_not_none(context.model, "Please call wrap_model(...).")
+
         training_x, training_y, training_sample_weight = keras._get_x_y_and_sample_weight(
-            input_data=trial.build_training_data_loader()
+            input_data=training_data_loader
         )
         training_data = keras._adapt_keras_data(
             x=training_x,
             y=training_y,
             sample_weight=training_sample_weight,
             batch_size=context.get_per_slot_batch_size(),
+            use_multiprocessing=context._fit_use_multiprocessing,
+            workers=context._fit_workers,
+            max_queue_size=context._fit_max_queue_size,
             drop_leftovers=True,
         )
 
         val_x, val_y, val_sample_weight = keras._get_x_y_and_sample_weight(
-            input_data=trial.build_validation_data_loader()
+            input_data=validation_data_loader
         )
         validation_data = keras._adapt_keras_data(
             x=val_x,
             y=val_y,
             sample_weight=val_sample_weight,
             batch_size=context.get_per_slot_batch_size(),
+            use_multiprocessing=context._fit_use_multiprocessing,
+            workers=context._fit_workers,
+            max_queue_size=context._fit_max_queue_size,
             drop_leftovers=False,
         )
-
-        trial.build_model()
-        check.is_not_none(context.model, "Please call wrap_model(...).")
 
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         compile_args = cast(inspect.BoundArguments, context.compile_args)
@@ -356,101 +348,337 @@ class TFKerasTrialController(det.LoopTrialController):
             hvd_config,
         )
 
-    @staticmethod
-    def compile_model(
-        context: keras.TFKerasContext,
-        compile_args: inspect.BoundArguments,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
+    def __init__(
+        self,
+        model: tf.keras.models.Model,
+        session: tf.compat.v1.ConfigProto,
+        train_config: keras.TFKerasTrainConfig,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
-        (
-            context.model,
-            compile_args.arguments["optimizer"],
-        ) = keras._get_multi_gpu_model_and_optimizer(
-            pre_compiled_model=context.model,
-            optimizer=compile_args.arguments["optimizer"],
-            env=env,
-            hvd_config=hvd_config,
+        super().__init__(*args, **kwargs)
+
+        self.model = model
+        self.session = session
+
+        # Configure optimizers, done for backwards compatibility.
+        self.context._select_optimizers()
+
+        keras._check_if_aggregation_frequency_will_work(
+            model=self.model, hvd_config=self.hvd_config
         )
 
-        if hvd_config.use and version.parse("2.0.0") <= version.parse(
-            tf.__version__
-        ) < version.parse("2.2.0"):
-            logging.info(
-                "Calling `model.compile(...)` with `experimental_run_tf_function=False` to ensure "
-                "TensorFlow calls `optimizer.get_gradients()` to compute gradients."
-            )
+        self._train_input_manager, self._validation_input_manager = keras._init_input_managers(
+            context=self.context, train_config=train_config
+        )
 
-            context.model.compile(
-                *compile_args.args, **compile_args.kwargs, experimental_run_tf_function=False
-            )
-        else:
-            context.model.compile(*compile_args.args, **compile_args.kwargs)
+        # If a load path is provided, load weights and restore the data location.
+        self._load()
 
-    def _load(self) -> None:
-        if not self.load_path:
-            return
+        self._configure_callbacks(train_config.callbacks)
 
-        # Load model.
-        if self.load_path.joinpath("determined-keras-model.h5").exists():
-            full_ckpt_path = self.load_path.joinpath("determined-keras-model.h5")
-        else:
-            full_ckpt_path = self.load_path.joinpath("determined-keras-model")
+        self.train_response_func = None  # type: Optional[workload.ResponseFunc]
+        self.train_workload_metrics = []  # type: List[Dict[str, Any]]
+        self.train_workload_batches = 0
+        self.train_workload_inputs = 0
+        self.train_workload_len = 0
+        self.test_inputs = 0
 
-        logging.info(f"Restoring checkpoint from {full_ckpt_path}")
-        self.model.load_weights(str(full_ckpt_path))
-        load_optimizer_weights(self.model, full_ckpt_path)
+    def _configure_callbacks(self, user_callbacks: Optional[List]) -> None:
+        """
+        If we pass a callbacks parameter to model.fit() or model.evaluate() which is a
+        pre-constructed CallbackList, Keras will not alter it.  We can use this property to
+        configure the exact callback order that we want in our system.
+
+        The implementation is based closely on from the real
+        tf.keras.callbacks.configure_callbacks(), with the following differences:
+
+          - We always assume we have the original Callbacks list.
+          - We prepend and append additional Determined and Horovod callbacks
+          - We create a det.keras.CallbackList instead of the normal tf.keras one.
+        """
+
+        callbacks = user_callbacks or []
+        check.is_instance(
+            callbacks,
+            list,
+            "the callbacks parameter of model.fit() or model.eval() must be a list of Callbacks",
+        )
+
+        if self.env.experiment_config.get_records_per_epoch() is None:
+            for cb in callbacks:
+                if util.is_overridden(cb.on_epoch_end, tf.keras.callbacks.Callback) and not getattr(
+                    cb, "_skip_epoch_end_check", False
+                ):
+                    if isinstance(cb, keras.callbacks.Callback):
+                        # New callbacks must obey the rules.
+                        raise AssertionError(
+                            "it is unsupported to use a Callback that defines on_epoch_end "
+                            f"({type(cb).__name__}) without setting the records_per_epoch value "
+                            "in the experiment config"
+                        )
+                    else:
+                        # Pre-existing callbacks only get a warning.
+                        logging.warning(
+                            "It is unsupported to use a Callback that defines on_epoch_end "
+                            f"({type(cb).__name__})without setting the records_per_epoch value in "
+                            "the experiment config. Training will continue but on_epoch_end will "
+                            "never be called."
+                        )
+
+        # Standard post-callback from the real configure_callbacks().
+        # Note that we are not including BaseLogger since it is only for averaging metrics over an
+        # entire epoch, and we don't report any metrics in on_epoch_end at all.
+        self.model.history = keras.callbacks._DeterminedHistory()
+        callbacks = callbacks + [self.model.history]
+
+        if self.context._fit_verbose:
+            # Our implementation of verbose=True.
+            callbacks = [keras.callbacks._DeterminedProgress()] + callbacks
+
+        # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
+        # because we would have to communicate after every batch to know how many records were in
+        # each batch on each worker in order to trigger on_epoch_end callbacks correctly.
+        batches_per_epoch = None
+        records_per_epoch = self.env.experiment_config.get_records_per_epoch()
+        if records_per_epoch is not None:
+            batches_per_epoch = records_per_epoch // self.context.get_global_batch_size()
+
+        # We wrap all of the callbacks in a single Multiplexer.
+        self.multiplexer = TrialControllerMultiplexer(
+            self,
+            callbacks,
+            self.is_chief,
+            self.batch_size,
+            batches_per_epoch,
+            self.multiplexer_load_state,
+        )
+        callbacks = [self.multiplexer]
+
+        if self.hvd_config.use:
+            # Horovod synchronization of initial variables should happen even before we enter our
+            # control loop, in case we have an initial validation requested.
+            callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0)] + callbacks
+
+        # The remainder of Determined control logic is done with a custom CallbackList
+        self.callback_list = CallbackList(callbacks)
+
+        # Disable timing of callbacks in some versions of keras. This can fail in some corner-cases
+        # because CallbackList is not designed to allow some callbacks to call other callbacks, and
+        # they can interact very poorly.
+        if hasattr(self.callback_list, "_timing"):
+            self.callback_list._timing["on_train_batch_begin"] = True
+            self.callback_list._timing["on_train_batch_end"] = True
+            self.callback_list._timing["on_test_batch_begin"] = True
+            self.callback_list._timing["on_test_batch_end"] = True
+            self.callback_list._timing["on_predict_batch_begin"] = True
+            self.callback_list._timing["on_predict_batch_end"] = True
+
+        # callback_model is the model given to callbacks, where we should be checking for
+        # stop_training.  In horovod dtrain or non-dtrain, it should always be self.model.
+        callback_model = self.model._get_callback_model()
+        self.callback_list.set_model(callback_model)
+
+        # Fill in bogus values for most of these... some of them are very complex to calculate.
+        set_callback_parameters(
+            self.callback_list,
+            self.model,
+            do_validation=False,
+            batch_size=self.batch_size,
+            epochs=None,
+            steps_per_epoch=None,
+            samples=None,
+            verbose=False,
+            mode=ModeKeys.TRAIN,
+        )
+
+        self.callback_list.model.stop_training = False
 
     def _save_checkpoint(self, path: pathlib.Path) -> workload.Response:
-        # We assume that at least one training step has completed when saving a
-        # checkpoint.
-
         if not self.is_chief:
             return workload.Skipped()
 
-        # Save training data iterator position.
         path.mkdir(parents=True, exist_ok=True)
 
-        # Save model.
-        self.model.save(path.joinpath("determined-keras-model.h5"), save_format="h5")
+        # Save model weights. We use `tf` format because `h5` does not support
+        # models that subclass `tf.keras.Model` and define custom `call()`
+        # and/or `train_step()` functions.
+        self.model.save_weights(
+            str(path.joinpath("determined-keras-model-weights")), save_format="tf"
+        )
 
+        # Save optimizer(s) weights.
+        with h5py.File(path.joinpath("determined-keras-optimizer-weights.h5"), "w") as h5file:
+            for idx, optimizer in enumerate(self.context._optimizers):
+                opt_group = h5file.create_group(f"optimizer-{idx}")
+                save_optimizer_weights_to_hdf5_group(opt_group, optimizer)
+
+        # Save RNG state.
+        rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
+        if version.parse(tf.__version__) < version.parse("2.0.0"):
+            rng_state["tf_rng_global_seed"] = tf.compat.v1.random.get_seed(0)[0]
+        else:
+            generator = tf.random.get_global_generator()
+            rng_state["tf2_rng_global_algorithm"] = generator.algorithm
+            rng_state["tf2_rng_global_state"] = generator.state
+        with open(path.joinpath("rng_state.pkl"), "wb") as f:
+            pickle.dump(rng_state, f)
+
+        # Save user code.
         det.util.write_user_code(path)
 
-        return {"framework": f"tensorflow-{tf.__version__}", "format": "h5"}
+        # Save callback(s) state.
+        callbacks_state = self.multiplexer._get_state()
+        with path.joinpath("determined-callbacks.v1.pkl").open("wb") as f:
+            pickle.dump(callbacks_state, f)
+
+        self.multiplexer._checkpoint_end(path)
+
+        return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_weights"}
+
+    def _load_model_weights(self, model_weights_checkpoint_path: pathlib.Path) -> None:
+        logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
+        self.model.load_weights(str(model_weights_checkpoint_path))
+
+    def _load_optimizers_weights(self, optimizer_weights_checkpoint_path: pathlib.Path) -> None:
+        logging.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
+        with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
+            if "optimizer_weights" in h5file:
+                load_optimizer_weights(
+                    self.model, h5file["optimizer_weights"], self.model.optimizer
+                )
+                return
+
+            for idx, optimizer in enumerate(self.context._optimizers):
+                if f"optimizer-{idx}" in h5file:
+                    load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
+
+    def _load_model_and_optimizer_weights_v1(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model"))
+        self._load_optimizers_weights(self.load_path.joinpath("determined-keras-model"))
+
+    def _load_model_and_optimizer_weights_v2(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model.h5"))
+        self._load_optimizers_weights(self.load_path.joinpath("determined-keras-model.h5"))
+
+    def _load_model_and_optimizer_weights_v3(self) -> None:
+        self.load_path = cast(pathlib.Path, self.load_path)
+        self._load_model_weights(self.load_path.joinpath("determined-keras-model-weights"))
+        self._load_optimizers_weights(
+            self.load_path.joinpath("determined-keras-optimizer-weights.h5")
+        )
+
+    def _load(self) -> None:
+        self.multiplexer_load_state = None  # type: Optional[Dict]
+        if not self.load_path:
+            return
+
+        # Find model code path, we check multiple naming conventions for backwards compatibility.
+        if self.load_path.joinpath("determined-keras-model.h5").exists():
+            self._load_model_and_optimizer_weights_v2()
+        elif self.load_path.joinpath("determined-keras-optimizer-weights.h5").exists():
+            self._load_model_and_optimizer_weights_v3()
+        else:
+            self._load_model_and_optimizer_weights_v1()
+
+        # Load RNG state.
+        try:
+            with open(self.load_path.joinpath("rng_state.pkl"), "rb") as f:
+                rng_state = pickle.load(f)
+            np.random.set_state(rng_state["np_rng_state"])
+            random.setstate(rng_state["random_rng_state"])
+
+            if version.parse(tf.__version__) < version.parse("2.0.0"):
+                tf.compat.v1.random.set_random_seed(rng_state["tf_rng_global_seed"])
+            else:
+                algorithm = rng_state["tf2_rng_global_algorithm"]
+                state = rng_state["tf2_rng_global_state"]
+                generator = tf.random.Generator.from_state(state, algorithm)
+                tf.random.set_global_generator(generator)
+        except IOError:
+            logging.warning("Checkpoint did not include RNG state.")
+
+        # Load callbacks.
+        cb_state_path = self.load_path.joinpath("determined-callbacks.v1.pkl")
+        if cb_state_path.exists():
+            with cb_state_path.open("rb") as f:
+                self.multiplexer_load_state = pickle.load(f)
 
     def run(self) -> None:
+        try:
+            self._launch_fit()
+        except det.errors.WorkerFinishedGracefully:
+            pass
+
+    def _launch_fit(self) -> None:
+        (
+            training_input,
+            batches_per_epoch,
+        ) = self._train_input_manager.get_training_input_and_batches_per_epoch()
+
+        self.model.fit(
+            training_input,
+            class_weight=self.context._fit_class_weight,
+            callbacks=self.callback_list,
+            shuffle=False,
+            steps_per_epoch=sys.maxsize,
+            initial_epoch=self._train_input_manager.get_initial_epoch(),
+            epochs=IMPOSSIBLY_LARGE_EPOCHS,
+            validation_split=0,
+            verbose=0,
+        )
+
+    def _launch_evaluate(self) -> Any:
+        (
+            validation_data,
+            validation_steps,
+        ) = self._validation_input_manager.get_validation_input_and_num_batches()
+
+        # Starting in TF 2.2 users may define custom test_step() that do
+        # not use the model metrics.
+        use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
+        evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
+
+        metrics_values = self.model.evaluate(
+            validation_data,
+            steps=validation_steps,
+            verbose=0,
+            callbacks=self.callback_list,
+            **evaluate_kwargs,
+        )
+        logging.debug(f"Worker finished model.evaluate() with metrics: {metrics_values}.")
+
+        # If the model was compiled with metrics=None, metrics_value will be a single value.
+        if not isinstance(metrics_values, (tuple, list, dict)):
+            metrics_values = (metrics_values,)
+
+        if use_model_metrics:
+            metrics = make_logs(self.model, {}, metrics_values, ModeKeys.TEST, prefix="val_")
+        else:
+            check.is_instance(metrics_values, dict)
+            metrics = {f"val_{k}": v for k, v in metrics_values.items()}
+
+        _ = self._validation_input_manager.stop_validation_input_and_get_num_inputs()
+
+        return metrics
+
+    def _control_loop(self) -> None:
         for wkld, args, response_func in self.workloads:
             logging.debug(f"Received wkld {wkld.kind} with args {args}.")
-
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                # Store the train_response_func for later.
+                # Configure the state for a training step.
                 self.train_response_func = response_func
-                self.num_batches = wkld.num_batches
-
-                # There are two possibilities when a RUN_STEP workload is recieved.
-                # 1) This is the first training step seen by the trial
-                #    container. In this case, enter the tf.keras fit() training loop.
-                # 2) This is _not_ the first training step, meaning that the
-                #    tf.keras fit() training loop is already active and paused.
-                #    break to re-enter the training loop.
-                if not self.fit_loop_started:
-                    try:
-                        self._launch_fit()
-                    except det.errors.WorkerFinishedGracefully:
-                        pass
-
-                    if not self.expect_terminate:
-                        raise AssertionError(
-                            "Training loop exited unexpectedly but without throwing any errors. "
-                            "This is possibly due to a user callback causing the training loop to "
-                            "exit, which is not supported at this time."
-                        )
+                self.train_workload_batches = 0
+                self.train_workload_metrics = []
+                self.train_workload_len = wkld.num_batches
+                self.multiplexer.set_batches_requested(wkld.num_batches)
                 break
-
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response_func(
                     det.util.wrap_metrics(
-                        self.compute_validation_metrics(), self.context.get_stop_requested()
+                        self._compute_validation_metrics(), self.context.get_stop_requested()
                     )
                 )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
@@ -459,66 +687,107 @@ class TFKerasTrialController(det.LoopTrialController):
                 path = cast(pathlib.Path, args[0])
                 response_func(self._save_checkpoint(path))
             elif wkld.kind == workload.Workload.Kind.TERMINATE:
-                self.model.stop_training = True
-                self.expect_terminate = True
                 response_func({} if self.is_chief else workload.Skipped())
-                break
+                self.multiplexer._corrected_train_end()
+                raise det.errors.WorkerFinishedGracefully
             else:
-                raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
+                raise AssertionError(f"Unknown workload kind {wkld.kind}.")
 
-    def _launch_fit(self) -> None:
-        check.false(self.fit_loop_started)
-        self.fit_loop_started = True
+    def _allreduce_logs(self, logs: Dict) -> Dict:
+        if not self.hvd_config.use:
+            return logs
+        # Reduce logs in key-sorted to be deterministic across workers.
+        keys = sorted(logs)
+        logging.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
+        return {key: np.array(hvd.allreduce(logs[key], name=key)) for key in keys}
 
-        self.tf_keras_callbacks.append(DeterminedEarlyStoppingCallback(self))
-        self.tf_keras_callbacks.append(WaitForInstructionsCallback(self))
+    def _post_train_batch_end(self, num_inputs: int, logs: Dict) -> None:
+        # Remove default keras metrics we aren't interested in like "batch" and "size".
+        self.train_workload_metrics.append(
+            {k: v for k, v in logs.items() if k not in {"batch", "size"}}
+        )
+        self.train_workload_inputs += num_inputs
+        self.train_workload_batches += 1
+        if self.train_workload_batches != self.train_workload_len:
+            return
 
-        if self.hvd_config.use:
-            # When using horovod broadcast initial variable states from rank 0 to
-            # all other processes.
-            self.tf_keras_callbacks.append(hvd.callbacks.BroadcastGlobalVariablesCallback(0))
-
-        (
-            training_input,
-            batches_per_epoch,
-        ) = self._train_input_manager.get_training_input_and_batches_per_epoch()
-
-        _ = self.model.fit(
-            training_input,
-            callbacks=self.tf_keras_callbacks,
-            shuffle=False,
-            steps_per_epoch=batches_per_epoch,
-            initial_epoch=self._train_input_manager.get_initial_epoch(),
-            epochs=IMPOSSIBLY_LARGE_EPOCHS,
-            validation_split=0,
-            verbose=0,
-        ).history
-
-    def compute_validation_metrics(self) -> workload.Response:
-        (
-            validation_data,
-            validation_steps,
-        ) = self._validation_input_manager.get_validation_input_and_num_batches()
-
-        metrics_values = self.model.evaluate(validation_data, steps=validation_steps, verbose=0)
-
-        # If the model was compiled with metrics=None, metrics_value will be a single value.
-        if not isinstance(metrics_values, (tuple, list)):
-            metrics_values = (metrics_values,)
+        if self.train_response_func is None:
+            raise AssertionError(
+                "Callback should avoid calling model.predict(), "
+                "as this will affect Determined training behavior",
+            )
 
         if self.hvd_config.use:
-            for index, metric_value in enumerate(metrics_values):
-                metrics_values[index] = np.array(hvd.allreduce(metric_value))
+            num_inputs = hvd.allreduce(num_inputs, average=False, name="train_num_inputs")
+            if isinstance(num_inputs, EagerTensor):
+                # Horovod will promote an int to a tensor in eager mode.
+                num_inputs = num_inputs.numpy()
 
-        num_inputs = self._validation_input_manager.stop_validation_input_and_get_num_inputs()
+        # Return only the latest metrics, which is the running average for all trained batches in
+        # the step (Keras does not report individual logs, only running averages at any point).
+        final_metrics = self.train_workload_metrics[-1]
+        if self.env.experiment_config.averaging_training_metrics_enabled():
+            final_metrics = self._allreduce_logs(final_metrics)
+
+        self.multiplexer._train_workload_end(final_metrics)
+        self._stop_training_check()
+
+        if self.is_chief:
+            # Don't use det.util.make_metrics, because our batch metrics are not raw metrics.
+            response = {
+                "metrics": {
+                    "num_inputs": num_inputs,
+                    "batch_metrics": self.train_workload_metrics,
+                    "avg_metrics": final_metrics,
+                },
+                "stop_requested": self.context.get_stop_requested(),
+            }
+            self.train_response_func(response)
+        else:
+            self.train_response_func(workload.Skipped())
+
+        self.train_response_func = None
+
+        self._control_loop()
+
+        # Always reset metrics before starting a new training step.
+        assert self.model is not None
+        self.model.reset_metrics()
+
+    def _compute_validation_metrics(self) -> workload.Response:
+        metrics = self._launch_evaluate()
+        num_inputs = self.multiplexer.get_test_inputs()
+
+        if self.hvd_config.use:
+            # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
+            # may hang when called minutes apart by different workers which may happen if
+            # workers complete evaluation at different speeds.
+            self._global_barrier()
+
+            num_inputs = hvd.allreduce(num_inputs, average=False, name="validation_num_inputs")
+            if isinstance(num_inputs, EagerTensor):
+                # Horovod will promote an int to a tensor in eager mode.
+                num_inputs = num_inputs.numpy()
+
+        metrics = self._allreduce_logs(metrics)
+        check.gt(len(metrics), 0)
+
+        self.multiplexer._test_end(metrics)
 
         if not self.is_chief:
             return workload.Skipped()
 
-        metrics = make_logs(self.model, {}, metrics_values, ModeKeys.TEST, prefix="val_")
-        check.gt(len(metrics), 0)
-
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
+
+    def _stop_training_check(self) -> None:
+        # Detect when users set stop_training and convert it to a set_stop_requested.
+        if self.multiplexer.model.stop_training:
+            if self.is_chief:
+                self.multiplexer.model.stop_training = False
+                self.context.set_stop_requested(True)
+            else:
+                logging.debug("cancelling model.stop_training on non-chief worker")
+                self.multiplexer.model.stop_training = True
 
 
 class TFKerasTrial(det.Trial):
@@ -532,7 +801,7 @@ class TFKerasTrial(det.Trial):
     TensorFlow 2.x, specify a TensorFlow 2.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.7.0``).
+    ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate
@@ -599,9 +868,6 @@ class TFKerasTrial(det.Trial):
             <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple
             of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
-            5) A :class:`determined.keras.SequenceAdapter` returning a tuple of either
-            ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
-
         When using ``tf.data.Dataset``, you must wrap the dataset using
         :meth:`determined.keras.TFKerasTrialContext.wrap_dataset`. This wrapper is used
         to shard the dataset for distributed training. For optimal performance, users
@@ -637,9 +903,6 @@ class TFKerasTrial(det.Trial):
             <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple
             of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
-            5) A :class:`determined.keras.SequenceAdapter` returning a tuple of either
-            (inputs, targets) or (inputs, targets, sample weights).
-
         When using ``tf.data.Dataset``, you must wrap the dataset using
         :meth:`determined.keras.TFKerasTrialContext.wrap_dataset`. This wrapper is used
         to shard the dataset for distributed training. For optimal performance, users
@@ -658,20 +921,24 @@ class TFKerasTrial(det.Trial):
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
         """
-        Specifies a list of `tf.keras.callback.Callback
-        <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback>`__
-        objects to be used during the trial’s lifetime.
+        Specifies a list of :class:`determined.keras.callbacks.Callback` objects to be used during
+        training.
 
-        Callbacks should avoid calling ``model.predict()``, as this will affect
-        Determined training behavior.
+        Callbacks should avoid calling ``model.predict()``, as this will affect Determined training
+        behavior.
 
-        .. note::
-            If you specify a Keras callback that uses the `on_epoch_begin
-            <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback#on_epoch_begin>`__
-            or <`on_epoch_end
-            <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback#on_epoch_end>`__
-            interfaces, epoch boundaries are determined by the length of the
-            training data set, not by the value of the Determined configuration
-            setting :ref:`records_per_epoch <config-records-per-epoch>`.
+        .. note:
+           Note that :class:`determined.keras.callbacks.Callback` is a subclass of
+           `tf.keras.callback.Callback
+           <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback>`__ objects
+           which supports stateful callbacks that can be checkpointed an restored mid-training.
+
+           Please see :class:`determined.keras.callbacks.Callback` for a summary of differences
+           between normal Keras callbacks and Determined Keras callbacks.
+
+        .. warning:
+           For legacy callbacks which do not subclass :class:`determined.keras.callbacks.Callback`,
+           if ``records_per_epoch`` is not set in the experiement config for an experiment,
+           ``on_epoch_end`` will never be called.
         """
         return []

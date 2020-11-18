@@ -10,11 +10,8 @@ from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import RMSprop
 
-from determined.keras import (
-    TFKerasTensorBoard,
-    TFKerasTrial,
-    TFKerasTrialContext,
-)
+from determined.keras import TFKerasTrial, TFKerasTrialContext
+from determined.keras.callbacks import TensorBoard
 
 # Constants about the data set.
 IMAGE_SIZE = 32
@@ -55,9 +52,16 @@ class MnistTrial(TFKerasTrial):
         probs = tf.keras.layers.Dense(10, activation="softmax")(y)
 
         model = tf.keras.models.Model(image, probs, name="mnist")
+
+        # Wrap the model.
         model = self.context.wrap_model(model)
+
+        # Create and wrap the optimizer.
+        optimizer = RMSprop(lr=self.base_learning_rate, decay=self.learning_rate_decay)
+        optimizer = self.context.wrap_optimizer(optimizer)
+
         model.compile(
-            RMSprop(lr=self.base_learning_rate, decay=self.learning_rate_decay),
+            optimizer=optimizer,
             loss="sparse_categorical_crossentropy",
             metrics=["sparse_categorical_accuracy"],
         )
@@ -65,7 +69,7 @@ class MnistTrial(TFKerasTrial):
         return model
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-        return [TFKerasTensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
+        return [TensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
     def build_training_data_loader(self) -> tf.data.Dataset:
         @self.context.experimental.cache_train_dataset("mnist-tf-keras", "v1", shuffle=True)

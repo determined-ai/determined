@@ -25,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.13.7.dev0
+    default: 0.13.8.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -99,11 +99,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-1def2ee
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0f2001a
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-1def2ee
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0f2001a
 
   login-docker:
     steps:
@@ -784,6 +784,19 @@ jobs:
       - react-get-deps
       - run: make -C webui/react check
 
+  build-react-preview:
+    docker:
+      - image: cimg/node:12.16
+    environment:
+      PUBLIC_URL: /0
+    steps:
+      - checkout
+      - react-get-deps
+      - run: make -C webui/react build
+      - store_artifacts:
+          path: webui/react/build
+          destination: /
+
   build-react:
     docker:
       - image: cimg/node:12.16
@@ -1034,7 +1047,7 @@ jobs:
           determined-deploy: true
           executor: determinedai/cimg-base:stable
       - deploy-aws-cluster:
-          cluster-id: determined-${CIRCLE_BRANCH}
+          cluster-id: determined-${CIRCLE_BRANCH////--}
           det-version: ${CIRCLE_SHA1}
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
@@ -1255,6 +1268,9 @@ workflows:
       - build-and-package-ts-sdk:
           requires:
             - build-proto
+      - build-react-preview:
+          requires:
+            - build-and-package-ts-sdk
       - build-react:
           requires:
             - build-and-package-ts-sdk
