@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type priorityScheduler struct {
@@ -64,7 +63,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
 
-	for _, priority := range getOrderedPriorities(priorityToPendingTasksMap) {
+	for priority := range getOrderedPriorities(priorityToPendingTasksMap) {
 		allocationRequests := priorityToPendingTasksMap[priority]
 		log.Infof("processing priority %d with %d pending tasks", priority, len(allocationRequests))
 
@@ -95,7 +94,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 				log.Infof(
 					"Not preempting tasks for task %s as it will be able to launch "+
 						"once all other tasks are preempted", prioritizedAllocation.Name)
-				simulateFitsPlacement(fits)
+				addTaskToAgents(fits)
 				continue
 			}
 
@@ -104,7 +103,9 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 				priorityToScheduledTaskMap, toRelease)
 
 			if taskPlaced {
-				log.Infof("Preempted %d tasks for task: %s", len(preemptedTasks), prioritizedAllocation.Name)
+				log.Infof("Preempted %d tasks for task: %s", len(preemptedTasks),
+					prioritizedAllocation.Name)
+
 				localAgentsState = updatedLocalAgentState
 				for preemptedTask := range preemptedTasks {
 					toRelease[preemptedTask] = true
@@ -113,6 +114,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 		}
 	}
 
+	// Convert to a slice which is the expected output format.
 	toReleaseSlice := make([]*actor.Ref, 0, len(toRelease))
 	for k := range toRelease {
 		toReleaseSlice = append(toReleaseSlice, k)
@@ -121,6 +123,8 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 	return toAllocate, toReleaseSlice
 }
 
+// trySchedulingTaskViaPreemption checks whether preempting lower priority tasks
+// would allow this task to be scheduled.
 func trySchedulingTaskViaPreemption(
 	taskList *taskList,
 	allocationRequest *AllocateRequest,
@@ -149,11 +153,11 @@ func trySchedulingTaskViaPreemption(
 			}
 
 			resourcesAllocated := taskList.GetAllocations(preemptionCandidate.TaskActor)
-			simulateTaskRemoval(localAgentsState, resourcesAllocated)
+			removeTaskFromAgents(localAgentsState, resourcesAllocated)
 			preemptedTasks[preemptionCandidate.TaskActor] = true
 
 			if fits := findFits(allocationRequest, localAgentsState, fittingMethod); len(fits) > 0 {
-				simulateFitsPlacement(fits)
+				addTaskToAgents(fits)
 				return true, localAgentsState, preemptedTasks
 			}
 		}
@@ -162,6 +166,9 @@ func trySchedulingTaskViaPreemption(
 	return false, localAgentsState, preemptedTasks
 }
 
+// trySchedulingPendingTasksInPriority tries to schedule all the tasks in the
+// current priority. Note tasks are scheduled based on the order in which they
+// are listed.
 func trySchedulingPendingTasksInPriority(
 	allocationRequests []*AllocateRequest,
 	agents map[*actor.Ref]*agentState,
@@ -177,7 +184,7 @@ func trySchedulingPendingTasksInPriority(
 			unSuccessfulAllocations = append(unSuccessfulAllocations, allocationRequest)
 			continue
 		}
-		simulateFitsPlacement(fits)
+		addTaskToAgents(fits)
 		successfulAllocations = append(successfulAllocations, allocationRequest)
 		log.Infof("successfully scheduled task: %s", allocationRequest.ID)
 	}
@@ -203,6 +210,9 @@ func getAllPendingZeroSlotTasks(taskList *taskList, label string) []*AllocateReq
 	return pendingZeroSlotTasks
 }
 
+// sortTasksByPriorityAndTimestamp sorts all pending and scheduled tasks
+// separately by priority. Within each priority, tasks are orderdered
+// based on their creation time.
 func sortTasksByPriorityAndTimestamp(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
@@ -268,13 +278,13 @@ func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentStat
 	return copiedAgents
 }
 
-func simulateFitsPlacement(fits []*fittingState) {
+func addTaskToAgents(fits []*fittingState) {
 	for _, fit := range fits {
 		fit.Agent.allocateFreeDevices(fit.Slots, "simulation")
 	}
 }
 
-func simulateTaskRemoval(
+func removeTaskFromAgents(
 	agents map[*actor.Ref]*agentState,
 	resourcesAllocated *ResourcesAllocated,
 ) {
@@ -282,8 +292,8 @@ func simulateTaskRemoval(
 		allocation := allocation.(*containerAllocation)
 		for _, allocatedDevice := range allocation.devices {
 			// Local devices are a deep copy of the originals so we loop over trying to find
-			// the device that matches. If we assume homogeneous devices can just search for
-			// the first available device.
+			// the device that matches. If we assume that we have homogeneous devices we could
+			// just search for the first available device.
 			for localDevice, localContainer := range agents[allocation.agent.handler].devices {
 				if allocatedDevice.ID == localDevice.ID && localContainer != nil {
 					agents[allocation.agent.handler].devices[localDevice] = nil
