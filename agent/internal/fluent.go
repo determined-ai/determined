@@ -152,9 +152,9 @@ end
 
 		// HACK: If a host resolves to both IPv4 and IPv6 addresses, Fluent Bit seems to only try IPv6 and
 		// fail if that connection doesn't work. IPv6 doesn't play well with Docker and many Linux
-		// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and [::1]
-		// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
-		// diretcly into an IP address before passing it to Fluent Bit.
+		// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and
+		// [::1] (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate
+		// "localhost" diretcly into an IP address before passing it to Fluent Bit.
 		if fluentMasterHost == localhost {
 			fluentMasterHost = ipv4Loopback
 			if opts.Security.TLS.MasterCertName == "" {

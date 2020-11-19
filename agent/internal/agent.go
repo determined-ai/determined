@@ -343,9 +343,9 @@ func (a *agent) setup(ctx *actor.Context) error {
 	a.cm, _ = ctx.ActorOf("containers", cm)
 
 	ctx.Ask(a.socket, api.WriteMessage{Message: proto.MasterMessage{AgentStarted: &proto.AgentStarted{
-		Version:      a.Version,
-		Devices:      a.Devices,
-		Label:        a.Label,
+		Version: a.Version,
+		Devices: a.Devices,
+		Label:   a.Label,
 	}}})
 	return nil
 }
