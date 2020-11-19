@@ -56,14 +56,15 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 	toAllocate := getAllPendingZeroSlotTasks(taskList, label)
 	toRelease := make(map[*actor.Ref]bool)
 
-	// Sort tasks by priorities and timestamps.
+	// Sort tasks by priorities and timestamps. This sort determines the order in which
+	// tasks are scheduled and preempted.
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
 		taskList, groups, label)
 
 	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
 
-	for priority := range getOrderedPriorities(priorityToPendingTasksMap) {
+	for _, priority := range getOrderedPriorities(priorityToPendingTasksMap) {
 		allocationRequests := priorityToPendingTasksMap[priority]
 		log.Infof("processing priority %d with %d pending tasks", priority, len(allocationRequests))
 
@@ -93,7 +94,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 			if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(fits) > 0 {
 				log.Infof(
 					"Not preempting tasks for task %s as it will be able to launch "+
-						"once all other tasks are preempted", prioritizedAllocation.Name)
+						"once already scheduled preemptions complete", prioritizedAllocation.Name)
 				addTaskToAgents(fits)
 				continue
 			}
@@ -108,6 +109,8 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 
 				localAgentsState = updatedLocalAgentState
 				for preemptedTask := range preemptedTasks {
+					log.Infof("preempting task %s for task %s",
+						preemptedTask.Address().Local(), prioritizedAllocation.Name)
 					toRelease[preemptedTask] = true
 				}
 			}
@@ -136,6 +139,7 @@ func trySchedulingTaskViaPreemption(
 ) (bool, map[*actor.Ref]*agentState, map[*actor.Ref]bool) {
 	localAgentsState := deepCopyAgents(agents)
 	preemptedTasks := make(map[*actor.Ref]bool)
+	log.Infof("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
 
 	for priority := model.MaxUserSchedulingPriority; priority > allocationPriority; priority-- {
 		if _, ok := priorityToScheduledTaskMap[priority]; !ok {
@@ -155,6 +159,10 @@ func trySchedulingTaskViaPreemption(
 			resourcesAllocated := taskList.GetAllocations(preemptionCandidate.TaskActor)
 			removeTaskFromAgents(localAgentsState, resourcesAllocated)
 			preemptedTasks[preemptionCandidate.TaskActor] = true
+
+			for _, agent := range localAgentsState {
+				log.Infof("agent has %d slots", agent.numEmptySlots())
+			}
 
 			if fits := findFits(allocationRequest, localAgentsState, fittingMethod); len(fits) > 0 {
 				addTaskToAgents(fits)
@@ -211,7 +219,7 @@ func getAllPendingZeroSlotTasks(taskList *taskList, label string) []*AllocateReq
 }
 
 // sortTasksByPriorityAndTimestamp sorts all pending and scheduled tasks
-// separately by priority. Within each priority, tasks are orderdered
+// separately by priority. Within each priority, tasks are ordered
 // based on their creation time.
 func sortTasksByPriorityAndTimestamp(
 	taskList *taskList,

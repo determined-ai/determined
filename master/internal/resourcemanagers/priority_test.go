@@ -1,6 +1,7 @@
 package resourcemanagers
 
 import (
+	"fmt"
 	"testing"
 
 	"gotest.tools/assert"
@@ -202,4 +203,38 @@ func TestPrioritySchedulingNoPreemptionWithLabels(t *testing.T) {
 
 	expectedToAllocate := []*mockTask{tasks[0], tasks[1]}
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+}
+
+func TestPrioritySchedulingPreemption(t *testing.T) {
+	lowerPriority := 50
+	higherPriority := 40
+
+	agents := []*mockAgent{
+		{id: "agent1", slots: 4},
+	}
+	groups := []*mockGroup{
+		{id: "group1", priority: &lowerPriority},
+		{id: "group2", priority: &higherPriority},
+	}
+	tasks := []*mockTask{
+		{id: "task1", slotsNeeded: 4, group: groups[0], allocatedAgent: agents[0], containerStarted: true},
+		{id: "task2", slotsNeeded: 0, group: groups[0]},
+		{id: "task3", slotsNeeded: 4, group: groups[1]},
+	}
+
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+
+	for _, agent := range agentMap {
+		fmt.Println("agent has free slots: ", agent.numEmptySlots())
+	}
+
+	p := &priorityScheduler{preemptionEnabled: true}
+	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+
+	expectedToAllocate := []*mockTask{tasks[1]}
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+
+	expectedToRelease := []*mockTask{tasks[0]}
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
