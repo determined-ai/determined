@@ -433,7 +433,8 @@ If the problem persists please contact support.',
     trialDetails.source,
     trialId,
     storage,
-    storageTableMetricsKey ]);
+    storageTableMetricsKey,
+  ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
   if (trialDetails.error !== undefined) {

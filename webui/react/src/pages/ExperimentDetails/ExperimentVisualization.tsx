@@ -1,5 +1,5 @@
 import { Col, Row } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
@@ -48,7 +48,8 @@ const ExperimentVisualization: React.FC<Props> = ({
     <div className={css.base}>
       <Row>
         <Col md={20} span={24}>
-          visualizations
+          {experiment.id}
+          {experiment.config.description}
         </Col>
         <Col md={4} span={24}>
           <div className={css.inspector}>
