@@ -124,8 +124,7 @@ func newMockAgent(
 ) *agentState {
 	ref, created := system.ActorOf(actor.Addr(id), &mockAgent{id: id, slots: slots, label: label})
 	assert.Assert(t, created)
-	// TODO: Add a resource pool to the agent state
-	state := newAgentState(sproto.AddAgent{Agent: ref, Label: label})
+	state := newAgentState(sproto.AddAgent{Agent: ref, Label: label}, "default")
 	for i := 0; i < slots; i++ {
 		state.devices[device.Device{ID: i}] = nil
 	}
@@ -250,12 +249,12 @@ func setupSchedulerStates(
 	for _, mockAgent := range mockAgents {
 		ref, created := system.ActorOf(actor.Addr(mockAgent.id), mockAgent)
 		assert.Assert(t, created)
-		// TODO: Add resource pool name to agentState
 		agent := &agentState{
 			handler:            ref,
 			label:              mockAgent.label,
 			devices:            make(map[device.Device]*cproto.ID),
 			zeroSlotContainers: make(map[cproto.ID]bool),
+			resourcePool: 		"default",
 		}
 		for i := 0; i < mockAgent.slots; i++ {
 			agent.devices[device.Device{ID: i}] = nil

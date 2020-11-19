@@ -141,6 +141,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		telemetry.ReportAgentConnected(ctx.Self().System(), a.uuid, msg.AgentStarted.Devices)
 		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
 			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
+
 		ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
 		a.label = msg.AgentStarted.Label
