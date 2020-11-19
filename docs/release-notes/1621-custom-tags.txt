@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  Support custom tags for AWS dynamic agents.

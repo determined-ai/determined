@@ -451,6 +451,13 @@ The master supports the following configuration settings:
          instances. Defaults to the master instance ID if the master is
          on EC2, otherwise ``determined-ai-determined``.
 
+      -  ``custom_tags``: List of custom tags that are applied to the
+         Determined agent instances. Each tag must specify ``key`` and
+         ``value`` fields. Defaults to empty list.
+
+         -  ``key``: Key of custom tag
+         -  ``value``: value of custom tag
+
       -  ``instance_name``: Name to set for the Determined agent
          instances. Defaults to ``determined-ai-agent``.
 
