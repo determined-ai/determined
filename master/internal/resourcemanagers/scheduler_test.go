@@ -360,18 +360,7 @@ func setupSchedulerStates(
 			agentState := agents[agentRef]
 			container := newContainer(req, agentState, req.SlotsNeeded)
 
-			allocated := &ResourcesAllocated{
-				ID: req.ID,
-				Allocations: []Allocation{
-					containerAllocation{
-						req:       req,
-						agent:     agentState,
-						container: container,
-					},
-				},
-			}
-			taskList.SetAllocations(req.TaskActor, allocated)
-
+			devices := make([]device.Device, 0)
 			if mockTask.containerStarted {
 				if mockTask.slotsNeeded == 0 {
 					agentState.zeroSlotContainers[container.id] = true
@@ -383,6 +372,7 @@ func setupSchedulerStates(
 						}
 						if i < mockTask.slotsNeeded {
 							agentState.devices[d] = &container.id
+							devices = append(devices, d)
 							i++
 						}
 					}
@@ -390,6 +380,19 @@ func setupSchedulerStates(
 						"over allocated to agent %s", mockTask.allocatedAgent.id)
 				}
 			}
+
+			allocated := &ResourcesAllocated{
+				ID: req.ID,
+				Allocations: []Allocation{
+					&containerAllocation{
+						req:       req,
+						agent:     agentState,
+						container: container,
+						devices:   devices,
+					},
+				},
+			}
+			taskList.SetAllocations(req.TaskActor, allocated)
 		}
 	}
 
