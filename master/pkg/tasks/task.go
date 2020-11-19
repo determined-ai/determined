@@ -137,6 +137,12 @@ func startCommand(t TaskSpec) container.Spec {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", envVarKey, envVarValue))
 	}
 	envVars = append(envVars, cmd.Config.Environment.EnvironmentVariables.For(deviceType)...)
+
+	shmSize := t.TaskContainerDefaults.ShmSizeBytes
+	if cmd.Config.Resources.ShmSize != nil {
+		shmSize = int64(*cmd.Config.Resources.ShmSize)
+	}
+
 	return container.Spec{
 		PullSpec: container.PullSpec{
 			Registry:  cmd.Config.Environment.RegistryAuth,
@@ -155,7 +161,7 @@ func startCommand(t TaskSpec) container.Spec {
 				NetworkMode:     t.TaskContainerDefaults.NetworkMode,
 				Mounts:          ToDockerMounts(cmd.Config.BindMounts),
 				PublishAllPorts: true,
-				ShmSize:         t.TaskContainerDefaults.ShmSizeBytes,
+				ShmSize:         shmSize,
 			},
 			Archives: CommandArchives(t),
 		},
