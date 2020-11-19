@@ -23,7 +23,6 @@ describe('Sign in/out', () => {
     cy.login();
     cy.visit('/det/dashboard');
     cy.get('#avatar').click();
-    cy.get(`[role="menu"] a[href="${LOGOUT_ROUTE}"]`).should('have.lengthOf', 1);
     cy.get(`[role="menu"] a[href="${LOGOUT_ROUTE}"]`).click();
     cy.checkLoggedOut();
   });
