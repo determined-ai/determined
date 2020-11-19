@@ -8,6 +8,16 @@
  Version 0.13
 **************
 
+Version 0.13.9
+==============
+
+**Release Date:** November 19, 2020
+
+**Bug Fixes**
+
+-  API: Fix a bug that caused the webUI's log viewer to fail to render
+   older pages of logs.
+
 Version 0.13.8
 ==============
 
