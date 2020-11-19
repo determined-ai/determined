@@ -56,6 +56,7 @@ class TFKerasContext:
         self._fit_workers = 1
         self._fit_use_multiprocessing = False
         self._fit_max_queue_size = 10
+        self._fit_shuffle = True
 
     def configure_fit(
         self,
@@ -64,6 +65,7 @@ class TFKerasContext:
         workers: Optional[int] = None,
         use_multiprocessing: Optional[bool] = None,
         max_queue_size: Optional[bool] = None,
+        shuffle: Optional[bool] = None,
     ) -> None:
         """
         Configure parameters of ``model.fit()``.  See the `Keras documentation
@@ -98,6 +100,8 @@ class TFKerasContext:
             self._fit_use_multiprocessing = use_multiprocessing
         if max_queue_size is not None:
             self._fit_max_queue_size = max_queue_size
+        if shuffle is not None:
+            self._fit_shuffle = shuffle
 
     def _wrap_model_with_train_fn(self, model: Any, train_fn: Optional[Callable]) -> Any:
         class _WrappedModel(type(model)):  # type: ignore
@@ -127,15 +131,16 @@ class TFKerasContext:
                 fit_generator_args = inspect.signature(model.fit_generator).bind(*args, **kwargs)
                 fit_generator_args.apply_defaults()
 
-                training_data = keras.SequenceAdapter(
-                    fit_generator_args.arguments["generator"],
-                    use_multiprocessing=fit_generator_args.arguments["use_multiprocessing"],
-                    workers=fit_generator_args.arguments["workers"],
-                )
-                validation_data = keras.SequenceAdapter(
-                    fit_generator_args.arguments["validation_data"],
-                    use_multiprocessing=fit_generator_args.arguments["use_multiprocessing"],
-                    workers=fit_generator_args.arguments["workers"],
+                training_data = fit_generator_args.arguments["generator"]
+
+                if fit_generator_args.arguments["validation_data"] is None:
+                    raise errors.InvalidExperimentException(
+                        "Determined requires validation_data in the call to fit_generator()."
+                    )
+
+                validation_data = keras._adapt_data_from_data_loader(
+                    input_data=fit_generator_args.arguments["validation_data"],
+                    batch_size=self.env.per_slot_batch_size,
                 )
 
                 self.train_config = TFKerasTrainConfig(
@@ -147,6 +152,7 @@ class TFKerasContext:
                 self.configure_fit(
                     verbose=fit_generator_args.arguments["verbose"],
                     class_weight=fit_generator_args.arguments["class_weight"],
+                    shuffle=fit_generator_args.arguments["shuffle"],
                     workers=fit_generator_args.arguments["workers"],
                     use_multiprocessing=fit_generator_args.arguments["use_multiprocessing"],
                     max_queue_size=fit_generator_args.arguments["max_queue_size"],
@@ -192,30 +198,21 @@ class TFKerasContext:
                 fit_args = inspect.signature(model.fit).bind(*args, **kwargs)
                 fit_args.apply_defaults()
 
-                # TODO: Use batch size from context instead of fit call.
-                training_data = keras._adapt_keras_data(
+                training_data = keras._adapt_data_from_fit_args(
                     x=fit_args.arguments["x"],
                     y=fit_args.arguments["y"],
                     sample_weight=fit_args.arguments["sample_weight"],
                     batch_size=self.env.per_slot_batch_size,
-                    use_multiprocessing=fit_args.arguments["use_multiprocessing"],
-                    workers=fit_args.arguments["workers"],
-                    max_queue_size=fit_args.arguments["max_queue_size"],
-                    drop_leftovers=True,
                 )
 
-                val_x, val_y, val_sample_weight = keras._get_x_y_and_sample_weight(
-                    input_data=fit_args.arguments["validation_data"]
-                )
-                validation_data = keras._adapt_keras_data(
-                    x=val_x,
-                    y=val_y,
-                    sample_weight=val_sample_weight,
+                if fit_args.arguments["validation_data"] is None:
+                    raise errors.InvalidExperimentException(
+                        "Determined requires validation_data in the call to fit()."
+                    )
+
+                validation_data = keras._adapt_data_from_data_loader(
+                    input_data=fit_args.arguments["validation_data"],
                     batch_size=self.env.per_slot_batch_size,
-                    use_multiprocessing=fit_args.arguments["use_multiprocessing"],
-                    workers=fit_args.arguments["workers"],
-                    max_queue_size=fit_args.arguments["max_queue_size"],
-                    drop_leftovers=False,
                 )
 
                 self.train_config = TFKerasTrainConfig(
@@ -226,6 +223,7 @@ class TFKerasContext:
 
                 self.configure_fit(
                     verbose=fit_args.arguments["verbose"],
+                    shuffle=fit_args.arguments["shuffle"],
                     class_weight=fit_args.arguments["class_weight"],
                     workers=fit_args.arguments["workers"],
                     use_multiprocessing=fit_args.arguments["use_multiprocessing"],

@@ -245,39 +245,18 @@ class TFKerasTrialController(det.LoopTrialController):
 
         session = TFKerasTrialController._configure_session(env, hvd_config, trial.session_config())
 
-        training_data_loader = trial.build_training_data_loader()
-        validation_data_loader = trial.build_validation_data_loader()
+        training_data = keras._adapt_data_from_data_loader(
+            input_data=trial.build_training_data_loader(),
+            batch_size=context.get_per_slot_batch_size(),
+        )
+
+        validation_data = keras._adapt_data_from_data_loader(
+            input_data=trial.build_validation_data_loader(),
+            batch_size=context.get_per_slot_batch_size(),
+        )
 
         trial.build_model()
         check.is_not_none(context.model, "Please call wrap_model(...).")
-
-        training_x, training_y, training_sample_weight = keras._get_x_y_and_sample_weight(
-            input_data=training_data_loader
-        )
-        training_data = keras._adapt_keras_data(
-            x=training_x,
-            y=training_y,
-            sample_weight=training_sample_weight,
-            batch_size=context.get_per_slot_batch_size(),
-            use_multiprocessing=context._fit_use_multiprocessing,
-            workers=context._fit_workers,
-            max_queue_size=context._fit_max_queue_size,
-            drop_leftovers=True,
-        )
-
-        val_x, val_y, val_sample_weight = keras._get_x_y_and_sample_weight(
-            input_data=validation_data_loader
-        )
-        validation_data = keras._adapt_keras_data(
-            x=val_x,
-            y=val_y,
-            sample_weight=val_sample_weight,
-            batch_size=context.get_per_slot_batch_size(),
-            use_multiprocessing=context._fit_use_multiprocessing,
-            workers=context._fit_workers,
-            max_queue_size=context._fit_max_queue_size,
-            drop_leftovers=False,
-        )
 
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         compile_args = cast(inspect.BoundArguments, context.compile_args)
@@ -368,9 +347,13 @@ class TFKerasTrialController(det.LoopTrialController):
             model=self.model, hvd_config=self.hvd_config
         )
 
-        self._train_input_manager, self._validation_input_manager = keras._init_input_managers(
-            context=self.context, train_config=train_config
-        )
+        self.training_data = train_config.training_data
+        self.validation_data = train_config.validation_data
+
+        self._check_training_data()
+        self._check_validation_data()
+
+        self.enqueuers = []  # type: List[keras._Enqueuer]
 
         # If a load path is provided, load weights and restore the data location.
         self._load()
@@ -383,6 +366,62 @@ class TFKerasTrialController(det.LoopTrialController):
         self.train_workload_inputs = 0
         self.train_workload_len = 0
         self.test_inputs = 0
+
+    def _check_training_data(self) -> None:
+        cacheable_used = self.context.experimental.get_train_cacheable().is_decorator_used()
+        wrap_used = self.context.dataset_initialized
+
+        # Non-tf.data.Datasets should not have used the data layer.
+        if not isinstance(self.training_data, tf.data.Dataset):
+            if cacheable_used:
+                raise det.errors.InvalidExperimentException(
+                    "Pass in a tf.data.Dataset object for training data if using "
+                    "context.experimental.cache_train_dataset().",
+                )
+            return
+
+        # You can't use data layer and the wrap_dataset.
+        if cacheable_used and wrap_used:
+            raise det.errors.InvalidExperimentException(
+                "Please do not use: context.wrap_dataset(dataset) if using "
+                "context.experimental.cache_train_dataset() and "
+                "context.experimental.cache_validation_dataset().",
+            )
+
+        # You must use either data layer or wrap_dataset.
+        if not cacheable_used and not wrap_used:
+            raise det.errors.InvalidExperimentException(
+                "Please use either context.wrap_dataset(dataset) or "
+                "context.experimental.cache_train_dataset() for tf.data.dataset inputs"
+            )
+
+    def _check_validation_data(self) -> None:
+        cacheable_used = self.context.experimental.get_validation_cacheable().is_decorator_used()
+        wrap_used = self.context.dataset_initialized
+
+        # Non-tf.data.Datasets should not have used the data layer.
+        if not isinstance(self.validation_data, tf.data.Dataset):
+            if cacheable_used:
+                raise det.errors.InvalidExperimentException(
+                    "Pass in a tf.data.Dataset object for validation data if using "
+                    "context.experimental.cache_validation_dataset().",
+                )
+            return
+
+        # You can't use data layer and the wrap_dataset.
+        if cacheable_used and wrap_used:
+            raise det.errors.InvalidExperimentException(
+                "Please do not use: context.wrap_dataset(dataset) if using "
+                "context.experimental.cache_train_dataset() and "
+                "context.experimental.cache_validation_dataset().",
+            )
+
+        # You must use either data layer or wrap_dataset.
+        if not cacheable_used and not wrap_used:
+            raise det.errors.InvalidExperimentException(
+                "Please use either context.wrap_dataset(dataset) or "
+                "context.experimental.cache_train_dataset() for tf.data.dataset inputs"
+            )
 
     def _configure_callbacks(self, user_callbacks: Optional[List]) -> None:
         """
@@ -611,30 +650,87 @@ class TFKerasTrialController(det.LoopTrialController):
             self._launch_fit()
         except det.errors.WorkerFinishedGracefully:
             pass
+        finally:
+            self._stop_enqueuers()
 
     def _launch_fit(self) -> None:
-        (
-            training_input,
-            batches_per_epoch,
-        ) = self._train_input_manager.get_training_input_and_batches_per_epoch()
+        training_data = self.training_data
+
+        # Support the deprecated SequenceAdapter API.
+        if isinstance(training_data, keras.SequenceAdapter):
+            self.context._configure_fit(
+                workers=training_data.workers,
+                use_multiprocessing=training_data.use_multiprocessing,
+                max_queue_size=training_data.max_queue_size,
+            )
+            # Use the provided Sequence directly.
+            training_data = training_data.sequence
+
+        if isinstance(training_data, tf.keras.utils.Sequence):
+            # Handle args from fit(): shuffle, workers, use_multiprocessing, and max_queue_size.
+            enqueuer = keras._build_enqueuer(
+                sequence=training_data,
+                workers=self.context._fit_workers,
+                use_multiprocessing=self.context._fit_use_multiprocessing,
+                max_queue_size=self.context._fit_max_queue_size,
+                shard_rank=self.context.distributed.get_rank(),
+                num_shards=self.context.distributed.get_size(),
+                repeat=True,
+                shuffle=self.context._fit_shuffle,
+                shuffle_seed=self.context.get_trial_seed(),
+                prior_batches_trained=self.context.env.initial_workload.total_batches_processed,
+            )
+            enqueuer.start()
+            self.enqueuers.append(enqueuer)
+            training_data = enqueuer.data()
+
+        if isinstance(training_data, tf.data.Dataset):
+            training_data = training_data.repeat()
+            if self.context._fit_shuffle:
+                logging.warning(
+                    "You set shuffle=True for a tf.data.Dataset, which will be ignored. "
+                    "Please call .shuffle() on your dataset instead."
+                )
 
         self.model.fit(
-            training_input,
+            training_data,
             class_weight=self.context._fit_class_weight,
             callbacks=self.callback_list,
             shuffle=False,
             steps_per_epoch=sys.maxsize,
-            initial_epoch=self._train_input_manager.get_initial_epoch(),
             epochs=IMPOSSIBLY_LARGE_EPOCHS,
             validation_split=0,
             verbose=0,
+            workers=0,
         )
 
     def _launch_evaluate(self) -> Any:
-        (
-            validation_data,
-            validation_steps,
-        ) = self._validation_input_manager.get_validation_input_and_num_batches()
+        validation_data = self.validation_data
+        steps = None
+
+        # Support the deprecated SequenceAdapter API.
+        if isinstance(validation_data, keras.SequenceAdapter):
+            # Ignore these settings and use the same settings as for the fit call.
+            validation_data = validation_data.sequence
+
+        if isinstance(validation_data, tf.keras.utils.Sequence):
+            steps = len(validation_data)
+            # Handle args from fit(): shuffle, workers, use_multiprocessing, and max_queue_size.
+            enqueuer = keras._build_enqueuer(
+                sequence=validation_data,
+                workers=self.context._fit_workers,
+                use_multiprocessing=self.context._fit_use_multiprocessing,
+                max_queue_size=self.context._fit_max_queue_size,
+                shard_rank=self.context.distributed.get_rank(),
+                num_shards=self.context.distributed.get_size(),
+                repeat=False,
+                shuffle=False,
+                shuffle_seed=0,
+                prior_batches_trained=0,
+            )
+            enqueuer.start()
+            self.enqueuers.append(enqueuer)
+            validation_data = enqueuer.data()
 
         # Starting in TF 2.2 users may define custom test_step() that do
         # not use the model metrics.
@@ -643,9 +739,10 @@ class TFKerasTrialController(det.LoopTrialController):
 
         metrics_values = self.model.evaluate(
             validation_data,
-            steps=validation_steps,
-            verbose=0,
             callbacks=self.callback_list,
+            steps=steps,
+            verbose=0,
+            workers=0,
             **evaluate_kwargs,
         )
         logging.debug(f"Worker finished model.evaluate() with metrics: {metrics_values}.")
@@ -659,8 +756,6 @@ class TFKerasTrialController(det.LoopTrialController):
         else:
             check.is_instance(metrics_values, dict)
             metrics = {f"val_{k}": v for k, v in metrics_values.items()}
-
-        _ = self._validation_input_manager.stop_validation_input_and_get_num_inputs()
 
         return metrics
 
@@ -751,7 +846,6 @@ class TFKerasTrialController(det.LoopTrialController):
         self._control_loop()
 
         # Always reset metrics before starting a new training step.
-        assert self.model is not None
         self.model.reset_metrics()
 
     def _compute_validation_metrics(self) -> workload.Response:
@@ -788,6 +882,10 @@ class TFKerasTrialController(det.LoopTrialController):
             else:
                 logging.debug("cancelling model.stop_training on non-chief worker")
                 self.multiplexer.model.stop_training = True
+
+    def _stop_enqueuers(self) -> None:
+        for enqueuer in self.enqueuers:
+            enqueuer.stop()
 
 
 class TFKerasTrial(det.Trial):
