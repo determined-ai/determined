@@ -20,7 +20,7 @@ message Agent {
   map<string, determined.container.v1.Container> containers = 4;
   // An optional label applied to the agent for scheduling restrictions.
   string label = 5;
-  // The resource pool the agent is in
+  // The name of the resource pool the agent is in
   string resourcePool = 6;
 }
 

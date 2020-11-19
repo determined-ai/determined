@@ -17,12 +17,6 @@ func (a *apiServer) GetAgents(
 	switch {
 	case a.m.system.Get(actor.Addr("agents")) != nil:
 		err = a.actorRequest("/agents", req, &resp)
-		if len(resp.Agents) > 0 {
-			fmt.Printf("Got response from agents actor: %s \n", resp.Agents[0].ResourcePool)
-		} else {
-			fmt.Println("Got response from agents actor (agent list is empty)")
-		}
-
 	case a.m.system.Get(actor.Addr("pods")) != nil:
 		err = a.actorRequest("/pods", req, &resp)
 	default:

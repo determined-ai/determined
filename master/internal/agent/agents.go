@@ -54,15 +54,12 @@ func (a *agents) createAgentActor(ctx *actor.Context, id, resourcePool string) (
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
 	}
-	ctx.Log().Infof("Creating new Agent actor with resource pool: %s", resourcePool)
 	if resourcePool == "" {
-		ctx.Log().Info("Resource pool was a blank string")
 		resourcePool = "default"
 	}
 	if a.cluster.Child(resourcePool) == nil {
 		return nil, errors.Errorf("cannot find specified resource pool %s for agent %s", resourcePool, id)
 	}
-	ctx.Log().Infof("Adding a new agent with resource pool: %s", resourcePool)
 	ref, ok := ctx.ActorOf(id, &agent{resourcePool: a.cluster.Child(resourcePool), resourcePoolName: resourcePool})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)

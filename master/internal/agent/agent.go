@@ -50,16 +50,11 @@ type AgentSummary struct {
 func (a *agent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Log().Infof("New agent created [in prestart]. In resource pool: %s", a.resourcePoolName)
 		a.uuid = uuid.New()
 		a.slots, _ = ctx.ActorOf("slots", &slots{resourcePool: a.resourcePool})
 		a.containers = make(map[container.ID]*actor.Ref)
 	case AgentSummary:
-		ctx.Log().Infof("[agent] Received AgentSummary Request")
-		s := a.summarize(ctx)
-		ctx.Log().Infof("[agent] Summarized. Pool: %s", s.ResourcePool)
-		ctx.Log().Infof("[agent] Confirming that I know my resource pool: %s", a.resourcePoolName)
-		ctx.Respond(s)
+		ctx.Respond(a.summarize(ctx))
 	case ws.WebSocketConnected:
 		check.Panic(check.True(a.socket == nil, "websocket already connected"))
 		socket, ok := msg.Accept(ctx, aproto.MasterMessage{}, true)
@@ -91,10 +86,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
 	case *proto.GetAgentRequest:
-		ctx.Log().Infof("[agent] Received GetAgentRequest")
-		s := a.summarize(ctx)
-		ctx.Log().Infof("[agent] Summarized. Pool: %s", s.ResourcePool)
-		ctx.Respond(&proto.GetAgentResponse{Agent: ToProtoAgent(s)})
+		ctx.Respond(&proto.GetAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
 	case *proto.GetSlotsRequest:
 		var slots []*agentv1.Slot
 		for _, s := range a.summarize(ctx).Slots {
@@ -149,8 +141,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		telemetry.ReportAgentConnected(ctx.Self().System(), a.uuid, msg.AgentStarted.Devices)
 		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
 			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
-
-		ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label, })
+		ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
 		a.label = msg.AgentStarted.Label
 	case msg.ContainerStateChanged != nil:
@@ -197,7 +188,6 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 }
 
 func (a *agent) summarize(ctx *actor.Context) AgentSummary {
-	ctx.Log().Infof("Summarizing agent. Existing in resource pool %s", a.resourcePoolName)
 	return AgentSummary{
 		ID:             ctx.Self().Address().Local(),
 		RegisteredTime: ctx.Self().RegisteredTime(),
