@@ -23,7 +23,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import { handlePath, openBlank } from 'routes/utils';
+import { handlePath, openCommand } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, getExperimentList,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
@@ -239,9 +239,8 @@ const ExperimentList: React.FC = () => {
   const handleBatchAction = useCallback(async (action: Action) => {
     try {
       const result = await sendBatchActions(action);
-      if (action === Action.OpenTensorBoard) {
-        const url = (result as Command).url;
-        if (url) openBlank(url);
+      if (action === Action.OpenTensorBoard && result) {
+        openCommand(result as Command);
       }
 
       /*
