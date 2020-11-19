@@ -249,6 +249,7 @@ func setupSchedulerStates(
 	for _, mockAgent := range mockAgents {
 		ref, created := system.ActorOf(actor.Addr(mockAgent.id), mockAgent)
 		assert.Assert(t, created)
+
 		agent := &agentState{
 			handler:            ref,
 			label:              mockAgent.label,
