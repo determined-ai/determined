@@ -1,0 +1,6 @@
+:orphan:
+
+**BUG FIXES**
+
+-  WebUI: Fix the issue of opening tensorboard from experiment list page
+   via multiple batch operations.
