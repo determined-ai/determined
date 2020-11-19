@@ -17,11 +17,10 @@ describe('Task List', () => {
 
     it('should terminate notebook', () => {
       cy.get('button[aria-label="Notebook"]').click();
-      cy.server();
-      cy.route('DELETE', /\/notebook.*/).as('terminateRequest');
       cy.get(`${recordSelector}:first-child .ant-dropdown-trigger`).click();
       cy.get('.ant-dropdown .ant-dropdown-menu-item').contains(/kill/i).click();
-      cy.wait('@terminateRequest');
+      // Using the server/route approach to detect endpoint calls does not work with new API
+      cy.wait(5000);
       cy.visit('/det/tasks');
       cy.get(recordSelector).contains(/terminated/i).should('be.visible');
     });
@@ -44,11 +43,10 @@ describe('Task List', () => {
 
     it('should terminate tensorboard', () => {
       cy.get('button[aria-label="Tensorboard"]').click();
-      cy.server();
-      cy.route('DELETE', /\/tensorboard.*/).as('terminateRequest');
       cy.get(`${recordSelector}:first-child .ant-dropdown-trigger`).click();
       cy.get('.ant-dropdown .ant-dropdown-menu-item').contains(/kill/i).click();
-      cy.wait('@terminateRequest');
+      // Using the server/route approach to detect endpoint calls does not work with new API
+      cy.wait(5000);
       cy.visit('/det/tasks');
       cy.get(recordSelector).contains(/terminated/i).should('be.visible');
     });
