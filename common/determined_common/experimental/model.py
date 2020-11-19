@@ -4,6 +4,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 import determined_client
+from determined_client.rest import ApiException
 
 from determined_common import api
 from determined_common.experimental.checkpoint import Checkpoint
@@ -67,9 +68,12 @@ class Model:
         creation_time: Optional[datetime.datetime] = None,
         last_updated_time: Optional[datetime.datetime] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        api_client=None,
         master: str = "",
     ):
         self._master = master
+        self.api_client = api_client
+        self.model_api = determined_client.api.models_api.ModelsApi(self.api_client)
         self.name = name
         self.description = description
         self.creation_time = creation_time
@@ -90,29 +94,34 @@ class Model:
             version (int, optional): The model version number requested.
         """
         if version == 0:
-            resp = api.get(
-                self._master,
-                "/api/v1/models/{}/versions/".format(self.name),
-                {"limit": 1, "order_by": 2},
+            # resp = api.get(
+            #     self._master,
+            #     "/api/v1/models/{}/versions/".format(self.name),
+            #     {"limit": 1, "order_by": 2},
+            # )
+
+            model_versions_response = self.model_api.determined_get_model_versions(
+                model_name=self.name, limit=1, order_by=2
             )
 
-            data = resp.json()
-            if data["modelVersions"] == []:
+            if not model_versions_response.model_versions:
                 return None
 
-            latest_version = data["modelVersions"][0]
-            return Checkpoint.from_json(
-                {
-                    **latest_version["checkpoint"],
-                    "model_version": latest_version["version"],
-                    "model_name": data["model"]["name"],
-                }
+            latest_version = model_versions_response.model_versions[0]
+            return Checkpoint.from_spec(
+                api_client=self.api_client,
+                checkpoint_object=latest_version.checkpoint,
+                model_name=self.name,
+                model_version=latest_version.version,
             )
-        else:
-            resp = api.get(self._master, "/api/v1/models/{}/versions/{}".format(self.name, version))
 
-        data = resp.json()
-        return Checkpoint.from_json(data["modelVersion"]["checkpoint"], self._master)
+        model_version_response = self.model_api.determined_get_model_version(self.name, version)
+        return Checkpoint.from_spec(
+            api_client=self.api_client,
+            checkpoint_object=model_version_response.model_version.checkpoint,
+            model_name=self.name,
+            model_version=model_version_response.model_version.version,
+        )
 
     def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[Checkpoint]:
         """
@@ -123,23 +132,24 @@ class Model:
         Arguments:
             order_by (enum): A member of the :class:`ModelOrderBy` enum.
         """
-        resp = api.get(
-            self._master,
-            "/api/v1/models/{}/versions/".format(self.name),
-            params={"order_by": order_by.value},
-        )
-        data = resp.json()
+
+        model_versions_response = self.model_api.determined_get_model_versions(model_name=self.name)
+
+        # resp = api.get(
+        #     self._master,
+        #     "/api/v1/models/{}/versions/".format(self.name),
+        #     params={"order_by": order_by.value},
+        # )
+        # data = resp.json()
 
         return [
-            Checkpoint.from_json(
-                {
-                    **version["checkpoint"],
-                    "model_version": version["version"],
-                    "model_name": data["model"]["name"],
-                },
-                self._master,
+            Checkpoint.from_spec(
+                api_client=self.api_client,
+                checkpoint_object=model_version.checkpoint,
+                model_name=self.name,
+                model_version=model_version.version,
             )
-            for version in data["modelVersions"]
+            for model_version in model_versions_response.model_versions
         ]
 
     def register_version(self, checkpoint_uuid: str) -> Checkpoint:
@@ -151,24 +161,23 @@ class Model:
         Arguments:
             checkpoint_uuid: The UUID of the checkpoint to register.
         """
-        resp = api.post(
-            self._master,
-            "/api/v1/models/{}/versions".format(self.name),
-            body={"checkpoint_uuid": checkpoint_uuid},
+        model_version_request = (
+            determined_client.models.v1_post_model_version_request.V1PostModelVersionRequest(
+                model_name=self.name, checkpoint_uuid=checkpoint_uuid
+            )
+        )
+        model_version_response = self.model_api.determined_post_model_version(
+            model_version_request, self.name
         )
 
-        data = resp.json()
-
-        return Checkpoint.from_json(
-            {
-                **data["modelVersion"]["checkpoint"],
-                "model_version": data["modelVersion"]["version"],
-                "model_name": data["modelVersion"]["model"]["name"],
-            },
-            self._master,
+        return Checkpoint.from_spec(
+            api_client=self.api_client,
+            checkpoint_object=model_version_response.model_version.checkpoint,
+            model_name=model_version_response.model_version.model.name,
+            model_version=model_version_response.model_version.version,
         )
 
-    def add_metadata(self, metadata: Dict[str, Any]) -> None:
+    def add_metadata(self, metadata: Dict[str, Any]):
         """
         Adds user-defined metadata to the model. The ``metadata`` argument must be a
         JSON-serializable dictionary. If any keys from this dictionary already appear in
@@ -180,13 +189,26 @@ class Model:
         for key, val in metadata.items():
             self.metadata[key] = val
 
-        api.patch(
-            self._master,
-            "/api/v1/models/{}".format(self.name),
-            body={"model": {"metadata": self.metadata, "description": self.description}},
+        # api.patch(
+        #     self._master,
+        #     "/api/v1/models/{}".format(self.name),
+        #     body={"model": {"metadata": self.metadata, "description": self.description}},
+        # )
+        model = determined_client.models.v1_model.V1Model(
+            name=self.name,
+            description=self.description,
+            metadata=self.metadata,
+            creation_time=self.creation_time,
+            last_updated_time=self.last_updated_time,
+        )
+        body = determined_client.models.v1_patch_model_request.V1PatchModelRequest(model=model)
+        patch_model_response = self.model_api.determined_patch_model(
+            body=body, model_name=self.name
         )
 
-    def remove_metadata(self, keys: List[str]) -> None:
+        return Model.from_spec(patch_model_response.model, self.api_client)
+
+    def remove_metadata(self, keys: List[str]):
         """
         Removes user-defined metadata from the model. Any top-level keys that
         appear in the ``keys`` list are removed from the model.
@@ -198,11 +220,19 @@ class Model:
             if key in self.metadata:
                 del self.metadata[key]
 
-        api.patch(
-            self._master,
-            "/api/v1/models/{}".format(self.name),
-            body={"model": {"metadata": self.metadata, "description": self.description}},
+        model = determined_client.models.v1_model.V1Model(
+            name=self.name,
+            description=self.description,
+            metadata=self.metadata,
+            creation_time=self.creation_time,
+            last_updated_time=self.last_updated_time,
         )
+        body = determined_client.models.v1_patch_model_request.V1PatchModelRequest(model=model)
+        patch_model_response = self.model_api.determined_patch_model(
+            body=body, model_name=self.name
+        )
+
+        return Model.from_spec(patch_model_response.model, self.api_client)
 
     def to_json(self) -> Dict[str, Any]:
         return {
@@ -228,21 +258,22 @@ class Model:
         )
 
     @classmethod
-    def from_spec(cls, model_object, master):
+    def from_spec(cls, model_object, api_client):
         return cls(
             model_object.name,
             model_object.description,
             model_object.creation_time,
             model_object.last_updated_time,
             model_object.metadata,
-            master,
+            api_client,
+            master=api_client.configuration.host,
         )
 
     @classmethod
     def get_model(cls, api_client, name):
         model_api = determined_client.ModelsApi(api_client)
         response = model_api.determined_get_model(name)
-        return cls.from_spec(response.model, api_client.configuration.host)
+        return cls.from_spec(response.model, api_client)
 
     @classmethod
     def create_model(cls, api_client, name, description, metadata):
@@ -258,4 +289,13 @@ class Model:
         )
 
         model_response = models_api.determined_post_model(model_name=name, body=model_body)
-        return Model.from_spec(model_response.model, api_client.configuration.host)
+        return Model.from_spec(model_response.model, api_client)
+
+    @staticmethod
+    def get_models(
+        api_client,
+    ):
+        model_api = determined_client.api.ModelsApi(api_client)
+        models_response = model_api.determined_get_models()
+
+        return [Model.from_spec(model, api_client) for model in models_response.models]

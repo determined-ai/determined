@@ -1,5 +1,5 @@
 from typing import Optional
-
+import determined_client
 from determined_common import api, check
 from determined_common.experimental import checkpoint
 
@@ -16,9 +16,11 @@ class Trial:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, trial_id: int, master: str):
+    def __init__(self, api_client, trial_id: int):
+        self.api_client = api_client
         self.id = trial_id
-        self._master = master
+        self._master = api_client.configuration.host
+        self.trial_api = determined_client.api.TrialsApi(api_client)
 
     def top_checkpoint(
         self,
@@ -99,8 +101,7 @@ class Trial:
             )
 
         if uuid:
-            resp = api.get(self._master, "/api/v1/checkpoints/{}".format(uuid))
-            return checkpoint.Checkpoint.from_json(resp.json()["checkpoint"], master=self._master)
+            return checkpoint.Checkpoint.get_checkpoint(self.api_client, uuid)
 
         r = api.get(
             self._master,
@@ -132,3 +133,16 @@ class Trial:
 
     def __repr__(self) -> str:
         return "Trial(id={})".format(self.id)
+
+    @classmethod
+    def get_trial(cls, api_client, trial_id):
+        trial_api = determined_client.api.TrialsApi(api_client)
+        trial_response = trial_api.determined_get_trial(trial_id)
+        return Trial.from_spec(api_client, trial_response.trial)
+
+    @classmethod
+    def from_spec(cls, api_client, trial):
+        return cls(
+            trial_id=trial.id,
+            api_client=api_client
+        )

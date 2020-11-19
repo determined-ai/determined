@@ -54,10 +54,8 @@ class Experiment:
             experiment_obj[attribute] = getattr(
                 experiment, attribute, getattr(experiment, attribute)
             )
-        experiment = cls(api_client, master, config, experiment_obj)
 
-        experiment.activate()
-        return experiment
+        return cls(api_client, master, config, experiment_obj)
 
     @classmethod
     def get_experiment(cls, api_client, experiment_id, master=""):
@@ -92,7 +90,7 @@ class Experiment:
 
         return False
 
-    def wait_for_completion(self):
+    def wait(self):
         while self.state == States.ACTIVE:
             time.sleep(10)
 
@@ -177,10 +175,7 @@ class Experiment:
         checkpoint_refs = []
         for ckpt in checkpoints:
             if ckpt.trial_id not in t_ids:
-                # checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._master))
-                checkpoint_refs.append(
-                    checkpoint.Checkpoint.from_spec(ckpt, self.api_client.configuration.host)
-                )
+                checkpoint_refs.append(checkpoint.Checkpoint.from_spec(self.api_client, ckpt))
                 t_ids.add(ckpt.trial_id)
 
         return checkpoint_refs[:limit]

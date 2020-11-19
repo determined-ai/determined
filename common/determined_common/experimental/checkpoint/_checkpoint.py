@@ -76,6 +76,7 @@ class Checkpoint(object):
         model_version: Optional[int] = None,
         model_name: Optional[str] = None,
         master: Optional[str] = None,
+        api_client=None,
     ):
         self.uuid = uuid
         self.experiment_config = experiment_config
@@ -347,7 +348,7 @@ class Checkpoint(object):
         )
 
     @classmethod
-    def from_spec(cls, checkpoint_object, master):
+    def from_spec(cls, api_client, checkpoint_object, model_version=None, model_name=None):
         validation = {
             "metrics": checkpoint_object.metrics,
             "state": checkpoint_object.validation_state,
@@ -368,14 +369,15 @@ class Checkpoint(object):
             framework=checkpoint_object.framework,
             format=checkpoint_object.format,
             determined_version=checkpoint_object.determined_version,
-            # model_version=checkpoint_object.model_version,
-            # model_name=checkpoint_object.model_name,
-            master=master,
+            model_version=model_version,
+            model_name=model_name,
+            master=api_client.configuration.host,
+            api_client=api_client,
         )
 
     @classmethod
-    def get_checkpoint(cls, api_client, uuid, master=""):
+    def get_checkpoint(cls, api_client, uuid):
         checkpoint_api = determined_client.CheckpointsApi(api_client)
         response = checkpoint_api.determined_get_checkpoint(uuid)
 
-        return cls.from_spec(response.checkpoint, api_client.configuration.host)
+        return cls.from_spec(api_client, response.checkpoint)

@@ -9,10 +9,6 @@ from determined_common.experimental.model import Model, ModelOrderBy, ModelSortB
 from determined_common.experimental.session import Session
 from determined_common.experimental.trial import Trial
 
-#
-# configuration.host = SERVER_ADDRESS
-# configuration.api_key_prefix['Authorization'] = 'Bearer'
-
 
 class Determined:
     """
@@ -50,8 +46,10 @@ class Determined:
         # Set auth token
         self.configuration.api_key["Authorization"] = api_response.token
 
-    def create_experiment(self, config, context_dir, local=False, test=False):
-        return Experiment.create_experiment(self.api_client, config, context_dir, local, test)
+    def create_experiment(self, config, context_dir=None, local=False, test=False):
+        experiment = Experiment.create_experiment(self.api_client, config, context_dir, local, test)
+        experiment.activate()
+        return experiment
 
     def get_experiment(self, experiment_id: int) -> Experiment:
         """
@@ -65,7 +63,8 @@ class Determined:
         Get the :class:`~determined.experimental.TrialReference` representing the
         trial with the provided trial ID.
         """
-        return Trial(trial_id, self._session._master)
+        # return Trial(trial_id, self._session._master)
+        return Trial.get_trial(self.api_client, trial_id)
 
     def get_checkpoint(self, uuid: str) -> Checkpoint:
         """
@@ -73,8 +72,6 @@ class Determined:
         checkpoint with the provided UUID.
         """
         return Checkpoint.get_checkpoint(self.api_client, uuid)
-        # r = api.get(self._session._master, "/api/v1/checkpoints/{}".format(uuid)).json()
-        # return Checkpoint.from_json(r["checkpoint"], master=self._session._master)
 
     def create_model(
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
@@ -88,13 +85,6 @@ class Determined:
             metadata (dict, optional): Dictionary of metadata to add to the model.
         """
         return Model.create_model(self.api_client, name, description, metadata)
-        # r = api.post(
-        #     self._session._master,
-        #     "/api/v1/models/{}".format(name),
-        #     body={"description": description, "metadata": metadata},
-        # )
-        #
-        # return Model.from_json(r.json().get("model"), self._session._master)
 
     def get_model(self, name: str) -> Model:
         """
@@ -125,16 +115,5 @@ class Determined:
             description: If this parameter is set, models will be filtered to
                 only include models with descriptions matching this parameter.
         """
-        r = api.get(
-            self._session._master,
-            "/api/v1/models/",
-            params={
-                "sort_by": sort_by.value,
-                "order_by": order_by.value,
-                "name": name,
-                "description": description,
-            },
-        )
 
-        models = r.json().get("models")
-        return [Model.from_json(m, self._session._master) for m in models]
+        return Model.get_models(self.api_client)
