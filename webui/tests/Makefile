@@ -6,6 +6,7 @@ get-deps:
 
 .PHONY: clean-test-artifacts
 clean-test-artifacts:
+	rm -rf .gauge/screenshots/*
 	rm -rf reports/*
 	rm -rf logs/*
 
