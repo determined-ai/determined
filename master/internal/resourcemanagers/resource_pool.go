@@ -262,7 +262,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
-		rp.agents[msg.Agent] = newAgentState(msg)
+		rp.agents[msg.Agent] = newAgentState(msg, rp.config.PoolName)
 
 	case sproto.AddDevice:
 		ctx.Log().Infof("adding device: %s on %s", msg.Device.String(), msg.Agent.Address().Local())

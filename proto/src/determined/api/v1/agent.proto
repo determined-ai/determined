@@ -30,6 +30,7 @@ message GetAgentsRequest {
   // Filter agents by their label. If no label is specified or is empty, all
   // agents are returned.
   string label = 5;
+  // TODO: Filter agents by resource pool
 }
 // Response to GetAgentsRequest.
 message GetAgentsResponse {

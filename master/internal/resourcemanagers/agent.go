@@ -14,6 +14,7 @@ type agentState struct {
 	handler *actor.Ref
 	devices map[device.Device]*cproto.ID
 	label   string
+	resourcePool string
 
 	// Since we only model GPUs as devices/slots and assume each slot can be allocated with
 	// one container, we add one additional field to keep track of zero-slot containers.
@@ -22,12 +23,13 @@ type agentState struct {
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-func newAgentState(msg sproto.AddAgent) *agentState {
+func newAgentState(msg sproto.AddAgent, resourcePool string) *agentState {
 	return &agentState{
 		handler:            msg.Agent,
 		label:              msg.Label,
 		devices:            make(map[device.Device]*cproto.ID),
 		zeroSlotContainers: make(map[cproto.ID]bool),
+		resourcePool:		resourcePool,
 	}
 }
 
