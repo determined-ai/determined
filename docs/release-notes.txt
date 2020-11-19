@@ -13,10 +13,18 @@ Version 0.13.9
 
 **Release Date:** November 19, 2020
 
+**Improvements**
+
+-  Support configuring shmSize for commands (e.g., notebooks, shells,
+   TensorBoards) in :ref:`command configurations
+   <command-notebook-configuration>`.
+
 **Bug Fixes**
 
 -  API: Fix a bug that caused the webUI's log viewer to fail to render
-   older pages of logs.
+   older pages of trial logs.
+-  WebUI: Fix a bug in opening TensorBoards from the experiment list
+   page via multiple batch operations.
 
 Version 0.13.8
 ==============
