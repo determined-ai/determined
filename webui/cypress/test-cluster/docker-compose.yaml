@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  determined-db:
+    image: postgres:10.14
+    ports:
+      - 5433:5432
+    restart: always
+    environment:
+      POSTGRES_DB: determined
+      POSTGRES_PASSWORD: postgres
+    command:
+      - --max_connections=96
+      - --shared_buffers=512MB

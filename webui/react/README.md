@@ -73,7 +73,7 @@ npm run test -- --watchAll=false
 
 ### End-to-end Testing
 
-We are using [Cypress](https://www.cypress.io/) to run end-to-end tests for both of our webapps. Refer to [this section](https://github.com/determined-ai/determined/blob/master/webui/README.md#end-to-end-testing) for details on how to run e2e tests.
+We are using [Gauge](https://gauge.org/) and [Taiko](https://taiko.dev/) to run end-to-end tests for both of our webapps. Refer to [this section](https://github.com/determined-ai/determined/blob/master/webui/README.md#end-to-end-testing) for details on how to run e2e tests.
 
 ### Visual Testing with Storybook
 

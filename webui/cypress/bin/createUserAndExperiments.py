@@ -38,7 +38,9 @@ def login_as(username, password=""):
 def create_user(username, password=""):
     print(f"creating user {username} ... ", end="")
     p = pexpect.spawn("det", ["-u", "admin", "user", "create", username])
-    p.expect(pexpect.EOF)
+    prompt = p.expect([pexpect.EOF, "Password.*:"])
+    if prompt == 1:
+      p.sendline("")
     wait_for_process(p)
     print("done")
 

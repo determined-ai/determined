@@ -17,9 +17,8 @@ root = subprocess.check_output(
 root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
-reports_dir = tests_dir.joinpath("reports")
+results_dir = tests_dir.joinpath("results")
 test_cluster_dir = tests_dir.joinpath("test-cluster")
-screencasts_dir = reports_dir.joinpath("screencasts")
 
 CLUSTER_CMD_PREFIX = ["make", "-C", str(test_cluster_dir)]
 
@@ -44,9 +43,9 @@ def run_ignore_failure(cmd: List[str], config):
         pass
 
 
-def setup_screencasts_dir(config):
-    run_ignore_failure(["rm", "-r", str(screencasts_dir)], config)
-    run(["mkdir", "-p", str(screencasts_dir)], config)
+def setup_results_dir(config):
+    run_ignore_failure(["rm", "-r", str(results_dir)], config)
+    run(["mkdir", "-p", str(results_dir)], config)
 
 
 def setup_cluster(logfile, config):
@@ -80,11 +79,32 @@ def det_cluster(config):
 
 def pre_e2e_tests(config):
     # TODO add a check for cluster condition
-    setup_screencasts_dir(config)
+    setup_results_dir(config)
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
         config,
     )
+
+
+# _cypress_arguments generates an array of cypress arguments.
+def _cypress_arguments(cypress_configs, config):
+    base_url_config = f"baseUrl=http://{config['DET_MASTER']}"
+    timeout_config = (
+        f"defaultCommandTimeout={config['CYPRESS_DEFAULT_COMMAND_TIMEOUT']}"
+    )
+    args = [
+        "--config-file",
+        "cypress.json",
+        "--config",
+        ",".join([timeout_config, base_url_config, *cypress_configs]),
+        "--browser",
+        "electron",
+    ]
+
+    if config["CYPRESS_ARGS"]:
+        args.extend(config["CYPRESS_ARGS"].split(" "))
+
+    return args
 
 
 def run_e2e_tests(config):
@@ -92,22 +112,23 @@ def run_e2e_tests(config):
     1. a brand new, exclusive cluster at config['DET_MASTER']
     2. pre_e2e_tests() to have seeded that cluster recently* """
     logger.info(f"testing against http://{config['DET_MASTER']}")
+    cypress_arguments = _cypress_arguments([], config)
     command = [
         "npx",
-        "gauge",
+        "cypress",
         "run",
-        "--env",
-        "ci",
-        "specs"
+        *cypress_arguments,
     ]
     run(command, config)
 
 
-def run_dev_tests(config):
-    run(["npx", "gauge", "run", "--env", "dev", "specs"], config)
+def cypress_open(config):
+    base_url_config = f"baseUrl=http://{config['DET_MASTER']}"
+    run(["npx", "cypress", "open", "--config", base_url_config], config)
+
 
 def e2e_tests(config):
-    setup_screencasts_dir(config)
+    setup_results_dir(config)
     with det_cluster(config):
         pre_e2e_tests(config)
         run_e2e_tests(config)
@@ -116,7 +137,7 @@ def e2e_tests(config):
 def dev_tests(config):
     with det_cluster(config):
         pre_e2e_tests(config)
-        run_dev_tests(config)
+        cypress_open(config)
 
 
 def get_config(args):
@@ -124,6 +145,8 @@ def get_config(args):
     config["DET_PORT"] = args.det_port
     config["CLUSTER_NAME"] = f"det_test_{args.det_port}"
     config["DET_MASTER"] = f"{args.det_host}:{args.det_port}"
+    config["CYPRESS_DEFAULT_COMMAND_TIMEOUT"] = args.cypress_default_command_timeout
+    config["CYPRESS_ARGS"] = args.cypress_args
 
     env = {}
     for var in ["DISPLAY", "PATH", "XAUTHORITY", "TERM"]:
@@ -145,7 +168,7 @@ def main():
         "teardown-test-cluster": teardown_cluster,
         "pre-e2e-tests": pre_e2e_tests,
         "run-e2e-tests": run_e2e_tests,
-        "run-dev-tests": run_dev_tests,
+        "cypress-open": cypress_open,
         "e2e-tests": e2e_tests,
         "dev-tests": dev_tests,
     }
@@ -159,6 +182,8 @@ def main():
         default="localhost",
         help="det master address eg localhost or 192.168.1.2",
     )
+    parser.add_argument("--cypress-default-command-timeout", default="4000")
+    parser.add_argument("--cypress-args", help="other cypress arguments")
     parser.add_argument("--log-level")
     parser.add_argument("--log-format")
     args = parser.parse_args()

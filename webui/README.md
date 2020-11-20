@@ -61,8 +61,7 @@ To run unit tests for each of the SPAs issue `make test` in their respective dir
 
 ### End-to-end testing
 
-We use [Cypress](https://www.cypress.io/) for end-to-end testing.
-To run the tests issue `make e2e-tests` or `make docker-e2e-tests` depending on which test runner you'd like to use in the `webui/tests` directory.
+We use [Gauge](https://gauge.org/) and [Taiko](https://taiko.dev/) for end-to-end testing. To run the tests locally with chromium browser, run `make dev-tests` in the `webui/tests` directory. To run the tests in headless mode, run `make test`.
 
 #### Dependencies
 
