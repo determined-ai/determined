@@ -14,7 +14,14 @@ from torch import nn
 import torchvision.datasets as dset
 
 import determined as det
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, reset_parameters, PyTorchCallback, ClipGradsL2Norm
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchTrial,
+    reset_parameters,
+    PyTorchCallback,
+    ClipGradsL2Norm,
+)
 
 from model import NetworkCIFAR as Network
 import utils
@@ -36,6 +43,7 @@ class DARTSCNNTrial(PyTorchTrial):
         self.criterion = torch.nn.functional.cross_entropy
         # The last epoch is only used for logging.
         self._last_epoch = -1
+        self.results = {"loss": float("inf"), "top1_accuracy": 0, "top5_accuracy": 0}
 
     def build_training_data_loader(self) -> DataLoader:
         train_transform, valid_transform = utils._data_transforms_cifar10(
@@ -129,7 +137,7 @@ class DARTSCNNTrial(PyTorchTrial):
         reset_parameters(model)
         return model
 
-    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:  
+    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:
         return torch.optim.SGD(
             model.parameters(),
             lr=self.context.get_hparam("learning_rate"),
@@ -149,7 +157,9 @@ class DARTSCNNTrial(PyTorchTrial):
     ) -> Dict[str, torch.Tensor]:
         input, target = batch
         model.drop_path_prob = (
-            self.hparams["drop_path_prob"] * (self.scheduler.last_epoch) / self.hparams["train_epochs"]
+            self.hparams["drop_path_prob"]
+            * (self.scheduler.last_epoch)
+            / self.hparams["train_epochs"]
         )
         if batch_idx == 0 or epoch_idx > self._last_epoch:
             print("epoch {} lr: {}".format(epoch_idx, self.scheduler.get_last_lr()[0]))
@@ -165,13 +175,33 @@ class DARTSCNNTrial(PyTorchTrial):
 
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
 
-    def evaluate_batch(self, batch: Any, model: nn.Module) -> Dict[str, Any]:
-        input, target = batch
-        logits, _ = model(input)
-        loss = self.criterion(logits, target)
-        top1, top5 = utils.accuracy(logits, target, topk=(1, 5))
+    def evaluate_full_dataset(
+        self, model, data_loader: torch.utils.data.DataLoader
+    ) -> Dict[str, Any]:
+        acc_top1 = 0
+        acc_top5 = 0
+        loss_avg = 0
+        num_batches = 0
+        with torch.no_grad():
+            for batch in data_loader:
+                batch = self.context.to_device(batch)
+                input, target = batch
+                num_batches += 1
+                logits, _ = model(input)
+                loss = self.criterion(logits, target)
+                top1, top5 = utils.accuracy(logits, target, topk=(1, 5))
+                acc_top1 += top1
+                acc_top5 += top5
+                loss_avg += loss
+        results = {
+            "loss": loss_avg.item() / num_batches,
+            "top1_accuracy": acc_top1.item() / num_batches,
+            "top5_accuracy": acc_top5.item() / num_batches,
+        }
+        if results["top1_accuracy"] > self.results["top1_accuracy"]:
+            self.results = results
 
-        return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
+        return self.results
 
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         return {
@@ -179,4 +209,3 @@ class DARTSCNNTrial(PyTorchTrial):
                 self.context.get_hparam("clip_gradients_l2_norm")
             )
         }
-

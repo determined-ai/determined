@@ -142,6 +142,10 @@ searcher:
     batches: 156200
   max_trials: 10000
   mode: aggressive
+  # A maximum of 4 rungs corresponds to a minimum training length of 1/divisor^(max_rungs - 1) = 1/64 * max_length 
+  # per trial.  Trials with higher validation accuracy will be trained for longer than this minimum will poor
+  # trials will be stopped early.
+  max_rungs: 4
   max_concurrent_trials: 16
 
 entrypoint: model_def:DARTSCNNTrial

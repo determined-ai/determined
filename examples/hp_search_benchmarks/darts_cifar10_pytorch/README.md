@@ -29,7 +29,6 @@ adaptive.yaml .`. The other configurations can be run by specifying the appropri
 configuration file in place of `adaptive.yaml`.
 
 ## Expected Performance
-With 16 V100 GPUs, the best architecture after 1 day should achieve around to 96.8\% 
-to 97.0\% accuracy on CIFAR-10.  For a fair comparison to the NAS results for this search space, 
+With 16 V100 GPUs, the best architecture after 1 day should achieve around 97\% accuracy on CIFAR-10.  For a fair comparison to the NAS results for this search space, 
 you will have to train the best architecture for a total of 600 epochs instead of the 300 epochs 
 used for the HP search experiment.
