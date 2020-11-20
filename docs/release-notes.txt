@@ -11,7 +11,7 @@
 Version 0.13.9
 ==============
 
-**Release Date:** November 19, 2020
+**Release Date:** November 20, 2020
 
 **Improvements**
 
