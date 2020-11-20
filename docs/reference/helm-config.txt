@@ -222,3 +222,6 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
    about the usage of Determined.
 
    -  ``enabled``: Whether collection is enabled. Defaults to ``true``.
+
+-  ``defaultPassword``: Specifies a string containing the default
+   password for the admin and determined user accounts.

@@ -158,7 +158,8 @@ Unless otherwise specified, the pre-existing users, ``admin`` and
 ``determined``, do not have passwords associated with their accounts.
 Users can set a default password for the ``determined`` and ``admin``
 accounts if preferred or needed. This password will not affect any other
-user account.
+user account. For additional information on managing users in
+determined, see our :ref:`topic guide on users <users>`.
 
 Database (Optional)
 ===================
