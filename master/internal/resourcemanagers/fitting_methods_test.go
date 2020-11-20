@@ -17,7 +17,7 @@ func TestBestFit(t *testing.T) {
 	assert.Equal(t, BestFit(
 		&AllocateRequest{SlotsNeeded: 0},
 		newFakeAgentState(t, system, "agent2", "", 0, 0, 0, 1),
-	), 0.5)
+	), 0.0)
 	assert.Equal(t, BestFit(
 		&AllocateRequest{SlotsNeeded: 0},
 		newFakeAgentState(t, system, "agent3", "", 0, 0, 2, 0),
@@ -49,11 +49,11 @@ func TestWorstFit(t *testing.T) {
 	assert.Equal(t, WorstFit(
 		&AllocateRequest{SlotsNeeded: 0},
 		newFakeAgentState(t, system, "agent1", "", 0, 0, 0, 0),
-	), 1.0)
+	), 0.0)
 	assert.Equal(t, WorstFit(
 		&AllocateRequest{SlotsNeeded: 0},
 		newFakeAgentState(t, system, "agent2", "", 0, 0, 0, 1),
-	), 0.5)
+	), 0.0)
 	assert.Equal(t, WorstFit(
 		&AllocateRequest{SlotsNeeded: 0},
 		newFakeAgentState(t, system, "agent3", "", 0, 0, 2, 0),

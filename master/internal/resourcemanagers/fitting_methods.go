@@ -39,7 +39,7 @@ func BestFit(req *AllocateRequest, agent *agentState) float64 {
 	case agent.numUsedSlots() != 0 || req.SlotsNeeded != 0:
 		return 1.0 / (1.0 + float64(agent.numEmptySlots()))
 	case agent.maxZeroSlotContainers == 0:
-		return 1.0 - 1.0/float64(agent.numZeroSlotContainers()+1)
+		return 0.0
 	default:
 		return 1.0 / (1.0 + float64(agent.maxZeroSlotContainers-agent.numZeroSlotContainers()))
 	}
@@ -53,7 +53,7 @@ func WorstFit(req *AllocateRequest, agent *agentState) float64 {
 	case agent.numUsedSlots() != 0 || req.SlotsNeeded != 0:
 		return float64(agent.numEmptySlots()) / float64(agent.numSlots())
 	case agent.maxZeroSlotContainers == 0:
-		return 1.0 / float64(agent.numZeroSlotContainers()+1)
+		return 0.0
 	default:
 		return float64(agent.maxZeroSlotContainers-agent.numZeroSlotContainers()) /
 			float64(agent.maxZeroSlotContainers)
