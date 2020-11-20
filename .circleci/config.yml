@@ -281,7 +281,10 @@ commands:
       - run:
           name: Split tests
           working_directory: ~/project/e2e_tests
-          command: circleci tests glob "tests/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+          command: |
+            circleci tests glob "tests/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+            echo "Running tests from these files:"
+            sed 's/^/- /' </tmp/tests-to-run
 
       - wait-for-master:
           host: <<parameters.master-host>>
@@ -296,8 +299,9 @@ commands:
             --durations=0 \
             --master-host="<<parameters.master-host>>" \
             --master-port="<<parameters.master-port>>" \
+            -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
-            $(cat /tmp/tests-to-run)
+            $(< /tmp/tests-to-run)
 
   run-det-deploy-tests:
     parameters:
