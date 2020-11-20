@@ -12,7 +12,7 @@ CLEAR = "\033[39m"
 MAGENTA = "\033[95m"
 BLUE = "\033[94m"
 
-DB_PROT = 5433
+DB_PORT = 5433
 MASTER_PORT = 8081
 
 def kill_process(name: str, process: Optional[mp.Process]) -> None:
@@ -80,7 +80,7 @@ def run_agent() -> mp.Process:
 
 def is_db_running() -> bool:
     try:
-        with socket.create_connection(("localhost", DB_PROT), timeout=0.5):
+        with socket.create_connection(("localhost", DB_PORT), timeout=0.5):
             return True
     except OSError:
         return False
@@ -96,7 +96,7 @@ def main() -> None:
             db = True
             subprocess.check_call(["docker-compose", "up", "-d"])
 
-        wait_for_server(DB_PROT)
+        wait_for_server(DB_PORT)
         db_logs.start()
         master.start()
         wait_for_server(MASTER_PORT)

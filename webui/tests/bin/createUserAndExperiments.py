@@ -54,21 +54,6 @@ def create_user(username, password=""):
         print("done")
 
 
-print("setting up users...")
-
-# First login as admin to avoid having to authenticate downstream
-login_as("admin")
-
-# Create a non-default user without a password
-create_user(USER_WITHOUT_PASSWORD_USERNAME)
-
-# Create a non-default user with a password
-create_user(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
-
-# Login as non-default user with password
-login_as(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
-
-
 # Create experiments
 def createExperiment(directory, config_file, count):
     cmd = [
@@ -84,5 +69,24 @@ def createExperiment(directory, config_file, count):
         p.wait()
 
 
-print("creating experiments..")
-createExperiment(noop_dir, noop_config, 4)
+def main():
+    print("setting up users...")
+
+    # First login as admin to avoid having to authenticate downstream
+    login_as("admin")
+
+    # Create a non-default user without a password
+    create_user(USER_WITHOUT_PASSWORD_USERNAME)
+
+    # Create a non-default user with a password
+    create_user(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
+
+    # Login as non-default user with password
+    login_as(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
+
+    print("creating experiments..")
+    createExperiment(noop_dir, noop_config, 4)
+
+
+if __name__ == "__main__":
+    main()
