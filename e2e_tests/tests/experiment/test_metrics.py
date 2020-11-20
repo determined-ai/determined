@@ -11,7 +11,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-@pytest.mark.timeout(300)  # type: ignore
+@pytest.mark.timeout(600)  # type: ignore
 def test_streaming_metrics_api() -> None:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
 
