@@ -301,7 +301,7 @@ Then create an experiment without either of ``--test`` or ``--local`` flags
 **How to diagnose failures:** If Step 7 worked but Step 8 does not,
 there are a few high-level categories of issues to check for:
 
-   -  Does
+   -  TODO: fill this in
 
 9. Does cluster test mode work with (slots_per_trial>1)?
 --------------------------------------------------------
@@ -309,32 +309,3 @@ there are a few high-level categories of issues to check for:
 10. Does a multi-gpu experiment work?
 -------------------------------------
 
-***********************
- I am seeing slowdowns
-***********************
-
-************************
- I am seeing OOM errors
-************************
-
-###############
- Fixing Issues
-###############
-
-*************************************
- Data issues when running on cluster
-*************************************
-
-If this is your issue, you can
-   choose to either add some ``pip install --user PACKAGE`` lines to a
-   ``startup-hook.sh`` TODO:docs or build a custom environment TODO:ref.
-   The startup-hook.sh option is easier but will be slower at runtime. A
-   custom environment is more effort and may require assistance from
-   your Determined cluster administrator, but it will be faster at
-   runtime.
-
-Model training with Determined requires the following 4 components:
-
-#. A working Docker image
-#. A working Trial implementation
-#. A working Trial
