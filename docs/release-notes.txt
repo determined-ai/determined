@@ -24,7 +24,7 @@ Version 0.13.9
 -  API: Fix a bug that caused the webUI's log viewer to fail to render
    older pages of trial logs.
 -  WebUI: Fix a bug in opening TensorBoards from the experiment list
-   page via multiple batch operations.
+   page via batch selection.
 
 Version 0.13.8
 ==============
