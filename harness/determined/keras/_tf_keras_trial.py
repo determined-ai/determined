@@ -714,7 +714,13 @@ class TFKerasTrialController(det.LoopTrialController):
             validation_data = validation_data.sequence
 
         if isinstance(validation_data, tf.keras.utils.Sequence):
+            # Calculate the length of our validation shard.
             steps = len(validation_data)
+            if self.context.distributed.get_size() > 1:
+                size = self.context.distributed.get_size()
+                rank = self.context.distributed.get_rank()
+                steps = steps // size + (1 if steps % size > rank else 0)
+
             # Handle args from fit(): shuffle, workers, use_multiprocessing, and max_queue_size.
             enqueuer = keras._build_enqueuer(
                 sequence=validation_data,
