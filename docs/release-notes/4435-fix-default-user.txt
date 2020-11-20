@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  Allow users to specify a default password for the admin and
+   determined accounts.
