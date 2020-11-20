@@ -99,6 +99,11 @@ The following configuration settings are supported:
       via the ``label`` field in the :ref:`agent configuration
       <agent-configuration>`.
 
+   -  ``shm_size``: The size in bytes of ``/dev/shm`` for trial
+      containers. Defaults to ``4294967296`` (4GiB). If set, this value
+      overrides the value specified in the :ref:`master configuration
+      <master-configuration>`.
+
 -  ``bind_mounts``: Specifies a collection of directories that are
    bind-mounted into the Docker containers for execution. This can be
    used to allow commands to access additional data that is not
