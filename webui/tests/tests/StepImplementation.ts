@@ -46,34 +46,54 @@ const BASE_PATH = process.env.PUBLIC_URL || '/det';
 const BASE_URL = `${HOST}${BASE_PATH}`;
 const SCREENCAST = process.env.SCREENCAST === 'true';
 
+function handleError(e) {
+  console.error(e);
+}
+
 export default class StepImplementation {
   @BeforeSuite()
   public async beforeSuite() {
-    const browserArgs = HEADLESS
-      ? { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }
-      : { headless: false };
-    await openBrowser(browserArgs);
+    try {
+      const browserArgs = HEADLESS
+        ? { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }
+        : { headless: false };
+      await openBrowser(browserArgs);
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @AfterSuite()
   public async afterSuite() {
-    await closeBrowser();
+    try {
+      await closeBrowser();
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @BeforeScenario()
   public async startScreencast(context: ExecutionContext) {
-    if (SCREENCAST) {
-      const spec = context.getCurrentSpec().getName();
-      const scenario = context.getCurrentScenario().getName();
-      const filename = `screencasts/${spec} -- ${scenario}.gif`;
-      await screencast.startScreencast(filename);
+    try {
+      if (SCREENCAST) {
+        const spec = context.getCurrentSpec().getName();
+        const scenario = context.getCurrentScenario().getName();
+        const filename = `screencasts/${spec} -- ${scenario}.gif`;
+        await screencast.startScreencast(filename);
+      }
+    } catch (e) {
+      handleError(e);
     }
   }
 
   @AfterScenario()
   public async stopScreencast() {
-    if (SCREENCAST) {
-      await screencast.stopScreencast();
+    try {
+      if (SCREENCAST) {
+        await screencast.stopScreencast();
+      }
+    } catch (e) {
+      handleError(e);
     }
   }
 
@@ -81,62 +101,86 @@ export default class StepImplementation {
 
   @Step('Sign in as <username> with <password>')
   public async signInWithPassword(username: string, password: string) {
-    await goto(`${BASE_URL}/login`);
-    await clear(focus(textBox('username')));
-    await write(username);
-    if (password !== '') {
-      await focus(textBox('password'));
-      await write(password);
+    try {
+      await goto(`${BASE_URL}/login`);
+      await clear(focus(textBox('username')));
+      await write(username);
+      if (password !== '') {
+        await focus(textBox('password'));
+        await write(password);
+      }
+      await click(button('Sign In'));
+      await text(username, near($('#avatar'))).exists();
+    } catch (e) {
+      handleError(e);
     }
-    await click(button('Sign In'));
-    await text(username, near($('#avatar'))).exists();
   }
 
   @Step('Sign in as <username> without password')
   public async signIn(username: string) {
-    await this.signInWithPassword(username, '');
+    try {
+      await this.signInWithPassword(username, '');
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Sign out')
   public async signOut() {
-    await click($('#avatar'));
-    await click(link('Sign Out'));
-    await button('Sign In').exists();
+    try {
+      await click($('#avatar'));
+      await click(link('Sign Out'));
+      await button('Sign In').exists();
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   /* Navigation Steps */
 
   @Step('Navigate to the following routes <table>')
   public async navigateWithTable(table: Table) {
-    for (var row of table.getTableRows()) {
-      const label = row.getCell('label');
-      await click(link(label, within($('[class*=Navigation_base]'))));
+    try {
+      for (var row of table.getTableRows()) {
+        const label = row.getCell('label');
+        await click(link(label, within($('[class*=Navigation_base]'))));
 
-      const external = row.getCell('external') === 'true';
-      if (external) {
-        const title = row.getCell('title');
-        const titleRegex = new RegExp(title, 'i');
-        await switchTo(titleRegex);
+        const external = row.getCell('external') === 'true';
+        if (external) {
+          const title = row.getCell('title');
+          const titleRegex = new RegExp(title, 'i');
+          await switchTo(titleRegex);
+        }
+
+        const path = row.getCell('route');
+        const url = await currentURL();
+        assert.ok(url.includes(path));
+
+        if (external) {
+          await closeTab();
+        }
       }
-
-      const path = row.getCell('route');
-      const url = await currentURL();
-      assert.ok(url.includes(path));
-
-      if (external) {
-        await closeTab();
-      }
+    } catch (e) {
+      handleError(e);
     }
   }
 
   @Step('Navigate to dashboard page')
   public async navigateToDashboard() {
-    await goto(`${BASE_URL}/dashboard`);
+    try {
+      await goto(`${BASE_URL}/dashboard`);
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Navigate to experiment list page')
   public async navigateToExperimentList() {
-    await goto(`${BASE_URL}/experiments`);
+    try {
+      await goto(`${BASE_URL}/experiments`);
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Navigate to experiment <id> page')
@@ -150,40 +194,64 @@ export default class StepImplementation {
 
   @Step('Navigate to task list page')
   public async navigateToTaskList() {
-    await goto(`${BASE_URL}/tasks`);
+    try {
+      await goto(`${BASE_URL}/tasks`);
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Navigate to master logs page')
   public async navigateToMasterLogs() {
-    await goto(`${BASE_URL}/logs`);
+    try {
+      await goto(`${BASE_URL}/logs`);
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   /* Table Steps */
 
   @Step('Should have <count> table rows')
   public async checkTableRowCount(count: string) {
-    const expectedCount = parseInt(count);
-    await assert.strictEqual((await $('tr[data-row-key]').elements()).length, expectedCount);
+    try {
+      const expectedCount = parseInt(count);
+      await assert.strictEqual((await $('tr[data-row-key]').elements()).length, expectedCount);
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Sort table by column <column>')
   public async sortTableByColumn(column: string) {
-    await click(text(column));
+    try {
+      await click(text(column));
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Select all table rows')
   public async selectAllTableRows() {
-    await click($('th input[type=checkbox]'));
+    try {
+      await click($('th input[type=checkbox]'));
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Table batch should have following buttons <table>')
   public async checkTableBatchButton(table: Table) {
-    for (var row of table.getTableRows()) {
-      const label = row.getCell('table batch buttons');
-      const disabled = row.getCell('disabled') === 'true';
-      const batchButton = await button(label, within($('[class*=TableBatch_base]')));
-      await batchButton.exists();
-      assert.strictEqual(await batchButton.isDisabled(), disabled);
+    try {
+      for (var row of table.getTableRows()) {
+        const label = row.getCell('table batch buttons');
+        const disabled = row.getCell('disabled') === 'true';
+        const batchButton = await button(label, within($('[class*=TableBatch_base]')));
+        await batchButton.exists();
+        assert.strictEqual(await batchButton.isDisabled(), disabled);
+      }
+    } catch (e) {
+      handleError(e);
     }
   }
 
@@ -215,8 +283,12 @@ export default class StepImplementation {
 
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
-    await click($('[class*=Navigation_launchIcon]'));
-    await click(text('Launch CPU-only Notebook'));
+    try {
+      await click($('[class*=Navigation_launchIcon]'));
+      await click(text('Launch CPU-only Notebook'));
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Launch tensorboard')
@@ -241,33 +313,52 @@ export default class StepImplementation {
 
   @Step('Should have <count> recent task cards')
   public async checkRecentTasks(count: string) {
-    const expectedCount = parseInt(count);
-    await assert.strictEqual((await $('[class*=TaskCard_base]').elements()).length, expectedCount);
+    try {
+      const expectedCount = parseInt(count);
+      await assert.strictEqual(
+        (await $('[class*=TaskCard_base]').elements()).length,
+        expectedCount,
+      );
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   /* Experiment List Page Steps */
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    await click(tableCell({ row: parseInt(row) + 1, col: 11 }));
-    await click(text(action, within($('.ant-dropdown'))));
+    try {
+      await click(tableCell({ row: parseInt(row) + 1, col: 11 }));
+      await click(text(action, within($('.ant-dropdown'))));
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @Step('Toggle show archived button')
   public async toggleShowArchived() {
-    await click(button({ class: 'ant-switch' }));
+    try {
+      await click(button({ class: 'ant-switch' }));
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   /* Task List Page Steps */
 
   @Step('Filter tasks by type <table>')
   public async filterTasksByType(table: Table) {
-    for (var row of table.getTableRows()) {
-      const ariaLabel = row.getCell('aria-label');
-      const count = row.getCell('count');
-      await click($(`[aria-label=${ariaLabel}]`));
-      await this.checkTableRowCount(count);
-      await click($(`[aria-label=${ariaLabel}]`));
+    try {
+      for (var row of table.getTableRows()) {
+        const ariaLabel = row.getCell('aria-label');
+        const count = row.getCell('count');
+        await click($(`[aria-label=${ariaLabel}]`));
+        await this.checkTableRowCount(count);
+        await click($(`[aria-label=${ariaLabel}]`));
+      }
+    } catch (e) {
+      handleError(e);
     }
   }
 }
