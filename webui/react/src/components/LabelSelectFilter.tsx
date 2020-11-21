@@ -18,7 +18,7 @@ const { Option } = Select;
 
 const LabelSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   const [ labels, setLabels ] = useState<string[]>([]);
-  const [ controller ] = useState(new AbortController());
+  const [ canceler ] = useState(new AbortController());
 
   const labelValues = useMemo(() => {
     if (!Array.isArray(value)) return;
@@ -63,7 +63,7 @@ const LabelSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const labels = await getExperimentLabels({ signal: controller.signal });
+        const labels = await getExperimentLabels({ signal: canceler.signal });
         setLabels([
           ALL_VALUE,
           ...labels.sort((a, b) => alphanumericSorter(a, b)),
@@ -73,8 +73,8 @@ const LabelSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
 
     fetchData();
 
-    return () => controller.abort();
-  }, [ controller ]);
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   return (
     <SelectFilter

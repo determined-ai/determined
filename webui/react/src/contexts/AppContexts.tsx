@@ -1,4 +1,3 @@
-import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ActiveExperiments from 'contexts/ActiveExperiments';
@@ -17,7 +16,7 @@ import { Command, DetailedUser, ExperimentBase } from 'types';
 import { activeRunStates } from 'utils/types';
 
 const AppContexts: React.FC = () => {
-  const [ apiSource ] = useState(axios.CancelToken.source());
+  const [ canceler ] = useState(new AbortController());
   const setUsers = Users.useActionContext();
   const setAgents = Agents.useActionContext();
   const setCommands = Commands.useActionContext();
@@ -41,7 +40,7 @@ const AppContexts: React.FC = () => {
 
   const fetchAgents = useCallback(async (): Promise<void> => {
     try {
-      const agentsResponse = await getAgents({ cancelToken: apiSource.token });
+      const agentsResponse = await getAgents({ signal: canceler.signal });
       setAgents({
         type: Agents.ActionType.Set,
         value: {
@@ -52,10 +51,8 @@ const AppContexts: React.FC = () => {
         },
       });
       setOverview({ type: ClusterOverview.ActionType.SetAgents, value: agentsResponse });
-    } catch (e) {
-      /* eslint-disable-next-line no-empty */
-    }
-  }, [ apiSource.token, setAgents, setOverview ]);
+    } catch (e) {}
+  }, [ canceler, setAgents, setOverview ]);
 
   const fetchAll = useCallback((): void => {
     triggerCommandsRequest({});
@@ -102,8 +99,8 @@ const AppContexts: React.FC = () => {
   }, [ tensorboardsResponse, setTensorboards ]);
 
   useEffect(() => {
-    return (): void => apiSource.cancel();
-  }, [ apiSource ]);
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   return <React.Fragment />;
 };
