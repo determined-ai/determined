@@ -25,21 +25,23 @@ const FilterButtons: React.FC<Props> = ({ buttons, onClick }: Props) => {
 
   return (
     <div className={css.base}>
-      {buttons.map(button => {
-        const buttonClasses = [ css.button ];
-        if (button.active) buttonClasses.push(css.active);
-        return (
-          <Tooltip key={button.id} placement="top" title={button.label}>
-            <button
-              aria-label={button.label}
-              className={buttonClasses.join(' ')}
-              tabIndex={0}
-              onClick={handleClick(button.id)}>
-              <Icon name={button.icon} />
-            </button>
-          </Tooltip>
-        );
-      })}
+      <div className={css.buttons}>
+        {buttons.map(button => {
+          const buttonClasses = [ css.button ];
+          if (button.active) buttonClasses.push(css.active);
+          return (
+            <Tooltip key={button.id} placement="top" title={button.label}>
+              <button
+                aria-label={button.label}
+                className={buttonClasses.join(' ')}
+                tabIndex={0}
+                onClick={handleClick(button.id)}>
+                <Icon name={button.icon} />
+              </button>
+            </Tooltip>
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -1,0 +1,36 @@
+.base {
+  background-color: var(--theme-colors-base-2);
+  height: var(--theme-sizes-navigation-toolbarHeight);
+
+  .toolbar {
+    align-items: center;
+    display: flex;
+    width: 100%;
+  }
+  .toolbar > * { flex-grow: 1; }
+  .toolbarItem {
+    align-items: center;
+    color: var(--theme-colors-monochrome-17);
+    display: flex;
+    height: var(--theme-sizes-navigation-toolbarHeight);
+    justify-content: center;
+    position: relative;
+
+    .status {
+      background-color: var(--theme-colors-action-normal);
+      border-radius: var(--theme-sizes-layout-medium);
+      bottom: var(--theme-sizes-layout-medium);
+      color: var(--theme-colors-monochrome-17);
+      font-size: var(--theme-sizes-font-tiny);
+      height: 0 var(--theme-sizes-layout-big);
+      padding: 0 var(--theme-sizes-layout-small);
+      position: absolute;
+      right: var(--theme-sizes-layout-big);
+      white-space: nowrap;
+    }
+  }
+  .toolbarItem.active {
+    background-color: var(--theme-colors-base-0);
+    color: var(--theme-colors-monochrome-17);
+  }
+}

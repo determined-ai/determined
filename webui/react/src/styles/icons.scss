@@ -4,10 +4,10 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('fonts/determined-ai.woff2?vusz4x') format('woff2'),
-    url('fonts/determined-ai.woff?vusz4x') format('woff'),
-    url('fonts/determined-ai.ttf?vusz4x') format('truetype'),
-    url('fonts/determined-ai.svg?vusz4x#determined-ai') format('svg');
+    url('fonts/determined-ai.woff2?pfw88x') format('woff2'),
+    url('fonts/determined-ai.woff?pfw88x') format('woff'),
+    url('fonts/determined-ai.ttf?pfw88x') format('truetype'),
+    url('fonts/determined-ai.svg?pfw88x#determined-ai') format('svg');
 }
 
 [class^='icon-'],
@@ -34,6 +34,8 @@
 .icon-checkpoint::before { content: '\e91f'; }
 .icon-checkmark::before { content: '\e921'; }
 .icon-clipboard::before { content: '\e919'; }
+.icon-close::before { content: '\e925'; }
+.icon-close-small::before { content: '\e926'; }
 .icon-cloud::before { content: '\e923'; }
 .icon-cluster::before { content: '\e913'; }
 .icon-collapse::before { content: '\e90d'; }

@@ -23,7 +23,8 @@ const NavigationLoggedIn = () => {
 };
 
 export const Default = (): React.ReactNode => (
-  <div style={{ width: '240px' }}>
+  <div style={{ display: 'flex', width: '100vw' }}>
     <NavigationLoggedIn />;
+    <div style={{ flexGrow: 1 }}>Content</div>
   </div>
 );

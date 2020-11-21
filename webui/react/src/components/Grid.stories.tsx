@@ -6,6 +6,7 @@ import Grid from './Grid';
 
 export default {
   component: Grid,
+  parameters: { layout: 'padded' },
   title: 'Grid',
 };
 

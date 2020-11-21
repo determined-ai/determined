@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
+import Page from 'components/Page';
 import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -74,16 +75,19 @@ const SignIn: React.FC = () => {
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  return auth.checked ?
-    <div className={css.base}>
-      <Helmet>
-        <title>Sign In - Determined</title>
-      </Helmet>
-      <div className={css.content}>
-        <Logo type={LogoTypes.OnLightVertical} />
-        <DeterminedAuth />
+  return auth.checked ? (
+    <Page>
+      <div className={css.base}>
+        <Helmet>
+          <title>Sign In - Determined</title>
+        </Helmet>
+        <div className={css.content}>
+          <Logo type={LogoTypes.OnLightVertical} />
+          <DeterminedAuth />
+        </div>
       </div>
-    </div> : null;
+    </Page>
+  ) : null;
 };
 
 export default SignIn;

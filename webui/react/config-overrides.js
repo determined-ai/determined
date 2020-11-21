@@ -2,6 +2,7 @@
 const {
   addLessLoader,
   addWebpackPlugin,
+  adjustStyleLoaders,
   disableEsLint,
   override,
   fixBabelImports,
@@ -29,6 +30,17 @@ const webpackConfig = override(
 
   // Add LESS loader support for antd.
   addLessLoader({ lessOptions: { javascriptEnabled: true } }),
+
+  // Add support for global SASS/SCSS file.
+  adjustStyleLoaders(({ use: [ , css, postcss, resolve, processor ] }) => {
+    if (processor && processor.loader.includes('sass-loader')) {
+      processor.options = processor.options || {};
+      processor.options.prependData = '@import \'global.scss\';';
+      processor.options.sassOptions = processor.options.sassOptions || {};
+      processor.options.sassOptions.includePaths = processor.options.sassOptions.includePaths || [];
+      processor.options.sassOptions.includePaths.push(path.join(__dirname, './src/styles'));
+    }
+  }),
 
   // Replace momentjs to Day.js to reduce antd package size.
   addWebpackPlugin(new AntdDayjsWebpackPlugin()),

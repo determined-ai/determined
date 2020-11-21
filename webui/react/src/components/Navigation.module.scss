@@ -1,5 +1,4 @@
 /* stylelint-disable no-descending-specificity */
-$transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
 
 .base {
   background-color: var(--theme-colors-base-2);
@@ -227,15 +226,15 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
 }
 .collapsedEnterActive {
   flex-basis: var(--theme-sizes-navigation-minWidth);
-  transition: flex-basis $transition-props;
+  transition: flex-basis var(--theme-animationCurve);
 
   header {
     height: 7.2rem;
-    transition: height $transition-props;
+    transition: height var(--theme-animationCurve);
   }
   section.launch {
     padding: var(--theme-sizes-layout-medium) 0;
-    transition: padding $transition-props, width $transition-props;
+    transition: padding var(--theme-animationCurve), width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-minWidth);
   }
   .logo {
@@ -243,65 +242,65 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     left: 1.2rem;
     top: 1.6rem;
     transition:
-      height $transition-props,
-      left $transition-props,
-      top $transition-props,
-      width $transition-props;
+      height var(--theme-animationCurve),
+      left var(--theme-animationCurve),
+      top var(--theme-animationCurve),
+      width var(--theme-animationCurve);
     width: 3.2rem;
   }
   .logoIcon {
     height: 2.4rem;
     left: 0;
     transition:
-      height $transition-props,
-      left $transition-props,
-      width $transition-props;
+      height var(--theme-animationCurve),
+      left var(--theme-animationCurve),
+      width var(--theme-animationCurve);
     width: 3.2rem;
   }
   .logoLabel {
     opacity: 0;
     transition:
-      opacity $transition-props,
-      width $transition-props;
+      opacity var(--theme-animationCurve),
+      width var(--theme-animationCurve);
     width: 0;
   }
   .version {
     top: 4.4rem;
-    transition: top $transition-props,
+    transition: top var(--theme-animationCurve),
   }
   .launchBlock {
-    transition: width $transition-props;
+    transition: width var(--theme-animationCurve);
     width: 3.2rem;
 
     .launchButton {
       opacity: 0;
       padding: 0;
       transition:
-        opacity $transition-props,
-        padding $transition-props,
-        width $transition-props;
+        opacity var(--theme-animationCurve),
+        padding var(--theme-animationCurve),
+        width var(--theme-animationCurve);
       width: 0;
     }
     .launchIcon {
       border-radius: 100%;
-      transition: border-radius $transition-props;
+      transition: border-radius var(--theme-animationCurve);
     }
   }
   .navItem {
-    transition: height $transition-props, width $transition-props;
+    transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-minWidth);
     
     .label {
       opacity: 0;
-      transition: opacity $transition-props;
+      transition: opacity var(--theme-animationCurve);
     }
     .status {
       right: 50%;
       transform: translateX(50%);
       transition:
-        bottom $transition-props,
-        right $transition-props,
-        transform $transition-props;
+        bottom var(--theme-animationCurve),
+        right var(--theme-animationCurve),
+        transform var(--theme-animationCurve);
     }
   }
   .navItem.hasStatus {
@@ -310,12 +309,12 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     .status { bottom: var(--theme-sizes-layout-large); }
   }
   .user {
-    transition: width $transition-props;
+    transition: width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-minWidth);
 
     span {
       opacity: 0;
-      transition: opacity $transition-props;
+      transition: opacity var(--theme-animationCurve);
     }
   }
 }
@@ -386,15 +385,15 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
 }
 .collapsedExitActive {
   flex-basis: var(--theme-sizes-navigation-maxWidth);
-  transition: flex-basis $transition-props;
+  transition: flex-basis var(--theme-animationCurve);
 
   header {
     height: 14rem;
-    transition: height $transition-props;
+    transition: height var(--theme-animationCurve);
   }
   section.launch {
     padding: 0 0 var(--theme-sizes-layout-big) 0;
-    transition: padding $transition-props, width $transition-props;
+    transition: padding var(--theme-animationCurve), width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-maxWidth);
   }
   .logo {
@@ -402,65 +401,65 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     left: 6rem;
     top: 2.4rem;
     transition:
-      height $transition-props,
-      left $transition-props,
-      top $transition-props,
-      width $transition-props;
+      height var(--theme-animationCurve),
+      left var(--theme-animationCurve),
+      top var(--theme-animationCurve),
+      width var(--theme-animationCurve);
     width: 12.8rem;
   }
   .logoIcon {
     height: 4rem;
     left: 3.2rem;
     transition:
-      height $transition-props,
-      left $transition-props,
-      width $transition-props;
+      height var(--theme-animationCurve),
+      left var(--theme-animationCurve),
+      width var(--theme-animationCurve);
     width: 5.2rem;
   }
   .logoLabel {
     opacity: 1;
     transition:
-      opacity $transition-props,
-      width $transition-props;
+      opacity var(--theme-animationCurve),
+      width var(--theme-animationCurve);
     width: 12rem;
   }
   .version {
     top: 10.4rem;
-    transition: top $transition-props,
+    transition: top var(--theme-animationCurve),
   }
   .launchBlock {
-    transition: width $transition-props;
+    transition: width var(--theme-animationCurve);
     width: 19rem;
     
     .launchButton {
       opacity: 1;
       padding: 0 var(--theme-sizes-layout-big);
       transition:
-        opacity $transition-props,
-        padding $transition-props,
-        width $transition-props;
+        opacity var(--theme-animationCurve),
+        padding var(--theme-animationCurve),
+        width var(--theme-animationCurve);
       width: 100%;
     }
     .launchIcon {
       border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
-      transition: border-radius $transition-props;
+      transition: border-radius var(--theme-animationCurve);
     }
   }
   .navItem {
-    transition: height $transition-props, width $transition-props;
+    transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-maxWidth);
 
     .label {
       opacity: 1;
-      transition: opacity $transition-props;
+      transition: opacity var(--theme-animationCurve);
     }
     .status {
       right: var(--theme-sizes-layout-big);
       transform: translateX(0);
       transition:
-        bottom $transition-props,
-        right $transition-props,
-        transform $transition-props;
+        bottom var(--theme-animationCurve),
+        right var(--theme-animationCurve),
+        transform var(--theme-animationCurve);
     }
   }
   .navItem.hasStatus {
@@ -469,12 +468,12 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     .status { bottom: var(--theme-sizes-layout-big); }
   }
   .user {
-    transition: width $transition-props;
+    transition: width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-maxWidth);
 
     span {
       opacity: 1;
-      transition: opacity $transition-props;
+      transition: opacity var(--theme-animationCurve);
     }
   }
 }

@@ -1,9 +1,8 @@
-import React, { PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { toRem } from 'utils/dom';
-import { generateLetters } from 'utils/string';
 
-import css from './DropdownMenu.module.scss';
+import css from './Dropdown.module.scss';
 
 export enum Placement {
   Bottom = 'bottom',
@@ -21,25 +20,28 @@ export enum Placement {
 }
 
 interface Props {
-  menu: React.ReactNode;
+  content: React.ReactNode;
+  disableAutoDismiss?: boolean;
   offset?: { x: number, y: number };
   onVisibleChange?: (visible: boolean) => void;
   placement?: Placement;
   showArrow?: boolean;
 }
 
-const DropdownMenu: React.FC<Props> = ({
+const Dropdown: React.FC<Props> = ({
+  disableAutoDismiss = false,
   offset = { x: 0, y: 0 },
   onVisibleChange,
   placement = Placement.BottomLeft,
   showArrow = true,
   ...props
 }: PropsWithChildren<Props>) => {
-  const [ id ] = useState(generateLetters());
   const [ isVisible, setIsVisible ] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const classes = [ css.base, css[placement] ];
 
-  const menuStyle = useMemo(() => {
+  const contentStyle = useMemo(() => {
     switch (placement) {
       case Placement.Bottom:
         return {
@@ -118,14 +120,17 @@ const DropdownMenu: React.FC<Props> = ({
 
     event.stopPropagation();
 
-    const isTrigger = event.target.closest(`#${id}`);
+    const isTrigger = triggerRef.current && triggerRef.current.contains(event.target);
+    const isDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
 
     if (isTrigger) {
       setIsVisible(prev => !prev);
+    } else if (isDropdown) {
+      if (!disableAutoDismiss) setIsVisible(false);
     } else {
       setIsVisible(false);
     }
-  }, [ id ]);
+  }, [ disableAutoDismiss ]);
 
   useEffect(() => {
     if (onVisibleChange) onVisibleChange(isVisible);
@@ -137,9 +142,9 @@ const DropdownMenu: React.FC<Props> = ({
   }, [ handleClick ]);
 
   return <div className={classes.join(' ')}>
-    <div className={css.menu} style={menuStyle}>{props.menu}</div>
-    <div className={css.trigger} id={id}>{props.children}</div>
+    <div className={css.content} ref={dropdownRef} style={contentStyle}>{props.content}</div>
+    <div className={css.trigger} ref={triggerRef}>{props.children}</div>
   </div>;
 };
 
-export default DropdownMenu;
+export default Dropdown;

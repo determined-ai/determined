@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Table } from 'antd';
+import { Button, Input, Modal } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -7,6 +7,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import LabelSelectFilter from 'components/LabelSelectFilter';
 import Page from 'components/Page';
+import ResponsiveFilters from 'components/ResponsiveFilters';
+import ResponsiveTable from 'components/ResponsiveTable';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
@@ -82,6 +84,10 @@ const ExperimentList: React.FC = () => {
   const [ search, setSearch ] = useState('');
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+
+  const hasFiltersApplied = useMemo(() => {
+    return filters.showArchived || !filters.states.includes(ALL_VALUE) || !!filters.username;
+  }, [ filters ]);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -253,7 +259,7 @@ const ExperimentList: React.FC = () => {
       await fetchExperiments();
     } catch (e) {
       const publicSubject = action === Action.OpenTensorBoard ?
-        'Unable to Open TensorBoard for Selected Experiments' :
+        'Unable to View TensorBoard for Selected Experiments' :
         `Unable to ${action} Selected Experiments`;
       handleError({
         error: e,
@@ -318,7 +324,7 @@ const ExperimentList: React.FC = () => {
             placeholder="name"
             prefix={<Icon name="search" size="small" />}
             onChange={handleSearchChange} />
-          <div className={css.filters}>
+          <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
             <Toggle
               checked={filters.showArchived}
               prefixLabel="Show Archived"
@@ -331,7 +337,7 @@ const ExperimentList: React.FC = () => {
               value={filters.states}
               onChange={handleStateChange} />
             <UserSelectFilter value={filters.username} onChange={handleUserChange} />
-          </div>
+          </ResponsiveFilters>
         </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
@@ -359,7 +365,7 @@ const ExperimentList: React.FC = () => {
             type="primary"
             onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
         </TableBatch>
-        <Table
+        <ResponsiveTable<ExperimentItem>
           columns={columns}
           dataSource={experiments}
           loading={{

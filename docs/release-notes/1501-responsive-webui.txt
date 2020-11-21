@@ -1,0 +1,9 @@
+:orphan:
+
+**Improvements**
+
+-  WebUI: Update the WebUI to support responsive designs.
+
+   -  Add mobile-friendly navigation top bar and tab bar.
+   -  Update tables to be fluid and scrollable.
+   -  Collapse various filters into a dropdown button.

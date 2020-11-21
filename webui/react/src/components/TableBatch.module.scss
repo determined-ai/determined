@@ -61,4 +61,24 @@
     height: 4.8rem;
     opacity: 1;
   }
+
+  @media only screen and (max-width: $breakpoint-mobile) {
+    .container {
+      flex-direction: column;
+      height: 7.8rem;
+      justify-content: flex-start;
+      padding: 0;
+    }
+    .actions {
+      overflow: auto;
+      padding: var(--theme-sizes-layout-medium);
+      width: 100%;
+    }
+    .message {
+      padding-bottom: var(--theme-sizes-layout-medium);
+    }
+    &.show {
+      height: 7.8rem;
+    }
+  }
 }

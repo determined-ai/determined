@@ -7,6 +7,10 @@
  * @storybook/addon-backgrounds to show through.
  */
 
+#root {
+  height: auto;
+  width: auto;
+}
 .sb-show-main {
   background-color: transparent;
 }

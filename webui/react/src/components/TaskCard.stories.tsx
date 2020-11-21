@@ -30,3 +30,4 @@ export const InAGrid = (): React.ReactNode => {
     <Grid gap={ShirtSize.large} minItemWidth={20}>{tasks}</Grid>
   );
 };
+InAGrid.parameters = { layout: 'padded' };

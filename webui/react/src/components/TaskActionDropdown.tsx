@@ -109,7 +109,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
   if (isExperiment) {
-    menuItems.push(<Menu.Item key="openOrCreateTensorboard">Open Tensorboard</Menu.Item>);
+    menuItems.push(<Menu.Item key="openOrCreateTensorboard">View in TensorBoard</Menu.Item>);
   } else {
     menuItems.push(<Menu.Item key="viewLogs">
       <Link path={taskPath(task as CommandTask)}>View Logs</Link>

@@ -6,13 +6,11 @@ import { CSSTransition } from 'react-transition-group';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useStorage from 'hooks/useStorage';
-import { openCommand } from 'routes/utils';
-import { createNotebook } from 'services/api';
+import { launchNotebook } from 'utils/task';
 
 import Avatar from './Avatar';
-import DropdownMenu, { Placement } from './DropdownMenu';
+import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './Navigation.module.scss';
@@ -66,25 +64,8 @@ const Navigation: React.FC = () => {
   const username = user?.username || 'Anonymous';
   const cluster = overview.allocation === 0 ? undefined : `${overview.allocation}%`;
 
-  const launchNotebook = useCallback(async (slots: number) => {
-    try {
-      const notebook = await createNotebook({ slots });
-      openCommand(notebook);
-    } catch (e) {
-      handleError({
-        error: e,
-        level: ErrorLevel.Error,
-        message: e.message,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to Launch Notebook',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
-
-  const handleNotebookLaunch = useCallback(() => launchNotebook(1), [ launchNotebook ]);
-  const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), [ launchNotebook ]);
+  const handleNotebookLaunch = useCallback(() => launchNotebook(1), []);
+  const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), []);
   const handleVisibleChange = useCallback((visible: boolean) => setIsShowingCpu(visible), []);
 
   const handleCollapse = useCallback(() => {
@@ -97,7 +78,9 @@ const Navigation: React.FC = () => {
     setUI({ type: isCollapsed ? UI.ActionType.CollapseChrome : UI.ActionType.ExpandChrome });
   }, [ isCollapsed, setUI ]);
 
-  return showNavigation ? (
+  if (!showNavigation) return null;
+
+  return (
     <CSSTransition
       appear={true}
       classNames={{
@@ -135,8 +118,8 @@ const Navigation: React.FC = () => {
               <Button
                 className={css.launchButton}
                 onClick={handleNotebookLaunch}>Launch Notebook</Button>
-              <DropdownMenu
-                menu={(
+              <Dropdown
+                content={(
                   <Menu>
                     {isCollapsed && <Menu.Item onClick={handleNotebookLaunch}>
                       Launch Notebook
@@ -152,7 +135,7 @@ const Navigation: React.FC = () => {
                 <Button className={css.launchIcon}>
                   <Icon name={isShowingCpu ? 'arrow-up': 'arrow-down'} size="tiny" />
                 </Button>
-              </DropdownMenu>
+              </Dropdown>
             </div>
           </section>
           <section className={css.top}>
@@ -177,8 +160,8 @@ const Navigation: React.FC = () => {
           </section>
         </main>
         <footer>
-          <DropdownMenu
-            menu={<Menu>
+          <Dropdown
+            content={<Menu>
               <Menu.Item>
                 <Link path={'/logout'}>Sign Out</Link>
               </Menu.Item>
@@ -189,11 +172,11 @@ const Navigation: React.FC = () => {
               <Avatar hideTooltip name={username} />
               <span>{username}</span>
             </div>
-          </DropdownMenu>
+          </Dropdown>
         </footer>
       </nav>
     </CSSTransition>
-  ) : null;
+  );
 };
 
 export default Navigation;

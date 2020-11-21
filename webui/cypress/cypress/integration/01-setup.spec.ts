@@ -5,7 +5,6 @@ describe('setup', () => {
 
   before(() => {
     cy.login();
-    cy.visit('/det');
   });
 
   beforeEach(() => {

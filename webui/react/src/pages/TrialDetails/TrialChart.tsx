@@ -57,6 +57,8 @@ const TrialChart: React.FC<Props> = ({
   const initMetrics = storage.getWithDefault(storageKey || '', initMetric ? [ initMetric ] : []);
   const [ metrics, setMetrics ] = useState<MetricName[]>(initMetrics);
 
+  const metricsSelected = JSON.stringify([ initMetric ]) !== JSON.stringify(metrics);
+
   const data: Partial<PlotData>[] = useMemo(() => {
     const dataMap: Record<string, Partial<PlotData>> = {};
 
@@ -112,6 +114,7 @@ const TrialChart: React.FC<Props> = ({
   return <MetricChart
     data={data}
     id={props.id}
+    metricsSelected={metricsSelected}
     options={<MetricSelectFilter
       defaultMetricNames={defaultMetricNames}
       metricNames={metricNames}

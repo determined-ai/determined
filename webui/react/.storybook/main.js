@@ -18,8 +18,9 @@ module.exports = {
     '@storybook/addon-backgrounds',
     '@storybook/addon-links',
     '@storybook/addon-knobs',
+    '@storybook/addon-viewport',
   ],
-  stories: ['../src/**/*.stories.(ts|tsx)'],
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
   webpackFinal: async (config, { configType }) => {
     // `configType` has a value of 'DEVELOPMENT' or 'PRODUCTION'
     // You can change the configuration based on that.

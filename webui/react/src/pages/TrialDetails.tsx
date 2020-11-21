@@ -1,4 +1,4 @@
-import { Button, Col, Form, Input, Modal, Row, Select, Space, Table, Tooltip } from 'antd';
+import { Button, Col, Form, Input, Modal, Row, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import axios from 'axios';
 import yaml from 'js-yaml';
@@ -15,6 +15,8 @@ import Icon from 'components/Icon';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
+import ResponsiveFilters from 'components/ResponsiveFilters';
+import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter, { ALL_VALUE } from 'components/SelectFilter';
 import Spinner, { Indicator } from 'components/Spinner';
@@ -31,7 +33,7 @@ import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
   TrialHyperParameters,
 } from 'types';
-import { clone, numericSorter } from 'utils/data';
+import { clone, isEqual, numericSorter } from 'utils/data';
 import { hasCheckpoint } from 'utils/step';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
@@ -128,6 +130,12 @@ const TrialDetailsComp: React.FC = () => {
     storageMetricsPath && `${storageMetricsPath}/${STORAGE_CHART_METRICS_KEY}`;
   const storageTableMetricsKey =
     storageMetricsPath && `${storageMetricsPath}/${STORAGE_TABLE_METRICS_KEY}`;
+
+  const hasFiltersApplied = useMemo(() => {
+    const metricsApplied = !isEqual(metrics, defaultMetrics);
+    const checkpointValidationFilterApplied = hasCheckpointOrValidation as string !== ALL_VALUE;
+    return metricsApplied || checkpointValidationFilterApplied;
+  }, [ hasCheckpointOrValidation, metrics, defaultMetrics ]);
 
   const metricNames = useMemo(() => extractMetricNames(trial?.steps), [ trial?.steps ]);
 
@@ -401,6 +409,7 @@ If the problem persists please contact support.',
         const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
         setDefaultMetrics(defaultMetrics);
         const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
+        setDefaultMetrics(defaultMetrics);
         setMetrics(initMetrics);
       } catch (e) {
         if (axios.isCancel(e)) return;
@@ -416,7 +425,15 @@ If the problem persists please contact support.',
     };
 
     fetchExperimentDetails();
-  }, [ experimentId, metricNames, trialDetails.source, storage, storageTableMetricsKey ]);
+  }, [
+    experimentId,
+    experimentIdParam,
+    history,
+    metricNames,
+    trialDetails.source,
+    trialId,
+    storage,
+    storageTableMetricsKey ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
   if (trialDetails.error !== undefined) {
@@ -431,7 +448,7 @@ If the problem persists please contact support.',
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
   const options = (
-    <Space size="middle">
+    <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
       <SelectFilter
         dropdownMatchSelectWidth={300}
         label="Show"
@@ -446,7 +463,7 @@ If the problem persists please contact support.',
         multiple
         value={metrics}
         onChange={handleMetricChange} />}
-    </Space>
+    </ResponsiveFilters>
   );
 
   return (
@@ -485,7 +502,7 @@ If the problem persists please contact support.',
         </Col>
         <Col span={24}>
           <Section options={options} title="Trial Information">
-            <Table
+            <ResponsiveTable<Step>
               columns={columns}
               dataSource={steps}
               loading={{

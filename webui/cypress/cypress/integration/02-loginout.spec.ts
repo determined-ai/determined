@@ -4,6 +4,7 @@ describe('Sign in/out', () => {
 
   const LOGIN_ROUTE = '/det/login';
   const LOGOUT_ROUTE = '/det/logout';
+  const logoutSelector = `[class^="Navigation_base_"] [role="menu"] a[href*="${LOGOUT_ROUTE}"]`;
 
   before(() => {
     cy.login();
@@ -23,7 +24,7 @@ describe('Sign in/out', () => {
     cy.login();
     cy.visit('/det/dashboard');
     cy.get('#avatar').click();
-    cy.get(`[role="menu"] a[href="${LOGOUT_ROUTE}"]`).click();
+    cy.get(logoutSelector).click();
     cy.checkLoggedOut();
   });
 

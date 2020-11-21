@@ -1,5 +1,7 @@
 .base {
   cursor: pointer;
   font-size: var(--theme-sizes-font-small);
+  white-space: nowrap;
 }
+.alignRight { text-align: right; }
 .textOnly { cursor: auto; }

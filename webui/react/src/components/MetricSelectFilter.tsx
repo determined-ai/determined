@@ -207,7 +207,6 @@ const MetricSelectFilter: React.FC<Props> = ({
         </Option>;
       })}
     </OptGroup>}
-
   </SelectFilter>;
 };
 

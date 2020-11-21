@@ -10,7 +10,7 @@ Specification to test the dashboard page.
 
 ## Check recent tasks
 
-* Should have "5" recent task cards
+* Should have "7" recent task cards
 
 ## Sign out
 

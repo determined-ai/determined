@@ -65,7 +65,7 @@ const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Pr
       button: <Button
         key={Action.Tensorboard}
         loading={buttonStates.Tensorboard}
-        onClick={handleCreateTensorboard}>View in Tensorboard</Button>,
+        onClick={handleCreateTensorboard}>View in TensorBoard</Button>,
       showIf: (aTrial): boolean => !trialWillNeverHaveData(aTrial),
     },
     {

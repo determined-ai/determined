@@ -15,17 +15,27 @@ Specification to stop the running experiments to setup a controlled environment.
 
 * Sort table by column "ID"
 * Select all table rows
-* Pause all experiments
+* "Pause" all table rows
 * "Kill" experiment row "1"
 * "Kill" experiment row "2"
 * "Archive" experiment row "2"
 
 ## Create notebooks
 
+* Navigate to task list page
 * Launch notebook
-* Close wait page
+* Close current tab
 * Launch cpu-only notebook
-* Close wait page
+* Close current tab
+
+## Create tensorboards
+
+* Navigate to experiment "3" page
+* Launch tensorboard
+* Close current tab
+* Navigate to experiment "4" page
+* Launch tensorboard
+* Close current tab
 
 ## Sign out
 
