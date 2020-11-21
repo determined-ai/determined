@@ -16,7 +16,7 @@ const SignOut: React.FC = () => {
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
       try {
-        await logout();
+        await logout({});
       } catch (e) {
         handleError({
           error: e,

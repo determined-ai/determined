@@ -20,6 +20,23 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
 /* Authentication */
 
+export const login = generateApi<Credentials, LoginResponse>(Config.login);
+
+/*
+ * Login is an exception where the caller will perform the error handling,
+ * so it is one of the few API calls that will not have a try/catch block.
+ */
+// Temporarily disabling this until we figure out how we want to secure new login endpoint.
+// export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
+//   const response = await detApi.Auth.determinedLogin({
+//     password: Config.saltAndHashPassword(credentials.password),
+//     username: credentials.username,
+//   } as Api.V1LoginRequest);
+//   return response;
+// };
+
+export const logout = generateDetApi<EmptyParams, Api.V1LogoutResponse, void>(Config.logout);
+
 export const getCurrentUser =
   generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(Config.getCurrentUser);
 
@@ -158,29 +175,6 @@ export const killTask = async (task: CommandTask): Promise<void> => {
       return await killShell({ commandId: task.id });
     case CommandType.Tensorboard:
       return await killTensorboard({ commandId: task.id });
-  }
-};
-
-export const login = generateApi<Credentials, LoginResponse>(Config.login);
-
-/*
- * Login is an exception where the caller will perform the error handling,
- * so it is one of the few API calls that will not have a try/catch block.
- */
-// Temporarily disabling this until we figure out how we want to secure new login endpoint.
-// export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
-//   const response = await detApi.Auth.determinedLogin({
-//     password: Config.saltAndHashPassword(credentials.password),
-//     username: credentials.username,
-//   } as Api.V1LoginRequest);
-//   return response;
-// };
-
-export const logout = async (): Promise<Api.V1LogoutResponse> => {
-  try {
-    return await Config.detApi.Auth.determinedLogout();
-  } catch (e) {
-    throw processApiError('logout', e);
   }
 };
 

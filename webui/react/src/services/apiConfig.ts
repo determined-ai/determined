@@ -93,6 +93,12 @@ export const login: HttpApi<Credentials, LoginResponse> = {
   unAuthenticated: true,
 };
 
+export const logout: DetApi<EmptyParams, Api.V1LogoutResponse, void> = {
+  name: 'logout',
+  postProcess: noOp,
+  request: () => detApi.Auth.determinedLogout(),
+};
+
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser> = {
   name: 'getCurrentUser',
   postProcess: (response) => decoder.user(response.user),
