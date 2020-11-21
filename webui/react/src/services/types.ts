@@ -6,6 +6,10 @@ export interface ApiCommonParams {
   cancelToken?: CancelToken,
 }
 
+export interface OptionParams {
+  signal?: AbortSignal;
+}
+
 export interface HttpOptions {
   url: string;
   method?: Method;

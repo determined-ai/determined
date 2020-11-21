@@ -120,15 +120,10 @@ export const patchExperiment =
     Config.patchExperiment,
   );
 
-export const getAllExperimentLabels = async (): Promise<string[]> => {
-  try {
-    const data = await Config.detApi.Experiments.determinedGetExperimentLabels();
-    return data.labels || [];
-  } catch (e) {
-    processApiError('getAllExperimentLabels', e);
-    throw e;
-  }
-};
+export const getExperimentLabels =
+  generateDetApi<EmptyParams, Api.V1GetExperimentLabelsResponse, string[]>(
+    Config.getExperimentLabels,
+  );
 
 /* Tasks */
 

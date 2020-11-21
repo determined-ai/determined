@@ -217,6 +217,13 @@ export const getExperimentDetails: HttpApi<ExperimentDetailsParams, ExperimentDe
   postProcess: (response) => jsonToExperimentDetails(response.data),
 };
 
+export const getExperimentLabels:
+DetApi<EmptyParams, Api.V1GetExperimentLabelsResponse, string[]> = {
+  name: 'getExperimentLabels',
+  postProcess: (response) => response.labels || [],
+  request: (params) => detApi.Experiments.determinedGetExperimentLabels(params),
+};
+
 export const getTrialDetails: HttpApi<TrialDetailsParams, TrialDetails> = {
   httpOptions: (params: TrialDetailsParams) => ({ url: `/trials/${params.id}/details` }),
   name: 'getTrialDetails',
