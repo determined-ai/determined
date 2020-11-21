@@ -33,7 +33,10 @@ module.exports = {
     '@typescript-eslint/indent': [
       'error',
       2,
-      { ignoredNodes: [ 'TSTypeParameterInstantiation' ] },
+      {
+        ignoredNodes: [ 'TSTypeParameterInstantiation' ],
+        SwitchCase: 1,
+      },
     ],
     '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],

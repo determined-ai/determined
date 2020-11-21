@@ -21,9 +21,7 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 /* Authentication */
 
 export const getCurrentUser =
-  generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser> (
-    Config.getCurrentUser,
-  );
+  generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(Config.getCurrentUser);
 
 export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
 
@@ -34,9 +32,7 @@ export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
 /* Agent */
 
 export const getAgents =
-  generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> (
-    Config.getAgents,
-  );
+  generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]>(Config.getAgents);
 
 /* Experiments */
 
@@ -85,45 +81,37 @@ export const getTrialDetails =
 
 export const forkExperiment = generateApi<ForkExperimentParams, number>(Config.forkExperiment);
 
-export const archiveExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1ArchiveExperimentResponse, void> (
-    Config.archiveExperiment,
-  );
+export const archiveExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
+>(Config.archiveExperiment);
 
-export const unarchiveExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void> (
-    Config.unarchiveExperiment,
-  );
+export const unarchiveExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
+>(Config.unarchiveExperiment);
 
-export const activateExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1ActivateExperimentResponse, void> (
-    Config.activateExperiment,
-  );
+export const activateExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1ActivateExperimentResponse, void
+>(Config.activateExperiment);
 
-export const pauseExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1PauseExperimentResponse, void> (
-    Config.pauseExperiment,
-  );
+export const pauseExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1PauseExperimentResponse, void
+>(Config.pauseExperiment);
 
-export const cancelExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1CancelExperimentResponse, void> (
-    Config.cancelExperiment,
-  );
+export const cancelExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1CancelExperimentResponse, void
+>(Config.cancelExperiment);
 
 export const killExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void> (
-    Config.killExperiment,
-  );
+  generateDetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void
+>(Config.killExperiment);
 
-export const patchExperiment =
-  generateDetApi<PatchExperimentParams, Api.V1KillExperimentResponse, void> (
-    Config.patchExperiment,
-  );
+export const patchExperiment = generateDetApi<
+  PatchExperimentParams, Api.V1KillExperimentResponse, void
+>(Config.patchExperiment);
 
-export const getExperimentLabels =
-  generateDetApi<EmptyParams, Api.V1GetExperimentLabelsResponse, string[]>(
-    Config.getExperimentLabels,
-  );
+export const getExperimentLabels = generateDetApi<
+  EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+>(Config.getExperimentLabels);
 
 /* Tasks */
 
@@ -133,24 +121,16 @@ export const getShells = generateApi<EmptyParams, Command[]>(Config.getShells);
 export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTensorboards);
 
 export const killCommand =
-  generateDetApi<CommandIdParams, Api.V1KillCommandResponse, void> (
-    Config.killCommand,
-  );
+  generateDetApi<CommandIdParams, Api.V1KillCommandResponse, void>(Config.killCommand);
 
 export const killNotebook =
-  generateDetApi<CommandIdParams, Api.V1KillNotebookResponse, void> (
-    Config.killNotebook,
-  );
+  generateDetApi<CommandIdParams, Api.V1KillNotebookResponse, void>(Config.killNotebook);
 
 export const killShell =
-  generateDetApi<CommandIdParams, Api.V1KillShellResponse, void> (
-    Config.killShell,
-  );
+  generateDetApi<CommandIdParams, Api.V1KillShellResponse, void>(Config.killShell);
 
 export const killTensorboard =
-  generateDetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> (
-    Config.killTensorboard,
-  );
+  generateDetApi<CommandIdParams, Api.V1KillTensorboardResponse, void>(Config.killTensorboard);
 
 export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
 
