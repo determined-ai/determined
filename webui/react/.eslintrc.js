@@ -30,7 +30,11 @@ module.exports = {
       'warn',
       { allowArgumentsExplicitlyTypedAsAny: true },
     ],
-    '@typescript-eslint/indent': [ 'error', 2 ],
+    '@typescript-eslint/indent': [
+      'error',
+      2,
+      { ignoredNodes: [ 'TSTypeParameterInstantiation' ] },
+    ],
     '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
@@ -52,6 +56,7 @@ module.exports = {
     'no-multi-spaces': [ 'error', { ignoreEOLComments: true } ],
     'no-multiple-empty-lines': [ 'error', { max: 1, maxBOF: 0, maxEOF: 0 } ],
     'no-trailing-spaces': [ 'error', {} ],
+    'no-unused-vars': 'off',
     'object-curly-newline': [ 'error', {
       ExportDeclaration: { consistent: true },
       ImportDeclaration: { consistent: true },
