@@ -17,7 +17,6 @@ searcher:
   max_length:
     batches: 1140
 
-max_restarts: 0
 min_validation_period:
   batches: 57
 entrypoint: model_def:UNetsTrial
