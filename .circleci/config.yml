@@ -293,6 +293,7 @@ commands:
       - run:
           name: Run e2e tests
           working_directory: ~/project/e2e_tests
+          no_output_timeout: 20m
           command: |
             pytest -vv -s \
             -m <<parameters.mark>> \
@@ -1180,22 +1181,22 @@ jobs:
         default: "1.16.15-gke.500"
       machine-type:
         type: string
-        default: "n1-standard-8"
+        default: "a2-highgpu-1g"
       num-machines:
         type: integer
         default: 1
       gpu-type:
         type: string
-        default: "nvidia-tesla-k80"
+        default: "nvidia-tesla-a100"
       gpus-per-machine:
         type: integer
         default: 1
       region:
         type: string
-        default: "us-west1"
+        default: "us-central1"
       node-locations:
         type: string
-        default: "us-west1-b"
+        default: "us-central1-c"
       slack-mentions:
         type: string
         default: ""
@@ -1521,8 +1522,8 @@ workflows:
               mark: ["parallel"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
+              machine-type: ["a2-highgpu-2g"]
+              gpus-per-machine: [2]
               num-machines: [2]
 
       - request-k8-tests:
@@ -1556,7 +1557,7 @@ workflows:
               mark: ["parallel"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-32"]
+              machine-type: ["a2-highgpu-2g"]
               gpus-per-machine: [4]
               num-machines: [2]
 
