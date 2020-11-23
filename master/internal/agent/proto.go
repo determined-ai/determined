@@ -17,7 +17,7 @@ func ToProtoAgent(a AgentSummary) *proto.Agent {
 		Slots:          slots,
 		Containers:     nil,
 		Label:          a.Label,
-		ResourcePool: 	a.ResourcePool,
+		ResourcePool:   a.ResourcePool,
 	}
 }
 
