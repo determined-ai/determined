@@ -37,14 +37,22 @@ var (
 	distinctFieldBatchWaitTime = 5 * time.Second
 )
 
-func trialStatus(d *db.PgDB, trialID int32) (model.State, int, error) {
+func (a *apiServer) trialStatus(trialID int32) (model.State, int, error) {
 	trialStatus := struct {
 		State   model.State
 		NumLogs int
 	}{}
-	err := d.Query("trial_status", &trialStatus, trialID)
+	err := a.m.db.Query("trial_status", &trialStatus, trialID)
 	if err == db.ErrNotFound {
 		err = status.Error(codes.NotFound, "trial not found")
+	} else if err != nil {
+		return "", 0, err
+	}
+	if a.m.config.Logging.ElasticLoggingConfig != nil {
+		trialStatus.NumLogs, err = a.m.es.TrialLogCount(int(trialID))
+		if err != nil {
+			return "", 0, err
+		}
 	}
 	return trialStatus.State, trialStatus.NumLogs, err
 }
@@ -58,7 +66,7 @@ func (a *apiServer) TrialLogs(
 		return err
 	}
 
-	_, total, err := trialStatus(a.m.db, req.TrialId)
+	_, total, err := a.trialStatus(req.TrialId)
 	if err != nil {
 		return err
 	}
@@ -81,24 +89,45 @@ func (a *apiServer) TrialLogs(
 		})
 	}
 
-	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
-		switch {
-		case lr.Follow, lr.Limit > batchSize:
-			lr.Limit = batchSize
-		case lr.Limit <= 0:
-			return nil, nil
-		}
+	var fetch api.LogFetcherFn
+	switch {
+	case a.m.config.Logging.DefaultLoggingConfig != nil:
+		fetch = func(lr api.LogsRequest) (api.LogBatch, error) {
+			switch {
+			case lr.Follow, lr.Limit > batchSize:
+				lr.Limit = batchSize
+			case lr.Limit <= 0:
+				return nil, nil
+			}
 
-		b, err := a.m.db.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters)
-		if err != nil {
-			return nil, err
-		}
+			b, err := a.m.db.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters)
+			if err != nil {
+				return nil, err
+			}
 
-		return model.TrialLogBatch(b), err
+			return model.TrialLogBatch(b), err
+		}
+	case a.m.config.Logging.ElasticLoggingConfig != nil:
+		var sortValues []interface{}
+		fetch = func(lr api.LogsRequest) (api.LogBatch, error) {
+			switch {
+			case lr.Follow, lr.Limit > batchSize:
+				lr.Limit = batchSize
+			case lr.Limit <= 0:
+				return nil, nil
+			}
+
+			b, sv, err := a.m.es.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, sortValues)
+			if err != nil {
+				return nil, err
+			}
+			sortValues = sv
+			return model.TrialLogBatch(b), err
+		}
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, _, err := trialStatus(a.m.db, req.TrialId)
+		state, _, err := a.trialStatus(req.TrialId)
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}
@@ -204,7 +233,7 @@ func (a *apiServer) TrialLogsFields(
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, _, err := trialStatus(a.m.db, req.TrialId)
+		state, _, err := a.trialStatus(req.TrialId)
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}
@@ -227,7 +256,7 @@ func (a *apiServer) TrialLogsFields(
 func (a *apiServer) GetTrialCheckpoints(
 	_ context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {
-	_, _, err := trialStatus(a.m.db, req.Id)
+	_, _, err := a.trialStatus(req.Id)
 	if err != nil {
 		return nil, err
 	}

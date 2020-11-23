@@ -67,6 +67,7 @@ type Master struct {
 	rm            *actor.Ref
 	rwCoordinator *actor.Ref
 	db            *db.PgDB
+	es            *elastic.Elastic
 	proxy         *actor.Ref
 	trialLogger   *actor.Ref
 }
@@ -367,11 +368,11 @@ func (m *Master) Run(ctx context.Context) error {
 	case m.config.Logging.DefaultLoggingConfig != nil:
 		trialLogPersister = m.db
 	case m.config.Logging.ElasticLoggingConfig != nil:
-		es, sErr := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
-		if sErr != nil {
-			return sErr
+		m.es, err = elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
+		if err != nil {
+			return err
 		}
-		trialLogPersister = es
+		trialLogPersister = m.es
 	default:
 		panic("unsupported logging backend")
 	}
