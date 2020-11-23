@@ -21,7 +21,7 @@ message Agent {
   // An optional label applied to the agent for scheduling restrictions.
   string label = 5;
   // The name of the resource pool the agent is in
-  string resourcePool = 6;
+  string resource_pool = 6;
 }
 
 // Slot wraps a single device on the agent.
