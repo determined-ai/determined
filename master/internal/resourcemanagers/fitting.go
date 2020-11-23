@@ -141,7 +141,7 @@ func findDedicatedAgentFits(
 	}
 
 	if candidateNumSlots == 0 {
-		log.Infof("Task: %s which requires %d slots, can not be scheduled onto multiple agents "+
+		log.Debugf("Task: %s which requires %d slots, can not be scheduled onto multiple agents "+
 			"in the current cluster configuration. When running on multiple agents, number of "+
 			"slots per trial must be either set to 1 or a multiple of the GPUs per agent.",
 			req.ID, req.SlotsNeeded,

@@ -15,8 +15,8 @@ type priorityScheduler struct {
 }
 
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
-func NewPriorityScheduler() Scheduler {
-	return &priorityScheduler{preemptionEnabled: true}
+func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
+	return &priorityScheduler{preemptionEnabled: config.Priority.Preemption}
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*AllocateRequest, []*actor.Ref) {
@@ -64,16 +64,23 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
 
+	// Once we are unable to start a task of a higher priority, do not start anymore tasks.
+	startTasks := true
+
 	for _, priority := range getOrderedPriorities(priorityToPendingTasksMap) {
 		allocationRequests := priorityToPendingTasksMap[priority]
-		log.Infof("processing priority %d with %d pending tasks", priority, len(allocationRequests))
+		log.Debugf("processing priority %d with %d pending tasks",
+			priority, len(allocationRequests))
 
 		successfulAllocations, unSuccessfulAllocations := trySchedulingPendingTasksInPriority(
 			allocationRequests, localAgentsState, fittingMethod)
 
-		// Only add these tasks to the lists of tasks to start if there has been
-		// no preemption to start tasks of higher priority.
-		if len(toRelease) == 0 {
+		// Only add these tasks to the lists of tasks to start if all tasks of higher priority
+		// have been scheduled.
+		if startTasks {
+			for _, allocatedTask := range successfulAllocations {
+				log.Infof("scheduled task: %s", allocatedTask.Name)
+			}
 			toAllocate = append(toAllocate, successfulAllocations...)
 		}
 
@@ -81,9 +88,10 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 		if len(unSuccessfulAllocations) == 0 {
 			continue
 		}
+		startTasks = false
 
 		if !p.preemptionEnabled {
-			log.Infof(
+			log.Debugf(
 				"scheduled only %d tasks in priority level and preemption thus breaking out",
 				len(successfulAllocations))
 			break
@@ -104,9 +112,6 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 				priorityToScheduledTaskMap, toRelease)
 
 			if taskPlaced {
-				log.Infof("Preempted %d tasks for task: %s", len(preemptedTasks),
-					prioritizedAllocation.Name)
-
 				localAgentsState = updatedLocalAgentState
 				for preemptedTask := range preemptedTasks {
 					log.Infof("preempting task %s for task %s",
@@ -139,7 +144,7 @@ func trySchedulingTaskViaPreemption(
 ) (bool, map[*actor.Ref]*agentState, map[*actor.Ref]bool) {
 	localAgentsState := deepCopyAgents(agents)
 	preemptedTasks := make(map[*actor.Ref]bool)
-	log.Infof("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
+	log.Debugf("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
 
 	for priority := model.MaxUserSchedulingPriority; priority > allocationPriority; priority-- {
 		if _, ok := priorityToScheduledTaskMap[priority]; !ok {
@@ -159,10 +164,6 @@ func trySchedulingTaskViaPreemption(
 			resourcesAllocated := taskList.GetAllocations(preemptionCandidate.TaskActor)
 			removeTaskFromAgents(localAgentsState, resourcesAllocated)
 			preemptedTasks[preemptionCandidate.TaskActor] = true
-
-			for _, agent := range localAgentsState {
-				log.Infof("agent has %d slots", agent.numEmptySlots())
-			}
 
 			if fits := findFits(allocationRequest, localAgentsState, fittingMethod); len(fits) > 0 {
 				addTaskToAgents(fits)
@@ -186,7 +187,6 @@ func trySchedulingPendingTasksInPriority(
 	unSuccessfulAllocations := make([]*AllocateRequest, 0)
 
 	for _, allocationRequest := range allocationRequests {
-		log.Infof("trying to schedule task: %s", allocationRequest.ID)
 		fits := findFits(allocationRequest, agents, fittingMethod)
 		if len(fits) == 0 {
 			unSuccessfulAllocations = append(unSuccessfulAllocations, allocationRequest)
@@ -194,7 +194,6 @@ func trySchedulingPendingTasksInPriority(
 		}
 		addTaskToAgents(fits)
 		successfulAllocations = append(successfulAllocations, allocationRequest)
-		log.Infof("successfully scheduled task: %s", allocationRequest.ID)
 	}
 
 	return successfulAllocations, unSuccessfulAllocations
@@ -210,7 +209,7 @@ func getAllPendingZeroSlotTasks(taskList *taskList, label string) []*AllocateReq
 
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assigned == nil || len(assigned.Allocations) == 0 {
-			log.Infof("scheduling pending zero-slot task: %s", req.ID)
+			log.Debugf("scheduling pending zero-slot task: %s", req.ID)
 			pendingZeroSlotTasks = append(pendingZeroSlotTasks, req)
 		}
 	}
@@ -262,7 +261,7 @@ func sortTasksByPriorityAndTimestamp(
 		pendingTasks := priorityToPendingTasksMap[priority]
 		sort.Slice(pendingTasks, func(i, j int) bool {
 			first, second := pendingTasks[i], pendingTasks[j]
-			return second.TaskActor.RegisteredTime().Before(first.TaskActor.RegisteredTime())
+			return first.TaskActor.RegisteredTime().Before(second.TaskActor.RegisteredTime())
 		})
 	}
 
@@ -271,7 +270,7 @@ func sortTasksByPriorityAndTimestamp(
 		scheduledTasks := priorityToScheduledTaskMap[priority]
 		sort.Slice(scheduledTasks, func(i, j int) bool {
 			first, second := scheduledTasks[i], scheduledTasks[j]
-			return first.TaskActor.RegisteredTime().Before(second.TaskActor.RegisteredTime())
+			return second.TaskActor.RegisteredTime().Before(first.TaskActor.RegisteredTime())
 		})
 	}
 
