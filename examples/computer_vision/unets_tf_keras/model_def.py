@@ -20,7 +20,10 @@ from tensorflow import keras
 class UNetsTrial(TFKerasTrial):
     def __init__(self, context):
         self.context = context
+
+        # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
+        self.data_downloaded = False
 
     def normalize(self, input_image, input_mask):
         input_image = tf.cast(input_image, tf.float32) / 255.0
@@ -55,10 +58,7 @@ class UNetsTrial(TFKerasTrial):
     def download_weights(self):
         weights_dir = self.download_directory + '/weights/'
         data_file = self.context.get_data_config()['data_file']
-
         mobilenet_link = 'https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v2/' + data_file
-
-        os.mkdir(self.download_directory)
         os.mkdir(weights_dir)
 
         urllib.request.urlretrieve(mobilenet_link,weights_dir + data_file)
@@ -112,8 +112,8 @@ class UNetsTrial(TFKerasTrial):
             'oxford_iiit_pet:3.*.*',
             split="train",
             with_info=False,
-            data_dir=self.context.get_data_config().get('data_dir'),
-            download=True,
+            data_dir=self.download_directory,
+            download=not self.data_downloaded,
         )
 
         def load_image_train(datapoint):
@@ -139,8 +139,8 @@ class UNetsTrial(TFKerasTrial):
             'oxford_iiit_pet:3.*.*',
             split="test",
             with_info=True,
-            data_dir=self.context.get_data_config()['data_dir'],
-            download=True,
+            data_dir=self.download_directory,
+            download=not self.data_downloaded,
         )
         def load_image_test(datapoint):
             input_image = tf.image.resize(datapoint['image'], (128, 128))

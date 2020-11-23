@@ -1,7 +1,6 @@
 description: unets_tf_keras_const
 data:
   BUFFER_SIZE: 1000
-  data_dir: '/tmp/data'
   data_file: mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_128_no_top.h5
 
 hyperparameters:
@@ -18,6 +17,7 @@ searcher:
   max_length:
     batches: 1140
 
+max_restarts: 0
 min_validation_period:
   batches: 57
 entrypoint: model_def:UNetsTrial
