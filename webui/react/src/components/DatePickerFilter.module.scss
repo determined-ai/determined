@@ -1,0 +1,5 @@
+.wrapper {
+  :global(.ant-picker) {
+    border-radius: var(--theme-sizes-border-radius);
+  }
+}

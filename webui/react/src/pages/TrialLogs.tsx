@@ -6,6 +6,7 @@ import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Message, { MessageType } from 'components/Message';
+import TrialLogFilters, { TrialLogFiltersInterface } from 'components/TrialLogFilters';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import { getTrialDetails } from 'services/api';
@@ -36,6 +37,7 @@ const TrialLogs: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
   const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
+  const [ filter, setFilter ] = useState<TrialLogFiltersInterface>({});
 
   const title = `Trial ${trialId} Logs`;
   const experimentId = trial.data?.experimentId;
@@ -46,7 +48,20 @@ const TrialLogs: React.FC = () => {
     let buffer: Log[] = [];
 
     consumeStream<V1TrialLogsResponse>(
-      detApi.StreamingExperiments.determinedTrialLogs(trialId, offset - TAIL_SIZE, TAIL_SIZE),
+      detApi.StreamingExperiments.determinedTrialLogs(
+        trialId,
+        offset - TAIL_SIZE,
+        TAIL_SIZE,
+        false,
+        filter.agentIds,
+        filter.containerIds,
+        filter.rankIds,
+        filter.levels,
+        filter.stdtypes,
+        filter.sources,
+        filter.timestampBefore ? filter.timestampBefore.toDate() : undefined,
+        filter.timestampAfter ? filter.timestampAfter.toDate() : undefined,
+      ),
       event => buffer.push(jsonToTrialLog(event)),
     ).then(() => {
       if (!logsRef.current) return;
@@ -59,7 +74,7 @@ const TrialLogs: React.FC = () => {
       }
       buffer = [];
     });
-  }, [ offset, oldestId, oldestReached, trialId ]);
+  }, [ filter, offset, oldestId, oldestReached, trialId ]);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (downloadModal) {
@@ -123,7 +138,20 @@ const TrialLogs: React.FC = () => {
     });
 
     consumeStream<V1TrialLogsResponse>(
-      detApi.StreamingExperiments.determinedTrialLogs(trialId, -TAIL_SIZE, 0, true),
+      detApi.StreamingExperiments.determinedTrialLogs(
+        trialId,
+        -TAIL_SIZE,
+        0,
+        true,
+        filter.agentIds,
+        filter.containerIds,
+        filter.rankIds,
+        filter.levels,
+        filter.stdtypes,
+        filter.sources,
+        filter.timestampBefore ? filter.timestampBefore.toDate() : undefined,
+        filter.timestampAfter ? filter.timestampAfter.toDate() : undefined,
+      ),
       event => {
         buffer.push(jsonToTrialLog(event));
         throttleFunc();
@@ -131,7 +159,7 @@ const TrialLogs: React.FC = () => {
     );
 
     return (): void => throttleFunc.cancel();
-  }, [ trial.hasLoaded, trialId ]);
+  }, [ filter, trial.hasLoaded, trialId ]);
 
   if (trial.errorCount > 0 && !trial.isLoading) {
     return <Message title={`Unable to find Trial ${trialId}`} type={MessageType.Warning} />;
@@ -140,9 +168,21 @@ const TrialLogs: React.FC = () => {
   const experimentDetailPath = `/experiments/${trial.data?.experimentId}`;
   const trialDetailPath = `${experimentDetailPath}/trials/${trialId}`;
 
+  const onFilterChange = (newFilters: TrialLogFiltersInterface) => {
+    setFilter(newFilters);
+    if (logsRef.current) {
+      logsRef.current.clearLogs();
+    }
+  };
+
   return (
     <LogViewer
       disableLevel
+      filterOptions={<TrialLogFilters
+        filter={filter}
+        trialId={trialId}
+        onChange={onFilterChange}
+      />}
       isDownloading={isDownloading}
       isLoading={isLoading}
       noWrap

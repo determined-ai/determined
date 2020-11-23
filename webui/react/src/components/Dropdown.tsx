@@ -122,10 +122,16 @@ const Dropdown: React.FC<Props> = ({
 
     event.stopPropagation();
 
+    const isAntPicker = (
+      typeof event.target.className === 'string'
+      && event.target.className.indexOf('ant-picker') >= 0
+    );
     const isTrigger = triggerRef.current && triggerRef.current.contains(event.target);
     const isDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
 
-    if (isTrigger) {
+    if (isAntPicker) {
+      return;
+    } else if (isTrigger) {
       setIsVisible(prev => !prev);
     } else if (isDropdown) {
       if (!disableAutoDismiss) setIsVisible(false);
