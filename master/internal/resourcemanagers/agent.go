@@ -11,9 +11,9 @@ import (
 // agentState holds the scheduler state for an agent. The implementation of agent-related operations
 // (e.g., socket I/O) is deferred to the actor.
 type agentState struct {
-	handler      *actor.Ref
-	devices      map[device.Device]*cproto.ID
-	label        string
+	handler *actor.Ref
+	devices map[device.Device]*cproto.ID
+	label   string
 
 	// Since we only model GPUs as devices/slots and assume each slot can be allocated with
 	// one container, we add one additional field to keep track of zero-slot containers.
