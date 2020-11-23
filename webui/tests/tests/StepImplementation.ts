@@ -17,7 +17,7 @@ import * as t from 'taiko';
 
 /*
  * A require is used here to allow for plugins
- * such as screencast to come through.
+ * such as video to come through.
  * Using an import will not work.
  */
 const {
@@ -33,7 +33,6 @@ const {
   link,
   near,
   openBrowser,
-  screencast,
   switchTo,
   tableCell,
   text,
@@ -48,7 +47,6 @@ const HEADLESS = process.env.HEADLESS === 'true';
 const HOST = process.env.DET_MASTER || 'localhost:8080';
 const BASE_PATH = process.env.PUBLIC_URL || '/det';
 const BASE_URL = `${HOST}${BASE_PATH}`;
-const SCREENCAST = process.env.SCREENCAST === 'true';
 const viewports = {
   desktop: { width: 1366, height: 768 },
 };
@@ -69,39 +67,14 @@ export default class StepImplementation {
 
   @BeforeSpec()
   public async beforeSpec(context: ExecutionContext) {
-    try {
-      const spec = context.getCurrentSpec().getName();
-      const filename = `reports/videos/${spec}.mp4`;
-      await video.startRecording(filename);
-    } catch (e) {
-      handleError(e);
-    }
+    const spec = context.getCurrentSpec().getName();
+    const filename = `reports/videos/${spec}.mp4`;
+    await video.startRecording(filename);
   }
 
   @AfterSpec()
   public async afterSpec() {
-    try {
-      await video.stopRecording();
-    } catch (e) {
-      handleError(e);
-    }
-  }
-
-  @BeforeScenario()
-  public async startScreencast(context: ExecutionContext) {
-    if (SCREENCAST) {
-      const spec = context.getCurrentSpec().getName();
-      const scenario = context.getCurrentScenario().getName();
-      const filename = `screencasts/${spec} -- ${scenario}.gif`;
-      await screencast.startScreencast(filename);
-    }
-  }
-
-  @AfterScenario()
-  public async stopScreencast() {
-    if (SCREENCAST) {
-      await screencast.stopScreencast();
-    }
+    await video.stopRecording();
   }
 
   /* Authentication Steps */
