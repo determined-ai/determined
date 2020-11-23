@@ -164,7 +164,9 @@ class DETRTrial(PyTorchTrial):
                 for k in loss_dict:
                     loss_dict_aggregated[k] += loss_dict[k]
 
-                orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
+                orig_target_sizes = torch.stack(
+                    [t["orig_size"] for t in targets], dim=0
+                )
                 res = self.postprocessors["bbox"](outputs, orig_target_sizes)
                 results.update(
                     {

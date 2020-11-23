@@ -41,20 +41,35 @@ class GCSBackend:
         return img_str
 
 
+class FakeBackend:
+    def __init__(self):
+        self.data = None
+
+    def get(self, filepath):
+        if self.data is None:
+            with open("imgs/train_curves.png", "rb") as f:
+                img_str = f.read()
+            self.data = img_str
+        return self.data
+
+
 class CocoDetection(torchvision.datasets.CocoDetection):
     def __init__(self, bucket_name, img_folder, ann_file, transforms, return_masks):
         super(CocoDetection, self).__init__(bucket_name, ann_file)
         self.img_folder = img_folder
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks)
-        self.backend = GCSBackend(bucket_name)
+        if bucket_name is None:
+            self.backend = FakeBackend()
+        else:
+            self.backend = GCSBackend(bucket_name)
 
     def __getitem__(self, idx):
         coco = self.coco
         img_id = self.ids[idx]
         ann_ids = coco.getAnnIds(imgIds=img_id)
         target = coco.loadAnns(ann_ids)
-        path = coco.loadImgs(img_id)[0]['file_name']
+        path = coco.loadImgs(img_id)[0]["file_name"]
         img_bytes = BytesIO(self.backend.get(os.path.join(self.img_folder, path)))
 
         img = Image.open(img_bytes).convert("RGB")
@@ -84,5 +99,3 @@ def build_dataset(image_set, args):
         return_masks=args.masks,
     )
     return dataset
-
-
