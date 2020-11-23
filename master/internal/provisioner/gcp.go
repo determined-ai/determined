@@ -206,6 +206,8 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceNum int) {
 		}
 		rb.Metadata.Items = append(c.metadata, rb.Metadata.Items...)
 
+		rb.MinCpuPlatform = getCPUPlatform(rb.MachineType)
+
 		resp, err := c.client.Instances.Insert(c.Project, c.Zone, rb).Context(clientCtx).Do()
 		if err != nil {
 			ctx.Log().WithError(err).Errorf("cannot insert GCE instance")

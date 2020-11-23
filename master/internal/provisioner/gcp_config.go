@@ -214,6 +214,8 @@ var gceMachineTypes = []string{
 	"m2-ultramem",
 	"n1-megamem",
 	"c2-standard",
+	"a2-highgpu",
+	"a2-megagpu",
 	"custom",
 }
 
@@ -224,6 +226,25 @@ var gceGPUTypes = map[string][]int{
 	"nvidia-tesla-p4":   {0, 1, 2, 4},
 	"nvidia-tesla-v100": {0, 1, 2, 4, 8},
 	"nvidia-tesla-k80":  {0, 1, 2, 4, 8},
+	"nvidia-tesla-a100": {0, 1, 2, 4, 8, 16},
+}
+
+func getCPUPlatform(machineType string) string {
+	fields := strings.Split(machineType, "/")
+	instanceType := fields[len(fields)-1]
+
+	for typePrefix, cpuPlatform := range gceCPUPlatforms {
+		if strings.HasPrefix(instanceType, typePrefix) {
+			return cpuPlatform
+		}
+	}
+	return "Intel Broadwell"
+}
+
+// First prefix match found is applied
+var gceCPUPlatforms = map[string]string{
+	"a2-highgpu": "Intel Cascade Lake",
+	"a2-megagpu": "Intel Cascade Lake",
 }
 
 type gceInstanceType struct {
