@@ -39,7 +39,6 @@ type MasterMessage struct {
 // AgentStarted notifies the master that the agent has started up.
 type AgentStarted struct {
 	Version      string
-	ResourcePool string
 	Label        string
 	Devices      []device.Device
 }

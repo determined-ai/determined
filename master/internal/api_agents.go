@@ -34,7 +34,6 @@ func (a *apiServer) GetAgents(
 }
 
 func (a *apiServer) GetAgent(
-	// TODO: Does this work on k8s?
 	_ context.Context, req *apiv1.GetAgentRequest) (resp *apiv1.GetAgentResponse, err error) {
 	err = a.actorRequest(fmt.Sprintf("/agents/%s", req.AgentId), req, &resp)
 	return resp, err

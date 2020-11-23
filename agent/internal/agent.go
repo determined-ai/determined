@@ -348,10 +348,8 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 
 	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
 
-	// TODO: Discuss: we don't use the resource pool field of this message - the resource pool was
-	//       already defined when we established the connection to the master.
 	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
-		Version: a.Version, Devices: a.Devices, ResourcePool: a.ResourcePool, Label: a.Label}}
+		Version: a.Version, Devices: a.Devices, Label: a.Label}}
 	ctx.Ask(a.socket, api.WriteMessage{Message: started})
 	return nil
 }
