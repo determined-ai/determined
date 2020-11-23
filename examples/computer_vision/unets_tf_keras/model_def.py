@@ -113,7 +113,7 @@ class UNetsTrial(TFKerasTrial):
             split="train",
             with_info=False,
             data_dir=self.context.get_data_config().get('data_dir'),
-            download=False,
+            download=True,
         )
 
         def load_image_train(datapoint):
@@ -140,7 +140,7 @@ class UNetsTrial(TFKerasTrial):
             split="test",
             with_info=True,
             data_dir=self.context.get_data_config()['data_dir'],
-            download=False
+            download=True,
         )
         def load_image_test(datapoint):
             input_image = tf.image.resize(datapoint['image'], (128, 128))
