@@ -69,14 +69,14 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		return k.receiveRequestMsg(ctx)
 
 	case GetTaskSummary:
-		if resp := getTaskSummary(k.reqList, *msg.ID); resp != nil {
+		if resp := getTaskSummary(k.reqList, *msg.ID, k.groups, "kubernetes"); resp != nil {
 			ctx.Respond(*resp)
 		}
 		reschedule = false
 
 	case GetTaskSummaries:
 		reschedule = false
-		ctx.Respond(getTaskSummaries(k.reqList))
+		ctx.Respond(getTaskSummaries(k.reqList, k.groups, "kubernetes"))
 
 	case schedulerTick:
 		if k.reschedule {

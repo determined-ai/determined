@@ -232,13 +232,14 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	case GetTaskSummary:
 		reschedule = false
-		if resp := getTaskSummary(rp.taskList, *msg.ID); resp != nil {
+		if resp := getTaskSummary(
+			rp.taskList, *msg.ID, rp.groups, rp.config.Scheduler.GetType()); resp != nil {
 			ctx.Respond(*resp)
 		}
 
 	case GetTaskSummaries:
 		reschedule = false
-		ctx.Respond(getTaskSummaries(rp.taskList))
+		ctx.Respond(getTaskSummaries(rp.taskList, rp.groups, rp.config.Scheduler.GetType()))
 
 	case schedulerTick:
 		if rp.reschedule {
