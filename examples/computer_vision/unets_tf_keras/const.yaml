@@ -1,7 +1,6 @@
 description: unets_tf_keras_const
 data:
   BUFFER_SIZE: 1000
-  data_dir: '/tmp/data'
   data_file: mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_128_no_top.h5
 
 hyperparameters:
