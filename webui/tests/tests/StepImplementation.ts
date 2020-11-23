@@ -1,8 +1,10 @@
 /* eslint-disable no-unused-vars */
 import {
   AfterScenario,
+  AfterSpec,
   AfterSuite,
   BeforeScenario,
+  BeforeSpec,
   BeforeSuite,
   ExecutionContext,
   Step,
@@ -39,6 +41,7 @@ const {
   waitFor,
   within,
   write,
+  video,
 } = require('taiko');
 
 const HEADLESS = process.env.HEADLESS === 'true';
@@ -62,6 +65,26 @@ export default class StepImplementation {
   @AfterSuite()
   public async afterSuite() {
     await closeBrowser();
+  }
+
+  @BeforeSpec()
+  public async beforeSpec(context: ExecutionContext) {
+    try {
+      const spec = context.getCurrentSpec().getName();
+      const filename = `reports/videos/${spec}.mp4`;
+      await video.startRecording(filename);
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
+  @AfterSpec()
+  public async afterSpec() {
+    try {
+      await video.stopRecording();
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   @BeforeScenario()
