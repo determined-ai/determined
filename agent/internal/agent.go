@@ -349,7 +349,7 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
 
 	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
-		Version: a.Version, Devices: a.Devices, ResourcePool: a.ResourcePool, Label: a.Label}}
+		Version: a.Version, Devices: a.Devices, Label: a.Label}}
 	ctx.Ask(a.socket, api.WriteMessage{Message: started})
 	return nil
 }

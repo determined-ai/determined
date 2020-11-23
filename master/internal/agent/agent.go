@@ -140,11 +140,10 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.AgentStarted != nil:
 		telemetry.ReportAgentConnected(ctx.Self().System(), a.uuid, msg.AgentStarted.Devices)
 		ctx.Log().Infof("agent connected ip: %v resource pool: %s slots: %d",
-			a.address, msg.AgentStarted.ResourcePool, len(msg.AgentStarted.Devices))
+			a.address, a.resourcePoolName, len(msg.AgentStarted.Devices))
 
 		ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
-		a.resourcePoolName = msg.AgentStarted.ResourcePool
 		a.label = msg.AgentStarted.Label
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)

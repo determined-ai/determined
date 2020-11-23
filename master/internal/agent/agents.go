@@ -60,7 +60,10 @@ func (a *agents) createAgentActor(ctx *actor.Context, id, resourcePool string) (
 	if a.cluster.Child(resourcePool) == nil {
 		return nil, errors.Errorf("cannot find specified resource pool %s for agent %s", resourcePool, id)
 	}
-	ref, ok := ctx.ActorOf(id, &agent{resourcePool: a.cluster.Child(resourcePool)})
+	ref, ok := ctx.ActorOf(id, &agent{
+		resourcePool:     a.cluster.Child(resourcePool),
+		resourcePoolName: resourcePool,
+	})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)
 	}

@@ -421,6 +421,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
 			Slots:          slotsSummary,
 			NumContainers:  len(podByNode[node.Name]),
+			ResourcePool:   "",
 		}
 	}
 
