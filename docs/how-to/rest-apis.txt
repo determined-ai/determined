@@ -9,7 +9,8 @@ interact with a Determined cluster programmatically. Determined includes
 detailed documentation about all of the REST endpoints provided by the
 API, alongside a playground for interacting with the API. The endpoint
 documentation and playground are provided via `Swagger UI
-<https://swagger.io/tools/swagger-ui/>`__.
+<https://swagger.io/tools/swagger-ui/>`__ and are available `here
+<../rest-api/index.html>`__.
 
 ****************
  Authentication
