@@ -94,3 +94,12 @@ def test_gan_mnist_pytorch_distributed() -> None:
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.gan_examples_path("gan_mnist_pytorch"), 1)
+
+
+@pytest.mark.distributed  # type: ignore
+def test_detr_coco_pytorch_distributed() -> None:
+    config = conf.load_config(conf.cv_examples_path("detr_coco_pytorch/const_fake.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_slots_per_trial(config, 2)
+
+    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("detr_coco_pytorch"), 1)

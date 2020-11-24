@@ -47,22 +47,45 @@ class FakeBackend:
 
     def get(self, filepath):
         if self.data is None:
+            # Use train_curves.png image as fake data.
             with open("imgs/train_curves.png", "rb") as f:
                 img_str = f.read()
             self.data = img_str
         return self.data
 
 
+class LocalBackend:
+    """
+    This class will load data from harddrive.
+    COCO dataset will be downloaded from source in model_def.py if
+    local backend is specified.
+    """
+
+    def __init__(self, outdir):
+        assert os.path.isdir(outdir)
+        self.outdir = outdir
+
+    def get(self, filepath):
+        # Use train_curves.png image as fake data.
+        with open(os.path.join(self.outdir, filepath), "rb") as f:
+            img_str = f.read()
+        return img_str
+
+
 class CocoDetection(torchvision.datasets.CocoDetection):
-    def __init__(self, bucket_name, img_folder, ann_file, transforms, return_masks):
-        super(CocoDetection, self).__init__(bucket_name, ann_file)
+    def __init__(
+        self, backend, root_dir, img_folder, ann_file, transforms, return_masks
+    ):
+        super(CocoDetection, self).__init__(img_folder, ann_file)
         self.img_folder = img_folder
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks)
-        if bucket_name is None:
+        if backend == "fake":
             self.backend = FakeBackend()
-        else:
-            self.backend = GCSBackend(bucket_name)
+        elif backend == "local":
+            self.backend = LocalBackend(img_folder)
+        elif backend == "gcs":
+            self.backend = GCSBackend(root_dir)
 
     def __getitem__(self, idx):
         coco = self.coco
@@ -83,7 +106,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
 
 def build_dataset(image_set, args):
-    root = args.bucket_name
+    root = args.data_dir
     mode = "instances"
     PATHS = {
         "train": (f"{root}/train2017", f"/tmp/{mode}_train2017.json"),
@@ -92,7 +115,8 @@ def build_dataset(image_set, args):
 
     img_folder, ann_file = PATHS[image_set]
     dataset = CocoDetection(
-        args.bucket_name,
+        args.backend,
+        args.data_dir,
         img_folder,
         ann_file,
         transforms=make_coco_transforms(image_set),

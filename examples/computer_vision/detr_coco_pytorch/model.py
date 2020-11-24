@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
-DETR model and criterion classes.
+Copied from: https://github.com/facebookresearch/detr/blob/4e1a9281bc5621dcd65f3438631de25e255c4269/models/detr.py
+The SetCriterion module is modified to sync num_boxes using horovod allreduce instead of pytorch all_reduce.
 """
 import sys
 
@@ -81,7 +82,6 @@ class SetCriterion(nn.Module):
         losses = {"loss_ce": loss_ce}
 
         if log:
-            # TODO this should probably be a separate loss, not hacked in this one here
             losses["class_error"] = 100 - accuracy(src_logits[idx], target_classes_o)[0]
         return losses
 
@@ -138,7 +138,6 @@ class SetCriterion(nn.Module):
         src_masks = outputs["pred_masks"]
         src_masks = src_masks[src_idx]
         masks = [t["masks"] for t in targets]
-        # TODO use valid to mask invalid areas due to padding in loss
         target_masks, valid = nested_tensor_from_tensor_list(masks).decompose()
         target_masks = target_masks.to(src_masks)
         target_masks = target_masks[tgt_idx]
@@ -244,10 +243,6 @@ def build_model(args, world_size):
     # For more details on this, check the following discussion
     # https://github.com/facebookresearch/detr/issues/108#issuecomment-650269223
     num_classes = 20 if args.dataset_file != "coco" else 91
-    if args.dataset_file == "coco_panoptic":
-        # for panoptic, we just add a num_classes that is large enough to hold
-        # max_obj_id + 1, but the exact value doesn't really matter
-        num_classes = 250
     device = torch.device(args.device)
 
     backbone = build_backbone(args)
@@ -261,15 +256,11 @@ def build_model(args, world_size):
         num_queries=args.num_queries,
         aux_loss=args.aux_loss,
     )
-    if args.masks:
-        model = DETRsegm(model, freeze_detr=(args.frozen_weights is not None))
     matcher = build_matcher(args)
     weight_dict = {"loss_ce": 1, "loss_bbox": args.bbox_loss_coef}
     weight_dict["loss_giou"] = args.giou_loss_coef
-    if args.masks:
-        weight_dict["loss_mask"] = args.mask_loss_coef
-        weight_dict["loss_dice"] = args.dice_loss_coef
-    # TODO this is a hack
+    # Add weights for aux_loss items which are then used in model_def.DETRTrial.train_batch
+    # to compute the weighted loss.
     if args.aux_loss:
         aux_weight_dict = {}
         for i in range(args.dec_layers - 1):
@@ -277,8 +268,6 @@ def build_model(args, world_size):
         weight_dict.update(aux_weight_dict)
 
     losses = ["labels", "boxes", "cardinality"]
-    if args.masks:
-        losses += ["masks"]
     criterion = SetCriterion(
         num_classes,
         matcher=matcher,
@@ -289,12 +278,5 @@ def build_model(args, world_size):
     )
     criterion.to(device)
     postprocessors = {"bbox": PostProcess()}
-    if args.masks:
-        postprocessors["segm"] = PostProcessSegm()
-        if args.dataset_file == "coco_panoptic":
-            is_thing_map = {i: i <= 90 for i in range(201)}
-            postprocessors["panoptic"] = PostProcessPanoptic(
-                is_thing_map, threshold=0.85
-            )
 
     return model, criterion, postprocessors

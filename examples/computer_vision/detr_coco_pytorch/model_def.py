@@ -5,6 +5,8 @@ from typing import Any, Dict, Sequence, Union
 from attrdict import AttrDict
 import numpy as np
 import sys
+import os
+import time
 
 sys.path.append("./detr")
 
@@ -25,6 +27,7 @@ from model import build_model
 
 # Experiment dir imports
 from data import unwrap_collate_fn, build_dataset
+from data_utils import download_coco_from_source
 
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
@@ -35,7 +38,25 @@ class DETRTrial(PyTorchTrial):
         self.context = context
         self.hparams = AttrDict(self.context.get_hparams())
 
-        # Wrap the model.
+        # If backend is local download data in rank 0 slot.
+        if self.hparams.backend == "local":
+            if self.context.distributed.get_local_rank() == 0:
+                if not all(
+                    [
+                        os.path.isdir(os.path.join(self.hparams.data_dir, d))
+                        for d in ["train2017", "val2017"]
+                    ]
+                ):
+                    download_coco_from_source(self.hparams.data_dir)
+            else:
+                # Other slots wait until rank 0 is done downloading, which will
+                # correspond to the head writing a done.txt file.
+                while not os.path.isfile(
+                    os.path.join(self.hparams.data_dir, "done.txt")
+                ):
+                    time.sleep(10)
+
+        # Build the model and configure postprocessors for evaluation.
         model, self.criterion, self.postprocessors = build_model(
             self.hparams, world_size=self.context.distributed.get_size()
         )
@@ -79,19 +100,10 @@ class DETRTrial(PyTorchTrial):
             else None
         )
 
-        # Build datasets
-        self.dataset_train = build_dataset(image_set="train", args=self.hparams)
-        self.dataset_val = build_dataset(image_set="val", args=self.hparams)
-
-        # Set up evaluator
-        self.base_ds = get_coco_api_from_dataset(self.dataset_val)
-        self.iou_types = tuple(
-            k for k in ("segm", "bbox") if k in self.postprocessors.keys()
-        )
-
     def build_training_data_loader(self) -> DataLoader:
+        dataset_train = build_dataset(image_set="train", args=self.hparams)
         return DataLoader(
-            self.dataset_train,
+            dataset_train,
             batch_size=self.context.get_per_slot_batch_size(),
             collate_fn=unwrap_collate_fn,
             num_workers=self.hparams.num_workers,
@@ -99,8 +111,11 @@ class DETRTrial(PyTorchTrial):
         )
 
     def build_validation_data_loader(self) -> DataLoader:
+        dataset_val = build_dataset(image_set="val", args=self.hparams)
+        # Set up evaluator
+        self.base_ds = get_coco_api_from_dataset(dataset_val)
         return DataLoader(
-            self.dataset_val,
+            dataset_val,
             batch_size=self.context.get_per_slot_batch_size(),
             collate_fn=unwrap_collate_fn,
             num_workers=self.hparams.num_workers,
@@ -119,7 +134,7 @@ class DETRTrial(PyTorchTrial):
             loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict
         )
         self.context.backward(losses)
-        self.context.step_optimizer(self.optimizer)
+        self.context.step_optimizer(self.optimizer, clip_grads=self.clip_grads_fn)
 
         # Compute losses for logging
         loss_dict_scaled = {
@@ -139,7 +154,10 @@ class DETRTrial(PyTorchTrial):
         self, data_loader: torch.utils.data.DataLoader
     ) -> Dict[str, Any]:
         # This is slow, need to have custom reducer to suppport multi-GPU eval.
-        coco_evaluator = CocoEvaluator(self.base_ds, self.iou_types)
+        iou_types = tuple(
+            k for k in ("segm", "bbox") if k in self.postprocessors.keys()
+        )
+        coco_evaluator = CocoEvaluator(self.base_ds, iou_types)
         results = {}
         loss_dict_aggregated = defaultdict(int)
         with torch.no_grad():
