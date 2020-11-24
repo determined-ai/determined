@@ -19,9 +19,19 @@ import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/t
 import Link from './Link';
 import css from './TaskActionDropdown.module.scss';
 
+export enum Action {
+  Activate = 'activate',
+  Archive = 'archive',
+  Cancel = 'cancel',
+  Kill = 'kill',
+  Pause = 'pause',
+  Tensorboard = 'tensorboard',
+  Unarchive = 'unarchive',
+}
+
 interface Props {
   task: AnyTask;
-  onComplete?: () => void;
+  onComplete?: (action?: Action) => void;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
@@ -48,21 +58,22 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
     try {
-      switch (params.key) { // Cases should match menu items.
-        case 'activate':
+      const action = params.key as Action;
+      switch (action) { // Cases should match menu items.
+        case Action.Activate:
           await activateExperiment({ experimentId: id });
-          if (onComplete) onComplete();
+          if (onComplete) onComplete(action);
           break;
-        case 'archive':
+        case Action.Archive:
           if (!isExperiment) break;
           await archiveExperiment({ experimentId: id });
-          if (onComplete) onComplete();
+          if (onComplete) onComplete(action);
           break;
-        case 'cancel':
+        case Action.Cancel:
           await cancelExperiment({ experimentId: id });
-          if (onComplete) onComplete();
+          if (onComplete) onComplete(action);
           break;
-        case 'openOrCreateTensorboard': {
+        case Action.Tensorboard: {
           const tensorboard = await openOrCreateTensorboard({
             ids: [ id ],
             type: TBSourceType.Experiment,
@@ -70,22 +81,22 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           openCommand(tensorboard);
           break;
         }
-        case 'kill':
+        case Action.Kill:
           if (isExperiment) {
             await killExperiment({ experimentId: id });
-            if (onComplete) onComplete();
+            if (onComplete) onComplete(action);
           } else {
             await killTask(task as CommandTask);
           }
           break;
-        case 'pause':
+        case Action.Pause:
           await pauseExperiment({ experimentId: id });
-          if (onComplete) onComplete();
+          if (onComplete) onComplete(action);
           break;
-        case 'unarchive':
+        case Action.Unarchive:
           if (!isExperiment) break;
           await unarchiveExperiment({ experimentId: id });
-          if (onComplete) onComplete();
+          if (onComplete) onComplete(action);
       }
     } catch (e) {
       handleError({
@@ -102,14 +113,14 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   };
 
   const menuItems: React.ReactNode[] = [];
-  if (isResumable) menuItems.push(<Menu.Item key="activate">Activate</Menu.Item>);
-  if (isPausable) menuItems.push(<Menu.Item key="pause">Pause</Menu.Item>);
-  if (isArchivable) menuItems.push(<Menu.Item key="archive">Archive</Menu.Item>);
-  if (isUnarchivable) menuItems.push(<Menu.Item key="unarchive">Unarchive</Menu.Item>);
-  if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
-  if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
+  if (isResumable) menuItems.push(<Menu.Item key={Action.Activate}>Activate</Menu.Item>);
+  if (isPausable) menuItems.push(<Menu.Item key={Action.Pause}>Pause</Menu.Item>);
+  if (isArchivable) menuItems.push(<Menu.Item key={Action.Archive}>Archive</Menu.Item>);
+  if (isUnarchivable) menuItems.push(<Menu.Item key={Action.Unarchive}>Unarchive</Menu.Item>);
+  if (isCancelable) menuItems.push(<Menu.Item key={Action.Cancel}>Cancel</Menu.Item>);
+  if (isKillable) menuItems.push(<Menu.Item key={Action.Kill}>Kill</Menu.Item>);
   if (isExperiment) {
-    menuItems.push(<Menu.Item key="openOrCreateTensorboard">View in TensorBoard</Menu.Item>);
+    menuItems.push(<Menu.Item key={Action.Tensorboard}>View in TensorBoard</Menu.Item>);
   } else {
     menuItems.push(<Menu.Item key="viewLogs">
       <Link path={taskPath(task as CommandTask)}>View Logs</Link>
