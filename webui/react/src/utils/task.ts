@@ -1,5 +1,5 @@
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { openBlank } from 'routes/utils';
+import { openCommand } from 'routes/utils';
 import { createNotebook } from 'services/api';
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
@@ -7,14 +7,11 @@ import {
   RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
-import { commandToTask } from 'utils/types';
 
 export const launchNotebook = async (slots: number): Promise<void> => {
   try {
     const notebook = await createNotebook({ slots });
-    const task = commandToTask(notebook);
-    if (task.url) openBlank(task.url);
-    else throw new Error('Notebook URL not available.');
+    openCommand(notebook);
   } catch (e) {
     handleError({
       error: e,
