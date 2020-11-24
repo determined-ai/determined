@@ -1,7 +1,6 @@
 package resourcemanagers
 
 import (
-	"fmt"
 	"testing"
 
 	"gotest.tools/assert"
@@ -24,25 +23,11 @@ func TestGetAllPendingZeroSlotTasks(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	taskList, _, _ := setupSchedulerStates(t, system, tasks, groups, agents)
 
-	allocationRequests := make(map[string]*AllocateRequest)
-	for it := taskList.iterator(); it.next(); {
-		req := it.value()
-		allocationRequests[req.Name] = req
-	}
-
 	pendingZeroSlotTasks := getAllPendingZeroSlotTasks(taskList, "")
 	expectedZeroSlotTasksIds := []*mockTask{tasks[2], tasks[3]}
 	assertEqualToAllocate(t, pendingZeroSlotTasks, expectedZeroSlotTasksIds)
 
-	task4, _ := taskList.GetTaskByID("task4")
-	taskList.SetAllocations(
-		task4.TaskActor,
-		&ResourcesAllocated{
-			task4.ID,
-			"",
-			[]Allocation{containerAllocation{}},
-		},
-	)
+	setTaskAllocations(t, taskList, "task4", 1)
 
 	pendingZeroSlotTasks = getAllPendingZeroSlotTasks(taskList, "")
 	expectedZeroSlotTasksIds = []*mockTask{tasks[2]}
@@ -83,15 +68,7 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 		}
 	}
 
-	task5, _ := taskList.GetTaskByID("task5")
-	taskList.SetAllocations(
-		task5.TaskActor,
-		&ResourcesAllocated{
-			task5.ID,
-			"",
-			[]Allocation{containerAllocation{}},
-		},
-	)
+	setTaskAllocations(t, taskList, "task5", 1)
 
 	_, scheduledTasksByPriority := sortTasksByPriorityAndTimestamp(taskList, mockGroups, "")
 	for priority, tasksInPriority := range scheduledTasksByPriority {
@@ -226,10 +203,6 @@ func TestPrioritySchedulingPreemption(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 
-	for _, agent := range agentMap {
-		fmt.Println("agent has free slots: ", agent.numEmptySlots())
-	}
-
 	p := &priorityScheduler{preemptionEnabled: true}
 	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
 
@@ -258,10 +231,6 @@ func TestPrioritySchedulingNoSchedule(t *testing.T) {
 
 	system := actor.NewSystem(t.Name())
 	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	for _, agent := range agentMap {
-		fmt.Println("agent has free slots: ", agent.numEmptySlots())
-	}
 
 	p := &priorityScheduler{preemptionEnabled: true}
 	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
