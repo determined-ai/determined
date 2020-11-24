@@ -49,7 +49,7 @@ hyperparameters:
   weight_decay: 4e-5
   kd_ratio: 1. # Knowledge distillation ratio
   # Optimizer
-  learning_rate: 0.4
+  learning_rate: 0.1
   momentum: 0.9
   # Choices include linear and cosine
   lr_scheduler: cosine
