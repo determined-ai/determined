@@ -79,7 +79,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 		// have been scheduled.
 		if startTasks {
 			for _, allocatedTask := range successfulAllocations {
-				log.Infof("scheduled task: %s", allocatedTask.Name)
+				log.Debugf("scheduled task: %s", allocatedTask.Name)
 			}
 			toAllocate = append(toAllocate, successfulAllocations...)
 		}
@@ -100,7 +100,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 		for _, prioritizedAllocation := range unSuccessfulAllocations {
 			// Check if we still need to preempt tasks to schedule this task.
 			if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(fits) > 0 {
-				log.Infof(
+				log.Debugf(
 					"Not preempting tasks for task %s as it will be able to launch "+
 						"once already scheduled preemptions complete", prioritizedAllocation.Name)
 				addTaskToAgents(fits)
@@ -114,7 +114,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 			if taskPlaced {
 				localAgentsState = updatedLocalAgentState
 				for preemptedTask := range preemptedTasks {
-					log.Infof("preempting task %s for task %s",
+					log.Debugf("preempting task %s for task %s",
 						preemptedTask.Address().Local(), prioritizedAllocation.Name)
 					toRelease[preemptedTask] = true
 				}
