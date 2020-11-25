@@ -104,3 +104,18 @@ func ReportUserCreated(system *actor.System, admin, active bool) {
 		"active": active,
 	})
 }
+
+// ReportResourcePoolCreated reports that a resource pool has been created.
+func ReportResourcePoolCreated(
+	system *actor.System,
+	poolName, schedulerType,
+	fittingPolicy string,
+	preemptionEnabled bool,
+) {
+	report(system, "resource_pool_created", map[string]interface{}{
+		"pool_name":          poolName,
+		"scheduler_type":     schedulerType,
+		"fitting_policy":     fittingPolicy,
+		"preemption_enabled": preemptionEnabled,
+	})
+}

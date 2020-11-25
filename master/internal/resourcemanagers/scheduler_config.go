@@ -63,7 +63,8 @@ func fillInSchedulerDefaults(s *SchedulerConfig) {
 	}
 }
 
-func (s *SchedulerConfig) getType() string {
+// GetType returns the type of scheduler that is configured.
+func (s *SchedulerConfig) GetType() string {
 	switch {
 	case s.FairShare != nil:
 		return fairShareScheduling
