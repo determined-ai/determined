@@ -42,7 +42,12 @@ function run(tag, timestamp, record)
     record.trial_id = tonumber(record.trial_id)
 
     -- TODO: Only do this if it's not a partial record.
-    record.log = record.log .. '\n'
+    if (record.log == nil) then 
+        record.log = '\n'  
+    else
+        record.log = record.log .. '\n'
+    end
+
 
     return 2, timestamp, record
 end
