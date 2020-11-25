@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.13.8.dev0",
+    version="0.13.9.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -15,7 +15,7 @@ setup(
     package_data={"determined": ["py.typed"]},
     install_requires=[
         "cloudpickle==0.5.3",
-        "determined-common==0.13.8.dev0",
+        "determined-common==0.13.9.dev0",
         "dill>=0.2.9",
         # TF 2.2 has strict h5py requirements, which we expose here.
         "h5py>=2.10.0,<2.11.0",
