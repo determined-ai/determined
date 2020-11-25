@@ -10,6 +10,7 @@ describe('Task List', () => {
   beforeEach(() => {
     cy.login();
     cy.visit('/det/tasks');
+    cy.wait(500);
   });
 
   describe('Notebooks', () => {
