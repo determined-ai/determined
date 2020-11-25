@@ -10,8 +10,11 @@ from determined import constants, gpu, horovod, workload
 from determined_common import api
 
 
-def _get_gpus() -> Tuple[bool, List[str], List[int]]:
+def _get_gpus(limit_gpus: Optional[int]) -> Tuple[bool, List[str], List[int]]:
     gpu_ids, gpu_uuids = gpu.get_gpu_ids_and_uuids()
+    if limit_gpus is not None:
+        use_gpu = len(gpu_uuids) > 0 and limit_gpus > 0
+        return use_gpu, gpu_uuids[:limit_gpus], gpu_ids[:limit_gpus]
     use_gpu = len(gpu_uuids) > 0
     return use_gpu, gpu_uuids, gpu_ids
 
@@ -61,10 +64,11 @@ def _make_local_execution_env(
     managed_training: bool,
     config: Optional[Dict[str, Any]],
     hparams: Optional[Dict[str, Any]] = None,
+    limit_gpus: Optional[int] = None,
 ) -> Tuple[det.EnvContext, det.RendezvousInfo, horovod.HorovodContext]:
     config = det.ExperimentConfig(_make_local_execution_exp_config(config))
     hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))
-    use_gpu, container_gpus, slot_ids = _get_gpus()
+    use_gpu, container_gpus, slot_ids = _get_gpus(limit_gpus)
     local_rendezvous_ports = (
         f"{constants.LOCAL_RENDEZVOUS_PORT},{constants.LOCAL_RENDEZVOUS_PORT+1}"
     )

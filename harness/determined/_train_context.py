@@ -55,6 +55,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         env_context, rendezvous_info, hvd_config = det._make_local_execution_env(
             managed_training=False,
             config=config,
+            limit_gpus=1,
         )
         return cls(env_context, hvd_config)
 
