@@ -86,16 +86,22 @@ INSERT INTO trial_logs
 	return nil
 }
 
-// TrialLogCount returns the number of logs in postgres for the given trial. This shouldn't be called,
-// instead the master's TrialLogBackend should be called which may call this.
-func (db *PgDB) TrialLogCount(trialID int) (int, error) {
-	trialStatus := struct {
-		State   model.State
-		NumLogs int
-	}{}
-	err := db.Query("trial_status", &trialStatus, trialID)
+// TrialLogCount returns the number of logs in postgres for the given trial.
+// This shouldn't be called, instead the master's TrialLogBackend should be
+// called which may call this.
+func (db *PgDB) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
+	params := []interface{}{trialID}
+	fragment, params := filtersToSQL(fs, params)
+	query := fmt.Sprintf(`
+SELECT count(*)
+FROM trial_logs l
+WHERE l.trial_id = $1
+%s
+`, fragment)
+	var count int
+	err := db.sql.QueryRow(query, params...).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
-	return trialStatus.NumLogs, err
+	return count, err
 }

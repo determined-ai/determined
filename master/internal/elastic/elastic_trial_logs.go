@@ -56,7 +56,7 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 }
 
 // TrialLogCount returns the number of trial logs for the given trial.
-func (e *Elastic) TrialLogCount(trialID int) (int, error) {
+func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 	res, err := e.client.Count(
 		e.client.Count.WithQuery(fmt.Sprintf("trial_id:%d", trialID)))
 	if err != nil {

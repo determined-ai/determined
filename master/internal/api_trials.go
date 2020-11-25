@@ -37,24 +37,15 @@ var (
 	distinctFieldBatchWaitTime = 5 * time.Second
 )
 
-func (a *apiServer) trialStatus(trialID int32) (model.State, int, error) {
-	trialStatus := struct {
-		State   model.State
-		NumLogs int
-	}{}
+func (a *apiServer) trialStatus(trialID int32) (model.State, error) {
+	var trialStatus model.State
 	err := a.m.db.Query("trial_status", &trialStatus, trialID)
 	if err == db.ErrNotFound {
 		err = status.Error(codes.NotFound, "trial not found")
 	} else if err != nil {
-		return "", 0, err
+		return "", err
 	}
-	if a.m.config.Logging.ElasticLoggingConfig != nil {
-		trialStatus.NumLogs, err = a.m.trialLogBackend.TrialLogCount(int(trialID))
-		if err != nil {
-			return "", 0, err
-		}
-	}
-	return trialStatus.State, trialStatus.NumLogs, err
+	return trialStatus, err
 }
 
 type TrialLogBackend interface {
@@ -62,7 +53,7 @@ type TrialLogBackend interface {
 		trialID, offset, limit int, filters []api.Filter, state interface{},
 	) ([]*model.TrialLog, interface{}, error)
 	AddTrialLogs([]*model.TrialLog) error
-	TrialLogCount(trialID int) (int, error)
+	TrialLogCount(trialID int, filters []api.Filter) (int, error)
 }
 
 func (a *apiServer) TrialLogs(
@@ -81,16 +72,16 @@ func (a *apiServer) TrialLogs(
 		return status.Error(codes.NotFound, "trial not found")
 	}
 
-	total, err := a.m.trialLogBackend.TrialLogCount(int(req.TrialId))
-	if err != nil {
-		return fmt.Errorf("failed to get trial count from backend: %w", err)
-	}
-	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
-
 	filters, err := constructTrialLogsFilters(req)
 	if err != nil {
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
 	}
+
+	total, err := a.m.trialLogBackend.TrialLogCount(int(req.TrialId), filters)
+	if err != nil {
+		return fmt.Errorf("failed to get trial count from backend: %w", err)
+	}
+	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
 	logID := int32(offset - 1) // WebUI assumes logs are 0-indexed.
 	onBatch := func(b api.LogBatch) error {
@@ -123,7 +114,7 @@ func (a *apiServer) TrialLogs(
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, _, err := a.trialStatus(req.TrialId)
+		state, err := a.trialStatus(req.TrialId)
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}
@@ -229,7 +220,7 @@ func (a *apiServer) TrialLogsFields(
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, _, err := a.trialStatus(req.TrialId)
+		state, err := a.trialStatus(req.TrialId)
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}
@@ -252,9 +243,11 @@ func (a *apiServer) TrialLogsFields(
 func (a *apiServer) GetTrialCheckpoints(
 	_ context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {
-	_, _, err := a.trialStatus(req.Id)
-	if err != nil {
+	switch exists, err := a.m.db.CheckTrialExists(int(req.Id)); {
+	case err != nil:
 		return nil, err
+	case !exists:
+		return nil, status.Error(codes.NotFound, "trial not found")
 	}
 
 	resp := &apiv1.GetTrialCheckpointsResponse{}
