@@ -1,10 +1,12 @@
 from typing import Optional
+
 import determined_client
+
 from determined_common import api, check
 from determined_common.experimental import checkpoint
 
 
-class Trial:
+class TrialReference:
     """
     Trial reference class used for querying relevant
     :class:`~determined.experimental.Checkpoint` instances.
@@ -135,14 +137,5 @@ class Trial:
         return "Trial(id={})".format(self.id)
 
     @classmethod
-    def get_trial(cls, api_client, trial_id):
-        trial_api = determined_client.api.TrialsApi(api_client)
-        trial_response = trial_api.determined_get_trial(trial_id)
-        return Trial.from_spec(api_client, trial_response.trial)
-
-    @classmethod
     def from_spec(cls, api_client, trial):
-        return cls(
-            trial_id=trial.id,
-            api_client=api_client
-        )
+        return cls(trial_id=trial.id, api_client=api_client)

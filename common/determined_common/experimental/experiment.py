@@ -2,16 +2,16 @@ import time
 from typing import List, Optional
 
 import determined_client
-import yaml
 from determined_client.models.determinedexperimentv1_state import (
     Determinedexperimentv1State as States,
 )
 
 from determined_common import api, context
 from determined_common.experimental import checkpoint
+from determined_common.experimental.trial import TrialReference
 
 
-class Experiment:
+class ExperimentReference:
     """
     Helper class that supports querying the set of checkpoints associated with an
     experiment.
@@ -35,71 +35,35 @@ class Experiment:
             if attribute != "state":
                 setattr(self, attribute, experiment_data[attribute])
 
-    @classmethod
-    def create_experiment(
-        cls, api_client, config, context_path, local=False, test=False, master=""
-    ):
-        print("Creating Experiment")
-        experiment_api = determined_client.ExperimentsApi(api_client)
-        model_definition = cls._path_to_files(context_path)
-        create_experiment_request = determined_client.models.V1CreateExperimentRequest(
-            config=yaml.safe_dump(config), validate_only=False, model_definition=model_definition
-        )
-
-        response = experiment_api.determined_create_experiment(create_experiment_request)
-        config = response.config
-        experiment = response.experiment
-        experiment_obj = {}
-        for attribute in experiment.attribute_map:
-            experiment_obj[attribute] = getattr(
-                experiment, attribute, getattr(experiment, attribute)
-            )
-
-        return cls(api_client, master, config, experiment_obj)
-
-    @classmethod
-    def get_experiment(cls, api_client, experiment_id, master=""):
-        experiment_api = determined_client.ExperimentsApi(api_client)
-        response = experiment_api.determined_get_experiment(experiment_id)
-
-        config = response.config
-        experiment = response.experiment
-
-        experiment_obj = {}
-        for attribute in experiment.attribute_map:
-            experiment_obj[attribute] = getattr(
-                experiment, attribute, getattr(experiment, attribute)
-            )
-
-        return cls(api_client, master, config, experiment_obj)
-
-    @property
-    def state(self):
+    def get_status(self):
         experiment = self.experiments_api.determined_get_experiment(self.id)
         return experiment.experiment.state
 
-    def success(self):
-        if self.state == States.COMPLETED:
-            return True
-
-        return False
-
     def is_active(self):
-        if self.state == States.ACTIVE:
+        if self.get_status() == States.ACTIVE:
             return True
 
         return False
 
     def wait(self):
-        while self.state == States.ACTIVE:
+        while self.get_status() == States.ACTIVE:
             time.sleep(10)
 
     def activate(self):
         experiment_api = determined_client.ExperimentsApi(self.api_client)
         experiment_api.determined_activate_experiment(self.id)
 
-        while self.state == States.PAUSED:
+        while self.get_status() == States.PAUSED:
             time.sleep(1)
+
+    def get_trials(self):
+        experiment_api = determined_client.ExperimentsApi(self.api_client)
+        trials = []
+        trials_response = experiment_api.determined_get_experiment_trials(self.id)
+        for trial in trials_response.trials:
+            trials.append(TrialReference.from_spec(self.api_client, trial))
+
+        return trials
 
     def top_checkpoint(
         self,
@@ -184,7 +148,7 @@ class Experiment:
         return "Experiment(id={})".format(self.id)
 
     @staticmethod
-    def _path_to_files(path):
+    def path_to_files(path):
         files = []
         for item in context.read_context(path)[0]:
             content = item["content"].decode("ascii")

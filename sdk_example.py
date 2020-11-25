@@ -25,64 +25,71 @@ def is_better(c1, c2):
 
 
 # Create Determined Object
-d = Determined()
+d = Determined(master='ec2-44-233-172-48.us-west-2.compute.amazonaws.com:8080')
 
 # Setup Experiment
-context_dir = pathlib.Path.joinpath(pathlib.Path.cwd(), 'mnist_pytorch')
-config = {'description': 'mnist_pytorch_const',
-          'data': {'url': 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz'},
-          'hyperparameters': {'learning_rate': 1.0,
-                              'global_batch_size': 64,
-                              'n_filters1': 32,
-                              'n_filters2': 64,
-                              'dropout1': 0.25,
-                              'dropout2': 0.5},
-          'searcher': {'name': 'single',
-                       'metric': 'validation_loss',
-                       'max_length': {'batches': 1},
-                       'smaller_is_better': True},
-          'entrypoint': 'model_def:MNistTrial'}
+# context_dir = pathlib.Path.joinpath(pathlib.Path.cwd(), 'mnist_pytorch')
+# config = {'description': 'mnist_pytorch_const',
+#           'data': {'url': 'https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz'},
+#           'hyperparameters': {'learning_rate': 1.0,
+#                               'global_batch_size': 64,
+#                               'n_filters1': 32,
+#                               'n_filters2': 64,
+#                               'dropout1': 0.25,
+#                               'dropout2': 0.5},
+#           'searcher': {'name': 'single',
+#                        'metric': 'validation_loss',
+#                        'max_length': {'batches': 1},
+#                        'smaller_is_better': True},
+#           'entrypoint': 'model_def:MNistTrial'}
+#
+# # Submit Experiment
+# experiment = d.create_experiment(config, context_dir)
+# experiment.wait()
 
-# Submit Experiment
-experiment = d.create_experiment(config, context_dir)
-experiment.wait()
 
 # Act on Experiment State
-if not experiment.success():
-    print(f'Experiment {experiment.id} did not complete successfully')
-    sys.exit(1)
-print(f'Experiment {experiment.id} completed successfully ')
+# if not experiment.success():
+#     print(f'Experiment {experiment.id} did not complete successfully')
+#     sys.exit(1)
+# print(f'Experiment {experiment.id} completed successfully ')
 
-best_checkpoint = experiment.top_checkpoint()
-
-print(best_checkpoint)
-
-import uuid
-
-model_name = str(uuid.uuid4())
-
-try:
-    model = d.get_model(model_name)
-
-except:  # Model not yet in registry
-    print(f'Registering new Model: {model_name}')
-    model = d.create_model(model_name)
-
-latest_version = model.get_version()
-
-if not latest_version:
-    better = True
-else:
-    better = is_better(latest_version, best_checkpoint)
-
-if better:
-    print(f'Registering new version: {model_name}')
-    model.register_version(best_checkpoint.uuid)
-
-
-model = d.get_model(model_name)
-model.get_versions()
+# best_checkpoint = experiment.top_checkpoint()
 #
+# print(best_checkpoint)
+#
+# import uuid
+#
+# model_name = str(uuid.uuid4())
+#
+# try:
+#     model = d.get_model(model_name)
+#
+# except:  # Model not yet in registry
+#     print(f'Registering new Model: {model_name}')
+#     model = d.create_model(model_name)
+#
+#
+# t = d.get_trial(9)
+#
+# print(t)
+
+#
+# latest_version = model.get_version()
+#
+# if not latest_version:
+#     better = True
+# else:
+#     better = is_better(latest_version, best_checkpoint)
+#
+# if better:
+#     print(f'Registering new version: {model_name}')
+#     model.register_version(best_checkpoint.uuid)
+#
+#
+# model = d.get_model(model_name)
+# model.get_versions()
+# #
 #
 # a = model.get_version()
 # print(a)
@@ -95,22 +102,22 @@ model.get_versions()
 # print(model.get_versions())
 
 
-model = d.get_model(model_name)
-print(model)
-
-model.add_metadata({'test': 'blah'})
-
-print(model)
-
-model.remove_metadata(['test'])
-
-print(model)
-
-
-models = d.get_models()
-
-for model in models:
-    print(model)
+# model = d.get_model(model_name)
+# print(model)
+#
+# model.add_metadata({'test': 'blah'})
+#
+# print(model)
+#
+# model.remove_metadata(['test'])
+#
+# print(model)
+#
+#
+# models = d.get_models()
+#
+# for model in models:
+#     print(model)
 
 
 # t = d.get_trial(69)
@@ -122,3 +129,8 @@ for model in models:
 # checkpoint = t.select_checkpoint(uuid=uuid)
 #
 # print('hi')
+
+
+experiment = d.get_experiment(1)
+
+print(experiment.get_trials()[0])

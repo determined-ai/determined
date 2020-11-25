@@ -268,34 +268,3 @@ class Model:
             api_client,
             master=api_client.configuration.host,
         )
-
-    @classmethod
-    def get_model(cls, api_client, name):
-        model_api = determined_client.ModelsApi(api_client)
-        response = model_api.determined_get_model(name)
-        return cls.from_spec(response.model, api_client)
-
-    @classmethod
-    def create_model(cls, api_client, name, description, metadata):
-        models_api = determined_client.ModelsApi(api_client)
-
-        if not description:
-            description = ""
-        if not metadata:
-            metadata = {}
-
-        model_body = determined_client.models.v1_model.V1Model(
-            name=name, description=description, metadata=metadata
-        )
-
-        model_response = models_api.determined_post_model(model_name=name, body=model_body)
-        return Model.from_spec(model_response.model, api_client)
-
-    @staticmethod
-    def get_models(
-        api_client,
-    ):
-        model_api = determined_client.api.ModelsApi(api_client)
-        models_response = model_api.determined_get_models()
-
-        return [Model.from_spec(model, api_client) for model in models_response.models]

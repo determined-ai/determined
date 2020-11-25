@@ -1,13 +1,14 @@
 from typing import Any, Dict, List, Optional
 
 import determined_client
+import yaml
 
 from determined_common import api
 from determined_common.experimental.checkpoint import Checkpoint
-from determined_common.experimental.experiment import Experiment
+from determined_common.experimental.experiment import ExperimentReference
 from determined_common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined_common.experimental.session import Session
-from determined_common.experimental.trial import Trial
+from determined_common.experimental.trial import TrialReference
 
 
 class Determined:
@@ -47,31 +48,67 @@ class Determined:
         self.configuration.api_key["Authorization"] = api_response.token
 
     def create_experiment(self, config, context_dir=None, local=False, test=False):
-        experiment = Experiment.create_experiment(self.api_client, config, context_dir, local, test)
+        print("Creating Experiment")
+        experiment_api = determined_client.ExperimentsApi(self.api_client)
+        model_definition = ExperimentReference.path_to_files(context_dir)
+        create_experiment_request = determined_client.models.V1CreateExperimentRequest(
+            config=yaml.safe_dump(config), validate_only=False, model_definition=model_definition
+        )
+
+        response = experiment_api.determined_create_experiment(create_experiment_request)
+        config = response.config
+        experiment = response.experiment
+        experiment_obj = {}
+        for attribute in experiment.attribute_map:
+            experiment_obj[attribute] = getattr(
+                experiment, attribute, getattr(experiment, attribute)
+            )
+        experiment = ExperimentReference(
+            self.api_client, self.api_client.configuration.host, config, experiment_obj
+        )
+
         experiment.activate()
         return experiment
 
-    def get_experiment(self, experiment_id: int) -> Experiment:
+    def get_experiment(self, experiment_id: int) -> ExperimentReference:
         """
         Get the :class:`~determined.experimental.ExperimentReference` representing the
         experiment with the provided experiment ID.
         """
-        return Experiment.get_experiment(self.api_client, experiment_id)
+        experiment_api = determined_client.ExperimentsApi(self.api_client)
+        response = experiment_api.determined_get_experiment(experiment_id)
 
-    def get_trial(self, trial_id: int) -> Trial:
+        config = response.config
+        experiment = response.experiment
+
+        experiment_obj = {}
+        for attribute in experiment.attribute_map:
+            experiment_obj[attribute] = getattr(
+                experiment, attribute, getattr(experiment, attribute)
+            )
+
+        return ExperimentReference(
+            self.api_client, self.api_client.configuration.host, config, experiment_obj
+        )
+
+    def get_trial(self, trial_id: int) -> TrialReference:
         """
         Get the :class:`~determined.experimental.TrialReference` representing the
         trial with the provided trial ID.
         """
-        # return Trial(trial_id, self._session._master)
-        return Trial.get_trial(self.api_client, trial_id)
+        trial_api = determined_client.api.TrialsApi(self.api_client)
+        trial_response = trial_api.determined_get_trial(trial_id)
+        return TrialReference.from_spec(self.api_client, trial_response.trial)
 
     def get_checkpoint(self, uuid: str) -> Checkpoint:
         """
         Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
-        return Checkpoint.get_checkpoint(self.api_client, uuid)
+        checkpoint_api = determined_client.CheckpointsApi(self.api_client)
+        response = checkpoint_api.determined_get_checkpoint(uuid)
+
+        return Checkpoint.from_spec(self.api_client, response.checkpoint)
 
     def create_model(
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
@@ -84,7 +121,19 @@ class Determined:
             description (string, optional): A description of the model.
             metadata (dict, optional): Dictionary of metadata to add to the model.
         """
-        return Model.create_model(self.api_client, name, description, metadata)
+        models_api = determined_client.ModelsApi(self.api_client)
+
+        if not description:
+            description = ""
+        if not metadata:
+            metadata = {}
+
+        model_body = determined_client.models.v1_model.V1Model(
+            name=name, description=description, metadata=metadata
+        )
+
+        model_response = models_api.determined_post_model(model_name=name, body=model_body)
+        return Model.from_spec(model_response.model, self.api_client)
 
     def get_model(self, name: str) -> Model:
         """
@@ -94,7 +143,9 @@ class Determined:
         """
         # r = api.get(self._session._master, "/api/v1/models/{}".format(name))
         # return Model.from_json(r.json().get("model"), self._session._master)
-        return Model.get_model(self.api_client, name)
+        model_api = determined_client.ModelsApi(self.api_client)
+        response = model_api.determined_get_model(name)
+        return Model.from_spec(response.model, self.api_client)
 
     def get_models(
         self,
@@ -115,5 +166,7 @@ class Determined:
             description: If this parameter is set, models will be filtered to
                 only include models with descriptions matching this parameter.
         """
+        model_api = determined_client.api.ModelsApi(self.api_client)
+        models_response = model_api.determined_get_models()
 
-        return Model.get_models(self.api_client)
+        return [Model.from_spec(model, self.api_client) for model in models_response.models]
