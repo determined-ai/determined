@@ -2,9 +2,11 @@ package db
 
 import (
 	"fmt"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/determined-ai/determined/master/internal/api"
 

@@ -37,6 +37,8 @@ var (
 	distinctFieldBatchWaitTime = 5 * time.Second
 )
 
+// TrialLogBackend is an interface trial log backends, such as elastic or postgres,
+// must support to provide the features surfaced in API.
 type TrialLogBackend interface {
 	TrialLogs(
 		trialID, offset, limit int, filters []api.Filter, state interface{},
@@ -94,7 +96,8 @@ func (a *apiServer) TrialLogs(
 			return nil, nil
 		}
 
-		b, state, err := a.m.trialLogBackend.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, followState)
+		b, state, err := a.m.trialLogBackend.TrialLogs(
+			int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, followState)
 		if err != nil {
 			return nil, err
 		}

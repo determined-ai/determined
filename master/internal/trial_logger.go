@@ -25,14 +25,8 @@ type (
 	flushLogs struct{}
 )
 
-// TrialLogPersister is an interface for a storage backend that can persist
-// trial logs.
-type TrialLogPersister interface {
-	AddTrialLogs([]*model.TrialLog) error
-}
-
 type trialLogger struct {
-	backend    TrialLogPersister
+	backend      TrialLogBackend
 	pending      []*model.TrialLog
 	lastLogFlush time.Time
 }
@@ -41,7 +35,7 @@ type trialLogger struct {
 // There should only be one trialLogger shared across the entire system.
 func newTrialLogger(backend TrialLogBackend) actor.Actor {
 	return &trialLogger{
-		backend:    backend,
+		backend:      backend,
 		lastLogFlush: time.Now(),
 		pending:      make([]*model.TrialLog, 0, logBuffer),
 	}

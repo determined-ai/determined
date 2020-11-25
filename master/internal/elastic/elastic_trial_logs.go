@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"io"
 	"reflect"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/determined-ai/determined/master/internal/api"
 
@@ -81,7 +85,7 @@ func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to retrieve log count: %w", err)
 	}
-	defer res.Body.Close()
+	defer closeWithErrCheck(res.Body)
 
 	resp := struct {
 		Count int `json:"count"`
@@ -156,7 +160,7 @@ func (e *Elastic) TrialLogs(
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to perform search: %w", err)
 	}
-	defer res.Body.Close()
+	defer closeWithErrCheck(res.Body)
 
 	resp := struct {
 		Hits struct {
@@ -264,16 +268,16 @@ func filtersToElastic(fs []api.Filter) []map[string]interface{} {
 	return terms
 }
 
-type StringAggResult struct {
+type stringAggResult struct {
 	DocCountErrorUpperBound int `json:"doc_count_error_upper_bound"`
-	SumOtherDocCount int `json:"sum_other_doc_count"`
-	Buckets []struct{
-		DocCount int `json:"doc_count"`
-		Key string `json:"key"`
+	SumOtherDocCount        int `json:"sum_other_doc_count"`
+	Buckets                 []struct {
+		DocCount int    `json:"doc_count"`
+		Key      string `json:"key"`
 	} `json:"buckets"`
 }
 
-func (r StringAggResult) ToKeys() []string {
+func (r stringAggResult) ToKeys() []string {
 	var keys []string
 	for _, b := range r.Buckets {
 		keys = append(keys, b.Key)
@@ -281,16 +285,16 @@ func (r StringAggResult) ToKeys() []string {
 	return keys
 }
 
-type IntAggResult struct {
+type intAggResult struct {
 	DocCountErrorUpperBound int `json:"doc_count_error_upper_bound"`
-	SumOtherDocCount int `json:"sum_other_doc_count"`
-	Buckets []struct{
+	SumOtherDocCount        int `json:"sum_other_doc_count"`
+	Buckets                 []struct {
 		DocCount int `json:"doc_count"`
-		Key int `json:"key"`
+		Key      int `json:"key"`
 	} `json:"buckets"`
 }
 
-func (r IntAggResult) ToKeysInt32() []int32 {
+func (r intAggResult) ToKeysInt32() []int32 {
 	var keys []int32
 	for _, b := range r.Buckets {
 		keys = append(keys, int32(b.Key))
@@ -301,8 +305,6 @@ func (r IntAggResult) ToKeysInt32() []int32 {
 // TrialLogFields returns the unique fields that can be filtered on for the given trial.
 func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
 	query := map[string]interface{}{
-		// For the hesitant, size:0 is actually the recommended way to do this. See:
-		// www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html#return-only-agg-results
 		"size": 0,
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
@@ -315,7 +317,7 @@ func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, e
 				},
 			},
 		},
-		"aggs":map[string]interface{}{
+		"aggs": map[string]interface{}{
 			// These keys are the aggregate names; they must match the aggregate names we expect to
 			// be returned, which are defined in the type of resp below.
 			"agent_ids": map[string]interface{}{
@@ -351,22 +353,19 @@ func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, e
 		return nil, fmt.Errorf("failed to encoding query: %w", err)
 	}
 
-	b, _ := json.Marshal(query)
-	fmt.Println(string(b))
-
 	res, err := e.client.Search(e.client.Search.WithBody(&buf))
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform search: %w", err)
 	}
-	defer res.Body.Close()
+	defer closeWithErrCheck(res.Body)
 
 	resp := struct {
-		Aggregations struct{
-			AgentIDs StringAggResult `json:"agent_ids"`
-			ContainerIDs StringAggResult `json:"container_ids"`
-			RankIDs IntAggResult `json:"rank_ids"`
-			Sources StringAggResult `json:"sources"`
-			StdTypes StringAggResult `json:"stdtypes"`
+		Aggregations struct {
+			AgentIDs     stringAggResult `json:"agent_ids"`
+			ContainerIDs stringAggResult `json:"container_ids"`
+			RankIDs      intAggResult    `json:"rank_ids"`
+			Sources      stringAggResult `json:"sources"`
+			StdTypes     stringAggResult `json:"stdtypes"`
 		} `json:"aggregations"`
 	}{}
 	err = json.NewDecoder(res.Body).Decode(&resp)
@@ -385,4 +384,11 @@ func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, e
 
 func logstashIndexFromTimestamp(time *time.Time) string {
 	return time.UTC().Format("triallogs-2006.01.02")
+}
+
+func closeWithErrCheck(closer io.Closer) {
+	err := closer.Close()
+	if err != nil {
+		log.Errorf("error closing closer: %s", err)
+	}
 }

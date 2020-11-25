@@ -61,14 +61,14 @@ type Master struct {
 	config   *Config
 	taskSpec *tasks.TaskSpec
 
-	logs          *logger.LogBuffer
-	system        *actor.System
-	echo          *echo.Echo
-	rm            *actor.Ref
-	rwCoordinator *actor.Ref
-	db            *db.PgDB
-	proxy         *actor.Ref
-	trialLogger   *actor.Ref
+	logs            *logger.LogBuffer
+	system          *actor.System
+	echo            *echo.Echo
+	rm              *actor.Ref
+	rwCoordinator   *actor.Ref
+	db              *db.PgDB
+	proxy           *actor.Ref
+	trialLogger     *actor.Ref
 	trialLogBackend TrialLogBackend
 }
 
@@ -367,9 +367,9 @@ func (m *Master) Run(ctx context.Context) error {
 	case m.config.Logging.DefaultLoggingConfig != nil:
 		m.trialLogBackend = m.db
 	case m.config.Logging.ElasticLoggingConfig != nil:
-		es, err := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
-		if err != nil {
-			return err
+		es, eErr := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
+		if eErr != nil {
+			return eErr
 		}
 		m.trialLogBackend = es
 	default:
