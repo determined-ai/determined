@@ -398,6 +398,90 @@ class TestPyTorchTrial:
         )
         controller.run()
 
+    def test_custom_reducers(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            yield from trainer.send(steps=3, validation_freq=3, scheduling_unit=10)
+            training_metrics = trainer.get_avg_training_metrics()
+            _, validation_metrics = trainer.result()
+
+            batch_size = self.hparams["global_batch_size"]
+
+            for i, metrics in enumerate(training_metrics):
+                expect = pytorch_onevar_model.TriangleLabelSum.expect(
+                    batch_size, 10 * i, 10 * (i + 1)
+                )
+                assert "cls_reducer" in metrics
+                assert metrics["cls_reducer"] == expect
+                assert "fn_reducer" in metrics
+                assert metrics["fn_reducer"] == expect
+
+            for metrics in validation_metrics:
+                num_batches = len(pytorch_onevar_model.OnesDataset()) // batch_size
+                expect = pytorch_onevar_model.TriangleLabelSum.expect(batch_size, 0, num_batches)
+                assert "cls_reducer" in metrics
+                assert metrics["cls_reducer"] == expect
+                assert "fn_reducer" in metrics
+                assert metrics["fn_reducer"] == expect
+
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
+
+    def test_reject_unnamed_nondict_metric(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+
+        def reducer_fn(_):
+            return 1.0
+
+        # Inject an unnamed metric which returns a non-dict (which is not allowed).
+        controller.context.experimental.wrap_reducer(reducer_fn)
+
+        with pytest.raises(AssertionError, match="name=None but it did not return a dict"):
+            controller.run()
+
+    def test_reject_named_dict_metric(self) -> None:
+        # If at some point in the future the webui is able to render scalar metrics inside of
+        # nested dictionary metrics, this test could go away.
+
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+
+        def reducer_fn(_):
+            return {"my_metric": 1.0}
+
+        # Inject a named metric which returns a dict (which is not allowed).
+        controller.context.experimental.wrap_reducer(reducer_fn, name="my_metric")
+
+        with pytest.raises(AssertionError, match="with name set but it returned a dict anyway"):
+            controller.run()
+
 
 def test_create_trial_instance() -> None:
     utils.create_trial_instance(pytorch_xor_model.XORTrial)

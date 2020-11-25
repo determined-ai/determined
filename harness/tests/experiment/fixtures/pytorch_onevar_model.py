@@ -33,7 +33,7 @@ Finally, we can calculate the updated weight (w') in terms of w0:
 TODO(DET-1597): migrate the all pytorch XOR trial unit tests to variations of the OneVarTrial.
 """
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -47,6 +47,45 @@ class OnesDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index: int) -> Tuple:
         return torch.Tensor([float(1)]), torch.Tensor([float(1)])
+
+
+class TriangleLabelSum(pytorch.MetricReducer):
+    """Return a sum of (label_sum * batch_index) for every batch (labels are always 1 here)."""
+
+    @staticmethod
+    def expect(batch_size, idx_start, idx_end):
+        """What to expect during testing."""
+        return sum(batch_size * idx for idx in range(idx_start, idx_end))
+
+    def __init__(self) -> None:
+        self.reset()
+
+    def reset(self) -> None:
+        self.sum = 0
+        # We don't actually expose a batch_idx for evaluation, so we track the number of batches
+        # since the last reset(), which is only accurate during evaluation workloads or the very
+        # first training workload.
+        self.count = 0
+
+    def update(self, label_sum: torch.Tensor, batch_idx: Optional[int]) -> None:
+        self.sum += label_sum * (batch_idx if batch_idx is not None else self.count)
+        self.count += 1
+
+    def per_slot_reduce(self) -> Any:
+        return self.sum
+
+    def cross_slot_reduce(self, per_slot_metrics) -> Any:
+        return sum(per_slot_metrics)
+
+
+def triangle_label_sum(updates: List) -> Any:
+    out = 0
+    for update_idx, (label_sum, batch_idx) in enumerate(updates):
+        if batch_idx is not None:
+            out += batch_idx * label_sum
+        else:
+            out += update_idx * label_sum
+    return out
 
 
 class OneVarTrial(pytorch.PyTorchTrial):
@@ -67,10 +106,16 @@ class OneVarTrial(pytorch.PyTorchTrial):
 
         self.loss_fn = torch.nn.MSELoss()
 
+        self.cls_reducer = context.experimental.wrap_reducer(TriangleLabelSum(), name="cls_reducer")
+        self.fn_reducer = context.experimental.wrap_reducer(triangle_label_sum, name="fn_reducer")
+
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         data, label = batch
+
+        self.cls_reducer.update(sum(label), batch_idx)
+        self.fn_reducer.update((sum(label), batch_idx))
 
         # Measure the weight right now.
         w_before = self.model.weight.data.item()
@@ -114,6 +159,10 @@ class OneVarTrial(pytorch.PyTorchTrial):
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         data, label = batch
+
+        self.cls_reducer.update(sum(label), None)
+        self.fn_reducer.update((sum(label), None))
+
         loss = self.loss_fn(self.model(data), label)
         return {"val_loss": loss}
 

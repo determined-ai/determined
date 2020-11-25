@@ -27,6 +27,7 @@ class TrainAndValidate:
 
     def __init__(self, request_stop_step_id: Optional[int] = None) -> None:
         self._training_metrics = None  # type: Optional[List[Dict[str, Any]]]
+        self._avg_training_metrics = None  # type: Optional[List[Dict[str, Any]]]
         self._validation_metrics = None  # type: Optional[List[Dict[str, Any]]]
         self.request_stop_step_id = request_stop_step_id
 
@@ -34,6 +35,7 @@ class TrainAndValidate:
         self, steps: int, validation_freq: int, initial_step_id: int = 1, scheduling_unit: int = 1
     ) -> workload.Stream:
         self._training_metrics = []
+        self._avg_training_metrics = []
         self._validation_metrics = []
         total_batches_processed = 0
         interceptor = workload.WorkloadResponseInterceptor()
@@ -52,6 +54,7 @@ class TrainAndValidate:
             batch_metrics = metrics["metrics"]["batch_metrics"]
             assert len(batch_metrics) == scheduling_unit
             self._training_metrics.extend(batch_metrics)
+            self._avg_training_metrics.append(metrics["metrics"]["avg_metrics"])
             total_batches_processed += scheduling_unit
             if metrics["stop_requested"]:
                 assert step_id == self.request_stop_step_id
@@ -65,7 +68,6 @@ class TrainAndValidate:
                     [],
                 )
                 validation = interceptor.metrics_result()
-                print(validation)
                 v_metrics = validation["metrics"]["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
                 if validation["stop_requested"]:
@@ -81,6 +83,10 @@ class TrainAndValidate:
         assert self._training_metrics is not None
         assert self._validation_metrics is not None
         return self._training_metrics, self._validation_metrics
+
+    def get_avg_training_metrics(self) -> List[Dict[str, Any]]:
+        assert self._avg_training_metrics is not None
+        return self._avg_training_metrics
 
 
 def make_default_exp_config(hparams: Dict[str, Any], scheduling_unit: int) -> Dict:

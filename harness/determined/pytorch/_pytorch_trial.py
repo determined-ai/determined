@@ -10,18 +10,8 @@ import torch
 import torch.nn as nn
 
 import determined as det
-from determined import horovod, ipc, util, workload
+from determined import horovod, ipc, pytorch, util, workload
 from determined.horovod import hvd
-from determined.pytorch import (
-    DataLoader,
-    LRScheduler,
-    PyTorchTrialContext,
-    Reducer,
-    TorchData,
-    _callback,
-    _reduce_metrics,
-    data_length,
-)
 from determined_common import check
 
 # Apex is included only for GPU trials.
@@ -37,7 +27,8 @@ class PyTorchTrialController(det.LoopTrialController):
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
-        self.context = cast(PyTorchTrialContext, self.context)
+        self.context = cast(pytorch.PyTorchTrialContext, self.context)
+        self.context.experimental._set_allgather_fn(self.allgather_metrics)
         self.callbacks = self.trial.build_callbacks()
 
         self._apply_backwards_compatibility()
@@ -191,7 +182,7 @@ class PyTorchTrialController(det.LoopTrialController):
             # Backward compatibility: train_batch
             train_batch = cast(Callable, self.trial.train_batch)
 
-            def new_train_batch(batch: TorchData, epoch_idx: int, batch_idx: int) -> Any:
+            def new_train_batch(batch: pytorch.TorchData, epoch_idx: int, batch_idx: int) -> Any:
                 tr_metrics = train_batch(
                     batch=batch,
                     model=model,
@@ -225,7 +216,7 @@ class PyTorchTrialController(det.LoopTrialController):
             if self._evaluate_batch_defined():
                 evaluate_batch = cast(Callable, self.trial.evaluate_batch)
 
-                def new_evaluate_batch(batch: TorchData) -> Any:
+                def new_evaluate_batch(batch: pytorch.TorchData) -> Any:
                     return evaluate_batch(model=model, batch=batch)
 
                 self.trial.__setattr__("evaluate_batch", new_evaluate_batch)
@@ -334,13 +325,15 @@ class PyTorchTrialController(det.LoopTrialController):
             per_batch_metrics = util._dict_to_list(averaged_metrics_timeseries)
         return per_batch_metrics
 
-    def _auto_step_lr_scheduler_per_batch(self, batch_idx: int, lr_scheduler: LRScheduler) -> None:
+    def _auto_step_lr_scheduler_per_batch(
+        self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
+    ) -> None:
         """
         This function aims at automatically step a LR scheduler. It should be called per batch.
         """
-        if lr_scheduler._step_mode == LRScheduler.StepMode.STEP_EVERY_BATCH:
+        if lr_scheduler._step_mode == pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH:
             lr_scheduler.step()
-        elif lr_scheduler._step_mode == LRScheduler.StepMode.STEP_EVERY_EPOCH:
+        elif lr_scheduler._step_mode == pytorch.LRScheduler.StepMode.STEP_EVERY_EPOCH:
             mod = (batch_idx + 1) % len(self.training_loader)
             if mod == 0 or mod < self.hvd_config.aggregation_frequency:
                 lr_scheduler.step()
@@ -349,6 +342,7 @@ class PyTorchTrialController(det.LoopTrialController):
         self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Response:
         check.gt(step_id, 0)
+        self.context.experimental.reset_reducers()
 
         # Set the behavior of certain layers (e.g., dropout) that are different
         # between training and inference.
@@ -363,7 +357,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         for batch_idx in range(start, end):
             batch = next(self.training_iterator)
-            num_inputs += data_length(batch)
+            num_inputs += pytorch.data_length(batch)
             batch = self.context.to_device(batch)
 
             self.context._current_batch_idx = batch_idx
@@ -382,7 +376,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 f"mapping string names to Tensor metrics, got {type(tr_metrics)}",
             )
 
-            # Step learning rate of a LRScheduler.
+            # Step learning rate of a pytorch.LRScheduler.
             for lr_scheduler in self.context.lr_schedulers:
                 self._auto_step_lr_scheduler_per_batch(batch_idx, lr_scheduler)
 
@@ -403,6 +397,14 @@ class PyTorchTrialController(det.LoopTrialController):
             num_inputs *= hvd.size()
         metrics = det.util.make_metrics(num_inputs, per_batch_metrics)
 
+        # Ignore batch_metrics entirely for custom reducers; there's no guarantee that per-batch
+        # metrics are even logical for a custom reducer.
+        metrics["avg_metrics"].update(
+            self._convert_metrics_to_numpy(
+                self.context.experimental.reduce_metrics(for_training=True)
+            )
+        )
+
         if not self.is_chief:
             # The training metrics are reported only in the chief process.
             return workload.Skipped()
@@ -420,6 +422,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
     @torch.no_grad()
     def _compute_validation_metrics(self) -> workload.Response:
+        self.context.experimental.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
         # different between training and inference.
         for model in self.context.models:
@@ -435,7 +438,7 @@ class PyTorchTrialController(det.LoopTrialController):
             callback.on_validation_start()
 
         num_inputs = 0
-        metrics = {}  # type: Optional[Dict[str, Any]]
+        metrics = {}  # type: Dict[str, Any]
 
         if self._evaluate_batch_defined():
             keys = None
@@ -445,7 +448,7 @@ class PyTorchTrialController(det.LoopTrialController):
             check.gt(len(self.validation_loader), 0)
             for batch in self.validation_loader:
                 batch = self.context.to_device(batch)
-                num_inputs += data_length(batch)
+                num_inputs += pytorch.data_length(batch)
 
                 vld_metrics = self.trial.evaluate_batch(batch=batch)
                 # Verify validation metric names are the same across batches.
@@ -489,10 +492,16 @@ class PyTorchTrialController(det.LoopTrialController):
                 metrics = self._convert_metrics_to_numpy(metrics)
                 num_inputs = self.context.get_per_slot_batch_size() * len(self.validation_loader)
 
+        metrics.update(
+            self._convert_metrics_to_numpy(
+                self.context.experimental.reduce_metrics(for_training=False)
+            )
+        )
+
         if self.hvd_config.use and any(
             map(
-                lambda c: util.is_overridden(c.on_validation_end, _callback.PyTorchCallback)
-                or util.is_overridden(c.on_validation_step_end, _callback.PyTorchCallback),
+                lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
+                or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
                 self.callbacks.values(),
             )
         ):
@@ -506,20 +515,21 @@ class PyTorchTrialController(det.LoopTrialController):
             logging.warning(
                 "on_validation_step_end is now deprecated, please use on_validation_end instead"
             )
-            callback.on_validation_step_end(cast(Dict[str, Any], metrics))
+            callback.on_validation_step_end(metrics)
 
         for callback in self.callbacks.values():
-            callback.on_validation_end(cast(Dict[str, Any], metrics))
+            callback.on_validation_end(metrics)
 
         if not self.is_chief:
             return workload.Skipped()
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
-    def _prepare_metrics_reducers(self, keys: Any) -> Dict[str, Reducer]:
-        metrics_reducers = {}  # type: Dict[str, Reducer]
-        if isinstance(self.trial.evaluation_reducer(), Dict):
-            metrics_reducers = cast(Dict[str, Any], self.trial.evaluation_reducer())
+    def _prepare_metrics_reducers(self, keys: Any) -> Dict[str, pytorch.Reducer]:
+        metrics_reducers = {}  # type: Dict[str, pytorch.Reducer]
+        reducer = self.trial.evaluation_reducer()
+        if isinstance(reducer, Dict):
+            metrics_reducers = reducer
             check.eq(
                 metrics_reducers.keys(),
                 keys,
@@ -527,23 +537,23 @@ class PyTorchTrialController(det.LoopTrialController):
                 "provide a reducer for every validation metric. "
                 f"Expected keys: {keys}, provided keys: {metrics_reducers.keys()}.",
             )
-        elif isinstance(self.trial.evaluation_reducer(), Reducer):
+        elif isinstance(reducer, pytorch.Reducer):
             for key in keys:
-                metrics_reducers[key] = cast(Reducer, self.trial.evaluation_reducer())
+                metrics_reducers[key] = reducer
 
         for key in keys:
             check.true(
-                isinstance(metrics_reducers[key], Reducer),
+                isinstance(metrics_reducers[key], pytorch.Reducer),
                 "Please select `determined.pytorch.Reducer` for reducing validation metrics.",
             )
 
         return metrics_reducers
 
     def _reduce_metrics(
-        self, batch_metrics: List, keys: Any, metrics_reducers: Dict[str, Reducer]
-    ) -> Optional[Dict[str, Any]]:
+        self, batch_metrics: List, keys: Any, metrics_reducers: Dict[str, pytorch.Reducer]
+    ) -> Dict[str, Any]:
         metrics = {
-            name: _reduce_metrics(
+            name: pytorch._reduce_metrics(
                 reducer=metrics_reducers[name],
                 metrics=np.stack([b[name] for b in batch_metrics], axis=0),
                 num_batches=None,
@@ -565,7 +575,7 @@ class PyTorchTrialController(det.LoopTrialController):
                     cast(Dict[str, Any], combined_metrics)
                 )
                 metrics = {
-                    name: _reduce_metrics(
+                    name: pytorch._reduce_metrics(
                         reducer=metrics_reducers[name],
                         metrics=combined_metrics[name],
                         num_batches=batches_per_process,
@@ -701,9 +711,7 @@ class PyTorchTrialController(det.LoopTrialController):
         for name in self.callbacks:
             if name in callback_state:
                 self.callbacks[name].load_state_dict(callback_state[name])
-            elif util.is_overridden(
-                self.callbacks[name].load_state_dict, _callback.PyTorchCallback
-            ):
+            elif util.is_overridden(self.callbacks[name].load_state_dict, pytorch.PyTorchCallback):
                 logging.warning(
                     "Callback '{}' implements load_state_dict(), but no callback state "
                     "was found for that name when restoring from checkpoint. This "
@@ -800,10 +808,10 @@ class PyTorchTrial(det.Trial):
     """
 
     trial_controller_class = PyTorchTrialController
-    trial_context_class = PyTorchTrialContext
+    trial_context_class = pytorch.PyTorchTrialContext
 
     @abstractmethod
-    def __init__(self, context: PyTorchTrialContext) -> None:
+    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         """
         Initializes a trial using the provided ``context``. The general steps are:
 
@@ -863,7 +871,7 @@ class PyTorchTrial(det.Trial):
 
     def create_lr_scheduler(
         self, optimizer: torch.optim.Optimizer  # type: ignore
-    ) -> Optional[LRScheduler]:
+    ) -> Optional[pytorch.LRScheduler]:
         """
         Create a learning rate scheduler for the trial given an instance of the
         optimizer.
@@ -885,7 +893,7 @@ class PyTorchTrial(det.Trial):
 
     @abstractmethod
     def train_batch(
-        self, batch: TorchData, epoch_idx: int, batch_idx: int
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Union[torch.Tensor, Dict[str, Any]]:
         """
         Train on one batch.
@@ -944,7 +952,7 @@ class PyTorchTrial(det.Trial):
         pass
 
     @abstractmethod
-    def build_training_data_loader(self) -> DataLoader:
+    def build_training_data_loader(self) -> pytorch.DataLoader:
         """
         Defines the data loader to use during training.
 
@@ -953,7 +961,7 @@ class PyTorchTrial(det.Trial):
         pass
 
     @abstractmethod
-    def build_validation_data_loader(self) -> DataLoader:
+    def build_validation_data_loader(self) -> pytorch.DataLoader:
         """
         Defines the data loader to use during validation.
 
@@ -961,7 +969,7 @@ class PyTorchTrial(det.Trial):
         """
         pass
 
-    def build_callbacks(self) -> Dict[str, _callback.PyTorchCallback]:
+    def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
         """
         Defines a dictionary of string names to callbacks to be used during
         training and/or validation.
@@ -971,7 +979,7 @@ class PyTorchTrial(det.Trial):
         """
         return {}
 
-    def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         """
         Calculate evaluation metrics for a batch and return them as a
         dictionary mapping metric names to metric values.
@@ -993,12 +1001,12 @@ class PyTorchTrial(det.Trial):
         """
         pass
 
-    def evaluation_reducer(self) -> Union[Reducer, Dict[str, Reducer]]:
+    def evaluation_reducer(self) -> Union[pytorch.Reducer, Dict[str, pytorch.Reducer]]:
         """
         Return a reducer for all evaluation metrics, or a dict mapping metric
         names to individual reducers. Defaults to :obj:`determined.pytorch.Reducer.AVG`.
         """
-        return Reducer.AVG
+        return pytorch.Reducer.AVG
 
     def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
         """
