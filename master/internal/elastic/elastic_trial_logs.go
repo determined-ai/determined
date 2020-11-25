@@ -84,8 +84,8 @@ func (e *Elastic) TrialLogCount(trialID int) (int, error) {
 // search after over itself.
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-search-after.html
 func (e *Elastic) TrialLogs(
-	trialID, offset, limit int, fs []api.Filter, searchAfter []interface{},
-) ([]*model.TrialLog, []interface{}, error) {
+	trialID, offset, limit int, fs []api.Filter, searchAfter interface{},
+) ([]*model.TrialLog, interface{}, error) {
 	if limit > ElasticMaxQuerySize {
 		limit = ElasticMaxQuerySize
 	}
@@ -192,7 +192,7 @@ func (e *Elastic) TrialLogs(
 		logs = append(logs, h.Source)
 	}
 
-	var sortValues []interface{}
+	var sortValues interface{}
 	if len(resp.Hits.Hits) > 0 {
 		sortValues = resp.Hits.Hits[len(resp.Hits.Hits)-1].Sort
 	} else if searchAfter != nil {

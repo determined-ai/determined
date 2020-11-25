@@ -32,16 +32,16 @@ type TrialLogPersister interface {
 }
 
 type trialLogger struct {
-	persister    TrialLogPersister
+	backend    TrialLogPersister
 	pending      []*model.TrialLog
 	lastLogFlush time.Time
 }
 
 // newTrialLogger creates an actor which can buffer up trial logs and flush them periodically.
 // There should only be one trialLogger shared across the entire system.
-func newTrialLogger(persister TrialLogPersister) actor.Actor {
+func newTrialLogger(backend TrialLogBackend) actor.Actor {
 	return &trialLogger{
-		persister:    persister,
+		backend:    backend,
 		lastLogFlush: time.Now(),
 		pending:      make([]*model.TrialLog, 0, logBuffer),
 	}
@@ -72,7 +72,7 @@ func (l *trialLogger) Receive(ctx *actor.Context) error {
 
 func (l *trialLogger) tryFlushLogs(ctx *actor.Context, forceFlush bool) {
 	if forceFlush || len(l.pending) >= logBuffer {
-		if err := l.persister.AddTrialLogs(l.pending); err != nil {
+		if err := l.backend.AddTrialLogs(l.pending); err != nil {
 			ctx.Log().WithError(err).Errorf("failed to save trial logs")
 		}
 		l.pending = l.pending[:0]

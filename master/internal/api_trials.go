@@ -49,12 +49,20 @@ func (a *apiServer) trialStatus(trialID int32) (model.State, int, error) {
 		return "", 0, err
 	}
 	if a.m.config.Logging.ElasticLoggingConfig != nil {
-		trialStatus.NumLogs, err = a.m.es.TrialLogCount(int(trialID))
+		trialStatus.NumLogs, err = a.m.trialLogBackend.TrialLogCount(int(trialID))
 		if err != nil {
 			return "", 0, err
 		}
 	}
 	return trialStatus.State, trialStatus.NumLogs, err
+}
+
+type TrialLogBackend interface {
+	TrialLogs(
+		trialID, offset, limit int, filters []api.Filter, state interface{},
+	) ([]*model.TrialLog, interface{}, error)
+	AddTrialLogs([]*model.TrialLog) error
+	TrialLogCount(trialID int) (int, error)
 }
 
 func (a *apiServer) TrialLogs(
@@ -66,9 +74,16 @@ func (a *apiServer) TrialLogs(
 		return err
 	}
 
-	_, total, err := a.trialStatus(req.TrialId)
-	if err != nil {
+	switch exists, err := a.m.db.CheckTrialExists(int(req.TrialId)); {
+	case err != nil:
 		return err
+	case !exists:
+		return status.Error(codes.NotFound, "trial not found")
+	}
+
+	total, err := a.m.trialLogBackend.TrialLogCount(int(req.TrialId))
+	if err != nil {
+		return fmt.Errorf("failed to get trial count from backend: %w", err)
 	}
 	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
@@ -89,41 +104,22 @@ func (a *apiServer) TrialLogs(
 		})
 	}
 
-	var fetch api.LogFetcherFn
-	switch {
-	case a.m.config.Logging.DefaultLoggingConfig != nil:
-		fetch = func(lr api.LogsRequest) (api.LogBatch, error) {
-			switch {
-			case lr.Follow, lr.Limit > batchSize:
-				lr.Limit = batchSize
-			case lr.Limit <= 0:
-				return nil, nil
-			}
-
-			b, err := a.m.db.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters)
-			if err != nil {
-				return nil, err
-			}
-
-			return model.TrialLogBatch(b), err
+	var followState interface{}
+	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+		switch {
+		case lr.Follow, lr.Limit > batchSize:
+			lr.Limit = batchSize
+		case lr.Limit <= 0:
+			return nil, nil
 		}
-	case a.m.config.Logging.ElasticLoggingConfig != nil:
-		var sortValues []interface{}
-		fetch = func(lr api.LogsRequest) (api.LogBatch, error) {
-			switch {
-			case lr.Follow, lr.Limit > batchSize:
-				lr.Limit = batchSize
-			case lr.Limit <= 0:
-				return nil, nil
-			}
 
-			b, sv, err := a.m.es.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, sortValues)
-			if err != nil {
-				return nil, err
-			}
-			sortValues = sv
-			return model.TrialLogBatch(b), err
+		b, state, err := a.m.trialLogBackend.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, followState)
+		if err != nil {
+			return nil, err
 		}
+		followState = state
+
+		return model.TrialLogBatch(b), err
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
