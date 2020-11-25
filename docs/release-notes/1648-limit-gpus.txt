@@ -1,0 +1,7 @@
+:orphan:
+
+**Fixes**
+
+-  Fix a bug in --local --test mode where all gpus were being passed to
+   the training loop even though all distributed training code paths
+   were disabled.
