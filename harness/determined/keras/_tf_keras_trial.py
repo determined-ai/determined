@@ -738,6 +738,10 @@ class TFKerasTrialController(det.LoopTrialController):
             self.enqueuers.append(enqueuer)
             validation_data = enqueuer.data()
 
+        if isinstance(validation_data, tf.data.Dataset):
+            # Handle validation_steps, which in Keras only applies to tf.data.Datasets.
+            steps = self.context._fit_validation_steps
+
         # Starting in TF 2.2 users may define custom test_step() that do
         # not use the model metrics.
         use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
