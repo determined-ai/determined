@@ -42,26 +42,6 @@ class OFATrial(PyTorchTrial):
         )
         self.last_epoch_idx = -1
 
-        if self.hparams['kd_ratio'] > 0:
-            self.teacher = self.context.wrap_model(
-                OFAMobileNetV3(
-                    n_classes=self.hparams["n_classes"],
-                    bn_param=(self.hparams["bn_momentum"], self.hparams["bn_eps"]),
-                    dropout_rate=0,
-                    width_mult_list=1.0,
-                    ks_list=7,
-                    expand_ratio_list=6,
-                    depth_list=4,  # these values correspond to largest net
-                )
-            )
-            model_path = download_url(
-                "https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K7",
-                model_dir="/tmp/ofa_checkpoint%d" % self.context.distributed.get_rank(),
-            )
-            self.teacher.init_model(self.hparams["init_policy"])
-            init = torch.load(model_path)["state_dict"]
-            self.teacher.load_weights_from_net(init)
-
         self.supernet = self.context.wrap_model(
             OFAMobileNetV3(
                 n_classes=self.hparams["n_classes"],
@@ -74,23 +54,32 @@ class OFATrial(PyTorchTrial):
                 depth_list=[2, 3, 4],
             )
         )
-        self.supernet.init_model(self.hparams["init_policy"])
 
         # Configure supernet according to architecture config.
-        self.kernel_sizes = []
-        self.depths = []
-        self.widths = []
+        self.teacher_arch = {
+            'kernel_sizes': []
+            'depths': []
+            'widths': []
+        }
+        self.student_arch = {
+            'kernel_sizes': []
+            'depths': []
+            'widths': []
+        }
         for module, n_blocks in enumerate([4] * 5):
-            self.depths.append(
+            self.student_arch['depths'].append(
                 self.hparams["b{}_depth".format(module + 1)]
             )
+            self.teacher_arch['depths'].append(4)
             for block in range(n_blocks):
-                self.kernel_sizes.append(
+                self.student_arch['kernel_sizes'].append(
                     self.hparams["b{}{}_ks".format(module + 1, block + 1)]
                 )
-                self.widths.append(
+                self.teacher_arch['kernel_sizes'].append(7)
+                self.student_arch['widths'].append(
                     self.hparams["b{}{}_expand".format(module + 1, block + 1)]
                 )
+                self.teacher_arch['widths'].append(6)
 
         print('kernel_sizes', self.kernel_sizes)
         print('depths', self.depths)
@@ -98,10 +87,15 @@ class OFATrial(PyTorchTrial):
         print('block_group_info', self.supernet.block_group_info)
         print("n_blocks", len(self.supernet.blocks))
 
-        self.supernet.set_active_subnet(
-            1.0, self.kernel_sizes, self.widths, self.depths
-        )
+        for n in self.context.models:
+            n.init_model(self.hparams["init_policy"])
 
+        self.supernet.set_active_subnet(
+            1.0, 
+            self.student_arch['kernel_sizes'], 
+            self.student_arch['widths'], 
+            self.student_arch['depths']
+        )
 
         self.optimizer = self.context.wrap_optimizer(
             torch.optim.SGD(
@@ -211,19 +205,29 @@ class OFATrial(PyTorchTrial):
 
         images, target = batch
 
-
+        self.supernet.set_active_subnet(
+            1.0, 
+            self.teacher_arch['kernel_sizes'], 
+            self.teacher_arch['widths'], 
+            self.teacher_arch['depths']
+        )
         logits = self.supernet(images)
         loss = self.criterion(logits, target)
-        if self.hparams['kd_ratio'] > 0:
-            with torch.no_grad():
-                soft_logits = self.teacher(images).detach()
-                soft_label = F.softmax(soft_logits, dim=1)
-            kd_loss = cross_entropy_loss_with_soft_target(logits, soft_label)
-            loss += self.hparams["kd_ratio"] * kd_loss 
-        top1, top5 = accuracy(logits, target, topk=(1, 5))
-
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
+        soft_label = F.softmax(logits, dim=1).detach()
+        self.supernet.set_active_subnet(
+            1.0, 
+            self.student_arch['kernel_sizes'], 
+            self.student_arch['widths'], 
+            self.student_arch['depths']
+        )
+        logits = self.supernet(images)
+        kd_loss = cross_entropy_loss_with_soft_target(logits, soft_label)
+        self.context.backward(kd_loss)
+        self.context.step_optimizer(self.optimizer)
+
+        top1, top5 = accuracy(logits, target, topk=(1, 5))
 
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
 

@@ -13,8 +13,8 @@ data:
   bucket_name: determined-ai-datasets
   # We recommend num_workers_train to be set to 16
   # when running with slots_per_trial=8
-  num_workers_train: 2
-  num_workers_val: 2
+  num_workers_train: 4
+  num_workers_val: 4
   # If streaming is true, we will send request to bucket
   # every time an image is requested.  If false, we will
   # save data to disk and load that the next time the
@@ -35,7 +35,7 @@ data:
 #    read_only: false
 
 min_validation_period:
-  batches: 400
+  batches: 800
 
 hyperparameters:
   global_batch_size: 512
@@ -46,10 +46,10 @@ hyperparameters:
   dropout: 0.1
   init_policy: he_fout
   label_smoothing_rate: 0.1
-  weight_decay: 4e-5
-  kd_ratio: 1. # Knowledge distillation ratio
+  weight_decay: 3e-5
+  kd_ratio: 1. # Knowledge distillation ratio, only used if > 0.
   # Optimizer
-  learning_rate: 0.1
+  learning_rate: 0.6
   momentum: 0.9
   # Choices include linear and cosine
   lr_scheduler: cosine
@@ -329,6 +329,7 @@ hyperparameters:
       - 4
       - 6
 
+scheduling_unit: 100
 resources:
   # We recommend 8 slots with V100
   # and at least 16 slots with K80 GPUs.
@@ -340,9 +341,10 @@ searcher:
   metric: top1_accuracy 
   smaller_is_better: false 
   mode: aggressive
-  max_concurrent_trials: 5
+  max_concurrent_trials: 10
+  max_rungs: 4
   max_length:
-    batches: 25600 # 1.2 million images in training set of imagenet
+    batches: 12800 # 1.2 million images in training set of imagenet
   max_trials: 1000
 
 optimizations:
