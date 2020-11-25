@@ -3,7 +3,6 @@ package elastic
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -17,11 +16,7 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 	indexToLogs := map[string][]*model.TrialLog{}
 	for _, l := range logs {
 		index := logstashIndexFromTimestamp(l.Timestamp)
-		if ls, ok := indexToLogs[index]; ok {
-			indexToLogs[index] = append(ls, l)
-		} else {
-			indexToLogs[index] = []*model.TrialLog{l}
-		}
+		indexToLogs[index] = append(indexToLogs[index], l)
 	}
 	// NOTE: This could potentially use the bulk APIs, but the official
 	// client's support for them is very heavy - it is built to spawn
@@ -48,6 +43,5 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 }
 
 func logstashIndexFromTimestamp(time *time.Time) string {
-	y, m, d := time.UTC().Date()
-	return fmt.Sprintf("triallogs-%d.%d.%d", y, m, d)
+	return time.UTC().Format("triallogs-2006.01.02")
 }

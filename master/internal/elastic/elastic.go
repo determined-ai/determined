@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
@@ -62,20 +61,16 @@ func elasticTLSConfig(conf model.ElasticTLSConfig) (*tls.Config, error) {
 	}
 
 	var pool *x509.CertPool
-	if certFile := conf.CertificatePath; certFile != "" {
-		certData, err := ioutil.ReadFile(certFile) //nolint:gosec
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to read certificate file")
-		}
+	if conf.CertBytes != nil {
 		pool = x509.NewCertPool()
-		if !pool.AppendCertsFromPEM(certData) {
+		if !pool.AppendCertsFromPEM(conf.CertBytes) {
 			return nil, errors.New("certificate file contains no certificates")
 		}
 	}
 
 	return &tls.Config{
 		InsecureSkipVerify: conf.SkipVerify, //nolint:gosec
-		MinVersion:         tls.VersionTLS11,
+		MinVersion:         tls.VersionTLS12,
 		RootCAs:            pool,
 	}, nil
 }

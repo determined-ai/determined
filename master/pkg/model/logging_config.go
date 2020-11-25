@@ -52,18 +52,9 @@ type ElasticLoggingConfig struct {
 	Security ElasitcSecurityConfig `json:"security"`
 }
 
-// Resolve resolves the parts of the ElasticLoggingConfig that must be evaluated on the
-// master machine.
+// Resolve resolves the configuration.
 func (o *ElasticLoggingConfig) Resolve() error {
-	if o.Security.TLS.CertificatePath != "" {
-		certBytes, err := ioutil.ReadFile(
-			o.Security.TLS.CertificatePath)
-		if err != nil {
-			return err
-		}
-		o.Security.TLS.CertBytes = certBytes
-	}
-	return nil
+	return o.Security.Resolve()
 }
 
 // ElasitcSecurityConfig configure security-related options for the elastic logging backend.
@@ -82,6 +73,11 @@ func (o ElasitcSecurityConfig) Validate() []error {
 	return errs
 }
 
+// Resolve resolves the configuration.
+func (o *ElasitcSecurityConfig) Resolve() error {
+	return o.TLS.Resolve()
+}
+
 // ElasticTLSConfig are the TLS connection configuration for the elastic logging backend.
 type ElasticTLSConfig struct {
 	Enabled         bool   `json:"enabled"`
@@ -97,4 +93,16 @@ func (t ElasticTLSConfig) Validate() []error {
 		errs = append(errs, errors.New("cannot specify a elastic cert file with verification off"))
 	}
 	return errs
+}
+
+// Resolve resolves the configuration.
+func (t *ElasticTLSConfig) Resolve() error {
+	if t.CertificatePath != "" {
+		certBytes, err := ioutil.ReadFile(t.CertificatePath)
+		if err != nil {
+			return err
+		}
+		t.CertBytes = certBytes
+	}
+	return nil
 }
