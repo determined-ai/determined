@@ -3,11 +3,17 @@
 declare namespace Cypress {
   interface Chainable<Subject> {
     /**
-     * Make a request to log in and check.
+     * Log the user in by driving the UI.
      * @example
      * cy.login({username: determined})
      */
     login(credentials?: { username: string; password?: string }): Chainable<any>;
+    /**
+     * Make a request to log in and check.
+     * @example
+     * cy.login({username: determined})
+     */
+    loginHeadless(credentials?: { username: string; password?: string }): Chainable<any>;
     /**
      * Make a request to log out and check.
      * @example

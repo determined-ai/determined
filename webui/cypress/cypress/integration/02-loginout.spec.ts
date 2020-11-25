@@ -1,11 +1,9 @@
-import { DEFAULT_WAIT_TIME, USERNAME_WITHOUT_PASSWORD } from '../constants';
+import { DEFAULT_WAIT_TIME, LOGIN_ROUTE, LOGOUT_ROUTE, USERNAME_INPUT,
+  USERNAME_WITHOUT_PASSWORD } from '../constants';
 
 describe('Sign in/out', () => {
 
-  const LOGIN_ROUTE = '/det/login';
-  const LOGOUT_ROUTE = '/det/logout';
   const logoutSelector = `[class^="Navigation_base_"] [role="menu"] a[href*="${LOGOUT_ROUTE}"]`;
-  const USERNAME_INPUT = 'input#login_username';
 
   it('should be logged out', () => {
     cy.checkLoggedOut();

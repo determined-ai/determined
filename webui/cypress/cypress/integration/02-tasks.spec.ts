@@ -1,3 +1,5 @@
+import { DEFAULT_WAIT_TIME } from '../constants';
+
 describe('Task List', () => {
   const notebookLaunchSelector =
     '[class*="Navigation_launch_"] button[class*="Navigation_launchButton_"]';
@@ -8,8 +10,6 @@ describe('Task List', () => {
   beforeEach(() => {
     cy.login();
     cy.visit('/det/tasks');
-    cy.clearLocalStorage();
-    cy.wait(5000);
   });
 
   describe('Notebooks', () => {
@@ -29,7 +29,7 @@ describe('Task List', () => {
       cy.get(`${recordSelector}:first .ant-dropdown-trigger`).click();
       cy.get(overflowSelector).contains(/kill/i).click();
       // Using the server/route approach to detect endpoint calls does not work with new API
-      cy.wait(5000);
+      cy.wait(DEFAULT_WAIT_TIME);
       cy.visit('/det/tasks');
       cy.get(recordSelector).contains(/terminated/i).should('be.visible');
     });
@@ -55,7 +55,7 @@ describe('Task List', () => {
       cy.get(`${recordSelector}:first .ant-dropdown-trigger`).click();
       cy.get(overflowSelector).contains(/kill/i).click();
       // Using the server/route approach to detect endpoint calls does not work with new API
-      cy.wait(5000);
+      cy.wait(DEFAULT_WAIT_TIME);
       cy.visit('/det/tasks');
       cy.get(recordSelector).contains(/terminated/i).should('be.visible');
     });
