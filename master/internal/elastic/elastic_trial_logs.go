@@ -7,8 +7,6 @@ import (
 	"reflect"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/determined-ai/determined/master/internal/api"
 
 	"github.com/pkg/errors"
@@ -36,13 +34,15 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 	// multiple go routines and use persistent bulk indexer objects - way
 	// overkill (to the point of being slower) for the small number of logs that go here now.
 	// See: https://github.com/elastic/go-elasticsearch/blob/master/_examples/bulk/indexer.go
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
 	for index, logs := range indexToLogs {
 		for _, l := range logs {
-			b, err := json.Marshal(l)
+			err := enc.Encode(l)
 			if err != nil {
 				return errors.Wrap(err, "failed to make index request body")
 			}
-			res, err := e.client.Index(index, bytes.NewReader(b))
+			res, err := e.client.Index(index, &buf)
 			if err != nil {
 				return errors.Wrapf(err, "failed to index document")
 			}
@@ -57,16 +57,30 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 
 // TrialLogCount returns the number of trial logs for the given trial.
 func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
+	query := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"filter": append(filtersToElastic(fs),
+					map[string]interface{}{
+						"term": map[string]interface{}{
+							"trial_id": trialID,
+						},
+					}),
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return 0, fmt.Errorf("failed to encoding query: %w", err)
+	}
+
 	res, err := e.client.Count(
-		e.client.Count.WithQuery(fmt.Sprintf("trial_id:%d", trialID)))
+		e.client.Count.WithBody(&buf))
 	if err != nil {
 		return 0, fmt.Errorf("failed to retrieve log count: %w", err)
 	}
-	defer func() {
-		if cErr := res.Body.Close(); cErr != nil {
-			log.Errorf("failed to close count response body: %s", cErr)
-		}
-	}()
+	defer res.Body.Close()
 
 	resp := struct {
 		Count int `json:"count"`
@@ -141,12 +155,7 @@ func (e *Elastic) TrialLogs(
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to perform search: %w", err)
 	}
-	defer func() {
-		cErr := res.Body.Close()
-		if cErr != nil {
-			log.Errorf("failed to close search resp body: %s", cErr)
-		}
-	}()
+	defer res.Body.Close()
 
 	resp := struct {
 		Hits struct {
