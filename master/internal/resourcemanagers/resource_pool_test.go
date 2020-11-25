@@ -180,6 +180,7 @@ func TestSettingGroupPriority(t *testing.T) {
 			Priority: &PrioritySchedulerConfig{
 				DefaultPriority: &defaultPriority,
 			},
+			FittingPolicy: best,
 		},
 	}
 
