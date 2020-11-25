@@ -37,23 +37,13 @@ var (
 	distinctFieldBatchWaitTime = 5 * time.Second
 )
 
-func (a *apiServer) trialStatus(trialID int32) (model.State, error) {
-	var trialStatus model.State
-	err := a.m.db.Query("trial_status", &trialStatus, trialID)
-	if err == db.ErrNotFound {
-		err = status.Error(codes.NotFound, "trial not found")
-	} else if err != nil {
-		return "", err
-	}
-	return trialStatus, err
-}
-
 type TrialLogBackend interface {
 	TrialLogs(
 		trialID, offset, limit int, filters []api.Filter, state interface{},
 	) ([]*model.TrialLog, interface{}, error)
 	AddTrialLogs([]*model.TrialLog) error
 	TrialLogCount(trialID int, filters []api.Filter) (int, error)
+	TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
 }
 
 func (a *apiServer) TrialLogs(
@@ -114,7 +104,7 @@ func (a *apiServer) TrialLogs(
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, err := a.trialStatus(req.TrialId)
+		state, err := a.m.db.TrialStatus(int(req.TrialId))
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}
@@ -203,13 +193,8 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer) error {
 	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
-		var fields apiv1.TrialLogsFieldsResponse
-		err := a.m.db.QueryProto("get_trial_log_fields", &fields, req.TrialId)
-		if err != nil {
-			return nil, err
-		}
-
-		return api.ToLogBatchOfOne(&fields), err
+		fields, err := a.m.trialLogBackend.TrialLogFields(int(req.TrialId))
+		return api.ToLogBatchOfOne(fields), err
 	}
 
 	onBatch := func(b api.LogBatch) error {
@@ -220,7 +205,7 @@ func (a *apiServer) TrialLogsFields(
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, err := a.trialStatus(req.TrialId)
+		state, err := a.m.db.TrialStatus(int(req.TrialId))
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}

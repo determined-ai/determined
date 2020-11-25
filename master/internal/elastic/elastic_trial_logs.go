@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"reflect"
 	"time"
 
@@ -261,6 +262,125 @@ func filtersToElastic(fs []api.Filter) []map[string]interface{} {
 		}
 	}
 	return terms
+}
+
+type StringAggResult struct {
+	DocCountErrorUpperBound int `json:"doc_count_error_upper_bound"`
+	SumOtherDocCount int `json:"sum_other_doc_count"`
+	Buckets []struct{
+		DocCount int `json:"doc_count"`
+		Key string `json:"key"`
+	} `json:"buckets"`
+}
+
+func (r StringAggResult) ToKeys() []string {
+	var keys []string
+	for _, b := range r.Buckets {
+		keys = append(keys, b.Key)
+	}
+	return keys
+}
+
+type IntAggResult struct {
+	DocCountErrorUpperBound int `json:"doc_count_error_upper_bound"`
+	SumOtherDocCount int `json:"sum_other_doc_count"`
+	Buckets []struct{
+		DocCount int `json:"doc_count"`
+		Key int `json:"key"`
+	} `json:"buckets"`
+}
+
+func (r IntAggResult) ToKeysInt32() []int32 {
+	var keys []int32
+	for _, b := range r.Buckets {
+		keys = append(keys, int32(b.Key))
+	}
+	return keys
+}
+
+// TrialLogFields returns the unique fields that can be filtered on for the given trial.
+func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
+	query := map[string]interface{}{
+		// For the hesitant, size:0 is actually the recommended way to do this. See:
+		// www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html#return-only-agg-results
+		"size": 0,
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"filter": []map[string]interface{}{
+					{
+						"term": map[string]interface{}{
+							"trial_id": trialID,
+						},
+					},
+				},
+			},
+		},
+		"aggs":map[string]interface{}{
+			// These keys are the aggregate names; they must match the aggregate names we expect to
+			// be returned, which are defined in the type of resp below.
+			"agent_ids": map[string]interface{}{
+				"terms": map[string]interface{}{
+					"field": "agent_id.keyword",
+				},
+			},
+			"container_ids": map[string]interface{}{
+				"terms": map[string]interface{}{
+					"field": "container_id.keyword",
+				},
+			},
+			"rank_ids": map[string]interface{}{
+				"terms": map[string]interface{}{
+					"field": "rank_id",
+				},
+			},
+			"sources": map[string]interface{}{
+				"terms": map[string]interface{}{
+					"field": "source.keyword",
+				},
+			},
+			"stdtypes": map[string]interface{}{
+				"terms": map[string]interface{}{
+					"field": "stdtype.keyword",
+				},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return nil, fmt.Errorf("failed to encoding query: %w", err)
+	}
+
+	b, _ := json.Marshal(query)
+	fmt.Println(string(b))
+
+	res, err := e.client.Search(e.client.Search.WithBody(&buf))
+	if err != nil {
+		return nil, fmt.Errorf("failed to perform search: %w", err)
+	}
+	defer res.Body.Close()
+
+	resp := struct {
+		Aggregations struct{
+			AgentIDs StringAggResult `json:"agent_ids"`
+			ContainerIDs StringAggResult `json:"container_ids"`
+			RankIDs IntAggResult `json:"rank_ids"`
+			Sources StringAggResult `json:"sources"`
+			StdTypes StringAggResult `json:"stdtypes"`
+		} `json:"aggregations"`
+	}{}
+	err = json.NewDecoder(res.Body).Decode(&resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode search api response")
+	}
+
+	return &apiv1.TrialLogsFieldsResponse{
+		AgentIds:     resp.Aggregations.AgentIDs.ToKeys(),
+		ContainerIds: resp.Aggregations.ContainerIDs.ToKeys(),
+		RankIds:      resp.Aggregations.RankIDs.ToKeysInt32(),
+		Stdtypes:     resp.Aggregations.StdTypes.ToKeys(),
+		Sources:      resp.Aggregations.Sources.ToKeys(),
+	}, err
 }
 
 func logstashIndexFromTimestamp(time *time.Time) string {

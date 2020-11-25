@@ -1933,6 +1933,17 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	}
 }
 
+// TrialStatus returns current state of the given trial.
+func (db *PgDB) TrialStatus(trialID int) (model.State, error) {
+	var state model.State
+	err := db.sql.QueryRow(`
+SELECT t.state AS State
+FROM trials t
+WHERE t.id = $1
+`, trialID).Scan(&state)
+	return state, err
+}
+
 func (db *PgDB) queryRowsWithParser(
 	query string, p func(*sqlx.Rows, interface{}) error, v interface{}, args ...interface{},
 ) error {

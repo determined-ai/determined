@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/pkg/errors"
 	"strings"
 
@@ -87,8 +88,6 @@ INSERT INTO trial_logs
 }
 
 // TrialLogCount returns the number of logs in postgres for the given trial.
-// This shouldn't be called, instead the master's TrialLogBackend should be
-// called which may call this.
 func (db *PgDB) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 	params := []interface{}{trialID}
 	fragment, params := filtersToSQL(fs, params)
@@ -104,4 +103,11 @@ WHERE l.trial_id = $1
 		return 0, err
 	}
 	return count, err
+}
+
+// TrialLogFields returns the unique fields that can be filtered on for the given trial.
+func (db *PgDB) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
+	var fields *apiv1.TrialLogsFieldsResponse
+	err := db.QueryProto("get_trial_log_fields", fields, trialID)
+	return fields, err
 }

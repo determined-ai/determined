@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
@@ -33,8 +35,11 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	} else {
 		scheme = "http://"
 	}
+	addr := fmt.Sprintf("%s%s:%d", scheme, conf.Host, conf.Port)
+	logrus.Infof("connecting to elasticsearch %s", addr)
+
 	cfg := elasticsearch.Config{
-		Addresses: []string{fmt.Sprintf("%s%s:%d", scheme, conf.Host, conf.Port)},
+		Addresses: []string{addr},
 		Transport: &http.Transport{
 			MaxIdleConnsPerHost:   10,
 			ResponseHeaderTimeout: time.Second,
@@ -52,6 +57,14 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create elastic client from config")
 	}
+
+	// Try to connect to elastic - we'd rather fail hard here than on first log write.
+	i, err := es.Info()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect to elastic")
+	}
+	logrus.Infof("connected to elasticsearch cluster with info: %s", i.String())
+
 	return &Elastic{es}, nil
 }
 
