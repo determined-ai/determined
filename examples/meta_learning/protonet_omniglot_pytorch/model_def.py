@@ -16,7 +16,7 @@ class Flatten(nn.Module):
         super(Flatten, self).__init__()
 
     def forward(self, x):
-        return x.view(x.size(0), -1)
+        return x.contiguous().view(x.size(0), -1)
 
 
 def SquaredDistance(x, y):
@@ -159,7 +159,7 @@ class OmniglotProtoNetTrial(PyTorchTrial):
         # Prototype size: (num_classes, embedding_dim)
         prototypes = (
             embedding[0 : num_classes * num_support]
-            .view(num_classes, num_support, embedding_dim)
+            .contiguous().view(num_classes, num_support, embedding_dim)
             .mean(1)
         )
 
@@ -172,13 +172,13 @@ class OmniglotProtoNetTrial(PyTorchTrial):
 
         # Class log probabilities by treating -distances as logits
         # Log_prob_query size: (num_classes, num_query, num_classes)
-        log_prob_query = F.log_softmax(-euclidean_dist, dim=1).view(
+        log_prob_query = F.log_softmax(-euclidean_dist, dim=1).contiguous().view(
             num_classes, num_query, -1
         )
 
         # Match query examples with classes
-        y_query_expand = y_query.view(num_classes, num_query, 1)
-        loss = -log_prob_query.gather(2, y_query_expand).squeeze().view(-1).mean()
+        y_query_expand = y_query.contiguous().view(num_classes, num_query, 1)
+        loss = -log_prob_query.gather(2, y_query_expand).squeeze().contiguous().view(-1).mean()
 
         _, pred_query = log_prob_query.max(2)
 

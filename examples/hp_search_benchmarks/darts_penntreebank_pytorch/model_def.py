@@ -205,7 +205,7 @@ class DARTSRNNTrial(PyTorchTrial):
         )
 
         raw_loss = nn.functional.nll_loss(
-            log_prob.view(-1, log_prob.size(2)), labels.contiguous().view(-1)
+            log_prob.contiguous().view(-1, log_prob.size(2)), labels.contiguous().contiguous().view(-1)
         )
 
         loss = raw_loss
@@ -260,7 +260,7 @@ class DARTSRNNTrial(PyTorchTrial):
 
             log_prob, hidden = model(features, hidden)
             loss = nn.functional.nll_loss(
-                log_prob.view(-1, log_prob.size(2)), targets
+                log_prob.contiguous().view(-1, log_prob.size(2)), targets
             ).data
             total_loss += loss * len(features)
 

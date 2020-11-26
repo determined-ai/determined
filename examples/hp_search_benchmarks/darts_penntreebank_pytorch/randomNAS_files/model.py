@@ -168,10 +168,10 @@ class RNNModel(nn.Module):
         output = self.lockdrop(raw_output, self.dropout)
         outputs.append(output)
 
-        logit = self.decoder(output.view(-1, self.ninp))
+        logit = self.decoder(output.contiguous().view(-1, self.ninp))
         log_prob = nn.functional.log_softmax(logit, dim=-1)
         model_output = log_prob
-        model_output = model_output.view(-1, batch_size, self.ntoken)
+        model_output = model_output.contiguous().view(-1, batch_size, self.ntoken)
 
         if return_h:
             return model_output, hidden, raw_outputs, outputs
