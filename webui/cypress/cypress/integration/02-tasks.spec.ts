@@ -1,8 +1,6 @@
 import { DEFAULT_WAIT_TIME } from '../constants';
 
 describe('Task List', () => {
-  const notebookLaunchSelector =
-    '[class*="Navigation_launch_"] button[class*="Navigation_launchButton_"]';
   const recordSelector = 'tr[data-row-key]';
   const batchSelector = '[class*="TableBatch_actions_"] button';
   const overflowSelector = '.ant-dropdown .ant-dropdown-menu-item';
@@ -18,8 +16,8 @@ describe('Task List', () => {
       cy.get('button[aria-label="Notebook"]').click();
       cy.server();
       cy.route('POST', /\/notebook.*/).as('createRequest');
-      cy.get(notebookLaunchSelector).click();
-      cy.get(notebookLaunchSelector).click();
+      cy.contains(/launch notebook/i).click();
+      cy.contains(/launch notebook/i).click();
       cy.wait('@createRequest');
       cy.visit('/det/tasks');
       cy.get(recordSelector).should('have.lengthOf', 2);
@@ -64,6 +62,7 @@ describe('Task List', () => {
 
   describe('batch buttons', () => {
     it('should have 1 button', () => {
+      cy.get(recordSelector).should('have.lengthOf', 3);
       cy.get('thead input[type=checkbox]').click();
       cy.get(batchSelector).should('have.lengthOf', 1);
       cy.get(batchSelector).click();
