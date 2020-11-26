@@ -4,13 +4,17 @@
  Setting up an AWS Kubernetes (EKS) Cluster
 ############################################
 
-In addition to `GKE <setup-gke-cluster>`_, Determined can be installed
-on `EKS <https://aws.amazon.com/eks/>`_. Determined requires the EKS
-cluster to be running Kubernetes version >= 1.15 and to have GPU-enabled
-nodes. This document describes how to set up an EKS cluster with
-GPU-enabled nodes. The recommended setup includes deploying a cluster
-with a single non-GPU node that will host the Determined master and
-database and an autoscaling group of GPU nodes.
+Determined can be installed on a cluster that is hosted on a managed
+Kubernetes service such as `Amazon EKS <https://aws.amazon.com/eks/>`_.
+This document describes how to set up an EKS cluster with GPU-enabled
+nodes. The recommended setup includes deploying a cluster with a single
+non-GPU node that will host the Determined master and database, and an
+autoscaling group of GPU nodes. After creating a suitable EKS cluster,
+you can then proceed with the standard :ref:`instructions for installing
+Determined on Kubernetes <install-on-kubernetes>`.
+
+Determined requires the Kubernetes cluster to be running version >= 1.15
+and to have GPU-enabled nodes.
 
 ***************
  Prerequisites
@@ -31,16 +35,16 @@ Continuing without subscribing will cause node creation to fail.
  Making an S3 Bucket
 *********************
 
-One resource that eksctl does not automatically create is an s3 bucket,
-which is necessary for Determined to store checkpoints. To quickly
-create an s3 bucket, use the command:
+One resource that ``eksctl`` does not automatically create is an S3
+bucket, which is necessary for Determined to store checkpoints. To
+quickly create an S3 bucket, use the command:
 
 .. code:: bash
 
    aws s3 mb s3://<bucket-name>
 
-The bucket name needs to be specified in both the eksctl cluster config
-as well as the Determined helm chart.
+The bucket name needs to be specified in both the ``eksctl`` cluster
+config as well as the Determined Helm chart.
 
 .. _cluster-creation:
 
@@ -48,12 +52,12 @@ as well as the Determined helm chart.
  Creating the Cluster
 **********************
 
-The quickest and easiest way to deploy an EKS cluster is with eksctl.
-eksctl supports cluster creation with either command line arguments or a
-cluster config file. Below is a template config that deploys a managed
-node group for Determined's master instance, as well as an autoscaling
-GPU node group for workers. To fill in the template, insert the cluster
-name and s3 bucket name.
+The quickest and easiest way to deploy an EKS cluster is with
+``eksctl``. ``eksctl`` supports cluster creation with either command
+line arguments or a cluster config file. Below is a template config that
+deploys a managed node group for Determined's master instance, as well
+as an autoscaling GPU node group for workers. To fill in the template,
+insert the cluster name and S3 bucket name.
 
 .. code:: YAML
 
@@ -169,7 +173,7 @@ untainted p2.8xlarge instances with minor additions to their experiment
 configs. To create a cluster with tainted instances, see the `Tainting
 Nodes` section below.
 
-To launch the cluster with eksctl, run:
+To launch the cluster with ``eksctl``, run:
 
 .. code:: bash
 
@@ -178,7 +182,7 @@ To launch the cluster with eksctl, run:
 .. note::
 
    For an experiment to run, its config must be modified to specify a
-   service account for s3 access . An example of this is provided in the
+   service account for S3 access . An example of this is provided in the
    Configuring Per-Task Pod Specs section of the :ref:`custom-pod-specs`
    guide.
 
@@ -186,9 +190,9 @@ To launch the cluster with eksctl, run:
  Creating a kubeconfig for EKS
 *******************************
 
-After creating the cluster, kubectl should be used to deploy apps. In
-order for kubectl to be used with EKS, users need to create or update
-the cluster kubeconfig. This can be done with the command:
+After creating the cluster, ``kubectl`` should be used to deploy apps.
+In order for ``kubectl`` to be used with EKS, users need to create or
+update the cluster kubeconfig. This can be done with the command:
 
 .. code:: bash
 
@@ -212,7 +216,7 @@ installed. Use the following command to install the plugin:
 
 Lastly, EKS requires manual deployment of an autoscaler. Save the
 following configuration in a new file such as
-`determined-autoscaler.yaml`:
+``determined-autoscaler.yaml``:
 
 .. code:: YAML
 
@@ -274,7 +278,7 @@ following configuration in a new file such as
 To deploy an autoscaler that works with Determined, apply the official
 autoscaler `configuration
 <https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-run-on-master.yaml>`_
-first, then apply the custom `determined-autoscaler.yaml`.
+first, then apply the custom ``determined-autoscaler.yaml``.
 
 .. code:: bash
 
@@ -291,7 +295,7 @@ first, then apply the custom `determined-autoscaler.yaml`.
 Tainting nodes is optional, but users may want to taint nodes to
 restrict which nodes a pod may be scheduled onto. To taint nodes, users
 will need to add a taint type and a tag to the node group specified in
-the cluster config from `Creating the Cluster`. An example of the
+the cluster config from :ref:`cluster-creation`. An example of the
 modifications is shown for the p2.8xlarge node group from above:
 
 .. code:: YAML
@@ -321,7 +325,9 @@ and make the following additions to its tolerations:
        effect: NoSchedule
 
 To modify the experiment config to run on tainted nodes, refer to the
-`Changes to the Experiment Config` section below.
+:ref:`changes-to-experiment-config` section below.
+
+.. _changes-to-experiment-config:
 
 ******************************
  Changes to Experiment Config
@@ -329,7 +335,7 @@ To modify the experiment config to run on tainted nodes, refer to the
 
 To run an experiment with EKS, two additions must be made to the
 experiment config. A service account must be specified in order to allow
-Determined to save checkpoints to s3 and tolerances, if there are
+Determined to save checkpoints to S3 and tolerances, if there are
 tainted nodes, must be listed for the experiment to be scheduled. An
 example of the necessary changes is shown here:
 
@@ -348,8 +354,8 @@ example of the necessary changes is shown here:
              value: "true"
              effect: "NoSchedule"
 
-Details about pod configuration can be found in the Configuring Per-Task
-Pod Specs section of the :ref:`custom-pod-specs` guide.
+Details about pod configuration can be found in
+:ref:`per-task-pod-specs`.
 
 ***********************
  Changes to Determined
@@ -357,9 +363,9 @@ Pod Specs section of the :ref:`custom-pod-specs` guide.
 
 Following the deployment of EKS, make sure that the necessary changes to
 Determined have been applied in order to successfully run experiments.
-These changes include adding the created s3 bucket to Determined's helm
+These changes include adding the created S3 bucket to Determined's Helm
 chart and specifying a service account in the default pod specs. When
-modifying the helm chart to include s3, no keys or endpoint urls are
+modifying the Helm chart to include S3, no keys or endpoint urls are
 needed. Additionally, if running on tainted nodes, be sure to add pod
 tolerations to the experiment spec to ensure they will get scheduled.
 

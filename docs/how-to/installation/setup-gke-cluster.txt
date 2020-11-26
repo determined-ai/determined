@@ -4,14 +4,18 @@
  Setting up a Google Kubernetes Engine (GKE) Cluster
 #####################################################
 
-Determined can be installed into a self-managed Kubernetes deployment or
-a managed Kubernetes service such as `GKE
-<https://cloud.google.com/kubernetes-engine>`_. Determined requires the
-Kubernetes cluster to be running version >= 1.15 and to have GPU-enabled
-nodes. This document describes how to set up a GKE cluster with
-GPU-enabled nodes. The recommended setup includes deploying a cluster
-with a single non-GPU node that will host the Determined master and
-database, and an autoscaling group of GPU nodes.
+Determined can be installed on a cluster that is hosted on a managed
+Kubernetes service such as `GKE
+<https://cloud.google.com/kubernetes-engine>`_. This document describes
+how to set up a GKE cluster with GPU-enabled nodes. The recommended
+setup includes deploying a cluster with a single non-GPU node that will
+host the Determined master and database, and an autoscaling group of GPU
+nodes. After creating a suitable GKE cluster, you can then proceed with
+the standard :ref:`instructions for installing Determined on Kubernetes
+<install-on-kubernetes>`.
+
+Determined requires the Kubernetes cluster to be running version >= 1.15
+and to have GPU-enabled nodes.
 
 ***************
  Prerequisites

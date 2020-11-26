@@ -130,6 +130,8 @@ Example of configuring default pod specs:
              hostPath:
                path: /data
 
+.. _per-task-pod-specs:
+
 ********************************
  Configuring Per-Task Pod Specs
 ********************************
