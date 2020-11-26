@@ -110,25 +110,30 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 }
 
 type mockAgent struct {
-	id    string
-	slots int
-	label string
+	id                    string
+	label                 string
+	slots                 int
+	slotsUsed             int
+	maxZeroSlotContainers int
+	zeroSlotContainers    int
 }
 
 func newMockAgent(
-	t *testing.T,
-	system *actor.System,
 	id string,
-	slots int,
 	label string,
-) *agentState {
-	ref, created := system.ActorOf(actor.Addr(id), &mockAgent{id: id, slots: slots, label: label})
-	assert.Assert(t, created)
-	state := newAgentState(sproto.AddAgent{Agent: ref, Label: label})
-	for i := 0; i < slots; i++ {
-		state.devices[device.Device{ID: i}] = nil
+	slots int,
+	slotsUsed int,
+	maxZeroSlotContainers int,
+	zeroSlotContainers int,
+) *mockAgent {
+	return &mockAgent{
+		id:                    id,
+		label:                 label,
+		slots:                 slots,
+		slotsUsed:             slotsUsed,
+		maxZeroSlotContainers: maxZeroSlotContainers,
+		zeroSlotContainers:    zeroSlotContainers,
 	}
-	return state
 }
 
 func (m *mockAgent) Receive(ctx *actor.Context) error {
@@ -178,7 +183,12 @@ func forceAddAgent(
 	numUsedSlots int,
 	numZeroSlotContainers int,
 ) *agentState {
-	state := newMockAgent(t, system, agentID, numSlots, "")
+	ref, created := system.ActorOf(actor.Addr(agentID), &mockAgent{id: agentID, slots: numSlots})
+	assert.Assert(t, created)
+	state := newAgentState(sproto.AddAgent{Agent: ref}, 100)
+	for i := 0; i < numSlots; i++ {
+		state.devices[device.Device{ID: i}] = nil
+	}
 	i := 0
 	for ix := range state.devices {
 		if i < numUsedSlots {
@@ -190,6 +200,40 @@ func forceAddAgent(
 		state.zeroSlotContainers[cproto.ID(uuid.New().String())] = true
 	}
 	agents[state.handler] = state
+	return state
+}
+
+func newFakeAgentState(
+	t *testing.T,
+	system *actor.System,
+	id string,
+	label string,
+	slots int,
+	slotsUsed int,
+	maxZeroSlotContainers int,
+	zeroSlotContainers int,
+) *agentState {
+	ref, created := system.ActorOf(actor.Addr(id), &mockAgent{id: id, slots: slots, label: label})
+	assert.Assert(t, created)
+	state := newAgentState(sproto.AddAgent{Agent: ref, Label: label}, maxZeroSlotContainers)
+	for i := 0; i < slots; i++ {
+		state.devices[device.Device{ID: i}] = nil
+	}
+
+	if slotsUsed > 0 {
+		req := &AllocateRequest{
+			SlotsNeeded:    slotsUsed,
+			NonPreemptible: false,
+		}
+		container := newContainer(req, state, req.SlotsNeeded)
+		state.allocateFreeDevices(req.SlotsNeeded, container.id)
+	}
+
+	for i := 0; i < zeroSlotContainers; i++ {
+		req := &AllocateRequest{}
+		container := newContainer(req, state, req.SlotsNeeded)
+		state.allocateFreeDevices(req.SlotsNeeded, container.id)
+	}
 	return state
 }
 
@@ -212,10 +256,10 @@ func forceAddTask(
 		SlotsNeeded: slotsNeeded,
 	}
 	taskList.AddTask(req)
-	setTaskAllocations(t, taskList, taskID, numAllocated)
+	forceSetTaskAllocations(t, taskList, taskID, numAllocated)
 }
 
-func setTaskAllocations(
+func forceSetTaskAllocations(
 	t *testing.T,
 	taskList *taskList,
 	taskID string,
@@ -251,10 +295,11 @@ func setupSchedulerStates(
 		assert.Assert(t, created)
 
 		agent := &agentState{
-			handler:            ref,
-			label:              mockAgent.label,
-			devices:            make(map[device.Device]*cproto.ID),
-			zeroSlotContainers: make(map[cproto.ID]bool),
+			handler:               ref,
+			label:                 mockAgent.label,
+			devices:               make(map[device.Device]*cproto.ID),
+			zeroSlotContainers:    make(map[cproto.ID]bool),
+			maxZeroSlotContainers: mockAgent.maxZeroSlotContainers,
 		}
 		for i := 0; i < mockAgent.slots; i++ {
 			agent.devices[device.Device{ID: i}] = nil

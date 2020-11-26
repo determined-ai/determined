@@ -46,7 +46,7 @@ type ContainerSummary struct {
 func newAgentSummary(state *agentState) sproto.AgentSummary {
 	return sproto.AgentSummary{
 		Name:   state.handler.Address().Local(),
-		IsIdle: state.numUsedSlots() == 0 && len(state.zeroSlotContainers) == 0,
+		IsIdle: state.idle(),
 	}
 }
 

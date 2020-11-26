@@ -26,7 +26,11 @@ func ResolveConfig(
 	case provisionerConf != nil && resourcePoolsConf == nil:
 		resourcePoolsConf = &ResourcePoolsConfig{
 			ResourcePools: []ResourcePoolConfig{
-				{PoolName: defaultResourcePoolName, Provider: provisionerConf},
+				{
+					PoolName:                 defaultResourcePoolName,
+					Provider:                 provisionerConf,
+					MaxCPUContainersPerAgent: 100,
+				},
 			},
 		}
 	case provisionerConf != nil && resourcePoolsConf != nil:
