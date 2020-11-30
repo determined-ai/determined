@@ -74,6 +74,11 @@ const routes: RouteConfig[] = [
     title: 'Dashboard',
   },
   {
+    id: 'wait',
+    needAuth: true,
+    path: '/wait/:taskType/:taskId',
+  },
+  {
     id: 'signIn',
     needAuth: false,
     path: '/login',
