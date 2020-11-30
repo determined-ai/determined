@@ -553,6 +553,7 @@ commands:
             -w /webui/tests \
             --env DET_MASTER=determined-master:8080 \
             determinedai/gauge-taiko-ts
+          rm -f webui/tests/reports/videos/*.jpeg
 
   run-e2e-webui-tests-cypress:
     steps:
