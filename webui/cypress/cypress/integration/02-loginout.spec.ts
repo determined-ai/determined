@@ -48,6 +48,7 @@ describe('Sign in/out', () => {
     cy.login();
     cy.visit(LOGIN_ROUTE);
     cy.url().should('not.contain', LOGIN_ROUTE);
+    cy.checkLoggedIn(); // wait until dashboard is loaded.
   });
 
   it('should logout the user when visiting the logout page', () => {
