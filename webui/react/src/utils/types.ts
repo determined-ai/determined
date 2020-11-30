@@ -77,6 +77,7 @@ export const killableCmdStates = [
 
 export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminated,
+  CommandState.Terminating,
 ]);
 
 export const terminalRunStates: Set<RunState> = new Set([
