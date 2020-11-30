@@ -13,7 +13,7 @@ describe('Task List', () => {
 
   describe('Notebooks', () => {
     it('should launch notebooks', () => {
-      cy.get('button[aria-label="Notebook"]').click();
+      cy.get('button[aria-label="Notebook"]').should('be.visible').click();
       cy.server();
       cy.route('POST', /\/notebook.*/).as('createRequest');
       cy.contains(/launch notebook/i).click();
@@ -24,7 +24,7 @@ describe('Task List', () => {
     });
 
     it('should terminate notebook', () => {
-      cy.get('button[aria-label="Notebook"]').click();
+      cy.get('button[aria-label="Notebook"]').should('be.visible').click();
       cy.get(`${recordSelector}:first .ant-dropdown-trigger`).click();
       cy.get(overflowSelector).contains(/kill/i).click();
       // Using the server/route approach to detect endpoint calls does not work with new API
@@ -36,7 +36,7 @@ describe('Task List', () => {
 
   describe('Tensorboards', () => {
     it('should launch tensorboard', () => {
-      cy.get('button[aria-label="Tensorboard"]').click();
+      cy.get('button[aria-label="Tensorboard"]').should('be.visible').click();
       cy.server();
       cy.route('POST', /\/tensorboard.*/).as('createRequest');
       cy.visit('/det/experiments');
@@ -50,7 +50,7 @@ describe('Task List', () => {
     });
 
     it('should terminate tensorboard', () => {
-      cy.get('button[aria-label="Tensorboard"]').click();
+      cy.get('button[aria-label="Tensorboard"]').should('be.visible').click();
       cy.get(`${recordSelector}:first .ant-dropdown-trigger`).click();
       cy.get(overflowSelector).contains(/kill/i).click();
       // Using the server/route approach to detect endpoint calls does not work with new API
