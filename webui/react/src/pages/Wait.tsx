@@ -3,8 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
+import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
 import { IndicatorUnpositioned } from 'components/Spinner';
+import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { CommandState } from 'types';
@@ -26,10 +28,16 @@ interface Queries {
 
 const Wait: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
+  // const ui = UI.useStateContext();
+  const setUI = UI.useActionContext();
   const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
   const taskTypeCap = capitalize(taskType);
+
+  useEffect(() => {
+    setUI({ type: UI.ActionType.HideChrome });
+  }, [ setUI ]);
 
   const handleWsError = (err: Error) => {
     handleError({
@@ -39,6 +47,7 @@ const Wait: React.FC = () => {
       type: ErrorType.Server,
     });
   };
+
   useEffect(() => {
     if (!eventUrl || !serviceAddr) return;
 
@@ -67,7 +76,7 @@ const Wait: React.FC = () => {
 
   }, [ eventUrl, serviceAddr ]);
 
-  let message = `Waiting for ${taskTypeCap}`;
+  let message = `Waiting for ${taskTypeCap} ...`;
   if ((!eventUrl || !serviceAddr)) {
     message = 'Missing required parameters.';
   }
@@ -79,9 +88,11 @@ const Wait: React.FC = () => {
     <Page id="wait">
       <div className={css.base}>
         <div className={css.content}>
+          <Logo type={LogoTypes.OnLightVertical} />
           <p>Service State: {waitStatus?.state}</p>
           <p>{message}</p>
-          <IndicatorUnpositioned />
+          <br />
+          {!waitStatus || !terminalCommandStates.has(waitStatus.state) && <IndicatorUnpositioned />}
         </div>
       </div>
     </Page>
