@@ -85,6 +85,9 @@ export const openCommand = async (command: Command | CommandTask): Promise<void>
     message: `Loading ${cmdKind}`,
     placement: 'topRight',
   });
+  const waitPath = `${process.env.PUBLIC_URL}/wait/${kind}/${command.id}`;
+  const waitParams = `?eventUrl=${url}&serviceAddr=${command.serviceAddress}`;
+  openBlank(waitPath + waitParams);
   await waitCommandReady(url);
   notification.close(command.id);
   notification.open({
