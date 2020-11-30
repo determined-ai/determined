@@ -1,13 +1,15 @@
 import queryString from 'query-string';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import Message from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
-import history from 'routes/history';
+import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
-import { waitCommandReady } from 'wait';
+import { capitalize } from 'utils/string';
+import { terminalCommandStates } from 'utils/types';
+import { waitCommandReady, WaitStatus } from 'wait';
 
 interface Params {
   taskId: string;
@@ -21,28 +23,42 @@ interface Queries {
 
 const Wait: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
-  const [ message, setMessage ] = useState<string>();
+  const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
+
+  const taskTypeCap = capitalize(taskType);
 
   useEffect(() => {
     if (!eventUrl || !serviceAddr) return;
-    console.log(serviceAddr);
     waitCommandReady(eventUrl)
-      .then(() => {
-        window.location.assign(serverAddress(serviceAddr));
+      .then((status) => {
+        setWaitStatus(status);
+        if (status.isReady) window.location.assign(serverAddress(serviceAddr));
       })
-      .catch(() => {
-        setMessage('Error'); // TODO
+      .catch((err: Error) => {
+        handleError({
+          error: err,
+          message: 'failed while waiting for command to be ready',
+          silent: false,
+          type: ErrorType.Server,
+        });
       });
-  }, [ eventUrl, serviceAddr, setMessage ]);
+  }, [ eventUrl, serviceAddr ]);
 
-  if (!eventUrl || !serviceAddr) return <Message title="missing required parameters" />;
+  let message: React.ReactNode;
+  if ((!eventUrl || !serviceAddr)) {
+    message = <Message title='Missing required parameters.' />;
+  }
+  if (waitStatus && terminalCommandStates.has(waitStatus.state)) {
+    message = <Message title={`${taskTypeCap} has been terminated.`} />;
+  }
 
   return (
-    <Page id="wait" title={`Waiting for ${taskType} ${taskId}`}>
-      <Message title={message || 'Loading'} />
-
-      <Spinner />
+    <Page id="wait" title={`Waiting for ${taskTypeCap} ${taskId}`}>
+      {message ?
+        message :
+        <Spinner />
+      }
     </Page>
   );
 };

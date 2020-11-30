@@ -2,9 +2,9 @@ import { notification } from 'antd';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
 import { openBlank, serverAddress } from 'routes/utils';
-import { Command, CommandTask, CommandType } from 'types';
+import { Command, CommandState, CommandTask, CommandType } from 'types';
 import { capitalize } from 'utils/string';
-import { isCommandTask } from 'utils/types';
+import { isCommandTask, terminalCommandStates } from 'utils/types';
 
 // createWsUrl: Given an event url create the corresponding ws url.
 function createWsUrl(eventUrl: string): string {
@@ -23,7 +23,12 @@ function createWsUrl(eventUrl: string): string {
 
 const ERROR_STATES = new Set([ 'TERMINATED', 'TERMINATING' ]);
 
-export const waitCommandReady = (eventUrl: string): Promise<unknown> => {
+export interface WaitStatus {
+  isReady: boolean;
+  state: CommandState
+}
+
+export const waitCommandReady = (eventUrl: string): Promise<WaitStatus> => {
   return new Promise((resolve, reject) => {
     const url = createWsUrl(eventUrl);
     const client = new W3CWebSocket(url);
@@ -34,10 +39,10 @@ export const waitCommandReady = (eventUrl: string): Promise<unknown> => {
       if (msg.snapshot) {
         const state = msg.snapshot.state;
         if (state === 'RUNNING' && msg.snapshot.is_ready) {
-          resolve();
+          resolve({ isReady: true, state: CommandState.Running });
           client.close();
         } else if (ERROR_STATES.has(state)) {
-          reject(state);
+          resolve({ isReady: false, state });
           client.close();
         }
       }
@@ -85,18 +90,31 @@ export const openCommand = async (command: Command | CommandTask): Promise<void>
     message: `Loading ${cmdKind}`,
     placement: 'topRight',
   });
+
   const waitPath = `${process.env.PUBLIC_URL}/wait/${kind}/${command.id}`;
   const waitParams = `?eventUrl=${url}&serviceAddr=${command.serviceAddress}`;
   openBlank(waitPath + waitParams);
-  await waitCommandReady(url);
-  notification.close(command.id);
-  notification.open({
-    description: `Click to open ${name}`,
-    duration: 0,
-    key: command.id,
-    message: `${cmdKind} Ready`,
-    onClick: readyOpenHandler(command),
-    placement: 'topRight',
-  });
 
+  const waitStatus = await waitCommandReady(url);
+  notification.close(command.id);
+  if (waitStatus.isReady) {
+    notification.open({
+      description: `Click to open ${name}`,
+      duration: 0,
+      key: command.id,
+      message: `${cmdKind} Ready`,
+      onClick: readyOpenHandler(command),
+      placement: 'topRight',
+    });
+  }
+  if (terminalCommandStates.has(waitStatus.state)) {
+    notification.open({
+      description: `${name} is terminated.`,
+      duration: 0,
+      key: command.id,
+      message: `${cmdKind} Terminated`,
+      placement: 'topRight',
+    });
+
+  }
 };
