@@ -7,7 +7,7 @@ import { capitalize } from 'utils/string';
 import { isCommandTask, terminalCommandStates } from 'utils/types';
 
 // createWsUrl: Given an event url create the corresponding ws url.
-function createWsUrl(eventUrl: string): string {
+export function createWsUrl(eventUrl: string): string {
   const isFullUrl = /^https?:\/\//i;
 
   if (isFullUrl.test(eventUrl)) {
@@ -91,7 +91,7 @@ export const openCommand = async (command: Command | CommandTask): Promise<void>
     placement: 'topRight',
   });
 
-  const waitPath = `${process.env.PUBLIC_URL}/wait/${kind}/${command.id}`;
+  const waitPath = `${process.env.PUBLIC_URL}/wait/${kind.toLowerCase()}/${command.id}`;
   const waitParams = `?eventUrl=${url}&serviceAddr=${command.serviceAddress}`;
   openBlank(waitPath + waitParams);
 

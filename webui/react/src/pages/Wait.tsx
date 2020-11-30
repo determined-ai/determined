@@ -1,15 +1,18 @@
 import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
-import Message from 'components/Message';
 import Page from 'components/Page';
-import Spinner from 'components/Spinner';
+import { IndicatorUnpositioned } from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
+import { CommandState } from 'types';
 import { capitalize } from 'utils/string';
 import { terminalCommandStates } from 'utils/types';
-import { waitCommandReady, WaitStatus } from 'wait';
+import { createWsUrl, WaitStatus } from 'wait';
+
+import css from './Wait.module.scss';
 
 interface Params {
   taskId: string;
@@ -28,37 +31,59 @@ const Wait: React.FC = () => {
 
   const taskTypeCap = capitalize(taskType);
 
+  const handleWsError = (err: Error) => {
+    handleError({
+      error: err,
+      message: 'failed while waiting for command to be ready',
+      silent: false,
+      type: ErrorType.Server,
+    });
+  };
   useEffect(() => {
     if (!eventUrl || !serviceAddr) return;
-    waitCommandReady(eventUrl)
-      .then((status) => {
-        setWaitStatus(status);
-        if (status.isReady) window.location.assign(serverAddress(serviceAddr));
-      })
-      .catch((err: Error) => {
-        handleError({
-          error: err,
-          message: 'failed while waiting for command to be ready',
-          silent: false,
-          type: ErrorType.Server,
-        });
-      });
+
+    const url = createWsUrl(eventUrl);
+    const client = new W3CWebSocket(url);
+
+    client.onmessage = (messageEvent) => {
+      if (typeof messageEvent.data !== 'string') return;
+      const msg = JSON.parse(messageEvent.data);
+      if (msg.snapshot) {
+        const state = msg.snapshot.state;
+        if (state === 'RUNNING' && msg.snapshot.is_ready) {
+          setWaitStatus({ isReady: true, state: CommandState.Running });
+          client.close();
+          window.location.assign(serverAddress(serviceAddr));
+        } else if (terminalCommandStates.has(state)) {
+          setWaitStatus({ isReady: false, state });
+          client.close();
+        }
+        setWaitStatus({ isReady: false, state });
+      }
+    };
+
+    // client.onclose = handleWsError;
+    client.onerror = handleWsError;
+
   }, [ eventUrl, serviceAddr ]);
 
-  let message: React.ReactNode;
+  let message = `Waiting for ${taskTypeCap}`;
   if ((!eventUrl || !serviceAddr)) {
-    message = <Message title='Missing required parameters.' />;
+    message = 'Missing required parameters.';
   }
   if (waitStatus && terminalCommandStates.has(waitStatus.state)) {
-    message = <Message title={`${taskTypeCap} has been terminated.`} />;
+    message = `${taskTypeCap} has been terminated.`;
   }
 
   return (
-    <Page id="wait" title={`Waiting for ${taskTypeCap} ${taskId}`}>
-      {message ?
-        message :
-        <Spinner />
-      }
+    <Page id="wait">
+      <div className={css.base}>
+        <div className={css.content}>
+          <p>Service State: {waitStatus?.state}</p>
+          <p>{message}</p>
+          <IndicatorUnpositioned />
+        </div>
+      </div>
     </Page>
   );
 };

@@ -8,8 +8,16 @@ import css from './Spinner.module.scss';
 
 interface Props extends SpinProps, SpinState {}
 
+export const IndicatorUnpositioned: React.FC = () => {
+  const classes = [ css.spin ];
+  return <div className={classes.join(' ')}>
+    <Icon name="spinner" size="large" />
+  </div>;
+};
+
 export const Indicator: React.FC = () => {
-  return <div className={css.spin}>
+  const classes = [ css.spin, css.center ];
+  return <div className={classes.join(' ')}>
     <Icon name="spinner" size="large" />
   </div>;
 };
