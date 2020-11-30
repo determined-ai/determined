@@ -75,9 +75,14 @@ export const handlePath = (
   }
 };
 
-// Given a react url returns the react route path.
-const getReactPath = (url: string): string => {
-  return parseUrl(url).pathname.replace(process.env.PUBLIC_URL, '');
+// remove host and public_url.
+const stripUrl = (aUrl: string): string => {
+  const url = parseUrl(aUrl);
+  const rest = url.href.replace(url.origin, '');
+  if (rest.startsWith(process.env.PUBLIC_URL)) {
+    return rest.replace(process.env.PUBLIC_URL, '');
+  }
+  return rest;
 };
 
 const findReactRoute = (url: string): RouteConfig | undefined => {
@@ -87,7 +92,7 @@ const findReactRoute = (url: string): RouteConfig | undefined => {
     url = url.replace(reactHostAddress(), '');
   }
   // Check to see if the path matches any of the defined app routes.
-  const pathname = getReactPath(url);
+  const pathname = parseUrl(url).pathname.replace(process.env.PUBLIC_URL, '');
   return routes
     .filter(route => route.path !== '*')
     .find(route => {
@@ -105,7 +110,7 @@ export const routeAll = (path: string): void => {
   if (!matchingReactRoute) {
     routeToExternalUrl(path);
   } else {
-    history.push(getReactPath(path), { loginRedirect: clone(window.location) });
+    history.push(stripUrl(path), { loginRedirect: clone(window.location) });
   }
 };
 
