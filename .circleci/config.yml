@@ -544,6 +544,8 @@ commands:
     steps:
       - run: python webui/tests/bin/createUserAndExperiments.py
       - run: |
+          mkdir -p webui/tests/reports/logs
+          mkdir -p webui/tests/reports/videos
           docker run \
             --name e2e_gauge \
             --network=determined_default \
