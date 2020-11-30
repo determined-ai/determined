@@ -57,6 +57,7 @@ class TFKerasContext:
         self._fit_use_multiprocessing = False
         self._fit_max_queue_size = 10
         self._fit_shuffle = True
+        self._fit_validation_steps = None
 
     def configure_fit(
         self,
@@ -66,6 +67,7 @@ class TFKerasContext:
         use_multiprocessing: Optional[bool] = None,
         max_queue_size: Optional[bool] = None,
         shuffle: Optional[bool] = None,
+        validation_steps: Any = _arg_not_provided,
     ) -> None:
         """
         Configure parameters of ``model.fit()``.  See the `Keras documentation
@@ -102,6 +104,8 @@ class TFKerasContext:
             self._fit_max_queue_size = max_queue_size
         if shuffle is not None:
             self._fit_shuffle = shuffle
+        if not isinstance(validation_steps, _ArgNotProvided):
+            self._fit_validation_steps = validation_steps
 
     def _wrap_model_with_train_fn(self, model: Any, train_fn: Optional[Callable]) -> Any:
         class _WrappedModel(type(model)):  # type: ignore
