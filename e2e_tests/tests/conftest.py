@@ -31,6 +31,12 @@ def pytest_addoption(parser: Parser) -> None:
         "--master-config-path", action="store", default=None, help="Path to master config path"
     )
     parser.addoption(
+        "--master-scheme",
+        action="store",
+        default="http",
+        help="Master scheme for integration tests",
+    )
+    parser.addoption(
         "--master-host",
         action="store",
         default="localhost",
@@ -66,12 +72,14 @@ def pytest_addoption(parser: Parser) -> None:
 def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
     master_config_path = request.config.getoption("--master-config-path")
     master_config_path = Path(master_config_path) if master_config_path else None
+    master_scheme = request.config.getoption("--master-scheme")
     master_host = request.config.getoption("--master-host")
     master_port = request.config.getoption("--master-port")
     det_version = request.config.getoption("--det-version")
     follow_local_logs = request.config.getoption("--follow-local-logs")
     compose_file = request.config.getoption("--compose-file")
 
+    config.MASTER_SCHEME = master_scheme
     config.MASTER_IP = master_host
     config.MASTER_PORT = master_port
     config.DET_VERSION = det_version

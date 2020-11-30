@@ -1,4 +1,5 @@
 import argparse
+import base64
 import re
 import sys
 from typing import Callable, Dict, Type, Union
@@ -55,6 +56,15 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--enable-cors",
         action="store_true",
         help="allow CORS requests or not: true/false",
+    )
+    subparser.add_argument(
+        "--master-tls-cert",
+    )
+    subparser.add_argument(
+        "--master-tls-key",
+    )
+    subparser.add_argument(
+        "--master-cert-name",
     )
     subparser.add_argument(
         "--agent-instance-type",
@@ -196,9 +206,20 @@ def deploy_aws(args: argparse.Namespace) -> None:
                 f"deployment-type={args.deployment_type}."
             )
 
+    master_tls_cert = master_tls_key = ""
+    if args.master_tls_cert:
+        with open(args.master_tls_cert, "rb") as f:
+            master_tls_cert = base64.b64encode(f.read()).decode()
+    if args.master_tls_key:
+        with open(args.master_tls_key, "rb") as f:
+            master_tls_key = base64.b64encode(f.read()).decode()
+
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
         constants.cloudformation.ENABLE_CORS: args.enable_cors,
+        constants.cloudformation.MASTER_TLS_CERT: master_tls_cert,
+        constants.cloudformation.MASTER_TLS_KEY: master_tls_key,
+        constants.cloudformation.MASTER_CERT_NAME: args.master_cert_name,
         constants.cloudformation.MASTER_INSTANCE_TYPE: args.master_instance_type,
         constants.cloudformation.AGENT_INSTANCE_TYPE: args.agent_instance_type,
         constants.cloudformation.CLUSTER_ID: args.cluster_id,

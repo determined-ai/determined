@@ -271,12 +271,21 @@ commands:
       junit-path:
         type: string
         default: "/tmp/test-results/e2e/tests.xml"
+      master-scheme:
+        type: string
+        default: "http"
       master-host:
         type: string
         default: "localhost"
       master-port:
         type: string
         default: "8080"
+      master-cert:
+        type: string
+        default: ""
+      master-cert-name:
+        type: string
+        default: ""
     steps:
       - run:
           name: Split tests
@@ -287,6 +296,7 @@ commands:
             sed 's/^/- /' </tmp/tests-to-run
 
       - wait-for-master:
+          scheme: <<parameters.master-scheme>>
           host: <<parameters.master-host>>
           port: <<parameters.master-port>>
 
@@ -294,9 +304,11 @@ commands:
           name: Run e2e tests
           working_directory: ~/project/e2e_tests
           command: |
+            DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             pytest -vv -s \
             -m <<parameters.mark>> \
             --durations=0 \
+            --master-scheme="<<parameters.master-scheme>>" \
             --master-host="<<parameters.master-host>>" \
             --master-port="<<parameters.master-port>>" \
             -o junit_family=xunit1 \
@@ -332,6 +344,15 @@ commands:
       enable-cors:
         type: boolean
         default: false
+      master-tls-cert:
+        type: string
+        default: ""
+      master-tls-key:
+        type: string
+        default: ""
+      master-cert-name:
+        type: string
+        default: ""
       agent-instance-type:
         type: string
         default: "p2.xlarge"
@@ -339,36 +360,37 @@ commands:
         type: integer
         default: 1
     steps:
+      - run:
+          name: Initialize extra arguments
+          command: touch /tmp/det-deploy-extra-args
       - when:
           condition:
             equal:
                [ true, << parameters.enable-cors >> ]
           steps:
           - run:
-              name: Deploy AWS cluster
-              command: |
-                det-deploy aws up \
-                  --cluster-id <<parameters.cluster-id>> \
-                  --det-version <<parameters.det-version>> \
-                  --agent-instance-type <<parameters.agent-instance-type>> \
-                  --max-dynamic-agents <<parameters.max-dynamic-agents>> \
-                  --keypair <<parameters.keypair>> \
-                  --enable-cors
-      - when:
-          condition:
-            equal:
-               [ false, << parameters.enable-cors >> ]
-          steps:
-          - run:
-              name: Deploy AWS cluster
-              command: |
-                det-deploy aws up \
-                  --cluster-id <<parameters.cluster-id>> \
-                  --det-version <<parameters.det-version>> \
-                  --agent-instance-type <<parameters.agent-instance-type>> \
-                  --max-dynamic-agents <<parameters.max-dynamic-agents>> \
-                  --keypair <<parameters.keypair>> \
+              name: Enable CORS
+              command: 'echo --enable-cors >> /tmp/det-deploy-extra-args'
 
+      - run:
+          name: Configure TLS arguments
+          command: |
+            if [ -n "<<parameters.master-tls-cert>>" ]; then echo "--master-tls-cert <<parameters.master-tls-cert>>" >> /tmp/det-deploy-extra-args; fi
+            if [ -n "<<parameters.master-tls-key>>" ]; then echo "--master-tls-key <<parameters.master-tls-key>>" >> /tmp/det-deploy-extra-args; fi
+            if [ -n "<<parameters.master-cert-name>>" ]; then echo "--master-cert-name <<parameters.master-cert-name>>" >> /tmp/det-deploy-extra-args; fi
+      - run:
+          name: Deploy AWS cluster
+          command: |
+            echo "-----BEGIN ARGS-----"
+            cat /tmp/det-deploy-extra-args
+            echo "-----END ARGS-----"
+            det-deploy aws up \
+              $(< /tmp/det-deploy-extra-args) \
+              --cluster-id <<parameters.cluster-id>> \
+              --det-version <<parameters.det-version>> \
+              --agent-instance-type <<parameters.agent-instance-type>> \
+              --max-dynamic-agents <<parameters.max-dynamic-agents>> \
+              --keypair <<parameters.keypair>>
   terminate-aws-cluster:
     parameters:
       cluster-id:
@@ -393,6 +415,12 @@ commands:
       max-dynamic-agents:
         type: integer
         default: 1
+      master-tls-cert:
+        type: string
+      master-tls-key:
+        type: string
+      master-cert-name:
+        type: string
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -401,10 +429,17 @@ commands:
           det-version: <<parameters.det-version>>
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          master-tls-cert: <<parameters.master-tls-cert>>
+          master-tls-key: <<parameters.master-tls-key>>
+          master-cert-name: <<parameters.master-cert-name>>
       - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
+          master-tls-cert: <<parameters.master-tls-cert>>
+          master-tls-key: <<parameters.master-tls-key>>
       - wait-for-master:
+          scheme: ${MASTER_SCHEME:-http}
           host: ${MASTER_HOST}
+          port: ${MASTER_PORT:-8080}
 
   terminate-gke-cluster:
     parameters:
@@ -534,14 +569,30 @@ commands:
             --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
             --browser electron
 
+  generate-tls-cert:
+    steps:
+      - run: |
+          .circleci/scripts/generate_cert.sh /tmp/master
+          echo 'export MASTER_TLS_CERT=/tmp/master.crt MASTER_TLS_KEY=/tmp/master.key MASTER_CERT_NAME=determined-master-ci' >> $BASH_ENV
+
   set-master-address-aws:
     parameters:
       cluster-id:
+        type: string
+      master-tls-cert:
+        type: string
+      master-tls-key:
         type: string
     steps:
       - run: |
           MASTER_HOST=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> DeterminedAddress)
           echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
+
+      - run: |
+          if [ -n "<<parameters.master-tls-cert>>" ] && [ -n "<<parameters.master-tls-key>>" ]; then
+            echo "export MASTER_PORT=8443" >> $BASH_ENV
+            echo "export MASTER_SCHEME=https" >> $BASH_ENV
+          fi
 
   set-master-address-gke:
     parameters:
@@ -575,13 +626,16 @@ commands:
 
   wait-for-master:
     parameters:
+      scheme:
+        type: string
+        default: "http"
       host:
         type: string
       port:
         type: string
         default: "8080"
     steps:
-      - run: python .circleci/scripts/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
+      - run: python .circleci/scripts/wait_for_master.py <<parameters.scheme>>://<<parameters.host>>:<<parameters.port>>
 
   upload-cloud-watch-to-s3:
     parameters:
@@ -1126,6 +1180,9 @@ jobs:
       parallelism:
         type: integer
         default: 1
+      enable-tls:
+        type: boolean
+        default: false
       slack-mentions:
         type: string
         default: ""
@@ -1145,14 +1202,25 @@ jobs:
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
+      - when:
+          condition: <<parameters.enable-tls>>
+          steps:
+            - generate-tls-cert
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          master-tls-cert: ${MASTER_TLS_CERT}
+          master-tls-key: ${MASTER_TLS_KEY}
+          master-cert-name: ${MASTER_CERT_NAME}
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
+          master-scheme: ${MASTER_SCHEME:-http}
+          master-port: ${MASTER_PORT:-8080}
+          master-cert: ${MASTER_TLS_CERT}
+          master-cert-name: ${MASTER_CERT_NAME}
       - upload-cloud-watch-to-s3:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
@@ -1445,6 +1513,7 @@ workflows:
             parameters:
               parallelism: [2]
               cluster-id-prefix: ["e2e-gpu"]
+              enable-tls: [true]
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
@@ -1489,6 +1558,7 @@ workflows:
             parameters:
               parallelism: [2]
               cluster-id-prefix: ["e2e-gpu"]
+              enable-tls: [true]
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 

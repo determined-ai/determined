@@ -9,7 +9,7 @@ from tests import experiment as exp
 from tests.filetree import FileTree
 
 AWAITING_METRICS = "TensorBoard is awaiting metrics"
-SERVICE_READY = "TensorBoard is running at: http://"
+SERVICE_READY = "TensorBoard is running at: http"
 num_trials = 1
 
 
