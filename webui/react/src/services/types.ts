@@ -6,7 +6,7 @@ export interface ApiCommonParams {
   cancelToken?: CancelToken,
 }
 
-export interface OptionParams {
+export interface FetchOptionParams {
   signal?: AbortSignal;
 }
 

@@ -4,6 +4,7 @@ import Auth from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
 import { getCurrentUser, isAuthFailure } from 'services/api';
+import { isAborted } from 'services/utils';
 
 const useAuthCheck = (): (() => void) => {
   const setAuth = Auth.useActionContext();
@@ -28,7 +29,7 @@ const useAuthCheck = (): (() => void) => {
           value: { isAuthenticated: true, token: authToken, user },
         });
       } catch (e) {
-        if (e.name === 'AbortError') return;
+        if (isAborted(e)) return;
         const isAuthError = isAuthFailure(e);
         handleError({
           error: e,
