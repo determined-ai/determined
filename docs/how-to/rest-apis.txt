@@ -9,37 +9,8 @@ interact with a Determined cluster programmatically. Determined includes
 detailed documentation about all of the REST endpoints provided by the
 API, alongside a playground for interacting with the API. The endpoint
 documentation and playground are provided via `Swagger UI
-<https://swagger.io/tools/swagger-ui/>`__.
-
-************
- Swagger UI
-************
-
-As Swagger puts it:
-
-   "Swagger UI allows anyone — be it your development team or your end
-   consumers — to visualize and interact with the API’s resources
-   without having any of the implementation logic in place. It’s
-   automatically generated from your OpenAPI (formerly known as Swagger)
-   Specification, with the visual documentation making it easy for back
-   end implementation and client-side consumption."
-
-A static version of the Swagger UI is bundled with these docs `here
-<../rest-api/index.html>`__. If you have access to a running Determined
-cluster you can checkout the live-interact version by clicking the API
-icon from the Determined WebUI or by visiting the path `/docs/rest-api/`
-on your Determined cluster.
-
-The Swagger UI gives you an up-to-date view of the APIs your Determined
-cluster provides in a readable and interactive fashion.
-
-On this page, you'll see a list of all the available endpoints grouped
-by their workflows. If you click on each endpoint you'll be presented
-with expected inputs and outputs for it as well as an interactive tool
-that lets you try out the endpoint. Note that for the interactive
-portion to work, you'd need to have the appropriate cookie set and have
-a running cluster. To set up the authentication take a look at the
-authentication section below or simply log in through the WebUI.
+<https://swagger.io/tools/swagger-ui/>`__ and are available `here
+<../rest-api/index.html>`__.
 
 ****************
  Authentication
@@ -145,21 +116,3 @@ specified by the endpoint:
 .. code:: bash
 
    curl -H "Authorization: Bearer ${token}" -X POST "${DET_MASTER}/api/v1/experiments/16/unarchive"
-
-************************
- How Our REST APIs work
-************************
-
-We use `protobuf <https://developers.google.com/protocol-buffers>`_ to
-define language-agnostic message structures. We use these type
-definitions with `gRPC-gateway
-<https://grpc-ecosystem.github.io/grpc-gateway/>`_ to provide consistent
-REST endpoints to serve various needs.
-
-Using these two tools we also auto-generate OpenAPI v2 spec (aka Swagger
-RESTful API Documentation Specification) which lets us inline
-documentation for each endpoint and response in our codebase.
-
-Having this specification prepared we can serve it to different tools to
-generate code for different languages (eg swagger codegen) as well as
-provide web-based explorers into our APIs (e.g., Swagger UI).
