@@ -117,5 +117,6 @@ func ReportResourcePoolCreated(
 		"scheduler_type":     schedulerType,
 		"fitting_policy":     fittingPolicy,
 		"preemption_enabled": preemptionEnabled,
+		"version":            "1",
 	})
 }
