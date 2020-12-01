@@ -55,37 +55,28 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 	taskList, mockGroups, _ := setupSchedulerStates(t, system, tasks, groups, agents)
 
 	pendingTasksByPriority, _ := sortTasksByPriorityAndTimestamp(taskList, mockGroups, "")
-	for priority, tasksInPriority := range pendingTasksByPriority {
-		switch priority {
-		case lowerPriority:
-			expectedTasks := []*mockTask{tasks[0], tasks[1]}
-			assertEqualToAllocate(t, tasksInPriority, expectedTasks)
-		case higherPriority:
-			expectedTasks := []*mockTask{tasks[4]}
-			assertEqualToAllocate(t, tasksInPriority, expectedTasks)
-		default:
-			panic("unexpected priority")
-		}
-	}
+
+	tasksInLowerPriority := pendingTasksByPriority[lowerPriority]
+	expectedTasksInLowerPriority := []*mockTask{tasks[0], tasks[1]}
+	assertEqualToAllocate(t, tasksInLowerPriority, expectedTasksInLowerPriority)
+
+	tasksInHigherPriority := pendingTasksByPriority[higherPriority]
+	expectedTasksInHigherPriority := []*mockTask{tasks[4]}
+	assertEqualToAllocate(t, tasksInHigherPriority, expectedTasksInHigherPriority)
 
 	setTaskAllocations(t, taskList, "task5", 1)
-
 	_, scheduledTasksByPriority := sortTasksByPriorityAndTimestamp(taskList, mockGroups, "")
-	for priority, tasksInPriority := range scheduledTasksByPriority {
-		switch priority {
-		case lowerPriority:
-			expectedTasks := make([]*mockTask, 0)
-			assertEqualToAllocate(t, tasksInPriority, expectedTasks)
-		case higherPriority:
-			expectedTasks := []*mockTask{tasks[4]}
-			assertEqualToAllocate(t, tasksInPriority, expectedTasks)
-		default:
-			panic("unexpected priority")
-		}
-	}
+
+	tasksInLowerPriority = scheduledTasksByPriority[lowerPriority]
+	expectedTasksInLowerPriority = make([]*mockTask, 0)
+	assertEqualToAllocate(t, tasksInLowerPriority, expectedTasksInLowerPriority)
+
+	tasksInHigherPriority = scheduledTasksByPriority[higherPriority]
+	expectedTasksInHigherPriority = []*mockTask{tasks[4]}
+	assertEqualToAllocate(t, tasksInHigherPriority, expectedTasksInHigherPriority)
 }
 
-func TestPrioritySchedulingNoPreemption(t *testing.T) {
+func TestPrioritySchedulingPreemptionDisabled(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
@@ -121,7 +112,7 @@ func TestPrioritySchedulingNoPreemption(t *testing.T) {
 	}
 }
 
-func TestPrioritySchedulingNoPreemptionCase2(t *testing.T) {
+func TestPrioritySchedulingPreemptionDisabledHigherPriorityBlocksLowerPriority(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
@@ -154,7 +145,7 @@ func TestPrioritySchedulingNoPreemptionCase2(t *testing.T) {
 	}
 }
 
-func TestPrioritySchedulingNoPreemptionWithLabels(t *testing.T) {
+func TestPrioritySchedulingPreemptionDisabledWithLabels(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
@@ -213,7 +204,7 @@ func TestPrioritySchedulingPreemption(t *testing.T) {
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
-func TestPrioritySchedulingNoSchedule(t *testing.T) {
+func TestPrioritySchedulingLowPriorityTasksAreBlockedByHigherPriority(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
