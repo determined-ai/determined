@@ -159,7 +159,16 @@ func setupResourcePool(
 	if config == nil {
 		config = &ResourcePoolConfig{PoolName: "pool"}
 	}
-	rp := NewResourcePool(config, nil, NewFairShareScheduler(), BestFit)
+	if config.Scheduler == nil {
+		config.Scheduler = &SchedulerConfig{
+			FairShare:     &FairShareSchedulerConfig{},
+			FittingPolicy: best,
+		}
+	}
+
+	rp := NewResourcePool(
+		config, nil, MakeScheduler(config.Scheduler.GetType()),
+		MakeFitFunction(config.Scheduler.FittingPolicy))
 	rp.taskList, rp.groups, rp.agents = setupSchedulerStates(
 		t, system, mockTasks, mockGroups, mockAgents,
 	)

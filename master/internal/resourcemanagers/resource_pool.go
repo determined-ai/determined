@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
@@ -206,6 +207,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		reportResourcePoolCreated(ctx.Self().System(), rp.config)
 		err := rp.setupProvisioner(ctx)
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 		return err
@@ -382,4 +384,25 @@ func (c containerAllocation) Kill(ctx *actor.Context) {
 	ctx.Tell(c.agent.handler, sproto.KillTaskContainer{
 		ContainerID: c.container.id,
 	})
+}
+
+func reportResourcePoolCreated(system *actor.System, config *ResourcePoolConfig) {
+	if config.Scheduler == nil {
+		panic("scheduler not configured in resource pool")
+	}
+
+	var preemptionEnabled bool
+	switch {
+	case config.Scheduler.FairShare != nil:
+		preemptionEnabled = true
+	case config.Scheduler.Priority != nil:
+		preemptionEnabled = config.Scheduler.Priority.Preemption
+	case config.Scheduler.RoundRobin != nil:
+		preemptionEnabled = false
+	}
+
+	telemetry.ReportResourcePoolCreated(
+		system, config.PoolName, config.Scheduler.GetType(),
+		config.Scheduler.FittingPolicy, preemptionEnabled,
+	)
 }

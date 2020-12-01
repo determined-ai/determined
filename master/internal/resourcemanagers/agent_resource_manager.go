@@ -82,7 +82,7 @@ func (a *agentResourceManager) createResourcePool(
 	rp := NewResourcePool(
 		&config,
 		cert,
-		MakeScheduler(config.Scheduler.getType()),
+		MakeScheduler(config.Scheduler.GetType()),
 		MakeFitFunction(config.Scheduler.FittingPolicy),
 	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
