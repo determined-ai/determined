@@ -20,10 +20,25 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
 /* Authentication */
 
+export const login = generateApi<Credentials, LoginResponse>(Config.login);
+
+/*
+ * Login is an exception where the caller will perform the error handling,
+ * so it is one of the few API calls that will not have a try/catch block.
+ */
+// Temporarily disabling this until we figure out how we want to secure new login endpoint.
+// export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
+//   const response = await detApi.Auth.determinedLogin({
+//     password: Config.saltAndHashPassword(credentials.password),
+//     username: credentials.username,
+//   } as Api.V1LoginRequest);
+//   return response;
+// };
+
+export const logout = generateDetApi<EmptyParams, Api.V1LogoutResponse, void>(Config.logout);
+
 export const getCurrentUser =
-  generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser> (
-    Config.getCurrentUser,
-  );
+  generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(Config.getCurrentUser);
 
 export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
 
@@ -34,9 +49,7 @@ export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
 /* Agent */
 
 export const getAgents =
-  generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> (
-    Config.getAgents,
-  );
+  generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]>(Config.getAgents);
 
 /* Experiments */
 
@@ -85,50 +98,37 @@ export const getTrialDetails =
 
 export const forkExperiment = generateApi<ForkExperimentParams, number>(Config.forkExperiment);
 
-export const archiveExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1ArchiveExperimentResponse, void> (
-    Config.archiveExperiment,
-  );
+export const archiveExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
+>(Config.archiveExperiment);
 
-export const unarchiveExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void> (
-    Config.unarchiveExperiment,
-  );
+export const unarchiveExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
+>(Config.unarchiveExperiment);
 
-export const activateExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1ActivateExperimentResponse, void> (
-    Config.activateExperiment,
-  );
+export const activateExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1ActivateExperimentResponse, void
+>(Config.activateExperiment);
 
-export const pauseExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1PauseExperimentResponse, void> (
-    Config.pauseExperiment,
-  );
+export const pauseExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1PauseExperimentResponse, void
+>(Config.pauseExperiment);
 
-export const cancelExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1CancelExperimentResponse, void> (
-    Config.cancelExperiment,
-  );
+export const cancelExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1CancelExperimentResponse, void
+>(Config.cancelExperiment);
 
 export const killExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void> (
-    Config.killExperiment,
-  );
+  generateDetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void
+>(Config.killExperiment);
 
-export const patchExperiment =
-  generateDetApi<PatchExperimentParams, Api.V1KillExperimentResponse, void> (
-    Config.patchExperiment,
-  );
+export const patchExperiment = generateDetApi<
+  PatchExperimentParams, Api.V1KillExperimentResponse, void
+>(Config.patchExperiment);
 
-export const getAllExperimentLabels = async (): Promise<string[]> => {
-  try {
-    const data = await Config.detApi.Experiments.determinedGetExperimentLabels();
-    return data.labels || [];
-  } catch (e) {
-    processApiError('getAllExperimentLabels', e);
-    throw e;
-  }
-};
+export const getExperimentLabels = generateDetApi<
+  EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+>(Config.getExperimentLabels);
 
 /* Tasks */
 
@@ -138,24 +138,16 @@ export const getShells = generateApi<EmptyParams, Command[]>(Config.getShells);
 export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTensorboards);
 
 export const killCommand =
-  generateDetApi<CommandIdParams, Api.V1KillCommandResponse, void> (
-    Config.killCommand,
-  );
+  generateDetApi<CommandIdParams, Api.V1KillCommandResponse, void>(Config.killCommand);
 
 export const killNotebook =
-  generateDetApi<CommandIdParams, Api.V1KillNotebookResponse, void> (
-    Config.killNotebook,
-  );
+  generateDetApi<CommandIdParams, Api.V1KillNotebookResponse, void>(Config.killNotebook);
 
 export const killShell =
-  generateDetApi<CommandIdParams, Api.V1KillShellResponse, void> (
-    Config.killShell,
-  );
+  generateDetApi<CommandIdParams, Api.V1KillShellResponse, void>(Config.killShell);
 
 export const killTensorboard =
-  generateDetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> (
-    Config.killTensorboard,
-  );
+  generateDetApi<CommandIdParams, Api.V1KillTensorboardResponse, void>(Config.killTensorboard);
 
 export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
 
@@ -183,29 +175,6 @@ export const killTask = async (task: CommandTask): Promise<void> => {
       return await killShell({ commandId: task.id });
     case CommandType.Tensorboard:
       return await killTensorboard({ commandId: task.id });
-  }
-};
-
-export const login = generateApi<Credentials, LoginResponse>(Config.login);
-
-/*
- * Login is an exception where the caller will perform the error handling,
- * so it is one of the few API calls that will not have a try/catch block.
- */
-// Temporarily disabling this until we figure out how we want to secure new login endpoint.
-// export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
-//   const response = await detApi.Auth.determinedLogin({
-//     password: Config.saltAndHashPassword(credentials.password),
-//     username: credentials.username,
-//   } as Api.V1LoginRequest);
-//   return response;
-// };
-
-export const logout = async (): Promise<Api.V1LogoutResponse> => {
-  try {
-    return await Config.detApi.Auth.determinedLogout();
-  } catch (e) {
-    throw processApiError('logout', e);
   }
 };
 

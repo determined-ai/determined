@@ -6,7 +6,7 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
 
-import { ApiCommonParams, DetApi, HttpApi } from './types';
+import { ApiCommonParams, DetApi, FetchOptionParams, HttpApi } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
@@ -39,6 +39,11 @@ export const isLoginFailure = (e: any): boolean => {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isNotFound = (e: any): boolean => {
   return getResponseStatus(e) === 404;
+};
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isAborted = (e: any): boolean => {
+  return e.name === 'AbortError';
 };
 
 /* HTTP Helpers */
@@ -97,12 +102,12 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 }
 
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
-  return async function(params: Input & ApiCommonParams): Promise<Output> {
+  return async function(params: Input & FetchOptionParams): Promise<Output> {
     try {
       const response = api.stubbedResponse ? api.stubbedResponse : await api.request(params);
       return api.postProcess(response);
     } catch (e) {
-      processApiError(api.name, e);
+      if (!isAborted(e)) processApiError(api.name, e);
       throw e;
     }
   };

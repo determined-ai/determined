@@ -93,8 +93,13 @@ export const login: HttpApi<Credentials, LoginResponse> = {
   unAuthenticated: true,
 };
 
-export const getCurrentUser:
-DetApi<EmptyParams, Api.V1CurrentUserResponse,DetailedUser> = {
+export const logout: DetApi<EmptyParams, Api.V1LogoutResponse, void> = {
+  name: 'logout',
+  postProcess: noOp,
+  request: () => detApi.Auth.determinedLogout(),
+};
+
+export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser> = {
   name: 'getCurrentUser',
   postProcess: (response) => decoder.user(response.user),
   // We make sure to request using the latest API configuraitonp parameters.
@@ -117,12 +122,10 @@ export const getInfo: HttpApi<EmptyParams, DeterminedInfo> = {
 
 /* Agent */
 
-export const getAgents:
-DetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> = {
+export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> = {
   name: 'getAgents',
   postProcess: (response) => jsonToAgents(response.agents || []),
-  request: () => detApi.Cluster
-    .determinedGetAgents(),
+  request: () => detApi.Cluster.determinedGetAgents(),
 };
 
 /* Experiment */
@@ -144,56 +147,55 @@ export const forkExperiment: HttpApi<ForkExperimentParams, number> = {
   postProcess: (response: any) => response.data.id,
 };
 
-export const archiveExperiment:
-DetApi<ExperimentIdParams, Api.V1ArchiveExperimentResponse, void> = {
+export const archiveExperiment: DetApi<
+  ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
+> = {
   name: 'archiveExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams) => detApi.Experiments
     .determinedArchiveExperiment(params.experimentId),
 };
 
-export const unarchiveExperiment:
-DetApi<ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void> = {
+export const unarchiveExperiment: DetApi<
+  ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
+> = {
   name: 'unarchiveExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams) => detApi.Experiments
     .determinedUnarchiveExperiment(params.experimentId),
 };
 
-export const activateExperiment:
-DetApi<ExperimentIdParams, Api.V1ActivateExperimentResponse, void> = {
+export const activateExperiment: DetApi<
+  ExperimentIdParams, Api.V1ActivateExperimentResponse, void
+> = {
   name: 'activateExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams) => detApi.Experiments
     .determinedActivateExperiment(params.experimentId),
 };
 
-export const pauseExperiment:
-DetApi<ExperimentIdParams, Api.V1PauseExperimentResponse, void> = {
+export const pauseExperiment: DetApi<ExperimentIdParams, Api.V1PauseExperimentResponse, void> = {
   name: 'pauseExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams) => detApi.Experiments
     .determinedPauseExperiment(params.experimentId),
 };
 
-export const cancelExperiment:
-DetApi<ExperimentIdParams, Api.V1CancelExperimentResponse, void> = {
+export const cancelExperiment: DetApi<ExperimentIdParams, Api.V1CancelExperimentResponse, void> = {
   name: 'cancelExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams) => detApi.Experiments
     .determinedCancelExperiment(params.experimentId),
 };
 
-export const killExperiment:
-DetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void> = {
+export const killExperiment: DetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void> = {
   name: 'killExperiment',
   postProcess: noOp,
   request: (params: ExperimentIdParams) => detApi.Experiments
     .determinedKillExperiment(params.experimentId),
 };
 
-export const patchExperiment:
-DetApi<PatchExperimentParams, Api.V1PatchExperimentResponse, void> = {
+export const patchExperiment: DetApi<PatchExperimentParams, Api.V1PatchExperimentResponse, void> = {
   name: 'patchExperiment',
   postProcess: noOp,
   request: (params: PatchExperimentParams) => detApi.Experiments
@@ -215,6 +217,14 @@ export const getExperimentDetails: HttpApi<ExperimentDetailsParams, ExperimentDe
   httpOptions: (params) => ({ url: `/experiments/${params.id}/summary` }),
   name: 'getExperimentDetails',
   postProcess: (response) => jsonToExperimentDetails(response.data),
+};
+
+export const getExperimentLabels: DetApi<
+  EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
+> = {
+  name: 'getExperimentLabels',
+  postProcess: (response) => response.labels || [],
+  request: (params) => detApi.Experiments.determinedGetExperimentLabels(params),
 };
 
 export const getTrialDetails: HttpApi<TrialDetailsParams, TrialDetails> = {
@@ -249,32 +259,28 @@ export const getTensorboards: HttpApi<EmptyParams, Command[]> = {
   postProcess: (response) => jsonToTensorboards(response.data),
 };
 
-export const killCommand:
-DetApi<CommandIdParams, Api.V1KillCommandResponse, void> = {
+export const killCommand: DetApi<CommandIdParams, Api.V1KillCommandResponse, void> = {
   name: 'killCommand',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Commands
     .determinedKillCommand(params.commandId),
 };
 
-export const killNotebook:
-DetApi<CommandIdParams, Api.V1KillNotebookResponse, void> = {
+export const killNotebook: DetApi<CommandIdParams, Api.V1KillNotebookResponse, void> = {
   name: 'killNotebook',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Notebooks
     .determinedKillNotebook(params.commandId),
 };
 
-export const killShell:
-DetApi<CommandIdParams, Api.V1KillShellResponse, void> = {
+export const killShell: DetApi<CommandIdParams, Api.V1KillShellResponse, void> = {
   name: 'killShell',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Shells
     .determinedKillShell(params.commandId),
 };
 
-export const killTensorboard:
-DetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> = {
+export const killTensorboard: DetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> = {
   name: 'killTensorboard',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Tensorboards
