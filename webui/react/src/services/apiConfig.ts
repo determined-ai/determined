@@ -13,8 +13,8 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateNotebookParams, CreateTensorboardParams, DetApi, EmptyParams,
   ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, ForkExperimentParams,
-  LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
-  TrialLogsParams,
+  GetExperimentsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
+  TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import { HttpApi } from 'services/types';
 import {
@@ -129,6 +129,36 @@ export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> = 
 };
 
 /* Experiment */
+
+export const getExperiments: DetApi<
+GetExperimentsParams,
+Api.V1GetExperimentsResponse,
+ExperimentBase[]
+> = {
+  name: 'activateExperiment',
+  postProcess: (response: Api.V1GetExperimentsResponse) => {
+    if (response.experiments) {
+      return response.experiments.map(
+        (experiment: Api.V1Experiment) => experiment as unknown as ExperimentBase,
+      );
+    }
+
+    return [];
+  },
+  request: (params: GetExperimentsParams) => detApi.Experiments
+    .determinedGetExperiments(
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.description,
+      params.labels,
+      params.archived,
+      params.states,
+      params.users,
+      params.options,
+    ),
+};
 
 export const forkExperiment: HttpApi<ForkExperimentParams, number> = {
   httpOptions: (params) => {

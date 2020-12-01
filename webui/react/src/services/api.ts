@@ -3,8 +3,8 @@ import * as Config from 'services/apiConfig';
 import {
   ApiSorter, CommandIdParams, CreateNotebookParams, CreateTensorboardParams, EmptyParams,
   ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, ForkExperimentParams,
-  LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
-  TrialLogsParams,
+  GetExperimentsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
+  TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
@@ -52,6 +52,11 @@ export const getAgents =
   generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]>(Config.getAgents);
 
 /* Experiments */
+
+export const getExperiments =
+  generateDetApi<GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentBase[]> (
+    Config.getExperiments,
+  );
 
 export const getExperimentList = async (
   sorter: ApiSorter<Api.V1GetExperimentsRequestSortBy>,
