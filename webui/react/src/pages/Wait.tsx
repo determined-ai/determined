@@ -27,8 +27,7 @@ interface Queries {
 }
 
 const Wait: React.FC = () => {
-  const { taskId, taskType } = useParams<Params>();
-  // const ui = UI.useStateContext();
+  const { taskType } = useParams<Params>();
   const setUI = UI.useActionContext();
   const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);

@@ -1,10 +1,6 @@
-import { notification } from 'antd';
-import { w3cwebsocket as W3CWebSocket } from 'websocket';
-
 import { openBlank, serverAddress } from 'routes/utils';
 import { Command, CommandState, CommandTask, CommandType } from 'types';
-import { capitalize } from 'utils/string';
-import { isCommandTask, terminalCommandStates } from 'utils/types';
+import { isCommandTask } from 'utils/types';
 
 // createWsUrl: Given an event url create the corresponding ws url.
 export function createWsUrl(eventUrl: string): string {
