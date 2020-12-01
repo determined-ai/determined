@@ -228,38 +228,40 @@ const ExperimentDetailsComp: React.FC = () => {
         {experiment.archived && <Badge>ARCHIVED</Badge>}
       </Space>}
       title={`Experiment ${experimentId}`}>
-      <Row className={css.topRow} gutter={[ 16, 16 ]}>
-        <Col lg={10} span={24} xl={8} xxl={6}>
-          <ExperimentInfoBox
-            experiment={experiment}
-            onChange={fetchExperimentDetails}
-          />
-        </Col>
-        <Col lg={14} span={24} xl={16} xxl={18}>
-          <ExperimentChart
-            startTime={experiment.startTime}
-            validationHistory={experiment.validationHistory}
-            validationMetric={experimentConfig?.searcher.metric} />
-        </Col>
-        <Col span={24}>
-          <Section title="Trials">
-            <ResponsiveTable<TrialItem>
-              columns={columns}
-              dataSource={experiment?.trials}
-              loading={{
-                indicator: <Indicator />,
-                spinning: experimentDetails.isLoading,
-              }}
-              pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
-              rowClassName={defaultRowClassName()}
-              rowKey="id"
-              showSorterTooltip={false}
-              size="small"
-              onChange={handleTableChange}
-              onRow={handleTableRow} />
-          </Section>
-        </Col>
-      </Row>
+      <div className={css.base}>
+        <Row className={css.topRow} gutter={[ 16, 16 ]}>
+          <Col lg={10} span={24} xl={8} xxl={6}>
+            <ExperimentInfoBox
+              experiment={experiment}
+              onTagsChange={fetchExperimentDetails}
+            />
+          </Col>
+          <Col lg={14} span={24} xl={16} xxl={18}>
+            <ExperimentChart
+              startTime={experiment.startTime}
+              validationHistory={experiment.validationHistory}
+              validationMetric={experimentConfig?.searcher.metric} />
+          </Col>
+          <Col span={24}>
+            <Section title="Trials">
+              <ResponsiveTable<TrialItem>
+                columns={columns}
+                dataSource={experiment?.trials}
+                loading={{
+                  indicator: <Indicator />,
+                  spinning: experimentDetails.isLoading,
+                }}
+                pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
+                rowClassName={defaultRowClassName()}
+                rowKey="id"
+                showSorterTooltip={false}
+                size="small"
+                onChange={handleTableChange}
+                onRow={handleTableRow} />
+            </Section>
+          </Col>
+        </Row>
+      </div>
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}
