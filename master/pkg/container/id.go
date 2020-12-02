@@ -10,7 +10,8 @@ import (
 // ID is a unique ID assigned to the containers of tasks when started in the cluster.
 type ID string
 
-func newID() ID {
+// NewID provides a unique ID for a container.
+func NewID() ID {
 	return ID(uuid.New().String())
 }
 

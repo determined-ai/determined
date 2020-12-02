@@ -82,10 +82,11 @@ func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Devic
 
 func (a *agentState) deepCopy() *agentState {
 	copiedAgent := &agentState{
-		handler:            a.handler,
-		label:              a.label,
-		devices:            make(map[device.Device]*cproto.ID),
-		zeroSlotContainers: make(map[cproto.ID]bool),
+		handler:               a.handler,
+		label:                 a.label,
+		devices:               make(map[device.Device]*cproto.ID),
+		zeroSlotContainers:    make(map[cproto.ID]bool),
+		maxZeroSlotContainers: a.maxZeroSlotContainers,
 	}
 
 	for originalDevice, id := range a.devices {

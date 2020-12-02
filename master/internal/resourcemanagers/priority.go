@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -296,7 +297,7 @@ func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentStat
 
 func addTaskToAgents(fits []*fittingState) {
 	for _, fit := range fits {
-		fit.Agent.allocateFreeDevices(fit.Slots, "simulation")
+		fit.Agent.allocateFreeDevices(fit.Slots, cproto.NewID())
 	}
 }
 
@@ -306,10 +307,15 @@ func removeTaskFromAgents(
 ) {
 	for _, allocation := range resourcesAllocated.Allocations {
 		allocation := allocation.(*containerAllocation)
+		if len(allocation.devices) == 0 {
+			// Handle zero-slot containers.
+			delete(agents[allocation.agent.handler].zeroSlotContainers, allocation.container.id)
+		}
+
 		for _, allocatedDevice := range allocation.devices {
 			// Local devices are a deep copy of the originals so we loop over trying to find
 			// the device that matches. If we assume that we have homogeneous devices we could
-			// just search for the first available device.
+			// just search for the first used device.
 			for localDevice, localContainer := range agents[allocation.agent.handler].devices {
 				if allocatedDevice.ID == localDevice.ID && localContainer != nil {
 					agents[allocation.agent.handler].devices[localDevice] = nil
