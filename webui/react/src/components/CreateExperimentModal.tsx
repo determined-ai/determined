@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
 import { routeAll } from 'routes/utils';
-import { forkExperiment } from 'services/api';
+import { createExperiment } from 'services/api';
 
 import css from './CreateExperimentModal.module.scss';
 
@@ -34,7 +34,7 @@ const CreateExperimentModal: React.FC<Props> = (
     try {
       // Validate the yaml syntax by attempting to load it.
       yaml.safeLoad(config);
-      const configId = await forkExperiment({ experimentConfig: config, parentId });
+      const { id: configId } = await createExperiment({ experimentConfig: config, parentId });
       onVisibleChange(false);
       routeAll(`/experiments/${configId}`);
     } catch (e) {

@@ -27,7 +27,7 @@ import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes/utils';
-import { forkExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
+import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
@@ -304,7 +304,7 @@ If the problem persists please contact support.',
     if (!experimentId) return;
     const updatedConfig = updateStatesFromForm();
     try {
-      const newExperimentId = await forkExperiment({
+      const { id: newExperimentId } = await createExperiment({
         experimentConfig: JSON.stringify(updatedConfig),
         parentId: experimentId,
       });
