@@ -9,5 +9,7 @@
   },
   "screenshotsFolder": "results/recordings/screenshots",
   "supportFile": "cypress/support",
-  "videosFolder": "results/recordings/videos"
+  "videosFolder": "results/recordings/videos",
+  "viewportHeight": 960,
+  "viewportWidth": 1536
 }

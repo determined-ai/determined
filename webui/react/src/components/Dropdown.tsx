@@ -22,6 +22,7 @@ export enum Placement {
 interface Props {
   content: React.ReactNode;
   disableAutoDismiss?: boolean;
+  initVisible?: boolean;
   offset?: { x: number, y: number };
   onVisibleChange?: (visible: boolean) => void;
   placement?: Placement;
@@ -31,12 +32,13 @@ interface Props {
 const Dropdown: React.FC<Props> = ({
   disableAutoDismiss = false,
   offset = { x: 0, y: 0 },
+  initVisible = false,
   onVisibleChange,
   placement = Placement.BottomLeft,
   showArrow = true,
   ...props
 }: PropsWithChildren<Props>) => {
-  const [ isVisible, setIsVisible ] = useState(false);
+  const [ isVisible, setIsVisible ] = useState(initVisible);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const classes = [ css.base, css[placement] ];
