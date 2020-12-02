@@ -154,7 +154,7 @@ export default class StepImplementation {
   }
 
   @Step('Switch to mobile view')
-  public async emulateDevice() {
+  public async setMobileViewport() {
     await t.emulateDevice('iPhone 7');
   }
 
