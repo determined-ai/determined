@@ -37,7 +37,6 @@ describe('cypress', () => {
       before(() => {
         cy.visit('/det');
       });
-      // this sometimes fails locally..
       it('should still be logged in', () => {
         cy.checkLoggedIn();
       });
