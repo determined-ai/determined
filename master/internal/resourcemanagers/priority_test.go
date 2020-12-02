@@ -8,32 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-func TestGetAllPendingZeroSlotTasks(t *testing.T) {
-	agents := make([]*mockAgent, 0)
-	groups := []*mockGroup{
-		{id: "group1", maxSlots: newMaxSlot(1), weight: 1},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 4, group: groups[0]},
-		{id: "task2", slotsNeeded: 1, group: groups[0]},
-		{id: "task3", slotsNeeded: 0, group: groups[0]},
-		{id: "task4", slotsNeeded: 0, group: groups[0]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, _, _ := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	pendingZeroSlotTasks := getAllPendingZeroSlotTasks(taskList, "")
-	expectedZeroSlotTasksIds := []*mockTask{tasks[2], tasks[3]}
-	assertEqualToAllocate(t, pendingZeroSlotTasks, expectedZeroSlotTasksIds)
-
-	setTaskAllocations(t, taskList, "task4", 1)
-
-	pendingZeroSlotTasks = getAllPendingZeroSlotTasks(taskList, "")
-	expectedZeroSlotTasksIds = []*mockTask{tasks[2]}
-	assertEqualToAllocate(t, pendingZeroSlotTasks, expectedZeroSlotTasksIds)
-}
-
 func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
@@ -54,18 +28,31 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 	taskList, mockGroups, _ := setupSchedulerStates(t, system, tasks, groups, agents)
 
-	pendingTasksByPriority, _ := sortTasksByPriorityAndTimestamp(taskList, mockGroups, "")
+	zeroSlotPendingTasksByPriority, _ := sortTasksByPriorityAndTimestamp(
+		taskList, mockGroups, "", zeroSlotTaskFilter)
 
-	tasksInLowerPriority := pendingTasksByPriority[lowerPriority]
-	expectedTasksInLowerPriority := []*mockTask{tasks[0], tasks[1]}
+	tasksInLowerPriority := zeroSlotPendingTasksByPriority[lowerPriority]
+	expectedTasksInLowerPriority := []*mockTask{}
 	assertEqualToAllocate(t, tasksInLowerPriority, expectedTasksInLowerPriority)
 
-	tasksInHigherPriority := pendingTasksByPriority[higherPriority]
-	expectedTasksInHigherPriority := []*mockTask{tasks[4]}
+	tasksInHigherPriority := zeroSlotPendingTasksByPriority[higherPriority]
+	expectedTasksInHigherPriority := []*mockTask{tasks[2], tasks[3]}
+	assertEqualToAllocate(t, tasksInHigherPriority, expectedTasksInHigherPriority)
+
+	nonZeroSlotPendingTasksByPriority, _ := sortTasksByPriorityAndTimestamp(
+		taskList, mockGroups, "", nonZeroSlotTaskFilter)
+
+	tasksInLowerPriority = nonZeroSlotPendingTasksByPriority[lowerPriority]
+	expectedTasksInLowerPriority = []*mockTask{tasks[0], tasks[1]}
+	assertEqualToAllocate(t, tasksInLowerPriority, expectedTasksInLowerPriority)
+
+	tasksInHigherPriority = nonZeroSlotPendingTasksByPriority[higherPriority]
+	expectedTasksInHigherPriority = []*mockTask{tasks[4]}
 	assertEqualToAllocate(t, tasksInHigherPriority, expectedTasksInHigherPriority)
 
 	setTaskAllocations(t, taskList, "task5", 1)
-	_, scheduledTasksByPriority := sortTasksByPriorityAndTimestamp(taskList, mockGroups, "")
+	_, scheduledTasksByPriority := sortTasksByPriorityAndTimestamp(
+		taskList, mockGroups, "", nonZeroSlotTaskFilter)
 
 	tasksInLowerPriority = scheduledTasksByPriority[lowerPriority]
 	expectedTasksInLowerPriority = make([]*mockTask, 0)
@@ -173,7 +160,7 @@ func TestPrioritySchedulingPreemptionDisabledWithLabels(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 }
 
-func TestPrioritySchedulingPreemption(t *testing.T) {
+func TestPrioritySchedulingPreemptionAaron(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
