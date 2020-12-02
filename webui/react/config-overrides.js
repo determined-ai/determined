@@ -20,8 +20,8 @@ function customOverride(config, env) {
   let configPatch = {};
   if (IS_DEV) {
     configPatch = {
-    mode: 'development',
-    optimization: {},
+      mode: 'development',
+      optimization: {},
     }
   }
   return {
@@ -63,7 +63,8 @@ const webpackConfig = override(
    * https://github.com/mzohaibqc/antd-theme-webpack-plugin
    */
   addWebpackPlugin(
-    new AntDesignThemePlugin({ antDir: path.join(__dirname, './node_modules/antd'),
+    new AntDesignThemePlugin({
+      antDir: path.join(__dirname, './node_modules/antd'),
       stylesDir: path.join(__dirname, './src/styles'),
       varFile: path.join(__dirname, './src/styles/variables.less'),
       mainLessFile: path.join(__dirname, './src/styles/index.less'),
