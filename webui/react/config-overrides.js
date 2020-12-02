@@ -21,6 +21,7 @@ function customOverride(config, env) {
   if (IS_DEV) {
     configPatch = {
       mode: 'development',
+      // remove webpack optimizations to lower build time.
       optimization: {},
     }
   }
@@ -105,8 +106,8 @@ const webpackConfig = override(
 
 module.exports = {
   webpack: (config, env) => {
-    const c = webpackConfig(config, env);
-    return customOverride(c);
+    const customCraConfig = webpackConfig(config, env);
+    return customOverride(customCraConfig);
   },
   jest: (config, env) => ({...config, ...jestConfig}),
   // devServer: (config, env) => config,
