@@ -1,0 +1,19 @@
+.base {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  width: 100%;
+
+  .content {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    font-size: var(--theme-sizes-font-large);
+
+    & > * { margin-bottom: var(--theme-sizes-layout-big); }
+    & > *:last-child {
+      margin-bottom: 0;
+    }
+  }
+}

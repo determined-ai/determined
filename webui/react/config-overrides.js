@@ -14,7 +14,22 @@ const path = require('path');
 const webpack = require('webpack');
 const jestConfig = require('./jest.config');
 
-const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_DEV = process.env.DET_NODE_ENV === 'development';
+
+function customOverride(config, env) {
+  let configPatch = {};
+  if (IS_DEV) {
+    configPatch = {
+      mode: 'development',
+      // remove webpack optimizations to lower build time.
+      optimization: {},
+    }
+  }
+  return {
+    ...config,
+    ...configPatch
+  }
+}
 
 const webpackConfig = override(
   // Disable eslint for webpack config.
@@ -90,7 +105,10 @@ const webpackConfig = override(
 );
 
 module.exports = {
-  webpack: webpackConfig,
+  webpack: (config, env) => {
+    const customCraConfig = webpackConfig(config, env);
+    return customOverride(customCraConfig);
+  },
   jest: (config, env) => ({...config, ...jestConfig}),
   // devServer: (config, env) => config,
 }

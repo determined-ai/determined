@@ -11,6 +11,7 @@ import TaskList from 'pages/TaskList';
 import TaskLogs from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import TrialLogs from 'pages/TrialLogs';
+import Wait from 'pages/Wait';
 
 import Routes from './routes';
 import { RouteConfig } from './types';
@@ -27,6 +28,7 @@ const routeComponentMap: Record<string, FC> = {
   taskLogs: TaskLogs,
   trialDetails: TrialDetails,
   trialLogs: TrialLogs,
+  wait: Wait,
 };
 
 const defaultRouteId = 'dashboard';

@@ -6,7 +6,6 @@ import React from 'react';
 
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { openCommand } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment, killTask,
   openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
@@ -15,6 +14,7 @@ import { AnyTask, CommandTask, ExperimentTask, RunState, TBSourceType } from 'ty
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
+import { openCommand } from 'wait';
 
 import Link from './Link';
 import css from './TaskActionDropdown.module.scss';

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@types/react-helmet": "^6.1.0",
+    "@types/websocket": "^1.0.1",
     "ansi-to-html": "^0.6.14",
     "antd": "^4.6.6",
     "antd-dayjs-webpack-plugin": "^1.0.1",
@@ -44,7 +45,8 @@
     "screenfull": "^5.0.2",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
-    "timeago-react": "^3.0.1"
+    "timeago-react": "^3.0.1",
+    "websocket": "^1.0.32"
   },
   "browserslist": {
     "production": [
@@ -113,7 +115,7 @@
     "stylelint-config-standard": "^20.0.0",
     "stylelint-order": "^4.1.0",
     "throttle-debounce": "^2.3.0",
-    "typescript": "^4.0.3"
+    "typescript": "^3.9.7"
   },
   "resolutions": {
     "marked": "^0.7.0"

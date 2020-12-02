@@ -3,7 +3,6 @@ import { isNumber } from 'util';
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
-import { waitPageUrl } from 'routes/utils';
 import * as types from 'types';
 import { capitalize } from 'utils/string';
 
@@ -106,7 +105,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
 
 export const jsonToGenericCommand = (data: unknown, type: types.CommandType): types.Command => {
   const io = ioTypes.decode<ioTypes.ioTypeGenericCommand>(ioTypes.ioGenericCommand, data);
-  const command: Partial<types.Command> = {
+  const command: types.Command = {
     config: { ...io.config },
     exitStatus: io.exit_status || undefined,
     id: io.id,
@@ -118,10 +117,8 @@ export const jsonToGenericCommand = (data: unknown, type: types.CommandType): ty
     registeredTime: io.registered_time,
     serviceAddress: io.service_address || undefined,
     state: io.state as types.CommandState,
-    url: undefined,
     user: { username: io.owner.username },
   };
-  command.url = waitPageUrl(command);
   return command as types.Command;
 };
 

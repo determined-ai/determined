@@ -3,10 +3,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
-import { openCommand } from 'routes/utils';
 import { openOrCreateTensorboard } from 'services/api';
 import { RunState, TBSourceType, TrialDetails, TrialItem } from 'types';
 import { terminalRunStates } from 'utils/types';
+import { openCommand } from 'wait';
 
 export enum Action {
   Continue = 'Continue',
