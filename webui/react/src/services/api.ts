@@ -102,7 +102,7 @@ export const getTrialDetails =
   generateApi<TrialDetailsParams, TrialDetails>(Config.getTrialDetails);
 
 export const createExperiment = generateDetApi<
-CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentDetails>(
+CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase>(
   Config.createExperiment,
 );
 
