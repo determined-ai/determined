@@ -2,7 +2,8 @@
 // For examples of custom commands please read more here:
 // https://on.cypress.io/custom-commands
 // ***********************************************
-import { ACCOUNT_PASSWORD, ACCOUNT_USERNAME, API_PATH, STORAGE_KEY_AUTH } from '../constants';
+import { ACCOUNT_PASSWORD, ACCOUNT_USERNAME, API_PATH, DEFAULT_WAIT_TIME, LOGIN_ROUTE,
+  PASSWORD_INPUT, STORAGE_KEY_AUTH, USERNAME_INPUT } from '../constants';
 
 const sha512 = require('js-sha512').sha512;
 
@@ -38,36 +39,47 @@ Cypress.Commands.add('checkLoggedIn', (username = null, visit = true) => {
   // cluster page link in the top bar, which should be present if and only if
   // the user is logged in.
   username = username || ACCOUNT_USERNAME;
-  if (visit) cy.visit('/');
+  if (visit) cy.visit('/det/dashboard');
   cy.get('#avatar').should('exist');
   cy.get('#avatar').should('have.text', username.charAt(0).toUpperCase());
 });
 
 Cypress.Commands.add('checkLoggedOut', () => {
-  cy.visit('/');
-  cy.request({
-    failOnStatusCode: false,
-    headers: { Authorization: 'Bearer ' + retreiveAuthToken() },
-    method: 'GET',
-    url: '/users/me',
-  })
-    .then(response => {
-      expect(response.status).to.equal(401);
-    });
+  cy.visit('/det');
+  cy.url().should('include', '/login');
 });
 
 // TODO use Cypress.env to share (and bring in) some of the contants used.
-Cypress.Commands.add('login', (credentials) => {
+Cypress.Commands.add('loginHeadless', (credentials) => {
   credentials = credentials || {
     password: saltAndHashPassword(ACCOUNT_PASSWORD),
     username: ACCOUNT_USERNAME,
   };
+  cy.visit('/det/login');
   cy.request('POST', '/login', credentials)
     .then(response => {
       expect(response.body).to.have.property('token');
       saveAuthToken(response.body.token);
     });
   cy.checkLoggedIn(credentials.username, true);
+});
+
+Cypress.Commands.add('login', (credentials) => {
+  credentials = credentials || {
+    password: ACCOUNT_PASSWORD,
+    username: ACCOUNT_USERNAME,
+  };
+  cy.visit(LOGIN_ROUTE);
+  cy.get(USERNAME_INPUT).should('have.value', '');
+  cy.get(USERNAME_INPUT)
+    .type(credentials.username, { delay: 50 })
+    .should('have.value', credentials.username);
+  cy.get(PASSWORD_INPUT).should('have.value', '');
+  cy.get(PASSWORD_INPUT)
+    .type(credentials.password, { delay: 50 })
+    .should('have.value', credentials.password);
+  cy.get('button[type="submit"]').contains('Sign In').click();
+  cy.checkLoggedIn(credentials.username, false);
 });
 
 Cypress.Commands.add('logout', () => {

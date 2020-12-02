@@ -8,7 +8,7 @@ import { copyToClipboard } from 'utils/dom';
 import css from './AuthToken.module.scss';
 
 const AuthToken: React.FC = () => {
-  const token = globalStorage.getAuthToken || 'Auth token not found.';
+  const token = globalStorage.authToken || 'Auth token not found.';
 
   const handleCopyToClipboard = useCallback(async () => {
     try {

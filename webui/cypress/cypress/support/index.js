@@ -14,12 +14,14 @@
 // ***********************************************************
 
 import './commands';
-import { STORAGE_KEY_AUTH } from '../constants';
+// import { STORAGE_KEY_AUTH } from '../constants';
 
-const _clear = Cypress.LocalStorage.clear;
-Cypress.LocalStorage.clear = function(aKeys) {
-  const keysToKeep = new Set([ STORAGE_KEY_AUTH ]);
-  const keys = (aKeys && aKeys.length ? aKeys : Object.keys(window.localStorage))
-    .filter(key => !keysToKeep.has(key));
-  return _clear(keys);
-};
+// const _clear = Cypress.LocalStorage.clear;
+// Cypress.LocalStorage.clear = function(aKeys) {
+//   if (aKeys && aKeys.length) return _clear.apply(Cypress.LocalStorage, arguments);
+//   const keysToKeep = new Set([ STORAGE_KEY_AUTH ]);
+//   const keys = (aKeys && aKeys.length ? aKeys : Object.keys(window.localStorage))
+//     .filter(key => !keysToKeep.has(key));
+//   const args = [ keys, Array.from(arguments).slice(1) ];
+//   return _clear.apply(Cypress.LocalStorage, args);
+// };

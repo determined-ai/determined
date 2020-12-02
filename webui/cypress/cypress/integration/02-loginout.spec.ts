@@ -1,38 +1,27 @@
-import { DEFAULT_WAIT_TIME, USERNAME_WITHOUT_PASSWORD } from '../constants';
+import { DEFAULT_WAIT_TIME, LOGIN_ROUTE, LOGOUT_ROUTE, USERNAME_INPUT,
+  USERNAME_WITHOUT_PASSWORD } from '../constants';
 
 describe('Sign in/out', () => {
 
-  const LOGIN_ROUTE = '/det/login';
-  const LOGOUT_ROUTE = '/det/logout';
   const logoutSelector = `[class^="Navigation_base_"] [role="menu"] a[href*="${LOGOUT_ROUTE}"]`;
 
-  before(() => {
-    cy.login();
-  });
-
-  after(() => {
-    cy.login();
-  });
-
-  it('should be logged in React side', () => {
-    cy.visit('/det');
-    cy.checkLoggedIn();
+  it('should be logged out', () => {
+    cy.checkLoggedOut();
   });
 
   it('should be able to log out from React', () => {
     // Open the dropdown menu and click the button to log out.
     cy.login();
-    cy.visit('/det/dashboard');
+    cy.visit('/det');
     cy.get('#avatar').click();
     cy.get(logoutSelector).click();
     cy.checkLoggedOut();
   });
 
   it('should be able to log in', () => {
-    cy.logout();
     cy.visit(LOGIN_ROUTE);
-
-    cy.get('input#login_username')
+    cy.get(USERNAME_INPUT).should('have.value', '');
+    cy.get(USERNAME_INPUT)
       .type(USERNAME_WITHOUT_PASSWORD, { delay: 100 })
       .should('have.value', USERNAME_WITHOUT_PASSWORD);
 
@@ -48,19 +37,31 @@ describe('Sign in/out', () => {
     cy.checkLoggedIn(USERNAME_WITHOUT_PASSWORD, false);
   });
 
+  it('should stay logged in after reload', () => {
+    cy.login();
+    cy.visit('/det');
+    cy.reload();
+    cy.checkLoggedIn();
+  });
+
   it('should redirect away from login when visiting login while logged in', () => {
     cy.login();
     cy.visit(LOGIN_ROUTE);
     cy.url().should('not.contain', LOGIN_ROUTE);
+    cy.checkLoggedIn(); // wait until dashboard is loaded.
   });
 
   it('should logout the user when visiting the logout page', () => {
     cy.login();
+    cy.checkLoggedIn();
     cy.visit(LOGOUT_ROUTE);
     cy.checkLoggedOut();
   });
 
   it('should end up redirecting to login page when visiting logout page', () => {
+    cy.visit(LOGOUT_ROUTE);
+    cy.url().should('contain', LOGIN_ROUTE);
+    cy.login();
     cy.visit(LOGOUT_ROUTE);
     cy.url().should('contain', LOGIN_ROUTE);
   });

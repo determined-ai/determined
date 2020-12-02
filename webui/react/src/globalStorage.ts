@@ -16,8 +16,8 @@ class GlobalStorage {
     this.storage.set(this.keys.authToken, token);
   }
 
-  get getAuthToken() {
-    return this.storage.get<string>(this.keys.authToken);
+  get authToken() {
+    return this.storage.get<string>(this.keys.authToken) || '';
   }
 
   removeAuthToken() {
@@ -28,8 +28,8 @@ class GlobalStorage {
     this.storage.set(this.keys.serverAddress, address);
   }
 
-  get getServerAddress() {
-    return this.storage.get<string>(this.keys.serverAddress);
+  get serverAddress() {
+    return this.storage.get<string>(this.keys.serverAddress) || '';
   }
 
   removeServerAddress() {

@@ -3,11 +3,8 @@ import { DEFAULT_WAIT_TIME } from '../constants';
 describe('setup', () => {
   const recordSelector = 'tr.ant-table-row';
 
-  before(() => {
-    cy.login();
-  });
-
   beforeEach(() => {
+    cy.login();
     cy.visit('/det/experiments');
   });
 
@@ -47,11 +44,11 @@ describe('setup', () => {
   });
 
   it('should archive experiment 2', () => {
+    cy.get(recordSelector).should('have.lengthOf', 4);
     cy.get(`${recordSelector} td:nth-child(2)`).contains('2').click();
     cy.contains('Canceled');
     cy.get('body').should('not.contain', /archived/i);
     cy.contains('Archive').click();
-    cy.reload(); // polling is stopped on terminated experiments.
     cy.contains(/unarchive/i);
     cy.visit('/det/experiments');
     cy.get(recordSelector).should('have.lengthOf', 3);

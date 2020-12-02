@@ -80,7 +80,7 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
       let headers = httpOpts.headers;
       if (!api.unAuthenticated) {
         headers = {
-          Authorization: 'Bearer ' + (globalStorage.getAuthToken),
+          Authorization: 'Bearer ' + (globalStorage.authToken),
           ...headers,
         };
       }
