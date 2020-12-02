@@ -165,6 +165,12 @@ func marshalInto(unmarshaled interface{}, obj interface{}) error {
 func newSearcherEventCallback(master *Master, ref *actor.Ref) func(model.SearcherEvent) error {
 	requestIDs := make(map[int]searcher.RequestID)
 
+	// Seen tracks if this is the first time we've seen a workload. For example: if a trial runs
+	// steps 1, 2, 3 and fails during step 4, then restarts and runs 1, 2, 3, 4... the event log
+	// will look like 1, 2, 3, 1, 2, 3, 4... which the trial workload sequencer will barf over.
+	// We only replay the first of each event.
+	seen := make(map[workload.Workload]bool)
+
 	return func(event model.SearcherEvent) error {
 		switch event.EventType {
 		case TrialCreatedEventType:
@@ -202,6 +208,12 @@ func newSearcherEventCallback(master *Master, ref *actor.Ref) func(model.Searche
 			if err := marshalInto(obj, &msg); err != nil {
 				return errors.Wrap(err, "failed to process completed message")
 			}
+
+			// Check if we've already passed this exact workload to the trial once.
+			if seen[msg.Workload] {
+				return nil
+			}
+			seen[msg.Workload] = true
 
 			// Pass the workload completed message to the Trial. It will pass the event along to
 			// the experiment before this Ask gets a response.
