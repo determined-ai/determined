@@ -10,7 +10,7 @@ from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 def load_model(
     ckpt_dir: pathlib.Path, metadata: Dict[str, Any], **kwargs: Any
 ) -> Union[PyTorchTrial, torch.nn.Module]:
-    checkpoint = torch.load(ckpt_dir.joinpath("state_dict.pth"), **kwargs)  # type: ignore
+    checkpoint = torch.load(str(ckpt_dir.joinpath("state_dict.pth")), **kwargs)  # type: ignore
 
     trial_cls, trial_context = experimental._load_trial_on_local(
         ckpt_dir.joinpath("code"),
