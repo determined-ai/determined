@@ -12,7 +12,7 @@ The following are the notable main packages and libraries we are using:
 - [Axios](https://github.com/axios/axios) - Promise based HTTP client
 - [io-ts](https://github.com/gcanti/io-ts) - Runtime type checking library
 
-## Local Development
+## Development
 
 To get started, install all the dependencies for the React webapp.
 
@@ -35,6 +35,16 @@ npm start
 This will spin up a nodeJS webserver at [localhost:3000](http://localhost:3000). If the page is a blank, do a page refresh and it should take you the landing page for the WebUI.
 
 The page will automatically load and display new changes via [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/) when you modify the project code. You will also see any lint errors in the console.
+
+## Environment Variables
+
+- `SERVER_ADDRESS`: If set, directs the WebUI to find the Determined cluster at this address.
+This allows users to host the WebUI on a separate server from Determined. This would need the target
+server to allow requests coming from the domain hosting the WebUI, aka CORS.
+- `PUBLIC_URL`: Indicates where the React assets are being served from relative to the root of the webserver.
+This is set to `/det` by default for typical workflows in this project.  [More info](https://create-react-app.dev/docs/using-the-public-folder/)
+- `DET_NODE_ENV`: set this to `development` to skip some build optimizations when developing and building
+locally to lower build time.
 
 ## Testing
 
