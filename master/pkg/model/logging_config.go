@@ -9,7 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-// LoggingConfig configure logging for tasks (currently only trials) in Determined.
+// LoggingConfig configures logging for tasks (currently only trials) in Determined.
 type LoggingConfig struct {
 	DefaultLoggingConfig *DefaultLoggingConfig `union:"backend,default" json:"-"`
 	ElasticLoggingConfig *ElasticLoggingConfig `union:"backend,elastic" json:"-"`
@@ -42,14 +42,14 @@ func (c *LoggingConfig) UnmarshalJSON(data []byte) error {
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(c)), "failed to parse logging options")
 }
 
-// DefaultLoggingConfig configure logging for tasks using Fluent+HTTP to the master.
+// DefaultLoggingConfig configures logging for tasks using Fluent+HTTP to the master.
 type DefaultLoggingConfig struct{}
 
-// ElasticLoggingConfig configure logging for tasks using Fluent+Elastic.
+// ElasticLoggingConfig configures logging for tasks using Fluent+Elastic.
 type ElasticLoggingConfig struct {
 	Host     string                `json:"host"`
 	Port     int                   `json:"port"`
-	Security ElasitcSecurityConfig `json:"security"`
+	Security ElasticSecurityConfig `json:"security"`
 }
 
 // Resolve resolves the configuration.
@@ -57,15 +57,15 @@ func (o *ElasticLoggingConfig) Resolve() error {
 	return o.Security.Resolve()
 }
 
-// ElasitcSecurityConfig configure security-related options for the elastic logging backend.
-type ElasitcSecurityConfig struct {
+// ElasticSecurityConfig configures security-related options for the elastic logging backend.
+type ElasticSecurityConfig struct {
 	Username *string          `json:"username"`
 	Password *string          `json:"password"`
 	TLS      ElasticTLSConfig `json:"tls"`
 }
 
 // Validate implements the check.Validatable interface.
-func (o ElasitcSecurityConfig) Validate() []error {
+func (o ElasticSecurityConfig) Validate() []error {
 	var errs []error
 	if (o.Username != nil) != (o.Password != nil) {
 		errs = append(errs, errors.New("username and password must be specified together"))
@@ -74,11 +74,11 @@ func (o ElasitcSecurityConfig) Validate() []error {
 }
 
 // Resolve resolves the configuration.
-func (o *ElasitcSecurityConfig) Resolve() error {
+func (o *ElasticSecurityConfig) Resolve() error {
 	return o.TLS.Resolve()
 }
 
-// ElasticTLSConfig are the TLS connection configuration for the elastic logging backend.
+// ElasticTLSConfig configures TLS for the connection to the elastic logging backend.
 type ElasticTLSConfig struct {
 	Enabled         bool   `json:"enabled"`
 	SkipVerify      bool   `json:"skip_verify"`

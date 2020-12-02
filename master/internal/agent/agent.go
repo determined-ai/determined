@@ -36,7 +36,7 @@ type agent struct {
 	// to be correlated.
 	uuid uuid.UUID
 
-	// opts are addition agent options the master sends to the agent.
+	// opts are additional agent options the master sends to the agent.
 	opts *aproto.MasterSetAgentOptions
 }
 

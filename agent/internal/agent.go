@@ -40,7 +40,7 @@ const (
 type agent struct {
 	Version               string
 	Options               `json:"options"`
-	MasterSetAgentOptions proto.MasterSetAgentOptions
+	MasterSetAgentOptions *proto.MasterSetAgentOptions
 	Devices               []device.Device `json:"devices"`
 
 	socket *actor.Ref
@@ -51,7 +51,6 @@ type agent struct {
 	masterClient *http.Client
 }
 
-// newAgent returns a new agent in the starting state.
 func newAgent(version string, options Options) *agent {
 	return &agent{Version: version, Options: options}
 }
@@ -66,7 +65,11 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case proto.AgentMessage:
 		switch {
 		case msg.MasterSetAgentOptions != nil:
-			a.MasterSetAgentOptions = *msg.MasterSetAgentOptions
+			if a.MasterSetAgentOptions != nil {
+				return fmt.Errorf("received MasterStepAgentOptions more than once: %v",
+					*msg.MasterSetAgentOptions)
+			}
+			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
 			return a.setup(ctx)
 		case msg.StartContainer != nil:
 			a.addProxy(&msg.StartContainer.Spec.RunSpec.ContainerConfig)
@@ -307,7 +310,7 @@ func (a *agent) connect(ctx *actor.Context) error {
 }
 
 func (a *agent) setup(ctx *actor.Context) error {
-	fluentActor, err := newFluentActor(ctx, a.Options, a.MasterSetAgentOptions)
+	fluentActor, err := newFluentActor(ctx, a.Options, *a.MasterSetAgentOptions)
 	if err != nil {
 		return errors.Wrap(err, "failed to start Fluent daemon")
 	}
