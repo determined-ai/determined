@@ -11,6 +11,7 @@ import {
 /* eslint-enable no-unused-vars */
 
 import * as assert from 'assert';
+import * as t from 'taiko';
 
 /*
  * A require is used here to allow for plugins
@@ -45,6 +46,9 @@ const HOST = process.env.DET_MASTER || 'localhost:8080';
 const BASE_PATH = process.env.PUBLIC_URL || '/det';
 const BASE_URL = `${HOST}${BASE_PATH}`;
 const SCREENCAST = process.env.SCREENCAST === 'true';
+const viewports = {
+  desktop: { width: 1366, height: 768 },
+};
 
 export default class StepImplementation {
   @BeforeSuite()
@@ -102,6 +106,29 @@ export default class StepImplementation {
     await click($('#avatar'));
     await click(link('Sign Out'));
     await button('Sign In').exists();
+  }
+
+  /* Browser Utility Steps */
+
+  @Step('Should not have element <selector> present')
+  public async hasNoElement(selector: string) {
+    const exists = await t.$(selector).exists(undefined, 2000);
+    assert.ok(!exists);
+  }
+
+  @Step('Should have element <selector> present')
+  public async hasElement(selector: string) {
+    await t.$(selector).exists();
+  }
+
+  @Step('Switch to mobile view')
+  public async setMobileViewport() {
+    await t.emulateDevice('iPhone 7');
+  }
+
+  @Step('Switch to desktop view')
+  public async setDesktopViewport() {
+    await t.setViewPort(viewports.desktop);
   }
 
   /* Navigation Steps */
