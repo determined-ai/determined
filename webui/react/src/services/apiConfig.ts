@@ -5,7 +5,7 @@ import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import {
-  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails, jsonToExperiments,
+  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
   jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
   jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails, jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
@@ -223,17 +223,6 @@ export const patchExperiment: DetApi<PatchExperimentParams, Api.V1PatchExperimen
   postProcess: noOp,
   request: (params: PatchExperimentParams) => detApi.Experiments
     .determinedPatchExperiment(params.experimentId, params.body as Api.V1Experiment),
-};
-
-export const getExperimentSummaries: HttpApi<ExperimentsParams, ExperimentBase[]> = {
-  httpOptions: (params) => ({
-    url: [
-      '/experiment-summaries',
-      params.states ? `?states=${params.states.join(',')}` : '',
-    ].join(''),
-  }),
-  name: 'getExperimentSummaries',
-  postProcess: (response) => jsonToExperiments(response.data),
 };
 
 export const getExperimentDetails: HttpApi<ExperimentDetailsParams, ExperimentDetails> = {

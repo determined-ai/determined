@@ -92,9 +92,6 @@ export const getExperimentList = async (
   }
 };
 
-export const getExperimentSummaries =
-  generateApi<ExperimentsParams, ExperimentBase[]>(Config.getExperimentSummaries);
-
 export const getExperimentDetails =
   generateApi<ExperimentDetailsParams, ExperimentDetails>(Config.getExperimentDetails);
 

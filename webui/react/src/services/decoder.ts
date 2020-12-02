@@ -184,26 +184,6 @@ const ioToExperimentConfig = (io: ioTypes.ioTypeExperimentConfig): types.Experim
   return config;
 };
 
-export const jsonToExperiment = (data: unknown): types.ExperimentBase => {
-  const io = ioTypes.decode<ioTypes.ioTypeExperiment>(ioTypes.ioExperiment, data);
-  return {
-    archived: io.archived,
-    config: ioToExperimentConfig(io.config),
-    configRaw: (data as { config: types.RawJson }).config,
-    endTime: io.end_time || undefined,
-    id: io.id,
-    progress: io.progress != null ? io.progress : undefined,
-    startTime: io.start_time,
-    state: io.state as types.RunState,
-    userId: io.owner_id,
-  };
-};
-
-export const jsonToExperiments = (data: unknown): types.ExperimentBase[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeExperiments>(ioTypes.ioExperiments, data);
-  return io.map(jsonToExperiment);
-};
-
 const ioToCheckpoint = (io: ioTypes.ioTypeCheckpoint): types.Checkpoint => {
   return {
     endTime: io.end_time || undefined,
@@ -356,7 +336,6 @@ export const jsonToExperimentDetails = (data: unknown): types.ExperimentDetails 
     startTime: io.start_time,
     state: io.state as types.RunState,
     trials: io.trials.map(ioToTrial),
-    userId: io.owner.id,
     username: io.owner.username,
     validationHistory: io.validation_history.map(vh => ({
       endTime: vh.end_time,
