@@ -897,6 +897,7 @@ jobs:
       - image: cimg/node:12.16
     environment:
       PUBLIC_URL: /0
+      SERVER_ADDRESS: http://localhost:8080
     steps:
       - checkout
       - react-get-deps
