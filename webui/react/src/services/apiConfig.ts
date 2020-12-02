@@ -170,23 +170,6 @@ CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentDetails> = {
     .determinedCreateExperiment({ config: params.experimentConfig, parentId: params.parentId }),
 };
 
-export const forkExperiment: HttpApi<CreateExperimentParams, number> = {
-  httpOptions: (params) => {
-    return {
-      body: {
-        experiment_config: params.experimentConfig,
-        parent_id: params.parentId,
-      },
-      headers: { 'content-type': 'application/json' },
-      method: 'POST',
-      url: '/experiments',
-    };
-  },
-  name: 'forkExperiment',
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  postProcess: (response: any) => response.data.id,
-};
-
 export const archiveExperiment: DetApi<
   ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
 > = {

@@ -106,8 +106,6 @@ CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentDetails>(
   Config.createExperiment,
 );
 
-export const forkExperiment = generateApi<CreateExperimentParams, number>(Config.forkExperiment);
-
 export const archiveExperiment = generateDetApi<
   ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
 >(Config.archiveExperiment);
