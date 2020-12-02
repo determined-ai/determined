@@ -289,8 +289,10 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const decodeGetV1ExperimentRespToExperimentBase = (exp: Sdk.V1Experiment, config: types.RawJson):
-types.ExperimentBase => {
+export const decodeGetV1ExperimentRespToExperimentBase = (
+  exp: Sdk.V1Experiment,
+  config: types.RawJson,
+): types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
   return {
