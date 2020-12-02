@@ -128,3 +128,6 @@ telemetry:
 
 ## A user friendly name to identify this cluster by.
 # clusterName: Dev
+
+# defaultPassword sets the password for the admin and determined user accounts. 
+# defaultPassword:

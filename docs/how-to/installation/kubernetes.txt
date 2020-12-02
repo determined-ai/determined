@@ -151,6 +151,16 @@ pod specs for all CPU and GPU tasks. The defaults can be defined in
 a description of permissible fields please see the :ref:`specifying
 custom pod specs <custom-pod-specs>` guide.
 
+Default Password (Optional)
+===========================
+
+Unless otherwise specified, the pre-existing users, ``admin`` and
+``determined``, do not have passwords associated with their accounts.
+Users can set a default password for the ``determined`` and ``admin``
+accounts if preferred or needed. This password will not affect any other
+user account. For additional information on managing users in
+determined, see our :ref:`topic guide on users <users>`.
+
 Database (Optional)
 ===================
 

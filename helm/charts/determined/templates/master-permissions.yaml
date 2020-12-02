@@ -22,13 +22,14 @@ rules:
     verbs: ["create", "get", "list", "delete"]
   - apiGroups: [""]
     resources: ["services"]
-    verbs: ["get"]
+    verbs: ["get", "list"]
   - apiGroups: [""]
     resources: ["pods", "events"]
     verbs: ["watch"]
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["list", "watch"]
+
 
 
 ---

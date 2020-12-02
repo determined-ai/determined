@@ -1,0 +1,7 @@
+:orphan:
+
+**Improvements**
+
+-  Allow users to specify a default password for Kubernetes deployments,
+   which will affect the admin and determined user accounts.
+-  Release version ``0.3.1`` of the Determined Helm chart.
