@@ -31,15 +31,17 @@ import (
 )
 
 const (
-	insecureScheme = "http"
-	secureScheme   = "https"
+	httpInsecureScheme = "http"
+	httpSecureScheme   = "https"
+	wsInsecureScheme   = "ws"
+	wsSecureScheme     = "wss"
 )
 
 type agent struct {
-	Version    string
-	Options    `json:"options"`
-	Devices    []device.Device  `json:"devices"`
-	MasterInfo proto.MasterInfo `json:"master"`
+	Version               string
+	Options               `json:"options"`
+	MasterSetAgentOptions *proto.MasterSetAgentOptions
+	Devices               []device.Device `json:"devices"`
 
 	socket *actor.Ref
 	cm     *actor.Ref
@@ -49,37 +51,26 @@ type agent struct {
 	masterClient *http.Client
 }
 
-func (a *agent) addProxy(config *container.Config) {
-	addVars := map[string]string{
-		"HTTP_PROXY":  a.Options.HTTPProxy,
-		"HTTPS_PROXY": a.Options.HTTPSProxy,
-		"FTP_PROXY":   a.Options.FTPProxy,
-		"NO_PROXY":    a.Options.NoProxy,
-	}
-
-	for _, v := range config.Env {
-		key := strings.SplitN(v, "=", 2)[0]
-		key = strings.ToUpper(key)
-		_, ok := addVars[key]
-		if ok {
-			delete(addVars, key)
-		}
-	}
-
-	for k, v := range addVars {
-		if v != "" {
-			config.Env = append(config.Env, k+"="+v)
-		}
-	}
+func newAgent(version string, options Options) *agent {
+	return &agent{Version: version, Options: options}
 }
 
 func (a *agent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		return a.setup(ctx)
+		ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
+		actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
+		return a.connect(ctx)
 
 	case proto.AgentMessage:
 		switch {
+		case msg.MasterSetAgentOptions != nil:
+			if a.MasterSetAgentOptions != nil {
+				return fmt.Errorf("received MasterStepAgentOptions more than once: %v",
+					*msg.MasterSetAgentOptions)
+			}
+			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
+			return a.setup(ctx)
 		case msg.StartContainer != nil:
 			a.addProxy(&msg.StartContainer.Spec.RunSpec.ContainerConfig)
 			if !a.validateDevices(msg.StartContainer.Container.Devices) {
@@ -143,6 +134,30 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (a *agent) addProxy(config *container.Config) {
+	addVars := map[string]string{
+		"HTTP_PROXY":  a.Options.HTTPProxy,
+		"HTTPS_PROXY": a.Options.HTTPSProxy,
+		"FTP_PROXY":   a.Options.FTPProxy,
+		"NO_PROXY":    a.Options.NoProxy,
+	}
+
+	for _, v := range config.Env {
+		key := strings.SplitN(v, "=", 2)[0]
+		key = strings.ToUpper(key)
+		_, ok := addVars[key]
+		if ok {
+			delete(addVars, key)
+		}
+	}
+
+	for k, v := range addVars {
+		if v != "" {
+			config.Env = append(config.Env, k+"="+v)
+		}
+	}
 }
 
 // validateDevices checks the devices requested in container.Spec are a subset of agent devices.
@@ -232,9 +247,9 @@ func (a *agent) makeMasterClient() error {
 		return errors.Wrap(err, "failed to construct TLS config")
 	}
 
-	a.masterProto = insecureScheme
+	a.masterProto = httpInsecureScheme
 	if tlsConfig != nil {
-		a.masterProto = secureScheme
+		a.masterProto = httpSecureScheme
 	}
 	a.masterClient = &http.Client{
 		Transport: &http.Transport{
@@ -245,31 +260,61 @@ func (a *agent) makeMasterClient() error {
 	return nil
 }
 
-func (a *agent) getMasterInfo() error {
-	resp, err := a.masterClient.Get(
-		fmt.Sprintf("%s://%s:%d/info", a.masterProto, a.MasterHost, a.MasterPort),
-	)
+func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
+	tlsConfig, err := a.tlsConfig()
 	if err != nil {
-		return errors.Wrap(err, "failed to get master info")
+		return errors.Wrap(err, "failed to construct TLS config")
 	}
-	if err = json.NewDecoder(resp.Body).Decode(&a.MasterInfo); err != nil {
-		return errors.Wrap(err, "failed to read master info")
+
+	masterProto := wsInsecureScheme
+	if tlsConfig != nil {
+		masterProto = wsSecureScheme
 	}
-	if err := resp.Body.Close(); err != nil {
+	dialer := websocket.Dialer{
+		Proxy:            websocket.DefaultDialer.Proxy,
+		HandshakeTimeout: websocket.DefaultDialer.HandshakeTimeout,
+		TLSClientConfig:  tlsConfig,
+	}
+
+	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&resource_pool=%s",
+		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool)
+	ctx.Log().Infof("connecting to master at: %s", masterAddr)
+	conn, resp, err := dialer.Dial(masterAddr, nil)
+	if err != nil {
+		return errors.Wrap(err, "error connecting to master")
+	} else if err = resp.Body.Close(); err != nil {
 		return errors.Wrap(err, "failed to read master response on connection")
+	}
+	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
+	return nil
+}
+
+func (a *agent) connect(ctx *actor.Context) error {
+	if a.MasterPort == 0 {
+		if a.Options.Security.TLS.Enabled {
+			a.MasterPort = 443
+		} else {
+			a.MasterPort = 80
+		}
+	}
+
+	if a.MasterHost != "" {
+		if err := a.connectToMaster(ctx); err != nil {
+			return err
+		}
+		ctx.Log().Infof("successfully connected to master")
+	} else {
+		ctx.Log().Warn("no master address specified; running in standalone mode")
 	}
 	return nil
 }
 
 func (a *agent) setup(ctx *actor.Context) error {
-	fluentActor, err := newFluentActor(ctx, a.Options)
+	fluentActor, err := newFluentActor(ctx, a.Options, *a.MasterSetAgentOptions)
 	if err != nil {
 		return errors.Wrap(err, "failed to start Fluent daemon")
 	}
 	a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
-
-	ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
-	actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
 
 	if err = a.detect(); err != nil {
 		return err
@@ -294,63 +339,27 @@ func (a *agent) setup(ctx *actor.Context) error {
 		}
 	}
 
-	if err = a.makeMasterClient(); err != nil {
-		return errors.Wrap(err, "error connecting to master")
-	}
-
-	if err = a.getMasterInfo(); err != nil {
-		return errors.Wrap(err, "error fetching master info")
-	}
-
 	cm, err := newContainerManager(a, fluentActor.port)
 	if err != nil {
 		return errors.Wrap(err, "error initializing container manager")
 	}
 	a.cm, _ = ctx.ActorOf("containers", cm)
 
-	if a.MasterHost != "" {
-		if err := a.connectToMaster(ctx); err != nil {
-			return err
-		}
-	} else {
-		ctx.Log().Warn("no master address specified; running in standalone mode")
-	}
-
+	ctx.Ask(a.socket, api.WriteMessage{Message: proto.MasterMessage{AgentStarted: &proto.AgentStarted{
+		Version: a.Version,
+		Devices: a.Devices,
+		Label:   a.Label,
+	}}})
 	return nil
 }
 
 func (a *agent) connectToMaster(ctx *actor.Context) error {
-	tlsConfig, err := a.tlsConfig()
-	if err != nil {
-		return errors.Wrap(err, "failed to construct TLS config")
+	if err := a.makeMasterClient(); err != nil {
+		return errors.Wrap(err, "error creating master client")
 	}
-
-	masterProto := "ws"
-	if tlsConfig != nil {
-		masterProto = "wss"
-	}
-	dialer := websocket.Dialer{
-		Proxy:            websocket.DefaultDialer.Proxy,
-		HandshakeTimeout: websocket.DefaultDialer.HandshakeTimeout,
-		TLSClientConfig:  tlsConfig,
-	}
-
-	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&resource_pool=%s",
-		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool)
-	ctx.Log().Infof("connecting to master at: %s", masterAddr)
-	conn, resp, err := dialer.Dial(masterAddr, nil)
-	if err != nil {
+	if err := a.makeMasterWebsocket(ctx); err != nil {
 		return errors.Wrap(err, "error connecting to master")
-	} else if err = resp.Body.Close(); err != nil {
-		return errors.Wrap(err, "failed to read master response on connection")
 	}
-	ctx.Log().Infof("successfully connected to master")
-
-	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
-
-	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
-		Version: a.Version, Devices: a.Devices, Label: a.Label}}
-	ctx.Ask(a.socket, api.WriteMessage{Message: started})
 	return nil
 }
 
@@ -406,7 +415,7 @@ func Run(version string, options Options) error {
 	logrus.Infof("agent configuration: %s", printableConfig)
 
 	system := actor.NewSystem(options.AgentID)
-	ref, _ := system.ActorOf(actor.Addr("agent"), &agent{Version: version, Options: options})
+	ref, _ := system.ActorOf(actor.Addr("agent"), newAgent(version, options))
 
 	errs := make(chan error)
 	if options.APIEnabled {

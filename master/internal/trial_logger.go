@@ -3,7 +3,6 @@ package internal
 import (
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -26,17 +25,23 @@ type (
 	flushLogs struct{}
 )
 
+// TrialLogPersister is an interface for a storage backend that can persist
+// trial logs.
+type TrialLogPersister interface {
+	AddTrialLogs([]*model.TrialLog) error
+}
+
 type trialLogger struct {
-	db           *db.PgDB
+	persister    TrialLogPersister
 	pending      []*model.TrialLog
 	lastLogFlush time.Time
 }
 
 // newTrialLogger creates an actor which can buffer up trial logs and flush them periodically.
 // There should only be one trialLogger shared across the entire system.
-func newTrialLogger(db *db.PgDB) actor.Actor {
+func newTrialLogger(persister TrialLogPersister) actor.Actor {
 	return &trialLogger{
-		db:           db,
+		persister:    persister,
 		lastLogFlush: time.Now(),
 		pending:      make([]*model.TrialLog, 0, logBuffer),
 	}
@@ -67,7 +72,7 @@ func (l *trialLogger) Receive(ctx *actor.Context) error {
 
 func (l *trialLogger) tryFlushLogs(ctx *actor.Context, forceFlush bool) {
 	if forceFlush || len(l.pending) >= logBuffer {
-		if err := l.db.AddTrialLogs(l.pending); err != nil {
+		if err := l.persister.AddTrialLogs(l.pending); err != nil {
 			ctx.Log().WithError(err).Errorf("failed to save trial logs")
 		}
 		l.pending = l.pending[:0]

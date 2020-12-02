@@ -60,6 +60,9 @@ func DefaultConfig() *Config {
 		},
 		EnableCors:  false,
 		ClusterName: "",
+		Logging: model.LoggingConfig{
+			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
+		},
 	}
 }
 
@@ -81,6 +84,7 @@ type Config struct {
 	Telemetry             TelemetryConfig                   `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`
 	ClusterName           string                            `json:"cluster_name"`
+	Logging               model.LoggingConfig               `json:"logging"`
 
 	Scheduler   *resourcemanagers.Config `json:"scheduler"`
 	Provisioner *provisioner.Config      `json:"provisioner"`
@@ -133,6 +137,10 @@ func (c *Config) Resolve() error {
 		return err
 	}
 	c.Scheduler, c.Provisioner = nil, nil
+
+	if err := c.Logging.Resolve(); err != nil {
+		return err
+	}
 
 	return nil
 }

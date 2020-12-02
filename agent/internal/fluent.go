@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -22,16 +24,21 @@ import (
 // the agent sends to the Fluent Bit logger.
 var fluentEnvVarNames = []string{containerIDEnvVar, trialIDEnvVar}
 
-const localhost = "localhost"
+const (
+	localhost    = "localhost"
+	ipv4Loopback = "127.0.0.1"
+)
 
 // fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
 // an appropriate configuration.
-func fluentConfig(opts Options) ([]string, archive.Archive, error) {
+func fluentConfig(
+	opts Options,
+	masterSetOpts aproto.MasterSetAgentOptions,
+) ([]string, archive.Archive, error) {
 	const baseDir = "/run/determined/fluent/"
 	const luaPath = baseDir + "tonumber.lua"
 	const configPath = baseDir + "fluent.conf"
 	const parserConfigPath = baseDir + "parsers.conf"
-	const masterCertPath = baseDir + "master.crt"
 
 	var files archive.Archive
 
@@ -132,29 +139,37 @@ end
   Call run
 `, containerIDEnvVar, trialIDEnvVar, opts.AgentID, luaPath)
 
-	fluentMasterHost := opts.MasterHost
-	fluentMasterPort := opts.MasterPort
+	var outputConfig string
+	const (
+		tlsOn         = "  tls On\n"
+		tlsVerifyOff  = "  tls.verify Off\n"
+		tlsCaCertFile = "  tls.ca_file %s\n"
+	)
+	switch {
+	case masterSetOpts.LoggingOptions.DefaultLoggingConfig != nil:
+		fluentMasterHost := opts.MasterHost
+		fluentMasterPort := opts.MasterPort
 
-	// HACK: If a host resolves to both IPv4 and IPv6 addresses, Fluent Bit seems to only try IPv6 and
-	// fail if that connection doesn't work. IPv6 doesn't play well with Docker and many Linux
-	// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and [::1]
-	// (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate "localhost"
-	// diretcly into an IP address before passing it to Fluent Bit.
-	if fluentMasterHost == localhost {
-		fluentMasterHost = "127.0.0.1"
-		if opts.Security.TLS.MasterCertName == "" {
-			opts.Security.TLS.MasterCertName = localhost
+		// HACK: If a host resolves to both IPv4 and IPv6 addresses, Fluent Bit seems to only try IPv6 and
+		// fail if that connection doesn't work. IPv6 doesn't play well with Docker and many Linux
+		// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and
+		// [::1] (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate
+		// "localhost" diretcly into an IP address before passing it to Fluent Bit.
+		if fluentMasterHost == localhost {
+			fluentMasterHost = ipv4Loopback
+			if opts.Security.TLS.MasterCertName == "" {
+				opts.Security.TLS.MasterCertName = localhost
+			}
 		}
-	}
 
-	if opts.ContainerMasterHost != "" {
-		fluentMasterHost = opts.ContainerMasterHost
-	}
-	if opts.ContainerMasterPort != 0 {
-		fluentMasterPort = opts.ContainerMasterPort
-	}
+		if opts.ContainerMasterHost != "" {
+			fluentMasterHost = opts.ContainerMasterHost
+		}
+		if opts.ContainerMasterPort != 0 {
+			fluentMasterPort = opts.ContainerMasterPort
+		}
 
-	outputConfig := fmt.Sprintf(`
+		outputConfig = fmt.Sprintf(`
 [OUTPUT]
   Name http
   Match *
@@ -167,31 +182,85 @@ end
   Json_date_format iso8601
 `, fluentMasterHost, fluentMasterPort)
 
-	if opts.Security.TLS.Enabled {
-		outputConfig += "  tls On\n"
-		if a := opts.Security.TLS.MasterCertName; a != "" {
-			outputConfig += "  tls.vhost " + a + "\n"
-		}
-		if opts.Security.TLS.SkipVerify {
-			outputConfig += "  tls.verify Off\n"
-		}
-		if opts.Security.TLS.MasterCert != "" {
-			outputConfig += "  tls.ca_file " + masterCertPath + "\n"
+		const masterCertPath = baseDir + "master.crt"
+		if opts.Security.TLS.Enabled {
+			outputConfig += tlsOn
+			if a := opts.Security.TLS.MasterCertName; a != "" {
+				outputConfig += "  tls.vhost " + a + "\n"
+			}
+			if opts.Security.TLS.SkipVerify {
+				outputConfig += tlsVerifyOff
+			}
+			if opts.Security.TLS.MasterCert != "" {
+				outputConfig += fmt.Sprintf(tlsCaCertFile, masterCertPath)
 
-			certBytes, cErr := ioutil.ReadFile(opts.Security.TLS.MasterCert)
-			if cErr != nil {
-				return nil, nil, cErr
+				certBytes, cErr := ioutil.ReadFile(opts.Security.TLS.MasterCert)
+				if cErr != nil {
+					return nil, nil, cErr
+				}
+
+				files = append(files,
+					archive.Item{
+						Path:     masterCertPath,
+						Type:     tar.TypeReg,
+						FileMode: 0444,
+						Content:  certBytes,
+					},
+				)
+			}
+		}
+	case masterSetOpts.LoggingOptions.ElasticLoggingConfig != nil:
+		elasticOpts := masterSetOpts.LoggingOptions.ElasticLoggingConfig
+
+		fluentElasticHost := elasticOpts.Host
+		// HACK: Also a hack, described above in detail.
+		if fluentElasticHost == localhost {
+			fluentElasticHost = ipv4Loopback
+		}
+
+		outputConfig = fmt.Sprintf(`
+[OUTPUT]
+  Name  es
+  Match *
+  Host  %s
+  Port  %d
+  Logstash_Format True
+  Logstash_Prefix triallogs
+  Time_Key timestamp
+  Time_Key_Nanos On
+`, fluentElasticHost, elasticOpts.Port)
+
+		elasticSecOpts := elasticOpts.Security
+		if elasticSecOpts.Username != nil && elasticSecOpts.Password != nil {
+			outputConfig += fmt.Sprintf(`
+  HTTPUser   %s
+  HTTPPasswd %s
+`, *elasticOpts.Security.Username, *elasticOpts.Security.Password)
+		}
+
+		const elasticCertPath = baseDir + "elastic.crt"
+		if elasticSecOpts.TLS.Enabled {
+			outputConfig += tlsOn
+
+			if elasticSecOpts.TLS.SkipVerify {
+				outputConfig += tlsVerifyOff
 			}
 
-			files = append(files,
-				archive.Item{
-					Path:     masterCertPath,
-					Type:     tar.TypeReg,
-					FileMode: 0444,
-					Content:  certBytes,
-				},
-			)
+			if elasticSecOpts.TLS.CertBytes != nil {
+				outputConfig += fmt.Sprintf(tlsCaCertFile, elasticCertPath)
+				files = append(files,
+					archive.Item{
+						Path:     elasticCertPath,
+						Type:     tar.TypeReg,
+						FileMode: 0444,
+						Content:  elasticSecOpts.TLS.CertBytes,
+					},
+				)
+			}
 		}
+
+	default:
+		panic("no log driver set for agent")
 	}
 
 	files = append(files,
@@ -262,6 +331,7 @@ func startLoggingContainer(
 	ctx *actor.Context,
 	docker *client.Client,
 	opts Options,
+	masterSetOpts aproto.MasterSetAgentOptions,
 ) (int, string, error) {
 	const containerName = "determined-fluent"
 	imageName := opts.Fluent.Image
@@ -274,7 +344,7 @@ func startLoggingContainer(
 		return 0, "", errors.Wrap(err, "failed to pull logging image")
 	}
 
-	fluentArgs, fluentFiles, err := fluentConfig(opts)
+	fluentArgs, fluentFiles, err := fluentConfig(opts, masterSetOpts)
 	if err != nil {
 		return 0, "", errors.Wrap(err, "failed to configure Fluent Bit")
 	}
@@ -330,30 +400,36 @@ func startLoggingContainer(
 // fluentActor manages the lifecycle of the Fluent Bit container that is run by the agent for the
 // purpose of forwarding container logs.
 type fluentActor struct {
-	opts        Options
-	port        int
-	containerID string
-	docker      *client.Client
+	opts          Options
+	masterSetOpts aproto.MasterSetAgentOptions
+	port          int
+	containerID   string
+	docker        *client.Client
 }
 
-func newFluentActor(ctx *actor.Context, opts Options) (*fluentActor, error) {
+func newFluentActor(
+	ctx *actor.Context,
+	opts Options,
+	masterSetOpts aproto.MasterSetAgentOptions,
+) (*fluentActor, error) {
 	docker, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.40"))
 	if err != nil {
 		return nil, errors.Wrap(err, "error connecting to Docker daemon")
 	}
 
 	t0 := time.Now()
-	hostPort, cid, err := startLoggingContainer(ctx, docker, opts)
+	hostPort, cid, err := startLoggingContainer(ctx, docker, opts, masterSetOpts)
 	if err != nil {
 		return nil, err
 	}
 	ctx.Log().Infof("Fluent Bit started in %s", time.Since(t0))
 
 	return &fluentActor{
-		opts:        opts,
-		port:        hostPort,
-		containerID: cid,
-		docker:      docker,
+		opts:          opts,
+		masterSetOpts: masterSetOpts,
+		port:          hostPort,
+		containerID:   cid,
+		docker:        docker,
 	}, nil
 }
 

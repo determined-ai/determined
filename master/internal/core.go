@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/elastic"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
@@ -77,11 +79,12 @@ func New(version string, logStore *logger.LogBuffer, config *Config) *Master {
 	}
 }
 
-func (m *Master) getConfig(c echo.Context) (interface{}, error) {
+func (m *Master) getConfig(echo.Context) (interface{}, error) {
 	return m.config.Printable()
 }
 
-func (m *Master) getInfo(c echo.Context) (interface{}, error) {
+// Info returns this master's information.
+func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentWebUIKey != "" {
@@ -91,13 +94,17 @@ func (m *Master) getInfo(c echo.Context) (interface{}, error) {
 		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
 	}
 
-	return &aproto.MasterInfo{
+	return aproto.MasterInfo{
 		ClusterID:   m.ClusterID,
 		MasterID:    m.MasterID,
 		Version:     m.Version,
 		Telemetry:   telemetryInfo,
 		ClusterName: m.config.ClusterName,
-	}, nil
+	}
+}
+
+func (m *Master) getInfo(echo.Context) (interface{}, error) {
+	return m.Info(), nil
 }
 
 func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
@@ -325,7 +332,20 @@ func (m *Master) Run() error {
 	//             +- Websocket (actors.WebSocket: <remote-address>)
 	m.system = actor.NewSystem("master")
 
-	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(m.db))
+	var trialLogPersister TrialLogPersister
+	switch {
+	case m.config.Logging.DefaultLoggingConfig != nil:
+		trialLogPersister = m.db
+	case m.config.Logging.ElasticLoggingConfig != nil:
+		es, sErr := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
+		if sErr != nil {
+			return sErr
+		}
+		trialLogPersister = es
+	default:
+		panic("unsupported logging backend")
+	}
+	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(trialLogPersister))
 
 	userService, err := user.New(m.db, m.system)
 	if err != nil {
@@ -384,8 +404,12 @@ func (m *Master) Run() error {
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
 
 	// Resource Manager.
+	agentOpts := &aproto.MasterSetAgentOptions{
+		MasterInfo:     m.Info(),
+		LoggingOptions: m.config.Logging,
+	}
 	m.rm = resourcemanagers.Setup(
-		m.system, m.echo, m.config.ResourceManager, m.config.ResourcePoolsConfig, cert,
+		m.system, m.echo, m.config.ResourceManager, m.config.ResourcePoolsConfig, agentOpts, cert,
 	)
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))

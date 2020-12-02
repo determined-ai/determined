@@ -3,6 +3,8 @@ package agent
 import (
 	"net/http"
 
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
+
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
@@ -13,8 +15,14 @@ import (
 )
 
 // Initialize creates a new global agent actor.
-func Initialize(system *actor.System, e *echo.Echo, c *actor.Ref) {
-	_, ok := system.ActorOf(actor.Addr("agents"), &agents{cluster: c})
+func Initialize(
+	system *actor.System, e *echo.Echo, c *actor.Ref,
+	opts *aproto.MasterSetAgentOptions,
+) {
+	_, ok := system.ActorOf(actor.Addr("agents"), &agents{
+		cluster: c,
+		opts:    opts,
+	})
 	check.Panic(check.True(ok, "agents address already taken"))
 	// Route /agents and /agents/<agent id>/slots to the agents actor and slots actors.
 	e.Any("/agents*", api.Route(system, nil))
@@ -22,6 +30,7 @@ func Initialize(system *actor.System, e *echo.Echo, c *actor.Ref) {
 
 type agents struct {
 	cluster *actor.Ref
+	opts    *aproto.MasterSetAgentOptions
 }
 
 type agentsSummary map[string]AgentSummary
@@ -30,7 +39,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case api.WebSocketConnected:
 		id, resourcePool := msg.Ctx.QueryParam("id"), msg.Ctx.QueryParam("resource_pool")
-		if ref, err := a.createAgentActor(ctx, id, resourcePool); err != nil {
+		if ref, err := a.createAgentActor(ctx, id, resourcePool, a.opts); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(ctx.Ask(ref, msg).Get())
@@ -50,7 +59,9 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (a *agents) createAgentActor(ctx *actor.Context, id, resourcePool string) (*actor.Ref, error) {
+func (a *agents) createAgentActor(
+	ctx *actor.Context, id, resourcePool string, opts *aproto.MasterSetAgentOptions,
+) (*actor.Ref, error) {
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
 	}
@@ -63,6 +74,7 @@ func (a *agents) createAgentActor(ctx *actor.Context, id, resourcePool string) (
 	ref, ok := ctx.ActorOf(id, &agent{
 		resourcePool:     a.cluster.Child(resourcePool),
 		resourcePoolName: resourcePool,
+		opts:             opts,
 	})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)
