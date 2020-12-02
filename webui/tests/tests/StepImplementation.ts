@@ -48,6 +48,7 @@ const SCREENCAST = process.env.SCREENCAST === 'true';
 
 function handleError(e) {
   console.error(e);
+  throw e;
 }
 
 export default class StepImplementation {
