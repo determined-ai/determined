@@ -51,10 +51,6 @@ export interface ApiSorter<T = string> {
   key: T;
 }
 
-export interface ExperimentsParams {
-  states?: string[];
-}
-
 export interface SingleEntityParams {
   id: number;
 }

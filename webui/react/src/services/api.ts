@@ -2,7 +2,7 @@ import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
   ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
-  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, GetExperimentsParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams,
   LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
   TrialLogsParams,
 } from 'services/types';

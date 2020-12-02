@@ -12,7 +12,7 @@ import {
 import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
-  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
   GetExperimentsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
@@ -163,8 +163,9 @@ ExperimentBase[]
 export const createExperiment: DetApi<
 CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase> = {
   name: 'createExperiment',
-  postProcess: (expResponse: Api.V1CreateExperimentResponse) => {
-    return { id: expResponse.experiment.id } as ExperimentBase; // TODO add decoder
+  postProcess: (resp: Api.V1CreateExperimentResponse) => {
+    return decoder
+      .decodeGetV1ExperimentRespToExperimentBase(resp.experiment, resp.config);
   },
   request: (params: CreateExperimentParams) => detApi.Experiments
     .determinedCreateExperiment({ config: params.experimentConfig, parentId: params.parentId }),

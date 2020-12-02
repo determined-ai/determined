@@ -247,7 +247,7 @@ const ioDataLayer = io.type({
 
 const ioExpResources = io.type({ max_slots: optional(io.number) });
 
-const ioExperimentConfig = io.type({
+export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: optional(ioCheckpointStorage),
   data_layer: optional(ioDataLayer),

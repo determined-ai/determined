@@ -8,6 +8,7 @@ import * as types from 'types';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
+import { V1Experiment } from './api-ts-sdk';
 import { LoginResponse } from './types';
 
 const dropNonNumericMetrics = (ioMetrics: ioTypes.ioTypeMetric): Record<string, number> => {
@@ -289,16 +290,20 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const decodeV1ExperimentToExperimentBase = (
-  data: Sdk.V1Experiment,
-): Partial<types.ExperimentBase> => {
+export const decodeGetV1ExperimentRespToExperimentBase = (exp: V1Experiment, config: types.RawJson):
+types.ExperimentBase => {
+  const ioConfig = ioTypes
+    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
   return {
-    archived: data.archived,
-    endTime: data.endTime as unknown as string,
-    id: data.id,
-    progress: data.progress != null ? data.progress : undefined,
-    startTime: data.startTime as unknown as string,
-    state: decodeExperimentState(data.state),
+    archived: exp.archived,
+    config: ioToExperimentConfig(ioConfig),
+    configRaw: config,
+    endTime: exp.endTime as unknown as string,
+    id: exp.id,
+    progress: exp.progress != null ? exp.progress : undefined,
+    startTime: exp.startTime as unknown as string,
+    state: decodeExperimentState(exp.state),
+    username: exp.username,
   };
 };
 
