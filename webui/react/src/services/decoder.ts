@@ -309,20 +309,39 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
+export const decodeV1ExperimentToExperimentBase = (
+  data: Sdk.V1Experiment,
+): Partial<types.ExperimentBase> => {
+  return {
+    archived: data.archived,
+    endTime: data.endTime as unknown as string,
+    id: data.id,
+    progress: data.progress != null ? data.progress : undefined,
+    startTime: data.startTime as unknown as string,
+    state: decodeExperimentState(data.state),
+  };
+};
+
+const decodeV1ExperimentToExperimentItem = (
+  data: Sdk.V1Experiment,
+): types.ExperimentItem => {
+  return {
+    archived: data.archived,
+    endTime: data.endTime as unknown as string,
+    id: data.id,
+    labels: data.labels || [],
+    name: data.description,
+    numTrials: data.numTrials || 0,
+    progress: data.progress != null ? data.progress : undefined,
+    startTime: data.startTime as unknown as string,
+    state: decodeExperimentState(data.state),
+    url: `/experiments/${data.id}`,
+    username: data.username,
+  };
+};
+
 export const decodeExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
-  return data.map(item => ({
-    archived: item.archived,
-    endTime: item.endTime as unknown as string,
-    id: item.id,
-    labels: item.labels || [],
-    name: item.description,
-    numTrials: item.numTrials || 0,
-    progress: item.progress != null ? item.progress : undefined,
-    startTime: item.startTime as unknown as string,
-    state: decodeExperimentState(item.state),
-    url: `/experiments/${item.id}`,
-    username: item.username,
-  }));
+  return data.map(decodeV1ExperimentToExperimentItem);
 };
 
 export const jsonToExperimentDetails = (data: unknown): types.ExperimentDetails => {
