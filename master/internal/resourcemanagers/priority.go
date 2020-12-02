@@ -53,13 +53,44 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 	label string,
 ) ([]*AllocateRequest, []*actor.Ref) {
 	// All pending zero slot tasks get scheduled right away.
-	toAllocate := getAllPendingZeroSlotTasks(taskList, label)
+	toAllocate := make([]*AllocateRequest, 0)
+	toRelease := make([]*actor.Ref, 0)
+
+	// We schedule zero-slot and non-zero-slot tasks independently of each other.
+	// E.g., a lower priority zero-slot task can be started while a higher priority
+	// non-zero-slot task is pending, and vice-versa.
+	zeroSlotTasksToAllocate, zeroSlotTasksToRelease := p.prioritySchedulerWithFilter(
+		taskList, groups, agents, fittingMethod, label, zeroSlotTaskFilter)
+	toAllocate = append(toAllocate, zeroSlotTasksToAllocate...)
+	for zeroSlotTaskToRelease := range zeroSlotTasksToRelease {
+		toRelease = append(toRelease, zeroSlotTaskToRelease)
+	}
+
+	nonZeroSlotTasksToAllocate, nonZeroSlotTasksToRelease := p.prioritySchedulerWithFilter(
+		taskList, groups, agents, fittingMethod, label, nonZeroSlotTaskFilter)
+	toAllocate = append(toAllocate, nonZeroSlotTasksToAllocate...)
+	for nonZeroSlotTaskToRelease := range nonZeroSlotTasksToRelease {
+		toRelease = append(toRelease, nonZeroSlotTaskToRelease)
+	}
+
+	return toAllocate, toRelease
+}
+
+func (p *priorityScheduler) prioritySchedulerWithFilter(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	agents map[*actor.Ref]*agentState,
+	fittingMethod SoftConstraint,
+	label string,
+	filter func(*AllocateRequest) bool,
+) ([]*AllocateRequest, map[*actor.Ref]bool) {
+	toAllocate := make([]*AllocateRequest, 0)
 	toRelease := make(map[*actor.Ref]bool)
 
 	// Sort tasks by priorities and timestamps. This sort determines the order in which
 	// tasks are scheduled and preempted.
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
-		taskList, groups, label)
+		taskList, groups, label, filter)
 
 	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
@@ -109,7 +140,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 
 			taskPlaced, updatedLocalAgentState, preemptedTasks := trySchedulingTaskViaPreemption(
 				taskList, prioritizedAllocation, priority, fittingMethod, localAgentsState,
-				priorityToScheduledTaskMap, toRelease)
+				priorityToScheduledTaskMap, toRelease, filter)
 
 			if taskPlaced {
 				localAgentsState = updatedLocalAgentState
@@ -122,13 +153,7 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 		}
 	}
 
-	// Convert to a slice which is the expected output format.
-	toReleaseSlice := make([]*actor.Ref, 0, len(toRelease))
-	for k := range toRelease {
-		toReleaseSlice = append(toReleaseSlice, k)
-	}
-
-	return toAllocate, toReleaseSlice
+	return toAllocate, toRelease
 }
 
 // trySchedulingTaskViaPreemption checks whether preempting lower priority tasks
@@ -141,6 +166,7 @@ func trySchedulingTaskViaPreemption(
 	agents map[*actor.Ref]*agentState,
 	priorityToScheduledTaskMap map[int][]*AllocateRequest,
 	tasksAlreadyPreempted map[*actor.Ref]bool,
+	filter func(*AllocateRequest) bool,
 ) (bool, map[*actor.Ref]*agentState, map[*actor.Ref]bool) {
 	localAgentsState := deepCopyAgents(agents)
 	preemptedTasks := make(map[*actor.Ref]bool)
@@ -153,7 +179,7 @@ func trySchedulingTaskViaPreemption(
 
 		preemptionCandidates := priorityToScheduledTaskMap[priority]
 		for _, preemptionCandidate := range preemptionCandidates {
-			if preemptionCandidate.NonPreemptible || preemptionCandidate.SlotsNeeded == 0 {
+			if preemptionCandidate.NonPreemptible || !filter(preemptionCandidate) {
 				continue
 			}
 
@@ -199,24 +225,6 @@ func trySchedulingPendingTasksInPriority(
 	return successfulAllocations, unSuccessfulAllocations
 }
 
-func getAllPendingZeroSlotTasks(taskList *taskList, label string) []*AllocateRequest {
-	pendingZeroSlotTasks := make([]*AllocateRequest, 0)
-	for it := taskList.iterator(); it.next(); {
-		req := it.value()
-		if req.Label != label || req.SlotsNeeded > 0 {
-			continue
-		}
-
-		assigned := taskList.GetAllocations(req.TaskActor)
-		if assigned == nil || len(assigned.Allocations) == 0 {
-			log.Debugf("scheduling pending zero-slot task: %s", req.ID)
-			pendingZeroSlotTasks = append(pendingZeroSlotTasks, req)
-		}
-	}
-
-	return pendingZeroSlotTasks
-}
-
 // sortTasksByPriorityAndTimestamp sorts all pending and scheduled tasks
 // separately by priority. Within each priority, tasks are ordered
 // based on their creation time.
@@ -224,6 +232,7 @@ func sortTasksByPriorityAndTimestamp(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
 	label string,
+	filter func(*AllocateRequest) bool,
 ) (map[int][]*AllocateRequest, map[int][]*AllocateRequest) {
 	// Sort all non-zero slot tasks by priority.
 	priorityToPendingTasksMap := make(map[int][]*AllocateRequest)
@@ -231,7 +240,7 @@ func sortTasksByPriorityAndTimestamp(
 
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
-		if req.Label != label || req.SlotsNeeded == 0 {
+		if req.Label != label || !filter(req) {
 			continue
 		}
 
@@ -328,4 +337,12 @@ func splitAgentsByLabel(agents map[*actor.Ref]*agentState) map[string]map[*actor
 		agentsSplitByLabel[agent.label][agentRef] = agent
 	}
 	return agentsSplitByLabel
+}
+
+func nonZeroSlotTaskFilter(request *AllocateRequest) bool {
+	return request.SlotsNeeded > 0
+}
+
+func zeroSlotTaskFilter(request *AllocateRequest) bool {
+	return request.SlotsNeeded == 0
 }
