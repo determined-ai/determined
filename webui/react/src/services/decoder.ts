@@ -8,7 +8,6 @@ import * as types from 'types';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
-import { V1Experiment } from './api-ts-sdk';
 import { LoginResponse } from './types';
 
 const dropNonNumericMetrics = (ioMetrics: ioTypes.ioTypeMetric): Record<string, number> => {
@@ -290,7 +289,7 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const decodeGetV1ExperimentRespToExperimentBase = (exp: V1Experiment, config: types.RawJson):
+export const decodeGetV1ExperimentRespToExperimentBase = (exp: Sdk.V1Experiment, config: types.RawJson):
 types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
