@@ -87,7 +87,7 @@ export interface GetExperimentsParams {
   options?: never;
 }
 
-export interface ForkExperimentParams {
+export interface CreateExperimentParams {
   parentId: number;
   experimentConfig: string;
 }

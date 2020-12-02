@@ -11,8 +11,8 @@ import {
 } from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
-  CommandIdParams, CreateNotebookParams, CreateTensorboardParams, DetApi, EmptyParams,
-  ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, ForkExperimentParams,
+  CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
+  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams,
   GetExperimentsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
@@ -160,7 +160,17 @@ ExperimentBase[]
     ),
 };
 
-export const forkExperiment: HttpApi<ForkExperimentParams, number> = {
+export const createExperiment: DetApi<
+CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentDetails> = {
+  name: 'createExperiment',
+  postProcess: (expResponse: Api.V1CreateExperimentResponse) => {
+    return { id: expResponse.experiment?.id } as ExperimentDetails; // TODO
+  },
+  request: (params: CreateExperimentParams) => detApi.Experiments
+    .determinedCreateExperiment({ config: params.experimentConfig, parentId: params.parentId }),
+};
+
+export const forkExperiment: HttpApi<CreateExperimentParams, number> = {
   httpOptions: (params) => {
     return {
       body: {

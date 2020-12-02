@@ -1,10 +1,10 @@
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
-  ApiSorter, CommandIdParams, CreateNotebookParams, CreateTensorboardParams, EmptyParams,
-  ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, ForkExperimentParams,
-  GetExperimentsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
-  TrialDetailsParams, TrialLogsParams,
+  ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, GetExperimentsParams,
+  LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
+  TrialLogsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
@@ -101,7 +101,12 @@ export const getExperimentDetails =
 export const getTrialDetails =
   generateApi<TrialDetailsParams, TrialDetails>(Config.getTrialDetails);
 
-export const forkExperiment = generateApi<ForkExperimentParams, number>(Config.forkExperiment);
+export const createExperiment = generateDetApi<
+CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentDetails>(
+  Config.createExperiment,
+);
+
+export const forkExperiment = generateApi<CreateExperimentParams, number>(Config.forkExperiment);
 
 export const archiveExperiment = generateDetApi<
   ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
