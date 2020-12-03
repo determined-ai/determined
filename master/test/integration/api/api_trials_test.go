@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/integration/testutils"
+	"github.com/determined-ai/determined/master/test/testutils"
 
 	"github.com/golang/protobuf/ptypes"
 	"gotest.tools/assert"

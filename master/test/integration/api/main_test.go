@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/determined-ai/determined/master/integration/testutils"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/test/testutils"
 )
 
 var pgDB *db.PgDB

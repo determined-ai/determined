@@ -33,9 +33,9 @@ db:
   user: postgres
   password: postgres
   name: determined
-  migrations: file://../../static/migrations
+  migrations: file://../../../static/migrations
 
-root: ../..
+root: ../../..
 `
 )
 

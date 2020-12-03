@@ -35,7 +35,7 @@ test:
 .PHONY: test
 test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@localhost:5432/determined?sslmode=disable
 test-intg:
-	go test -tags=integration -coverprofile=coverage.out -covermode count -cover ./integration/...
+	go test -tags=integration -coverprofile=coverage.out -covermode count -cover ./test/...
 
 .PHONY: pre-package
 pre-package:
