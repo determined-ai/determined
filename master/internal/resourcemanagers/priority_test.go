@@ -256,8 +256,8 @@ func TestPrioritySchedulingNoPreemptionAddTasks(t *testing.T) {
 	higherPriority := 40
 
 	agents := []*mockAgent{
-		{id: "agent1", slots: 4},
-		{id: "agent2", slots: 4},
+		{id: "agent1", slots: 4, maxZeroSlotContainers: 100},
+		{id: "agent2", slots: 4, maxZeroSlotContainers: 100},
 	}
 	groups := []*mockGroup{
 		{id: "group1", priority: &lowerPriority},
@@ -296,6 +296,7 @@ func TestPrioritySchedulingNoPreemptionAddTasks(t *testing.T) {
 
 	toAllocate, _ = p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
 	expectedToAllocate = []*mockTask{newTasks[0], newTasks[1]}
+	fmt.Println("second")
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 }
 
@@ -394,7 +395,7 @@ func TestPrioritySchedulingNoPreemptionTaskFinished(t *testing.T) {
 	higherPriority := 40
 
 	agents := []*mockAgent{
-		{id: "agent1", slots: 4},
+		{id: "agent1", slots: 4, maxZeroSlotContainers: 100},
 	}
 	groups := []*mockGroup{
 		{id: "group1", priority: &higherPriority},
@@ -539,8 +540,8 @@ func TestPrioritySchedulingPreemptAllTasks(t *testing.T) {
 	higherPriority := 40
 
 	agents := []*mockAgent{
-		{id: "agent1", slots: 4},
-		{id: "agent2", slots: 4},
+		{id: "agent1", slots: 4, maxZeroSlotContainers: 100},
+		{id: "agent2", slots: 4, maxZeroSlotContainers: 100},
 	}
 	groups := []*mockGroup{
 		{id: "group1", priority: &lowerPriority},
@@ -641,8 +642,8 @@ func TestPrioritySchedulingPreemptMultiplePriorities(t *testing.T) {
 	highestPriority := 20
 
 	agents := []*mockAgent{
-		{id: "agent1", slots: 4},
-		{id: "agent2", slots: 4},
+		{id: "agent1", slots: 4, maxZeroSlotContainers: 100},
+		{id: "agent2", slots: 4, maxZeroSlotContainers: 100},
 	}
 	groups := []*mockGroup{
 		{id: "group1", priority: &lowerPriority},
