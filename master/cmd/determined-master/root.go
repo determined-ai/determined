@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -49,7 +50,7 @@ func runRoot() error {
 	log.Infof("master configuration: %s", printableConfig)
 
 	m := internal.New(version.Version, logStore, config)
-	return m.Run()
+	return m.Run(context.TODO())
 }
 
 // initializeConfig returns the validated configuration populated from config

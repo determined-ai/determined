@@ -992,6 +992,22 @@ jobs:
       - run: make -C master test
       - run: make -C agent test
 
+  test-intg-master:
+    machine:
+      image: ubuntu-1604:202004-01
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - install-protoc # install newer version of protoc into #HOME/.local/bin, since default is proto2
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
+      - run: make -C master get-deps
+      - run: make -C agent get-deps
+      - run: make -C tools start-db
+      - run: make -C master test-intg
+
   lint-docs:
     docker:
       - image: determinedai/cimg-base:stable
@@ -1384,6 +1400,10 @@ workflows:
       - test-unit-harness
       - test-unit-harness-tf2
       - test-examples
+
+  test-intg:
+    jobs:
+      - test-intg-master
 
   test-e2e:
     jobs:

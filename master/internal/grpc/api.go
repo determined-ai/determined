@@ -66,7 +66,7 @@ func newGRPCGatewayMux() *runtime.ServeMux {
 }
 
 // RegisterHTTPProxy registers grpc-gateway with the master echo server.
-func RegisterHTTPProxy(e *echo.Echo, port int, cert *tls.Certificate) error {
+func RegisterHTTPProxy(ctx context.Context, e *echo.Echo, port int, cert *tls.Certificate) error {
 	addr := fmt.Sprintf(":%d", port)
 	var opts []grpc.DialOption
 	if cert == nil {
@@ -78,7 +78,7 @@ func RegisterHTTPProxy(e *echo.Echo, port int, cert *tls.Certificate) error {
 		})))
 	}
 	mux := newGRPCGatewayMux()
-	err := proto.RegisterDeterminedHandlerFromEndpoint(context.Background(), mux, addr, opts)
+	err := proto.RegisterDeterminedHandlerFromEndpoint(ctx, mux, addr, opts)
 	if err != nil {
 		return err
 	}

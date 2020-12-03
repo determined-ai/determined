@@ -1,9 +1,11 @@
 package internal
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -27,7 +29,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/context"
+	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/proxy"
@@ -140,12 +142,13 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 	return entries, nil
 }
 
-func (m *Master) startServers(cert *tls.Certificate) error {
+func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error {
 	// Create the base TCP socket listener and, if configured, set up TLS wrapping.
 	baseListener, err := net.Listen("tcp", fmt.Sprintf(":%d", m.config.Port))
 	if err != nil {
 		return err
 	}
+	defer closeWithErrCheck(baseListener)
 
 	if cert != nil {
 		baseListener = tls.NewListener(baseListener, &tls.Config{
@@ -156,15 +159,20 @@ func (m *Master) startServers(cert *tls.Certificate) error {
 	}
 
 	// Initialize listeners and multiplexing.
-	if err := grpc.RegisterHTTPProxy(m.echo, m.config.Port, cert); err != nil {
+	err = grpc.RegisterHTTPProxy(ctx, m.echo, m.config.Port, cert)
+	if err != nil {
 		return errors.Wrap(err, "failed to register gRPC gateway")
 	}
 
 	mux := cmux.New(baseListener)
+
 	grpcListener := mux.MatchWithWriters(
 		cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"),
 	)
+	defer closeWithErrCheck(grpcListener)
+
 	httpListener := mux.Match(cmux.HTTP1(), cmux.HTTP2())
+	defer closeWithErrCheck(httpListener)
 
 	// Start all servers and return the first error. This leaks a channel, but the complexity of
 	// perfectly handling cleanup and all the error cases doesn't seem worth it for a function that is
@@ -176,17 +184,35 @@ func (m *Master) startServers(cert *tls.Certificate) error {
 		}()
 	}
 	start("gRPC server", func() error {
-		return grpc.NewGRPCServer(m.db, &apiServer{m: m}).Serve(grpcListener)
+		srv := grpc.NewGRPCServer(m.db, &apiServer{m: m})
+		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
+		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
+		// indefinitely when using cmux.
+		// To be fixed by https://github.com/soheilhy/cmux/pull/69 which makes cmux an io.Closer.
+		return srv.Serve(grpcListener)
 	})
 	start("HTTP server", func() error {
 		m.echo.Listener = httpListener
 		m.echo.HidePort = true
+		defer closeWithErrCheck(m.echo)
 		return m.echo.StartServer(m.echo.Server)
 	})
 	start("cmux listener", mux.Serve)
 
 	log.Infof("accepting incoming connections on port %d", m.config.Port)
-	return <-errs
+	select {
+	case err := <-errs:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func closeWithErrCheck(closer io.Closer) {
+	err := closer.Close()
+	if err != nil {
+		log.Errorf("error closing closer: %s", err)
+	}
 }
 
 func (m *Master) restoreExperiment(e *model.Experiment) {
@@ -280,7 +306,7 @@ func (m *Master) postTrialLogs(c echo.Context) (interface{}, error) {
 }
 
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
-func (m *Master) Run() error {
+func (m *Master) Run(ctx context.Context) error {
 	log.Infof("Determined master %s (built with %s)", m.Version, runtime.Version())
 
 	var err error
@@ -293,6 +319,7 @@ func (m *Master) Run() error {
 	if err != nil {
 		return err
 	}
+	defer closeWithErrCheck(m.db)
 
 	m.ClusterID, err = m.db.GetClusterID()
 	if err != nil {
@@ -392,7 +419,7 @@ func (m *Master) Run() error {
 	// Register middleware that extends default context.
 	m.echo.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := &context.DetContext{Context: c}
+			cc := &detContext.DetContext{Context: c}
 			return h(cc)
 		}
 	})
@@ -569,5 +596,5 @@ func (m *Master) Run() error {
 		log.Info("telemetry reporting is disabled")
 	}
 
-	return m.startServers(cert)
+	return m.startServers(ctx, cert)
 }
