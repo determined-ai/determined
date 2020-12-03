@@ -223,6 +223,7 @@ export enum CheckpointState {
   Completed = 'COMPLETED',
   Error = 'ERROR',
   Deleted = 'DELETED',
+  Unspecified = 'UNSPECIFIED',
 }
 
 export enum MetricType {
@@ -237,13 +238,33 @@ export interface MetricName {
 
 // Checkpoint sub step.
 export interface Checkpoint extends StartEndTimes {
-  id: number;
   resources?: Record<string, number>;
   state: CheckpointState;
-  stepId: number;
   trialId: number;
   uuid? : string;
   validationMetric? : number;
+}
+
+export interface Workload extends StartEndTimes {
+  numBatches: number;
+  priorBatchesProcessed: number;
+}
+
+export interface CheckpointWorkload extends Workload {
+  resources?: Record<string, number>;
+  state: CheckpointState;
+  uuid? : string;
+}
+
+export interface MetricsWorkload extends Workload {
+  state: RunState;
+  metrics?: Record<string, number>;
+  numInputs?: number;
+}
+export interface WorkloadWrapper {
+  training?: MetricsWorkload;
+  validation?: MetricsWorkload;
+  checkpoint?: CheckpointWorkload;
 }
 
 // Validation sub step.
@@ -280,8 +301,19 @@ interface TrialBase extends StartEndTimes {
   experimentId: number;
   id: number;
   state: RunState;
-  seed: number;
   hparams: TrialHyperParameters;
+}
+
+// To replace TrialItem once experiment endpoint is migrated.
+export interface TrialItem2 extends TrialBase {
+  bestAvailableCheckpoint?: CheckpointWorkload;
+  bestValidationMetric?: MetricsWorkload;
+  latestValidationMetric?: MetricsWorkload;
+  totalBatchesProcessed: number;
+}
+
+export interface TrialDetails2 extends TrialItem2 {
+  workloads: WorkloadWrapper[];
 }
 
 export interface TrialItem extends TrialBase {
@@ -292,11 +324,13 @@ export interface TrialItem extends TrialBase {
   numSteps: number;
   totalBatchesProcessed: number;
   url: string;
+  seed: number;
 }
 
 export interface TrialDetails extends TrialBase {
   steps: Step[];
   warmStartCheckpointId?: number;
+  seed: number;
 }
 
 export interface ExperimentItem {

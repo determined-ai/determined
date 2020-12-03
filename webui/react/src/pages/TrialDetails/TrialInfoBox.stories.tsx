@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  CheckpointState, ExperimentDetails, ExperimentOld, RunState, TrialDetails, TrialItem,
+  CheckpointState, ExperimentDetails, ExperimentOld, RunState, TrialDetails2, TrialItem, TrialItem2,
 } from 'types';
 import { generateOldExperiment } from 'utils/task';
 
@@ -14,15 +14,14 @@ export default {
 
 const sampleExperiment: ExperimentOld = generateOldExperiment(3);
 
-const sampleTrialItem: TrialItem = {
+const sampleTrialItem: TrialItem2 = {
   bestAvailableCheckpoint: {
-    id: 3,
+    numBatches: 100,
+    priorBatchesProcessed: 9900,
     resources: { noOpCheckpoint: 1542 },
     startTime: Date.now.toString(),
     state: CheckpointState.Completed,
-    stepId: 34,
-    trialId: 3,
-    validationMetric: 0.023,
+
   },
   experimentId: 1,
   hparams: {
@@ -33,24 +32,20 @@ const sampleTrialItem: TrialItem = {
     stringVal: 'loss',
   },
   id: 1,
-  numCompletedCheckpoints: 1,
-  numSteps: 100,
-  seed: 142,
   startTime: Date.now.toString(),
   state: RunState.Completed,
   totalBatchesProcessed: 10000,
-  url: '/experiments/1/trials/1',
 };
 
-const trialDetails: TrialDetails = {
+const trialDetails: TrialDetails2 = {
   ...sampleTrialItem,
-  steps: [],
+  workloads: [],
 };
 
 const experimentDetails: ExperimentDetails = {
   ...sampleExperiment,
   trials: [
-    sampleTrialItem,
+    // sampleTrialItem, // TODO experiment migration
   ],
   username: 'hamid',
   validationHistory: [ {

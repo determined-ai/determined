@@ -17,11 +17,9 @@ const experimentDetails: ExperimentDetails = {
   trials: [
     {
       bestAvailableCheckpoint: {
-        id: 3,
         resources: { noOpCheckpoint: 1542 },
         startTime: Date.now.toString(),
         state: CheckpointState.Completed,
-        stepId: 34,
         trialId: 3,
         validationMetric: 0.023,
       },

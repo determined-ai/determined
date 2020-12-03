@@ -1,9 +1,9 @@
-import { MetricName, MetricType, Step } from 'types';
+import { MetricName, MetricType, Step, WorkloadWrapper } from 'types';
 import { isNumber, metricNameSorter } from 'utils/data';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
 
-export const extractMetricValue = (step: Step, metricName: MetricName): number | undefined => {
+export const extractMetricValueStep = (step: Step, metricName: MetricName): number | undefined => {
   if (metricName.type === MetricType.Training) {
     const source = step.avgMetrics || {};
     if (isNumber(source[metricName.name])) return source[metricName.name];
@@ -14,7 +14,7 @@ export const extractMetricValue = (step: Step, metricName: MetricName): number |
   return undefined;
 };
 
-export const extractMetricNames = (steps: Step[] = []): MetricName[] => {
+export const extractMetricNamesStep = (steps: Step[] = []): MetricName[] => {
   const map: Record<string, MetricName> = {};
 
   steps.forEach(step => {
@@ -41,8 +41,49 @@ export const extractMetricNames = (steps: Step[] = []): MetricName[] => {
   return Object.values(map).sort(metricNameSorter);
 };
 
+export const extractMetricNames = (workloads: WorkloadWrapper[]): MetricName[] => {
+  const trainingNames: Set<string> = workloads
+    .filter(wl => wl.training?.metrics)
+    .reduce((acc, cur) => {
+      Object.keys(cur.training?.metrics as Record<string, number>).forEach(name => {
+        acc.add(name);
+      });
+      return acc;
+    }, new Set<string>()) as Set<string>; // this "as" shouldn't be needed.
+
+  const trainingMetrics: MetricName[]= Array.from(trainingNames).map(name => ({
+    name,
+    type: MetricType.Training,
+  }));
+
+  const validationNames: Set<string> = workloads
+    .filter(wl => wl.validation?.metrics)
+    .reduce((acc, cur) => {
+      Object.keys(cur.validation?.metrics as Record<string, number>).forEach(name => {
+        acc.add(name);
+      });
+      return acc;
+    }, new Set<string>()) as Set<string>; // this "as" shouldn't be needed.
+
+  const validationMetrics: MetricName[]= Array.from(validationNames).map(name => ({
+    name,
+    type: MetricType.Validation,
+  }));
+
+  return [ ...validationMetrics, ...trainingMetrics ].sort(metricNameSorter);
+};
 export const metricNameToValue = (metricName: MetricName): string => {
   return `${metricName.type}|${metricName.name}`;
+};
+
+export const extractMetricValue = (
+  wl: WorkloadWrapper,
+  metricName: MetricName,
+): number | undefined => {
+  const source = (metricName.type === MetricType.Training
+    ? wl.training?.metrics : wl.validation?.metrics) || {};
+  if (isNumber(source[metricName.name])) return source[metricName.name];
+  return undefined;
 };
 
 export const metricNameFromValue = (metricValue: string): MetricName | undefined => {

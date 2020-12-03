@@ -19,7 +19,7 @@ import {
 import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentDetails, Log, TBSourceType, TrialDetails,
+  ExperimentDetails, Log, TBSourceType, TrialDetails, TrialDetails2,
 } from 'types';
 
 import { noOp } from './utils';
@@ -240,10 +240,20 @@ export const getExperimentLabels: DetApi<
   request: (params) => detApi.Experiments.determinedGetExperimentLabels(params),
 };
 
-export const getTrialDetails: HttpApi<TrialDetailsParams, TrialDetails> = {
-  httpOptions: (params: TrialDetailsParams) => ({ url: `/trials/${params.id}/details` }),
+// export const getTrialDetails: HttpApi<TrialDetailsParams, TrialDetails> = {
+//   httpOptions: (params: TrialDetailsParams) => ({ url: `/trials/${params.id}/details` }),
+//   name: 'getTrialDetails',
+//   postProcess: response => jsonToTrialDetails(response.data),
+// };
+
+export const getTrialDetails: DetApi<
+TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2> = {
   name: 'getTrialDetails',
-  postProcess: response => jsonToTrialDetails(response.data),
+  postProcess: (resp: Api.V1GetTrialResponse) => {
+    return decoder
+      .decodeTrialResponseToTrialDetails(resp);
+  },
+  request: (params: TrialDetailsParams) => detApi.Experiments.determinedGetTrial(params.id),
 };
 
 /* Tasks */

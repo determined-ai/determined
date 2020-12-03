@@ -184,11 +184,9 @@ const ioToExperimentConfig = (io: ioTypes.ioTypeExperimentConfig): types.Experim
 const ioToCheckpoint = (io: ioTypes.ioTypeCheckpoint): types.Checkpoint => {
   return {
     endTime: io.end_time || undefined,
-    id: io.id,
     resources: io.resources,
     startTime: io.start_time,
     state: io.state as types.CheckpointState,
-    stepId: io.step_id,
     trialId: io.trial_id,
     uuid: io.uuid || undefined,
     validationMetric: io.validation_metric != null ? io.validation_metric : undefined,
@@ -261,6 +259,14 @@ export const jsonToTrialDetails = (data: unknown): types.TrialDetails => {
   };
 };
 
+const checkpointStateMap = {
+  [Sdk.Determinedcheckpointv1State.UNSPECIFIED]: types.CheckpointState.Unspecified,
+  [Sdk.Determinedcheckpointv1State.ACTIVE]: types.CheckpointState.Active,
+  [Sdk.Determinedcheckpointv1State.COMPLETED]: types.CheckpointState.Completed,
+  [Sdk.Determinedcheckpointv1State.ERROR]: types.CheckpointState.Error,
+  [Sdk.Determinedcheckpointv1State.DELETED]: types.CheckpointState.Deleted,
+};
+
 const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.UNSPECIFIED]: types.RunState.Unspecified,
   [Sdk.Determinedexperimentv1State.ACTIVE]: types.RunState.Active,
@@ -272,6 +278,10 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.COMPLETED]: types.RunState.Completed,
   [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.Errored,
   [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
+};
+
+export const decodeCheckpointState = (data: Sdk.Determinedcheckpointv1State): types.CheckpointState => {
+  return checkpointStateMap[data];
 };
 
 export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): types.RunState => {
@@ -325,6 +335,63 @@ const decodeV1ExperimentToExperimentItem = (
 
 export const decodeExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
   return data.map(decodeV1ExperimentToExperimentItem);
+};
+
+const decodeMetricsWorkload = (data: Sdk.V1MetricsWorkload): types.MetricsWorkload => {
+  return {
+    metrics: data.metrics,
+    numBatches: data.numBatches,
+    priorBatchesProcessed: data.priorBatchesProcessed,
+    startTime: data.startTime as unknown as string,
+    state: decodeExperimentState(data.state),
+  };
+};
+
+const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.CheckpointWorkload => {
+  return {
+    // resources: data.bestCheckpoint.resources,
+    endTime: data.endTime as unknown as string,
+    numBatches: data.numBatches,
+    priorBatchesProcessed: data.priorBatchesProcessed,
+    startTime:data.startTime as unknown as string,
+    state: decodeCheckpointState(data.state),
+    uuid: data.uuid,
+  };
+};
+
+const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem2 => {
+  return {
+    bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
+    bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
+    endTime: data.endTime && data.endTime as unknown as string,
+    experimentId: data.experimentId,
+    hparams: data.hparams,
+    id: data.id,
+    latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
+    startTime: data.startTime as unknown as string,
+    state: decodeExperimentState(data.state),
+    totalBatchesProcessed: data.totalBatchesProcessed,
+  };
+};
+
+export const decodeTrialResponseToTrialDetails = (
+  data: Sdk.V1GetTrialResponse,
+): types.TrialDetails2 => {
+  const trialItem = decodeV1TrialToTrialItem(data.trial);
+  let workloads;
+
+  if (data.workloads) {
+    workloads = data.workloads.map(ww => ({
+      checkpoint: ww.checkpoint && decodeCheckpointWorkload(ww.checkpoint),
+      training: ww.training && decodeMetricsWorkload(ww.training),
+      validation: ww.validation && decodeMetricsWorkload(ww.validation),
+    }));
+  }
+
+  return {
+    ...trialItem,
+    workloads: workloads || [],
+  };
 };
 
 export const jsonToExperimentDetails = (data: unknown): types.ExperimentDetails => {

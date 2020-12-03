@@ -4,7 +4,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
 import { openOrCreateTensorboard } from 'services/api';
-import { RunState, TBSourceType, TrialDetails, TrialItem } from 'types';
+import { RunState, TBSourceType, TrialDetails2, TrialItem } from 'types';
+import { getWorkload, isMetricsWorkload } from 'utils/step';
 import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -15,7 +16,7 @@ export enum Action {
 }
 
 interface Props {
-  trial: TrialDetails;
+  trial: TrialDetails2;
   trials: TrialItem[],
   onClick: (action: Action) => (() => void);
   onSettled: () => void; // A callback to trigger after an action is done.
@@ -23,10 +24,13 @@ interface Props {
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
+const trialWillNeverHaveData = (trial: TrialDetails2): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
-  const stepsWithSomeMetric = trial.steps.filter(step => step.state === RunState.Completed);
-  return isTerminal && stepsWithSomeMetric.length === 0;
+  const workloadsWithSomeMetric = trial.workloads
+    .map(getWorkload)
+    .filter(isMetricsWorkload)
+    .filter(workload => workload.metrics && workload.state === RunState.Completed);
+  return isTerminal && workloadsWithSomeMetric.length === 0;
 };
 
 const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Props) => {
@@ -51,7 +55,7 @@ const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Pr
     return trials.reduce((acc, trial) => acc + trial.numCompletedCheckpoints, 0);
   }, [ trials ]);
 
-  const actionButtons: ConditionalButton<TrialDetails>[] = [
+  const actionButtons: ConditionalButton<TrialDetails2>[] = [
     {
       button: (trialCompletedCheckpointSum > 0 ? (
         <Button key={Action.Continue} onClick={onClick(Action.Continue)}>Continue Trial</Button>
