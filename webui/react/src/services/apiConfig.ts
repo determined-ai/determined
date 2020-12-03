@@ -37,6 +37,7 @@ export const detApi = {
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
+  StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
   Tensorboards: new Api.TensorboardsApi(ApiConfig),
 };
 

@@ -1,11 +1,18 @@
+import { Select } from 'antd';
 import { Col, Row } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
-import { ExperimentDetails } from 'types';
+import SelectFilter from 'components/SelectFilter';
+import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
+import { consumeStream } from 'services/utils';
+import { ALL_VALUE, ExperimentDetails } from 'types';
 
 import css from './ExperimentVisualization.module.scss';
+
+const { OptGroup, Option } = Select;
 
 export enum VisualizationType {
   HpParallelCoord = 'hp-parallel-coord',
@@ -44,6 +51,15 @@ const ExperimentVisualization: React.FC<Props> = ({
     }
   }, [ basePath, history, type ]);
 
+  useEffect(() => {
+    consumeStream<V1MetricNamesResponse>(
+      detApi.StreamingInternal.determinedMetricNames(experiment.id),
+      event => {
+        console.log('event', event);
+      },
+    );
+  }, [ experiment ]);
+
   return (
     <div className={css.base}>
       <Row>
@@ -66,7 +82,9 @@ const ExperimentVisualization: React.FC<Props> = ({
             <div className={css.filters}>
               <header>Filters</header>
               <div>
-                content
+                <SelectFilter label="Metric">
+                  <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
+                </SelectFilter>
               </div>
             </div>
           </div>
