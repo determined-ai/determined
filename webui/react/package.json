@@ -45,7 +45,6 @@
     "screenfull": "^5.0.2",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
-    "taiko-video": "^0.1.4",
     "timeago-react": "^3.0.1",
     "websocket": "^1.0.32"
   },
