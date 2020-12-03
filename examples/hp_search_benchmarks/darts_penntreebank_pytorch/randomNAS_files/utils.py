@@ -16,7 +16,7 @@ def repackage_hidden(h):
 def batchify(data, bsz, args):
     nbatch = data.size(0) // bsz
     data = data.narrow(0, 0, nbatch * bsz)
-    data = data.view(bsz, -1).t().contiguous()
+    data = data.contiguous().view(bsz, -1).t().contiguous()
     if args.cuda:
         data = data.cuda()
     return data

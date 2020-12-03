@@ -14,12 +14,12 @@ def channel_shuffle(x, groups):
     channels_per_group = num_channels // groups
 
     # reshape
-    x = x.view(batchsize, groups, channels_per_group, height, width)
+    x = x.contiguous().view(batchsize, groups, channels_per_group, height, width)
 
     x = torch.transpose(x, 1, 2).contiguous()
 
     # flatten
-    return x.view(batchsize, -1, height, width)
+    return x.contiguous().view(batchsize, -1, height, width)
 
 
 class MixedOp(nn.Module):
@@ -173,7 +173,7 @@ class Network(nn.Module):
                     weights2 = torch.cat([weights2, tw2], dim=0)
             s0, s1 = s1, cell(s0, s1, weights, weights2)
         out = self.global_pooling(s1)
-        logits = self.classifier(out.view(out.size(0), -1))
+        logits = self.classifier(out.contiguous().view(out.size(0), -1))
         return logits
 
     def _loss(self, input, target):

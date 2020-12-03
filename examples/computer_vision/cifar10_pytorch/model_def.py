@@ -36,7 +36,7 @@ class Flatten(nn.Module):
         assert len(args) == 1
         x = args[0]
         assert isinstance(x, torch.Tensor)
-        return x.view(x.size(0), -1)
+        return x.contiguous().view(x.size(0), -1)
 
 
 class CIFARTrial(PyTorchTrial):

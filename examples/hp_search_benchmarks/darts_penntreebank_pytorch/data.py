@@ -67,7 +67,7 @@ class PTBData(Dataset):
     def batchify(self, data):
         nbatch = data.size(0) // self.batch_size
         data = data.narrow(0, 0, nbatch * self.batch_size)
-        data = data.view(self.batch_size, -1).t().contiguous()  # returns [29049, 32]
+        data = data.contiguous().view(self.batch_size, -1).t().contiguous()  # returns [29049, 32]
         return data
 
     def __len__(self):

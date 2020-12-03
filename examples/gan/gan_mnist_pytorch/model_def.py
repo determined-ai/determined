@@ -47,7 +47,7 @@ class Generator(nn.Module):
 
     def forward(self, z):
         img = self.model(z)
-        img = img.view(img.size(0), *self.img_shape)
+        img = img.contiguous().view(img.size(0), *self.img_shape)
         return img
 
 
@@ -65,7 +65,7 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, img):
-        img_flat = img.view(img.size(0), -1)
+        img_flat = img.contiguous().view(img.size(0), -1)
         validity = self.model(img_flat)
 
         return validity

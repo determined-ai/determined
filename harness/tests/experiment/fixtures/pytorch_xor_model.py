@@ -115,7 +115,7 @@ class BaseXORTrial(pytorch.PyTorchTrial):
     ) -> Dict[str, torch.Tensor]:
         data, labels = batch
         output = self.model(data)
-        loss = torch.nn.functional.binary_cross_entropy(output, labels.view(-1, 1))
+        loss = torch.nn.functional.binary_cross_entropy(output, labels.contiguous().view(-1, 1))
 
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
@@ -151,7 +151,7 @@ class XORTrialMulti(XORTrial):
     ) -> Dict[str, torch.Tensor]:
         data, labels = batch
         output = self.model(data)
-        loss = nn.functional.binary_cross_entropy(output["output"], labels.view(-1, 1))
+        loss = nn.functional.binary_cross_entropy(output["output"], labels.contiguous().view(-1, 1))
 
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
@@ -172,7 +172,7 @@ class XORTrialWithTrainingMetrics(XORTrialMulti):
         data, labels = batch
         output = self.model(data)
         labels = cast(torch.Tensor, labels)
-        loss = nn.functional.binary_cross_entropy(output["output"], labels.view(-1, 1))
+        loss = nn.functional.binary_cross_entropy(output["output"], labels.contiguous().view(-1, 1))
         accuracy = error_rate(output["output"], labels)
 
         self.context.backward(loss)
@@ -210,7 +210,7 @@ class XORTrialWithNonScalarValidation(pytorch.PyTorchTrial):
     ) -> Dict[str, torch.Tensor]:
         data, labels = batch
         output = self.model(data)
-        loss = nn.functional.binary_cross_entropy(output["output"], labels.view(-1, 1))
+        loss = nn.functional.binary_cross_entropy(output["output"], labels.contiguous().view(-1, 1))
 
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
@@ -347,7 +347,7 @@ class XORTrialAccessContext(BaseXORTrial):
 
         data, labels = batch
         output = self.model_a(data)
-        loss = torch.nn.functional.binary_cross_entropy(output, labels.view(-1, 1))
+        loss = torch.nn.functional.binary_cross_entropy(output, labels.contiguous().view(-1, 1))
 
         self.context.backward(loss)
         self.context.step_optimizer(self.opt_a)
@@ -372,7 +372,7 @@ class XORTrialGradClipping(XORTrial):
     ) -> Dict[str, torch.Tensor]:
         data, labels = batch
         output = self.model(data)
-        loss = torch.nn.functional.binary_cross_entropy(output, labels.view(-1, 1))
+        loss = torch.nn.functional.binary_cross_entropy(output, labels.contiguous().view(-1, 1))
 
         self.context.backward(loss)
 

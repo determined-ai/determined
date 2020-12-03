@@ -80,7 +80,7 @@ class AuxiliaryHeadCIFAR(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = self.classifier(x.view(x.size(0), -1))
+        x = self.classifier(x.contiguous().view(x.size(0), -1))
         return x
 
 
@@ -104,7 +104,7 @@ class AuxiliaryHeadImageNet(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = self.classifier(x.view(x.size(0), -1))
+        x = self.classifier(x.contiguous().view(x.size(0), -1))
         return x
 
 
@@ -153,7 +153,7 @@ class NetworkCIFAR(nn.Module):
                 if self._auxiliary and self.training:
                     logits_aux = self.auxiliary_head(s1)
         out = self.global_pooling(s1)
-        logits = self.classifier(out.view(out.size(0), -1))
+        logits = self.classifier(out.contiguous().view(out.size(0), -1))
         return logits, logits_aux
 
 
@@ -211,5 +211,5 @@ class NetworkImageNet(nn.Module):
                 if self._auxiliary and self.training:
                     logits_aux = self.auxiliary_head(s1)
         out = self.global_pooling(s1)
-        logits = self.classifier(out.view(out.size(0), -1))
+        logits = self.classifier(out.contiguous().view(out.size(0), -1))
         return logits, logits_aux
