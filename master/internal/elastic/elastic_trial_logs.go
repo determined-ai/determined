@@ -19,11 +19,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// The maximum size of elasticsearch queries on a cluster with default configurations.
-// Can be increased but is limited by Lucene's 2m cap also.
 const (
-	ElasticMaxQuerySize    = 10000
-	ElasticTimeWindowDelay = -10 * time.Second
+	// The maximum size of elasticsearch queries on a cluster with default configurations.
+	// Can be increased but is limited by Lucene's 2m cap also.
+	elasticMaxQuerySize = 10000
+	// A time buffer to allow logs to come in before we try to serve them up. We do this to
+	// not miss later logs when using search_after.
+	elasticTimeWindowDelay = -10 * time.Second
 )
 
 // AddTrialLogs indexes a batch of trial logs into the index like triallogs-yyyy-MM-dd based
@@ -92,7 +94,7 @@ func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 	}{}
 	err = json.NewDecoder(res.Body).Decode(&resp)
 	if err != nil {
-		return 0, fmt.Errorf("failed to decode count api response")
+		return 0, errors.New("failed to decode count api response")
 	}
 	return resp.Count, nil
 }
@@ -105,8 +107,8 @@ func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 func (e *Elastic) TrialLogs(
 	trialID, offset, limit int, fs []api.Filter, searchAfter interface{},
 ) ([]*model.TrialLog, interface{}, error) {
-	if limit > ElasticMaxQuerySize {
-		limit = ElasticMaxQuerySize
+	if limit > elasticMaxQuerySize {
+		limit = elasticMaxQuerySize
 	}
 
 	query := map[string]interface{}{
@@ -129,7 +131,7 @@ func (e *Elastic) TrialLogs(
 					map[string]interface{}{
 						"range": map[string]interface{}{
 							"timestamp": map[string]interface{}{
-								"lt": time.Now().UTC().Add(ElasticTimeWindowDelay),
+								"lt": time.Now().UTC().Add(elasticTimeWindowDelay),
 							},
 						},
 					}),
@@ -184,24 +186,29 @@ func (e *Elastic) TrialLogs(
 			timestamp = "UNKNOWN TIME"
 		}
 
+		// This is just to match postgres.
+		const containerIDMaxLength = 8
 		var containerID string
 		if h.Source.ContainerID != nil {
 			containerID = *h.Source.ContainerID
+			if len(containerID) > containerIDMaxLength {
+				containerID = containerID[:containerIDMaxLength]
+			}
 		} else {
 			containerID = "UNKNOWN CONTAINER"
 		}
 
 		var rankID string
 		if h.Source.RankID != nil {
-			rankID = fmt.Sprintf("[rank=%d]", *h.Source.RankID)
+			rankID = fmt.Sprintf("[rank=%d] ", *h.Source.RankID)
 		}
 
 		var level string
 		if h.Source.Level != nil {
-			level = *h.Source.Level
+			level = fmt.Sprintf("%s: ", *h.Source.Level)
 		}
 
-		h.Source.Message = fmt.Sprintf("[%s] [%s] %s || %s %s",
+		h.Source.Message = fmt.Sprintf("[%s] [%s] %s|| %s %s",
 			timestamp, containerID, rankID, level, *h.Source.Log)
 		logs = append(logs, h.Source)
 	}
@@ -221,28 +228,36 @@ func filtersToElastic(fs []api.Filter) []map[string]interface{} {
 	for _, f := range fs {
 		switch f.Operation {
 		case api.FilterOperationIn:
-			switch reflect.TypeOf(f.Values).Kind() {
-			case reflect.Slice:
-				s := reflect.ValueOf(f.Values)
-				var inTerms []map[string]interface{}
-				for i := 0; i < s.Len(); i++ {
-					inTerms = append(inTerms,
-						map[string]interface{}{
-							"term": map[string]interface{}{
-								// filter against the keyword not the analyzed text.
-								f.Field + ".keyword": s.Index(i).Interface(),
-							},
-						})
-				}
-				terms = append(terms,
+			values, err := interfaceToSlice(f.Values)
+			if err != nil {
+				panic(fmt.Errorf("invalid IN filter values: %w", err))
+			}
+			var inTerms []map[string]interface{}
+			for _, v := range values {
+				inTerms = append(inTerms,
 					map[string]interface{}{
-						"bool": map[string]interface{}{
-							"should": inTerms,
+						"term": map[string]interface{}{
+							// filter against the keyword not the analyzed text. If you
+							// have any text field, for example `agent_id`, by default,
+							// elasticsearch will analyze this field and operations against it
+							// use this analyzed field, leading to unexpected results.
+							// The text fields we use should be stored as multi-fields, with an
+							// additional field `keyword` under the original field that stores
+							// the input as type `keyword` for literal comparisons. When elastic
+							// encounters JSON strings, the default dynamic mappings for
+							// the cluster will create this field.
+							// Relates to https://github.com/elastic/elasticsearch/issues/53020
+							// and https://github.com/elastic/elasticsearch/issues/53181.
+							f.Field + ".keyword": v,
 						},
 					})
-			default:
-				panic(fmt.Sprintf("unsupported IN filter values %T", f.Values))
 			}
+			terms = append(terms,
+				map[string]interface{}{
+					"bool": map[string]interface{}{
+						"should": inTerms,
+					},
+				})
 		case api.FilterOperationLessThan:
 			terms = append(terms,
 				map[string]interface{}{
@@ -268,6 +283,22 @@ func filtersToElastic(fs []api.Filter) []map[string]interface{} {
 	return terms
 }
 
+// interfaceToSlice accepts an interface{} whose underlying type is []T for any T
+// and returns it as type []interface{}.
+func interfaceToSlice(i interface{}) ([]interface{}, error) {
+	var iSlice []interface{}
+	switch reflect.TypeOf(i).Kind() {
+	case reflect.Slice:
+		s := reflect.ValueOf(i)
+		for i := 0; i < s.Len(); i++ {
+			iSlice = append(iSlice, s.Index(i).Interface())
+		}
+	default:
+		return nil, fmt.Errorf("interfaceToSlice only accepts slice, not %T", i)
+	}
+	return iSlice, nil
+}
+
 type stringAggResult struct {
 	DocCountErrorUpperBound int `json:"doc_count_error_upper_bound"`
 	SumOtherDocCount        int `json:"sum_other_doc_count"`
@@ -277,7 +308,7 @@ type stringAggResult struct {
 	} `json:"buckets"`
 }
 
-func (r stringAggResult) ToKeys() []string {
+func (r stringAggResult) toKeys() []string {
 	var keys []string
 	for _, b := range r.Buckets {
 		keys = append(keys, b.Key)
@@ -294,7 +325,7 @@ type intAggResult struct {
 	} `json:"buckets"`
 }
 
-func (r intAggResult) ToKeysInt32() []int32 {
+func (r intAggResult) toKeysInt32() []int32 {
 	var keys []int32
 	for _, b := range r.Buckets {
 		keys = append(keys, int32(b.Key))
@@ -374,11 +405,11 @@ func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, e
 	}
 
 	return &apiv1.TrialLogsFieldsResponse{
-		AgentIds:     resp.Aggregations.AgentIDs.ToKeys(),
-		ContainerIds: resp.Aggregations.ContainerIDs.ToKeys(),
-		RankIds:      resp.Aggregations.RankIDs.ToKeysInt32(),
-		Stdtypes:     resp.Aggregations.StdTypes.ToKeys(),
-		Sources:      resp.Aggregations.Sources.ToKeys(),
+		AgentIds:     resp.Aggregations.AgentIDs.toKeys(),
+		ContainerIds: resp.Aggregations.ContainerIDs.toKeys(),
+		RankIds:      resp.Aggregations.RankIDs.toKeysInt32(),
+		Stdtypes:     resp.Aggregations.StdTypes.toKeys(),
+		Sources:      resp.Aggregations.Sources.toKeys(),
 	}, err
 }
 

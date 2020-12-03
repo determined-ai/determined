@@ -95,16 +95,15 @@ func (db *PgDB) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 	fragment, params := filtersToSQL(fs, params)
 	query := fmt.Sprintf(`
 SELECT count(*)
-FROM trial_logs l
-WHERE l.trial_id = $1
+FROM trial_logs
+WHERE trial_id = $1
 %s
 `, fragment)
 	var count int
-	err := db.sql.QueryRow(query, params...).Scan(&count)
-	if err != nil {
+	if err := db.sql.QueryRow(query, params...).Scan(&count); err != nil {
 		return 0, err
 	}
-	return count, err
+	return count, nil
 }
 
 // TrialLogFields returns the unique fields that can be filtered on for the given trial.
