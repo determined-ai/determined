@@ -319,7 +319,7 @@ export interface ExperimentBase {
   configRaw: RawJson; // Readonly unparsed config object.
   endTime?: string;
   id: number;
-  userId: number;
+  username: string;
   progress?: number;
   startTime: string;
   state: RunState;

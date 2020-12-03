@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/field_mask.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
@@ -241,6 +242,9 @@ message CreateExperimentRequest {
 }
 // Response to CreateExperimentRequest.
 message CreateExperimentResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment", "config" ] }
+  };
   // The created experiment.
   determined.experiment.v1.Experiment experiment = 1;
   // The created experiment config.

@@ -109,7 +109,6 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
     configRaw: config,
     id: id,
     name: experimentTask.name,
-    userId: user.id,
     username: user.username,
   } as ExperimentOld;
 };
@@ -131,7 +130,6 @@ export const generateExperiments = (count = 30): ExperimentItem[] => {
         labels: [],
         name: experimentTask.name,
         numTrials: Math.round(Math.random() * 60000),
-        userId: user.id,
         username: user.username,
       } as ExperimentItem;
     });

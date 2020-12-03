@@ -51,10 +51,6 @@ export interface ApiSorter<T = string> {
   key: T;
 }
 
-export interface ExperimentsParams {
-  states?: string[];
-}
-
 export interface SingleEntityParams {
   id: number;
 }
@@ -87,7 +83,7 @@ export interface GetExperimentsParams {
   options?: never;
 }
 
-export interface ForkExperimentParams {
+export interface CreateExperimentParams {
   parentId: number;
   experimentConfig: string;
 }

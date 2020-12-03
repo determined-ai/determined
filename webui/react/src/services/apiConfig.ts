@@ -5,14 +5,14 @@ import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import {
-  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails, jsonToExperiments,
+  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
   jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
   jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails, jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
-  CommandIdParams, CreateNotebookParams, CreateTensorboardParams, DetApi, EmptyParams,
-  ExperimentDetailsParams, ExperimentIdParams, ExperimentsParams, ForkExperimentParams,
+  CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
+  EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
   GetExperimentsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
@@ -160,21 +160,15 @@ ExperimentBase[]
     ),
 };
 
-export const forkExperiment: HttpApi<ForkExperimentParams, number> = {
-  httpOptions: (params) => {
-    return {
-      body: {
-        experiment_config: params.experimentConfig,
-        parent_id: params.parentId,
-      },
-      headers: { 'content-type': 'application/json' },
-      method: 'POST',
-      url: '/experiments',
-    };
+export const createExperiment: DetApi<
+CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase> = {
+  name: 'createExperiment',
+  postProcess: (resp: Api.V1CreateExperimentResponse) => {
+    return decoder
+      .decodeGetV1ExperimentRespToExperimentBase(resp.experiment, resp.config);
   },
-  name: 'forkExperiment',
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  postProcess: (response: any) => response.data.id,
+  request: (params: CreateExperimentParams) => detApi.Experiments
+    .determinedCreateExperiment({ config: params.experimentConfig, parentId: params.parentId }),
 };
 
 export const archiveExperiment: DetApi<
@@ -230,17 +224,6 @@ export const patchExperiment: DetApi<PatchExperimentParams, Api.V1PatchExperimen
   postProcess: noOp,
   request: (params: PatchExperimentParams) => detApi.Experiments
     .determinedPatchExperiment(params.experimentId, params.body as Api.V1Experiment),
-};
-
-export const getExperimentSummaries: HttpApi<ExperimentsParams, ExperimentBase[]> = {
-  httpOptions: (params) => ({
-    url: [
-      '/experiment-summaries',
-      params.states ? `?states=${params.states.join(',')}` : '',
-    ].join(''),
-  }),
-  name: 'getExperimentSummaries',
-  postProcess: (response) => jsonToExperiments(response.data),
 };
 
 export const getExperimentDetails: HttpApi<ExperimentDetailsParams, ExperimentDetails> = {

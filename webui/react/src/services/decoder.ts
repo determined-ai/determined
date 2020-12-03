@@ -181,26 +181,6 @@ const ioToExperimentConfig = (io: ioTypes.ioTypeExperimentConfig): types.Experim
   return config;
 };
 
-export const jsonToExperiment = (data: unknown): types.ExperimentBase => {
-  const io = ioTypes.decode<ioTypes.ioTypeExperiment>(ioTypes.ioExperiment, data);
-  return {
-    archived: io.archived,
-    config: ioToExperimentConfig(io.config),
-    configRaw: (data as { config: types.RawJson }).config,
-    endTime: io.end_time || undefined,
-    id: io.id,
-    progress: io.progress != null ? io.progress : undefined,
-    startTime: io.start_time,
-    state: io.state as types.RunState,
-    userId: io.owner_id,
-  };
-};
-
-export const jsonToExperiments = (data: unknown): types.ExperimentBase[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeExperiments>(ioTypes.ioExperiments, data);
-  return io.map(jsonToExperiment);
-};
-
 const ioToCheckpoint = (io: ioTypes.ioTypeCheckpoint): types.Checkpoint => {
   return {
     endTime: io.end_time || undefined,
@@ -306,20 +286,45 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
+export const decodeGetV1ExperimentRespToExperimentBase = (
+  exp: Sdk.V1Experiment,
+  config: types.RawJson,
+): types.ExperimentBase => {
+  const ioConfig = ioTypes
+    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
+  return {
+    archived: exp.archived,
+    config: ioToExperimentConfig(ioConfig),
+    configRaw: config,
+    endTime: exp.endTime as unknown as string,
+    id: exp.id,
+    progress: exp.progress != null ? exp.progress : undefined,
+    startTime: exp.startTime as unknown as string,
+    state: decodeExperimentState(exp.state),
+    username: exp.username,
+  };
+};
+
+const decodeV1ExperimentToExperimentItem = (
+  data: Sdk.V1Experiment,
+): types.ExperimentItem => {
+  return {
+    archived: data.archived,
+    endTime: data.endTime as unknown as string,
+    id: data.id,
+    labels: data.labels || [],
+    name: data.description,
+    numTrials: data.numTrials || 0,
+    progress: data.progress != null ? data.progress : undefined,
+    startTime: data.startTime as unknown as string,
+    state: decodeExperimentState(data.state),
+    url: `/experiments/${data.id}`,
+    username: data.username,
+  };
+};
+
 export const decodeExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
-  return data.map(item => ({
-    archived: item.archived,
-    endTime: item.endTime as unknown as string,
-    id: item.id,
-    labels: item.labels || [],
-    name: item.description,
-    numTrials: item.numTrials || 0,
-    progress: item.progress != null ? item.progress : undefined,
-    startTime: item.startTime as unknown as string,
-    state: decodeExperimentState(item.state),
-    url: `/experiments/${item.id}`,
-    username: item.username,
-  }));
+  return data.map(decodeV1ExperimentToExperimentItem);
 };
 
 export const jsonToExperimentDetails = (data: unknown): types.ExperimentDetails => {
@@ -334,7 +339,6 @@ export const jsonToExperimentDetails = (data: unknown): types.ExperimentDetails 
     startTime: io.start_time,
     state: io.state as types.RunState,
     trials: io.trials.map(ioToTrial),
-    userId: io.owner.id,
     username: io.owner.username,
     validationHistory: io.validation_history.map(vh => ({
       endTime: vh.end_time,
