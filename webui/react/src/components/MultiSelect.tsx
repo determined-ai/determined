@@ -1,13 +1,18 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import SelectFilter from './SelectFilter';
+
+interface LabeledValue {
+  label: number|string;
+  value: number|string;
+}
 
 interface Props {
   label: string;
   onChange?: (value: (number|string)[]) => void;
-  options: (number|string)[];
+  options: (number|string|LabeledValue)[];
   value?: (number|string)[];
 }
 
@@ -44,6 +49,20 @@ const MultiSelect: React.FC<Props> = ({ label, onChange, options, value }: Props
     onChange(newValue);
   }, [ onChange, value ]);
 
+  const selectOptions = useMemo(() => {
+    return options.map((item: number|string|LabeledValue) => (
+      [ 'string', 'number' ].indexOf(typeof item) >= 0 ? (
+        <Option key={item as number|string} value={item as string|number}>
+          {item as string|number}
+        </Option>
+      ) : (
+        <Option key={(item as LabeledValue).value} value={(item as LabeledValue).value}>
+          {(item as LabeledValue).label}
+        </Option>
+      )
+    ));
+  }, [ options ]);
+
   return <SelectFilter
     disableTags
     dropdownMatchSelectWidth={200}
@@ -59,12 +78,7 @@ const MultiSelect: React.FC<Props> = ({ label, onChange, options, value }: Props
     <Option key={ALL_VALUE} value={ALL_VALUE}>
       {ALL_VALUE}
     </Option>
-    {options.map((item: number|string) => (
-      <Option key={item} value={item}>
-        {item}
-      </Option>
-    ))}
-    {options}
+    {selectOptions}
   </SelectFilter>;
 };
 

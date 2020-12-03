@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 import moment, { Moment } from 'moment';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { V1TrialLogsFieldsResponse } from '../services/api-ts-sdk';
 import { detApi } from '../services/apiConfig';
@@ -88,6 +88,12 @@ const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) 
 
   const onBeforeDateChange = (date: Moment|null) => onDateChange('timestampBefore', date);
 
+  const logLevelList = useMemo(() => {
+    return Object.entries(LogLevelFromApi)
+      .filter(([ key ]) => key !== 'Unspecified')
+      .map(([ key, value ]) => ({ label: key, value }));
+  }, []);
+
   useEffect(() => {
     consumeStream<V1TrialLogsFieldsResponse>(
       detApi.StreamingExperiments.determinedTrialLogsFields(
@@ -120,7 +126,7 @@ const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) 
       />
       <MultiSelect
         label="Level"
-        options={Object.values(LogLevelFromApi)}
+        options={logLevelList}
         value={filter.levels || []}
         onChange={onLevelChange}
       />
