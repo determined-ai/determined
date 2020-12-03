@@ -1,7 +1,6 @@
 package resourcemanagers
 
 import (
-	"fmt"
 	"testing"
 
 	"gotest.tools/assert"
@@ -161,7 +160,7 @@ func TestPrioritySchedulingPreemptionDisabledWithLabels(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 }
 
-func TestPrioritySchedulingPreemptionAaron(t *testing.T) {
+func TestPrioritySchedulingPreemption(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
@@ -241,11 +240,9 @@ func TestPrioritySchedulerPreemptZeroSlotTask(t *testing.T) {
 	p := &priorityScheduler{preemptionEnabled: true}
 	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
 
-	fmt.Println("1")
 	expectedToAllocate := make([]*mockTask, 0)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 
-	fmt.Println("2", toRelease)
 	expectedToRelease := []*mockTask{tasks[0]}
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
