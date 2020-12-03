@@ -19,7 +19,7 @@ type Container struct {
 
 // New returns a new pending container.
 func New(parent actor.Address, devices []device.Device, recoverable bool) Container {
-	return Container{Parent: parent, ID: newID(), State: Assigned, Devices: devices}
+	return Container{Parent: parent, ID: NewID(), State: Assigned, Devices: devices}
 }
 
 // Transition transitions the container state to the new state. An illegal transition will panic.
