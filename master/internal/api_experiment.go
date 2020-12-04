@@ -536,11 +536,18 @@ func (a *apiServer) CreateExperiment(
 	}, nil
 }
 
-var metricsStreamPeriod = 30 * time.Second
+var defaultMetricsStreamPeriod = 30 * time.Second
 
 func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	resp apiv1.Determined_MetricNamesServer) error {
 	experimentID := int(req.ExperimentId)
+	if err := a.checkExperimentExists(experimentID); err != nil {
+		return err
+	}
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
+	}
 
 	config, err := a.m.db.ExperimentConfig(experimentID)
 	if err != nil {
@@ -583,12 +590,15 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 			return err
 		}
 
-		experiment, _ := a.getExperiment(experimentID)
-		if experiment.State == experimentv1.State_STATE_COMPLETED {
+		state, err := a.m.db.GetExperimentState(experimentID)
+		if err != nil {
+			return errors.Wrap(err, "error looking up experiment state")
+		}
+		if model.TerminalStates[model.State(state)] {
 			return nil
 		}
 
-		time.Sleep(metricsStreamPeriod)
+		time.Sleep(period)
 		if err := resp.Context().Err(); err != nil {
 			// connection is closed
 			return nil
@@ -599,13 +609,20 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	resp apiv1.Determined_MetricBatchesServer) error {
 	experimentID := int(req.ExperimentId)
+	if err := a.checkExperimentExists(experimentID); err != nil {
+		return err
+	}
 	metricName := req.MetricName
+	if metricName == "" {
+		return status.Error(codes.InvalidArgument, "must specify a metric name")
+	}
 	metricType := req.MetricType
 	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return errors.New("must specify a metric type")
+		return status.Error(codes.InvalidArgument, "must specify a metric type")
 	}
-	if metricName == "" {
-		return errors.New("must provide metric name")
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
 	}
 
 	seenBatches := make(map[int32]bool)
@@ -642,12 +659,15 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 			return errors.Wrapf(err, "error sending batches recorded for metric")
 		}
 
-		experiment, _ := a.getExperiment(experimentID)
-		if experiment.State == experimentv1.State_STATE_COMPLETED {
+		state, err := a.m.db.GetExperimentState(experimentID)
+		if err != nil {
+			return errors.Wrap(err, "error looking up experiment state")
+		}
+		if model.TerminalStates[model.State(state)] {
 			return nil
 		}
 
-		time.Sleep(metricsStreamPeriod)
+		time.Sleep(period)
 		if err := resp.Context().Err(); err != nil {
 			// connection is closed
 			return nil
@@ -658,14 +678,21 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	resp apiv1.Determined_TrialsSnapshotServer) error {
 	experimentID := int(req.ExperimentId)
+	if err := a.checkExperimentExists(experimentID); err != nil {
+		return err
+	}
 	batchesProcessed := int(req.BatchesProcessed)
 	metricName := req.MetricName
+	if metricName == "" {
+		return status.Error(codes.InvalidArgument, "must specify a metric name")
+	}
 	metricType := req.MetricType
 	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return errors.New("must specify a metric type")
+		return status.Error(codes.InvalidArgument, "must specify a metric type")
 	}
-	if metricName == "" {
-		return errors.New("must provide metric name")
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
 	}
 
 	var startTime time.Time
@@ -698,12 +725,15 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 			return errors.Wrapf(err, "error sending batches recorded for metrics")
 		}
 
-		experiment, _ := a.getExperiment(experimentID)
-		if experiment.State == experimentv1.State_STATE_COMPLETED {
+		state, err := a.m.db.GetExperimentState(experimentID)
+		if err != nil {
+			return errors.Wrap(err, "error looking up experiment state")
+		}
+		if model.TerminalStates[model.State(state)] {
 			return nil
 		}
 
-		time.Sleep(metricsStreamPeriod)
+		time.Sleep(period)
 		if err := resp.Context().Err(); err != nil {
 			// connection is closed
 			return nil
@@ -809,6 +839,9 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	resp apiv1.Determined_TrialsSampleServer) error {
 	experimentID := int(req.ExperimentId)
+	if err := a.checkExperimentExists(experimentID); err != nil {
+		return err
+	}
 	maxTrials := int(req.MaxTrials)
 	if maxTrials == 0 {
 		maxTrials = 25
@@ -822,14 +855,18 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	if endBatches <= 0 {
 		endBatches = math.MaxInt32
 	}
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
+	}
 
 	metricName := req.MetricName
 	metricType := req.MetricType
 	if metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED {
-		return errors.New("must specify a metric type")
+		return status.Error(codes.InvalidArgument, "must specify a metric type")
 	}
 	if metricName == "" {
-		return errors.New("must provide metric name")
+		return status.Error(codes.InvalidArgument, "must specify a metric name")
 	}
 
 	config, err := a.m.db.ExperimentConfig(experimentID)
@@ -886,12 +923,15 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 			return errors.Wrap(err, "error sending sample of trial metric streams")
 		}
 
-		experiment, _ := a.getExperiment(experimentID)
-		if experiment.State == experimentv1.State_STATE_COMPLETED {
+		state, err := a.m.db.GetExperimentState(experimentID)
+		if err != nil {
+			return errors.Wrap(err, "error looking up experiment state")
+		}
+		if model.TerminalStates[model.State(state)] {
 			return nil
 		}
 
-		time.Sleep(metricsStreamPeriod)
+		time.Sleep(period)
 		if err := resp.Context().Err(); err != nil {
 			// connection is closed
 			return nil

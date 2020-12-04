@@ -50,6 +50,11 @@ func (db *PgDB) ExperimentLabelUsage() (labelUsage map[string]int, err error) {
 	return labelUsage, nil
 }
 
+func (db *PgDB) GetExperimentState(experimentID int) (state string, err error) {
+	err = db.sql.Get(&state, "SELECT state FROM experiments WHERE id=$1", experimentID)
+	return state, err
+}
+
 // MetricNames returns the set of training and validation metric names that have been recorded for
 // an experiment.
 func (db *PgDB) MetricNames(experimentID int, sStartTime time.Time, vStartTime time.Time) (

@@ -253,8 +253,13 @@ message CreateExperimentResponse {
 
 // Request for the set of metrics recorded by an experiment.
 message MetricNamesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id" ] }
+  };
   // The id of the experiment.
   int32 experiment_id = 1;
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 2;
 }
 
 // Response to MetricNamesRequest.
@@ -280,12 +285,17 @@ enum MetricType {
 // Request the milestones (in batches processed) at which a metric is recorded
 // by an experiment.
 message MetricBatchesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id", "metric_name", "metric_type" ] }
+  };
   // The id of the experiment.
   int32 experiment_id = 1;
   // A metric name.
   string metric_name = 2;
   // The type of metric.
   MetricType metric_type = 3;
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 4;
 }
 
 // Response to MetricBatchesRequest.
@@ -297,6 +307,9 @@ message MetricBatchesResponse {
 
 // Request metrics from all trials at a progress point of progress.
 message TrialsSnapshotRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id", "batches_processed", "metric_name", "metric_type" ] }
+  };
   // The id of the experiment.
   int32 experiment_id = 1;
   // The point of progress at which to query metrics.
@@ -305,6 +318,8 @@ message TrialsSnapshotRequest {
   string metric_name = 3;
   // The type of metric.
   MetricType metric_type = 4;
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 5;
 }
 
 // Response to TrialSnapshotResponse
@@ -324,6 +339,9 @@ message TrialsSnapshotResponse {
 
 // Request a sample of metrics over time for a sample of trials.
 message TrialsSampleRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id", "metric_name", "metric_type" ] }
+  };
   // The id of the experiment.
   int32 experiment_id = 1;
   // A metric name.
@@ -338,6 +356,8 @@ message TrialsSampleRequest {
   int32 start_batches = 6;
   // Ending of window (inclusive) to fetch data for.
   int32 end_batches = 7;
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 8;
 }
 
 // Response to TrialsSampleRequest
