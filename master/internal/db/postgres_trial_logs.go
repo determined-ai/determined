@@ -108,7 +108,7 @@ WHERE trial_id = $1
 
 // TrialLogFields returns the unique fields that can be filtered on for the given trial.
 func (db *PgDB) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
-	var fields *apiv1.TrialLogsFieldsResponse
-	err := db.QueryProto("get_trial_log_fields", fields, trialID)
-	return fields, err
+	var fields apiv1.TrialLogsFieldsResponse
+	err := db.QueryProto("get_trial_log_fields", &fields, trialID)
+	return &fields, err
 }

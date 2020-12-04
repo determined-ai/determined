@@ -28,6 +28,8 @@ const (
 	elasticTimeWindowDelay = -10 * time.Second
 )
 
+type jsonObj = map[string]interface{}
+
 // AddTrialLogs indexes a batch of trial logs into the index like triallogs-yyyy-MM-dd based
 // on the UTC value of their timestamp.
 func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
@@ -64,12 +66,12 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 
 // TrialLogCount returns the number of trial logs for the given trial.
 func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"bool": map[string]interface{}{
+	query := jsonObj{
+		"query": jsonObj{
+			"bool": jsonObj{
 				"filter": append(filtersToElastic(fs),
-					map[string]interface{}{
-						"term": map[string]interface{}{
+					jsonObj{
+						"term": jsonObj{
 							"trial_id": trialID,
 						},
 					}),
@@ -79,7 +81,7 @@ func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return 0, fmt.Errorf("failed to encoding query: %w", err)
+		return 0, fmt.Errorf("failed to encode query: %w", err)
 	}
 
 	res, err := e.client.Count(
@@ -111,16 +113,16 @@ func (e *Elastic) TrialLogs(
 		limit = elasticMaxQuerySize
 	}
 
-	query := map[string]interface{}{
+	query := jsonObj{
 		// Use from+size to begin at the requested offset, but move to search after
 		// API after first query to paginate the requests.
 		"size": limit,
 		"from": offset,
-		"query": map[string]interface{}{
-			"bool": map[string]interface{}{
+		"query": jsonObj{
+			"bool": jsonObj{
 				"filter": append(filtersToElastic(fs),
-					map[string]interface{}{
-						"term": map[string]interface{}{
+					jsonObj{
+						"term": jsonObj{
 							"trial_id": trialID,
 						},
 					},
@@ -128,16 +130,16 @@ func (e *Elastic) TrialLogs(
 					// a fluentbit shipper is backed up, it may post logs with a timestamp
 					// that falls before the current time. If we do a search_after based on
 					// the latest logs, we may miss these backed up unless we do this.
-					map[string]interface{}{
-						"range": map[string]interface{}{
-							"timestamp": map[string]interface{}{
+					jsonObj{
+						"range": jsonObj{
+							"timestamp": jsonObj{
 								"lt": time.Now().UTC().Add(elasticTimeWindowDelay),
 							},
 						},
 					}),
 			},
 		},
-		"sort": []map[string]interface{}{
+		"sort": []jsonObj{
 			{"timestamp": "asc"},
 			// If two containers emit logs with the same timestamp down
 			// to the nanosecond, it may be lost in some cases still, but
@@ -155,7 +157,7 @@ func (e *Elastic) TrialLogs(
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return nil, nil, fmt.Errorf("failed to encoding query: %w", err)
+		return nil, nil, fmt.Errorf("failed to encode query: %w", err)
 	}
 
 	res, err := e.client.Search(e.client.Search.WithBody(&buf))
@@ -223,8 +225,8 @@ func (e *Elastic) TrialLogs(
 	return logs, sortValues, nil
 }
 
-func filtersToElastic(fs []api.Filter) []map[string]interface{} {
-	var terms []map[string]interface{}
+func filtersToElastic(fs []api.Filter) []jsonObj {
+	var terms []jsonObj
 	for _, f := range fs {
 		switch f.Operation {
 		case api.FilterOperationIn:
@@ -232,11 +234,11 @@ func filtersToElastic(fs []api.Filter) []map[string]interface{} {
 			if err != nil {
 				panic(fmt.Errorf("invalid IN filter values: %w", err))
 			}
-			var inTerms []map[string]interface{}
+			var inTerms []jsonObj
 			for _, v := range values {
 				inTerms = append(inTerms,
-					map[string]interface{}{
-						"term": map[string]interface{}{
+					jsonObj{
+						"term": jsonObj{
 							// filter against the keyword not the analyzed text. If you
 							// have any text field, for example `agent_id`, by default,
 							// elasticsearch will analyze this field and operations against it
@@ -253,25 +255,25 @@ func filtersToElastic(fs []api.Filter) []map[string]interface{} {
 					})
 			}
 			terms = append(terms,
-				map[string]interface{}{
-					"bool": map[string]interface{}{
+				jsonObj{
+					"bool": jsonObj{
 						"should": inTerms,
 					},
 				})
 		case api.FilterOperationLessThan:
 			terms = append(terms,
-				map[string]interface{}{
-					"range": map[string]interface{}{
-						f.Field: map[string]interface{}{
+				jsonObj{
+					"range": jsonObj{
+						f.Field: jsonObj{
 							"lt": f.Values,
 						},
 					},
 				})
 		case api.FilterOperationGreaterThan:
 			terms = append(terms,
-				map[string]interface{}{
-					"range": map[string]interface{}{
-						f.Field: map[string]interface{}{
+				jsonObj{
+					"range": jsonObj{
+						f.Field: jsonObj{
 							"gt": f.Values,
 						},
 					},
@@ -285,16 +287,16 @@ func filtersToElastic(fs []api.Filter) []map[string]interface{} {
 
 // interfaceToSlice accepts an interface{} whose underlying type is []T for any T
 // and returns it as type []interface{}.
-func interfaceToSlice(i interface{}) ([]interface{}, error) {
+func interfaceToSlice(x interface{}) ([]interface{}, error) {
 	var iSlice []interface{}
-	switch reflect.TypeOf(i).Kind() {
+	switch reflect.TypeOf(x).Kind() {
 	case reflect.Slice:
-		s := reflect.ValueOf(i)
+		s := reflect.ValueOf(x)
 		for i := 0; i < s.Len(); i++ {
 			iSlice = append(iSlice, s.Index(i).Interface())
 		}
 	default:
-		return nil, fmt.Errorf("interfaceToSlice only accepts slice, not %T", i)
+		return nil, fmt.Errorf("interfaceToSlice only accepts slice, not %T", x)
 	}
 	return iSlice, nil
 }
@@ -335,44 +337,44 @@ func (r intAggResult) toKeysInt32() []int32 {
 
 // TrialLogFields returns the unique fields that can be filtered on for the given trial.
 func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
-	query := map[string]interface{}{
+	query := jsonObj{
 		"size": 0,
-		"query": map[string]interface{}{
-			"bool": map[string]interface{}{
-				"filter": []map[string]interface{}{
+		"query": jsonObj{
+			"bool": jsonObj{
+				"filter": []jsonObj{
 					{
-						"term": map[string]interface{}{
+						"term": jsonObj{
 							"trial_id": trialID,
 						},
 					},
 				},
 			},
 		},
-		"aggs": map[string]interface{}{
+		"aggs": jsonObj{
 			// These keys are the aggregate names; they must match the aggregate names we expect to
 			// be returned, which are defined in the type of resp below.
-			"agent_ids": map[string]interface{}{
-				"terms": map[string]interface{}{
+			"agent_ids": jsonObj{
+				"terms": jsonObj{
 					"field": "agent_id.keyword",
 				},
 			},
-			"container_ids": map[string]interface{}{
-				"terms": map[string]interface{}{
+			"container_ids": jsonObj{
+				"terms": jsonObj{
 					"field": "container_id.keyword",
 				},
 			},
-			"rank_ids": map[string]interface{}{
-				"terms": map[string]interface{}{
+			"rank_ids": jsonObj{
+				"terms": jsonObj{
 					"field": "rank_id",
 				},
 			},
-			"sources": map[string]interface{}{
-				"terms": map[string]interface{}{
+			"sources": jsonObj{
+				"terms": jsonObj{
 					"field": "source.keyword",
 				},
 			},
-			"stdtypes": map[string]interface{}{
-				"terms": map[string]interface{}{
+			"stdtypes": jsonObj{
+				"terms": jsonObj{
 					"field": "stdtype.keyword",
 				},
 			},
@@ -381,7 +383,7 @@ func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, e
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return nil, fmt.Errorf("failed to encoding query: %w", err)
+		return nil, fmt.Errorf("failed to encode query: %w", err)
 	}
 
 	res, err := e.client.Search(e.client.Search.WithBody(&buf))
