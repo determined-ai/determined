@@ -70,6 +70,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Stream available metrics
   useEffect(() => {
+    console.log('consuming metrics stream', experiment.id);
     consumeStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.determinedMetricNames(
         experiment.id,
