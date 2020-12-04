@@ -17,13 +17,13 @@ type SingleHandler = (value: MetricName) => void;
 type MultipleHandler = (value: MetricName[]) => void;
 
 interface Props {
-  metricNames: MetricName[];
   defaultMetricNames: MetricName[];
   dropdownMatchSelectWidth?: number | boolean;
+  metricNames: MetricName[];
   multiple?: boolean;
-  onChange?: SingleHandler | MultipleHandler;
   value?: MetricName | MetricName[];
   width?: number | string;
+  onChange?: SingleHandler | MultipleHandler;
 }
 
 const filterFn = (search: string, metricName: string) => {
@@ -31,13 +31,13 @@ const filterFn = (search: string, metricName: string) => {
 };
 
 const MetricSelectFilter: React.FC<Props> = ({
+  defaultMetricNames,
   dropdownMatchSelectWidth = 400,
   metricNames,
   multiple,
-  onChange,
   value,
-  defaultMetricNames,
   width = 200,
+  onChange,
 }: Props) => {
   const [ filterString, setFilterString ] = useState('');
   const selectRef = useRef<Select<SelectValue>>(null);
