@@ -1,3 +1,4 @@
+import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
@@ -50,6 +51,13 @@ export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
 
 export const getAgents =
   generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]>(Config.getAgents);
+
+// FIXME placeholder for a getResourcePoolsApi.
+/* eslint-disable */
+export const getResourcePools = async () => {
+  return resourcePools;
+};
+/* eslint-enable */
 
 /* Experiments */
 
