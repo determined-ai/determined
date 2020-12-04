@@ -19,9 +19,11 @@ type MultipleHandler = (value: MetricName[]) => void;
 interface Props {
   metricNames: MetricName[];
   defaultMetricNames: MetricName[];
+  dropdownMatchSelectWidth?: number | boolean;
   multiple?: boolean;
   onChange?: SingleHandler | MultipleHandler;
   value?: MetricName | MetricName[];
+  width?: number | string;
 }
 
 const filterFn = (search: string, metricName: string) => {
@@ -29,11 +31,13 @@ const filterFn = (search: string, metricName: string) => {
 };
 
 const MetricSelectFilter: React.FC<Props> = ({
+  dropdownMatchSelectWidth = 400,
   metricNames,
   multiple,
   onChange,
   value,
   defaultMetricNames,
+  width = 200,
 }: Props) => {
   const [ filterString, setFilterString ] = useState('');
   const selectRef = useRef<Select<SelectValue>>(null);
@@ -165,7 +169,7 @@ const MetricSelectFilter: React.FC<Props> = ({
   return <SelectFilter
     autoClearSearchValue={false}
     disableTags
-    dropdownMatchSelectWidth={400}
+    dropdownMatchSelectWidth={dropdownMatchSelectWidth}
     filterOption={handleFiltering}
     label="Metrics"
     maxTagCount={maxTagCount}
@@ -173,7 +177,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     mode={multiple ? 'multiple' : undefined}
     ref={selectRef}
     showArrow
-    style={{ width: 200 }}
+    style={{ width }}
     value={metricValues}
     onBlur={handleBlur}
     onDeselect={handleMetricDeselect}

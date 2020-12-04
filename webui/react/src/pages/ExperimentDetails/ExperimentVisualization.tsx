@@ -1,18 +1,16 @@
-import { Select } from 'antd';
 import { Col, Row } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
-import SelectFilter from 'components/SelectFilter';
+import MetricSelectFilter from 'components/MetricSelectFilter';
+import Spinner from 'components/Spinner';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ALL_VALUE, ExperimentDetails } from 'types';
+import { ExperimentDetails, MetricName, MetricType } from 'types';
 
 import css from './ExperimentVisualization.module.scss';
-
-const { OptGroup, Option } = Select;
 
 export enum VisualizationType {
   HpParallelCoord = 'hp-parallel-coord',
@@ -44,21 +42,45 @@ const ExperimentVisualization: React.FC<Props> = ({
   const history = useHistory();
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
+  const [ trainingMetrics, setTrainingMetrics ] = useState<string[]>([]);
+  const [ validationMetrics, setValidationMetrics ] = useState<string[]>([]);
+  const [ selectedMetric, setSelectedMetric ] = useState<MetricName>();
+  const [ searchMetric, setSearchMetric ] = useState<string>();
 
+  const metrics = [
+    ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
+    ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+  ];
+
+  const handleMetricChange = useCallback((metric: MetricName) => {
+    setSelectedMetric(metric);
+  }, []);
+
+  // Sets the default sub route
   useEffect(() => {
     if (type && (!TYPE_KEYS.includes(type) || type === DEFAULT_TYPE_KEY)) {
       history.replace(basePath);
     }
   }, [ basePath, history, type ]);
 
+  // Stream available metrics
   useEffect(() => {
+    console.log('consuming metrics stream', experiment.id);
     consumeStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.determinedMetricNames(experiment.id),
       event => {
-        console.log('event', event);
+        setSearchMetric(event.searcherMetric);
+        setTrainingMetrics(event.trainingMetrics || []);
+        setValidationMetrics(event.validationMetrics || []);
       },
     );
-  }, [ experiment ]);
+  }, [ experiment.id ]);
+
+  // Set the default metric of interest
+  useEffect(() => {
+    if (selectedMetric) return;
+    if (searchMetric) setSelectedMetric({ name: searchMetric, type: MetricType.Validation });
+  }, [ searchMetric, selectedMetric ]);
 
   return (
     <div className={css.base}>
@@ -82,9 +104,13 @@ const ExperimentVisualization: React.FC<Props> = ({
             <div className={css.filters}>
               <header>Filters</header>
               <div>
-                <SelectFilter label="Metric">
-                  <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-                </SelectFilter>
+                <MetricSelectFilter
+                  defaultMetricNames={metrics}
+                  metricNames={metrics}
+                  multiple={false}
+                  value={selectedMetric}
+                  width={'100%'}
+                  onChange={handleMetricChange} />
               </div>
             </div>
           </div>
