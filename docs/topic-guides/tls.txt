@@ -71,7 +71,7 @@ option should be set to the DNS name contained in the certificate.
    address. The hostname does not need to be an actual DNS name for the
    master---it is only used for certificate verification.
 
-When :ref:`dynamic agents <elastic-infra-index>` and TLS are both in
+When :ref:`dynamic agents <elastic-infrastructure>` and TLS are both in
 use, the dynamic agents that the master creates will automatically be
 configured to connect securely to the master over TLS.
 

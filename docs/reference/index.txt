@@ -21,13 +21,7 @@ The full list of reference guides can be found below:
 
 .. toctree::
    :maxdepth: 1
+   :glob:
 
    api/index
-   rest-api
-   cluster-config
-   cli
-   command-notebook-config
-   config-template
-   experiment-config
-   helm-config
-   attributions
+   *

@@ -1167,7 +1167,7 @@ Version 0.12.4
    the same model.
 
 -  Add a topic guide explaining Determined's approach to
-   :ref:`elastic-infra-index`.
+   :ref:`elastic-infrastructure`.
 
 -  Add a topic guide explaining the Native API (since deprecated).
 

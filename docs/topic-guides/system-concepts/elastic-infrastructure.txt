@@ -1,4 +1,4 @@
-.. _elastic-infra-index:
+.. _elastic-infrastructure:
 
 ########################
  Elastic Infrastructure
@@ -48,12 +48,3 @@ automatically.
    default, idle dynamic agents will automatically be terminated after 5
    minutes of inactivity. This behavior gives agents a chance to run
    multiple workloads after they have been provisioned.
-
-The full list of our topic guides can be found below:
-
-.. toctree::
-   :maxdepth: 1
-
-   dynamic-agents-gcp
-   dynamic-agents-aws
-   aws-spot

@@ -117,7 +117,7 @@ capabilities.
 
 **Elastic Infrastructure**
 
--  :ref:`elastic-infra-index`
+-  :ref:`elastic-infrastructure`
 -  :ref:`dynamic-agents-aws`
 -  :ref:`dynamic-agents-gcp`
 

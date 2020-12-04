@@ -53,7 +53,7 @@ Core Resources
    agents varies with the volume and type of workloads currently
    running. All agents are managed by the master and users do not have
    to interact with them directly. For more information on scaling
-   clusters, or dynamic agents, see :ref:`elastic-infra-index`.
+   clusters, or dynamic agents, see :ref:`elastic-infrastructure`.
 
 -  **Database**: Determined uses an Amazon Relational Database Service
    (Postgres) database to store metadata.
