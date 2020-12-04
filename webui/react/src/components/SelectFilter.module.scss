@@ -19,3 +19,10 @@
     max-width: calc(100% - var(--theme-sizes-layout-giant));
   }
 }
+.vertical {
+  align-items: flex-start;
+  flex-direction: column;
+
+  & > *:first-child { margin-bottom: var(--theme-sizes-layout-tiny); }
+  & > *:not(:first-child) { margin-left: 0; }
+}

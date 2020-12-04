@@ -18,8 +18,9 @@ export interface Props<T = SelectValue> extends SelectProps<T> {
   disableTags?: boolean;
   enableSearchFilter?: boolean;
   label: string;
-  style?: React.CSSProperties;
   ref?: React.Ref<Select<SelectValue>>;
+  style?: React.CSSProperties;
+  verticalLayout?: boolean;
 }
 
 export const ALL_VALUE = 'all';
@@ -46,15 +47,16 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
     dropdownMatchSelectWidth = false,
     enableSearchFilter = true,
     showSearch = true,
+    verticalLayout = false,
     ...props
   }: PropsWithChildren<Props>,
   ref?: React.Ref<Select<SelectValue>>,
 ) {
-
   const [ isOpen, setIsOpen ] = useState(false);
   const classes = [ className, css.base ];
 
   if (disableTags) classes.push(css.disableTags);
+  if (verticalLayout) classes.push(css.vertical);
 
   const optionsCount = useMemo(() => countOptions(props.children), [ props.children ]);
 

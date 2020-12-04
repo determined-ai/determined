@@ -22,6 +22,7 @@ interface Props {
   metricNames: MetricName[];
   multiple?: boolean;
   value?: MetricName | MetricName[];
+  verticalLayout?: boolean;
   width?: number | string;
   onChange?: SingleHandler | MultipleHandler;
 }
@@ -36,6 +37,7 @@ const MetricSelectFilter: React.FC<Props> = ({
   metricNames,
   multiple,
   value,
+  verticalLayout = false,
   width = 200,
   onChange,
 }: Props) => {
@@ -179,6 +181,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     showArrow
     style={{ width }}
     value={metricValues}
+    verticalLayout={verticalLayout}
     onBlur={handleBlur}
     onDeselect={handleMetricDeselect}
     onSearch={handleSearchInputChange}

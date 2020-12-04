@@ -22,6 +22,9 @@
     height: 0.1rem;
     margin: var(--theme-sizes-layout-medium);
   }
+  header {
+    padding: 0 var(--theme-sizes-layout-big);
+  }
   .filters {
     border: solid 0.1rem var(--theme-colors-monochrome-14);
     border-radius: var(--theme-border-radius);
@@ -29,5 +32,7 @@
     flex-direction: column;
     margin: var(--theme-sizes-layout-medium);
     padding: var(--theme-sizes-layout-medium);
+    
+    & > *:not(:first-child) { margin-top: var(--theme-sizes-layout-medium); }
   }
 }
