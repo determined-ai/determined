@@ -13,15 +13,15 @@ type Scheduler interface {
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.
-func MakeScheduler(schedulingPolicy string) Scheduler {
-	switch schedulingPolicy {
+func MakeScheduler(config *SchedulerConfig) Scheduler {
+	switch config.GetType() {
 	case priorityScheduling:
-		return NewRoundRobinScheduler()
+		return NewPriorityScheduler(config)
 	case fairShareScheduling:
 		return NewFairShareScheduler()
 	case roundRobinScheduling:
 		return NewRoundRobinScheduler()
 	default:
-		panic(fmt.Sprintf("invalid scheduler: %s", schedulingPolicy))
+		panic(fmt.Sprintf("invalid scheduler: %s", config.GetType()))
 	}
 }
