@@ -17,6 +17,7 @@ from determined.pytorch import (
     PyTorchCallback,
     ClipGradsL2Norm,
 )
+from determined.experimental import Determined
 
 from ofa.elastic_nn.networks import OFAMobileNetV3
 from ofa.utils import download_url
@@ -62,8 +63,7 @@ class OFATrial(PyTorchTrial):
             init = torch.load(model_path)["state_dict"]
             self.teacher.load_weights_from_net(init)
 
-        self.supernet = self.context.wrap_model(
-            OFAMobileNetV3(
+        self.supernet = OFAMobileNetV3(
                 n_classes=self.hparams["n_classes"],
                 bn_param=(self.hparams["bn_momentum"], self.hparams["bn_eps"]),
                 dropout_rate=self.hparams["dropout"],
@@ -72,7 +72,6 @@ class OFATrial(PyTorchTrial):
                 ks_list=[3, 5, 7],
                 expand_ratio_list=[3, 4, 6],
                 depth_list=[2, 3, 4],
-            )
         )
         self.supernet.init_model(self.hparams["init_policy"])
 
@@ -97,15 +96,15 @@ class OFATrial(PyTorchTrial):
         print('widths', self.widths)
         print('block_group_info', self.supernet.block_group_info)
         print("n_blocks", len(self.supernet.blocks))
-
         self.supernet.set_active_subnet(
             1.0, self.kernel_sizes, self.widths, self.depths
         )
 
+        self.subnet = self.context.wrap_model(self.supernet.get_active_subnet())
 
         self.optimizer = self.context.wrap_optimizer(
             torch.optim.SGD(
-                self.supernet.parameters(),
+                self.subnet.parameters(),
                 lr=self.context.get_hparam("learning_rate"),
                 momentum=self.context.get_hparam("momentum"),
                 weight_decay=self.context.get_hparam("weight_decay"),
@@ -116,6 +115,16 @@ class OFATrial(PyTorchTrial):
             self.build_lr_scheduler_from_config(self.optimizer),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
         )
+
+        if self.hparams['weights_from'] is not None:
+            print("loading weights from checkpoint: %s" % self.hparams['weights_from'])
+            det = Determined()
+            ckpt = Determined.get_checkpoint(self.hparams['weights_from'])
+            ckpt_path = ckpt.download()
+            ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
+            for idx, model in enumerate(self.context.models):
+                model.load_state_dict(ckpt['models_state_dict'][0])
+                
 
     def build_lr_scheduler_from_config(self, optimizer):
         if self.context.get_hparam("lr_scheduler") == "cosine":
@@ -165,7 +174,7 @@ class OFATrial(PyTorchTrial):
             train_data,
             batch_size=self.context.get_per_slot_batch_size(),
             shuffle=True,
-            pin_memory=True,
+            pin_memory=False,
             num_workers=self.data_config["num_workers_train"],
         )
         return train_queue
@@ -195,7 +204,7 @@ class OFATrial(PyTorchTrial):
             valid_data,
             batch_size=self.context.get_per_slot_batch_size(),
             shuffle=False,
-            pin_memory=True,
+            pin_memory=False,
             num_workers=self.data_config["num_workers_val"],
         )
         return valid_queue
@@ -210,9 +219,7 @@ class OFATrial(PyTorchTrial):
         self.last_epoch_idx = epoch_idx
 
         images, target = batch
-
-
-        logits = self.supernet(images)
+        logits = self.subnet(images)
         loss = self.criterion(logits, target)
         if self.hparams['kd_ratio'] > 0:
             with torch.no_grad():
@@ -220,16 +227,16 @@ class OFATrial(PyTorchTrial):
                 soft_label = F.softmax(soft_logits, dim=1)
             kd_loss = cross_entropy_loss_with_soft_target(logits, soft_label)
             loss += self.hparams["kd_ratio"] * kd_loss 
-        top1, top5 = accuracy(logits, target, topk=(1, 5))
-
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
+
+        top1, top5 = accuracy(logits, target, topk=(1, 5))
 
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
 
     def evaluate_batch(self, batch: Any) -> Dict[str, Any]:
         input, target = batch
-        logits = self.supernet(input)
+        logits = self.subnet(input)
         loss = self.criterion(logits, target)
         top1, top5 = accuracy(logits, target, topk=(1, 5))
 

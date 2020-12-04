@@ -3,6 +3,7 @@
 
 from collections import namedtuple
 from typing import Any, Dict
+import os
 
 import torch
 import torchvision.transforms as transforms
@@ -17,6 +18,7 @@ from determined.pytorch import (
     PyTorchCallback,
     ClipGradsL2Norm,
 )
+from determined.experimental import Determined 
 
 from ofa.elastic_nn.networks import OFAMobileNetV3
 from ofa.utils import download_url
@@ -57,13 +59,13 @@ class OFATrial(PyTorchTrial):
 
         # Configure supernet according to architecture config.
         self.teacher_arch = {
-            'kernel_sizes': []
-            'depths': []
+            'kernel_sizes': [],
+            'depths': [],
             'widths': []
         }
         self.student_arch = {
-            'kernel_sizes': []
-            'depths': []
+            'kernel_sizes': [],
+            'depths': [],
             'widths': []
         }
         for module, n_blocks in enumerate([4] * 5):
@@ -81,11 +83,7 @@ class OFATrial(PyTorchTrial):
                 )
                 self.teacher_arch['widths'].append(6)
 
-        print('kernel_sizes', self.kernel_sizes)
-        print('depths', self.depths)
-        print('widths', self.widths)
-        print('block_group_info', self.supernet.block_group_info)
-        print("n_blocks", len(self.supernet.blocks))
+        print(self.student_arch)
 
         for n in self.context.models:
             n.init_model(self.hparams["init_policy"])
@@ -110,6 +108,15 @@ class OFATrial(PyTorchTrial):
             self.build_lr_scheduler_from_config(self.optimizer),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
         )
+
+        if self.hparams['weights_from'] is not None:
+            print("loading weights from checkpoint: %s" % self.hparams['weights_from'])
+            det = Determined()
+            ckpt = det.get_checkpoint(self.hparams['weights_from'])
+            ckpt_path = ckpt.download()
+            ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
+            for idx, model in enumerate(self.context.models):
+                model.load_state_dict(ckpt['models_state_dict'][0])
 
     def build_lr_scheduler_from_config(self, optimizer):
         if self.context.get_hparam("lr_scheduler") == "cosine":

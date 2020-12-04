@@ -13,8 +13,8 @@ data:
   bucket_name: determined-ai-datasets
   # We recommend num_workers_train to be set to 16
   # when running with slots_per_trial=8
-  num_workers_train: 16
-  num_workers_val: 16
+  num_workers_train: 4
+  num_workers_val: 4
   # If streaming is true, we will send request to bucket
   # every time an image is requested.  If false, we will
   # save data to disk and load that the next time the
@@ -38,7 +38,7 @@ min_validation_period:
   epochs: 1
 
 hyperparameters:
-  weights_from: null
+  weights_from: fb1d08bb-b332-4105-9787-2eb25b352377 
   global_batch_size: 2048
   n_classes: 1000
   # Batch norm
@@ -50,11 +50,11 @@ hyperparameters:
   weight_decay: 3e-5
   kd_ratio: 1. # Knowledge distillation ratio
   # Optimizer
-  learning_rate: 2.6
+  learning_rate: 0.96
   momentum: 0.9
   # Choices include linear and cosine
   lr_scheduler: cosine
-  lr_epochs: 360
+  lr_epochs: 180
   warmup_epochs: 5
   b11_ks: 3
   b12_ks: 7
@@ -105,8 +105,8 @@ hyperparameters:
 resources:
   # We recommend 8 slots with V100
   # and at least 16 slots with K80 GPUs.
-  slots_per_trial: 32
-  shm_size: 16000000000
+  slots_per_trial: 40
+  shm_size: 4000000000
 
 records_per_epoch: 1281166
 searcher:
@@ -114,9 +114,9 @@ searcher:
   metric: top1_accuracy 
   smaller_is_better: false 
   max_length:
-    epochs: 360 # 1.2 million images in training set of imagenet
+    epochs: 180 # 1.2 million images in training set of imagenet
 
 optimizations:
   aggregation_frequency:  1
 
-entrypoint: model_def:OFATrial
+entrypoint: model_inplace_distillation:OFATrial
