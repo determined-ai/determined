@@ -82,7 +82,7 @@ func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Devic
 
 func (a *agentState) deallocateDevices(slots int, id cproto.ID) {
 	if slots == 0 {
-		a.zeroSlotContainers[id] = false
+		delete(a.zeroSlotContainers, id)
 		return
 	}
 	cid := id
