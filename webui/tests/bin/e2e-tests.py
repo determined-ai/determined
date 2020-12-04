@@ -18,6 +18,8 @@ root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
 reports_dir = tests_dir.joinpath("reports")
+logs_dir = reports_dir.joinpath("logs")
+videos_dir = reports_dir.joinpath("videos")
 test_cluster_dir = tests_dir.joinpath("test-cluster")
 
 CLUSTER_CMD_PREFIX = ["make", "-C", str(test_cluster_dir)]
@@ -41,6 +43,12 @@ def run_ignore_failure(cmd: List[str], config):
         run(cmd, config)
     except subprocess.CalledProcessError:
         pass
+
+
+def setup_reports_dir(config):
+    run_ignore_failure(["rm", "-r", str(reports_dir)], config)
+    run(["mkdir", "-p", str(logs_dir)], config)
+    run(["mkdir", "-p", str(videos_dir)], config)
 
 
 def setup_cluster(logfile, config):
@@ -74,6 +82,7 @@ def det_cluster(config):
 
 def pre_e2e_tests(config):
     # TODO add a check for cluster condition
+    setup_reports_dir(config)
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
         config,
@@ -99,16 +108,26 @@ def run_e2e_tests(config):
 def run_dev_tests(config):
     run(["npx", "gauge", "run", "--env", "dev", "specs"], config)
 
+
 def e2e_tests(config):
     with det_cluster(config):
         pre_e2e_tests(config)
         run_e2e_tests(config)
+        cleanup_video_artifacts(config)
 
 
 def dev_tests(config):
     with det_cluster(config):
         pre_e2e_tests(config)
         run_dev_tests(config)
+        cleanup_video_artifacts(config)
+
+
+def cleanup_video_artifacts(config):
+    items = os.listdir(videos_dir)
+    for item in items:
+        if item.endswith(tuple([".jpeg", ".jpg", ".png"])):
+            os.remove(os.path.join(videos_dir, item))
 
 
 def get_config(args):
