@@ -631,7 +631,7 @@ class PyTorchTrialController(det.LoopTrialController):
         for ckpt_path in potential_paths:
             maybe_ckpt = self.load_path.joinpath(*ckpt_path)
             if maybe_ckpt.exists():
-                checkpoint = torch.load(maybe_ckpt, map_location="cpu")  # type: ignore
+                checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
                 break
 
         if "model_state_dict" in checkpoint:
