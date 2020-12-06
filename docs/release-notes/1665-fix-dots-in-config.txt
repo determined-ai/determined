@@ -1,0 +1,7 @@
+:orphan:
+
+**Fixes**
+
+-  Allow configurations with ``.`` in the keys for fields that are maps
+   in the master.yaml (e.g.
+   ``task_container_defaults.cpu_pod_spec.metadata.labels``).
