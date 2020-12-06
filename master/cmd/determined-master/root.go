@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -58,7 +57,7 @@ func runRoot() error {
 // global logging state based on those options.
 func initializeConfig() (*internal.Config, error) {
 	// Fetch an initial config to get the config file path and read its settings into Viper.
-	initialConfig, err := getConfig(viper.AllSettings())
+	initialConfig, err := getConfig(v.AllSettings())
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +72,7 @@ func initializeConfig() (*internal.Config, error) {
 
 	// Now call viper.AllSettings() again to get the full config, containing all values from CLI flags,
 	// environment variables, and the configuration file.
-	config, err := getConfig(viper.AllSettings())
+	config, err := getConfig(v.AllSettings())
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +110,7 @@ func mergeConfigBytesIntoViper(bs []byte) error {
 	if err := yaml.Unmarshal(bs, &configMap); err != nil {
 		return errors.Wrap(err, "error unmarshal yaml configuration file")
 	}
-	if err := viper.MergeConfigMap(configMap); err != nil {
+	if err := v.MergeConfigMap(configMap); err != nil {
 		return errors.Wrap(err, "error merge configuration to viper")
 	}
 	return nil

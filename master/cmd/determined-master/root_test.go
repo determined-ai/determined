@@ -3,7 +3,9 @@ package main
 import (
 	"testing"
 
-	"github.com/spf13/viper"
+	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"google.golang.org/api/compute/v1"
 	"gotest.tools/assert"
 
@@ -24,6 +26,16 @@ provisioner:
           diskSizeGb: "200"
           diskType: projects/determined-ai/zones/us-central1-a/diskTypes/pd-ssd
         autoDelete: true
+task_container_defaults:
+  cpu_pod_spec:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        "app.kubernetes.io/name": "cpu-label"
+    spec:
+      containers:
+        - name: determined-container
 `
 	expected := internal.DefaultConfig()
 	expected.Provisioner = provisioner.DefaultConfig()
@@ -41,17 +53,35 @@ provisioner:
 			},
 		},
 	}
+	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		Spec: k8sV1.PodSpec{
+			Containers: []k8sV1.Container{
+				{
+					Name: "determined-container",
+				},
+			},
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Labels: map[string]string{
+				"app.kubernetes.io/name": "cpu-label",
+			},
+		},
+	}
 	err := expected.Resolve()
 	assert.NilError(t, err)
 	err = mergeConfigBytesIntoViper([]byte(raw))
 	assert.NilError(t, err)
-	config, err := getConfig(viper.AllSettings())
+	config, err := getConfig(v.AllSettings())
 	assert.NilError(t, err)
 	assert.DeepEqual(t, config, expected)
 }
 
 func TestUnmarshalMasterConfiguration(t *testing.T) {
-	config, err := getConfig(viper.AllSettings())
+	config, err := getConfig(v.AllSettings())
 	assert.NilError(t, err)
 
 	c, err := config.CheckpointStorage.ToModel()

@@ -10,12 +10,24 @@ import (
 	"github.com/determined-ai/determined/master/version"
 )
 
+var v *viper.Viper
+
+// viperKeyDelimiter marks nested values in the configuration. For example, with a key delimiter
+// of ".", viper will expect `{ db { host = "something" } }` to be stored and supplied as
+// `db.host : "something"`. This also implies that if there is a key like `my.key: "ok"`, viper
+// becomes unable to disambiguate the key from an object key delimited using ".". Because of this,
+// viper will tell us the config map looks like `{ my { key = "ok" } }`, not `{ my.key = "ok"}`.
+// The key delimiter is chosen as ".." because users would like to allow "." in keys without them
+// being considered an object by viper and ".." causes a proper subset of previously unhandled
+// configurations to be handled correctly; in otherwise, this doesn't break anything that was not
+// already broken and fixes some parts of what was broken that people care about.
+const viperKeyDelimiter = ".."
+
 func init() {
 	// The version of rootCmd is set in init() rather than when `rootCmd` is initialized,
 	// because link-time variable assignments are not applied when package-scoped variables
 	// are initialized.
 	rootCmd.Version = version.Version
-
 	registerConfig()
 }
 
@@ -26,7 +38,7 @@ func (c configKey) EnvName() string {
 }
 
 func (c configKey) AccessPath() string {
-	return strings.ReplaceAll(strings.Join(c, "."), "-", "_")
+	return strings.ReplaceAll(strings.Join(c, viperKeyDelimiter), "-", "_")
 }
 
 func (c configKey) FlagName() string {
@@ -35,28 +47,33 @@ func (c configKey) FlagName() string {
 
 func registerString(flags *pflag.FlagSet, name configKey, value string, usage string) {
 	flags.String(name.FlagName(), value, usage)
-	_ = viper.BindEnv(name.AccessPath(), name.EnvName())
-	_ = viper.BindPFlag(name.AccessPath(), flags.Lookup(name.FlagName()))
-	viper.SetDefault(name.AccessPath(), value)
+	_ = v.BindEnv(name.AccessPath(), name.EnvName())
+	_ = v.BindPFlag(name.AccessPath(), flags.Lookup(name.FlagName()))
+	v.SetDefault(name.AccessPath(), value)
 }
 
 func registerBool(flags *pflag.FlagSet, name configKey, value bool, usage string) {
 	flags.Bool(name.FlagName(), value, usage)
-	_ = viper.BindEnv(name.AccessPath(), name.EnvName())
-	_ = viper.BindPFlag(name.AccessPath(), flags.Lookup(name.FlagName()))
-	viper.SetDefault(name.AccessPath(), value)
+	_ = v.BindEnv(name.AccessPath(), name.EnvName())
+	_ = v.BindPFlag(name.AccessPath(), flags.Lookup(name.FlagName()))
+	v.SetDefault(name.AccessPath(), value)
 }
 
 func registerInt(flags *pflag.FlagSet, name configKey, value int, usage string) {
 	flags.Int(name.FlagName(), value, usage)
-	_ = viper.BindEnv(name.AccessPath(), name.EnvName())
-	_ = viper.BindPFlag(name.AccessPath(), flags.Lookup(name.FlagName()))
-	viper.SetDefault(name.AccessPath(), value)
+	_ = v.BindEnv(name.AccessPath(), name.EnvName())
+	_ = v.BindPFlag(name.AccessPath(), flags.Lookup(name.FlagName()))
+	v.SetDefault(name.AccessPath(), value)
 }
 
 func registerConfig() {
+	// Relies on https://github.com/spf13/viper/pull/794. Once the points in the commentary
+	// are addressed, specifically adding the option `v.AllowDelimiterInKey`, it may be better
+	// to switch to that.
+	v = viper.NewWithOptions(viper.KeyDelimiter(viperKeyDelimiter))
+	v.SetTypeByDefaultValue(true)
+
 	defaults := internal.DefaultConfig()
-	viper.SetTypeByDefaultValue(true)
 
 	// Register flags and environment variables, and set default values for the flags.
 	flags := rootCmd.Flags()
