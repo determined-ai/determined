@@ -12,6 +12,9 @@ import (
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
+
+const KUBERNETES = "kubernetes"
+
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
 	config *KubernetesResourceManagerConfig
@@ -69,14 +72,14 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		return k.receiveRequestMsg(ctx)
 
 	case GetTaskSummary:
-		if resp := getTaskSummary(k.reqList, *msg.ID, k.groups, "kubernetes"); resp != nil {
+		if resp := getTaskSummary(k.reqList, *msg.ID, k.groups, KUBERNETES); resp != nil {
 			ctx.Respond(*resp)
 		}
 		reschedule = false
 
 	case GetTaskSummaries:
 		reschedule = false
-		ctx.Respond(getTaskSummaries(k.reqList, k.groups, "kubernetes"))
+		ctx.Respond(getTaskSummaries(k.reqList, k.groups, KUBERNETES))
 
 	case schedulerTick:
 		if k.reschedule {
