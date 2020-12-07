@@ -11,18 +11,16 @@ import (
 
 type agentResourceManager struct {
 	config      *AgentResourceManagerConfig
-	poolsConfig *ResourcePoolsConfig
+	poolsConfig []ResourcePoolConfig
 	cert        *tls.Certificate
 
 	pools map[string]*actor.Ref
 }
 
-func newAgentResourceManager(
-	config *AgentResourceManagerConfig, poolsConfig *ResourcePoolsConfig, cert *tls.Certificate,
-) *agentResourceManager {
+func newAgentResourceManager(config *ResourceConfig, cert *tls.Certificate) *agentResourceManager {
 	return &agentResourceManager{
-		config:      config,
-		poolsConfig: poolsConfig,
+		config:      config.ResourceManager.AgentRM,
+		poolsConfig: config.ResourcePools,
 		cert:        cert,
 		pools:       make(map[string]*actor.Ref),
 	}
@@ -31,8 +29,8 @@ func newAgentResourceManager(
 func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		for ix, config := range a.poolsConfig.ResourcePools {
-			rpRef := a.createResourcePool(ctx, a.poolsConfig.ResourcePools[ix], a.cert)
+		for ix, config := range a.poolsConfig {
+			rpRef := a.createResourcePool(ctx, a.poolsConfig[ix], a.cert)
 			if rpRef != nil {
 				a.pools[config.PoolName] = rpRef
 			}

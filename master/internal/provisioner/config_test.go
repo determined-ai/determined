@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/api/compute/v1"
+
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
 
@@ -31,7 +33,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 	configRaw := `{
 "master_url": "http://test.master",
-"provider": "aws",
+"type": "aws",
 "agent_docker_image": "test_image",
 "agent_fluent_image": "fluent_image",
 "region": "test.region3",
@@ -83,7 +85,7 @@ startup_script: |
 func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 	configRaw := `{
 "master_url": "http://test.master",
-"provider": "aws",
+"type": "aws",
 "agent_docker_image": "test_image",
 "region": "test.region2",
 "image_id": "test.image2",
@@ -119,7 +121,7 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 	configRaw := `{
 "master_url": "http://test.master",
-"provider": "gcp",
+"type": "gcp",
 "agent_docker_image": "test_image",
 "project": "test_project2",
 "zone": "test-zone2",
@@ -148,4 +150,64 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
+}
+
+func TestUnmarshalProvisionerConfigWithGCPBase(t *testing.T) {
+	configRaw := `
+master_url: http://test.master
+agent_docker_image: test_image
+
+type: gcp
+base_config:
+  disks:
+    - mode: READ_ONLY
+      boot: false
+      initializeParams:
+        sourceImage: projects/determined-ai/global/images/determined-agent
+        diskSizeGb: "200"
+        diskType: projects/determined-ai/zones/us-central1-a/diskTypes/pd-ssd
+      autoDelete: true
+project: test_project3
+zone: test-zone3
+boot_disk_source_image: test-source_image3
+`
+	unmarshaled := Config{}
+	err := yaml.Unmarshal([]byte(configRaw), &unmarshaled, yaml.DisallowUnknownFields)
+	assert.NilError(t, err)
+	err = check.Validate(&unmarshaled)
+	assert.NilError(t, err)
+	err = unmarshaled.initMasterAddress()
+	assert.NilError(t, err)
+
+	expectedGCP := *DefaultGCPClusterConfig()
+	expectedGCP.BaseConfig = &compute.Instance{
+		Disks: []*compute.AttachedDisk{
+			{
+				Mode: "READ_ONLY",
+				Boot: false,
+				InitializeParams: &compute.AttachedDiskInitializeParams{
+					SourceImage: "projects/determined-ai/global/images/determined-agent",
+					DiskSizeGb:  200,
+					DiskType:    "projects/determined-ai/zones/us-central1-a/diskTypes/pd-ssd",
+				},
+				AutoDelete: true,
+			},
+		},
+	}
+	expectedGCP.Project = "test_project3"
+	expectedGCP.Zone = "test-zone3"
+	expectedGCP.BootDiskSourceImage = "test-source_image3"
+
+	expected := Config{
+		MasterURL:              "http://test.master:8080",
+		GCP:                    &expectedGCP,
+		AgentDockerImage:       "test_image",
+		AgentFluentImage:       "fluent/fluent-bit:1.6",
+		AgentDockerRuntime:     "runc",
+		AgentDockerNetwork:     "default",
+		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
+		MaxAgentStartingPeriod: Duration(20 * time.Minute),
+		MaxInstances:           5,
+	}
+	assert.DeepEqual(t, expected, unmarshaled)
 }

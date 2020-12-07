@@ -52,8 +52,8 @@ type Config struct {
 	AgentDockerRuntime     string            `json:"agent_docker_runtime"`
 	AgentDockerImage       string            `json:"agent_docker_image"`
 	AgentFluentImage       string            `json:"agent_fluent_image"`
-	AWS                    *AWSClusterConfig `union:"provider,aws" json:"-"`
-	GCP                    *GCPClusterConfig `union:"provider,gcp" json:"-"`
+	AWS                    *AWSClusterConfig `union:"type,aws" json:"-"`
+	GCP                    *GCPClusterConfig `union:"type,gcp" json:"-"`
 	MaxIdleAgentPeriod     Duration          `json:"max_idle_agent_period"`
 	MaxAgentStartingPeriod Duration          `json:"max_agent_starting_period"`
 	MinInstances           int               `json:"min_instances"`

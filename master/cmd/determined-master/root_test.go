@@ -11,21 +11,24 @@ import (
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/provisioner"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 )
 
 func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
 	raw := `
-provisioner:
-  provider: gcp
-  base_config:
-    disks:
-      - mode: READ_ONLY
-        boot: false
-        initializeParams:
-          sourceImage: projects/determined-ai/global/images/determined-agent
-          diskSizeGb: "200"
-          diskType: projects/determined-ai/zones/us-central1-a/diskTypes/pd-ssd
-        autoDelete: true
+resource_pools:
+  - pool_name: default
+    provider: 
+      type: gcp
+      base_config:
+        disks:
+          - mode: READ_ONLY
+            boot: false
+            initializeParams:
+              sourceImage: projects/determined-ai/global/images/determined-agent
+              diskSizeGb: "200"
+              diskType: projects/determined-ai/zones/us-central1-a/diskTypes/pd-ssd
+            autoDelete: true
 task_container_defaults:
   cpu_pod_spec:
     apiVersion: v1
@@ -38,9 +41,9 @@ task_container_defaults:
         - name: determined-container
 `
 	expected := internal.DefaultConfig()
-	expected.Provisioner = provisioner.DefaultConfig()
-	expected.Provisioner.GCP = provisioner.DefaultGCPClusterConfig()
-	expected.Provisioner.GCP.BaseConfig = &compute.Instance{
+	providerConf := provisioner.DefaultConfig()
+	providerConf.GCP = provisioner.DefaultGCPClusterConfig()
+	providerConf.GCP.BaseConfig = &compute.Instance{
 		Disks: []*compute.AttachedDisk{
 			{
 				AutoDelete: true,
@@ -51,6 +54,13 @@ task_container_defaults:
 					SourceImage: "projects/determined-ai/global/images/determined-agent",
 				},
 			},
+		},
+	}
+	expected.ResourcePools = []resourcemanagers.ResourcePoolConfig{
+		{
+			PoolName:                 "default",
+			Provider:                 providerConf,
+			MaxCPUContainersPerAgent: 100,
 		},
 	}
 	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{
