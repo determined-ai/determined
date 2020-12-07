@@ -116,11 +116,21 @@ const ExperimentVisualization: React.FC<Props> = ({
   return (
     <div className={css.base}>
       <Row>
-        <Col md={20} span={24}>
+        <Col
+          lg={{ order: 1, span: 20 }}
+          md={{ order: 1, span: 18 }}
+          sm={{ order: 2, span: 24 }}
+          span={24}
+          xs={{ order: 2, span: 24 }}>
           {experiment.id}
           {experiment.config.description}
         </Col>
-        <Col md={4} span={24}>
+        <Col
+          lg={{ order: 2, span: 4 }}
+          md={{ order: 2, span: 6 }}
+          sm={{ order: 1, span: 24 }}
+          span={24}
+          xs={{ order: 1, span: 24 }}>
           <div className={css.inspector}>
             <div className={css.menu}>
               {MENU.map(item => (
@@ -134,6 +144,15 @@ const ExperimentVisualization: React.FC<Props> = ({
             <div className={css.divider} />
             <header>Filters</header>
             <div className={css.filters}>
+              <SelectFilter
+                className={css.mobileNav}
+                label="Chart Type"
+                value={typeKey}
+                verticalLayout={true}>
+                {MENU.map(item => (
+                  <Option key={item.type} value={item.type}>{item.label}</Option>
+                ))}
+              </SelectFilter>
               <MetricSelectFilter
                 defaultMetricNames={metrics}
                 metricNames={metrics}
