@@ -2,6 +2,9 @@
 
 **New Feature**
 
--  Updated priority scheduler to support specifying priorities and preemption.
--  The prior version of the priority scheduler is now deprecated. For a limited
-   period of time it will remain availabe as the ``round_robin`` scheduler.
+-  Updated priority scheduler to support specifying priorities and
+   preemption.
+
+-  The prior version of the priority scheduler is now deprecated. For a
+   limited period of time it will remain availabe as the ``round_robin``
+   scheduler.
