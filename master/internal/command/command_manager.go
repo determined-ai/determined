@@ -68,8 +68,8 @@ func (c *commandManager) processLaunchRequest(
 	ctx *actor.Context,
 	req CommandLaunchRequest,
 ) (*summary, int, error) {
-	commandReq, err := parseCommandRequest(*req.User, c.db, req.CommandParams,
-		&c.taskSpec.TaskContainerDefaults,
+	commandReq, err := parseCommandRequest(
+		ctx.Self().System(), c.db, *req.User, req.CommandParams, &c.taskSpec.TaskContainerDefaults,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err

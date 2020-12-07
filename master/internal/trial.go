@@ -338,6 +338,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			!t.replaying {
 			slotsNeeded := t.experiment.Config.Resources.SlotsPerTrial
 			label := t.experiment.Config.Resources.AgentLabel
+			resourcePool := t.experiment.Config.Resources.ResourcePool
 			var name string
 			if t.idSet {
 				name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
@@ -352,12 +353,16 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				SlotsNeeded:    slotsNeeded,
 				NonPreemptible: false,
 				Label:          label,
+				ResourcePool:   resourcePool,
 				FittingRequirements: resourcemanagers.FittingRequirements{
 					SingleAgent: false,
 				},
 				TaskActor: ctx.Self(),
 			}
-			ctx.Tell(t.rm, *t.task)
+			if err := ctx.Ask(t.rm, *t.task).Error(); err != nil {
+				ctx.Log().Error(err)
+				t.terminated(ctx)
+			}
 		}
 	} else if t.experimentState != model.ActiveState {
 		_ = t.releaseResource(ctx)

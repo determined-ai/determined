@@ -193,6 +193,7 @@ type ResourcesConfig struct {
 	NativeParallel bool    `json:"native_parallel"`
 	ShmSize        *int    `json:"shm_size,omitempty"`
 	AgentLabel     string  `json:"agent_label"`
+	ResourcePool   string  `json:"resource_pool"`
 	Priority       *int    `json:"priority,omitempty"`
 }
 

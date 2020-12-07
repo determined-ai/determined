@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -43,8 +44,9 @@ func respondBadRequest(ctx *actor.Context, err error) {
 // - user_files: The files to run with the command.
 // - data: Additional data for a command.
 func parseCommandRequest(
-	user model.User,
+	system *actor.System,
 	db *db.PgDB,
+	user model.User,
 	params *CommandParams,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 ) (*commandRequest, error) {
@@ -75,6 +77,10 @@ func parseCommandRequest(
 	agentUserGroup, err := db.AgentUserGroup(user.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find user and group information for user %s", user.Username)
+	}
+
+	if err := sproto.ValidateRP(system, config.Resources.ResourcePool); err != nil {
+		return nil, err
 	}
 
 	return &commandRequest{
