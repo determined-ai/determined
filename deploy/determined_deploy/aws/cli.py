@@ -22,6 +22,16 @@ def validate_spot_max_price() -> Callable:
     return validate
 
 
+def validate_scheduler_type() -> Callable:
+    def validate(s: str) -> str:
+        supported_scheduler_types = ["fair_share", "priority", "round_robin"]
+        if s not in supported_scheduler_types:
+            raise argparse.ArgumentTypeError(f"supported schedulers are: {supported_scheduler_types}")
+        return s
+
+    return validate
+
+
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
     subparser = subparsers.add_parser("down", help="delete CloudFormation stack")
     require_named = subparser.add_argument_group("required named arguments")
@@ -138,6 +148,18 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="maximum hourly price for the spot instance (do not include the dollar sign)",
     )
     subparser.add_argument(
+        "--scheduler-type",
+        type=validate_scheduler_type(),
+        default="fair_share",
+        help="scheduler to use (defaults to fair_share).",
+    )
+    subparser.add_argument(
+        "--preemption-enabled",
+        type=str,
+        default="false",
+        help="whether preemption is supported in the scheduler (only configurable for priority scheduler).",
+    )
+    subparser.add_argument(
         "--dry-run",
         action="store_true",
         help="print deployment template",
@@ -234,6 +256,8 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.SPOT_ENABLED: args.spot,
         constants.cloudformation.SPOT_MAX_PRICE: args.spot_max_price,
         constants.cloudformation.SUBNET_ID_KEY: args.agent_subnet_id,
+        constants.cloudformation.SCHEDULER_TYPE: args.scheduler_type,
+        constants.cloudformation.PREEMPTION_ENABLED: args.preemption_enabled,
     }
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)
