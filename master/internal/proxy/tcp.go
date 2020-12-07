@@ -1,15 +1,46 @@
 package proxy
 
 import (
+	"io"
 	"net"
 	"net/http"
 	"net/url"
 
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 )
 
-func newSingleHostReverseTCPProxy(c echo.Context, t *url.URL) http.Handler {
+func asyncCopyToWebSocket(dst *websocket.Conn, src io.Reader) chan error {
+	return asyncRun(func() error {
+		for buf := make([]byte, 4096); ; {
+			n, err := src.Read(buf)
+			if err != nil {
+				return err
+			}
+			if err := dst.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
+				return err
+			}
+		}
+	})
+}
+
+func asyncCopyFromWebSocket(dst io.Writer, src *websocket.Conn) chan error {
+	return asyncRun(func() error {
+		for {
+			switch tp, buf, err := src.ReadMessage(); {
+			case err != nil:
+				return err
+			case tp == websocket.BinaryMessage:
+				if _, err := dst.Write(buf); err != nil {
+					return err
+				}
+			}
+		}
+	})
+}
+
+func newSingleHostReverseTCPOverWebSocketProxy(c echo.Context, t *url.URL) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Make sure we can open the connection to the remote host.
 		out, err := net.Dial("tcp", t.Host)
@@ -24,23 +55,14 @@ func newSingleHostReverseTCPProxy(c echo.Context, t *url.URL) http.Handler {
 			}
 		}()
 
-		// Send the 200 OK response header.
-		c.Response().WriteHeader(http.StatusOK)
-
-		// Hijack the connection instead of providing a body.
-		in, _, err := c.Response().Hijack()
+		ws, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
 		if err != nil {
-			c.Error(errors.Errorf("error hijacking connection to %v: %v", t, err))
+			c.Error(echo.NewHTTPError(http.StatusBadGateway, errors.Wrap(err, "error upgrading")))
 			return
 		}
-		defer func() {
-			if cerr := in.Close(); cerr != nil {
-				c.Logger().Error(cerr)
-			}
-		}()
 
-		copyReqErr := asyncCopy(out, in)
-		copyResErr := asyncCopy(in, out)
+		copyReqErr := asyncCopyToWebSocket(ws, out)
+		copyResErr := asyncCopyFromWebSocket(out, ws)
 
 		if cerr := <-copyReqErr; cerr != nil {
 			c.Logger().Errorf("error copying request body for %v: %v", t, cerr)

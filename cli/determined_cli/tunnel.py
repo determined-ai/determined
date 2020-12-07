@@ -1,104 +1,86 @@
 """
-tunnel.py will tunnel a TCP connection through Determined master at MASTER_ADDR to SERVICE_UUID.
-
-This is used to tunnel ssh connections through the master, where the hostname in the SERVICE_UUID
-should be the shell ID of the shell in question.
+tunnel.py will tunnel a TCP connection to the service (typically a shell) with ID equal to
+SERVICE_UUID over a WebSocket connection to a Determined master at MASTER_ADDR.
 """
 
 import argparse
-import http.client
 import io
 import os
 import socket
 import ssl
 import sys
 import threading
-from typing import Any, Optional, Union
+from typing import Optional
+
+import lomond
 
 from determined_common.api import request
 
 
-class HTTPSProxyConnection(http.client.HTTPSConnection):
+class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignore
     """
-    A connection class that applies TLS to the entire connection, even for CONNECT requests.
-    """
-
-    def __init__(self, cert_name: Optional[str], *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self._cert_name = cert_name
-
-    def connect(self) -> None:
-        self.sock = self._create_connection(  # type: ignore
-            (self.host, self.port), self.timeout, self.source_address  # type: ignore
-        )
-        self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-        # This is what differs from the base class: we wrap the socket *before* setting up the
-        # tunnel and verify against the proxy's hostname rather than the target's.  We also support
-        # matching the host name against an externally-provided hostname.
-        self.sock = self._context.wrap_socket(  # type: ignore
-            self.sock, server_hostname=self._cert_name or self.host
-        )
-
-        if self._tunnel_host:  # type: ignore
-            self._tunnel()  # type: ignore
-
-
-class SocketWrapper:
-    """A small wrapper to provide file-like read/write methods on top of a socket object."""
-
-    def __init__(self, sock: socket.socket):
-        self.sock = sock
-
-    def read(self, n: int) -> bytes:
-        return self.sock.recv(n)
-
-    def write(self, s: bytes) -> int:
-        self.sock.sendall(s)
-        return len(s)
-
-    def close(self) -> None:
-        self.sock.close()
-
-
-class Copier(threading.Thread):
-    """
-    A thread to copy from one file descriptor to another.  Only copies in one direction; use two
-    threads to deal with bidirectional file descriptors.  The choice to use a pair of threads as
-    opposed to select.select or select.poll ensures that this code will run nicely on Windows.
+    A session class that allows for the TLS verification mode of a WebSocket connection to be
+    configured.
     """
 
     def __init__(
-        self, src: Union[SocketWrapper, io.RawIOBase], dst: Union[SocketWrapper, io.RawIOBase]
-    ):
-        super().__init__()
-        self.src = src
-        self.dst = dst
+        self, socket: lomond.WebSocket, cert_file: Optional[str], cert_name: Optional[str]
+    ) -> None:
+        super().__init__(socket)
+        self.ctx = ssl.create_default_context()
+        if cert_file == "False":
+            self.ctx.verify_mode = ssl.CERT_NONE
+            return
 
-    def run(self) -> None:
-        try:
-            while True:
-                try:
-                    buf = self.src.read(4096)
-                except OSError:
-                    break
-                if not buf:
-                    break
-                try:
-                    self.dst.write(buf)
-                except OSError:
-                    break
-        finally:
-            # We're ok with double-closing some sockets.
-            try:
-                self.src.close()
-            except OSError:
-                pass
+        if cert_file is not None:
+            self.ctx.load_verify_locations(cafile=cert_file)
+        self.cert_name = cert_name
 
-            try:
-                self.dst.close()
-            except OSError:
-                pass
+    def _wrap_socket(self, sock: socket.SocketType, host: str) -> socket.SocketType:
+        return self.ctx.wrap_socket(sock, server_hostname=self.cert_name or host)
+
+
+def copy_to_websocket(
+    ws: lomond.WebSocket, f: io.RawIOBase, ready_sem: threading.Semaphore
+) -> None:
+    ready_sem.acquire()
+
+    try:
+        while True:
+            chunk = f.read(4096)
+            if not chunk:
+                break
+            ws.send_binary(chunk)
+    finally:
+        f.close()
+        ws.close()
+
+
+def copy_from_websocket(
+    f: io.RawIOBase,
+    ws: lomond.WebSocket,
+    ready_sem: threading.Semaphore,
+    cert_file: Optional[str],
+    cert_name: Optional[str],
+) -> None:
+    try:
+        for event in ws.connect(
+            ping_rate=0,
+            session_class=lambda socket: CustomSSLWebsocketSession(socket, cert_file, cert_name),
+        ):
+            if isinstance(event, lomond.events.Binary):
+                f.write(event.data)
+            elif isinstance(event, lomond.events.Ready):
+                ready_sem.release()
+            elif isinstance(
+                event,
+                (lomond.events.ConnectFail, lomond.events.Rejected, lomond.events.ProtocolError),
+            ):
+                raise Exception("Connection failed: {}".format(event))
+            elif isinstance(event, (lomond.events.Closing, lomond.events.Disconnected)):
+                break
+    finally:
+        f.close()
 
 
 def http_connect_tunnel(
@@ -106,40 +88,26 @@ def http_connect_tunnel(
 ) -> None:
     parsed_master = request.parse_master_address(master)
     assert parsed_master.hostname is not None, "Failed to parse master address: {}".format(master)
+    url = request.make_url(master, "proxy/{}/tcp".format(service))
+    ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url))
 
-    if parsed_master.scheme == "https":
-        if cert_file == "False":
-            context = ssl.create_default_context()
-            context.verify_mode = ssl.CERT_NONE
-        else:
-            context = ssl.create_default_context(cafile=cert_file)
-        client = HTTPSProxyConnection(
-            cert_name, parsed_master.hostname, parsed_master.port, context=context
-        )  # type: http.client.HTTPConnection
-    else:
-        client = http.client.HTTPConnection(parsed_master.hostname, parsed_master.port)
+    # We can't send data to the WebSocket before the connection becomes ready, which takes a bit of
+    # time; this semaphore lets the sending thread wait for that to happen.
+    ready_sem = threading.Semaphore(0)
 
-    client.set_tunnel(service)
+    # Directly using sys.stdin.buffer.read or sys.stdout.buffer.write would block due to
+    # buffering; instead, we use unbuffered file objects based on the same file descriptors.
+    unbuffered_stdin = os.fdopen(sys.stdin.fileno(), "rb", buffering=0)
+    unbuffered_stdout = os.fdopen(sys.stdout.fileno(), "wb", buffering=0)
 
-    try:
-        client.connect()
-    except socket.gaierror:
-        print("failed to look up host:", master, file=sys.stderr)
-        raise
-
-    with client.sock as sock:
-        sock = SocketWrapper(sock)
-        # Directly using sys.stdin.buffer.read or sys.stdout.buffer.write would block due to
-        # buffering; instead, we use unbuffered file objects based on the same file descriptors.
-        unbuffered_stdin = os.fdopen(sys.stdin.fileno(), "rb", buffering=0)
-        unbuffered_stdout = os.fdopen(sys.stdout.fileno(), "wb", buffering=0)
-
-        c1 = Copier(sock, unbuffered_stdout)
-        c2 = Copier(unbuffered_stdin, sock)
-        c1.start()
-        c2.start()
-        c1.join()
-        c2.join()
+    c1 = threading.Thread(target=copy_to_websocket, args=(ws, unbuffered_stdin, ready_sem))
+    c2 = threading.Thread(
+        target=copy_from_websocket, args=(unbuffered_stdout, ws, ready_sem, cert_file, cert_name)
+    )
+    c1.start()
+    c2.start()
+    c1.join()
+    c2.join()
 
 
 if __name__ == "__main__":

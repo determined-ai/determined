@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -30,9 +30,6 @@ type (
 	// NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
 	// running in the cluster.
 	NewProxyHandler struct{ ServiceID string }
-	// NewConnectHandler returns a middleware function for tunneling TCP-like traffic (via HTTP
-	// CONNECT) to services running in the cluster.
-	NewConnectHandler struct{}
 
 	// GetSummary returns a snapshot of the registered services.
 	GetSummary struct{}
@@ -74,8 +71,6 @@ func (p *Proxy) Receive(ctx *actor.Context) error {
 		delete(p.services, msg.ServiceID)
 	case NewProxyHandler:
 		ctx.Respond(p.newProxyHandler(msg.ServiceID))
-	case NewConnectHandler:
-		ctx.Respond(p.newConnectHandler())
 	case GetSummary:
 		ctx.Respond(p.getSummary())
 	case actor.PostStop:
@@ -101,7 +96,7 @@ func (p *Proxy) getTargetURL(serviceName string) *url.URL {
 	return &sURL
 }
 
-// Service a normal (non-CONNECT) HTTP request through the /proxy/:service/* route.
+// Service an HTTP request through the /proxy/:service/* route.
 func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Look up the service name in the url path.
@@ -126,36 +121,15 @@ func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
 
 		// Proxy the request to the target host.
 		var proxy http.Handler
-		if c.IsWebSocket() {
+		switch {
+		case strings.HasSuffix(c.Request().URL.Path, "tcp"):
+			proxy = newSingleHostReverseTCPOverWebSocketProxy(c, serviceURL)
+		case c.IsWebSocket():
 			proxy = newSingleHostReverseWebSocketProxy(c, serviceURL)
-		} else {
+		default:
 			proxy = httputil.NewSingleHostReverseProxy(serviceURL)
 		}
 		proxy.ServeHTTP(c.Response(), req)
-
-		return nil
-	}
-}
-
-// Service an HTTP CONNECT request, which have a hostname:port in place of a normal route.
-func (p *Proxy) newConnectHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// Parse the request-target, which must be in hostname[:port] format, per RFC 7231.
-		u, err := url.Parse("tcp://" + c.Request().RequestURI)
-		if err != nil {
-			return errors.Wrap(err, "failed to parse host for CONNECT")
-		}
-		serviceName := u.Hostname()
-
-		target := p.getTargetURL(serviceName)
-		if target == nil {
-			return echo.NewHTTPError(http.StatusNotFound,
-				fmt.Sprintf("service not found: %s", serviceName))
-		}
-
-		proxy := newSingleHostReverseTCPProxy(c, target)
-
-		proxy.ServeHTTP(c.Response(), c.Request())
 
 		return nil
 	}
@@ -174,14 +148,20 @@ func (p *Proxy) getSummary() map[string]Service {
 	return snapshot
 }
 
-func asyncCopy(dst io.Writer, src io.Reader) chan error {
+func asyncRun(f func() error) chan error {
 	errs := make(chan error, 1)
 	go func() {
 		defer close(errs)
-		_, err := io.Copy(dst, src)
-		if err != io.EOF {
-			errs <- err
-		}
+		errs <- f()
 	}()
 	return errs
+}
+
+func asyncCopy(dst io.Writer, src io.Reader) chan error {
+	return asyncRun(func() error {
+		if _, err := io.Copy(dst, src); err != nil && err != io.EOF {
+			return err
+		}
+		return nil
+	})
 }
