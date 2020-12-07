@@ -210,80 +210,6 @@ The master supports the following configuration settings:
    should only be set via an environment variable or command-line
    option. Defaults to ``/etc/determined/master.yaml``.
 
--  ``scheduler``: Specifies how Determined schedules tasks to agents.
-
-   -  ``fit``: The scheduling policy to use when assigning tasks to
-      agents in the cluster. Defaults to ``best``.
-
-      -  ``best``: The best-fit policy ensures that tasks will be
-         preferentially "packed" together on the smallest number of
-         agents.
-
-      -  ``worst``: The worst-fit policy ensures that tasks will be
-         placed on under-utilized agents.
-
-   -  ``type``: The scheduling policy to use when allocating resources
-      between different tasks (experiments, notebooks, etc.). Defaults
-      to ``fair_share``.
-
-      -  ``fair_share``: Tasks receive a proportional amount of the
-         available resources depending on the resource they require and
-         their weight.
-
-      -  ``round_robin``: Tasks are scheduled in the order of the order
-         in which they arrive at the cluster.
-
-      -  ``priority``: Tasks are scheduled based on their priority,
-         which can range from the values 1 to 99 inclusive. Lower
-         priority numbers indicate higher priority tasks. A lower
-         priority task will never be scheduled while a higher priority
-         task is pending. Zero-slot tasks (e.g., cpu-only notebooks,
-         tensorboards) are prioritized separately from tasks requiring
-         slots (e.g., experiments running on GPUs). Task priority can be
-         assigned using the the ``resources.priority`` field. If a task
-         does not specify a priority it is assigned the
-         ``default_priority``.
-
-         -  ``preemption``: Specifies whether lower priority tasks
-            should be preempted to schedule higher priority tasks. Tasks
-            are preempted in order of lowest priority first.
-
-         -  ``default_priority``: The priority that is assigned to tasks
-            that do not specify a priority. Can be configured to 1 to 99
-            inclusively. Defaults to 42.
-
-   -  ``resource_provider``: The resource provider to use to acquire
-      agents. Defaults to the default resource provider.
-
-      -  ``type: default``: The default resource provider includes
-         static and dynamic agents.
-
-      -  ``type: kubernetes``: The ``kubernetes`` resource provider
-         launches tasks on a Kubernetes cluster. The Determined master
-         must be running within the Kubernetes cluster. When using the
-         ``kubernetes`` resource provider, we recommend deploying
-         Determined using the :ref:`Determined Helm Chart
-         <install-on-kubernetes>`. When installed via Helm, the
-         configuration settings below will be set automatically.
-
-         -  ``namespace``: The namespace where Determined will deploy
-            Pods and ConfigMaps.
-
-         -  ``max_slots_per_pod``: Each multi-GPU (distributed training)
-            task will be scheduled as a set of ``slots_per_task /
-            max_slots_per_pod`` separate pods, with each pod assigned up
-            to ``max_slots_per_pod`` GPUs. Distributed tasks with sizes
-            that are not divisible by ``max_slots_per_pod`` are never
-            scheduled. If you have a cluster of different size nodes,
-            set ``max_slots_per_pod`` to the greatest common divisor of
-            all the sizes. For example, if you have some nodes with 4
-            GPUs and other nodes with 8 GPUs, set ``maxSlotsPerPod`` to
-            ``4`` so that all distributed experiments will launch with 4
-            GPUs per pod (with two pods on 8-GPU nodes).
-
-         -  ``master_service_name``: The service account Determined uses
-            to interact with the Kubernetes API.
-
 -  ``port``: The TCP port on which the master accepts all incoming
    connections. Defaults to ``8080``.
 
@@ -379,256 +305,387 @@ The master supports the following configuration settings:
    TensorBoard instance is considered to be idle if it does not receive
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
 
--  ``provisioner``: Specifies the configuration of dynamic agents.
+-  ``resource_manager``: The resource manager to use to acquire
+   resources. Defaults to the agent resource provider.
 
-   -  ``master_url``: The full URL of the master. A valid URL is in the
-      format of ``scheme://host:port``. The scheme must be either
-      ``http`` or ``https``. If the master is deployed on EC2, rather
-      than hardcoding the IP address, we advise you use one of the
-      following to set the host as an alias: ``local-ipv4``,
-      ``public-ipv4``, ``local-hostname``, or ``public-hostname``. If
-      the master is deployed on GCP, rather than hardcoding the IP
-      address, we advise you use one of the following to set the host as
-      an alias: ``internal-ip`` or ``external-ip``. Which one you should
-      select is based on your network configuration. On master startup,
-      we will replace the above alias host with its real value. Defaults
-      to ``http`` as scheme, local IP address as host, and ``8080`` as
-      port.
+   -  ``type: agent``: The agent resource manager includes static and
+      dynamic agents.
 
-   -  ``master_cert_name``: A hostname for which the master's TLS
-      certificate is valid, if the host specified by the ``master_url``
-      option is an IP address or is not contained in the certificate.
-      See :ref:`tls` for more information.
+      -  ``scheduler``: Specifies how Determined schedules tasks to
+         agents on resource pools. If a resource pool is specified with
+         an individual scheduler configuration, it will not use this
+         scheduler.
 
-   -  ``startup_script``: One or more shell commands that will be run
-      during agent instance start up. These commands are executed as
-      root as soon as the agent cloud instance has started and before
-      the Determined agent container on the instance is launched. For
-      example, this feature can be used to mount a distributed file
-      system or make changes to the agent instance's configuration. The
-      default value is the empty string. It may be helpful to use the
-      YAML ``|`` syntax to specify a multi-line string. For example,
+         -  ``type``: The scheduling policy to use when allocating
+            resources between different tasks (experiments, notebooks,
+            etc.). Defaults to ``fair_share``.
 
-      .. code::
+            -  ``fair_share``: Tasks receive a proportional amount of
+               the available resources depending on the resource they
+               require and their weight.
 
-         startup_script: |
-                         mkdir -p /mnt/disks/second
-                         mount /dev/sdb1 /mnt/disks/second
+            -  ``round_robin``: Tasks are scheduled in the order of the
+               order which they arrive at the cluster. in which they
+               arrive at the cluster.
 
-   -  ``container_startup_script``: One or more shell commands that will
-      be run when the Determined agent container is started. These
-      commands are executed inside the agent container but before the
-      Determined agent itself is launched. For example, this feature can
-      be used to configure Docker so that the agent can pull task images
-      from GCR securely (see :ref:`this example <gcp-pull-gcr>` for more
-      details). The default value is the empty string.
+            -  ``priority``: Tasks are scheduled based on their
+               priority, which can range from the values 1 to 99
+               inclusive. Lower priority numbers indicate higher
+               priority tasks. A lower priority task will never be
+               scheduled while a higher priority task is pending.
+               Zero-slot tasks (e.g., cpu-only notebooks, tensorboards)
+               are prioritized separately from tasks requiring slots
+               (e.g., experiments running on GPUs). Task priority can be
+               assigned using the the ``resources.priority`` field. If a
+               task does not specify a priority it is assigned the
+               ``default_priority``.
 
-   -  ``agent_docker_image``: The Docker image to use for the Determined
-      agents. A valid form is
-      ``determinedai/determined-agent:<version>``. (*Required*)
+               -  ``preemption``: Specifies whether lower priority tasks
+                  should be preempted to schedule higher priority tasks.
+                  Tasks are preempted in order of lowest priority first.
 
-   -  ``agent_docker_network``: The Docker network to use for the
-      Determined agent and task containers. If this is set to ``host``,
-      `Docker host-mode networking
-      <https://docs.docker.com/network/host/>`__ will be used instead.
-      The default value is ``determined``.
+               -  ``default_priority``: The priority that is assigned to
+                  tasks that do not specify a priority. Can be
+                  configured to 1 to 99 inclusively. Defaults to 42.
 
-   -  ``agent_docker_runtime``: The Docker runtime to use for the
-      Determined agent and task containers. Defaults to ``runc``.
+         -  ``fitting_policy``: The scheduling policy to use when
+            assigning tasks to agents in the cluster. Defaults to
+            ``best``.
 
-   -  ``max_idle_agent_period``: How long to wait before terminating
-      idle dynamic agents. This string is a sequence of decimal numbers,
-      each with optional fraction and a unit suffix, such as "30s",
-      "1h", or "1m30s". Valid time units are "s", "m", "h". The default
-      value is ``20m``.
+            -  ``best``: The best-fit policy ensures that tasks will be
+               preferentially "packed" together on the smallest number
+               of agents.
 
-   -  ``max_agent_starting_period``: How long to wait for agents
-      starting before retrying. This string is a sequence of decimal
-      numbers, each with optional fraction and a unit suffix, such as
-      "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The
-      default value is ``20m``.
+            -  ``worst``: The worst-fit policy ensures that tasks will
+               be placed on under-utilized agents.
 
-   -  ``min_instances``: Min number of Determined agent instances.
-      Defaults to 0.
+      -  ``default_cpu_resource_pool``: The default resource pool to use
+         for tasks that do not need GPUs. Defaults to ``default`` if no
+         resource pool is specified.
 
-   -  ``max_instances``: Max number of Determined agent instances.
-      Defaults to 5.
+      -  ``default_gpu_resource_pool``: The default resource pool to use
+         for tasks that need GPUs. Defaults to ``default`` if no
+         resource pool is specified.
 
-   -  ``provider: aws``: Specifies running dynamic agents on AWS.
-      (*Required*)
+   -  ``type: kubernetes``: The ``kubernetes`` resource manager launches
+      tasks on a Kubernetes cluster. The Determined master must be
+      running within the Kubernetes cluster. When using the
+      ``kubernetes`` resource provider, we recommend deploying
+      Determined using the :ref:`Determined Helm Chart
+      <install-on-kubernetes>`. When installed via Helm, the
+      configuration settings below will be set automatically.
 
-      -  ``region``: The region of the AWS resources used by Determined.
-         We advise setting this region to be the same region as the
-         Determined master for better network performance. Defaults to
-         the same region as the master.
+      -  ``namespace``: The namespace where Determined will deploy Pods
+         and ConfigMaps.
 
-      -  ``root_volume_size``: Size of the root volume of the Determined
-         agent in GB. We recommend at least 100GB. Defaults to ``200``.
+      -  ``max_slots_per_pod``: Each multi-GPU (distributed training)
+         task will be scheduled as a set of ``slots_per_task /
+         max_slots_per_pod`` separate pods, with each pod assigned up to
+         ``max_slots_per_pod`` GPUs. Distributed tasks with sizes that
+         are not divisible by ``max_slots_per_pod`` are never scheduled.
+         If you have a cluster of different size nodes, set
+         ``max_slots_per_pod`` to the greatest common divisor of all the
+         sizes. For example, if you have some nodes with 4 GPUs and
+         other nodes with 8 GPUs, set ``maxSlotsPerPod`` to ``4`` so
+         that all distributed experiments will launch with 4 GPUs per
+         pod (with two pods on 8-GPU nodes).
 
-      -  ``image_id``: The AMI ID of the Determined agent. Defaults to
-         the latest GCP agent image. (*Optional*)
+      -  ``master_service_name``: The service account Determined uses to
+         interact with the Kubernetes API.
 
-      -  ``tag_key``: Key for tagging the Determined agent instances.
-         Defaults to ``managed-by``.
+-  ``resource_pools``: The resource pools to use to acquire resources.
+   Defaults to a resource pool with a name ``default``.
 
-      -  ``tag_value``: Value for tagging the Determined agent
-         instances. Defaults to the master instance ID if the master is
-         on EC2, otherwise ``determined-ai-determined``.
+   -  ``pool_name``: The name of the resource pool.
 
-      -  ``custom_tags``: List of arbitrary user-defined tags that are
-         added to the Determined agent instances and do not affect how
-         Determined works. Each tag must specify ``key`` and ``value``
-         fields. Defaults to empty list.
+   -  ``description``: The description of the resource pool.
 
-         -  ``key``: Key of custom tag.
-         -  ``value``: value of custom tag.
+   -  ``max_cpu_containers_per_agent``: The maximum number of containers
+      that do not take any GPUs on each agent.
 
-      -  ``instance_name``: Name to set for the Determined agent
-         instances. Defaults to ``determined-ai-agent``.
+   -  ``scheduler``: Specifies how Determined schedules tasks to agents.
+      The scheduler configuration on each resource pool will override
+      the global one.
 
-      -  ``ssh_key_name``: The name of the SSH key registered with AWS
-         for SSH key access to the agent instances. (*Required*)
+      -  ``type``: The scheduling policy to use when allocating
+         resources between different tasks (experiments, notebooks,
+         etc.). Defaults to ``fair_share``.
 
-      -  ``iam_instance_profile_arn``: The Amazon Resource Name (ARN) of
-         the IAM instance profile to attach to the agent instances.
+         -  ``fair_share``: Tasks receive a proportional amount of the
+            available resources depending on the resource they require
+            and their weight.
 
-      -  ``network_interface``: Network interface to set for the
-         Determined agent instances.
+         -  ``priority``: Tasks are scheduled in the order of the order
+            in which they arrive at the cluster.
 
-         -  ``public_ip``: Whether to use public IP addresses for the
-            Determined agents. See :ref:`aws-network-requirements` for
-            instructions on whether a public IP should be used. Defaults
-            to ``false``.
+      -  ``fitting_policy``: The scheduling policy to use when assigning
+         tasks to agents in the cluster. Defaults to ``best``.
 
-         -  ``security_group_id``: The ID of the security group to run
-            the Determined agents as. This should be the security group
-            you identified or created in
-            :ref:`aws-network-requirements`. Defaults to the default
-            security group of the specified VPC.
+         -  ``best``: The best-fit policy ensures that tasks will be
+            preferentially "packed" together on the smallest number of
+            agents.
 
-         -  ``subnet_id``: The ID of the subnet to run the Determined
-            agents in. Defaults to the default subnet of the default
-            VPC.
+         -  ``worst``: The worst-fit policy ensures that tasks will be
+            placed on under-utilized agents.
 
-      -  ``instance_type``: AWS instance type to use for dynamic agents.
-         This must be one of the following: ``g4dn.xlarge``,
-         ``g4dn.2xlarge``, ``g4dn.4xlarge``, ``g4dn.8xlarge``,
-         ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``,
-         ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
-         ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. Defaults
-         to ``p3.8xlarge``.
+   -  ``provider``: Specifies the configuration of dynamic agents.
 
-      -  ``spot``: Whether to use spot instances. Defaults to ``false``.
-         See :ref:`aws-spot` for more details.
+      -  ``master_url``: The full URL of the master. A valid URL is in
+         the format of ``scheme://host:port``. The scheme must be either
+         ``http`` or ``https``. If the master is deployed on EC2, rather
+         than hardcoding the IP address, we advise you use one of the
+         following to set the host as an alias: ``local-ipv4``,
+         ``public-ipv4``, ``local-hostname``, or ``public-hostname``. If
+         the master is deployed on GCP, rather than hardcoding the IP
+         address, we advise you use one of the following to set the host
+         as an alias: ``internal-ip`` or ``external-ip``. Which one you
+         should select is based on your network configuration. On master
+         startup, we will replace the above alias host with its real
+         value. Defaults to ``http`` as scheme, local IP address as
+         host, and ``8080`` as port.
 
-      -  ``spot_max_price``: Optional field indicating the maximum price
-         per hour that you are willing to pay for a spot instance. The
-         market price for a spot instance varies based on supply and
-         demand. If the market price exceeds the ``spot_max_price``,
-         Determined will not launch instances. This field must be a
-         string and must not include a currency sign. For example, $2.50
-         should be represented as ``"2.50"``. Defaults to the on-demand
-         price for the given instance type.
+      -  ``master_cert_name``: A hostname for which the master's TLS
+         certificate is valid, if the host specified by the
+         ``master_url`` option is an IP address or is not contained in
+         the certificate. See :ref:`tls` for more information.
 
-   -  ``provider: gcp``: Specifies running dynamic agents on GCP.
-      (*Required*)
+      -  ``startup_script``: One or more shell commands that will be run
+         during agent instance start up. These commands are executed as
+         root as soon as the agent cloud instance has started and before
+         the Determined agent container on the instance is launched. For
+         example, this feature can be used to mount a distributed file
+         system or make changes to the agent instance's configuration.
+         The default value is the empty string. It may be helpful to use
+         the YAML ``|`` syntax to specify a multi-line string. For
+         example,
 
-      -  ``base_config``: Instance resource base configuration that will
-         be merged with the fields below to construct GCP inserting
-         instance request. See `REST Resource: instances
-         <https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert>`__
-         for details.
+         .. code::
 
-      -  ``project``: The project ID of the GCP resources used by
-         Determined. Defaults to the project of the master.
+            startup_script: |
+                            mkdir -p /mnt/disks/second
+                            mount /dev/sdb1 /mnt/disks/second
 
-      -  ``zone``: The zone of the GCP resources used by Determined.
-         Defaults to the zone of the master.
+      -  ``container_startup_script``: One or more shell commands that
+         will be run when the Determined agent container is started.
+         These commands are executed inside the agent container but
+         before the Determined agent itself is launched. For example,
+         this feature can be used to configure Docker so that the agent
+         can pull task images from GCR securely (see :ref:`this example
+         <gcp-pull-gcr>` for more details). The default value is the
+         empty string.
 
-      -  ``boot_disk_size``: Size of the root volume of the Determined
-         agent in GB. We recommend at least 100GB. Defaults to ``200``.
+      -  ``agent_docker_image``: The Docker image to use for the
+         Determined agents. A valid form is
+         ``determinedai/determined-agent:<version>``. (*Required*)
 
-      -  ``boot_disk_source_image``: The boot disk source image of the
-         Determined agent that was shared with you. To use a specific
-         version of the Determined agent image from a specific project,
-         it should be set in the format:
-         ``projects/<project-id>/global/images/<image-id>``. Defaults to
-         the latest GCP agent image. (*Optional*)
+      -  ``agent_docker_network``: The Docker network to use for the
+         Determined agent and task containers. If this is set to
+         ``host``, `Docker host-mode networking
+         <https://docs.docker.com/network/host/>`__ will be used
+         instead. The default value is ``determined``.
 
-      -  ``label_key``: Key for labeling the Determined agent instances.
-         Defaults to ``managed-by``.
+      -  ``agent_docker_runtime``: The Docker runtime to use for the
+         Determined agent and task containers. Defaults to ``runc``.
 
-      -  ``label_value``: Value for labeling the Determined agent
-         instances. Defaults to the master instance name if the master
-         is on GCP, otherwise ``determined-ai-determined``.
+      -  ``max_idle_agent_period``: How long to wait before terminating
+         idle dynamic agents. This string is a sequence of decimal
+         numbers, each with optional fraction and a unit suffix, such as
+         "30s", "1h", or "1m30s". Valid time units are "s", "m", "h".
+         The default value is ``20m``.
 
-      -  ``name_prefix``: Name prefix to set for the Determined agent
-         instances. The names of the Determined agent instances are a
-         concatenation of the name prefix and a pet name. Defaults to
-         the master instance name if the master is on GCP otherwise
-         ``determined-ai-determined``.
+      -  ``max_agent_starting_period``: How long to wait for agents
+         starting before retrying. This string is a sequence of decimal
+         numbers, each with optional fraction and a unit suffix, such as
+         "30s", "1h", or "1m30s". Valid time units are "s", "m", "h".
+         The default value is ``20m``.
 
-      -  ``network_interface``: Network configuration for the Determined
-         agent instances. See the :ref:`gcp-api-access` section for the
-         suggested configuration. (*Required*)
+      -  ``min_instances``: Min number of Determined agent instances.
+         Defaults to 0.
 
-         -  ``network``: Network resource for the Determined agent
-            instances. The network configuration should specify the
-            project ID of the network. It should be set in the format:
-            ``projects/<project>/global/networks/<network>``.
-            (*Required*)
+      -  ``max_instances``: Max number of Determined agent instances.
+         Defaults to 5.
 
-         -  ``subnetwork``: Subnetwork resource for the Determined agent
-            instances. The subnet configuration should specify the
-            project ID and the region of the subnetwork. It should be
-            set in the format:
-            ``projects/<project>/regions/<region>/subnetworks/<subnetwork>``.
-            (*Required*)
+      -  ``type: aws``: Specifies running dynamic agents on AWS.
+         (*Required*)
 
-         -  ``external_ip``: Whether to use external IP addresses for
-            the Determined agent instances. See
-            :ref:`gcp-network-requirements` for instructions on whether
-            an external IP should be set. Defaults to ``false``.
+         -  ``region``: The region of the AWS resources used by
+            Determined. We advise setting this region to be the same
+            region as the Determined master for better network
+            performance. Defaults to the same region as the master.
 
-      -  ``network_tags``: An array of network tags to set firewalls for
-         the Determined agent instances. This is the one you identified
-         or created in :ref:`firewall-rules`. Defaults to be an empty
-         array.
+         -  ``root_volume_size``: Size of the root volume of the
+            Determined agent in GB. We recommend at least 100GB.
+            Defaults to ``200``.
 
-      -  ``service_account``: Service account for the Determined agent
-         instances. See the :ref:`gcp-api-access` section for suggested
-         configuration.
+         -  ``image_id``: The AMI ID of the Determined agent. Defaults
+            to the latest GCP agent image. (*Optional*)
 
-         -  ``email``: Email of the service account for the Determined
-            agent instances. Defaults to the empty string.
+         -  ``tag_key``: Key for tagging the Determined agent instances.
+            Defaults to ``managed-by``.
 
-         -  ``scopes``: List of scopes authorized for the Determined
-            agent instances. As suggested in :ref:`gcp-api-access`, we
-            recommend you set the scopes to
-            ``["https://www.googleapis.com/auth/cloud-platform"]``.
-            Defaults to
-            ``["https://www.googleapis.com/auth/cloud-platform"]``.
+         -  ``tag_value``: Value for tagging the Determined agent
+            instances. Defaults to the master instance ID if the master
+            is on EC2, otherwise ``determined-ai-determined``.
 
-      -  ``instance_type``: Type of instance for the Determined agents.
+         -  ``custom_tags``: List of arbitrary user-defined tags that
+            are added to the Determined agent instances and do not
+            affect how Determined works. Each tag must specify ``key``
+            and ``value`` fields. Defaults to empty list.
 
-         -  ``machine_type``: Type of machine for the Determined agents.
-            Defaults to ``n1-standard-32``.
+            -  ``key``: Key of custom tag.
+            -  ``value``: value of custom tag.
 
-         -  ``gpu_type``: Type of GPU for the Determined agents. Set it
-            to be an empty string to not use any GPUs. Defaults to
-            ``nvidia-tesla-v100``.
+         -  ``instance_name``: Name to set for the Determined agent
+            instances. Defaults to ``determined-ai-agent``.
 
-         -  ``gpu_num``: Number of GPUs for the Determined agents.
-            Defaults to 4.
+         -  ``ssh_key_name``: The name of the SSH key registered with
+            AWS for SSH key access to the agent instances. (*Required*)
 
-         -  ``preemptible``: Whether to use preemptible instances.
-            Defaults to ``false``.
+         -  ``iam_instance_profile_arn``: The Amazon Resource Name (ARN)
+            of the IAM instance profile to attach to the agent
+            instances.
 
-      -  ``operation_timeout_period``: The timeout period for tracking a
-         GCP operation. This string is a sequence of decimal numbers,
-         each with optional fraction and a unit suffix, such as "30s",
-         "1h", or "1m30s". Valid time units are "s", "m", "h". The
-         default value is ``5m``.
+         -  ``network_interface``: Network interface to set for the
+            Determined agent instances.
+
+            -  ``public_ip``: Whether to use public IP addresses for the
+               Determined agents. See :ref:`aws-network-requirements`
+               for instructions on whether a public IP should be used.
+               Defaults to ``false``.
+
+            -  ``security_group_id``: The ID of the security group to
+               run the Determined agents as. This should be the security
+               group you identified or created in
+               :ref:`aws-network-requirements`. Defaults to the default
+               security group of the specified VPC.
+
+            -  ``subnet_id``: The ID of the subnet to run the Determined
+               agents in. Defaults to the default subnet of the default
+               VPC.
+
+         -  ``instance_type``: AWS instance type to use for dynamic
+            agents. This must be one of the following: ``g4dn.xlarge``,
+            ``g4dn.2xlarge``, ``g4dn.4xlarge``, ``g4dn.8xlarge``,
+            ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``,
+            ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
+            ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, or
+            ``p3dn.24xlarge``. Defaults to ``p3.8xlarge``.
+
+         -  ``spot``: Whether to use spot instances. Defaults to
+            ``false``. See :ref:`aws-spot` for more details.
+
+         -  ``spot_max_price``: Optional field indicating the maximum
+            price per hour that you are willing to pay for a spot
+            instance. The market price for a spot instance varies based
+            on supply and demand. If the market price exceeds the
+            ``spot_max_price``, Determined will not launch instances.
+            This field must be a string and must not include a currency
+            sign. For example, $2.50 should be represented as
+            ``"2.50"``. Defaults to the on-demand price for the given
+            instance type.
+
+      -  ``type: gcp``: Specifies running dynamic agents on GCP.
+         (*Required*)
+
+         -  ``base_config``: Instance resource base configuration that
+            will be merged with the fields below to construct GCP
+            inserting instance request. See `REST Resource: instances
+            <https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert>`__
+            for details.
+
+         -  ``project``: The project ID of the GCP resources used by
+            Determined. Defaults to the project of the master.
+
+         -  ``zone``: The zone of the GCP resources used by Determined.
+            Defaults to the zone of the master.
+
+         -  ``boot_disk_size``: Size of the root volume of the
+            Determined agent in GB. We recommend at least 100GB.
+            Defaults to ``200``.
+
+         -  ``boot_disk_source_image``: The boot disk source image of
+            the Determined agent that was shared with you. To use a
+            specific version of the Determined agent image from a
+            specific project, it should be set in the format:
+            ``projects/<project-id>/global/images/<image-id>``. Defaults
+            to the latest GCP agent image. (*Optional*)
+
+         -  ``label_key``: Key for labeling the Determined agent
+            instances. Defaults to ``managed-by``.
+
+         -  ``label_value``: Value for labeling the Determined agent
+            instances. Defaults to the master instance name if the
+            master is on GCP, otherwise ``determined-ai-determined``.
+
+         -  ``name_prefix``: Name prefix to set for the Determined agent
+            instances. The names of the Determined agent instances are a
+            concatenation of the name prefix and a pet name. Defaults to
+            the master instance name if the master is on GCP otherwise
+            ``determined-ai-determined``.
+
+         -  ``network_interface``: Network configuration for the
+            Determined agent instances. See the :ref:`gcp-api-access`
+            section for the suggested configuration. (*Required*)
+
+            -  ``network``: Network resource for the Determined agent
+               instances. The network configuration should specify the
+               project ID of the network. It should be set in the
+               format: ``projects/<project>/global/networks/<network>``.
+               (*Required*)
+
+            -  ``subnetwork``: Subnetwork resource for the Determined
+               agent instances. The subnet configuration should specify
+               the project ID and the region of the subnetwork. It
+               should be set in the format:
+               ``projects/<project>/regions/<region>/subnetworks/<subnetwork>``.
+               (*Required*)
+
+            -  ``external_ip``: Whether to use external IP addresses for
+               the Determined agent instances. See
+               :ref:`gcp-network-requirements` for instructions on
+               whether an external IP should be set. Defaults to
+               ``false``.
+
+         -  ``network_tags``: An array of network tags to set firewalls
+            for the Determined agent instances. This is the one you
+            identified or created in :ref:`firewall-rules`. Defaults to
+            be an empty array.
+
+         -  ``service_account``: Service account for the Determined
+            agent instances. See the :ref:`gcp-api-access` section for
+            suggested configuration.
+
+            -  ``email``: Email of the service account for the
+               Determined agent instances. Defaults to the empty string.
+
+            -  ``scopes``: List of scopes authorized for the Determined
+               agent instances. As suggested in :ref:`gcp-api-access`,
+               we recommend you set the scopes to
+               ``["https://www.googleapis.com/auth/cloud-platform"]``.
+               Defaults to
+               ``["https://www.googleapis.com/auth/cloud-platform"]``.
+
+         -  ``instance_type``: Type of instance for the Determined
+            agents.
+
+            -  ``machine_type``: Type of machine for the Determined
+               agents. Defaults to ``n1-standard-32``.
+
+            -  ``gpu_type``: Type of GPU for the Determined agents. Set
+               it to be an empty string to not use any GPUs. Defaults to
+               ``nvidia-tesla-v100``.
+
+            -  ``gpu_num``: Number of GPUs for the Determined agents.
+               Defaults to 4.
+
+            -  ``preemptible``: Whether to use preemptible instances.
+               Defaults to ``false``.
+
+         -  ``operation_timeout_period``: The timeout period for
+            tracking a GCP operation. This string is a sequence of
+            decimal numbers, each with optional fraction and a unit
+            suffix, such as "30s", "1h", or "1m30s". Valid time units
+            are "s", "m", "h". The default value is ``5m``.
 
 -  ``checkpoint_storage``: Specifies where model checkpoints will be
    stored. This can be overridden on a per-experiment basis in the
