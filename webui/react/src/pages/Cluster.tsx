@@ -1,16 +1,20 @@
 import React, { useMemo } from 'react';
 
-import Grid from 'components/Grid';
+import Grid, { GridMode } from 'components/Grid';
 import Message from 'components/Message';
+import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import ResourceChart from 'components/ResourceChart';
 import Spinner from 'components/Spinner';
 import Agents from 'contexts/Agents';
+import ClusterOverview from 'contexts/ClusterOverview';
+import { ShirtSize } from 'themes';
 import { Resource, ResourceType } from 'types';
 import { categorize } from 'utils/data';
 
 const Cluster: React.FC = () => {
   const agents = Agents.useStateContext();
+  const overview = ClusterOverview.useStateContext();
 
   const availableResources = useMemo(() => {
     if (!agents.data) return {};
@@ -33,6 +37,17 @@ const Cluster: React.FC = () => {
 
   return (
     <Page id="cluster" title="Cluster">
+      <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
+        <OverviewStats title="Number of Agents">
+          {agents.data ? agents.data.length : '?'}
+        </OverviewStats>
+        <OverviewStats title="GPU Slots Allocated">
+          {overview.GPU.total - overview.GPU.available} / {overview.GPU.total}
+        </OverviewStats>
+        <OverviewStats title="CPU Containers Running">
+          7/300 {/* TODO: blocked on resource pools API */}
+        </OverviewStats>
+      </Grid>
       <Grid minItemWidth={50}>
         {Object.values(ResourceType)
           .filter((resourceType) => (
