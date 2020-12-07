@@ -6,7 +6,7 @@
 
 This document describes how to install, configure, and upgrade a
 deployment of Determined with dynamic agents on AWS. See
-:ref:`elastic-infra-index` for an overview of using elastic
+:ref:`elastic-infrastructure` for an overview of using elastic
 infrastructure in Determined.
 
 Determined is able to launch dynamic agents as spot instances, which can

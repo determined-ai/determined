@@ -12,6 +12,9 @@ starting guides.
 
 -  :ref:`install-cli`
 -  :ref:`install-cluster`
+-  :ref:`dynamic-agents-gcp`
+-  :ref:`dynamic-agents-aws`
+-  :ref:`custom-pod-specs`
 
 **Hyperparameter**
 
@@ -25,16 +28,7 @@ The full list of our how-to guides can be found below:
 
 .. toctree::
    :maxdepth: 1
-   :titlesonly:
+   :glob:
 
-   custom-env
-   data-layer
-   distributed-training
-   hyperparameter-tuning
-   install-cli
-   install-main
-   ide-setup
-   notebooks
-   tensorboard
-   use-trained-models
-   rest-apis
+   *
+   installation/*

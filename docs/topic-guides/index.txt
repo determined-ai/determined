@@ -6,6 +6,26 @@ Topic guides discuss different concepts and topics about Determined and
 deep learning at a high level. They provide useful information and
 explanation. Below you will find some suggested starting guides.
 
+**System Concepts**
+
+-  :ref:`det-system-architecture`
+-  :ref:`terminology-concepts`
+-  :ref:`scheduling`
+-  :ref:`elastic-infrastructure`
+
+**Deployment**
+
+-  :ref:`topic_guide_aws`
+-  :ref:`topic_guide_gcp`
+-  :ref:`aws-spot`
+-  :ref:`determined-on-kubernetes`
+
+**Training**
+
+-  :ref:`experiment-lifecycle`
+-  :ref:`reproducibility`
+-  :ref:`topic-guides_training-units`
+
 **Hyperparameter Tuning**
 
 -  :ref:`topic-guides_hp-tuning-basics`
@@ -16,60 +36,22 @@ explanation. Below you will find some suggested starting guides.
 -  :ref:`optimizing-multi-gpu-training`
 -  :ref:`effective-distributed-training`
 
-**System Concepts**
-
--  :ref:`reproducibility`
--  :ref:`scheduling`
--  :ref:`det-system-architecture`
--  :ref:`terminology-concepts`
-
-**Elastic Infrastructure**
-
--  :ref:`elastic-infra-index`
--  :ref:`dynamic-agents-gcp`
--  :ref:`dynamic-agents-aws`
--  :ref:`aws-spot`
-
 **Model Definitions**
 
 -  :ref:`model-definitions`
 -  :ref:`model-definitions_trial-api`
 -  :ref:`model-definitions_best-practices`
 
-**Kubernetes**
-
--  :ref:`determined-on-kubernetes`
--  :ref:`custom-pod-specs`
-
 The full list of our topic guides can be found below:
 
 .. toctree::
    :maxdepth: 1
+   :glob:
 
-   benefits-of-determined
-   determined-on-kubernetes
-   custom-pod-specs
-   effective-distributed-training
-   experiment-lifecycle
-   checkpoints
-   hp-tuning-defined
+   system-concepts/*
+   deployment/*
+   training/*
    hp-tuning-det/index
-   model-definitions/index
-   model-definitions/trial-api
-   model-definitions/best-practices
-   optimizing-distributed-training
-   reproducibility
-   scheduling
-   system-architecture
-   aws
-   gcp
-   elastic-infra/index
-   elastic-infra/dynamic-agents-gcp
-   elastic-infra/dynamic-agents-aws
-   elastic-infra/aws-spot
-   terminology-concepts
-   tls
-   training-units
-   user-interfaces
-   users
-   yaml
+   distributed-training/*
+   model-definitions/*
+   *

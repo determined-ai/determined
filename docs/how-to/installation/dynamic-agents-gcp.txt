@@ -6,8 +6,8 @@
 
 This document describes how to install, configure, and upgrade a
 deployment of Determined with dynamic agents on GCP. See
-:ref:`elastic-infra-index` for an overview of the elastic infrastructure
-in Determined.
+:ref:`elastic-infrastructure` for an overview of the elastic
+infrastructure in Determined.
 
 *********************
  System Requirements

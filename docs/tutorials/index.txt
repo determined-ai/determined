@@ -18,12 +18,7 @@ Next, follow the tutorial for your preferred deep learning framework:
 The full list of our tutorials can be found below:
 
 .. toctree::
-   :maxdepth: 0
-   :titlesonly:
+   :maxdepth: 1
+   :glob:
 
-   data-access
-   notebook-tutorial
-   model-registry
-   pytorch-mnist-tutorial
-   tf-mnist-tutorial
-   quick-start
+   *
