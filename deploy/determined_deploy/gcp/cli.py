@@ -204,7 +204,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
     optional_named.add_argument(
         "--preemption-enabled",
-        type=str,
+        type=bool,
         default=constants.defaults.PREEMPTION_ENABLED,
         help="whether task preemption is supported in the scheduler "
         "(only configurable for priority scheduler).",

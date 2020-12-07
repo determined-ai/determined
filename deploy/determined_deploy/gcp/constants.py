@@ -18,4 +18,4 @@ class defaults:
     PORT = 8080
     REGION = "us-west1"
     SCHEDULER_TYPE = "fair_share"
-    PREEMPTION_ENABLED = "false"
+    PREEMPTION_ENABLED = False

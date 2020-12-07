@@ -131,8 +131,8 @@ variable "scheduler_type" {
 }
 
 variable "preemption_enabled" {
-  type = string
-  default = "false"
+  type = bool
+  default = false
 }
 
 // DETERMINED
