@@ -586,7 +586,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 			}
 		}
 
-		if err := resp.Send(&response); err != nil {
+		if err = resp.Send(&response); err != nil {
 			return err
 		}
 
@@ -594,7 +594,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 		if err != nil {
 			return errors.Wrap(err, "error looking up experiment state")
 		}
-		if model.TerminalStates[model.State(state)] {
+		if model.TerminalStates[state] {
 			return nil
 		}
 
@@ -655,7 +655,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 			}
 		}
 
-		if err := resp.Send(&response); err != nil {
+		if err = resp.Send(&response); err != nil {
 			return errors.Wrapf(err, "error sending batches recorded for metric")
 		}
 
@@ -663,7 +663,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		if err != nil {
 			return errors.Wrap(err, "error looking up experiment state")
 		}
-		if model.TerminalStates[model.State(state)] {
+		if model.TerminalStates[state] {
 			return nil
 		}
 
@@ -721,7 +721,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 
 		response.Trials = newTrials
 
-		if err := resp.Send(&response); err != nil {
+		if err = resp.Send(&response); err != nil {
 			return errors.Wrapf(err, "error sending batches recorded for metrics")
 		}
 
@@ -729,7 +729,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		if err != nil {
 			return errors.Wrap(err, "error looking up experiment state")
 		}
-		if model.TerminalStates[model.State(state)] {
+		if model.TerminalStates[state] {
 			return nil
 		}
 
@@ -890,7 +890,8 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 			return errors.Wrapf(err, "error determining top trials")
 		}
 		for _, trialID := range trialIDs {
-			trial, err := a.fetchTrialSample(trialID, metricName, metricType, maxDatapoints,
+			var trial *apiv1.TrialsSampleResponse_Trial
+			trial, err = a.fetchTrialSample(trialID, metricName, metricType, maxDatapoints,
 				startBatches, endBatches, currentTrials, trialCursors)
 			if err != nil {
 				return err
@@ -919,7 +920,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		response.PromotedTrials = promotedTrials
 		response.DemotedTrials = demotedTrials
 
-		if err := resp.Send(&response); err != nil {
+		if err = resp.Send(&response); err != nil {
 			return errors.Wrap(err, "error sending sample of trial metric streams")
 		}
 
@@ -927,7 +928,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		if err != nil {
 			return errors.Wrap(err, "error looking up experiment state")
 		}
-		if model.TerminalStates[model.State(state)] {
+		if model.TerminalStates[state] {
 			return nil
 		}
 

@@ -121,7 +121,11 @@ def request_valid_metric_batches(experiment_id):  # type: ignore
     response = api.get(
         conf.make_master_url(),
         "api/v1/experiments/{}/metrics-stream/batches".format(experiment_id),
-        params={"metric_name": "accuracy", "metric_type": "METRIC_TYPE_VALIDATION", "period_seconds": 1},
+        params={
+            "metric_name": "accuracy",
+            "metric_type": "METRIC_TYPE_VALIDATION",
+            "period_seconds": 1,
+        },
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
 
