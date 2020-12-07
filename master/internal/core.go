@@ -47,8 +47,9 @@ import (
 )
 
 const (
-	defaultAskTimeout = 2 * time.Second
-	webuiBaseRoute    = "/det"
+	maxConcurrentRestores = 10
+	defaultAskTimeout     = 2 * time.Second
+	webuiBaseRoute        = "/det"
 )
 
 // Master manages the Determined master state.
@@ -215,7 +216,9 @@ func closeWithErrCheck(closer io.Closer) {
 	}
 }
 
-func (m *Master) restoreExperiment(e *model.Experiment) {
+func (m *Master) restoreExperiment(sema chan struct{}, e *model.Experiment) {
+	sema <- struct{}{}
+	defer func() { <-sema }()
 	// Check if the returned config is the zero value, i.e. the config could not be parsed
 	// correctly. If the config could not be parsed, mark the experiment as errored.
 	if !reflect.DeepEqual(e.Config, model.ExperimentConfig{}) {
@@ -447,13 +450,19 @@ func (m *Master) Run(ctx context.Context) error {
 	m.rwCoordinator, _ = m.system.ActorOf(actor.Addr("rwCoordinator"), rwCoordinator)
 
 	// Restore non-terminal experiments from the database.
+	// Limit the number of concurrent restores at any time within the system to maxConcurrentRestores.
+	// This avoids an issue where the connection pool can be exhausted and the system deadlock. For
+	// example if there are N connections in the pool and N experiments restoring, since a connection
+	// is pinned per restore streaming events, if during any restore blocks for a connection before
+	// completing, we are deadlocked.
+	sema := make(chan struct{}, maxConcurrentRestores)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 	toRestore, err := m.db.NonTerminalExperiments()
 	if err != nil {
 		return errors.Wrap(err, "couldn't retrieve experiments to restore")
 	}
 	for _, exp := range toRestore {
-		go m.restoreExperiment(exp)
+		go m.restoreExperiment(sema, exp)
 	}
 
 	// Docs and WebUI.
