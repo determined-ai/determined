@@ -8,6 +8,17 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/log/v1/log.proto";
 
+// Telemetry information.
+message Telemetry {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "enabled" ] }
+  };
+  // Whether telemetry is enabled or not.
+  bool enabled = 1;
+  // The key used for analytics in the UI.
+  string segment_key = 2;
+}
+
 // Get master information.
 message GetMasterRequest {}
 // Response to GetMasterRequest.
@@ -25,6 +36,8 @@ message GetMasterResponse {
   string cluster_id = 3;
   // The cluster name.
   string cluster_name = 4;
+  // Telemetry status.
+  Telemetry telemetry = 5;
 }
 
 // Get master config.

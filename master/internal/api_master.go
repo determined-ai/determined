@@ -26,6 +26,10 @@ func (a *apiServer) GetMaster(
 		MasterId:    a.m.MasterID,
 		ClusterId:   a.m.ClusterID,
 		ClusterName: a.m.config.ClusterName,
+		Telemetry: &apiv1.Telemetry{
+			Enabled:    a.m.config.Telemetry.Enabled,
+			SegmentKey: a.m.config.Telemetry.SegmentWebUIKey,
+		},
 	}, nil
 }
 
