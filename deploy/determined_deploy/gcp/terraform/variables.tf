@@ -125,6 +125,16 @@ variable "min_cpu_platform_agent" {
   default = "Intel Broadwell"
 }
 
+variable "scheduler_type" {
+  type = string
+  default = "fair_share"
+}
+
+variable "preemption_enabled" {
+  type = string
+  default = "false"
+}
+
 // DETERMINED
 
 variable "environment_image" {

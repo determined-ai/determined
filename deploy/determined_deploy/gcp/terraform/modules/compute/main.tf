@@ -42,6 +42,22 @@ resource "google_compute_instance" "master_instance" {
       type: gcs
       bucket: "${var.gcs_bucket}"
 
+    resource_manager:
+      type: agent
+      default_cpu_resource_pool: default
+      default_gpu_resource_pool: default
+      scheduler:
+        type: "${var.scheduler_type}"
+    EOF
+
+    if [ "${var.scheduler_type}" = "priority" ]; then
+      cat << EOF >> /usr/local/determined/etc/master.yaml
+        preemption: "${var.preemption_enabled}"
+
+    EOF
+    fi
+
+    cat << EOF >> /usr/local/determined/etc/master.yaml
     provisioner:
       boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
       agent_docker_image: determinedai/determined-agent:${var.det_version}

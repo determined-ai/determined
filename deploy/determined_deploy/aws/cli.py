@@ -26,7 +26,9 @@ def validate_scheduler_type() -> Callable:
     def validate(s: str) -> str:
         supported_scheduler_types = ["fair_share", "priority", "round_robin"]
         if s not in supported_scheduler_types:
-            raise argparse.ArgumentTypeError(f"supported schedulers are: {supported_scheduler_types}")
+            raise argparse.ArgumentTypeError(
+                f"supported schedulers are: {supported_scheduler_types}"
+            )
         return s
 
     return validate
@@ -157,7 +159,8 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--preemption-enabled",
         type=str,
         default="false",
-        help="whether preemption is supported in the scheduler (only configurable for priority scheduler).",
+        help="whether task preemption is supported in the scheduler "
+        "(only configurable for priority scheduler).",
     )
     subparser.add_argument(
         "--dry-run",
