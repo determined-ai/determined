@@ -243,22 +243,6 @@ const ioToTrial = (io: ioTypes.ioTypeTrial): types.TrialItem => {
   };
 };
 
-export const jsonToTrialDetails = (data: unknown): types.TrialDetails => {
-  const io = ioTypes.decode<ioTypes.ioTypeTrialDetails>(ioTypes.ioTrialDetails, data);
-  return {
-    endTime: io.end_time || undefined,
-    experimentId: io.experiment_id,
-    hparams: io.hparams,
-    id: io.id,
-    seed: io.seed,
-    startTime: io.start_time,
-    state: io.state as types.RunState,
-    steps: io.steps.map(ioToStep),
-    warmStartCheckpointId: io.warm_start_checkpoint_id != null ?
-      io.warm_start_checkpoint_id : undefined,
-  };
-};
-
 const checkpointStateMap = {
   [Sdk.Determinedcheckpointv1State.UNSPECIFIED]: types.CheckpointState.Unspecified,
   [Sdk.Determinedcheckpointv1State.ACTIVE]: types.CheckpointState.Active,

@@ -327,12 +327,6 @@ export interface TrialItem extends TrialBase {
   seed: number;
 }
 
-export interface TrialDetails extends TrialBase {
-  steps: Step[];
-  warmStartCheckpointId?: number;
-  seed: number;
-}
-
 export interface ExperimentItem {
   id: number;
   name: string;
