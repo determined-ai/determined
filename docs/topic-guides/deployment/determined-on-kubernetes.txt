@@ -37,10 +37,8 @@ the Kubernetes cluster.
  Limitations of Determined on Kubernetes
 *****************************************
 
-Deploying :ref:`Determined on Kubernetes <install-on-kubernetes>` is
-currently in beta and under active development. This section outlines
-the current limitations of Determined on Kubernetes. Many of these
-limitations will be addressed in future releases of Determined.
+This section outlines the current limitations of Determined on
+Kubernetes.
 
 Scheduling
 ==========
@@ -77,11 +75,9 @@ should pause, cancel, or kill one or more of the deadlocked experiments.
 Dynamic Agents
 ==============
 
-Determined on :ref:`AWS <install-aws>` and :ref:`GCP <install-gcp>`
-autoscales compute resources. Determined on Kubernetes does not yet
-offer this functionality. Users are encouraged to use the `Kubernetes
-Cluster Autoscaler
-<https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_
+Determined is not able to autoscale your cluster, but equivalent
+functionality is available by using the `Kubernetes Cluster Autoscaler
+<https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_,
 which is supported on `GKE
 <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_
 and `EKS
