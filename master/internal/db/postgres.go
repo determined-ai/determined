@@ -1933,8 +1933,8 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	}
 }
 
-// TrialStatus returns the current state of the given trial.
-func (db *PgDB) TrialStatus(trialID int) (model.State, error) {
+// TrialState returns the current state of the given trial.
+func (db *PgDB) TrialState(trialID int) (model.State, error) {
 	var state model.State
 	err := db.sql.QueryRow(`
 SELECT state
@@ -1942,6 +1942,21 @@ FROM trials
 WHERE id = $1
 `, trialID).Scan(&state)
 	return state, err
+}
+
+// TrialStatus returns the current status of the given trial, including start and end times
+// without returning all its hparams and other unneeded details. Called in some hotter paths.
+func (db *PgDB) TrialStatus(trialID int) (model.State, *time.Time, error) {
+	status := struct {
+		State   model.State `db:"state"`
+		EndTime *time.Time  `db:"end_time"`
+	}{}
+	err := db.query(`
+SELECT state, end_time
+FROM trials
+WHERE id = $1
+`, &status, trialID)
+	return status.State, status.EndTime, err
 }
 
 func (db *PgDB) queryRowsWithParser(

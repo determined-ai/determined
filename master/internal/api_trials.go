@@ -107,8 +107,10 @@ func (a *apiServer) TrialLogs(
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, err := a.m.db.TrialStatus(int(req.TrialId))
-		if err != nil || model.TerminalStates[state] {
+		state, endTime, err := a.m.db.TrialStatus(int(req.TrialId))
+		if err != nil ||
+			// Give trials a moment to finish sending logs after termination.
+			(model.TerminalStates[state] && endTime.After(time.Now().Add(-10*time.Second))) {
 			return true, err
 		}
 		return false, nil
@@ -210,7 +212,7 @@ func (a *apiServer) TrialLogsFields(
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, err := a.m.db.TrialStatus(int(req.TrialId))
+		state, err := a.m.db.TrialState(int(req.TrialId))
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}

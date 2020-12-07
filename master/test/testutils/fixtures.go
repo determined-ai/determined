@@ -6,7 +6,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/sirupsen/logrus"
 
@@ -48,6 +52,26 @@ func ResolvePostgres() (*db.PgDB, error) {
 	return pgDB, nil
 }
 
+// ResolveElastic resolves a connection to an elasticsearch database.
+func ResolveElastic() (*elastic.Elastic, error) {
+	es, err := elastic.Setup(defaultElasticConfig())
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to elasticsearch: %w", err)
+	}
+	return es, nil
+}
+
+func defaultElasticConfig() model.ElasticLoggingConfig {
+	port, err := strconv.Atoi(os.Getenv("DET_INTEGRATION_ES_PORT"))
+	if err != nil {
+		panic("elastic config had non-numeric port")
+	}
+	return model.ElasticLoggingConfig{
+		Host: os.Getenv("DET_INTEGRATION_ES_HOST"),
+		Port: port,
+	}
+}
+
 // RunMaster runs a master in a goroutine and returns a reference to the master,
 // along with all the external context required to interact with the master, and
 // a function to close it.
@@ -67,7 +91,10 @@ func RunMaster(ctx context.Context, c *internal.Config) (
 	logrus.AddHook(logs)
 	go func() {
 		err := m.Run(ctx)
-		if err != nil {
+		switch {
+		case err == context.Canceled:
+			fmt.Println("master stopped")
+		case err != nil:
 			fmt.Println("error running master: ", err)
 		}
 	}()
@@ -109,8 +136,29 @@ func ConnectMaster(c *internal.Config) (apiv1.DeterminedClient, error) {
 	return nil, fmt.Errorf("failed to connect to master: %w", err)
 }
 
+// MasterConfigOption is an option that can be applied to a master config.
+type MasterConfigOption interface {
+	apply(*internal.Config)
+}
+
+// MasterConfigOptionFunc is a type that implements MasterConfigOption.
+type MasterConfigOptionFunc func(*internal.Config)
+
+func (f MasterConfigOptionFunc) apply(cfg *internal.Config) {
+	f(cfg)
+}
+
+func WithElasticEnabled() MasterConfigOption {
+	return MasterConfigOptionFunc(func(cfg *internal.Config) {
+		elasticCfg := defaultElasticConfig()
+		cfg.Logging = model.LoggingConfig{
+			ElasticLoggingConfig: &elasticCfg,
+		}
+	})
+}
+
 // DefaultMasterConfig returns the default master configuration.
-func DefaultMasterConfig() (*internal.Config, error) {
+func DefaultMasterConfig(opts ...MasterConfigOption) (*internal.Config, error) {
 	c := internal.DefaultConfig()
 	err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields)
 	if err != nil {
@@ -120,6 +168,10 @@ func DefaultMasterConfig() (*internal.Config, error) {
 	err = c.Resolve()
 	if err != nil {
 		return nil, err
+	}
+
+	for _, opt := range opts {
+		opt.apply(c)
 	}
 
 	if err = check.Validate(c); err != nil {
