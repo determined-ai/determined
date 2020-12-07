@@ -254,7 +254,9 @@ message CreateExperimentResponse {
 // Request for the set of metrics recorded by an experiment.
 message MetricNamesRequest {
   // The id of the experiment.
-  int32 experiment_id = 1;
+  int32 experiment_id = 1 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["experiment_id"]; }];
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 2;
 }
 
 // Response to MetricNamesRequest.
@@ -281,11 +283,13 @@ enum MetricType {
 // by an experiment.
 message MetricBatchesRequest {
   // The id of the experiment.
-  int32 experiment_id = 1;
+  int32 experiment_id = 1 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["experiment_id"]; }];
   // A metric name.
-  string metric_name = 2;
+  string metric_name = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_name"]; }];
   // The type of metric.
-  MetricType metric_type = 3;
+  MetricType metric_type = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_type"]; }];
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 4;
 }
 
 // Response to MetricBatchesRequest.
@@ -298,13 +302,15 @@ message MetricBatchesResponse {
 // Request metrics from all trials at a progress point of progress.
 message TrialsSnapshotRequest {
   // The id of the experiment.
-  int32 experiment_id = 1;
+  int32 experiment_id = 1 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["experiment_id"]; }];
   // The point of progress at which to query metrics.
-  int32 batches_processed = 2;
+  int32 batches_processed = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["batches_processed"]; }];
   // A metric name.
-  string metric_name = 3;
+  string metric_name = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_name"]; }];
   // The type of metric.
-  MetricType metric_type = 4;
+  MetricType metric_type = 4 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_type"]; }];
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 5;
 }
 
 // Response to TrialSnapshotResponse
@@ -325,11 +331,11 @@ message TrialsSnapshotResponse {
 // Request a sample of metrics over time for a sample of trials.
 message TrialsSampleRequest {
   // The id of the experiment.
-  int32 experiment_id = 1;
+  int32 experiment_id = 1 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["experiment_id"]; }];
   // A metric name.
-  string metric_name = 2;
+  string metric_name = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_name"]; }];
   // The type of metric.
-  MetricType metric_type = 3;
+  MetricType metric_type = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_type"]; }];
   // Maximum number of trials to fetch data for.
   int32 max_trials = 4;
   // Maximum number of initial / historical data points.
@@ -338,6 +344,8 @@ message TrialsSampleRequest {
   int32 start_batches = 6;
   // Ending of window (inclusive) to fetch data for.
   int32 end_batches = 7;
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 8;
 }
 
 // Response to TrialsSampleRequest

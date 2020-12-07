@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/lttb"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -48,6 +49,12 @@ func (db *PgDB) ExperimentLabelUsage() (labelUsage map[string]int, err error) {
 		}
 	}
 	return labelUsage, nil
+}
+
+// GetExperimentState returns the current state of the experiment.
+func (db *PgDB) GetExperimentState(experimentID int) (state model.State, err error) {
+	err = db.sql.Get(&state, "SELECT state FROM experiments WHERE id=$1", experimentID)
+	return state, err
 }
 
 // MetricNames returns the set of training and validation metric names that have been recorded for
