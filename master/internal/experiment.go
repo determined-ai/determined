@@ -75,7 +75,7 @@ const (
 	// writing to the database.  In reality, it is much more likely flushing the buffer happens
 	// due to the contents of the SearcherEvents than the number of them; see the comment in
 	// convertSearcherEvent()
-	searcherEventBuffer = 1000
+	searcherEventBuffer = 20
 )
 
 type experiment struct {
