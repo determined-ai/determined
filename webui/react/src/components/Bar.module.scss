@@ -3,6 +3,10 @@
   display: flex;
   min-height: 2rem;
 
+  ol {
+    margin: 0;
+  }
+
   .bar {
     background-color: var(--theme-colors-monochrome-12);
     border-radius: 0;

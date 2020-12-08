@@ -3,7 +3,7 @@ import React from 'react';
 
 import { floatToPercent } from 'utils/string';
 
-import css from './ProgressBar.module.scss';
+import css from './Bar.module.scss';
 
 interface BarPart {
   percent: number; // between 0-1
@@ -23,7 +23,7 @@ const partStyle = (part: BarPart) => {
   };
 };
 
-const SlotAllocationBar: React.FC<Props> = ({ barOnly, parts }: Props) => {
+const Bar: React.FC<Props> = ({ barOnly, parts }: Props) => {
   const classes: string[] = [ css.base ];
 
   if (barOnly) classes.push(css.barOnly);
@@ -46,4 +46,4 @@ const SlotAllocationBar: React.FC<Props> = ({ barOnly, parts }: Props) => {
   );
 };
 
-export default SlotAllocationBar;
+export default Bar;

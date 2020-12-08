@@ -4,17 +4,17 @@ import React from 'react';
 import { enumToOptions } from 'storybook/utils';
 import { CommandState, RunState } from 'types';
 
-import SlotAllocationBar, { Props } from './SlotAllocationBar';
+import Bar, { Props } from './Bar';
 
 export default {
-  component: SlotAllocationBar,
+  component: Bar,
   decorators: [ withKnobs ],
-  title: 'SlotAllocationBar',
+  title: 'Bar',
 };
 
 const Wrapper: React.FC<Props> = props => (
   <div style={{ width: 240 }}>
-    <SlotAllocationBar {...props} />
+    <Bar {...props} />
   </div>
 );
 
