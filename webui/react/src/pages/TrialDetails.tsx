@@ -51,9 +51,9 @@ interface Params {
 }
 
 enum TrialInfoFilter {
-  Checkpoint = 'Checkpoint',
-  Validation = 'Validation',
-  CheckpointOrValidation = 'Checkpoint or Validation',
+  Checkpoint = 'Has Checkpoint',
+  Validation = 'Has Validation',
+  CheckpointOrValidation = 'Has Checkpoint or Validation',
 }
 
 const getTrialLength = (config?: RawJson): [string, number] | undefined => {
