@@ -257,7 +257,7 @@ type BindMountsConfig []BindMount
 func (b *BindMountsConfig) UnmarshalJSON(data []byte) error {
 	unmarshaled := make([]BindMount, 0)
 	if err := json.Unmarshal(data, &unmarshaled); err != nil {
-		return errors.Wrapf(err, "failed to parse bind mounts")
+		return errors.Wrap(err, "failed to parse bind mounts")
 	}
 	*b = append(*b, unmarshaled...)
 	return nil
