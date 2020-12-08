@@ -1,0 +1,6 @@
+:orphan:
+
+**Fixes**
+
+-  Fix merging templates with user-specified configuration for bind
+   mounts.
