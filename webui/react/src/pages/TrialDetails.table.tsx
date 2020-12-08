@@ -2,27 +2,21 @@ import { ColumnType } from 'antd/es/table';
 import React from 'react';
 
 import { Renderer, stateRenderer } from 'components/Table';
-import { MetricsWorkload, WorkloadWrapper } from 'types';
+import { MetricsWorkload, Step2 } from 'types';
 import { alphanumericSorter, runStateSorter } from 'utils/data';
 import { getWorkload } from 'utils/step';
 
-const batchRender: Renderer<WorkloadWrapper> = (_, record) => {
-  const wl = getWorkload(record);
-  return <>{wl.numBatches + wl.priorBatchesProcessed}</>;
+const batchRender: Renderer<Step2> = (_, record) => {
+  return <>{record.batchNum}</>;
 };
 
-export const columns: ColumnType<WorkloadWrapper>[] = [
+export const columns: ColumnType<Step2>[] = [
   {
     fixed: 'left',
     key: 'batches',
     render: batchRender,
-    sorter: (a: WorkloadWrapper, b: WorkloadWrapper): number => {
-      const wlA = getWorkload(a);
-      const wlB = getWorkload(b);
-      return alphanumericSorter(
-        wlA.numBatches + wlA.priorBatchesProcessed,
-        wlB.numBatches + wlB.priorBatchesProcessed,
-      );
+    sorter: (a: Step2, b: Step2): number => {
+      return alphanumericSorter(a.batchNum, b.batchNum);
     },
     title: 'Batches',
     width: 100,
@@ -30,13 +24,11 @@ export const columns: ColumnType<WorkloadWrapper>[] = [
   {
     fixed: 'right',
     key: 'state',
-    render: (text, record, index) => stateRenderer(text, getWorkload(record), index),
-    sorter: (a: WorkloadWrapper, b: WorkloadWrapper): number => {
+    render: (text, record, index) => stateRenderer(text, record.training, index),
+    sorter: (a: Step2, b: Step2): number => {
       // Previously the list of steps would list steps by training steps which
       // all have RunState type as their state.
-      const wlA = getWorkload(a) as MetricsWorkload;
-      const wlB = getWorkload(b) as MetricsWorkload;
-      return runStateSorter(wlA.state, wlB.state);
+      return runStateSorter(a.training.state, b.training.state);
     },
     title: 'State',
     width: 120,

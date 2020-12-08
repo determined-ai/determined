@@ -1,4 +1,4 @@
-import { MetricName, MetricType, Step, WorkloadWrapper } from 'types';
+import { MetricName, MetricType, Step, Step2, WorkloadWrapper } from 'types';
 import { isNumber, metricNameSorter } from 'utils/data';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
@@ -11,6 +11,16 @@ export const extractMetricValueStep = (step: Step, metricName: MetricName): numb
     const source = step.validation?.metrics?.validationMetrics || {};
     if (isNumber(source[metricName.name])) return source[metricName.name];
   }
+  return undefined;
+};
+
+export const extractMetricValueStep2 = (
+  wl: Step2,
+  metricName: MetricName,
+): number | undefined => {
+  const source = (metricName.type === MetricType.Training
+    ? wl.training?.metrics : wl.validation?.metrics) || {};
+  if (isNumber(source[metricName.name])) return source[metricName.name];
   return undefined;
 };
 

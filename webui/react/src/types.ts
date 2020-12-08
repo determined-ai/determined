@@ -274,6 +274,13 @@ export interface Validation extends StartEndTimes {
   metrics?: ValidationMetrics;
 }
 
+export interface Step2 extends StartEndTimes {
+  validation?: MetricsWorkload;
+  training: MetricsWorkload;
+  checkpoint?: CheckpointWorkload;
+  batchNum: number;
+}
+
 export interface Step extends StartEndTimes {
   avgMetrics?: Record<string, number>;
   checkpoint?: Checkpoint;
