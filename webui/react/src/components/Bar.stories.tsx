@@ -27,6 +27,16 @@ export const Default = (): React.ReactNode => <Wrapper parts={[
     label: 'labelA',
     percent: 0.3,
   },
+  {
+    color: 'blue',
+    label: 'labelB',
+    percent: 0.2,
+  },
+  {
+    color: 'yellow',
+    label: 'labelc',
+    percent: 0.5,
+  },
 ]} />;
 // export const Full = (): React.ReactNode => <Wrapper percent={100} state={RunState.Completed} />;
 // export const Empty = (): React.ReactNode => <Wrapper percent={0} state={RunState.Paused} />;

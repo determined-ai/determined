@@ -8,7 +8,7 @@ import css from './Bar.module.scss';
 interface BarPart {
   percent: number; // between 0-1
   color: string; // css color
-  label: string;
+  label?: string;
 }
 
 export interface Props {
@@ -19,7 +19,7 @@ export interface Props {
 const partStyle = (part: BarPart) => {
   return {
     backgroundColor: part.color,
-    width: floatToPercent(part.percent),
+    width: floatToPercent(part.percent, 0),
   };
 };
 
@@ -34,7 +34,7 @@ const Bar: React.FC<Props> = ({ barOnly, parts }: Props) => {
         <ol>
           {parts.map(part => {
             return (
-              <Tooltip key={part.label} title={floatToPercent(part.percent)}>
+              <Tooltip key={part.label} title={part.label}>
                 <li style={partStyle(part)} />
               </Tooltip>
             );
