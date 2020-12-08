@@ -4,12 +4,11 @@ import Grid, { GridMode } from 'components/Grid';
 import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
-import ResourceChart from 'components/ResourceChart';
 import Spinner from 'components/Spinner';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { ShirtSize } from 'themes';
-import { Resource, ResourceType } from 'types';
+import { Resource } from 'types';
 import { categorize } from 'utils/data';
 
 const Cluster: React.FC = () => {
@@ -47,19 +46,6 @@ const Cluster: React.FC = () => {
         <OverviewStats title="CPU Containers Running">
           7/300 {/* TODO: blocked on resource pools API */}
         </OverviewStats>
-      </Grid>
-      <Grid minItemWidth={50}>
-        {Object.values(ResourceType)
-          .filter((resourceType) => (
-            resourceType !== ResourceType.UNSPECIFIED
-          ))
-          .map((resourceType, idx) => (
-            <ResourceChart
-              key={idx}
-              resources={availableResources[resourceType]}
-              title={resourceType + 's'} />
-          ))
-        }
       </Grid>
     </Page>
   );
