@@ -148,20 +148,14 @@ func (p *Proxy) getSummary() map[string]Service {
 	return snapshot
 }
 
-func asyncRun(f func() error) chan error {
+func asyncCopy(dst io.Writer, src io.Reader) chan error {
 	errs := make(chan error, 1)
 	go func() {
 		defer close(errs)
-		errs <- f()
+		_, err := io.Copy(dst, src)
+		if err != io.EOF {
+			errs <- err
+		}
 	}()
 	return errs
-}
-
-func asyncCopy(dst io.Writer, src io.Reader) chan error {
-	return asyncRun(func() error {
-		if _, err := io.Copy(dst, src); err != nil && err != io.EOF {
-			return err
-		}
-		return nil
-	})
 }

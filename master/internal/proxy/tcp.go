@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"bytes"
 	"io"
 	"net"
 	"net/http"
@@ -11,33 +12,37 @@ import (
 	"github.com/pkg/errors"
 )
 
-func asyncCopyToWebSocket(dst *websocket.Conn, src io.Reader) chan error {
-	return asyncRun(func() error {
-		for buf := make([]byte, 4096); ; {
-			n, err := src.Read(buf)
-			if err != nil {
-				return err
-			}
-			if err := dst.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
-				return err
-			}
-		}
-	})
+// websocketReadWriter exposes an io.ReadWriter interface to a WebSocket connection that is only
+// being used for binary communication.
+type websocketReadWriter struct {
+	ws  *websocket.Conn
+	buf *bytes.Buffer
 }
 
-func asyncCopyFromWebSocket(dst io.Writer, src *websocket.Conn) chan error {
-	return asyncRun(func() error {
-		for {
-			switch tp, buf, err := src.ReadMessage(); {
-			case err != nil:
-				return err
-			case tp == websocket.BinaryMessage:
-				if _, err := dst.Write(buf); err != nil {
-					return err
-				}
+func (w *websocketReadWriter) Read(buf []byte) (int, error) {
+	if w.buf.Len() > 0 {
+		return w.buf.Read(buf)
+	}
+	for {
+		switch msg, data, err := w.ws.ReadMessage(); {
+		case err != nil:
+			return 0, err
+		case msg == websocket.CloseMessage:
+			return 0, io.EOF
+		case msg == websocket.BinaryMessage:
+			if len(data) > 0 {
+				w.buf.Write(data)
+				return w.buf.Read(buf)
 			}
 		}
-	})
+	}
+}
+
+func (w *websocketReadWriter) Write(buf []byte) (int, error) {
+	if err := w.ws.WriteMessage(websocket.BinaryMessage, buf); err != nil {
+		return 0, err
+	}
+	return len(buf), nil
 }
 
 func newSingleHostReverseTCPOverWebSocketProxy(c echo.Context, t *url.URL) http.Handler {
@@ -61,8 +66,9 @@ func newSingleHostReverseTCPOverWebSocketProxy(c echo.Context, t *url.URL) http.
 			return
 		}
 
-		copyReqErr := asyncCopyToWebSocket(ws, out)
-		copyResErr := asyncCopyFromWebSocket(out, ws)
+		rw := &websocketReadWriter{ws: ws, buf: new(bytes.Buffer)}
+		copyReqErr := asyncCopy(rw, out)
+		copyResErr := asyncCopy(out, rw)
 
 		if cerr := <-copyReqErr; cerr != nil {
 			c.Logger().Errorf("error copying request body for %v: %v", t, cerr)
