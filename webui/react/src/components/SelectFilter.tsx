@@ -14,7 +14,7 @@ import css from './SelectFilter.module.scss';
 
 const { OptGroup, Option } = Select;
 
-interface Props<T = SelectValue> extends SelectProps<T> {
+export interface Props<T = SelectValue> extends SelectProps<T> {
   disableTags?: boolean;
   enableSearchFilter?: boolean;
   label: string;

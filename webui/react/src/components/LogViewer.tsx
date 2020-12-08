@@ -24,6 +24,7 @@ interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
   disableLineNumber?: boolean;
+  filterOptions?: React.ReactNode;
   pageProps: Partial<PageProps>;
   isDownloading?: boolean;
   isLoading?: boolean;
@@ -69,6 +70,7 @@ interface LogConfig {
 
 export interface LogViewerHandles {
   addLogs: (newLogs: Log[], prepend?: boolean) => void;
+  clearLogs: () => void;
 }
 
 export const TAIL_SIZE = 1000;
@@ -240,6 +242,17 @@ const LogViewer: React.FC<Props> = forwardRef((
     }));
   }, [ logs, logIdRange, measureLogs ]);
 
+  const clearLogs = useCallback((): void => {
+    setConfig(defaultLogConfig);
+    setScrollToInfo({ isPrepend: false, logId: 0 });
+    setLogs([]);
+    setLogIdRange({
+      max: Number.MIN_SAFE_INTEGER,
+      min: Number.MAX_SAFE_INTEGER,
+    });
+    setIsTailing(true);
+  }, []);
+
   /*
    * Figure out which logs lines to actually render based on whether it
    * is visible in the scroll view window or not.
@@ -263,7 +276,7 @@ const LogViewer: React.FC<Props> = forwardRef((
    * The useImperitiveHandle hook provides the parent component
    * access to functions defined here to modify LogViewer state.
    */
-  useImperativeHandle(ref, () => ({ addLogs }));
+  useImperativeHandle(ref, () => ({ addLogs, clearLogs }));
 
   /*
    * Pass event of user manually scrolling to the top to parent
@@ -442,6 +455,7 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const logOptions = (
     <Space>
+      {props.filterOptions}
       {props.debugMode && <div className={css.debugger}>
         <span data-label="ScrollLeft:">{scroll.scrollLeft}</span>
         <span data-label="ScrollTop:">{scroll.scrollTop}</span>

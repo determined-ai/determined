@@ -208,10 +208,10 @@ const ExperimentList: React.FC = () => {
     handleFilterChange({ ...filters, username });
   }, [ filters, handleFilterChange ]);
 
-  const handleLabelsChange = useCallback((value: SelectValue[]) => {
+  const handleLabelsChange = useCallback((newValue: SelectValue) => {
     handleFilterChange({
       ...filters,
-      labels: value.map(label => label.toString()),
+      labels: (newValue as Array<string>).map(label => label.toString()),
     });
   }, [ filters, handleFilterChange ]);
 

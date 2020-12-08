@@ -11,6 +11,21 @@
     right: 0;
     top: 0;
   }
+  .filtersButtonDesktop {
+    display: block;
+  }
+  .filtersButtonMobile {
+    display: none;
+  }
+
+  @media only screen and (max-width: $breakpoint-mobile) {
+    .filtersButtonDesktop {
+      display: none;
+    }
+    .filtersButtonMobile {
+      display: flex;
+    }
+  }
 }
 .filtersApplied {
   .filtersButton {
