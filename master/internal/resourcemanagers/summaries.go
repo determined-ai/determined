@@ -3,6 +3,8 @@ package resourcemanagers
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
@@ -15,9 +17,16 @@ type TaskSummary struct {
 	ResourcePool   string             `json:"resource_pool"`
 	SlotsNeeded    int                `json:"slots_needed"`
 	Containers     []ContainerSummary `json:"containers"`
+	SchedulerType  string             `json:"scheduler_type"`
+	Priority       *int               `json:"priority"`
 }
 
-func newTaskSummary(request *AllocateRequest, allocated *ResourcesAllocated) TaskSummary {
+func newTaskSummary(
+	request *AllocateRequest,
+	allocated *ResourcesAllocated,
+	groups map[*actor.Ref]*group,
+	schedulerType string,
+) TaskSummary {
 	// Summary returns a new immutable view of the task state.
 	containerSummaries := make([]ContainerSummary, 0)
 	if allocated != nil {
@@ -25,14 +34,20 @@ func newTaskSummary(request *AllocateRequest, allocated *ResourcesAllocated) Tas
 			containerSummaries = append(containerSummaries, c.Summary())
 		}
 	}
-	return TaskSummary{
+	summary := TaskSummary{
 		ID:             request.ID,
 		Name:           request.Name,
 		RegisteredTime: request.TaskActor.RegisteredTime(),
 		ResourcePool:   request.ResourcePool,
 		SlotsNeeded:    request.SlotsNeeded,
 		Containers:     containerSummaries,
+		SchedulerType:  schedulerType,
 	}
+
+	if group, ok := groups[request.Group]; ok {
+		summary.Priority = group.priority
+	}
+	return summary
 }
 
 // ContainerSummary contains information about a task container for external display.
@@ -50,19 +65,28 @@ func newAgentSummary(state *agentState) sproto.AgentSummary {
 	}
 }
 
-func getTaskSummary(reqList *taskList, id TaskID) *TaskSummary {
+func getTaskSummary(
+	reqList *taskList,
+	id TaskID,
+	groups map[*actor.Ref]*group,
+	schedulerType string,
+) *TaskSummary {
 	if req, ok := reqList.GetTaskByID(id); ok {
-		summary := newTaskSummary(req, reqList.GetAllocations(req.TaskActor))
+		summary := newTaskSummary(req, reqList.GetAllocations(req.TaskActor), groups, schedulerType)
 		return &summary
 	}
 	return nil
 }
 
-func getTaskSummaries(reqList *taskList) map[TaskID]TaskSummary {
+func getTaskSummaries(
+	reqList *taskList,
+	groups map[*actor.Ref]*group,
+	schedulerType string,
+) map[TaskID]TaskSummary {
 	ret := make(map[TaskID]TaskSummary)
 	for it := reqList.iterator(); it.next(); {
 		req := it.value()
-		ret[req.ID] = newTaskSummary(req, reqList.GetAllocations(req.TaskActor))
+		ret[req.ID] = newTaskSummary(req, reqList.GetAllocations(req.TaskActor), groups, schedulerType)
 	}
 	return ret
 }
