@@ -1,0 +1,25 @@
+.base {
+  align-items: center;
+  display: flex;
+  min-height: 2rem;
+
+  .bar {
+    background-color: var(--theme-colors-monochrome-12);
+    border-radius: 0;
+    box-shadow: var(--theme-colors-monochrome-6);
+    flex-grow: 1;
+    height: var(--theme-sizes-layout-tiny);
+    margin: 0;
+    padding: 0;
+    position: relative;
+  }
+  .bar > * {
+    display: block;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+}
+.barOnly {
+  min-height: auto;
+}
