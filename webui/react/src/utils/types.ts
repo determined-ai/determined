@@ -1,7 +1,7 @@
 import {
-  AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask, CommandType, ExperimentHyperParams,
-  ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
-  TBSource, TBSourceType, Workload, WorkloadWrapper,
+  AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
+  CommandType, ExperimentHyperParams, ExperimentItem, RawJson, RecentCommandTask,
+  RecentExperimentTask, RecentTask, RunState, Step, TBSource, TBSourceType, WorkloadWrapper,
 } from 'types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';

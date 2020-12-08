@@ -200,28 +200,6 @@ const ioToValidationMetrics = (io: ioTypes.ioTypeValidationMetrics): types.Valid
   };
 };
 
-const ioToStep = (io: ioTypes.ioTypeStep): types.Step => {
-  return {
-    avgMetrics: io.avg_metrics ? dropNonNumericMetrics(io.avg_metrics) : undefined,
-    checkpoint: io.checkpoint ? ioToCheckpoint(io.checkpoint) : undefined,
-    endTime: io.end_time || undefined,
-    id: io.id,
-    numBatches: io.num_batches || 0,
-    priorBatchesProcessed: io.prior_batches_processed || 0,
-    startTime: io.start_time,
-    state: io.state as types.RunState,
-    validation: !io.validation ? undefined : {
-      endTime: io.validation.end_time || undefined,
-      id: io.validation.id,
-      metrics: io.validation.metrics != null ?
-        ioToValidationMetrics(io.validation.metrics) : undefined,
-      startTime: io.validation.start_time,
-      state: io.validation.state as types.RunState,
-    },
-  };
-
-};
-
 const ioToTrial = (io: ioTypes.ioTypeTrial): types.TrialItem => {
   return {
     bestAvailableCheckpoint: io.best_available_checkpoint
@@ -264,7 +242,9 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
 };
 
-export const decodeCheckpointState = (data: Sdk.Determinedcheckpointv1State): types.CheckpointState => {
+export const decodeCheckpointState = (
+  data: Sdk.Determinedcheckpointv1State,
+): types.CheckpointState => {
   return checkpointStateMap[data];
 };
 

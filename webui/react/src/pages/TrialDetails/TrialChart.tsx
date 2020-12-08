@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import MetricChart from 'components/MetricChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import useStorage from 'hooks/useStorage';
-import { MetricName, MetricType, RunState, Step, WorkloadWrapper } from 'types';
+import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
 
 interface Props {
   id?: string;
@@ -70,7 +70,6 @@ const TrialChart: React.FC<Props> = ({
         if (!metricsWl || metricsWl.state !== RunState.Completed) return;
 
         const source = metricsWl.metrics || {};
-        // if the wl is completed numBatches and priorBatchesProcessed should be defined.
         const x = metricsWl.numBatches + metricsWl.priorBatchesProcessed;
         const y = source[metric.name];
 

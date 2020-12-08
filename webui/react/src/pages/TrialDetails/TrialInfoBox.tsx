@@ -6,10 +6,10 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
 import {
-  Checkpoint, CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentDetails, RunState,
-  Step, TrialDetails2, TrialHyperParameters, ValidationMetrics,
+  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentDetails, TrialDetails2,
+  TrialHyperParameters,
 } from 'types';
-import { isObject, numericSorter } from 'utils/data';
+import { isObject } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
