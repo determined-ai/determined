@@ -312,11 +312,17 @@ const decodeMetricsWorkload = (data: Sdk.V1MetricsWorkload): types.MetricsWorklo
 };
 
 const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.CheckpointWorkload => {
+
+  const resources: Record<string, number> = {};
+  Object.entries(data.resources || {}).forEach(([ res, val ]) => {
+    resources[res] = parseFloat(val);
+  });
+
   return {
-    // resources: data.bestCheckpoint.resources,
     endTime: data.endTime as unknown as string,
     numBatches: data.numBatches,
     priorBatchesProcessed: data.priorBatchesProcessed,
+    resources,
     startTime:data.startTime as unknown as string,
     state: decodeCheckpointState(data.state),
     uuid: data.uuid,
