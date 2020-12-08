@@ -4,6 +4,7 @@ import Cluster from 'pages/Cluster';
 import Dashboard from 'pages/Dashboard';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import ExperimentList from 'pages/ExperimentList';
+import HGICluster from 'pages/HGICluster';
 import MasterLogs from 'pages/MasterLogs';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
@@ -21,6 +22,7 @@ const routeComponentMap: Record<string, FC> = {
   dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,
+  hgiCluster: HGICluster,
   masterLogs: MasterLogs,
   signIn: SignIn,
   signOut: SignOut,

@@ -11,7 +11,7 @@ import { ShirtSize } from 'themes';
 import { Resource } from 'types';
 import { categorize } from 'utils/data';
 
-const Cluster: React.FC = () => {
+const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
   const overview = ClusterOverview.useStateContext();
 
@@ -51,4 +51,4 @@ const Cluster: React.FC = () => {
   );
 };
 
-export default Cluster;
+export default HGICluster;
