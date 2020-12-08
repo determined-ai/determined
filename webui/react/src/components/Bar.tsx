@@ -5,7 +5,7 @@ import { floatToPercent } from 'utils/string';
 
 import css from './Bar.module.scss';
 
-interface BarPart {
+export interface BarPart {
   percent: number; // between 0-1
   color: string; // css color
   label?: string;
