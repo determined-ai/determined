@@ -35,7 +35,7 @@ type ExperimentConfig struct {
 	Optimizations            OptimizationsConfig       `json:"optimizations"`
 	RecordsPerEpoch          int                       `json:"records_per_epoch"`
 	SchedulingUnit           int                       `json:"scheduling_unit"`
-	BindMounts               []BindMount               `json:"bind_mounts,omitempty"`
+	BindMounts               BindMountsConfig          `json:"bind_mounts,omitempty"`
 	Environment              Environment               `json:"environment"`
 	Reproducibility          ReproducibilityConfig     `json:"reproducibility"`
 	MaxRestarts              int                       `json:"max_restarts"`
@@ -248,6 +248,19 @@ func (r OptimizationsConfig) Validate() []error {
 		check.GreaterThanOrEqualTo(r.TensorFusionThreshold, 0, "tensor_fusion_threshold must be >= 0"),
 		check.GreaterThanOrEqualTo(r.TensorFusionCycleTime, 0, "tensor_fusion_cycle_time must be >= 0"),
 	}
+}
+
+// BindMountsConfig is the configuration for bind mounts.
+type BindMountsConfig []BindMount
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (b *BindMountsConfig) UnmarshalJSON(data []byte) error {
+	unmarshaled := make([]BindMount, 0)
+	if err := json.Unmarshal(data, &unmarshaled); err != nil {
+		return errors.Wrapf(err, "failed to parse bind mounts")
+	}
+	*b = append(*b, unmarshaled...)
+	return nil
 }
 
 // BindMount configures trial runner filesystem bind mounts.

@@ -7,12 +7,12 @@ import (
 // CommandConfig holds the necessary configurations to launch a command task in
 // the cluster.
 type CommandConfig struct {
-	Description     string          `json:"description"`
-	BindMounts      []BindMount     `json:"bind_mounts"`
-	Environment     Environment     `json:"environment"`
-	Resources       ResourcesConfig `json:"resources"`
-	Entrypoint      []string        `json:"entrypoint"`
-	TensorBoardArgs []string        `json:"tensorboard_args"`
+	Description     string           `json:"description"`
+	BindMounts      BindMountsConfig `json:"bind_mounts"`
+	Environment     Environment      `json:"environment"`
+	Resources       ResourcesConfig  `json:"resources"`
+	Entrypoint      []string         `json:"entrypoint"`
+	TensorBoardArgs []string         `json:"tensorboard_args"`
 }
 
 // Validate implements the check.Validatable interface.
