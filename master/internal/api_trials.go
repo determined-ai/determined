@@ -152,6 +152,8 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 			switch l {
 			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
 				levels = append(levels, "DEBUG")
+			case logv1.LogLevel_LOG_LEVEL_TRACE:
+				levels = append(levels, "TRACE")
 			case logv1.LogLevel_LOG_LEVEL_DEBUG:
 				levels = append(levels, "DEBUG")
 			case logv1.LogLevel_LOG_LEVEL_INFO:
