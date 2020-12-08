@@ -1,33 +1,22 @@
 import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useMemo } from 'react';
+import { LabeledValue, SelectValue } from 'antd/es/select';
+import React, { useCallback } from 'react';
 
-import SelectFilter from './SelectFilter';
-
-interface LabeledValue {
-  label: number|string;
-  value: number|string;
-}
-
-interface Props {
-  label: string;
-  onChange?: (value: (number|string)[]) => void;
-  options: (number|string|LabeledValue)[];
-  value?: (number|string)[];
-}
+import SelectFilter, { Props as SelectFilterProps } from './SelectFilter';
 
 const ALL_VALUE = 'All';
 
 const { Option } = Select;
 
-const MultiSelect: React.FC<Props> = ({ label, onChange, options, value }: Props) => {
+const MultiSelect: React.FC<SelectFilterProps> = (
+  { children, onChange, value, ...props }: SelectFilterProps,
+) => {
 
-  const handleSelect = useCallback((option: SelectValue) => {
+  const handleSelect = useCallback((selectedValue: SelectValue, option) => {
     if (!onChange) return;
 
-    const optionString = option.toString();
-    if (optionString === ALL_VALUE) {
-      onChange([]);
+    if (selectedValue === ALL_VALUE) {
+      onChange([], option);
       if (document && document.activeElement) {
         (document.activeElement as HTMLElement).blur();
       }
@@ -35,38 +24,34 @@ const MultiSelect: React.FC<Props> = ({ label, onChange, options, value }: Props
     }
 
     const newValue = Array.isArray(value) ? [ ...value ] : [];
-    if (newValue.indexOf(optionString) === -1) newValue.push(optionString);
-    onChange(newValue);
+    if (typeof selectedValue === 'object') {
+      if (newValue.indexOf((selectedValue as LabeledValue).value) === -1) {
+        newValue.push((selectedValue as LabeledValue).value);
+      }
+    } else {
+      if (newValue.indexOf(selectedValue) === -1) {
+        newValue.push(selectedValue);
+      }
+    }
+    onChange(newValue as SelectValue, option);
   }, [ onChange, value ]);
 
-  const handleDeselect = useCallback((option: SelectValue) => {
+  const handleDeselect = useCallback((selectedValue: SelectValue, option) => {
     if (!onChange) return;
 
-    const newValue = Array.isArray(value) ? [ ...value ] : [];
-    const optionString = option.toString();
-    const index = newValue.indexOf(optionString);
-    if (index !== -1) newValue.splice(index, 1);
-    onChange(newValue);
-  }, [ onChange, value ]);
+    let newValue = Array.isArray(value) ? [ ...value ] : [];
+    if (typeof selectedValue === 'object') {
+      newValue = newValue.filter((item) => item !== (selectedValue as LabeledValue).value);
+    } else {
+      newValue = newValue.filter((item) => item !== selectedValue);
+    }
 
-  const selectOptions = useMemo(() => {
-    return options.map((item: number|string|LabeledValue) => (
-      [ 'string', 'number' ].indexOf(typeof item) >= 0 ? (
-        <Option key={item as number|string} value={item as string|number}>
-          {item as string|number}
-        </Option>
-      ) : (
-        <Option key={(item as LabeledValue).value} value={(item as LabeledValue).value}>
-          {(item as LabeledValue).label}
-        </Option>
-      )
-    ));
-  }, [ options ]);
+    onChange(newValue as SelectValue, option);
+  }, [ onChange, value ]);
 
   return <SelectFilter
     disableTags
     dropdownMatchSelectWidth={200}
-    label={label}
     mode="multiple"
     placeholder={'All'}
     showArrow
@@ -74,11 +59,12 @@ const MultiSelect: React.FC<Props> = ({ label, onChange, options, value }: Props
     value={value}
     onDeselect={handleDeselect}
     onSelect={handleSelect}
+    {...props}
   >
     <Option key={ALL_VALUE} value={ALL_VALUE}>
       {ALL_VALUE}
     </Option>
-    {selectOptions}
+    {children}
   </SelectFilter>;
 };
 

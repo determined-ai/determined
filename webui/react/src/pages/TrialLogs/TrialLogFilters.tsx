@@ -1,15 +1,21 @@
-import { Button } from 'antd';
-import moment, { Moment } from 'moment';
+import { Button, Select } from 'antd';
+import { SelectValue } from 'antd/es/select';
+import dayjs, { Dayjs } from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { V1TrialLogsFieldsResponse } from '../services/api-ts-sdk';
-import { detApi } from '../services/apiConfig';
-import { consumeStream } from '../services/utils';
+import DatePickerFilter from 'components/DatePickerFilter';
+import MultiSelect from 'components/MultiSelect';
+import ResponsiveFilters from 'components/ResponsiveFilters';
+import { V1TrialLogsFieldsResponse } from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
+import { consumeStream } from 'services/utils';
 
-import DatePickerFilter from './DatePickerFilter';
-import MultiSelect from './MultiSelect';
-import ResponsiveFilters from './ResponsiveFilters';
 import css from './TrialLogFilters.module.scss';
+
+dayjs.extend(utc);
+
+const { Option } = Select;
 
 export enum LogLevelFromApi {
   Unspecified = 'LOG_LEVEL_UNSPECIFIED',
@@ -28,8 +34,8 @@ export interface TrialLogFiltersInterface {
   levels?: Array<LogLevelFromApi>,
   stdtypes?: Array<string>,
   sources?: Array<string>,
-  timestampBefore?: Moment,
-  timestampAfter?: Moment,
+  timestampBefore?: Dayjs,
+  timestampAfter?: Dayjs,
 }
 
 interface Props {
@@ -47,46 +53,47 @@ const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) 
     }
   };
 
-  const onAgentChange = (value: (number|string)[]) => broadcastChange({
+  const onAgentChange = (value: SelectValue) => broadcastChange({
     ...filter,
-    agentIds: value.map((item) => String(item)),
+    agentIds: (value as Array<string>).map((item) => String(item)),
   });
 
   const onClear = () => broadcastChange({});
 
-  const onContainerChange = (value: (number|string)[]) => broadcastChange({
+  const onContainerChange = (value: SelectValue) => broadcastChange({
     ...filter,
-    containerIds: value.map((item) => String(item)),
+    containerIds: (value as Array<string>).map((item) => String(item)),
   });
 
-  const onRankChange = (value: (number|string)[]) => broadcastChange({
+  const onRankChange = (value: SelectValue) => broadcastChange({
     ...filter,
-    rankIds: value.map((item) => Number(item)),
+    rankIds: (value as Array<string>).map((item) => Number(item)),
   });
 
-  const onLevelChange = (value: (number|string)[]) => broadcastChange({
+  const onLevelChange = (value: SelectValue) => broadcastChange({
     ...filter,
-    levels: value.map((item) => String(item) as LogLevelFromApi),
+    levels: (value as Array<string>).map((item) => String(item) as LogLevelFromApi),
   });
 
-  const onDateChange = (key: string, date: Moment|null) => {
-    if (!date) {
-      return;
+  const onDateChange = (key: string, date: Dayjs|null) => {
+    let dateUtc = null;
+
+    if (date) {
+      // receiving a date with user timezone. need to keep the selected date/time but
+      // set the timezone to UTC.
+      const iso8601StringNoTz = date.format().substr(0, 19);
+      dateUtc = dayjs.utc(iso8601StringNoTz);
     }
 
-    // receiving a moment with user timezone. need to keep the selected date/time but
-    // set the timezone to UTC.
-    const iso8601StringNoTz = date.format().substr(0, 19);
-    const momentUtc = moment.utc(iso8601StringNoTz);
     broadcastChange({
       ...filter,
-      [key]: momentUtc,
+      [key]: dateUtc,
     });
   };
 
-  const onAfterDateChange = (date: Moment|null) => onDateChange('timestampAfter', date);
+  const onAfterDateChange = (date: Dayjs|null) => onDateChange('timestampAfter', date);
 
-  const onBeforeDateChange = (date: Moment|null) => onDateChange('timestampBefore', date);
+  const onBeforeDateChange = (date: Dayjs|null) => onDateChange('timestampBefore', date);
 
   const logLevelList = useMemo(() => {
     return Object.entries(LogLevelFromApi)
@@ -108,28 +115,48 @@ const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) 
     <ResponsiveFilters>
       <MultiSelect
         label="Agents"
-        options={availableFilters?.agentIds || []}
         value={filter.agentIds || []}
         onChange={onAgentChange}
-      />
+      >
+        {(availableFilters?.agentIds || []).map((agentId) => (
+          <Option key={agentId} value={agentId}>
+            {agentId}
+          </Option>
+        ))}
+      </MultiSelect>
       <MultiSelect
         label="Containers"
-        options={availableFilters?.containerIds || []}
         value={filter.containerIds || []}
         onChange={onContainerChange}
-      />
+      >
+        {(availableFilters?.containerIds || []).map((containerId) => (
+          <Option key={containerId} value={containerId}>
+            {containerId}
+          </Option>
+        ))}
+      </MultiSelect>
       <MultiSelect
         label="Ranks"
-        options={availableFilters?.rankIds || []}
         value={filter.rankIds || []}
         onChange={onRankChange}
-      />
+      >
+        {(availableFilters?.rankIds || []).map((rankId) => (
+          <Option key={rankId} value={rankId}>
+            {rankId}
+          </Option>
+        ))}
+      </MultiSelect>
       <MultiSelect
         label="Level"
-        options={logLevelList}
         value={filter.levels || []}
         onChange={onLevelChange}
-      />
+      >
+        {logLevelList.map((logLevel) => (
+          <Option key={logLevel.value} value={logLevel.value}>
+            {logLevel.label}
+          </Option>
+        ))}
+      </MultiSelect>
       <DatePickerFilter
         label="After"
         value={filter.timestampAfter}

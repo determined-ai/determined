@@ -57,7 +57,21 @@ const webpackConfig = override(
   }),
 
   // Replace momentjs to Day.js to reduce antd package size.
-  addWebpackPlugin(new AntdDayjsWebpackPlugin()),
+  addWebpackPlugin(new AntdDayjsWebpackPlugin({
+    plugins: [
+      'isSameOrBefore',
+      'isSameOrAfter',
+      'advancedFormat',
+      'customParseFormat',
+      'weekday',
+      'weekYear',
+      'weekOfYear',
+      'isMoment',
+      'localeData',
+      'localizedFormat',
+    ],
+    replaceMoment: true,
+  })),
 
   /*
    * Add theme override support for antd. For more options.

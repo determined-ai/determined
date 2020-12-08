@@ -6,7 +6,6 @@ import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Message, { MessageType } from 'components/Message';
-import TrialLogFilters, { TrialLogFiltersInterface } from 'components/TrialLogFilters';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import { getTrialDetails } from 'services/api';
@@ -17,6 +16,8 @@ import { TrialDetailsParams } from 'services/types';
 import { consumeStream } from 'services/utils';
 import { Log, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
+
+import TrialLogFilters, { TrialLogFiltersInterface } from './TrialLogs/TrialLogFilters';
 
 interface Params {
   experimentId?: string;

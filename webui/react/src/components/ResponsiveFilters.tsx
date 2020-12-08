@@ -20,7 +20,10 @@ const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Pro
   const classes = [ css.base ];
 
   if (hasFiltersApplied) classes.push(css.filtersApplied);
-  if (isCollapsed) classes.push(css.collapsed);
+  if (isCollapsed) {
+    classes.push('responsive-filters-collapsed');
+    classes.push(css.collapsed);
+  }
 
   /*
    * If the height of the container is more than 32,

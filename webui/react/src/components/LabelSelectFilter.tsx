@@ -1,3 +1,5 @@
+import { Select } from 'antd';
+import { SelectValue } from 'antd/es/select';
 import React, { useEffect, useState } from 'react';
 
 import { getExperimentLabels } from 'services/api';
@@ -6,9 +8,11 @@ import { alphanumericSorter } from 'utils/data';
 import MultiSelect from './MultiSelect';
 
 interface Props {
-  onChange?: (value: (number|string)[]) => void;
+  onChange?: (newValue: SelectValue) => void;
   value?: string[];
 }
+
+const { Option } = Select;
 
 const LabelSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   const [ labels, setLabels ] = useState<string[]>([]);
@@ -32,10 +36,15 @@ const LabelSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   return (
     <MultiSelect
       label="Labels"
-      options={labels}
       value={value || []}
       onChange={onChange}
-    />
+    >
+      {labels.map((label) => (
+        <Option key={label} value={label}>
+          {label}
+        </Option>
+      ))}
+    </MultiSelect>
   );
 };
 

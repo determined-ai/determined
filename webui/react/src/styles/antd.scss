@@ -210,4 +210,10 @@ html {
       width: 100%;
     }
   }
+
+  /* Picker */
+
+  .ant-picker {
+    border-radius: var(--theme-sizes-border-radius);
+  }
 }

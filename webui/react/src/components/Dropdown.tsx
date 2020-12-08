@@ -123,8 +123,9 @@ const Dropdown: React.FC<Props> = ({
     event.stopPropagation();
 
     const isAntPicker = (
-      typeof event.target.className === 'string'
-      && event.target.className.indexOf('ant-picker') >= 0
+      event.target.closest('div') &&
+      typeof event.target.closest('div').className === 'string'
+      && event.target.closest('div').className.indexOf('ant-picker') >= 0
     );
     const isTrigger = triggerRef.current && triggerRef.current.contains(event.target);
     const isDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
