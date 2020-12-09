@@ -39,6 +39,7 @@ const TrialLogs: React.FC = () => {
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
   const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ filter, setFilter ] = useState<TrialLogFiltersInterface>({});
+  const [ historyCanceler ] = useState(new AbortController());
 
   const title = `Trial ${trialId} Logs`;
   const experimentId = trial.data?.experimentId;
@@ -62,6 +63,7 @@ const TrialLogs: React.FC = () => {
         filter.sources,
         filter.timestampBefore ? filter.timestampBefore.toDate() : undefined,
         filter.timestampAfter ? filter.timestampAfter.toDate() : undefined,
+        { signal: historyCanceler.signal },
       ),
       event => buffer.push(jsonToTrialLog(event)),
     ).then(() => {
@@ -75,7 +77,7 @@ const TrialLogs: React.FC = () => {
       }
       buffer = [];
     });
-  }, [ filter, offset, oldestId, oldestReached, trialId ]);
+  }, [ filter, historyCanceler, offset, oldestId, oldestReached, trialId ]);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (downloadModal) {
@@ -131,6 +133,7 @@ const TrialLogs: React.FC = () => {
     if (!trial.hasLoaded) return;
 
     let buffer: Log[] = [];
+    const canceler = new AbortController();
     const throttleFunc = throttle(THROTTLE_TIME, () => {
       if (!logsRef.current) return;
       logsRef.current.addLogs(buffer);
@@ -152,6 +155,7 @@ const TrialLogs: React.FC = () => {
         filter.sources,
         filter.timestampBefore ? filter.timestampBefore.toDate() : undefined,
         filter.timestampAfter ? filter.timestampAfter.toDate() : undefined,
+        { signal: canceler.signal },
       ),
       event => {
         buffer.push(jsonToTrialLog(event));
@@ -159,8 +163,16 @@ const TrialLogs: React.FC = () => {
       },
     );
 
-    return (): void => throttleFunc.cancel();
+    return () => {
+      canceler.abort();
+      throttleFunc.cancel();
+    };
   }, [ filter, trial.hasLoaded, trialId ]);
+
+  // Clean up all running api calls before unmounting.
+  useEffect(() => {
+    return () => historyCanceler.abort();
+  }, [ historyCanceler ]);
 
   if (trial.errorCount > 0 && !trial.isLoading) {
     return <Message title={`Unable to find Trial ${trialId}`} type={MessageType.Warning} />;
