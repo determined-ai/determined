@@ -3,28 +3,26 @@
   display: flex;
   min-height: 2rem;
 
-  ol, li {
+  ol,
+  li {
     margin: 0;
     padding: 0;
   }
-
   ol {
     display: flex;
     flex-direction: row;
   }
-
   li {
     display: block;
     height: 100%;
   }
-
   .bar {
     background-color: var(--theme-colors-monochrome-12);
     border-radius: 0;
     box-shadow: var(--theme-colors-monochrome-6);
     flex-grow: 1;
-    height: var(--theme-sizes-layout-tiny);
     margin: 0;
+    min-height: var(--theme-sizes-layout-tiny);
     padding: 0;
     position: relative;
   }
