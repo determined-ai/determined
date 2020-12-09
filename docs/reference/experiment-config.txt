@@ -947,6 +947,11 @@ allowed to use.
    ``4294967296`` (4GiB). If set, this value overrides the value
    specified in the :ref:`master configuration <master-configuration>`.
 
+``priority``
+   The priority assigned to this experiment. Smaller priority assignment
+   indicates higher priority. Only applicable when using the
+   ``priority`` scheduler.
+
 *************
  Bind Mounts
 *************
