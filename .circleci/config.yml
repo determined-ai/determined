@@ -1087,7 +1087,7 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
-      - run: pip install --user --upgrade pip=19.3.1
+      - run: pip install --user --upgrade pip==19.3.1
       - run: python --version
       - run: pip --version
       - run: pip install wheel
