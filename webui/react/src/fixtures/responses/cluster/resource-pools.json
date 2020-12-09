@@ -1,7 +1,184 @@
-{
-  "resourcePools": [
+[
     {
-      "description": "this is a res pool description"
+        "name": "perception-cpu-aws",
+        "description": "AWS CPU-only resource pool for tensorboards",
+        "type": "aws",
+        "num_agents": "1",
+        "slots_available": "0",
+        "slots_used": "0",
+        "cpu_container_capacity": "100",
+        "cpu_containers_running":, "5",
+        "default_cpu_pool": "true",
+        "default_gpu_pool": "false",
+        "spot_or_preemptible": "false",
+        "min_instances": "0",
+        "max_instances": "5",
+        "gpus_per_agent": "0",
+        "cpu_container_capacity_per_agent": "100",
+        "scheduler_type": "fair share",
+        "scheduler_fitting_policy": "best fit",
+        "location": "us-east-1",
+        "image_id": "ami-0e4b739ea71222f80",
+        "instance_type": "m5.large",
+
+        "details": {
+            "pool_name": "perception-cpu-aws",
+            "description": "AWS CPU-only resource pool for tensorboards",
+            "max_cpu_containers_per_agent": "100",
+            "provisioner_type": "aws",
+            "master_url": "172.0.0.1:8080",
+            "master_cert_name": "",
+            "startup_script": "",  # This can be extremely long
+            "container_startup_script": "",  # This can be extremely long
+            "agent_docker_image": "default",
+            "agent_docker_runtime": "runc",
+            "agent_docker_image": "determinedai/determined-agent:1.0",
+            "agent_fluent_image": "fluent/fluent"1.6.6",
+            "max_idle_agent_period": "5m",
+            "max_agent_starting_period": "5m",
+            "min_instances": "0",
+            "max_instances": "5",
+            "aws": {
+                "region": "us-east-1",
+                "root_volume_size": "200",
+                "image_id": "ami-0e4b739ea71222f80",
+                "tag_key": "some_key",
+                "tag_value": "some_value",
+                "instance_name": "determined-ai-agent",
+                "ssh_key_name": "determined-agent-us-east-1",
+                "public_ip": "true",
+                "subnet_id": "subnet-1234567",
+                "security_group_id": "sg-123123123abcd",
+                "iam_instance_profile_arn": "aen:129u98y1ojkj1vy2fui",
+                "instance_type": "m5.large",
+                "log_group": "/determined/master/xyz",
+                "log_stream": "/determined/master/master",
+                "spot_enabled": "false",
+                "spot_max_price": "",
+                "custom_tags": [
+                    {
+                        "key": "my_key",
+                        "value": "my_value",
+                    }
+                ]
+            },
+            "scheduler_type": "fair share",
+            "scheduler_fitting_policy": "best fit",                
+        }
+    },
+    {
+        "name": "v100-gcp",
+        "description": "GCP resource pool with V100s",
+        "type": "gcp",
+        "num_agents": "1",
+        "slots_available": "8",
+        "slots_used": "4",
+        "cpu_container_capacity": "100",
+        "cpu_containers_running":, "1",
+        "default_cpu_pool": "false",
+        "default_cpu_pool": "true",
+        "spot_or_preemptible": "true",
+        "min_instances": "0",
+        "max_instances": "2",
+        "gpus_per_agent": "8",
+        "cpu_container_capacity_per_agent": "100",
+        "location": "us-west1-c",
+        "image_id": "ubuntu-1604-xenial-v20200611",
+        "instance_type": "n1-standard-32, 8 nvidia-tesla-v100",
+        "scheduler_type": "priority",
+        "scheduler_fitting_policy": "best fit",
+        "details": {
+            "pool_name": "v100-gcp",
+            "description": "GCP resource pool with V100s",
+            "max_cpu_containers_per_agent": "100",
+            "provisioner_type": "gcp",
+            "master_url": "172.0.0.1:8080",
+            "master_cert_name": "",
+            "startup_script": "",
+            "container_startup_script": "",
+            "agent_docker_image": "default",
+            "agent_docker_runtime": "runc",
+            "agent_docker_image": "determinedai/determined-agent:1.0",
+            "agent_fluent_image": "fluent/fluent"1.6.6",
+            "max_idle_agent_period": "5m",
+            "max_agent_starting_period": "5m",
+            "min_instances": "0",
+            "max_instances": "2",
+            "gcp": {
+                "project": "determined",
+                "zone": "us-west1-c",
+                "boot_disk_size": "200",
+                "boot_disk_source_image": "kajhsdjaksdkjaskjda",
+                "label_key": "key",
+                "label_value": "value",
+                "name_prefix": "determined-ai-agent-",
+                "network": "default",
+                "subnetwork": "",
+                "external_ip": "true"
+                "network_tags": [
+                    "tag1",
+                    "tag2"
+                ],
+                "service_account_email": "service@something.something"
+                "service_account_scopes": [
+                    "something",
+                    "something"
+                ]
+                "machine_type": "n1-standard-32",
+                "gpu_type": "nvidia-v100",
+                "gpu_num": "8"
+                "preemptible": "true"
+                "operation_timeout_period": "5m",
+
+            },
+            "scheduler_type": "priority"
+            "scheduler_fitting_policy": "best fit"
+            "priority_scheduler": {
+                "preemption": "true"
+                "default_priority": "42"
+            }  
+        }
+    },
+    {
+        "name": "on-prem-1",
+        "description": "On prem cluster with K80s. Use for prototyping",
+        "type": "static",
+        "num_agents": "3",
+        "slots_available": "12",
+        "slots_used": "2",
+        "cpu_container_capacity": "300",
+        "cpu_containers_running":, "0",
+        "default_cpu_pool": "false",
+        "default_cpu_pool": "false",
+        "spot_or_preemptible": "false",
+        "min_instances": "N/A",
+        "max_instances": "N/A",
+        "gpus_per_agent": "4",
+        "cpu_container_capacity_per_agent": "100",
+        "scheduler_type": "fair share",
+        "scheduler_fitting_policy": "worst fit",
+        "location": "N/A",
+        "image_id": "N/A",
+        "instance_type": "N/A",
+        "details": {
+            "pool_name": "on-prem-1",
+            "description": "On prem cluster with K80s. Use for prototyping",
+            "max_cpu_containers_per_agent": "100",
+            "provisioner_type": "static",
+            "master_url": "master.determined.ai:8080",
+            "master_cert_name": "",
+            "startup_script": "",
+            "container_startup_script": "",
+            "agent_docker_image": "default",
+            "agent_docker_runtime": "runc",
+            "agent_docker_image": "determinedai/determined-agent:1.0",
+            "agent_fluent_image": "fluent/fluent"1.6.6",
+            "max_idle_agent_period": "5m",
+            "max_agent_starting_period": "5m",
+            "min_instances": "N/A",
+            "max_instances": "N/A",
+            "scheduler_type": "fair share"
+            "scheduler_fitting_policy": "worst fit"                
+        }
     }
-  ]
-}
+]
