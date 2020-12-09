@@ -88,7 +88,7 @@ def http_connect_tunnel(
 ) -> None:
     parsed_master = request.parse_master_address(master)
     assert parsed_master.hostname is not None, "Failed to parse master address: {}".format(master)
-    url = request.make_url(master, "proxy/{}/tcp".format(service))
+    url = request.make_url(master, "proxy/{}/".format(service))
     ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url))
 
     # We can't send data to the WebSocket before the connection becomes ready, which takes a bit of

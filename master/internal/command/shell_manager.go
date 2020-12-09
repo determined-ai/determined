@@ -221,5 +221,7 @@ func (s *shellManager) newShell(
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
 		taskSpec:       s.taskSpec,
+
+		proxyTCP: true,
 	}
 }

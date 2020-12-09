@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -22,6 +21,7 @@ type (
 	Register struct {
 		ServiceID string
 		URL       *url.URL
+		ProxyTCP  bool
 	}
 	// Unregister removes the service from the proxy. All future requests until the service name is
 	// registered again will be responded with a 404 response. If the service is not registered with
@@ -40,6 +40,7 @@ type (
 type Service struct {
 	URL           *url.URL
 	LastRequested time.Time
+	ProxyTCP      bool
 }
 
 // Proxy is an actor that proxies requests to registered services.
@@ -60,7 +61,7 @@ func (p *Proxy) Receive(ctx *actor.Context) error {
 		p.lock.Lock()
 		defer p.lock.Unlock()
 		ctx.Log().Infof("registering service: %s (%v)", msg.ServiceID, msg.URL)
-		p.services[msg.ServiceID] = &Service{msg.URL, time.Now()}
+		p.services[msg.ServiceID] = &Service{msg.URL, time.Now(), msg.ProxyTCP}
 
 		if ctx.ExpectingResponse() {
 			ctx.Respond(nil)
@@ -82,7 +83,7 @@ func (p *Proxy) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *Proxy) getTargetURL(serviceName string) *url.URL {
+func (p *Proxy) getService(serviceName string) *Service {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	service := p.services[serviceName]
@@ -90,10 +91,10 @@ func (p *Proxy) getTargetURL(serviceName string) *url.URL {
 		return nil
 	}
 	service.LastRequested = time.Now()
-	// Make a copy to avoid callers mutating the url outside of this locked
-	// method.
+
+	// Make a copy to avoid callers mutating the object outside of this locked method.
 	sURL := *service.URL
-	return &sURL
+	return &Service{&sURL, service.LastRequested, service.ProxyTCP}
 }
 
 // Service an HTTP request through the /proxy/:service/* route.
@@ -101,8 +102,8 @@ func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Look up the service name in the url path.
 		serviceName := c.Param(serviceID)
-		serviceURL := p.getTargetURL(serviceName)
-		if serviceURL == nil {
+		service := p.getService(serviceName)
+		if service == nil {
 			return echo.NewHTTPError(http.StatusNotFound,
 				fmt.Sprintf("service not found: %s", serviceName))
 		}
@@ -122,12 +123,12 @@ func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
 		// Proxy the request to the target host.
 		var proxy http.Handler
 		switch {
-		case strings.HasSuffix(c.Request().URL.Path, "tcp"):
-			proxy = newSingleHostReverseTCPOverWebSocketProxy(c, serviceURL)
+		case service.ProxyTCP:
+			proxy = newSingleHostReverseTCPOverWebSocketProxy(c, service.URL)
 		case c.IsWebSocket():
-			proxy = newSingleHostReverseWebSocketProxy(c, serviceURL)
+			proxy = newSingleHostReverseWebSocketProxy(c, service.URL)
 		default:
-			proxy = httputil.NewSingleHostReverseProxy(serviceURL)
+			proxy = httputil.NewSingleHostReverseProxy(service.URL)
 		}
 		proxy.ServeHTTP(c.Response(), req)
 
@@ -142,7 +143,7 @@ func (p *Proxy) getSummary() map[string]Service {
 
 	for id, service := range p.services {
 		sURL := *service.URL
-		snapshot[id] = Service{&sURL, service.LastRequested}
+		snapshot[id] = Service{&sURL, service.LastRequested, service.ProxyTCP}
 	}
 
 	return snapshot
