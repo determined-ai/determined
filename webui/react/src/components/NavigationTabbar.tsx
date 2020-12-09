@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
+import { handlePath } from 'routes/utils';
 import { launchNotebook } from 'utils/task';
 
 import ActionSheet from './ActionSheet';
@@ -51,6 +52,11 @@ const NavigationTabbar: React.FC = () => {
     setIsShowingOverflow(false);
   }, []);
 
+  const handlePathUpdate = useCallback((e, path) => {
+    handlePath(e, { path });
+    setIsShowingOverflow(false);
+  }, []);
+
   if (!showNavigation) return null;
 
   return (
@@ -74,7 +80,11 @@ const NavigationTabbar: React.FC = () => {
             label: 'Launch CPU-only Notebook',
             onClick: () => handleLaunchNotebook(true),
           },
-          { icon: 'logs', label: 'Master Logs', path: '/logs', popout: true },
+          {
+            icon: 'logs',
+            label: 'Master Logs',
+            onClick: e => handlePathUpdate(e, '/logs'),
+          },
           {
             external: true,
             icon: 'docs',
