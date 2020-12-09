@@ -46,7 +46,7 @@ interface Props {
 }
 
 const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) => {
-  const [ availableFilters, setAvailableFilters ] = useState<V1TrialLogsFieldsResponse|null>(null);
+  const [ availableFilters, setAvailableFilters ] = useState<V1TrialLogsFieldsResponse>();
 
   const broadcastChange = (newFilter: TrialLogFiltersInterface) => {
     if (typeof onChange === 'function') {
@@ -127,6 +127,14 @@ const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) 
 
     return () => canceler.abort();
   }, [ trialId ]);
+
+  // Check for when filter options are not available.
+  if (availableFilters &&
+    (!availableFilters.agentIds || availableFilters.agentIds.length === 0) &&
+    (!availableFilters.containerIds || availableFilters.containerIds.length === 0) &&
+    (!availableFilters.rankIds || availableFilters.rankIds.length === 0)) {
+    return null;
+  }
 
   return (
     <ResponsiveFilters>
