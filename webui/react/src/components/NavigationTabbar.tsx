@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
+import { handlePath } from 'routes/utils';
 import { launchNotebook } from 'utils/task';
 
 import ActionSheet from './ActionSheet';
@@ -38,7 +39,6 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 const NavigationTabbar: React.FC = () => {
   const { isAuthenticated } = Auth.useStateContext();
   const ui = UI.useStateContext();
-  const history = useHistory();
   const overview = ClusterOverview.useStateContext();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
 
@@ -52,10 +52,10 @@ const NavigationTabbar: React.FC = () => {
     setIsShowingOverflow(false);
   }, []);
 
-  const handlePathUpdate = useCallback((path) => {
-    history.push(path);
+  const handlePathUpdate = useCallback((e, path) => {
+    handlePath(e, { path });
     setIsShowingOverflow(false);
-  }, [ history ]);
+  }, []);
 
   if (!showNavigation) return null;
 
@@ -83,7 +83,7 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'logs',
             label: 'Master Logs',
-            onClick: () => handlePathUpdate('/logs'),
+            onClick: e => handlePathUpdate(e, '/logs'),
           },
           {
             external: true,
