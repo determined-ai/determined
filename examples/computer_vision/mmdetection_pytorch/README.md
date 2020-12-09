@@ -1,6 +1,8 @@
 # MMDetection in Determined
 This example allows you to use the powerful object detection library [MMDetection](https://github.com/open-mmlab/mmdetection) while benefiting from all the features available on Determined's integrated deep learning platform.  In particular, get access to automated resource provisioning and experiment tracking with Determined along with state-of-the-art support for distributed training and hyperparameter tuning with little to no code modification.  
 
+**Note**: Currently, this example does not work on Determined in Kubernetes due to the limit on the size of a ConfigMap.  Please open an issue if this is a concern for you.
+
 ## Capabilities
 Most of the configurations provided in the original [`mmdetection` repo](https://github.com/open-mmlab/mmdetection/tree/master/configs) are supported here.  You can see examples of how to submit an experiment to a Determined cluster with a particular config in [`maskrcnn.yaml`](maskrcnn.yaml).  The provided experiment configurations are as follows:
 * Mask R-CNN: [`maskrcnn.yaml`](mask_rcnn.yaml)
