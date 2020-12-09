@@ -17,3 +17,5 @@ class defaults:
     NETWORK = "det-default"
     PORT = 8080
     REGION = "us-west1"
+    SCHEDULER_TYPE = "fair_share"
+    PREEMPTION_ENABLED = False

@@ -130,6 +130,16 @@ Parameters:
     Description: Hostname to verify the master's TLS certificate against
     Default: ""
 
+  SchedulerType:
+    Type: String
+    Description: Scheduler to use in Determined.
+    Default: fair_share
+
+  PreemptionEnabled:
+    Type: String
+    Description: Whether preemption is enabled (only supported for priority scheduler).
+    Default: false
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -653,6 +663,22 @@ Resources:
 
             enable_cors: ${EnableCORS}
 
+            resource_manager:
+              type: agent
+              default_cpu_resource_pool: default
+              default_gpu_resource_pool: default
+              scheduler:
+                type: ${SchedulerType}
+            EOF
+
+            if [ "${SchedulerType}" = "priority" ]; then
+              cat << EOF >> /usr/local/determined/etc/master.yaml
+                preemption: ${PreemptionEnabled}
+
+            EOF
+            fi
+
+            cat << EOF >> /usr/local/determined/etc/master.yaml
             provisioner:
               master_cert_name: ${MasterCertName}
               iam_instance_profile_arn: ${AgentInstanceProfile.Arn}

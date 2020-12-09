@@ -47,6 +47,8 @@ class cloudformation:
     REGION = "Region"
     SPOT_ENABLED = "SpotEnabled"
     SPOT_MAX_PRICE = "SpotMaxPrice"
+    SCHEDULER_TYPE = "SchedulerType"
+    PREEMPTION_ENABLED = "PreemptionEnabled"
 
 
 class misc:

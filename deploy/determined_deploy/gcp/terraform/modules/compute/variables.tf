@@ -111,3 +111,9 @@ variable "min_cpu_platform_master" {
 
 variable "min_cpu_platform_agent" {
 }
+
+variable "scheduler_type" {
+}
+
+variable "preemption_enabled" {
+}

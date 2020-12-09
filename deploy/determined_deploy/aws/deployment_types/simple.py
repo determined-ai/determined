@@ -32,6 +32,8 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.SPOT_ENABLED,
         constants.cloudformation.SPOT_MAX_PRICE,
         constants.cloudformation.SUBNET_ID_KEY,
+        constants.cloudformation.SCHEDULER_TYPE,
+        constants.cloudformation.PREEMPTION_ENABLED,
     ]
 
     def deploy(self) -> None:

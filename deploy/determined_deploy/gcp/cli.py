@@ -15,6 +15,18 @@ def validate_cluster_id() -> Callable:
     return validate
 
 
+def validate_scheduler_type() -> Callable:
+    def validate(s: str) -> str:
+        supported_scheduler_types = ["fair_share", "priority", "round_robin"]
+        if s not in supported_scheduler_types:
+            raise argparse.ArgumentTypeError(
+                f"supported schedulers are: {supported_scheduler_types}"
+            )
+        return s
+
+    return validate
+
+
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
     subparser = subparsers.add_parser("down", help="delete gcp cluster")
 
@@ -183,6 +195,19 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         type=str,
         default=constants.defaults.MIN_CPU_PLATFORM_AGENT,
         help="minimum cpu platform for agent instances",
+    )
+    optional_named.add_argument(
+        "--scheduler-type",
+        type=validate_scheduler_type(),
+        default=constants.defaults.SCHEDULER_TYPE,
+        help="scheduler to use (defaults to fair_share).",
+    )
+    optional_named.add_argument(
+        "--preemption-enabled",
+        type=bool,
+        default=constants.defaults.PREEMPTION_ENABLED,
+        help="whether task preemption is supported in the scheduler "
+        "(only configurable for priority scheduler).",
     )
 
 

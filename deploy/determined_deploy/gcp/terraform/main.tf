@@ -139,6 +139,8 @@ module "compute" {
   operation_timeout_period = var.operation_timeout_period
   db_username = var.db_username
   db_password = var.db_password
+  scheduler_type = var.scheduler_type
+  preemption_enabled = var.preemption_enabled
 
   network_name = module.network.network_name
   subnetwork_name = module.network.subnetwork_name
