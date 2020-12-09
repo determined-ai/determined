@@ -484,9 +484,9 @@ func (m *Master) Run(ctx context.Context) error {
 		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
 		requestedFile := filepath.Join(reactRoot, groupPath)
 		// We do a simple check against directory traversal attacks.
-		requestedFileAbs, err := filepath.Abs(requestedFile)
-		if err != nil {
-			log.WithError(err).Error("failed to get absolute path to requested file")
+		requestedFileAbs, fErr := filepath.Abs(requestedFile)
+		if fErr != nil {
+			log.WithError(fErr).Error("failed to get absolute path to requested file")
 			return c.File(reactIndex)
 		}
 		isInReactDir := strings.HasPrefix(requestedFileAbs, reactRootAbs)
@@ -495,12 +495,12 @@ func (m *Master) Run(ctx context.Context) error {
 		}
 
 		var hasMatchingFile bool
-		stat, err := os.Stat(requestedFile)
+		stat, oErr := os.Stat(requestedFile)
 		switch {
-		case os.IsNotExist(err):
-		case os.IsPermission(err):
+		case os.IsNotExist(oErr):
+		case os.IsPermission(oErr):
 			hasMatchingFile = false
-		case err != nil:
+		case oErr != nil:
 			return echo.NewHTTPError(http.StatusInternalServerError, "failed to check if file exists")
 		default:
 			hasMatchingFile = !stat.IsDir()
