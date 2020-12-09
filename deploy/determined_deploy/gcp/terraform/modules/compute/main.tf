@@ -47,12 +47,12 @@ resource "google_compute_instance" "master_instance" {
       default_cpu_resource_pool: default
       default_gpu_resource_pool: default
       scheduler:
-        type: ${var.scheduler_type}
+        type: "${var.scheduler_type}"
     EOF
 
     if [ "${var.scheduler_type}" = "priority" ]; then
       cat << EOF >> /usr/local/determined/etc/master.yaml
-        preemption: "${var.preemption_enabled}"
+        preemption: ${var.preemption_enabled}
 
     EOF
     fi
