@@ -219,33 +219,8 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg container.RunSpec) {
 	)
 
 	if !d.spec.RunSpec.UseFluentLogging {
-		logs, lErr := d.ContainerLogs(
-			context.Background(),
-			containerID,
-			types.ContainerLogsOptions{
-				ShowStdout: true,
-				ShowStderr: true,
-				Since:      "",
-				Timestamps: false,
-				Follow:     true,
-				Tail:       "all",
-				Details:    true,
-			},
-		)
-		if lErr != nil {
-			sendErr(ctx, errors.Wrap(lErr, "error grabbing container logs"))
-			return
-		}
-
-		stdout := demultiplexer{ctx: ctx, stdType: stdcopy.Stdout}
-		stderr := demultiplexer{ctx: ctx, stdType: stdcopy.Stderr}
-		if _, lErr = stdcopy.StdCopy(stdout, stderr, logs); lErr != nil {
-			sendErr(ctx, errors.Wrap(lErr, "error scanning logs"))
-			return
-		}
-		if lErr = logs.Close(); lErr != nil {
-			sendErr(ctx, errors.Wrap(lErr, "error closing log stream"))
-			return
+		if lerr := trackLogs(ctx, d.Client, containerID, ctx.Sender()); err != nil {
+			sendErr(ctx, lerr)
 		}
 	}
 	select {
@@ -291,12 +266,13 @@ func (d *dockerActor) sendPullLogs(ctx *actor.Context, r io.Reader) error {
 }
 
 type demultiplexer struct {
-	ctx     *actor.Context
-	stdType stdcopy.StdType
+	ctx       *actor.Context
+	stdType   stdcopy.StdType
+	recipient *actor.Ref
 }
 
 func (d demultiplexer) Write(p []byte) (n int, err error) {
-	d.ctx.Tell(d.ctx.Sender(), aproto.ContainerLog{
+	d.ctx.Tell(d.recipient, aproto.ContainerLog{
 		Timestamp: time.Now(),
 		RunMessage: &aproto.RunMessage{
 			Value:   string(p),
@@ -304,4 +280,35 @@ func (d demultiplexer) Write(p []byte) (n int, err error) {
 		},
 	})
 	return len(p), nil
+}
+
+func trackLogs(
+	ctx *actor.Context, docker *client.Client, containerID string, recipient *actor.Ref,
+) error {
+	logs, lErr := docker.ContainerLogs(
+		context.Background(),
+		containerID,
+		types.ContainerLogsOptions{
+			ShowStdout: true,
+			ShowStderr: true,
+			Since:      "",
+			Timestamps: false,
+			Follow:     true,
+			Tail:       "all",
+			Details:    true,
+		},
+	)
+	if lErr != nil {
+		return errors.Wrap(lErr, "error grabbing container logs")
+	}
+
+	stdout := demultiplexer{ctx: ctx, stdType: stdcopy.Stdout, recipient: recipient}
+	stderr := demultiplexer{ctx: ctx, stdType: stdcopy.Stderr, recipient: recipient}
+	if _, lErr = stdcopy.StdCopy(stdout, stderr, logs); lErr != nil {
+		return errors.Wrap(lErr, "error scanning logs")
+	}
+	if lErr = logs.Close(); lErr != nil {
+		return errors.Wrap(lErr, "error closing log stream")
+	}
+	return nil
 }

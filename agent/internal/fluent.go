@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"regexp"
 	"time"
 
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
@@ -23,6 +24,8 @@ import (
 // The names of environment variables whose values should be included in log entries that Docker or
 // the agent sends to the Fluent Bit logger.
 var fluentEnvVarNames = []string{containerIDEnvVar, trialIDEnvVar}
+
+var fluentLogLineRegexp = regexp.MustCompile(`\[[^]]*\] \[ *([^]]*)\] (.*)`)
 
 const (
 	localhost    = "localhost"
@@ -49,8 +52,8 @@ function run(tag, timestamp, record)
     record.trial_id = tonumber(record.trial_id)
 
     -- TODO: Only do this if it's not a partial record.
-    if (record.log == nil) then 
-        record.log = '\n'  
+    if (record.log == nil) then
+        record.log = '\n'
     else
         record.log = record.log .. '\n'
     end
@@ -400,11 +403,13 @@ func startLoggingContainer(
 // fluentActor manages the lifecycle of the Fluent Bit container that is run by the agent for the
 // purpose of forwarding container logs.
 type fluentActor struct {
-	opts          Options
-	masterSetOpts aproto.MasterSetAgentOptions
-	port          int
-	containerID   string
-	docker        *client.Client
+	opts            Options
+	masterSetOpts   aproto.MasterSetAgentOptions
+	port            int
+	containerID     string
+	docker          *client.Client
+	fluentLogs      []*aproto.RunMessage
+	fluentLogsCount int
 }
 
 func newFluentActor(
@@ -430,11 +435,30 @@ func newFluentActor(
 		port:          hostPort,
 		containerID:   cid,
 		docker:        docker,
+		fluentLogs:    make([]*aproto.RunMessage, 50),
 	}, nil
 }
 
 func (f *fluentActor) Receive(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
+	switch msg := ctx.Message().(type) {
+	case actor.PreStart:
+		go f.trackLogs(ctx)
+	case aproto.ContainerLog:
+		if msg.RunMessage == nil {
+			return nil
+		}
+		f.fluentLogs[f.fluentLogsCount%len(f.fluentLogs)] = msg.RunMessage
+		f.fluentLogsCount++
+		match := fluentLogLineRegexp.FindStringSubmatch(msg.RunMessage.Value)
+		if match == nil {
+			return nil
+		}
+		switch level, message := match[1], match[2]; level {
+		case "warn":
+			ctx.Log().Warnf("Fluent Bit: %s", message)
+		case "error":
+			ctx.Log().Errorf("Fluent Bit: %s", message)
+		}
 	case actor.PostStop:
 		t0 := time.Now()
 		err := f.docker.ContainerRemove(
@@ -444,4 +468,18 @@ func (f *fluentActor) Receive(ctx *actor.Context) error {
 		return err
 	}
 	return nil
+}
+
+func (f *fluentActor) trackLogs(ctx *actor.Context) {
+	if err := trackLogs(ctx, f.docker, f.containerID, ctx.Self()); err != nil {
+		ctx.Log().Errorf("error tracking Fluent Bit logs: %s", err)
+	}
+	ctx.Log().Error("Fluent Bit failed, dumping all recent logs")
+	i0 := f.fluentLogsCount - len(f.fluentLogs)
+	if i0 < 0 {
+		i0 = 0
+	}
+	for i := i0; i < f.fluentLogsCount; i++ {
+		ctx.Log().Error(f.fluentLogs[i%len(f.fluentLogs)].Value)
+	}
 }
