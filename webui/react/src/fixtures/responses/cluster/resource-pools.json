@@ -7,7 +7,7 @@
         "slots_available": "0",
         "slots_used": "0",
         "cpu_container_capacity": "100",
-        "cpu_containers_running":, "5",
+        "cpu_containers_running": "5",
         "default_cpu_pool": "true",
         "default_gpu_pool": "false",
         "spot_or_preemptible": "false",
@@ -20,7 +20,6 @@
         "location": "us-east-1",
         "image_id": "ami-0e4b739ea71222f80",
         "instance_type": "m5.large",
-
         "details": {
             "pool_name": "perception-cpu-aws",
             "description": "AWS CPU-only resource pool for tensorboards",
@@ -28,12 +27,11 @@
             "provisioner_type": "aws",
             "master_url": "172.0.0.1:8080",
             "master_cert_name": "",
-            "startup_script": "",  # This can be extremely long
-            "container_startup_script": "",  # This can be extremely long
-            "agent_docker_image": "default",
+            "startup_script": "# This can be extremely long",
+            "container_startup_script": "# This can be extremely long",
             "agent_docker_runtime": "runc",
             "agent_docker_image": "determinedai/determined-agent:1.0",
-            "agent_fluent_image": "fluent/fluent"1.6.6",
+            "agent_fluent_image": "fluent/fluent1.6.6",
             "max_idle_agent_period": "5m",
             "max_agent_starting_period": "5m",
             "min_instances": "0",
@@ -63,7 +61,7 @@
                 ]
             },
             "scheduler_type": "fair share",
-            "scheduler_fitting_policy": "best fit",                
+            "scheduler_fitting_policy": "best fit",
         }
     },
     {
@@ -74,8 +72,7 @@
         "slots_available": "8",
         "slots_used": "4",
         "cpu_container_capacity": "100",
-        "cpu_containers_running":, "1",
-        "default_cpu_pool": "false",
+        "cpu_containers_running": "1",
         "default_cpu_pool": "true",
         "spot_or_preemptible": "true",
         "min_instances": "0",
@@ -96,10 +93,9 @@
             "master_cert_name": "",
             "startup_script": "",
             "container_startup_script": "",
-            "agent_docker_image": "default",
             "agent_docker_runtime": "runc",
             "agent_docker_image": "determinedai/determined-agent:1.0",
-            "agent_fluent_image": "fluent/fluent"1.6.6",
+            "agent_fluent_image": "fluent/fluent1.6.6",
             "max_idle_agent_period": "5m",
             "max_agent_starting_period": "5m",
             "min_instances": "0",
@@ -114,29 +110,28 @@
                 "name_prefix": "determined-ai-agent-",
                 "network": "default",
                 "subnetwork": "",
-                "external_ip": "true"
+                "external_ip": "true",
                 "network_tags": [
                     "tag1",
                     "tag2"
                 ],
-                "service_account_email": "service@something.something"
+                "service_account_email": "service@something.something",
                 "service_account_scopes": [
                     "something",
                     "something"
-                ]
+                ],
                 "machine_type": "n1-standard-32",
                 "gpu_type": "nvidia-v100",
-                "gpu_num": "8"
-                "preemptible": "true"
-                "operation_timeout_period": "5m",
-
+                "gpu_num": "8",
+                "preemptible": "true",
+                "operation_timeout_period": "5m"
             },
-            "scheduler_type": "priority"
-            "scheduler_fitting_policy": "best fit"
+            "scheduler_type": "priority",
+            "scheduler_fitting_policy": "best fit",
             "priority_scheduler": {
-                "preemption": "true"
+                "preemption": "true",
                 "default_priority": "42"
-            }  
+            }
         }
     },
     {
@@ -147,8 +142,7 @@
         "slots_available": "12",
         "slots_used": "2",
         "cpu_container_capacity": "300",
-        "cpu_containers_running":, "0",
-        "default_cpu_pool": "false",
+        "cpu_containers_running": "0",
         "default_cpu_pool": "false",
         "spot_or_preemptible": "false",
         "min_instances": "N/A",
@@ -169,16 +163,15 @@
             "master_cert_name": "",
             "startup_script": "",
             "container_startup_script": "",
-            "agent_docker_image": "default",
             "agent_docker_runtime": "runc",
             "agent_docker_image": "determinedai/determined-agent:1.0",
-            "agent_fluent_image": "fluent/fluent"1.6.6",
+            "agent_fluent_image": "fluent/fluent1.6.6",
             "max_idle_agent_period": "5m",
             "max_agent_starting_period": "5m",
             "min_instances": "N/A",
             "max_instances": "N/A",
-            "scheduler_type": "fair share"
-            "scheduler_fitting_policy": "worst fit"                
+            "scheduler_type": "fair share",
+            "scheduler_fitting_policy": "worst fit"
         }
     }
 ]
