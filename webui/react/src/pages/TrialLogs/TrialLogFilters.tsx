@@ -102,13 +102,18 @@ const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) 
   }, []);
 
   useEffect(() => {
+    const canceler = new AbortController();
+
     consumeStream<V1TrialLogsFieldsResponse>(
       detApi.StreamingExperiments.determinedTrialLogsFields(
         trialId,
         true,
+        { signal: canceler.signal },
       ),
       event => setAvailableFilters(event),
     );
+
+    return () => canceler.abort();
   }, [ trialId ]);
 
   return (
