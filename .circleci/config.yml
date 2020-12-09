@@ -1087,12 +1087,13 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
+      - run: pip install --user --upgrade pip
       - run: python --version
       - run: pip --version
       - run: pip install wheel
       - run: cd common; python setup.py bdist_wheel -d ../build
       - run: cd cli; python setup.py bdist_wheel -d ../build
-      - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
+      - run: pip install --find-links build --ignore-installed determined-cli==<< pipeline.parameters.det-version >>
       - run: pip freeze
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
