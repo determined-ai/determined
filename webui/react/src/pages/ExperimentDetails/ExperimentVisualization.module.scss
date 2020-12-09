@@ -3,6 +3,7 @@
     border-left: solid 0.1rem var(--theme-colors-monochrome-14);
     display: flex;
     flex-direction: column;
+    margin-left: var(--theme-sizes-layout-big);
   }
   .menu {
     display: flex;
@@ -42,6 +43,7 @@
       border-bottom: solid 0.1rem var(--theme-colors-monochrome-14);
       border-left: 0;
       margin-bottom: var(--theme-sizes-layout-big);
+      margin-left: 0;
       padding-bottom: var(--theme-sizes-layout-big);
     }
     .menu { display: none; }

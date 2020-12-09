@@ -11,6 +11,7 @@ import { consumeStream } from 'services/utils';
 import { ExperimentDetails, MetricName, MetricType } from 'types';
 
 import css from './ExperimentVisualization.module.scss';
+import LearningCurve from './ExperimentVisualization/LearningCurve';
 
 const { Option } = Select;
 
@@ -127,8 +128,7 @@ const ExperimentVisualization: React.FC<Props> = ({
           sm={{ order: 2, span: 24 }}
           span={24}
           xs={{ order: 2, span: 24 }}>
-          {experiment.id}
-          {experiment.config.description}
+          <LearningCurve />
         </Col>
         <Col
           lg={{ order: 2, span: 4 }}
