@@ -1,0 +1,25 @@
+.base {
+
+  .legends {
+    ol, li {
+      margin: 0;
+      padding: 0;
+    }
+
+    ol {
+      display: flex;
+      justify-content: center;
+      flex-direction: row;
+    }
+
+    li {
+      display: block;
+      height: 100%;
+      margin-left: var(--theme-sizes-layout-tiny);
+    }
+
+    li:first-child {
+      margin-left: 0;
+    }
+  }
+}

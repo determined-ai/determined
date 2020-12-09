@@ -3,6 +3,9 @@ import React, { useMemo } from 'react';
 import Bar, { BarPart } from 'components/Bar';
 import { getStateColorCssVar } from 'themes';
 import { ResourceState } from 'types';
+import { floatToPercent } from 'utils/string';
+
+import css from './SlotAllocation.module.scss';
 
 export interface Props {
   barOnly?: boolean;
@@ -18,10 +21,22 @@ const pendingStates = new Set<ResourceState>([
   ResourceState.Starting,
 ]);
 
+const legend = (part: BarPart , count: number) => {
+  return <li>
+    <span>
+      {count} ({floatToPercent(part.percent, 1)})
+    </span>
+    <span style={{ color: part.color }}>
+      {' ' + part.label}
+    </span>
+  </li>;
+};
+
 const ProgressBar: React.FC<Props> = ({ barOnly, resourceStates, totalSlots }: Props) => {
 
-  const parts = useMemo(() => {
+  const { parts, legends } = useMemo(() => {
     const tally = {
+      free: totalSlots - resourceStates.length,
       pending: 0,
       running: 0,
     };
@@ -41,19 +56,34 @@ const ProgressBar: React.FC<Props> = ({ barOnly, resourceStates, totalSlots }: P
         label: 'Pending',
         percent: tally.pending / totalSlots,
       },
+      {
+        color: 'Green', // TODO
+        label: 'Free',
+        percent: tally.free / totalSlots,
+      },
     ];
 
-    return parts;
+    const legends = [
+      legend(parts[0], tally.running),
+      legend(parts[1], tally.pending),
+      legend(parts[2], tally.free),
+    ];
 
+    return { legends, parts };
   }, [ resourceStates, totalSlots ]);
 
   return (
-    <div>
+    <div className={css.base}>
       <div>
         <header>GPU Slots Allocated</header>
         <span>3/10(33%)</span>
       </div>
       <Bar parts={parts} />
+      <div className={css.legends}>
+        <ol>
+          {legends}
+        </ol>
+      </div>
     </div>
   );
 };
