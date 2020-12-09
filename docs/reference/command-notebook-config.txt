@@ -104,6 +104,10 @@ The following configuration settings are supported:
       overrides the value specified in the :ref:`master configuration
       <master-configuration>`.
 
+   -  ``priority``: The priority assigned to this experiment. Smaller
+      priority assignment indicates higher priority. Only applicable
+      when using the ``priority`` scheduler.
+
 -  ``bind_mounts``: Specifies a collection of directories that are
    bind-mounted into the Docker containers for execution. This can be
    used to allow commands to access additional data that is not
