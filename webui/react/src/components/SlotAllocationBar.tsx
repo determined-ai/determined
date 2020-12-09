@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import Bar, { BarPart } from 'components/Bar';
-import { getStateColorCssVar } from 'themes';
+import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState } from 'types';
 import { floatToPercent } from 'utils/string';
 
@@ -11,6 +11,7 @@ export interface Props {
   barOnly?: boolean;
   resourceStates: ResourceState[];
   totalSlots: number;
+  size?: ShirtSize;
 }
 
 const pendingStates = new Set<ResourceState>([
@@ -32,7 +33,7 @@ const legend = (part: BarPart , count: number) => {
   </li>;
 };
 
-const ProgressBar: React.FC<Props> = ({ barOnly, resourceStates, totalSlots }: Props) => {
+const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, ...barProps }: Props) => {
 
   const { parts, legends } = useMemo(() => {
     const tally = {
@@ -74,11 +75,11 @@ const ProgressBar: React.FC<Props> = ({ barOnly, resourceStates, totalSlots }: P
 
   return (
     <div className={css.base}>
-      <div>
+      <div className={css.header}>
         <header>GPU Slots Allocated</header>
         <span>3/10(33%)</span>
       </div>
-      <Bar parts={parts} />
+      <Bar {...barProps} parts={parts} />
       <div className={css.legends}>
         <ol>
           {legends}

@@ -1,25 +1,27 @@
 .base {
-
   .legends {
-    ol, li {
+    ol,
+    li {
       margin: 0;
       padding: 0;
     }
-
     ol {
       display: flex;
-      justify-content: center;
       flex-direction: row;
+      justify-content: center;
     }
-
     li {
       display: block;
       height: 100%;
       margin-left: var(--theme-sizes-layout-tiny);
     }
-
     li:first-child {
       margin-left: 0;
     }
+  }
+  .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
   }
 }
