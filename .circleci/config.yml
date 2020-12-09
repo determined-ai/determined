@@ -1092,6 +1092,8 @@ jobs:
       - run: pip install wheel
       - run: cd common; python setup.py bdist_wheel -d ../build
       - run: cd cli; python setup.py bdist_wheel -d ../build
+      # Windows needs special treatment of cryptography for unknown reasons.
+      - run: sh -c "if which conda ; then conda install cryptography --yes ; fi"
       - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
       - run: pip freeze
       # Allow this to fail, but it is useful for debugging.
