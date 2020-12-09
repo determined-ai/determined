@@ -147,8 +147,10 @@ export const consumeStream = async <T = unknown>(
       onEvent(result.value.result);
     }
   } catch (e) {
-    processApiError(fetchArgs.url, e);
-    throw e;
+    if (!isAborted(e)) {
+      processApiError(fetchArgs.url, e);
+      throw e;
+    }
   }
 };
 
