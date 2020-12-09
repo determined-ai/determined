@@ -31,6 +31,10 @@ def capitalize(s: str) -> str:
         return s.title()
     return s[0].upper() + s[1:]
 
+def to_lower_camel_case(snake_str):
+    components = snake_str.split('_')
+    return components[0] + ''.join(x.title() for x in components[1:])
+
 
 def clean(path: str, patch: str) -> None:
     with open(path, "r") as f:
@@ -46,6 +50,9 @@ def clean(path: str, patch: str) -> None:
         # Clean up titles.
         if "title" not in value:
             value["title"] = "".join(capitalize(k) for k in key.split(sep="v1"))
+
+        if "required" in value:
+            value["required"] = [to_lower_camel_case(attr) for attr in value["required"]]
 
     with open(patch, "r") as f:
         merge_dict(spec, json.load(f))
