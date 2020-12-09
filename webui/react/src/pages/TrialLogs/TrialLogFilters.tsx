@@ -10,6 +10,7 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import { V1TrialLogsFieldsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
+import { alphanumericSorter } from 'utils/data';
 
 import css from './TrialLogFilters.module.scss';
 
@@ -107,7 +108,18 @@ const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) 
         trialId,
         true,
       ),
-      event => setAvailableFilters(event),
+      event => {
+        if (event.rankIds) {
+          event.rankIds.sort(alphanumericSorter);
+        }
+        if (event.agentIds) {
+          event.agentIds.sort(alphanumericSorter);
+        }
+        if (event.containerIds) {
+          event.containerIds.sort(alphanumericSorter);
+        }
+        setAvailableFilters(event);
+      },
     );
   }, [ trialId ]);
 
