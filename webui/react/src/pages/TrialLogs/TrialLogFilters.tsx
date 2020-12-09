@@ -183,12 +183,12 @@ const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) 
         ))}
       </MultiSelect>
       <DatePickerFilter
-        label="After"
+        label="Start"
         value={filter.timestampAfter}
         onChange={onAfterDateChange}
       />
       <DatePickerFilter
-        label="Before"
+        label="End"
         value={filter.timestampBefore}
         onChange={onBeforeDateChange}
       />
