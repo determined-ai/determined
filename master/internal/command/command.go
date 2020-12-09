@@ -89,6 +89,8 @@ type command struct {
 
 	proxy       *actor.Ref
 	eventStream *actor.Ref
+
+	proxyTCP bool
 }
 
 // Receive implements the actor.Actor interface.
@@ -214,6 +216,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 						Scheme: "http",
 						Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 					},
+					ProxyTCP: c.proxyTCP,
 				})
 				names = append(names, string(c.taskID))
 			}

@@ -1,15 +1,51 @@
 package proxy
 
 import (
+	"bytes"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
 
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 )
 
-func newSingleHostReverseTCPProxy(c echo.Context, t *url.URL) http.Handler {
+// websocketReadWriter exposes an io.ReadWriter interface to a WebSocket connection that is only
+// being used for binary communication.
+type websocketReadWriter struct {
+	ws  *websocket.Conn
+	buf *bytes.Buffer
+}
+
+func (w *websocketReadWriter) Read(buf []byte) (int, error) {
+	if w.buf.Len() > 0 {
+		return w.buf.Read(buf)
+	}
+	for {
+		switch msg, data, err := w.ws.ReadMessage(); {
+		case err != nil:
+			return 0, err
+		case msg == websocket.CloseMessage:
+			return 0, io.EOF
+		case msg == websocket.BinaryMessage:
+			if len(data) > 0 {
+				w.buf.Write(data)
+				return w.buf.Read(buf)
+			}
+		}
+	}
+}
+
+func (w *websocketReadWriter) Write(buf []byte) (int, error) {
+	if err := w.ws.WriteMessage(websocket.BinaryMessage, buf); err != nil {
+		return 0, err
+	}
+	return len(buf), nil
+}
+
+func newSingleHostReverseTCPOverWebSocketProxy(c echo.Context, t *url.URL) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Make sure we can open the connection to the remote host.
 		out, err := net.Dial("tcp", t.Host)
@@ -24,23 +60,15 @@ func newSingleHostReverseTCPProxy(c echo.Context, t *url.URL) http.Handler {
 			}
 		}()
 
-		// Send the 200 OK response header.
-		c.Response().WriteHeader(http.StatusOK)
-
-		// Hijack the connection instead of providing a body.
-		in, _, err := c.Response().Hijack()
+		ws, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
 		if err != nil {
-			c.Error(errors.Errorf("error hijacking connection to %v: %v", t, err))
+			c.Error(echo.NewHTTPError(http.StatusBadGateway, errors.Wrap(err, "error upgrading")))
 			return
 		}
-		defer func() {
-			if cerr := in.Close(); cerr != nil {
-				c.Logger().Error(cerr)
-			}
-		}()
 
-		copyReqErr := asyncCopy(out, in)
-		copyResErr := asyncCopy(in, out)
+		rw := &websocketReadWriter{ws: ws, buf: new(bytes.Buffer)}
+		copyReqErr := asyncCopy(rw, out)
+		copyResErr := asyncCopy(out, rw)
 
 		if cerr := <-copyReqErr; cerr != nil {
 			c.Logger().Errorf("error copying request body for %v: %v", t, cerr)

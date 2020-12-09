@@ -570,9 +570,6 @@ func (m *Master) Run(ctx context.Context) error {
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
 
-	handler = m.system.AskAt(actor.Addr("proxy"), proxy.NewConnectHandler{})
-	m.echo.CONNECT("*", handler.Get().(echo.HandlerFunc))
-
 	user.RegisterAPIHandler(m.echo, userService, authFuncs...)
 	command.RegisterAPIHandler(
 		m.system,
