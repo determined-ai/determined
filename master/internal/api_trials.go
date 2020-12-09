@@ -37,16 +37,15 @@ var (
 	distinctFieldBatchWaitTime = 5 * time.Second
 )
 
-func trialStatus(d *db.PgDB, trialID int32) (model.State, int, error) {
-	trialStatus := struct {
-		State   model.State
-		NumLogs int
-	}{}
-	err := d.Query("trial_status", &trialStatus, trialID)
-	if err == db.ErrNotFound {
-		err = status.Error(codes.NotFound, "trial not found")
-	}
-	return trialStatus.State, trialStatus.NumLogs, err
+// TrialLogBackend is an interface trial log backends, such as elastic or postgres,
+// must support to provide the features surfaced in API.
+type TrialLogBackend interface {
+	TrialLogs(
+		trialID, offset, limit int, filters []api.Filter, state interface{},
+	) ([]*model.TrialLog, interface{}, error)
+	AddTrialLogs([]*model.TrialLog) error
+	TrialLogCount(trialID int, filters []api.Filter) (int, error)
+	TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
 }
 
 func (a *apiServer) TrialLogs(
@@ -58,16 +57,23 @@ func (a *apiServer) TrialLogs(
 		return err
 	}
 
-	_, total, err := trialStatus(a.m.db, req.TrialId)
-	if err != nil {
+	switch exists, err := a.m.db.CheckTrialExists(int(req.TrialId)); {
+	case err != nil:
 		return err
+	case !exists:
+		return status.Error(codes.NotFound, "trial not found")
 	}
-	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
 	filters, err := constructTrialLogsFilters(req)
 	if err != nil {
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
 	}
+
+	total, err := a.m.trialLogBackend.TrialLogCount(int(req.TrialId), filters)
+	if err != nil {
+		return fmt.Errorf("failed to get trial count from backend: %w", err)
+	}
+	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
 	logID := int32(offset - 1) // WebUI assumes logs are 0-indexed.
 	onBatch := func(b api.LogBatch) error {
@@ -81,6 +87,7 @@ func (a *apiServer) TrialLogs(
 		})
 	}
 
+	var followState interface{}
 	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
 		switch {
 		case lr.Follow, lr.Limit > batchSize:
@@ -89,16 +96,18 @@ func (a *apiServer) TrialLogs(
 			return nil, nil
 		}
 
-		b, err := a.m.db.TrialLogs(int(req.TrialId), lr.Offset, lr.Limit, lr.Filters)
+		b, state, err := a.m.trialLogBackend.TrialLogs(
+			int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, followState)
 		if err != nil {
 			return nil, err
 		}
+		followState = state
 
 		return model.TrialLogBatch(b), err
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, _, err := trialStatus(a.m.db, req.TrialId)
+		state, err := a.m.db.TrialStatus(int(req.TrialId))
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}
@@ -143,6 +152,8 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 			switch l {
 			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
 				levels = append(levels, "DEBUG")
+			case logv1.LogLevel_LOG_LEVEL_TRACE:
+				levels = append(levels, "TRACE")
 			case logv1.LogLevel_LOG_LEVEL_DEBUG:
 				levels = append(levels, "DEBUG")
 			case logv1.LogLevel_LOG_LEVEL_INFO:
@@ -187,13 +198,8 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer) error {
 	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
-		var fields apiv1.TrialLogsFieldsResponse
-		err := a.m.db.QueryProto("get_trial_log_fields", &fields, req.TrialId)
-		if err != nil {
-			return nil, err
-		}
-
-		return api.ToLogBatchOfOne(&fields), err
+		fields, err := a.m.trialLogBackend.TrialLogFields(int(req.TrialId))
+		return api.ToLogBatchOfOne(fields), err
 	}
 
 	onBatch := func(b api.LogBatch) error {
@@ -204,7 +210,7 @@ func (a *apiServer) TrialLogsFields(
 	}
 
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, _, err := trialStatus(a.m.db, req.TrialId)
+		state, err := a.m.db.TrialStatus(int(req.TrialId))
 		if err != nil || model.TerminalStates[state] {
 			return true, err
 		}
@@ -227,9 +233,11 @@ func (a *apiServer) TrialLogsFields(
 func (a *apiServer) GetTrialCheckpoints(
 	_ context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {
-	_, _, err := trialStatus(a.m.db, req.Id)
-	if err != nil {
+	switch exists, err := a.m.db.CheckTrialExists(int(req.Id)); {
+	case err != nil:
 		return nil, err
+	case !exists:
+		return nil, status.Error(codes.NotFound, "trial not found")
 	}
 
 	resp := &apiv1.GetTrialCheckpointsResponse{}

@@ -61,14 +61,15 @@ type Master struct {
 	config   *Config
 	taskSpec *tasks.TaskSpec
 
-	logs          *logger.LogBuffer
-	system        *actor.System
-	echo          *echo.Echo
-	rm            *actor.Ref
-	rwCoordinator *actor.Ref
-	db            *db.PgDB
-	proxy         *actor.Ref
-	trialLogger   *actor.Ref
+	logs            *logger.LogBuffer
+	system          *actor.System
+	echo            *echo.Echo
+	rm              *actor.Ref
+	rwCoordinator   *actor.Ref
+	db              *db.PgDB
+	proxy           *actor.Ref
+	trialLogger     *actor.Ref
+	trialLogBackend TrialLogBackend
 }
 
 // New creates an instance of the Determined master.
@@ -362,20 +363,19 @@ func (m *Master) Run(ctx context.Context) error {
 	//             +- Websocket (actors.WebSocket: <remote-address>)
 	m.system = actor.NewSystem("master")
 
-	var trialLogPersister TrialLogPersister
 	switch {
 	case m.config.Logging.DefaultLoggingConfig != nil:
-		trialLogPersister = m.db
+		m.trialLogBackend = m.db
 	case m.config.Logging.ElasticLoggingConfig != nil:
-		es, sErr := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
-		if sErr != nil {
-			return sErr
+		es, eErr := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
+		if eErr != nil {
+			return eErr
 		}
-		trialLogPersister = es
+		m.trialLogBackend = es
 	default:
 		panic("unsupported logging backend")
 	}
-	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(trialLogPersister))
+	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(m.trialLogBackend))
 
 	userService, err := user.New(m.db, m.system)
 	if err != nil {
