@@ -29,7 +29,7 @@
     }
     & > main {
       flex-grow: 1;
-      height: 100vh;
+      height: calc(var(--vh, 1vh) * 100);
       overflow: auto;
     }
 
@@ -40,11 +40,13 @@
       [class^=NavigationTopbar_base_] { display: flex; }
       [class^=NavigationTabbar_base] { display: flex; }
       & > main {
-        height: calc(100vh - var(--theme-sizes-navigation-topbarHeight) - var(--theme-sizes-navigation-toolbarHeight));
+        height: calc(var(--vh, 1vh) * 100 - var(--theme-sizes-navigation-topbarHeight) - var(--theme-sizes-navigation-toolbarHeight));
       }
     }
   }
 }
 .noChrome {
-  .body > *:last-child { height: 100vh; }
+  .body > *:last-child {
+    height: calc(var(--vh, 1vh) * 100);
+  }
 }
