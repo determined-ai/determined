@@ -331,6 +331,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialExitedEarly:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.exitedReason)
 		e.processOperations(ctx, ops, err)
+		progress := e.searcher.Progress()
+		if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
+			ctx.Log().WithError(err).Error("failed to save experiment progress")
+		}
 	case sendNextWorkload:
 		// Pass this back to the trial; this message is just used to allow the trial to synchronize
 		// with the searcher.

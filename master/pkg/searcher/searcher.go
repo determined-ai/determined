@@ -66,7 +66,7 @@ func (s *Searcher) TrialExitedEarly(
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
 
-	s.eventLog.TrialExitedEarly(requestID)
+	s.eventLog.TrialExitedEarly(requestID, *exitedReason)
 	operations, err := s.method.trialExitedEarly(s.context(), requestID, *exitedReason)
 	s.eventLog.OperationsCreated(operations...)
 	if err != nil {

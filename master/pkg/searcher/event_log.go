@@ -25,9 +25,10 @@ type EventLog struct {
 	uncommitted []Event
 
 	// Searcher state.
-	earlyExits          map[RequestID]bool
-	TotalUnitsCompleted float64
-	Shutdown            bool
+    unitsCompletedByTrial map[RequestID]int
+	earlyExits            map[RequestID]bool
+	TotalUnitsCompleted   float64
+	Shutdown              bool
 
 	// Trial state and metrics.
 	TrialsRequested int
@@ -39,13 +40,14 @@ type EventLog struct {
 // NewEventLog initializes an empty event log.
 func NewEventLog(unit model.Unit) *EventLog {
 	return &EventLog{
-		earlyExits:          map[RequestID]bool{},
-		TotalUnitsCompleted: 0,
-		Shutdown:            false,
-		TrialsRequested:     0,
-		TrialsClosed:        0,
-		TrialIDs:            map[RequestID]int{},
-		RequestIDs:          map[int]RequestID{},
+        unitsCompletedByTrial: map[RequestID]int{},
+		earlyExits:            map[RequestID]bool{},
+		TotalUnitsCompleted:   0,
+		Shutdown:              false,
+		TrialsRequested:       0,
+		TrialsClosed:          0,
+		TrialIDs:              map[RequestID]int{},
+		RequestIDs:            map[int]RequestID{},
 	}
 }
 
@@ -70,13 +72,18 @@ func (el *EventLog) TrialCreated(create Create, trialID int) {
 	el.uncommitted = append(el.uncommitted, trialCreated)
 	el.TrialIDs[create.RequestID] = trialID
 	el.RequestIDs[trialID] = create.RequestID
+    el.unitsCompletedByTrial[create.RequestID] = 0
 }
 
 // TrialExitedEarly marks the trial with the given requestID as exited early.
-func (el *EventLog) TrialExitedEarly(requestID RequestID) {
+func (el *EventLog) TrialExitedEarly(requestID RequestID, exitedReason workload.ExitedReason) {
 	// If we are exiting early and we haven't seen this exiting early
 	// message before, return true to send the message down to the search
 	// method.
+    if workload.ExitedReason == workload.InvalidHP {
+        unitsCancelled := el.unitsCompletedByTrial[requestID]
+        el.TotalUnitsCompleted -= unitsCancelled
+    }
 	if _, ok := el.earlyExits[requestID]; !ok {
 		el.earlyExits[requestID] = true
 	}
@@ -85,6 +92,7 @@ func (el *EventLog) TrialExitedEarly(requestID RequestID) {
 // WorkloadCompleted records that the workload has been completed.
 func (el *EventLog) WorkloadCompleted(msg workload.CompletedMessage, unitsCompleted float64) {
 	el.TotalUnitsCompleted += unitsCompleted
+    el.unitsCompletedByTrial[el.RequestIDs[msg.Workload.TrialID]] += unitsCompleted
 	el.uncommitted = append(el.uncommitted, msg)
 }
 
