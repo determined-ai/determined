@@ -13,8 +13,8 @@ data:
   bucket_name: determined-ai-datasets
   # We recommend num_workers_train to be set to 16
   # when running with slots_per_trial=8
-  num_workers_train: 4
-  num_workers_val: 4
+  num_workers_train: 8
+  num_workers_val: 8
   # If streaming is true, we will send request to bucket
   # every time an image is requested.  If false, we will
   # save data to disk and load that the next time the
@@ -38,7 +38,7 @@ min_validation_period:
   epochs: 1
 
 hyperparameters:
-  weights_from: fb1d08bb-b332-4105-9787-2eb25b352377 
+  weights_from: null
   global_batch_size: 2048
   n_classes: 1000
   # Batch norm
@@ -105,7 +105,7 @@ hyperparameters:
 resources:
   # We recommend 8 slots with V100
   # and at least 16 slots with K80 GPUs.
-  slots_per_trial: 40
+  slots_per_trial: 32
   shm_size: 4000000000
 
 records_per_epoch: 1281166

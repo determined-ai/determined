@@ -227,7 +227,6 @@ class OFATrial(PyTorchTrial):
         logits = self.supernet(images)
         loss = self.criterion(logits, target)
         self.context.backward(loss)
-        self.context.step_optimizer(self.optimizer)
         soft_label = F.softmax(logits, dim=1).detach()
         self.supernet.set_active_subnet(
             1.0, 
