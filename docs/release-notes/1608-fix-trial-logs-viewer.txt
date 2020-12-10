@@ -1,6 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Fix an API bug that caused the log viewer fail to render older pages
-   of logs.

@@ -1,6 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  WebUI: Fix the tablet viewport for table and chart filters throughout
-   the WebUI.
