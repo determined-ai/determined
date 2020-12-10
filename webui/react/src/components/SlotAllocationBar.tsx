@@ -35,7 +35,12 @@ const legend = (label: React.ReactNode , count: number, totalSlots: number) => {
   </li>;
 };
 
-const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, showLegends, ...barProps }: Props) => {
+const ProgressBar: React.FC<Props> = ({
+  resourceStates,
+  totalSlots,
+  showLegends,
+  ...barProps
+}: Props) => {
 
   const { parts, legends } = useMemo(() => {
     const tally = {

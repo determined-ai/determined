@@ -4,12 +4,16 @@ import Grid, { GridMode } from 'components/Grid';
 import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
+import SlotAllocationBar from 'components/SlotAllocationBar';
 import Spinner from 'components/Spinner';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
+import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { Resource } from 'types';
+import { Resource, ResourceState } from 'types';
 import { categorize } from 'utils/data';
+
+const resourcePools = getResourcePools();
 
 const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
@@ -25,6 +29,26 @@ const HGICluster: React.FC = () => {
   }, [ agents ]);
 
   const availableResourceTypes = Object.keys(availableResources);
+
+  const cpuContainers = useMemo(() => {
+    const tally = {
+      running: 0,
+      total: 0,
+    };
+    resourcePools.forEach(rp => {
+      tally.total += rp.cpuContainerCapacity;
+      tally.running += rp.cpuContainersRunning;
+    });
+    return tally;
+  }, [ ]);
+
+  const slotContainerStates = agents.data?.map(agent => agent.resources)
+    .reduce((acc, cur) => {
+      acc.push(...cur);
+      return acc;
+    }, [])
+    .filter(res => res.enabled && res.container)
+    .map(res => res.container?.state) as ResourceState[];
 
   if (!agents.data) {
     return <Spinner />;
@@ -44,9 +68,13 @@ const HGICluster: React.FC = () => {
           {overview.GPU.total - overview.GPU.available} / {overview.GPU.total}
         </OverviewStats>
         <OverviewStats title="CPU Containers Running">
-          7/300 {/* TODO: blocked on resource pools API */}
+          {cpuContainers.running}/{cpuContainers.total}
         </OverviewStats>
       </Grid>
+      <SlotAllocationBar
+        resourceStates={slotContainerStates}
+        showLegends
+        totalSlots={overview.GPU.total} />
     </Page>
   );
 };
