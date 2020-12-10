@@ -23,23 +23,20 @@ type ResourceManagers struct {
 
 // NewResourceManagers creates an instance of ResourceManagers.
 func NewResourceManagers(
-	system *actor.System,
-	rmConfig *ResourceManagerConfig,
-	poolsConfig *ResourcePoolsConfig,
-	cert *tls.Certificate,
+	system *actor.System, config *ResourceConfig, cert *tls.Certificate,
 ) *ResourceManagers {
 	var ref *actor.Ref
 	switch {
-	case rmConfig.AgentRM != nil:
+	case config.ResourceManager.AgentRM != nil:
 		ref, _ = system.ActorOf(
 			actor.Addr("agentRM"),
-			newAgentResourceManager(rmConfig.AgentRM, poolsConfig, cert),
+			newAgentResourceManager(config, cert),
 		)
 
-	case rmConfig.KubernetesRM != nil:
+	case config.ResourceManager.KubernetesRM != nil:
 		ref, _ = system.ActorOf(
 			actor.Addr("kubernetesRM"),
-			newKubernetesResourceManager(rmConfig.KubernetesRM),
+			newKubernetesResourceManager(config.ResourceManager.KubernetesRM),
 		)
 
 	default:

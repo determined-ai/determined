@@ -438,9 +438,7 @@ func (m *Master) Run(ctx context.Context) error {
 		MasterInfo:     m.Info(),
 		LoggingOptions: m.config.Logging,
 	}
-	m.rm = resourcemanagers.Setup(
-		m.system, m.echo, m.config.ResourceManager, m.config.ResourcePoolsConfig, agentOpts, cert,
-	)
+	m.rm = resourcemanagers.Setup(m.system, m.echo, m.config.ResourceConfig, agentOpts, cert)
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))
