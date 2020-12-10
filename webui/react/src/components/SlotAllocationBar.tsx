@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 
-import Bar, { BarPart } from 'components/Bar';
+import Bar from 'components/Bar';
 import { getStateColorCssVar, ShirtSize } from 'themes';
-import { CommandState, ResourceState } from 'types';
+import { ResourceState } from 'types';
 import { floatToPercent } from 'utils/string';
 
 import css from './SlotAllocation.module.scss';
@@ -22,13 +22,14 @@ const pendingStates = new Set<ResourceState>([
   ResourceState.Starting,
 ]);
 
-const legend = (part: BarPart , count: number) => {
+const legend = (label: React.ReactNode , count: number, totalSlots: number) => {
   return <li>
     <span>
-      {count} ({floatToPercent(part.percent, 1)})
+      {count} ({floatToPercent(count/totalSlots, 1)})
     </span>
-    <span style={{ color: part.color }}>
-      {' ' + part.label}
+    <span>
+      {' '}
+      {label}
     </span>
   </li>;
 };
@@ -53,7 +54,7 @@ const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, ...barProps 
         percent: tally.free / totalSlots,
       },
       pending: {
-        color: getStateColorCssVar(ResourceState.Unspecified), // TODO
+        color: '#6666CC', // TODO
         label: 'Pending',
         percent: tally.pending / totalSlots,
       },
@@ -65,19 +66,24 @@ const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, ...barProps 
     };
 
     const legends = [
-      legend(parts.running, tally.running),
-      legend(parts.pending, tally.pending),
-      legend(parts.free, tally.free),
+      legend(parts.running.label, tally.running, totalSlots),
+      legend(parts.pending.label, tally.pending, totalSlots),
+      legend(parts.free.label, tally.free, totalSlots),
     ];
 
-    return { legends, parts: [ parts.running, parts.pending, parts.free ] };
+    return { legends, parts: [ parts.running, parts.pending ] };
   }, [ resourceStates, totalSlots ]);
 
   return (
     <div className={css.base}>
       <div className={css.header}>
         <header>GPU Slots Allocated</header>
-        <span>3/10(33%)</span>
+        <span>
+          {resourceStates.length}/{totalSlots} ({floatToPercent(
+            resourceStates.length/totalSlots,
+            1,
+          )})
+        </span>
       </div>
       <div className={css.bar}>
         <Bar {...barProps} parts={parts} />
