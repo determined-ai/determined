@@ -31,6 +31,18 @@ Object.defineProperty(window, 'matchMedia', {
   writable: true,
 });
 
+/*
+ * Mocking useResize hook.
+ */
+jest.mock('hooks/useResize', () => {
+  return jest.fn(() => ({
+    height: 1024,
+    width: 768,
+    x: 0,
+    y: 0,
+  }));
+});
+
 describe('App', () => {
   it('renders app', () => {
     const { container } = render(<MemoryRouter><App /></MemoryRouter>);
