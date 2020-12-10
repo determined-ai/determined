@@ -9,6 +9,7 @@ import css from './SlotAllocation.module.scss';
 
 export interface Props {
   barOnly?: boolean;
+  showLegends?: boolean;
   resourceStates: ResourceState[];
   totalSlots: number;
   size?: ShirtSize;
@@ -34,7 +35,7 @@ const legend = (label: React.ReactNode , count: number, totalSlots: number) => {
   </li>;
 };
 
-const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, ...barProps }: Props) => {
+const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, showLegends, ...barProps }: Props) => {
 
   const { parts, legends } = useMemo(() => {
     const tally = {
@@ -88,11 +89,13 @@ const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, ...barProps 
       <div className={css.bar}>
         <Bar {...barProps} parts={parts} />
       </div>
+      {showLegends &&
       <div className={css.legends}>
         <ol>
           {legends}
         </ol>
       </div>
+      }
     </div>
   );
 };
