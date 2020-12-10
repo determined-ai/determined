@@ -125,16 +125,28 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="instance type for master",
     )
     optional_named.add_argument(
-        "--agent-instance-type",
+        "--cpu-agent-instance-type",
         type=str,
-        default=constants.defaults.AGENT_INSTANCE_TYPE,
-        help="instance type for agent",
+        default=constants.defaults.CPU_AGENT_INSTANCE_TYPE,
+        help="instance type for agens in the CPU resource pool",
+    )
+    optional_named.add_argument(
+        "--gpu-agent-instance-type",
+        type=str,
+        default=constants.defaults.GPU_AGENT_INSTANCE_TYPE,
+        help="instance type for agents in the GPU resource pool",
     )
     optional_named.add_argument(
         "--db-password",
         type=str,
         default=constants.defaults.DB_PASSWORD,
         help="password for master database",
+    )
+    optional_named.add_argument(
+        "--max-cpu-containers-per-agent",
+        type=str,
+        default=constants.defaults.MAX_CPU_CONTAINERS_PER_AGENT,
+        help="max CPU containers running for agents in the CPU resource pool",
     )
     optional_named.add_argument(
         "--max-idle-agent-period",

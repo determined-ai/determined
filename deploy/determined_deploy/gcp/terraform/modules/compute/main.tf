@@ -44,8 +44,8 @@ resource "google_compute_instance" "master_instance" {
 
     resource_manager:
       type: agent
-      default_cpu_resource_pool: default
-      default_gpu_resource_pool: default
+      default_cpu_resource_pool: cpu-pool
+      default_gpu_resource_pool: gpu-pool
       scheduler:
         type: "${var.scheduler_type}"
     EOF
@@ -58,35 +58,70 @@ resource "google_compute_instance" "master_instance" {
     fi
 
     cat << EOF >> /usr/local/determined/etc/master.yaml
-    provisioner:
-      boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
-      agent_docker_image: determinedai/determined-agent:${var.det_version}
-      master_url: ${var.scheme}://internal-ip:${var.port}
-      agent_docker_network: ${var.agent_docker_network}
-      max_idle_agent_period: ${var.max_idle_agent_period}
-      max_agent_starting_period: ${var.max_agent_starting_period}
-      provider: gcp
-      name_prefix: det-dynamic-agent-${var.unique_id}-${var.det_version_key}-
-      label_key: managed-by
-      label_value: det-master-${var.unique_id}-${var.det_version_key}
-      network_interface:
-        network: projects/${var.project_id}/global/networks/${var.network_name}
-        subnetwork: projects/${var.project_id}/regions/${var.region}/subnetworks/${var.subnetwork_name}
-        external_ip: true
-      network_tags: [${var.tag_allow_internal}, ${var.tag_allow_ssh}]
-      service_account:
-        email: "${var.service_account_email}"
-        scopes: ["https://www.googleapis.com/auth/cloud-platform"]
-      instance_type:
-        machine_type: ${var.agent_instance_type}
-        gpu_type: ${var.gpu_type}
-        gpu_num: ${var.gpu_num}
-        preemptible: ${var.preemptible}
-      min_instances: ${var.min_dynamic_agents}
-      max_instances: ${var.max_dynamic_agents}
-      operation_timeout_period: ${var.operation_timeout_period}
-      base_config:
-        minCpuPlatform: ${var.min_cpu_platform_agent}
+    resource_pools:
+      - pool_name: cpu-pool
+        max_cpu_containers_per_agent: ${var.max_cpu_containers_per_agent}
+        provider:
+          boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
+          agent_docker_image: determinedai/determined-agent:${var.det_version}
+          master_url: ${var.scheme}://internal-ip:${var.port}
+          agent_docker_network: ${var.agent_docker_network}
+          max_idle_agent_period: ${var.max_idle_agent_period}
+          max_agent_starting_period: ${var.max_agent_starting_period}
+          type: gcp
+          name_prefix: det-dynamic-agent-${var.unique_id}-${var.det_version_key}-
+          label_key: managed-by
+          label_value: det-master-${var.unique_id}-${var.det_version_key}
+          network_interface:
+            network: projects/${var.project_id}/global/networks/${var.network_name}
+            subnetwork: projects/${var.project_id}/regions/${var.region}/subnetworks/${var.subnetwork_name}
+            external_ip: true
+          network_tags: [${var.tag_allow_internal}, ${var.tag_allow_ssh}]
+          service_account:
+            email: "${var.service_account_email}"
+            scopes: ["https://www.googleapis.com/auth/cloud-platform"]
+          instance_type:
+            machine_type: ${var.cpu_agent_instance_type}
+            gpu_type: ${var.gpu_type}
+            gpu_num: 0
+            preemptible: ${var.preemptible}
+          min_instances: ${var.min_dynamic_agents}
+          max_instances: ${var.max_dynamic_agents}
+          operation_timeout_period: ${var.operation_timeout_period}
+          base_config:
+            minCpuPlatform: ${var.min_cpu_platform_agent}
+
+      - pool_name: gpu-pool
+        max_cpu_containers_per_agent: 0
+        provider:
+          boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
+          agent_docker_image: determinedai/determined-agent:${var.det_version}
+          master_url: ${var.scheme}://internal-ip:${var.port}
+          agent_docker_network: ${var.agent_docker_network}
+          max_idle_agent_period: ${var.max_idle_agent_period}
+          max_agent_starting_period: ${var.max_agent_starting_period}
+          type: gcp
+          name_prefix: det-dynamic-agent-${var.unique_id}-${var.det_version_key}-
+          label_key: managed-by
+          label_value: det-master-${var.unique_id}-${var.det_version_key}
+          network_interface:
+            network: projects/${var.project_id}/global/networks/${var.network_name}
+            subnetwork: projects/${var.project_id}/regions/${var.region}/subnetworks/${var.subnetwork_name}
+            external_ip: true
+          network_tags: [${var.tag_allow_internal}, ${var.tag_allow_ssh}]
+          service_account:
+            email: "${var.service_account_email}"
+            scopes: ["https://www.googleapis.com/auth/cloud-platform"]
+          instance_type:
+            machine_type: ${var.gpu_agent_instance_type}
+            gpu_type: ${var.gpu_type}
+            gpu_num: ${var.gpu_num}
+            preemptible: ${var.preemptible}
+          min_instances: ${var.min_dynamic_agents}
+          max_instances: ${var.max_dynamic_agents}
+          operation_timeout_period: ${var.operation_timeout_period}
+          base_config:
+            minCpuPlatform: ${var.min_cpu_platform_agent}
     EOF
 
     apt-get remove docker docker-engine docker.io containerd runc
@@ -134,7 +169,7 @@ resource "google_compute_instance" "master_instance" {
 // Create configured number of static agents
 resource "google_compute_instance" "agent_instance" {
   name = "det-static-agent-${var.unique_id}-${var.det_version_key}-${count.index}"
-  machine_type = var.agent_instance_type
+  machine_type = var.gpu_agent_instance_type
   zone = var.zone
   tags = [var.tag_master_port, var.tag_allow_internal, var.tag_allow_ssh]
 
@@ -174,6 +209,7 @@ resource "google_compute_instance" "agent_instance" {
         --restart unless-stopped \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -e DET_MASTER_HOST=${google_compute_instance.master_instance.network_interface.0.network_ip} \
+        -e DET_RESOURCE_POOL=gpu-pool \
         determinedai/determined-agent:${var.det_version}  run --master-port=${var.port}
 
   EOT

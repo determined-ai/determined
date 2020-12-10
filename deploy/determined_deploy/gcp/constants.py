@@ -1,11 +1,13 @@
 class defaults:
 
-    AGENT_INSTANCE_TYPE = "n1-standard-32"
+    CPU_AGENT_INSTANCE_TYPE = "n1-standard-4"
+    GPU_AGENT_INSTANCE_TYPE = "n1-standard-32"
     DB_PASSWORD = "postgres"
     ENVIRONMENT_IMAGE = "det-environments-0f2001a"
     GPU_NUM = 8
     GPU_TYPE = "nvidia-tesla-k80"
     MASTER_INSTANCE_TYPE = "n1-standard-2"
+    MAX_CPU_CONTAINERS_PER_AGENT = "100"
     MAX_IDLE_AGENT_PERIOD = "10m"
     MAX_AGENT_STARTING_PERIOD = "20m"
     OPERATION_TIMEOUT_PERIOD = "5m"

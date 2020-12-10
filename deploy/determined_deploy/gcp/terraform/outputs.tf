@@ -18,8 +18,12 @@ output "B2--Master-Instance-Type" {
   value = "              ${var.master_instance_type}"
 }
 
-output "B3--Agent-Instance-Type" {
-  value = "               ${var.agent_instance_type}"
+output "B3--CPU-Agent-Instance-Type" {
+  value = "               ${var.cpu_agent_instance_type}"
+}
+
+output "B3--GPU-Agent-Instance-Type" {
+  value = "               ${var.gpu_agent_instance_type}"
 }
 
 output "B4--Min-Number-of-Dynamic-Agents" {

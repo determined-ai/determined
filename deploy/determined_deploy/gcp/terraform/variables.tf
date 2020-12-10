@@ -55,7 +55,12 @@ variable "master_instance_type" {
   default = "n1-standard-2"
 }
 
-variable "agent_instance_type" {
+variable "cpu_agent_instance_type" {
+  type = string
+  default = "n1-standard-4"
+}
+
+variable "gpu_agent_instance_type" {
   type = string
   default = "n1-standard-32"
 }
@@ -103,6 +108,11 @@ variable "agent_docker_network" {
 variable "master_docker_network" {
   type = string
   default = "determined"
+}
+
+variable "max_cpu_containers_per_agent" {
+  type = number
+  default = 100
 }
 
 variable "max_idle_agent_period" {

@@ -125,7 +125,9 @@ module "compute" {
   master_docker_network = var.master_docker_network
   master_instance_type = var.master_instance_type
   agent_docker_network = var.agent_docker_network
-  agent_instance_type = var.agent_instance_type
+  cpu_agent_instance_type = var.cpu_agent_instance_type
+  gpu_agent_instance_type = var.gpu_agent_instance_type
+  max_cpu_containers_per_agent = var.max_cpu_containers_per_agent
   max_idle_agent_period = var.max_idle_agent_period
   max_agent_starting_period = var.max_agent_starting_period
   gpu_type = var.gpu_type
