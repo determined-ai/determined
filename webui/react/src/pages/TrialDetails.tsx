@@ -517,7 +517,7 @@ If the problem persists please contact support.',
               }}
               pagination={getPaginationConfig(workloadSteps.length, pageSize)}
               rowClassName={defaultRowClassName(false)}
-              rowKey="id"
+              rowKey="batchNum"
               scroll={{ x: 1000 }}
               showSorterTooltip={false}
               size="small"
