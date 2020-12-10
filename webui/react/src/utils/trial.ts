@@ -3,7 +3,10 @@ import { isNumber, metricNameSorter } from 'utils/data';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
 
-export const extractMetricValueStep = (step: Step, metricName: MetricName): number | undefined => {
+export const extractMetricValuesFromSteps = (
+  step: Step,
+  metricName: MetricName,
+): number | undefined => {
   if (metricName.type === MetricType.Training) {
     const source = step.avgMetrics || {};
     if (isNumber(source[metricName.name])) return source[metricName.name];
@@ -14,7 +17,7 @@ export const extractMetricValueStep = (step: Step, metricName: MetricName): numb
   return undefined;
 };
 
-export const extractMetricNamesStep = (steps: Step[] = []): MetricName[] => {
+export const extractMetricNamesFromSteps = (steps: Step[] = []): MetricName[] => {
   const map: Record<string, MetricName> = {};
 
   steps.forEach(step => {
