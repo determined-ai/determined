@@ -44,7 +44,7 @@ const AppView: React.FC = () => {
 
   const fetchInfo = useCallback(() => triggerInfoRequest({}), [ triggerInfoRequest ]);
 
-  if (!ui.showChrome) classes.push(css.noChrome);
+  if (!ui.showChrome || !isAuthenticated) classes.push(css.noChrome);
 
   updateFaviconType(cluster.allocation !== 0);
 
