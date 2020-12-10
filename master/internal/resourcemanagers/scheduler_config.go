@@ -1,6 +1,8 @@
 package resourcemanagers
 
 import (
+	"encoding/json"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/union"
@@ -18,13 +20,6 @@ const (
 	defaultFitPolicy = best
 )
 
-func defaultSchedulerConfig() *SchedulerConfig {
-	return &SchedulerConfig{
-		FairShare:     &FairShareSchedulerConfig{},
-		FittingPolicy: defaultFitPolicy,
-	}
-}
-
 // SchedulerConfig holds the configurations for scheduling policies.
 type SchedulerConfig struct {
 	FairShare     *FairShareSchedulerConfig  `union:"type,fair_share" json:"-"`
@@ -40,7 +35,28 @@ func (s SchedulerConfig) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
-	return union.Unmarshal(data, s)
+	if err := union.Unmarshal(data, s); err != nil {
+		return err
+	}
+
+	type DefaultParser *SchedulerConfig
+	if err := json.Unmarshal(data, DefaultParser(s)); err != nil {
+		return err
+	}
+
+	// Fill in the default
+	if s.FairShare == nil && s.Priority == nil && s.RoundRobin == nil {
+		s.FairShare = &FairShareSchedulerConfig{}
+	}
+	if s.Priority != nil && s.Priority.DefaultPriority == nil {
+		defaultPriority := defaultSchedulingPriority
+		s.Priority.DefaultPriority = &defaultPriority
+	}
+	if s.FittingPolicy == "" {
+		s.FittingPolicy = best
+	}
+
+	return nil
 }
 
 // Validate implements the check.Validatable interface.
@@ -49,17 +65,6 @@ func (s SchedulerConfig) Validate() []error {
 		check.Contains(
 			s.FittingPolicy, []interface{}{best, worst}, "invalid fitting policy",
 		),
-	}
-}
-
-func fillInSchedulerDefaults(s *SchedulerConfig) {
-	if s.FittingPolicy == "" {
-		s.FittingPolicy = defaultFitPolicy
-	}
-
-	if s.Priority != nil && s.Priority.DefaultPriority == nil {
-		defaultPriority := defaultSchedulingPriority
-		s.Priority.DefaultPriority = &defaultPriority
 	}
 }
 
