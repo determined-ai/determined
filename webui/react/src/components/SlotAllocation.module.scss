@@ -1,7 +1,7 @@
 .base {
   .legends {
-    ol,
-    li {
+    font-size: var(--theme-sizes-font-small);
+    ol, li {
       margin: 0;
       padding: 0;
     }
@@ -23,5 +23,11 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    font-size: var(--theme-sizes-font-medium);
+  }
+
+  .bar {
+      margin: var(--theme-sizes-layout-small) 0;
+
   }
 }

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 
 import Bar, { BarPart } from 'components/Bar';
 import { getStateColorCssVar, ShirtSize } from 'themes';
-import { ResourceState } from 'types';
+import { CommandState, ResourceState } from 'types';
 import { floatToPercent } from 'utils/string';
 
 import css from './SlotAllocation.module.scss';
@@ -46,31 +46,31 @@ const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, ...barProps 
       if (state === ResourceState.Running) tally.running++;
     });
 
-    const parts: BarPart[] = [
-      {
+    const parts = {
+      free: {
+        color: getStateColorCssVar(ResourceState.Terminated), // TODO
+        label: 'Free',
+        percent: tally.free / totalSlots,
+      },
+      pending: {
+        color: getStateColorCssVar(ResourceState.Unspecified), // TODO
+        label: 'Pending',
+        percent: tally.pending / totalSlots,
+      },
+      running: {
         color: getStateColorCssVar(ResourceState.Running),
         label: 'Running',
         percent: tally.running / totalSlots,
       },
-      {
-        color: 'purple', // TODO
-        label: 'Pending',
-        percent: tally.pending / totalSlots,
-      },
-      {
-        color: 'Green', // TODO
-        label: 'Free',
-        percent: tally.free / totalSlots,
-      },
-    ];
+    };
 
     const legends = [
-      legend(parts[0], tally.running),
-      legend(parts[1], tally.pending),
-      legend(parts[2], tally.free),
+      legend(parts.running, tally.running),
+      legend(parts.pending, tally.pending),
+      legend(parts.free, tally.free),
     ];
 
-    return { legends, parts };
+    return { legends, parts: [ parts.running, parts.pending, parts.free ] };
   }, [ resourceStates, totalSlots ]);
 
   return (
@@ -79,7 +79,9 @@ const ProgressBar: React.FC<Props> = ({ resourceStates, totalSlots, ...barProps 
         <header>GPU Slots Allocated</header>
         <span>3/10(33%)</span>
       </div>
-      <Bar {...barProps} parts={parts} />
+      <div className={css.bar}>
+        <Bar {...barProps} parts={parts} />
+      </div>
       <div className={css.legends}>
         <ol>
           {legends}

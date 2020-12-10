@@ -15,8 +15,14 @@
   li {
     display: block;
     height: 100%;
+    margin-left: 1px;
+  }
+  li:first-child {
+    margin-left: 0;
   }
   .bar {
+    border-radius: 3px;
+    overflow: hidden;
     background-color: var(--theme-colors-monochrome-12);
     border-radius: 0;
     box-shadow: var(--theme-colors-monochrome-6);
@@ -28,7 +34,6 @@
   }
   .bar > * {
     height: 100%;
-    overflow: hidden;
     position: relative;
   }
 }
