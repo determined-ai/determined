@@ -4,6 +4,7 @@
   flex-direction: column;
   flex-grow: 1;
   height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
   justify-content: flex-start;
   overflow: auto;
   padding: var(--theme-sizes-layout-big);
