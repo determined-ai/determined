@@ -45,7 +45,7 @@ Version 0.13.10
 
 **Deprecated Features**
 
-- The prior version of the priority scheduler is now deprecated. It will remain available as the ``round_robin`` scheduler for a limited period of time.
+- The previous version of the priority scheduler is now deprecated. It will remain available as the ``round_robin`` scheduler for a limited period of time.
 
 Version 0.13.9
 ==============
