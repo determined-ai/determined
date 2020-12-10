@@ -16,7 +16,6 @@ body,
 #root {
   font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
   font-size: 62.5%;
-  height: 100vh;
   height: calc(var(--vh, 1vh) * 100);
   width: 100vw;
 }
