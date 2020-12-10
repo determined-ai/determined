@@ -13,7 +13,12 @@ import "protoc-gen-swagger/options/annotations.proto";
 message CheckpointWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "startTime", "state", "numBatches", "priorBatchesProcessed" ]
+      required: [
+        "start_time",
+        "state",
+        "num_batches",
+        "prior_batches_processed"
+      ]
     }
   };
   // UUID of the checkpoint.
@@ -38,11 +43,11 @@ message MetricsWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [
-        "startTime",
+        "start_time",
         "state",
-        "numInputs",
-        "numBatches",
-        "priorBatchesProcessed"
+        "num_inputs",
+        "num_batches",
+        "prior_batches_processed"
       ]
     }
   };
