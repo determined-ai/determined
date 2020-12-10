@@ -52,7 +52,7 @@ export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
 export const getAgents =
   generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]>(Config.getAgents);
 
-// FIXME placeholder for a getResourcePoolsApi.
+// Placeholder for getResourcePools API.
 /* eslint-disable */
 export const getResourcePools = async () => {
   return resourcePools;
