@@ -13,7 +13,8 @@ import { isObject } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
-import { checkpointSize, trialDurations } from 'utils/types';
+import { trialDurations } from 'utils/trial';
+import { checkpointSize } from 'utils/types';
 
 import css from './TrialInfoBox.module.scss';
 

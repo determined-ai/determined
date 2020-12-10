@@ -1,11 +1,10 @@
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
   CommandType, ExperimentHyperParams, ExperimentItem, RawJson, RecentCommandTask,
-  RecentExperimentTask, RecentTask, RunState, Step, TBSource, TBSourceType, WorkloadWrapper,
+  RecentExperimentTask, RecentTask, RunState, TBSource, TBSourceType,
 } from 'types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
-import { getDuration } from './time';
 
 /* Conversions to Tasks */
 
@@ -170,42 +169,6 @@ export const checkpointSize = (checkpoint: Checkpoint | CheckpointWorkload): num
   if (!checkpoint.resources) return 0;
   const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
   return total;
-};
-
-interface TrialDurations {
-  train: number;
-  checkpoint: number;
-  validation: number;
-}
-
-export const trialDurationsStep = (steps: Step[]): TrialDurations => {
-  const initialDurations: TrialDurations = {
-    checkpoint: 0,
-    train: 0,
-    validation: 0,
-  };
-
-  return steps.reduce((acc: TrialDurations, cur: Step) => {
-    acc.train += getDuration(cur);
-    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
-    if (cur.validation) acc.validation += getDuration(cur.validation);
-    return acc;
-  }, initialDurations);
-};
-
-export const trialDurations = (wlWrappers: WorkloadWrapper[]): TrialDurations => {
-  const initialDurations: TrialDurations = {
-    checkpoint: 0,
-    train: 0,
-    validation: 0,
-  };
-
-  return wlWrappers.reduce((acc: TrialDurations, cur: WorkloadWrapper) => {
-    if (cur.training) acc.train += getDuration(cur.training);
-    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
-    if (cur.validation) acc.validation += getDuration(cur.validation);
-    return acc;
-  }, initialDurations);
 };
 
 /* Experiment Config */

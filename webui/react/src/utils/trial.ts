@@ -3,6 +3,8 @@ import { isNumber, metricNameSorter } from 'utils/data';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
 
+import { getDuration } from './time';
+
 export const extractMetricValuesFromSteps = (
   step: Step,
   metricName: MetricName,
@@ -131,4 +133,40 @@ export const valueToMetricName = (value: string): MetricName | undefined => {
   const parts = value.split('|');
   if (parts.length === 2) return { name: parts[1], type: parts[0] as MetricType };
   return undefined;
+};
+
+interface TrialDurations {
+  train: number;
+  checkpoint: number;
+  validation: number;
+}
+
+export const trialDurationsStep = (steps: Step[]): TrialDurations => {
+  const initialDurations: TrialDurations = {
+    checkpoint: 0,
+    train: 0,
+    validation: 0,
+  };
+
+  return steps.reduce((acc: TrialDurations, cur: Step) => {
+    acc.train += getDuration(cur);
+    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
+    if (cur.validation) acc.validation += getDuration(cur.validation);
+    return acc;
+  }, initialDurations);
+};
+
+export const trialDurations = (wlWrappers: WorkloadWrapper[]): TrialDurations => {
+  const initialDurations: TrialDurations = {
+    checkpoint: 0,
+    train: 0,
+    validation: 0,
+  };
+
+  return wlWrappers.reduce((acc: TrialDurations, cur: WorkloadWrapper) => {
+    if (cur.training) acc.train += getDuration(cur.training);
+    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
+    if (cur.validation) acc.validation += getDuration(cur.validation);
+    return acc;
+  }, initialDurations);
 };
