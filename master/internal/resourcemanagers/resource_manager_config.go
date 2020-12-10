@@ -3,9 +3,6 @@ package resourcemanagers
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
@@ -151,8 +148,23 @@ func (r *ResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	if err := union.Unmarshal(data, r); err != nil {
 		return err
 	}
+
 	type DefaultParser *ResourceManagerConfig
-	return errors.Wrap(json.Unmarshal(data, DefaultParser(r)), "failed to parse resource manager")
+	if err := json.Unmarshal(data, DefaultParser(r)); err != nil {
+		return err
+	}
+
+	// Fill in the default config.
+	if r.AgentRM == nil && r.KubernetesRM == nil {
+		r.AgentRM = &AgentResourceManagerConfig{
+			Scheduler: &SchedulerConfig{
+				FittingPolicy: defaultFitPolicy,
+			},
+			DefaultGPUResourcePool: defaultResourcePoolName,
+			DefaultCPUResourcePool: defaultResourcePoolName,
+		}
+	}
+	return nil
 }
 
 // AgentResourceManagerConfig hosts configuration fields for the determined resource manager.
@@ -160,6 +172,22 @@ type AgentResourceManagerConfig struct {
 	Scheduler              *SchedulerConfig `json:"scheduler"`
 	DefaultCPUResourcePool string           `json:"default_cpu_resource_pool"`
 	DefaultGPUResourcePool string           `json:"default_gpu_resource_pool"`
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
+	type DefaultParser *AgentResourceManagerConfig
+	if err := json.Unmarshal(data, DefaultParser(a)); err != nil {
+		return err
+	}
+
+	if a.DefaultGPUResourcePool == "" {
+		a.DefaultGPUResourcePool = defaultResourcePoolName
+	}
+	if a.DefaultCPUResourcePool == "" {
+		a.DefaultCPUResourcePool = defaultResourcePoolName
+	}
+	return nil
 }
 
 // Validate implements the check.Validatable interface.
