@@ -42,6 +42,7 @@ const HGICluster: React.FC = () => {
     return tally;
   }, [ ]);
 
+  // TODO this needs to be hydrated from resource pools endpoint.
   const slotContainerStates = agents.data?.map(agent => agent.resources)
     .reduce((acc, cur) => {
       acc.push(...cur);
