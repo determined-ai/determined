@@ -439,6 +439,11 @@ func newFluentActor(
 	}, nil
 }
 
+// fluentFailed is a message sent when the trackLogs sees fluent has failed.
+type fluentFailed struct {
+	err error
+}
+
 func (f *fluentActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
@@ -459,6 +464,8 @@ func (f *fluentActor) Receive(ctx *actor.Context) error {
 		case "error":
 			ctx.Log().Errorf("Fluent Bit: %s", message)
 		}
+	case fluentFailed:
+		return errors.New("detected Fluent Bit exit")
 	case actor.PostStop:
 		t0 := time.Now()
 		err := f.docker.ContainerRemove(
@@ -474,6 +481,13 @@ func (f *fluentActor) trackLogs(ctx *actor.Context) {
 	if err := trackLogs(ctx, f.docker, f.containerID, ctx.Self()); err != nil {
 		ctx.Log().Errorf("error tracking Fluent Bit logs: %s", err)
 	}
+	// This message also allows us to synchronize with the buffer before dumping logs.
+	ctx.Ask(ctx.Self(), aproto.ContainerLog{
+		Timestamp: time.Now(),
+		RunMessage: &aproto.RunMessage{
+			Value: "detected Fluent Bit exit",
+		},
+	})
 	ctx.Log().Error("Fluent Bit failed, dumping all recent logs")
 	i0 := f.fluentLogsCount - len(f.fluentLogs)
 	if i0 < 0 {
@@ -482,4 +496,5 @@ func (f *fluentActor) trackLogs(ctx *actor.Context) {
 	for i := i0; i < f.fluentLogsCount; i++ {
 		ctx.Log().Error(f.fluentLogs[i%len(f.fluentLogs)].Value)
 	}
+	ctx.Tell(ctx.Self(), fluentFailed{})
 }

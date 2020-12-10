@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"net/http/pprof"
 	"os"
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/gorilla/websocket"
@@ -103,8 +105,23 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Log().Warn("master socket disconnected, shutting down agent...")
 		case a.cm:
 			ctx.Log().Warn("container manager failed, shutting down agent...")
+		case a.fluent:
+			ctx.Log().Warn("fluent bit failed, restarting it...")
+			go func() {
+				// Do this in a goroutine so we don't block the agent actor while retrying.
+				err := a.restartFluent(ctx)
+				if err != nil {
+					ctx.Tell(ctx.Self(), fluentFailed{
+						err: errors.New("failed to restart fluent with retries"),
+					})
+				}
+			}()
+			return nil
 		}
 		return errors.Wrapf(msg.Error, "unexpected child failure: %s", msg.Child.Address())
+
+	case fluentFailed:
+		return errors.Wrapf(msg.err, "unexpected unrecoverable fluent failure: %s", msg.err)
 
 	case actor.ChildStopped:
 		return errors.Errorf("unexpected child stopped: %s", msg.Child.Address())
@@ -134,6 +151,27 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (a *agent) restartFluent(ctx *actor.Context) error {
+	i := 0
+	for {
+		fluentActor, err := newFluentActor(ctx, a.Options, *a.MasterSetAgentOptions)
+		switch {
+		case err == nil:
+			a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
+			return nil
+		case err != nil && i >= 5:
+			return errors.Wrap(err, "failed to restart Fluent daemon")
+		default:
+			ctx.Log().Warnf("failed to restart Fluent daemon: %s", err)
+			// Just use exponential backoff.
+			t := time.Duration(math.Pow(2, float64(i))) * time.Second
+			i++
+			ctx.Log().Infof("trying to restart Fluent daemon in %s", t)
+			time.Sleep(t)
+		}
+	}
 }
 
 func (a *agent) addProxy(config *container.Config) {
