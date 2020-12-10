@@ -413,7 +413,7 @@ func (t *TrialLog) Resolve() {
 	}
 
 	// This is just to match postgres.
-	const containerIDMaxLength = 8 // TODO: I think we need to remove this for elastic.
+	const containerIDMaxLength = 8
 	var containerID string
 	if t.ContainerID != nil {
 		containerID = *t.ContainerID

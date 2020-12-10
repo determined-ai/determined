@@ -306,8 +306,8 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 			}
 			var inTerms []jsonObj
 			for _, v := range values {
-				switch reflect.TypeOf(v).Kind() {
-				case reflect.String:
+				switch v.(type) {
+				case string:
 					// For strings, we filter against the keyword not the analyzed text.
 					// If you have any text field, for example `agent_id`, by default,
 					// elasticsearch will analyze this field and operations against it
@@ -423,7 +423,7 @@ func checkResponse(res *esapi.Response) error {
 	if res.StatusCode > 299 || res.StatusCode < 200 {
 		b, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return errors.New("failed to read response body")
+			return fmt.Errorf("failed to read response body with code %d", res.StatusCode)
 		}
 		return fmt.Errorf("request failed with code %d: %s", res.StatusCode, b)
 	}

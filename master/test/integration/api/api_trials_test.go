@@ -35,8 +35,9 @@ func TestTrialLogAPIPostgres(t *testing.T) {
 }
 
 func TestTrialLogAPIElastic(t *testing.T) {
-	cfg, err := testutils.DefaultMasterConfig(testutils.WithElasticEnabled())
+	cfg, err := testutils.DefaultMasterConfig()
 	assert.NilError(t, err, "failed to create master config")
+	cfg.Logging = testutils.DefaultElasticConfig()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	_, _, cl, creds, err := testutils.RunMaster(ctx, cfg)
@@ -242,8 +243,9 @@ func TestTrialLogFollowingPostgres(t *testing.T) {
 }
 
 func TestTrialLogFollowingElastic(t *testing.T) {
-	cfg, err := testutils.DefaultMasterConfig(testutils.WithElasticEnabled())
+	cfg, err := testutils.DefaultMasterConfig()
 	assert.NilError(t, err, "failed to create master config")
+	cfg.Logging = testutils.DefaultElasticConfig()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	_, _, cl, creds, err := testutils.RunMaster(ctx, cfg)
@@ -305,13 +307,13 @@ func assertStringContains(t *testing.T, actual, expected string) {
 		fmt.Sprintf("%s not in %s", expected, actual))
 }
 
-// stringWithPrefix is a convenience method that returns a pointer.
+// stringWithPrefix is a convenience function that returns a pointer.
 func stringWithPrefix(p, s string) *string {
 	x := p + s
 	return &x
 }
 
-// timePlusDuration is a convenience method that returns a pointer.
+// timePlusDuration is a convenience function that returns a pointer.
 func timePlusDuration(t time.Time, d time.Duration) *time.Time {
 	t2 := t.Add(d)
 	return &t2

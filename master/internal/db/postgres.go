@@ -1944,8 +1944,9 @@ WHERE id = $1
 	return state, err
 }
 
-// TrialStatus returns the current status of the given trial, including start and end times
-// without returning all its hparams and other unneeded details. Called in some hotter paths.
+// TrialStatus returns the current status of the given trial, including the end time
+// without returning all its hparams and other unneeded details. Called in paths hotter
+// than TrialByID allows.
 func (db *PgDB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	status := struct {
 		State   model.State `db:"state"`

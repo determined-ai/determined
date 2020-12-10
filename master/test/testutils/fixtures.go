@@ -54,22 +54,11 @@ func ResolvePostgres() (*db.PgDB, error) {
 
 // ResolveElastic resolves a connection to an elasticsearch database.
 func ResolveElastic() (*elastic.Elastic, error) {
-	es, err := elastic.Setup(defaultElasticConfig())
+	es, err := elastic.Setup(*DefaultElasticConfig().ElasticLoggingConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to elasticsearch: %w", err)
 	}
 	return es, nil
-}
-
-func defaultElasticConfig() model.ElasticLoggingConfig {
-	port, err := strconv.Atoi(os.Getenv("DET_INTEGRATION_ES_PORT"))
-	if err != nil {
-		panic("elastic config had non-numeric port")
-	}
-	return model.ElasticLoggingConfig{
-		Host: os.Getenv("DET_INTEGRATION_ES_HOST"),
-		Port: port,
-	}
 }
 
 // RunMaster runs a master in a goroutine and returns a reference to the master,
@@ -136,48 +125,34 @@ func ConnectMaster(c *internal.Config) (apiv1.DeterminedClient, error) {
 	return nil, fmt.Errorf("failed to connect to master: %w", err)
 }
 
-// MasterConfigOption is an option that can be applied to a master config.
-type MasterConfigOption interface {
-	apply(*internal.Config)
-}
-
-// MasterConfigOptionFunc is a type that implements MasterConfigOption.
-type MasterConfigOptionFunc func(*internal.Config)
-
-func (f MasterConfigOptionFunc) apply(cfg *internal.Config) {
-	f(cfg)
-}
-
-func WithElasticEnabled() MasterConfigOption {
-	return MasterConfigOptionFunc(func(cfg *internal.Config) {
-		elasticCfg := defaultElasticConfig()
-		cfg.Logging = model.LoggingConfig{
-			ElasticLoggingConfig: &elasticCfg,
-		}
-	})
-}
-
 // DefaultMasterConfig returns the default master configuration.
-func DefaultMasterConfig(opts ...MasterConfigOption) (*internal.Config, error) {
+func DefaultMasterConfig() (*internal.Config, error) {
 	c := internal.DefaultConfig()
-	err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields)
-	if err != nil {
+	if err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields); err != nil {
 		return nil, err
 	}
 
-	err = c.Resolve()
-	if err != nil {
+	if err := c.Resolve(); err != nil {
 		return nil, err
 	}
 
-	for _, opt := range opts {
-		opt.apply(c)
-	}
-
-	if err = check.Validate(c); err != nil {
+	if err := check.Validate(c); err != nil {
 		return nil, err
 	}
 	return c, nil
+}
+
+func DefaultElasticConfig() model.LoggingConfig {
+	port, err := strconv.Atoi(os.Getenv("DET_INTEGRATION_ES_PORT"))
+	if err != nil {
+		panic("elastic config had non-numeric port")
+	}
+	return model.LoggingConfig{
+		ElasticLoggingConfig: &model.ElasticLoggingConfig{
+			Host: os.Getenv("DET_INTEGRATION_ES_HOST"),
+			Port: port,
+		},
+	}
 }
 
 // APICredentials takes a context and a connected apiv1.DeterminedClient and returns a context
