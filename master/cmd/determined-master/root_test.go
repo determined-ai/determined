@@ -103,3 +103,52 @@ func TestUnmarshalMasterConfiguration(t *testing.T) {
 		t.Errorf("SaveTrialBest %d <= 0", f)
 	}
 }
+
+func TestApplyBackwardsCompatibility(t *testing.T) {
+	type testcase struct {
+		name     string
+		before   map[string]interface{}
+		expected map[string]interface{}
+		err      error
+	}
+	tcs := []testcase{
+		{
+			before: map[string]interface{}{
+				"scheduler": map[string]interface{}{
+					"fit": "best",
+				},
+				"provisioner": map[string]interface{}{
+					"max_idle_agent_period":     "30s",
+					"max_agent_starting_period": "30s",
+				},
+			},
+			expected: map[string]interface{}{
+				"resource_manager": map[string]interface{}{
+					"type": "agent",
+					"scheduler": map[string]interface{}{
+						"fitting_policy": "best",
+					},
+					"default_cpu_resource_pool": "default",
+					"default_gpu_resource_pool": "default",
+				},
+				"resource_pools": []map[string]interface{}{
+					{
+						"pool_name": "default",
+						"provider": map[string]interface{}{
+							"max_idle_agent_period":     "30s",
+							"max_agent_starting_period": "30s",
+						},
+					},
+				},
+			},
+		},
+	}
+	for ix := range tcs {
+		tc := tcs[ix]
+		t.Run(tc.name, func(t *testing.T) {
+			after, err := applyBackwardsCompatibility(tc.before)
+			assert.Equal(t, err, tc.err)
+			assert.DeepEqual(t, after, tc.expected)
+		})
+	}
+}
