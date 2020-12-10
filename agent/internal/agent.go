@@ -109,19 +109,14 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Log().Warn("fluent bit failed, restarting it...")
 			go func() {
 				// Do this in a goroutine so we don't block the agent actor while retrying.
-				err := a.restartFluent(ctx)
-				if err != nil {
-					ctx.Tell(ctx.Self(), fluentFailed{
-						err: errors.New("failed to restart fluent with retries"),
-					})
+				if err := a.restartFluent(ctx); err != nil {
+					logrus.WithError(err).Error("failed to restart fluent with retries")
+					ctx.Self().Stop()
 				}
 			}()
 			return nil
 		}
 		return errors.Wrapf(msg.Error, "unexpected child failure: %s", msg.Child.Address())
-
-	case fluentFailed:
-		return errors.Wrapf(msg.err, "unexpected unrecoverable fluent failure: %s", msg.err)
 
 	case actor.ChildStopped:
 		return errors.Errorf("unexpected child stopped: %s", msg.Child.Address())

@@ -439,10 +439,8 @@ func newFluentActor(
 	}, nil
 }
 
-// fluentFailed is a message sent when the trackLogs sees fluent has failed.
-type fluentFailed struct {
-	err error
-}
+// fluentFailedDetected is a message sent when the trackLogs sees fluent has failed.
+type fluentFailureDetected struct{}
 
 func (f *fluentActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
@@ -464,7 +462,7 @@ func (f *fluentActor) Receive(ctx *actor.Context) error {
 		case "error":
 			ctx.Log().Errorf("Fluent Bit: %s", message)
 		}
-	case fluentFailed:
+	case fluentFailureDetected:
 		return errors.New("detected Fluent Bit exit")
 	case actor.PostStop:
 		t0 := time.Now()
@@ -496,5 +494,5 @@ func (f *fluentActor) trackLogs(ctx *actor.Context) {
 	for i := i0; i < f.fluentLogsCount; i++ {
 		ctx.Log().Error(f.fluentLogs[i%len(f.fluentLogs)].Value)
 	}
-	ctx.Tell(ctx.Self(), fluentFailed{})
+	ctx.Tell(ctx.Self(), fluentFailureDetected{})
 }
