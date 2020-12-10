@@ -85,6 +85,7 @@ export interface Agent {
   id: string;
   registeredTime: number;
   resources: Resource[];
+  resourcePool: string;
 }
 
 export interface ClusterOverviewResource {

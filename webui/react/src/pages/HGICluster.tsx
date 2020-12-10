@@ -10,10 +10,26 @@ import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { Resource, ResourceState } from 'types';
+import { Agent, Resource, ResourceState } from 'types';
 import { categorize } from 'utils/data';
 
 const resourcePools = getResourcePools();
+
+const getSlotContainerStates = (agents: Agent[], resourcePoolName?: string): ResourceState[] => {
+  let targetAgents = agents;
+  if (resourcePoolName) {
+    targetAgents = targetAgents.filter(agent => agent.resourcePool);
+  }
+  const slotContainerStates = targetAgents.map(agent => agent.resources)
+    .reduce((acc, cur) => {
+      acc.push(...cur);
+      return acc;
+    }, [])
+    .filter(res => res.enabled && res.container)
+    .map(res => res.container?.state) as ResourceState[];
+
+  return slotContainerStates;
+};
 
 const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
@@ -42,14 +58,7 @@ const HGICluster: React.FC = () => {
     return tally;
   }, [ ]);
 
-  // TODO this needs to be hydrated from resource pools endpoint.
-  const slotContainerStates = agents.data?.map(agent => agent.resources)
-    .reduce((acc, cur) => {
-      acc.push(...cur);
-      return acc;
-    }, [])
-    .filter(res => res.enabled && res.container)
-    .map(res => res.container?.state) as ResourceState[];
+  const slotContainerStates = getSlotContainerStates(agents.data || []);
 
   if (!agents.data) {
     return <Spinner />;
