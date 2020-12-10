@@ -7,12 +7,12 @@ import { RouteProps } from 'react-router';
  * mechanism.
  */
 export interface RouteConfig extends RouteProps {
-  id: string;
   icon?: string;
+  id: string;
+  needAuth?: boolean;
   path: string;
   popout?: boolean;
   redirect?: string;
   suffixIcon?: string;
   title?: string;
-  needAuth?: boolean;
 }

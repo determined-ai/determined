@@ -25,12 +25,12 @@ interface Props {
   disableLevel?: boolean;
   disableLineNumber?: boolean;
   filterOptions?: React.ReactNode;
-  pageProps: Partial<PageProps>;
   isDownloading?: boolean;
   isLoading?: boolean;
   noWrap?: boolean;
   onDownload?: () => void;
   onScrollToTop?: (oldestLogId: number) => void;
+  pageProps: Partial<PageProps>;
   ref?: React.Ref<LogViewerHandles>;
 }
 

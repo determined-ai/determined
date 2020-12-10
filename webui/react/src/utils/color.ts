@@ -1,7 +1,7 @@
 interface HslColor {
   h: number;
-  s: number;
   l: number;
+  s: number;
 }
 
 export const hex2hsl = (hex: string): HslColor => {

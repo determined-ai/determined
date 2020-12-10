@@ -8,14 +8,14 @@ import { clone } from 'utils/data';
 import { generateAlphaNumeric } from '../utils/string';
 
 interface Props extends CommonProps {
-  title: string;
   resources?: Resource[];
+  title: string;
 }
 
 export interface PlotInfo {
+  config: Partial<Plotly.Config>
   data: Data[];
   layout: Partial<Plotly.Layout>;
-  config: Partial<Plotly.Config>
 }
 
 type Tally = Record<ResourceState, number>;

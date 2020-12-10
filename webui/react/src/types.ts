@@ -11,8 +11,8 @@ export interface DetailedUser extends User {
 }
 
 export interface Auth {
-  token?: string;
   isAuthenticated: boolean;
+  token?: string;
   user?: User;
 }
 
@@ -69,12 +69,12 @@ export interface ResourceContainer {
 }
 
 export interface Resource {
+  container?: ResourceContainer;
+  enabled: boolean;
   id: string;
   name: string;
-  uuid?: string;
   type: ResourceType;
-  enabled: boolean;
-  container?: ResourceContainer;
+  uuid?: string;
 }
 
 export interface Agent {
@@ -101,8 +101,8 @@ export interface StartEndTimes {
 }
 
 export interface Pagination {
-  offset: number;
   limit: number;
+  offset: number;
 }
 
 /* Command */
@@ -144,15 +144,15 @@ export interface CommandConfig {
 
 // The command type is shared between Commands, Notebooks, Tensorboards, and Shells.
 export interface Command {
-  kind: CommandType; // TODO rename to type
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
   id: string;
+  kind: CommandType; // TODO rename to type
   misc?: CommandMisc;
-  user: User;
   registeredTime: string;
   serviceAddress?: string;
   state: CommandState;
+  user: User;
 }
 
 export enum CheckpointStorageType {
@@ -190,14 +190,14 @@ export interface ExperimentConfig {
   checkpointStorage?: CheckpointStorage;
   dataLayer?: DataLayer;
   description: string;
-  searcher: {
-    smallerIsBetter: boolean;
-    metric: string;
-  };
+  labels?: string[];
   resources: {
     maxSlots?: number;
   };
-  labels?: string[];
+  searcher: {
+    metric: string;
+    smallerIsBetter: boolean;
+  };
 }
 
 /* Experiment */
@@ -259,26 +259,26 @@ export interface CheckpointWorkload extends Workload {
 }
 
 export interface MetricsWorkload extends Workload {
-  state: RunState;
   metrics?: Record<string, number>;
   numInputs?: number;
+  state: RunState;
 }
 export interface WorkloadWrapper {
+  checkpoint?: CheckpointWorkload;
   training?: MetricsWorkload;
   validation?: MetricsWorkload;
-  checkpoint?: CheckpointWorkload;
 }
 
 // Validation sub step.
 export interface Validation extends StartEndTimes {
   id: number;
-  state: RunState;
   metrics?: ValidationMetrics;
+  state: RunState;
 }
 
 export interface Step2 extends WorkloadWrapper, StartEndTimes {
-  training: MetricsWorkload;
   batchNum: number;
+  training: MetricsWorkload;
 }
 
 export interface Step extends StartEndTimes {
@@ -306,9 +306,10 @@ export type TrialHyperParameters = Record<string, HyperparameterValue>
 
 interface TrialBase extends StartEndTimes {
   experimentId: number;
-  id: number;
-  state: RunState;
   hparams: TrialHyperParameters;
+  id: number;
+  seed: number;
+  state: RunState;
 }
 
 // To replace TrialItem once experiment endpoint is migrated.
@@ -329,23 +330,23 @@ export interface TrialItem extends TrialBase {
   latestValidationMetrics?: ValidationMetrics;
   numCompletedCheckpoints: number;
   numSteps: number;
+  seed: number;
   totalBatchesProcessed: number;
   url: string;
-  seed: number;
 }
 
 export interface ExperimentItem {
-  id: number;
-  name: string;
-  labels: string[];
-  startTime: string;
-  endTime?: string;
-  state: RunState;
   archived: boolean;
+  endTime?: string;
+  id: number;
+  labels: string[];
+  name: string;
   numTrials: number;
   progress?: number;
-  username: string;
+  startTime: string;
+  state: RunState;
   url: string;
+  username: string;
 }
 
 export interface ExperimentBase {
@@ -354,10 +355,10 @@ export interface ExperimentBase {
   configRaw: RawJson; // Readonly unparsed config object.
   endTime?: string;
   id: number;
-  username: string;
   progress?: number;
   startTime: string;
   state: RunState;
+  username: string;
 }
 
 export interface ExperimentOld extends ExperimentBase {
@@ -367,37 +368,37 @@ export interface ExperimentOld extends ExperimentBase {
 }
 
 export interface ExperimentDetails extends ExperimentBase {
-  validationHistory: ValidationHistory[];
   trials: TrialItem[];
   username: string;
+  validationHistory: ValidationHistory[];
 }
 
 export interface Task {
-  name: string;
   id: string;
-  url?: string;
+  name: string;
   serviceAddress?: string;
   startTime: string;
+  url?: string;
 }
 
 export interface ExperimentTask extends Task {
-  progress?: number;
   archived: boolean;
+  progress?: number;
   state: RunState;
   username: string;
 }
 
 export interface CommandTask extends Task {
   misc?: CommandMisc;
-  type: CommandType;
   state: CommandState;
+  type: CommandType;
   username: string;
 }
 
 export type RecentEvent = {
   lastEvent: {
-    name: string;
     date: string;
+    name: string;
   };
 };
 
@@ -413,8 +414,8 @@ export type PropsWithClassName<T> = T & {className?: string};
 export type TaskType = CommandType | 'Experiment';
 
 export interface ExperimentFilters {
-  showArchived: boolean;
   labels?: string[];
+  showArchived: boolean;
   states: string[];
   username?: string;
 }
@@ -422,8 +423,8 @@ export interface ExperimentFilters {
 export interface TaskFilters<T extends TaskType = TaskType> {
   limit: number;
   states: string[];
-  username?: string;
   types: Record<T, boolean>;
+  username?: string;
 }
 
 export enum TBSourceType {
@@ -437,8 +438,8 @@ export interface TBSource {
 }
 
 export type CommonProps = {
-  className?: string;
   children?: React.ReactNode;
+  className?: string;
   title?: string;
 };
 

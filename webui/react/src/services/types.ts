@@ -11,10 +11,10 @@ export interface FetchOptionParams {
 }
 
 export interface HttpOptions {
-  url: string;
-  method?: Method;
-  headers?: Record<string, unknown>;
   body?: Record<keyof unknown, unknown> | string;
+  headers?: Record<string, unknown>;
+  method?: Method;
+  url: string;
 }
 
 interface ApiBase {
@@ -26,8 +26,8 @@ interface ApiBase {
 
 // Designed for use with Swagger generated api bindings.
 export interface DetApi<Input, DetOutput, Output> extends ApiBase {
-  request: (params: Input) => Promise<DetOutput>;
   postProcess: (response: DetOutput) => Output;
+  request: (params: Input) => Promise<DetOutput>;
   stubbedResponse?: DetOutput;
 }
 export interface HttpApi<Input, Output> extends ApiBase {
@@ -67,25 +67,25 @@ export interface ExperimentIdParams {
 }
 
 export interface GetExperimentsParams {
+  archived?: boolean;
+  description?: string;
+  labels?: Array<string>;
+  limit?: number;
+  offset?: number;
+  options?: never;
+  orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'
   | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS'
   | 'SORT_BY_USER';
-  orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
-  offset?: number;
-  limit?: number;
-  description?: string;
-  labels?: Array<string>;
-  archived?: boolean;
   states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED'
   | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
   | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
   users?: Array<string>;
-  options?: never;
 }
 
 export interface CreateExperimentParams {
-  parentId: number;
   experimentConfig: string;
+  parentId: number;
 }
 
 export interface PatchExperimentParams extends ExperimentIdParams {
@@ -102,8 +102,8 @@ export interface CreateNotebookParams {
 export type CreateTensorboardParams = TBSource;
 
 export interface LogsParams {
-  tail?: number;
   greaterThanId?: number;
+  tail?: number;
 }
 
 export interface TaskLogsParams extends LogsParams {

@@ -5,10 +5,10 @@ import Label from './Label';
 import css from './Toggle.module.scss';
 
 interface Props {
-  prefixLabel?: string;
   checked?: boolean;
-  suffixLabel?: string;
   onChange?: (checked: boolean) => void;
+  prefixLabel?: string;
+  suffixLabel?: string;
 }
 
 const Toggle: React.FC<Props> = ({ onChange, ...props }: Props) => {

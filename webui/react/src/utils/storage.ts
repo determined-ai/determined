@@ -47,14 +47,6 @@ export class Storage {
     this.store = options.store;
   }
 
-  private computeKey(key: string): string {
-    return [ ...this.pathKeys, key ].join(this.delimiter);
-  }
-
-  private parsePath (path: string, delimiter: string): string[] {
-    return path.split(delimiter).filter(key => key !== '');
-  }
-
   clear(): void {
     this.store.clear();
   }
@@ -82,5 +74,13 @@ export class Storage {
     const path = this.computeKey(key);
     const item = JSON.stringify(value);
     this.store.setItem(path, item);
+  }
+
+  private computeKey(key: string): string {
+    return [ ...this.pathKeys, key ].join(this.delimiter);
+  }
+
+  private parsePath (path: string, delimiter: string): string[] {
+    return path.split(delimiter).filter(key => key !== '');
   }
 }

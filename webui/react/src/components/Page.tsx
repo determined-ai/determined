@@ -12,20 +12,20 @@ import Link from './Link';
 import css from './Page.module.scss';
 
 export interface BreadCrumbRoute {
-  path: string;
   breadcrumbName: string;
+  path: string;
 }
 
 export interface Props extends CommonProps {
-  breadcrumb?: BreadCrumbRoute[];
   backPath?: string;
+  breadcrumb?: BreadCrumbRoute[];
+  docTitle?: string;
   headerInfo?: React.ReactNode;
   id?: string;
   options?: React.ReactNode;
+  showDivider?: boolean;
   subTitle?: React.ReactNode;
   title?: string;
-  showDivider?: boolean;
-  docTitle?: string;
 }
 
 const breadCrumbRender = (route: Route, params: unknown, routes: Route[]) => {

@@ -7,14 +7,14 @@ import css from './Link.module.scss';
 export interface Props {
   className?: string;
   disabled?: boolean;
-  inherit?: boolean;
-  isButton?: boolean;
   // is this external to the assets hosted by React?
   external?: boolean;
+  inherit?: boolean;
+  isButton?: boolean;
   label?: string;
+  onClick?: MouseEventHandler;
   path?: string;
   popout?: boolean;
-  onClick?: MouseEventHandler;
 }
 
 const Link: React.FC<Props> = ({

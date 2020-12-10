@@ -21,10 +21,10 @@ interface Props {
   dropdownMatchSelectWidth?: number | boolean;
   metricNames: MetricName[];
   multiple?: boolean;
+  onChange?: SingleHandler | MultipleHandler;
   value?: MetricName | MetricName[];
   verticalLayout?: boolean;
   width?: number | string;
-  onChange?: SingleHandler | MultipleHandler;
 }
 
 const filterFn = (search: string, metricName: string) => {

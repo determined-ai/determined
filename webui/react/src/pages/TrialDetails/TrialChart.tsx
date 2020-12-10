@@ -7,12 +7,12 @@ import useStorage from 'hooks/useStorage';
 import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
 
 interface Props {
+  defaultMetricNames: MetricName[];
   id?: string;
   metricNames: MetricName[];
-  defaultMetricNames: MetricName[];
-  workloads?: WorkloadWrapper[];
   storageKey?: string;
   validationMetric?: string;
+  workloads?: WorkloadWrapper[];
 }
 
 const STORAGE_PATH = 'trial-detail';

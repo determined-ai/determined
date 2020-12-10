@@ -36,14 +36,14 @@ export enum ErrorType {
 export interface DaError {
   error?: Error;
   id?: string; // slug unique to each place in the codebase that we will use this.
+  isUserTriggered?: boolean; // whether the error was caused by an active interaction.
   level?: ErrorLevel;
+  logger?: LoggerInterface;
   message: string; // internal message.
   payload?: unknown;
-  silent?: boolean;
-  isUserTriggered?: boolean; // whether the error was caused by an active interaction.
-  logger?: LoggerInterface;
-  publicSubject?: string;
   publicMessage?: string;
+  publicSubject?: string;
+  silent?: boolean;
   type: ErrorType;
 }
 

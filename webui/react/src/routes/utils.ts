@@ -53,10 +53,10 @@ export const openBlank = (url: string): void => {
 export const handlePath = (
   event: MouseEvent,
   options: {
+    external?: boolean,
     onClick?: MouseEventHandler,
     path?: string,
     popout?: boolean,
-    external?: boolean,
   } = {},
 ): void => {
   event.persist();

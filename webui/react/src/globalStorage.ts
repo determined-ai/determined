@@ -1,8 +1,8 @@
 import { Storage } from 'utils/storage';
 
 class GlobalStorage {
-  private storage: Storage;
   private keys: Record<string, string>;
+  private storage: Storage;
 
   constructor(storage: Storage) {
     this.storage = storage;

@@ -3,8 +3,8 @@ import React from 'react';
 import css from './InfoBox.module.scss';
 
 export interface InfoRow {
-  label: string;
   content?: React.ReactNode;
+  label: string;
 }
 
 interface Props {

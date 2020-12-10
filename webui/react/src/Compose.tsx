@@ -1,8 +1,8 @@
 import React, { JSXElementConstructor, PropsWithChildren, ReactNode } from 'react';
 
 interface Props {
-  components: JSXElementConstructor<PropsWithChildren<{children: ReactNode}>>[];
   children: React.ReactNode;
+  components: JSXElementConstructor<PropsWithChildren<{children: ReactNode}>>[];
 }
 
 const Compose = (props: Props): JSX.Element => {

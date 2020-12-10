@@ -19,8 +19,8 @@ import { checkpointSize } from 'utils/types';
 import css from './TrialInfoBox.module.scss';
 
 interface Props {
-  trial: TrialDetails2;
   experiment: ExperimentDetails;
+  trial: TrialDetails2;
 }
 
 const hyperparamsView = (params: TrialHyperParameters) => {

@@ -31,18 +31,18 @@ export enum LogLevelFromApi {
 export interface TrialLogFiltersInterface {
   agentIds?: Array<string>,
   containerIds?: Array<string>,
-  rankIds?: Array<number>,
   levels?: Array<LogLevelFromApi>,
-  stdtypes?: Array<string>,
+  rankIds?: Array<number>,
   sources?: Array<string>,
-  timestampBefore?: Dayjs,
+  stdtypes?: Array<string>,
   timestampAfter?: Dayjs,
+  timestampBefore?: Dayjs,
 }
 
 interface Props {
   filter: TrialLogFiltersInterface;
-  trialId: number;
   onChange?: (newFilters: TrialLogFiltersInterface) => void;
+  trialId: number;
 }
 
 const TrialLogFilters: React.FC<Props> = ({ filter, onChange, trialId }: Props) => {
