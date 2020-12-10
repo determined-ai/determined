@@ -1,7 +1,9 @@
 .base {
   .legends {
     font-size: var(--theme-sizes-font-small);
-    ol, li {
+
+    ol,
+    li {
       margin: 0;
       padding: 0;
     }
@@ -22,12 +24,10 @@
   .header {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
     font-size: var(--theme-sizes-font-medium);
+    justify-content: space-between;
   }
-
   .bar {
-      margin: var(--theme-sizes-layout-small) 0;
-
+    margin: var(--theme-sizes-layout-small) 0;
   }
 }

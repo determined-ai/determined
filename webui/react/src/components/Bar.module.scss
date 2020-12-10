@@ -21,13 +21,13 @@
     margin-left: 0;
   }
   .bar {
-    border-radius: 3px;
-    overflow: hidden;
     background-color: var(--theme-colors-monochrome-12);
+    border-radius: 3px;
     box-shadow: var(--theme-colors-monochrome-6);
     flex-grow: 1;
     margin: 0;
     min-height: var(--theme-sizes-layout-tiny);
+    overflow: hidden;
     padding: 0;
     position: relative;
   }
