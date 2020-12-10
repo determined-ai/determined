@@ -56,6 +56,11 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  :download:`mmdetection_pytorch.tgz
          </examples/mmdetection_pytorch.tgz>`
 
+   -  -  PyTorch
+      -  COCO
+      -  :download:`detr_coco_pytorch.tgz
+         </examples/detr_coco_pytorch.tgz>`
+
    -  -  TensorFlow (Estimator API)
       -  MNIST
       -  :download:`mnist_estimator.tgz </examples/mnist_estimator.tgz>`
