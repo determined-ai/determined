@@ -58,7 +58,7 @@ export const getAgents =
 
 // Placeholder for getResourcePools API.
 /* eslint-disable */
-export const getResourcePools = async () => {
+export const getResourcePools = () => {
   return resourcePools;
 };
 /* eslint-enable */

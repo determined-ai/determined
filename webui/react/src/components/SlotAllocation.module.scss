@@ -1,0 +1,33 @@
+.base {
+  .legends {
+    font-size: var(--theme-sizes-font-small);
+
+    ol,
+    li {
+      margin: 0;
+      padding: 0;
+    }
+    ol {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+    li {
+      display: block;
+      height: 100%;
+      margin-left: var(--theme-sizes-layout-tiny);
+    }
+    li:first-child {
+      margin-left: 0;
+    }
+  }
+  .header {
+    display: flex;
+    flex-direction: row;
+    font-size: var(--theme-sizes-font-medium);
+    justify-content: space-between;
+  }
+  .bar {
+    margin: var(--theme-sizes-layout-small) 0;
+  }
+}
