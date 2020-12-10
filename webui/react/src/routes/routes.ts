@@ -60,6 +60,13 @@ const routes: RouteConfig[] = [
     title: 'Cluster',
   },
   {
+    icon: 'cluster',
+    id: 'hgiCluster',
+    needAuth: true,
+    path: '/hgicluster',
+    title: 'Cluster',
+  },
+  {
     icon: 'logs',
     id: 'masterLogs',
     needAuth: true,
