@@ -56,6 +56,12 @@ class OFATrial(PyTorchTrial):
                 depth_list=[2, 3, 4],
             )
         )
+        model_path = download_url(
+            "https://hanlab.mit.edu/files/OnceForAll/ofa_checkpoints/ofa_D4_E6_K7",
+            model_dir="/tmp/ofa_checkpoint%d" % self.context.distributed.get_rank(),
+        )
+        init = torch.load(model_path)["state_dict"]
+        self.supernet.load_weights_from_net(init)
 
         # Configure supernet according to architecture config.
         self.teacher_arch = {

@@ -114,7 +114,7 @@ searcher:
   metric: top1_accuracy 
   smaller_is_better: false 
   max_length:
-    epochs: 180 # 1.2 million images in training set of imagenet
+    epochs: 360 # 1.2 million images in training set of imagenet
 
 optimizations:
   aggregation_frequency:  1
