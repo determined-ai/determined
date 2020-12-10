@@ -146,9 +146,9 @@ See :ref:`network-requirements` for details.
 ***********************
 
 The Determined Cluster is configured with ``master.yaml`` file located
-at ``/usr/local/determined/etc/`` on the Determined master instance.
-We need to configure AWS dynamic agents in each resource pool.
-See :ref:`cluster-configuration` for details.
+at ``/usr/local/determined/etc/`` on the Determined master instance. We
+need to configure AWS dynamic agents in each resource pool. See
+:ref:`cluster-configuration` for details.
 
 **************
  Installation

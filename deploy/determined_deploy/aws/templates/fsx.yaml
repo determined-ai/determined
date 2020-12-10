@@ -58,9 +58,14 @@ Parameters:
     Description: Instance Type of Master
     Default: m5.large
 
-  AgentInstanceType:
+  CPUAgentInstanceType:
     Type: String
-    Description: Instance Type of Agent
+    Description: Instance Type of Agent in the CPU resource pool
+    Default: t2.xlarge
+
+  GPUAgentInstanceType:
+    Type: String
+    Description: Instance Type of Agent in the GPU resource pool
     Default: p2.8xlarge
 
   InboundCIDRRange:
@@ -77,6 +82,11 @@ Parameters:
     Type: String
     Description: Password for database
     NoEcho: true
+
+  MaxCPUContainersPerAgent:
+    Type: Number
+    Description: Maximum number of CPU containers to keep running on agents in the CPU resource pool
+    Default: 100
 
   MaxIdleAgentPeriod:
     Type: String
@@ -665,8 +675,8 @@ Resources:
 
             resource_manager:
               type: agent
-              default_cpu_resource_pool: default
-              default_gpu_resource_pool: default
+              default_cpu_resource_pool: cpu-pool
+              default_gpu_resource_pool: gpu-pool
               scheduler:
                 type: ${SchedulerType}
             EOF
@@ -679,37 +689,74 @@ Resources:
             fi
 
             cat << EOF >> /usr/local/determined/etc/master.yaml
-            provisioner:
-              master_cert_name: ${MasterCertName}
-              iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
-              image_id: ${AgentAmi}
-              agent_docker_image: determinedai/determined-agent:${Version}
-              instance_name: determined-agent-${AWS::StackName}
-              instance_type: ${AgentInstanceType}
-              log_group: ${LogGroup}
-              log_stream: determined-agent
-              master_url: $scheme://local-ipv4:$port
-              max_idle_agent_period: ${MaxIdleAgentPeriod}
-              max_agent_starting_period: ${MaxAgentStartingPeriod}
-              min_instances: ${MinDynamicAgents}
-              max_instances: ${MaxDynamicAgents}
-              spot: ${SpotEnabled}
-              spot_max_price: "${SpotMaxPrice}"
-              network_interface:
-                public_ip: true
-                security_group_id: ${AgentSecurityGroup.GroupId}
-                subnet_id: ${Subnet1}
-              provider: aws
-              root_volume_size: 200
-              ssh_key_name: ${Keypair}
-              tag_key: det-${AWS::StackName}
-              tag_value: det-agent-${AWS::StackName}
-              startup_script: |
-                wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | sudo apt-key add -
-                bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'
-                apt install -y lustre-client-modules-4.4.0-1109-aws
-                mkdir /mnt/fsx
-                mount -t lustre -o noatime,flock ${FSx}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSx.LustreMountName} /mnt/fsx
+            resource_pools:
+              - pool_name: cpu-pool
+                max_cpu_containers_per_agent: ${MaxCPUContainersPerAgent}
+                provider:
+                  master_cert_name: ${MasterCertName}
+                  iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+                  image_id: ${AgentAmi}
+                  agent_docker_image: determinedai/determined-agent:${Version}
+                  instance_name: determined-agent-${AWS::StackName}
+                  instance_type: ${CPUAgentInstanceType}
+                  log_group: ${LogGroup}
+                  log_stream: determined-agent
+                  master_url: $scheme://local-ipv4:$port
+                  max_idle_agent_period: ${MaxIdleAgentPeriod}
+                  max_agent_starting_period: ${MaxAgentStartingPeriod}
+                  min_instances: ${MinDynamicAgents}
+                  max_instances: ${MaxDynamicAgents}
+                  spot: ${SpotEnabled}
+                  spot_max_price: "${SpotMaxPrice}"
+                  network_interface:
+                    public_ip: true
+                    security_group_id: ${AgentSecurityGroup.GroupId}
+                    subnet_id: ${Subnet1}
+                  type: aws
+                  root_volume_size: 200
+                  ssh_key_name: ${Keypair}
+                  tag_key: det-${AWS::StackName}
+                  tag_value: det-agent-${AWS::StackName}
+                  startup_script: |
+                    wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | sudo apt-key add -
+                    bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'
+                    apt install -y lustre-client-modules-4.4.0-1109-aws
+                    mkdir /mnt/fsx
+                    mount -t lustre -o noatime,flock ${FSx}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSx.LustreMountName} /mnt/fsx
+
+              - pool_name: gpu-pool
+                max_cpu_containers_per_agent: 0
+                provider:
+                  master_cert_name: ${MasterCertName}
+                  iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+                  image_id: ${AgentAmi}
+                  agent_docker_image: determinedai/determined-agent:${Version}
+                  instance_name: determined-agent-${AWS::StackName}
+                  instance_type: ${GPUAgentInstanceType}
+                  log_group: ${LogGroup}
+                  log_stream: determined-agent
+                  master_url: $scheme://local-ipv4:$port
+                  max_idle_agent_period: ${MaxIdleAgentPeriod}
+                  max_agent_starting_period: ${MaxAgentStartingPeriod}
+                  min_instances: ${MinDynamicAgents}
+                  max_instances: ${MaxDynamicAgents}
+                  spot: ${SpotEnabled}
+                  spot_max_price: "${SpotMaxPrice}"
+                  network_interface:
+                    public_ip: true
+                    security_group_id: ${AgentSecurityGroup.GroupId}
+                    subnet_id: ${Subnet1}
+                  type: aws
+                  root_volume_size: 200
+                  ssh_key_name: ${Keypair}
+                  tag_key: det-${AWS::StackName}
+                  tag_value: det-agent-${AWS::StackName}
+                  startup_script: |
+                    wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | sudo apt-key add -
+                    bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'
+                    apt install -y lustre-client-modules-4.4.0-1109-aws
+                    mkdir /mnt/fsx
+                    mount -t lustre -o noatime,flock ${FSx}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSx.LustreMountName} /mnt/fsx
             EOF
 
             if [ "$scheme" = https ]; then

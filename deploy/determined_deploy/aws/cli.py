@@ -79,9 +79,14 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--master-cert-name",
     )
     subparser.add_argument(
-        "--agent-instance-type",
+        "--gpu-agent-instance-type",
         type=str,
-        help="instance type for agent",
+        help="instance type for agent in the GPU resource pool",
+    )
+    subparser.add_argument(
+        "--cpu-agent-instance-type",
+        type=str,
+        help="instance type for agent in the CPU resource pool",
     )
     subparser.add_argument(
         "--deployment-type",
@@ -128,6 +133,11 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--max-agent-starting-period",
         type=str,
         help="max agent starting time",
+    )
+    subparser.add_argument(
+        "--max-cpu-containers-per-agent",
+        type=int,
+        help="maximum number of cpu containers on agent in the CPU resource pool",
     )
     subparser.add_argument(
         "--min-dynamic-agents",
@@ -246,7 +256,8 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.MASTER_TLS_KEY: master_tls_key,
         constants.cloudformation.MASTER_CERT_NAME: args.master_cert_name,
         constants.cloudformation.MASTER_INSTANCE_TYPE: args.master_instance_type,
-        constants.cloudformation.AGENT_INSTANCE_TYPE: args.agent_instance_type,
+        constants.cloudformation.CPU_AGENT_INSTANCE_TYPE: args.cpu_agent_instance_type,
+        constants.cloudformation.GPU_AGENT_INSTANCE_TYPE: args.gpu_agent_instance_type,
         constants.cloudformation.CLUSTER_ID: args.cluster_id,
         constants.cloudformation.BOTO3_SESSION: boto3_session,
         constants.cloudformation.VERSION: args.det_version,
@@ -254,6 +265,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.DB_PASSWORD: args.db_password,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD: args.max_idle_agent_period,
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD: args.max_agent_starting_period,
+        constants.cloudformation.MAX_CPU_CONTAINERS_PER_AGENT: args.max_cpu_containers_per_agent,
         constants.cloudformation.MIN_DYNAMIC_AGENTS: args.min_dynamic_agents,
         constants.cloudformation.MAX_DYNAMIC_AGENTS: args.max_dynamic_agents,
         constants.cloudformation.SPOT_ENABLED: args.spot,
