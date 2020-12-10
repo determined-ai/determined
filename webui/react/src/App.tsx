@@ -1,5 +1,5 @@
 import { Button, notification } from 'antd';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect } from 'react';
 
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
@@ -19,6 +19,7 @@ import Info from 'contexts/Info';
 import UI from 'contexts/UI';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
+import useResize from 'hooks/useResize';
 import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
@@ -26,11 +27,12 @@ import appRoutes from 'routes';
 import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { DeterminedInfo } from 'types';
-import { refreshPage, updateFaviconType } from 'utils/browser';
+import { correctViewportHeight, refreshPage, updateFaviconType } from 'utils/browser';
 
 import css from './App.module.scss';
 
 const AppView: React.FC = () => {
+  const resize = useResize();
   const { isAuthenticated } = Auth.useStateContext();
   const ui = UI.useStateContext();
   const cluster = ClusterOverview.useStateContext();
@@ -84,6 +86,9 @@ const AppView: React.FC = () => {
   useEffect(() => {
     setUI({ type: UI.ActionType.ShowSpinner });
   }, [ setUI ]);
+
+  // Correct the viewport height size when window resize occurs.
+  useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
   return (
     <div className={classes.join(' ')}>

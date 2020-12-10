@@ -94,3 +94,15 @@ export const refreshPage = (): void => {
   url.search = url.search ? `${url.search}&ts=${now}` : `ts=${now}`;
   window.location.href = url.toString();
 };
+
+/*
+ * In mobile view the definition of viewport height varies between
+ * whether it should include the chrome's vertical space or not.
+ * This function dynamically calculates the available height on the
+ * browser view minus the chrome height.
+ * https://css-tricks.com/the-trick-to-viewport-units-on-mobile/
+ */
+export const correctViewportHeight = (): void => {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+};
