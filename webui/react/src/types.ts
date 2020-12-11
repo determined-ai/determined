@@ -233,6 +233,14 @@ export enum MetricType {
   Validation = 'validation',
 }
 
+export type MetricTypeParam =
+  'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION';
+
+export const metricTypeParamMap: Record<string, MetricTypeParam> = {
+  [MetricType.Training]: 'METRIC_TYPE_TRAINING',
+  [MetricType.Validation]: 'METRIC_TYPE_VALIDATION',
+};
+
 export interface MetricName {
   name: string;
   type: MetricType;
