@@ -8,5 +8,5 @@ export default {
 };
 
 export const Default = (): React.ReactNode => {
-  return <ResourcePoolCard />;
+  return <ResourcePoolCard agents={[]} />;
 };
