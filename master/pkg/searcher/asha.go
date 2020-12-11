@@ -239,11 +239,11 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 	if allTrials == s.maxTrials {
 		progress = math.Max(float64(s.trialsCompleted)/float64(s.maxTrials), progress)
 	}
-    // Cap progress at 95% for InvalidHP cases
-    if progress > 1 {
-	    progress = float64(0.95)
+	// Cap progress at 95% for InvalidHP cases
+	if progress > 1 {
+		progress = float64(0.95)
 	}
-    return progress
+	return progress
 }
 
 func (s *asyncHalvingSearch) trialExitedEarly(
@@ -268,7 +268,7 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 		ops = append(ops, NewTrain(create.RequestID, s.rungs[0].unitsNeeded))
 		ops = append(ops, NewValidate(create.RequestID))
 		return ops, nil
-	} 
+	}
 	s.earlyExitTrials[requestID] = true
 	s.closedTrials[requestID] = true
 	return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil

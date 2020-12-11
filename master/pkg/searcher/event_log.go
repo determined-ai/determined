@@ -22,10 +22,10 @@ type TrialClosedEvent struct {
 
 // EventLog records all actions coming to and from a searcher.
 type EventLog struct {
-    uncommitted []Event
+	uncommitted []Event
 
 	// Searcher state.
-    unitsCompletedByTrial map[RequestID]float64
+	unitsCompletedByTrial map[RequestID]float64
 	earlyExits            map[RequestID]bool
 	TotalUnitsCompleted   float64
 	Shutdown              bool
