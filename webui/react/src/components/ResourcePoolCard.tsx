@@ -19,10 +19,6 @@ interface Props {
 
 const resoucePools = getResourcePools();
 
-const rp = resoucePools[Math.floor(
-  Math.random() * resoucePools.length,
-)];
-
 const rpAttrs = [
   'location' ,
   'instanceType',
@@ -34,13 +30,19 @@ const rpAttrs = [
   'schedulerType',
 ];
 
-const shortDetails = rpAttrs.reduce((acc, cur) => {
-  acc[cur] = rp[cur];
-  return acc;
-}, {});
+type SafeRawJson = Record<string, unknown>;
 
 const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
   const classes = [ css.base ];
+
+  const rp = resoucePools[Math.floor(
+    Math.random() * resoucePools.length,
+  )];
+
+  const shortDetails = rpAttrs.reduce((acc, cur) => {
+    acc[cur] = (rp as SafeRawJson) [cur];
+    return acc;
+  }, {} as SafeRawJson );
 
   const {
     name,
@@ -63,7 +65,7 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
             <div className={css.name}>{name}</div>
             <div className={css.tags}>
               <span>{type}</span>
-              <span>Default pool: {defaultGpuPool || false}</span>
+              <span>Default pool: {!!defaultGpuPool}</span>
               {/* TODO custom badge */}
             </div>
           </div>

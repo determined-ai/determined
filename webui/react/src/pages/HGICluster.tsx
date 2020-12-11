@@ -4,6 +4,7 @@ import Grid, { GridMode } from 'components/Grid';
 import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
+import ResourcePoolCard from 'components/ResourcePoolCard';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import Spinner from 'components/Spinner';
 import Agents from 'contexts/Agents';
@@ -70,6 +71,11 @@ const HGICluster: React.FC = () => {
         resourceStates={slotContainerStates}
         showLegends
         totalSlots={overview.GPU.total} />
+      <Grid gap={ShirtSize.medium} minItemWidth={25} mode={GridMode.AutoFill}>
+        {resourcePools.map(() => {
+          return <ResourcePoolCard agents={agents.data || []} />;
+        })}
+      </Grid>
     </Page>
   );
 };
