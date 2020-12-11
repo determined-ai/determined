@@ -1,6 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  WebUI: prevent Master Logs link from opening new tab/window in mobile
-   view
