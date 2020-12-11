@@ -65,7 +65,8 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
             <div className={css.name}>{name}</div>
             <div className={css.tags}>
               <span>{type}</span>
-              <span>Default pool: {!!defaultGpuPool}</span>
+              {/* QUESTION is this default gpu or cpu pool */}
+              <span>Default GPU pool: {(!!defaultGpuPool).toString()}</span>
               {/* TODO custom badge */}
             </div>
           </div>
