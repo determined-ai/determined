@@ -8,9 +8,9 @@
         "slotsUsed": 0,
         "cpuContainerCapacity": 100,
         "cpuContainersRunning": 5,
-        "defaultCpuPool": "true",
-        "defaultGpuPool": "false",
-        "spotOrPreemptible": "false",
+        "defaultCpuPool": true,
+        "defaultGpuPool": true,
+        "spotOrPreemptible": false,
         "minInstances": 0,
         "maxInstances": 5,
         "gpusPerAgent": 0,
@@ -44,14 +44,14 @@
                 "tagValue": "someValue",
                 "instanceName": "determined-ai-agent",
                 "sshKeyName": "determined-agent-us-east-1",
-                "publicIp": "true",
+                "publicIp": true,
                 "subnetId": "subnet-1234567",
                 "securityGroupId": "sg-123123123abcd",
                 "iamInstanceProfileArn": "aen:129u98y1ojkj1vy2fui",
                 "instanceType": "m5.large",
                 "logGroup": "/determined/master/xyz",
                 "logStream": "/determined/master/master",
-                "spotEnabled": "false",
+                "spotEnabled": false,
                 "spotMaxPrice": "",
                 "customTags": [
                     {
@@ -73,8 +73,8 @@
         "slotsUsed": 4,
         "cpuContainerCapacity": 100,
         "cpuContainersRunning": 1,
-        "defaultCpuPool": "true",
-        "spotOrPreemptible": "true",
+        "defaultCpuPool": true,
+        "spotOrPreemptible": true,
         "minInstances": 0,
         "maxInstances": 2,
         "gpusPerAgent": 8,
@@ -110,7 +110,7 @@
                 "namePrefix": "determined-ai-agent-",
                 "network": "default",
                 "subnetwork": "",
-                "externalIp": "true",
+                "externalIp": true,
                 "networkTags": [
                     "tag1",
                     "tag2"
@@ -123,13 +123,13 @@
                 "machineType": "n1-standard-32",
                 "gpuType": "nvidia-v100",
                 "gpuNum": 8,
-                "preemptible": "true",
+                "preemptible": true,
                 "operationTimeoutPeriod": "5m"
             },
             "schedulerType": "priority",
             "schedulerFittingPolicy": "best fit",
             "priorityScheduler": {
-                "preemption": "true",
+                "preemption": true,
                 "defaultPriority": 42
             }
         }
@@ -143,8 +143,8 @@
         "slotsUsed": 2,
         "cpuContainerCapacity": 300,
         "cpuContainersRunning": 0,
-        "defaultCpuPool": "false",
-        "spotOrPreemptible": "false",
+        "defaultCpuPool": false,
+        "spotOrPreemptible": false,
         "minInstances": "N/A",
         "maxInstances": "N/A",
         "gpusPerAgent": 4,
