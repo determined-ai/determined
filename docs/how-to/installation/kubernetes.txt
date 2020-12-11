@@ -93,17 +93,16 @@ multi-GPU tasks. Each multi-GPU (distributed training) task will be
 scheduled as a set of ``slotsPerTask / maxSlotsPerPod`` separate pods,
 with each pod assigned up to ``maxSlotsPerPod`` GPUs. Distributed tasks
 with sizes that are not divisible by ``maxSlotsPerPod`` are never
-scheduled. If you have a cluster of different size nodes set
-``maxSlotsPerPod`` to the smallest common denominator. For example, if
-you have nodes with 4 GPUs and other nodes with 8 GPUs, set
-``maxSlotsPerPod`` to 4 so that all distributed experiments will launch
-with 4 GPUs per pod (e.g., on nodes with 8 GPUs, two such pods would be
-launched).
+scheduled. If you have a cluster of different size nodes, set
+``maxSlotsPerPod`` to the greatest common divisor of all the sizes. For
+example, if you have some nodes with 4 GPUs and other nodes with 8 GPUs,
+set ``maxSlotsPerPod`` to ``4`` so that all distributed experiments will
+launch with 4 GPUs per pod (with two pods on 8-GPU nodes).
 
 Checkpoint Storage
 ==================
 
-Checkpoints and TensorBoards events can be configured to be stored in
+Checkpoints and TensorBoard events can be configured to be stored in
 ``shared_fs``, `AWS S3 <https://aws.amazon.com/s3/>`__, or `GCS
 <https://cloud.google.com/storage>`__. By default, checkpoints and
 TensorBoard events are stored using ``shared_fs``, which creates a

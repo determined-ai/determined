@@ -1,57 +1,52 @@
 # masterPort configures the port at which the Determined master listens for connections on.
 masterPort: 8080
 
-# When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed
-# to make the Determined master reachable from outside the cluster. When useNodePortForMaster
-# is set to true, the master will instead be exposed behind a NodePort service. When using a
-# NodePort service users will typically have to configure an Ingress to make the Determined
-# master reachable from outside the cluster. NodePort service is recommended when configuring
-# TLS termination in a load-balancer.
+# When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed to make
+# the Determined master reachable from outside the cluster. When useNodePortForMaster is set to
+# true, the master will instead be exposed behind a NodePort service. When using a NodePort service
+# users will typically have to configure an Ingress to make the Determined master reachable from
+# outside the cluster. NodePort service is recommended when configuring TLS termination in a
+# load-balancer.
 useNodePortForMaster: false
 
 # tlsSecret enables TLS encryption for all communication made to the Determined master (TLS
-# termination is performed in the Determined master). This includes communication between
-# the Determined master and the task containers it launches, but does not include communication
-# between the task containers (distributed training). The specified Secret of type tls must
-# already exist in the same namespace in which Determined is being installed.
+# termination is performed in the Determined master). This includes communication between the
+# Determined master and the task containers it launches, but does not include communication between
+# the task containers (distributed training). The specified Secret of type tls must already exist in
+# the same namespace in which Determined is being installed.
 # tlsSecret:
 
 # db sets the configurations for the database.
 db:
-  # To deploy your own postgres DB please provide a hostAddress.
-  # Note: if db hostAddress is provided Determined will skip deploying
-  # a postgres DB.
+  # To deploy your own Postgres DB, provide a hostAddress. If hostAddress is provided, Determined
+  # will skip deploying a Postgres DB.
   # hostAddress:
 
-  # Required db field. These parameters are required for both your
-  # own DB and a Determined DB.
+  # Required parameters, whether you are using your own DB or a Determined DB.
   name: determined
   user: postgres
   password: postgres
   port: 5432
 
-  # Only used for Determined db deployment. Configures the size
-  # of the PersistentVolumeClaim for the Determined deployed database,
-  # as well as the CPU and Memory requirements. Should be adjusted
-  # for scale.
+  # Only used for Determined DB deployment. Configures the size of the PersistentVolumeClaim for the
+  # Determined deployed database, as well as the CPU and memory requirements. Should be adjusted for
+  # scale.
   storageSize: 30Gi
-  cpuRequest: "2"
-  memRequest: "8Gi"
+  cpuRequest: 2
+  memRequest: 8Gi
 
-  # useNodePortForDB configures whether ClusterIP or NodePort service
-  # type is used for the Determined deployed db. By default ClusterIP
-  # is used.
+  # useNodePortForDB configures whether ClusterIP or NodePort service type is used for the
+  # Determined deployed DB. By default ClusterIP is used.
   useNodePortForDB: false
 
-  # storageClassName configures the StorageClass used by the PersistentVolumeClaim
-  # for the Determined deployed database. This can be left blank if a default
-  # storage class is specified in the cluster. If dynamic provisioning of
-  # PersistentVolumes is disabled, users must manually create a PersistentVolume
-  # that will match the PersistentVolumeClaim.
+  # storageClassName configures the StorageClass used by the PersistentVolumeClaim for the
+  # Determined deployed database. This can be left blank if a default storage class is specified in
+  # the cluster. If dynamic provisioning of PersistentVolumes is disabled, users must manually
+  # create a PersistentVolume that will match the PersistentVolumeClaim.
   # storageClassName:
 
-# checkpointStorage controls where checkpoints are stored.
-# supported types include `shared_fs`, `gcs`, and `s3.
+# checkpointStorage controls where checkpoints are stored. Supported types include `shared_fs`,
+# `gcs`, and `s3`.
 checkpointStorage:
   # Applicable to all checkpointStorage types.
   saveExperimentBest: 0
@@ -59,40 +54,40 @@ checkpointStorage:
   saveTrialLatest: 1
 
 
-  # Comment out if not using `shared_fs`. Users are strongly discouraged
-  # from using ``shared_fs`` for storage beyond initial testing as most
-  # Kubernetes cluster nodes do not have a shared file system.
+  # Comment out if not using `shared_fs`. Users are strongly discouraged from using `shared_fs` for
+  # storage beyond initial testing as most Kubernetes cluster nodes do not have a shared file
+  # system.
   type: shared_fs
   hostPath: /checkpoints
 
-  # For storing in gcs.
+  # For storing in GCS.
   # type: gcs
   # bucket: <bucket_name>
 
-  # For storing in s3.
+  # For storing in S3.
   # type: s3
   # bucket: <bucket_name>
   # accessKey: <access_key>
   # secretKey: <secret_key>
   # endpointUrl: <endpoint_url>
 
-# This is the number of GPUs there are per machine. Determined uses this information when
-# scheduling multi-GPU tasks. Each multi-GPU (distributed training) task will be scheduled as
-# a set of `slotsPerTask / maxSlotsPerPod` separate pods, with each pod assigned up to `maxSlotsPerPod`
-# GPUs. Distributed tasks with sizes that are not divisible by `maxSlotsPerPod` are never scheduled.
-# If you have a cluster of different size nodes (e.g., 4 and 8 GPUs per node), set the `maxSlotsPerPod`
-# to the smallest common denominator.
+# This is the number of GPUs there are per machine. Determined uses this information when scheduling
+# multi-GPU tasks. Each multi-GPU (distributed training) task will be scheduled as a set of
+# `slotsPerTask / maxSlotsPerPod` separate pods, with each pod assigned up to `maxSlotsPerPod` GPUs.
+# Distributed tasks with sizes that are not divisible by `maxSlotsPerPod` are never scheduled. If
+# you have a cluster of different size nodes (e.g., 4 and 8 GPUs per node), set `maxSlotsPerPod` to
+# the greatest common divisor of all the sizes (4, in that case).
 maxSlotsPerPod:
 
-# Memory and CPU requirements for the master instance should be adjusted for scale.
-masterCpuRequest: "2"
-masterMemRequest: "8Gi"
+# Memory and CPU requirements for the master instance. Should be adjusted for scale.
+masterCpuRequest: 2
+masterMemRequest: 8Gi
 
-## Configure the task container defaults. Tasks include trials, commands, tensorboards notebooks and shells.
-## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the
-## network interface used by distributed (multi-machine) training and ports used by the NCCL and
-## GLOO libraries during distributed training are configurable. These default to auto-discovery and
-## random non-privileged ports, respectively.
+## Configure the task container defaults. Tasks include trials, commands, TensorBoards, notebooks,
+## and shells. For all task containers, shm_size_bytes and network_mode are configurable. For
+## trials, the network interface used by distributed (multi-machine) training and ports used by the
+## NCCL and GLOO libraries during distributed training are configurable. These default to
+## auto-discovery and random non-privileged ports, respectively.
 taskContainerDefaults:
   # networkMode: bridge
   # dtrainNetworkInterface: <network interface name>
@@ -100,16 +95,16 @@ taskContainerDefaults:
   # glooPortRange: <MIN:MAX>
   # forcePullImage: <true or false>
 
-  # Configure a default pod spec for all GPU tasks (experiments, notebooks, commands) and
-  # CPU tasks (cpu notebooks, tensorboards, zero slot commands). If a pod spec is defined
-  # for an individual task, that pod spec will replace the default one that is defined here.
-  # See https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
+  # Configure a default pod spec for all GPU tasks (experiments, notebooks, commands) and CPU tasks
+  # (CPU notebooks, TensorBoards, zero-slot commands). If a pod spec is defined for an individual
+  # task, that pod spec will replace the default one that is defined here. See
+  # https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
   # cpuPodSpec:
   # gpuPodSpec:
 
 
-  # Configure default docker images for all GPU tasks (experiments, notebooks, commands) and
-  # CPU tasks (cpu notebooks, tensorboards, zero slot commands). If a docker image is defined
+  # Configure default Docker images for all GPU tasks (experiments, notebooks, commands) and
+  # CPU tasks (CPU notebooks, TensorBoards, zero-slot commands). If a Docker image is defined
   # for an individual task, that image will replace the default one that is defined here.
   # If specifying a default image, both GPU and CPU default images must be defined.
   # cpuImage:
@@ -126,8 +121,8 @@ enterpriseEdition: false
 telemetry:
   enabled: true
 
-## A user friendly name to identify this cluster by.
+## A user-friendly name to identify this cluster by.
 # clusterName: Dev
 
-# defaultPassword sets the password for the admin and determined user accounts. 
+# defaultPassword sets the password for the admin and determined user accounts.
 # defaultPassword:

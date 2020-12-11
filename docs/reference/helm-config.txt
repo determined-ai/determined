@@ -146,11 +146,11 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
    assigned up to ``maxSlotsPerPod`` GPUs. Distibuted tasks with sizes
    that are not divisible by ``maxSlotsPerPod`` are never scheduled. If
    you have a cluster of different size nodes, set the
-   ``maxSlotsPerPod`` to the smallest common denominator. For example,
-   if you have nodes with 4 GPUs and other nodes with 8 GPUs, set
-   ``maxSlotsPerPod`` to 4 so that all distributed experiments will
-   launch with 4 GPUs per pod (e.g., on nodes with 8 GPUs, two such pods
-   would be launched). (*Required*)
+   ``maxSlotsPerPod`` to greatest common divisor of all the sizes. For
+   example, if you have some nodes with 4 GPUs and other nodes with 8
+   GPUs, set ``maxSlotsPerPod`` to ``4`` so that all distributed
+   experiments will launch with 4 GPUs per pod (with two pods on 8-GPU
+   nodes). (*Required*)
 
 -  ``masterCpuRequest``: The CPU requirements for the Determined master.
 
