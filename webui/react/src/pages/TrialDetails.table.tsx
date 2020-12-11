@@ -11,7 +11,6 @@ const batchRender: Renderer<Step> = (_, record) => (
 
 export const columns: ColumnType<Step>[] = [
   {
-    fixed: 'left',
     key: 'batches',
     render: batchRender,
     sorter: (a: Step, b: Step): number => alphanumericSorter(
@@ -19,20 +18,15 @@ export const columns: ColumnType<Step>[] = [
       b.numBatches + b.priorBatchesProcessed,
     ),
     title: 'Batches',
-    width: 100,
   },
   {
-    fixed: 'right',
     key: 'state',
     render: stateRenderer,
     sorter: (a: Step, b: Step): number => runStateSorter(a.state, b.state),
     title: 'State',
-    width: 120,
   },
   {
-    fixed: 'right',
     key: 'checkpoint',
     title: 'Checkpoint',
-    width: 100,
   },
 ];
