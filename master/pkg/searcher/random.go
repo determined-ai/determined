@@ -43,7 +43,7 @@ func (s *randomSearch) progress(unitsCompleted float64) float64 {
 func (s *randomSearch) trialExitedEarly(
 	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
-    if workload.ExitedReason == workload.InvalidHP {
+    if exitedReason == workload.InvalidHP {
 	    var ops []Operation
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)

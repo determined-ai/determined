@@ -25,7 +25,7 @@ type EventLog struct {
 	uncommitted []Event
 
 	// Searcher state.
-    unitsCompletedByTrial map[RequestID]int
+    unitsCompletedByTrial map[RequestID]float64
 	earlyExits            map[RequestID]bool
 	TotalUnitsCompleted   float64
 	Shutdown              bool
@@ -40,7 +40,7 @@ type EventLog struct {
 // NewEventLog initializes an empty event log.
 func NewEventLog(unit model.Unit) *EventLog {
 	return &EventLog{
-        unitsCompletedByTrial: map[RequestID]int{},
+        unitsCompletedByTrial: map[RequestID]float64{},
 		earlyExits:            map[RequestID]bool{},
 		TotalUnitsCompleted:   0,
 		Shutdown:              false,
@@ -80,7 +80,7 @@ func (el *EventLog) TrialExitedEarly(requestID RequestID, exitedReason workload.
 	// If we are exiting early and we haven't seen this exiting early
 	// message before, return true to send the message down to the search
 	// method.
-    if workload.ExitedReason == workload.InvalidHP {
+    if exitedReason == workload.InvalidHP {
         unitsCancelled := el.unitsCompletedByTrial[requestID]
         el.TotalUnitsCompleted -= unitsCancelled
     }

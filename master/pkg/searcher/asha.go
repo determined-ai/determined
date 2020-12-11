@@ -249,7 +249,7 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
-    if workload.ExitedReason == workload.InvalidHP {
+    if exitedReason == workload.InvalidHP {
         var ops []Operation
 	    s.earlyExitTrials[requestID] = true
         ops = append(ops, NewClose(requestID))
@@ -262,8 +262,7 @@ func (s *asyncHalvingSearch) trialExitedEarly(
         }
         // Add new trial to searcher queue
 		create := NewCreate(
-			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType
-        )
+			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.trialRungs[create.RequestID] = 0
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.rungs[0].unitsNeeded))
