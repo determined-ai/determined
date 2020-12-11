@@ -11,25 +11,10 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
 import { Agent, Resource, ResourceState } from 'types';
+import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
 
 const resourcePools = getResourcePools();
-
-const getSlotContainerStates = (agents: Agent[], resourcePoolName?: string): ResourceState[] => {
-  let targetAgents = agents;
-  if (resourcePoolName) {
-    targetAgents = targetAgents.filter(agent => agent.resourcePool);
-  }
-  const slotContainerStates = targetAgents.map(agent => agent.resources)
-    .reduce((acc, cur) => {
-      acc.push(...cur);
-      return acc;
-    }, [])
-    .filter(res => res.enabled && res.container)
-    .map(res => res.container?.state) as ResourceState[];
-
-  return slotContainerStates;
-};
 
 const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
