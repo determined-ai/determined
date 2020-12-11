@@ -3,6 +3,9 @@ package resourcemanagers
 import (
 	"testing"
 
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
+
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -295,7 +298,7 @@ func TestPrioritySchedulingPreemptionDisabledAddTasks(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 }
 
-func TestPrioritySchedulingPreemptionDisabledDepth2(t *testing.T) {
+func TestPrioritySchedulingPreemptionDisabledAllSlotsAllocated(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
@@ -883,13 +886,23 @@ func AddUnallocatedTasks(
 	}
 }
 
+func deallocateDevices(a *agentState, slots int, id cproto.ID, devices []device.Device) {
+	if slots == 0 {
+		a.deallocateDevice(device.ZeroSlot, id, device.Device{})
+	}
+
+	for _, d := range devices {
+		a.deallocateDevice(device.CPU, id, d)
+	}
+}
+
 func RemoveTask(slots int, toRelease *actor.Ref, taskList *taskList, delete bool) bool {
 	for _, alloc := range taskList.GetAllocations(toRelease).Allocations {
 		alloc, ok := alloc.(*containerAllocation)
 		if !ok {
 			return false
 		}
-		alloc.agent.deallocateDevices(slots, alloc.container.id)
+		deallocateDevices(alloc.agent, slots, alloc.container.id, alloc.devices)
 	}
 	if delete {
 		taskList.RemoveTaskByHandler(toRelease)
