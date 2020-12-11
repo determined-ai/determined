@@ -379,7 +379,7 @@ func startLoggingContainer(
 
 	filesReader, err := archive.ToIOReader(fluentFiles)
 	if err != nil {
-		return 0, "", errors.Wrap(err, "failed make reader from fluent files")
+		return 0, "", errors.Wrap(err, "failed to make reader from Fluent files")
 	}
 
 	err = docker.CopyToContainer(context.Background(),

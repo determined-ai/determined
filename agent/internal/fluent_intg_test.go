@@ -11,8 +11,8 @@ import (
 	"math"
 	"math/rand"
 	"net"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/docker/api/types"
@@ -47,16 +47,24 @@ func TestFluentPostgresLogging(t *testing.T) {
 	sys := actor.NewSystem("")
 	sys.MustActorOf(actor.Addr("fluent"), f)
 
-	// AND a container that prints some predefined logs
+	// WHEN a container prints some predefined logs
 	trialID := math.MaxInt16 + rand.Int31n(math.MaxInt16)
 	expected, actual := makeLogTestCase(int(trialID), aConf.AgentID)
 	runContainerWithLogs(t, actual, int(trialID), f.port)
 
 	// THEN fluent should parse all fields as expected and ship them to the mock master.
 	i := 0
-	for l := range logBuffer {
-		assertLogEquals(t, l, expected[i])
-		i++
+	for {
+		select {
+		case l := <-logBuffer:
+			assertLogEquals(t, l, expected[i])
+			i++
+			if i == len(expected) {
+				return
+			}
+		case <-time.After(time.Minute):
+			assert.Equal(t, i, len(expected), "not enough logs received after one minute")
+		}
 	}
 }
 
@@ -75,16 +83,21 @@ func TestFluentLoggingElastic(t *testing.T) {
 	sys := actor.NewSystem("")
 	sys.MustActorOf(actor.Addr("fluent"), f)
 
-	// AND a container that prints some predefined logs
+	// WHEN a container prints some predefined logs
 	trialID := math.MaxInt16 + rand.Int31n(math.MaxInt16)
 	expected, actual := makeLogTestCase(int(trialID), aConf.AgentID)
 	runContainerWithLogs(t, actual, int(trialID), f.port)
+
+	// This is really unfortunate, but we don't query for logs until they're more than 10 seconds old
+	// to _try_ to avoid the trickiness involved with elastic's consistency model.
+	time.Sleep(10 * time.Second)
 
 	assert.NilError(t, elastic.WaitForIngest(testutils.CurrentLogstashElasticIndex()))
 
 	// THEN fluent should parse all fields as expected and ship them to elastic.
 	logs, _, err := elastic.TrialLogs(int(trialID), 0, 4, nil, nil)
 	assert.NilError(t, err, "failed to retrieve trial logs")
+	assert.Equal(t, len(logs), len(expected), "not enough logs received after one minute")
 	for i, l := range logs {
 		assertLogEquals(t, *l, expected[i])
 	}
@@ -123,23 +136,23 @@ func makeLogTestCase(trialID int, agentID string) ([]model.TrialLog, string) {
 			AgentID:     &agentID,
 			ContainerID: stringToPointer("goodcontainer"),
 			RankID:      intToPointer(3),
-			Log:         stringToPointer("urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110] END\n"), // nolint:lll
+			Log:         stringToPointer("urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]\n"), // nolint:lll
 			StdType:     stringToPointer("stdout"),
 		},
 	}
 	actual := `[rank=4] 
 [rank=1] INFO: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)
 [rank=2] ERROR: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 9:99:99)
-[rank=3] urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110] END` // nolint:lll
+[rank=3] urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]` // nolint:lll
 	return expected, actual
 }
 
 func mockLogAcceptor(t *testing.T) (chan model.TrialLog, func()) {
 	e := echo.New()
-	baseListener, err := net.Listen("tcp", fmt.Sprintf(":%d", 8080))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 8080))
 	assert.NilError(t, err, "error starting mock master listener")
-	e.Listener = baseListener
-	logBuffer := make(chan model.TrialLog, 100)
+	e.Listener = lis
+	logBuffer := make(chan model.TrialLog)
 	e.POST("/trial_logs", func(ctx echo.Context) error {
 		body, err := ioutil.ReadAll(ctx.Request().Body)
 		if err != nil {
@@ -152,12 +165,7 @@ func mockLogAcceptor(t *testing.T) (chan model.TrialLog, func()) {
 		}
 
 		for _, l := range logs {
-			end := strings.Contains(*l.Log, "END")
 			logBuffer <- l
-			if end {
-				close(logBuffer)
-				break
-			}
 		}
 		return nil
 	})
@@ -199,6 +207,8 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 	env := []string{fmt.Sprintf("DET_TRIAL_ID=%d", trialID)}
 	cont := cproto.Container{ID: "goodcontainer"}
 	spec = overwriteSpec(cont, spec, env, nil, fluentPort)
+
+	// AND create a container with this env
 	cc, err := docker.ContainerCreate(
 		context.Background(),
 		&spec.RunSpec.ContainerConfig,
@@ -207,6 +217,7 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 		"log-test-"+uuid.New().String())
 	assert.NilError(t, err, "error creating container")
 
+	// AND start that container with a command to print the fake logs
 	files := []archive.Item{
 		{
 			Path:     "/fakelogs",
@@ -217,7 +228,6 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 	}
 	filesReader, err := archive.ToIOReader(files)
 	assert.NilError(t, err, "failed make reader from fluent files")
-
 	err = docker.CopyToContainer(context.Background(),
 		cc.ID,
 		"/",
@@ -225,27 +235,18 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 		types.CopyToContainerOptions{},
 	)
 	assert.NilError(t, err, "failed to copy files to container")
-
 	err = docker.ContainerStart(context.Background(), cc.ID, types.ContainerStartOptions{})
 	assert.NilError(t, err, "error starting container")
 }
 
 func assertLogEquals(t *testing.T, l, expected model.TrialLog) {
 	assert.Equal(t, l.TrialID, expected.TrialID, spew.Sdump(l))
-	assert.Assert(t, l.AgentID != nil, spew.Sdump(l))
-	assert.Equal(t, *l.AgentID, *expected.AgentID, spew.Sdump(l))
-	assert.Assert(t, l.ContainerID != nil, spew.Sdump(l))
-	assert.Equal(t, *l.ContainerID, *expected.ContainerID, spew.Sdump(l))
-	assert.Assert(t, l.RankID != nil, spew.Sdump(l))
-	assert.Equal(t, *l.RankID, *expected.RankID, spew.Sdump(l))
-	if expected.Level != nil {
-		assert.Assert(t, l.Level != nil, spew.Sdump(l))
-		assert.Equal(t, *l.Level, *expected.Level, spew.Sdump(l))
-	}
-	assert.Assert(t, l.Log != nil, spew.Sdump(l))
-	assert.Equal(t, *l.Log, *expected.Log, spew.Sdump(l))
-	assert.Assert(t, l.StdType != nil, spew.Sdump(l))
-	assert.Equal(t, *l.StdType, *expected.StdType, spew.Sdump(l))
+	assert.DeepEqual(t, l.AgentID, expected.AgentID)
+	assert.DeepEqual(t, l.ContainerID, expected.ContainerID)
+	assert.DeepEqual(t, l.RankID, expected.RankID)
+	assert.DeepEqual(t, l.Level, expected.Level)
+	assert.DeepEqual(t, l.Log, expected.Log)
+	assert.DeepEqual(t, l.StdType, expected.StdType)
 }
 
 func stringToPointer(x string) *string {
