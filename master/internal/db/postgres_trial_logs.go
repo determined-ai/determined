@@ -15,7 +15,7 @@ import (
 
 // TrialLogs takes a trial ID and log offset, limit and filters and returns matching trial logs.
 func (db *PgDB) TrialLogs(
-	trialID, offset, limit int, fs []api.Filter, _ interface{},
+	trialID, offset, limit int, fs []api.Filter, order apiv1.OrderBy, _ interface{},
 ) ([]*model.TrialLog, interface{}, error) {
 	params := []interface{}{trialID, offset, limit}
 	fragment, params := filtersToSQL(fs, params)
@@ -43,8 +43,8 @@ SELECT
 FROM trial_logs l
 WHERE l.trial_id = $1
 %s
-ORDER BY l.id ASC OFFSET $2 LIMIT $3
-`, fragment)
+ORDER BY l.timestamp %s OFFSET $2 LIMIT $3
+`, fragment, orderByToSQL(order))
 
 	var b []*model.TrialLog
 	return b, nil, db.queryRows(query, &b, params...)

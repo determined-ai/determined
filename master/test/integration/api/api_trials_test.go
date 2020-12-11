@@ -189,6 +189,37 @@ func trialLogAPITests(
 			},
 			matches: []string{"a log at time0 and a second"},
 		},
+		{
+			name: "order by desc",
+			req: &apiv1.TrialLogsRequest{
+				Offset:  0,
+				Limit:   3,
+				Follow:  false,
+				OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
+			},
+			logs: []*model.TrialLog{
+				{
+					AgentID:   &agent1,
+					Timestamp: timePlusDuration(time0, time.Second),
+					Log:       stringWithPrefix("", "a log at time0 and a second"),
+				},
+				{
+					AgentID:   &agent0,
+					Timestamp: &time0,
+					Log:       stringWithPrefix("", "a log at time0"),
+				},
+				{
+					AgentID:   &agent0,
+					Timestamp: timePlusDuration(time0, -time.Second),
+					Log:       stringWithPrefix("", "a log at time0 less a second"),
+				},
+			},
+			matches: []string{
+				"a log at time0 and a second",
+				"a log at time0",
+				"a log at time0 less a second",
+			},
+		},
 	}
 
 	runTestCase := func(t *testing.T, tc testCase) {

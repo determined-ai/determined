@@ -42,6 +42,8 @@ message TrialLogsRequest {
   google.protobuf.Timestamp timestamp_before = 12;
   // Limit the trial logs to ones with a timestamp after a given time.
   google.protobuf.Timestamp timestamp_after = 13;
+  // Order logs in either ascending or descending order by timestamp.
+  OrderBy order_by = 14;
 }
 
 // Response to TrialLogsRequest.
