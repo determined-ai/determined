@@ -71,7 +71,11 @@ const ExperimentVisualization: React.FC<Props> = ({
   // Stream available metrics
   useEffect(() => {
     consumeStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.determinedMetricNames(experiment.id, { signal: canceler.signal }),
+      detApi.StreamingInternal.determinedMetricNames(
+        experiment.id,
+        undefined,
+        { signal: canceler.signal },
+      ),
       event => {
         setSearchMetric(event.searcherMetric);
         setTrainingMetrics(event.trainingMetrics || []);
@@ -94,6 +98,7 @@ const ExperimentVisualization: React.FC<Props> = ({
         experiment.id,
         selectedMetric?.name,
         metricTypeParam,
+        undefined,
         { signal: batchesCanceler.signal },
       ),
       event => {
