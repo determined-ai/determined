@@ -246,7 +246,7 @@ def generate_random_hparam_values(hparam_def: Dict[str, Any]) -> Dict[str, Any]:
                 return math.pow(hparam["base"], random.uniform(hparam["minval"], hparam["maxval"]))
             else:
                 raise Exception("Wrong type of hyperparameter: {}".format(hparam["type"]))
-        elif isinstance(hparam, (int, float, str)):
+        elif isinstance(hparam, (int, float, str, type(None))):
             return hparam
         else:
             raise Exception("Wrong type of hyperparameter: {}".format(type(hparam)))
