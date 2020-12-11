@@ -21,10 +21,10 @@ import css from './ExperimentInfoBox.module.scss';
 
 interface Props {
   experiment: ExperimentDetails;
-  onChange?: () => void;
+  onTagsChange?: () => void;
 }
 
-const ExperimentInfoBox: React.FC<Props> = ({ experiment, onChange }: Props) => {
+const ExperimentInfoBox: React.FC<Props> = ({ experiment, onTagsChange }: Props) => {
   const config = experiment.config;
   const [ showConfig, setShowConfig ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
@@ -55,7 +55,7 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment, onChange }: Props) => 
     return sortedCheckpoints[0];
   }, [ experiment.trials, orderFactor ]);
 
-  const experimentTags = useExperimentTags(onChange);
+  const experimentTags = useExperimentTags(onTagsChange);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
   const handleHideConfig = useCallback(() => setShowConfig(false), []);
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
