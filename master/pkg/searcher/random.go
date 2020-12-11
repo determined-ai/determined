@@ -44,14 +44,13 @@ func (s *randomSearch) trialExitedEarly(
 	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
     if exitedReason == workload.InvalidHP {
-	    var ops []Operation
+		var ops []Operation
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
 		ops = append(ops, NewValidate(create.RequestID))
 		ops = append(ops, NewClose(create.RequestID))
-        return ops, nil
-    } else {
-	    return nil, nil
-    }
+		return ops, nil
+	} 
+	return nil, nil
 }

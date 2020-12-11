@@ -239,38 +239,37 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 	if allTrials == s.maxTrials {
 		progress = math.Max(float64(s.trialsCompleted)/float64(s.maxTrials), progress)
 	}
-    // Cap progress at 95% for InvalidHP cases 
+    // Cap progress at 95% for InvalidHP cases
     if progress > 1 {
-        progress = float64(0.95)
-    } 
-	return progress
+	    progress = float64(0.95)
+	}
+    return progress
 }
 
 func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
-    if exitedReason == workload.InvalidHP {
-        var ops []Operation
-	    s.earlyExitTrials[requestID] = true
-        ops = append(ops, NewClose(requestID))
-	    s.closedTrials[requestID] = true
-        // Remove metrics associated with InvalidHP trial across all rungs
-	    highestRungIndex := s.trialRungs[requestID]
-        for rungIndex := 0; rungIndex <= highestRungIndex; rungIndex++ {
-            rung := s.rungs[rungIndex]
-            rung.metrics = nil    
-        }
-        // Add new trial to searcher queue
+	if exitedReason == workload.InvalidHP {
+		var ops []Operation
+		s.earlyExitTrials[requestID] = true
+		ops = append(ops, NewClose(requestID))
+		s.closedTrials[requestID] = true
+		// Remove metrics associated with InvalidHP trial across all rungs
+		highestRungIndex := s.trialRungs[requestID]
+		for rungIndex := 0; rungIndex <= highestRungIndex; rungIndex++ {
+			rung := s.rungs[rungIndex]
+			rung.metrics = nil
+		}
+		// Add new trial to searcher queue
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.trialRungs[create.RequestID] = 0
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.rungs[0].unitsNeeded))
 		ops = append(ops, NewValidate(create.RequestID))
-        return ops, nil
-    } else {
-	    s.earlyExitTrials[requestID] = true
-	    s.closedTrials[requestID] = true
-	    return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil
-    }
+		return ops, nil
+	} 
+	s.earlyExitTrials[requestID] = true
+	s.closedTrials[requestID] = true
+	return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil
 }

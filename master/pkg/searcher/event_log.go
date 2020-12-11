@@ -22,7 +22,7 @@ type TrialClosedEvent struct {
 
 // EventLog records all actions coming to and from a searcher.
 type EventLog struct {
-	uncommitted []Event
+    uncommitted []Event
 
 	// Searcher state.
     unitsCompletedByTrial map[RequestID]float64
@@ -40,7 +40,7 @@ type EventLog struct {
 // NewEventLog initializes an empty event log.
 func NewEventLog(unit model.Unit) *EventLog {
 	return &EventLog{
-        unitsCompletedByTrial: map[RequestID]float64{},
+		unitsCompletedByTrial: map[RequestID]float64{},
 		earlyExits:            map[RequestID]bool{},
 		TotalUnitsCompleted:   0,
 		Shutdown:              false,
@@ -72,7 +72,7 @@ func (el *EventLog) TrialCreated(create Create, trialID int) {
 	el.uncommitted = append(el.uncommitted, trialCreated)
 	el.TrialIDs[create.RequestID] = trialID
 	el.RequestIDs[trialID] = create.RequestID
-    el.unitsCompletedByTrial[create.RequestID] = 0
+	el.unitsCompletedByTrial[create.RequestID] = 0
 }
 
 // TrialExitedEarly marks the trial with the given requestID as exited early.
@@ -80,10 +80,10 @@ func (el *EventLog) TrialExitedEarly(requestID RequestID, exitedReason workload.
 	// If we are exiting early and we haven't seen this exiting early
 	// message before, return true to send the message down to the search
 	// method.
-    if exitedReason == workload.InvalidHP {
-        unitsCancelled := el.unitsCompletedByTrial[requestID]
-        el.TotalUnitsCompleted -= unitsCancelled
-    }
+	if exitedReason == workload.InvalidHP {
+		unitsCancelled := el.unitsCompletedByTrial[requestID]
+		el.TotalUnitsCompleted -= unitsCancelled
+	}
 	if _, ok := el.earlyExits[requestID]; !ok {
 		el.earlyExits[requestID] = true
 	}
@@ -92,7 +92,7 @@ func (el *EventLog) TrialExitedEarly(requestID RequestID, exitedReason workload.
 // WorkloadCompleted records that the workload has been completed.
 func (el *EventLog) WorkloadCompleted(msg workload.CompletedMessage, unitsCompleted float64) {
 	el.TotalUnitsCompleted += unitsCompleted
-    el.unitsCompletedByTrial[el.RequestIDs[msg.Workload.TrialID]] += unitsCompleted
+	el.unitsCompletedByTrial[el.RequestIDs[msg.Workload.TrialID]] += unitsCompleted
 	el.uncommitted = append(el.uncommitted, msg)
 }
 
