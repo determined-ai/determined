@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -400,6 +401,41 @@ type TrialLog struct {
 	Log         *string    `db:"log" json:"log"`
 	Source      *string    `db:"source" json:"source"`
 	StdType     *string    `db:"stdtype" json:"stdtype"`
+}
+
+// Resolve resolves the legacy Message field from the others provided.
+func (t *TrialLog) Resolve() {
+	var timestamp string
+	if t.Timestamp != nil {
+		timestamp = t.Timestamp.Format(time.RFC3339Nano)
+	} else {
+		timestamp = "UNKNOWN TIME"
+	}
+
+	// This is just to match postgres.
+	const containerIDMaxLength = 8
+	var containerID string
+	if t.ContainerID != nil {
+		containerID = *t.ContainerID
+		if len(containerID) > containerIDMaxLength {
+			containerID = containerID[:containerIDMaxLength]
+		}
+	} else {
+		containerID = "UNKNOWN CONTAINER"
+	}
+
+	var rankID string
+	if t.RankID != nil {
+		rankID = fmt.Sprintf("[rank=%d] ", *t.RankID)
+	}
+
+	var level string
+	if t.Level != nil {
+		level = fmt.Sprintf("%s: ", *t.Level)
+	}
+
+	t.Message = fmt.Sprintf("[%s] [%s] %s|| %s %s",
+		timestamp, containerID, rankID, level, *t.Log)
 }
 
 // TrialLogBatch represents a batch of model.TrialLog.

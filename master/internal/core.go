@@ -150,7 +150,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	if err != nil {
 		return err
 	}
-	defer closeWithErrCheck(baseListener)
+	defer closeWithErrCheck("base", baseListener)
 
 	if cert != nil {
 		baseListener = tls.NewListener(baseListener, &tls.Config{
@@ -171,10 +171,10 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	grpcListener := mux.MatchWithWriters(
 		cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"),
 	)
-	defer closeWithErrCheck(grpcListener)
+	defer closeWithErrCheck("grpc", grpcListener)
 
 	httpListener := mux.Match(cmux.HTTP1(), cmux.HTTP2())
-	defer closeWithErrCheck(httpListener)
+	defer closeWithErrCheck("http", httpListener)
 
 	// Start all servers and return the first error. This leaks a channel, but the complexity of
 	// perfectly handling cleanup and all the error cases doesn't seem worth it for a function that is
@@ -196,7 +196,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	start("HTTP server", func() error {
 		m.echo.Listener = httpListener
 		m.echo.HidePort = true
-		defer closeWithErrCheck(m.echo)
+		defer closeWithErrCheck("echo", m.echo)
 		return m.echo.StartServer(m.echo.Server)
 	})
 	start("cmux listener", mux.Serve)
@@ -210,10 +210,10 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	}
 }
 
-func closeWithErrCheck(closer io.Closer) {
+func closeWithErrCheck(name string, closer io.Closer) {
 	err := closer.Close()
 	if err != nil {
-		log.Errorf("error closing closer: %s", err)
+		log.Errorf("error closing closer %s: %s", name, err)
 	}
 }
 
@@ -323,7 +323,7 @@ func (m *Master) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer closeWithErrCheck(m.db)
+	defer closeWithErrCheck("db", m.db)
 
 	m.ClusterID, err = m.db.GetClusterID()
 	if err != nil {

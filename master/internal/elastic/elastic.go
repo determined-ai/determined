@@ -59,13 +59,19 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	}
 
 	// Try to connect to elastic - we'd rather fail hard here than on first log write.
-	i, err := es.Info()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to elastic")
+	numTries := 0
+	for {
+		i, err := es.Info()
+		if err == nil {
+			logrus.Infof("connected to elasticsearch cluster with info: %s", i.String())
+			return &Elastic{es}, nil
+		}
+		numTries++
+		if numTries >= 15 {
+			return nil, errors.Wrapf(err, "could not connect to elastic after %v tries", numTries)
+		}
+		time.Sleep(time.Second)
 	}
-	logrus.Infof("connected to elasticsearch cluster with info: %s", i.String())
-
-	return &Elastic{es}, nil
 }
 
 func elasticTLSConfig(conf model.ElasticTLSConfig) (*tls.Config, error) {

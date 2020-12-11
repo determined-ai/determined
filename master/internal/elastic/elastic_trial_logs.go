@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"reflect"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 
 	log "github.com/sirupsen/logrus"
 
@@ -47,17 +50,17 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 	enc := json.NewEncoder(&buf)
 	for index, logs := range indexToLogs {
 		for _, l := range logs {
-			err := enc.Encode(l)
-			if err != nil {
+			if err := enc.Encode(l); err != nil {
 				return errors.Wrap(err, "failed to make index request body")
 			}
 			res, err := e.client.Index(index, &buf)
 			if err != nil {
 				return errors.Wrapf(err, "failed to index document")
 			}
-			err = res.Body.Close()
+			err = checkResponse(res)
+			closeWithErrCheck(res.Body)
 			if err != nil {
-				return errors.Wrap(err, "failed to close index response body")
+				return errors.Wrap(err, "failed to index document")
 			}
 		}
 	}
@@ -66,7 +69,7 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 
 // TrialLogCount returns the number of trial logs for the given trial.
 func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
-	query := jsonObj{
+	count, err := e.count(jsonObj{
 		"query": jsonObj{
 			"bool": jsonObj{
 				"filter": append(filtersToElastic(fs),
@@ -77,28 +80,11 @@ func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 					}),
 			},
 		},
-	}
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return 0, fmt.Errorf("failed to encode query: %w", err)
-	}
-
-	res, err := e.client.Count(
-		e.client.Count.WithBody(&buf))
+	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to retrieve log count: %w", err)
+		return 0, errors.Wrap(err, "failed to get trial log count")
 	}
-	defer closeWithErrCheck(res.Body)
-
-	resp := struct {
-		Count int `json:"count"`
-	}{}
-	err = json.NewDecoder(res.Body).Decode(&resp)
-	if err != nil {
-		return 0, errors.New("failed to decode count api response")
-	}
-	return resp.Count, nil
+	return count, nil
 }
 
 // TrialLogs return a set of trial logs within a specified window.
@@ -144,7 +130,14 @@ func (e *Elastic) TrialLogs(
 			// If two containers emit logs with the same timestamp down
 			// to the nanosecond, it may be lost in some cases still, but
 			// this should be better than nothing.
-			{"container_id.keyword": "asc"},
+			{
+				"container_id.keyword": jsonObj{
+					"order": "asc",
+					// https://www.elastic.co/guide/en/elasticsearch/reference/7.9/
+					// sort-search-results.html#_ignoring_unmapped_fields
+					"unmapped_type": "keyword",
+				},
+			},
 		},
 	}
 
@@ -155,17 +148,6 @@ func (e *Elastic) TrialLogs(
 		delete(query, "from")
 	}
 
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return nil, nil, fmt.Errorf("failed to encode query: %w", err)
-	}
-
-	res, err := e.client.Search(e.client.Search.WithBody(&buf))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to perform search: %w", err)
-	}
-	defer closeWithErrCheck(res.Body)
-
 	resp := struct {
 		Hits struct {
 			Hits []struct {
@@ -174,44 +156,14 @@ func (e *Elastic) TrialLogs(
 			} `json:"hits"`
 		} `json:"hits"`
 	}{}
-	err = json.NewDecoder(res.Body).Decode(&resp)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to decode search api response")
+
+	if err := e.search(query, &resp); err != nil {
+		return nil, nil, errors.Wrap(err, "failed to query trial logs")
 	}
 
 	var logs []*model.TrialLog
 	for _, h := range resp.Hits.Hits {
-		var timestamp string
-		if h.Source.Timestamp != nil {
-			timestamp = h.Source.Timestamp.Format(time.RFC3339Nano)
-		} else {
-			timestamp = "UNKNOWN TIME"
-		}
-
-		// This is just to match postgres.
-		const containerIDMaxLength = 8
-		var containerID string
-		if h.Source.ContainerID != nil {
-			containerID = *h.Source.ContainerID
-			if len(containerID) > containerIDMaxLength {
-				containerID = containerID[:containerIDMaxLength]
-			}
-		} else {
-			containerID = "UNKNOWN CONTAINER"
-		}
-
-		var rankID string
-		if h.Source.RankID != nil {
-			rankID = fmt.Sprintf("[rank=%d] ", *h.Source.RankID)
-		}
-
-		var level string
-		if h.Source.Level != nil {
-			level = fmt.Sprintf("%s: ", *h.Source.Level)
-		}
-
-		h.Source.Message = fmt.Sprintf("[%s] [%s] %s|| %s %s",
-			timestamp, containerID, rankID, level, *h.Source.Log)
+		h.Source.Resolve()
 		logs = append(logs, h.Source)
 	}
 
@@ -225,6 +177,124 @@ func (e *Elastic) TrialLogs(
 	return logs, sortValues, nil
 }
 
+// TrialLogFields returns the unique fields that can be filtered on for the given trial.
+func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
+	query := jsonObj{
+		"size": 0,
+		"query": jsonObj{
+			"bool": jsonObj{
+				"filter": []jsonObj{
+					{
+						"term": jsonObj{
+							"trial_id": trialID,
+						},
+					},
+				},
+			},
+		},
+		"aggs": jsonObj{
+			// These keys are the aggregate names; they must match the aggregate names we expect to
+			// be returned, which are defined in the type of resp below.
+			"agent_ids": jsonObj{
+				"terms": jsonObj{
+					"field": "agent_id.keyword",
+				},
+			},
+			"container_ids": jsonObj{
+				"terms": jsonObj{
+					"field": "container_id.keyword",
+				},
+			},
+			"rank_ids": jsonObj{
+				"terms": jsonObj{
+					"field": "rank_id",
+				},
+			},
+			"sources": jsonObj{
+				"terms": jsonObj{
+					"field": "source.keyword",
+				},
+			},
+			"stdtypes": jsonObj{
+				"terms": jsonObj{
+					"field": "stdtype.keyword",
+				},
+			},
+		},
+	}
+	resp := struct {
+		Aggregations struct {
+			AgentIDs     stringAggResult `json:"agent_ids"`
+			ContainerIDs stringAggResult `json:"container_ids"`
+			RankIDs      intAggResult    `json:"rank_ids"`
+			Sources      stringAggResult `json:"sources"`
+			StdTypes     stringAggResult `json:"stdtypes"`
+		} `json:"aggregations"`
+	}{}
+	if err := e.search(query, &resp); err != nil {
+		return nil, errors.Wrap(err, "failed to aggregate trial log fields")
+	}
+
+	return &apiv1.TrialLogsFieldsResponse{
+		AgentIds:     resp.Aggregations.AgentIDs.toKeys(),
+		ContainerIds: resp.Aggregations.ContainerIDs.toKeys(),
+		RankIds:      resp.Aggregations.RankIDs.toKeysInt32(),
+		Stdtypes:     resp.Aggregations.StdTypes.toKeys(),
+		Sources:      resp.Aggregations.Sources.toKeys(),
+	}, nil
+}
+
+// search runs the search request with query as its body and populates the result into resp.
+func (e *Elastic) search(query jsonObj, resp interface{}) error {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return errors.Wrap(err, "failed to encoding query")
+	}
+
+	res, err := e.client.Search(e.client.Search.WithBody(&buf))
+	if err != nil {
+		return errors.Wrap(err, "failed to perform search")
+	}
+	defer closeWithErrCheck(res.Body)
+	if err = checkResponse(res); err != nil {
+		return errors.Wrap(err, "failed to perform search")
+	}
+
+	err = json.NewDecoder(res.Body).Decode(resp)
+	if err != nil {
+		return fmt.Errorf("failed to decode search api response")
+	}
+
+	return nil
+}
+
+// count runs the count request with query as its body returns the result.
+func (e *Elastic) count(query jsonObj) (int, error) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return 0, errors.Wrap(err, "failed to encode query")
+	}
+
+	res, err := e.client.Count(e.client.Count.WithBody(&buf))
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to retrieve log count")
+	}
+	defer closeWithErrCheck(res.Body)
+	if err = checkResponse(res); err != nil {
+		return 0, errors.Wrap(err, "failed to retrieve log count")
+	}
+
+	resp := struct {
+		Count int `json:"count"`
+	}{}
+	err = json.NewDecoder(res.Body).Decode(&resp)
+	if err != nil {
+		return 0, errors.New("failed to decode count api response")
+	}
+
+	return resp.Count, nil
+}
+
 func filtersToElastic(fs []api.Filter) []jsonObj {
 	var terms []jsonObj
 	for _, f := range fs {
@@ -236,23 +306,33 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 			}
 			var inTerms []jsonObj
 			for _, v := range values {
-				inTerms = append(inTerms,
-					jsonObj{
-						"term": jsonObj{
-							// filter against the keyword not the analyzed text. If you
-							// have any text field, for example `agent_id`, by default,
-							// elasticsearch will analyze this field and operations against it
-							// use this analyzed field, leading to unexpected results.
-							// The text fields we use should be stored as multi-fields, with an
-							// additional field `keyword` under the original field that stores
-							// the input as type `keyword` for literal comparisons. When elastic
-							// encounters JSON strings, the default dynamic mappings for
-							// the cluster will create this field.
-							// Relates to https://github.com/elastic/elasticsearch/issues/53020
-							// and https://github.com/elastic/elasticsearch/issues/53181.
-							f.Field + ".keyword": v,
-						},
-					})
+				switch v.(type) {
+				case string:
+					// For strings, we filter against the keyword not the analyzed text.
+					// If you have any text field, for example `agent_id`, by default,
+					// elasticsearch will analyze this field and operations against it
+					// use this analyzed field, leading to unexpected results.
+					// The text fields we use should be stored as multi-fields, with an
+					// additional field `keyword` under the original field that stores
+					// the input as type `keyword` for literal comparisons. When elastic
+					// encounters JSON strings, the default dynamic mappings for
+					// the cluster will create this field.
+					// Relates to https://github.com/elastic/elasticsearch/issues/53020
+					// and https://github.com/elastic/elasticsearch/issues/53181.
+					inTerms = append(inTerms,
+						jsonObj{
+							"term": jsonObj{
+								f.Field + ".keyword": v,
+							},
+						})
+				default:
+					inTerms = append(inTerms,
+						jsonObj{
+							"term": jsonObj{
+								f.Field: v,
+							},
+						})
+				}
 			}
 			terms = append(terms,
 				jsonObj{
@@ -335,88 +415,19 @@ func (r intAggResult) toKeysInt32() []int32 {
 	return keys
 }
 
-// TrialLogFields returns the unique fields that can be filtered on for the given trial.
-func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
-	query := jsonObj{
-		"size": 0,
-		"query": jsonObj{
-			"bool": jsonObj{
-				"filter": []jsonObj{
-					{
-						"term": jsonObj{
-							"trial_id": trialID,
-						},
-					},
-				},
-			},
-		},
-		"aggs": jsonObj{
-			// These keys are the aggregate names; they must match the aggregate names we expect to
-			// be returned, which are defined in the type of resp below.
-			"agent_ids": jsonObj{
-				"terms": jsonObj{
-					"field": "agent_id.keyword",
-				},
-			},
-			"container_ids": jsonObj{
-				"terms": jsonObj{
-					"field": "container_id.keyword",
-				},
-			},
-			"rank_ids": jsonObj{
-				"terms": jsonObj{
-					"field": "rank_id",
-				},
-			},
-			"sources": jsonObj{
-				"terms": jsonObj{
-					"field": "source.keyword",
-				},
-			},
-			"stdtypes": jsonObj{
-				"terms": jsonObj{
-					"field": "stdtype.keyword",
-				},
-			},
-		},
-	}
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		return nil, fmt.Errorf("failed to encode query: %w", err)
-	}
-
-	res, err := e.client.Search(e.client.Search.WithBody(&buf))
-	if err != nil {
-		return nil, fmt.Errorf("failed to perform search: %w", err)
-	}
-	defer closeWithErrCheck(res.Body)
-
-	resp := struct {
-		Aggregations struct {
-			AgentIDs     stringAggResult `json:"agent_ids"`
-			ContainerIDs stringAggResult `json:"container_ids"`
-			RankIDs      intAggResult    `json:"rank_ids"`
-			Sources      stringAggResult `json:"sources"`
-			StdTypes     stringAggResult `json:"stdtypes"`
-		} `json:"aggregations"`
-	}{}
-	err = json.NewDecoder(res.Body).Decode(&resp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode search api response")
-	}
-
-	return &apiv1.TrialLogsFieldsResponse{
-		AgentIds:     resp.Aggregations.AgentIDs.toKeys(),
-		ContainerIds: resp.Aggregations.ContainerIDs.toKeys(),
-		RankIds:      resp.Aggregations.RankIDs.toKeysInt32(),
-		Stdtypes:     resp.Aggregations.StdTypes.toKeys(),
-		Sources:      resp.Aggregations.Sources.toKeys(),
-	}, err
-}
-
 func logstashIndexFromTimestamp(time *time.Time) string {
 	return time.UTC().Format("triallogs-2006.01.02")
+}
+
+func checkResponse(res *esapi.Response) error {
+	if res.StatusCode > 299 || res.StatusCode < 200 {
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body with code %d", res.StatusCode)
+		}
+		return fmt.Errorf("request failed with code %d: %s", res.StatusCode, b)
+	}
+	return nil
 }
 
 func closeWithErrCheck(closer io.Closer) {

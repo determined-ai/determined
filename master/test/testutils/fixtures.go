@@ -6,7 +6,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/sirupsen/logrus"
 
@@ -48,6 +52,15 @@ func ResolvePostgres() (*db.PgDB, error) {
 	return pgDB, nil
 }
 
+// ResolveElastic resolves a connection to an elasticsearch database.
+func ResolveElastic() (*elastic.Elastic, error) {
+	es, err := elastic.Setup(*DefaultElasticConfig().ElasticLoggingConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to elasticsearch: %w", err)
+	}
+	return es, nil
+}
+
 // RunMaster runs a master in a goroutine and returns a reference to the master,
 // along with all the external context required to interact with the master, and
 // a function to close it.
@@ -67,7 +80,10 @@ func RunMaster(ctx context.Context, c *internal.Config) (
 	logrus.AddHook(logs)
 	go func() {
 		err := m.Run(ctx)
-		if err != nil {
+		switch {
+		case err == context.Canceled:
+			fmt.Println("master stopped")
+		case err != nil:
 			fmt.Println("error running master: ", err)
 		}
 	}()
@@ -112,20 +128,31 @@ func ConnectMaster(c *internal.Config) (apiv1.DeterminedClient, error) {
 // DefaultMasterConfig returns the default master configuration.
 func DefaultMasterConfig() (*internal.Config, error) {
 	c := internal.DefaultConfig()
-	err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields)
-	if err != nil {
+	if err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields); err != nil {
 		return nil, err
 	}
 
-	err = c.Resolve()
-	if err != nil {
+	if err := c.Resolve(); err != nil {
 		return nil, err
 	}
 
-	if err = check.Validate(c); err != nil {
+	if err := check.Validate(c); err != nil {
 		return nil, err
 	}
 	return c, nil
+}
+
+func DefaultElasticConfig() model.LoggingConfig {
+	port, err := strconv.Atoi(os.Getenv("DET_INTEGRATION_ES_PORT"))
+	if err != nil {
+		panic("elastic config had non-numeric port")
+	}
+	return model.LoggingConfig{
+		ElasticLoggingConfig: &model.ElasticLoggingConfig{
+			Host: os.Getenv("DET_INTEGRATION_ES_HOST"),
+			Port: port,
+		},
+	}
 }
 
 // APICredentials takes a context and a connected apiv1.DeterminedClient and returns a context

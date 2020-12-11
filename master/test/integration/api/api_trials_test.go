@@ -7,8 +7,12 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal"
+	"github.com/determined-ai/determined/master/internal/elastic"
 
 	"github.com/determined-ai/determined/master/test/testutils"
 
@@ -19,12 +23,36 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-func TestTrialLogAPI(t *testing.T) {
+func TestTrialLogAPIPostgres(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
+	trialLogAPITests(t, creds, cl, pgDB, func() error {
+		return nil
+	})
+}
+
+func TestTrialLogAPIElastic(t *testing.T) {
+	cfg, err := testutils.DefaultMasterConfig()
+	assert.NilError(t, err, "failed to create master config")
+	cfg.Logging = testutils.DefaultElasticConfig()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	_, _, cl, creds, err := testutils.RunMaster(ctx, cfg)
+	defer cancel()
+	assert.NilError(t, err, "failed to start master")
+
+	trialLogAPITests(t, creds, cl, es, func() error {
+		return es.WaitForIngest(elastic.CurrentLogstashIndex())
+	})
+}
+
+func trialLogAPITests(
+	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, backend internal.TrialLogBackend,
+	awaitBackend func() error,
+) {
 	type testCase struct {
 		name    string
 		req     *apiv1.TrialLogsRequest
@@ -34,8 +62,7 @@ func TestTrialLogAPI(t *testing.T) {
 
 	agent0, agent1 := "elated-backward-cat", "sad-testfailed-cat"
 	rank0, rank1 := 0, 1
-	time0 := time.Now().UTC()
-	time0Plus1, time0Minus1 := time0.Add(time.Second), time0.Add(-time.Second)
+	time0 := time.Now().UTC().Add(-time.Minute)
 	pTime0, err := ptypes.TimestampProto(time0)
 	assert.NilError(t, err, "failed to make proto time")
 	tests := []testCase{
@@ -51,20 +78,24 @@ func TestTrialLogAPI(t *testing.T) {
 			},
 			logs: []*model.TrialLog{
 				{
-					AgentID: &agent0,
-					Message: "a log from " + agent0,
+					AgentID:   &agent0,
+					Log:       stringWithPrefix("a log from ", agent0),
+					Timestamp: &time0,
 				},
 				{
-					AgentID: &agent1,
-					Message: "a log from " + agent1,
+					AgentID:   &agent1,
+					Log:       stringWithPrefix("a log from ", agent1),
+					Timestamp: timePlusDuration(time0, time.Second),
 				},
 				{
-					AgentID: &agent0,
-					Message: "another log from " + agent0,
+					AgentID:   &agent0,
+					Log:       stringWithPrefix("another log from ", agent0),
+					Timestamp: timePlusDuration(time0, 2*time.Second),
 				},
 				{
-					AgentID: &agent1,
-					Message: "another log from " + agent1,
+					AgentID:   &agent1,
+					Log:       stringWithPrefix("another log from ", agent1),
+					Timestamp: timePlusDuration(time0, 3*time.Second),
 				},
 			},
 			matches: []string{
@@ -84,20 +115,24 @@ func TestTrialLogAPI(t *testing.T) {
 			},
 			logs: []*model.TrialLog{
 				{
-					RankID:  &rank0,
-					Message: "a log from " + strconv.Itoa(rank0),
+					RankID:    &rank0,
+					Log:       stringWithPrefix("a log from ", strconv.Itoa(rank0)),
+					Timestamp: &time0,
 				},
 				{
-					RankID:  &rank1,
-					Message: "a log from " + strconv.Itoa(rank1),
+					RankID:    &rank1,
+					Log:       stringWithPrefix("a log from ", strconv.Itoa(rank1)),
+					Timestamp: timePlusDuration(time0, time.Second),
 				},
 				{
-					RankID:  &rank0,
-					Message: "another log from " + strconv.Itoa(rank0),
+					RankID:    &rank0,
+					Log:       stringWithPrefix("another log from ", strconv.Itoa(rank0)),
+					Timestamp: timePlusDuration(time0, 2*time.Second),
 				},
 				{
-					RankID:  &rank1,
-					Message: "another log from " + strconv.Itoa(rank1),
+					RankID:    &rank1,
+					Log:       stringWithPrefix("another log from ", strconv.Itoa(rank1)),
+					Timestamp: timePlusDuration(time0, 3*time.Second),
 				},
 			},
 			matches: []string{
@@ -116,13 +151,13 @@ func TestTrialLogAPI(t *testing.T) {
 			logs: []*model.TrialLog{
 				{
 					AgentID:   &agent1,
-					Timestamp: &time0Plus1,
-					Message:   "a log at time0 and a second",
+					Timestamp: timePlusDuration(time0, time.Second),
+					Log:       stringWithPrefix("", "a log at time0 and a second"),
 				},
 				{
 					AgentID:   &agent0,
-					Timestamp: &time0Minus1,
-					Message:   "a log at time0 less a second",
+					Timestamp: timePlusDuration(time0, -time.Second),
+					Log:       stringWithPrefix("", "a log at time0 less a second"),
 				},
 			},
 			matches: []string{"a log at time0 less a second"},
@@ -139,17 +174,17 @@ func TestTrialLogAPI(t *testing.T) {
 				{
 					AgentID:   &agent0,
 					Timestamp: &time0,
-					Message:   "a log at time0",
+					Log:       stringWithPrefix("", "a log at time0"),
 				},
 				{
 					AgentID:   &agent1,
-					Timestamp: &time0Plus1,
-					Message:   "a log at time0 and a second",
+					Timestamp: timePlusDuration(time0, time.Second),
+					Log:       stringWithPrefix("", "a log at time0 and a second"),
 				},
 				{
 					AgentID:   &agent0,
-					Timestamp: &time0Minus1,
-					Message:   "a log at time0 less a second",
+					Timestamp: timePlusDuration(time0, -time.Second),
+					Log:       stringWithPrefix("", "a log at time0 less a second"),
 				},
 			},
 			matches: []string{"a log at time0 and a second"},
@@ -169,23 +204,25 @@ func TestTrialLogAPI(t *testing.T) {
 			for i := range tc.logs {
 				tc.logs[i].TrialID = trial.ID
 			}
-			err = pgDB.AddTrialLogs(tc.logs)
+			err = backend.AddTrialLogs(tc.logs)
 			assert.NilError(t, err, "failed to insert mocked trial logs")
 
+			assert.NilError(t, awaitBackend(), "failed to wait for logging backend")
+
 			tc.req.TrialId = int32(trial.ID)
-			ctx, _ := context.WithTimeout(creds, 100*time.Millisecond)
+			ctx, _ := context.WithTimeout(creds, time.Second)
 			tlCl, err := cl.TrialLogs(ctx, tc.req)
 			i := 0
 			for {
 				resp, err := tlCl.Recv()
 				if err == io.EOF {
-					assert.Assert(t, i == len(tc.matches))
+					assert.Equal(t, i, len(tc.matches))
 					return
 				}
 				// context.DeadlineExceeded likely means the stream did not terminate as expected.
 				assert.NilError(t, err, "failed to receive trial logs")
 				assert.Assert(t, i < len(tc.matches), "received too many logs")
-				assert.Equal(t, tc.matches[i], resp.Message)
+				assertStringContains(t, resp.Message, tc.matches[i])
 				i++
 			}
 		})
@@ -196,33 +233,55 @@ func TestTrialLogAPI(t *testing.T) {
 	}
 }
 
-func TestTrialLogFollowing(t *testing.T) {
+func TestTrialLogFollowingPostgres(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
+	trialLogFollowingTests(t, ctx, creds, cl, pgDB)
+}
+
+func TestTrialLogFollowingElastic(t *testing.T) {
+	cfg, err := testutils.DefaultMasterConfig()
+	assert.NilError(t, err, "failed to create master config")
+	cfg.Logging = testutils.DefaultElasticConfig()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	_, _, cl, creds, err := testutils.RunMaster(ctx, cfg)
+	defer cancel()
+	assert.NilError(t, err, "failed to start master")
+
+	trialLogFollowingTests(t, ctx, creds, cl, es)
+}
+
+func trialLogFollowingTests(
+	t *testing.T, ctx context.Context, creds context.Context, cl apiv1.DeterminedClient,
+	backend internal.TrialLogBackend,
+) {
 	experiment := testutils.ExperimentModel()
-	err = pgDB.AddExperiment(experiment)
+	err := pgDB.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
 	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
 	err = pgDB.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
-	ctx, _ = context.WithTimeout(creds, time.Second)
+	ctx, _ = context.WithTimeout(creds, 5*time.Second)
 	tlCl, err := cl.TrialLogs(ctx, &apiv1.TrialLogsRequest{
 		TrialId: int32(trial.ID),
 		Follow:  true,
 	})
 
 	// Write logs and turn around and make sure following receives them.
+	time0 := time.Now().UTC().Add(-time.Minute)
 	for trialLogID := 0; trialLogID < 5; trialLogID++ {
 		message := fmt.Sprintf("log %d", trialLogID)
-		err = pgDB.AddTrialLogs([]*model.TrialLog{
+		err = backend.AddTrialLogs([]*model.TrialLog{
 			{
-				TrialID: trial.ID,
-				Message: message,
+				TrialID:   trial.ID,
+				Log:       &message,
+				Timestamp: timePlusDuration(time0, time.Duration(trialLogID)*time.Second),
 			},
 		})
 		assert.NilError(t, err, "failed to insert mocked trial logs")
@@ -232,7 +291,7 @@ func TestTrialLogFollowing(t *testing.T) {
 
 		// context.DeadlineExceeded likely means the stream did not terminate as expected.
 		assert.NilError(t, err, "failed to receive trial logs")
-		assert.Equal(t, message, resp.Message)
+		assertStringContains(t, resp.Message, message)
 		assert.Equal(t, trialLogID, int(resp.Id))
 	}
 
@@ -241,4 +300,21 @@ func TestTrialLogFollowing(t *testing.T) {
 
 	_, err = tlCl.Recv()
 	assert.Equal(t, err, io.EOF, "log stream didn't terminate with trial")
+}
+
+func assertStringContains(t *testing.T, actual, expected string) {
+	assert.Assert(t, strings.Contains(actual, expected),
+		fmt.Sprintf("%s not in %s", expected, actual))
+}
+
+// stringWithPrefix is a convenience function that returns a pointer.
+func stringWithPrefix(p, s string) *string {
+	x := p + s
+	return &x
+}
+
+// timePlusDuration is a convenience function that returns a pointer.
+func timePlusDuration(t time.Time, d time.Duration) *time.Time {
+	t2 := t.Add(d)
+	return &t2
 }
