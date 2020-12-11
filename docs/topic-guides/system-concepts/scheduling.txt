@@ -4,6 +4,16 @@
  Scheduling
 ############
 
+This topic guide covers the two different scheduling policies that are
+supported in Determined. Users can configure the desired scheduler in
+:ref:`master-configuration`. Scheduling behavior for experiments can be
+configured via the ``resources`` section of the experiment config file;
+see :ref:`experiment-configuration` for details.
+
+************
+ Fair-Share
+************
+
 The master allocates cluster resources (slots) among the active
 experiments using a fair-share scheduling policy. In other words, slots
 are divided among the active experiments according to the *demand*
@@ -14,6 +24,21 @@ As new experiments become active or the resource demand of an active
 experiment changes, the scheduler will adjust how slots are allocated to
 experiments as appropriate.
 
-Scheduling behavior can be configured via the ``resources`` section of
-the experiment config file; see :ref:`experiment-configuration` for
-details.
+**********
+ Priority
+**********
+
+The master allocates cluster resources (slots) to active tasks based on
+their priority. While tasks of higher priority (lower priority number)
+are pending, no lower priority tasks will be scheduled. For instance, if
+tasks with priorities of five and forty-two are pending, the latter will
+not be scheduled until the prior has been. By default the priority
+scheduler will not preempt lower priority tasks in favor of higher
+priority tasks. If preemption is enabled, in scenarious where a higher
+priority task is pending and can not be scheduled, the scheduler will
+attempt to schedule it by pre-empting lower priority tasks, starting
+with the lowest priorities.
+
+.. note::
+
+   Notebooks, tensorboards, shells, and commands are non-preemptible.
