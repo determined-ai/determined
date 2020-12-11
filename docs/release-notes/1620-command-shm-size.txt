@@ -1,7 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Support configuring shmSize for commands (e.g., notebooks, shells,
-   tensorboards) in :ref:`command configurations
-   <command-notebook-configuration>`.
