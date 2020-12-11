@@ -9,14 +9,35 @@ import { getResourcePools } from 'services/api';
 import { Agent } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
+import Json from './Json';
 import Link from './Link';
 import css from './ResourcePoolCard.module.scss';
-
-const resoucePools = getResourcePools();
 
 interface Props {
   agents: Agent[];
 }
+
+const resoucePools = getResourcePools();
+
+const rp = resoucePools[Math.floor(
+  Math.random() * resoucePools.length,
+)];
+
+const rpAttrs = [
+  'location' ,
+  'instanceType',
+  'spotOrPreemptible',
+  'minInstances',
+  'maxInstances',
+  'gpusPerAgent',
+  'cpuContainerCapacityPerAgent',
+  'schedulerType',
+];
+
+const shortDetails = rpAttrs.reduce((acc, cur) => {
+  acc[cur] = rp[cur];
+  return acc;
+}, {});
 
 const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
   const classes = [ css.base ];
@@ -28,10 +49,7 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
     gpusPerAgent,
     defaultGpuPool,
     numAgents,
-    ...rp
-  } = resoucePools[Math.floor(
-    Math.random() * resoucePools.length,
-  )];
+  } = rp;
 
   const slotStates = getSlotContainerStates(agents, name);
 
@@ -56,19 +74,14 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
       </div>
       <div className={css.lower}>
         <div>{description}</div>
+        <hr />
         <div>
           <SlotAllocationBar resourceStates={slotStates} totalSlots={numAgents * gpusPerAgent} />
+          <div> CPU containers running: {rp.cpuContainersRunning} </div>
         </div>
+        <hr />
         <div>
-          <ul>
-            <li>{rp.location}</li>
-            <li>{rp.instanceType}</li>
-            <li>{rp.spotOrPreemptible}</li>
-            <li>{rp.minInstances}</li>
-            <li>{rp.maxInstances}</li>
-            <li>deet 2</li>
-            <li>deet 3</li>
-          </ul>
+          <Json json={shortDetails} />
         </div>
         <div>
           <Link>View more info</Link>
