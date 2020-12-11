@@ -155,6 +155,11 @@ func DefaultElasticConfig() model.LoggingConfig {
 	}
 }
 
+// CurrentLogstashElasticIndex returns the current active trial log index.
+func CurrentLogstashElasticIndex() string {
+	return elastic.CurrentLogstashIndex()
+}
+
 // APICredentials takes a context and a connected apiv1.DeterminedClient and returns a context
 // with credentials or an error if unable to login with defaults.
 func APICredentials(ctx context.Context, cl apiv1.DeterminedClient) (context.Context, error) {

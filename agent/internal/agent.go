@@ -151,7 +151,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 func (a *agent) restartFluent(ctx *actor.Context) error {
 	i := 0
 	for {
-		fluentActor, err := newFluentActor(ctx, a.Options, *a.MasterSetAgentOptions)
+		fluentActor, err := newFluentActor(a.Options, *a.MasterSetAgentOptions)
 		switch {
 		case err == nil:
 			a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
@@ -343,7 +343,7 @@ func (a *agent) connect(ctx *actor.Context) error {
 }
 
 func (a *agent) setup(ctx *actor.Context) error {
-	fluentActor, err := newFluentActor(ctx, a.Options, *a.MasterSetAgentOptions)
+	fluentActor, err := newFluentActor(a.Options, *a.MasterSetAgentOptions)
 	if err != nil {
 		return errors.Wrap(err, "failed to start Fluent daemon")
 	}

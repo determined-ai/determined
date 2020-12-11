@@ -210,7 +210,7 @@ func trialLogAPITests(
 			assert.NilError(t, awaitBackend(), "failed to wait for logging backend")
 
 			tc.req.TrialId = int32(trial.ID)
-			ctx, _ := context.WithTimeout(creds, time.Second)
+			ctx, _ := context.WithTimeout(creds, time.Minute)
 			tlCl, err := cl.TrialLogs(ctx, tc.req)
 			i := 0
 			for {
@@ -267,7 +267,7 @@ func trialLogFollowingTests(
 	err = pgDB.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
-	ctx, _ = context.WithTimeout(creds, 5*time.Second)
+	ctx, _ = context.WithTimeout(creds, time.Minute)
 	tlCl, err := cl.TrialLogs(ctx, &apiv1.TrialLogsRequest{
 		TrialId: int32(trial.ID),
 		Follow:  true,

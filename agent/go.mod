@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/determined-ai/determined/master v0.0.0
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
@@ -24,7 +25,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
 	golang.org/x/tools v0.0.0-20200702044944-0cc1aa72b347
-	gotest.tools v2.2.0+incompatible // indirect
+	gotest.tools v2.2.0+incompatible
 )
 
 replace github.com/determined-ai/determined/master => ../master

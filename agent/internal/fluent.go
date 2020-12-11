@@ -15,7 +15,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -279,7 +279,7 @@ end
 	return args, files, nil
 }
 
-func removeContainerByName(ctx *actor.Context, docker *client.Client, name string) error {
+func removeContainerByName(docker *client.Client, name string) error {
 	containers, err := docker.ContainerList(context.Background(), types.ContainerListOptions{
 		All: true,
 		Filters: filters.NewArgs(
@@ -290,7 +290,7 @@ func removeContainerByName(ctx *actor.Context, docker *client.Client, name strin
 		return errors.Wrap(err, "failed to list containers by name")
 	}
 	for _, cont := range containers {
-		ctx.Log().WithFields(logrus.Fields{"name": name, "id": cont.ID}).Infof(
+		log.WithFields(log.Fields{"name": name, "id": cont.ID}).Infof(
 			"killing and removing Docker container",
 		)
 		err := docker.ContainerRemove(
@@ -303,14 +303,14 @@ func removeContainerByName(ctx *actor.Context, docker *client.Client, name strin
 	return nil
 }
 
-func pullImageByName(ctx *actor.Context, docker *client.Client, imageName string) error {
+func pullImageByName(docker *client.Client, imageName string) error {
 	_, _, err := docker.ImageInspectWithRaw(context.Background(), imageName)
 	switch {
 	case err == nil:
 		// No error means the image is present; do nothing.
 	case client.IsErrNotFound(err):
 		// This error means the call to Docker went fine but the image doesn't exist; pull it now.
-		ctx.Log().Infof("pulling Docker image %s", imageName)
+		log.Infof("pulling Docker image %s", imageName)
 		pullResponse, pErr := docker.ImagePull(context.Background(), imageName, types.ImagePullOptions{})
 		if pErr != nil {
 			return pErr
@@ -331,7 +331,6 @@ func pullImageByName(ctx *actor.Context, docker *client.Client, imageName string
 // startLoggingContainer starts a Fluent Bit container running in host mode. It returns the port
 // that Fluent Bit is listening on and the ID of the container.
 func startLoggingContainer(
-	ctx *actor.Context,
 	docker *client.Client,
 	opts Options,
 	masterSetOpts aproto.MasterSetAgentOptions,
@@ -339,11 +338,11 @@ func startLoggingContainer(
 	const containerName = "determined-fluent"
 	imageName := opts.Fluent.Image
 
-	if err := removeContainerByName(ctx, docker, containerName); err != nil {
+	if err := removeContainerByName(docker, containerName); err != nil {
 		return 0, "", errors.Wrap(err, "failed to kill old logging container")
 	}
 
-	if err := pullImageByName(ctx, docker, imageName); err != nil {
+	if err := pullImageByName(docker, imageName); err != nil {
 		return 0, "", errors.Wrap(err, "failed to pull logging image")
 	}
 
@@ -378,7 +377,10 @@ func startLoggingContainer(
 		return 0, "", err
 	}
 
-	filesReader, _ := archive.ToIOReader(fluentFiles)
+	filesReader, err := archive.ToIOReader(fluentFiles)
+	if err != nil {
+		return 0, "", errors.Wrap(err, "failed make reader from fluent files")
+	}
 
 	err = docker.CopyToContainer(context.Background(),
 		createResponse.ID,
@@ -395,7 +397,7 @@ func startLoggingContainer(
 		return 0, "", err
 	}
 
-	ctx.Log().Infof("Fluent Bit listening on host port %d", opts.Fluent.Port)
+	log.Infof("Fluent Bit listening on host port %d", opts.Fluent.Port)
 
 	return opts.Fluent.Port, createResponse.ID, nil
 }
@@ -413,7 +415,6 @@ type fluentActor struct {
 }
 
 func newFluentActor(
-	ctx *actor.Context,
 	opts Options,
 	masterSetOpts aproto.MasterSetAgentOptions,
 ) (*fluentActor, error) {
@@ -423,11 +424,11 @@ func newFluentActor(
 	}
 
 	t0 := time.Now()
-	hostPort, cid, err := startLoggingContainer(ctx, docker, opts, masterSetOpts)
+	hostPort, cid, err := startLoggingContainer(docker, opts, masterSetOpts)
 	if err != nil {
 		return nil, err
 	}
-	ctx.Log().Infof("Fluent Bit started in %s", time.Since(t0))
+	log.Infof("Fluent Bit started in %s", time.Since(t0))
 
 	return &fluentActor{
 		opts:          opts,

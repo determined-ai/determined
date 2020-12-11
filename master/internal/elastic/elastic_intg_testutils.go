@@ -21,7 +21,7 @@ func (e *Elastic) WaitForIngest(index string) error {
 		return errors.Wrap(err, "failed to make index request body")
 	}
 	res, err := e.client.Index(index, &buf,
-		e.client.Index.WithRefresh(refreshWaitFor), e.client.Index.WithTimeout(10*time.Second))
+		e.client.Index.WithRefresh(refreshWaitFor), e.client.Index.WithTimeout(time.Minute))
 	if err != nil {
 		return errors.Wrapf(err, "failed to index document")
 	}

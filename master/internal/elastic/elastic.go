@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -41,10 +40,7 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	cfg := elasticsearch.Config{
 		Addresses: []string{addr},
 		Transport: &http.Transport{
-			MaxIdleConnsPerHost:   10,
-			ResponseHeaderTimeout: time.Second,
-			DialContext:           (&net.Dialer{Timeout: time.Second}).DialContext,
-			TLSClientConfig:       tlsCfg,
+			TLSClientConfig: tlsCfg,
 		},
 	}
 
@@ -67,7 +63,8 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 			return &Elastic{es}, nil
 		}
 		numTries++
-		if numTries >= 15 {
+		// Elastic can take a really long time to come up.
+		if numTries >= 60 {
 			return nil, errors.Wrapf(err, "could not connect to elastic after %v tries", numTries)
 		}
 		time.Sleep(time.Second)
