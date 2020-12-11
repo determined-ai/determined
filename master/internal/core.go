@@ -71,7 +71,7 @@ type Master struct {
 	proxy           *actor.Ref
 	trialLogger     *actor.Ref
 	trialLogBackend TrialLogBackend
-	hpImportance  *actor.Ref
+	hpImportance    *actor.Ref
 }
 
 // New creates an instance of the Determined master.
