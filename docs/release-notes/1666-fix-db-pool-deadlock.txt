@@ -1,7 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Fix a bug where restoring a large number of experiments after a
-   failure would lead to deadlock from contention on the database
-   connection pool.

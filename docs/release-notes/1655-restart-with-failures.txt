@@ -1,6 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Fix a bug that caused ACTIVE trials with ``max_restarts > 0`` and
-   failures to not be restored properly on a master restart.

@@ -1,9 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Support ``validation_steps`` in ``TFKerasTrial``'s
-   ``context.configure_fit()``. ``validation_steps`` means the same
-   thing in Determined as it does in ``model.fit()``, and has the same
-   limitation that it only applies when ``validation_data`` is of type
-   ``tf.data.Dataset``.

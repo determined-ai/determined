@@ -8,6 +8,87 @@
  Version 0.13
 **************
 
+Version 0.13.10
+===============
+
+**Release Date:** December 10, 2020
+
+**New Features**
+
+-  WebUI: Add support for mobile and tablet devices. Check your
+   experiment results on the go!
+
+-  Scheduler: Update the priority scheduler to support specifying
+   priorities and preemption. See :ref:`experiment-configuration` for
+   details on how to set individual experiment priorities.
+
+**Improvements**
+
+-  Improve the scheduling and scaling behavior of CPU tasks, and allow
+   the maximum number of CPU tasks per agent to be configured via the
+   :ref:`cluster-configuration`.
+
+-  Add custom tagging support to AWS dynamic agents. Thank you to
+   ``sean-adler`` for contributing this improvement!
+
+-  Support ``validation_steps`` in ``TFKerasTrial``'s
+   ``context.configure_fit()``. ``validation_steps`` means the same
+   thing in Determined as it does in ``model.fit()``, and has the same
+   limitation (in that it only applies when ``validation_data`` is of
+   type ``tf.data.Dataset``).
+
+-  Kubernetes: Support a default user password for Kubernetes
+   deployments. This affects the ``admin`` and ``determined`` default
+   user accounts.
+
+-  Kubernetes: Release version ``0.3.1`` of the Determined Helm chart.
+
+**Bug Fixes**
+
+-  Fix a bug in ``--local --test`` mode where all GPUs were being passed
+   to the training loop despite the distributed training code paths
+   being disabled.
+
+-  Fix a bug causing `active` trials that have failed to not be restored
+   properly on a master restart when ``max_restarts`` is greater than
+   ``0``.
+
+-  Allow configurations with a ``.`` character in the keys for map
+   fields in the :ref:`master-configuration` (e.g.
+   ``task_container_defaults.cpu_pod_spec.metadata.labels``).
+
+-  Fix a bug where restoring a large number of experiments after a
+   failure could lead to deadlock.
+
+-  Fix an issue where templates with user-specified bind mounts would
+   merge incorrectly. Thank you to ``zjorgensenbits`` for `reporting
+   this issue
+   <https://github.com/determined-ai/determined/issues/1660>`__!
+
+**Deprecated Features**
+
+-  The previous version of the priority scheduler is now deprecated. It
+   will remain available as the ``round_robin`` scheduler for a limited
+   period of time.
+
+Version 0.13.9
+==============
+
+**Release Date:** November 20, 2020
+
+**Improvements**
+
+-  Commands: Support configuring ``shmSize`` for commands (e.g.,
+   notebooks, shells, TensorBoards) in :ref:`command configurations
+   <command-notebook-configuration>`.
+
+**Bug Fixes**
+
+-  API: Fix a bug that caused the WebUI's log viewer to fail to render
+   previous pages of trial logs.
+-  WebUI: Fix a bug in opening TensorBoards from the experiment list
+   page via batch selection.
+
 Version 0.13.8
 ==============
 
