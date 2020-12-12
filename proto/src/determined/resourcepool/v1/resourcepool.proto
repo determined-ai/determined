@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package determined.resourcepool.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/resourcepoolv1";
+
+
+
+// A Resource Pool is a pool of resources where containers are run.
+message ResourcePool {
+  // The unique id of the resource pool.
+  string id = 1;
+  // The description of the resource pool
+  string description = 2;
+  string type = 3;  // TODO: Make this an enum?
+  int32 numAgents = 4;
+  int32 slotsAvailable = 5;
+  int32 slotsUsed=6;
+  int32 cpuContainerCapacity = 7;
+  int32 cpuContainersRunning = 8;
+
+  bool defaultGpuPool=9;
+  bool defaultCpuPool=10;
+  bool preemptible=11;
+  int32 minAgents=12;
+  int32 maxAgents=13;
+  int32 acceleratorsPerAgent=14; // TODO: Can we actually correctly calculate this number?
+  int32 cpuContainerCapacityPerAgent=      15;
+  string schedulerType=16; // TODO: Make sure the scheduler information is correct here
+  string schedulerFittingPolicy=17; // TODO: Make sure the scheduler information is correct here
+  string location=18;
+  string imageId=19;
+  string instanceType=20;
+
+  string masterUrl=21;
+  string masterCertName=22;
+  string startupScript=23;
+  string containerStartupScript=24;
+  string agentDockerNetwork=25;
+  string agentDockerRuntime=26;
+  string agentDockerImage=27;
+  string agentFluentImage=28;
+  string maxIdleAgentPeriod=29;
+  string maxAgentStartingPeriod=30;
+
+  determined.resourcepool.v1.ResourcePoolDetail details=31;
+}
+
+// Detailed information about the resource pool
+message ResourcePoolDetail {
+  determined.resourcepool.v1.ResourcePoolAwsDetail aws=1;
+  determined.resourcepool.v1.ResourcePoolGcpDetail gcp=2;
+  determined.resourcepool.v1.ResourcePoolPrioritySchedulerDetail priorityScheduler=3;
+}
+
+
+message AwsCustomTag {
+  string key=1;
+  string value=2;
+}
+
+message ResourcePoolAwsDetail {
+  string region=1;
+  int32 rootVolumeSize=2;
+  string imageId=3; // TODO: Call this AMI explicitly?
+  string tagKey=4;
+  string tagValue=5;
+  string instanceName=6;
+  string sshKeyName=7;
+  bool publicIp=8;
+  string subnetId=9;
+  string securityGroupId=10;
+  string iamInstanceProfileArn=11;
+  string instanceType=12;
+  string logGroup=13;
+  string logStream=14;
+  bool spotEnabled=15;
+  string spotMaxPrice=16;
+  repeated determined.resourcepool.v1.AwsCustomTag customTags=17;
+}
+
+message ResourcePoolGcpDetail {
+  string project=1;
+  string zone=2;
+  int32 bootDiskSize=3;
+  string bootDiskSourceImage=4;
+  string labelKey=5;
+  string labelValue=6;
+  string namePrefix=7;
+  string network=8;
+  string subnetwork=9;
+  bool externalIp=10;
+  repeated string networkTags=11;
+  string serviceAccountEmail=12;
+  repeated string serviceAccountScopes=13;
+  string machineType=14; // TODO: Make enum?
+  string gpuType=15; // TODO: Make enum?
+  int32 gpuNum=16;
+  bool preemptible=17;
+  string operationTimeoutPeriod=18;
+}
+
+// This will only be present if the schedulerType=priority
+message ResourcePoolPrioritySchedulerDetail {
+  bool preemption=1;
+  int32 defaultPriority=2;
+}

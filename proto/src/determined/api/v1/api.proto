@@ -19,6 +19,7 @@ import "determined/api/v1/tensorboard.proto";
 import "determined/api/v1/trial.proto";
 import "determined/api/v1/shell.proto";
 import "determined/api/v1/user.proto";
+import "determined/api/v1/resourcepool.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
   info: {
@@ -777,6 +778,25 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
+    };
+  }
+
+  // Get a set of agents from the cluster.
+  rpc GetResourcePools(GetResourcePoolsRequest) returns (GetResourcePoolsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pools"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
+  }
+  // Get the requested agent.
+  rpc GetResourcePool(GetResourcePoolRequest) returns (GetResourcePoolResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pool/{resource_pool_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
     };
   }
 }

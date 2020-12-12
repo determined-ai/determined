@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/api/v1/pagination.proto";
+
+import "determined/resourcepool/v1/resourcepool.proto";
+
+// Get the list of resource pools from the cluster.
+message GetResourcePoolsRequest {
+  // Sorts resource pools by the given field.
+  enum SortBy {
+    // Returns agents in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns agents sorted by id.
+    SORT_BY_ID = 1;
+    // Returns agents sorted by time.
+    SORT_BY_TIME = 2;
+  }
+  // Sort resource pools by the given field.
+  SortBy sort_by = 1;
+  // Order resource pools in either ascending or descending order.
+  OrderBy order_by = 2;
+  // Skip the number of resource pools before returning results. Negative values
+  // denote number of resource pools to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of resource pools. A value of 0 denotes no limit.
+  int32 limit = 4;
+}
+
+// Response to GetResourcePoolsRequest.
+message GetResourcePoolsResponse {
+  // The list of returned resource pools.
+  repeated determined.resourcepool.v1.ResourcePool resourcePools = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}
+
+// Get the requested resource pool.
+message GetResourcePoolRequest {
+  // The id of the resource pool.
+  string resource_pool_id = 1;
+}
+// Response to GetResourcePoolRequest.
+message GetResourcePoolResponse {
+  // The requested resource pool.
+  determined.resourcepool.v1.ResourcePool resourcePool = 1;
+}
+

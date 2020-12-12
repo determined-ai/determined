@@ -2,11 +2,13 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
+	"strings"
 
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"time"
 )
 
 type agentResourceManager struct {
@@ -16,6 +18,9 @@ type agentResourceManager struct {
 
 	pools map[string]*actor.Ref
 }
+
+type GetResourcePoolSummary struct {}
+
 
 func newAgentResourceManager(
 	config *AgentResourceManagerConfig, poolsConfig *ResourcePoolsConfig, cert *tls.Certificate,
@@ -57,6 +62,12 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
+
+	case GetResourcePoolSummary:
+		// Send default information
+		// Send ResourcePoolConfig
+
+
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -155,4 +166,152 @@ func (a *agentResourceManager) aggregateTaskSummaries(
 		}
 	}
 	return summaries
+}
+
+type ResourcePoolSummary struct {
+	name string
+	description string
+	poolType string  // TODO: Maybe enum?
+	//numAgents int
+	//slotsAvailable
+	//slotsUsed
+	//cpuContainerCapacity
+	//CpuContainersRunning
+	defaultGpuPool bool
+	defaultCpuPool bool
+	preemptible bool
+	minAgents int
+	maxAgents int
+	//AcceleratorsPerAgent  // TODO: Do we want to offer this?
+	cpuContainerCapacityPerAgent int
+	schedulerType string // TODO: Maybe enum?
+	schedulerFittingPolicy string  // TODO: Maybe enum?
+	location string
+	imageId string
+	instanceType string
+	masterUrl string
+	masterCertName string
+	startupScript string
+	containerStartupScript string
+	agentDockerNetwork string
+	agentDockerRuntime string
+	agentDockerImage string
+	agentFluentImage string
+	maxIdleAgentPeriod string // TODO: Should this be a string?
+	maxAgentStartingPeriod string // TODO: Should this be a string?
+	//Details
+}
+
+
+
+func (a *agentResourceManager) getResourcePoolConfig(poolName string) (ResourcePoolConfig, error) {
+	// TODO: Implement correctly
+	return a.poolsConfig.ResourcePools[0], nil
+}
+
+func (a *agentResourceManager) createResourcePoolSummary(poolName string) (ResourcePoolSummary, error) {
+	pool, err := a.getResourcePoolConfig(poolName)
+	if err != nil {
+		return ResourcePoolSummary{}, err
+	}
+
+
+	poolType := "static"
+	if pool.Provider.AWS != nil {
+		poolType = "aws"
+	}
+	if pool.Provider.GCP != nil {
+		poolType = "gcp"
+	}
+
+	preemptible := false
+	if poolType == "aws" {
+		preemptible = pool.Provider.AWS.SpotEnabled
+	}
+	if poolType == "gcp" {
+		preemptible = pool.Provider.GCP.InstanceType.Preemptible
+	}
+
+	var schedulerType string
+	if pool.Scheduler.FairShare != nil {
+		schedulerType = "fair share"
+	}
+	if pool.Scheduler.Priority != nil {
+		schedulerType = "priority"
+	}
+	if pool.Scheduler.RoundRobin != nil {
+		schedulerType = "round robin"
+	}
+
+	location := "on-prem"
+	if poolType == "aws" {
+		location = pool.Provider.AWS.Region
+		// TODO: Would be nice to automatically detect the AZ that the subnet is in as well
+	}
+	if poolType == "gcp" {
+		location = pool.Provider.GCP.Zone
+	}
+
+	imageId := "N/A"
+	if poolType == "aws" {
+		imageId = pool.Provider.AWS.ImageID
+		// TODO: Would be nice to also have the description/name instead of just the ID
+	}
+	if poolType == "gcp" {
+		imageId = pool.Provider.GCP.BootDiskSourceImage
+	}
+
+	instanceType := "N/A"
+	if poolType == "aws" {
+		instanceType = string(pool.Provider.AWS.InstanceType)
+	}
+	if poolType == "gcp" {
+		instanceTypeStringBuilder := strings.Builder{}
+		instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
+		instanceTypeStringBuilder.WriteString(", ")
+		instanceTypeStringBuilder.WriteString(string(pool.Provider.GCP.InstanceType.GPUNum))
+		instanceTypeStringBuilder.WriteString("x")
+		instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.GPUType)
+		instanceType = instanceTypeStringBuilder.String()
+		// TODO: Confirm that this looks good
+	}
+
+
+
+
+	resp := ResourcePoolSummary{
+		name: pool.PoolName,
+		description: pool.Description,
+		poolType: poolType,
+		defaultCpuPool: a.config.DefaultCPUResourcePool == poolName,
+		defaultGpuPool: a.config.DefaultGPUResourcePool == poolName,
+		preemptible:preemptible,
+		minAgents: pool.Provider.MinInstances,  // TODO: Handle static pool explicitly?
+		maxAgents: pool.Provider.MaxInstances,  // TODO: Handle static pool explicitly?
+		cpuContainerCapacityPerAgent: pool.MaxCPUContainersPerAgent,
+		schedulerType: schedulerType,
+		schedulerFittingPolicy: pool.Scheduler.FittingPolicy,
+		location:location,
+		imageId:imageId,
+		instanceType: instanceType,
+		masterUrl: pool.Provider.MasterURL,
+		masterCertName: pool.Provider.MasterCertName,
+		startupScript: pool.Provider.StartupScript,
+		containerStartupScript: pool.Provider.ContainerStartupScript,
+		agentDockerNetwork: pool.Provider.AgentDockerNetwork,
+		agentDockerRuntime: pool.Provider.AgentDockerRuntime,
+		agentDockerImage: pool.Provider.AgentDockerImage,
+		agentFluentImage: pool.Provider.AgentFluentImage,
+		maxIdleAgentPeriod: time.Duration(pool.Provider.MaxIdleAgentPeriod).String(),
+		maxAgentStartingPeriod: time.Duration(pool.Provider.MaxAgentStartingPeriod).String(),
+
+
+
+
+
+
+
+
+	}
+	return resp, nil
 }
