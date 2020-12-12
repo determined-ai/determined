@@ -29,7 +29,7 @@ import (
 )
 
 // terminatedDuration defines the amount of time the command stays in a
-// termianted state in the master before garbage collecting.
+// terminated state in the master before garbage collecting.
 const terminatedDuration = 24 * time.Hour
 
 // TODO: readinessCheck should be defined at the agent level. Temporarily we will use log
@@ -361,6 +361,7 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		ServiceAddress: serviceAddress,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.owner.Username,
+		ResourcePool:	c.config.Resources.ResourcePool,
 	}, nil
 }
 
@@ -371,18 +372,20 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Container:   c.container.Proto(),
 		StartTime:   protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:    c.owner.Username,
+		ResourcePool:c.config.Resources.ResourcePool,
 	}
 }
 
 func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 	return &shellv1.Shell{
-		Id:          ctx.Self().Address().Local(),
-		Description: c.config.Description,
-		StartTime:   protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Container:   c.container.Proto(),
-		PrivateKey:  c.metadata["privateKey"].(string),
-		PublicKey:   c.metadata["publicKey"].(string),
-		Username:    c.owner.Username,
+		Id:           ctx.Self().Address().Local(),
+		Description:  c.config.Description,
+		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Container:    c.container.Proto(),
+		PrivateKey:   c.metadata["privateKey"].(string),
+		PublicKey:    c.metadata["publicKey"].(string),
+		Username:     c.owner.Username,
+		ResourcePool: c.config.Resources.ResourcePool,
 	}
 }
 
@@ -404,6 +407,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		ExperimentIds:  eids,
 		TrialIds:       tids,
 		Username:       c.owner.Username,
+		ResourcePool:	c.config.Resources.ResourcePool,
 	}
 }
 
