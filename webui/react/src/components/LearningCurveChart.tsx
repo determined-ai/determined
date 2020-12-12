@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import uPlot, { Options } from 'uplot';
+import uPlot, { AlignedData, Options } from 'uplot';
 
 import { generateTrials } from 'utils/chart';
 import { numericSorter } from 'utils/data';
@@ -10,6 +10,12 @@ interface DataPoint {
   color: number;
   x: number;
   y: number;
+}
+
+interface Props {
+  data: (number | null)[][];
+  trialIds: number[];
+  xValues: number[];
 }
 
 const UPLOT_OPTIONS = {
@@ -36,8 +42,10 @@ const UPLOT_OPTIONS = {
   series: [ { label: 'batches' } ],
 };
 
-const LearningCurveChart: React.FC = () => {
+const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
+  console.log('data', data);
+  console.log('xValues', xValues);
 
   const handleCursorChange = useCallback((
     plot: uPlot,
@@ -51,46 +59,29 @@ const LearningCurveChart: React.FC = () => {
 
   useEffect(() => {
     if (!chartRef.current) return;
-    console.log('render start...');
 
-    console.log('size', chartRef.current.offsetWidth);
     const now = Date.now();
-    const data: number[][] = [];
-    const options = uPlot.assign(UPLOT_OPTIONS, {
+    const options = uPlot.assign({}, UPLOT_OPTIONS, {
       cursor: { dataIdx: handleCursorChange },
+      series: [
+        { label: 'batches' },
+        ...trialIds.map(trialId => ({
+          label: `trial ${trialId}`,
+          scale: 'metric',
+          spanGaps: true,
+          stroke: 'rgba(50, 0, 150, 1.0)',
+          width: 1 / devicePixelRatio,
+        })),
+      ],
       width: chartRef.current.offsetWidth,
     }) as Options;
 
-    const xMap: Record<string, boolean> = {};
-    generateTrials().forEach((trial, index) => {
-      const series: number[] = [];
-      trial.forEach(point => {
-        const xKey = point.x.toString();
-        if (xMap[xKey] == null) xMap[xKey] = true;
-        series.push(point.y);
-      });
-      data.push(series);
-      options.series.push({
-        label: `trial ${index}`,
-        scale: 'metric',
-        stroke: 'rgba(50, 0, 255, 1.0)',
-        width: 1 / devicePixelRatio,
-      });
-    });
-
-    const xValues = Object.keys(xMap).map(x => parseFloat(x)).sort(numericSorter);
-
     const chart = new uPlot(options, [ xValues, ...data ], chartRef.current);
+    console.log('render time', (Date.now() - now) / 1000);
 
-    console.log('xMap', xMap);
-    console.log('generateTrials', xValues);
-    console.log('render ended', (Date.now() - now) / 1000);
-
-    return () => {
-      if (chart) chart.destroy();
-    };
+    return () => chart.destroy();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, []);
+  }, [ data, xValues ]);
 
   return <div ref={chartRef} />;
 };
