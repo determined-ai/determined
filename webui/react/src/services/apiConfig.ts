@@ -7,7 +7,7 @@ import * as Api from 'services/api-ts-sdk';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
   jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
-  jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails, jsonToTrialLogs,jsonToUsers,
+  jsonToTensorboard, jsonToTensorboards, jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
@@ -19,7 +19,7 @@ import {
 import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentDetails, Log, TBSourceType, TrialDetails,
+  ExperimentDetails, Log, TBSourceType, TrialDetails2,
 } from 'types';
 
 import { noOp } from './utils';
@@ -241,10 +241,14 @@ export const getExperimentLabels: DetApi<
   request: (params) => detApi.Experiments.determinedGetExperimentLabels(params),
 };
 
-export const getTrialDetails: HttpApi<TrialDetailsParams, TrialDetails> = {
-  httpOptions: (params: TrialDetailsParams) => ({ url: `/trials/${params.id}/details` }),
+export const getTrialDetails: DetApi<
+TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2> = {
   name: 'getTrialDetails',
-  postProcess: response => jsonToTrialDetails(response.data),
+  postProcess: (resp: Api.V1GetTrialResponse) => {
+    return decoder
+      .decodeTrialResponseToTrialDetails(resp);
+  },
+  request: (params: TrialDetailsParams) => detApi.Experiments.determinedGetTrial(params.id),
 };
 
 /* Tasks */

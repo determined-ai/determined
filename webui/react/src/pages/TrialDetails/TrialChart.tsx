@@ -4,13 +4,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 import MetricChart from 'components/MetricChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import useStorage from 'hooks/useStorage';
-import { MetricName, MetricType, Step } from 'types';
+import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
 
 interface Props {
   id?: string;
   metricNames: MetricName[];
   defaultMetricNames: MetricName[];
-  steps?: Step[];
+  workloads?: WorkloadWrapper[];
   storageKey?: string;
   validationMetric?: string;
 }
@@ -62,15 +62,16 @@ const TrialChart: React.FC<Props> = ({
   const data: Partial<PlotData>[] = useMemo(() => {
     const dataMap: Record<string, Partial<PlotData>> = {};
 
-    (props.steps || []).forEach(step => {
+    (props.workloads || []).forEach(wlWrapper => {
       metrics.forEach(metric => {
         if (!metric) return;
+        const metricsWl = metric.type === MetricType.Training ?
+          wlWrapper.training : wlWrapper.validation;
+        if (!metricsWl || metricsWl.state !== RunState.Completed) return;
 
-        const trainingSource = step.avgMetrics || {};
-        const validationSource = step.validation?.metrics?.validationMetrics || {};
-        const x = step.numBatches + step.priorBatchesProcessed;
-        const y = metric.type === MetricType.Validation ?
-          validationSource[metric.name] : trainingSource[metric.name];
+        const source = metricsWl.metrics || {};
+        const x = metricsWl.numBatches + metricsWl.priorBatchesProcessed;
+        const y = source[metric.name];
 
         const metricKey = `${metric.type}_${metric.name}`;
 
@@ -103,7 +104,7 @@ const TrialChart: React.FC<Props> = ({
       acc.push(value);
       return acc;
     }, [] as Partial<PlotData>[]);
-  }, [ metrics, props.steps ]);
+  }, [ metrics, props.workloads ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     setMetrics(value);

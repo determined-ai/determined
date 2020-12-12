@@ -8,6 +8,7 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import {
+  CheckpointState,
   CommandState, CommandTask, CommandType, ExperimentItem,
   Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
@@ -68,7 +69,8 @@ export const relativeTimeRenderer = (date: Date): React.ReactNode => {
   );
 };
 
-export const stateRenderer: Renderer<{ state: CommandState | RunState }> = (_, record) => (
+export const stateRenderer: Renderer<{ state: CommandState | RunState | CheckpointState }> =
+(_, record) => (
   <div className={css.centerVertically}>
     <Badge state={record.state} type={BadgeType.State} />
   </div>

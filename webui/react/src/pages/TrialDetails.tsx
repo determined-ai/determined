@@ -29,12 +29,13 @@ import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes/utils';
 import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
+import { isAborted } from 'services/utils';
 import {
-  CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
+  CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step2, TrialDetails2,
   TrialHyperParameters,
 } from 'types';
 import { clone, isEqual, numericSorter } from 'utils/data';
-import { hasCheckpoint } from 'utils/step';
+import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/step';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
@@ -50,9 +51,9 @@ interface Params {
 }
 
 enum TrialInfoFilter {
-  HasCheckpoint = 'Has Checkpoint',
-  HasValidation = 'Has Validation',
-  HasCheckpointOrValidation = 'Has Checkpoint or Validation',
+  Checkpoint = 'Has Checkpoint',
+  Validation = 'Has Validation',
+  CheckpointOrValidation = 'Has Checkpoint or Validation',
 }
 
 const getTrialLength = (config?: RawJson): [string, number] | undefined => {
@@ -98,10 +99,10 @@ const TrialDetailsComp: React.FC = () => {
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilter = storage.getWithDefault(
     STORAGE_CHECKPOINT_VALIDATION_KEY,
-    TrialInfoFilter.HasCheckpointOrValidation,
+    TrialInfoFilter.CheckpointOrValidation,
   );
   const [ pageSize, setPageSize ] = useState(initLimit);
-  const [ hasCheckpointOrValidation, setHasCheckpointOrValidation ] = useState(initFilter);
+  const [ showFilter, setShowFilter ] = useState(initFilter);
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contFormVisible, setContFormVisible ] = useState(false);
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
@@ -114,7 +115,8 @@ const TrialDetailsComp: React.FC = () => {
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
-  const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
+  const [ trialCanceler ] = useState(new AbortController());
+  const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails2>>({
     data: undefined,
     error: undefined,
     isLoading: true,
@@ -133,11 +135,13 @@ const TrialDetailsComp: React.FC = () => {
 
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !isEqual(metrics, defaultMetrics);
-    const checkpointValidationFilterApplied = hasCheckpointOrValidation as string !== ALL_VALUE;
+    const checkpointValidationFilterApplied = showFilter as string !== ALL_VALUE;
     return metricsApplied || checkpointValidationFilterApplied;
-  }, [ hasCheckpointOrValidation, metrics, defaultMetrics ]);
+  }, [ showFilter, metrics, defaultMetrics ]);
 
-  const metricNames = useMemo(() => extractMetricNames(trial?.steps), [ trial?.steps ]);
+  const metricNames = useMemo(() => extractMetricNames(
+    trial?.workloads || [],
+  ), [ trial?.workloads ]);
 
   const upgradedConfig = useMemo(() => {
     if (!experiment?.configRaw) return;
@@ -151,13 +155,14 @@ const TrialDetailsComp: React.FC = () => {
   }, [ upgradedConfig ]);
 
   const columns = useMemo(() => {
-    const checkpointRenderer = (_: string, record: Step) => {
-      if (record.checkpoint && hasCheckpoint(record)) {
-        const checkpoint: CheckpointDetail = {
+
+    const checkpointRenderer = (_: string, record: Step2) => {
+      if (record.checkpoint && hasCheckpointStep(record)) {
+        const checkpoint = {
           ...record.checkpoint,
-          batch: record.numBatches + record.priorBatchesProcessed,
+          batch: record.checkpoint.numBatches + record.checkpoint.priorBatchesProcessed,
           experimentId,
-          trialId: record.id,
+          trialId: trialId,
         };
         return (
           <Tooltip title="View Checkpoint">
@@ -172,7 +177,7 @@ const TrialDetailsComp: React.FC = () => {
     };
 
     const metricRenderer = (metricName: MetricName) => {
-      const metricCol = (_: string, record: Step) => {
+      const metricCol = (_: string, record: Step2) => {
         const value = extractMetricValue(record, metricName);
         return value ? <HumanReadableFloat num={value} /> : undefined;
       };
@@ -202,36 +207,37 @@ const TrialDetailsComp: React.FC = () => {
     });
 
     return newColumns;
-  }, [ experimentConfig, experimentId, metrics ]);
+  }, [ experimentConfig, experimentId, metrics, trialId ]);
 
-  const steps = useMemo(() => {
-    const data = trial?.steps || [];
-    return hasCheckpointOrValidation as string === ALL_VALUE ?
-      data : data.filter(step => {
-        if (hasCheckpointOrValidation === TrialInfoFilter.HasCheckpoint) {
-          return hasCheckpoint(step);
-        } else if (hasCheckpointOrValidation === TrialInfoFilter.HasValidation) {
-          return !!step.validation;
-        } else if (hasCheckpointOrValidation === TrialInfoFilter.HasCheckpointOrValidation) {
-          return !!step.checkpoint || !!step.validation;
+  const workloadSteps = useMemo(() => {
+    const data = trial?.workloads || [];
+    const workloadSteps = workloadsToSteps(data);
+    return showFilter as string === ALL_VALUE ?
+      workloadSteps : workloadSteps.filter(wlStep => {
+        if (showFilter === TrialInfoFilter.Checkpoint) {
+          return hasCheckpoint(wlStep);
+        } else if (showFilter === TrialInfoFilter.Validation) {
+          return !!wlStep.validation;
+        } else if (showFilter === TrialInfoFilter.CheckpointOrValidation) {
+          return !!wlStep.checkpoint || !!wlStep.validation;
         }
         return false;
       });
-  }, [ hasCheckpointOrValidation, trial?.steps ]);
+  }, [ showFilter, trial?.workloads ]);
 
   const fetchTrialDetails = useCallback(async () => {
     try {
       const response = await getTrialDetails({
-        cancelToken: trialDetails.source?.token,
         id: trialId,
+        signal: trialCanceler.signal,
       });
       setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
     } catch (e) {
-      if (!trialDetails.error && !axios.isCancel(e)) {
+      if (!trialDetails.error && !isAborted(e)) {
         setTrialDetails(prev => ({ ...prev, error: e }));
       }
     }
-  }, [ trialDetails.error, trialDetails.source, trialId ]);
+  }, [ trialDetails.error, trialCanceler, trialId ]);
 
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
@@ -341,9 +347,9 @@ If the problem persists please contact support.',
   const handleHasCheckpointOrValidationSelect = useCallback((value: SelectValue): void => {
     const filter = value as unknown as TrialInfoFilter;
     if (value as string !== ALL_VALUE && !Object.values(TrialInfoFilter).includes(filter)) return;
-    setHasCheckpointOrValidation(filter);
+    setShowFilter(filter);
     storage.set(STORAGE_CHECKPOINT_VALIDATION_KEY, filter);
-  }, [ setHasCheckpointOrValidation, storage ]);
+  }, [ setShowFilter, storage ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     setMetrics(value);
@@ -369,8 +375,8 @@ If the problem persists please contact support.',
   }, [ trialDetails.data, stopPolling ]);
 
   useEffect(() => {
-    return () => trialDetails.source?.cancel();
-  }, [ trialDetails.source ]);
+    return () => trialCanceler.abort();
+  }, [ trialCanceler ]);
 
   useEffect(() => {
     try {
@@ -453,7 +459,7 @@ If the problem persists please contact support.',
       <SelectFilter
         dropdownMatchSelectWidth={300}
         label="Show"
-        value={hasCheckpointOrValidation}
+        value={showFilter}
         onSelect={handleHasCheckpointOrValidationSelect}>
         <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
         {Object.values(TrialInfoFilter).map(key => <Option key={key} value={key}>{key}</Option>)}
@@ -497,22 +503,22 @@ If the problem persists please contact support.',
           <TrialChart
             defaultMetricNames={defaultMetrics}
             metricNames={metricNames}
-            steps={trial?.steps}
             storageKey={storageChartMetricsKey}
-            validationMetric={experimentConfig?.searcher.metric} />
+            validationMetric={experimentConfig?.searcher.metric}
+            workloads={trial?.workloads} />
         </Col>
         <Col span={24}>
           <Section options={options} title="Trial Information">
-            <ResponsiveTable<Step>
+            <ResponsiveTable<Step2>
               columns={columns}
-              dataSource={steps}
+              dataSource={workloadSteps}
               loading={{
                 indicator: <Indicator />,
                 spinning: trialDetails.isLoading,
               }}
-              pagination={getPaginationConfig(steps.length, pageSize)}
+              pagination={getPaginationConfig(workloadSteps.length, pageSize)}
               rowClassName={defaultRowClassName(false)}
-              rowKey="id"
+              rowKey="batchNum"
               scroll={{ x: 1000 }}
               showSorterTooltip={false}
               size="small"

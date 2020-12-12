@@ -6,19 +6,20 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
 import {
-  Checkpoint, CheckpointDetail, CheckpointState, ExperimentDetails, RunState,
-  Step, TrialDetails, TrialHyperParameters, ValidationMetrics,
+  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentDetails, TrialDetails2,
+  TrialHyperParameters,
 } from 'types';
-import { isObject, numericSorter } from 'utils/data';
+import { isObject } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
-import { checkpointSize, trialDurations } from 'utils/types';
+import { trialDurations } from 'utils/trial';
+import { checkpointSize } from 'utils/types';
 
 import css from './TrialInfoBox.module.scss';
 
 interface Props {
-  trial: TrialDetails;
+  trial: TrialDetails2;
   experiment: ExperimentDetails;
 }
 
@@ -37,46 +38,33 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const [ showHParams, setShowHParams ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
-  const { metric, smallerIsBetter } = experiment.config.searcher || {};
+  const { metric } = experiment.config.searcher || {};
 
   const bestValidation = useMemo(() => {
-    const sortedValidations = trial.steps
-      .filter(step => step.validation
-        && step.validation.state === RunState.Completed
-        && !!step.validation.metrics )
-      .map(step => (step.validation?.metrics as ValidationMetrics)
-        .validationMetrics[metric])
-      .sort((a, b) => numericSorter(a, b, !smallerIsBetter));
-
-    return sortedValidations[0];
-  }, [ metric, smallerIsBetter, trial.steps ]);
+    return (trial.bestValidationMetric?.metrics || {})[metric];
+  }, [ metric, trial.bestValidationMetric?.metrics ]);
 
   const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
-    const sortedSteps: Step[] = trial.steps
-      .filter(step => step.checkpoint && step.checkpoint.state === CheckpointState.Completed)
-      .sort((a, b) => numericSorter(
-        a.checkpoint?.validationMetric,
-        b.checkpoint?.validationMetric,
-        !smallerIsBetter,
-      ));
-    const bestStep = sortedSteps[0];
-    return bestStep ? {
-      ...(bestStep.checkpoint as Checkpoint),
-      batch: bestStep.numBatches + bestStep.priorBatchesProcessed,
-      experimentId: experiment.id,
-    } : undefined;
-  }, [ experiment.id, smallerIsBetter, trial.steps ]);
+    const cp = trial.bestAvailableCheckpoint;
+    if (!cp) return;
+
+    return {
+      ...cp,
+      batch: cp.numBatches + cp.priorBatchesProcessed,
+      trialId: trial.id,
+    };
+  }, [ trial.id, trial.bestAvailableCheckpoint ]);
 
   const totalCheckpointsSize = useMemo(() => {
-    const totalBytes = trial.steps
+    const totalBytes = trial.workloads
       .filter(step => step.checkpoint
         && step.checkpoint.state === CheckpointState.Completed)
-      .map(step =>checkpointSize(step.checkpoint as Checkpoint))
+      .map(step =>checkpointSize(step.checkpoint as CheckpointWorkload))
       .reduce((acc, cur) => acc + cur, 0);
     return humanReadableBytes(totalBytes);
-  }, [ trial.steps ]);
+  }, [ trial.workloads ]);
 
-  const durations = useMemo(() => trialDurations(trial.steps), [ trial.steps ]);
+  const durations = useMemo(() => trialDurations(trial.workloads), [ trial.workloads ]);
 
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);

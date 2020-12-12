@@ -1,11 +1,10 @@
 import {
-  AnyTask, Checkpoint, Command, CommandState, CommandTask, CommandType, ExperimentHyperParams,
-  ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
-  TBSource, TBSourceType,
+  AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
+  CommandType, ExperimentHyperParams, ExperimentItem, RawJson, RecentCommandTask,
+  RecentExperimentTask, RecentTask, RunState, TBSource, TBSourceType,
 } from 'types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
-import { getDuration } from './time';
 
 /* Conversions to Tasks */
 
@@ -110,13 +109,23 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminated]: 'Terminated',
 };
 
+export const checkpointStateToLabel: {[key in CheckpointState]: string} = {
+  [CheckpointState.Active]: 'Active',
+  [CheckpointState.Completed]: 'Completed',
+  [CheckpointState.Error]: 'Error',
+  [CheckpointState.Deleted]: 'Deleted',
+  [CheckpointState.Unspecified]: 'Unspecified',
+};
+
 export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };
 
-export function stateToLabel(state: RunState | CommandState): string {
-  return runStateToLabel[state as RunState] || commandStateToLabel[state as CommandState];
+export function stateToLabel(state: RunState | CommandState | CheckpointState): string {
+  return runStateToLabel[state as RunState]
+  || commandStateToLabel[state as CommandState]
+  || checkpointStateToLabel[state as CheckpointState];
 }
 
 export const commandTypeToLabel: {[key in CommandType]: string} = {
@@ -156,31 +165,10 @@ export const oneOfProperties = <T>(obj: any, props: string[]): T => {
 };
 
 // size in bytes
-export const checkpointSize = (checkpoint: Checkpoint): number => {
+export const checkpointSize = (checkpoint: Checkpoint | CheckpointWorkload): number => {
   if (!checkpoint.resources) return 0;
   const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
   return total;
-};
-
-interface TrialDurations {
-  train: number;
-  checkpoint: number;
-  validation: number;
-}
-
-export const trialDurations = (steps: Step[]): TrialDurations => {
-  const initialDurations: TrialDurations = {
-    checkpoint: 0,
-    train: 0,
-    validation: 0,
-  };
-
-  return steps.reduce((acc: TrialDurations, cur: Step) => {
-    acc.train += getDuration(cur);
-    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
-    if (cur.validation) acc.validation += getDuration(cur.validation);
-    return acc;
-  }, initialDurations);
 };
 
 /* Experiment Config */

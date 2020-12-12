@@ -1,4 +1,4 @@
-import { CommandState, ResourceState, RunState } from 'types';
+import { CheckpointState, CommandState, ResourceState, RunState } from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -222,7 +222,7 @@ const stateColorMapping = {
 };
 
 export const getStateColorCssVar = (
-  state: RunState | CommandState | ResourceState | undefined,
+  state: RunState | CommandState | ResourceState | CheckpointState | undefined,
 ): string => {
   const name = state ? stateColorMapping[state] : 'active';
   return `var(--theme-colors-states-${name})`;

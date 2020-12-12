@@ -1,9 +1,14 @@
-import { MetricName, MetricType, Step } from 'types';
+import { MetricName, MetricType, Step, WorkloadWrapper } from 'types';
 import { isNumber, metricNameSorter } from 'utils/data';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
 
-export const extractMetricValue = (step: Step, metricName: MetricName): number | undefined => {
+import { getDuration } from './time';
+
+export const extractMetricValuesFromSteps = (
+  step: Step,
+  metricName: MetricName,
+): number | undefined => {
   if (metricName.type === MetricType.Training) {
     const source = step.avgMetrics || {};
     if (isNumber(source[metricName.name])) return source[metricName.name];
@@ -14,7 +19,7 @@ export const extractMetricValue = (step: Step, metricName: MetricName): number |
   return undefined;
 };
 
-export const extractMetricNames = (steps: Step[] = []): MetricName[] => {
+export const extractMetricNamesFromSteps = (steps: Step[] = []): MetricName[] => {
   const map: Record<string, MetricName> = {};
 
   steps.forEach(step => {
@@ -41,8 +46,49 @@ export const extractMetricNames = (steps: Step[] = []): MetricName[] => {
   return Object.values(map).sort(metricNameSorter);
 };
 
+export const extractMetricNames = (workloads: WorkloadWrapper[]): MetricName[] => {
+  const trainingNames: Set<string> = workloads
+    .filter(wl => wl.training?.metrics)
+    .reduce((acc, cur) => {
+      Object.keys(cur.training?.metrics as Record<string, number>).forEach(name => {
+        acc.add(name);
+      });
+      return acc;
+    }, new Set<string>()) as Set<string>; // this "as" shouldn't be needed.
+
+  const trainingMetrics: MetricName[]= Array.from(trainingNames).map(name => ({
+    name,
+    type: MetricType.Training,
+  }));
+
+  const validationNames: Set<string> = workloads
+    .filter(wl => wl.validation?.metrics)
+    .reduce((acc, cur) => {
+      Object.keys(cur.validation?.metrics as Record<string, number>).forEach(name => {
+        acc.add(name);
+      });
+      return acc;
+    }, new Set<string>()) as Set<string>; // this "as" shouldn't be needed.
+
+  const validationMetrics: MetricName[]= Array.from(validationNames).map(name => ({
+    name,
+    type: MetricType.Validation,
+  }));
+
+  return [ ...validationMetrics, ...trainingMetrics ].sort(metricNameSorter);
+};
 export const metricNameToValue = (metricName: MetricName): string => {
   return `${metricName.type}|${metricName.name}`;
+};
+
+export const extractMetricValue = (
+  wl: WorkloadWrapper,
+  metricName: MetricName,
+): number | undefined => {
+  const source = (metricName.type === MetricType.Training
+    ? wl.training?.metrics : wl.validation?.metrics) || {};
+  if (isNumber(source[metricName.name])) return source[metricName.name];
+  return undefined;
 };
 
 export const metricNameFromValue = (metricValue: string): MetricName | undefined => {
@@ -87,4 +133,40 @@ export const valueToMetricName = (value: string): MetricName | undefined => {
   const parts = value.split('|');
   if (parts.length === 2) return { name: parts[1], type: parts[0] as MetricType };
   return undefined;
+};
+
+interface TrialDurations {
+  train: number;
+  checkpoint: number;
+  validation: number;
+}
+
+export const trialDurationsStep = (steps: Step[]): TrialDurations => {
+  const initialDurations: TrialDurations = {
+    checkpoint: 0,
+    train: 0,
+    validation: 0,
+  };
+
+  return steps.reduce((acc: TrialDurations, cur: Step) => {
+    acc.train += getDuration(cur);
+    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
+    if (cur.validation) acc.validation += getDuration(cur.validation);
+    return acc;
+  }, initialDurations);
+};
+
+export const trialDurations = (wlWrappers: WorkloadWrapper[]): TrialDurations => {
+  const initialDurations: TrialDurations = {
+    checkpoint: 0,
+    train: 0,
+    validation: 0,
+  };
+
+  return wlWrappers.reduce((acc: TrialDurations, cur: WorkloadWrapper) => {
+    if (cur.training) acc.train += getDuration(cur.training);
+    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
+    if (cur.validation) acc.validation += getDuration(cur.validation);
+    return acc;
+  }, initialDurations);
 };

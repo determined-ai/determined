@@ -14,7 +14,7 @@ import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
 import { TrialDetailsParams } from 'services/types';
 import { consumeStream } from 'services/utils';
-import { Log, TrialDetails } from 'types';
+import { Log, TrialDetails2 } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
 import TrialLogFilters, { TrialLogFiltersInterface } from './TrialLogs/TrialLogFilters';
@@ -37,7 +37,7 @@ const TrialLogs: React.FC = () => {
   const [ isDownloading, setIsDownloading ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
-  const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
+  const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails2>(getTrialDetails, { id: trialId });
   const [ filter, setFilter ] = useState<TrialLogFiltersInterface>({});
   const [ historyCanceler ] = useState(new AbortController());
 
