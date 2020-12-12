@@ -179,8 +179,12 @@ interface DataLayer {
 }
 
 interface ExperimentHyperParam {
+  base?: number;
+  count?: number;
+  maxval?: number;
+  minval?: number;
   type: string;
-  val: unknown;
+  val?: number | string;
 }
 
 export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;
@@ -190,6 +194,7 @@ export interface ExperimentConfig {
   checkpointStorage?: CheckpointStorage;
   dataLayer?: DataLayer;
   description: string;
+  hyperparameters: ExperimentHyperParams;
   labels?: string[];
   resources: {
     maxSlots?: number;

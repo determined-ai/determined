@@ -166,6 +166,7 @@ const ioToExperimentConfig = (io: ioTypes.ioTypeExperimentConfig): types.Experim
       type: io.data_layer.type,
     } : undefined,
     description: io.description,
+    hyperparameters: io.hyperparameters,
     labels: io.labels || undefined,
     resources: {},
     searcher: {

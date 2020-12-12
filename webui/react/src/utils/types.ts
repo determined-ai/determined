@@ -178,7 +178,7 @@ export const trialHParamsToExperimentHParams = (hParams: Record<string, unknown>
   Object.entries(hParams).forEach(([ param, value ]) => {
     experimentHParams[param] = {
       type: 'const',
-      val: value,
+      val: value as number,
     };
   });
   return experimentHParams;

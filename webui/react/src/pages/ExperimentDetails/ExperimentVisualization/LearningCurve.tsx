@@ -76,7 +76,9 @@ const LearningCurve: React.FC<Props> = ({
         // Save the trials sample data for post processing.
         setTrialList(event.trials || []);
       },
-    );
+    ).catch(e => {
+      console.log('error', e);
+    });
 
     return () => canceler.abort();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
