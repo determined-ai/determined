@@ -1,13 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
+import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
+import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { V1TrialsSampleResponse, V1TrialsSampleResponseTrial } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentDetails, MetricName, metricTypeParamMap } from 'types';
-import { alphanumericSorter } from 'utils/data';
+import { alphanumericSorter, hpSorter } from 'utils/data';
 
 import css from './LearningCurve.module.scss';
 
@@ -19,6 +22,11 @@ interface Props {
 }
 
 type HParams = Record<string, boolean | number | string>;
+
+interface TrialHParams {
+  id: number;
+  hparams: HParams;
+}
 
 const MAX_TRIALS = 100;
 const MAX_DATAPOINTS = 5000;
@@ -32,12 +40,50 @@ const LearningCurve: React.FC<Props> = ({
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
-  const [ trialHParams, setTrialHParams ] = useState<Record<number, HParams>>({});
+  const [ trialHpMap, setTrialHpMap ] = useState<Record<number, HParams>>({});
   const [ trialList, setTrialList ] = useState<Array<V1TrialsSampleResponseTrial>>([]);
+  const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
+
+  const isReady = useMemo(() => {
+    return Object.keys(trialHpMap).length !== 0;
+  }, [ trialHpMap ]);
+
+  const trialHParams: TrialHParams[] = useMemo(() => {
+    if (!trialHpMap) return [];
+    return trialIds.map(trialId => ({ hparams: trialHpMap[trialId], id: trialId }));
+  }, [ trialHpMap, trialIds ]);
+
+  const columns = useMemo(() => {
+    const idColumn = { dataIndex: 'id', key: 'id', title: 'Trial ID' };
+
+    const hpRenderer = (key: string) => {
+      return (_: string, record: TrialHParams) => record.hparams[key];
+    };
+    const hpColumnSorter = (key: string) => {
+      return (recordA: TrialHParams, recordB: TrialHParams): number => {
+        const a = recordA.hparams[key];
+        const b = recordB.hparams[key];
+        return hpSorter(a, b);
+      };
+    };
+
+    const hpColumns = Object.keys(experiment.config.hyperparameters || {}).map(key => ({
+      key,
+      render: hpRenderer(key),
+      sorter: hpColumnSorter(key),
+      title: key,
+    }));
+
+    return [ idColumn, ...hpColumns ];
+  }, [ experiment.config.hyperparameters ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     if (onMetricChange) onMetricChange(metric);
   }, [ onMetricChange ]);
+
+  const handleTableChange = useCallback((tablePagination) => {
+    setPageSize(tablePagination.pageSize);
+  }, []);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -85,7 +131,7 @@ const LearningCurve: React.FC<Props> = ({
   }, [ experiment.id, selectedMetric ]);
 
   useEffect(() => {
-    const newTrialHParams: Record<number, HParams> = {};
+    const newTrialHpMap: Record<number, HParams> = {};
     const batchesSeen: Record<number, boolean> = {};
     const metricsSeen: Record<number, Record<number, number | null>> = {};
 
@@ -94,7 +140,7 @@ const LearningCurve: React.FC<Props> = ({
       if (!id) return;
 
       const hasHParams = Object.keys(trialData.hparams || {}).length !== 0;
-      if (hasHParams && !trialHParams[id]) newTrialHParams[id] = trialData.hparams;
+      if (hasHParams && !trialHpMap[id]) newTrialHpMap[id] = trialData.hparams;
 
       metricsSeen[id] = metricsSeen[id] || {};
       (trialData.data || []).forEach(batchMetric => {
@@ -110,8 +156,8 @@ const LearningCurve: React.FC<Props> = ({
     setBatches(newBatches);
 
     // Update the hyperparameters for all of the newly encountered trials.
-    if (Object.keys(newTrialHParams).length !== 0) {
-      setTrialHParams({ ...trialHParams, ...newTrialHParams });
+    if (Object.keys(newTrialHpMap).length !== 0) {
+      setTrialHpMap({ ...trialHpMap, ...newTrialHpMap });
     }
 
     // Construct the data to feed to the chart.
@@ -125,21 +171,37 @@ const LearningCurve: React.FC<Props> = ({
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ trialIds, trialList ]);
 
+  if (!isReady) return <Spinner />;
+
   return (
-    <Section
-      options={<MetricSelectFilter
-        defaultMetricNames={metrics}
-        label="Metric"
-        metricNames={metrics}
-        multiple={false}
-        value={selectedMetric}
-        width={'100%'}
-        onChange={handleMetricChange} />}
-      title="Learning Curve">
-      <div className={css.base}>
-        <LearningCurveChart data={chartData} trialIds={trialIds} xValues={batches} />
-      </div>
-    </Section>
+    <>
+      <Section
+        options={<MetricSelectFilter
+          defaultMetricNames={metrics}
+          label="Metric"
+          metricNames={metrics}
+          multiple={false}
+          value={selectedMetric}
+          width={'100%'}
+          onChange={handleMetricChange} />}
+        title="Learning Curve">
+        <div className={css.base}>
+          <LearningCurveChart data={chartData} trialIds={trialIds} xValues={batches} />
+        </div>
+      </Section>
+      <Section title="Trial Hyperparameters">
+        <ResponsiveTable<TrialHParams>
+          columns={columns}
+          dataSource={trialHParams}
+          pagination={getPaginationConfig(trialHParams.length, pageSize)}
+          rowClassName={defaultRowClassName(false)}
+          rowKey="id"
+          scroll={{ x: 1000 }}
+          showSorterTooltip={false}
+          size="small"
+          onChange={handleTableChange} />
+      </Section>
+    </>
   );
 };
 

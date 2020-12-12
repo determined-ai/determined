@@ -85,8 +85,24 @@ export const alphanumericSorter = (a: string|number, b: string|number): number =
   return a.toString().localeCompare(b.toString(), 'en', { numeric: true });
 };
 
+export const booleanSorter = (a: boolean, b: boolean): number => {
+  // True values first.
+  return (a === b) ? 0 : (a ? -1 : 1);
+};
+
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
   return commandStateSortValues[a] - commandStateSortValues[b];
+};
+
+export const hpSorter = (a: boolean|number|string, b: boolean|number|string): number => {
+  if (typeof a === 'boolean' && typeof b === 'boolean') {
+    return booleanSorter(a, b);
+  } else if (typeof a === 'number' && typeof b === 'number') {
+    return alphanumericSorter(a, b);
+  } else if (typeof a === 'string' && typeof b === 'string') {
+    return alphanumericSorter(a, b);
+  }
+  return 0;
 };
 
 /*
