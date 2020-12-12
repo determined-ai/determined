@@ -331,6 +331,6 @@ func (a *agentResourceManager) createResourcePoolSummary(poolName string) (*reso
 			//slotsUsed
 			//cpuContainerCapacity
 			//CpuContainersRunning
-			//AcceleratorsPerAgent  // TODO: Do we even want to offer this?
+			//AcceleratorsPerAgent  // TODO: Do we even want to offer this one field?
 	return resp, nil
 }
