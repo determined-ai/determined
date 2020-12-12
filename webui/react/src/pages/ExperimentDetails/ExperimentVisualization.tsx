@@ -48,12 +48,12 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ trainingMetrics, setTrainingMetrics ] = useState<string[]>([]);
   const [ validationMetrics, setValidationMetrics ] = useState<string[]>([]);
   const [ selectedMetric, setSelectedMetric ] = useState<MetricName>();
-  const [ searchMetric, setSearchMetric ] = useState<string>();
+  const [ searcherMetric, setSearcherMetric ] = useState<string>();
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ selectedBatch, setSelectedBatch ] = useState<number>();
   const [ canceler ] = useState(new AbortController());
 
-  const metrics = [
+  const metrics: MetricName[] = [
     ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
     ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
   ];
@@ -78,7 +78,7 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        setSearchMetric(event.searcherMetric);
+        setSearcherMetric(event.searcherMetric);
         setTrainingMetrics(event.trainingMetrics || []);
         setValidationMetrics(event.validationMetrics || []);
       },
@@ -116,8 +116,8 @@ const ExperimentVisualization: React.FC<Props> = ({
   // Set the default metric of interest
   useEffect(() => {
     if (selectedMetric) return;
-    if (searchMetric) setSelectedMetric({ name: searchMetric, type: MetricType.Validation });
-  }, [ searchMetric, selectedMetric ]);
+    if (searcherMetric) setSelectedMetric({ name: searcherMetric, type: MetricType.Validation });
+  }, [ searcherMetric, selectedMetric ]);
 
   return (
     <div className={css.base}>
@@ -129,7 +129,11 @@ const ExperimentVisualization: React.FC<Props> = ({
           span={24}
           xs={{ order: 2, span: 24 }}>
           {selectedMetric && typeKey === VisualizationType.LearningCurve && (
-            <LearningCurve experiment={experiment} metric={selectedMetric} />
+            <LearningCurve
+              experiment={experiment}
+              metrics={metrics}
+              selectedMetric={selectedMetric}
+              onMetricChange={handleMetricChange} />
           )}
         </Col>
         <Col
@@ -160,14 +164,6 @@ const ExperimentVisualization: React.FC<Props> = ({
                   <Option key={item.type} value={item.type}>{item.label}</Option>
                 ))}
               </SelectFilter>
-              <MetricSelectFilter
-                defaultMetricNames={metrics}
-                metricNames={metrics}
-                multiple={false}
-                value={selectedMetric}
-                verticalLayout={true}
-                width={'100%'}
-                onChange={handleMetricChange} />
               <SelectFilter
                 label="Batches"
                 style={{ width: '100%' }}

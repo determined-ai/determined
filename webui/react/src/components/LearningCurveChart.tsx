@@ -44,8 +44,6 @@ const UPLOT_OPTIONS = {
 
 const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
-  console.log('data', data);
-  console.log('xValues', xValues);
 
   const handleCursorChange = useCallback((
     plot: uPlot,

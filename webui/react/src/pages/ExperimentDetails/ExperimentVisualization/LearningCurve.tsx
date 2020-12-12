@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
+import MetricSelectFilter from 'components/MetricSelectFilter';
 import Section from 'components/Section';
 import { V1TrialsSampleResponse, V1TrialsSampleResponseTrial } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -12,7 +13,9 @@ import css from './LearningCurve.module.scss';
 
 interface Props {
   experiment: ExperimentDetails;
-  metric: MetricName;
+  metrics: MetricName[];
+  onMetricChange?: (metric: MetricName) => void;
+  selectedMetric: MetricName
 }
 
 type HParams = Record<string, boolean | number | string>;
@@ -20,12 +23,21 @@ type HParams = Record<string, boolean | number | string>;
 const MAX_TRIALS = 100;
 const MAX_DATAPOINTS = 5000;
 
-const LearningCurve: React.FC<Props> = ({ experiment, metric }: Props) => {
+const LearningCurve: React.FC<Props> = ({
+  experiment,
+  metrics,
+  onMetricChange,
+  selectedMetric,
+}: Props) => {
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
   const [ trialHParams, setTrialHParams ] = useState<Record<number, HParams>>({});
   const [ trialList, setTrialList ] = useState<Array<V1TrialsSampleResponseTrial>>([]);
+
+  const handleMetricChange = useCallback((metric: MetricName) => {
+    if (onMetricChange) onMetricChange(metric);
+  }, [ onMetricChange ]);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -33,8 +45,8 @@ const LearningCurve: React.FC<Props> = ({ experiment, metric }: Props) => {
     consumeStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.determinedTrialsSample(
         experiment.id,
-        metric.name,
-        metricTypeParamMap[metric.type],
+        selectedMetric.name,
+        metricTypeParamMap[selectedMetric.type],
         MAX_TRIALS,
         MAX_DATAPOINTS,
         undefined,
@@ -68,7 +80,7 @@ const LearningCurve: React.FC<Props> = ({ experiment, metric }: Props) => {
 
     return () => canceler.abort();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [ experiment.id, metric ]);
+  }, [ experiment.id, selectedMetric ]);
 
   useEffect(() => {
     const newTrialHParams: Record<number, HParams> = {};
@@ -112,7 +124,16 @@ const LearningCurve: React.FC<Props> = ({ experiment, metric }: Props) => {
   }, [ trialIds, trialList ]);
 
   return (
-    <Section title="Learning Curve">
+    <Section
+      options={<MetricSelectFilter
+        defaultMetricNames={metrics}
+        label="Metric"
+        metricNames={metrics}
+        multiple={false}
+        value={selectedMetric}
+        width={'100%'}
+        onChange={handleMetricChange} />}
+      title="Learning Curve">
       <div className={css.base}>
         <LearningCurveChart data={chartData} trialIds={trialIds} xValues={batches} />
       </div>
