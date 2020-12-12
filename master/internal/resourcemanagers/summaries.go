@@ -90,3 +90,31 @@ func getTaskSummaries(
 	}
 	return ret
 }
+
+
+type ResourceSummary struct {
+	numAgents int
+	numTotalSlots int
+	numActiveSlots int
+	maxNumCpuContainers int
+	numActiveCpuContainers int
+}
+
+func getResourceSummary(
+	agentInfo  map[*actor.Ref]*agentState,
+) ResourceSummary {
+	summary := ResourceSummary{
+		numTotalSlots:          0,
+		numActiveSlots:         0,
+		maxNumCpuContainers:    0,
+		numActiveCpuContainers: 0,
+	}
+	for _, agentState  := range agentInfo {
+		summary.numAgents += 1
+		summary.numTotalSlots += agentState.numSlots()
+		summary.numActiveSlots += agentState.numUsedSlots()
+		summary.maxNumCpuContainers += agentState.maxZeroSlotContainers
+		summary.numActiveCpuContainers += agentState.numZeroSlotContainers()
+	}
+	return summary
+}

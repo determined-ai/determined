@@ -17,14 +17,12 @@ message ResourcePool {
   int32 slotsUsed=6;
   int32 cpuContainerCapacity = 7;
   int32 cpuContainersRunning = 8;
-
   bool defaultGpuPool=9;
   bool defaultCpuPool=10;
   bool preemptible=11;
   int32 minAgents=12;
   int32 maxAgents=13;
-  int32 acceleratorsPerAgent=14; // TODO: Can we actually correctly calculate this number?
-  int32 cpuContainerCapacityPerAgent=      15;
+  int32 cpuContainerCapacityPerAgent=15;
   string schedulerType=16; // TODO: Make sure the scheduler information is correct here
   string schedulerFittingPolicy=17; // TODO: Make sure the scheduler information is correct here
   string location=18;

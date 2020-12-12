@@ -40,6 +40,8 @@ type ResourcePool struct {
 	notifications     []<-chan struct{}
 }
 
+type GetResourceSummary struct {}
+
 // NewResourcePool initializes a new empty default resource provider.
 func NewResourcePool(
 	config *ResourcePoolConfig,
@@ -240,6 +242,10 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 	case GetTaskSummaries:
 		reschedule = false
 		ctx.Respond(getTaskSummaries(rp.taskList, rp.groups, rp.config.Scheduler.GetType()))
+
+	case GetResourceSummary:
+		reschedule = false
+		ctx.Respond(getResourceSummary(rp.agents))
 
 	case schedulerTick:
 		if rp.reschedule {

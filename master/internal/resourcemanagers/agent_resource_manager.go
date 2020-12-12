@@ -20,7 +20,11 @@ type agentResourceManager struct {
 	pools map[string]*actor.Ref
 }
 
-type GetResourcePoolSummary struct{}
+type GetResourcePoolSummary struct{
+	resourcePool string
+}
+
+type GetResourcePoolSummaries struct{}
 
 func newAgentResourceManager(
 	config *AgentResourceManagerConfig, poolsConfig *ResourcePoolsConfig, cert *tls.Certificate,
@@ -64,8 +68,33 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		a.forwardToAllPools(ctx, msg)
 
 	case GetResourcePoolSummary:
-		// Send default information
-		// Send ResourcePoolConfig
+
+		if a.pools[msg.resourcePool] == nil {
+			err := errors.Errorf("cannot find resource pool %s to summarize", msg.resourcePool)
+			ctx.Log().WithError(err).Error("")
+			if ctx.ExpectingResponse() {
+				ctx.Respond(err)
+			}
+			break
+		}
+
+		resourcePoolSummary, err := a.createResourcePoolSummary(ctx, msg.resourcePool)
+		if err != nil {
+			// TODO: handle this
+		}
+		ctx.Respond(resourcePoolSummary)
+
+	case GetResourcePoolSummaries:
+		summaries := make([]*resourcepoolv1.ResourcePool, len(a.poolsConfig.ResourcePools))
+		for _, pool := range a.poolsConfig.ResourcePools {
+			summary, err := a.createResourcePoolSummary(ctx, pool.PoolName)
+			if err != nil {
+				// TODO: handle error
+			}
+			summaries = append(summaries, summary)
+		}
+		ctx.Respond(summaries)
+
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -174,7 +203,7 @@ func (a *agentResourceManager) getResourcePoolConfig(poolName string) (ResourceP
 	return a.poolsConfig.ResourcePools[0], nil
 }
 
-func (a *agentResourceManager) createResourcePoolSummary(poolName string) (*resourcepoolv1.ResourcePool, error) {
+func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poolName string) (*resourcepoolv1.ResourcePool, error) {
 	pool, err := a.getResourcePoolConfig(poolName)
 	if err != nil {
 		return &resourcepoolv1.ResourcePool{}, err
@@ -209,6 +238,7 @@ func (a *agentResourceManager) createResourcePoolSummary(poolName string) (*reso
 	}
 
 	location := "on-prem"
+	// TODO: Add GCP and AWS to location info?
 	if poolType == "aws" {
 		location = pool.Provider.AWS.Region
 		// TODO: Would be nice to automatically detect the AZ that the subnet is in as well
@@ -289,7 +319,14 @@ func (a *agentResourceManager) createResourcePoolSummary(poolName string) (*reso
 			SpotMaxPrice:          aws.SpotMaxPrice,
 
 		}
-		// TODO: add Custom tags
+		customTags := make([]*resourcepoolv1.AwsCustomTag, len(aws.CustomTags))
+		for i, tagInfo := range aws.CustomTags {
+			customTags[i] = &resourcepoolv1.AwsCustomTag{
+				Key:   tagInfo.Key,
+				Value: tagInfo.Value,
+			}
+		}
+		resp.Details.Aws.CustomTags = customTags
 	}
 	if poolType == "gcp" {
 		gcp := pool.Provider.GCP
@@ -325,12 +362,12 @@ func (a *agentResourceManager) createResourcePoolSummary(poolName string) (*reso
 		}
 	}
 
-	// TODO: Missing fields:
-			//numAgents int
-			//slotsAvailable
-			//slotsUsed
-			//cpuContainerCapacity
-			//CpuContainersRunning
-			//AcceleratorsPerAgent  // TODO: Do we even want to offer this one field?
+	resourceSummary := ctx.Ask(a.pools[poolName], GetResourceSummary{}).Get().(ResourceSummary)
+	resp.NumAgents = int32(resourceSummary.numAgents)
+	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
+	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
+	resp.CpuContainerCapacity = int32(resourceSummary.maxNumCpuContainers)
+	resp.CpuContainersRunning = int32(resourceSummary.numActiveCpuContainers)
+
 	return resp, nil
 }
