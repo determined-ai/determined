@@ -26,16 +26,18 @@ func (a *apiServer) GetMaster(
 		MasterId:         a.m.MasterID,
 		ClusterId:        a.m.ClusterID,
 		ClusterName:      a.m.config.ClusterName,
-		TelemetryEnabled: a.m.config.Telemetry.Enabled,
+		TelemetryEnabled: a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
 	}, nil
 }
 
 func (a *apiServer) GetTelemetry(
 	_ context.Context, _ *apiv1.GetTelemetryRequest) (*apiv1.GetTelemetryResponse, error) {
-	return &apiv1.GetTelemetryResponse{
-		Enabled:    a.m.config.Telemetry.Enabled,
-		SegmentKey: a.m.config.Telemetry.SegmentWebUIKey,
-	}, nil
+	resp := apiv1.GetTelemetryResponse{}
+	if a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "" {
+		resp.Enabled = true
+		resp.SegmentKey = a.m.config.Telemetry.SegmentWebUIKey
+	}
+	return &resp, nil
 }
 
 func (a *apiServer) GetMasterConfig(
