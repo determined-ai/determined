@@ -63,6 +63,7 @@ def list_slots(args: argparse.Namespace) -> None:
         OrderedDict(
             [
                 ("agent_id", local_id(agent_id)),
+                ("resource_pool", agent["resource_pool"]),
                 ("slot_id", local_id(slot_id)),
                 ("enabled", slot["enabled"]),
                 (
@@ -85,7 +86,7 @@ def list_slots(args: argparse.Namespace) -> None:
         print(json.dumps(slots, indent=4))
         return
 
-    headers = ["Agent ID", "Slot ID", "Enabled", "Task ID", "Task Name", "Type", "Device"]
+    headers = ["Agent ID", "Resource Pool", "Slot ID", "Enabled", "Task ID", "Task Name", "Type", "Device"]
     values = [s.values() for s in slots]
 
     render.tabulate_or_csv(headers, values, args.csv)
