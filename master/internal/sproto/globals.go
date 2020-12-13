@@ -1,6 +1,7 @@
 package sproto
 
 import (
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"

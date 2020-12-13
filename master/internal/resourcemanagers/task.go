@@ -33,6 +33,17 @@ type (
 		Name        string
 		TaskHandler *actor.Ref
 	}
+
+	GetDefaultGpuResourcePoolReq struct {}
+	GetDefaultGpuResourcePoolResponse struct {
+		PoolName string
+	}
+
+	GetDefaultCpuResourcePoolReq struct {}
+	GetDefaultCpuResourcePoolResponse struct {
+		PoolName string
+	}
+
 )
 
 // Incoming task actor messages; task actors must accept these messages.
