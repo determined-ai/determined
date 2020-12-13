@@ -16,7 +16,7 @@ from .declarative_argparse import Arg, Cmd
 
 Tensorboard = namedtuple(
     "Tensorboard",
-    ["id", "owner", "description", "state", "experiment_ids", "trial_ids", "exit_status"],
+    ["id", "owner", "description", "state", "experiment_ids", "trial_ids", "exit_status", "resource_pool"],
 )
 
 
@@ -29,6 +29,7 @@ def to_tensorboard(command: Command) -> Tensorboard:
         command.misc.get("experiment_ids"),
         command.misc.get("trial_ids"),
         command.exit_status,
+        command.config["resources"].get("resource_pool", "")
     )
 
 
