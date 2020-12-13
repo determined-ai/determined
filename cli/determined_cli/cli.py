@@ -50,7 +50,7 @@ def list_tasks(args: Namespace) -> None:
         return [c["agent"] for c in containers]
 
     tasks = r.json()
-    headers = ["ID", "Name", "Slots Needed", "Registered Time", "Agent", "Priority"]
+    headers = ["ID", "Name", "Slots Needed", "Registered Time", "Agent", "Priority", "Resource Pool"]
     values = [
         [
             task["id"],
@@ -59,6 +59,7 @@ def list_tasks(args: Namespace) -> None:
             render.format_time(task["registered_time"]),
             agent_info(task),
             task["priority"] if task["scheduler_type"] == "priority" else "N/A",
+            task["resource_pool"],
         ]
         for task_id, task in sorted(
             tasks.items(),
