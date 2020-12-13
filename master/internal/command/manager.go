@@ -83,6 +83,14 @@ func parseCommandRequest(
 		return nil, err
 	}
 
+	if config.Resources.ResourcePool == "" {
+		if config.Resources.Slots == 0 {
+			config.Resources.ResourcePool = sproto.GetDefaultCpuResourcePool(system)
+		} else {
+			config.Resources.ResourcePool = sproto.GetDefaultGpuResourcePool(system)
+		}
+	}
+
 	return &commandRequest{
 		Config:    config,
 		UserFiles: params.UserFiles,
