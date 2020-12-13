@@ -105,7 +105,6 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		return nil, err
 	}
 
-	// TODO: Autofill the default resource pool name in the config
 	if conf.Resources.ResourcePool == "" {
 		conf.Resources.ResourcePool = sproto.GetDefaultGpuResourcePool(master.system)
 	}

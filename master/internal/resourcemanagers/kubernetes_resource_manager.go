@@ -90,6 +90,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
+	case GetDefaultGpuResourcePoolReq:
+		ctx.Respond(&GetDefaultGpuResourcePoolResponse{PoolName: "default"})
+
+	case GetDefaultCpuResourcePoolReq:
+		ctx.Respond(&GetDefaultCpuResourcePoolResponse{PoolName: "default"})
+
 	case schedulerTick:
 		if k.reschedule {
 			k.schedulePendingTasks(ctx)

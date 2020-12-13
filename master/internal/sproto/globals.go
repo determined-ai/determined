@@ -1,6 +1,7 @@
 package sproto
 
 import (
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -42,24 +43,16 @@ func GetRP(system *actor.System, name string) *actor.Ref {
 	return nil
 }
 
-// TODO: Implement correctly by querying resource pool
 func GetDefaultGpuResourcePool(system *actor.System) string {
-	if UseAgentRM(system) {
-		return "TODO"
-	}
-	if UseK8sRM(system) {
-		return "TODO"
-	}
+		resp := system.Ask(GetRM(system), &resourcemanagers.GetDefaultGpuResourcePoolReq{}).Get()
+		return resp.(resourcemanagers.GetDefaultGpuResourcePoolResponse).PoolName
 }
-//
-//func GetDefaultCpuResourcePool(system *actor.System) string {
-//	if UseAgentRM(system) {
-//
-//	}
-//	if UseK8sRM(system) {
-//
-//	}
-//}
+
+func GetDefaultCpuResourcePool(system *actor.System) string {
+	resp := system.Ask(GetRM(system), &resourcemanagers.GetDefaultCpuResourcePoolReq{}).Get()
+	return resp.(resourcemanagers.GetDefaultCpuResourcePoolResponse).PoolName
+}
+
 
 // ValidateRP validates if the resource pool exists when using the agent resource manager.
 func ValidateRP(system *actor.System, name string) error {
