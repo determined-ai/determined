@@ -42,6 +42,25 @@ func GetRP(system *actor.System, name string) *actor.Ref {
 	return nil
 }
 
+// TODO: Implement correctly by querying resource pool
+func GetDefaultGpuResourcePool(system *actor.System) string {
+	if UseAgentRM(system) {
+		return "TODO"
+	}
+	if UseK8sRM(system) {
+		return "TODO"
+	}
+}
+//
+//func GetDefaultCpuResourcePool(system *actor.System) string {
+//	if UseAgentRM(system) {
+//
+//	}
+//	if UseK8sRM(system) {
+//
+//	}
+//}
+
 // ValidateRP validates if the resource pool exists when using the agent resource manager.
 func ValidateRP(system *actor.System, name string) error {
 	if name == "" || UseAgentRM(system) && GetRP(system, name) != nil {

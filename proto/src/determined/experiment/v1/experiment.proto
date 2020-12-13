@@ -67,6 +67,8 @@ message Experiment {
   double progress = 9;
   // The username of the user that created the experiment.
   string username = 10;
+  // The resource pool the experiment was created in
+  string resource_pool = 11;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an
