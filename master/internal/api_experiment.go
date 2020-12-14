@@ -72,7 +72,6 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 		return nil, errors.Wrapf(err,
 			"error fetching experiment from database: %d", experimentID)
 	}
-
 	return exp, nil
 }
 
