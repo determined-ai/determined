@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import uPlot, { Cursor, Options } from 'uplot';
 
-import useResize from 'hooks/useResize';
-
 import 'uplot/dist/uPlot.min.css';
+import useResize from 'hooks/useResize';
 import { distance } from 'utils/chart';
 
 import css from './LearningCurveChart.module.scss';
@@ -15,6 +14,7 @@ interface Props {
 }
 
 const CHART_HEIGHT = 400;
+const CANVAS_CSS_RATIO = 2;
 const FOCUS_MIN_DISTANCE = 30;
 const UPLOT_OPTIONS = {
   axes: [
@@ -145,10 +145,21 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
     };
 
     if (closestSeriesIdx !== -1) {
-      const [ offsetX, offsetY ] = [ plot.bbox.left / 2, plot.bbox.top / 2 ];
+      const x = closestX + plot.bbox.left / CANVAS_CSS_RATIO;
+      const y = closestY + plot.bbox.top / CANVAS_CSS_RATIO;
+      const classes = [ css.tooltip ];
+
+      /*
+       * Place tooltip in the quadrant appropriate for where the cursor position is.
+       * 1 - Bottom Right, 2 - Bottom Left, 3 - Top Right, 4 - Top Left
+       */
+      if (y > plot.bbox.height / 2 / CANVAS_CSS_RATIO) classes.push(css.top);
+      if (x > plot.bbox.width / 2 / CANVAS_CSS_RATIO) classes.push(css.left);
+
       tooltipRef.current.style.display = 'block';
-      tooltipRef.current.style.left = `${closestX + offsetX}px`;
-      tooltipRef.current.style.top = `${closestY + offsetY}px`;
+      tooltipRef.current.style.left = `${x}px`;
+      tooltipRef.current.style.top = `${y}px`;
+      tooltipRef.current.className = classes.join(' ');
       trialIdRef.current.innerText = trialIds[closestSeriesIdx].toString();
       batchesRef.current.innerText = closestXValue.toString();
       metricValueRef.current.innerText = closestValue.toString();
