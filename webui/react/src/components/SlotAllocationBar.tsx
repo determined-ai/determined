@@ -46,7 +46,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   ...barProps
 }: Props) => {
 
-  const { parts, legends } = useMemo(() => {
+  const { barParts, legendParts, partTally } = useMemo(() => {
     const tally = {
       free: totalSlots - resourceStates.length,
       pending: 0,
@@ -75,29 +75,7 @@ const SlotAllocationBar: React.FC<Props> = ({
       },
     };
 
-    const legends = [
-      legend(
-        <Badge bgColor={parts.running.color} type={BadgeType.Custom}>{parts.running.label}</Badge>
-        , tally.running,
-        totalSlots,
-      ),
-      legend(
-        <Badge bgColor={parts.pending.color} type={BadgeType.Custom}>
-          {parts.pending.label}
-        </Badge>
-        , tally.pending,
-        totalSlots,
-      ),
-      legend(
-        <Badge bgColor={parts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
-          {parts.free.label}
-        </Badge>
-        , tally.free,
-        totalSlots,
-      ),
-    ];
-
-    return { legends, parts: [ parts.running, parts.pending ] };
+    return { barParts: [ parts.running, parts.pending ], legendParts: parts, partTally: tally };
   }, [ resourceStates, totalSlots ]);
 
   const classes = [ css.base ];
@@ -113,12 +91,32 @@ const SlotAllocationBar: React.FC<Props> = ({
         </span>
       </div>
       <div className={css.bar}>
-        <Bar {...barProps} parts={parts} />
+        <Bar {...barProps} parts={barParts} />
       </div>
       {showLegends &&
       <div className={css.legends}>
         <ol>
-          {legends}
+          {legend(
+            <Badge bgColor={legendParts.running.color} type={BadgeType.Custom}>
+              {legendParts.running.label}
+            </Badge>
+            , partTally.running,
+            totalSlots,
+          )}
+          {legend(
+            <Badge bgColor={legendParts.pending.color} type={BadgeType.Custom}>
+              {legendParts.pending.label}
+            </Badge>
+            , partTally.pending,
+            totalSlots,
+          )}
+          {legend(
+            <Badge bgColor={legendParts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
+              {legendParts.free.label}
+            </Badge>
+            , partTally.free,
+            totalSlots,
+          )}
         </ol>
       </div>
       }

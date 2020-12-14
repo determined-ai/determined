@@ -81,8 +81,8 @@ const HGICluster: React.FC = () => {
       </Section>
       <Section title={`${resourcePools.length} Resource Pools`}>
         <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
-          {(new Array(5).fill(0)).map(() => {
-            return <ResourcePoolCard agents={agents.data || []} />;
+          {(new Array(5).fill(0)).map((_, idx) => {
+            return <ResourcePoolCard agents={agents.data || []} key={idx} />;
           })}
         </Grid>
       </Section>
