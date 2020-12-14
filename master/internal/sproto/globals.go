@@ -62,13 +62,13 @@ func GetRP(system *actor.System, name string) *actor.Ref {
 
 // GetDefaultGPUResourcePool returns the default GPU resource pool
 func GetDefaultGPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetRM(system), &GetDefaultGPUResourcePoolReq{}).Get()
+	resp := system.Ask(GetRM(system), GetDefaultGPUResourcePoolReq{}).Get()
 	return resp.(GetDefaultGPUResourcePoolResponse).PoolName
 }
 
 // GetDefaultCPUResourcePool returns the default CPU resource pool
 func GetDefaultCPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetRM(system), &GetDefaultCPUResourcePoolReq{}).Get()
+	resp := system.Ask(GetRM(system), GetDefaultCPUResourcePoolReq{}).Get()
 	return resp.(GetDefaultCPUResourcePoolResponse).PoolName
 }
 
