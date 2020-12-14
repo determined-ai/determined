@@ -61,7 +61,7 @@ def describe_command(command: Command) -> CommandDescription:
         command.config["description"],
         command.state,
         command.exit_status,
-        command.config["resources"].get("resource_pool", ""),
+        command.config["resources"].get("resource_pool"),
     )
 
 

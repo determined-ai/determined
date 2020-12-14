@@ -38,7 +38,7 @@ def to_tensorboard(command: Command) -> Tensorboard:
         command.misc.get("experiment_ids"),
         command.misc.get("trial_ids"),
         command.exit_status,
-        command.config["resources"].get("resource_pool", ""),
+        command.config["resources"].get("resource_pool"),
     )
 
 
