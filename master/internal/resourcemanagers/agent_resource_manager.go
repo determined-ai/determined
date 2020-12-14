@@ -63,10 +63,10 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultGPUResourcePoolReq:
-		ctx.Respond(&sproto.GetDefaultGPUResourcePoolResponse{PoolName: a.config.DefaultGPUResourcePool})
+		ctx.Respond(sproto.GetDefaultGPUResourcePoolResponse{PoolName: a.config.DefaultGPUResourcePool})
 
 	case sproto.GetDefaultCPUResourcePoolReq:
-		ctx.Respond(&sproto.GetDefaultCPUResourcePoolResponse{PoolName: a.config.DefaultCPUResourcePool})
+		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: a.config.DefaultCPUResourcePool})
 
 	case *apiv1.GetResourcePoolsRequest:
 		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig.ResourcePools))
