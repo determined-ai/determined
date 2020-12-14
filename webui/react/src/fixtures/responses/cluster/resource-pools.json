@@ -8,7 +8,7 @@
         "slotsUsed": 0,
         "cpuContainerCapacity": 100,
         "cpuContainersRunning": 5,
-        "defaultCpuPool": true,
+        "defaultCpuPool": false,
         "defaultGpuPool": true,
         "spotOrPreemptible": false,
         "minInstances": 0,

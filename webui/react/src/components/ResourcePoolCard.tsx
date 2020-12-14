@@ -49,48 +49,51 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
     description,
     type,
     gpusPerAgent,
-    defaultGpuPool,
     numAgents,
   } = rp;
 
   const slotStates = getSlotContainerStates(agents, name);
 
+  const tags: string[] = [ type ];
+  if (rp.defaultGpuPool) tags.push('default gpu pool');
+  if (rp.defaultCpuPool) tags.push('default cpu pool');
+
   return (
-    <Card
-      className={classes.join(' ')}
-      title={
-        <div className={css.upper}>
-          <div className={css.icon}><Avatar name={type} /></div>
-          <div className={css.info}>
-            <div className={css.name}>{name}</div>
-            <div className={css.tags}>
-              <span>{type}</span>
-              {/* QUESTION is this default gpu or cpu pool */}
-              <span>Default GPU pool: {(!!defaultGpuPool).toString()}</span>
-              {/* TODO custom badge */}
-            </div>
+    <div className={css.base}>
+      <div className={css.header}>
+        <div className={css.icon}><Avatar name={type} /></div>
+        <div className={css.info}>
+          <div className={css.name}>{name}</div>
+          <div className={css.tags}>
+            {tags.map(tag => (
+              <Badge bgColor="#132231" key={tag} type={BadgeType.Custom}>{tag.toUpperCase()}</Badge>
+            ))}
+            {/* QUESTION do we want default gpu or cpu pool */}
           </div>
         </div>
-      }>
-      <div className={css.agentsStatus}>
-        {numAgents}/{rp.maxInstances} Agents Active
       </div>
-      <div className={css.lower}>
-        <div>{description}</div>
+      <div className={css.agentsStatus}>
+        <p>
+          {numAgents}/{rp.maxInstances} Agents Active
+        </p>
+      </div>
+      <div className={css.body}>
+        <section>{description}</section>
         <hr />
-        <div>
+        <section>
           <SlotAllocationBar resourceStates={slotStates} totalSlots={numAgents * gpusPerAgent} />
           <div> CPU containers running: {rp.cpuContainersRunning} </div>
-        </div>
+        </section>
         <hr />
-        <div>
+        <section>
           <Json json={shortDetails} />
-        </div>
-        <div>
-          <Link>View more info</Link>
-        </div>
+          <div>
+            <Link>View more info</Link>
+          </div>
+        </section>
+        <div />
       </div>
-    </Card>
+    </div>
   );
 };
 

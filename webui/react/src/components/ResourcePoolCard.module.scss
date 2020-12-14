@@ -1,0 +1,55 @@
+$padding: 1rem;
+
+.base {
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+
+  .header {
+    background: #234b65;
+    display: flex;
+    flex-direction: row;
+    padding: $padding;
+    color: white;
+    min-height: 8rem;
+    .icon {
+      margin-right: 2rem;
+      margin: auto 2rem auto 0;
+    }
+    .info {
+      margin: auto 0;
+
+      .name {
+        margin-bottom: 0.5rem;
+      }
+    }
+
+    .tags *[class^="Badge"] {
+      margin-right: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .tags *[class^="Badge"]:last-child {
+      margin-right: 0;
+    }
+  }
+
+  .agentsStatus {
+    background: #00b2ff;
+    height: 24px;
+    text-align: center;
+    vertical-align: middle;
+    display: flex;
+    color: white;
+    p {
+      margin: auto;
+    }
+  }
+
+  hr {
+    height: 2px;
+    background: #c4c4c4;
+  }
+
+  section {
+    padding: $padding;
+  }
+}
