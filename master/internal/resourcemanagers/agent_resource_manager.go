@@ -63,7 +63,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultGPUResourcePoolReq:
-		ctx.Log().Infof("Agent RM received GetDefaultGPUResourcePoolReq and returning %s", a.config.DefaultGPUResourcePool)
 		ctx.Respond(sproto.GetDefaultGPUResourcePoolResponse{PoolName: a.config.DefaultGPUResourcePool})
 
 	case sproto.GetDefaultCPUResourcePoolReq:
