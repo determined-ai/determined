@@ -20,13 +20,19 @@ var (
 )
 
 type (
-	GetDefaultGpuResourcePoolReq struct {}
-	GetDefaultGpuResourcePoolResponse struct {
+	// GetDefaultGPUResourcePoolReq is a message asking for the name of the default GPU resource pool
+	GetDefaultGPUResourcePoolReq struct{}
+
+	// GetDefaultGPUResourcePoolResponse is the response to GetDefaultGPUResourcePoolReq
+	GetDefaultGPUResourcePoolResponse struct {
 		PoolName string
 	}
 
-	GetDefaultCpuResourcePoolReq struct {}
-	GetDefaultCpuResourcePoolResponse struct {
+	// GetDefaultCPUResourcePoolReq is a message asking for the name of the default CPU resource pool
+	GetDefaultCPUResourcePoolReq struct{}
+
+	// GetDefaultCPUResourcePoolResponse is the response to GetDefaultCPUResourcePoolReq
+	GetDefaultCPUResourcePoolResponse struct {
 		PoolName string
 	}
 )
@@ -54,20 +60,17 @@ func GetRP(system *actor.System, name string) *actor.Ref {
 	return nil
 }
 
-
-
-
-
-func GetDefaultGpuResourcePool(system *actor.System) string {
-		resp := system.Ask(GetRM(system), &GetDefaultGpuResourcePoolReq{}).Get()
-		return resp.(GetDefaultGpuResourcePoolResponse).PoolName
+// GetDefaultGPUResourcePool returns the default GPU resource pool
+func GetDefaultGPUResourcePool(system *actor.System) string {
+	resp := system.Ask(GetRM(system), &GetDefaultGPUResourcePoolReq{}).Get()
+	return resp.(GetDefaultGPUResourcePoolResponse).PoolName
 }
 
-func GetDefaultCpuResourcePool(system *actor.System) string {
-	resp := system.Ask(GetRM(system), &GetDefaultCpuResourcePoolReq{}).Get()
-	return resp.(GetDefaultCpuResourcePoolResponse).PoolName
+// GetDefaultCPUResourcePool returns the default CPU resource pool
+func GetDefaultCPUResourcePool(system *actor.System) string {
+	resp := system.Ask(GetRM(system), &GetDefaultCPUResourcePoolReq{}).Get()
+	return resp.(GetDefaultCPUResourcePoolResponse).PoolName
 }
-
 
 // ValidateRP validates if the resource pool exists when using the agent resource manager.
 func ValidateRP(system *actor.System, name string) error {

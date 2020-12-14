@@ -33,9 +33,6 @@ type (
 		Name        string
 		TaskHandler *actor.Ref
 	}
-
-
-
 )
 
 // Incoming task actor messages; task actors must accept these messages.

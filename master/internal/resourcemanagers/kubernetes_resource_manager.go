@@ -83,6 +83,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
+	case sproto.GetDefaultGPUResourcePoolReq:
+		ctx.Respond(&sproto.GetDefaultGPUResourcePoolResponse{PoolName: "default"})
 	case sproto.GetDefaultGpuResourcePoolReq:
 		ctx.Respond(&sproto.GetDefaultGpuResourcePoolResponse{PoolName: "default"})
 	case *apiv1.GetResourcePoolsRequest:
@@ -95,8 +97,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case GetDefaultGpuResourcePoolReq:
 		ctx.Respond(&GetDefaultGpuResourcePoolResponse{PoolName: "default"})
 
-	case sproto.GetDefaultCpuResourcePoolReq:
-		ctx.Respond(&sproto.GetDefaultCpuResourcePoolResponse{PoolName: "default"})
+	case sproto.GetDefaultCPUResourcePoolReq:
+		ctx.Respond(&sproto.GetDefaultCPUResourcePoolResponse{PoolName: "default"})
 
 	case schedulerTick:
 		if k.reschedule {

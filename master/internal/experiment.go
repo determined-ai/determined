@@ -106,7 +106,7 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 	}
 
 	if conf.Resources.ResourcePool == "" {
-		conf.Resources.ResourcePool = sproto.GetDefaultGpuResourcePool(master.system)
+		conf.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(master.system)
 	}
 
 	method := searcher.NewSearchMethod(conf.Searcher)
