@@ -11,17 +11,14 @@ const batchRender: Renderer<Step2> = (_, record) => {
 
 export const columns: ColumnType<Step2>[] = [
   {
-    fixed: 'left',
     key: 'batches',
     render: batchRender,
     sorter: (a: Step2, b: Step2): number => {
       return alphanumericSorter(a.batchNum, b.batchNum);
     },
     title: 'Batches',
-    width: 100,
   },
   {
-    fixed: 'right',
     key: 'state',
     render: (text: string, record: Step2, index: number): React.ReactNode =>
       stateRenderer(text, record.training, index),
@@ -31,12 +28,9 @@ export const columns: ColumnType<Step2>[] = [
       return runStateSorter(a.training.state, b.training.state);
     },
     title: 'State',
-    width: 120,
   },
   {
-    fixed: 'right',
     key: 'checkpoint',
     title: 'Checkpoint',
-    width: 100,
   },
 ];

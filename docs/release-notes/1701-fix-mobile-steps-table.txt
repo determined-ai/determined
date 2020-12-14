@@ -1,0 +1,5 @@
+:orphan:
+
+**BUG FIXES**
+
+-  WebUI: Update Trial Information Table to be usable in mobile view.
