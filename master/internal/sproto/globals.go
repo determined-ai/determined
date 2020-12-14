@@ -1,6 +1,7 @@
 package sproto
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -62,7 +63,12 @@ func GetRP(system *actor.System, name string) *actor.Ref {
 
 // GetDefaultGPUResourcePool returns the default GPU resource pool
 func GetDefaultGPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetRM(system), GetDefaultGPUResourcePoolReq{}).Get()
+	rm := GetRM(system)
+	fmt.Printf("RM %s", rm)
+	fut := system.Ask(rm, GetDefaultGPUResourcePoolReq{})
+	fmt.Printf("Future %s", fut)
+	resp := fut.Get()
+	fmt.Printf("resp %s", resp)
 	return resp.(GetDefaultGPUResourcePoolResponse).PoolName
 }
 
