@@ -1,7 +1,6 @@
 package sproto
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -61,20 +60,27 @@ func GetRP(system *actor.System, name string) *actor.Ref {
 	return nil
 }
 
+// GetCurrentRM returns either the k8s resource manager or the agents
+// resource manager, depending on which exists
+func GetCurrentRM(system *actor.System) *actor.Ref {
+	if UseK8sRM(system) {
+		return system.Get(K8sRMAddr)
+	}
+	if UseAgentRM(system) {
+		return system.Get(AgentRMAddr)
+	}
+	panic("There should either be a k8s resource manager or an agent resource manager")
+}
+
 // GetDefaultGPUResourcePool returns the default GPU resource pool
 func GetDefaultGPUResourcePool(system *actor.System) string {
-	rm := GetRM(system)
-	fmt.Printf("RM %s", rm)
-	fut := system.Ask(rm, GetDefaultGPUResourcePoolReq{})
-	fmt.Printf("Future %s", fut)
-	resp := fut.Get()
-	fmt.Printf("resp %s", resp)
+	resp := system.Ask(GetCurrentRM(system), GetDefaultGPUResourcePoolReq{}).Get()
 	return resp.(GetDefaultGPUResourcePoolResponse).PoolName
 }
 
 // GetDefaultCPUResourcePool returns the default CPU resource pool
 func GetDefaultCPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetRM(system), GetDefaultCPUResourcePoolReq{}).Get()
+	resp := system.Ask(GetCurrentRM(system), GetDefaultGPUResourcePoolReq{}).Get()
 	return resp.(GetDefaultCPUResourcePoolResponse).PoolName
 }
 
