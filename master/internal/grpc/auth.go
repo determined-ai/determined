@@ -27,8 +27,9 @@ const (
 )
 
 var unauthenticatedMethods = map[string]bool{
-	"/determined.api.v1.Determined/Login":     true,
-	"/determined.api.v1.Determined/GetMaster": true,
+	"/determined.api.v1.Determined/Login":        true,
+	"/determined.api.v1.Determined/GetMaster":    true,
+	"/determined.api.v1.Determined/GetTelemetry": true,
 }
 
 var (

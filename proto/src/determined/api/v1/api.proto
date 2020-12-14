@@ -139,6 +139,16 @@ service Determined {
     };
   }
 
+  // Get telemetry information.
+  rpc GetTelemetry(GetTelemetryRequest) returns (GetTelemetryResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/master/telemetry"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+      security: {}
+    };
+  }
   // Get master information.
   rpc GetMaster(GetMasterRequest) returns (GetMasterResponse) {
     option (google.api.http) = {
@@ -146,6 +156,7 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"
+      security: {}
     };
   }
   // Get master config.
