@@ -74,7 +74,7 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
       </div>
       <div className={css.agentsStatus}>
         <p>
-          {numAgents}/{rp.maxInstances} Agents Active
+          {numAgents}{rp.maxInstances ? `/${rp.maxInstances}` : ''} Agents Active
         </p>
       </div>
       <div className={css.body}>
