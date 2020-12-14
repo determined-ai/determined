@@ -85,10 +85,8 @@ const ProgressBar: React.FC<Props> = ({
       <div className={css.header}>
         <header>GPU Slots Allocated</header>
         <span>
-          {resourceStates.length}/{totalSlots} ({floatToPercent(
-            resourceStates.length/totalSlots,
-            1,
-          )})
+          {resourceStates.length}/{totalSlots}
+          {totalSlots > 0 ? ` (${floatToPercent( resourceStates.length/totalSlots, 0)})` : ''}
         </span>
       </div>
       <div className={css.bar}>
