@@ -75,6 +75,10 @@ func (l *taskList) SetAllocations(handler *actor.Ref, assigned *ResourcesAllocat
 	l.allocations[handler] = assigned
 }
 
+func (l *taskList) RemoveAllocations(handler *actor.Ref) {
+	delete(l.allocations, handler)
+}
+
 type taskIterator struct{ it treeset.Iterator }
 
 func (i *taskIterator) next() bool              { return i.it.Next() }

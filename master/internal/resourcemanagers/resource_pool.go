@@ -280,15 +280,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 			msg.ContainerID, msg.Device.String(), msg.Agent.Address().Local())
 		state, ok := rp.agents[msg.Agent]
 		check.Panic(check.True(ok, "error freeing device, agent not found: %s", msg.Agent.Address()))
-
-		if msg.Device.Type == device.ZeroSlot {
-			delete(state.zeroSlotContainers, *msg.ContainerID)
-		} else {
-			id, ok := rp.agents[msg.Agent].devices[msg.Device]
-			check.Panic(check.True(ok, "error freeing device, device not found: %s", msg.Device))
-			check.Panic(check.True(id != nil, "error freeing device, device not assigned: %s", msg.Device))
-			state.devices[msg.Device] = nil
-		}
+		state.deallocateDevice(msg.Device.Type, *msg.ContainerID, msg.Device)
 
 	case sproto.RemoveDevice:
 		ctx.Log().Infof("removing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
