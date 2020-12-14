@@ -1,0 +1,33 @@
+.base {
+  .ant-list-split .ant-list-item {
+    border-bottom: 0;
+  }
+  .ant-list-sm .ant-list-item {
+    padding: 0;
+  }
+  padding-inline-start: 0;
+}
+
+.item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  list-style-type: none;
+
+  span {
+    display: block;
+  }
+}
+
+.label {
+  color: var(--theme-colors-monochrome-7);
+  margin-right: var(--theme-sizes-layout-medium);
+}
+
+.value {
+  overflow-wrap: break-word;
+  word-break: break-all;
+  text-align: right;
+}
