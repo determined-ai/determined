@@ -1,7 +1,6 @@
 package sproto
 
 import (
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -18,6 +17,18 @@ var (
 	AgentsAddr = actor.Addr("agents")
 	// PodsAddr is the actor address of the pods.
 	PodsAddr = actor.Addr("pods")
+)
+
+type (
+	GetDefaultGpuResourcePoolReq struct {}
+	GetDefaultGpuResourcePoolResponse struct {
+		PoolName string
+	}
+
+	GetDefaultCpuResourcePoolReq struct {}
+	GetDefaultCpuResourcePoolResponse struct {
+		PoolName string
+	}
 )
 
 // GetRM returns the resource manager router.
@@ -43,14 +54,18 @@ func GetRP(system *actor.System, name string) *actor.Ref {
 	return nil
 }
 
+
+
+
+
 func GetDefaultGpuResourcePool(system *actor.System) string {
-		resp := system.Ask(GetRM(system), &resourcemanagers.GetDefaultGpuResourcePoolReq{}).Get()
-		return resp.(resourcemanagers.GetDefaultGpuResourcePoolResponse).PoolName
+		resp := system.Ask(GetRM(system), &GetDefaultGpuResourcePoolReq{}).Get()
+		return resp.(GetDefaultGpuResourcePoolResponse).PoolName
 }
 
 func GetDefaultCpuResourcePool(system *actor.System) string {
-	resp := system.Ask(GetRM(system), &resourcemanagers.GetDefaultCpuResourcePoolReq{}).Get()
-	return resp.(resourcemanagers.GetDefaultCpuResourcePoolResponse).PoolName
+	resp := system.Ask(GetRM(system), &GetDefaultCpuResourcePoolReq{}).Get()
+	return resp.(GetDefaultCpuResourcePoolResponse).PoolName
 }
 
 

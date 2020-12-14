@@ -34,15 +34,7 @@ type (
 		TaskHandler *actor.Ref
 	}
 
-	GetDefaultGpuResourcePoolReq struct {}
-	GetDefaultGpuResourcePoolResponse struct {
-		PoolName string
-	}
 
-	GetDefaultCpuResourcePoolReq struct {}
-	GetDefaultCpuResourcePoolResponse struct {
-		PoolName string
-	}
 
 )
 

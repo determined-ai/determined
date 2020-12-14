@@ -62,11 +62,11 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
 
-	case GetDefaultGpuResourcePoolReq:
-		ctx.Respond(&GetDefaultGpuResourcePoolResponse{PoolName: a.config.DefaultGPUResourcePool})
+	case sproto.GetDefaultGpuResourcePoolReq:
+		ctx.Respond(&sproto.GetDefaultGpuResourcePoolResponse{PoolName: a.config.DefaultGPUResourcePool})
 
-	case GetDefaultCpuResourcePoolReq:
-		ctx.Respond(&GetDefaultCpuResourcePoolResponse{PoolName: a.config.DefaultCPUResourcePool})
+	case sproto.GetDefaultCpuResourcePoolReq:
+		ctx.Respond(&sproto.GetDefaultCpuResourcePoolResponse{PoolName: a.config.DefaultCPUResourcePool})
 
 	case *apiv1.GetResourcePoolsRequest:
 		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig.ResourcePools))
