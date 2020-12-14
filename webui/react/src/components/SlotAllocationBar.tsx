@@ -75,7 +75,11 @@ const SlotAllocationBar: React.FC<Props> = ({
       },
     };
 
-    return { barParts: [ parts.running, parts.pending, parts.free ], legendParts: parts, partTally: tally };
+    return {
+      barParts: [ parts.running, parts.pending, parts.free ],
+      legendParts: parts,
+      partTally: tally,
+    };
   }, [ resourceStates, totalSlots ]);
 
   const classes = [ css.base ];

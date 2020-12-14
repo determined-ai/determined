@@ -1,30 +1,30 @@
 $padding: var(--theme-sizes-layout-large);
 
 .base {
-  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
   border-radius: 3px;
-  overflow: hidden;
-  font-size: var(--theme-sizes-font-medium);
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
   color: var(--theme-colors-monochrome-0);
   display: flex;
   flex-direction: column;
+  font-size: var(--theme-sizes-font-medium);
+  overflow: hidden;
 
   .body {
-    flex-grow: 1;
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
   }
-
   .header {
     background: #234b65;
+    color: white;
     display: flex;
     flex-direction: row;
-    padding: $padding;
-    color: white;
     min-height: 8rem;
+    padding: $padding;
+
     .icon {
-      margin-right: 2rem;
       margin: auto 2rem auto 0;
+      margin-right: 2rem;
     }
     .info {
       margin: auto 0;
@@ -33,45 +33,40 @@ $padding: var(--theme-sizes-layout-large);
         margin-bottom: 0.5rem;
       }
     }
-
     .tags *[class^="Badge"] {
-      margin-right: 1rem;
       margin-bottom: 0.5rem;
+      margin-right: 1rem;
     }
     .tags *[class^="Badge"]:last-child {
       margin-right: 0;
     }
   }
-
   .agentsStatus {
     @extend .textCenter;
     background: #00b2ff;
-    height: 24px;
     color: white;
+    height: 24px;
   }
-
   .description {
-    min-height: 10rem;
-    flex-direction: column;
-    display: flex;
     align-content: center;
+    display: flex;
+    flex-direction: column;
+    min-height: 10rem;
+
     p {
       margin: auto 0;
     }
   }
-
   hr {
-    height: 2px;
     background: #c4c4c4;
     border: none;
+    height: 2px;
     margin: 0;
   }
-
   section {
     padding: $padding;
   }
 }
-
 section.details {
   display: flex;
   flex-direction: column;
@@ -81,16 +76,15 @@ section.details {
     flex-grow: 1;
   }
 }
-
 .textCenter {
+  display: flex;
   text-align: center;
   vertical-align: middle;
-  display: flex;
+
   & > * {
     margin: auto;
   }
 }
-
 .spaceBetweenHorizontal {
   display: flex;
   flex-direction: row;

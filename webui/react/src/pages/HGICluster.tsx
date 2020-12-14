@@ -12,7 +12,7 @@ import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { Agent, Resource, ResourceState } from 'types';
+import { Resource } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
 
