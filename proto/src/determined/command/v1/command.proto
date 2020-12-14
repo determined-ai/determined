@@ -20,5 +20,5 @@ message Command {
   // The username of the user that created the command.
   string username = 10;
   // The name of the resource pool the command was created in
-  string resourcePool = 11;
+  string resource_pool = 11;
 }

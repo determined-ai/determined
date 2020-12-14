@@ -26,5 +26,5 @@ message Tensorboard {
   // The service address.
   string service_address = 11;
   // The name of the resource pool the command was created in
-  string resourcePool = 12;
+  string resource_pool = 12;
 }
