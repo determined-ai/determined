@@ -6,6 +6,7 @@ import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { getResourcePools } from 'services/api';
+import { getStateColorCssVar } from 'themes';
 import { Agent } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
@@ -31,6 +32,19 @@ const rpAttrs = [
 ];
 
 type SafeRawJson = Record<string, unknown>;
+
+const agentStatusText = (numAgents: number, maxInstances: number): string => {
+  let prefix = '';
+  if (numAgents === 0) {
+    prefix = 'No';
+  } else if (maxInstances === 0) {
+    prefix = numAgents + '';
+
+  } else {
+    prefix = `${numAgents}/${maxInstances}`;
+  }
+  return prefix + ' Agents Active';
+};
 
 const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
   const rp = resoucePools[Math.floor(
@@ -90,9 +104,14 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
           </div>
         </div>
       </div>
-      <div className={css.agentsStatus}>
+      <div
+        className={css.agentsStatus}
+        style={{
+          backgroundColor: numAgents > 0 ?
+            'var(--theme-colors-states-active)' : 'var(--theme-colors-states-inactive)',
+        }}>
         <p>
-          {numAgents}{rp.maxInstances ? `/${rp.maxInstances}` : ''} Agents Active
+          {agentStatusText(numAgents, rp.maxInstances)}
         </p>
       </div>
       <div className={css.body}>

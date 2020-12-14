@@ -9,6 +9,7 @@ $icon-side: 5rem;
   flex-direction: column;
   font-size: var(--theme-sizes-font-medium);
   overflow: hidden;
+  text-overflow: ellipsis;
 
   .body {
     display: flex;
@@ -54,15 +55,15 @@ $icon-side: 5rem;
   }
   .agentsStatus {
     @extend .textCenter;
-    background: #00b2ff;
+    background: var(--theme-colors-state-active);
     color: white;
-    height: 24px;
+    height: var(--theme-sizes-layout-enormous);
   }
   .description {
     align-content: center;
     display: flex;
     flex-direction: column;
-    min-height: 10rem;
+    min-height: 8rem;
 
     p {
       margin: auto 0;

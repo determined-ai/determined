@@ -20,6 +20,8 @@ import css from './HGICluster.module.scss';
 
 const resourcePools = getResourcePools();
 
+// TODO no active agents style
+
 const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
   const overview = ClusterOverview.useStateContext();

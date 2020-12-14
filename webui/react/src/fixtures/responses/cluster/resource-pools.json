@@ -174,5 +174,45 @@
             "schedulerType": "fair share",
             "schedulerFittingPolicy": "worst fit"
         }
+    },
+    {
+        "name": "on-prem-2",
+        "description": "On prem cluster 2 with K80s. Use for prototyping",
+        "type": "static",
+        "numAgents": 0,
+        "slotsAvailable": 12,
+        "slotsUsed": 2,
+        "cpuContainerCapacity": 300,
+        "cpuContainersRunning": 0,
+        "defaultCpuPool": false,
+        "spotOrPreemptible": false,
+        "minInstances": 0,
+        "maxInstances": 0,
+        "gpusPerAgent": 8,
+        "cpuContainerCapacityPerAgent": 100,
+        "schedulerType": "fair share",
+        "schedulerFittingPolicy": "best fit",
+        "location": "",
+        "imageId": "",
+        "instanceType": "",
+        "details": {
+            "poolName": "on-prem-2",
+            "description": "On prem cluster with K80s. Use for prototyping",
+            "maxCpuContainersPerAgent": 100,
+            "provisionerType": "static",
+            "masterUrl": "master.determined.ai:8080",
+            "masterCertName": "",
+            "startupScript": "",
+            "containerStartupScript": "",
+            "agentDockerRuntime": "runc",
+            "agentDockerImage": "determinedai/determined-agent:1.0",
+            "agentFluentImage": "fluent/fluent1.6.6",
+            "maxIdleAgentPeriod": "5m",
+            "maxAgentStartingPeriod": "5m",
+            "minInstances": 0,
+            "maxInstances": 0,
+            "schedulerType": "fair share",
+            "schedulerFittingPolicy": "worst fit"
+        }
     }
 ]

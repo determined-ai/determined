@@ -35,7 +35,8 @@
     .icon {
       align-items: center;
       background-color: var(--theme-colors-monochrome-17);
-      border: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-11);
+      border: var(--theme-sizes-border-width) solid
+        var(--theme-colors-monochrome-11);
       border-radius: var(--theme-sizes-border-radius);
       display: flex;
       flex-shrink: 0;
@@ -57,7 +58,9 @@
       font-size: var(--theme-sizes-font-small);
       line-height: var(--theme-sizes-font-big);
     }
-    .event { padding-right: var(--theme-sizes-layout-tiny); }
+    .event {
+      padding-right: var(--theme-sizes-layout-tiny);
+    }
   }
   .lower {
     align-items: center;
@@ -71,7 +74,9 @@
     .badges {
       display: flex;
 
-      & > *:not(:first-child) { margin-left: var(--theme-sizes-layout-tiny); }
+      & > *:not(:first-child) {
+        margin-left: var(--theme-sizes-layout-tiny);
+      }
     }
     .percent {
       color: black;
