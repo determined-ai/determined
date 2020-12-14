@@ -88,7 +88,7 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
           </div>
         </section>
         <hr />
-        <section>
+        <section className={css.details}>
           <Json json={shortDetails} />
           <div>
             <Link>View more info</Link>

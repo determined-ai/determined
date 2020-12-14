@@ -1,18 +1,21 @@
 import React, { useMemo } from 'react';
 
+import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState } from 'types';
 import { floatToPercent } from 'utils/string';
 
+import { BadgeType } from './Badge';
 import css from './SlotAllocation.module.scss';
 
 export interface Props {
   barOnly?: boolean;
-  showLegends?: boolean;
+  className?: string;
   resourceStates: ResourceState[];
-  totalSlots: number;
+  showLegends?: boolean;
   size?: ShirtSize;
+  totalSlots: number;
 }
 
 const pendingStates = new Set<ResourceState>([
@@ -35,10 +38,11 @@ const legend = (label: React.ReactNode , count: number, totalSlots: number) => {
   </li>;
 };
 
-const ProgressBar: React.FC<Props> = ({
+const SlotAllocationBar: React.FC<Props> = ({
   resourceStates,
   totalSlots,
   showLegends,
+  className,
   ...barProps
 }: Props) => {
 
@@ -55,7 +59,7 @@ const ProgressBar: React.FC<Props> = ({
 
     const parts = {
       free: {
-        color: getStateColorCssVar(ResourceState.Terminated), // TODO
+        color: 'var(--theme-colors-monochrome-15)', // TODO
         label: 'Free',
         percent: tally.free / totalSlots,
       },
@@ -72,16 +76,35 @@ const ProgressBar: React.FC<Props> = ({
     };
 
     const legends = [
-      legend(parts.running.label, tally.running, totalSlots),
-      legend(parts.pending.label, tally.pending, totalSlots),
-      legend(parts.free.label, tally.free, totalSlots),
+      legend(
+        <Badge bgColor={parts.running.color} type={BadgeType.Custom}>{parts.running.label}</Badge>
+        , tally.running,
+        totalSlots,
+      ),
+      legend(
+        <Badge bgColor={parts.pending.color} type={BadgeType.Custom}>
+          {parts.pending.label}
+        </Badge>
+        , tally.pending,
+        totalSlots,
+      ),
+      legend(
+        <Badge bgColor={parts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
+          {parts.free.label}
+        </Badge>
+        , tally.free,
+        totalSlots,
+      ),
     ];
 
     return { legends, parts: [ parts.running, parts.pending ] };
   }, [ resourceStates, totalSlots ]);
 
+  const classes = [ css.base ];
+  if (className) classes.push(className);
+
   return (
-    <div className={css.base}>
+    <div className={classes.join(' ')}>
       <div className={css.header}>
         <header>GPU Slots Allocated</header>
         <span>
@@ -103,4 +126,4 @@ const ProgressBar: React.FC<Props> = ({
   );
 };
 
-export default ProgressBar;
+export default SlotAllocationBar;

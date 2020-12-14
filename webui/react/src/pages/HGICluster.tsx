@@ -5,6 +5,7 @@ import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import ResourcePoolCard from 'components/ResourcePoolCard';
+import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import Spinner from 'components/Spinner';
 import Agents from 'contexts/Agents';
@@ -14,6 +15,8 @@ import { ShirtSize } from 'themes';
 import { Agent, Resource, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
+
+import css from './HGICluster.module.scss';
 
 const resourcePools = getResourcePools();
 
@@ -55,27 +58,34 @@ const HGICluster: React.FC = () => {
   }
 
   return (
-    <Page id="cluster" title="Cluster">
-      <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
-        <OverviewStats title="Number of Agents">
-          {agents.data ? agents.data.length : '?'}
-        </OverviewStats>
-        <OverviewStats title="GPU Slots Allocated">
-          {overview.GPU.total - overview.GPU.available} / {overview.GPU.total}
-        </OverviewStats>
-        <OverviewStats title="CPU Containers Running">
-          {cpuContainers.running}/{cpuContainers.total}
-        </OverviewStats>
-      </Grid>
-      <SlotAllocationBar
-        resourceStates={slotContainerStates}
-        showLegends
-        totalSlots={overview.GPU.total} />
-      <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
-        {(new Array(5).fill(0)).map(() => {
-          return <ResourcePoolCard agents={agents.data || []} />;
-        })}
-      </Grid>
+    <Page className={css.base} id="cluster" title="Cluster">
+      <Section hideTitle title="Overview Stats">
+        <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
+          <OverviewStats title="Number of Agents">
+            {agents.data ? agents.data.length : '?'}
+          </OverviewStats>
+          <OverviewStats title="GPU Slots Allocated">
+            {overview.GPU.total - overview.GPU.available} / {overview.GPU.total}
+          </OverviewStats>
+          <OverviewStats title="CPU Containers Running">
+            {cpuContainers.running}/{cpuContainers.total}
+          </OverviewStats>
+        </Grid>
+      </Section>
+      <Section hideTitle title="Overall Allocation">
+        <SlotAllocationBar
+          resourceStates={slotContainerStates}
+          showLegends
+          size={ShirtSize.enormous}
+          totalSlots={overview.GPU.total} />
+      </Section>
+      <Section title={`${resourcePools.length} Resource Pools`}>
+        <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
+          {(new Array(5).fill(0)).map(() => {
+            return <ResourcePoolCard agents={agents.data || []} />;
+          })}
+        </Grid>
+      </Section>
     </Page>
   );
 };

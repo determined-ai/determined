@@ -6,6 +6,14 @@ $padding: var(--theme-sizes-layout-large);
   overflow: hidden;
   font-size: var(--theme-sizes-font-medium);
   color: var(--theme-colors-monochrome-0);
+  display: flex;
+  flex-direction: column;
+
+  .body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
 
   .header {
     background: #234b65;
@@ -61,6 +69,16 @@ $padding: var(--theme-sizes-layout-large);
 
   section {
     padding: $padding;
+  }
+}
+
+section.details {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
+  ul {
+    flex-grow: 1;
   }
 }
 
