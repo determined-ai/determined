@@ -1,9 +1,7 @@
-import { Card } from 'antd';
 import React from 'react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
-import Icon from 'components/Icon';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { getResourcePools } from 'services/api';
 import { Agent } from 'types';
@@ -33,8 +31,6 @@ const rpAttrs = [
 type SafeRawJson = Record<string, unknown>;
 
 const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
-  const classes = [ css.base ];
-
   const rp = resoucePools[Math.floor(
     Math.random() * resoucePools.length,
   )];
@@ -78,11 +74,18 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
         </p>
       </div>
       <div className={css.body}>
-        <section>{description}</section>
+        <section className={css.description}>
+          <p>
+            {description}
+          </p>
+        </section>
         <hr />
         <section>
           <SlotAllocationBar resourceStates={slotStates} totalSlots={numAgents * gpusPerAgent} />
-          <div> CPU containers running: {rp.cpuContainersRunning} </div>
+          <div className={css.spaceBetweenHorizontal}>
+            <span>CPU containers running:</span>
+            <span>{rp.cpuContainersRunning}</span>
+          </div>
         </section>
         <hr />
         <section>

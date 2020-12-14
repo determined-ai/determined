@@ -71,8 +71,8 @@ const HGICluster: React.FC = () => {
         resourceStates={slotContainerStates}
         showLegends
         totalSlots={overview.GPU.total} />
-      <Grid gap={ShirtSize.medium} minItemWidth={25} mode={GridMode.AutoFill}>
-        {resourcePools.map(() => {
+      <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
+        {(new Array(5).fill(0)).map(() => {
           return <ResourcePoolCard agents={agents.data || []} />;
         })}
       </Grid>

@@ -1,8 +1,11 @@
-$padding: 1rem;
+$padding: var(--theme-sizes-layout-large);
 
 .base {
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
   border-radius: 3px;
+  overflow: hidden;
+  font-size: var(--theme-sizes-font-medium);
+  color: var(--theme-colors-monochrome-0);
 
   .header {
     background: #234b65;
@@ -33,23 +36,45 @@ $padding: 1rem;
   }
 
   .agentsStatus {
+    @extend .textCenter;
     background: #00b2ff;
     height: 24px;
-    text-align: center;
-    vertical-align: middle;
-    display: flex;
     color: white;
+  }
+
+  .description {
+    min-height: 10rem;
+    flex-direction: column;
+    display: flex;
+    align-content: center;
     p {
-      margin: auto;
+      margin: auto 0;
     }
   }
 
   hr {
     height: 2px;
     background: #c4c4c4;
+    border: none;
+    margin: 0;
   }
 
   section {
     padding: $padding;
   }
+}
+
+.textCenter {
+  text-align: center;
+  vertical-align: middle;
+  display: flex;
+  & > * {
+    margin: auto;
+  }
+}
+
+.spaceBetweenHorizontal {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
