@@ -440,13 +440,22 @@ def list_experiments(args: Namespace) -> None:
             render.format_percent(e["progress"]),
             render.format_time(e["start_time"]),
             render.format_time(e["end_time"]),
-            e["config"]["resources"].get("resource_pool")
+            e["config"]["resources"].get("resource_pool"),
         ]
         if args.all:
             result.append(e["archived"])
         return result
 
-    headers = ["ID", "Owner", "Description", "State", "Progress", "Start Time", "End Time", "Resource Pool"]
+    headers = [
+        "ID",
+        "Owner",
+        "Description",
+        "State",
+        "Progress",
+        "Start Time",
+        "End Time",
+        "Resource Pool",
+    ]
     if args.all:
         headers.append("Archived")
 

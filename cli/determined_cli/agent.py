@@ -86,7 +86,16 @@ def list_slots(args: argparse.Namespace) -> None:
         print(json.dumps(slots, indent=4))
         return
 
-    headers = ["Agent ID", "Resource Pool", "Slot ID", "Enabled", "Task ID", "Task Name", "Type", "Device"]
+    headers = [
+        "Agent ID",
+        "Resource Pool",
+        "Slot ID",
+        "Enabled",
+        "Task ID",
+        "Task Name",
+        "Type",
+        "Device",
+    ]
     values = [s.values() for s in slots]
 
     render.tabulate_or_csv(headers, values, args.csv)

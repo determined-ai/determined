@@ -50,7 +50,15 @@ def list_tasks(args: Namespace) -> None:
         return [c["agent"] for c in containers]
 
     tasks = r.json()
-    headers = ["ID", "Name", "Slots Needed", "Registered Time", "Agent", "Priority", "Resource Pool"]
+    headers = [
+        "ID",
+        "Name",
+        "Slots Needed",
+        "Registered Time",
+        "Agent",
+        "Priority",
+        "Resource Pool",
+    ]
     values = [
         [
             task["id"],
