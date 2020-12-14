@@ -1,5 +1,7 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import uPlot, { Cursor, Options } from 'uplot';
+
+import useResize from 'hooks/useResize';
 
 import 'uplot/dist/uPlot.min.css';
 import { distance } from 'utils/chart';
@@ -12,6 +14,8 @@ interface Props {
   xValues: number[];
 }
 
+const CHART_HEIGHT = 400;
+const FOCUS_MIN_DISTANCE = 30;
 const UPLOT_OPTIONS = {
   axes: [
     {
@@ -26,7 +30,7 @@ const UPLOT_OPTIONS = {
     },
   ],
   focus: { alpha: 0.3 },
-  height: 400,
+  height: CHART_HEIGHT,
   legend: { show: false },
   scales: {
     metric: { auto: true, time: false },
@@ -35,14 +39,14 @@ const UPLOT_OPTIONS = {
   series: [ { label: 'batches' } ],
 };
 
-const FOCUS_MIN_DISTANCE = 30;
-
 const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const trialIdRef = useRef<HTMLDivElement>(null);
   const batchesRef = useRef<HTMLDivElement>(null);
   const metricValueRef = useRef<HTMLDivElement>(null);
+  const resize = useResize(chartRef);
+  const [ chart, setChart ] = useState<uPlot>();
 
   const handleMouseLeave = useCallback(() => {
     return (plot: uPlot, target: HTMLElement, handler: Cursor.MouseListener) => {
@@ -177,12 +181,20 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
       width: chartRef.current.offsetWidth,
     }) as Options;
 
-    const chart = new uPlot(options, [ xValues, ...data ], chartRef.current);
+    const plotChart = new uPlot(options, [ xValues, ...data ], chartRef.current);
+    setChart(plotChart);
     console.log('render time', (Date.now() - now) / 1000);
 
-    return () => chart.destroy();
+    return () => {
+      setChart(undefined);
+      plotChart.destroy();
+    };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ data, xValues ]);
+
+  useEffect(() => {
+    if (chart) chart.setSize({ height: CHART_HEIGHT, width: resize.width });
+  }, [ chart, resize ]);
 
   return (
     <div className={css.base}>
@@ -194,12 +206,12 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
             <div>Trial Id:</div>
             <div ref={trialIdRef} />
           </div>
-          <div className={css.tooltipRow}>
+          <div className={css.row}>
             <div>Batches:</div>
             <div ref={batchesRef} />
           </div>
-          <div className={css.tooltipRow}>
-            <div>Metric Value:</div>
+          <div className={css.row}>
+            <div>Metric:</div>
             <div ref={metricValueRef} />
           </div>
         </div>
