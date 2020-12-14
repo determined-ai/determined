@@ -67,7 +67,7 @@ func (s *Searcher) TrialExitedEarly(
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
 	if exitedReason == nil {
-		panic(fmt.Sprintf("Trial %d exited early with ExitedReason nil.\n", trialID))
+		panic(fmt.Sprintf("trial %d exited early with ExitedReason nil.", trialID))
 	}
 	s.eventLog.TrialExitedEarly(requestID, *exitedReason)
 	operations, err := s.method.trialExitedEarly(s.context(), requestID, *exitedReason)
