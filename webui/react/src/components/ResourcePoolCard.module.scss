@@ -1,7 +1,8 @@
 $padding: var(--theme-sizes-layout-large);
+$icon-side: 5rem;
 
 .base {
-  border-radius: 3px;
+  border-radius: var(--theme-sizes-border-radius);
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
   color: var(--theme-colors-monochrome-0);
   display: flex;
@@ -25,6 +26,16 @@ $padding: var(--theme-sizes-layout-large);
     .icon {
       margin: auto 2rem auto 0;
       margin-right: 2rem;
+      align-items: center;
+      background-color: var(--theme-colors-monochrome-17);
+      border: var(--theme-sizes-border-width) solid
+        var(--theme-colors-monochrome-11);
+      border-radius: 50%;
+      display: flex;
+      flex-shrink: 0;
+      height: $icon-side;
+      justify-content: center;
+      width: $icon-side;
     }
     .info {
       margin: auto 0;

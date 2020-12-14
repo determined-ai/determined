@@ -1,6 +1,8 @@
 import React from 'react';
 
-import Avatar from 'components/Avatar';
+import awsLogo from 'assets/aws-logo.svg';
+import gcpLogo from 'assets/gcp-logo.svg';
+import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { getResourcePools } from 'services/api';
@@ -48,6 +50,24 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
     numAgents,
   } = rp;
 
+  let iconSrc = staticLogo;
+  switch (type) {
+    case 'aws':
+      iconSrc = awsLogo;
+
+      break;
+    case 'gcp':
+      iconSrc = gcpLogo;
+      break;
+    case 'static':
+      iconSrc = staticLogo;
+      break;
+
+    default:
+      console.error('unexpected resource pool type');
+      break;
+  }
+
   const slotStates = getSlotContainerStates(agents, name);
 
   const tags: string[] = [ type ];
@@ -57,7 +77,9 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
   return (
     <div className={css.base}>
       <div className={css.header}>
-        <div className={css.icon}><Avatar name={type} /></div>
+        <div className={css.icon}>
+          <img src={iconSrc} />
+        </div>
         <div className={css.info}>
           <div className={css.name}>{name}</div>
           <div className={css.tags}>
