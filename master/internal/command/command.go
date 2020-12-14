@@ -361,18 +361,18 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		ServiceAddress: serviceAddress,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.owner.Username,
-		ResourcePool:	c.config.Resources.ResourcePool,
+		ResourcePool:   c.config.Resources.ResourcePool,
 	}, nil
 }
 
 func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 	return &commandv1.Command{
-		Id:          ctx.Self().Address().Local(),
-		Description: c.config.Description,
-		Container:   c.container.Proto(),
-		StartTime:   protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Username:    c.owner.Username,
-		ResourcePool:c.config.Resources.ResourcePool,
+		Id:           ctx.Self().Address().Local(),
+		Description:  c.config.Description,
+		Container:    c.container.Proto(),
+		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Username:     c.owner.Username,
+		ResourcePool: c.config.Resources.ResourcePool,
 	}
 }
 
@@ -407,7 +407,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		ExperimentIds:  eids,
 		TrialIds:       tids,
 		Username:       c.owner.Username,
-		ResourcePool:	c.config.Resources.ResourcePool,
+		ResourcePool:   c.config.Resources.ResourcePool,
 	}
 }
 
