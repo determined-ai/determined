@@ -61,6 +61,7 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
 	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.gpus > 0)
+	envVarsMap["DET_K8S_LOG_TO_FILE"] = "true"
 
 	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
@@ -97,6 +98,21 @@ func (p *pod) configureConfigMapSpec(runArchives []cproto.RunArchive) (*k8sV1.Co
 	}, nil
 }
 
+func (p *pod) configureLoggingVolumes(
+	ctx *actor.Context,
+) ([]k8sV1.VolumeMount, []k8sV1.Volume) {
+	volumeName := "det-logs"
+	return []k8sV1.VolumeMount{{
+			Name:      volumeName,
+			MountPath: "/run/determined/train/logs",
+		}}, []k8sV1.Volume{{
+			Name: volumeName,
+			VolumeSource: k8sV1.VolumeSource{EmptyDir: &k8sV1.EmptyDirVolumeSource{
+				Medium: k8sV1.StorageMediumMemory,
+			}},
+		}}
+}
+
 func (p *pod) configureVolumes(
 	ctx *actor.Context,
 	dockerMounts []mount.Mount,
@@ -127,6 +143,7 @@ func (p *pod) configurePodSpec(
 	volumes []k8sV1.Volume,
 	determinedInitContainers k8sV1.Container,
 	determinedContainer k8sV1.Container,
+	sidecarContainers []k8sV1.Container,
 	podSpec *k8sV1.Pod,
 ) *k8sV1.Pod {
 	if podSpec == nil {
@@ -169,6 +186,7 @@ func (p *pod) configurePodSpec(
 	}
 
 	podSpec.Spec.Containers = nonDeterminedContainers
+	podSpec.Spec.Containers = append(podSpec.Spec.Containers, sidecarContainers...)
 	podSpec.Spec.Containers = append(podSpec.Spec.Containers, determinedContainer)
 	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
 	podSpec.Spec.HostNetwork = p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
@@ -189,6 +207,9 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 	runArchives := tasks.TrialArchives(p.taskSpec)
 	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, tasks.TrialDockerMounts(exp), runArchives)
+	loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)
+	volumes = append(volumes, loggingVolumes...)
+	volumeMounts = append(volumeMounts, loggingMounts...)
 
 	p.ports = []int{
 		tasks.LocalRendezvousPort, tasks.LocalRendezvousPort + tasks.LocalRendezvousPortOffset}
@@ -212,7 +233,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		configureImagePullPolicy(exp.ExperimentConfig.Environment),
 	)
 
-	container := k8sV1.Container{
+	mainContainer := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
 		Command:         []string{"/run/determined/train/entrypoint.sh"},
 		Image:           exp.ExperimentConfig.Environment.Image.For(deviceType),
@@ -224,8 +245,45 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		WorkingDir:      tasks.ContainerWorkDir,
 	}
 
+	fluentContainer := k8sV1.Container{
+		Name: model.DeterminedK8FluentContainerName,
+		// TODO: Construct the config to handle TLS and actually shipping out logs somewhere.
+		Command: []string{
+			"/fluent-bit/bin/fluent-bit",
+			"-f", ".05",
+
+			"-i", "tail",
+			"-p", "path=/run/determined/train/logs/stdout.log-rotate/current",
+			"-p", "refresh_interval=3",
+			"-p", "read_from_head=true",
+			"-p", "buffer_max_size=1M",
+			"-p", "skip_long_lines=on",
+
+			"-i", "tail",
+			"-p", "path=/run/determined/train/logs/stderr.log-rotate/current",
+			"-p", "refresh_interval=3",
+			"-p", "read_from_head=true",
+			"-p", "buffer_max_size=1M",
+			"-p", "skip_long_lines=on",
+
+			"-o", "stdout",
+			"-m", "*",
+		},
+		Image:           "fluent/fluent-bit:1.6",
+		ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
+		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
+		Resources:       p.configureResourcesRequirements(),
+		VolumeMounts:    loggingMounts,
+	}
+
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, exp.ExperimentConfig.Environment.PodSpec)
+		ctx,
+		volumes,
+		initContainer,
+		mainContainer,
+		[]k8sV1.Container{fluentContainer},
+		exp.ExperimentConfig.Environment.PodSpec,
+	)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives)
 	if err != nil {
@@ -280,7 +338,7 @@ func (p *pod) createPodSpecForCommand(ctx *actor.Context) error {
 	}
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, cmd.Config.Environment.PodSpec)
+		ctx, volumes, initContainer, container, nil, cmd.Config.Environment.PodSpec)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives)
 	if err != nil {
@@ -331,7 +389,7 @@ func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 	}
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, gcc.ExperimentConfig.Environment.PodSpec)
+		ctx, volumes, initContainer, container, nil, gcc.ExperimentConfig.Environment.PodSpec)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives)
 	if err != nil {
