@@ -11,9 +11,12 @@ export enum BadgeType {
   Default,
   Id,
   State,
+  Custom,
 }
 
 export interface BadgeProps {
+  bgColor?: string; // background color for custom badge.
+  fgColor?: string; // foreground color for custom badge.
   state?: RunState | CommandState | CheckpointState;
   tooltip?: string;
   type?: BadgeType;
@@ -33,6 +36,9 @@ const Badge: React.FC<BadgeProps> = ({
     style.backgroundColor = getStateColorCssVar(state);
   } else if (type === BadgeType.Id) {
     classes.push(css.id);
+  } else if (type === BadgeType.Custom) {
+    style.color = props.fgColor;
+    style.backgroundColor = props.bgColor;
   }
 
   const badge = <span className={classes.join(' ')} style={style}>
