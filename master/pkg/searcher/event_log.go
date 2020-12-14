@@ -101,6 +101,7 @@ func (el *EventLog) TrialClosed(requestID RequestID) {
 	trialClosed := TrialClosedEvent{
 		RequestID: requestID,
 	}
+	delete(el.unitsCompletedByTrial, requestID)
 	el.uncommitted = append(el.uncommitted, trialClosed)
 	el.TrialsClosed++
 }

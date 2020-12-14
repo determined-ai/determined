@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/determined-ai/determined/master/pkg/workload"
@@ -65,7 +66,9 @@ func (s *Searcher) TrialExitedEarly(
 	if !ok {
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
-
+	if exitedReason == nil {
+		panic(fmt.Sprintf("Trial %d exited early with ExitedReason nil.\n", trialID))
+	}
 	s.eventLog.TrialExitedEarly(requestID, *exitedReason)
 	operations, err := s.method.trialExitedEarly(s.context(), requestID, *exitedReason)
 	s.eventLog.OperationsCreated(operations...)

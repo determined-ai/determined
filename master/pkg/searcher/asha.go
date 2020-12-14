@@ -239,7 +239,8 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 	if allTrials == s.maxTrials {
 		progress = math.Max(float64(s.trialsCompleted)/float64(s.maxTrials), progress)
 	}
-	// Cap progress at 95% for InvalidHP cases
+	// Cap progress at 95% for InvalidHP cases since we can’t know whether a trial is closed forever
+	// until we finish all possible promotions in a rung, so accurate progress estimation infeasible.
 	if progress > 1 {
 		progress = float64(0.95)
 	}
@@ -258,7 +259,11 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 		highestRungIndex := s.trialRungs[requestID]
 		for rungIndex := 0; rungIndex <= highestRungIndex; rungIndex++ {
 			rung := s.rungs[rungIndex]
-			rung.metrics = nil
+			for i, trialMetric := range rung.metrics {
+				if trialMetric.requestID == requestID {
+					rung.metrics = append(rung.metrics[:i], rung.metrics[i+1:]...)
+				}
+			}
 		}
 		// Add new trial to searcher queue
 		create := NewCreate(
