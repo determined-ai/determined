@@ -1,0 +1,33 @@
+.base {
+  position: relative;
+
+  .tooltip {
+    pointer-events: none;
+    position: absolute;
+
+    .point {
+      background-color: rgba(50, 0, 150, 1);
+      border-radius: 0.35rem;
+      height: 0.7rem;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 0.7rem;
+    }
+    .box {
+      background-color: var(--theme-colors-monochrome-17);
+      border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+      border-radius: var(--theme-sizes-border-radius);
+      box-shadow: var(--theme-shadow);
+      left: 0.5rem;
+      padding: var(--theme-sizes-layout-medium);
+      position: absolute;
+      top: 0.5rem;
+    }
+    .row {
+      display: table-row;
+    }
+    .row > * {
+      display: table-cell;
+    }
+  }
+}
