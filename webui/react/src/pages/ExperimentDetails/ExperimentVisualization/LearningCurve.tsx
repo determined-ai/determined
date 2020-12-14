@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -54,10 +55,18 @@ const LearningCurve: React.FC<Props> = ({
   }, [ trialHpMap, trialIds ]);
 
   const columns = useMemo(() => {
-    const idColumn = { dataIndex: 'id', key: 'id', title: 'Trial ID' };
+    const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
+    const idColumn = { dataIndex: 'id', key: 'id', sorter: idSorter, title: 'Trial ID' };
 
     const hpRenderer = (key: string) => {
-      return (_: string, record: TrialHParams) => record.hparams[key];
+      return (_: string, record: TrialHParams) => {
+        const value = record.hparams[key];
+        const type = experiment.config.hyperparameters[key].type;
+        if (typeof value === 'number' && [ 'const', 'double', 'float', 'log' ].includes(type)) {
+          return <HumanReadableFloat num={value} />;
+        }
+        return record.hparams[key];
+      };
     };
     const hpColumnSorter = (key: string) => {
       return (recordA: TrialHParams, recordB: TrialHParams): number => {
