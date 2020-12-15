@@ -194,6 +194,11 @@ html {
   .ant-table-tbody > tr > td:only-child {
     border-width: var(--theme-sizes-border-width);
   }
+  .ant-table-tbody > tr.ant-table-row.highlighted > td {
+    background-color: var(--theme-colors-monochrome-17);
+    border-color: var(--theme-colors-action-normal);
+    border-style: solid;
+  }
   .ant-table-tbody > tr.ant-table-row.clickable {
     cursor: pointer;
   }

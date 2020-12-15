@@ -374,7 +374,7 @@ const ExperimentList: React.FC = () => {
             spinning: !experiments,
           }}
           pagination={getFullPaginationConfig(pagination, total)}
-          rowClassName={defaultRowClassName()}
+          rowClassName={defaultRowClassName({ clickable: true })}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}

@@ -328,7 +328,7 @@ const TaskList: React.FC = () => {
             spinning: !hasLoaded,
           }}
           pagination={getPaginationConfig(filteredTasks.length, filters.limit)}
-          rowClassName={record => defaultRowClassName(canBeOpened(record))}
+          rowClassName={record => defaultRowClassName({ clickable: canBeOpened(record) })}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}
