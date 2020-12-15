@@ -38,7 +38,7 @@ def check_tf_1(aggregation_frequency: int, average_aggregated_gradients: bool) -
 
     hvd_optimizer = hvd.DistributedOptimizer(
         optimizer=CustomOptimizer("mine"),
-        aggregation_frequency=aggregation_frequency,
+        backward_passes_per_step=aggregation_frequency,
         average_aggregated_gradients=average_aggregated_gradients,
     )
     iterations = hvd_optimizer.iterations
@@ -72,7 +72,7 @@ def check_tf_2(aggregation_frequency: int, average_aggregated_gradients: bool) -
 
     hvd_optimizer = hvd.DistributedOptimizer(
         optimizer=CustomOptimizer("mine"),
-        aggregation_frequency=aggregation_frequency,
+        backward_passes_per_step=aggregation_frequency,
         average_aggregated_gradients=average_aggregated_gradients,
     )
     _ = hvd_optimizer.iterations
