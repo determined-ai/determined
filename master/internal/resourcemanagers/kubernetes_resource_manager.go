@@ -1,7 +1,9 @@
 package resourcemanagers
 
 import (
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -13,6 +15,7 @@ import (
 )
 
 const kubernetesScheduler = "kubernetes"
+const kubernetesDummyResourcePool = "kubernetes"
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
@@ -80,6 +83,32 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
+	case GetResourcePoolSummary:
+		if msg.resourcePool != kubernetesDummyResourcePool {
+			err := errors.
+				Errorf("cannot find resource pool %s to summarize - " +
+								"in k8s only the '%s' resource pool exists. ",
+								msg.resourcePool,
+								kubernetesDummyResourcePool)
+			ctx.Log().WithError(err).Error("")
+			ctx.Respond(err)
+		}
+
+		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
+		if err != nil {
+			// TODO: handle this
+		}
+		ctx.Respond(resourcePoolSummary)
+
+
+	case GetResourcePoolSummaries:
+		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
+		if err != nil {
+			// TODO: handle this
+		}
+		summaries := []*resourcepoolv1.ResourcePool{resourcePoolSummary}
+		ctx.Respond(summaries)
+
 	case schedulerTick:
 		if k.reschedule {
 			k.schedulePendingTasks(ctx)
@@ -95,6 +124,33 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	}
 
 	return nil
+}
+
+func (k *kubernetesResourceManager) summarizeDummyResourcePool(ctx *actor.Context) (*resourcepoolv1.ResourcePool, error) {
+	// TODO: Correctly fill in more details?
+	return &resourcepoolv1.ResourcePool{
+		Id:                           kubernetesDummyResourcePool,
+		Description:                  "Kubernetes-managed pool of resources",
+		Type:                         "kubernetes",
+		NumAgents:                    1,
+		SlotsAvailable:               0,
+		SlotsUsed:                    0,
+		CpuContainerCapacity:         0,
+		CpuContainersRunning:         0,
+		DefaultGpuPool:               true,
+		DefaultCpuPool:               true,
+		Preemptible:                  false,
+		MinAgents:                    0,
+		MaxAgents:                    0,
+		CpuContainerCapacityPerAgent: 0,
+		SchedulerType:                "kubernetes",
+		SchedulerFittingPolicy:       "kubernetes",
+		Location:                     "kubernetes",
+		ImageId:                      "N/A",
+		InstanceType:                 "kubernetes",
+		Details:                      nil,
+	}, nil
+
 }
 
 func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error {

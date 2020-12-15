@@ -72,9 +72,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		if a.pools[msg.resourcePool] == nil {
 			err := errors.Errorf("cannot find resource pool %s to summarize", msg.resourcePool)
 			ctx.Log().WithError(err).Error("")
-			if ctx.ExpectingResponse() {
-				ctx.Respond(err)
-			}
+			ctx.Respond(err)
 			break
 		}
 
