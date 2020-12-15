@@ -29,24 +29,3 @@ func (a *apiServer) GetResourcePools(
 }
 
 
-
-func (a *apiServer) GetResourcePool(
-	_ context.Context, req *apiv1.GetResourcePoolRequest) (resp *apiv1.GetResourcePoolResponse, err error) {
-
-	switch {
-	case sproto.UseAgentRM(a.m.system):
-		err = a.actorRequest(sproto.AgentRMAddr.String(), req, &resp)
-		if err != nil {
-			// TODO: Handle this
-		}
-	case sproto.UseK8sRM(a.m.system):
-		err = a.actorRequest(sproto.K8sRMAddr.String(), req, &resp)
-		if err != nil {
-			// TODO: Handle this
-		}
-	default:
-		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
-	}
-
-	return resp, err
-}
