@@ -275,12 +275,11 @@ The master supports the following configuration settings:
             to ``max_slots_per_pod`` GPUs. Distributed tasks with sizes
             that are not divisible by ``max_slots_per_pod`` are never
             scheduled. If you have a cluster of different size nodes,
-            set ``max_slots_per_pod`` to the smallest common
-            denominator. For example, if you have nodes with 4 GPUs and
-            other nodes with 8 GPUs, set ``max_slots_per_pod`` to 4 so
-            that all distributed experiments will launch with 4 GPUs per
-            pod (e.g., on nodes with 8 GPUs, two such pods would be
-            launched).
+            set ``max_slots_per_pod`` to the greatest common divisor of
+            all the sizes. For example, if you have some nodes with 4
+            GPUs and other nodes with 8 GPUs, set ``maxSlotsPerPod`` to
+            ``4`` so that all distributed experiments will launch with 4
+            GPUs per pod (with two pods on 8-GPU nodes).
 
          -  ``master_service_name``: The service account Determined uses
             to interact with the Kubernetes API.
