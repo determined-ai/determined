@@ -781,7 +781,7 @@ service Determined {
     };
   }
 
-  // Get a set of agents from the cluster.
+  // Get a list of all resource pools from the cluster.
   rpc GetResourcePools(GetResourcePoolsRequest) returns (GetResourcePoolsResponse) {
     option (google.api.http) = {
       get: "/api/v1/resource-pools"
@@ -790,13 +790,5 @@ service Determined {
       tags: "Cluster"
     };
   }
-  // Get the requested agent.
-  rpc GetResourcePool(GetResourcePoolRequest) returns (GetResourcePoolResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/resource-pool/{resource_pool_id}"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Cluster"
-    };
-  }
+
 }

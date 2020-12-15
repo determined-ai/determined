@@ -23,15 +23,4 @@ message GetResourcePoolsResponse {
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }
-//
-//// Get the requested resource pool.
-//message GetResourcePoolRequest {
-//  // The id of the resource pool.
-//  string resource_pool_id = 1;
-//}
-//// Response to GetResourcePoolRequest.
-//message GetResourcePoolResponse {
-//  // The requested resource pool.
-//  determined.resourcepool.v1.ResourcePool resourcePool = 1;
-//}
-//
+

@@ -1,7 +1,6 @@
 package resourcemanagers
 
 import (
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -90,10 +89,6 @@ func getTaskSummaries(
 		ret[req.ID] = newTaskSummary(req, reqList.GetAllocations(req.TaskActor), groups, schedulerType)
 	}
 	return ret
-}
-
-type ResourcePoolSummaries struct {
-	summaries []resourcepoolv1.ResourcePool
 }
 
 type ResourceSummary struct {

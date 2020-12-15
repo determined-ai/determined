@@ -94,21 +94,11 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("")
 			ctx.Respond(err)
 		}
-
-		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
-		if err != nil {
-			// TODO: handle this
-		}
-		resp := &apiv1.GetResourcePoolResponse{}
-		resp.ResourcePool = resourcePoolSummary
-		ctx.Respond(resp)
+		ctx.Respond(&apiv1.GetResourcePoolResponse{ResourcePool: k.summarizeDummyResourcePool(ctx)})
 
 
 	case *apiv1.GetResourcePoolsRequest:
-		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
-		if err != nil {
-			// TODO: handle this
-		}
+		resourcePoolSummary := k.summarizeDummyResourcePool(ctx)
 		resp := &apiv1.GetResourcePoolsResponse{}
 		resp.ResourcePools = []*resourcepoolv1.ResourcePool{resourcePoolSummary}
 		ctx.Respond(resp)
@@ -130,7 +120,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (k *kubernetesResourceManager) summarizeDummyResourcePool(ctx *actor.Context) (*resourcepoolv1.ResourcePool, error) {
+func (k *kubernetesResourceManager) summarizeDummyResourcePool(ctx *actor.Context) *resourcepoolv1.ResourcePool {
 	// TODO: Correctly fill in more details?
 	return &resourcepoolv1.ResourcePool{
 		Id:                           kubernetesDummyResourcePool,
@@ -153,8 +143,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(ctx *actor.Contex
 		ImageId:                      "N/A",
 		InstanceType:                 "kubernetes",
 		Details:                      nil,
-	}, nil
-
+	}
 }
 
 func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error {

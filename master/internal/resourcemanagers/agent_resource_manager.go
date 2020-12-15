@@ -68,7 +68,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		a.forwardToAllPools(ctx, msg)
 
 	case *apiv1.GetResourcePoolRequest:
-
 		if a.pools[msg.ResourcePoolId] == nil {
 			err := errors.Errorf("cannot find resource pool %s to summarize", msg.ResourcePoolId)
 			ctx.Log().WithError(err).Error("")
@@ -77,9 +76,11 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 		resourcePoolSummary, err := a.createResourcePoolSummary(ctx, msg.ResourcePoolId)
-
 		if err != nil {
-			// TODO: handle this
+			// Should only raise an error if the resource pool doesn't exist and we've checked for that.
+			// But best to handle it anyway in case the implementation changes in the future.
+			ctx.Log().WithError(err).Error("")
+			ctx.Respond(err)
 		}
 		resp := &apiv1.GetResourcePoolResponse{}
 		resp.ResourcePool = resourcePoolSummary
@@ -91,7 +92,10 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		for _, pool := range a.poolsConfig.ResourcePools {
 			summary, err := a.createResourcePoolSummary(ctx, pool.PoolName)
 			if err != nil {
-				// TODO: handle error
+				// Should only raise an error if the resource pool doesn't exist and that can't happen.
+				// But best to handle it anyway in case the implementation changes in the future.
+				ctx.Log().WithError(err).Error("")
+				ctx.Respond(err)
 			}
 			summaries = append(summaries, summary)
 		}
