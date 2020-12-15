@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Callable, List, NamedTuple, Optional, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union
 
 import tensorflow as tf
 
@@ -280,11 +280,17 @@ class TFKerasContext:
         if isinstance(optimizer, str):
             raise det.errors.InvalidExperimentException("string optimizers are not supported")
 
-        return hvd.DistributedOptimizer(
-            optimizer,
-            aggregation_frequency=self.hvd_config.aggregation_frequency,
-            average_aggregated_gradients=self.hvd_config.average_aggregated_gradients,
-        )
+        # The signature of our horovod optimizer changed after we rebased onto 0.21.
+        hvd_args = inspect.signature(hvd.DistributedOptimizer)
+        horovod_kwargs = {
+            "average_aggregated_gradients": self.hvd_config.average_aggregated_gradients,
+        }  # type: Dict[str, Any]
+        if "aggregation_frequency" in hvd_args.parameters:
+            horovod_kwargs["aggregation_frequency"] = self.hvd_config.aggregation_frequency
+        else:
+            horovod_kwargs["backward_passes_per_step"] = self.hvd_config.aggregation_frequency
+
+        return hvd.DistributedOptimizer(optimizer, **horovod_kwargs)
 
     def wrap_optimizer(
         self, optimizer: tf.keras.optimizers.Optimizer

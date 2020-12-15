@@ -1,3 +1,4 @@
+import inspect
 import logging
 from typing import Any, Callable, Dict, List, Tuple, Union
 
@@ -65,14 +66,21 @@ class EstimatorContext:
 
         hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_optimizer was called.")
         use_compression = self.hvd_config.fp16_compression
-        optimizer = hvd.DistributedOptimizer(
-            optimizer,
-            compression=hvd.compression.Compression.fp16
+
+        # The signature of our horovod optimizer changed after we rebased onto 0.21.
+        hvd_args = inspect.signature(hvd.DistributedOptimizer)
+        horovod_kwargs = {
+            "compression": hvd.compression.Compression.fp16
             if use_compression
             else hvd.compression.Compression.none,
-            aggregation_frequency=self.hvd_config.aggregation_frequency,
-            average_aggregated_gradients=self.hvd_config.average_aggregated_gradients,
-        )
+            "average_aggregated_gradients": self.hvd_config.average_aggregated_gradients,
+        }
+        if "aggregation_frequency" in hvd_args.parameters:
+            horovod_kwargs["aggregation_frequency"] = self.hvd_config.aggregation_frequency
+        else:
+            horovod_kwargs["backward_passes_per_step"] = self.hvd_config.aggregation_frequency
+
+        optimizer = hvd.DistributedOptimizer(optimizer, **horovod_kwargs)
         logging.debug("Initialized optimizer for distributed and optimized parallel training.")
         return optimizer
 
