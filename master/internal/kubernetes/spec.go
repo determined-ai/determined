@@ -71,7 +71,9 @@ func (p *pod) configureEnvVars(
 	return envVars, nil
 }
 
-func (p *pod) configureConfigMapSpec(runArchives []cproto.RunArchive) (*k8sV1.ConfigMap, error) {
+func (p *pod) configureConfigMapSpec(
+	runArchives []cproto.RunArchive, fluentFiles archive.Archive,
+) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte)
 	// Add additional files as tar.gz archive.
 	for idx, runArchive := range runArchives {
@@ -80,6 +82,10 @@ func (p *pod) configureConfigMapSpec(runArchives []cproto.RunArchive) (*k8sV1.Co
 			return nil, errors.Wrap(err, "failed to zip archive")
 		}
 		configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
+	}
+
+	for _, a := range fluentFiles {
+		configMapData[a.Path] = a.Content
 	}
 
 	// Add initContainer script.
@@ -101,16 +107,35 @@ func (p *pod) configureConfigMapSpec(runArchives []cproto.RunArchive) (*k8sV1.Co
 func (p *pod) configureLoggingVolumes(
 	ctx *actor.Context,
 ) ([]k8sV1.VolumeMount, []k8sV1.Volume) {
-	volumeName := "det-logs"
-	return []k8sV1.VolumeMount{{
-			Name:      volumeName,
+	logsVolumeName := "det-logs"
+	configVolumeName := "det-fluent"
+	mounts := []k8sV1.VolumeMount{
+		{
+			Name:      logsVolumeName,
 			MountPath: "/run/determined/train/logs",
-		}}, []k8sV1.Volume{{
-			Name: volumeName,
+		},
+		{
+			Name:      configVolumeName,
+			MountPath: fluentBaseDir,
+		},
+	}
+	volumes := []k8sV1.Volume{
+		{
+			Name: logsVolumeName,
 			VolumeSource: k8sV1.VolumeSource{EmptyDir: &k8sV1.EmptyDirVolumeSource{
 				Medium: k8sV1.StorageMediumMemory,
 			}},
-		}}
+		},
+		{
+			Name: configVolumeName,
+			VolumeSource: k8sV1.VolumeSource{
+				ConfigMap: &k8sV1.ConfigMapVolumeSource{
+					LocalObjectReference: k8sV1.LocalObjectReference{Name: p.configMapName},
+				},
+			},
+		},
+	}
+	return mounts, volumes
 }
 
 func (p *pod) configureVolumes(
@@ -245,30 +270,22 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		WorkingDir:      tasks.ContainerWorkDir,
 	}
 
+	fields := map[string]string{
+		"agent_id":     "k8agent",
+		"container_id": string(p.container.ID),
+		"trial_id":     strconv.Itoa(exp.InitialWorkload.TrialID),
+	}
+	ctx.Log().Infof("fields: %+v", fields)
+	fluentArgs, fluentFiles, err := fluentConfig(
+		p.masterIP, int(p.masterPort), fields, nil, p.loggingConfig,
+	)
+	if err != nil {
+		return err
+	}
+
 	fluentContainer := k8sV1.Container{
-		Name: model.DeterminedK8FluentContainerName,
-		// TODO: Construct the config to handle TLS and actually shipping out logs somewhere.
-		Command: []string{
-			"/fluent-bit/bin/fluent-bit",
-			"-f", ".05",
-
-			"-i", "tail",
-			"-p", "path=/run/determined/train/logs/stdout.log-rotate/current",
-			"-p", "refresh_interval=3",
-			"-p", "read_from_head=true",
-			"-p", "buffer_max_size=1M",
-			"-p", "skip_long_lines=on",
-
-			"-i", "tail",
-			"-p", "path=/run/determined/train/logs/stderr.log-rotate/current",
-			"-p", "refresh_interval=3",
-			"-p", "read_from_head=true",
-			"-p", "buffer_max_size=1M",
-			"-p", "skip_long_lines=on",
-
-			"-o", "stdout",
-			"-m", "*",
-		},
+		Name:            model.DeterminedK8FluentContainerName,
+		Command:         fluentArgs,
 		Image:           "fluent/fluent-bit:1.6",
 		ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
 		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
@@ -285,7 +302,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		exp.ExperimentConfig.Environment.PodSpec,
 	)
 
-	p.configMap, err = p.configureConfigMapSpec(runArchives)
+	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
 	if err != nil {
 		return err
 	}
@@ -340,7 +357,7 @@ func (p *pod) createPodSpecForCommand(ctx *actor.Context) error {
 	p.pod = p.configurePodSpec(
 		ctx, volumes, initContainer, container, nil, cmd.Config.Environment.PodSpec)
 
-	p.configMap, err = p.configureConfigMapSpec(runArchives)
+	p.configMap, err = p.configureConfigMapSpec(runArchives, nil)
 	if err != nil {
 		return err
 	}
@@ -391,7 +408,7 @@ func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 	p.pod = p.configurePodSpec(
 		ctx, volumes, initContainer, container, nil, gcc.ExperimentConfig.Environment.PodSpec)
 
-	p.configMap, err = p.configureConfigMapSpec(runArchives)
+	p.configMap, err = p.configureConfigMapSpec(runArchives, nil)
 	if err != nil {
 		return err
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // Setup setups the actor and endpoints for resource managers.
@@ -26,7 +27,7 @@ func Setup(
 	case rmConfig.AgentRM != nil:
 		ref = setupAgentResourceManager(system, echo, rmConfig.AgentRM, poolsConfig, opts, cert)
 	case rmConfig.KubernetesRM != nil:
-		ref = setupKubernetesResourceManager(system, echo, rmConfig.KubernetesRM)
+		ref = setupKubernetesResourceManager(system, echo, rmConfig.KubernetesRM, opts.LoggingOptions)
 	default:
 		panic("no expected resource manager config is defined")
 	}
@@ -61,6 +62,7 @@ func setupKubernetesResourceManager(
 	system *actor.System,
 	echo *echo.Echo,
 	config *KubernetesResourceManagerConfig,
+	loggingConfig model.LoggingConfig,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
 		actor.Addr("kubernetesRM"),
@@ -70,7 +72,8 @@ func setupKubernetesResourceManager(
 
 	logrus.Infof("initializing endpoints for pods")
 	kubernetes.Initialize(
-		system, echo, ref, config.Namespace, config.MasterServiceName, config.LeaveKubernetesResources,
+		system, echo, ref, config.Namespace, config.MasterServiceName, loggingConfig,
+		config.LeaveKubernetesResources,
 	)
 	return ref
 }

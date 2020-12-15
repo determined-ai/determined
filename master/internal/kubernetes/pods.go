@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -48,9 +49,10 @@ type pods struct {
 	masterServiceName        string
 	leaveKubernetesResources bool
 
-	clientSet  *k8sClient.Clientset
-	masterIP   string
-	masterPort int32
+	clientSet     *k8sClient.Clientset
+	masterIP      string
+	masterPort    int32
+	loggingConfig model.LoggingConfig
 
 	informer                *actor.Ref
 	nodeInformer            *actor.Ref
@@ -73,12 +75,14 @@ func Initialize(
 	c *actor.Ref,
 	namespace string,
 	masterServiceName string,
+	loggingConfig model.LoggingConfig,
 	leaveKubernetesResources bool,
 ) *actor.Ref {
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:                  c,
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
+		loggingConfig:            loggingConfig,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
 		containerIDToPodHandler:  make(map[string]*actor.Ref),
 		podHandlerToMetadata:     make(map[*actor.Ref]podMetadata),
@@ -252,7 +256,8 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) error {
 	newPodHandler := newPod(
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
-		p.podInterface, p.configMapInterface, p.resourceRequestQueue, p.leaveKubernetesResources,
+		p.loggingConfig, p.podInterface, p.configMapInterface, p.resourceRequestQueue,
+		p.leaveKubernetesResources,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {

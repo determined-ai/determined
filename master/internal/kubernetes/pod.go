@@ -38,6 +38,7 @@ type pod struct {
 	masterIP                 string
 	masterPort               int32
 	taskSpec                 tasks.TaskSpec
+	loggingConfig            model.LoggingConfig
 	gpus                     int
 	podInterface             typedV1.PodInterface
 	configMapInterface       typedV1.ConfigMapInterface
@@ -71,6 +72,7 @@ func newPod(
 	namespace string,
 	masterIP string,
 	masterPort int32,
+	loggingConfig model.LoggingConfig,
 	podInterface typedV1.PodInterface,
 	configMapInterface typedV1.ConfigMapInterface,
 	resourceRequestQueue *actor.Ref,
@@ -96,6 +98,7 @@ func newPod(
 		masterIP:                 masterIP,
 		masterPort:               masterPort,
 		taskSpec:                 msg.Spec,
+		loggingConfig:            loggingConfig,
 		gpus:                     msg.Slots,
 		podInterface:             podInterface,
 		configMapInterface:       configMapInterface,
