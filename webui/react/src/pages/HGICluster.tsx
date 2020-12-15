@@ -16,11 +16,7 @@ import { Resource } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
 
-import css from './HGICluster.module.scss';
-
 const resourcePools = getResourcePools();
-
-// TODO no active agents style
 
 const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
@@ -60,7 +56,7 @@ const HGICluster: React.FC = () => {
   }
 
   return (
-    <Page className={css.base} id="cluster" title="Cluster">
+    <Page id="cluster" title="HGI Cluster">
       <Section hideTitle title="Overview Stats">
         <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
           <OverviewStats title="Number of Agents">
@@ -84,7 +80,12 @@ const HGICluster: React.FC = () => {
       <Section title={`${resourcePools.length} Resource Pools`}>
         <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
           {(new Array(5).fill(0)).map((_, idx) => {
-            return <ResourcePoolCard agents={agents.data || []} key={idx} />;
+            const rp = resourcePools[Math.floor(
+              Math.random() * resourcePools.length,
+            )];
+            return <ResourcePoolCard
+              containerStates={getSlotContainerStates(agents.data || [], rp.name)}
+              key={idx} />;
           })}
         </Grid>
       </Section>

@@ -7,19 +7,17 @@ import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { getResourcePools } from 'services/api';
-import { getStateColorCssVar } from 'themes';
-import { Agent } from 'types';
-import { getSlotContainerStates } from 'utils/cluster';
+import { ResourceState } from 'types';
 
 import Json from './Json';
 import Link from './Link';
 import css from './ResourcePoolCard.module.scss';
 
 interface Props {
-  agents: Agent[];
+  containerStates: ResourceState[]; // GPU
 }
 
-const resoucePools = getResourcePools();
+const resourcePolls = getResourcePools();
 
 const rpAttrs = [
   [ 'location', 'Location' ] ,
@@ -47,9 +45,9 @@ const agentStatusText = (numAgents: number, maxInstances: number): string => {
   return prefix + ' Agents Active';
 };
 
-const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
-  const rp = resoucePools[Math.floor(
-    Math.random() * resoucePools.length,
+const ResourcePoolCard: React.FC<Props> = ({ containerStates }: Props) => {
+  const rp = resourcePolls[Math.floor(
+    Math.random() * resourcePolls.length,
   )];
 
   const shortDetails = rpAttrs.reduce((acc, cur) => {
@@ -65,11 +63,10 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
     numAgents,
   } = rp;
 
-  let iconSrc = staticLogo;
+  let iconSrc = '';
   switch (type) {
     case 'aws':
       iconSrc = awsLogo;
-
       break;
     case 'gcp':
       iconSrc = gcpLogo;
@@ -77,13 +74,7 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
     case 'static':
       iconSrc = staticLogo;
       break;
-
-    default:
-      console.error('unexpected resource pool type');
-      break;
   }
-
-  const slotStates = getSlotContainerStates(agents, name);
 
   const tags: string[] = [ type ];
   if (rp.defaultGpuPool) tags.push('default gpu pool');
@@ -125,7 +116,9 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
         </section>
         <hr />
         <section>
-          <SlotAllocationBar resourceStates={slotStates} totalSlots={numAgents * gpusPerAgent} />
+          <SlotAllocationBar
+            resourceStates={containerStates}
+            totalSlots={numAgents * gpusPerAgent} />
           <div className={css.spaceBetweenHorizontal}>
             <span>CPU containers running:</span>
             <span>{rp.cpuContainersRunning}</span>

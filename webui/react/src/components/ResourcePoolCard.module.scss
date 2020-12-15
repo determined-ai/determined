@@ -25,17 +25,18 @@ $icon-side: 5rem;
     padding: $padding;
 
     .icon {
-      margin: auto 2rem auto 0;
-      margin-right: 2rem;
       align-items: center;
       background-color: var(--theme-colors-monochrome-17);
-      border: var(--theme-sizes-border-width) solid
+      border:
+        var(--theme-sizes-border-width) solid
         var(--theme-colors-monochrome-11);
       border-radius: 50%;
       display: flex;
       flex-shrink: 0;
       height: $icon-side;
       justify-content: center;
+      margin: auto 2rem auto 0;
+      margin-right: 2rem;
       width: $icon-side;
     }
     .info {
@@ -54,22 +55,31 @@ $icon-side: 5rem;
     }
   }
   .agentsStatus {
-    @extend .textCenter;
     background: var(--theme-colors-state-active);
     color: white;
+    display: flex;
     height: var(--theme-sizes-layout-enormous);
+    text-align: center;
+    vertical-align: middle;
+
+    & > * {
+      margin: auto;
+    }
+
+    // @extend .textCenter; // why at-rule-no-unknown
   }
   .description {
     align-content: center;
     display: flex;
     flex-direction: column;
+
     p {
+      margin: auto 0;
       // https://css-tricks.com/line-clampin/
       overflow: hidden;
-      text-overflow: ellipsis;
       overflow-wrap: break-word;
+      text-overflow: ellipsis;
       white-space: nowrap;
-      margin: auto 0;
     }
   }
   hr {
@@ -89,15 +99,6 @@ section.details {
 
   ul {
     flex-grow: 1;
-  }
-}
-.textCenter {
-  display: flex;
-  text-align: center;
-  vertical-align: middle;
-
-  & > * {
-    margin: auto;
   }
 }
 .spaceBetweenHorizontal {

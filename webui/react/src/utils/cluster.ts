@@ -2,9 +2,11 @@ import { Agent, ResourceState } from 'types';
 
 export const getSlotContainerStates = (agents: Agent[], resourcePoolName?: string)
 : ResourceState[] => {
-  let targetAgents = agents;
+  const targetAgents = agents;
   if (resourcePoolName) {
-    targetAgents = targetAgents.filter(agent => agent.resourcePool);
+    // FIXME we turn this off so that the sample resource pool can match whatever
+    // name resource pool agents are attached too.
+    // targetAgents = targetAgents.filter(agent => agent.resourcePool);
   }
   const slotContainerStates = targetAgents.map(agent => agent.resources)
     .reduce((acc, cur) => {

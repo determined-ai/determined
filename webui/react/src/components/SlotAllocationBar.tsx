@@ -32,8 +32,7 @@ const legend = (label: React.ReactNode , count: number, totalSlots: number) => {
       {count} ({floatToPercent(count/totalSlots, 1)})
     </span>
     <span>
-      {' '}
-      {label}
+      {' '} {label}
     </span>
   </li>;
 };
