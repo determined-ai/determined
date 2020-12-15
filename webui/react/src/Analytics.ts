@@ -1,5 +1,8 @@
 import { DeterminedInfo } from 'types';
 
+import handleError, { ErrorLevel, ErrorType } from './ErrorHandler';
+import { getTelemetry } from './services/api';
+
 interface InternalSegmentAnalytics extends SegmentAnalytics.AnalyticsJS {
   methods: string[];
 }
@@ -45,7 +48,7 @@ const getReadyAnalytics = (): SegmentAnalytics.AnalyticsJS | undefined => {
   return undefined;
 };
 
-export const setupAnalytics = (info: DeterminedInfo): void => {
+export const setupAnalytics = async (info: DeterminedInfo): Promise<void> => {
   if (!data.analytics) data.analytics = getReadyAnalytics();
   if (!data.analytics || data.isEnabled) return;
 
@@ -53,13 +56,25 @@ export const setupAnalytics = (info: DeterminedInfo): void => {
    * Segment key should be 32 characters composed of upper case letters,
    * lower case letters and numbers 0-9.
    */
-  const telemetry = info.telemetry;
-  const isEnabled = telemetry.enabled;
-  const isProperKey = telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(telemetry.segmentKey);
-  if (isEnabled && isProperKey) {
-    data.analytics.load(telemetry.segmentKey || '');
-    data.analytics.identify(info.clusterId);
-    data.isEnabled = true;
+  if (info.isTelemetryEnabled) {
+    try {
+      const telemetry = await getTelemetry({});
+      const isProperKey = telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(telemetry.segmentKey);
+      if (isProperKey) {
+        data.analytics.load(telemetry.segmentKey || '');
+        data.analytics.identify(info.clusterId);
+        data.isEnabled = true;
+      }
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Failed to get telemetry info',
+        silent: true,
+        type: ErrorType.Server,
+      });
+    }
   }
 };
 

@@ -5,8 +5,8 @@ const contextProvider = generateContext<DeterminedInfo>({
   initialState: {
     clusterId: '',
     clusterName: '',
+    isTelemetryEnabled: false,
     masterId: '',
-    telemetry: { enabled: false },
     version: process.env.VERSION || '',
   },
   name: 'DeterminedInfo',

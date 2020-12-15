@@ -7,7 +7,7 @@ import * as Api from 'services/api-ts-sdk';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
   jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
-  jsonToTensorboard, jsonToTensorboards, jsonToTrialLogs,jsonToUsers,
+  jsonToTensorboard, jsonToTensorboards, jsonToTrialLogs, jsonToUsers,
 } from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
@@ -19,7 +19,7 @@ import {
 import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentDetails, Log, TBSourceType, TrialDetails2,
+  ExperimentDetails, Log, TBSourceType, Telemetry, TrialDetails2,
 } from 'types';
 
 import { noOp } from './utils';
@@ -34,6 +34,7 @@ export const detApi = {
   Cluster: new Api.ClusterApi(ApiConfig),
   Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
+  InternalApi: new Api.InternalApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
@@ -57,6 +58,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Cluster = new Api.ClusterApi(config);
   detApi.Commands = new Api.CommandsApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
+  detApi.InternalApi = new Api.InternalApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
@@ -115,10 +117,16 @@ export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
 
 /* Info */
 
-export const getInfo: HttpApi<EmptyParams, DeterminedInfo> = {
-  httpOptions: () => ({ url: '/info' }),
+export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo> = {
   name: 'getInfo',
-  postProcess: (response) => jsonToDeterminedInfo(response.data),
+  postProcess: (response) => jsonToDeterminedInfo(response),
+  request: () => detApi.Cluster.determinedGetMaster(),
+};
+
+export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry> = {
+  name: 'getTelemetry',
+  postProcess: (response) => response,
+  request: () => detApi.InternalApi.determinedGetTelemetry(),
 };
 
 /* Agent */

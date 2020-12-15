@@ -40,17 +40,13 @@ export const jsonToLogin = (data: unknown): LoginResponse => {
   return { token: io.token };
 };
 
-export const jsonToDeterminedInfo = (data: unknown): types.DeterminedInfo => {
-  const io = ioTypes.decode<ioTypes.ioTypeDeterminedInfo>(ioTypes.ioDeterminedInfo, data);
+export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
   return {
-    clusterId: io.cluster_id,
-    clusterName: io.cluster_name,
-    masterId: io.master_id,
-    telemetry: {
-      enabled: io.telemetry.enabled,
-      segmentKey: io.telemetry.segment_key || undefined,
-    },
-    version: io.version,
+    clusterId: data.clusterId,
+    clusterName: data.clusterName,
+    isTelemetryEnabled: data.telemetryEnabled === true,
+    masterId: data.masterId,
+    version: data.version,
   };
 };
 
