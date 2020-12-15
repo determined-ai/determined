@@ -2,8 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -16,29 +14,21 @@ func (a *apiServer) GetResourcePools(
 ) (resp *apiv1.GetResourcePoolsResponse, err error) {
 	switch {
 	case sproto.UseAgentRM(a.m.system):
-		resourcePoolSummaries := a.m.system.AskAt(sproto.AgentRMAddr, req).Get()
-		if resourcePoolSummaries == nil {
+		err = a.actorRequest(sproto.AgentRMAddr.String(), req, &resp)
+		if err != nil {
 			// TODO: Handle this
 		}
 	case sproto.UseK8sRM(a.m.system):
-		resourcePoolSummaries := a.m.system.AskAt(sproto.K8sRMAddr, req).Get()
-		if resourcePoolSummaries == nil {
+		err = a.actorRequest(sproto.K8sRMAddr.String(), req, &resp)
+		if err != nil {
 			// TODO: Handle this
 		}
+
 	default:
 		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
 	}
 
-	//
-	//if err != nil {
-	//	return nil, err
-	//}
-	//a.filter(&resp.Agents, func(i int) bool {
-	//	v := resp.Agents[i]
-	//	return req.Label == "" || v.Label == req.Label
-	//})
-	//a.sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
-	//return resp, a.paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
+	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
 
 
@@ -48,18 +38,18 @@ func (a *apiServer) GetResourcePool(
 
 	switch {
 	case sproto.UseAgentRM(a.m.system):
-		resourcePoolSummary := a.m.system.AskAt(sproto.AgentRMAddr, req).Get()
-		if resourcePoolSummary == nil {
+		err = a.actorRequest(sproto.AgentRMAddr.String(), req, &resp)
+		if err != nil {
 			// TODO: Handle this
 		}
 	case sproto.UseK8sRM(a.m.system):
-		resourcePoolSummary := a.m.system.AskAt(sproto.K8sRMAddr, req).Get()
-		if resourcePoolSummary == nil {
+		err = a.actorRequest(sproto.K8sRMAddr.String(), req, &resp)
+		if err != nil {
 			// TODO: Handle this
 		}
 	default:
 		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
 	}
 
-
+	return resp, err
 }

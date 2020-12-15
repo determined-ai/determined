@@ -3,13 +3,12 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"strings"
-
 	"github.com/pkg/errors"
+	"strings"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	resourcepoolv1 "github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 	"time"
 )
 
@@ -68,7 +67,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
 
-	case apiv1.GetResourcePoolRequest:
+	case *apiv1.GetResourcePoolRequest:
 
 		if a.pools[msg.ResourcePoolId] == nil {
 			err := errors.Errorf("cannot find resource pool %s to summarize", msg.ResourcePoolId)
@@ -78,13 +77,17 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 		resourcePoolSummary, err := a.createResourcePoolSummary(ctx, msg.ResourcePoolId)
+
 		if err != nil {
 			// TODO: handle this
 		}
-		ctx.Respond(resourcePoolSummary)
+		resp := &apiv1.GetResourcePoolResponse{}
+		resp.ResourcePool = resourcePoolSummary
+		ctx.Respond(resp)
 
-	case apiv1.GetResourcePoolsRequest:
-		summaries := make([]*resourcepoolv1.ResourcePool, len(a.poolsConfig.ResourcePools))
+	case *apiv1.GetResourcePoolsRequest:
+		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig.ResourcePools))
+		//ctx.Log().Infof("GetResourcePoolRequest of length %d", len(summaries))
 		for _, pool := range a.poolsConfig.ResourcePools {
 			summary, err := a.createResourcePoolSummary(ctx, pool.PoolName)
 			if err != nil {
@@ -92,7 +95,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 			}
 			summaries = append(summaries, summary)
 		}
-		ctx.Respond(summaries)
+		resp := &apiv1.GetResourcePoolsResponse{}
+		resp.ResourcePools = summaries
+		ctx.Respond(resp)
 
 
 	default:
@@ -213,66 +218,97 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 	}
 
 	// TODO: Group the coallescing
-	poolType := "static"
-	if pool.Provider.AWS != nil {
-		poolType = "aws"
-	}
-	if pool.Provider.GCP != nil {
-		poolType = "gcp"
+	var poolType string
+	if pool.Provider == nil {
+		poolType = "static"
+	} else {
+		if pool.Provider.AWS != nil {
+			poolType = "aws"
+		}
+		if pool.Provider.GCP != nil {
+			poolType = "gcp"
+		}
 	}
 
-	preemptible := false
-	if poolType == "aws" {
-		preemptible = pool.Provider.AWS.SpotEnabled
+
+	var preemptible bool
+	if pool.Provider == nil {
+		preemptible = false
+	} else {
+		if poolType == "aws" {
+			preemptible = pool.Provider.AWS.SpotEnabled
+		}
+		if poolType == "gcp" {
+			preemptible = pool.Provider.GCP.InstanceType.Preemptible
+		}
 	}
-	if poolType == "gcp" {
-		preemptible = pool.Provider.GCP.InstanceType.Preemptible
-	}
+
 
 	var schedulerType string
-	if pool.Scheduler.FairShare != nil {
-		schedulerType = "fair share"
-	}
-	if pool.Scheduler.Priority != nil {
-		schedulerType = "priority"
-	}
-	if pool.Scheduler.RoundRobin != nil {
-		schedulerType = "round robin"
-	}
-
-	location := "on-prem"
-	// TODO: Add GCP and AWS to location info?
-	if poolType == "aws" {
-		location = pool.Provider.AWS.Region
-		// TODO: Would be nice to automatically detect the AZ that the subnet is in as well
-	}
-	if poolType == "gcp" {
-		location = pool.Provider.GCP.Zone
+	if pool.Scheduler == nil {
+		ctx.Log().Errorf("scheduler is not present in config")
+	} else {
+		if pool.Scheduler.FairShare != nil {
+			schedulerType = "fair share"
+		}
+		if pool.Scheduler.Priority != nil {
+			schedulerType = "priority"
+		}
+		if pool.Scheduler.RoundRobin != nil {
+			schedulerType = "round robin"
+		}
 	}
 
-	imageId := "N/A"
-	if poolType == "aws" {
-		imageId = pool.Provider.AWS.ImageID
-		// TODO: Would be nice to also have the description/name instead of just the ID
-	}
-	if poolType == "gcp" {
-		imageId = pool.Provider.GCP.BootDiskSourceImage
+
+	var location string
+	if pool.Provider == nil {
+		location = "on-prem"
+	} else {
+		// TODO: Add GCP and AWS to location info?
+		if poolType == "aws" {
+			location = pool.Provider.AWS.Region
+			// TODO: Would be nice to automatically detect the AZ that the subnet is in as well
+		}
+		if poolType == "gcp" {
+			location = pool.Provider.GCP.Zone
+		}
 	}
 
-	instanceType := "N/A"
-	if poolType == "aws" {
-		instanceType = string(pool.Provider.AWS.InstanceType)
+
+	var imageId string
+	if pool.Provider == nil {
+		imageId = "N/A"
+	} else {
+		if poolType == "aws" {
+			imageId = pool.Provider.AWS.ImageID
+			// TODO: Would be nice to also have the description/name instead of just the ID
+		}
+		if poolType == "gcp" {
+			imageId = pool.Provider.GCP.BootDiskSourceImage
+		}
 	}
-	if poolType == "gcp" {
-		instanceTypeStringBuilder := strings.Builder{}
-		instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
-		instanceTypeStringBuilder.WriteString(", ")
-		instanceTypeStringBuilder.WriteString(string(pool.Provider.GCP.InstanceType.GPUNum))
-		instanceTypeStringBuilder.WriteString("x")
-		instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.GPUType)
-		instanceType = instanceTypeStringBuilder.String()
-		// TODO: Confirm that this looks good as output for
+
+
+	var instanceType string
+	if pool.Provider == nil {
+		instanceType = "N/A"
+	} else {
+		if poolType == "aws" {
+			instanceType = string(pool.Provider.AWS.InstanceType)
+		}
+		if poolType == "gcp" {
+			instanceTypeStringBuilder := strings.Builder{}
+			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
+			instanceTypeStringBuilder.WriteString(", ")
+			instanceTypeStringBuilder.WriteString(string(pool.Provider.GCP.InstanceType.GPUNum))
+			instanceTypeStringBuilder.WriteString("x")
+			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.GPUType)
+			instanceType = instanceTypeStringBuilder.String()
+			// TODO: Confirm that this looks good as output for
+		}
+
 	}
+
 
 	resp := &resourcepoolv1.ResourcePool{
 		Id:                           pool.PoolName,
@@ -281,25 +317,29 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 		DefaultCpuPool:               a.config.DefaultCPUResourcePool == poolName,
 		DefaultGpuPool:               a.config.DefaultGPUResourcePool == poolName,
 		Preemptible:                  preemptible,
-		MinAgents:                    int32(pool.Provider.MinInstances), // TODO: Handle static pool explicitly?
-		MaxAgents:                    int32(pool.Provider.MaxInstances), // TODO: Handle static pool explicitly?
 		CpuContainerCapacityPerAgent: int32(pool.MaxCPUContainersPerAgent),
 		SchedulerType:                schedulerType,
-		SchedulerFittingPolicy:       pool.Scheduler.FittingPolicy,
 		Location:                     location,
 		ImageId:                      imageId,
 		InstanceType:                 instanceType,
-		MasterUrl:                    pool.Provider.MasterURL,
-		MasterCertName:               pool.Provider.MasterCertName,
-		StartupScript:                pool.Provider.StartupScript,
-		ContainerStartupScript:       pool.Provider.ContainerStartupScript,
-		AgentDockerNetwork:           pool.Provider.AgentDockerNetwork,
-		AgentDockerRuntime:           pool.Provider.AgentDockerRuntime,
-		AgentDockerImage:             pool.Provider.AgentDockerImage,
-		AgentFluentImage:             pool.Provider.AgentFluentImage,
-		MaxIdleAgentPeriod:           time.Duration(pool.Provider.MaxIdleAgentPeriod).String(),
-		MaxAgentStartingPeriod:       time.Duration(pool.Provider.MaxAgentStartingPeriod).String(),
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
+	}
+	if pool.Provider != nil {
+		resp.MinAgents = int32(pool.Provider.MinInstances)
+		resp.MaxAgents = int32(pool.Provider.MaxInstances) // TODO: Handle static pool explicitly?
+		resp.MasterUrl = pool.Provider.MasterURL
+		resp.MasterCertName = pool.Provider.MasterCertName
+		resp.StartupScript = pool.Provider.StartupScript
+		resp.ContainerStartupScript = pool.Provider.ContainerStartupScript
+		resp.AgentDockerNetwork = pool.Provider.AgentDockerNetwork
+		resp.AgentDockerRuntime = pool.Provider.AgentDockerRuntime
+		resp.AgentDockerImage = pool.Provider.AgentDockerImage
+		resp.AgentFluentImage = pool.Provider.AgentFluentImage
+		resp.MaxIdleAgentPeriod = time.Duration(pool.Provider.MaxIdleAgentPeriod).String()
+		resp.MaxAgentStartingPeriod = time.Duration(pool.Provider.MaxAgentStartingPeriod).String()
+	}
+	if pool.Scheduler != nil {
+		resp.SchedulerFittingPolicy = pool.Scheduler.FittingPolicy
 	}
 	if poolType == "aws" {
 		aws := pool.Provider.AWS

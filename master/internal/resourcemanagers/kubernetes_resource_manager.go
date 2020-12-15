@@ -84,7 +84,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
-	case apiv1.GetResourcePoolRequest:
+	case *apiv1.GetResourcePoolRequest:
 		if msg.ResourcePoolId != kubernetesDummyResourcePool {
 			err := errors.
 				Errorf("cannot find resource pool %s to summarize - " +
@@ -99,16 +99,19 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		if err != nil {
 			// TODO: handle this
 		}
-		ctx.Respond(resourcePoolSummary)
+		resp := &apiv1.GetResourcePoolResponse{}
+		resp.ResourcePool = resourcePoolSummary
+		ctx.Respond(resp)
 
 
-	case apiv1.GetResourcePoolsRequest:
+	case *apiv1.GetResourcePoolsRequest:
 		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
 		if err != nil {
 			// TODO: handle this
 		}
-		summaries := []*resourcepoolv1.ResourcePool{resourcePoolSummary}
-		ctx.Respond(summaries)
+		resp := &apiv1.GetResourcePoolsResponse{}
+		resp.ResourcePools = []*resourcepoolv1.ResourcePool{resourcePoolSummary}
+		ctx.Respond(resp)
 
 	case schedulerTick:
 		if k.reschedule {

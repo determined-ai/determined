@@ -31,7 +31,7 @@ type ResourcePoolConfig struct {
 	PoolName                 string              `json:"pool_name"`
 	Description              string              `json:"description"`
 	Provider                 *provisioner.Config `json:"provider"`
-	Scheduler                *SchedulerConfig    `json:"scheduler,omitempty"`
+	Scheduler                *SchedulerConfig    `json:"scheduler,omitempty"`  // TODO: Won't this lead to crashes when there isn't a scheduler config present?
 	MaxCPUContainersPerAgent int                 `json:"max_cpu_containers_per_agent"`
 }
 
