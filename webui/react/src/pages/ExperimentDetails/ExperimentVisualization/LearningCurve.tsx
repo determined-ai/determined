@@ -44,6 +44,7 @@ const LearningCurve: React.FC<Props> = ({
   const [ trialHpMap, setTrialHpMap ] = useState<Record<number, HParams>>({});
   const [ trialList, setTrialList ] = useState<Array<V1TrialsSampleResponseTrial>>([]);
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
+  const [ focusedTrialId, setFocusedTrialId ] = useState<number>();
 
   const isReady = useMemo(() => {
     return Object.keys(trialHpMap).length !== 0;
@@ -93,6 +94,11 @@ const LearningCurve: React.FC<Props> = ({
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);
   }, []);
+
+  const handleTableRow = useCallback((record: TrialHParams) => ({
+    onMouseEnter: () => setFocusedTrialId(record.id),
+    onMouseLeave: () => setFocusedTrialId(undefined),
+  }), []);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -195,7 +201,11 @@ const LearningCurve: React.FC<Props> = ({
           onChange={handleMetricChange} />}
         title="Learning Curve">
         <div className={css.base}>
-          <LearningCurveChart data={chartData} trialIds={trialIds} xValues={batches} />
+          <LearningCurveChart
+            data={chartData}
+            focusedTrialId={focusedTrialId}
+            trialIds={trialIds}
+            xValues={batches} />
         </div>
       </Section>
       <Section title="Trial Hyperparameters">
@@ -208,7 +218,8 @@ const LearningCurve: React.FC<Props> = ({
           scroll={{ x: 1000 }}
           showSorterTooltip={false}
           size="small"
-          onChange={handleTableChange} />
+          onChange={handleTableChange}
+          onRow={handleTableRow} />
       </Section>
     </>
   );

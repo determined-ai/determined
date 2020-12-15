@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import uPlot, { Cursor, Options } from 'uplot';
+import uPlot, { Options } from 'uplot';
 
 import 'uplot/dist/uPlot.min.css';
 import useResize from 'hooks/useResize';
@@ -9,6 +9,7 @@ import css from './LearningCurveChart.module.scss';
 
 interface Props {
   data: (number | null)[][];
+  focusedTrialId?: number;
   trialIds: number[];
   xValues: number[];
 }
@@ -29,7 +30,6 @@ const UPLOT_OPTIONS = {
       side: 3,
     },
   ],
-  // focus: { alpha: 0.3 },
   height: CHART_HEIGHT,
   legend: { show: false },
   scales: {
@@ -39,7 +39,12 @@ const UPLOT_OPTIONS = {
   series: [ { label: 'batches' } ],
 };
 
-const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props) => {
+const LearningCurveChart: React.FC<Props> = ({
+  data,
+  focusedTrialId,
+  trialIds,
+  xValues,
+}: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const trialIdRef = useRef<HTMLDivElement>(null);
@@ -48,16 +53,27 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
   const resize = useResize(chartRef);
   const [ chart, setChart ] = useState<uPlot>();
 
-  const handleMouseLeave = useCallback((
-    plot: uPlot,
-    target: HTMLElement,
-    handler: Cursor.MouseListener,
-  ) => {
+  const focusOnTrial = useCallback(() => {
+    if (!chart) return;
+
+    let seriesIdx = -1;
+    if (focusedTrialId && trialIds.includes(focusedTrialId)) {
+      seriesIdx = trialIds.findIndex(id => id === focusedTrialId);
+    }
+
+    if (seriesIdx === -1) {
+      chart.setSeries(null as unknown as number, { focus: false });
+    } else {
+      chart.setSeries(seriesIdx + 1, { focus: true });
+    }
+  }, [ chart, focusedTrialId, trialIds ]);
+
+  const handleMouseLeave = useCallback(() => {
+    focusOnTrial();
     setTimeout(() => {
       if (tooltipRef.current) tooltipRef.current.style.display = 'none';
     }, 100);
-    return handler;
-  }, []);
+  }, [ focusOnTrial ]);
 
   const handleCursorMove = useCallback((
     plot: uPlot,
@@ -72,6 +88,7 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
     const maxIdx = xValues.length;
     const idx = plot.posToIdx(mouseLeft);
 
+    // Find the nearest series and data point based on cursor position.
     let valDistance = Number.MAX_VALUE;
     let closestSeriesIdx = -1;
     let [ closestX, closestY ] = [ -1, -1 ];
@@ -82,6 +99,7 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
       let searchLeft = true;
       let searchRight = true;
 
+      // TODO: Optimize and refactor.
       while (searchLeft || searchRight) {
         const leftIdx = idx - idxDistance;
         const rightIdx = idx + idxDistance;
@@ -131,7 +149,7 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
       }
     });
 
-    // Focus or unfocus serires.
+    // Focus or remove focus series.
     if (closestSeriesIdx === -1) {
       plot.setSeries(null as unknown as number, { focus: false });
     } else {
@@ -175,12 +193,8 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
   useEffect(() => {
     if (!chartRef.current) return;
 
-    const now = Date.now();
     const options = uPlot.assign({}, UPLOT_OPTIONS, {
-      cursor: {
-        bind: { mouseleave: handleMouseLeave },
-        move: handleCursorMove,
-      },
+      cursor: { move: handleCursorMove },
       series: [
         { label: 'batches' },
         ...trialIds.map(trialId => ({
@@ -196,7 +210,6 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
 
     const plotChart = new uPlot(options, [ xValues, ...data ], chartRef.current);
     setChart(plotChart);
-    console.log('render time', (Date.now() - now) / 1000);
 
     return () => {
       setChart(undefined);
@@ -205,13 +218,17 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ data, xValues ]);
 
+  // Resize the chart when resize events detected.
   useEffect(() => {
     if (chart) chart.setSize({ height: CHART_HEIGHT, width: resize.width });
   }, [ chart, resize ]);
 
+  // Focus on a trial series if provided.
+  useEffect(() => focusOnTrial(), [ focusOnTrial ]);
+
   return (
     <div className={css.base}>
-      <div ref={chartRef} />
+      <div ref={chartRef} onMouseLeave={handleMouseLeave} />
       <div className={css.tooltip} ref={tooltipRef}>
         <div className={css.point} />
         <div className={css.box}>
