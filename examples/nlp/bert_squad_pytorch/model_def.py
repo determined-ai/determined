@@ -137,7 +137,7 @@ class BertSQuADPyTorch(PyTorchTrial):
             for i, feature_index in enumerate(feature_indices):
                 eval_feature = self.validation_features[feature_index.item()]
                 unique_id = int(eval_feature.unique_id)
-                output = [output[i].detach().cpu().tolist() for output in outputs]
+                output = [output[i].detach().cpu().tolist() for output in outputs.to_tuple()]
                 start_logits, end_logits = output
                 result = SquadResult(unique_id, start_logits, end_logits)
                 all_results.append(result)
