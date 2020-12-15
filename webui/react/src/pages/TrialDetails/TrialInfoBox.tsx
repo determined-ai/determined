@@ -6,7 +6,7 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
 import {
-  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentDetails, TrialDetails2,
+  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails2,
   TrialHyperParameters,
 } from 'types';
 import { isObject } from 'utils/data';
@@ -19,7 +19,7 @@ import { checkpointSize } from 'utils/types';
 import css from './TrialInfoBox.module.scss';
 
 interface Props {
-  experiment: ExperimentDetails;
+  experiment: ExperimentBase;
   trial: TrialDetails2;
 }
 

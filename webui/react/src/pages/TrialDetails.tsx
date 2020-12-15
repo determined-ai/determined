@@ -27,11 +27,11 @@ import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes/utils';
-import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
+import { createExperiment, getExperimentDetails2, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import {
-  CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step2, TrialDetails2,
+  CheckpointDetail, ExperimentBase, MetricName, MetricType, RawJson, Step2, TrialDetails2,
   TrialHyperParameters,
 } from 'types';
 import { clone, isEqual, numericSorter } from 'utils/data';
@@ -114,7 +114,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
-  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ trialCanceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails2>>({
     data: undefined,
@@ -396,9 +396,9 @@ If the problem persists please contact support.',
 
     const fetchExperimentDetails = async () => {
       try {
-        const response = await getExperimentDetails({
-          cancelToken: trialDetails.source?.token,
+        const response = await getExperimentDetails2({
           id: experimentId,
+          signal: trialCanceler.signal,
         });
         setExperiment(response);
 
@@ -433,6 +433,7 @@ If the problem persists please contact support.',
     fetchExperimentDetails();
   }, [
     experimentId,
+    trialCanceler,
     experimentIdParam,
     history,
     metricNames,
@@ -489,7 +490,6 @@ If the problem persists please contact support.',
       ]}
       options={<TrialActions
         trial={trial}
-        trials={experiment.trials}
         onClick={handleActionClick}
         onSettled={fetchTrialDetails} />}
       showDivider
