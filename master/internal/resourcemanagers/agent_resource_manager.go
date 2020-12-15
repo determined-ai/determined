@@ -198,8 +198,12 @@ func (a *agentResourceManager) aggregateTaskSummaries(
 
 
 func (a *agentResourceManager) getResourcePoolConfig(poolName string) (ResourcePoolConfig, error) {
-	// TODO: Implement correctly
-	return a.poolsConfig.ResourcePools[0], nil
+	for i := range a.poolsConfig.ResourcePools {
+		if a.poolsConfig.ResourcePools[i].PoolName == poolName {
+			return a.poolsConfig.ResourcePools[i], nil
+		}
+	}
+	return ResourcePoolConfig{},  errors.Errorf("cannot find resource pool %s", poolName)
 }
 
 func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poolName string) (*resourcepoolv1.ResourcePool, error) {
