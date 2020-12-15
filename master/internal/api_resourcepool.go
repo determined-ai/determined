@@ -15,17 +15,14 @@ func (a *apiServer) GetResourcePools(
 	switch {
 	case sproto.UseAgentRM(a.m.system):
 		err = a.actorRequest(sproto.AgentRMAddr.String(), req, &resp)
-		if err != nil {
-			// TODO: Handle this
-		}
 	case sproto.UseK8sRM(a.m.system):
 		err = a.actorRequest(sproto.K8sRMAddr.String(), req, &resp)
-		if err != nil {
-			// TODO: Handle this
-		}
 
 	default:
 		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
