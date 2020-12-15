@@ -2,6 +2,7 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -67,22 +68,22 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
 
-	case GetResourcePoolSummary:
+	case apiv1.GetResourcePoolRequest:
 
-		if a.pools[msg.resourcePool] == nil {
-			err := errors.Errorf("cannot find resource pool %s to summarize", msg.resourcePool)
+		if a.pools[msg.ResourcePoolId] == nil {
+			err := errors.Errorf("cannot find resource pool %s to summarize", msg.ResourcePoolId)
 			ctx.Log().WithError(err).Error("")
 			ctx.Respond(err)
 			break
 		}
 
-		resourcePoolSummary, err := a.createResourcePoolSummary(ctx, msg.resourcePool)
+		resourcePoolSummary, err := a.createResourcePoolSummary(ctx, msg.ResourcePoolId)
 		if err != nil {
 			// TODO: handle this
 		}
 		ctx.Respond(resourcePoolSummary)
 
-	case GetResourcePoolSummaries:
+	case apiv1.GetResourcePoolsRequest:
 		summaries := make([]*resourcepoolv1.ResourcePool, len(a.poolsConfig.ResourcePools))
 		for _, pool := range a.poolsConfig.ResourcePools {
 			summary, err := a.createResourcePoolSummary(ctx, pool.PoolName)

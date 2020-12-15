@@ -1,6 +1,7 @@
 package resourcemanagers
 
 import (
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -83,12 +84,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
-	case GetResourcePoolSummary:
-		if msg.resourcePool != kubernetesDummyResourcePool {
+	case apiv1.GetResourcePoolRequest:
+		if msg.ResourcePoolId != kubernetesDummyResourcePool {
 			err := errors.
 				Errorf("cannot find resource pool %s to summarize - " +
 								"in k8s only the '%s' resource pool exists. ",
-								msg.resourcePool,
+								msg.ResourcePoolId,
 								kubernetesDummyResourcePool)
 			ctx.Log().WithError(err).Error("")
 			ctx.Respond(err)
@@ -101,7 +102,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resourcePoolSummary)
 
 
-	case GetResourcePoolSummaries:
+	case apiv1.GetResourcePoolsRequest:
 		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
 		if err != nil {
 			// TODO: handle this

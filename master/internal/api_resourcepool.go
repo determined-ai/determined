@@ -16,13 +16,17 @@ func (a *apiServer) GetResourcePools(
 ) (resp *apiv1.GetResourcePoolsResponse, err error) {
 	switch {
 	case sproto.UseAgentRM(a.m.system):
-		err = a.actorRequest(sproto.AgentsAddr.String(), req, &resp)
+		resourcePoolSummaries := a.m.system.AskAt(sproto.AgentRMAddr, req).Get()
+		if resourcePoolSummaries == nil {
+			// TODO: Handle this
+		}
 	case sproto.UseK8sRM(a.m.system):
-		// TODO: What should we do in k8s land?
-		panic("Cannot call resource pools with k8s")
-		//err = a.actorRequest(sproto.PodsAddr.String(), req, &resp)
+		resourcePoolSummaries := a.m.system.AskAt(sproto.K8sRMAddr, req).Get()
+		if resourcePoolSummaries == nil {
+			// TODO: Handle this
+		}
 	default:
-		err = status.Error(codes.NotFound, "cannot find resource actor")
+		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
 	}
 
 	//
@@ -42,14 +46,20 @@ func (a *apiServer) GetResourcePools(
 func (a *apiServer) GetResourcePool(
 	_ context.Context, req *apiv1.GetResourcePoolRequest) (resp *apiv1.GetResourcePoolResponse, err error) {
 
-	// Send the request to the resourceManager for the general information
-	// 		Return err if the resource pool doesn't exist
-	// 		Otherwise return a resource pool config
-	// Transform config into correct shape for API response
+	switch {
+	case sproto.UseAgentRM(a.m.system):
+		resourcePoolSummary := a.m.system.AskAt(sproto.AgentRMAddr, req).Get()
+		if resourcePoolSummary == nil {
+			// TODO: Handle this
+		}
+	case sproto.UseK8sRM(a.m.system):
+		resourcePoolSummary := a.m.system.AskAt(sproto.K8sRMAddr, req).Get()
+		if resourcePoolSummary == nil {
+			// TODO: Handle this
+		}
+	default:
+		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
+	}
 
-	// Send a get to all agents
-	// Group slot information by resource pool
 
-	err = a.actorRequest(fmt.Sprintf("/agents/%s", req.AgentId), req, &resp)
-	return resp, err
 }
