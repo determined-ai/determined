@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+
 	"github.com/determined-ai/determined/master/internal/api"
 )
 
@@ -70,4 +72,21 @@ func filterToParams(f api.Filter) []interface{} {
 		panic(fmt.Sprintf("cannot convert filter values to params: %T", f.Values))
 	}
 	return params
+}
+
+func orderByToSQL(order apiv1.OrderBy) string {
+	const (
+		ascKeyword  = "ASC"
+		descKeyword = "DESC"
+	)
+	switch order {
+	case apiv1.OrderBy_ORDER_BY_UNSPECIFIED:
+		return ascKeyword
+	case apiv1.OrderBy_ORDER_BY_ASC:
+		return ascKeyword
+	case apiv1.OrderBy_ORDER_BY_DESC:
+		return descKeyword
+	default:
+		panic(fmt.Sprintf("unexpected order by: %s", order))
+	}
 }

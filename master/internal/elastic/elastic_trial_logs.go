@@ -93,7 +93,7 @@ func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 // search after over itself.
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-search-after.html
 func (e *Elastic) TrialLogs(
-	trialID, offset, limit int, fs []api.Filter, searchAfter interface{},
+	trialID, offset, limit int, fs []api.Filter, order apiv1.OrderBy, searchAfter interface{},
 ) ([]*model.TrialLog, interface{}, error) {
 	if limit > elasticMaxQuerySize {
 		limit = elasticMaxQuerySize
@@ -126,13 +126,13 @@ func (e *Elastic) TrialLogs(
 			},
 		},
 		"sort": []jsonObj{
-			{"timestamp": "asc"},
+			{"timestamp": orderByToElastic(order)},
 			// If two containers emit logs with the same timestamp down
 			// to the nanosecond, it may be lost in some cases still, but
 			// this should be better than nothing.
 			{
 				"container_id.keyword": jsonObj{
-					"order": "asc",
+					"order": orderByToElastic(order),
 					// https://www.elastic.co/guide/en/elasticsearch/reference/7.9/
 					// sort-search-results.html#_ignoring_unmapped_fields
 					"unmapped_type": "keyword",
@@ -363,6 +363,23 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 		}
 	}
 	return terms
+}
+
+func orderByToElastic(order apiv1.OrderBy) string {
+	const (
+		ascKeyword  = "asc"
+		descKeyword = "desc"
+	)
+	switch order {
+	case apiv1.OrderBy_ORDER_BY_UNSPECIFIED:
+		return ascKeyword
+	case apiv1.OrderBy_ORDER_BY_ASC:
+		return ascKeyword
+	case apiv1.OrderBy_ORDER_BY_DESC:
+		return descKeyword
+	default:
+		panic(fmt.Sprintf("unexpected order by: %s", order))
+	}
 }
 
 // interfaceToSlice accepts an interface{} whose underlying type is []T for any T

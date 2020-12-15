@@ -41,7 +41,7 @@ var (
 // must support to provide the features surfaced in API.
 type TrialLogBackend interface {
 	TrialLogs(
-		trialID, offset, limit int, filters []api.Filter, state interface{},
+		trialID, offset, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
 	) ([]*model.TrialLog, interface{}, error)
 	AddTrialLogs([]*model.TrialLog) error
 	TrialLogCount(trialID int, filters []api.Filter) (int, error)
@@ -97,7 +97,7 @@ func (a *apiServer) TrialLogs(
 		}
 
 		b, state, err := a.m.trialLogBackend.TrialLogs(
-			int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, followState)
+			int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, req.OrderBy, followState)
 		if err != nil {
 			return nil, err
 		}

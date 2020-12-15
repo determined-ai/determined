@@ -63,6 +63,7 @@ const TrialLogs: React.FC = () => {
         filter.sources,
         filter.timestampBefore ? filter.timestampBefore.toDate() : undefined,
         filter.timestampAfter ? filter.timestampAfter.toDate() : undefined,
+        undefined,
         { signal: historyCanceler.signal },
       ),
       event => buffer.push(jsonToTrialLog(event)),
@@ -155,6 +156,7 @@ const TrialLogs: React.FC = () => {
         filter.sources,
         filter.timestampBefore ? filter.timestampBefore.toDate() : undefined,
         filter.timestampAfter ? filter.timestampAfter.toDate() : undefined,
+        undefined,
         { signal: canceler.signal },
       ),
       event => {
