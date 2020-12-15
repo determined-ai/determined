@@ -1,5 +1,7 @@
 module github.com/determined-ai/determined/master
 
+go 1.15
+
 require (
 	cloud.google.com/go v0.58.0
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
@@ -65,5 +67,3 @@ require (
 replace github.com/determined-ai/determined/proto => ../proto
 
 replace github.com/docker/docker v1.13.1 => github.com/docker/engine v1.4.2-0.20191113042239-ea84732a7725
-
-go 1.13
