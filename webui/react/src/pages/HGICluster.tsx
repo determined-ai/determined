@@ -79,13 +79,14 @@ const HGICluster: React.FC = () => {
       </Section>
       <Section title={`${resourcePools.length} Resource Pools`}>
         <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
-          {(new Array(5).fill(0)).map((_, idx) => {
+          {resourcePools.map((_, idx) => {
             const rp = resourcePools[Math.floor(
               Math.random() * resourcePools.length,
             )];
             return <ResourcePoolCard
               containerStates={getSlotContainerStates(agents.data || [], rp.name)}
-              key={idx} />;
+              key={idx}
+              rpIndex={idx} />;
           })}
         </Grid>
       </Section>

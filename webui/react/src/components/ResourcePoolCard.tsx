@@ -15,6 +15,8 @@ import css from './ResourcePoolCard.module.scss';
 
 interface Props {
   containerStates: ResourceState[]; // GPU
+  rpIndex: number; // Index into resource pool sample response. This is a temporary
+  // prop until the resource pool api, and its corresponding types are implemented.
 }
 
 const resourcePolls = getResourcePools();
@@ -45,10 +47,8 @@ const agentStatusText = (numAgents: number, maxInstances: number): string => {
   return prefix + ' Agents Active';
 };
 
-const ResourcePoolCard: React.FC<Props> = ({ containerStates }: Props) => {
-  const rp = resourcePolls[Math.floor(
-    Math.random() * resourcePolls.length,
-  )];
+const ResourcePoolCard: React.FC<Props> = ({ containerStates, rpIndex }: Props) => {
+  const rp = resourcePolls[rpIndex];
 
   const shortDetails = rpAttrs.reduce((acc, cur) => {
     acc[cur[1]] = (rp as SafeRawJson) [cur[0]];
