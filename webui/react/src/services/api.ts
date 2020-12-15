@@ -5,14 +5,14 @@ import {
   ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams,
   GetTrialsParams,
-  LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
+  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
   TrialLogsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
   ExperimentBase, ExperimentDetails, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
-  Telemetry, TrialDetails2,
+  TrialDetails2, Telemetry ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -113,6 +113,10 @@ Api.V1GetExperimentResponse, ExperimentBase>(Config.getExperimentDetails2);
 
 export const getExpTrials = generateDetApi<GetTrialsParams, Api.V1GetExperimentTrialsResponse,
 TrialDetails2[]>(Config.getExpTrials);
+
+export const getExpValidationHistory = generateDetApi<
+SingleEntityParams, Api.V1GetExperimentValidationHistoryResponse, ValidationHistory[]>
+(Config.getExpValidationHistory);
 
 export const getTrialDetails =
   generateDetApi<TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2>(Config.getTrialDetails);

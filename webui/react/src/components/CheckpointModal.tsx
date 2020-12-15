@@ -3,23 +3,29 @@ import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
-import { CheckpointDetail, CheckpointStorageType, ExperimentConfig, RunState } from 'types';
+import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize } from 'utils/types';
+import { checkpointSize, getBatchNumber } from 'utils/types';
 
 import css from './CheckpointModal.module.scss';
 import Link from './Link';
 
 interface Props {
-  checkpoint: CheckpointDetail;
+  checkpoint: CheckpointWorkload | CheckpointDetail;
+  searcherValidation?: number;
+  trialId: number;
+  experimentId: number;
   config: ExperimentConfig;
   onHide?: () => void;
   show?: boolean;
   title: string;
 }
 
-const getStorageLocation = (config: ExperimentConfig, checkpoint: CheckpointDetail): string => {
+const getStorageLocation = (
+  config: ExperimentConfig,
+  checkpoint: CheckpointDetail | CheckpointWorkload,
+): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
   let location = '';
@@ -61,7 +67,7 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, title }: Props) => {
+const CheckpointModal: React.FC<Props> = ({ config, checkpoint, experimentId, trialId, onHide, show, title, ...props }: Props) => {
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {
@@ -76,6 +82,8 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
       .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
   }, [ checkpoint.resources ]);
 
+  const totalBatchesProcessed = getBatchNumber(checkpoint);
+
   return (
     <Modal
       footer={null}
@@ -87,25 +95,25 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
         {renderRow(
           'Source', (
             <div className={css.source}>
-              <Link path={`/experiments/${checkpoint.experimentId}`}>
-                Experiment {checkpoint.experimentId}
+              <Link path={`/experiments/${experimentId}`}>
+                Experiment {experimentId}
               </Link>
               <span className={css.sourceDivider} />
-              <Link path={`/experiments/${checkpoint.experimentId}/trials/${checkpoint.trialId}`}>
-                Trial {checkpoint.trialId}
+              <Link path={`/experiments/${experimentId}/trials/${trialId}`}>
+                Trial {trialId}
               </Link>
               <span className={css.sourceDivider} />
-              <span>Batch {checkpoint.batch}</span>
+              <span>Batch {totalBatchesProcessed}</span>
             </div>
           ),
         )}
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
-        {checkpoint.validationMetric && renderRow(
+        {props.searcherValidation && renderRow(
           'Validation Metric',
           <>
-            <HumanReadableFloat num={checkpoint.validationMetric} /> {`(${config.searcher.metric})`}
+            <HumanReadableFloat num={props.searcherValidation} /> {`(${config.searcher.metric})`}
           </>,
         )}
         {renderRow('Start Time', formatDatetime(checkpoint.startTime))}

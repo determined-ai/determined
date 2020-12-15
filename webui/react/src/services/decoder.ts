@@ -328,6 +328,25 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   };
 };
 
+export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail => {
+  const resources: Record<string, number> = {};
+  Object.entries(data.resources || {}).forEach(([ res, val ]) => {
+    resources[res] = parseFloat(val);
+  });
+
+  return {
+    batch: data.batchNumber,
+    endTime: data.endTime && data.endTime as unknown as string,
+    experimentId: data.experimentId,
+    resources,
+    startTime: data.startTime as unknown as string,
+    state: decodeCheckpointState(data.state),
+    trialId: data.trialId,
+    uuid: data.uuid,
+    validationMetric: data.searcherMetric,
+  };
+};
+
 const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem2 => {
   return {
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),

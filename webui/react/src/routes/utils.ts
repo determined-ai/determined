@@ -1,3 +1,4 @@
+import { string } from 'io-ts';
 import { pathToRegexp } from 'path-to-regexp';
 import { MouseEvent, MouseEventHandler } from 'react';
 
@@ -127,4 +128,12 @@ export const linkPath = (aPath: string, external = false): string => {
     path = process.env.PUBLIC_URL + aPath;
   }
   return path;
+};
+
+// type Single (params: {id: number}) => string;
+
+export const paths = {
+  trialDetails: (trialId: number | string, experimentId: number | string): string => {
+    return `/experiments/${experimentId}/trials/${trialId}`;
+  },
 };

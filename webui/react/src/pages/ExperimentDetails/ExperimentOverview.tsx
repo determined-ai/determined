@@ -147,8 +147,10 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, onTagsChange }: Props
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}
+        experimentId={experiment.id}
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
+        trialId={activeCheckpoint.trialId}
         onHide={handleCheckpointDismiss} />}
     </div>
   );

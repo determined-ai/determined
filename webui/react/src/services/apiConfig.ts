@@ -13,13 +13,13 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
-  GetExperimentsParams, GetTrialsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
+  GetExperimentsParams, GetTrialsParams, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentDetails, Log, TBSourceType, Telemetry, TrialDetails2,
+  ExperimentDetails, Log, TBSourceType, Telemetry, TrialDetails2, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -250,14 +250,22 @@ ExperimentBase> = {
   request: (response) => detApi.Experiments.determinedGetExperiment(response.id),
 };
 
-// export const getExpValidationHistory: DetApi<
-// ExperimentDetailsParams,
-// Api.V1GetExperimentValidationHistoryResponse,
-// Api.V1GetExperimentValidationHistoryResponse> = {
-//   name: 'getExperimentValidationHistory',
-//   postProcess: (response) => response,
-//   request: (response) => detApi.Experiments.determinedGetExperimentValidationHistory(response.id),
-// };
+export const getExpValidationHistory: DetApi<SingleEntityParams,
+Api.V1GetExperimentValidationHistoryResponse,
+ValidationHistory[]> = {
+  name: 'getExperimentValidationHistory',
+  postProcess: (response) => {
+    if (!response.validationHistory) return [];
+    return response.validationHistory?.map(vh => ({
+      endTime: vh.endTime as unknown as string,
+      trialId: vh.trialId,
+      validationError: vh.searcherMetric,
+    }));
+  },
+  request: (params) => detApi.Experiments.determinedGetExperimentValidationHistory(
+    params.id,
+  ),
+};
 
 export const getExpTrials: DetApi<
 GetTrialsParams,

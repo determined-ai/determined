@@ -529,8 +529,10 @@ If the problem persists please contact support.',
       {activeCheckpoint && experimentConfig && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experimentConfig}
+        experimentId={trial.experimentId}
         show={showCheckpoint}
         title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
+        trialId={activeCheckpoint.trialId}
         onHide={handleCheckpointDismiss} />}
       <CreateExperimentModal
         config={contModalConfig}

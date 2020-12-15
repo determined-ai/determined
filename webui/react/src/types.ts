@@ -271,6 +271,11 @@ export interface CheckpointWorkload extends Workload {
   uuid? : string;
 }
 
+export interface CheckpointWorkloadExtended extends CheckpointWorkload {
+  trialId: number;
+  experimentId: number;
+}
+
 export interface MetricsWorkload extends Workload {
   metrics?: Record<string, number>;
   numInputs?: number;
@@ -346,6 +351,8 @@ export interface TrialItem extends TrialBase {
   totalBatchesProcessed: number;
   url: string;
 }
+
+// export interface ValidationHistory
 
 export interface ExperimentItem {
   archived: boolean;

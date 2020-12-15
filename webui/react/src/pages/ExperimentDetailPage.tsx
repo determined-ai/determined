@@ -150,6 +150,7 @@ const ExperimentDetailPage: React.FC = () => {
       ]}
       options={<ExperimentActions
         experiment={experiment}
+        trials={experiment.trials}
         onClick={{ Fork: showForkModal }}
         onSettled={fetchExperimentDetails} />}
       showDivider

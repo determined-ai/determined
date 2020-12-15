@@ -15,10 +15,10 @@ export const getWorkload = (wrapper: WorkloadWrapper): MetricsWorkload | Checkpo
 
 export const isMetricsWorkload = (workload: MetricsWorkload | CheckpointWorkload)
 : workload is MetricsWorkload => {
-  return 'metrics' in workload
-  && 'numInputs' in workload
-  && !('uuid' in workload)
-  && !('resources' in workload);
+  if ('uuid' in workload || 'resources' in workload) return false;
+  if ('metrics' in workload || 'numInputs' in workload) return true;
+  // we can't determine which one it is.
+  return false;
 };
 
 export const workloadsToSteps = (workloads: WorkloadWrapper[]): Step2[] => {

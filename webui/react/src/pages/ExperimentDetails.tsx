@@ -21,13 +21,17 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
-import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
-import { handlePath } from 'routes/utils';
-import { getExperimentDetails, isNotFound } from 'services/api';
+import ExperimentInfoBox, { TopWorkloads } from 'pages/ExperimentDetails/ExperimentInfoBox';
+import { handlePath, paths } from 'routes/utils';
+import { getExperimentDetails2, getExpTrials, getExpValidationHistory, isNotFound } from 'services/api';
+import { detApi } from 'services/apiConfig';
+import { decodeCheckpoint } from 'services/decoder';
 import { ApiSorter, ApiState } from 'services/types';
-import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
+import { isAborted } from 'services/utils';
+import { CheckpointWorkloadExtended, ExperimentBase, TrialItem, TrialItem2,
+  ValidationHistory } from 'types';
 import { clone, numericSorter } from 'utils/data';
-import { terminalRunStates, upgradeConfig } from 'utils/types';
+import { getMetricValue, terminalRunStates, upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
 import { columns as defaultColumns } from './ExperimentDetails.table';
@@ -43,7 +47,7 @@ const STORAGE_SORTER_KEY = 'sorter';
 const ExperimentDetailsComp: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const id = parseInt(experimentId);
-  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
+  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ forkModalVisible, setForkModalVisible ] = useState(false);
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
@@ -52,36 +56,58 @@ const ExperimentDetailsComp: React.FC = () => {
   const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
   const [ pageSize, setPageSize ] = useState(initLimit);
   const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
-  const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentDetails>>({
+  const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentBase>>({
     data: undefined,
     error: undefined,
     isLoading: true,
     source: axios.CancelToken.source(),
   });
+  const [ trials, setTrials ] = useState<TrialItem2[]>([]);
+  const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
+  const [ bestWorkloads, setBestWorkloads ] = useState<TopWorkloads>();
 
   const experiment = experimentDetails.data;
   const experimentConfig = experiment?.config;
 
+  useEffect(() => {
+    if (id === undefined) return;
+    (async () => {
+      const resp = await detApi.Experiments.determinedGetExperimentCheckpoints(
+        id,
+        'SORT_BY_SEARCHER_METRIC',
+        experimentConfig?.searcher.smallerIsBetter ? 'ORDER_BY_ASC' : 'ORDER_BY_DESC',
+        undefined,
+        1,
+        [ 'STATE_COMPLETED' ],
+        [ 'STATE_COMPLETED' ],
+      );
+      const checkpoints = resp.checkpoints?.map(decodeCheckpoint);
+      const bestCheckpoint = checkpoints && checkpoints[0];
+
+      const bestValidation = valHistory.length > 1 ?
+        valHistory[valHistory.length-1]?.validationError : undefined;
+
+      setBestWorkloads({ bestCheckpoint, bestValidation });
+    })();
+  }, [ id, valHistory, experimentConfig?.searcher.smallerIsBetter ]);
+
   const columns = useMemo(() => {
-    const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      const validationMetrics = record.latestValidationMetrics?.validationMetrics || {};
-      const latestValidationMetric = metric && validationMetrics[metric];
-      return latestValidationMetric &&
-        <HumanReadableFloat num={latestValidationMetric} />;
+    const latestValidationRenderer = (_: string, record: TrialItem2): React.ReactNode => {
+      const value = getMetricValue(record.latestValidationMetric, metric);
+      return value && <HumanReadableFloat num={value} />;
     };
 
-    const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
+    const latestValidationSorter = (a: TrialItem2, b: TrialItem2): number => {
       if (!metric) return 0;
-      const aMetric = a.latestValidationMetrics?.validationMetrics[metric];
-      const bMetric = b.latestValidationMetrics?.validationMetrics[metric];
+      const aMetric = getMetricValue(a.latestValidationMetric, metric);
+      const bMetric = getMetricValue(b.latestValidationMetric, metric);
       return numericSorter(aMetric, bMetric);
     };
 
-    const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
+    const checkpointRenderer = (_: string, record: TrialItem2): React.ReactNode => {
       if (!record.bestAvailableCheckpoint) return;
-      const checkpoint: CheckpointDetail = {
+      const checkpoint: CheckpointWorkloadExtended = {
         ...record.bestAvailableCheckpoint,
-        batch: record.totalBatchesProcessed,
         experimentId: id,
         trialId: record.id,
       };
@@ -116,17 +142,19 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const response = await getExperimentDetails({
-        cancelToken: experimentDetails.source?.token,
-        id,
-      });
-      setExperimentDetails(prev => ({ ...prev, data: response, isLoading: false }));
+      // TODO add abort controller
+      const experiment = await getExperimentDetails2({ id });
+      const trials = await getExpTrials({ id });
+      const validationHistory = await getExpValidationHistory({ id });
+      setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
+      setTrials(trials);
+      setValHistory(validationHistory);
     } catch (e) {
-      if (!experimentDetails.error && !axios.isCancel(e)) {
+      if (!experimentDetails.error && !isAborted(e)) {
         setExperimentDetails(prev => ({ ...prev, error: e }));
       }
     }
-  }, [ id, experimentDetails.error, experimentDetails.source ]);
+  }, [ id, experimentDetails.error ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
@@ -161,12 +189,16 @@ const ExperimentDetailsComp: React.FC = () => {
     setPageSize(tablePagination.pageSize);
   }, [ columns, setSorter, storage ]);
 
-  const handleTableRow = useCallback((record: TrialItem) => {
-    const handleClick = (event: React.MouseEvent) => handlePath(event, { path: record.url });
+  const handleTableRow = useCallback((record: TrialItem2) => {
+    const handleClick = (event: React.MouseEvent) =>
+      handlePath(event, { path: paths.trialDetails(record.id, id) });
     return { onAuxClick: handleClick, onClick: handleClick };
-  }, []);
+  }, [ id ]);
 
-  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
+  const handleCheckpointShow = (
+    event: React.MouseEvent,
+    checkpoint: CheckpointWorkloadExtended,
+  ) => {
     event.stopPropagation();
     setActiveCheckpoint(checkpoint);
     setShowCheckpoint(true);
@@ -219,6 +251,7 @@ const ExperimentDetailsComp: React.FC = () => {
       ]}
       options={<ExperimentActions
         experiment={experiment}
+        trials={trials}
         onClick={{ Fork: showForkModal }}
         onSettled={fetchExperimentDetails} />}
       showDivider
@@ -232,6 +265,8 @@ const ExperimentDetailsComp: React.FC = () => {
         <Row className={css.topRow} gutter={[ 16, 16 ]}>
           <Col lg={10} span={24} xl={8} xxl={6}>
             <ExperimentInfoBox
+              bestCheckpoint={bestWorkloads?.bestCheckpoint}
+              bestValidation={bestWorkloads?.bestValidation}
               experiment={experiment}
               onTagsChange={fetchExperimentDetails}
             />
@@ -239,20 +274,20 @@ const ExperimentDetailsComp: React.FC = () => {
           <Col lg={14} span={24} xl={16} xxl={18}>
             <ExperimentChart
               startTime={experiment.startTime}
-              validationHistory={experiment.validationHistory}
+              validationHistory={valHistory}
               validationMetric={experimentConfig?.searcher.metric} />
           </Col>
           <Col span={24}>
             <Section title="Trials">
-              <ResponsiveTable<TrialItem>
+              <ResponsiveTable<TrialItem2>
                 columns={columns}
-                dataSource={experiment?.trials}
+                dataSource={trials}
                 loading={{
                   indicator: <Indicator />,
                   spinning: experimentDetails.isLoading,
                 }}
-                pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
-                rowClassName={defaultRowClassName({ clickable: true })}
+                pagination={getPaginationConfig(trials.length || 0, pageSize)}
+                rowClassName={defaultRowClassName()}
                 rowKey="id"
                 showSorterTooltip={false}
                 size="small"
@@ -265,8 +300,10 @@ const ExperimentDetailsComp: React.FC = () => {
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}
+        experimentId={id}
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
+        trialId={activeCheckpoint.trialId}
         onHide={handleCheckpointDismiss} />}
       <CreateExperimentModal
         config={forkModalConfig}
