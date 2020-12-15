@@ -381,7 +381,6 @@ export interface ExperimentOld extends ExperimentBase {
 
 export interface ExperimentDetails extends ExperimentBase {
   trials: TrialItem[];
-  username: string;
   validationHistory: ValidationHistory[];
 }
 
