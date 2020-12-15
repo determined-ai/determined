@@ -22,14 +22,14 @@ interface Props {
 const resoucePools = getResourcePools();
 
 const rpAttrs = [
-  'location' ,
-  'instanceType',
-  'spotOrPreemptible',
-  'minInstances',
-  'maxInstances',
-  'gpusPerAgent',
-  'cpuContainerCapacityPerAgent',
-  'schedulerType',
+  [ 'location', 'Location' ] ,
+  [ 'instanceType', 'Instance Type' ],
+  [ 'spotOrPreemptible', 'Sport/Preemptible' ],
+  [ 'minInstances', 'Min Agents' ],
+  [ 'maxInstances', 'Max Agents' ],
+  [ 'gpusPerAgent', 'GPUs per Agent' ],
+  [ 'cpuContainerCapacityPerAgent', 'CPU Containers per Agent' ],
+  [ 'schedulerType', 'Scheduler Type' ],
 ];
 
 type SafeRawJson = Record<string, unknown>;
@@ -53,7 +53,7 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
   )];
 
   const shortDetails = rpAttrs.reduce((acc, cur) => {
-    acc[cur] = (rp as SafeRawJson) [cur];
+    acc[cur[1]] = (rp as SafeRawJson) [cur[0]];
     return acc;
   }, {} as SafeRawJson );
 
