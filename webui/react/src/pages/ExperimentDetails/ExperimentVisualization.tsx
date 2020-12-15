@@ -78,6 +78,7 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: metricsCanceler.signal },
       ),
       event => {
+        if (!event) return;
         setSearcherMetric(event.searcherMetric);
         setTrainingMetrics(event.trainingMetrics || []);
         setValidationMetrics(event.validationMetrics || []);
@@ -103,10 +104,9 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: batchesCanceler.signal },
       ),
       event => {
-        if (event.batches) {
-          setBatches(event.batches);
-          if (event.batches.length !== 0) setSelectedBatch(event.batches[0]);
-        }
+        if (!event || !event.batches) return;
+        setBatches(event.batches);
+        if (event.batches.length !== 0) setSelectedBatch(event.batches[0]);
       },
     );
 

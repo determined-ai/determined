@@ -110,7 +110,7 @@ const LearningCurve: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        if (!event.trials || !Array.isArray(event.trials)) return;
+        if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         // Figure out if we need to update the list of trial ids.
         const hasDemotedTrials = event.demotedTrials && event.demotedTrials.length !== 0;
