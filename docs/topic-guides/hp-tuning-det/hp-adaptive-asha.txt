@@ -44,7 +44,8 @@ Resource budget:
    this many trials training simultaneously at any one time. The
    ``adaptive_asha`` searcher scales nearly perfectly with additional
    compute, so you should set this field based on compute environment
-   constraints.
+   constraints. If this value is less than the number of brackets
+   produced by the adaptive algorithm, it will be rounded up.
 
 *********
  Details

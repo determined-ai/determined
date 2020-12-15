@@ -44,12 +44,12 @@ func getBracketMaxConcurrentTrials(
 	remainder := 0
 	numBrackets := len(maxTrials)
 	bracketMaxConcurrentTrials := make([]int, 0, numBrackets)
-	// Without this, the remainder will be less than numBrackets and later brackets will,
-	// not receive a constraint on bracketMaxConcurrentTrials.
-	maxConcurrentTrials = min(maxConcurrentTrials, numBrackets)
 	if maxConcurrentTrials == 0 {
 		minTrials = max(maxTrials[numBrackets-1], int(divisor))
 	} else {
+		// Without this, the remainder will be less than numBrackets and later brackets willgit pu
+		// not receive a constraint on bracketMaxConcurrentTrials.
+		maxConcurrentTrials = max(maxConcurrentTrials, numBrackets)
 		minTrials = maxConcurrentTrials / numBrackets
 		remainder = maxConcurrentTrials % numBrackets
 	}
