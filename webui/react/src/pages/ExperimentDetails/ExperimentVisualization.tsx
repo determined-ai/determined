@@ -51,7 +51,6 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ selectedBatch, setSelectedBatch ] = useState<number>();
-  const [ canceler ] = useState(new AbortController());
 
   const metrics: MetricName[] = [
     ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
@@ -71,11 +70,12 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Stream available metrics
   useEffect(() => {
+    const metricsCanceler = new AbortController();
     consumeStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.determinedMetricNames(
         experiment.id,
         undefined,
-        { signal: canceler.signal },
+        { signal: metricsCanceler.signal },
       ),
       event => {
         setSearcherMetric(event.searcherMetric);
@@ -84,8 +84,8 @@ const ExperimentVisualization: React.FC<Props> = ({
       },
     );
 
-    return canceler.abort;
-  }, [ canceler, experiment.id ]);
+    return () => metricsCanceler.abort();
+  }, [ experiment.id ]);
 
   // Stream available batches
   useEffect(() => {
