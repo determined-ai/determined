@@ -1,10 +1,10 @@
 import { Button, Space, Tooltip } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
 import { openOrCreateTensorboard } from 'services/api';
-import { RunState, TBSourceType, TrialDetails2, TrialItem } from 'types';
+import { RunState, TBSourceType, TrialDetails2 } from 'types';
 import { getWorkload, isMetricsWorkload } from 'utils/step';
 import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
@@ -17,7 +17,6 @@ export enum Action {
 
 interface Props {
   trial: TrialDetails2;
-  trials: TrialItem[],
   onClick: (action: Action) => (() => void);
   onSettled: () => void; // A callback to trigger after an action is done.
 }
@@ -33,7 +32,7 @@ const trialWillNeverHaveData = (trial: TrialDetails2): boolean => {
   return isTerminal && workloadsWithSomeMetric.length === 0;
 };
 
-const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Props) => {
+const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => {
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Continue: false,
     Logs: false,
@@ -51,13 +50,9 @@ const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Pr
     setButtonStates(state => ({ ...state, tensorboard: false }));
   }, [ trial.id, onSettled ]);
 
-  const trialCompletedCheckpointSum = useMemo(() => {
-    return trials.reduce((acc, trial) => acc + trial.numCompletedCheckpoints, 0);
-  }, [ trials ]);
-
   const actionButtons: ConditionalButton<TrialDetails2>[] = [
     {
-      button: (trialCompletedCheckpointSum > 0 ? (
+      button: (trial.bestAvailableCheckpoint !== undefined ? (
         <Button key={Action.Continue} onClick={onClick(Action.Continue)}>Continue Trial</Button>
       ) : (
         <Tooltip key={Action.Continue} title={'No checkpoints found. Cannot continue trial.'}>

@@ -6,7 +6,7 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
 import {
-  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentDetails, TrialDetails2,
+  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails2,
   TrialHyperParameters,
 } from 'types';
 import { isObject } from 'utils/data';
@@ -20,7 +20,7 @@ import css from './TrialInfoBox.module.scss';
 
 interface Props {
   trial: TrialDetails2;
-  experiment: ExperimentDetails;
+  experiment: ExperimentBase;
 }
 
 const hyperparamsView = (params: TrialHyperParameters) => {
