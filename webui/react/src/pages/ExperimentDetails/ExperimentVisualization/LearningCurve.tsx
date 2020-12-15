@@ -7,6 +7,7 @@ import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { handlePath } from 'routes/utils';
 import { V1TrialsSampleResponse, V1TrialsSampleResponseTrial } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -25,8 +26,9 @@ interface Props {
 type HParams = Record<string, boolean | number | string>;
 
 interface TrialHParams {
-  id: number;
   hparams: HParams;
+  id: number;
+  url: string;
 }
 
 const MAX_TRIALS = 100;
@@ -44,7 +46,8 @@ const LearningCurve: React.FC<Props> = ({
   const [ trialHpMap, setTrialHpMap ] = useState<Record<number, HParams>>({});
   const [ trialList, setTrialList ] = useState<Array<V1TrialsSampleResponseTrial>>([]);
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
-  const [ focusedTrialId, setFocusedTrialId ] = useState<number>();
+  const [ chartTrialId, setChartTrialId ] = useState<number>();
+  const [ tableTrialId, setTableTrialId ] = useState<number>();
 
   const isReady = useMemo(() => {
     return Object.keys(trialHpMap).length !== 0;
@@ -52,7 +55,11 @@ const LearningCurve: React.FC<Props> = ({
 
   const trialHParams: TrialHParams[] = useMemo(() => {
     if (!trialHpMap) return [];
-    return trialIds.map(trialId => ({ hparams: trialHpMap[trialId], id: trialId }));
+    return trialIds.map(trialId => ({
+      hparams: trialHpMap[trialId],
+      id: trialId,
+      url: `/trials/${trialId}`,
+    }));
   }, [ trialHpMap, trialIds ]);
 
   const columns = useMemo(() => {
@@ -91,14 +98,26 @@ const LearningCurve: React.FC<Props> = ({
     if (onMetricChange) onMetricChange(metric);
   }, [ onMetricChange ]);
 
+  const handleTrialFocus = useCallback((trialId: number | null) => {
+    setChartTrialId(trialId != null ? trialId : undefined);
+  }, []);
+
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);
   }, []);
 
   const handleTableRow = useCallback((record: TrialHParams) => ({
-    onMouseEnter: () => setFocusedTrialId(record.id),
-    onMouseLeave: () => setFocusedTrialId(undefined),
+    onClick: (event: React.MouseEvent) => handlePath(event, { path: record.url }),
+    onMouseEnter: () => setTableTrialId(record.id),
+    onMouseLeave: () => setTableTrialId(undefined),
   }), []);
+
+  const rowClassName = useCallback((record: TrialHParams) => {
+    return defaultRowClassName({
+      clickable: true,
+      highlighted: record.id === chartTrialId,
+    });
+  }, [ chartTrialId ]);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -203,9 +222,10 @@ const LearningCurve: React.FC<Props> = ({
         <div className={css.base}>
           <LearningCurveChart
             data={chartData}
-            focusedTrialId={focusedTrialId}
+            focusedTrialId={tableTrialId}
             trialIds={trialIds}
-            xValues={batches} />
+            xValues={batches}
+            onTrialFocus={handleTrialFocus} />
         </div>
       </Section>
       <Section title="Trial Hyperparameters">
@@ -213,7 +233,7 @@ const LearningCurve: React.FC<Props> = ({
           columns={columns}
           dataSource={trialHParams}
           pagination={getPaginationConfig(trialHParams.length, pageSize)}
-          rowClassName={defaultRowClassName(false)}
+          rowClassName={rowClassName}
           rowKey="id"
           scroll={{ x: 1000 }}
           showSorterTooltip={false}

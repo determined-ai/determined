@@ -10,6 +10,7 @@ import css from './LearningCurveChart.module.scss';
 interface Props {
   data: (number | null)[][];
   focusedTrialId?: number;
+  onTrialFocus?: (trialId: number | null) => void;
   trialIds: number[];
   xValues: number[];
 }
@@ -42,6 +43,7 @@ const UPLOT_OPTIONS = {
 const LearningCurveChart: React.FC<Props> = ({
   data,
   focusedTrialId,
+  onTrialFocus,
   trialIds,
   xValues,
 }: Props) => {
@@ -152,8 +154,10 @@ const LearningCurveChart: React.FC<Props> = ({
     // Focus or remove focus series.
     if (closestSeriesIdx === -1) {
       plot.setSeries(null as unknown as number, { focus: false });
+      if (onTrialFocus) onTrialFocus(null);
     } else {
       plot.setSeries(closestSeriesIdx + 1, { focus: true });
+      if (onTrialFocus) onTrialFocus(trialIds[closestSeriesIdx]);
     }
 
     /*
@@ -188,7 +192,7 @@ const LearningCurveChart: React.FC<Props> = ({
     }
 
     return position;
-  }, [ data, tooltipRef, trialIdRef, trialIds, xValues ]);
+  }, [ data, onTrialFocus, tooltipRef, trialIdRef, trialIds, xValues ]);
 
   useEffect(() => {
     if (!chartRef.current) return;
