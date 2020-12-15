@@ -11,8 +11,15 @@ interface Props {
 
 // TODO can be reused in TrialInfoBox.
 
-const row = (label: string, value: RawJson): React.ReactNode => {
-  const textValue = isObject(value) ? JSON.stringify(value, null, 2) : value.toString();
+const row = (label: string, value: RawJson | string | number | null): React.ReactNode => {
+  let textValue = '';
+  if (isObject(value)) {
+    textValue = JSON.stringify(value, null, 2);
+  } else if (value === '' || value === null || value === undefined) {
+    textValue = 'N/A';
+  } else {
+    textValue = value.toString();
+  }
   return <li className={css.item} key={label}>
     <span className={css.label}>{label}:</span>
     <span className={css.value}>{textValue}</span>
