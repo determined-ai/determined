@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import React from 'react';
 
 import awsLogo from 'assets/aws-logo.svg';
@@ -116,9 +117,11 @@ const ResourcePoolCard: React.FC<Props> = ({ agents }: Props) => {
       </div>
       <div className={css.body}>
         <section className={css.description}>
-          <p>
-            {description}
-          </p>
+          <Tooltip title={description}>
+            <p>
+              {description}
+            </p>
+          </Tooltip>
         </section>
         <hr />
         <section>

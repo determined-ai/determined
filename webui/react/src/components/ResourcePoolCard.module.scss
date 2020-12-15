@@ -63,9 +63,12 @@ $icon-side: 5rem;
     align-content: center;
     display: flex;
     flex-direction: column;
-    min-height: 8rem;
-
     p {
+      // https://css-tricks.com/line-clampin/
+      overflow: hidden;
+      text-overflow: ellipsis;
+      overflow-wrap: break-word;
+      white-space: nowrap;
       margin: auto 0;
     }
   }
