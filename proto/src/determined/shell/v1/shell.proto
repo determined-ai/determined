@@ -23,4 +23,6 @@ message Shell {
   string public_key = 8;
   // The username of the user that created the shell.
   string username = 10;
+  // The name of the resource pool the Shell was created in
+  string resource_pool = 11;
 }
