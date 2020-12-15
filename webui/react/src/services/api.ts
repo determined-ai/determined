@@ -103,6 +103,9 @@ export const getExperimentList = async (
 export const getExperimentDetails =
   generateApi<ExperimentDetailsParams, ExperimentDetails>(Config.getExperimentDetails);
 
+export const getExperimentDetails2 = generateDetApi<ExperimentDetailsParams,
+Api.V1GetExperimentResponse, ExperimentBase>(Config.getExperimentDetails2);
+
 export const getTrialDetails =
   generateDetApi<TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2>(Config.getTrialDetails);
 

@@ -166,7 +166,7 @@ CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase> = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
     return decoder
-      .decodeGetV1ExperimentRespToExperimentBase(resp.experiment, resp.config);
+      .decodeGetV1ExperimentRespToExperimentBase(resp);
   },
   request: (params: CreateExperimentParams) => detApi.Experiments
     .determinedCreateExperiment({ config: params.experimentConfig, parentId: params.parentId }),
@@ -229,8 +229,17 @@ export const patchExperiment: DetApi<PatchExperimentParams, Api.V1PatchExperimen
 
 export const getExperimentDetails: HttpApi<ExperimentDetailsParams, ExperimentDetails> = {
   httpOptions: (params) => ({ url: `/experiments/${params.id}/summary` }),
-  name: 'getExperimentDetails',
+  name: 'getExperimentDetails1',
   postProcess: (response) => jsonToExperimentDetails(response.data),
+};
+
+export const getExperimentDetails2: DetApi<
+ExperimentDetailsParams,
+Api.V1GetExperimentResponse,
+ExperimentBase> = {
+  name: 'getExperimentDetails',
+  postProcess: (response) => decoder.decodeGetV1ExperimentRespToExperimentBase(response),
+  request: (response) => detApi.Experiments.determinedGetExperiment(response.id),
 };
 
 export const getExperimentLabels: DetApi<
