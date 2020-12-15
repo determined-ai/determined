@@ -29,7 +29,7 @@ const UPLOT_OPTIONS = {
       side: 3,
     },
   ],
-  focus: { alpha: 0.3 },
+  // focus: { alpha: 0.3 },
   height: CHART_HEIGHT,
   legend: { show: false },
   scales: {
@@ -48,13 +48,15 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
   const resize = useResize(chartRef);
   const [ chart, setChart ] = useState<uPlot>();
 
-  const handleMouseLeave = useCallback(() => {
-    return (plot: uPlot, target: HTMLElement, handler: Cursor.MouseListener) => {
-      setTimeout(() => {
-        if (tooltipRef.current) tooltipRef.current.style.display = 'none';
-      }, 100);
-      return handler;
-    };
+  const handleMouseLeave = useCallback((
+    plot: uPlot,
+    target: HTMLElement,
+    handler: Cursor.MouseListener,
+  ) => {
+    setTimeout(() => {
+      if (tooltipRef.current) tooltipRef.current.style.display = 'none';
+    }, 100);
+    return handler;
   }, []);
 
   const handleCursorMove = useCallback((
@@ -71,7 +73,6 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
     const idx = plot.posToIdx(mouseLeft);
 
     let valDistance = Number.MAX_VALUE;
-    let closestDataIdx = -1;
     let closestSeriesIdx = -1;
     let [ closestX, closestY ] = [ -1, -1 ];
     let [ closestXValue, closestValue ] = [ -1, -1 ];
@@ -95,7 +96,6 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
               searchLeft = false;
             } else if (dist < valDistance) {
               valDistance = dist;
-              closestDataIdx = leftIdx;
               closestSeriesIdx = index;
               closestX = x;
               closestY = y;
@@ -117,7 +117,6 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
               searchRight = false;
             } else if (dist < valDistance) {
               valDistance = dist;
-              closestDataIdx = leftIdx;
               closestSeriesIdx = index;
               closestX = x;
               closestY = y;
@@ -132,17 +131,20 @@ const LearningCurveChart: React.FC<Props> = ({ data, trialIds, xValues }: Props)
       }
     });
 
-    plot.setSeries(closestSeriesIdx + 1, { focus: true });
-    plot.cursor.dataIdx = (
-      plot: uPlot,
-      seriesIdx: number,
-      closestIdx: number,
-    ): number => {
-      if (seriesIdx === closestSeriesIdx && closestIdx === closestDataIdx) {
-        return closestDataIdx;
-      }
-      return -1;
-    };
+    // Focus or unfocus serires.
+    if (closestSeriesIdx === -1) {
+      plot.setSeries(null as unknown as number, { focus: false });
+    } else {
+      plot.setSeries(closestSeriesIdx + 1, { focus: true });
+    }
+
+    /*
+     * Disable focus on individual data point.
+     * uPlot picks the nearest point based on the X axis to focus on
+     * and not the nearest point based on the cursor position.
+     * Disable
+     */
+    plot.cursor.dataIdx = (): number => null as unknown as number;
 
     if (closestSeriesIdx !== -1) {
       const x = closestX + plot.bbox.left / CANVAS_CSS_RATIO;
