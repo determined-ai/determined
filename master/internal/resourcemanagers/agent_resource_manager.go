@@ -20,12 +20,6 @@ type agentResourceManager struct {
 	pools map[string]*actor.Ref
 }
 
-type GetResourcePoolSummary struct{
-	resourcePool string
-}
-
-type GetResourcePoolSummaries struct{}
-
 func newAgentResourceManager(
 	config *AgentResourceManagerConfig, poolsConfig *ResourcePoolsConfig, cert *tls.Certificate,
 ) *agentResourceManager {
