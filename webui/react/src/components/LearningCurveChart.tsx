@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { throttle } from 'throttle-debounce';
 import uPlot, { Options } from 'uplot';
 
 import 'uplot/dist/uPlot.min.css';
@@ -18,6 +19,7 @@ interface Props {
 const CHART_HEIGHT = 400;
 const CANVAS_CSS_RATIO = 2;
 const FOCUS_MIN_DISTANCE = 30;
+const SCROLL_THROTTLE_TIME = 500;
 const UPLOT_OPTIONS = {
   axes: [
     {
@@ -222,13 +224,36 @@ const LearningCurveChart: React.FC<Props> = ({
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ data, xValues ]);
 
-  // Resize the chart when resize events detected.
+  // Focus on a trial series if provided.
+  useEffect(() => focusOnTrial(), [ focusOnTrial ]);
+
+  // Resize the chart when resize events happen.
   useEffect(() => {
     if (chart) chart.setSize({ height: CHART_HEIGHT, width: resize.width });
   }, [ chart, resize ]);
 
-  // Focus on a trial series if provided.
-  useEffect(() => focusOnTrial(), [ focusOnTrial ]);
+  /*
+   * Resync the chart when scroll events happen to correct the cursor position upon
+   * a parent container scrolling.
+   */
+  useEffect(() => {
+    const throttleFunc = throttle(SCROLL_THROTTLE_TIME, () => {
+      if (chart) chart.syncRect();
+    });
+    const handleScroll = () => throttleFunc();
+
+    /*
+     * The true at the end is the important part,
+     * it tells the browser to capture the event on dispatch,
+     * even if that event does not normally bubble, like change, focus, and scroll.
+     */
+    document.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      document.removeEventListener('scroll', handleScroll);
+      throttleFunc.cancel();
+    };
+  }, [ chart ]);
 
   return (
     <div className={css.base}>
