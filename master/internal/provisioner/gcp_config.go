@@ -129,7 +129,7 @@ func (c *GCPClusterConfig) merge() *compute.Instance {
 		)
 	}
 
-	if len(c.InstanceType.GPUType) > 0 {
+	if len(c.InstanceType.GPUType) > 0 && c.InstanceType.GPUNum > 0 {
 		rb.GuestAccelerators = []*compute.AcceleratorConfig{
 			{
 				AcceleratorType: fmt.Sprintf(
