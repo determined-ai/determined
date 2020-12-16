@@ -146,37 +146,9 @@ See :ref:`network-requirements` for details.
 ***********************
 
 The Determined Cluster is configured with ``master.yaml`` file located
-at ``/usr/local/determined/etc/`` on the Determined master instance.
-Below you'll find an example configuration. See
+at ``/usr/local/determined/etc/`` on the Determined master instance. We
+need to configure AWS dynamic agents in each resource pool. See
 :ref:`cluster-configuration` for details.
-
-.. code:: yaml
-
-   provisioner:
-     master_url: <scheme://host:port>
-     startup_script: <startup script>
-     container_startup_script: <container startup script>
-     agent_docker_network: host
-     agent_docker_image: <agent docker image>
-     max_idle_agent_period: 5m
-     max_agent_starting_period: 5m
-
-     provider: aws
-     region: <region>
-     root_volume_size: 200
-     image_id: <AMI ID>
-     tag_key: <tag key for agent discovery>
-     tag_value: <tag value for agent discovery>
-     instance_name: determined-ai-agent
-     ssh_key_name: <SSH key name>
-     iam_instance_profile_arn: <IAM instance profile ARN>
-     network_interface:
-       public_ip: true
-       security_group_id: <security group ID>
-       subnet_id: <subnet ID>
-     instance_type: p3.8xlarge
-     max_instances: 5
-     spot: false
 
 **************
  Installation
