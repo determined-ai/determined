@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
+import Message from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -56,10 +57,11 @@ const LearningCurve: React.FC<Props> = ({
   const [ chartTrialId, setChartTrialId ] = useState<number>();
   const [ tableTrialId, setTableTrialId ] = useState<number>();
   const [ maxTrials, setMaxTrials ] = useState(DEFAULT_MAX_TRIALS);
+  const [ pageError, setPageError ] = useState<Error>();
 
   const isReady = useMemo(() => {
-    return Object.keys(trialHpMap).length !== 0;
-  }, [ trialHpMap ]);
+    return !!pageError || Object.keys(trialHpMap).length !== 0;
+  }, [ pageError, trialHpMap ]);
 
   const trialHParams: TrialHParams[] = useMemo(() => {
     if (!trialHpMap) return [];
@@ -176,9 +178,7 @@ const LearningCurve: React.FC<Props> = ({
         // Save the trials sample data for post processing.
         setTrialList(event.trials || []);
       },
-    ).catch(e => {
-      console.log('error', e);
-    });
+    ).catch(e => setPageError(e));
 
     return () => canceler.abort();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
@@ -225,7 +225,11 @@ const LearningCurve: React.FC<Props> = ({
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ trialIds, trialList ]);
 
-  if (!isReady) return <Spinner />;
+  if (!isReady) {
+    return <Spinner />;
+  } else if (pageError) {
+    return <Message title={pageError.message} />;
+  }
 
   return (
     <>
