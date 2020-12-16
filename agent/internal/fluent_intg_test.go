@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -94,7 +96,8 @@ func TestFluentLoggingElastic(t *testing.T) {
 	assert.NilError(t, elastic.WaitForIngest(testutils.CurrentLogstashElasticIndex()))
 
 	// THEN fluent should parse all fields as expected and ship them to elastic.
-	logs, _, err := elastic.TrialLogs(int(trialID), 0, 4, nil, nil)
+	logs, _, err := elastic.TrialLogs(
+		int(trialID), 0, 4, nil, apiv1.OrderBy_ORDER_BY_ASC, nil)
 	assert.NilError(t, err, "failed to retrieve trial logs")
 	assert.Equal(t, len(logs), len(expected), "not enough logs received after one minute")
 	for i, l := range logs {
