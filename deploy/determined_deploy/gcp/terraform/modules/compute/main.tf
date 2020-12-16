@@ -89,6 +89,23 @@ resource "google_compute_instance" "master_instance" {
         minCpuPlatform: ${var.min_cpu_platform_agent}
     EOF
 
+    if [ -n "${var.cpu_env_image}" ] || [ -n "${var.gpu_env_image}" ]; then
+      cat << EOF >> /usr/local/determined/etc/master.yaml
+    task_container_defaults:
+      image:
+    EOF
+      if [ -n "${var.cpu_env_image}" ]; then
+        cat << EOF >> /usr/local/determined/etc/master.yaml
+        cpu: ${var.cpu_env_image}
+    EOF
+      fi
+      if [ -n "${var.gpu_env_image}" ]; then
+        cat << EOF >> /usr/local/determined/etc/master.yaml
+        gpu: ${var.gpu_env_image}
+    EOF
+      fi
+    fi
+
     apt-get remove docker docker-engine docker.io containerd runc
     apt-get update
     apt-get install -y \
