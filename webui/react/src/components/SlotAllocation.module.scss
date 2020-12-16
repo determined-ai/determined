@@ -16,13 +16,20 @@ li.legend {
     margin-right: var(--theme-sizes-layout-small);
   }
 }
-
-ol.overallLegends {
-  font-size: var(--theme-sizes-font-small);
+div.overallLegends {
   display: flex;
   flex-direction: row;
+  font-size: var(--theme-sizes-font-small);
   justify-content: center;
 
+  ol {
+    display: flex;
+    flex-direction: row;
+    font-size: var(--theme-sizes-font-small);
+    justify-content: center;
+    margin: 0 auto;
+    padding: 0;
+  }
   li {
     display: block;
     height: 100%;
@@ -34,7 +41,6 @@ ol.overallLegends {
     margin-left: 0;
   }
 }
-
 ul.detailedLegends {
   margin: 0;
   padding: 0;

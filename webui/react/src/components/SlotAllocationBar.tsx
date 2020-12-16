@@ -128,25 +128,27 @@ const SlotAllocationBar: React.FC<Props> = ({
         </div>
       </ConditionalWrapper>
       {showLegends &&
-        <Popover content={stateDetails} placement="bottom">
-          <ol className={css.overallLegends}>
-            <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
-              <Badge bgColor={legendParts.running.color} type={BadgeType.Custom}>
+          <div className={css.overallLegends}>
+            <Popover content={stateDetails} placement="bottom">
+              <ol>
+                <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
+                  <Badge bgColor={legendParts.running.color} type={BadgeType.Custom}>
                 Running
-              </Badge>
-            </Legend>
-            <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
-              <Badge bgColor={legendParts.pending.color} type={BadgeType.Custom}>
+                  </Badge>
+                </Legend>
+                <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
+                  <Badge bgColor={legendParts.pending.color} type={BadgeType.Custom}>
                 Pending
-              </Badge>
-            </Legend>
-            <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
-              <Badge bgColor={legendParts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
+                  </Badge>
+                </Legend>
+                <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
+                  <Badge bgColor={legendParts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
                 Free
-              </Badge>
-            </Legend>
-          </ol>
-        </Popover>
+                  </Badge>
+                </Legend>
+              </ol>
+            </Popover>
+          </div>
       }
     </div>
   );
