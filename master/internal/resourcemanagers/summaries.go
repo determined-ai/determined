@@ -91,6 +91,7 @@ func getTaskSummaries(
 	return ret
 }
 
+// ResourceSummary is a summary of the resource available/used by a resource pool.
 type ResourceSummary struct {
 	numAgents              int
 	numTotalSlots          int

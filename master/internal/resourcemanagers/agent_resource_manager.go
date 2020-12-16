@@ -187,7 +187,10 @@ func (a *agentResourceManager) getResourcePoolConfig(poolName string) (ResourceP
 	return ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
 }
 
-func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poolName string) (*resourcepoolv1.ResourcePool, error) {
+func (a *agentResourceManager) createResourcePoolSummary(
+	ctx *actor.Context,
+	poolName string,
+) (*resourcepoolv1.ResourcePool, error) {
 	const awsType = "aws"
 	const gcpType = "gcp"
 	const na = "N/A"
@@ -200,7 +203,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 	poolType := "static"
 	preemptible := false
 	location := "on-prem"
-	imageId := na
+	imageID := na
 	instanceType := na
 
 	if pool.Provider != nil {
@@ -208,14 +211,14 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 			poolType = awsType
 			preemptible = pool.Provider.AWS.SpotEnabled
 			location = pool.Provider.AWS.Region
-			imageId = pool.Provider.AWS.ImageID
+			imageID = pool.Provider.AWS.ImageID
 			instanceType = string(pool.Provider.AWS.InstanceType)
 		}
 		if pool.Provider.GCP != nil {
 			poolType = gcpType
 			preemptible = pool.Provider.GCP.InstanceType.Preemptible
 			location = pool.Provider.GCP.Zone
-			imageId = pool.Provider.GCP.BootDiskSourceImage
+			imageID = pool.Provider.GCP.BootDiskSourceImage
 
 			instanceTypeStringBuilder := strings.Builder{}
 			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
@@ -252,7 +255,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 		CpuContainerCapacityPerAgent: int32(pool.MaxCPUContainersPerAgent),
 		SchedulerType:                schedulerType,
 		Location:                     location,
-		ImageId:                      imageId,
+		ImageId:                      imageID,
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 	}

@@ -40,6 +40,8 @@ type ResourcePool struct {
 	notifications     []<-chan struct{}
 }
 
+// GetResourceSummary is a message to request a summary of the resources used by the
+// resource pool (agents, slots, cpu containers)
 type GetResourceSummary struct{}
 
 // NewResourcePool initializes a new empty default resource provider.

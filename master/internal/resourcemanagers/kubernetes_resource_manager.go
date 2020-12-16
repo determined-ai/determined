@@ -85,7 +85,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 	case *apiv1.GetResourcePoolsRequest:
 		resourcePoolSummary := k.summarizeDummyResourcePool(ctx)
-		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{resourcePoolSummary}}
+		resp := &apiv1.GetResourcePoolsResponse{
+			ResourcePools: []*resourcepoolv1.ResourcePool{resourcePoolSummary},
+		}
 		ctx.Respond(resp)
 
 	case schedulerTick:
@@ -105,8 +107,10 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (k *kubernetesResourceManager) summarizeDummyResourcePool(ctx *actor.Context) *resourcepoolv1.ResourcePool {
-	slotsUsed :=0
+func (k *kubernetesResourceManager) summarizeDummyResourcePool(
+	ctx *actor.Context,
+) *resourcepoolv1.ResourcePool {
+	slotsUsed := 0
 	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
 		slotsUsed += slotsUsedByGroup
 	}
