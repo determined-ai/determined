@@ -114,6 +114,15 @@ commands:
       - run: curl -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.12.1/protoc-3.12.1-linux-x86_64.zip
       - run: unzip /tmp/protoc.zip -d $HOME/.local
 
+  setup-go-intg-deps:
+    steps:
+      - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
+      - run: make -C master get-deps
+      - run: make -C agent get-deps
+      - run: make -C tools start-db
+
   go-get-deps:
     steps:
       - install-protoc
@@ -1002,13 +1011,19 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - install-protoc # install newer version of protoc into #HOME/.local/bin, since default is proto2
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
-      - run: make -C master get-deps
-      - run: make -C agent get-deps
-      - run: make -C tools start-db
+      - setup-go-intg-deps
       - run: make -C master test-intg
+
+  test-intg-agent:
+    machine:
+      image: ubuntu-1604:202004-01
+    resource_class: large
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - setup-go-intg-deps
+      - run: make -C agent test-intg
 
   lint-docs:
     docker:
@@ -1408,6 +1423,7 @@ workflows:
   test-intg:
     jobs:
       - test-intg-master
+      - test-intg-agent
 
   test-e2e:
     jobs:

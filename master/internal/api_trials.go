@@ -109,8 +109,8 @@ func (a *apiServer) TrialLogs(
 	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
 		state, endTime, err := a.m.db.TrialStatus(int(req.TrialId))
 		if err != nil ||
-			// Give trials a moment to finish sending logs after termination.
-			(model.TerminalStates[state] && endTime.After(time.Now().Add(-10*time.Second))) {
+			// Give trials a bit to finish sending logs after termination.
+			(model.TerminalStates[state] && endTime.After(time.Now().Add(-30*time.Second))) {
 			return true, err
 		}
 		return false, nil

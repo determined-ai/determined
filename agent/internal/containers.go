@@ -138,18 +138,26 @@ func (c *containerManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Cont
 	}
 }
 
-func (c *containerManager) overwriteSpec(
-	cont cproto.Container, spec cproto.Spec,
+func (c *containerManager) overwriteSpec(cont cproto.Container, spec cproto.Spec) cproto.Spec {
+	return overwriteSpec(cont, spec, c.GlobalEnvVars, c.Labels, c.fluentPort)
+}
+
+func overwriteSpec(
+	cont cproto.Container,
+	spec cproto.Spec,
+	globalEnvVars []string,
+	labels map[string]string,
+	fluentPort int,
 ) cproto.Spec {
 	spec.RunSpec.HostConfig.AutoRemove = true
 	spec.RunSpec.ContainerConfig.Env = append(
-		spec.RunSpec.ContainerConfig.Env, c.GlobalEnvVars...)
+		spec.RunSpec.ContainerConfig.Env, globalEnvVars...)
 	spec.RunSpec.ContainerConfig.Env = append(
-		spec.RunSpec.ContainerConfig.Env, c.containerEnvVars(cont)...)
+		spec.RunSpec.ContainerConfig.Env, containerEnvVars(cont)...)
 	if spec.RunSpec.ContainerConfig.Labels == nil {
 		spec.RunSpec.ContainerConfig.Labels = make(map[string]string)
 	}
-	for key, value := range c.Labels {
+	for key, value := range labels {
 		spec.RunSpec.ContainerConfig.Labels[key] = value
 	}
 	spec.RunSpec.ContainerConfig.Labels[dockerContainerIDLabel] = cont.ID.String()
@@ -161,13 +169,13 @@ func (c *containerManager) overwriteSpec(
 	spec.RunSpec.ContainerConfig.Labels[dockerContainerDevicesLabel] = strings.Join(slotIds, ",")
 
 	spec.RunSpec.HostConfig.DeviceRequests = append(
-		spec.RunSpec.HostConfig.DeviceRequests, c.gpuDeviceRequests(cont)...)
+		spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
 
 	if spec.RunSpec.UseFluentLogging {
 		spec.RunSpec.HostConfig.LogConfig = dcontainer.LogConfig{
 			Type: "fluentd",
 			Config: map[string]string{
-				"fluentd-address":              "localhost:" + strconv.Itoa(c.fluentPort),
+				"fluentd-address":              "localhost:" + strconv.Itoa(fluentPort),
 				"fluentd-sub-second-precision": "true",
 				"env":                          strings.Join(fluentEnvVarNames, ","),
 				"labels":                       dockerContainerParentLabel,
@@ -178,7 +186,7 @@ func (c *containerManager) overwriteSpec(
 	return spec
 }
 
-func (c *containerManager) gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
+func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 	gpuUUIDs := cont.GPUDeviceUUIDs()
 	if len(gpuUUIDs) == 0 {
 		return nil
@@ -192,7 +200,7 @@ func (c *containerManager) gpuDeviceRequests(cont cproto.Container) []dcontainer
 	}
 }
 
-func (c *containerManager) containerEnvVars(cont cproto.Container) []string {
+func containerEnvVars(cont cproto.Container) []string {
 	var slotIds []string
 	for _, d := range cont.Devices {
 		slotIds = append(slotIds, strconv.Itoa(d.ID))

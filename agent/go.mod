@@ -24,7 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
 	golang.org/x/tools v0.0.0-20200702044944-0cc1aa72b347
-	gotest.tools v2.2.0+incompatible // indirect
+	gotest.tools v2.2.0+incompatible
 )
 
 replace github.com/determined-ai/determined/master => ../master
