@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package determined.resourcepool.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/resourcepoolv1";
+
+import "protoc-gen-swagger/options/annotations.proto";
+
+
+
+message ResourcePoolState {
+  string name = 1;
+  int32 num_agents = 2;
+  int32 num_total_slots = 3;
+  int32 num_active_slots = 4;
+  int32 max_cpu_containers = 5;
+  int32 num_active_cpu_containers = 6;
+}
+
+message ResourcePoolStates {
+  repeated ResourcePoolState resource_pools = 1;
+}
+

@@ -26,7 +26,7 @@ type (
 	}
 	// GetTaskSummary returns the summary of the specified task.
 	GetTaskSummary struct{ ID *TaskID }
-	// GetTaskSummaries returns the summaries of all the tasks in the cluster.
+	// GetTaskSummaries returns the Summaries of all the tasks in the cluster.
 	GetTaskSummaries struct{}
 	// SetTaskName sets the name of the task.
 	SetTaskName struct {

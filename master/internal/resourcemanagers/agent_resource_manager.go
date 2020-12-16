@@ -13,6 +13,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
+type GetResourceSummaries struct {}
+type ResourceSummaries struct {
+	Summaries []ResourceSummary
+}
+
 type agentResourceManager struct {
 	config      *AgentResourceManagerConfig
 	poolsConfig *ResourcePoolsConfig
@@ -71,6 +76,14 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 
 	case GetTaskSummaries:
 		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
+
+	case GetResourceSummaries:
+		summaries := make([]ResourceSummary, 0, len(a.poolsConfig.ResourcePools))
+		for _, pool := range a.pools {
+			summary := ctx.Ask(pool, GetResourceSummary{}).Get().(ResourceSummary)
+			summaries = append(summaries, summary)
+		}
+		ctx.Respond(ResourceSummaries{Summaries: summaries})
 
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
