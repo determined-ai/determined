@@ -40,14 +40,23 @@ clean:
 live:
 	SERVER_ADDRESS=http://localhost:8080 npm start
 
+.PHONY: check-js
+check-js:
+	npm run lint:js
+.PHONY: check-css
+check-css:
+	npm run lint:css
 .PHONY: check
-check:
-	npm run lint
+check: check-js check-css
 
-.PHONY: fmt
-fmt:
+.PHONY: fmt-js
+fmt-js:
 	npm run lint:js -- --fix
+.PHONY: fmt-css
+fmt-css:
 	npm run lint:css -- --fix
+.PHONY: fmt
+fmt: fmt-js fmt-css
 
 .PHONY: test
 test:
