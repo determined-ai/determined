@@ -43,7 +43,7 @@ export const isNotFound = (e: any): boolean => {
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAborted = (e: any): boolean => {
-  return e.name === 'AbortError';
+  return e && e.name && e.name === 'AbortError';
 };
 
 /* HTTP Helpers */
@@ -144,7 +144,11 @@ export const consumeStream = async <T = unknown>(
     while (!result || !result.done) {
       result = await reader.read();
       if (result.done) return;
-      onEvent(result.value.result);
+      if (result.value.error) {
+        throw result.value.error;
+      } else {
+        onEvent(result.value.result);
+      }
     }
   } catch (e) {
     if (!isAborted(e)) {
