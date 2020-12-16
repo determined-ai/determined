@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -27,5 +28,3 @@ func (a *apiServer) GetResourcePools(
 
 	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
-
-

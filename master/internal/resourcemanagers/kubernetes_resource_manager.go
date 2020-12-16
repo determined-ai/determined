@@ -1,6 +1,8 @@
 package resourcemanagers
 
 import (
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -10,7 +12,6 @@ import (
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
-	"github.com/google/uuid"
 )
 
 const kubernetesScheduler = "kubernetes"
@@ -105,16 +106,19 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 }
 
 func (k *kubernetesResourceManager) summarizeDummyResourcePool(ctx *actor.Context) *resourcepoolv1.ResourcePool {
-	// TODO: Correctly fill in more details?
+	slotsUsed :=0
+	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
+		slotsUsed += slotsUsedByGroup
+	}
 	return &resourcepoolv1.ResourcePool{
-		Id:                           kubernetesDummyResourcePool,
+		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         "kubernetes",
 		NumAgents:                    1,
-		SlotsAvailable:               0,
-		SlotsUsed:                    0,
-		CpuContainerCapacity:         0,
-		CpuContainersRunning:         0,
+		SlotsAvailable:               int32(k.agent.numSlots()),
+		SlotsUsed:                    int32(k.agent.numUsedSlots()),
+		CpuContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
+		CpuContainersRunning:         int32(k.agent.numZeroSlotContainers()),
 		DefaultGpuPool:               true,
 		DefaultCpuPool:               true,
 		Preemptible:                  false,
@@ -124,7 +128,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(ctx *actor.Contex
 		SchedulerType:                "kubernetes",
 		SchedulerFittingPolicy:       "kubernetes",
 		Location:                     "kubernetes",
-		ImageId:                      "N/A",
+		ImageID:                      "N/A",
 		InstanceType:                 "kubernetes",
 		Details:                      nil,
 	}

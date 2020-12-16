@@ -40,7 +40,7 @@ type ResourcePool struct {
 	notifications     []<-chan struct{}
 }
 
-type GetResourceSummary struct {}
+type GetResourceSummary struct{}
 
 // NewResourcePool initializes a new empty default resource provider.
 func NewResourcePool(

@@ -2,14 +2,17 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
-	"time"
 )
 
 type agentResourceManager struct {
@@ -75,7 +78,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
 		ctx.Respond(resp)
-
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -176,19 +178,19 @@ func (a *agentResourceManager) aggregateTaskSummaries(
 	return summaries
 }
 
-
-
-
 func (a *agentResourceManager) getResourcePoolConfig(poolName string) (ResourcePoolConfig, error) {
 	for i := range a.poolsConfig.ResourcePools {
 		if a.poolsConfig.ResourcePools[i].PoolName == poolName {
 			return a.poolsConfig.ResourcePools[i], nil
 		}
 	}
-	return ResourcePoolConfig{},  errors.Errorf("cannot find resource pool %s", poolName)
+	return ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
 }
 
 func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poolName string) (*resourcepoolv1.ResourcePool, error) {
+	const awsType = "aws"
+	const gcpType = "gcp"
+	const na = "N/A"
 	pool, err := a.getResourcePoolConfig(poolName)
 	if err != nil {
 		return &resourcepoolv1.ResourcePool{}, err
@@ -198,19 +200,19 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 	poolType := "static"
 	preemptible := false
 	location := "on-prem"
-	imageId := "N/A"
-	instanceType := "N/A"
+	imageId := na
+	instanceType := na
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
-			poolType = "aws"
+			poolType = awsType
 			preemptible = pool.Provider.AWS.SpotEnabled
 			location = pool.Provider.AWS.Region
 			imageId = pool.Provider.AWS.ImageID
 			instanceType = string(pool.Provider.AWS.InstanceType)
 		}
 		if pool.Provider.GCP != nil {
-			poolType = "gcp"
+			poolType = gcpType
 			preemptible = pool.Provider.GCP.InstanceType.Preemptible
 			location = pool.Provider.GCP.Zone
 			imageId = pool.Provider.GCP.BootDiskSourceImage
@@ -233,7 +235,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 			schedulerType = "fair share"
 		}
 		if pool.Scheduler.Priority != nil {
-			schedulerType = "priority"
+			schedulerType = priorityScheduling
 		}
 		if pool.Scheduler.RoundRobin != nil {
 			schedulerType = "round robin"
@@ -241,7 +243,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 	}
 
 	resp := &resourcepoolv1.ResourcePool{
-		Id:                           pool.PoolName,
+		Name:                         pool.PoolName,
 		Description:                  pool.Description,
 		Type:                         poolType,
 		DefaultCpuPool:               a.config.DefaultCPUResourcePool == poolName,
@@ -250,7 +252,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 		CpuContainerCapacityPerAgent: int32(pool.MaxCPUContainersPerAgent),
 		SchedulerType:                schedulerType,
 		Location:                     location,
-		ImageId:                      imageId,
+		ImageID:                      imageId,
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 	}
@@ -271,7 +273,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 	if pool.Scheduler != nil {
 		resp.SchedulerFittingPolicy = pool.Scheduler.FittingPolicy
 	}
-	if poolType == "aws" {
+	if poolType == awsType {
 		aws := pool.Provider.AWS
 		resp.Details.Aws = &resourcepoolv1.ResourcePoolAwsDetail{
 			Region:                aws.Region,
@@ -290,7 +292,6 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 			LogStream:             aws.LogStream,
 			SpotEnabled:           aws.SpotEnabled,
 			SpotMaxPrice:          aws.SpotMaxPrice,
-
 		}
 		customTags := make([]*resourcepoolv1.AwsCustomTag, len(aws.CustomTags))
 		for i, tagInfo := range aws.CustomTags {
@@ -301,7 +302,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 		}
 		resp.Details.Aws.CustomTags = customTags
 	}
-	if poolType == "gcp" {
+	if poolType == gcpType {
 		gcp := pool.Provider.GCP
 		resp.Details.Gcp = &resourcepoolv1.ResourcePoolGcpDetail{
 			Project:                gcp.Project,
@@ -325,7 +326,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 		}
 	}
 
-	if schedulerType == "priority" {
+	if schedulerType == priorityScheduling {
 		resp.Details.PriorityScheduler = &resourcepoolv1.ResourcePoolPrioritySchedulerDetail{
 			Preemption:      pool.Scheduler.Priority.Preemption,
 			DefaultPriority: int32(*pool.Scheduler.Priority.DefaultPriority),
@@ -336,8 +337,8 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 	resp.NumAgents = int32(resourceSummary.numAgents)
 	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
 	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
-	resp.CpuContainerCapacity = int32(resourceSummary.maxNumCpuContainers)
-	resp.CpuContainersRunning = int32(resourceSummary.numActiveCpuContainers)
+	resp.CpuContainerCapacity = int32(resourceSummary.maxNumCPUContainers)
+	resp.CpuContainersRunning = int32(resourceSummary.numActiveCPUContainers)
 
 	return resp, nil
 }
