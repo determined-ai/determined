@@ -116,7 +116,7 @@ commands:
 
   setup-go-intg-deps:
     steps:
-      - install-protoc # install newer version of protoc into #HOME/.local/bin, since default is proto2
+      - install-protoc # Install newer version of protoc into $HOME/.local/bin, since default is proto2.
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps

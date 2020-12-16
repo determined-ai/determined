@@ -119,7 +119,7 @@ func makeLogTestCase(trialID int, agentID string) ([]model.TrialLog, string) {
 			ContainerID: stringToPointer("goodcontainer"),
 			RankID:      intToPointer(1),
 			Level:       stringToPointer("INFO"),
-			Log:         stringToPointer("Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)\n"), // nolint:lll // Anything to make these lines shorter would look worse.
+			Log:         stringToPointer("Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)\n"), //nolint:lll // Anything to make these lines shorter would look worse.
 			StdType:     stringToPointer("stdout"),
 		},
 		{
