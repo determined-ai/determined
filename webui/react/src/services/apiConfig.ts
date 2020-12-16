@@ -13,7 +13,7 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
-  GetExperimentsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
+  GetExperimentsParams, GetTrialsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import { HttpApi } from 'services/types';
@@ -248,6 +248,33 @@ ExperimentBase> = {
   name: 'getExperimentDetails',
   postProcess: (response) => decoder.decodeGetV1ExperimentRespToExperimentBase(response),
   request: (response) => detApi.Experiments.determinedGetExperiment(response.id),
+};
+
+// export const getExpValidationHistory: DetApi<
+// ExperimentDetailsParams,
+// Api.V1GetExperimentValidationHistoryResponse,
+// Api.V1GetExperimentValidationHistoryResponse> = {
+//   name: 'getExperimentValidationHistory',
+//   postProcess: (response) => response,
+//   request: (response) => detApi.Experiments.determinedGetExperimentValidationHistory(response.id),
+// };
+
+export const getExpTrials: DetApi<
+GetTrialsParams,
+Api.V1GetExperimentTrialsResponse,
+TrialDetails2[]> = {
+  name: 'getExperimentValidationHistory',
+  postProcess: (response) => {
+    return response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial }));
+  },
+  request: (params) => detApi.Experiments.determinedGetExperimentTrials(
+    params.id,
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.states?.map(rs => 'STATE_' + rs.toString() as any), // FIXME
+  ),
 };
 
 export const getExperimentLabels: DetApi<

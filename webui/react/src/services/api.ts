@@ -4,6 +4,7 @@ import * as Config from 'services/apiConfig';
 import {
   ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams,
+  GetTrialsParams,
   LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
   TrialLogsParams,
 } from 'services/types';
@@ -109,6 +110,9 @@ export const getExperimentDetails =
 
 export const getExperimentDetails2 = generateDetApi<ExperimentDetailsParams,
 Api.V1GetExperimentResponse, ExperimentBase>(Config.getExperimentDetails2);
+
+export const getExpTrials = generateDetApi<GetTrialsParams, Api.V1GetExperimentTrialsResponse,
+TrialDetails2[]>(Config.getExpTrials);
 
 export const getTrialDetails =
   generateDetApi<TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2>(Config.getTrialDetails);
