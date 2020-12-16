@@ -1,10 +1,14 @@
+import { Select } from 'antd';
+import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
+import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
+import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { handlePath } from 'routes/utils';
@@ -15,6 +19,8 @@ import { ExperimentDetails, MetricName, metricTypeParamMap } from 'types';
 import { alphanumericSorter, hpSorter } from 'utils/data';
 
 import css from './LearningCurve.module.scss';
+
+const { Option } = Select;
 
 interface Props {
   experiment: ExperimentDetails;
@@ -31,8 +37,9 @@ interface TrialHParams {
   url: string;
 }
 
-const MAX_TRIALS = 100;
+const DEFAULT_MAX_TRIALS = 100;
 const MAX_DATAPOINTS = 5000;
+const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100, 200, 500 ];
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
@@ -48,6 +55,7 @@ const LearningCurve: React.FC<Props> = ({
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
   const [ chartTrialId, setChartTrialId ] = useState<number>();
   const [ tableTrialId, setTableTrialId ] = useState<number>();
+  const [ maxTrials, setMaxTrials ] = useState(DEFAULT_MAX_TRIALS);
 
   const isReady = useMemo(() => {
     return Object.keys(trialHpMap).length !== 0;
@@ -94,6 +102,18 @@ const LearningCurve: React.FC<Props> = ({
     return [ idColumn, ...hpColumns ];
   }, [ experiment.config.hyperparameters ]);
 
+  const resetData = useCallback(() => {
+    setChartData([]);
+    setTrialHpMap({});
+    setTrialIds([]);
+    setTrialList([]);
+  }, []);
+
+  const handleTopTrialsChange = useCallback((count: SelectValue) => {
+    resetData();
+    setMaxTrials(count as number);
+  }, [ resetData ]);
+
   const handleMetricChange = useCallback((metric: MetricName) => {
     if (onMetricChange) onMetricChange(metric);
   }, [ onMetricChange ]);
@@ -127,7 +147,7 @@ const LearningCurve: React.FC<Props> = ({
         experiment.id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
-        MAX_TRIALS,
+        maxTrials,
         MAX_DATAPOINTS,
         undefined,
         undefined,
@@ -162,7 +182,7 @@ const LearningCurve: React.FC<Props> = ({
 
     return () => canceler.abort();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [ experiment.id, selectedMetric ]);
+  }, [ experiment.id, maxTrials, selectedMetric ]);
 
   useEffect(() => {
     const newTrialHpMap: Record<number, HParams> = {};
@@ -210,14 +230,27 @@ const LearningCurve: React.FC<Props> = ({
   return (
     <>
       <Section
-        options={<MetricSelectFilter
-          defaultMetricNames={metrics}
-          label="Metric"
-          metricNames={metrics}
-          multiple={false}
-          value={selectedMetric}
-          width={'100%'}
-          onChange={handleMetricChange} />}
+        options={<ResponsiveFilters>
+          <SelectFilter
+            enableSearchFilter={false}
+            label="Top Trials"
+            showSearch={false}
+            style={{ width: 70 }}
+            value={maxTrials}
+            onChange={handleTopTrialsChange}>
+            {TOP_TRIALS_OPTIONS.map(option => (
+              <Option key={option} value={option}>{option}</Option>
+            ))}
+          </SelectFilter>
+          <MetricSelectFilter
+            defaultMetricNames={metrics}
+            label="Metric"
+            metricNames={metrics}
+            multiple={false}
+            value={selectedMetric}
+            width={'100%'}
+            onChange={handleMetricChange} />
+        </ResponsiveFilters>}
         title="Learning Curve">
         <div className={css.base}>
           <LearningCurveChart
