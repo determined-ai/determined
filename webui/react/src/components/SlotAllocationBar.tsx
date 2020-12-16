@@ -5,6 +5,7 @@ import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { getStateColorCssVar, ShirtSize } from 'themes';
 import { ResourceState } from 'types';
+import { ConditionalWrapper } from 'utils/react';
 import { floatToPercent } from 'utils/string';
 
 import { BadgeType } from './Badge';
@@ -73,18 +74,15 @@ const SlotAllocationBar: React.FC<Props> = ({
 
     const parts = {
       free: {
-        color: 'var(--theme-colors-monochrome-15)', // TODO
-        label: 'Free',
+        color: 'var(--theme-colors-monochrome-15)',
         percent: freeSlots / totalSlots,
       },
       pending: {
-        color: '#6666CC', // TODO
-        label: 'Pending',
+        color: '#6666CC',
         percent: pendingSlots / totalSlots,
       },
       running: {
         color: getStateColorCssVar(ResourceState.Running),
-        label: 'Running',
         percent: stateTallies.RUNNING / totalSlots,
       },
     };
@@ -118,25 +116,33 @@ const SlotAllocationBar: React.FC<Props> = ({
           {totalSlots > 0 ? ` (${floatToPercent( resourceStates.length/totalSlots, 0)})` : ''}
         </span>
       </div>
-      <div className={css.bar}>
-        <Bar {...barProps} parts={barParts} />
-      </div>
+      <ConditionalWrapper
+        condition={!showLegends}
+        wrapper={(ch) => (
+          <Popover content={stateDetails} placement="bottom">
+            {ch}
+          </Popover>
+        )}>
+        <div className={css.bar}>
+          <Bar {...barProps} parts={barParts} />
+        </div>
+      </ConditionalWrapper>
       {showLegends &&
         <Popover content={stateDetails} placement="bottom">
           <ol className={css.overallLegends}>
             <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
               <Badge bgColor={legendParts.running.color} type={BadgeType.Custom}>
-                {legendParts.running.label}
+                Running
               </Badge>
             </Legend>
             <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
               <Badge bgColor={legendParts.pending.color} type={BadgeType.Custom}>
-                {legendParts.pending.label}
+                Pending
               </Badge>
             </Legend>
             <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
               <Badge bgColor={legendParts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
-                {legendParts.free.label}
+                Free
               </Badge>
             </Legend>
           </ol>
