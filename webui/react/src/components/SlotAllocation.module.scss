@@ -1,26 +1,4 @@
 .base {
-  .legends {
-    font-size: var(--theme-sizes-font-small);
-
-    ol,
-    li {
-      margin: 0;
-      padding: 0;
-    }
-    ol {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-    }
-    li {
-      display: block;
-      height: 100%;
-      margin-left: var(--theme-sizes-layout-huge);
-    }
-    li:first-child {
-      margin-left: 0;
-    }
-  }
   .header {
     display: flex;
     flex-direction: row;
@@ -29,5 +7,42 @@
   }
   .bar {
     margin: var(--theme-sizes-layout-small) 0;
+  }
+}
+li.legend {
+  list-style-type: none;
+
+  .count {
+    margin-right: var(--theme-sizes-layout-small);
+  }
+}
+
+ol.overallLegends {
+  font-size: var(--theme-sizes-font-small);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+
+  li {
+    display: block;
+    height: 100%;
+    margin: 0;
+    margin-left: var(--theme-sizes-layout-huge);
+    padding: 0;
+  }
+  li:first-child {
+    margin-left: 0;
+  }
+}
+
+ul.detailedLegends {
+  margin: 0;
+  padding: 0;
+
+  li {
+    margin-top: var(--theme-sizes-layout-small);
+  }
+  li:first-child {
+    margin-top: 0;
   }
 }

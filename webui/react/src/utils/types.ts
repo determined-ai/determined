@@ -1,7 +1,7 @@
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
   CommandType, ExperimentHyperParams, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask,
-  RecentExperimentTask, RecentTask, RunState, TBSource, TBSourceType, Workload,
+  RecentExperimentTask, RecentTask, ResourceState, RunState, TBSource, TBSourceType, Workload,
 } from 'types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
@@ -118,14 +118,26 @@ export const checkpointStateToLabel: {[key in CheckpointState]: string} = {
   [CheckpointState.Unspecified]: 'Unspecified',
 };
 
+export const resourceStateToLabel: {[key in ResourceState]: string} = {
+  [ResourceState.Running]: 'Running',
+  [ResourceState.Assigned]: 'Assigned',
+  [ResourceState.Terminated]: 'Terminated',
+  [ResourceState.Pulling]: 'Pulling',
+  [ResourceState.Starting]: 'Starting',
+  [ResourceState.Unspecified]: 'Unspecified',
+};
+
 export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };
 
-export function stateToLabel(state: RunState | CommandState | CheckpointState): string {
+export function stateToLabel(
+  state: RunState | CommandState | CheckpointState | ResourceState,
+): string {
   return runStateToLabel[state as RunState]
   || commandStateToLabel[state as CommandState]
+  || resourceStateToLabel[state as ResourceState]
   || checkpointStateToLabel[state as CheckpointState];
 }
 

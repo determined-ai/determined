@@ -1,3 +1,4 @@
+import { Popover } from 'antd';
 import React, { useMemo } from 'react';
 
 import Badge from 'components/Badge';
@@ -18,23 +19,28 @@ export interface Props {
   totalSlots: number;
 }
 
-const pendingStates = new Set<ResourceState>([
-  ResourceState.Assigned,
-  ResourceState.Pulling,
-  ResourceState.Terminated,
-  ResourceState.Unspecified,
-  ResourceState.Starting,
-]);
+interface LegendProps {
+  children: React.ReactNode;
+  count: number;
+  totalSlots: number;
+  showPercentage?: boolean;
+}
 
-const legend = (label: React.ReactNode , count: number, totalSlots: number) => {
-  return <li>
-    <span>
-      {count} ({floatToPercent(count/totalSlots, 1)})
-    </span>
-    <span>
-      {' '} {label}
-    </span>
-  </li>;
+const Legend: React.FC<LegendProps> = ({
+  count, totalSlots,
+  showPercentage, children,
+}: LegendProps) => {
+
+  return (
+    <li className={css.legend}>
+      <span className={css.count}>
+        {count} {showPercentage && `(${floatToPercent(count/totalSlots, 0)})`}
+      </span>
+      <span>
+        {children}
+      </span>
+    </li>
+  );
 };
 
 const SlotAllocationBar: React.FC<Props> = ({
@@ -45,41 +51,60 @@ const SlotAllocationBar: React.FC<Props> = ({
   ...barProps
 }: Props) => {
 
-  const { barParts, legendParts, partTally } = useMemo(() => {
-    const tally = {
-      free: totalSlots - resourceStates.length,
-      pending: 0,
-      running: 0,
+  const stateTallies = useMemo(() => {
+    const tally: Record<ResourceState, number> = {
+      [ResourceState.Assigned]: 0,
+      [ResourceState.Pulling]: 0,
+      [ResourceState.Running]: 0,
+      [ResourceState.Starting]: 0,
+      [ResourceState.Terminated]: 0,
+      [ResourceState.Unspecified]: 0,
     };
     resourceStates.forEach(state => {
-      if (pendingStates.has(state)) tally.pending++;
-      if (state === ResourceState.Running) tally.running++;
+      tally[state] += 1;
     });
+    return tally;
+  }, [ resourceStates ]);
+
+  const freeSlots = (totalSlots - resourceStates.length);
+  const pendingSlots = (resourceStates.length - stateTallies.RUNNING);
+
+  const { barParts, legendParts } = useMemo(() => {
 
     const parts = {
       free: {
         color: 'var(--theme-colors-monochrome-15)', // TODO
         label: 'Free',
-        percent: tally.free / totalSlots,
+        percent: freeSlots / totalSlots,
       },
       pending: {
         color: '#6666CC', // TODO
         label: 'Pending',
-        percent: tally.pending / totalSlots,
+        percent: pendingSlots / totalSlots,
       },
       running: {
         color: getStateColorCssVar(ResourceState.Running),
         label: 'Running',
-        percent: tally.running / totalSlots,
+        percent: stateTallies.RUNNING / totalSlots,
       },
     };
 
     return {
       barParts: [ parts.running, parts.pending, parts.free ],
       legendParts: parts,
-      partTally: tally,
     };
-  }, [ resourceStates, totalSlots ]);
+  }, [ totalSlots, stateTallies, pendingSlots, freeSlots ]);
+
+  const stateDetails = useMemo(() => {
+    return (
+      <ul className={css.detailedLegends}>
+        {Object.entries(stateTallies).map(([ state, count ]) =>
+          <Legend count={count} key={state}totalSlots={totalSlots}>
+            <Badge state={state as ResourceState} type={BadgeType.State} />
+          </Legend>)}
+      </ul>
+    );
+  }, [ stateTallies, totalSlots ]);
 
   const classes = [ css.base ];
   if (className) classes.push(className);
@@ -97,31 +122,25 @@ const SlotAllocationBar: React.FC<Props> = ({
         <Bar {...barProps} parts={barParts} />
       </div>
       {showLegends &&
-      <div className={css.legends}>
-        <ol>
-          {legend(
-            <Badge bgColor={legendParts.running.color} type={BadgeType.Custom}>
-              {legendParts.running.label}
-            </Badge>
-            , partTally.running,
-            totalSlots,
-          )}
-          {legend(
-            <Badge bgColor={legendParts.pending.color} type={BadgeType.Custom}>
-              {legendParts.pending.label}
-            </Badge>
-            , partTally.pending,
-            totalSlots,
-          )}
-          {legend(
-            <Badge bgColor={legendParts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
-              {legendParts.free.label}
-            </Badge>
-            , partTally.free,
-            totalSlots,
-          )}
-        </ol>
-      </div>
+        <Popover content={stateDetails} placement="bottom">
+          <ol className={css.overallLegends}>
+            <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
+              <Badge bgColor={legendParts.running.color} type={BadgeType.Custom}>
+                {legendParts.running.label}
+              </Badge>
+            </Legend>
+            <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
+              <Badge bgColor={legendParts.pending.color} type={BadgeType.Custom}>
+                {legendParts.pending.label}
+              </Badge>
+            </Legend>
+            <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
+              <Badge bgColor={legendParts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
+                {legendParts.free.label}
+              </Badge>
+            </Legend>
+          </ol>
+        </Popover>
       }
     </div>
   );
