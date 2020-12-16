@@ -1,7 +1,10 @@
 package resourcemanagers
 
 import (
+	"bytes"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 
 	"github.com/labstack/echo"
 	"github.com/sirupsen/logrus"
@@ -13,7 +16,36 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// Setup setups the actor and endpoints for resource managers.
+func makeTLSConfig(cert *tls.Certificate) model.TLSClientConfig {
+	if cert == nil {
+		return model.TLSClientConfig{}
+	}
+	var content bytes.Buffer
+	for _, c := range cert.Certificate {
+		// Errors can only happen due to invalid headers (of which there are none) or I/O (which is safe
+		// with a bytes.Buffer).
+		_ = pem.Encode(&content, &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: c,
+		})
+	}
+
+	leaf, _ := x509.ParseCertificate(cert.Certificate[0])
+	certName := ""
+	if len(leaf.DNSNames) > 0 {
+		certName = leaf.DNSNames[0]
+	} else if len(leaf.IPAddresses) > 0 {
+		certName = leaf.IPAddresses[0].String()
+	}
+
+	return model.TLSClientConfig{
+		Enabled:         true,
+		CertBytes:       content.Bytes(),
+		CertificateName: certName,
+	}
+}
+
+// Setup sets up the actor and endpoints for resource managers.
 func Setup(
 	system *actor.System,
 	echo *echo.Echo,
@@ -27,7 +59,9 @@ func Setup(
 	case rmConfig.AgentRM != nil:
 		ref = setupAgentResourceManager(system, echo, rmConfig.AgentRM, poolsConfig, opts, cert)
 	case rmConfig.KubernetesRM != nil:
-		ref = setupKubernetesResourceManager(system, echo, rmConfig.KubernetesRM, opts.LoggingOptions)
+		ref = setupKubernetesResourceManager(
+			system, echo, rmConfig.KubernetesRM, makeTLSConfig(cert), opts.LoggingOptions,
+		)
 	default:
 		panic("no expected resource manager config is defined")
 	}
@@ -62,6 +96,7 @@ func setupKubernetesResourceManager(
 	system *actor.System,
 	echo *echo.Echo,
 	config *KubernetesResourceManagerConfig,
+	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
@@ -72,7 +107,7 @@ func setupKubernetesResourceManager(
 
 	logrus.Infof("initializing endpoints for pods")
 	kubernetes.Initialize(
-		system, echo, ref, config.Namespace, config.MasterServiceName, loggingConfig,
+		system, echo, ref, config.Namespace, config.MasterServiceName, masterTLSConfig, loggingConfig,
 		config.LeaveKubernetesResources,
 	)
 	return ref

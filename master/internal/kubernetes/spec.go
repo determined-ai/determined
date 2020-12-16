@@ -273,31 +273,6 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		WorkingDir:      tasks.ContainerWorkDir,
 	}
 
-	fields := map[string]string{
-		"agent_id":     "k8agent",
-		"container_id": string(p.container.ID),
-		"trial_id":     strconv.Itoa(exp.InitialWorkload.TrialID),
-	}
-	ctx.Log().Infof("fields: %+v", fields)
-
-	var tlsConfig model.TLSClientConfig
-	switch l := p.loggingConfig; {
-	case l.DefaultLoggingConfig != nil:
-		// TODO
-		// t := opts.Security.TLS
-		// tlsConfig = model.TLSClientConfig{
-		// 	Enabled:         t.Enabled,
-		// 	SkipVerify:      t.SkipVerify,
-		// 	CertificatePath: t.MasterCert,
-		// 	CertificateName: t.MasterCertName,
-		// }
-		// if err := tlsConfig.Resolve(); err != nil {
-		// 	return 0, "", err
-		// }
-	case l.ElasticLoggingConfig != nil:
-		tlsConfig = l.ElasticLoggingConfig.Security.TLS
-	}
-
 	//nolint:govet // Allow unkeyed struct fields -- it really looks much better like this.
 	fluentArgs, fluentFiles := fluent.ContainerConfig(
 		p.masterIP,
@@ -342,7 +317,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 			},
 		},
 		p.loggingConfig,
-		tlsConfig,
+		p.tlsConfig,
 	)
 
 	fluentContainer := k8sV1.Container{

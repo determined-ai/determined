@@ -52,6 +52,7 @@ type pods struct {
 	clientSet     *k8sClient.Clientset
 	masterIP      string
 	masterPort    int32
+	tlsConfig     model.TLSClientConfig
 	loggingConfig model.LoggingConfig
 
 	informer                *actor.Ref
@@ -75,13 +76,21 @@ func Initialize(
 	c *actor.Ref,
 	namespace string,
 	masterServiceName string,
+	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 	leaveKubernetesResources bool,
 ) *actor.Ref {
+
+	tlsConfig := masterTLSConfig
+	if loggingConfig.ElasticLoggingConfig != nil {
+		tlsConfig = loggingConfig.ElasticLoggingConfig.Security.TLS
+	}
+
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:                  c,
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
+		tlsConfig:                tlsConfig,
 		loggingConfig:            loggingConfig,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
 		containerIDToPodHandler:  make(map[string]*actor.Ref),
@@ -256,7 +265,7 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) error {
 	newPodHandler := newPod(
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
-		p.loggingConfig, p.podInterface, p.configMapInterface, p.resourceRequestQueue,
+		p.tlsConfig, p.loggingConfig, p.podInterface, p.configMapInterface, p.resourceRequestQueue,
 		p.leaveKubernetesResources,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
