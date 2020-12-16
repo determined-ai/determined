@@ -128,7 +128,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(ctx *actor.Contex
 		SchedulerType:                "kubernetes",
 		SchedulerFittingPolicy:       "kubernetes",
 		Location:                     "kubernetes",
-		ImageID:                      "N/A",
+		ImageId:                      "N/A",
 		InstanceType:                 "kubernetes",
 		Details:                      nil,
 	}

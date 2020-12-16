@@ -252,7 +252,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 		CpuContainerCapacityPerAgent: int32(pool.MaxCPUContainersPerAgent),
 		SchedulerType:                schedulerType,
 		Location:                     location,
-		ImageID:                      imageId,
+		ImageId:                      imageId,
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 	}

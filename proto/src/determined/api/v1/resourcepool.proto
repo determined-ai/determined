@@ -19,7 +19,7 @@ message GetResourcePoolsRequest {
 // Response to GetResourcePoolsRequest.
 message GetResourcePoolsResponse {
   // The list of returned resource pools.
-  repeated determined.resourcepool.v1.ResourcePool resourcePools = 1;
+  repeated determined.resourcepool.v1.ResourcePool resource_pools = 1;
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }
