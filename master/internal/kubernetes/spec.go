@@ -15,6 +15,7 @@ import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/fluent"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
@@ -22,6 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const fluentBaseDir = "/run/determined/fluent/"
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	return k8sV1.ResourceRequirements{
@@ -72,7 +75,7 @@ func (p *pod) configureEnvVars(
 }
 
 func (p *pod) configureConfigMapSpec(
-	runArchives []cproto.RunArchive, fluentFiles archive.Archive,
+	runArchives []cproto.RunArchive, fluentFiles map[string][]byte,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte)
 	// Add additional files as tar.gz archive.
@@ -84,8 +87,8 @@ func (p *pod) configureConfigMapSpec(
 		configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
 	}
 
-	for _, a := range fluentFiles {
-		configMapData[a.Path] = a.Content
+	for fn, content := range fluentFiles {
+		configMapData[fn] = content
 	}
 
 	// Add initContainer script.
@@ -276,12 +279,71 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		"trial_id":     strconv.Itoa(exp.InitialWorkload.TrialID),
 	}
 	ctx.Log().Infof("fields: %+v", fields)
-	fluentArgs, fluentFiles, err := fluentConfig(
-		p.masterIP, int(p.masterPort), fields, nil, p.loggingConfig,
-	)
-	if err != nil {
-		return err
+
+	var tlsConfig model.TLSClientConfig
+	switch l := p.loggingConfig; {
+	case l.DefaultLoggingConfig != nil:
+		// TODO
+		// t := opts.Security.TLS
+		// tlsConfig = model.TLSClientConfig{
+		// 	Enabled:         t.Enabled,
+		// 	SkipVerify:      t.SkipVerify,
+		// 	CertificatePath: t.MasterCert,
+		// 	CertificateName: t.MasterCertName,
+		// }
+		// if err := tlsConfig.Resolve(); err != nil {
+		// 	return 0, "", err
+		// }
+	case l.ElasticLoggingConfig != nil:
+		tlsConfig = l.ElasticLoggingConfig.Security.TLS
 	}
+
+	//nolint:govet // Allow unkeyed struct fields -- it really looks much better like this.
+	fluentArgs, fluentFiles := fluent.ContainerConfig(
+		p.masterIP,
+		int(p.masterPort),
+		[]fluent.ConfigSection{
+			{
+				{"Name", "tail"},
+				{"Path", "/run/determined/train/logs/stdout.log-rotate/current"},
+				{"Refresh_Interval", "3"},
+				{"Read_From_Head", "true"},
+				{"Buffer_Max_Size", "1M"},
+				{"Skip_Long_Lines", "On"},
+				{"Tag", "stdout"},
+			},
+			{
+				{"Name", "tail"},
+				{"Path", "/run/determined/train/logs/stderr.log-rotate/current"},
+				{"Refresh_Interval", "3"},
+				{"Read_From_Head", "true"},
+				{"Buffer_Max_Size", "1M"},
+				{"Skip_Long_Lines", "On"},
+				{"Tag", "stderr"},
+			},
+		},
+		[]fluent.ConfigSection{
+			{
+				{"Name", "modify"},
+				{"Match", "*"},
+				{"Add", "agent_id k8agent"},
+				{"Add", "container_id " + string(p.container.ID)},
+				{"Add", "trial_id " + strconv.Itoa(exp.InitialWorkload.TrialID)},
+			},
+			{
+				{"Name", "modify"},
+				{"Match", "stdout"},
+				{"Add", "stdtype stdout"},
+			},
+			{
+				{"Name", "modify"},
+				{"Match", "stderr"},
+				{"Add", "stdtype stderr"},
+			},
+		},
+		p.loggingConfig,
+		tlsConfig,
+	)
 
 	fluentContainer := k8sV1.Container{
 		Name:            model.DeterminedK8FluentContainerName,
@@ -291,6 +353,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    loggingMounts,
+		WorkingDir:      fluentBaseDir,
 	}
 
 	p.pod = p.configurePodSpec(

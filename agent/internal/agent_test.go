@@ -96,7 +96,7 @@ func defaultAgentConfig() Options {
 	// Same defaults as set by viper when binding environment variables.
 	return Options{
 		AgentID:             "test-agent",
-		MasterHost:          localhost,
+		MasterHost:          "localhost",
 		MasterPort:          8080,
 		ContainerMasterHost: defaultContainerMasterHost(),
 		SlotType:            "auto",

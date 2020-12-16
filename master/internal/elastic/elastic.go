@@ -71,7 +71,7 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	}
 }
 
-func elasticTLSConfig(conf model.ElasticTLSConfig) (*tls.Config, error) {
+func elasticTLSConfig(conf model.TLSClientConfig) (*tls.Config, error) {
 	if !conf.Enabled {
 		return nil, nil
 	}

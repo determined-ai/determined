@@ -59,9 +59,9 @@ func (o *ElasticLoggingConfig) Resolve() error {
 
 // ElasticSecurityConfig configures security-related options for the elastic logging backend.
 type ElasticSecurityConfig struct {
-	Username *string          `json:"username"`
-	Password *string          `json:"password"`
-	TLS      ElasticTLSConfig `json:"tls"`
+	Username *string         `json:"username"`
+	Password *string         `json:"password"`
+	TLS      TLSClientConfig `json:"tls"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -78,31 +78,33 @@ func (o *ElasticSecurityConfig) Resolve() error {
 	return o.TLS.Resolve()
 }
 
-// ElasticTLSConfig configures TLS for the connection to the elastic logging backend.
-type ElasticTLSConfig struct {
+// TLSClientConfig configures how to make a TLS connection.
+type TLSClientConfig struct {
 	Enabled         bool   `json:"enabled"`
 	SkipVerify      bool   `json:"skip_verify"`
 	CertificatePath string `json:"certificate"`
+	CertificateName string `json:"certificate_name"`
 	CertBytes       []byte
 }
 
 // Validate implements the check.Validatable interface.
-func (t ElasticTLSConfig) Validate() []error {
+func (t TLSClientConfig) Validate() []error {
 	var errs []error
 	if t.CertificatePath != "" && t.SkipVerify {
-		errs = append(errs, errors.New("cannot specify a elastic cert file with verification off"))
+		errs = append(errs, errors.New("cannot specify a cert file with verification off"))
 	}
 	return errs
 }
 
 // Resolve resolves the configuration.
-func (t *ElasticTLSConfig) Resolve() error {
-	if t.CertificatePath != "" {
-		certBytes, err := ioutil.ReadFile(t.CertificatePath)
-		if err != nil {
-			return err
-		}
-		t.CertBytes = certBytes
+func (t *TLSClientConfig) Resolve() error {
+	if t.CertificatePath == "" {
+		return nil
 	}
+	certBytes, err := ioutil.ReadFile(t.CertificatePath)
+	if err != nil {
+		return err
+	}
+	t.CertBytes = certBytes
 	return nil
 }
