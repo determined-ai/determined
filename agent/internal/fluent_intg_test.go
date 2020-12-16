@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -240,13 +239,11 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 }
 
 func assertLogEquals(t *testing.T, l, expected model.TrialLog) {
-	assert.Equal(t, l.TrialID, expected.TrialID, spew.Sdump(l))
-	assert.DeepEqual(t, l.AgentID, expected.AgentID)
-	assert.DeepEqual(t, l.ContainerID, expected.ContainerID)
-	assert.DeepEqual(t, l.RankID, expected.RankID)
-	assert.DeepEqual(t, l.Level, expected.Level)
-	assert.DeepEqual(t, l.Log, expected.Log)
-	assert.DeepEqual(t, l.StdType, expected.StdType)
+	// nil out timestamps since they are set by fluent and we cannot know what to expect.
+	l.Timestamp = nil
+	// nil out the message since we don't really care, we just want to see the structured fields.
+	l.Message = ""
+	assert.DeepEqual(t, l, expected)
 }
 
 func stringToPointer(x string) *string {
