@@ -42,7 +42,7 @@ export const rpLogo = (type: string): React.ReactNode => {
 const rpAttrs = [
   [ 'location', 'Location' ] ,
   [ 'instanceType', 'Instance Type' ],
-  [ 'spotOrPreemptible', 'Sport/Preemptible' ],
+  [ 'spotOrPreemptible', 'Spot/Preemptible' ],
   [ 'minInstances', 'Min Agents' ],
   [ 'maxInstances', 'Max Agents' ],
   [ 'gpusPerAgent', 'GPUs per Agent' ],
