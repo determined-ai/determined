@@ -61,28 +61,8 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
 
-	case *apiv1.GetResourcePoolRequest:
-		if a.pools[msg.ResourcePoolId] == nil {
-			err := errors.Errorf("cannot find resource pool %s to summarize", msg.ResourcePoolId)
-			ctx.Log().WithError(err).Error("")
-			ctx.Respond(err)
-			break
-		}
-
-		resourcePoolSummary, err := a.createResourcePoolSummary(ctx, msg.ResourcePoolId)
-		if err != nil {
-			// Should only raise an error if the resource pool doesn't exist and we've checked for that.
-			// But best to handle it anyway in case the implementation changes in the future.
-			ctx.Log().WithError(err).Error("")
-			ctx.Respond(err)
-		}
-		resp := &apiv1.GetResourcePoolResponse{}
-		resp.ResourcePool = resourcePoolSummary
-		ctx.Respond(resp)
-
 	case *apiv1.GetResourcePoolsRequest:
 		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig.ResourcePools))
-		//ctx.Log().Infof("GetResourcePoolRequest of length %d", len(summaries))
 		for _, pool := range a.poolsConfig.ResourcePools {
 			summary, err := a.createResourcePoolSummary(ctx, pool.PoolName)
 			if err != nil {
@@ -93,8 +73,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 			}
 			summaries = append(summaries, summary)
 		}
-		resp := &apiv1.GetResourcePoolsResponse{}
-		resp.ResourcePools = summaries
+		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
 		ctx.Respond(resp)
 
 
@@ -215,32 +194,36 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 		return &resourcepoolv1.ResourcePool{}, err
 	}
 
-	// TODO: Group the coallescing
-	var poolType string
-	if pool.Provider == nil {
-		poolType = "static"
-	} else {
+	// Static Pool defaults
+	poolType := "static"
+	preemptible := false
+	location := "on-prem"
+	imageId := "N/A"
+	instanceType := "N/A"
+
+	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
 			poolType = "aws"
+			preemptible = pool.Provider.AWS.SpotEnabled
+			location = pool.Provider.AWS.Region
+			imageId = pool.Provider.AWS.ImageID
+			instanceType = string(pool.Provider.AWS.InstanceType)
 		}
 		if pool.Provider.GCP != nil {
 			poolType = "gcp"
-		}
-	}
-
-
-	var preemptible bool
-	if pool.Provider == nil {
-		preemptible = false
-	} else {
-		if poolType == "aws" {
-			preemptible = pool.Provider.AWS.SpotEnabled
-		}
-		if poolType == "gcp" {
 			preemptible = pool.Provider.GCP.InstanceType.Preemptible
+			location = pool.Provider.GCP.Zone
+			imageId = pool.Provider.GCP.BootDiskSourceImage
+
+			instanceTypeStringBuilder := strings.Builder{}
+			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
+			instanceTypeStringBuilder.WriteString(", ")
+			instanceTypeStringBuilder.WriteString(string(pool.Provider.GCP.InstanceType.GPUNum))
+			instanceTypeStringBuilder.WriteString("x")
+			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.GPUType)
+			instanceType = instanceTypeStringBuilder.String()
 		}
 	}
-
 
 	var schedulerType string
 	if pool.Scheduler == nil {
@@ -256,57 +239,6 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 			schedulerType = "round robin"
 		}
 	}
-
-
-	var location string
-	if pool.Provider == nil {
-		location = "on-prem"
-	} else {
-		// TODO: Add GCP and AWS to location info?
-		if poolType == "aws" {
-			location = pool.Provider.AWS.Region
-			// TODO: Would be nice to automatically detect the AZ that the subnet is in as well
-		}
-		if poolType == "gcp" {
-			location = pool.Provider.GCP.Zone
-		}
-	}
-
-
-	var imageId string
-	if pool.Provider == nil {
-		imageId = "N/A"
-	} else {
-		if poolType == "aws" {
-			imageId = pool.Provider.AWS.ImageID
-			// TODO: Would be nice to also have the description/name instead of just the ID
-		}
-		if poolType == "gcp" {
-			imageId = pool.Provider.GCP.BootDiskSourceImage
-		}
-	}
-
-
-	var instanceType string
-	if pool.Provider == nil {
-		instanceType = "N/A"
-	} else {
-		if poolType == "aws" {
-			instanceType = string(pool.Provider.AWS.InstanceType)
-		}
-		if poolType == "gcp" {
-			instanceTypeStringBuilder := strings.Builder{}
-			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
-			instanceTypeStringBuilder.WriteString(", ")
-			instanceTypeStringBuilder.WriteString(string(pool.Provider.GCP.InstanceType.GPUNum))
-			instanceTypeStringBuilder.WriteString("x")
-			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.GPUType)
-			instanceType = instanceTypeStringBuilder.String()
-			// TODO: Confirm that this looks good as output for
-		}
-
-	}
-
 
 	resp := &resourcepoolv1.ResourcePool{
 		Id:                           pool.PoolName,
@@ -324,7 +256,7 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 	}
 	if pool.Provider != nil {
 		resp.MinAgents = int32(pool.Provider.MinInstances)
-		resp.MaxAgents = int32(pool.Provider.MaxInstances) // TODO: Handle static pool explicitly?
+		resp.MaxAgents = int32(pool.Provider.MaxInstances)
 		resp.MasterUrl = pool.Provider.MasterURL
 		resp.MasterCertName = pool.Provider.MasterCertName
 		resp.StartupScript = pool.Provider.StartupScript
@@ -371,9 +303,6 @@ func (a *agentResourceManager) createResourcePoolSummary(ctx *actor.Context, poo
 	}
 	if poolType == "gcp" {
 		gcp := pool.Provider.GCP
-		// Note: We do not return base image config because of how complex the structure is and because
-		// we are completely reliant on the schema being what GCP provides us.
-		// TODO: We should probably come up with a solution to this eventually
 		resp.Details.Gcp = &resourcepoolv1.ResourcePoolGcpDetail{
 			Project:                gcp.Project,
 			Zone:                   gcp.Zone,

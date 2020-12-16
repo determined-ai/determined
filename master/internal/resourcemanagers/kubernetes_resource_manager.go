@@ -1,11 +1,6 @@
 package resourcemanagers
 
 import (
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -13,6 +8,9 @@ import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
+	"github.com/google/uuid"
 )
 
 const kubernetesScheduler = "kubernetes"
@@ -84,23 +82,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
-	case *apiv1.GetResourcePoolRequest:
-		if msg.ResourcePoolId != kubernetesDummyResourcePool {
-			err := errors.
-				Errorf("cannot find resource pool %s to summarize - " +
-								"in k8s only the '%s' resource pool exists. ",
-								msg.ResourcePoolId,
-								kubernetesDummyResourcePool)
-			ctx.Log().WithError(err).Error("")
-			ctx.Respond(err)
-		}
-		ctx.Respond(&apiv1.GetResourcePoolResponse{ResourcePool: k.summarizeDummyResourcePool(ctx)})
-
-
 	case *apiv1.GetResourcePoolsRequest:
 		resourcePoolSummary := k.summarizeDummyResourcePool(ctx)
-		resp := &apiv1.GetResourcePoolsResponse{}
-		resp.ResourcePools = []*resourcepoolv1.ResourcePool{resourcePoolSummary}
+		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{resourcePoolSummary}}
 		ctx.Respond(resp)
 
 	case schedulerTick:

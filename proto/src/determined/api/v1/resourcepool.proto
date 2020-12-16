@@ -11,9 +11,9 @@ import "determined/resourcepool/v1/resourcepool.proto";
 message GetResourcePoolsRequest {
   // Skip the number of resource pools before returning results. Negative values
   // denote number of resource pools to skip from the end before returning results.
-  int32 offset = 3;
+  int32 offset = 1;
   // Limit the number of resource pools. A value of 0 denotes no limit.
-  int32 limit = 4;
+  int32 limit = 2;
 }
 
 // Response to GetResourcePoolsRequest.
