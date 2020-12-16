@@ -140,6 +140,17 @@ export const consumeStream = async <T = unknown>(
 
     const response = await fetch(serverAddress(fetchArgs.url), options);
     const reader = ndjsonStream(response.body).getReader();
+
+    // Cancel reader if an abort signal is received.
+    if (options && options.signal) {
+      const signal: AbortSignal = options.signal;
+      const abortHandler = () => {
+        reader.cancel();
+        signal.removeEventListener('abort', abortHandler);
+      };
+      signal.addEventListener('abort', abortHandler);
+    }
+
     let result;
     while (!result || !result.done) {
       result = await reader.read();
