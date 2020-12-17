@@ -706,7 +706,7 @@ jobs:
 
   package-and-push-system-local:
     docker:
-      - image: cimg/go:1.13
+      - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
     steps:
@@ -732,7 +732,7 @@ jobs:
 
   package-and-push-system-dev:
     docker:
-      - image: cimg/go:1.13
+      - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
     steps:
@@ -750,7 +750,7 @@ jobs:
 
   package-and-push-system-rc:
     docker:
-      - image: cimg/go:1.13
+      - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
     steps:
@@ -768,7 +768,7 @@ jobs:
 
   package-and-push-system-release:
     docker:
-      - image: cimg/go:1.13
+      - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
     steps:
@@ -949,7 +949,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: cimg/go:1.13
+      - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
     steps:
@@ -962,7 +962,7 @@ jobs:
 
   build-go:
     docker:
-      - image: cimg/go:1.13
+      - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
     steps:
@@ -979,7 +979,7 @@ jobs:
 
   build-proto:
     docker:
-      - image: cimg/go:1.13
+      - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
     steps:
@@ -993,7 +993,7 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: cimg/go:1.13
+      - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
     steps:
