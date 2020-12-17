@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -57,11 +57,10 @@ const LearningCurve: React.FC<Props> = ({
   const [ chartTrialId, setChartTrialId ] = useState<number>();
   const [ tableTrialId, setTableTrialId ] = useState<number>();
   const [ maxTrials, setMaxTrials ] = useState(DEFAULT_MAX_TRIALS);
+  const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<Error>();
 
-  const isReady = useMemo(() => {
-    return !!pageError || Object.keys(trialHpMap).length !== 0;
-  }, [ pageError, trialHpMap ]);
+  const hasTrials = Object.keys(trialHpMap).length !== 0;
 
   const trialHParams: TrialHParams[] = useMemo(() => {
     if (!trialHpMap) return [];
@@ -177,6 +176,9 @@ const LearningCurve: React.FC<Props> = ({
 
         // Save the trials sample data for post processing.
         setTrialList(event.trials || []);
+
+        // One successful event as come through.
+        setHasLoaded(true);
       },
     ).catch(e => setPageError(e));
 
@@ -225,10 +227,19 @@ const LearningCurve: React.FC<Props> = ({
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ trialIds, trialList ]);
 
-  if (!isReady) {
-    return <Spinner />;
-  } else if (pageError) {
+  if (pageError) {
     return <Message title={pageError.message} />;
+  } else if (!hasLoaded) {
+    return <Spinner />;
+  } else if (!hasTrials && hasLoaded) {
+    return (
+      <>
+        <Alert
+          description="Please wait until the experiment is further along."
+          message="Not enough data points to show yet." />
+        <Spinner />
+      </>
+    );
   }
 
   return (
