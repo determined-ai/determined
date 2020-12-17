@@ -1,6 +1,6 @@
 ap_northeast_1_agent_ami:
-  new: ami-07dc1e0617119df61
-  old: ami-01094af1846f7e057
+  new: ami-0a01b67743d465a6e
+  old: ami-07dc1e0617119df61
 ap_northeast_1_bastion_ami:
   new: ami-05855b7c54f91a1ae
   old: ami-0f475b2993ac825b7
@@ -8,8 +8,8 @@ ap_northeast_1_master_ami:
   new: ami-0af17d43b1f4ff4ea
   old: ami-0b8cd500f483d09ee
 ap_northeast_2_agent_ami:
-  new: ami-0a0061c1a3f27fe51
-  old: ami-068b19daf956a4ca5
+  new: ami-0c74312df78509701
+  old: ami-0a0061c1a3f27fe51
 ap_northeast_2_bastion_ami:
   new: ami-063acefae626a1e95
   old: ami-0eebe903cd90a3ddd
@@ -17,8 +17,8 @@ ap_northeast_2_master_ami:
   new: ami-04e6fcf8cfe3b09ea
   old: ami-07b7be0099924913e
 ap_southeast_1_agent_ami:
-  new: ami-0994ac61987afed77
-  old: ami-01b7af9433b415dac
+  new: ami-0eddf3f941d216f11
+  old: ami-0994ac61987afed77
 ap_southeast_1_bastion_ami:
   new: ami-0311dbbdd981577d5
   old: ami-03060465516794b47
@@ -26,8 +26,8 @@ ap_southeast_1_master_ami:
   new: ami-0ba45f1ec3dff60f9
   old: ami-028a5cff2f5a0f6c3
 ap_southeast_2_agent_ami:
-  new: ami-0183cafc9f2a57aa6
-  old: ami-07fc663f38164369e
+  new: ami-0c54777eb400a9e68
+  old: ami-0183cafc9f2a57aa6
 ap_southeast_2_bastion_ami:
   new: ami-0dea9aeaa95b9751b
   old: ami-001dbdb48850e6f54
@@ -35,8 +35,8 @@ ap_southeast_2_master_ami:
   new: ami-004d0fb87d10716c6
   old: ami-041e1cc8f4c429789
 eu_central_1_agent_ami:
-  new: ami-0c39ce440c27b5b97
-  old: ami-00c716e5005603cb0
+  new: ami-0474e45bb1a45bbfe
+  old: ami-0c39ce440c27b5b97
 eu_central_1_bastion_ami:
   new: ami-08a099fcfc36dff3f
   old: ami-01d4d9d5d6b52b25e
@@ -44,8 +44,8 @@ eu_central_1_master_ami:
   new: ami-08a1a61694dd1c82f
   old: ami-0d971d62e4d019dcc
 eu_west_1_agent_ami:
-  new: ami-085e4c3de4782b626
-  old: ami-0da48b82961b59fba
+  new: ami-0036879b70fee3339
+  old: ami-085e4c3de4782b626
 eu_west_1_bastion_ami:
   new: ami-00c25f7948e360133
   old: ami-0b85dae948397feb4
@@ -53,8 +53,8 @@ eu_west_1_master_ami:
   new: ami-0d67111dcacb4a14a
   old: ami-09b9e380df60300c8
 eu_west_2_agent_ami:
-  new: ami-080b10920a3f55fd4
-  old: ami-0d49b45685428fda1
+  new: ami-05d9b28afa79dbda3
+  old: ami-080b10920a3f55fd4
 eu_west_2_bastion_ami:
   new: ami-076071bbe3485317c
   old: ami-05e1a611b1e866695
@@ -62,35 +62,35 @@ eu_west_2_master_ami:
   new: ami-03441ec6f2faa7ddc
   old: ami-071884cefc7e770ba
 gcp_env:
-  new: det-environments-600cf86
-  old: det-environments-0f2001a
+  new: det-environments-067db2b
+  old: det-environments-600cf86
 tf1_cpu_hashed:
-  new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-600cf86
-  old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0f2001a
+  new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
+  old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-600cf86
 tf1_cpu_versioned:
   new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.8.0
   old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.7.0
 tf1_gpu_hashed:
-  new: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-600cf86
-  old: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0f2001a
+  new: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b
+  old: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-600cf86
 tf1_gpu_versioned:
   new: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.8.0
   old: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.7.0
 tf2_cpu_hashed:
-  new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-600cf86
-  old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0f2001a
+  new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b
+  old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-600cf86
 tf2_cpu_versioned:
   new: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.8.0
   old: determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.7.0
 tf2_gpu_hashed:
-  new: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-600cf86
-  old: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0f2001a
+  new: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-067db2b
+  old: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-600cf86
 tf2_gpu_versioned:
   new: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0
   old: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.7.0
 us_east_1_agent_ami:
-  new: ami-06130d042431bcc18
-  old: ami-0fa3c95101db75a3c
+  new: ami-0080b638f1339ccd5
+  old: ami-06130d042431bcc18
 us_east_1_bastion_ami:
   new: ami-053adf54573f777cf
   old: ami-08b277333b9511393
@@ -98,8 +98,8 @@ us_east_1_master_ami:
   new: ami-099e921e69356cf89
   old: ami-0739f8cdb239fe9ae
 us_east_2_agent_ami:
-  new: ami-044bdeb2ce74f4549
-  old: ami-0d7b699aa2315ee2d
+  new: ami-07318f0e0b3a02b8e
+  old: ami-044bdeb2ce74f4549
 us_east_2_bastion_ami:
   new: ami-0b9487791bf873774
   old: ami-0b9e40918b9df07e4
@@ -107,8 +107,8 @@ us_east_2_master_ami:
   new: ami-05edbb8e25e281608
   old: ami-0ebc8f6f580a04647
 us_west_2_agent_ami:
-  new: ami-07b649652a40e4208
-  old: ami-0888d917ee7cc9be9
+  new: ami-0211fc4b3b0eb5c64
+  old: ami-07b649652a40e4208
 us_west_2_bastion_ami:
   new: ami-0cc158853935719b7
   old: ami-08f6a7b1c02ad4ece
