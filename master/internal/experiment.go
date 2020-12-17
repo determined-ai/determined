@@ -457,7 +457,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case *apiv1.PauseExperimentRequest:
 		switch ok := e.updateState(ctx, model.PausedState); ok {
 		case true:
-			ctx.Tell(e.hpImportance, hpimportance.ExperimentPaused{ID: e.ID})
 			ctx.Respond(&apiv1.PauseExperimentResponse{})
 		default:
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,

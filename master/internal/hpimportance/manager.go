@@ -8,26 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-type metricType int
-
-// Training designates metrics from training steps.
-const Training metricType = 0
-
-// Validation designates metrics from validation steps.
-const Validation metricType = 1
-
-// Pending indicates that a computation request is queued.
-const Pending string = "pending"
-
-// InProgress indicates that a computation request is in-progress.
-const InProgress string = "in_progress"
-
-// Complete indicates that one request was completed and no further requests have been received.
-const Complete string = "complete"
-
-// Failed indicates that there was an error during computation.
-const Failed string = "failed"
-
 const (
 	// RootAddr is the path to use for looking up the manager actor.
 	RootAddr = "hpimportance"
@@ -37,32 +17,24 @@ const (
 	minPercent = 0.1
 )
 
-// TerminalStates indicate final states, as opposed to tasks that imply imminent changes.
-var TerminalStates = map[string]bool{
-	Complete: true,
-	Failed:   true,
-}
+// Messages handled by the HP importance manager.
+type (
+	// ExperimentCreated is the message an experiment sends when created.
+	ExperimentCreated struct {
+		ID int
+	}
 
-// ExperimentCreated is the message an experiment sends when created.
-type ExperimentCreated struct {
-	ID int
-}
+	// ExperimentCompleted is the message an experiment sends upon completion.
+	ExperimentCompleted struct {
+		ID int
+	}
 
-// ExperimentCompleted is the message an experiment sends upon completion.
-type ExperimentCompleted struct {
-	ID int
-}
-
-// ExperimentPaused is the message an experiment sends on pausing.
-type ExperimentPaused struct {
-	ID int
-}
-
-// ExperimentProgress is the message an experiment sends after trial completion.
-type ExperimentProgress struct {
-	ID       int
-	Progress float64
-}
+	// ExperimentProgress is the message an experiment sends after trial completion.
+	ExperimentProgress struct {
+		ID       int
+		Progress float64
+	}
+)
 
 // The zero-values of these types happen to be sensible defaults too. If we add fields for which
 // that is not true, add a newStateRecord(). This is for state that doesn't need to be persisted,
@@ -93,84 +65,105 @@ func (m *manager) Receive(ctx *actor.Context) error {
 	case actor.ChildStopped:
 		// Do nothing - it'll respawn next time a request is received
 	case ExperimentCompleted:
-		m.triggerDefaultWork(ctx, msg.ID)
+		m.experimentCompleted(ctx, msg)
 	case ExperimentCreated:
-		m.state[msg.ID] = stateRecord{
-			lastResult: time.Now(),
-		}
-	case ExperimentPaused:
-		m.triggerDefaultWork(ctx, msg.ID)
+		m.experimentCreated(ctx, msg) // TODO: maybe we just start the clock at the first sign of progress?
 	case ExperimentProgress:
-		var state stateRecord
-		var ok bool
-		if state, ok = m.state[msg.ID]; !ok {
-			state = stateRecord{}
-		}
-		if msg.Progress-state.lastProgress > minPercent &&
-			time.Since(state.lastResult) > minPause {
-			m.triggerDefaultWork(ctx, msg.ID)
-		}
+		m.experimentProgress(ctx, msg)
 	case workStarted:
-		hpi, err := m.db.GetHPImportance(msg.experimentID)
-		if err != nil {
-			ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
-			return nil
-		}
-		metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
-		metricData.Status = InProgress
-		setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
-		err = m.db.SetHPImportance(msg.experimentID, hpi)
-		if err != nil {
-			ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
-			return nil
-		}
+		m.workStarted(ctx, msg)
 	case workFailed:
-		hpi, err := m.db.GetHPImportance(msg.experimentID)
-		if err != nil {
-			ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
-			return nil
-		}
-		metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
-		metricData.Status = Failed
-		metricData.Error = msg.err
-		setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
-		err = m.db.SetHPImportance(msg.experimentID, hpi)
-		if err != nil {
-			ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
-			return nil
-		}
+		m.workFailed(ctx, msg)
 	case workCompleted:
-		m.state[msg.experimentID] = stateRecord{
-			lastResult:   time.Now(),
-			lastProgress: m.state[msg.experimentID].lastProgress,
-		}
-		hpi, err := m.db.GetHPImportance(msg.experimentID)
-		if err != nil {
-			ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
-			return nil
-		}
-		metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
-		metricData.ExperimentProgress = msg.progress
-		metricData.HpImportance = msg.results
-		switch metricData.Status {
-		case Pending:
-			// Do nothing - this means another startWork message was already sent
-		case InProgress:
-			metricData.Status = Complete
-		default:
-			ctx.Log().Warnf("work was completed for a metric with an unexpected state")
-		}
-		setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
-		err = m.db.SetHPImportance(msg.experimentID, hpi)
-		if err != nil {
-			ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
-			return nil
-		}
+		m.workCompleted(ctx, msg)
 	default:
 		ctx.Log().Errorf("unknown message received by hyperparameter importance manager: %v!",
 			ctx.Message())
 	}
 	return nil
+}
+
+func (m *manager) experimentCompleted(ctx *actor.Context, msg ExperimentCompleted) {
+	m.triggerDefaultWork(ctx, msg.ID)
+}
+
+func (m *manager) experimentCreated(ctx *actor.Context, msg ExperimentCreated) {
+	m.state[msg.ID] = stateRecord{
+		lastResult: time.Now(),
+	}
+}
+
+func (m *manager) experimentProgress(ctx *actor.Context, msg ExperimentProgress) {
+	state, ok := m.state[msg.ID]
+	if !ok {
+		state = stateRecord{}
+	}
+	if msg.Progress-state.lastProgress > minPercent &&
+		time.Since(state.lastResult) > minPause {
+		m.triggerDefaultWork(ctx, msg.ID)
+	}
+}
+
+func (m *manager) workStarted(ctx *actor.Context, msg workStarted) {
+	hpi, err := m.db.GetHPImportance(msg.experimentID)
+	if err != nil {
+		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		return
+	}
+	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
+	metricData.Status = model.InProgress
+	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
+	err = m.db.SetHPImportance(msg.experimentID, hpi)
+	if err != nil {
+		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+		return
+	}
+}
+
+func (m *manager) workFailed(ctx *actor.Context, msg workFailed) {
+	hpi, err := m.db.GetHPImportance(msg.experimentID)
+	if err != nil {
+		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		return
+	}
+	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
+	metricData.Status = model.Failed
+	metricData.Error = msg.err
+	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
+	err = m.db.SetHPImportance(msg.experimentID, hpi)
+	if err != nil {
+		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+		return
+	}
+}
+
+func (m *manager) workCompleted(ctx *actor.Context, msg workCompleted) {
+	m.state[msg.experimentID] = stateRecord{
+		lastResult:   time.Now(),
+		lastProgress: m.state[msg.experimentID].lastProgress,
+	}
+	hpi, err := m.db.GetHPImportance(msg.experimentID)
+	if err != nil {
+		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		return
+	}
+	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
+	metricData.ExperimentProgress = msg.progress
+	metricData.HpImportance = msg.results
+	switch metricData.Status {
+	case model.Pending:
+		// Do nothing - this means another startWork message was already sent
+	case model.InProgress:
+		metricData.Status = model.Complete
+	default:
+		ctx.Log().Warnf("work was completed for a metric with an unexpected state")
+	}
+	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
+	err = m.db.SetHPImportance(msg.experimentID, hpi)
+	if err != nil {
+		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+		return
+	}
 }
 
 func (m *manager) getChild(ctx *actor.Context, experimentID int) *actor.Ref {
@@ -208,21 +201,21 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 
 	loss := "loss"
 	triggerForLoss := false
-	lossHpi := getMetricHPImportance(hpi, loss, Training)
-	if lossHpi.Status != Pending {
+	lossHpi := getMetricHPImportance(hpi, loss, model.TrainingMetric)
+	if lossHpi.Status != model.Pending {
 		triggerForLoss = true
 	}
-	lossHpi.Status = Pending
-	setMetricHPImportance(&hpi, lossHpi, loss, Training)
+	lossHpi.Status = model.Pending
+	setMetricHPImportance(&hpi, lossHpi, loss, model.TrainingMetric)
 
 	searcherMetric := config.Searcher.Metric
 	triggerForSearcherMetric := false
-	searcherMetricHpi := getMetricHPImportance(hpi, searcherMetric, Validation)
-	if searcherMetricHpi.Status != Pending {
+	searcherMetricHpi := getMetricHPImportance(hpi, searcherMetric, model.ValidationMetric)
+	if searcherMetricHpi.Status != model.Pending {
 		triggerForSearcherMetric = true
 	}
-	searcherMetricHpi.Status = Pending
-	setMetricHPImportance(&hpi, searcherMetricHpi, searcherMetric, Validation)
+	searcherMetricHpi.Status = model.Pending
+	setMetricHPImportance(&hpi, searcherMetricHpi, searcherMetric, model.ValidationMetric)
 
 	err = m.db.SetHPImportance(experimentID, hpi)
 	if err != nil {
@@ -234,24 +227,24 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 		ctx.Tell(child, startWork{
 			experimentID: experimentID,
 			metricName:   loss,
-			metricType:   Training,
+			metricType:   model.TrainingMetric,
 		})
 	}
 	if triggerForSearcherMetric {
 		ctx.Tell(child, startWork{
 			experimentID: experimentID,
 			metricName:   searcherMetric,
-			metricType:   Validation,
+			metricType:   model.ValidationMetric,
 		})
 	}
 }
 
 func setMetricHPImportance(hpi *model.ExperimentHPImportance, metricHpi model.MetricHPImportance,
-	metricName string, metricType metricType) *model.ExperimentHPImportance {
+	metricName string, metricType model.MetricType) *model.ExperimentHPImportance {
 	switch metricType {
-	case Training:
+	case model.TrainingMetric:
 		hpi.TrainingMetrics[metricName] = metricHpi
-	case Validation:
+	case model.ValidationMetric:
 		hpi.ValidationMetrics[metricName] = metricHpi
 	default:
 		panic("Invalid metric type!")
@@ -260,9 +253,9 @@ func setMetricHPImportance(hpi *model.ExperimentHPImportance, metricHpi model.Me
 }
 
 func getMetricHPImportance(hpi model.ExperimentHPImportance, metricName string,
-	metricType metricType) model.MetricHPImportance {
+	metricType model.MetricType) model.MetricHPImportance {
 	switch metricType {
-	case Training:
+	case model.TrainingMetric:
 		metricHpi, ok := hpi.TrainingMetrics[metricName]
 		if !ok {
 			var newMetricHpi model.MetricHPImportance
@@ -270,7 +263,7 @@ func getMetricHPImportance(hpi model.ExperimentHPImportance, metricName string,
 			metricHpi = newMetricHpi
 		}
 		return metricHpi
-	case Validation:
+	case model.ValidationMetric:
 		metricHpi, ok := hpi.ValidationMetrics[metricName]
 		if !ok {
 			var newMetricHpi model.MetricHPImportance

@@ -408,25 +408,25 @@ type hpImportanceDataWrapper struct {
 	Metric  float64 `db:"metric"`
 }
 
-func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (*model.HPImportanceTrialData, error) {
+func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (model.HPImportanceTrialData, error) {
 	entry := model.HPImportanceTrialData{
 		TrialID: r.TrialID,
 		Batches: r.Batches,
 		Metric:  r.Metric,
 	}
 
-	err := json.Unmarshal(r.Hparams, &entry.Hparams) // FIXME this seems backwards?
+	err := json.Unmarshal(r.Hparams, &entry.Hparams)
 	if err != nil {
-		return nil, err
+		return entry, err
 	}
-	return &entry, nil
+	return entry, nil
 }
 
 // FetchHPImportanceTrainingData retrieves all the data needed by the hyperparameter importance
 // algorithm to measure the relative importance of various hyperparameters for one specific training
 // metric across all the trials in an experiment.
 func (db *PgDB) FetchHPImportanceTrainingData(experimentID int, metric string) (
-	*[]model.HPImportanceTrialData, error) {
+	[]model.HPImportanceTrialData, error) {
 	var rows []hpImportanceDataWrapper
 	var results []model.HPImportanceTrialData
 	// TODO: aren't we ignoring overtraining by taking the last?
@@ -458,18 +458,18 @@ FROM trials t
 		result, err := unmarshalHPImportanceHParams(row)
 		if err != nil {
 			return nil, errors.Wrap(err,
-				"Failed to process training metrics for hyperparameter importance")
+				"failed to process training metrics for hyperparameter importance")
 		}
-		results = append(results, *result)
+		results = append(results, result)
 	}
-	return &results, nil
+	return results, nil
 }
 
 // FetchHPImportanceValidationData retrieves all the data needed by the hyperparameter importance
 // algorithm to measure the relative importance of various hyperparameters for one specific
 // validation metric across all the trials in an experiment.
 func (db *PgDB) FetchHPImportanceValidationData(experimentID int, metric string) (
-	*[]model.HPImportanceTrialData, error) {
+	[]model.HPImportanceTrialData, error) {
 	var rows []hpImportanceDataWrapper
 	var results []model.HPImportanceTrialData
 	err := db.queryRows(`
@@ -505,9 +505,9 @@ FROM trials t
 			return nil, errors.Wrap(err,
 				"Failed to process validation metrics for hyperparameter importance")
 		}
-		results = append(results, *result)
+		results = append(results, result)
 	}
-	return &results, nil
+	return results, nil
 }
 
 // GetHPImportance returns the hyperparameter importance data and status for an experiment.

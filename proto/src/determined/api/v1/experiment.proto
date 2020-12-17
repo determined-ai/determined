@@ -443,16 +443,22 @@ message GetHPImportanceRequest {
 message GetHPImportanceResponse {
   // Hyperparameter importance as computed with respect for one specific metric.
   message MetricHPImportance {
+    // Possible statuses for hyperparameter importance computation
+    enum Status {
+      // A request is queued.
+      STATUS_PENDING = 0;
+      // A request is in progress.
+      STATUS_IN_PROGRESS = 1;
+      // A request is complete.
+      STATUS_COMPLETE = 2;
+    }
+
     // A map between hyperparameter names and their relative importance.
     map<string,double> hp_importance = 1;
     // The approximate portion of the experiment that was complete when the data was read.
     double experiment_progress = 2;
-    // The current status of any on-going computation. 'pending' means a request is queued, even if
-    // complete results from a previous computation are included. 'in_progress' means a new
-    // computation is ongoing (again, even if previous results are included). 'complete' means
-    // the current results are the latest available and no further action has been triggered.
-    // 'failed' means there was some error during computation (see 'error').
-    string status = 3;
+    // The current status of any on-going computation.
+    Status status = 3;
     // A description of why computation failed. Empty unless the state is (or was) 'failed'.
     string error = 4;
   }

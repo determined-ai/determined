@@ -6,32 +6,35 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-type startWork struct {
-	experimentID int
-	metricName   string
-	metricType   metricType
-}
+// Messages used by the HP importance workers.
+type (
+	startWork struct {
+		experimentID int
+		metricName   string
+		metricType   model.MetricType
+	}
 
-type workStarted struct {
-	experimentID int
-	metricName   string
-	metricType   metricType
-}
+	workStarted struct {
+		experimentID int
+		metricName   string
+		metricType   model.MetricType
+	}
 
-type workCompleted struct {
-	experimentID int
-	metricName   string
-	metricType   metricType
-	progress     float64
-	results      map[string]float64
-}
+	workCompleted struct {
+		experimentID int
+		metricName   string
+		metricType   model.MetricType
+		progress     float64
+		results      map[string]float64
+	}
 
-type workFailed struct {
-	experimentID int
-	metricName   string
-	metricType   metricType
-	err          string
-}
+	workFailed struct {
+		experimentID int
+		metricName   string
+		metricType   model.MetricType
+		err          string
+	}
+)
 
 type worker struct {
 	db      *db.PgDB
@@ -68,9 +71,7 @@ func (w *worker) sendWorkCompleted(ctx *actor.Context, msg startWork, progress f
 
 func (w *worker) Receive(ctx *actor.Context) (err error) {
 	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		// Do nothing
-	case actor.PostStop:
+	case actor.PreStart, actor.PostStop:
 		// Do nothing
 	case startWork:
 		w.sendWorkStarted(ctx, msg)
@@ -83,15 +84,15 @@ func (w *worker) Receive(ctx *actor.Context) (err error) {
 			progress = 1
 		}
 
-		var trials *[]model.HPImportanceTrialData
+		var trials []model.HPImportanceTrialData
 		switch msg.metricType {
-		case Training:
+		case model.TrainingMetric:
 			trials, err = w.db.FetchHPImportanceTrainingData(msg.experimentID, msg.metricName)
 			if err != nil {
 				w.sendWorkFailed(ctx, msg, err.Error())
 				return nil
 			}
-		case Validation:
+		case model.ValidationMetric:
 			trials, err = w.db.FetchHPImportanceValidationData(msg.experimentID, msg.metricName)
 			if err != nil {
 				w.sendWorkFailed(ctx, msg, err.Error())

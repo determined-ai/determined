@@ -17,7 +17,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
-	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -944,6 +943,12 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 }
 
+var hpiStateMap = map[model.HPImportanceStatus]apiv1.GetHPImportanceResponse_MetricHPImportance_Status{
+	model.Pending:    apiv1.GetHPImportanceResponse_MetricHPImportance_STATUS_PENDING,
+	model.InProgress: apiv1.GetHPImportanceResponse_MetricHPImportance_STATUS_IN_PROGRESS,
+	model.Complete:   apiv1.GetHPImportanceResponse_MetricHPImportance_STATUS_COMPLETE,
+}
+
 func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 	resp apiv1.Determined_GetHPImportanceServer) error {
 	experimentID := int(req.ExperimentId)
@@ -960,12 +965,15 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 		var response apiv1.GetHPImportanceResponse
 
 		result, err := a.m.db.GetHPImportance(experimentID)
+		if err != nil {
+			return errors.Wrap(err, "error looking up hyperparameter importance")
+		}
 		response.TrainingMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
 		response.ValidationMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
 		for metric, metricHpi := range result.TrainingMetrics {
 			response.TrainingMetrics[metric] = &apiv1.GetHPImportanceResponse_MetricHPImportance{
 				Error:              metricHpi.Error,
-				Status:             metricHpi.Status,
+				Status:             hpiStateMap[metricHpi.Status],
 				ExperimentProgress: metricHpi.ExperimentProgress,
 				HpImportance:       metricHpi.HpImportance,
 			}
@@ -973,13 +981,10 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 		for metric, metricHpi := range result.ValidationMetrics {
 			response.ValidationMetrics[metric] = &apiv1.GetHPImportanceResponse_MetricHPImportance{
 				Error:              metricHpi.Error,
-				Status:             metricHpi.Status,
+				Status:             hpiStateMap[metricHpi.Status],
 				ExperimentProgress: metricHpi.ExperimentProgress,
 				HpImportance:       metricHpi.HpImportance,
 			}
-		}
-		if err != nil {
-			return errors.Wrap(err, "error looking up hyperparameter importance")
 		}
 
 		if err := resp.Send(&response); err != nil {
@@ -991,12 +996,12 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 			allComplete = false
 		}
 		for _, metricHpi := range result.TrainingMetrics {
-			if !hpimportance.TerminalStates[metricHpi.Status] {
+			if !model.HPImportanceTerminalStates[metricHpi.Status] {
 				allComplete = false
 			}
 		}
 		for _, metricHpi := range result.ValidationMetrics {
-			if !hpimportance.TerminalStates[metricHpi.Status] {
+			if !model.HPImportanceTerminalStates[metricHpi.Status] {
 				allComplete = false
 			}
 		}

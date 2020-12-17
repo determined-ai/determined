@@ -487,6 +487,34 @@ type SearcherEvent struct {
 	Content      JSONObj `db:"content"`
 }
 
+type MetricType int
+
+const (
+	// Training designates metrics from training steps.
+	TrainingMetric MetricType = iota
+	// Validation designates metrics from validation steps.
+	ValidationMetric MetricType = iota
+)
+
+type HPImportanceStatus string
+
+const (
+	// Pending indicates that a computation request is queued.
+	Pending HPImportanceStatus = "pending"
+	// InProgress indicates that a computation request is in-progress.
+	InProgress HPImportanceStatus = "in_progress"
+	// Complete indicates that one request was completed and no further requests have been received.
+	Complete HPImportanceStatus = "complete"
+	// Failed indicates that there was an error during computation.
+	Failed HPImportanceStatus = "failed"
+)
+
+// TerminalStates indicate final states, as opposed to tasks that imply imminent changes.
+var HPImportanceTerminalStates = map[HPImportanceStatus]bool{
+	Complete: true,
+	Failed:   true,
+}
+
 // HPImportanceTrialData is the input to the hyperparameter importance algorithm.
 type HPImportanceTrialData struct {
 	TrialID int                    `db:"trial_id"`
@@ -505,7 +533,7 @@ type ExperimentHPImportance struct {
 // MetricHPImportance is hyperparameter importance with respect to a specific metric.
 type MetricHPImportance struct {
 	Error              string             `json:"error"`
-	Status             string             `json:"state"`
+	Status             HPImportanceStatus `json:"state"`
 	ExperimentProgress float64            `json:"experiment_progress"`
 	HpImportance       map[string]float64 `json:"hp_importance"`
 }
