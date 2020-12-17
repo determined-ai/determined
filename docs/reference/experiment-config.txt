@@ -643,7 +643,9 @@ large-scale experiments with hundreds or thousands of trials.
    The maximum number of trials that can be worked on simultaneously.
    The default value is ``0``, and we set reasonable values depending on
    max_trials and the number of rungs in the brackets. This is akin to
-   controlling the degree of parallelism of the experiment.
+   controlling the degree of parallelism of the experiment. If this
+   value is less than the number of brackets produced by the adaptive
+   algorithm, it will be rounded up.
 
 ``source_trial_id``
    If specified, the weights of *every* trial in the search will be

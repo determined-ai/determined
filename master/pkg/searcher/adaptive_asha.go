@@ -47,6 +47,9 @@ func getBracketMaxConcurrentTrials(
 	if maxConcurrentTrials == 0 {
 		minTrials = max(maxTrials[numBrackets-1], int(divisor))
 	} else {
+		// Without this, the remainder will be less than numBrackets and later brackets willgit pu
+		// not receive a constraint on bracketMaxConcurrentTrials.
+		maxConcurrentTrials = max(maxConcurrentTrials, numBrackets)
 		minTrials = maxConcurrentTrials / numBrackets
 		remainder = maxConcurrentTrials % numBrackets
 	}
