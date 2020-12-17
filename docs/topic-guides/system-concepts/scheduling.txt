@@ -54,10 +54,10 @@ not be scheduled until the former has been. Tasks of equal priority are
 scheduled in the order in which they were created.
 
 By default the priority scheduler will not perform any preemption. If
-preemption is enabled (:ref:`master-configuration`), in scenarious where
-a higher priority task is pending and can not be scheduled, the
-scheduler will attempt to schedule it by pre-empting lower priority
-tasks, starting with the lowest priorities.
+preemption is enabled (:ref:`master-configuration`), in scenarios where
+a higher priority task is pending and cannot be scheduled, the scheduler
+will attempt to schedule it by preempting lower priority tasks, starting
+with the lowest priorities.
 
 An example of the priority scheduler:
 
@@ -65,25 +65,25 @@ An example of the priority scheduler:
    and slots_per_trial 1. 8 trials run and utilize all 8 GPUs.
 
 #. User submits priority 1 distributed training experiment with
-   slots_per_trial 4. 4 asha trials preempted so it can run. Note that
-   if preemption were disabled, this would not get scheduled until the
-   ASHA experiment's GPU demand becomes <= 4.
+   slots_per_trial 4. 4 asha trials are preempted so it can run. Note
+   that if preemption were disabled, this would not get scheduled until
+   the ASHA experiment's GPU demand becomes <= 4.
 
-#. User starts priority 3 notebook with resources.slots 1. will run as
+#. User starts priority 3 notebook with resources.slots 1. Will run as
    soon as adaptive_asha plus distributed training experiments
    collectively need <= 7 GPUs.
 
-#. Asha and the distributed training expriments both complete.
+#. Asha and the distributed training expriment both complete.
 
-#. user submits priority 1 distributed training experiment with
-   slots_per_trial 8. will not be scheduled bc notebook not preemptible
-   and only 7 slots available.
+#. User submits priority 1 distributed training experiment with
+   slots_per_trial 8. It will not be scheduled because notebooks are not
+   preemptible and only 7 slots available.
 
-#. user submits priority 2 distributed training experiment with
-   slots_per_trial 4. will still not be scheduled even though 7 slots
+#. User submits priority 2 distributed training experiment with
+   slots_per_trial 4. It will not be scheduled even though 7 slots
    available, because it is behind a higher priority task.
 
-#. notebook killed. P1 distributed training experiment runs. Once
+#. Notebook killed. P1 distributed training experiment runs. Once
    complete, P2 distributed training experiment runs.
 
 .. note::
