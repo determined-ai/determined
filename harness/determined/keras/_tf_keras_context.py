@@ -281,11 +281,11 @@ class TFKerasContext:
             raise det.errors.InvalidExperimentException("string optimizers are not supported")
 
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
-        hvd_args = inspect.signature(hvd.DistributedOptimizer)
+        hvd_sig = inspect.signature(hvd.DistributedOptimizer)
         horovod_kwargs = {
             "average_aggregated_gradients": self.hvd_config.average_aggregated_gradients,
         }  # type: Dict[str, Any]
-        if "aggregation_frequency" in hvd_args.parameters:
+        if "aggregation_frequency" in hvd_sig.parameters:
             horovod_kwargs["aggregation_frequency"] = self.hvd_config.aggregation_frequency
         else:
             horovod_kwargs["backward_passes_per_step"] = self.hvd_config.aggregation_frequency

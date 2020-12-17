@@ -68,14 +68,14 @@ class EstimatorContext:
         use_compression = self.hvd_config.fp16_compression
 
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
-        hvd_args = inspect.signature(hvd.DistributedOptimizer)
+        hvd_sig = inspect.signature(hvd.DistributedOptimizer)
         horovod_kwargs = {
             "compression": hvd.compression.Compression.fp16
             if use_compression
             else hvd.compression.Compression.none,
             "average_aggregated_gradients": self.hvd_config.average_aggregated_gradients,
         }
-        if "aggregation_frequency" in hvd_args.parameters:
+        if "aggregation_frequency" in hvd_sig.parameters:
             horovod_kwargs["aggregation_frequency"] = self.hvd_config.aggregation_frequency
         else:
             horovod_kwargs["backward_passes_per_step"] = self.hvd_config.aggregation_frequency
