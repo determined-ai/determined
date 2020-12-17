@@ -88,5 +88,6 @@ func elasticTLSConfig(conf model.TLSClientConfig) (*tls.Config, error) {
 		InsecureSkipVerify: conf.SkipVerify, //nolint:gosec
 		MinVersion:         tls.VersionTLS12,
 		RootCAs:            pool,
+		ServerName:         conf.CertificateName,
 	}, nil
 }
