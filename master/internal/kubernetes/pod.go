@@ -134,7 +134,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		p.receivePodEventUpdate(ctx, msg)
 
 	case sproto.ContainerLog:
-		p.receiveContainerLogs(ctx, msg)
+		p.receiveContainerLog(ctx, msg)
 
 	case sproto.KillTaskPod:
 		ctx.Log().Info("received request to stop pod")
@@ -196,14 +196,7 @@ func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
 
 func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, msg resourceCreationFailed) {
 	ctx.Log().WithError(msg.err).Error("pod actor notified that resource creation failed")
-	errMsg := msg.err.Error()
-	ctx.Tell(p.taskActor, sproto.ContainerLog{
-		Container:   p.container,
-		Timestamp:   time.Now(),
-		PullMessage: nil,
-		RunMessage:  nil,
-		AuxMessage:  &errMsg,
-	})
+	p.insertLog(ctx, time.Now(), msg.err.Error())
 
 	// If a subset of resources were created (e.g., configMap but podCreation failed) they will
 	// be deleted during actor.PostStop.
@@ -376,9 +369,16 @@ func (p *pod) informTaskContainerStopped(
 	})
 }
 
-func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
+func (p *pod) receiveContainerLog(ctx *actor.Context, msg sproto.ContainerLog) {
 	msg.Container = p.container
 	ctx.Tell(p.taskActor, msg)
+}
+
+func (p *pod) insertLog(ctx *actor.Context, timestamp time.Time, msg string) {
+	p.receiveContainerLog(ctx, sproto.ContainerLog{
+		Timestamp:  timestamp,
+		AuxMessage: &msg,
+	})
 }
 
 func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
@@ -393,13 +393,7 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	}
 
 	message := fmt.Sprintf("Pod %s: %s", msg.event.InvolvedObject.Name, msg.event.Message)
-	ctx.Tell(p.taskActor, sproto.ContainerLog{
-		Container:   p.container,
-		Timestamp:   msg.event.CreationTimestamp.Time,
-		PullMessage: nil,
-		RunMessage:  nil,
-		AuxMessage:  &message,
-	})
+	p.insertLog(ctx, msg.event.CreationTimestamp.Time, message)
 }
 
 func getPodState(

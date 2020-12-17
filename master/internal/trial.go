@@ -293,7 +293,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.replaying = false
 
 	case sproto.ContainerLog:
-		t.processContainerLog(ctx, msg)
+		t.insertLog(ctx, msg.Container, msg.Message())
 
 	case trialAborted:
 		// This is to handle trial being aborted. It does nothing here but requires
@@ -968,14 +968,6 @@ func (t *trial) canLog(ctx *actor.Context, msg string) bool {
 		return false
 	}
 	return true
-}
-
-func (t *trial) processContainerLog(ctx *actor.Context, msg sproto.ContainerLog) {
-	if !t.canLog(ctx, msg.String()) {
-		return
-	}
-
-	ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: msg.String() + "\n"})
 }
 
 func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
