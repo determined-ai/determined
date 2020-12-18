@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { Options } from 'uplot';
 
-import 'uplot/dist/uPlot.min.css';
 import useResize from 'hooks/useResize';
 import { distance } from 'utils/chart';
 
