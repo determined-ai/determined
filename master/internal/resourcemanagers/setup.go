@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/agent"
@@ -16,21 +17,24 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func makeTLSConfig(cert *tls.Certificate) model.TLSClientConfig {
+func makeTLSConfig(cert *tls.Certificate) (model.TLSClientConfig, error) {
 	if cert == nil {
-		return model.TLSClientConfig{}
+		return model.TLSClientConfig{}, nil
 	}
 	var content bytes.Buffer
 	for _, c := range cert.Certificate {
-		// Errors can only happen due to invalid headers (of which there are none) or I/O (which is safe
-		// with a bytes.Buffer).
-		_ = pem.Encode(&content, &pem.Block{
+		if err := pem.Encode(&content, &pem.Block{
 			Type:  "CERTIFICATE",
 			Bytes: c,
-		})
+		}); err != nil {
+			return model.TLSClientConfig{}, errors.Wrap(err, "failed to encode PEM")
+		}
 	}
 
-	leaf, _ := x509.ParseCertificate(cert.Certificate[0])
+	leaf, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		return model.TLSClientConfig{}, errors.Wrap(err, "failed to parse certificate")
+	}
 	certName := ""
 	if len(leaf.DNSNames) > 0 {
 		certName = leaf.DNSNames[0]
@@ -42,7 +46,7 @@ func makeTLSConfig(cert *tls.Certificate) model.TLSClientConfig {
 		Enabled:         true,
 		CertBytes:       content.Bytes(),
 		CertificateName: certName,
-	}
+	}, nil
 }
 
 // Setup sets up the actor and endpoints for resource managers.
@@ -59,8 +63,12 @@ func Setup(
 	case rmConfig.AgentRM != nil:
 		ref = setupAgentResourceManager(system, echo, rmConfig.AgentRM, poolsConfig, opts, cert)
 	case rmConfig.KubernetesRM != nil:
+		config, err := makeTLSConfig(cert)
+		if err != nil {
+			panic(errors.Wrap(err, "failed to set up TLS config"))
+		}
 		ref = setupKubernetesResourceManager(
-			system, echo, rmConfig.KubernetesRM, makeTLSConfig(cert), opts.LoggingOptions,
+			system, echo, rmConfig.KubernetesRM, config, opts.LoggingOptions,
 		)
 	default:
 		panic("no expected resource manager config is defined")

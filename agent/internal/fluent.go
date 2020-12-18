@@ -187,7 +187,10 @@ func startLoggingContainer(
 		})
 	}
 
-	filesReader, _ := archive.ToIOReader(fluentArchive)
+	filesReader, err := archive.ToIOReader(fluentArchive)
+	if err != nil {
+		return 0, "", err
+	}
 
 	err = docker.CopyToContainer(context.Background(),
 		createResponse.ID,
