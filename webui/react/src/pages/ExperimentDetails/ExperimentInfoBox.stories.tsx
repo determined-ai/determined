@@ -43,6 +43,6 @@ const experimentDetails: ExperimentDetails = {
   } ],
 };
 
-// export const state = (): React.ReactNode => (
-//   // <ExperimentInfoBox experiment={experimentDetails} />
-// );
+export const state = (): React.ReactNode => (
+  <ExperimentInfoBox experiment={experimentDetails} />
+);

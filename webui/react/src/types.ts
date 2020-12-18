@@ -352,8 +352,6 @@ export interface TrialItem extends TrialBase {
   url: string;
 }
 
-// export interface ValidationHistory
-
 export interface ExperimentItem {
   archived: boolean;
   endTime?: string;

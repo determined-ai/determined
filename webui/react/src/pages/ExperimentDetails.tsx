@@ -179,7 +179,7 @@ const ExperimentDetailsComp: React.FC = () => {
   const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
 
-    const { columnKey, order } = sorter as SorterResult<TrialItem>;
+    const { columnKey, order } = sorter as SorterResult<TrialItem2>;
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });

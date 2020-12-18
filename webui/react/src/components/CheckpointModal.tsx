@@ -82,6 +82,10 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
 
   const totalBatchesProcessed = getBatchNumber(checkpoint);
 
+  const searcherMetric = props.searcherValidation !== undefined ?
+    props.searcherValidation :
+    ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
+
   return (
     <Modal
       footer={null}
@@ -108,10 +112,10 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
-        {props.searcherValidation && renderRow(
+        {searcherMetric && renderRow(
           'Validation Metric',
           <>
-            <HumanReadableFloat num={props.searcherValidation} /> {`(${config.searcher.metric})`}
+            <HumanReadableFloat num={searcherMetric} /> {`(${config.searcher.metric})`}
           </>,
         )}
         {renderRow('Start Time', formatDatetime(checkpoint.startTime))}
