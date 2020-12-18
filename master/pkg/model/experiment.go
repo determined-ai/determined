@@ -496,25 +496,6 @@ const (
 	ValidationMetric MetricType = iota
 )
 
-type HPImportanceStatus string
-
-const (
-	// Pending indicates that a computation request is queued.
-	Pending HPImportanceStatus = "pending"
-	// InProgress indicates that a computation request is in-progress.
-	InProgress HPImportanceStatus = "in_progress"
-	// Complete indicates that one request was completed and no further requests have been received.
-	Complete HPImportanceStatus = "complete"
-	// Failed indicates that there was an error during computation.
-	Failed HPImportanceStatus = "failed"
-)
-
-// TerminalStates indicate final states, as opposed to tasks that imply imminent changes.
-var HPImportanceTerminalStates = map[HPImportanceStatus]bool{
-	Complete: true,
-	Failed:   true,
-}
-
 // HPImportanceTrialData is the input to the hyperparameter importance algorithm.
 type HPImportanceTrialData struct {
 	TrialID int                    `db:"trial_id"`
@@ -533,7 +514,8 @@ type ExperimentHPImportance struct {
 // MetricHPImportance is hyperparameter importance with respect to a specific metric.
 type MetricHPImportance struct {
 	Error              string             `json:"error"`
-	Status             HPImportanceStatus `json:"state"`
+	Pending            bool               `json:"pending"`
+	InProgress         bool               `json:"in_progress"`
 	ExperimentProgress float64            `json:"experiment_progress"`
 	HpImportance       map[string]float64 `json:"hp_importance"`
 }

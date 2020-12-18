@@ -315,8 +315,8 @@ def request_hp_importance(experiment_id):  # type: ignore
                 return ("Unexpected importance for hparam %s" % hparam, lastResult)
         if not metric["experimentProgress"] == 1:
             return ("HP importance from unfinished experiment included!", lastResult)
-        if not metric["status"] == "complete":
-            return ("Unexpected non-complete status in HP importance", lastResult)
+        if metric["pending"] or metric["inProgress"]:
+            return ("Unexpected incomplete status in HP importance", lastResult)
         if not metric["error"] == "":
             return ("Unexpected error in HP importance", lastResult)
     return None

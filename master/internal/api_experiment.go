@@ -965,7 +965,7 @@ func (a *apiServer) ComputeHPImportance(ctx context.Context, req *apiv1.ComputeH
 		panic("Invalid metric type")
 	}
 
-	a.m.system.Tell(a.m.hpImportance, hpimportance.WorkRequest{
+	a.m.system.Ask(a.m.hpImportance, hpimportance.WorkRequest{
 		ExperimentID: experimentID,
 		MetricName:   metricName,
 		MetricType:   metricType,
@@ -973,12 +973,6 @@ func (a *apiServer) ComputeHPImportance(ctx context.Context, req *apiv1.ComputeH
 
 	var resp apiv1.ComputeHPImportanceResponse
 	return &resp, nil
-}
-
-var hpiStateMap = map[model.HPImportanceStatus]apiv1.GetHPImportanceResponse_MetricHPImportance_Status{
-	model.Pending:    apiv1.GetHPImportanceResponse_MetricHPImportance_STATUS_PENDING,
-	model.InProgress: apiv1.GetHPImportanceResponse_MetricHPImportance_STATUS_IN_PROGRESS,
-	model.Complete:   apiv1.GetHPImportanceResponse_MetricHPImportance_STATUS_COMPLETE,
 }
 
 func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
@@ -1005,7 +999,8 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 		for metric, metricHpi := range result.TrainingMetrics {
 			response.TrainingMetrics[metric] = &apiv1.GetHPImportanceResponse_MetricHPImportance{
 				Error:              metricHpi.Error,
-				Status:             hpiStateMap[metricHpi.Status],
+				Pending:            metricHpi.Pending,
+				InProgress:         metricHpi.InProgress,
 				ExperimentProgress: metricHpi.ExperimentProgress,
 				HpImportance:       metricHpi.HpImportance,
 			}
@@ -1013,7 +1008,8 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 		for metric, metricHpi := range result.ValidationMetrics {
 			response.ValidationMetrics[metric] = &apiv1.GetHPImportanceResponse_MetricHPImportance{
 				Error:              metricHpi.Error,
-				Status:             hpiStateMap[metricHpi.Status],
+				Pending:            metricHpi.Pending,
+				InProgress:         metricHpi.InProgress,
 				ExperimentProgress: metricHpi.ExperimentProgress,
 				HpImportance:       metricHpi.HpImportance,
 			}
@@ -1028,12 +1024,12 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 			allComplete = false
 		}
 		for _, metricHpi := range result.TrainingMetrics {
-			if !model.HPImportanceTerminalStates[metricHpi.Status] {
+			if metricHpi.Pending || metricHpi.InProgress {
 				allComplete = false
 			}
 		}
 		for _, metricHpi := range result.ValidationMetrics {
-			if !model.HPImportanceTerminalStates[metricHpi.Status] {
+			if metricHpi.Pending || metricHpi.InProgress {
 				allComplete = false
 			}
 		}

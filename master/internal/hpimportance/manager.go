@@ -120,7 +120,8 @@ func (m *manager) workStarted(ctx *actor.Context, msg workStarted) {
 		return
 	}
 	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
-	metricData.Status = model.InProgress
+	metricData.Pending = false
+	metricData.InProgress = true
 	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
@@ -136,7 +137,7 @@ func (m *manager) workFailed(ctx *actor.Context, msg workFailed) {
 		return
 	}
 	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
-	metricData.Status = model.Failed
+	metricData.InProgress = false
 	metricData.Error = msg.err
 	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
@@ -159,14 +160,7 @@ func (m *manager) workCompleted(ctx *actor.Context, msg workCompleted) {
 	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
 	metricData.ExperimentProgress = msg.progress
 	metricData.HpImportance = msg.results
-	switch metricData.Status {
-	case model.Pending:
-		// Do nothing - this means another startWork message was already sent
-	case model.InProgress:
-		metricData.Status = model.Complete
-	default:
-		ctx.Log().Warnf("work was completed for a metric with an unexpected state")
-	}
+	metricData.InProgress = false
 	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
@@ -194,40 +188,33 @@ func (m *manager) getChild(ctx *actor.Context, experimentID int) *actor.Ref {
 }
 
 func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
-	child := m.getChild(ctx, msg.ExperimentID)
-
 	hpi, err := m.db.GetHPImportance(msg.ExperimentID)
 	if err != nil {
 		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
 		return
 	}
 
-	trigger := false
 	metricHpi := getMetricHPImportance(hpi, msg.MetricName, msg.MetricType)
-	if metricHpi.Status != model.Pending {
-		trigger = true
+	if metricHpi.Pending {
+		return
 	}
-	metricHpi.Status = model.Pending
+	metricHpi.Pending = true
 	setMetricHPImportance(&hpi, metricHpi, msg.MetricName, msg.MetricType)
-
 	err = m.db.SetHPImportance(msg.ExperimentID, hpi)
 	if err != nil {
 		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
 		return
 	}
 
-	if trigger {
-		ctx.Tell(child, startWork{
-			experimentID: msg.ExperimentID,
-			metricName:   msg.MetricName,
-			metricType:   msg.MetricType,
-		})
-	}
+	child := m.getChild(ctx, msg.ExperimentID)
+	ctx.Tell(child, startWork{
+		experimentID: msg.ExperimentID,
+		metricName:   msg.MetricName,
+		metricType:   msg.MetricType,
+	})
 }
 
 func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
-	child := m.getChild(ctx, experimentID)
-
 	hpi, err := m.db.GetHPImportance(experimentID)
 	if err != nil {
 		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
@@ -243,40 +230,43 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 	loss := "loss"
 	triggerForLoss := false
 	lossHpi := getMetricHPImportance(hpi, loss, model.TrainingMetric)
-	if lossHpi.Status != model.Pending {
+	if !lossHpi.Pending {
 		triggerForLoss = true
+		lossHpi.Pending = true
+		setMetricHPImportance(&hpi, lossHpi, loss, model.TrainingMetric)
 	}
-	lossHpi.Status = model.Pending
-	setMetricHPImportance(&hpi, lossHpi, loss, model.TrainingMetric)
 
 	searcherMetric := config.Searcher.Metric
 	triggerForSearcherMetric := false
 	searcherMetricHpi := getMetricHPImportance(hpi, searcherMetric, model.ValidationMetric)
-	if searcherMetricHpi.Status != model.Pending {
+	if !searcherMetricHpi.Pending {
 		triggerForSearcherMetric = true
-	}
-	searcherMetricHpi.Status = model.Pending
-	setMetricHPImportance(&hpi, searcherMetricHpi, searcherMetric, model.ValidationMetric)
-
-	err = m.db.SetHPImportance(experimentID, hpi)
-	if err != nil {
-		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
-		return
+		searcherMetricHpi.Pending = true
+		setMetricHPImportance(&hpi, searcherMetricHpi, searcherMetric, model.ValidationMetric)
 	}
 
-	if triggerForLoss {
-		ctx.Tell(child, startWork{
-			experimentID: experimentID,
-			metricName:   loss,
-			metricType:   model.TrainingMetric,
-		})
-	}
-	if triggerForSearcherMetric {
-		ctx.Tell(child, startWork{
-			experimentID: experimentID,
-			metricName:   searcherMetric,
-			metricType:   model.ValidationMetric,
-		})
+	if triggerForLoss || triggerForSearcherMetric {
+		err = m.db.SetHPImportance(experimentID, hpi)
+		if err != nil {
+			ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+			return
+		}
+
+		child := m.getChild(ctx, experimentID)
+		if triggerForLoss {
+			ctx.Tell(child, startWork{
+				experimentID: experimentID,
+				metricName:   loss,
+				metricType:   model.TrainingMetric,
+			})
+		}
+		if triggerForSearcherMetric {
+			ctx.Tell(child, startWork{
+				experimentID: experimentID,
+				metricName:   searcherMetric,
+				metricType:   model.ValidationMetric,
+			})
+		}
 	}
 }
 
