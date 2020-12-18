@@ -175,7 +175,7 @@ class PyTorchTrialContext(det.TrialContext):
                 loss2 = output['loss2']
                 self.context.backward(loss1)
                 self.context.backward(loss2)
-                self.context.step_optimizer(self.optimizer)
+                self.context.step_optimizer(self.optimizer, backward_passes_per_step=2)
                 return {"loss1": loss1, "loss2": loss2}
 
         """
