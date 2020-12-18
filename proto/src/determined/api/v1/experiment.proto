@@ -432,6 +432,19 @@ message TrialsSampleResponse {
 }
 
 // Retrieve
+message ComputeHPImportanceRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+  // A metric name.
+  string metric_name = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_name"]; }];
+  // The type of metric.
+  MetricType metric_type = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_type"]; }];
+}
+
+message ComputeHPImportanceResponse {
+}
+
+// Retrieve
 message GetHPImportanceRequest {
   // The id of the experiment.
   int32 experiment_id = 1;

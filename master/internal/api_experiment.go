@@ -17,6 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -941,6 +942,37 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 			return nil
 		}
 	}
+}
+
+func (a *apiServer) ComputeHPImportance(ctx context.Context, req *apiv1.ComputeHPImportanceRequest) (*apiv1.ComputeHPImportanceResponse, error) {
+	experimentID := int(req.ExperimentId)
+	if err := a.checkExperimentExists(experimentID); err != nil {
+		return nil, err
+	}
+	metricName := req.MetricName
+	if metricName == "" {
+		return nil, status.Error(codes.InvalidArgument, "must specify a metric name")
+	}
+	var metricType model.MetricType
+	switch req.MetricType {
+	case apiv1.MetricType_METRIC_TYPE_UNSPECIFIED:
+		return nil, status.Error(codes.InvalidArgument, "must specify a metric type")
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricType = model.TrainingMetric
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricType = model.ValidationMetric
+	default:
+		panic("Invalid metric type")
+	}
+
+	a.m.system.Tell(a.m.hpImportance, hpimportance.WorkRequest{
+		ExperimentID: experimentID,
+		MetricName:   metricName,
+		MetricType:   metricType,
+	})
+
+	var resp apiv1.ComputeHPImportanceResponse
+	return &resp, nil
 }
 
 var hpiStateMap = map[model.HPImportanceStatus]apiv1.GetHPImportanceResponse_MetricHPImportance_Status{

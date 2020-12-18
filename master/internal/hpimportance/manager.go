@@ -34,6 +34,13 @@ type (
 		ID       int
 		Progress float64
 	}
+
+	// WorkRequest is an explicit request to compute HP importance on-demand.
+	WorkRequest struct {
+		ExperimentID int
+		MetricName   string
+		MetricType   model.MetricType
+	}
 )
 
 // The zero-values of these types happen to be sensible defaults too. If we add fields for which
@@ -67,9 +74,11 @@ func (m *manager) Receive(ctx *actor.Context) error {
 	case ExperimentCompleted:
 		m.experimentCompleted(ctx, msg)
 	case ExperimentCreated:
-		m.experimentCreated(ctx, msg) // TODO: maybe we just start the clock at the first sign of progress?
+		m.experimentCreated(ctx, msg) // TODO: should we just start the clock at the first sign of progress?
 	case ExperimentProgress:
 		m.experimentProgress(ctx, msg)
+	case WorkRequest:
+		m.workRequest(ctx, msg)
 	case workStarted:
 		m.workStarted(ctx, msg)
 	case workFailed:
@@ -182,6 +191,38 @@ func (m *manager) getChild(ctx *actor.Context, experimentID int) *actor.Ref {
 		result, _ = ctx.ActorOf(experimentID, w)
 	}
 	return result
+}
+
+func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
+	child := m.getChild(ctx, msg.ExperimentID)
+
+	hpi, err := m.db.GetHPImportance(msg.ExperimentID)
+	if err != nil {
+		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
+		return
+	}
+
+	trigger := false
+	metricHpi := getMetricHPImportance(hpi, msg.MetricName, msg.MetricType)
+	if metricHpi.Status != model.Pending {
+		trigger = true
+	}
+	metricHpi.Status = model.Pending
+	setMetricHPImportance(&hpi, metricHpi, msg.MetricName, msg.MetricType)
+
+	err = m.db.SetHPImportance(msg.ExperimentID, hpi)
+	if err != nil {
+		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+		return
+	}
+
+	if trigger {
+		ctx.Tell(child, startWork{
+			experimentID: msg.ExperimentID,
+			metricName:   msg.MetricName,
+			metricType:   msg.MetricType,
+		})
+	}
 }
 
 func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
