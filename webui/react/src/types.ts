@@ -251,7 +251,6 @@ export interface MetricName {
   type: MetricType;
 }
 
-// Checkpoint sub step.
 export interface Checkpoint extends StartEndTimes {
   resources?: Record<string, number>;
   state: CheckpointState;
@@ -287,26 +286,10 @@ export interface WorkloadWrapper {
   validation?: MetricsWorkload;
 }
 
-// Validation sub step.
-export interface Validation extends StartEndTimes {
-  id: number;
-  metrics?: ValidationMetrics;
-  state: RunState;
-}
-
+// TODO rename me
 export interface Step2 extends WorkloadWrapper, StartEndTimes {
   batchNum: number;
   training: MetricsWorkload;
-}
-
-export interface Step extends StartEndTimes {
-  avgMetrics?: Record<string, number>;
-  checkpoint?: Checkpoint;
-  id: number;
-  numBatches: number;
-  priorBatchesProcessed: number;
-  state: RunState;
-  validation?: Validation;
 }
 
 export interface CheckpointDetail extends Checkpoint {

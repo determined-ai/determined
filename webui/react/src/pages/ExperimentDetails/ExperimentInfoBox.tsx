@@ -15,7 +15,7 @@ import TagList from 'components/TagList';
 import tagListCss from 'components/TagList.module.scss';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { detApi } from 'services/apiConfig';
-import { Checkpoint, CheckpointDetail, CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, MetricsWorkload, TrialDetails2 } from 'types';
+import { CheckpointDetail, CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, MetricsWorkload, TrialDetails2 } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 
 import css from './ExperimentInfoBox.module.scss';

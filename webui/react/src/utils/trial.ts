@@ -1,50 +1,9 @@
-import { MetricName, MetricType, Step, WorkloadWrapper } from 'types';
+import { MetricName, MetricType, WorkloadWrapper } from 'types';
 import { isNumber, metricNameSorter } from 'utils/data';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
 
 import { getDuration } from './time';
-
-export const extractMetricValuesFromSteps = (
-  step: Step,
-  metricName: MetricName,
-): number | undefined => {
-  if (metricName.type === MetricType.Training) {
-    const source = step.avgMetrics || {};
-    if (isNumber(source[metricName.name])) return source[metricName.name];
-  } else if (metricName.type === MetricType.Validation) {
-    const source = step.validation?.metrics?.validationMetrics || {};
-    if (isNumber(source[metricName.name])) return source[metricName.name];
-  }
-  return undefined;
-};
-
-export const extractMetricNamesFromSteps = (steps: Step[] = []): MetricName[] => {
-  const map: Record<string, MetricName> = {};
-
-  steps.forEach(step => {
-    const trainingSource = step.avgMetrics || {};
-    const validationSource = step.validation?.metrics?.validationMetrics || {};
-
-    // Extract training metric names
-    Object.keys(trainingSource).forEach(key => {
-      if (!isNumber(trainingSource[key])) return;
-      const metricName = { name: key, type: MetricType.Training };
-      const value = metricNameToValue(metricName);
-      if (!map[value]) map[value] = metricName;
-    });
-
-    // Extract validation metric names
-    Object.keys(validationSource).forEach(key => {
-      if (!isNumber(validationSource[key])) return;
-      const metricName = { name: key, type: MetricType.Validation };
-      const value = metricNameToValue(metricName);
-      if (!map[value]) map[value] = metricName;
-    });
-  });
-
-  return Object.values(map).sort(metricNameSorter);
-};
 
 export const extractMetricNames = (workloads: WorkloadWrapper[]): MetricName[] => {
   const trainingNames: Set<string> = workloads
@@ -140,21 +99,6 @@ interface TrialDurations {
   train: number;
   validation: number;
 }
-
-export const trialDurationsStep = (steps: Step[]): TrialDurations => {
-  const initialDurations: TrialDurations = {
-    checkpoint: 0,
-    train: 0,
-    validation: 0,
-  };
-
-  return steps.reduce((acc: TrialDurations, cur: Step) => {
-    acc.train += getDuration(cur);
-    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
-    if (cur.validation) acc.validation += getDuration(cur.validation);
-    return acc;
-  }, initialDurations);
-};
 
 export const trialDurations = (wlWrappers: WorkloadWrapper[]): TrialDurations => {
   const initialDurations: TrialDurations = {

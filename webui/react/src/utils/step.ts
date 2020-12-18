@@ -1,7 +1,7 @@
-import { CheckpointState, CheckpointWorkload, MetricsWorkload, Step, Step2,
+import { CheckpointState, CheckpointWorkload, MetricsWorkload, Step2,
   WorkloadWrapper } from '../types';
 
-export const hasCheckpointStep = (step: Step | Step2): boolean => {
+export const hasCheckpointStep = (step: Step2): boolean => {
   return !!step.checkpoint && step.checkpoint.state !== CheckpointState.Deleted;
 };
 
