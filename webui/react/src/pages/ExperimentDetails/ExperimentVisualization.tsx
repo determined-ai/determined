@@ -3,12 +3,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
-import MetricSelectFilter from 'components/MetricSelectFilter';
 import SelectFilter from 'components/SelectFilter';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentDetails, MetricName, MetricType } from 'types';
+import { alphanumericSorter } from 'utils/data';
 
 import css from './ExperimentVisualization.module.scss';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
@@ -70,47 +70,60 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Stream available metrics
   useEffect(() => {
-    const metricsCanceler = new AbortController();
+    const canceler = new AbortController();
+    const trainingMetricsMap: Record<string, boolean> = {};
+    const validationMetricsMap: Record<string, boolean> = {};
     consumeStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.determinedMetricNames(
         experiment.id,
         undefined,
-        { signal: metricsCanceler.signal },
+        { signal: canceler.signal },
       ),
       event => {
         if (!event) return;
-        setSearcherMetric(event.searcherMetric);
-        setTrainingMetrics(event.trainingMetrics || []);
-        setValidationMetrics(event.validationMetrics || []);
+        /*
+         * The metrics endpoint can intermittently send empty lists,
+         * so we keep track of what we have seen on our end and
+         * only add new metrics we have not seen to the list.
+         */
+        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphanumericSorter);
+        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphanumericSorter);
+        setTrainingMetrics(newTrainingMetrics);
+        setValidationMetrics(newValidationMetrics);
+        if (event.searcherMetric) setSearcherMetric(event.searcherMetric);
       },
     );
 
-    return () => metricsCanceler.abort();
+    return () => canceler.abort();
   }, [ experiment.id ]);
 
   // Stream available batches
   useEffect(() => {
     if (!selectedMetric) return;
 
-    const batchesCanceler = new AbortController();
+    const canceler = new AbortController();
     const metricTypeParam = selectedMetric?.type === MetricType.Training
       ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
+    const batchesMap: Record<number, number> = {};
     consumeStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.determinedMetricBatches(
         experiment.id,
         selectedMetric?.name,
         metricTypeParam,
         undefined,
-        { signal: batchesCanceler.signal },
+        { signal: canceler.signal },
       ),
       event => {
-        if (!event || !event.batches) return;
-        setBatches(event.batches);
-        if (event.batches.length !== 0) setSelectedBatch(event.batches[0]);
+        if (!event) return;
+        (event.batches || []).forEach(batch => batchesMap[batch] = batch);
+        const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
+        setBatches(newBatches);
       },
     );
 
-    return () => batchesCanceler.abort();
+    return () => canceler.abort();
   }, [ experiment.id, selectedMetric ]);
 
   // Set the default metric of interest

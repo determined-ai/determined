@@ -16,6 +16,15 @@ interface Props {
   xValues: number[];
 }
 
+interface ClosestPoint {
+  distance: number;
+  seriesIdx?: number;
+  value?: number;
+  x?: number;
+  xValue?: number;
+  y?: number;
+}
+
 const CHART_HEIGHT = 400;
 const CANVAS_CSS_RATIO = 2;
 const FOCUS_MIN_DISTANCE = 30;
@@ -40,6 +49,52 @@ const UPLOT_OPTIONS = {
     x: { time: false },
   },
   series: [ { label: 'batches' } ],
+};
+
+const findClosestPoint = (
+  sharedData: {
+    mouseLeft: number,
+    mouseTop: number,
+    plot: uPlot,
+    series: (number | null)[],
+    seriesIdx: number,
+    startIdx: number,
+    xValues: number[],
+  },
+  closestPoint: ClosestPoint,
+  idxOffset: number,
+): ClosestPoint => {
+  const idx = sharedData.startIdx + idxOffset;
+  if (idx < 0 || idx >= sharedData.xValues.length) return closestPoint;
+
+  const xValue = sharedData.xValues[idx];
+  const value = sharedData.series[idx];
+  let updatedClosestPoint: ClosestPoint = { ...closestPoint };
+
+  if (value != null) {
+    const posX = sharedData.plot.valToPos(xValue, 'x');
+    const posY = sharedData.plot.valToPos(value, 'metric');
+    const dist = distance(posX, posY, sharedData.mouseLeft, sharedData.mouseTop);
+
+    if (dist > FOCUS_MIN_DISTANCE) return closestPoint;
+    if (dist < closestPoint.distance) {
+      updatedClosestPoint = {
+        distance: dist,
+        seriesIdx: sharedData.seriesIdx,
+        value,
+        x: posX,
+        xValue,
+        y: posY,
+      };
+    }
+  }
+
+  if (idxOffset === 0) {
+    const leftPoint = findClosestPoint(sharedData, updatedClosestPoint, -1);
+    return findClosestPoint(sharedData, leftPoint, 1);
+  }
+  const nextIdxOffset = idxOffset + (idxOffset < 0 ? -1 : 1);
+  return findClosestPoint(sharedData, updatedClosestPoint, nextIdxOffset);
 };
 
 const LearningCurveChart: React.FC<Props> = ({
@@ -86,80 +141,35 @@ const LearningCurveChart: React.FC<Props> = ({
   ) => {
     const position = [ mouseLeft, mouseTop ];
     if (mouseLeft < 0 && mouseTop < 0) return position;
+    if (!plot.data || plot.data.length === 0) return;
     if (!tooltipRef.current || !trialIdRef.current ||
         !batchesRef.current || !metricValueRef.current) return position;
 
-    const maxIdx = xValues.length;
+    const localXValues = plot.data[0];
+    const localData = plot.data.slice(1);
     const idx = plot.posToIdx(mouseLeft);
 
     // Find the nearest series and data point based on cursor position.
-    let valDistance = Number.MAX_VALUE;
-    let closestSeriesIdx = -1;
-    let [ closestX, closestY ] = [ -1, -1 ];
-    let [ closestXValue, closestValue ] = [ -1, -1 ];
-
-    data.forEach((series, index) => {
-      let idxDistance = 0;
-      let searchLeft = true;
-      let searchRight = true;
-
-      // TODO: Optimize and refactor.
-      while (searchLeft || searchRight) {
-        const leftIdx = idx - idxDistance;
-        const rightIdx = idx + idxDistance;
-        if (leftIdx >= 0) {
-          const leftXVal = xValues[leftIdx];
-          const leftVal = series[leftIdx];
-          if (leftVal != null) {
-            const x = plot.valToPos(leftXVal, 'x');
-            const y = plot.valToPos(leftVal, 'metric');
-            const dist = distance(x, y, mouseLeft, mouseTop);
-            if (dist > FOCUS_MIN_DISTANCE) {
-              searchLeft = false;
-            } else if (dist < valDistance) {
-              valDistance = dist;
-              closestSeriesIdx = index;
-              closestX = x;
-              closestY = y;
-              closestXValue = leftXVal;
-              closestValue = leftVal;
-            }
-          }
-        } else {
-          searchLeft = false;
-        }
-        if (rightIdx < maxIdx) {
-          const rightXVal = xValues[rightIdx];
-          const rightVal = series[rightIdx];
-          if (rightVal != null) {
-            const x = plot.valToPos(rightXVal, 'x');
-            const y = plot.valToPos(rightVal, 'metric');
-            const dist = distance(x, y, mouseLeft, mouseTop);
-            if (dist > FOCUS_MIN_DISTANCE) {
-              searchRight = false;
-            } else if (dist < valDistance) {
-              valDistance = dist;
-              closestSeriesIdx = index;
-              closestX = x;
-              closestY = y;
-              closestXValue = rightXVal;
-              closestValue = rightVal;
-            }
-          }
-        } else {
-          searchRight = false;
-        }
-        idxDistance++;
-      }
+    let closestPoint: ClosestPoint = { distance: Number.MAX_VALUE };
+    localData.forEach((series, index) => {
+      closestPoint = findClosestPoint({
+        mouseLeft,
+        mouseTop,
+        plot,
+        series,
+        seriesIdx: index,
+        startIdx: idx,
+        xValues: localXValues,
+      }, closestPoint, 0);
     });
 
     // Focus or remove focus series.
-    if (closestSeriesIdx === -1) {
+    if (closestPoint.seriesIdx == null) {
       plot.setSeries(null as unknown as number, { focus: false });
       if (onTrialFocus) onTrialFocus(null);
     } else {
-      plot.setSeries(closestSeriesIdx + 1, { focus: true });
-      if (onTrialFocus) onTrialFocus(trialIds[closestSeriesIdx]);
+      plot.setSeries(closestPoint.seriesIdx + 1, { focus: true });
+      if (onTrialFocus) onTrialFocus(trialIds[closestPoint.seriesIdx]);
     }
 
     /*
@@ -170,9 +180,10 @@ const LearningCurveChart: React.FC<Props> = ({
      */
     plot.cursor.dataIdx = (): number => null as unknown as number;
 
-    if (closestSeriesIdx !== -1) {
-      const x = closestX + plot.bbox.left / CANVAS_CSS_RATIO;
-      const y = closestY + plot.bbox.top / CANVAS_CSS_RATIO;
+    if (closestPoint.seriesIdx != null && closestPoint.x != null && closestPoint.y != null &&
+        closestPoint.xValue != null && closestPoint.value != null) {
+      const x = closestPoint.x + plot.bbox.left / CANVAS_CSS_RATIO;
+      const y = closestPoint.y + plot.bbox.top / CANVAS_CSS_RATIO;
       const classes = [ css.tooltip ];
 
       /*
@@ -186,15 +197,15 @@ const LearningCurveChart: React.FC<Props> = ({
       tooltipRef.current.style.left = `${x}px`;
       tooltipRef.current.style.top = `${y}px`;
       tooltipRef.current.className = classes.join(' ');
-      trialIdRef.current.innerText = trialIds[closestSeriesIdx].toString();
-      batchesRef.current.innerText = closestXValue.toString();
-      metricValueRef.current.innerText = closestValue.toString();
+      trialIdRef.current.innerText = trialIds[closestPoint.seriesIdx].toString();
+      batchesRef.current.innerText = closestPoint.xValue.toString();
+      metricValueRef.current.innerText = closestPoint.value.toString();
     } else {
       tooltipRef.current.style.display = 'none';
     }
 
     return position;
-  }, [ data, onTrialFocus, tooltipRef, trialIdRef, trialIds, xValues ]);
+  }, [ onTrialFocus, tooltipRef, trialIdRef, trialIds ]);
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -207,7 +218,7 @@ const LearningCurveChart: React.FC<Props> = ({
           label: `trial ${trialId}`,
           scale: 'metric',
           spanGaps: true,
-          stroke: 'rgba(50, 0, 150, 1.0)',
+          stroke: 'rgba(0, 155, 222, 1.0)',
           width: 1 / devicePixelRatio,
         })),
       ],
@@ -221,8 +232,7 @@ const LearningCurveChart: React.FC<Props> = ({
       setChart(undefined);
       plotChart.destroy();
     };
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [ data, xValues ]);
+  }, [ data, handleCursorMove, trialIds, xValues ]);
 
   // Focus on a trial series if provided.
   useEffect(() => focusOnTrial(), [ focusOnTrial ]);

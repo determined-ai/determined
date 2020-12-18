@@ -13,7 +13,7 @@ import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { handlePath } from 'routes/utils';
-import { V1TrialsSampleResponse, V1TrialsSampleResponseTrial } from 'services/api-ts-sdk';
+import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentDetails, MetricName, metricTypeParamMap } from 'types';
@@ -51,8 +51,7 @@ const LearningCurve: React.FC<Props> = ({
   const [ trialIds, setTrialIds ] = useState<number[]>([]);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
-  const [ trialHpMap, setTrialHpMap ] = useState<Record<number, HParams>>({});
-  const [ trialList, setTrialList ] = useState<Array<V1TrialsSampleResponseTrial>>([]);
+  const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
   const [ chartTrialId, setChartTrialId ] = useState<number>();
   const [ tableTrialId, setTableTrialId ] = useState<number>();
@@ -60,16 +59,7 @@ const LearningCurve: React.FC<Props> = ({
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<Error>();
 
-  const hasTrials = Object.keys(trialHpMap).length !== 0;
-
-  const trialHParams: TrialHParams[] = useMemo(() => {
-    if (!trialHpMap) return [];
-    return trialIds.map(trialId => ({
-      hparams: trialHpMap[trialId],
-      id: trialId,
-      url: `/trials/${trialId}`,
-    }));
-  }, [ trialHpMap, trialIds ]);
+  const hasTrials = trialHps.length !== 0;
 
   const columns = useMemo(() => {
     const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
@@ -92,7 +82,6 @@ const LearningCurve: React.FC<Props> = ({
         return hpSorter(a, b);
       };
     };
-
     const hpColumns = Object.keys(experiment.config.hyperparameters || {}).map(key => ({
       key,
       render: hpRenderer(key),
@@ -105,9 +94,8 @@ const LearningCurve: React.FC<Props> = ({
 
   const resetData = useCallback(() => {
     setChartData([]);
-    setTrialHpMap({});
+    setTrialHps([]);
     setTrialIds([]);
-    setTrialList([]);
   }, []);
 
   const handleTopTrialsChange = useCallback((count: SelectValue) => {
@@ -116,8 +104,10 @@ const LearningCurve: React.FC<Props> = ({
   }, [ resetData ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
-    if (onMetricChange) onMetricChange(metric);
-  }, [ onMetricChange ]);
+    if (!onMetricChange) return;
+    resetData();
+    onMetricChange(metric);
+  }, [ onMetricChange, resetData ]);
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
     setChartTrialId(trialId != null ? trialId : undefined);
@@ -142,6 +132,11 @@ const LearningCurve: React.FC<Props> = ({
 
   useEffect(() => {
     const canceler = new AbortController();
+    const trialIdsMap: Record<number, number> = {};
+    const trialDataMap: Record<number, number[]> = {};
+    const trialHpMap: Record<number, TrialHParams> = {};
+    const batchesMap: Record<number, number> = {};
+    const metricsMap: Record<number, Record<number, number>> = {};
 
     consumeStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.determinedTrialsSample(
@@ -158,24 +153,48 @@ const LearningCurve: React.FC<Props> = ({
       event => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
-        // Figure out if we need to update the list of trial ids.
-        const hasDemotedTrials = event.demotedTrials && event.demotedTrials.length !== 0;
-        const hasPromotedTrials = event.promotedTrials && event.promotedTrials.length !== 0;
-        if (hasDemotedTrials || hasPromotedTrials) {
-          // Update the trial ids based on the list of promotions and demotions.
-          const trialIdsSeen = trialIds.reduce((acc, trialId) => {
-            acc[trialId] = true;
-            return acc;
-          }, {} as Record<number, boolean>);
-          (event.demotedTrials || []).forEach(trialId => delete trialIdsSeen[trialId]);
-          (event.promotedTrials || []).forEach(trialId => trialIdsSeen[trialId] = true);
+        /*
+         * Cache trial ids, hparams, batches and metric values into easily searchable
+         * dictionaries, then construct the necessary data structures to render the
+         * chart and the table.
+         */
 
-          // Update trial ids after promotion and demotion applied.
-          setTrialIds(Object.keys(trialIdsSeen).map(id => parseInt(id)).sort(alphanumericSorter));
-        }
+        (event.promotedTrials || []).forEach(trialId => trialIdsMap[trialId] = trialId);
+        (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
+        const newTrialIds = Object.values(trialIdsMap);
+        setTrialIds(newTrialIds);
 
-        // Save the trials sample data for post processing.
-        setTrialList(event.trials || []);
+        (event.trials || []).forEach(trial => {
+          const id = trial.trialId;
+          const hasHParams = Object.keys(trial.hparams || {}).length !== 0;
+
+          if (hasHParams && !trialHpMap[id]) {
+            trialHpMap[id] = { hparams: trial.hparams, id, url: `/trials/${id}` };
+          }
+
+          trialDataMap[id] = trialDataMap[id] || [];
+          metricsMap[id] = metricsMap[id] || {};
+
+          trial.data.forEach(datapoint => {
+            batchesMap[datapoint.batches] = datapoint.batches;
+            metricsMap[id][datapoint.batches] = datapoint.value;
+          });
+        });
+
+        const newTrialHps = Object.values(trialHpMap)
+          .map(trialHp => trialHp.id)
+          .sort(alphanumericSorter)
+          .map(id => trialHpMap[id]);
+        setTrialHps(newTrialHps);
+
+        const newBatches = Object.values(batchesMap);
+        setBatches(newBatches);
+
+        const newChartData = newTrialIds.map(trialId => newBatches.map(batch => {
+          const value = metricsMap[trialId][batch];
+          return value != null ? value : null;
+        }));
+        setChartData(newChartData);
 
         // One successful event as come through.
         setHasLoaded(true);
@@ -183,49 +202,7 @@ const LearningCurve: React.FC<Props> = ({
     ).catch(e => setPageError(e));
 
     return () => canceler.abort();
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ experiment.id, maxTrials, selectedMetric ]);
-
-  useEffect(() => {
-    const newTrialHpMap: Record<number, HParams> = {};
-    const batchesSeen: Record<number, boolean> = {};
-    const metricsSeen: Record<number, Record<number, number | null>> = {};
-
-    trialList.forEach(trialData => {
-      const id = trialData.trialId;
-      if (!id) return;
-
-      const hasHParams = Object.keys(trialData.hparams || {}).length !== 0;
-      if (hasHParams && !trialHpMap[id]) newTrialHpMap[id] = trialData.hparams;
-
-      metricsSeen[id] = metricsSeen[id] || {};
-      (trialData.data || []).forEach(batchMetric => {
-        batchesSeen[batchMetric.batches] = true;
-        metricsSeen[id][batchMetric.batches] = batchMetric.value;
-      });
-    });
-
-    // Update batches with every step batches encountered.
-    const newBatches = Object.keys(batchesSeen)
-      .map(batch => parseInt(batch))
-      .sort(alphanumericSorter);
-    setBatches(newBatches);
-
-    // Update the hyperparameters for all of the newly encountered trials.
-    if (Object.keys(newTrialHpMap).length !== 0) {
-      setTrialHpMap({ ...trialHpMap, ...newTrialHpMap });
-    }
-
-    // Construct the data to feed to the chart.
-    const newChartData = trialIds.map(trialId => {
-      return newBatches.map(batch => {
-        const value = metricsSeen[trialId][batch];
-        return value != null ? value : null;
-      });
-    });
-    setChartData(newChartData);
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [ trialIds, trialList ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
@@ -279,8 +256,8 @@ const LearningCurve: React.FC<Props> = ({
       <Section title="Trial Hyperparameters">
         <ResponsiveTable<TrialHParams>
           columns={columns}
-          dataSource={trialHParams}
-          pagination={getPaginationConfig(trialHParams.length, pageSize)}
+          dataSource={trialHps}
+          pagination={getPaginationConfig(trialHps.length, pageSize)}
           rowClassName={rowClassName}
           rowKey="id"
           scroll={{ x: 1000 }}
