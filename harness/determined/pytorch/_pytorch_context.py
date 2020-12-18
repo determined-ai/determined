@@ -150,22 +150,50 @@ class PyTorchTrialContext(det.TrialContext):
         return model
 
     def wrap_optimizer(
-        self, optimizer: torch.optim.Optimizer  # type: ignore
+        self,
+        optimizer: torch.optim.Optimizer,  # type: ignore
+        backward_passes_per_step: int = 1,
     ) -> torch.optim.Optimizer:  # type: ignore
         """Returns a wrapped optimizer.
 
         The optimizer must use the models wrapped by :meth:`wrap_model`. This function
         creates a ``horovod.DistributedOptimizer`` if using parallel/distributed training.
+
+        `backward_passes_per_step` can be used to specify how many gradient aggregation
+        steps will be performed in a single `train_batch` call per optimizer step.
+        In most cases, this will just be the default value 1.  However, this advanced functionality
+        can be used to support training loops like the one shown below:
+
+        .. code-block:: python
+
+            def train_batch(
+                self, batch: TorchData, epoch_idx: int, batch_idx: int
+            ) -> Dict[str, torch.Tensor]:
+                data, labels = batch
+                output = self.model(data)
+                loss1 = output['loss1']
+                loss2 = output['loss2']
+                self.context.backward(loss1)
+                self.context.backward(loss2)
+                self.context.step_optimizer(self.optimizer)
+                return {"loss1": loss1, "loss2": loss2}
+
         """
         if self.env.managed_training:
             check.false(self._use_amp, "Must call wrap_optimizer() before configure_apex_amp.")
+            check.gt_eq(
+                backward_passes_per_step,
+                1,
+                "backwar_passes_per_step for local gradient aggregation must be >= 1",
+            )
 
             if self.hvd_config.use:
                 use_compression = self.hvd_config.fp16_compression
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
-                    backward_passes_per_step=self.hvd_config.aggregation_frequency,
+                    backward_passes_per_step=backward_passes_per_step
+                    * self.hvd_config.aggregation_frequency,
                     compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
                 )
                 logging.debug(

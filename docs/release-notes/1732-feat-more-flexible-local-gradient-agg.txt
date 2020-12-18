@@ -1,0 +1,5 @@
+:orphan:
+
+**IMPROVEMENTS**
+
+-  PyTorchTrial: support more flexible local gradient aggregation 
