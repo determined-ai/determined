@@ -65,8 +65,8 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
 	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.gpus > 0)
 	envVarsMap["DET_K8S_LOG_TO_FILE"] = "true"
-	if p.tlsConfig.CertificateName != "" {
-		envVarsMap["DET_MASTER_CERT_NAME"] = p.tlsConfig.CertificateName
+	if p.masterTLSConfig.CertificateName != "" {
+		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
 
 	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
@@ -320,7 +320,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 			},
 		},
 		p.loggingConfig,
-		p.tlsConfig,
+		p.loggingTLSConfig,
 	)
 
 	fluentContainer := k8sV1.Container{

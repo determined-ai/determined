@@ -77,7 +77,8 @@ func createPod(
 
 	newPodHandler := newPod(
 		msg, cluster, clusterID, &clientSet, namespace, masterIP, masterPort,
-		model.TLSClientConfig{}, model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
+		model.TLSClientConfig{}, model.TLSClientConfig{},
+		model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		podInterface, configMapInterface, resourceRequestQueue, leaveKubernetesResources,
 	)
 

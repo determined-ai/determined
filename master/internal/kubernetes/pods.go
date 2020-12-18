@@ -49,11 +49,12 @@ type pods struct {
 	masterServiceName        string
 	leaveKubernetesResources bool
 
-	clientSet     *k8sClient.Clientset
-	masterIP      string
-	masterPort    int32
-	tlsConfig     model.TLSClientConfig
-	loggingConfig model.LoggingConfig
+	clientSet        *k8sClient.Clientset
+	masterIP         string
+	masterPort       int32
+	masterTLSConfig  model.TLSClientConfig
+	loggingTLSConfig model.TLSClientConfig
+	loggingConfig    model.LoggingConfig
 
 	informer                *actor.Ref
 	nodeInformer            *actor.Ref
@@ -80,17 +81,17 @@ func Initialize(
 	loggingConfig model.LoggingConfig,
 	leaveKubernetesResources bool,
 ) *actor.Ref {
-
-	tlsConfig := masterTLSConfig
+	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
-		tlsConfig = loggingConfig.ElasticLoggingConfig.Security.TLS
+		loggingTLSConfig = loggingConfig.ElasticLoggingConfig.Security.TLS
 	}
 
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:                  c,
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
-		tlsConfig:                tlsConfig,
+		masterTLSConfig:          masterTLSConfig,
+		loggingTLSConfig:         loggingTLSConfig,
 		loggingConfig:            loggingConfig,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
 		containerIDToPodHandler:  make(map[string]*actor.Ref),
@@ -265,8 +266,8 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) error {
 	newPodHandler := newPod(
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
-		p.tlsConfig, p.loggingConfig, p.podInterface, p.configMapInterface, p.resourceRequestQueue,
-		p.leaveKubernetesResources,
+		p.masterTLSConfig, p.loggingTLSConfig, p.loggingConfig, p.podInterface, p.configMapInterface,
+		p.resourceRequestQueue, p.leaveKubernetesResources,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {
