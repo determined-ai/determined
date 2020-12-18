@@ -23,9 +23,6 @@
     height: 0.1rem;
     margin: var(--theme-sizes-layout-medium);
   }
-  header {
-    padding: 0 var(--theme-sizes-layout-big);
-  }
   .filters {
     border: solid 0.1rem var(--theme-colors-monochrome-14);
     border-radius: var(--theme-border-radius);
@@ -36,7 +33,7 @@
     
     & > *:not(:first-child) { margin-top: var(--theme-sizes-layout-medium); }
   }
-  .mobileNav { display: none; }
+  .mobileMenu { display: none; }
 
   @media only screen and (max-width: $breakpoint-tablet) {
     .inspector {
@@ -64,6 +61,6 @@
         margin-left: var(--theme-sizes-layout-medium);
       }
     }
-    .mobileNav { display: inline-block; }
+    .mobileMenu { display: inline-block; }
   }
 }

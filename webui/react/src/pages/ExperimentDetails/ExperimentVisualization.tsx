@@ -1,4 +1,5 @@
 import { Col, Row, Select } from 'antd';
+import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
@@ -49,8 +50,8 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ validationMetrics, setValidationMetrics ] = useState<string[]>([]);
   const [ selectedMetric, setSelectedMetric ] = useState<MetricName>();
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
+  /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
-  const [ selectedBatch, setSelectedBatch ] = useState<number>();
 
   const metrics: MetricName[] = [
     ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
@@ -59,6 +60,10 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     setSelectedMetric(metric);
+  }, []);
+
+  const handleChartTypeChange = useCallback((type: SelectValue) => {
+    setTypeKey(type as VisualizationType);
   }, []);
 
   // Sets the default sub route
@@ -165,24 +170,14 @@ const ExperimentVisualization: React.FC<Props> = ({
                   onClick={() => setTypeKey(item.type)}>{item.label}</Link>
               ))}
             </div>
-            <div className={css.divider} />
-            <header>Filters</header>
-            <div className={css.filters}>
+            <div className={css.mobileMenu}>
               <SelectFilter
-                className={css.mobileNav}
                 label="Chart Type"
                 value={typeKey}
-                verticalLayout={true}>
+                onChange={handleChartTypeChange}>
                 {MENU.map(item => (
                   <Option key={item.type} value={item.type}>{item.label}</Option>
                 ))}
-              </SelectFilter>
-              <SelectFilter
-                label="Batches"
-                style={{ width: '100%' }}
-                value={selectedBatch}
-                verticalLayout={true}>
-                {batches.map(batch => <Option key={batch} value={batch}>{batch}</Option>)}
               </SelectFilter>
             </div>
           </div>
