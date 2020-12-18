@@ -105,10 +105,8 @@ const ExperimentInfoBox: React.FC<Props> = (
       {bestCheckpoint && <CheckpointModal
         checkpoint={bestCheckpoint}
         config={config}
-        experimentId={experiment.id}
         show={showBestCheckpoint}
         title={`Best Checkpoint for Experiment ${experiment.id}`}
-        trialId={bestCheckpoint.trialId}
         onHide={handleHideBestCheckpoint} />}
       <Modal
         bodyStyle={{ padding: 0 }}

@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
-import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, ExperimentConfig, RunState } from 'types';
+import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize, getBatchNumber } from 'utils/types';
@@ -12,10 +12,8 @@ import css from './CheckpointModal.module.scss';
 import Link from './Link';
 
 interface Props {
-  checkpoint: CheckpointWorkload | CheckpointDetail;
+  checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
   searcherValidation?: number;
-  trialId: number;
-  experimentId: number;
   config: ExperimentConfig;
   onHide?: () => void;
   show?: boolean;
@@ -67,7 +65,7 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const CheckpointModal: React.FC<Props> = ({ config, checkpoint, experimentId, trialId, onHide, show, title, ...props }: Props) => {
+const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, title, ...props }: Props) => {
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {
@@ -95,12 +93,12 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, experimentId, tr
         {renderRow(
           'Source', (
             <div className={css.source}>
-              <Link path={`/experiments/${experimentId}`}>
-                Experiment {experimentId}
+              <Link path={`/experiments/${checkpoint.experimentId}`}>
+                Experiment {checkpoint.experimentId}
               </Link>
               <span className={css.sourceDivider} />
-              <Link path={`/experiments/${experimentId}/trials/${trialId}`}>
-                Trial {trialId}
+              <Link path={`/experiments/${checkpoint.experimentId}/trials/${checkpoint.trialId}`}>
+                Trial {checkpoint.trialId}
               </Link>
               <span className={css.sourceDivider} />
               <span>Batch {totalBatchesProcessed}</span>

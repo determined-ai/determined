@@ -300,10 +300,8 @@ const ExperimentDetailsComp: React.FC = () => {
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}
-        experimentId={id}
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
-        trialId={activeCheckpoint.trialId}
         onHide={handleCheckpointDismiss} />}
       <CreateExperimentModal
         config={forkModalConfig}
