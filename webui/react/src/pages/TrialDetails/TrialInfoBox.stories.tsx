@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  CheckpointState, ExperimentDetails, ExperimentOld, RunState, TrialDetails2, TrialItem2,
+  CheckpointState, ExperimentBase, ExperimentOld, RunState, TrialDetails2, TrialItem2,
 } from 'types';
 import { generateOldExperiment } from 'utils/task';
 
@@ -42,17 +42,9 @@ const trialDetails: TrialDetails2 = {
   workloads: [],
 };
 
-const experimentDetails: ExperimentDetails = {
+const experimentDetails: ExperimentBase = {
   ...sampleExperiment,
-  trials: [
-    // sampleTrialItem, // TODO experiment migration
-  ],
   username: 'hamid',
-  validationHistory: [ {
-    endTime: Date.now().toString(),
-    trialId: 0,
-    validationError: 0.023,
-  } ],
 };
 
 export const state = (): React.ReactNode => (

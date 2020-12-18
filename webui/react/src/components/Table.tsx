@@ -10,14 +10,14 @@ import ProgressBar from 'components/ProgressBar';
 import {
   CheckpointState,
   CommandState, CommandTask, CommandType, ExperimentItem,
-  Pagination, RunState, StartEndTimes, TrialItem,
+  Pagination, RunState, StartEndTimes, TrialItem2,
 } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { commandTypeToLabel } from 'utils/types';
 
 import css from './Table.module.scss';
 
-type TableRecord = CommandTask | ExperimentItem | TrialItem;
+type TableRecord = CommandTask | ExperimentItem | TrialItem2;
 
 export interface TablePaginationConfig {
   current: number;

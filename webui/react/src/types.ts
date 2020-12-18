@@ -272,8 +272,8 @@ export interface CheckpointWorkload extends Workload {
 }
 
 export interface CheckpointWorkloadExtended extends CheckpointWorkload {
-  trialId: number;
   experimentId: number;
+  trialId: number;
 }
 
 export interface MetricsWorkload extends Workload {
@@ -341,17 +341,6 @@ export interface TrialDetails2 extends TrialItem2 {
   workloads: WorkloadWrapper[];
 }
 
-export interface TrialItem extends TrialBase {
-  bestAvailableCheckpoint?: Checkpoint;
-  bestValidationMetric?: number;
-  latestValidationMetrics?: ValidationMetrics;
-  numCompletedCheckpoints: number;
-  numSteps: number;
-  seed: number;
-  totalBatchesProcessed: number;
-  url: string;
-}
-
 export interface ExperimentItem {
   archived: boolean;
   endTime?: string;
@@ -382,11 +371,6 @@ export interface ExperimentOld extends ExperimentBase {
   name: string;
   url: string;
   username: string;
-}
-
-export interface ExperimentDetails extends ExperimentBase {
-  trials: TrialItem[];
-  validationHistory: ValidationHistory[];
 }
 
 export interface Task {

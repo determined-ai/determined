@@ -28,7 +28,7 @@ import { detApi } from 'services/apiConfig';
 import { decodeCheckpoint } from 'services/decoder';
 import { ApiSorter, ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { CheckpointWorkloadExtended, ExperimentBase, TrialItem, TrialItem2,
+import { CheckpointWorkloadExtended, ExperimentBase, TrialItem2,
   ValidationHistory } from 'types';
 import { clone, numericSorter } from 'utils/data';
 import { getMetricValue, terminalRunStates, upgradeConfig } from 'utils/types';

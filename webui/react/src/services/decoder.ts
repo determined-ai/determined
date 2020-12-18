@@ -179,46 +179,6 @@ const ioToExperimentConfig = (io: ioTypes.ioTypeExperimentConfig): types.Experim
   return config;
 };
 
-const ioToCheckpoint = (io: ioTypes.ioTypeCheckpoint): types.Checkpoint => {
-  return {
-    endTime: io.end_time || undefined,
-    resources: io.resources,
-    startTime: io.start_time,
-    state: io.state as types.CheckpointState,
-    trialId: io.trial_id,
-    uuid: io.uuid || undefined,
-    validationMetric: io.validation_metric != null ? io.validation_metric : undefined,
-  };
-};
-
-const ioToValidationMetrics = (io: ioTypes.ioTypeValidationMetrics): types.ValidationMetrics => {
-  return {
-    numInputs: io.num_inputs,
-    validationMetrics: dropNonNumericMetrics(io.validation_metrics),
-  };
-};
-
-const ioToTrial = (io: ioTypes.ioTypeTrial): types.TrialItem => {
-  return {
-    bestAvailableCheckpoint: io.best_available_checkpoint
-      ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
-    bestValidationMetric: io.best_validation_metric != null ? io.best_validation_metric : undefined,
-    endTime: io.end_time || undefined,
-    experimentId: io.experiment_id,
-    hparams: io.hparams || {},
-    id: io.id,
-    latestValidationMetrics: io.latest_validation_metrics
-      ? ioToValidationMetrics(io.latest_validation_metrics) : undefined,
-    numCompletedCheckpoints: io.num_completed_checkpoints,
-    numSteps: io.num_steps,
-    seed: io.seed,
-    startTime: io.start_time,
-    state: io.state as types.RunState,// TODO add checkpoint decoder
-    totalBatchesProcessed: io.total_batches_processed || 0,
-    url: `/experiments/${io.experiment_id}/trials/${io.id}`,
-  };
-};
-
 const checkpointStateMap = {
   [Sdk.Determinedcheckpointv1State.UNSPECIFIED]: types.CheckpointState.Unspecified,
   [Sdk.Determinedcheckpointv1State.ACTIVE]: types.CheckpointState.Active,
@@ -379,27 +339,6 @@ export const decodeTrialResponseToTrialDetails = (
   return {
     ...trialItem,
     workloads: workloads || [],
-  };
-};
-
-export const jsonToExperimentDetails = (data: unknown): types.ExperimentDetails => {
-  const io = ioTypes.decode<ioTypes.ioTypeExperimentDetails>(ioTypes.ioExperimentDetails, data);
-  return {
-    archived: io.archived,
-    config: ioToExperimentConfig(io.config),
-    configRaw: (data as { config: types.RawJson }).config,
-    endTime: io.end_time || undefined,
-    id: io.id,
-    progress: io.progress != null ? io.progress : undefined,
-    startTime: io.start_time,
-    state: io.state as types.RunState,
-    trials: io.trials.map(ioToTrial),
-    username: io.owner.username,
-    validationHistory: io.validation_history.map(vh => ({
-      endTime: vh.end_time,
-      trialId: vh.trial_id,
-      validationError: vh.validation_error != null ? vh.validation_error : undefined,
-    })),
   };
 };
 
