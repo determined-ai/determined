@@ -60,7 +60,6 @@
     "@storybook/addon-actions": "^6.0.26",
     "@storybook/addon-backgrounds": "^6.0.26",
     "@storybook/addon-docs": "^6.0.26",
-    "@storybook/addon-info": "^5.3.21",
     "@storybook/addon-knobs": "^6.0.26",
     "@storybook/addon-links": "^6.0.26",
     "@storybook/addon-viewport": "^6.0.28",
@@ -117,8 +116,5 @@
     "stylelint-order": "^4.1.0",
     "throttle-debounce": "^2.3.0",
     "typescript": "^4.1.2"
-  },
-  "resolutions": {
-    "marked": "^0.7.0"
   }
 }
