@@ -1,0 +1,6 @@
+:orphan:
+
+**IMPROVEMENTS**
+
+-  PyTorchTrial: Support more than 1 backward passes per optimizer step
+   for distributed training.
