@@ -96,6 +96,7 @@ const LearningCurve: React.FC<Props> = ({
     setChartData([]);
     setTrialHps([]);
     setTrialIds([]);
+    setHasLoaded(false);
   }, []);
 
   const handleTopTrialsChange = useCallback((count: SelectValue) => {
@@ -108,6 +109,10 @@ const LearningCurve: React.FC<Props> = ({
     resetData();
     onMetricChange(metric);
   }, [ onMetricChange, resetData ]);
+
+  const handleTrialClick = useCallback((event: React.MouseEvent, trialId: number) => {
+    handlePath(event, { path: `/experiments/${experiment.id}/trials/${trialId}` });
+  }, [ experiment.id ]);
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
     setChartTrialId(trialId != null ? trialId : undefined);
@@ -169,7 +174,11 @@ const LearningCurve: React.FC<Props> = ({
           const hasHParams = Object.keys(trial.hparams || {}).length !== 0;
 
           if (hasHParams && !trialHpMap[id]) {
-            trialHpMap[id] = { hparams: trial.hparams, id, url: `/trials/${id}` };
+            trialHpMap[id] = {
+              hparams: trial.hparams,
+              id,
+              url: `/experiments/${experiment.id}/trials/${id}`,
+            };
           }
 
           trialDataMap[id] = trialDataMap[id] || [];
@@ -250,6 +259,7 @@ const LearningCurve: React.FC<Props> = ({
             focusedTrialId={tableTrialId}
             trialIds={trialIds}
             xValues={batches}
+            onTrialClick={handleTrialClick}
             onTrialFocus={handleTrialFocus} />
         </div>
       </Section>

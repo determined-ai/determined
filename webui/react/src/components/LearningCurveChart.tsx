@@ -11,6 +11,7 @@ import css from './LearningCurveChart.module.scss';
 interface Props {
   data: (number | null)[][];
   focusedTrialId?: number;
+  onTrialClick?: (event: React.MouseEvent, trialId: number) => void;
   onTrialFocus?: (trialId: number | null) => void;
   trialIds: number[];
   xValues: number[];
@@ -100,6 +101,7 @@ const findClosestPoint = (
 const LearningCurveChart: React.FC<Props> = ({
   data,
   focusedTrialId,
+  onTrialClick,
   onTrialFocus,
   trialIds,
   xValues,
@@ -111,6 +113,7 @@ const LearningCurveChart: React.FC<Props> = ({
   const metricValueRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
   const [ chart, setChart ] = useState<uPlot>();
+  const [ focusedPoint, setFocusedPoint ] = useState<ClosestPoint>();
 
   const focusOnTrial = useCallback(() => {
     if (!chart) return;
@@ -126,6 +129,11 @@ const LearningCurveChart: React.FC<Props> = ({
       chart.setSeries(seriesIdx + 1, { focus: true });
     }
   }, [ chart, focusedTrialId, trialIds ]);
+
+  const handleClick = useCallback((event: React.MouseEvent) => {
+    if (!chart || !focusedPoint || focusedPoint.seriesIdx == null || !onTrialClick) return;
+    onTrialClick(event, trialIds[focusedPoint.seriesIdx]);
+  }, [ chart, focusedPoint, onTrialClick, trialIds ]);
 
   const handleMouseLeave = useCallback(() => {
     focusOnTrial();
@@ -162,6 +170,7 @@ const LearningCurveChart: React.FC<Props> = ({
         xValues: localXValues,
       }, closestPoint, 0);
     });
+    setFocusedPoint(closestPoint);
 
     // Focus or remove focus series.
     if (closestPoint.seriesIdx == null) {
@@ -267,7 +276,7 @@ const LearningCurveChart: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <div ref={chartRef} onMouseLeave={handleMouseLeave} />
+      <div ref={chartRef} onClick={handleClick} onMouseLeave={handleMouseLeave} />
       <div className={css.tooltip} ref={tooltipRef}>
         <div className={css.point} />
         <div className={css.box}>
