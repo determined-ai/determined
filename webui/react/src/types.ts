@@ -24,12 +24,14 @@ export interface Credentials {
 export interface DeterminedInfo {
   clusterId: string;
   clusterName: string;
+  isTelemetryEnabled: boolean;
   masterId: string;
-  telemetry: {
-    enabled: boolean;
-    segmentKey?: string;
-  };
   version: string;
+}
+
+export interface Telemetry {
+  enabled: boolean;
+  segmentKey?: string;
 }
 
 export enum ResourceType {

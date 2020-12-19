@@ -11,7 +11,7 @@ import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
   ExperimentBase, ExperimentDetails, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
-  TrialDetails2,
+  Telemetry, TrialDetails2,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -45,7 +45,11 @@ export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers
 
 /* Info */
 
-export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
+export const getInfo =
+  generateDetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo>(Config.getInfo);
+
+export const getTelemetry =
+  generateDetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry>(Config.getTelemetry);
 
 /* Agent */
 
