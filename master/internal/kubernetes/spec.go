@@ -64,7 +64,6 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
 	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.gpus > 0)
-	envVarsMap["DET_K8S_LOG_TO_FILE"] = "true"
 	if p.masterTLSConfig.CertificateName != "" {
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
@@ -228,6 +227,8 @@ func (p *pod) configurePodSpec(
 }
 
 func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
+	p.containerNames[model.DeterminedK8FluentContainerName] = true
+
 	exp := *p.taskSpec.StartContainer
 
 	deviceType := device.CPU
@@ -248,8 +249,10 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		fmt.Sprintf("%d", p.ports[0]), fmt.Sprintf("%d", p.ports[1]),
 	}
 
+	envVarsMap := tasks.TrialEnvVars(p.taskSpec, rendezvousPorts, 0)
+	envVarsMap["DET_K8S_LOG_TO_FILE"] = "true"
 	envVars, err := p.configureEnvVars(
-		tasks.TrialEnvVars(p.taskSpec, rendezvousPorts, 0),
+		envVarsMap,
 		p.taskSpec.StartContainer.ExperimentConfig.Environment,
 		deviceType,
 	)
