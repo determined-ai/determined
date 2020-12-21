@@ -118,6 +118,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if err := ctx.Ask(sproto.GetRM(ctx.Self().System()), *c.task).Error(); err != nil {
 			return err
 		}
+		ctx.Tell(sproto.GetRM(ctx.Self().System()), sproto.SetGroupPriority{
+			Priority: c.config.Resources.Priority,
+			Handler:  ctx.Self(),
+		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
 
 	case actor.PostStop:
