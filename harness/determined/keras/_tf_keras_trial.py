@@ -818,6 +818,12 @@ class TFKerasTrialController(det.LoopTrialController):
 
         if "op" in hvd_sig.parameters:
             horovod_kwargs["op"] = hvd.Average if average else hvd.Sum
+
+            # average has not yet been removed but it's deprecated. It defaults
+            # to true and horovod does not support specifying an op while having
+            # average be not None.
+            if "average" in hvd_sig.parameters:
+                horovod_kwargs["average"] = None
         else:
             horovod_kwargs["average"] = average
 
