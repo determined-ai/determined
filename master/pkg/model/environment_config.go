@@ -14,9 +14,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-// DeterminedK8ContainerName is the name of the container that executes the
-// task within Kubernetes pods that are launched by Determined.
-const DeterminedK8ContainerName = "determined-container"
+const (
+	// DeterminedK8ContainerName is the name of the container that executes the task within Kubernetes
+	// pods that are launched by Determined.
+	DeterminedK8ContainerName = "determined-container"
+	// DeterminedK8FluentContainerName is the name of the container running Fluent Bit in each pod.
+	DeterminedK8FluentContainerName = "determined-fluent-container"
+)
 
 // Environment configures the environment of a Determined command or experiment.
 type Environment struct {

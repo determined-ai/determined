@@ -3,12 +3,13 @@ package internal
 import (
 	"archive/tar"
 	"context"
-	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"regexp"
 	"time"
 
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/fluent"
 )
 
 // The names of environment variables whose values should be included in log entries that Docker or
@@ -26,258 +28,6 @@ import (
 var fluentEnvVarNames = []string{containerIDEnvVar, trialIDEnvVar}
 
 var fluentLogLineRegexp = regexp.MustCompile(`\[[^]]*\] \[ *([^]]*)\] (.*)`)
-
-const (
-	localhost    = "localhost"
-	ipv4Loopback = "127.0.0.1"
-)
-
-// fluentConfig computes the command-line arguments and extra files needed to start Fluent Bit with
-// an appropriate configuration.
-func fluentConfig(
-	opts Options,
-	masterSetOpts aproto.MasterSetAgentOptions,
-) ([]string, archive.Archive, error) {
-	const baseDir = "/run/determined/fluent/"
-	const luaPath = baseDir + "tonumber.lua"
-	const configPath = baseDir + "fluent.conf"
-	const parserConfigPath = baseDir + "parsers.conf"
-
-	var files archive.Archive
-
-	luaCode := `
--- Do some tweaking of values that can't be expressed with the normal filters.
-function run(tag, timestamp, record)
-    record.rank_id = tonumber(record.rank_id)
-    record.trial_id = tonumber(record.trial_id)
-
-    -- TODO: Only do this if it's not a partial record.
-    if (record.log == nil) then
-        record.log = '\n'
-    else
-        record.log = record.log .. '\n'
-    end
-
-
-    return 2, timestamp, record
-end
-`
-	files = append(files,
-		archive.Item{
-			Path:     luaPath,
-			Type:     tar.TypeReg,
-			FileMode: 0444,
-			Content:  []byte(luaCode),
-		},
-	)
-
-	parserConfig := `
-[PARSER]
-  Name rank_id
-  Format regex
-  # Look for a rank ID from the beginning of the line (e.g., "[rank=0] xxx").
-  Regex ^\[rank=(?<rank_id>([0-9]+))\] (?<log>.*)
-
-[PARSER]
-  Name log_level
-  Format regex
-  # Look for a log level at the start of the line (e.g., "INFO: xxx").
-  Regex ^(?<level>(DEBUG|INFO|WARNING|ERROR|CRITICAL)): (?<log>.*)
-`
-
-	files = append(files,
-		archive.Item{
-			Path:     parserConfigPath,
-			Type:     tar.TypeReg,
-			FileMode: 0444,
-			Content:  []byte(parserConfig),
-		},
-	)
-
-	baseConfig := fmt.Sprintf(`
-[SERVICE]
-  # Flush every .05 seconds to reduce latency for users.
-  Flush .05
-  Parsers_File %s
-
-[INPUT]
-  Name forward
-`, parserConfigPath)
-
-	filterConfig := fmt.Sprintf(`
-# Attempt to parse the rank ID and log level out of output lines.
-[FILTER]
-  Name parser
-  Match *
-  Key_Name log
-  Parser rank_id
-  Reserve_Data true
-
-[FILTER]
-  Name parser
-  Match *
-  Key_Name log
-  Parser log_level
-  Reserve_Data true
-
-# Move around fields to create the desired shape of object.
-[FILTER]
-  Name modify
-  Match *
-  # Delete Docker's container information, which we don't want.
-  Remove container_id
-  Remove container_name
-  # Rename environment variables to normal names.
-  Rename %s container_id
-  Rename %s trial_id
-
-  Add agent_id %s
-  Rename source stdtype
-
-# Apply the Lua code for miscellaneous field tweaking.
-[FILTER]
-  Name lua
-  Match *
-  Script %s
-  Call run
-`, containerIDEnvVar, trialIDEnvVar, opts.AgentID, luaPath)
-
-	var outputConfig string
-	const (
-		tlsOn         = "  tls On\n"
-		tlsVerifyOff  = "  tls.verify Off\n"
-		tlsCaCertFile = "  tls.ca_file %s\n"
-	)
-	switch {
-	case masterSetOpts.LoggingOptions.DefaultLoggingConfig != nil:
-		fluentMasterHost := opts.MasterHost
-		fluentMasterPort := opts.MasterPort
-
-		// HACK: If a host resolves to both IPv4 and IPv6 addresses, Fluent Bit seems to only try IPv6 and
-		// fail if that connection doesn't work. IPv6 doesn't play well with Docker and many Linux
-		// distributions ship with an `/etc/hosts` that maps "localhost" to both 127.0.0.1 (IPv4) and
-		// [::1] (IPv6), so Fluent Bit will break when run in host mode. To avoid that, translate
-		// "localhost" diretcly into an IP address before passing it to Fluent Bit.
-		if fluentMasterHost == localhost {
-			fluentMasterHost = ipv4Loopback
-			if opts.Security.TLS.MasterCertName == "" {
-				opts.Security.TLS.MasterCertName = localhost
-			}
-		}
-
-		if opts.ContainerMasterHost != "" {
-			fluentMasterHost = opts.ContainerMasterHost
-		}
-		if opts.ContainerMasterPort != 0 {
-			fluentMasterPort = opts.ContainerMasterPort
-		}
-
-		outputConfig = fmt.Sprintf(`
-[OUTPUT]
-  Name http
-  Match *
-  Host %s
-  Port %d
-  URI /trial_logs
-  Header_tag X-Fluent-Tag
-  Format json
-  Json_date_key timestamp
-  Json_date_format iso8601
-`, fluentMasterHost, fluentMasterPort)
-
-		const masterCertPath = baseDir + "master.crt"
-		if opts.Security.TLS.Enabled {
-			outputConfig += tlsOn
-			if a := opts.Security.TLS.MasterCertName; a != "" {
-				outputConfig += "  tls.vhost " + a + "\n"
-			}
-			if opts.Security.TLS.SkipVerify {
-				outputConfig += tlsVerifyOff
-			}
-			if opts.Security.TLS.MasterCert != "" {
-				outputConfig += fmt.Sprintf(tlsCaCertFile, masterCertPath)
-
-				certBytes, cErr := ioutil.ReadFile(opts.Security.TLS.MasterCert)
-				if cErr != nil {
-					return nil, nil, cErr
-				}
-
-				files = append(files,
-					archive.Item{
-						Path:     masterCertPath,
-						Type:     tar.TypeReg,
-						FileMode: 0444,
-						Content:  certBytes,
-					},
-				)
-			}
-		}
-	case masterSetOpts.LoggingOptions.ElasticLoggingConfig != nil:
-		elasticOpts := masterSetOpts.LoggingOptions.ElasticLoggingConfig
-
-		fluentElasticHost := elasticOpts.Host
-		// HACK: Also a hack, described above in detail.
-		if fluentElasticHost == localhost {
-			fluentElasticHost = ipv4Loopback
-		}
-
-		outputConfig = fmt.Sprintf(`
-[OUTPUT]
-  Name  es
-  Match *
-  Host  %s
-  Port  %d
-  Logstash_Format True
-  Logstash_Prefix triallogs
-  Time_Key timestamp
-  Time_Key_Nanos On
-`, fluentElasticHost, elasticOpts.Port)
-
-		elasticSecOpts := elasticOpts.Security
-		if elasticSecOpts.Username != nil && elasticSecOpts.Password != nil {
-			outputConfig += fmt.Sprintf(`
-  HTTPUser   %s
-  HTTPPasswd %s
-`, *elasticOpts.Security.Username, *elasticOpts.Security.Password)
-		}
-
-		const elasticCertPath = baseDir + "elastic.crt"
-		if elasticSecOpts.TLS.Enabled {
-			outputConfig += tlsOn
-
-			if elasticSecOpts.TLS.SkipVerify {
-				outputConfig += tlsVerifyOff
-			}
-
-			if elasticSecOpts.TLS.CertBytes != nil {
-				outputConfig += fmt.Sprintf(tlsCaCertFile, elasticCertPath)
-				files = append(files,
-					archive.Item{
-						Path:     elasticCertPath,
-						Type:     tar.TypeReg,
-						FileMode: 0444,
-						Content:  elasticSecOpts.TLS.CertBytes,
-					},
-				)
-			}
-		}
-
-	default:
-		panic("no log driver set for agent")
-	}
-
-	files = append(files,
-		archive.Item{
-			Path:     configPath,
-			Type:     tar.TypeReg,
-			FileMode: 0444,
-			Content:  []byte(baseConfig + filterConfig + outputConfig),
-		})
-
-	args := []string{"/fluent-bit/bin/fluent-bit", "-c", configPath}
-
-	return args, files, nil
-}
 
 func removeContainerByName(docker *client.Client, name string) error {
 	containers, err := docker.ContainerList(context.Background(), types.ContainerListOptions{
@@ -346,16 +96,66 @@ func startLoggingContainer(
 		return 0, "", errors.Wrap(err, "failed to pull logging image")
 	}
 
-	fluentArgs, fluentFiles, err := fluentConfig(opts, masterSetOpts)
-	if err != nil {
-		return 0, "", errors.Wrap(err, "failed to configure Fluent Bit")
+	masterHost := opts.MasterHost
+	masterPort := opts.MasterPort
+	if opts.ContainerMasterHost != "" {
+		masterHost = opts.ContainerMasterHost
 	}
+	if opts.ContainerMasterPort != 0 {
+		masterPort = opts.ContainerMasterPort
+	}
+
+	var tlsConfig model.TLSClientConfig
+	switch l := masterSetOpts.LoggingOptions; {
+	case l.DefaultLoggingConfig != nil:
+		t := opts.Security.TLS
+		tlsConfig = model.TLSClientConfig{
+			Enabled:         t.Enabled,
+			SkipVerify:      t.SkipVerify,
+			CertificatePath: t.MasterCert,
+			CertificateName: t.MasterCertName,
+		}
+		if err := tlsConfig.Resolve(); err != nil {
+			return 0, "", err
+		}
+	case l.ElasticLoggingConfig != nil:
+		tlsConfig = l.ElasticLoggingConfig.Security.TLS
+	}
+
+	const fluentBaseDir = "/run/determined/fluent"
+	//nolint:govet // Allow unkeyed struct fields -- it really looks much better like this.
+	fluentArgs, fluentFiles := fluent.ContainerConfig(
+		masterHost,
+		masterPort,
+		[]fluent.ConfigSection{
+			{
+				{"Name", "forward"},
+			},
+		},
+		[]fluent.ConfigSection{
+			{
+				{"Name", "modify"},
+				{"Match", "*"},
+				// Delete Docker's container information, which we don't want.
+				{"Remove", "container_id"},
+				{"Remove", "container_name"},
+				// Rename environment variables to normal names.
+				{"Rename", containerIDEnvVar + " container_id"},
+				{"Rename", trialIDEnvVar + " trial_id"},
+				{"Add", "agent_id " + opts.AgentID},
+				{"Rename", "source stdtype"},
+			},
+		},
+		masterSetOpts.LoggingOptions,
+		tlsConfig,
+	)
 
 	createResponse, err := docker.ContainerCreate(
 		context.Background(),
 		&container.Config{
-			Image: imageName,
-			Cmd:   fluentArgs,
+			Image:      imageName,
+			Cmd:        fluentArgs,
+			WorkingDir: fluentBaseDir,
 		},
 		&container.HostConfig{
 			// Set autoremove to reduce the number of states that the container is likely to be in and what
@@ -377,9 +177,19 @@ func startLoggingContainer(
 		return 0, "", err
 	}
 
-	filesReader, err := archive.ToIOReader(fluentFiles)
+	var fluentArchive archive.Archive
+	for name, content := range fluentFiles {
+		fluentArchive = append(fluentArchive, archive.Item{
+			Path:     filepath.Join(fluentBaseDir, name),
+			Type:     tar.TypeReg,
+			FileMode: 0444,
+			Content:  content,
+		})
+	}
+
+	filesReader, err := archive.ToIOReader(fluentArchive)
 	if err != nil {
-		return 0, "", errors.Wrap(err, "failed to make reader from Fluent files")
+		return 0, "", err
 	}
 
 	err = docker.CopyToContainer(context.Background(),

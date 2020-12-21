@@ -71,7 +71,7 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	}
 }
 
-func elasticTLSConfig(conf model.ElasticTLSConfig) (*tls.Config, error) {
+func elasticTLSConfig(conf model.TLSClientConfig) (*tls.Config, error) {
 	if !conf.Enabled {
 		return nil, nil
 	}
@@ -88,5 +88,6 @@ func elasticTLSConfig(conf model.ElasticTLSConfig) (*tls.Config, error) {
 		InsecureSkipVerify: conf.SkipVerify, //nolint:gosec
 		MinVersion:         tls.VersionTLS12,
 		RootCAs:            pool,
+		ServerName:         conf.CertificateName,
 	}, nil
 }
