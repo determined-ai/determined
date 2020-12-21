@@ -22,6 +22,8 @@ the following prerequisites are satisfied:
 -  You should have access to the cluster via `kubectl
    <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
 -  `Helm 3 <https://helm.sh/docs/intro/install/>`_ should be installed.
+-  The nodes in the cluster already have or can pull the
+   ``fluent/fluent-bit:1.6`` Docker image from Docker Hub.
 
 You should also download a copy of the :download:`Determined Helm Chart
 </helm/determined-helm-chart.tgz>` and extract it on your local machine.
