@@ -821,6 +821,8 @@ class TFKerasTrialController(det.LoopTrialController):
         else:
             horovod_kwargs["average"] = average
 
+        return hvd.allreduce(**horovod_kwargs)
+
     def _convert_possible_tensor(self, possible_tensor: Any) -> Any:
         if isinstance(possible_tensor, EagerTensor):
             # Horovod and / or TensorFlow may promote scalars to tensors in eager mode.
