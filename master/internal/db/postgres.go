@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -900,12 +899,9 @@ WHERE experiment_id = $1;
 	if err != nil {
 		return errors.Wrapf(err, "error deleting trials for experiment %v", id)
 	}
-	_, err = tx.Exec(`
-DELETE FROM searcher_events
-WHERE experiment_id = $1;
-`, id)
+	err = db.deleteSnapshotsForExperiment(id)(tx)
 	if err != nil {
-		return errors.Wrapf(err, "error deleting events for experiment %v", id)
+		return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
 	}
 	result, err := tx.Exec(`
 DELETE FROM experiments
@@ -941,35 +937,6 @@ func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 		return errors.Wrap(err, "checking affected rows for saving experiment progress")
 	} else if numRows != 1 {
 		return errors.Errorf("saving experiment %d's progress affected %d rows instead of 1", id, numRows)
-	}
-	return nil
-}
-
-// ForEachSearcherEvent calls a callback for each searcher event of an experiment.
-func (db *PgDB) ForEachSearcherEvent(id int, callback func(model.SearcherEvent) error) error {
-	rows, err := db.sql.Queryx(`
-SELECT id, experiment_id, event_type, content
-FROM searcher_events
-WHERE experiment_id = $1
-ORDER BY id ASC`, id)
-	if err == sql.ErrNoRows {
-		return errors.WithStack(ErrNotFound)
-	} else if err != nil {
-		return errors.Wrapf(err, "querying for searcher events of experiment %v", id)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var event model.SearcherEvent
-
-		if err = rows.StructScan(&event); err != nil {
-			return errors.Wrapf(err, "scanning for event in row for experiment %v", id)
-		}
-
-		if err = callback(event); err != nil {
-			return errors.Wrapf(err, "running searcher event callback for experiment %v", id)
-		}
 	}
 	return nil
 }
@@ -1161,28 +1128,39 @@ func (db *PgDB) AddTrial(trial *model.Trial) error {
 	if trial.ID != 0 {
 		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
-	// Assume the foreign key constraint is handled by the database.
 	err := db.namedGet(&trial.ID, `
 INSERT INTO trials
-(experiment_id, state, start_time, end_time, hparams, warm_start_checkpoint_id, seed)
-VALUES (:experiment_id, :state, :start_time, :end_time, :hparams, :warm_start_checkpoint_id, :seed)
+  (request_id, experiment_id, state, start_time, end_time,
+   hparams, warm_start_checkpoint_id, seed)
+VALUES (:request_id, :experiment_id, :state, :start_time,
+        :end_time, :hparams, :warm_start_checkpoint_id, :seed)
 RETURNING id`, trial)
-	if err != nil {
-		return errors.Wrapf(err, "error inserting trial %v", *trial)
-	}
-	return nil
+	// Assume the foreign key constraint is handled by the database.
+	return errors.Wrapf(err, "error inserting trial %v", *trial)
 }
 
 // TrialByID looks up a trial by ID, returning an error if none exists.
 func (db *PgDB) TrialByID(id int) (*model.Trial, error) {
-	trial := model.Trial{}
-	if err := db.query(`
-SELECT id, experiment_id, state, start_time, end_time, hparams, warm_start_checkpoint_id, seed
+	var trial model.Trial
+	err := db.query(`
+SELECT id, request_id, experiment_id, state, start_time, end_time,
+  hparams, warm_start_checkpoint_id, seed
 FROM trials
-WHERE id = $1`, &trial, id); err != nil {
-		return nil, errors.Wrapf(err, "error querying for trial %v", id)
-	}
-	return &trial, nil
+WHERE id = $1`, &trial, id)
+	return &trial, errors.Wrapf(err, "error querying for trial %v", id)
+}
+
+// TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
+func (db *PgDB) TrialByExperimentAndRequestID(
+	experimentID int, requestID model.RequestID,
+) (*model.Trial, error) {
+	var trial model.Trial
+	err := db.query(`
+SELECT id, request_id, experiment_id, state, start_time,
+  end_time, hparams, warm_start_checkpoint_id, seed
+FROM trials
+WHERE experiment_id = $1 AND request_id = $2`, &trial, experimentID, requestID)
+	return &trial, errors.Wrapf(err, "error querying for trial %v", requestID)
 }
 
 // UpdateTrial updates an existing trial. Fields that are nil or zero are not
@@ -1213,31 +1191,6 @@ WHERE id = :id`, setClause(toUpdate)), trial)
 	if err != nil {
 		return errors.Wrapf(err, "error updating (%v) in trial %v",
 			strings.Join(toUpdate, ", "), id)
-	}
-	return nil
-}
-
-// RollbackSearcherEvents rolls back the events for an experiment to the last step with a
-// checkpoint. This is (and should only be) called by master restart to roll searcher events back
-// to the last checkpoint for each trial in the given experiment.
-func (db *PgDB) RollbackSearcherEvents(experimentID int) error {
-	_, err := db.sql.Exec(`
-DELETE FROM searcher_events se
-USING (
-    SELECT
-        (se.content->'msg'->'workload'->>'trial_id')::int trial_id,
-        max(CASE WHEN content->'msg'->'workload'->>'kind' = 'CHECKPOINT_MODEL'
-        THEN (se.content->'msg'->'workload'->>'step_id')::int ELSE 0 END) step_id
-    FROM searcher_events se
-    GROUP BY trial_id
-	) latest_checkpoint
-WHERE experiment_id = $1
-    AND (se.content->'msg'->'workload'->>'trial_id')::int = latest_checkpoint.trial_id
-    AND (se.content->'msg'->'workload'->>'step_id')::int > latest_checkpoint.step_id
-    AND (se.content->'msg'->'workload'->>'step_id')::int != 0;
-	`, experimentID)
-	if err != nil {
-		return errors.Wrapf(err, "error rolling back events for experiment %d", experimentID)
 	}
 	return nil
 }
@@ -1819,85 +1772,6 @@ WHERE id = :id`, setClause(toUpdate)), checkpoint)
 	return nil
 }
 
-// AddSearcherEvents adds the searcher events to the database.
-func (db *PgDB) AddSearcherEvents(events []*model.SearcherEvent) error {
-	if len(events) == 0 {
-		return nil
-	}
-
-	var text strings.Builder
-	_, _ = text.WriteString(
-		"INSERT INTO searcher_events (experiment_id, event_type, content) VALUES",
-	)
-
-	args := make([]interface{}, 0, len(events)*3)
-
-	for i, event := range events {
-		// Add an argument to the SQL statement of the form: ($1, $2, $3)
-		if i > 0 {
-			_, _ = text.WriteString(",")
-		}
-		_, _ = text.WriteString(" ($")
-		_, _ = text.WriteString(strconv.Itoa(i*3 + 1))
-		_, _ = text.WriteString(", $")
-		_, _ = text.WriteString(strconv.Itoa(i*3 + 2))
-		_, _ = text.WriteString(", $")
-		_, _ = text.WriteString(strconv.Itoa(i*3 + 3))
-		_, _ = text.WriteString(")")
-
-		args = append(args, event.ExperimentID)
-		args = append(args, event.EventType)
-		args = append(args, event.Content)
-	}
-
-	if _, err := db.sql.Exec(text.String(), args...); err != nil {
-		return errors.Wrapf(err, "error inserting %d searcher events", len(events))
-	}
-
-	return nil
-}
-
-// DeleteSearcherEvents deletes all searcher events for a specific experiment from the database.
-func (db *PgDB) DeleteSearcherEvents(expID int) error {
-	res, err := db.sql.Exec("DELETE FROM searcher_events WHERE experiment_id = $1", expID)
-	if err != nil {
-		return errors.Wrapf(err, "error in deleting searcher events for experiment %v", expID)
-	}
-
-	num, err := res.RowsAffected()
-	if err != nil {
-		log.Errorf(
-			"RowsAffected failed in deleting searcher events for experiment %v, error: %v", expID, err)
-		return nil
-	}
-	log.Debugf("deleted total %v searcher events for experiment %v", num, expID)
-	return nil
-}
-
-// DeleteSearcherEventsForTerminalStateExperiments deletes all searcher events for
-// terminal state experiments from the database. This is used to clean up searcher
-// events if master crashes before deleting searcher events.
-func (db *PgDB) DeleteSearcherEventsForTerminalStateExperiments() error {
-	res, err := db.sql.Exec(`
-DELETE FROM searcher_events
-WHERE experiment_id IN (
-	SELECT id
-	FROM experiments
-	WHERE state IN ('COMPLETED', 'CANCELED', 'ERROR'))`)
-	if err != nil {
-		return err
-	}
-
-	num, err := res.RowsAffected()
-	if err != nil {
-		log.Errorf(
-			"RowsAffected failed in deleting searcher events for terminal state experiments. error: %v", err)
-		return nil
-	}
-	log.Debugf("deleted total %v searcher events for terminal state experiments", num)
-	return nil
-}
-
 // PeriodicTelemetryInfo returns anonymous information about the usage of the current
 // Determined cluster.
 func (db *PgDB) PeriodicTelemetryInfo() ([]byte, error) {
@@ -2014,4 +1888,32 @@ func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) erro
 // replaced with supplied args.
 func (db *PgDB) RawQuery(queryName string, args ...interface{}) ([]byte, error) {
 	return db.rawQuery(db.queries.getOrLoad(queryName), args...)
+}
+
+// withTransaction executes a function with a transaction.
+func (db *PgDB) withTransaction(name string, exec func(tx *sql.Tx) error) error {
+	tx, err := db.sql.Begin()
+	if err != nil {
+		return errors.Wrapf(err, "failed to start transaction (%s)", name)
+	}
+	defer func() {
+		if tx == nil {
+			return
+		}
+
+		if rErr := tx.Rollback(); rErr != nil {
+			log.Errorf("failed to rollback transaction (%s): %v", name, rErr)
+		}
+	}()
+
+	if err = exec(tx); err != nil {
+		return errors.Wrapf(err, "failed to exec transaction (%s)", name)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return errors.Wrapf(err, "failed to commit transaction: (%s)", name)
+	}
+
+	tx = nil
+	return nil
 }

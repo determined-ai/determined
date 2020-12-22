@@ -19,8 +19,8 @@ const (
 
 // State is the state of the random number generator.
 type State struct {
-	key [stateLen]uint32
-	pos int
+	Key [stateLen]uint32 `json:"key"`
+	Pos int              `json:"pos"`
 }
 
 // New creates a new seeded RNG state.
@@ -33,32 +33,32 @@ func New(seed uint32) *State {
 // Seed initializes the RNG state.
 func (state *State) Seed(seed uint32) {
 	for pos := 0; pos < stateLen; pos++ {
-		state.key[pos] = seed
+		state.Key[pos] = seed
 		seed = (uint32(1812433253)*(seed^(seed>>uint32(30))) + uint32(pos) + 1)
 	}
-	state.pos = stateLen
+	state.Pos = stateLen
 }
 
 // Bits32 generates 32 bits of randomness.
 func (state *State) Bits32() uint32 {
 	var y uint32
-	if state.pos == stateLen {
+	if state.Pos == stateLen {
 		i := 0
 		for ; i < mtN-mtM; i++ {
-			y = (state.key[i] & upperMask) | (state.key[i+1] & lowerMask)
-			state.key[i] = state.key[i+mtM] ^ (y >> 1) ^ (-(y & 1) & matrixA)
+			y = (state.Key[i] & upperMask) | (state.Key[i+1] & lowerMask)
+			state.Key[i] = state.Key[i+mtM] ^ (y >> 1) ^ (-(y & 1) & matrixA)
 		}
 		for ; i < mtN-1; i++ {
-			y = (state.key[i] & upperMask) | (state.key[i+1] & lowerMask)
-			state.key[i] = state.key[i+(mtM-mtN)] ^ (y >> 1) ^ (-(y & 1) & matrixA)
+			y = (state.Key[i] & upperMask) | (state.Key[i+1] & lowerMask)
+			state.Key[i] = state.Key[i+(mtM-mtN)] ^ (y >> 1) ^ (-(y & 1) & matrixA)
 		}
-		y = (state.key[mtN-1] & upperMask) | (state.key[0] & lowerMask)
-		state.key[mtN-1] = state.key[mtM-1] ^ (y >> 1) ^ (-(y & 1) & matrixA)
+		y = (state.Key[mtN-1] & upperMask) | (state.Key[0] & lowerMask)
+		state.Key[mtN-1] = state.Key[mtM-1] ^ (y >> 1) ^ (-(y & 1) & matrixA)
 
-		state.pos = 0
+		state.Pos = 0
 	}
-	y = state.key[state.pos]
-	state.pos++
+	y = state.Key[state.Pos]
+	state.Pos++
 
 	// Tempering
 	y ^= y >> 11

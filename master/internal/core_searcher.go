@@ -30,12 +30,12 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 	return searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher.Metric)
 }
 
-// cleanUpSearcherEvents deletes all searcher events for terminal state experiments from
+// cleanUpExperimentSnapshots deletes all snapshots for terminal state experiments from
 // the database.
-func (m *Master) cleanUpSearcherEvents() {
-	log.Info("deleting all searcher events for terminal state experiments")
-	err := m.db.DeleteSearcherEventsForTerminalStateExperiments()
+func (m *Master) cleanUpExperimentSnapshots() {
+	log.Info("deleting all snapshots for terminal state experiments")
+	err := m.db.DeleteSnapshotsForTerminalExperiments()
 	if err != nil {
-		log.WithError(err).Errorf("cannot delete searcher events")
+		log.WithError(err).Errorf("cannot delete snapshots")
 	}
 }

@@ -301,7 +301,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 		searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500)),
 	))
 
-	_, _, err := s.WorkloadCompleted(workload.CompletedMessage{
+	op, _, err := s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: workload.Workload{
 			Kind:                  workload.RunStep,
 			ExperimentID:          1,
@@ -312,9 +312,12 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 		},
 	}, nil)
 	assert.NilError(t, err)
+	if op != nil {
+		t.Fatalf("received unexpected op: %s", op)
+	}
 
 	exitedReason := workload.ExitedReason("not ok")
-	op, _, err := s.WorkloadCompleted(workload.CompletedMessage{
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: workload.Workload{
 			Kind:                  workload.CheckpointModel,
 			ExperimentID:          1,
@@ -327,7 +330,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, nil, "should not have finished %v yet", op)
-	assert.Equal(t, s.exitingEarly, true, "should have been exiting early")
+	assert.Equal(t, s.ExitingEarly, true, "should have been exiting early")
 }
 
 func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {

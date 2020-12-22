@@ -1,6 +1,8 @@
 package searcher
 
 import (
+	"encoding/json"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/workload"
@@ -20,33 +22,34 @@ type SearchMethod interface {
 	initialOperations(ctx context) ([]Operation, error)
 	// trialCreated informs the searcher that a trial has been created as a result of a Create
 	// operation.
-	trialCreated(ctx context, requestID RequestID) ([]Operation, error)
+	trialCreated(ctx context, requestID model.RequestID) ([]Operation, error)
 	// trainCompleted informs the searcher that the training workload initiated by the same searcher
 	// has completed. It returns any new operations as a result of this workload completing.
-	trainCompleted(ctx context, requestID RequestID, train Train) ([]Operation, error)
+	trainCompleted(ctx context, requestID model.RequestID, train Train) ([]Operation, error)
 	// checkpointCompleted informs the searcher that the checkpoint workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
 	checkpointCompleted(
-		ctx context, requestID RequestID, checkpoint Checkpoint, metrics workload.CheckpointMetrics,
+		ctx context, requestID model.RequestID, checkpoint Checkpoint, metrics workload.CheckpointMetrics,
 	) ([]Operation, error)
 	// validationCompleted informs the searcher that the validation workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
 	validationCompleted(
-		ctx context, requestID RequestID, validate Validate, metrics workload.ValidationMetrics,
+		ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
 	) ([]Operation, error)
 	// trialClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
-	trialClosed(ctx context, requestID RequestID) ([]Operation, error)
+	trialClosed(ctx context, requestID model.RequestID) ([]Operation, error)
 	// progress returns experiment progress as a float between 0.0 and 1.0. As search methods
 	// receive completed workloads, they should internally track progress.
 	progress(totalUnitsCompleted float64) float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
 	trialExitedEarly(
-		ctx context, requestID RequestID, exitedReason workload.ExitedReason,
+		ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
 	) ([]Operation, error)
-	// SearchMethod embeds the InUnits interface because it is in terms of a specific unit.
+	// TODO: refactor as model.Snapshotter interface or something
+	model.Snapshotter
 	model.InUnits
 }
 
@@ -78,28 +81,38 @@ func NewSearchMethod(c model.SearcherConfig) SearchMethod {
 
 type defaultSearchMethod struct{}
 
-func (defaultSearchMethod) trialCreated(context, RequestID) ([]Operation, error) {
+func (defaultSearchMethod) trialCreated(context, model.RequestID) ([]Operation, error) {
 	return nil, nil
 }
-func (defaultSearchMethod) trainCompleted(context, RequestID, Train) ([]Operation, error) {
+func (defaultSearchMethod) trainCompleted(context, model.RequestID, Train) ([]Operation, error) {
 	return nil, nil
 }
 
 func (defaultSearchMethod) checkpointCompleted(
-	context, RequestID, Checkpoint, workload.CheckpointMetrics,
+	context, model.RequestID, Checkpoint, workload.CheckpointMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
 func (defaultSearchMethod) validationCompleted(
-	context, RequestID, Validate, workload.ValidationMetrics,
+	context, model.RequestID, Validate, workload.ValidationMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
-func (defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, error) {
+func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, error) {
 	return nil, nil
 }
 
 func (defaultSearchMethod) trialExitedEarly( //nolint: unused
-	context, RequestID, workload.ExitedReason) ([]Operation, error) {
+	context, model.RequestID, workload.ExitedReason) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
+}
+
+// save is the default implementation, used by stateless searchers like random and grid.
+func (defaultSearchMethod) Snapshot() (json.RawMessage, error) {
+	return nil, nil
+}
+
+// load is the default implementation, used by stateless searchers like random and grid.
+func (defaultSearchMethod) Restore(json.RawMessage) error {
+	return nil
 }

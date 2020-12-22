@@ -30,12 +30,6 @@ func (message *CompletedMessage) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 
-	// This check is needed for master restart: the metrics of RunStep completion messages are deleted
-	// before they are stored in the searcher events table.
-	if len(message.RawMetrics) == 0 {
-		return nil
-	}
-
 	switch message.Workload.Kind {
 	case RunStep:
 		return json.Unmarshal(message.RawMetrics, &message.RunMetrics)

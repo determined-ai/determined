@@ -1,11 +1,8 @@
 package searcher
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
-	"io"
-
-	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
@@ -14,71 +11,109 @@ import (
 // Operation represents the base interface for possible operations that a search method can return.
 type Operation interface{}
 
-// RequestID links all operations with the same ID to a single trial create request.
-type RequestID uuid.UUID
+type (
+	// OperationType encodes the underlying type of an Operation for serialization.
+	OperationType int
 
-func newRequestID(r io.Reader) RequestID {
-	var u uuid.UUID
-	if _, err := io.ReadFull(r, u[:]); err != nil {
-		// We always read from an `nprand.State`, which should
-		// not return an error in practice.
-		panic(fmt.Sprintf("unexpected error creating request ID: %v", err))
+	// OperationWithType is an operation with a serializable repr of its underlying type.
+	OperationWithType struct {
+		OperationType
+		Operation
 	}
 
-	// Ensure that the underlying UUID is a valid UUIDv4.
-	u[6] = (u[6] & 0x0f) | 0x40 // Version 4.
-	u[8] = (u[8] & 0x3f) | 0x80 // Variant is 10.
-	return RequestID(u)
+	// OperationList is []Operation that handles marshaling and unmarshaling heterogeneous
+	// operations to and from their correct underlying types.
+	OperationList []Operation
+)
+
+// All the operation types that support serialization.
+const (
+	CreateOperation OperationType = iota
+	TrainOperation
+	ValidateOperation
+	CheckpointOperation
+	CloseOperation
+)
+
+// MarshalJSON implements json.Marshaler.
+func (l OperationList) MarshalJSON() ([]byte, error) {
+	var typedOps []OperationWithType
+	for _, op := range l {
+		typedOp := OperationWithType{Operation: op}
+		switch op.(type) {
+		case Create:
+			typedOp.OperationType = CreateOperation
+		case Train:
+			typedOp.OperationType = TrainOperation
+		case Validate:
+			typedOp.OperationType = ValidateOperation
+		case Checkpoint:
+			typedOp.OperationType = CheckpointOperation
+		case Close:
+			typedOp.OperationType = CloseOperation
+		default:
+			return nil, fmt.Errorf("unable to serialize %T as operation", op)
+		}
+		typedOps = append(typedOps, typedOp)
+	}
+	return json.Marshal(typedOps)
 }
 
-// MarshalText returns the marshaled form of this ID, which is the string form of the underlying
-// UUID.
-func (r RequestID) MarshalText() ([]byte, error) {
-	return []byte(uuid.UUID(r).String()), nil
-}
-
-// UnmarshalText unmarshals this ID from a text representation.
-func (r *RequestID) UnmarshalText(data []byte) error {
-	u, err := uuid.ParseBytes(data)
-	if err != nil {
+// UnmarshalJSON implements json.Unmarshaler.
+func (l *OperationList) UnmarshalJSON(b []byte) error {
+	var typedOps []OperationWithType
+	if err := json.Unmarshal(b, &typedOps); err != nil {
 		return err
 	}
-	*r = RequestID(u)
+	var ops OperationList
+	for _, typedOp := range typedOps {
+		b, err := json.Marshal(typedOp.Operation)
+		if err != nil {
+			return err
+		}
+		switch typedOp.OperationType {
+		case CreateOperation:
+			var op Create
+			if err := json.Unmarshal(b, &op); err != nil {
+				return err
+			}
+			ops = append(ops, op)
+		case TrainOperation:
+			var op Train
+			if err := json.Unmarshal(b, &op); err != nil {
+				return err
+			}
+			ops = append(ops, op)
+		case ValidateOperation:
+			var op Validate
+			if err := json.Unmarshal(b, &op); err != nil {
+				return err
+			}
+			ops = append(ops, op)
+		case CheckpointOperation:
+			var op Checkpoint
+			if err := json.Unmarshal(b, &op); err != nil {
+				return err
+			}
+			ops = append(ops, op)
+		case CloseOperation:
+			var op Close
+			if err := json.Unmarshal(b, &op); err != nil {
+				return err
+			}
+			ops = append(ops, op)
+		default:
+			return fmt.Errorf("unable to deserialize %d as operation", typedOp.OperationType)
+		}
+	}
+	*l = ops
 	return nil
-}
-
-// Before determines whether this UUID is strictly lexicographically less (comparing the sequences
-// of bytes) than another one.
-func (r RequestID) Before(s RequestID) bool {
-	return bytes.Compare(r[:], s[:]) == -1
-}
-
-func (r RequestID) String() string {
-	return uuid.UUID(r).String()
-}
-
-// Parse decodes s into a request id or returns an error.
-func Parse(s string) (RequestID, error) {
-	parsed, err := uuid.Parse(s)
-	if err != nil {
-		return RequestID{}, err
-	}
-	return RequestID(parsed), nil
-}
-
-// MustParse decodes s into a request id or panics.
-func MustParse(s string) RequestID {
-	parsed, err := Parse(s)
-	if err != nil {
-		panic(err)
-	}
-	return parsed
 }
 
 // Requested is a convenience interface for operations that were requested by a searcher method
 // for a specific trial.
 type Requested interface {
-	GetRequestID() RequestID
+	GetRequestID() model.RequestID
 }
 
 // Runnable represents any runnable operation. It acts as a sum type for Train, Validate,
@@ -90,7 +125,7 @@ type Runnable interface {
 
 // Create a new trial for the search method.
 type Create struct {
-	RequestID RequestID `json:"request_id"`
+	RequestID model.RequestID `json:"request_id"`
 	// TrialSeed must be a value between 0 and 2**31 - 1.
 	TrialSeed             uint32                      `json:"trial_seed"`
 	Hparams               hparamSample                `json:"hparams"`
@@ -102,7 +137,7 @@ type Create struct {
 func NewCreate(
 	rand *nprand.State, s hparamSample, sequencerType model.WorkloadSequencerType) Create {
 	return Create{
-		RequestID:             newRequestID(rand),
+		RequestID:             model.NewRequestID(rand),
 		TrialSeed:             uint32(rand.Int64n(1 << 31)),
 		Hparams:               s,
 		WorkloadSequencerType: sequencerType,
@@ -130,16 +165,16 @@ func (create Create) String() string {
 }
 
 // GetRequestID implemented Requested.
-func (create Create) GetRequestID() RequestID { return create.RequestID }
+func (create Create) GetRequestID() model.RequestID { return create.RequestID }
 
 // Train is an operation emitted by search methods to signal the trial train for a specified length.
 type Train struct {
-	RequestID RequestID
+	RequestID model.RequestID
 	Length    model.Length
 }
 
 // NewTrain returns a new train operation.
-func NewTrain(requestID RequestID, length model.Length) Train {
+func NewTrain(requestID model.RequestID, length model.Length) Train {
 	return Train{requestID, length}
 }
 
@@ -151,15 +186,15 @@ func (t Train) String() string {
 func (t Train) Runnable() {}
 
 // GetRequestID implemented Requested.
-func (t Train) GetRequestID() RequestID { return t.RequestID }
+func (t Train) GetRequestID() model.RequestID { return t.RequestID }
 
 // Validate is an operation emitted by search methods to signal the trial to validate.
 type Validate struct {
-	RequestID RequestID
+	RequestID model.RequestID
 }
 
 // NewValidate returns a new validate operation.
-func NewValidate(requestID RequestID) Validate {
+func NewValidate(requestID model.RequestID) Validate {
 	return Validate{requestID}
 }
 
@@ -171,15 +206,15 @@ func (v Validate) String() string {
 func (v Validate) Runnable() {}
 
 // GetRequestID implemented Requested.
-func (v Validate) GetRequestID() RequestID { return v.RequestID }
+func (v Validate) GetRequestID() model.RequestID { return v.RequestID }
 
 // Checkpoint is an operation emitted by search methods to signal the trial to checkpoint.
 type Checkpoint struct {
-	RequestID RequestID
+	RequestID model.RequestID
 }
 
 // NewCheckpoint returns a new checkpoint operation.
-func NewCheckpoint(requestID RequestID) Checkpoint {
+func NewCheckpoint(requestID model.RequestID) Checkpoint {
 	return Checkpoint{requestID}
 }
 
@@ -191,15 +226,15 @@ func (c Checkpoint) String() string {
 func (c Checkpoint) Runnable() {}
 
 // GetRequestID implemented Requested.
-func (c Checkpoint) GetRequestID() RequestID { return c.RequestID }
+func (c Checkpoint) GetRequestID() model.RequestID { return c.RequestID }
 
 // Close the trial with the given trial id.
 type Close struct {
-	RequestID RequestID `json:"request_id"`
+	RequestID model.RequestID `json:"request_id"`
 }
 
 // NewClose initializes a new Close operation for the request ID.
-func NewClose(requestID RequestID) Close {
+func NewClose(requestID model.RequestID) Close {
 	return Close{
 		RequestID: requestID,
 	}
@@ -210,7 +245,7 @@ func (close Close) String() string {
 }
 
 // GetRequestID implemented Requested.
-func (close Close) GetRequestID() RequestID { return close.RequestID }
+func (close Close) GetRequestID() model.RequestID { return close.RequestID }
 
 // Shutdown marks the searcher as completed.
 type Shutdown struct {
