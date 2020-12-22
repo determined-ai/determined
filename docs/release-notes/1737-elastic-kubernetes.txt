@@ -1,0 +1,6 @@
+:orphan:
+
+**IMPROVEMENTS**
+
+-  Allow the trial logging backend to be configured in Kubernetes
+   deployments of Determined.

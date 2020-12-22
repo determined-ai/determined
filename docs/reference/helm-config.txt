@@ -225,3 +225,15 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
 
 -  ``defaultPassword``: Specifies a string containing the default
    password for the admin and determined user accounts.
+
+-  ``logging``: Configures where trial logs are stored. This section
+   takes the same shape as the logging configuration in the
+   :ref:`cluster configuration <cluster-configuration>`, except that
+   names are changed to camel case to match Helm conventions (e.g.,
+   ``skip_verify`` would be ``skipVerify`` here).
+
+   -  ``logging.security.tls.certificate``: Contains the contents of an
+      expected TLS certificate for the Elasticsearch cluster, rather
+      than a path as it does in the cluster configuration. This can be
+      conveniently set at the command line using ``helm install
+      --set-file logging.security.tls.certificate=<path>``.

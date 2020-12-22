@@ -126,3 +126,31 @@ telemetry:
 
 # defaultPassword sets the password for the admin and determined user accounts.
 # defaultPassword:
+
+## Configure how trial logs are stored.
+# logging:
+  ## The backend to use. Can be `default` to send logs to the master to store in the PostgreSQL
+  ## database or `elastic` to store logs in an Elasticsearch cluster (without going through the
+  ## master).
+  # backend: default
+
+  ## The remaining options should be provided only for the `elastic` backend.
+
+  ## The host and port to use to connect to the Elasticsearch cluster.
+  # host: <host>
+  # port: <port>
+
+  ## Authentication and TLS options for making the connection.
+  # security:
+    # username: <username>
+    # password: <password>
+    # tls:
+      # enabled: true
+      # skipVerify: false
+
+      ## The name to use when verifying the certificate, if different from the name used to connect.
+      # certificateName: <name>
+
+      ## This value must contain the contents of the certificate file, not a path. It may be set
+      ## directly or using `helm install --set-file logging.security.tls.certificate=<path>`.
+      # certificate: <certificate contents>
