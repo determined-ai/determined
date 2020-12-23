@@ -13,9 +13,9 @@ data:
       {{- if eq .Values.checkpointStorage.type "shared_fs" }}
       host_path: {{ required "A valid Values.checkpointStorage.hostPath entry is required!" .Values.checkpointStorage.hostPath | quote }}
       {{- else if eq .Values.checkpointStorage.type "gcs" }}
-      bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }} 
+      bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
       {{- else if eq .Values.checkpointStorage.type "s3" }}
-      bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }} 
+      bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }}
       access_key: {{ .Values.checkpointStorage.accessKey | quote }}
       secret_key: {{ .Values.checkpointStorage.secretKey | quote }}
       endpoint_url: {{ .Values.checkpointStorage.endpointUrl | quote }}
@@ -95,3 +95,48 @@ data:
     {{- if .Values.clusterName }}
     cluster_name: {{ .Values.clusterName }}
     {{- end }}
+
+    {{- if .Values.logging }}
+    logging:
+      {{- if .Values.logging.backend }}
+      backend: {{ .Values.logging.backend }}
+      {{- end }}
+
+      {{- if (eq (default "" .Values.logging.backend) "elastic") }}
+      host: {{ required "A valid host must be provided if logging to Elasticsearch!" .Values.logging.host }}
+      port: {{ required "A valid port must be provided if logging to Elasticsearch!" .Values.logging.port }}
+      {{- if .Values.logging.security }}
+      security:
+        {{- if .Values.logging.security.username }}
+        username: {{ .Values.logging.security.username }}
+        {{- end }}
+        {{- if .Values.logging.security.password }}
+        password: {{ .Values.logging.security.password }}
+        {{- end }}
+        {{- if .Values.logging.security.tls }}
+        tls:
+          {{- if .Values.logging.security.tls.enabled }}
+          enabled: {{ .Values.logging.security.tls.enabled }}
+          {{- end }}
+          {{- if .Values.logging.security.tls.skipVerify }}
+          skip_verify: {{ .Values.logging.security.tls.skipVerify }}
+          {{- end }}
+          {{- if .Values.logging.security.tls.certificate }}
+          certificate: /etc/determined/elastic.crt
+          {{- end }}
+          {{- if .Values.logging.security.tls.certificateName }}
+          certificate_name: {{ .Values.logging.security.tls.certificateName }}
+          {{- end }}
+        {{- end}}
+      {{- end }}
+      {{- end }}
+    {{- end}}
+  {{- if .Values.logging }}
+  {{- if .Values.logging.security }}
+  {{- if .Values.logging.security.tls }}
+  {{- if .Values.logging.security.tls.certificate }}
+  elastic.crt: |{{ nindent 4 .Values.logging.security.tls.certificate }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
