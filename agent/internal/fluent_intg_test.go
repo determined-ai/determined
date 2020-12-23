@@ -11,6 +11,7 @@ import (
 	"math"
 	"math/rand"
 	"net"
+	"sort"
 	"testing"
 	"time"
 
@@ -55,17 +56,24 @@ func TestFluentPostgresLogging(t *testing.T) {
 
 	// THEN fluent should parse all fields as expected and ship them to the mock master.
 	i := 0
+	var logs []model.TrialLog
 	for {
 		select {
 		case l := <-logBuffer:
-			assertLogEquals(t, l, expected[i])
+			logs = append(logs, l)
 			i++
-			if i == len(expected) {
-				return
-			}
 		case <-time.After(time.Minute):
 			assert.Equal(t, i, len(expected), "not enough logs received after one minute")
 		}
+		if i == len(expected) {
+			break
+		}
+	}
+	sort.Slice(logs, func(i, j int) bool {
+		return logs[i].Timestamp.Before(*logs[j].Timestamp)
+	})
+	for i := range logs {
+		assertLogEquals(t, logs[i], expected[i])
 	}
 }
 
@@ -91,7 +99,7 @@ func TestFluentLoggingElastic(t *testing.T) {
 
 	// This is really unfortunate, but we don't query for logs until they're more than 10 seconds old
 	// to _try_ to avoid the trickiness involved with elastic's consistency model.
-	time.Sleep(10 * time.Second)
+	time.Sleep(11 * time.Second)
 
 	assert.NilError(t, elastic.WaitForIngest(testutils.CurrentLogstashElasticIndex()))
 
@@ -239,6 +247,18 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 	assert.NilError(t, err, "failed to copy files to container")
 	err = docker.ContainerStart(context.Background(), cc.ID, types.ContainerStartOptions{})
 	assert.NilError(t, err, "error starting container")
+
+	exit, cErr := docker.ContainerWait(context.Background(), cc.ID, container.WaitConditionNextExit)
+	select {
+	case err = <-cErr:
+		assert.NilError(t, err, "container wait failed")
+	case exit := <-exit:
+		if exit.Error != nil {
+			t.Fatalf("container exited with error: %s", exit.Error)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("container did not exit after 10 seconds")
+	}
 }
 
 func assertLogEquals(t *testing.T, l, expected model.TrialLog) {
