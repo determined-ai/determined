@@ -804,7 +804,30 @@ class TFKerasTrialController(det.LoopTrialController):
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
         logging.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
-        return {key: np.array(hvd.allreduce(logs[key], name=key)) for key in keys}
+        return {
+            key: np.array(self._hvd_allreduce(logs[key], average=True, name=key)) for key in keys
+        }
+
+    def _hvd_allreduce(self, value: Any, average: bool, name: str) -> Any:
+        # The signature of our horovod allreduce changed after we rebased onto 0.21.
+        hvd_sig = inspect.signature(hvd.allreduce)
+        horovod_kwargs = {
+            "value": value,
+            "name": name,
+        }  # type: Dict[str, Any]
+
+        if "op" in hvd_sig.parameters:
+            horovod_kwargs["op"] = hvd.Average if average else hvd.Sum
+
+            # average has not yet been removed but it's deprecated. It defaults
+            # to true and horovod does not support specifying an op while having
+            # average be not None.
+            if "average" in hvd_sig.parameters:
+                horovod_kwargs["average"] = None
+        else:
+            horovod_kwargs["average"] = average
+
+        return hvd.allreduce(**horovod_kwargs)
 
     def _convert_possible_tensor(self, possible_tensor: Any) -> Any:
         if isinstance(possible_tensor, EagerTensor):
@@ -833,7 +856,7 @@ class TFKerasTrialController(det.LoopTrialController):
             )
 
         if self.hvd_config.use:
-            num_inputs = hvd.allreduce(num_inputs, average=False, name="train_num_inputs")
+            num_inputs = self._hvd_allreduce(num_inputs, average=False, name="train_num_inputs")
             num_inputs = self._convert_possible_tensor(num_inputs)
 
         # Return only the latest metrics, which is the running average for all trained batches in
