@@ -140,7 +140,7 @@ telemetry:
   # host: <host>
   # port: <port>
 
-  ## Authentication and TLS options for making the connection.
+  ## Authentication and TLS options for making the connection to Elasticsearch.
   # security:
     # username: <username>
     # password: <password>

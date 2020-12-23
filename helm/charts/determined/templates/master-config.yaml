@@ -96,16 +96,15 @@ data:
     cluster_name: {{ .Values.clusterName }}
     {{- end }}
 
+    {{- if .Values.logging }}
     logging:
       {{- if .Values.logging.backend }}
       backend: {{ .Values.logging.backend }}
       {{- end }}
-      {{- if .Values.logging.host }}
-      host: {{ .Values.logging.host }}
-      {{- end }}
-      {{- if .Values.logging.port }}
-      port: {{ .Values.logging.port }}
-      {{- end }}
+
+      {{- if (eq (default "" .Values.logging.backend) "elastic") }}
+      host: {{ required "A valid host must be provided if logging to Elasticsearch!" .Values.logging.host }}
+      port: {{ required "A valid port must be provided if logging to Elasticsearch!" .Values.logging.port }}
       {{- if .Values.logging.security }}
       security:
         {{- if .Values.logging.security.username }}
@@ -130,6 +129,14 @@ data:
           {{- end }}
         {{- end}}
       {{- end }}
+      {{- end }}
+    {{- end}}
+  {{- if .Values.logging }}
+  {{- if .Values.logging.security }}
+  {{- if .Values.logging.security.tls }}
   {{- if .Values.logging.security.tls.certificate }}
   elastic.crt: |{{ nindent 4 .Values.logging.security.tls.certificate }}
-  {{- end}}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
