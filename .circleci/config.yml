@@ -300,7 +300,13 @@ commands:
           name: Split tests
           working_directory: ~/project/e2e_tests
           command: |
-            circleci tests glob "tests/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+            # If a test mark is specified, preselect only files that contain tests with that mark to
+            # minimize how wrong CircleCI's splitting can get things.
+            if [ -n "<<parameters.mark>>" ]; then
+              find tests -name 'test*.py' -print0 | xargs -0 grep -rl 'pytest\.mark\.<<parameters.mark>>'
+            else
+              circleci tests glob 'tests/**/test*.py'
+            fi | circleci tests split --split-by=timings > /tmp/tests-to-run
             echo "Running tests from these files:"
             sed 's/^/- /' </tmp/tests-to-run
 
@@ -315,7 +321,7 @@ commands:
           command: |
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             pytest -vv -s \
-            -m <<parameters.mark>> \
+            -m '<<parameters.mark>>' \
             --durations=0 \
             --master-scheme="<<parameters.master-scheme>>" \
             --master-host="<<parameters.master-host>>" \
