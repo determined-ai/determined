@@ -276,7 +276,7 @@ def test_data_layer_mnist_estimator_accuracy() -> None:
         if step.get("validation")
     ]
 
-    target_accuracy = 0.93
+    target_accuracy = 0.92
     assert max(validation_accuracies) > target_accuracy, (
         "data_layer_mnist_estimator did not reach minimum target accuracy {} in {} steps."
         " full validation accuracy history: {}".format(
