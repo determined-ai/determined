@@ -16,6 +16,9 @@ li.legend {
     margin-right: var(--theme-sizes-layout-small);
   }
 }
+ul.detailedLegends li {
+  margin-top: var(--theme-sizes-layout-small);
+}
 div.overallLegends {
   display: flex;
   flex-direction: row;
@@ -45,9 +48,6 @@ ul.detailedLegends {
   margin: 0;
   padding: 0;
 
-  li {
-    margin-top: var(--theme-sizes-layout-small);
-  }
   li:first-child {
     margin-top: 0;
   }

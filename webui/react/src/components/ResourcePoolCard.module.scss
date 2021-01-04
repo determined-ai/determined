@@ -29,7 +29,8 @@ $line-height: 2.2rem;
     .icon {
       align-items: center;
       background-color: var(--theme-colors-monochrome-17);
-      border: var(--theme-sizes-border-width) solid
+      border:
+        var(--theme-sizes-border-width) solid
         var(--theme-colors-monochrome-11);
       border-radius: 50%;
       display: flex;

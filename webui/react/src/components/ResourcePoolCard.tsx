@@ -1,4 +1,3 @@
-import { Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import awsLogo from 'assets/aws-logo.svg';
