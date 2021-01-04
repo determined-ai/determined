@@ -179,11 +179,8 @@ func (m *manager) getChild(ctx *actor.Context, experimentID int) *actor.Ref {
 		may return a task to sleep for a time), and the manager decides when to spawn or scale down
 		workers. Or each authenticated user can have their own actor, for improved multi-tenancy.
 	*/
-	result = ctx.Child(experimentID)
-	if result == nil {
-		w := newWorker(m.db, ctx.Self())
-		result, _ = ctx.ActorOf(experimentID, w)
-	}
+	factory := func() actor.Actor { return newWorker(m.db, ctx.Self()) }
+	result, _ = ctx.ActorOfFromFactory(experimentID, factory)
 	return result
 }
 

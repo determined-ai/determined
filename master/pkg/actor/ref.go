@@ -173,6 +173,22 @@ func (r *Ref) createChild(address Address, actor Actor) (*Ref, bool) {
 	return ref, true
 }
 
+func (r *Ref) createChildFromFactory(address Address, factory func() Actor) (*Ref, bool) {
+	if existingRef, ok := r.children[address]; ok {
+		return existingRef, false
+	}
+
+	ref := newRef(r.system, r, address, factory())
+	r.children[address] = ref
+
+	r.system.refsLock.Lock()
+	defer r.system.refsLock.Unlock()
+
+	r.system.refs[address] = ref
+
+	return ref, true
+}
+
 func (r *Ref) deleteChild(address Address) {
 	delete(r.children, address)
 
