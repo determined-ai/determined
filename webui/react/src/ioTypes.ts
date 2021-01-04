@@ -244,11 +244,21 @@ const ioDataLayer = io.type({
 
 const ioExpResources = io.type({ max_slots: optional(io.number) });
 
+const ioExpHParam = io.type({
+  base: optional(io.number),
+  count: optional(io.number),
+  maxval: optional(io.number),
+  minval: optional(io.number),
+  type: io.keyof({ const: null, double: null, int: null, log: null }),
+  val: optional(io.union([ io.number, io.string ])),
+});
+
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: optional(ioCheckpointStorage),
   data_layer: optional(ioDataLayer),
   description: io.string,
+  hyperparameters: io.record(io.string, ioExpHParam),
   labels: optional(io.array(io.string)),
   resources: ioExpResources,
   searcher: io.type({

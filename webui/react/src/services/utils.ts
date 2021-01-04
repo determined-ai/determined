@@ -43,7 +43,7 @@ export const isNotFound = (e: any): boolean => {
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAborted = (e: any): boolean => {
-  return e.name === 'AbortError';
+  return e && e.name && e.name === 'AbortError';
 };
 
 /* HTTP Helpers */
@@ -140,11 +140,26 @@ export const consumeStream = async <T = unknown>(
 
     const response = await fetch(serverAddress(fetchArgs.url), options);
     const reader = ndjsonStream(response.body).getReader();
+
+    // Cancel reader if an abort signal is received.
+    if (options && options.signal) {
+      const signal: AbortSignal = options.signal;
+      const abortHandler = () => {
+        reader.cancel();
+        signal.removeEventListener('abort', abortHandler);
+      };
+      signal.addEventListener('abort', abortHandler);
+    }
+
     let result;
     while (!result || !result.done) {
       result = await reader.read();
       if (result.done) return;
-      onEvent(result.value.result);
+      if (result.value.error) {
+        throw result.value.error;
+      } else {
+        onEvent(result.value.result);
+      }
     }
   } catch (e) {
     if (!isAborted(e)) {

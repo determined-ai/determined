@@ -103,6 +103,7 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
       },
       dataLayer: { type: 'shared_fs' },
       description: experimentTask.name,
+      hyperparameters: {},
       resources: {},
       searcher: { metric: 'val_error', smallerIsBetter: true },
     },

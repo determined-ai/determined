@@ -148,8 +148,14 @@ export const isAlternativeAction = (event: React.MouseEvent): boolean => {
 /*
  * Default clickable row class name for Table components.
  */
-export const defaultRowClassName = (clickable = true): string=> {
-  return clickable ? 'clickable' : '';
+export const defaultRowClassName = (options?: {
+  clickable?: boolean,
+  highlighted?: boolean,
+}): string=> {
+  const classes = [];
+  if (options?.clickable) classes.push('clickable');
+  if (options?.highlighted) classes.push('highlighted');
+  return classes.join(' ');
 };
 
 export const getPaginationConfig = (

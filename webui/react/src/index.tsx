@@ -6,6 +6,7 @@ import history from 'routes/history';
 
 /* Import the styles first to allow components to override styles. */
 import 'styles/index.scss';
+import 'uplot/dist/uPlot.min.css';
 
 import App from './App';
 import * as serviceWorker from './serviceWorker';

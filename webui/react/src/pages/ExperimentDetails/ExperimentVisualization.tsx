@@ -1,16 +1,18 @@
 import { Col, Row, Select } from 'antd';
+import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
-import MetricSelectFilter from 'components/MetricSelectFilter';
 import SelectFilter from 'components/SelectFilter';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentDetails, MetricName, MetricType } from 'types';
+import { alphanumericSorter } from 'utils/data';
 
 import css from './ExperimentVisualization.module.scss';
+import LearningCurve from './ExperimentVisualization/LearningCurve';
 
 const { Option } = Select;
 
@@ -47,18 +49,21 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ trainingMetrics, setTrainingMetrics ] = useState<string[]>([]);
   const [ validationMetrics, setValidationMetrics ] = useState<string[]>([]);
   const [ selectedMetric, setSelectedMetric ] = useState<MetricName>();
-  const [ searchMetric, setSearchMetric ] = useState<string>();
+  const [ searcherMetric, setSearcherMetric ] = useState<string>();
+  /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
-  const [ selectedBatch, setSelectedBatch ] = useState<number>();
-  const [ canceler ] = useState(new AbortController());
 
-  const metrics = [
+  const metrics: MetricName[] = [
     ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
     ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
   ];
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     setSelectedMetric(metric);
+  }, []);
+
+  const handleChartTypeChange = useCallback((type: SelectValue) => {
+    setTypeKey(type as VisualizationType);
   }, []);
 
   // Sets the default sub route
@@ -70,6 +75,9 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Stream available metrics
   useEffect(() => {
+    const canceler = new AbortController();
+    const trainingMetricsMap: Record<string, boolean> = {};
+    const validationMetricsMap: Record<string, boolean> = {};
     consumeStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.determinedMetricNames(
         experiment.id,
@@ -77,46 +85,57 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        setSearchMetric(event.searcherMetric);
-        setTrainingMetrics(event.trainingMetrics || []);
-        setValidationMetrics(event.validationMetrics || []);
+        if (!event) return;
+        /*
+         * The metrics endpoint can intermittently send empty lists,
+         * so we keep track of what we have seen on our end and
+         * only add new metrics we have not seen to the list.
+         */
+        (event.trainingMetrics || []).forEach(metric => trainingMetricsMap[metric] = true);
+        (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
+        const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphanumericSorter);
+        const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphanumericSorter);
+        setTrainingMetrics(newTrainingMetrics);
+        setValidationMetrics(newValidationMetrics);
+        if (event.searcherMetric) setSearcherMetric(event.searcherMetric);
       },
     );
 
-    return canceler.abort;
-  }, [ canceler, experiment.id ]);
+    return () => canceler.abort();
+  }, [ experiment.id ]);
 
   // Stream available batches
   useEffect(() => {
     if (!selectedMetric) return;
 
-    const batchesCanceler = new AbortController();
+    const canceler = new AbortController();
     const metricTypeParam = selectedMetric?.type === MetricType.Training
       ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
+    const batchesMap: Record<number, number> = {};
     consumeStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.determinedMetricBatches(
         experiment.id,
         selectedMetric?.name,
         metricTypeParam,
         undefined,
-        { signal: batchesCanceler.signal },
+        { signal: canceler.signal },
       ),
       event => {
-        if (event.batches) {
-          setBatches(event.batches);
-          if (event.batches.length !== 0) setSelectedBatch(event.batches[0]);
-        }
+        if (!event) return;
+        (event.batches || []).forEach(batch => batchesMap[batch] = batch);
+        const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
+        setBatches(newBatches);
       },
     );
 
-    return () => batchesCanceler.abort();
+    return () => canceler.abort();
   }, [ experiment.id, selectedMetric ]);
 
   // Set the default metric of interest
   useEffect(() => {
     if (selectedMetric) return;
-    if (searchMetric) setSelectedMetric({ name: searchMetric, type: MetricType.Validation });
-  }, [ searchMetric, selectedMetric ]);
+    if (searcherMetric) setSelectedMetric({ name: searcherMetric, type: MetricType.Validation });
+  }, [ searcherMetric, selectedMetric ]);
 
   return (
     <div className={css.base}>
@@ -127,8 +146,13 @@ const ExperimentVisualization: React.FC<Props> = ({
           sm={{ order: 2, span: 24 }}
           span={24}
           xs={{ order: 2, span: 24 }}>
-          {experiment.id}
-          {experiment.config.description}
+          {selectedMetric && typeKey === VisualizationType.LearningCurve && (
+            <LearningCurve
+              experiment={experiment}
+              metrics={metrics}
+              selectedMetric={selectedMetric}
+              onMetricChange={handleMetricChange} />
+          )}
         </Col>
         <Col
           lg={{ order: 2, span: 4 }}
@@ -146,32 +170,14 @@ const ExperimentVisualization: React.FC<Props> = ({
                   onClick={() => setTypeKey(item.type)}>{item.label}</Link>
               ))}
             </div>
-            <div className={css.divider} />
-            <header>Filters</header>
-            <div className={css.filters}>
+            <div className={css.mobileMenu}>
               <SelectFilter
-                className={css.mobileNav}
                 label="Chart Type"
                 value={typeKey}
-                verticalLayout={true}>
+                onChange={handleChartTypeChange}>
                 {MENU.map(item => (
                   <Option key={item.type} value={item.type}>{item.label}</Option>
                 ))}
-              </SelectFilter>
-              <MetricSelectFilter
-                defaultMetricNames={metrics}
-                metricNames={metrics}
-                multiple={false}
-                value={selectedMetric}
-                verticalLayout={true}
-                width={'100%'}
-                onChange={handleMetricChange} />
-              <SelectFilter
-                label="Batches"
-                style={{ width: '100%' }}
-                value={selectedBatch}
-                verticalLayout={true}>
-                {batches.map(batch => <Option key={batch} value={batch}>{batch}</Option>)}
               </SelectFilter>
             </div>
           </div>

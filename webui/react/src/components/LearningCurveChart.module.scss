@@ -1,0 +1,49 @@
+$point-size: 0.7rem;
+$tooltip-offset: 0.5rem;
+
+.base {
+  position: relative;
+
+  .tooltip {
+    display: none;
+    pointer-events: none;
+    position: absolute;
+
+    .point {
+      background-color: rgba(0, 155, 222, 1);
+      border-radius: $point-size / 2;
+      height: $point-size;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: $point-size;
+    }
+    .box {
+      background-color: var(--theme-colors-monochrome-17);
+      border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+      border-radius: var(--theme-sizes-border-radius);
+      box-shadow: var(--theme-shadow);
+      left: $tooltip-offset;
+      padding: var(--theme-sizes-layout-medium);
+      position: absolute;
+      top: $tooltip-offset;
+    }
+    .row {
+      display: table-row;
+    }
+    .row > * {
+      display: table-cell;
+    }
+  }
+  .tooltip.top {
+    .box {
+      bottom: $tooltip-offset;
+      top: auto;
+    }
+  }
+  .tooltip.left {
+    .box {
+      left: auto;
+      right: $tooltip-offset;
+    }
+  }
+}

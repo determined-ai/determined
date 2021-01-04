@@ -36,7 +36,7 @@ export const TaskTable = (): React.ReactNode => {
     columns={taskColumns}
     dataSource={commandTasks}
     loading={commandTasks === undefined}
-    rowClassName={defaultRowClassName()}
+    rowClassName={defaultRowClassName({ clickable: true })}
     rowKey="id"
     showSorterTooltip={false} />;
 };
@@ -47,7 +47,7 @@ export const ExperimentTable = (): React.ReactNode => {
     columns={experimentColumns}
     dataSource={experiments}
     loading={experiments === undefined}
-    rowClassName={defaultRowClassName()}
+    rowClassName={defaultRowClassName({ clickable: true })}
     rowKey="id"
     showSorterTooltip={false} />;
 };
