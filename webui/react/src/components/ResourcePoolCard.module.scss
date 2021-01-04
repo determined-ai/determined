@@ -105,23 +105,3 @@ section.details {
   flex-direction: row;
   justify-content: space-between;
 }
-
-.fade {
-  position: relative;
-  height: $line-height * 2;
-  overflow: hidden;
-}
-.fade:after {
-  content: "";
-  text-align: right;
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 70%;
-  height: $line-height;
-  background: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 1) 50%
-  );
-}
