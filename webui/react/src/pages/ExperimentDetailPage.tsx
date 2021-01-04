@@ -12,9 +12,10 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
-import { getExperimentDetails, isNotFound } from 'services/api';
+import { getExperimentDetails2, getExpTrials, getExpValidationHistory, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
-import { ExperimentDetails } from 'types';
+import { isAborted } from 'services/utils';
+import { ExperimentBase, TrialItem2, ValidationHistory } from 'types';
 import { clone } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
@@ -47,12 +48,15 @@ const ExperimentDetailPage: React.FC = () => {
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
   const [ forkModalVisible, setForkModalVisible ] = useState(false);
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
-  const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentDetails>>({
+  const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentBase>>({
     data: undefined,
     error: undefined,
     isLoading: true,
     source: axios.CancelToken.source(),
   });
+  const [ experimentCanceler ] = useState(new AbortController());
+  const [ trials, setTrials ] = useState<TrialItem2[]>([]);
+  const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
 
   const id = parseInt(experimentId);
   const basePath = `/experiments/${experimentId}/hp`;
@@ -60,17 +64,18 @@ const ExperimentDetailPage: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const response = await getExperimentDetails({
-        cancelToken: experimentDetails.source?.token,
-        id,
-      });
-      setExperimentDetails(prev => ({ ...prev, data: response, isLoading: false }));
+      const experiment = await getExperimentDetails2({ id, signal: experimentCanceler.signal });
+      const trials = await getExpTrials({ id });
+      const validationHistory = await getExpValidationHistory({ id });
+      setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
+      setTrials(trials);
+      setValHistory(validationHistory);
     } catch (e) {
-      if (!experimentDetails.error && !axios.isCancel(e)) {
+      if (!experimentDetails.error && !isAborted(e)) {
         setExperimentDetails(prev => ({ ...prev, error: e }));
       }
     }
-  }, [ id, experimentDetails.error, experimentDetails.source ]);
+  }, [ id, experimentDetails.error, experimentCanceler.signal ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
@@ -150,7 +155,7 @@ const ExperimentDetailPage: React.FC = () => {
       ]}
       options={<ExperimentActions
         experiment={experiment}
-        trials={experiment.trials}
+        trials={trials}
         onClick={{ Fork: showForkModal }}
         onSettled={fetchExperimentDetails} />}
       showDivider

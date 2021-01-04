@@ -160,7 +160,7 @@ const ExperimentDetailsComp: React.FC = () => {
         setExperimentDetails(prev => ({ ...prev, error: e }));
       }
     }
-  }, [ id, experimentDetails.error ]);
+  }, [ id, experimentDetails.error, experimentCanceler.signal ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
