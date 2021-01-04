@@ -1,5 +1,6 @@
 $padding: var(--theme-sizes-layout-large);
 $icon-side: 5rem;
+$line-height: 2.2rem;
 
 .base {
   border-radius: var(--theme-sizes-border-radius);
@@ -8,6 +9,7 @@ $icon-side: 5rem;
   display: flex;
   flex-direction: column;
   font-size: var(--theme-sizes-font-medium);
+  line-height: $line-height;
   overflow: hidden;
   text-overflow: ellipsis;
 
@@ -27,8 +29,7 @@ $icon-side: 5rem;
     .icon {
       align-items: center;
       background-color: var(--theme-colors-monochrome-17);
-      border:
-        var(--theme-sizes-border-width) solid
+      border: var(--theme-sizes-border-width) solid
         var(--theme-colors-monochrome-11);
       border-radius: 50%;
       display: flex;
@@ -72,14 +73,12 @@ $icon-side: 5rem;
     align-content: center;
     display: flex;
     flex-direction: column;
+    height: $line-height * 4;
 
     p {
       margin: auto 0;
       // https://css-tricks.com/line-clampin/
-      overflow: hidden;
-      overflow-wrap: break-word;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow: auto;
     }
   }
   hr {

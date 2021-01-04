@@ -119,11 +119,9 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, rpIndex }: Props) 
       </div>
       <div className={css.body}>
         <section className={css.description}>
-          <Tooltip title={description}>
-            <p>
-              {description}
-            </p>
-          </Tooltip>
+          <p>
+            {description}
+          </p>
         </section>
         <hr />
         <section>
