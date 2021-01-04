@@ -1,0 +1,15 @@
+description: gan_mnist_pytorch_lightning_const
+max_restarts: 1
+records_per_epoch: 55000
+hyperparameters:
+  global_batch_size: 64
+  lr: 0.0002
+  b1: 0.5
+  b2: 0.999
+searcher:
+  name: single
+  metric: loss
+  max_length:
+      epochs: 5
+  smaller_is_better: true
+entrypoint: model_def:GANTrial

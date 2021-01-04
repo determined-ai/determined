@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 
 class PyTorchCallback:
@@ -70,5 +70,29 @@ class PyTorchCallback:
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         """
         Load the state of this using the deserialized ``state_dict``.
+        """
+        pass
+
+    def on_train_epoch_start(self) -> None:
+        """
+        Run on start of a new training epoch
+        """
+        pass
+
+    def on_train_epoch_end(self, output: List[Any]) -> None:
+        """
+        Run after a new training epoch has finished
+        """
+        pass
+
+    def on_validation_epoch_start(self) -> None:
+        """
+        Run on start of a new validation epoch
+        """
+        pass
+
+    def on_validation_epoch_end(self, outputs: List[Any]) -> None:
+        """
+        Run after a new validation epoch has finished
         """
         pass

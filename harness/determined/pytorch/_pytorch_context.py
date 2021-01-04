@@ -549,6 +549,7 @@ class PyTorchTrialContext(det.TrialContext):
         # Should be torch.cuda.amp.GradScaler, but:
         #   * other implementations might be possible
         #   * requiring this type forces upgrades to PyTorch 1.6+
+        on_before_zero_grad: Optional[Callable[[torch.optim.Optimizer], None]] = None, # type:ignore
     ) -> None:
         """
         Perform a single optimization step.
@@ -632,6 +633,8 @@ class PyTorchTrialContext(det.TrialContext):
             step_fn()
 
         if auto_zero_grads:
+            if on_before_zero_grad is not None:
+                on_before_zero_grad(optimizer)
             optimizer.zero_grad()
 
     def is_epoch_start(self) -> bool:
@@ -659,3 +662,18 @@ class PyTorchTrialContext(det.TrialContext):
         if self._epoch_len is None:
             raise det.errors.InternalException("Training DataLoader uninitialized.")
         return self._current_batch_idx % self._epoch_len == self._epoch_len - 1
+
+    def current_train_epoch(self) -> int:
+        if self._current_batch_idx is None:
+            raise det.errors.InternalException("Training hasn't started.")
+        if self._epoch_len is None:
+            raise det.errors.InternalException("Training DataLoader uninitialized.")
+        return self._current_batch_idx // self._epoch_len
+
+    def current_train_batch(self) -> int:
+        """
+        Current global batch index
+        """
+        if self._current_batch_idx is None:
+            raise det.errors.InternalException("Training hasn't started.")
+        return self._current_batch_idx

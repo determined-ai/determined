@@ -2,7 +2,7 @@ import logging
 import pathlib
 import random
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
 
 import cloudpickle
 import numpy as np
@@ -11,6 +11,7 @@ import torch
 import determined as det
 from determined import horovod, ipc, pytorch, util, workload
 from determined.horovod import hvd
+from determined.util import has_param
 from determined_common import check
 
 # Apex is included only for GPU trials.
@@ -18,6 +19,20 @@ try:
     import apex
 except ImportError:
     pass
+
+
+def iterate_batches(dataset_len: int, start: int, end: int) -> Iterable[Tuple[int, range]]:
+    """
+    A helper to iterate over a dataset using start and end indices.
+    """
+
+    def get_epoch_idx(batch_id: int) -> int:
+        return batch_id // dataset_len
+
+    for epoch_idx in range(get_epoch_idx(start), get_epoch_idx(end) + 1):
+        l_start = max(start, (dataset_len * epoch_idx))
+        l_end = min((epoch_idx + 1) * dataset_len, end)
+        yield epoch_idx, range(l_start, l_end)
 
 
 class PyTorchTrialController(det.LoopTrialController):
@@ -109,7 +124,7 @@ class PyTorchTrialController(det.LoopTrialController):
             self._evaluate_batch_defined(),
             self._evaluate_full_dataset_defined(),
             "Please define exactly one of: `evaluate_batch()` or `evaluate_full_dataset()`. "
-            "For most use cases `evaluate_batch()` is recommended is recommended because "
+            "For most use cases `evaluate_batch()` is recommended because "
             "it can be parallelized across all devices.",
         )
 
@@ -280,6 +295,7 @@ class PyTorchTrialController(det.LoopTrialController):
         end = start + num_batches
 
         per_batch_metrics = []  # type: List[Dict]
+        epoch_per_batch_metrics = []
         num_inputs = 0
 
         for batch_idx in range(start, end):
@@ -288,6 +304,9 @@ class PyTorchTrialController(det.LoopTrialController):
             batch = self.context.to_device(batch)
 
             self.context._current_batch_idx = batch_idx
+            if self.context.is_epoch_start():
+                for callback in self.callbacks.values():
+                    callback.on_train_epoch_start()
             self.context._loss_ids = {}
             tr_metrics = self.trial.train_batch(
                 batch=batch,
@@ -307,7 +326,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
             # Step learning rate of a pytorch.LRScheduler.
             for lr_scheduler in self.context.lr_schedulers:
-                self._auto_step_lr_scheduler_per_batch(batch_idx, lr_scheduler)
+                self._auto_step_lr_scheduler_per_batch(self.get_epoch_idx(batch_idx), lr_scheduler)
 
             for name, metric in tr_metrics.items():
                 # Convert PyTorch metric values to NumPy, so that
@@ -317,8 +336,15 @@ class PyTorchTrialController(det.LoopTrialController):
                     metric = metric.cpu().detach().numpy()
                 tr_metrics[name] = metric
 
-            per_batch_metrics.append(tr_metrics)
+            if self.context.is_epoch_end():
+                for callback in self.callbacks.values():
+                    callback.on_train_epoch_end(epoch_per_batch_metrics)
+                per_batch_metrics += epoch_per_batch_metrics
+                epoch_per_batch_metrics = []
+            else:
+                epoch_per_batch_metrics.append(tr_metrics)
 
+        per_batch_metrics += epoch_per_batch_metrics
         # Aggregate and reduce training metrics from all the training processes.
         if self.hvd_config.use and self.hvd_config.average_training_metrics:
             per_batch_metrics = self._average_training_metrics(per_batch_metrics)
@@ -375,11 +401,16 @@ class PyTorchTrialController(det.LoopTrialController):
 
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
             check.gt(len(self.validation_loader), 0)
-            for batch in self.validation_loader:
+            for callback in self.callbacks.values():
+                callback.on_validation_epoch_start()
+            for idx, batch in enumerate(self.validation_loader):
                 batch = self.context.to_device(batch)
                 num_inputs += pytorch.data_length(batch)
 
-                vld_metrics = self.trial.evaluate_batch(batch=batch)
+                if has_param(self.trial.evaluate_batch, "batch_idx", 2):
+                    vld_metrics = self.trial.evaluate_batch(batch=batch, batch_idx=idx)
+                else:
+                    vld_metrics = self.trial.evaluate_batch(batch=batch)
                 # Verify validation metric names are the same across batches.
                 if keys is None:
                     keys = vld_metrics.keys()
@@ -400,6 +431,9 @@ class PyTorchTrialController(det.LoopTrialController):
                 batch_metrics.append(self._convert_metrics_to_numpy(vld_metrics))
                 if self.env.test_mode:
                     break
+
+            for callback in self.callbacks.values():
+                callback.on_validation_epoch_end(batch_metrics)
 
             metrics = self._reduce_metrics(
                 batch_metrics=batch_metrics,
@@ -882,7 +916,7 @@ class PyTorchTrial(det.Trial):
         """
         return {}
 
-    def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
         """
         Calculate evaluation metrics for a batch and return them as a
         dictionary mapping metric names to metric values.

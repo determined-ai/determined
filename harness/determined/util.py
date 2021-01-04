@@ -1,13 +1,14 @@
 import collections
 import datetime
 import enum
+import inspect
 import os
 import pathlib
 import random
 import shutil
 import time
 import uuid
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import numpy as np
 import simplejson
@@ -34,6 +35,18 @@ def is_overridden(full_method: Any, parent_class: Any) -> bool:
     """
     if callable(full_method):
         return cast(bool, full_method.__qualname__.partition(".")[0] != parent_class.__name__)
+    return False
+
+
+def has_param(fn: Callable[..., Any], name: str, pos: Optional[int] = None) -> bool:
+    """
+    Inspects function fn for presence of an argument.
+    """
+    args = inspect.getfullargspec(fn)[0]
+    if name in args:
+        return True
+    if pos is not None:
+        return pos < len(args)
     return False
 
 
