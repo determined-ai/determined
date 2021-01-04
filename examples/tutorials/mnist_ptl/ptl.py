@@ -49,7 +49,7 @@ class LightningMNISTClassifier(pl.LightningModule):
         self.log('train_loss', loss)
         return {'loss': loss}
 
-    def validation_step(self, val_batch, batch_idx):
+    def validation_step(self, val_batch, batch_idx=None):
         x, y = val_batch
         logits = self.forward(x)
         loss = self.loss_fn(logits, y)
