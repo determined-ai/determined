@@ -1,0 +1,33 @@
+description: mnist_pytorch_adaptive_search
+data:
+  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
+hyperparameters:
+  global_batch_size: 64
+  learning_rate:
+    type: double
+    minval: .0001
+    maxval: 1.0
+  n_filters1:
+    type: int
+    minval: 8
+    maxval: 64
+  n_filters2:
+    type: int
+    minval: 8
+    maxval: 72
+  dropout1:
+    type: double
+    minval: .2
+    maxval: .8
+  dropout2:
+    type: double
+    minval: .2
+    maxval: .8
+searcher:
+  name: adaptive_asha
+  metric: validation_loss
+  smaller_is_better: true
+  max_trials: 16
+  max_length:
+    batches: 937 #60,000 training images with batch size 64
+entrypoint: model_def:MNistTrial

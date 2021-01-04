@@ -1,0 +1,19 @@
+description: mnist_pytorch_distributed
+data:
+  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
+hyperparameters:
+  learning_rate: 1.0
+  global_batch_size: 512
+  n_filters1: 32
+  n_filters2: 64
+  dropout1: 0.25
+  dropout2: 0.5
+resources:
+  slots_per_trial: 8
+searcher:
+  name: single
+  metric: validation_loss
+  max_length:
+      batches: 117  #60,000 training images with batch size 512 (batch size 64 per GPU)
+  smaller_is_better: true
+entrypoint: model_def:MNistTrial
