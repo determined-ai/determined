@@ -308,7 +308,6 @@ interface TrialBase extends StartEndTimes {
   experimentId: number;
   hparams: TrialHyperParameters;
   id: number;
-  seed: number;
   state: RunState;
 }
 
