@@ -23,9 +23,28 @@ To use Determined, you can continue using popular DL frameworks such as
 TensorFlow and PyTorch; you just need to update your model code to integrate
 with the Determined API.
 
-## Installation
+## Try out Determined locally with our CIFAR10 example
+ 
+Follow [these instructions](https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker) to install and set up docker.
 
-* [Installation Guide](https://docs.determined.ai/latest/how-to/install-main.html)
+ ```bash
+
+ python3.7 -m venv ~/.virtualenvs/test
+ . ~/.virtualenvs/test/bin/activate
+ pip install determined determined-cli determined-deploy
+ det-deploy local cluster-up --no-gpu # Deploy a Determined cluster locally with no GPU
+ 
+ # Access web UI at localhost:8080. By default, "admin" user accepts a blank password.
+ 
+ git clone https://github.com/determined-ai/determined
+ cd determined/examples/computer_vision/cifar10_pytorch/
+ 
+ det experiment create const.yaml . # Submit an experiment Determined. View results in web UI.
+ ```
+
+## Detailed Installation Guide
+
+See [our installation guide](https://docs.determined.ai/latest/how-to/install-main.html) for details on how to install Determined, including on AWS and GCP.
 
 ### Try Now on AWS
 
@@ -33,7 +52,7 @@ with the Determined API.
 
 ## Next Steps
 
-For a brief introduction to using Determined, start with the
+For a brief introduction to using Determined, check out our
 [Quick Start Guide](https://docs.determined.ai/latest/tutorials/quick-start.html).
 
 To use an existing deep learning model with Determined, follow the
