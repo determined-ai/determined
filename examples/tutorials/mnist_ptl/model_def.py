@@ -9,12 +9,9 @@ The methods `train_batch` and `evaluate_batch` define the forward pass
 for training and evaluation respectively.
 """
 
-from typing import Any, Dict, Sequence, Tuple, Union, cast
+from typing import Any, Dict, Sequence, Union
 
 import torch
-from torch import nn
-
-from layers import Flatten  # noqa: I100
 
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
@@ -34,27 +31,7 @@ class MNistTrial(PyTorchTrial):
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 
-        # self.model = self.context.wrap_model(nn.Sequential(
-        #     nn.Conv2d(1, self.context.get_hparam("n_filters1"), 3, 1),
-        #     nn.ReLU(),
-        #     nn.Conv2d(
-        #         self.context.get_hparam("n_filters1"), self.context.get_hparam("n_filters2"), 3,
-        #     ),
-        #     nn.ReLU(),
-        #     nn.MaxPool2d(2),
-        #     nn.Dropout2d(self.context.get_hparam("dropout1")),
-        #     Flatten(),
-        #     nn.Linear(144 * self.context.get_hparam("n_filters2"), 128),
-        #     nn.ReLU(),
-        #     nn.Dropout2d(self.context.get_hparam("dropout2")),
-        #     nn.Linear(128, 10),
-        #     nn.LogSoftmax(),
-        # ))
-
         self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
-        # self.optimizer = self.context.wrap_optimizer(torch.optim.Adadelta(
-        #     self.model.parameters(), lr=self.context.get_hparam("learning_rate"))
-        # )
 
     def build_training_data_loader(self) -> DataLoader:
         if not self.data_downloaded:
@@ -83,12 +60,6 @@ class MNistTrial(PyTorchTrial):
     ) -> Dict[str, torch.Tensor]:
         rv = self.lm.training_step(batch, batch_idx)
 
-        # batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
-        # data, labels = batch
-
-        # output = self.model(data)
-        # loss = torch.nn.functional.nll_loss(output, labels)
-
         # TODO option to set loss
         self.context.backward(rv['loss'])
         self.context.step_optimizer(self.optimizer)
@@ -96,14 +67,3 @@ class MNistTrial(PyTorchTrial):
 
     def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
         return self.lm.validation_step(batch)
-        # logits = self.lm.training_step(batch, batch_idx)
-        # batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
-        # data, labels = batch
-
-        # output = self.model(data)
-        # validation_loss = torch.nn.functional.nll_loss(output, labels).item()
-
-        # pred = output.argmax(dim=1, keepdim=True)
-        # accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(data)
-
-        # return {"validation_loss": validation_loss, "accuracy": accuracy}

@@ -7,6 +7,7 @@ from torchvision.datasets import MNIST
 from torchvision import datasets, transforms
 import os
 
+
 class LightningMNISTClassifier(pl.LightningModule):
 
     def __init__(self):
@@ -67,8 +68,8 @@ class LightningMNISTClassifier(pl.LightningModule):
 if __name__ == '__main__':
     # data
     # transforms for images
-    transform=transforms.Compose([transforms.ToTensor(), 
-                                  transforms.Normalize((0.1307,), (0.3081,))])
+    transform = transforms.Compose([transforms.ToTensor(), 
+                                    transforms.Normalize((0.1307,), (0.3081,))])
 
     # prepare transforms standard to MNIST
     mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
