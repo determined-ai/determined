@@ -16,7 +16,7 @@ import { handlePath } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentDetails, MetricName, metricTypeParamMap } from 'types';
+import { ExperimentBase, MetricName, metricTypeParamMap } from 'types';
 import { alphanumericSorter, hpSorter } from 'utils/data';
 
 import css from './LearningCurve.module.scss';
@@ -24,7 +24,7 @@ import css from './LearningCurve.module.scss';
 const { Option } = Select;
 
 interface Props {
-  experiment: ExperimentDetails;
+  experiment: ExperimentBase;
   metrics: MetricName[];
   onMetricChange?: (metric: MetricName) => void;
   selectedMetric: MetricName

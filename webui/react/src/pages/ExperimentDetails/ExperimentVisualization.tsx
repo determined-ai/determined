@@ -8,7 +8,7 @@ import SelectFilter from 'components/SelectFilter';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentDetails, MetricName, MetricType } from 'types';
+import { ExperimentBase, MetricName, MetricType } from 'types';
 import { alphanumericSorter } from 'utils/data';
 
 import css from './ExperimentVisualization.module.scss';
@@ -25,7 +25,7 @@ export enum VisualizationType {
 
 interface Props {
   basePath: string;
-  experiment: ExperimentDetails;
+  experiment: ExperimentBase;
   type?: VisualizationType;
 }
 
