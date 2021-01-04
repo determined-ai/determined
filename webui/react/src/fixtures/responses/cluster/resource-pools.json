@@ -1,7 +1,7 @@
 [
     {
         "name": "perception-cpu-aws",
-        "description": "AWS CPU-only resource pool for tensorboards",
+        "description": "AWS CPU-only resource pool for tensorboard AWS CPU-only resource pool for tensorboard AWS CPU-only resource pool for tensorboards AWS CPU-only resource pool for tensorboards AWS CPU-only resource pool for tensorboards",
         "type": "aws",
         "numAgents": 1,
         "slotsAvailable": 0,
