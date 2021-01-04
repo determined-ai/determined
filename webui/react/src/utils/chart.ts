@@ -2,8 +2,8 @@ type Range = [number, number];
 
 interface Config {
   batchSize: number;
-  trialCount: number;
   stepCount: number;
+  trialCount: number;
   valueRange: Range;
 }
 
