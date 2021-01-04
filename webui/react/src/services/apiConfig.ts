@@ -165,7 +165,6 @@ ExperimentBase[]
       params.archived,
       params.states,
       params.users,
-      params.options,
     ),
 };
 

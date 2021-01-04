@@ -19,7 +19,6 @@ interface Props {
   onClick: (action: Action) => (() => void);
   onSettled: () => void; // A callback to trigger after an action is done.
   trial: TrialDetails2;
-  trials: TrialItem[],
 }
 
 type ButtonLoadingStates = Record<Action, boolean>;
