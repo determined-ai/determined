@@ -12,7 +12,7 @@ import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
   ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
-  Telemetry, TrialDetails2, ValidationHistory,
+  Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -109,14 +109,14 @@ export const getExperimentDetails2 = generateDetApi<ExperimentDetailsParams,
 Api.V1GetExperimentResponse, ExperimentBase>(Config.getExperimentDetails2);
 
 export const getExpTrials = generateDetApi<GetTrialsParams, Api.V1GetExperimentTrialsResponse,
-TrialDetails2[]>(Config.getExpTrials);
+TrialDetails[]>(Config.getExpTrials);
 
 export const getExpValidationHistory = generateDetApi<
 SingleEntityParams, Api.V1GetExperimentValidationHistoryResponse, ValidationHistory[]>
 (Config.getExpValidationHistory);
 
 export const getTrialDetails =
-  generateDetApi<TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2>(Config.getTrialDetails);
+  generateDetApi<TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails>(Config.getTrialDetails);
 
 export const createExperiment = generateDetApi<
 CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase>(

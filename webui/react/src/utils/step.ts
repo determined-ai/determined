@@ -1,7 +1,7 @@
-import { CheckpointState, CheckpointWorkload, MetricsWorkload, Step2,
+import { CheckpointState, CheckpointWorkload, MetricsWorkload, Step,
   WorkloadWrapper } from '../types';
 
-export const hasCheckpointStep = (step: Step2): boolean => {
+export const hasCheckpointStep = (step: Step): boolean => {
   return !!step.checkpoint && step.checkpoint.state !== CheckpointState.Deleted;
 };
 
@@ -21,8 +21,8 @@ export const isMetricsWorkload = (workload: MetricsWorkload | CheckpointWorkload
   return false;
 };
 
-export const workloadsToSteps = (workloads: WorkloadWrapper[]): Step2[] => {
-  const stepsDict: Record<number, Partial<Step2>> = {};
+export const workloadsToSteps = (workloads: WorkloadWrapper[]): Step[] => {
+  const stepsDict: Record<number, Partial<Step>> = {};
   workloads.forEach(wlWrapper => {
     const wl = getWorkload(wlWrapper);
     const batchNum = wl.numBatches + wl.priorBatchesProcessed;
@@ -37,5 +37,5 @@ export const workloadsToSteps = (workloads: WorkloadWrapper[]): Step2[] => {
       stepsDict[batchNum].training = wlWrapper.training;
     }
   });
-  return Object.values(stepsDict) as Step2[];
+  return Object.values(stepsDict) as Step[];
 };

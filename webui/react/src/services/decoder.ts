@@ -307,7 +307,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
   };
 };
 
-const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem2 => {
+const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
@@ -324,7 +324,7 @@ const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem2 => {
 
 export const decodeTrialResponseToTrialDetails = (
   data: Sdk.V1GetTrialResponse,
-): types.TrialDetails2 => {
+): types.TrialDetails => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
   let workloads;
 

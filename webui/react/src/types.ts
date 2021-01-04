@@ -287,7 +287,7 @@ export interface WorkloadWrapper {
 }
 
 // TODO rename me
-export interface Step2 extends WorkloadWrapper, StartEndTimes {
+export interface Step extends WorkloadWrapper, StartEndTimes {
   batchNum: number;
   training: MetricsWorkload;
 }
@@ -313,14 +313,14 @@ interface TrialBase extends StartEndTimes {
 }
 
 // To replace TrialItem once experiment endpoint is migrated.
-export interface TrialItem2 extends TrialBase {
+export interface TrialItem extends TrialBase {
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;
   latestValidationMetric?: MetricsWorkload;
   totalBatchesProcessed: number;
 }
 
-export interface TrialDetails2 extends TrialItem2 {
+export interface TrialDetails extends TrialItem {
   workloads: WorkloadWrapper[];
 }
 

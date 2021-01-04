@@ -15,7 +15,7 @@ import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import { getExperimentDetails2, getExpTrials, getExpValidationHistory, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { ExperimentBase, TrialItem2, ValidationHistory } from 'types';
+import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { clone } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
@@ -55,7 +55,7 @@ const ExperimentDetailPage: React.FC = () => {
     source: axios.CancelToken.source(),
   });
   const [ experimentCanceler ] = useState(new AbortController());
-  const [ trials, setTrials ] = useState<TrialItem2[]>([]);
+  const [ trials, setTrials ] = useState<TrialItem[]>([]);
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
 
   const id = parseInt(experimentId);

@@ -28,7 +28,7 @@ import { detApi } from 'services/apiConfig';
 import { decodeCheckpoint } from 'services/decoder';
 import { ApiSorter, ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { CheckpointWorkloadExtended, ExperimentBase, TrialItem2,
+import { CheckpointWorkloadExtended, ExperimentBase, TrialItem,
   ValidationHistory } from 'types';
 import { clone, numericSorter } from 'utils/data';
 import { getMetricValue, terminalRunStates, upgradeConfig } from 'utils/types';
@@ -63,7 +63,7 @@ const ExperimentDetailsComp: React.FC = () => {
     source: axios.CancelToken.source(),
   });
   const [ experimentCanceler ] = useState(new AbortController());
-  const [ trials, setTrials ] = useState<TrialItem2[]>([]);
+  const [ trials, setTrials ] = useState<TrialItem[]>([]);
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ bestWorkloads, setBestWorkloads ] = useState<TopWorkloads>();
 
@@ -93,19 +93,19 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ id, valHistory, experimentConfig?.searcher.smallerIsBetter ]);
 
   const columns = useMemo(() => {
-    const latestValidationRenderer = (_: string, record: TrialItem2): React.ReactNode => {
+    const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
       const value = getMetricValue(record.latestValidationMetric, metric);
       return value && <HumanReadableFloat num={value} />;
     };
 
-    const latestValidationSorter = (a: TrialItem2, b: TrialItem2): number => {
+    const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
       if (!metric) return 0;
       const aMetric = getMetricValue(a.latestValidationMetric, metric);
       const bMetric = getMetricValue(b.latestValidationMetric, metric);
       return numericSorter(aMetric, bMetric);
     };
 
-    const checkpointRenderer = (_: string, record: TrialItem2): React.ReactNode => {
+    const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
       if (!record.bestAvailableCheckpoint) return;
       const checkpoint: CheckpointWorkloadExtended = {
         ...record.bestAvailableCheckpoint,
@@ -136,7 +136,7 @@ const ExperimentDetailsComp: React.FC = () => {
       }
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
       if (column.key === 'bestValidation') {
-        column.render = (_: string, record: TrialItem2): ReactNode => {
+        column.render = (_: string, record: TrialItem): ReactNode => {
           const value = getMetricValue(record.bestValidationMetric, metric);
           return value && humanReadableFloatRenderer(value);
         };
@@ -185,7 +185,7 @@ const ExperimentDetailsComp: React.FC = () => {
   const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
 
-    const { columnKey, order } = sorter as SorterResult<TrialItem2>;
+    const { columnKey, order } = sorter as SorterResult<TrialItem>;
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
@@ -195,7 +195,7 @@ const ExperimentDetailsComp: React.FC = () => {
     setPageSize(tablePagination.pageSize);
   }, [ columns, setSorter, storage ]);
 
-  const handleTableRow = useCallback((record: TrialItem2) => {
+  const handleTableRow = useCallback((record: TrialItem) => {
     const handleClick = (event: React.MouseEvent) =>
       handlePath(event, { path: paths.trialDetails(record.id, id) });
     return { onAuxClick: handleClick, onClick: handleClick };
@@ -285,7 +285,7 @@ const ExperimentDetailsComp: React.FC = () => {
           </Col>
           <Col span={24}>
             <Section title="Trials">
-              <ResponsiveTable<TrialItem2>
+              <ResponsiveTable<TrialItem>
                 columns={columns}
                 dataSource={trials}
                 loading={{

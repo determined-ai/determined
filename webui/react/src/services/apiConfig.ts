@@ -19,7 +19,7 @@ import {
 import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  Log, TBSourceType, Telemetry, TrialDetails2, ValidationHistory,
+  Log, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -263,7 +263,7 @@ ValidationHistory[]> = {
 export const getExpTrials: DetApi<
 GetTrialsParams,
 Api.V1GetExperimentTrialsResponse,
-TrialDetails2[]> = {
+TrialDetails[]> = {
   name: 'getExperimentValidationHistory',
   postProcess: (response) => {
     return response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial }));
@@ -287,7 +287,7 @@ export const getExperimentLabels: DetApi<
 };
 
 export const getTrialDetails: DetApi<
-TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2> = {
+TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails> = {
   name: 'getTrialDetails',
   postProcess: (resp: Api.V1GetTrialResponse) => {
     return decoder

@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
 import { openOrCreateTensorboard } from 'services/api';
-import { RunState, TBSourceType, TrialDetails2 } from 'types';
+import { RunState, TBSourceType, TrialDetails } from 'types';
 import { getWorkload, isMetricsWorkload } from 'utils/step';
 import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
@@ -18,12 +18,12 @@ export enum Action {
 interface Props {
   onClick: (action: Action) => (() => void);
   onSettled: () => void; // A callback to trigger after an action is done.
-  trial: TrialDetails2;
+  trial: TrialDetails;
 }
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const trialWillNeverHaveData = (trial: TrialDetails2): boolean => {
+const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
   const workloadsWithSomeMetric = trial.workloads
     .map(getWorkload)
@@ -50,7 +50,7 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => 
     setButtonStates(state => ({ ...state, tensorboard: false }));
   }, [ trial.id, onSettled ]);
 
-  const actionButtons: ConditionalButton<TrialDetails2>[] = [
+  const actionButtons: ConditionalButton<TrialDetails>[] = [
     {
       button: (trial.bestAvailableCheckpoint !== undefined ? (
         <Button key={Action.Continue} onClick={onClick(Action.Continue)}>Continue Trial</Button>

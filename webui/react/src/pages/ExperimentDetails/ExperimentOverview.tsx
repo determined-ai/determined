@@ -13,7 +13,7 @@ import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath, paths } from 'routes/utils';
 import { ApiSorter } from 'services/types';
-import { CheckpointDetail, CheckpointWorkloadExtended, ExperimentBase, TrialItem2, ValidationHistory } from 'types';
+import { CheckpointDetail, CheckpointWorkloadExtended, ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { numericSorter } from 'utils/data';
 import { getMetricValue } from 'utils/types';
 
@@ -23,7 +23,7 @@ import { columns as defaultColumns } from './ExperimentOverview.table';
 interface Props {
   experiment: ExperimentBase;
   onTagsChange: () => void;
-  trials: TrialItem2[];
+  trials: TrialItem[];
   validationHistory: ValidationHistory[];
 }
 
@@ -41,12 +41,12 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, trials, validationHis
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
 
   const columns = useMemo(() => {
-    const latestValidationRenderer = (_: string, record: TrialItem2): React.ReactNode => {
+    const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
       const value = getMetricValue(record.latestValidationMetric, metric);
       return value && <HumanReadableFloat num={value} />;
     };
 
-    const latestValidationSorter = (a: TrialItem2, b: TrialItem2): number => {
+    const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
       if (!metric) return 0;
       const aMetric = getMetricValue(a.latestValidationMetric, metric);
       const bMetric = getMetricValue(b.latestValidationMetric, metric);
@@ -84,7 +84,7 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, trials, validationHis
     //   );
     // };
 
-    const checkpointRenderer = (_: string, record: TrialItem2): React.ReactNode => {
+    const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
       if (!record.bestAvailableCheckpoint) return;
       const checkpoint: CheckpointWorkloadExtended = {
         ...record.bestAvailableCheckpoint,
@@ -123,7 +123,7 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, trials, validationHis
   const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
 
-    const { columnKey, order } = sorter as SorterResult<TrialItem2>;
+    const { columnKey, order } = sorter as SorterResult<TrialItem>;
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
@@ -133,7 +133,7 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, trials, validationHis
     setPageSize(tablePagination.pageSize);
   }, [ columns, setSorter, storage ]);
 
-  const handleTableRow = useCallback((record: TrialItem2) => {
+  const handleTableRow = useCallback((record: TrialItem) => {
     const handleClick = (event: React.MouseEvent) =>
       handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
     return { onAuxClick: handleClick, onClick: handleClick };

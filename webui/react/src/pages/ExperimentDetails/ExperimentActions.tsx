@@ -6,7 +6,7 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
   openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { ExperimentBase, RunState, TBSourceType, TrialItem2 } from 'types';
+import { ExperimentBase, RunState, TBSourceType, TrialItem } from 'types';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -23,7 +23,7 @@ export enum Action {
 
 interface Props {
   experiment: ExperimentBase;
-  trials: TrialItem2[];
+  trials: TrialItem[];
   onClick: {
     [key in Action]?: () => void;
   };
@@ -36,7 +36,7 @@ type ButtonLoadingStates = Record<Action, boolean>;
   * We use `numSteps` or `totalBatchesProcessed` as a
   * proxy to trials that definietly have some metric.
   */
-const experimentWillNeverHaveData = (experiment: ExperimentBase, trials: TrialItem2[]): boolean => {
+const experimentWillNeverHaveData = (experiment: ExperimentBase, trials: TrialItem[]): boolean => {
   const isTerminal = terminalRunStates.has(experiment.state);
   const trialsWithSomeMetric = trials.filter(trial => {
     return trial.totalBatchesProcessed > 0;

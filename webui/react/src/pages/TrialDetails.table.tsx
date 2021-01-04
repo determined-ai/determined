@@ -2,27 +2,27 @@ import { ColumnType } from 'antd/es/table';
 import React from 'react';
 
 import { Renderer, stateRenderer } from 'components/Table';
-import { Step2 } from 'types';
+import { Step } from 'types';
 import { alphanumericSorter, runStateSorter } from 'utils/data';
 
-const batchRender: Renderer<Step2> = (_, record) => {
+const batchRender: Renderer<Step> = (_, record) => {
   return <>{record.batchNum}</>;
 };
 
-export const columns: ColumnType<Step2>[] = [
+export const columns: ColumnType<Step>[] = [
   {
     key: 'batches',
     render: batchRender,
-    sorter: (a: Step2, b: Step2): number => {
+    sorter: (a: Step, b: Step): number => {
       return alphanumericSorter(a.batchNum, b.batchNum);
     },
     title: 'Batches',
   },
   {
     key: 'state',
-    render: (text: string, record: Step2, index: number): React.ReactNode =>
+    render: (text: string, record: Step, index: number): React.ReactNode =>
       stateRenderer(text, record.training, index),
-    sorter: (a: Step2, b: Step2): number => {
+    sorter: (a: Step, b: Step): number => {
       // Previously the list of steps would list steps by training steps which
       // all have RunState type as their state.
       return runStateSorter(a.training.state, b.training.state);
