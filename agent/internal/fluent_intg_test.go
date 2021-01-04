@@ -55,18 +55,13 @@ func TestFluentPostgresLogging(t *testing.T) {
 	runContainerWithLogs(t, actual, int(trialID), f.port)
 
 	// THEN fluent should parse all fields as expected and ship them to the mock master.
-	i := 0
 	var logs []model.TrialLog
-	for {
+	for i := 0; i < len(expected); i++ {
 		select {
 		case l := <-logBuffer:
 			logs = append(logs, l)
-			i++
 		case <-time.After(time.Minute):
 			assert.Equal(t, i, len(expected), "not enough logs received after one minute")
-		}
-		if i == len(expected) {
-			break
 		}
 	}
 	sort.Slice(logs, func(i, j int) bool {
@@ -248,11 +243,12 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 	err = docker.ContainerStart(context.Background(), cc.ID, types.ContainerStartOptions{})
 	assert.NilError(t, err, "error starting container")
 
-	exit, cErr := docker.ContainerWait(context.Background(), cc.ID, container.WaitConditionNextExit)
+	exitChan, errChan := docker.ContainerWait(
+		context.Background(), cc.ID, container.WaitConditionNextExit)
 	select {
-	case err = <-cErr:
+	case err = <-errChan:
 		assert.NilError(t, err, "container wait failed")
-	case exit := <-exit:
+	case exit := <-exitChan:
 		if exit.Error != nil {
 			t.Fatalf("container exited with error: %s", exit.Error)
 		}

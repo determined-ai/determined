@@ -63,8 +63,8 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 			return &Elastic{es}, nil
 		}
 		numTries++
-		// Elastic can take a really long time to come up.
-		if numTries >= 60 {
+		// Elastic can take a really long time to come up and we'd rather not fail integrations on this.
+		if numTries >= 300 {
 			return nil, errors.Wrapf(err, "could not connect to elastic after %v tries", numTries)
 		}
 		time.Sleep(time.Second)
