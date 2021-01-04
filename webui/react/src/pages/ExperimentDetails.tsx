@@ -2,7 +2,7 @@ import { Button, Col, Row, Space, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import axios from 'axios';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -15,7 +15,7 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig, humanReadableFloatRenderer, MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
@@ -62,6 +62,7 @@ const ExperimentDetailsComp: React.FC = () => {
     isLoading: true,
     source: axios.CancelToken.source(),
   });
+  const [ experimentCanceler ] = useState(new AbortController());
   const [ trials, setTrials ] = useState<TrialItem2[]>([]);
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ bestWorkloads, setBestWorkloads ] = useState<TopWorkloads>();
@@ -134,6 +135,12 @@ const ExperimentDetailsComp: React.FC = () => {
         column.sorter = latestValidationSorter;
       }
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
+      if (column.key === 'bestValidation') {
+        column.render = (_: string, record: TrialItem2): ReactNode => {
+          const value = getMetricValue(record.bestValidationMetric, metric);
+          return value && humanReadableFloatRenderer(value);
+        };
+      }
       return column;
     });
 
@@ -142,8 +149,7 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      // TODO add abort controller
-      const experiment = await getExperimentDetails2({ id });
+      const experiment = await getExperimentDetails2({ id, signal: experimentCanceler.signal });
       const trials = await getExpTrials({ id });
       const validationHistory = await getExpValidationHistory({ id });
       setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));

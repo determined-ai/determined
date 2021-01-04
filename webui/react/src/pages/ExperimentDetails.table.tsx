@@ -32,11 +32,6 @@ export const columns: ColumnType<TrialItem2>[] = [
   },
   {
     key: 'bestValidation',
-    render: (_: string, record: TrialItem2): ReactNode => {
-      // TODO we need to get the searcher metric name here.
-      const value = getMetricValue(record.bestValidationMetric);
-      return value && humanReadableFloatRenderer(value);
-    },
     sorter: (a: TrialItem2, b: TrialItem2): number => {
       return numericSorter(
         getMetricValue(a.bestValidationMetric),

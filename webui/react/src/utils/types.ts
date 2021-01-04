@@ -238,10 +238,8 @@ export const tsbMatchesSource = (tensorboard: Command, source: TBSource): boolea
 
 export const getMetricValue = (workload?: Workload, metricName?: string): number | undefined => {
   const metricsWl = workload as MetricsWorkload;
-
   if (!workload || !isMetricsWorkload(metricsWl) || !metricsWl.metrics) return undefined;
 
-  // FIXME make metricname required. this is unstable as object key orders are not guaranteed.
   metricName = metricName || Object.keys(metricsWl.metrics)[0];
 
   return metricsWl.metrics[metricName];
