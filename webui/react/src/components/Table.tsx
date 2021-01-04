@@ -21,9 +21,9 @@ type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
 export interface TablePaginationConfig {
   current: number;
-  pageSize: number;
   defaultPageSize: number;
   hideOnSinglePage: boolean;
+  pageSize: number;
   showSizeChanger: boolean;
   total: number;
 }

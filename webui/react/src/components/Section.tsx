@@ -5,12 +5,12 @@ import { toHtmlId } from 'utils/string';
 import css from './Section.module.scss';
 
 interface Props {
+  bodyBorder?: boolean;
   divider?: boolean;
+  hideTitle?: boolean;
   maxHeight?: boolean;
   options?: React.ReactNode;
   title: string;
-  hideTitle?: boolean;
-  bodyBorder?: boolean;
 }
 
 const defaultProps = { divider: false };

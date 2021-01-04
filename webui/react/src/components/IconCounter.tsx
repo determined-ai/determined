@@ -5,10 +5,10 @@ import Icon from 'components/Icon';
 import css from './IconCounter.module.scss';
 
 interface Props {
-  name: string;
   count: number;
-  type: IconCounterType;
+  name: string;
   onClick: () => void;
+  type: IconCounterType;
 }
 
 enum IconCounterType {

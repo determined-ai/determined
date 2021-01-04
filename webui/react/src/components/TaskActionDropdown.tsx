@@ -30,8 +30,8 @@ export enum Action {
 }
 
 interface Props {
-  task: AnyTask;
   onComplete?: (action?: Action) => void;
+  task: AnyTask;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();

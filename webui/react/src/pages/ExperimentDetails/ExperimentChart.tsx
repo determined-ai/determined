@@ -7,8 +7,8 @@ import { ValidationHistory } from 'types';
 interface Props {
   id?: string;
   startTime?: string;
-  validationMetric?: string;
   validationHistory?: ValidationHistory[];
+  validationMetric?: string;
 }
 
 const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props) => {

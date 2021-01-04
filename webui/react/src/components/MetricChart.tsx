@@ -17,11 +17,11 @@ const { Option } = Select;
 interface Props {
   data: Partial<PlotData>[];
   id?: string;
+  metricsSelected?: boolean;
   options?: React.ReactNode;
   title: string;
   xLabel: string;
   yLabel: string;
-  metricsSelected?: boolean;
 }
 
 interface Range {

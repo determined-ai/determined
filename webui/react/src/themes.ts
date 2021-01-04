@@ -64,16 +64,18 @@ export interface Theme {
       width: string;
     };
     font: {[size in ShirtSize]: string};
+    /* eslint-disable @typescript-eslint/member-ordering */
     icon: {
       tiny: string;
       small: string;
       medium: string;
       large: string;
     };
+    /* eslint-enable @typescript-eslint/member-ordering */
     layout: {[size in ShirtSize]: string};
     navigation: {
-      minWidth: string;
       maxWidth: string;
+      minWidth: string;
       toolbarHeight: string;
       topbarHeight: string;
     };

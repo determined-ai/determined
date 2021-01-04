@@ -136,8 +136,8 @@ export const valueToMetricName = (value: string): MetricName | undefined => {
 };
 
 interface TrialDurations {
-  train: number;
   checkpoint: number;
+  train: number;
   validation: number;
 }
 

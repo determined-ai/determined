@@ -11,8 +11,8 @@ import css from './TagList.module.scss';
 const TAG_MAX_LENGTH = 20;
 interface Props {
   className?: string;
-  tags: string[];
   onChange?: (tags: string[]) => void;
+  tags: string[];
 }
 
 const EditableTagList: React.FC<Props> = ({

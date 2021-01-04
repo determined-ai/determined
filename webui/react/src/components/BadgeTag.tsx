@@ -7,8 +7,8 @@ import css from './BadgeTag.module.scss';
 export { BadgeType } from './Badge';
 
 interface Props extends BadgeProps {
-  preLabel?: React.ReactNode;
   label?: React.ReactNode;
+  preLabel?: React.ReactNode;
 }
 
 const TOOLTIP_DELAY = 1.0;

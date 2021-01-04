@@ -6,16 +6,16 @@ import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 
 export interface ActionItem extends LinkProps {
-  label: string;
   icon?: string;
+  label: string;
   popout?: boolean;
 }
 
 interface Props {
   actions: ActionItem[];
   hideCancel?: boolean;
-  show?: boolean;
   onCancel?: () => void;
+  show?: boolean;
 }
 
 const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {

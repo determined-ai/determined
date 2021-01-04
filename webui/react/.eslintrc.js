@@ -38,6 +38,10 @@ module.exports = {
         SwitchCase: 1,
       },
     ],
+    '@typescript-eslint/member-ordering': [ 'error', {
+      interfaces: { order: 'alphabetically' },
+      typeLiterals: { order: 'alphabetically' },
+    } ],
     '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
