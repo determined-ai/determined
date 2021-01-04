@@ -18,7 +18,7 @@
   "dependencies": {
     "ansi-to-html": "^0.6.14",
     "antd": "^4.6.6",
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "can-ndjson-stream": "^1.0.2",
     "fp-ts": "^2.8.4",
     "history": "^4.10.1",
