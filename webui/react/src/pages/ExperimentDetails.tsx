@@ -34,7 +34,7 @@ import { clone, numericSorter } from 'utils/data';
 import { getMetricValue, terminalRunStates, upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
-import { columns as defaultColumns } from './ExperimentDetails.table';
+import { columns as defaultColumns } from './ExperimentDetails/ExperimentOverview.table';
 
 interface Params {
   experimentId: string;

@@ -4,37 +4,39 @@ import { ReactNode } from 'react';
 import {
   durationRenderer, humanReadableFloatRenderer, relativeTimeRenderer, stateRenderer,
 } from 'components/Table';
-import { TrialItem } from 'types';
+import { TrialItem2 } from 'types';
 import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { getDuration } from 'utils/time';
+import { getMetricValue } from 'utils/types';
 
-export const columns: ColumnType<TrialItem>[] = [
+export const columns: ColumnType<TrialItem2>[] = [
   {
     dataIndex: 'id',
     key: 'id',
-    sorter: (a: TrialItem, b: TrialItem): number => alphanumericSorter(a.id, b.id),
+    sorter: (a: TrialItem2, b: TrialItem2): number => alphanumericSorter(a.id, b.id),
     title: 'ID',
   },
   {
     key: 'state',
     render: stateRenderer,
-    sorter: (a: TrialItem, b: TrialItem): number => runStateSorter(a.state, b.state),
+    sorter: (a: TrialItem2, b: TrialItem2): number => runStateSorter(a.state, b.state),
     title: 'State',
   },
   {
     dataIndex: 'totalBatchesProcessed',
     key: 'batches',
-    sorter: (a: TrialItem, b: TrialItem): number => {
+    sorter: (a: TrialItem2, b: TrialItem2): number => {
       return numericSorter(a.totalBatchesProcessed, b.totalBatchesProcessed);
     },
     title: 'Batches',
   },
   {
     key: 'bestValidation',
-    render: (_: string, record: TrialItem): ReactNode =>
-      record.bestValidationMetric && humanReadableFloatRenderer(record.bestValidationMetric),
-    sorter: (a: TrialItem, b: TrialItem): number => {
-      return numericSorter(a.bestValidationMetric, b.bestValidationMetric);
+    sorter: (a: TrialItem2, b: TrialItem2): number => {
+      return numericSorter(
+        getMetricValue(a.bestValidationMetric),
+        getMetricValue(b.bestValidationMetric),
+      );
     },
     title: 'Best Validation Metric',
   },
@@ -44,15 +46,15 @@ export const columns: ColumnType<TrialItem>[] = [
   },
   {
     key: 'startTime',
-    render: (_: string, record: TrialItem): ReactNode =>
+    render: (_: string, record: TrialItem2): ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
-    sorter: (a: TrialItem, b: TrialItem): number => stringTimeSorter(a.startTime, b.startTime),
+    sorter: (a: TrialItem2, b: TrialItem2): number => stringTimeSorter(a.startTime, b.startTime),
     title: 'Start Time',
   },
   {
     key: 'duration',
-    render: (_: string, record: TrialItem): ReactNode => durationRenderer(record),
-    sorter: (a: TrialItem, b: TrialItem): number => getDuration(a) - getDuration(b),
+    render: (_: string, record: TrialItem2): ReactNode => durationRenderer(record),
+    sorter: (a: TrialItem2, b: TrialItem2): number => getDuration(a) - getDuration(b),
     title: 'Duration',
   },
   {
