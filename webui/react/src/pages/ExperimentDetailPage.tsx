@@ -167,7 +167,11 @@ const ExperimentDetailPage: React.FC = () => {
       title={`Experiment ${experimentId}`}>
       <Tabs className={css.base} defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
-          <ExperimentOverview experiment={experiment} onTagsChange={fetchExperimentDetails} />
+          <ExperimentOverview
+            experiment={experiment}
+            trials={trials}
+            validationHistory={valHistory}
+            onTagsChange={fetchExperimentDetails} />
         </TabPane>
         <TabPane key="visualization" tab="Visualization">
           <ExperimentVisualization

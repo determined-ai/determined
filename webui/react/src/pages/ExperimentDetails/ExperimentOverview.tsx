@@ -1,5 +1,6 @@
 import { Button, Col, Row, Table, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
+import { id } from 'fp-ts/lib/Reader';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
@@ -10,52 +11,83 @@ import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'com
 import useStorage from 'hooks/useStorage';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
-import { handlePath } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { ApiSorter } from 'services/types';
-import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
+import { CheckpointDetail, CheckpointWorkloadExtended, ExperimentBase, TrialItem2, ValidationHistory } from 'types';
 import { numericSorter } from 'utils/data';
+import { getMetricValue } from 'utils/types';
 
 import css from './ExperimentOverview.module.scss';
 import { columns as defaultColumns } from './ExperimentOverview.table';
 
 interface Props {
-  experiment: ExperimentDetails,
-  onTagsChange: () => void,
+  experiment: ExperimentBase;
+  onTagsChange: () => void;
+  trials: TrialItem2[];
+  validationHistory: ValidationHistory[];
 }
 
 const STORAGE_PATH = 'experiment-detail';
 const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
-const ExperimentOverview: React.FC<Props> = ({ experiment, onTagsChange }: Props) => {
+const ExperimentOverview: React.FC<Props> = ({ experiment, trials, validationHistory, onTagsChange }: Props) => {
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
   const [ pageSize, setPageSize ] = useState(initLimit);
   const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
-  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
+  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
 
   const columns = useMemo(() => {
-    const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      const validationMetrics = record.latestValidationMetrics?.validationMetrics || {};
-      const latestValidationMetric = metric && validationMetrics[metric];
-      return latestValidationMetric &&
-        <HumanReadableFloat num={latestValidationMetric} />;
+    const latestValidationRenderer = (_: string, record: TrialItem2): React.ReactNode => {
+      const value = getMetricValue(record.latestValidationMetric, metric);
+      return value && <HumanReadableFloat num={value} />;
     };
 
-    const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
+    const latestValidationSorter = (a: TrialItem2, b: TrialItem2): number => {
       if (!metric) return 0;
-      const aMetric = a.latestValidationMetrics?.validationMetrics[metric];
-      const bMetric = b.latestValidationMetrics?.validationMetrics[metric];
+      const aMetric = getMetricValue(a.latestValidationMetric, metric);
+      const bMetric = getMetricValue(b.latestValidationMetric, metric);
       return numericSorter(aMetric, bMetric);
     };
+    // const latestValidationRenderer = (_: string, record: TrialItem2): React.ReactNode => {
+    //   const validationMetrics = record.latestValidationMetrics?.validationMetrics || {};
+    //   const latestValidationMetric = metric && validationMetrics[metric];
+    //   return latestValidationMetric &&
+    //     <HumanReadableFloat num={latestValidationMetric} />;
+    // };
 
-    const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
+    // const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
+    //   if (!metric) return 0;
+    //   const aMetric = a.latestValidationMetrics?.validationMetrics[metric];
+    //   const bMetric = b.latestValidationMetrics?.validationMetrics[metric];
+    //   return numericSorter(aMetric, bMetric);
+    // };
+
+    // const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
+    //   if (!record.bestAvailableCheckpoint) return;
+    //   const checkpoint: CheckpointDetail = {
+    //     ...record.bestAvailableCheckpoint,
+    //     batch: record.totalBatchesProcessed,
+    //     experimentId: experiment.id,
+    //     trialId: record.id,
+    //   };
+    //   return (
+    //     <Tooltip title="View Checkpoint">
+    //       <Button
+    //         aria-label="View Checkpoint"
+    //         icon={<Icon name="checkpoint" />}
+    //         onClick={e => handleCheckpointShow(e, checkpoint)} />
+    //     </Tooltip>
+    //   );
+    // };
+
+    const checkpointRenderer = (_: string, record: TrialItem2): React.ReactNode => {
       if (!record.bestAvailableCheckpoint) return;
-      const checkpoint: CheckpointDetail = {
+      const checkpoint: CheckpointWorkloadExtended = {
         ...record.bestAvailableCheckpoint,
-        batch: record.totalBatchesProcessed,
         experimentId: experiment.id,
         trialId: record.id,
       };
@@ -91,7 +123,7 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, onTagsChange }: Props
   const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
 
-    const { columnKey, order } = sorter as SorterResult<TrialItem>;
+    const { columnKey, order } = sorter as SorterResult<TrialItem2>;
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
@@ -101,16 +133,25 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, onTagsChange }: Props
     setPageSize(tablePagination.pageSize);
   }, [ columns, setSorter, storage ]);
 
-  const handleTableRow = useCallback((record: TrialItem) => {
-    const handleClick = (event: React.MouseEvent) => handlePath(event, { path: record.url });
+  const handleTableRow = useCallback((record: TrialItem2) => {
+    const handleClick = (event: React.MouseEvent) =>
+      handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
     return { onAuxClick: handleClick, onClick: handleClick };
-  }, []);
+  }, [ id ]);
 
-  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
+  const handleCheckpointShow = (
+    event: React.MouseEvent,
+    checkpoint: CheckpointWorkloadExtended,
+  ) => {
     event.stopPropagation();
     setActiveCheckpoint(checkpoint);
     setShowCheckpoint(true);
   };
+  // const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
+  //   event.stopPropagation();
+  //   setActiveCheckpoint(checkpoint);
+  //   setShowCheckpoint(true);
+  // };
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
@@ -126,15 +167,15 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, onTagsChange }: Props
         <Col lg={14} span={24} xl={16} xxl={18}>
           <ExperimentChart
             startTime={experiment.startTime}
-            validationHistory={experiment.validationHistory}
+            validationHistory={validationHistory}
             validationMetric={experiment.config?.searcher.metric} />
         </Col>
         <Col span={24}>
           <Section title="Trials">
             <Table
               columns={columns}
-              dataSource={experiment?.trials}
-              pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
+              dataSource={trials}
+              pagination={getPaginationConfig(trials.length || 0, pageSize)}
               rowClassName={defaultRowClassName({ clickable: true })}
               rowKey="id"
               showSorterTooltip={false}
