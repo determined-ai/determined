@@ -25,23 +25,22 @@ with the Determined API.
 
 <p align="center"><img src="hp_experiment_page.jpg" alt="Web UI"></p>
 
-## Try out Determined locally with our CIFAR10 example
+## Try out Determined locally
  
 Follow [these instructions](https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker) to install and set up docker.
 
  ```bash
 
- python3.7 -m venv ~/.virtualenvs/test
+# Start a Determined cluster locally
  . ~/.virtualenvs/test/bin/activate
  pip install determined determined-cli determined-deploy
- det-deploy local cluster-up --no-gpu # Deploy a Determined cluster locally with no GPU
+ det-deploy local cluster-up --no-gpu # Access web UI at localhost:8080. By default, "admin" user accepts a blank password.
  
- # Access web UI at localhost:8080. By default, "admin" user accepts a blank password.
- 
- git clone https://github.com/determined-ai/determined
+# Navigate to a Determined example
  cd determined/examples/computer_vision/cifar10_pytorch/
- 
- det experiment create const.yaml . # Submit an experiment Determined. View results in web UI.
+
+# Submit an experiment to Determined
+ det experiment create const.yaml . 
  ```
 
 ## Detailed Installation Guide
