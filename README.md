@@ -23,8 +23,6 @@ To use Determined, you can continue using popular DL frameworks such as
 TensorFlow and PyTorch; you just need to update your model code to integrate
 with the Determined API.
 
-<p align="center"><img src="hp_experiment_page.jpg" alt="Web UI"></p>
-
 ## Try out Determined locally
  
 Follow [these instructions](https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker) to install and set up docker.
