@@ -30,11 +30,13 @@ Follow [these instructions](https://docs.determined.ai/latest/how-to/installatio
  ```bash
 
 # Start a Determined cluster locally
+python3.7 -m venv ~/.virtualenvs/test
  . ~/.virtualenvs/test/bin/activate
  pip install determined determined-cli determined-deploy
  det-deploy local cluster-up --no-gpu # Access web UI at localhost:8080. By default, "admin" user accepts a blank password.
  
 # Navigate to a Determined example
+ git clone https://github.com/determined-ai/determined
  cd determined/examples/computer_vision/cifar10_pytorch/
 
 # Submit an experiment to Determined
