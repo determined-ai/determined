@@ -487,12 +487,13 @@ type SearcherEvent struct {
 	Content      JSONObj `db:"content"`
 }
 
+// MetricType denotes what type of step (training / validation) a metric is from.
 type MetricType int
 
 const (
-	// Training designates metrics from training steps.
+	// TrainingMetric designates metrics from training steps.
 	TrainingMetric MetricType = iota
-	// Validation designates metrics from validation steps.
+	// ValidationMetric designates metrics from validation steps.
 	ValidationMetric MetricType = iota
 )
 

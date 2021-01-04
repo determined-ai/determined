@@ -431,7 +431,8 @@ message TrialsSampleResponse {
   repeated int32 demoted_trials = 3;
 }
 
-// Retrieve
+// Trigger the computation of hyperparameter importance on-demand for a specific metric on a
+// specific experiment.
 message ComputeHPImportanceRequest {
   // The id of the experiment.
   int32 experiment_id = 1;
@@ -441,10 +442,11 @@ message ComputeHPImportanceRequest {
   MetricType metric_type = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_type"]; }];
 }
 
+// Response to ComputeHPImportanceRequest
 message ComputeHPImportanceResponse {
 }
 
-// Retrieve
+// Retrieve the status and results of hyperparameter importance computation.
 message GetHPImportanceRequest {
   // The id of the experiment.
   int32 experiment_id = 1;

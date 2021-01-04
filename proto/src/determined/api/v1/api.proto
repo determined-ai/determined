@@ -803,6 +803,8 @@ service Determined {
     };
   }
 
+  // Trigger the computation of hyperparameter importance on-demand for a specific metric on a
+  // specific experiment. The status and results can be retrieved with GetHPImportance.
   rpc ComputeHPImportance(ComputeHPImportanceRequest) returns (ComputeHPImportanceResponse) {
     option (google.api.http) = {
       post: "/api/v1/experiments/{experiment_id}/hyperparameter-importance"

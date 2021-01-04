@@ -74,7 +74,7 @@ func (m *manager) Receive(ctx *actor.Context) error {
 	case ExperimentCompleted:
 		m.experimentCompleted(ctx, msg)
 	case ExperimentCreated:
-		m.experimentCreated(ctx, msg) // TODO: should we just start the clock at the first sign of progress?
+		m.experimentCreated(ctx, msg)
 	case ExperimentProgress:
 		m.experimentProgress(ctx, msg)
 	case WorkRequest:

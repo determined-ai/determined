@@ -944,7 +944,8 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 }
 
-func (a *apiServer) ComputeHPImportance(ctx context.Context, req *apiv1.ComputeHPImportanceRequest) (*apiv1.ComputeHPImportanceResponse, error) {
+func (a *apiServer) ComputeHPImportance(ctx context.Context,
+	req *apiv1.ComputeHPImportanceRequest) (*apiv1.ComputeHPImportanceResponse, error) {
 	experimentID := int(req.ExperimentId)
 	if err := a.checkExperimentExists(experimentID); err != nil {
 		return nil, err
