@@ -28,6 +28,7 @@ class MNistTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
         self.lm = ptl.LightningMNISTClassifier()
+        self.model = self.context.wrap_model(self.lm)
 
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
@@ -50,6 +51,7 @@ class MNistTrial(PyTorchTrial):
         #     nn.LogSoftmax(),
         # ))
 
+        self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
         # self.optimizer = self.context.wrap_optimizer(torch.optim.Adadelta(
         #     self.model.parameters(), lr=self.context.get_hparam("learning_rate"))
         # )
@@ -89,7 +91,7 @@ class MNistTrial(PyTorchTrial):
 
         # TODO option to set loss
         self.context.backward(rv['loss'])
-        self.context.step_optimizer(self.lm.configure_optimizers)
+        self.context.step_optimizer(self.optimizer)
         return rv
 
     def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:

@@ -1,4 +1,4 @@
-description: mnist_pytorch_const
+description: mnist_ptl_const
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
@@ -10,8 +10,10 @@ hyperparameters:
   dropout2: 0.5
 searcher:
   name: single
-  metric: validation_loss
+  metric: val_loss
   max_length:
       batches: 937 #60,000 training images with batch size 64
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
+environment:
+    image: ptl-image
