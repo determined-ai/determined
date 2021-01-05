@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { Options } from 'uplot';
 
+import { GLASBEY } from 'constants/colors';
 import useResize from 'hooks/useResize';
 import { distance } from 'utils/chart';
 
@@ -97,6 +98,11 @@ const findClosestPoint = (
   return findClosestPoint(sharedData, updatedClosestPoint, nextIdxOffset);
 };
 
+const seriesColor = (seriesIdx: number): string => {
+  const rgb = GLASBEY[seriesIdx];
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 1.0)`;
+};
+
 const LearningCurveChart: React.FC<Props> = ({
   data,
   focusedTrialId,
@@ -107,6 +113,7 @@ const LearningCurveChart: React.FC<Props> = ({
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const pointRef = useRef<HTMLDivElement>(null);
   const trialIdRef = useRef<HTMLDivElement>(null);
   const batchesRef = useRef<HTMLDivElement>(null);
   const metricValueRef = useRef<HTMLDivElement>(null);
@@ -149,7 +156,7 @@ const LearningCurveChart: React.FC<Props> = ({
     const position = [ mouseLeft, mouseTop ];
     if (mouseLeft < 0 && mouseTop < 0) return position;
     if (!plot.data || plot.data.length === 0) return;
-    if (!tooltipRef.current || !trialIdRef.current ||
+    if (!tooltipRef.current || !pointRef.current || !trialIdRef.current ||
         !batchesRef.current || !metricValueRef.current) return position;
 
     const localXValues = plot.data[0];
@@ -205,6 +212,7 @@ const LearningCurveChart: React.FC<Props> = ({
       tooltipRef.current.style.left = `${x}px`;
       tooltipRef.current.style.top = `${y}px`;
       tooltipRef.current.className = classes.join(' ');
+      pointRef.current.style.backgroundColor = seriesColor(closestPoint.seriesIdx);
       trialIdRef.current.innerText = trialIds[closestPoint.seriesIdx].toString();
       batchesRef.current.innerText = closestPoint.xValue.toString();
       metricValueRef.current.innerText = closestPoint.value.toString();
@@ -222,11 +230,11 @@ const LearningCurveChart: React.FC<Props> = ({
       cursor: { move: handleCursorMove },
       series: [
         { label: 'batches' },
-        ...trialIds.map(trialId => ({
+        ...trialIds.map((trialId, index) => ({
           label: `trial ${trialId}`,
           scale: 'metric',
           spanGaps: true,
-          stroke: 'rgba(0, 155, 222, 1.0)',
+          stroke: seriesColor(index),
           width: 1 / devicePixelRatio,
         })),
       ],
@@ -277,7 +285,7 @@ const LearningCurveChart: React.FC<Props> = ({
     <div className={css.base}>
       <div ref={chartRef} onClick={handleClick} onMouseLeave={handleMouseLeave} />
       <div className={css.tooltip} ref={tooltipRef}>
-        <div className={css.point} />
+        <div className={css.point} ref={pointRef} />
         <div className={css.box}>
           <div className={css.row}>
             <div>Trial Id:</div>
