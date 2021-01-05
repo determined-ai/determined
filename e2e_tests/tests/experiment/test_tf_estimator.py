@@ -115,9 +115,7 @@ def test_mnist_estimator_data_layer_s3(
 
 
 def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
-    config = conf.load_config(
-        conf.data_layer_examples_path("data_layer_mnist_estimator/const.yaml")
-    )
+    config = conf.load_config(conf.features_examples_path("data_layer_mnist_estimator/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     if storage_type == "lfs":
@@ -126,16 +124,14 @@ def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.data_layer_examples_path("data_layer_mnist_estimator"), 1
+        config, conf.features_examples_path("data_layer_mnist_estimator"), 1
     )
 
 
 @pytest.mark.parallel  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
 def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[str, str]) -> None:
-    config = conf.load_config(
-        conf.data_layer_examples_path("data_layer_mnist_estimator/const.yaml")
-    )
+    config = conf.load_config(conf.features_examples_path("data_layer_mnist_estimator/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf1_image(config)
@@ -145,7 +141,7 @@ def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[st
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.data_layer_examples_path("data_layer_mnist_estimator"), 1
+        config, conf.features_examples_path("data_layer_mnist_estimator"), 1
     )
 
 
@@ -156,7 +152,7 @@ def test_mnist_estimator_adaptive_with_data_layer() -> None:
     config = conf.set_shared_fs_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.data_layer_examples_path("data_layer_mnist_estimator"), None
+        config, conf.features_examples_path("data_layer_mnist_estimator"), None
     )
 
 

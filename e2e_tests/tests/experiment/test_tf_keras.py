@@ -114,7 +114,7 @@ def test_tf_keras_mnist_data_layer_s3(
 
 
 def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> None:
-    config = conf.load_config(conf.data_layer_examples_path("data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_min_validation_period(config, {"batches": 1000})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
@@ -124,7 +124,7 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> None:
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.data_layer_examples_path("data_layer_mnist_tf_keras"), 1
+        config, conf.features_examples_path("data_layer_mnist_tf_keras"), 1
     )
 
 
@@ -134,7 +134,7 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> None:
 def test_tf_keras_mnist_data_layer_parallel(
     tf2: bool, storage_type: str, secrets: Dict[str, str]
 ) -> None:
-    config = conf.load_config(conf.data_layer_examples_path("data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
@@ -144,7 +144,7 @@ def test_tf_keras_mnist_data_layer_parallel(
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.data_layer_examples_path("data_layer_mnist_tf_keras"), 1
+        config, conf.features_examples_path("data_layer_mnist_tf_keras"), 1
     )
 
 

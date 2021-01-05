@@ -50,8 +50,8 @@ def decision_trees_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/decision_trees", path)
 
 
-def data_layer_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/data_layer", path)
+def features_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/features", path)
 
 
 def load_config(config_path: str) -> Any:
