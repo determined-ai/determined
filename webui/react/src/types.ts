@@ -286,7 +286,8 @@ export interface WorkloadWrapper {
   validation?: MetricsWorkload;
 }
 
-// TODO rename me
+// This is to support the steps table in trial details and shouldn't be used
+// elsewhere so we can remove it with a redesign.
 export interface Step extends WorkloadWrapper, StartEndTimes {
   batchNum: number;
   training: MetricsWorkload;
@@ -312,7 +313,6 @@ interface TrialBase extends StartEndTimes {
   state: RunState;
 }
 
-// To replace TrialItem once experiment endpoint is migrated.
 export interface TrialItem extends TrialBase {
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;

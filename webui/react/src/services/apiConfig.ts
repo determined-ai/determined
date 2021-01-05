@@ -165,6 +165,7 @@ ExperimentBase[]
       params.archived,
       params.states,
       params.users,
+      params.options,
     ),
 };
 
@@ -275,7 +276,7 @@ TrialDetails[]> = {
     params.offset,
     params.limit,
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    params.states?.map(rs => 'STATE_' + rs.toString() as any)
+    params.states?.map(rs => 'STATE_' + rs.toString() as any),
   ),
 };
 

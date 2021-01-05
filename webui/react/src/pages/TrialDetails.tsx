@@ -27,7 +27,7 @@ import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes/utils';
-import { createExperiment, getExperimentDetails2, getTrialDetails, isNotFound } from 'services/api';
+import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import {
@@ -396,7 +396,7 @@ If the problem persists please contact support.',
 
     const fetchExperimentDetails = async () => {
       try {
-        const response = await getExperimentDetails2({
+        const response = await getExperimentDetails({
           id: experimentId,
           signal: trialCanceler.signal,
         });

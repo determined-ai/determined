@@ -76,6 +76,7 @@ export interface GetExperimentsParams extends PaginationParams {
   archived?: boolean;
   description?: string;
   labels?: Array<string>;
+  options?: never;
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'
   | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS'
   | 'SORT_BY_USER';

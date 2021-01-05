@@ -24,7 +24,7 @@ import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox, { TopWorkloads } from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath, paths } from 'routes/utils';
-import { getExperimentDetails2, getExpTrials, getExpValidationHistory,
+import { getExperimentDetails, getExpTrials, getExpValidationHistory,
   isNotFound } from 'services/api';
 import { detApi } from 'services/apiConfig';
 import { decodeCheckpoint } from 'services/decoder';
@@ -151,7 +151,7 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const experiment = await getExperimentDetails2({ id, signal: experimentCanceler.signal });
+      const experiment = await getExperimentDetails({ id, signal: experimentCanceler.signal });
       const trials = await getExpTrials({ id });
       const validationHistory = await getExpValidationHistory({ id });
       setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));

@@ -12,7 +12,7 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
-import { getExperimentDetails2, getExpTrials, getExpValidationHistory,
+import { getExperimentDetails, getExpTrials, getExpValidationHistory,
   isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
@@ -65,7 +65,7 @@ const ExperimentDetailPage: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const experiment = await getExperimentDetails2({ id, signal: experimentCanceler.signal });
+      const experiment = await getExperimentDetails({ id, signal: experimentCanceler.signal });
       const trials = await getExpTrials({ id });
       const validationHistory = await getExpValidationHistory({ id });
       setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
