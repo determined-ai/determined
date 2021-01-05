@@ -262,8 +262,8 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 			for i, trialMetric := range rung.metrics {
 				if trialMetric.requestID == requestID {
 					rung.metrics = append(rung.metrics[:i], rung.metrics[i+1:]...)
-					break
 				}
+				break
 			}
 		}
 		// Add new trial to searcher queue
