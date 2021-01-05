@@ -306,17 +306,14 @@ export interface ValidationMetrics {
 type HyperparameterValue = number | string | boolean | RawJson
 export type TrialHyperParameters = Record<string, HyperparameterValue>
 
-interface TrialBase extends StartEndTimes {
+export interface TrialItem extends StartEndTimes {
+  bestAvailableCheckpoint?: CheckpointWorkload;
+  bestValidationMetric?: MetricsWorkload;
   experimentId: number;
   hparams: TrialHyperParameters;
   id: number;
-  state: RunState;
-}
-
-export interface TrialItem extends TrialBase {
-  bestAvailableCheckpoint?: CheckpointWorkload;
-  bestValidationMetric?: MetricsWorkload;
   latestValidationMetric?: MetricsWorkload;
+  state: RunState;
   totalBatchesProcessed: number;
 }
 
