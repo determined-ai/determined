@@ -37,7 +37,7 @@ import simplejson
 
 import determined as det
 import determined_common
-from determined import gpu, horovod, layers, load, workload
+from determined import gpu, horovod, layers, load, tensorboard, workload
 from determined_common import constants, storage
 
 ENVIRONMENT_VARIABLE_KEYS = {
@@ -87,6 +87,19 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
     #
     # TODO(ryan): Pull profiler hooks out of SocketManager and into their own layer.
     with layers.SocketManager(env) as socket_mgr:
+        is_chief = socket_mgr.get_rendezvous_info().get_rank() == 0
+        workloads = iter(socket_mgr)
+
+        # The timer layer just measures the wall clock time for all the layers below it.
+        timer_layer = layers.TimerLayer(workloads)
+        workloads = iter(timer_layer)
+
+        # Create the tensorboard manager.  This is used to write and upload tensorboard metrics.
+        tensorboard_mgr = tensorboard.build(
+            env, env.experiment_config["checkpoint_storage"], constants.SHARED_FS_CONTAINER_PATH
+        )
+        tensorboard_layer = layers.TensorboardLayer(workloads, tensorboard_mgr, is_chief)
+        workloads = iter(tensorboard_layer)
 
         # Create the storage manager. This is used to download the initial checkpoint here in
         # build_training_pipeline and also used by the workload manager to create and store
@@ -95,27 +108,13 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
             env.experiment_config["checkpoint_storage"],
             container_path=constants.SHARED_FS_CONTAINER_PATH,
         )
+        storage_layer = layers.StorageLayer(workloads, storage_mgr, is_chief)
+        workloads = iter(storage_layer)
 
-        [tensorboard_mgr, tensorboard_writer] = load.prepare_tensorboard(
-            env, constants.SHARED_FS_CONTAINER_PATH
-        )
-
-        # Create the workload manager. The workload manager will receive workloads from the
-        # socket_mgr, and augment them with some additional arguments. Additionally, the
-        # workload manager is responsible for some generic workload hooks for things like timing
-        # workloads, preparing checkpoints, and uploading completed checkpoints.  Finally, the
-        # workload manager does some sanity checks on response messages that originate from the
-        # trial.
-        #
-        # TODO(ryan): Refactor WorkloadManager into separate layers that do each separate task.
-        workload_mgr = layers.build_workload_manager(
-            env,
-            iter(socket_mgr),
-            socket_mgr.get_rendezvous_info(),
-            storage_mgr,
-            tensorboard_mgr,
-            tensorboard_writer,
-        )
+        # Create the workload manager. The workload manager will pass workloads to the trial
+        # controller and will sanity-check and augment the responses.
+        workload_mgr = layers.build_workload_manager(env, workloads, is_chief)
+        workloads = iter(workload_mgr)
 
         hvd_config = horovod.HorovodContext.from_configs(
             env.experiment_config, socket_mgr.get_rendezvous_info(), env.hparams
@@ -129,7 +128,7 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
             # Horovod distributed training is done inside subprocesses.
             if hvd_config.use:
                 subproc = layers.SubprocessLauncher(
-                    env, iter(workload_mgr), load_path, socket_mgr.get_rendezvous_info(), hvd_config
+                    env, workloads, load_path, socket_mgr.get_rendezvous_info(), hvd_config
                 )
                 subproc.run()
             else:
@@ -139,7 +138,7 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 with det._catch_sys_exit():
                     controller = load.prepare_controller(
                         env,
-                        iter(workload_mgr),
+                        workloads,
                         load_path,
                         socket_mgr.get_rendezvous_info(),
                         hvd_config,

@@ -252,30 +252,32 @@ class PyTorchTrialController(det.LoopTrialController):
             )
 
     def run(self) -> None:
-        for w, args, response_func in self.workloads:
-            if w.kind == workload.Workload.Kind.RUN_STEP:
+        for wkld, args, response_func in self.workloads:
+            if wkld.kind == workload.Workload.Kind.RUN_STEP:
                 response_func(
                     util.wrap_metrics(
-                        self._train_for_step(w.step_id, w.num_batches, w.total_batches_processed),
+                        self._train_for_step(
+                            wkld.step_id, wkld.num_batches, wkld.total_batches_processed
+                        ),
                         self.context.get_stop_requested(),
                     )
                 )
-            elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response_func(
                     util.wrap_metrics(
                         self._compute_validation_metrics(), self.context.get_stop_requested()
                     )
                 )
-            elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+            elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.eq(len(args), 1)
                 check.is_instance(args[0], pathlib.Path)
                 path = cast(pathlib.Path, args[0])
                 response_func(self._save(path))
-            elif w.kind == workload.Workload.Kind.TERMINATE:
+            elif wkld.kind == workload.Workload.Kind.TERMINATE:
                 response_func({} if self.is_chief else workload.Skipped())
                 break
             else:
-                raise AssertionError("Unexpected workload: {}".format(w.kind))
+                raise AssertionError("Unexpected workload: {}".format(wkld.kind))
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)

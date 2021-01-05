@@ -1,24 +1,10 @@
 import logging
 import math
-import pathlib
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import determined as det
 from determined import tensorboard, workload
-from determined_common import storage
-from determined_common.check import (
-    check_eq,
-    check_len,
-    check_not_eq,
-    check_not_isinstance,
-    check_not_none,
-)
-
-
-def _current_timestamp() -> datetime:
-    """Returns the current time as a datetime object in the UTC timezone."""
-    return datetime.now(timezone.utc)
+from determined_common.check import check_eq, check_len, check_not_eq, check_not_isinstance
 
 
 class WorkloadManager(workload.Source):
@@ -27,38 +13,22 @@ class WorkloadManager(workload.Source):
     WebSocket. Each WorkloadManager may allow different workload messages.
     """
 
-    def __init__(
-        self,
-        env: det.EnvContext,
-        workloads: workload.Stream,
-        rendezvous_info: det.RendezvousInfo,
-        storage_mgr: storage.StorageManager,
-        tensorboard_mgr: tensorboard.TensorboardManager,
-        metric_writer: tensorboard.BatchMetricWriter,
-    ) -> None:
+    def __init__(self, env: det.EnvContext, workloads: workload.Stream, is_chief: bool) -> None:
         self.env = env
         self.workloads = workloads
-        self.rendezvous_info = rendezvous_info
-        self.storage_mgr = storage_mgr
-        self.tensorboard_mgr = tensorboard_mgr
-        self.callbacks = [metric_writer]  # type: List[det.callback.Callback]
+        self.is_chief = is_chief
 
 
 def build_workload_manager(
     env: det.EnvContext,
     workloads: workload.Stream,
-    rendezvous_info: det.RendezvousInfo,
-    storage_mgr: storage.StorageManager,
-    tensorboard_mgr: tensorboard.TensorboardManager,
-    metric_writer: tensorboard.BatchMetricWriter,
+    is_chief: bool,
 ) -> WorkloadManager:
     """
     Build the WorkloadManager as specified by the container environment.
     """
     if env.workload_manager_type == "TRIAL_WORKLOAD_MANAGER":
-        return _TrialWorkloadManager(
-            env, workloads, rendezvous_info, storage_mgr, tensorboard_mgr, metric_writer
-        )
+        return _TrialWorkloadManager(env, workloads, is_chief)
     raise ValueError("Unexpected workload manager type: {}", env.workload_manager_type)
 
 
@@ -67,41 +37,36 @@ class _TrialWorkloadManager(WorkloadManager):
         self,
         env: det.EnvContext,
         workloads: workload.Stream,
-        rendezvous_info: det.RendezvousInfo,
-        storage_mgr: storage.StorageManager,
-        tensorboard_mgr: tensorboard.TensorboardManager,
-        metric_writer: tensorboard.BatchMetricWriter,
+        is_chief: bool,
     ) -> None:
         super().__init__(
             env,
             workloads,
-            rendezvous_info,
-            storage_mgr,
-            tensorboard_mgr,
-            metric_writer,
+            is_chief,
         )
         self.workload = None  # type: Optional[workload.Workload]
 
     def __iter__(self) -> workload.Stream:
-        for w, _, response_func in self.workloads:
-            if self.rendezvous_info.get_rank() == 0:
-                logging.info("Running workload {}".format(w))
+        for wkld, args, response_func in self.workloads:
+            if self.is_chief:
+                logging.info("Running workload {}".format(wkld))
             else:
-                logging.debug("Running workload {}".format(w))
-            self.check_sane_workload(w)
+                logging.debug("Running workload {}".format(wkld))
+            self.check_sane_workload(wkld)
 
-            self.workload = w
+            self.workload = wkld
 
-            if w.kind == workload.Workload.Kind.RUN_STEP:
-                yield from self.yield_train_for_step(w, response_func)
-            elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                yield from self.yield_compute_validation_metrics(w, response_func)
-            elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                yield from self.yield_checkpoint_model(w, response_func)
-            elif w.kind == workload.Workload.Kind.TERMINATE:
-                yield from self.yield_terminate(w, response_func)
+            if wkld.kind == workload.Workload.Kind.RUN_STEP:
+                yield from self.yield_train_for_step(wkld, response_func)
+            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                yield from self.yield_compute_validation_metrics(wkld, response_func)
+            elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                # This layer does not affect CHECKPOINT_MODEL.
+                yield wkld, args, response_func
+            elif wkld.kind == workload.Workload.Kind.TERMINATE:
+                yield from self.yield_terminate(wkld, response_func)
             else:
-                raise AssertionError("Unexpected workload: {}".format(w.kind))
+                raise AssertionError("Unexpected workload: {}".format(wkld.kind))
 
     def check_sane_workload(self, new_workload: workload.Workload) -> None:
         # If this is the initial workload, we don't expect to start with
@@ -122,19 +87,10 @@ class _TrialWorkloadManager(WorkloadManager):
     def yield_train_for_step(
         self, wkld: workload.Workload, respond: workload.ResponseFunc
     ) -> workload.Stream:
-        start_time = _current_timestamp()
-
-        for callback in self.callbacks:
-            if wkld.step_id == 1:
-                callback.on_trial_begin()
-            callback.on_train_step_begin(
-                wkld.step_id, wkld.num_batches, wkld.total_batches_processed
-            )
-
         def _respond(in_response: workload.Response) -> None:
 
             # Only the chief container should actually respond to TRAIN_FOR_STEP.
-            if self.rendezvous_info.get_rank() != 0:
+            if not self.is_chief:
                 respond(workload.Skipped())
                 return
 
@@ -150,18 +106,9 @@ class _TrialWorkloadManager(WorkloadManager):
             det.util.validate_batch_metrics(batch_metrics)
             check_len(batch_metrics, wkld.num_batches)
 
-            for callback in self.callbacks:
-                callback.on_train_step_end(
-                    wkld.step_id, wkld.num_batches, wkld.total_batches_processed, metrics
-                )
-
-            self.tensorboard_mgr.sync()
-
             out_response = {
                 "type": "WORKLOAD_COMPLETED",
                 "workload": wkld,
-                "start_time": start_time,
-                "end_time": _current_timestamp(),
                 "metrics": metrics,
             }
 
@@ -176,12 +123,10 @@ class _TrialWorkloadManager(WorkloadManager):
     def yield_compute_validation_metrics(
         self, wkld: workload.Workload, respond: workload.ResponseFunc
     ) -> workload.Stream:
-        start_time = _current_timestamp()
-
         def _respond(in_response: workload.Response) -> None:
 
             # Only the chief container should actually respond to COMPUTE_VALIDATION_METRICS.
-            if self.rendezvous_info.get_rank() != 0:
+            if not self.is_chief:
                 respond(workload.Skipped())
                 return
 
@@ -189,14 +134,7 @@ class _TrialWorkloadManager(WorkloadManager):
             in_response = cast(Dict[str, Any], in_response)
             metrics = in_response["metrics"]
             metrics = cast(workload.Metrics, metrics)
-
             v_metrics = metrics["validation_metrics"]
-            for callback in self.callbacks:
-                callback.on_validation_step_end(
-                    wkld.step_id, wkld.total_batches_processed, v_metrics
-                )
-
-            self.tensorboard_mgr.sync()
 
             # Check that the validation metrics computed by the model code
             # includes the metric used by the search method.
@@ -255,8 +193,6 @@ class _TrialWorkloadManager(WorkloadManager):
             out_response = {
                 "type": "WORKLOAD_COMPLETED",
                 "workload": wkld,
-                "start_time": start_time,
-                "end_time": _current_timestamp(),
                 "metrics": metrics,
             }
 
@@ -265,58 +201,11 @@ class _TrialWorkloadManager(WorkloadManager):
 
             respond(out_response)
 
-        for callback in self.callbacks:
-            callback.on_validation_step_begin(wkld.step_id, wkld.total_batches_processed)
-
         yield wkld, [], _respond
-
-    def yield_checkpoint_model(
-        self, wkld: workload.Workload, respond: workload.ResponseFunc
-    ) -> workload.Stream:
-        start_time = _current_timestamp()
-
-        # Only the chief container should checkpoint.
-        if self.rendezvous_info.get_rank() != 0:
-            respond(workload.Skipped())
-            return
-
-        # Save the workload completed message for after checkpoint upload completes.
-        message = None  # type: Optional[workload.Response]
-
-        def _respond(checkpoint_info: workload.Response) -> None:
-            checkpoint_info = cast(Dict[str, Any], checkpoint_info)
-            metadata = storage.StorageMetadata(
-                storage_id,
-                storage.StorageManager._list_directory(path),
-                checkpoint_info.get("framework", ""),
-                checkpoint_info.get("format", ""),
-            )
-
-            logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
-            self.tensorboard_mgr.sync()
-
-            nonlocal message
-            message = {
-                "type": "WORKLOAD_COMPLETED",
-                "workload": wkld,
-                "start_time": start_time,
-                "end_time": _current_timestamp(),
-                "metrics": metadata,
-            }
-
-        with self.storage_mgr.store_path() as (storage_id, path):
-            yield wkld, [pathlib.Path(path)], _respond
-
-        # Because the messaging is synchronous, the layer below us must have called _respond.
-        check_not_none(message, "response function did not get called")
-        message = cast(workload.Response, message)
-
-        respond(message)
 
     def yield_terminate(
         self, wkld: workload.Workload, respond: workload.ResponseFunc
     ) -> workload.Stream:
-
         # The master can't actually handle WORKLOAD_COMPLETED messages for TERMINATE workloads.
         def _respond(_: workload.Response) -> None:
             respond(workload.Skipped())

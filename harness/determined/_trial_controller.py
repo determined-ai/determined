@@ -140,25 +140,25 @@ class CallbackTrialController(TrialController):
         classes.
         """
 
-        for w, args, response_func in self.workloads:
+        for wkld, args, response_func in self.workloads:
             try:
-                if w.kind == workload.Workload.Kind.RUN_STEP:
+                if wkld.kind == workload.Workload.Kind.RUN_STEP:
                     response = self.train_for_step(
-                        w.step_id, w.num_batches
+                        wkld.step_id, wkld.num_batches
                     )  # type: workload.Response
-                elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                    response = self.compute_validation_metrics(w.step_id)
-                elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                    response = self.compute_validation_metrics(wkld.step_id)
+                elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     check.len_eq(args, 1)
                     check.is_instance(args[0], pathlib.Path)
                     path = cast(pathlib.Path, args[0])
                     self.save(path)
                     response = {}
-                elif w.kind == workload.Workload.Kind.TERMINATE:
+                elif wkld.kind == workload.Workload.Kind.TERMINATE:
                     self.terminate()
                     response = workload.Skipped()
                 else:
-                    raise AssertionError("Unexpected workload: {}".format(w.kind))
+                    raise AssertionError("Unexpected workload: {}".format(wkld.kind))
 
             except det.errors.SkipWorkloadException:
                 response = workload.Skipped()

@@ -94,17 +94,13 @@ class MetricMaker(det.CallbackTrialController):
         # Update the overall base value for the trial..
         self.value += self.gain_per_batch * num_batches
 
-        return {
-            "metrics": det.util.make_metrics(num_batches, batch_metrics),
-            "stop_requested": self.context.get_stop_requested(),
-        }
+        return {"metrics": {"batch_metrics": batch_metrics, "num_inputs": num_batches}}
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:
         return {
             "metrics": {
                 "validation_metrics": structure_to_metrics(self.value, self.validation_structure)
-            },
-            "stop_requested": self.context.get_stop_requested(),
+            }
         }
 
     def set_random_seed(self, trial_seed) -> None:

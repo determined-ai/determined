@@ -1,9 +1,9 @@
 import logging
 import pathlib
-from typing import Optional, Tuple, Type, cast
+from typing import Optional, Type, cast
 
 import determined as det
-from determined import horovod, load, tensorboard, workload
+from determined import horovod, load, workload
 from determined_common import check
 
 
@@ -138,27 +138,3 @@ def prepare_controller(
         )
 
     return controller
-
-
-def prepare_tensorboard(
-    env: det.EnvContext,
-    container_path: Optional[str] = None,
-) -> Tuple[tensorboard.TensorboardManager, tensorboard.BatchMetricWriter]:
-    tensorboard_mgr = tensorboard.build(
-        env, env.experiment_config["checkpoint_storage"], container_path
-    )
-    try:
-        from determined.tensorboard.metric_writers import tensorflow
-
-        writer: tensorboard.MetricWriter = tensorflow.TFWriter()
-
-    except ModuleNotFoundError:
-        logging.warning("Tensorflow writer not found")
-        from determined.tensorboard.metric_writers import pytorch
-
-        writer = pytorch.TorchWriter()
-
-    return (
-        tensorboard_mgr,
-        tensorboard.BatchMetricWriter(writer),
-    )

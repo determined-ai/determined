@@ -1,1 +1,1 @@
-from determined.tensorboard.metric_writers.callback import BatchMetricWriter, MetricWriter
+from determined.tensorboard.metric_writers.base import MetricWriter
