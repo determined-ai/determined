@@ -53,37 +53,6 @@ const ExperimentOverview: React.FC<Props> = (
       const bMetric = getMetricValue(b.latestValidationMetric, metric);
       return numericSorter(aMetric, bMetric);
     };
-    // const latestValidationRenderer = (_: string, record: TrialItem2): React.ReactNode => {
-    //   const validationMetrics = record.latestValidationMetrics?.validationMetrics || {};
-    //   const latestValidationMetric = metric && validationMetrics[metric];
-    //   return latestValidationMetric &&
-    //     <HumanReadableFloat num={latestValidationMetric} />;
-    // };
-
-    // const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
-    //   if (!metric) return 0;
-    //   const aMetric = a.latestValidationMetrics?.validationMetrics[metric];
-    //   const bMetric = b.latestValidationMetrics?.validationMetrics[metric];
-    //   return numericSorter(aMetric, bMetric);
-    // };
-
-    // const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
-    //   if (!record.bestAvailableCheckpoint) return;
-    //   const checkpoint: CheckpointDetail = {
-    //     ...record.bestAvailableCheckpoint,
-    //     batch: record.totalBatchesProcessed,
-    //     experimentId: experiment.id,
-    //     trialId: record.id,
-    //   };
-    //   return (
-    //     <Tooltip title="View Checkpoint">
-    //       <Button
-    //         aria-label="View Checkpoint"
-    //         icon={<Icon name="checkpoint" />}
-    //         onClick={e => handleCheckpointShow(e, checkpoint)} />
-    //     </Tooltip>
-    //   );
-    // };
 
     const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
       if (!record.bestAvailableCheckpoint) return;
@@ -148,11 +117,6 @@ const ExperimentOverview: React.FC<Props> = (
     setActiveCheckpoint(checkpoint);
     setShowCheckpoint(true);
   };
-  // const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
-  //   event.stopPropagation();
-  //   setActiveCheckpoint(checkpoint);
-  //   setShowCheckpoint(true);
-  // };
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
