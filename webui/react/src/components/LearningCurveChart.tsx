@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { Options } from 'uplot';
 
-import { GLASBEY } from 'constants/colors';
 import useResize from 'hooks/useResize';
 import { distance } from 'utils/chart';
+import { glasbeyColor } from 'utils/color';
 
 import css from './LearningCurveChart.module.scss';
 
@@ -95,11 +95,6 @@ const findClosestPoint = (
   }
   const nextIdxOffset = idxOffset + (idxOffset < 0 ? -1 : 1);
   return findClosestPoint(sharedData, updatedClosestPoint, nextIdxOffset);
-};
-
-const seriesColor = (seriesIdx: number): string => {
-  const rgb = GLASBEY[seriesIdx];
-  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 1.0)`;
 };
 
 const LearningCurveChart: React.FC<Props> = ({
@@ -212,7 +207,7 @@ const LearningCurveChart: React.FC<Props> = ({
       tooltipRef.current.style.left = `${x}px`;
       tooltipRef.current.style.top = `${y}px`;
       tooltipRef.current.className = classes.join(' ');
-      pointRef.current.style.backgroundColor = seriesColor(closestPoint.seriesIdx);
+      pointRef.current.style.backgroundColor = glasbeyColor(closestPoint.seriesIdx);
       trialIdRef.current.innerText = trialIds[closestPoint.seriesIdx].toString();
       batchesRef.current.innerText = closestPoint.xValue.toString();
       metricValueRef.current.innerText = closestPoint.value.toString();
@@ -234,7 +229,7 @@ const LearningCurveChart: React.FC<Props> = ({
           label: `trial ${trialId}`,
           scale: 'metric',
           spanGaps: true,
-          stroke: seriesColor(index),
+          stroke: glasbeyColor(index),
           width: 1 / devicePixelRatio,
         })),
       ],

@@ -1,3 +1,5 @@
+import { GLASBEY } from 'constants/colors';
+
 interface HslColor {
   h: number;
   l: number;
@@ -40,4 +42,9 @@ export const hex2hsl = (hex: string): HslColor => {
 
 export const hsl2str = (hsl: HslColor): string => {
   return `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+};
+
+export const glasbeyColor = (seriesIdx: number): string => {
+  const rgb = GLASBEY[seriesIdx];
+  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 };

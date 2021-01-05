@@ -17,6 +17,7 @@ import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, MetricName, metricTypeParamMap } from 'types';
+import { glasbeyColor } from 'utils/color';
 import { alphanumericSorter, hpSorter } from 'utils/data';
 
 import css from './LearningCurve.module.scss';
@@ -65,6 +66,17 @@ const LearningCurve: React.FC<Props> = ({
     const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
     const idColumn = { dataIndex: 'id', key: 'id', sorter: idSorter, title: 'Trial ID' };
 
+    const colorRenderer = (_: string, record: TrialHParams) => {
+      const index = trialIds.findIndex(trialId => trialId === record.id);
+      const color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
+      return <div className={css.colorLegend} style={{ backgroundColor: color }} />;
+    };
+    const colorColumn = {
+      key: 'color',
+      render: colorRenderer,
+      title: 'Color',
+    };
+
     const hpRenderer = (key: string) => {
       return (_: string, record: TrialHParams) => {
         const value = record.hparams[key];
@@ -89,8 +101,8 @@ const LearningCurve: React.FC<Props> = ({
       title: key,
     }));
 
-    return [ idColumn, ...hpColumns ];
-  }, [ experiment.config.hyperparameters ]);
+    return [ idColumn, colorColumn, ...hpColumns ];
+  }, [ experiment.config.hyperparameters, trialIds ]);
 
   const resetData = useCallback(() => {
     setChartData([]);
@@ -229,7 +241,7 @@ const LearningCurve: React.FC<Props> = ({
   }
 
   return (
-    <>
+    <div className={css.base}>
       <Section
         options={<ResponsiveFilters>
           <SelectFilter
@@ -253,7 +265,7 @@ const LearningCurve: React.FC<Props> = ({
             onChange={handleMetricChange} />
         </ResponsiveFilters>}
         title="Learning Curve">
-        <div className={css.base}>
+        <div className={css.chart}>
           <LearningCurveChart
             data={chartData}
             focusedTrialId={tableTrialId}
@@ -276,7 +288,7 @@ const LearningCurve: React.FC<Props> = ({
           onChange={handleTableChange}
           onRow={handleTableRow} />
       </Section>
-    </>
+    </div>
   );
 };
 
