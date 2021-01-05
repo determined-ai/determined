@@ -52,6 +52,10 @@ official_examples = [
         "features/data_layer_mnist_tf_keras",
         "features/data_layer_mnist_tf_keras/const.yaml",
     ),
+    (
+        "features/custom_reducers_mnist_pytorch",
+        "features/custom_reducers_mnist_pytorch/const.yaml",
+    ),
 ]
 
 
