@@ -23,6 +23,7 @@ type asyncHalvingSearch struct {
 	closedTrials    map[RequestID]bool
 	maxTrials       int
 	trialsCompleted int
+	invalidTrials   int
 }
 
 const ashaExitedMetricValue = math.MaxFloat64
@@ -237,12 +238,9 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.maxTrials))
 	if allTrials == s.maxTrials {
-		progress = math.Max(float64(s.trialsCompleted)/float64(s.maxTrials), progress)
-	}
-	// Cap progress at 95% for InvalidHP cases since we can’t know whether a trial is closed forever
-	// until we finish all possible promotions in a rung, so accurate progress estimation infeasible.
-	if progress > 1 {
-		progress = float64(0.95)
+		numValidTrials := float64(s.trialsCompleted) - float64(s.invalidTrials)
+		progressNoOverhead := numValidTrials / float64(s.maxTrials)
+		progress = math.Max(progressNoOverhead, progress)
 	}
 	return progress
 }
@@ -255,6 +253,7 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 		s.earlyExitTrials[requestID] = true
 		ops = append(ops, NewClose(requestID))
 		s.closedTrials[requestID] = true
+		s.invalidTrials++
 		// Remove metrics associated with InvalidHP trial across all rungs
 		highestRungIndex := s.trialRungs[requestID]
 		for rungIndex := 0; rungIndex <= highestRungIndex; rungIndex++ {
