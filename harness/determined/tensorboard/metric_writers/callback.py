@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 
@@ -33,14 +33,25 @@ class BatchMetricWriter(callback.Callback):
         step_id: int,
         num_batches: int,
         total_batches_processed: int,
-        metrics: List[Dict[str, Any]],
+        metrics: Dict[str, Any],
     ) -> None:
         if step_id <= 0:
             raise AssertionError(f"Expected step_id to be a positive int, but it is {step_id}")
-        for batch_idx, batch_metrics in enumerate(metrics):
+        metrics_seen = set()
+
+        # Log all batch metrics.
+        for batch_idx, batch_metrics in enumerate(metrics["batch_metrics"]):
             batches_seen = total_batches_processed + batch_idx
             for name, value in batch_metrics.items():
                 self._maybe_write_metric(name, value, batches_seen)
+                metrics_seen.add(name)
+
+        # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
+        batches_seen = total_batches_processed + num_batches
+        for name, value in metrics["avg_metrics"].items():
+            if name in metrics_seen:
+                continue
+            self._maybe_write_metric(name, value, batches_seen)
 
         self.writer.reset()
 
