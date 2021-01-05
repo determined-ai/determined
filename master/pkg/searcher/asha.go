@@ -196,7 +196,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 		}
 	}
 
-	allTrials := len(s.trialRungs)
+	allTrials := len(s.trialRungs) - s.invalidTrials
 	if !addedTrainWorkload && allTrials < s.maxTrials {
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
