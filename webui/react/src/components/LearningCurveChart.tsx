@@ -139,8 +139,9 @@ const LearningCurveChart: React.FC<Props> = ({
     focusOnTrial();
     setTimeout(() => {
       if (tooltipRef.current) tooltipRef.current.style.display = 'none';
+      if (onTrialFocus) onTrialFocus(null);
     }, 100);
-  }, [ focusOnTrial ]);
+  }, [ focusOnTrial, onTrialFocus ]);
 
   const handleCursorMove = useCallback((
     plot: uPlot,
