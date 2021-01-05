@@ -287,7 +287,6 @@ func getMetricHPImportance(hpi model.ExperimentHPImportance, metricName string,
 		metricHpi, ok := hpi.TrainingMetrics[metricName]
 		if !ok {
 			var newMetricHpi model.MetricHPImportance
-			hpi.TrainingMetrics[metricName] = newMetricHpi
 			metricHpi = newMetricHpi
 		}
 		return metricHpi
@@ -295,7 +294,6 @@ func getMetricHPImportance(hpi model.ExperimentHPImportance, metricName string,
 		metricHpi, ok := hpi.ValidationMetrics[metricName]
 		if !ok {
 			var newMetricHpi model.MetricHPImportance
-			hpi.ValidationMetrics[metricName] = newMetricHpi
 			metricHpi = newMetricHpi
 		}
 		return metricHpi
