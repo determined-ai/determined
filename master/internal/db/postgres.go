@@ -13,8 +13,8 @@ import (
 	postgresM "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file" // Load migrations from files.
 	"github.com/google/uuid"
+	_ "github.com/jackc/pgx/v4/stdlib" // Import Postgres driver.
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // Use pq Postgres driver.
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -32,7 +32,7 @@ type PgDB struct {
 func ConnectPostgres(url string) (*PgDB, error) {
 	numTries := 0
 	for {
-		sql, err := sqlx.Connect("postgres", url)
+		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
 			return &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}}, err
 		}

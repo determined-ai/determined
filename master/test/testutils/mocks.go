@@ -43,10 +43,11 @@ func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
 	c.CheckpointStorage.SharedFSConfig.HostPath = "/"
 
 	e := &model.Experiment{
-		State:     model.ActiveState,
-		Config:    c,
-		StartTime: time.Now(),
-		OwnerID:   &defaultDeterminedUID,
+		State:                model.ActiveState,
+		Config:               c,
+		StartTime:            time.Now(),
+		OwnerID:              &defaultDeterminedUID,
+		ModelDefinitionBytes: []byte{},
 	}
 
 	for _, o := range opts {
