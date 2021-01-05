@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 
 class Callback(object):
@@ -21,7 +21,7 @@ class Callback(object):
         step_id: int,
         num_batches: int,
         total_batches_processed: int,
-        metrics: List[Dict[str, Any]],
+        metrics: Dict[str, Any],
     ) -> None:
         """
         Executed at the end of a training step.

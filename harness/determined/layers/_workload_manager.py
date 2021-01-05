@@ -152,7 +152,7 @@ class _TrialWorkloadManager(WorkloadManager):
 
             for callback in self.callbacks:
                 callback.on_train_step_end(
-                    wkld.step_id, wkld.num_batches, wkld.total_batches_processed, batch_metrics
+                    wkld.step_id, wkld.num_batches, wkld.total_batches_processed, metrics
                 )
 
             self.tensorboard_mgr.sync()
