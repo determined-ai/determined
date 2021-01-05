@@ -800,28 +800,6 @@ class EstimatorTrialController(det.LoopTrialController):
             _ = self.train_process_comm_worker.recv()
             return None
 
-    def allgather_metrics(self, metrics: Any) -> List:
-        if not self.hvd_config.use:
-            return [metrics]
-
-        if self.is_chief:
-            self.train_process_comm_chief = cast(
-                ipc.ZMQBroadcastServer, self.train_process_comm_chief
-            )
-            logging.debug(f"Chief {hvd.rank()} beginning allgathering metrics.")
-            worker_stuff, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
-            logging.debug(f"Chief {hvd.rank()} done allgathering metrics.")
-            all_metrics = [metrics, *worker_stuff]
-            self.train_process_comm_chief.broadcast(all_metrics)
-            return all_metrics
-        else:
-            self.train_process_comm_worker = cast(
-                ipc.ZMQBroadcastClient, self.train_process_comm_worker
-            )
-            logging.debug(f"Worker {hvd.rank()} allgathering metrics.")
-            self.train_process_comm_worker.send(metrics)
-            return self.train_process_comm_worker.recv()  # type: ignore
-
 
 class EstimatorTrial(det.Trial):
     """

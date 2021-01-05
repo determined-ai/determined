@@ -94,6 +94,10 @@ Trial Context
    :members:
    :exclude-members: get_model, get_optimizer, get_lr_scheduler
 
+.. autoclass:: determined.pytorch.PyTorchExperimentalContext
+   :members:
+   :exclude-members: reduce_metrics, reset_reducers
+
 Gradient Clipping
 -----------------
 
@@ -101,6 +105,22 @@ Users need to pass a gradient clipping function to
 :meth:`determined.pytorch.PyTorchTrialContext.step_optimizer`.
 
 .. _pytorch-callbacks:
+
+Reducing Metrics
+================
+
+Determined supports proper reduction of arbitrary training and
+validation metrics, even during distributed training, by allowing users
+to define custom reducers. Custom reducers can be either a function or
+an implementation of the :class:`determined.pytorch.MetricReducer`
+interface.
+
+See :meth:`determined.pytorch.PyTorchExperimentalContext.wrap_reducer()`
+for more details.
+
+.. autoclass:: determined.pytorch.MetricReducer
+   :members: reset, per_slot_reduce, cross_slot_reduce
+   :member-order: bysource
 
 Callbacks
 =========

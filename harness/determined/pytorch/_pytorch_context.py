@@ -62,6 +62,8 @@ class PyTorchTrialContext(det.TrialContext):
         self._last_backward_batch_idx = None  # type: Optional[int]
         self._current_batch_idx = None  # type: Optional[int]
 
+        self.experimental = pytorch.PyTorchExperimentalContext()
+
     def get_model(self) -> torch.nn.Module:
         """
         Get the model associated with the trial. This function should not be

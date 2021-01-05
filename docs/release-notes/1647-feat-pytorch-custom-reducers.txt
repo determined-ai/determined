@@ -1,0 +1,10 @@
+:orphan:
+
+**IMPROVEMENTS**
+
+-  PyTorchTrial: Add experimental support for custom metric reducers
+   with PyTorchTrial. Calculating advanced metrics like F1 score or mean
+   IOU and returning multiple metrics from a single reducer are
+   supported. See
+   :meth:`determined.pytorch.PyTorchExperimentalContext.wrap_reducer()`
+   for detailed documentation and code snippets.
