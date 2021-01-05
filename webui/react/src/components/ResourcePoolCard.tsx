@@ -100,7 +100,7 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, rpIndex }: Props) 
           <div className={css.name}>{name}</div>
           <div className={css.tags}>
             {tags.map(tag => (
-              <Badge bgColor="#132231" key={tag} type={BadgeType.Custom}>{tag.toUpperCase()}</Badge>
+              <Badge key={tag} type={BadgeType.Header}>{tag.toUpperCase()}</Badge>
             ))}
             {/* QUESTION do we want default gpu or cpu pool */}
           </div>

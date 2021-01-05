@@ -8,10 +8,11 @@ import { stateToLabel } from 'utils/types';
 import css from './Badge.module.scss';
 
 export enum BadgeType {
+  Custom,
   Default,
+  Header,
   Id,
   State,
-  Custom,
 }
 
 export interface BadgeProps {
@@ -36,6 +37,8 @@ const Badge: React.FC<BadgeProps> = ({
     style.backgroundColor = getStateColorCssVar(state);
   } else if (type === BadgeType.Id) {
     classes.push(css.id);
+  } else if (type === BadgeType.Header) {
+    classes.push(css.header);
   } else if (type === BadgeType.Custom) {
     style.color = props.fgColor;
     style.backgroundColor = props.bgColor;
