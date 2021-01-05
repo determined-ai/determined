@@ -179,6 +179,7 @@ def cluster_up(
             master_host="localhost",
             master_port=port,
             agent_name=agent_name,
+            agent_label=None,
             version=version,
             labels=labels,
             no_gpu=no_gpu,
@@ -200,6 +201,7 @@ def agent_up(
     master_host: str,
     master_port: int,
     agent_name: str,
+    agent_label: Optional[str],
     version: Optional[str],
     no_gpu: bool,
     autorestart: bool,
@@ -218,6 +220,7 @@ def agent_up(
         "DET_MASTER_HOST": master_host,
         "DET_MASTER_PORT": master_port,
         "DET_AGENT_ID": agent_name,
+        "DET_LABEL": agent_label,
     }
     init = True
     volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
