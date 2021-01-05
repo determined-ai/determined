@@ -97,7 +97,7 @@ const SlotAllocationBar: React.FC<Props> = ({
     return (
       <ul className={css.detailedLegends}>
         {Object.entries(stateTallies).map(([ state, count ]) =>
-          <Legend count={count} key={state}totalSlots={totalSlots}>
+          <Legend count={count} key={state} totalSlots={totalSlots}>
             <Badge state={state as ResourceState} type={BadgeType.State} />
           </Legend>)}
       </ul>
@@ -111,10 +111,12 @@ const SlotAllocationBar: React.FC<Props> = ({
     <div className={classes.join(' ')}>
       <div className={css.header}>
         <header>GPU Slots Allocated</header>
-        <span>
-          {resourceStates.length}/{totalSlots}
-          {totalSlots > 0 ? ` (${floatToPercent( resourceStates.length/totalSlots, 0)})` : ''}
-        </span>
+        {totalSlots === 0 ? <span>0/0</span> :
+          <span>
+            {resourceStates.length}/{totalSlots}
+            {totalSlots > 0 ? ` (${floatToPercent( resourceStates.length/totalSlots, 0)})` : ''}
+          </span>
+        }
       </div>
       <ConditionalWrapper
         condition={!showLegends}

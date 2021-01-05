@@ -41,6 +41,7 @@ export const listToStr = (list: (string|undefined)[], glue = ' '): string => {
 };
 
 export const floatToPercent = (num: number, precision = 2): string => {
+  if (isNaN(num)) num = 0;
   return (num * 100).toFixed(precision) + '%';
 };
 
