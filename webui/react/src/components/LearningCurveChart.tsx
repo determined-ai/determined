@@ -230,7 +230,7 @@ const LearningCurveChart: React.FC<Props> = ({
           scale: 'metric',
           spanGaps: true,
           stroke: glasbeyColor(index),
-          width: 1 / devicePixelRatio,
+          width: 2 / window.devicePixelRatio,
         })),
       ],
       width: chartRef.current.offsetWidth,
