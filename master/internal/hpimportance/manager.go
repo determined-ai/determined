@@ -119,10 +119,10 @@ func (m *manager) workStarted(ctx *actor.Context, msg workStarted) {
 		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
 		return
 	}
-	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
+	metricData := hpi.GetMetricHPImportance(msg.metricName, msg.metricType)
 	metricData.Pending = false
 	metricData.InProgress = true
-	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
+	hpi.SetMetricHPImportance(metricData, msg.metricName, msg.metricType)
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
 		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
@@ -136,10 +136,10 @@ func (m *manager) workFailed(ctx *actor.Context, msg workFailed) {
 		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
 		return
 	}
-	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
+	metricData := hpi.GetMetricHPImportance(msg.metricName, msg.metricType)
 	metricData.InProgress = false
 	metricData.Error = msg.err
-	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
+	hpi.SetMetricHPImportance(metricData, msg.metricName, msg.metricType)
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
 		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
@@ -157,11 +157,11 @@ func (m *manager) workCompleted(ctx *actor.Context, msg workCompleted) {
 		ctx.Log().Errorf("error retrieving hyperparameter importance state: %s", err.Error())
 		return
 	}
-	metricData := getMetricHPImportance(hpi, msg.metricName, msg.metricType)
+	metricData := hpi.GetMetricHPImportance(msg.metricName, msg.metricType)
 	metricData.ExperimentProgress = msg.progress
 	metricData.HpImportance = msg.results
 	metricData.InProgress = false
-	setMetricHPImportance(&hpi, metricData, msg.metricName, msg.metricType)
+	hpi.SetMetricHPImportance(metricData, msg.metricName, msg.metricType)
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
 		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
@@ -191,12 +191,12 @@ func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 		return
 	}
 
-	metricHpi := getMetricHPImportance(hpi, msg.MetricName, msg.MetricType)
+	metricHpi := hpi.GetMetricHPImportance(msg.MetricName, msg.MetricType)
 	if metricHpi.Pending {
 		return
 	}
 	metricHpi.Pending = true
-	setMetricHPImportance(&hpi, metricHpi, msg.MetricName, msg.MetricType)
+	hpi.SetMetricHPImportance(metricHpi, msg.MetricName, msg.MetricType)
 	err = m.db.SetHPImportance(msg.ExperimentID, hpi)
 	if err != nil {
 		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
@@ -226,20 +226,20 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 
 	loss := "loss"
 	triggerForLoss := false
-	lossHpi := getMetricHPImportance(hpi, loss, model.TrainingMetric)
+	lossHpi := hpi.GetMetricHPImportance(loss, model.TrainingMetric)
 	if !lossHpi.Pending {
 		triggerForLoss = true
 		lossHpi.Pending = true
-		setMetricHPImportance(&hpi, lossHpi, loss, model.TrainingMetric)
+		hpi.SetMetricHPImportance(lossHpi, loss, model.TrainingMetric)
 	}
 
 	searcherMetric := config.Searcher.Metric
 	triggerForSearcherMetric := false
-	searcherMetricHpi := getMetricHPImportance(hpi, searcherMetric, model.ValidationMetric)
+	searcherMetricHpi := hpi.GetMetricHPImportance(searcherMetric, model.ValidationMetric)
 	if !searcherMetricHpi.Pending {
 		triggerForSearcherMetric = true
 		searcherMetricHpi.Pending = true
-		setMetricHPImportance(&hpi, searcherMetricHpi, searcherMetric, model.ValidationMetric)
+		hpi.SetMetricHPImportance(searcherMetricHpi, searcherMetric, model.ValidationMetric)
 	}
 
 	if triggerForLoss || triggerForSearcherMetric {
@@ -264,40 +264,5 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 				metricType:   model.ValidationMetric,
 			})
 		}
-	}
-}
-
-func setMetricHPImportance(hpi *model.ExperimentHPImportance, metricHpi model.MetricHPImportance,
-	metricName string, metricType model.MetricType) *model.ExperimentHPImportance {
-	switch metricType {
-	case model.TrainingMetric:
-		hpi.TrainingMetrics[metricName] = metricHpi
-	case model.ValidationMetric:
-		hpi.ValidationMetrics[metricName] = metricHpi
-	default:
-		panic("Invalid metric type!")
-	}
-	return hpi
-}
-
-func getMetricHPImportance(hpi model.ExperimentHPImportance, metricName string,
-	metricType model.MetricType) model.MetricHPImportance {
-	switch metricType {
-	case model.TrainingMetric:
-		metricHpi, ok := hpi.TrainingMetrics[metricName]
-		if !ok {
-			var newMetricHpi model.MetricHPImportance
-			metricHpi = newMetricHpi
-		}
-		return metricHpi
-	case model.ValidationMetric:
-		metricHpi, ok := hpi.ValidationMetrics[metricName]
-		if !ok {
-			var newMetricHpi model.MetricHPImportance
-			metricHpi = newMetricHpi
-		}
-		return metricHpi
-	default:
-		panic("Invalid metric type!")
 	}
 }

@@ -520,3 +520,40 @@ type MetricHPImportance struct {
 	ExperimentProgress float64            `json:"experiment_progress"`
 	HpImportance       map[string]float64 `json:"hp_importance"`
 }
+
+// SetMetricHPImportance is a convenience function when modifying results for a specific metric.
+func (hpi *ExperimentHPImportance) SetMetricHPImportance(metricHpi MetricHPImportance,
+	metricName string, metricType MetricType) *ExperimentHPImportance {
+	switch metricType {
+	case TrainingMetric:
+		hpi.TrainingMetrics[metricName] = metricHpi
+	case ValidationMetric:
+		hpi.ValidationMetrics[metricName] = metricHpi
+	default:
+		panic("Invalid metric type!")
+	}
+	return hpi
+}
+
+// GetMetricHPImportance is a convenience function when working with results for a specific metric.
+func (hpi *ExperimentHPImportance) GetMetricHPImportance(metricName string, metricType MetricType,
+) MetricHPImportance {
+	switch metricType {
+	case TrainingMetric:
+		metricHpi, ok := hpi.TrainingMetrics[metricName]
+		if !ok {
+			var newMetricHpi MetricHPImportance
+			metricHpi = newMetricHpi
+		}
+		return metricHpi
+	case ValidationMetric:
+		metricHpi, ok := hpi.ValidationMetrics[metricName]
+		if !ok {
+			var newMetricHpi MetricHPImportance
+			metricHpi = newMetricHpi
+		}
+		return metricHpi
+	default:
+		panic("Invalid metric type!")
+	}
+}
