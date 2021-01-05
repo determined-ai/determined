@@ -75,11 +75,41 @@ $line-height: 2.2rem;
     display: flex;
     flex-direction: column;
     height: $line-height * 4;
+    padding: 0;
+    position: relative;
 
     p {
       margin: auto 0;
       // https://css-tricks.com/line-clampin/
       overflow: auto;
+      padding: $padding;
+    }
+    .fade::after {
+      background:
+        linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 1) 50%
+        );
+      bottom: 0;
+      content: "";
+      height: $line-height;
+      left: 0;
+      position: absolute;
+      text-align: center;
+      width: 90%;
+    }
+    .fade::before {
+      background:
+        linear-gradient(
+          to top,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 1) 50%
+        );
+      bottom: unset;
+      top: 0;
+
+      @extend .fade::after;
     }
   }
   hr {

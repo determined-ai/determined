@@ -26,7 +26,7 @@ export const Default = (): React.ReactNode => <Wrapper parts={[
   },
   {
     color: 'yellow',
-    label: 'labelc',
+    label: 'labelC',
     percent: 0.5,
   },
 ]} />;

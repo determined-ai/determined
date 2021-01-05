@@ -118,7 +118,7 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, rpIndex }: Props) 
       </div>
       <div className={css.body}>
         <section className={css.description}>
-          <p>
+          <p className={css.fade}>
             {description}
           </p>
         </section>
