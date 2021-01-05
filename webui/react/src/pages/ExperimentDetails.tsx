@@ -295,7 +295,7 @@ const ExperimentDetailsComp: React.FC = () => {
                   spinning: experimentDetails.isLoading,
                 }}
                 pagination={getPaginationConfig(trials.length || 0, pageSize)}
-                rowClassName={defaultRowClassName()}
+                rowClassName={defaultRowClassName({ clickable: true })}
                 rowKey="id"
                 showSorterTooltip={false}
                 size="small"
