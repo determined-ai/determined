@@ -27,7 +27,6 @@ interface ClosestPoint {
 }
 
 const CHART_HEIGHT = 400;
-const CANVAS_CSS_RATIO = 2;
 const FOCUS_MIN_DISTANCE = 30;
 const SCROLL_THROTTLE_TIME = 500;
 const UPLOT_OPTIONS = {
@@ -197,16 +196,17 @@ const LearningCurveChart: React.FC<Props> = ({
 
     if (closestPoint.seriesIdx != null && closestPoint.x != null && closestPoint.y != null &&
         closestPoint.xValue != null && closestPoint.value != null) {
-      const x = closestPoint.x + plot.bbox.left / CANVAS_CSS_RATIO;
-      const y = closestPoint.y + plot.bbox.top / CANVAS_CSS_RATIO;
+      const scale = window.devicePixelRatio;
+      const x = closestPoint.x + plot.bbox.left / scale;
+      const y = closestPoint.y + plot.bbox.top / scale;
       const classes = [ css.tooltip ];
 
       /*
        * Place tooltip in the quadrant appropriate for where the cursor position is.
        * 1 - Bottom Right, 2 - Bottom Left, 3 - Top Right, 4 - Top Left
        */
-      if (y > plot.bbox.height / 2 / CANVAS_CSS_RATIO) classes.push(css.top);
-      if (x > plot.bbox.width / 2 / CANVAS_CSS_RATIO) classes.push(css.left);
+      if (y > plot.bbox.height / 2 / scale) classes.push(css.top);
+      if (x > plot.bbox.width / 2 / scale) classes.push(css.left);
 
       tooltipRef.current.style.display = 'block';
       tooltipRef.current.style.left = `${x}px`;
