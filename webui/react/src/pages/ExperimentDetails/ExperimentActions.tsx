@@ -23,11 +23,11 @@ export enum Action {
 
 interface Props {
   experiment: ExperimentBase;
-  trials: TrialItem[];
   onClick: {
     [key in Action]?: () => void;
   };
   onSettled: () => void; // A callback to trigger after an action is done.
+  trials: TrialItem[];
 }
 
 type ButtonLoadingStates = Record<Action, boolean>;

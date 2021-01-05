@@ -1,4 +1,3 @@
-import { string } from 'io-ts';
 import { pathToRegexp } from 'path-to-regexp';
 import { MouseEvent, MouseEventHandler } from 'react';
 

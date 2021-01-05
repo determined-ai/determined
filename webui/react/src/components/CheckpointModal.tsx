@@ -3,7 +3,8 @@ import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
-import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentConfig, RunState } from 'types';
+import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
+  ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize, getBatchNumber } from 'utils/types';
@@ -13,9 +14,9 @@ import Link from './Link';
 
 interface Props {
   checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
-  searcherValidation?: number;
   config: ExperimentConfig;
   onHide?: () => void;
+  searcherValidation?: number;
   show?: boolean;
   title: string;
 }
@@ -65,7 +66,9 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, title, ...props }: Props) => {
+const CheckpointModal: React.FC<Props> = (
+  { config, checkpoint, onHide, show, title, ...props }: Props,
+) => {
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {

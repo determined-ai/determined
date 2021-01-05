@@ -1,5 +1,3 @@
-import { isNumber } from 'util';
-
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
@@ -9,14 +7,6 @@ import { capitalize } from 'utils/string';
 import * as Sdk from './api-ts-sdk'; // API Bindings
 import { V1GetExperimentResponse } from './api-ts-sdk';
 import { LoginResponse } from './types';
-
-const dropNonNumericMetrics = (ioMetrics: ioTypes.ioTypeMetric): Record<string, number> => {
-  const metrics: Record<string, number> = {};
-  Object.entries(ioMetrics).forEach(([ name, value ]) => {
-    if (isNumber(value)) metrics[name] = value;
-  });
-  return metrics;
-};
 
 export const user = (data: Sdk.V1User): types.DetailedUser => {
   return {

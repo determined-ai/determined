@@ -1,6 +1,5 @@
 import { Button, Col, Row, Table, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
-import { id } from 'fp-ts/lib/Reader';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
@@ -13,7 +12,7 @@ import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath, paths } from 'routes/utils';
 import { ApiSorter } from 'services/types';
-import { CheckpointDetail, CheckpointWorkloadExtended, ExperimentBase, TrialItem, ValidationHistory } from 'types';
+import { CheckpointWorkloadExtended, ExperimentBase, TrialItem, ValidationHistory } from 'types';
 import { numericSorter } from 'utils/data';
 import { getMetricValue } from 'utils/types';
 
@@ -31,7 +30,9 @@ const STORAGE_PATH = 'experiment-detail';
 const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
-const ExperimentOverview: React.FC<Props> = ({ experiment, trials, validationHistory, onTagsChange }: Props) => {
+const ExperimentOverview: React.FC<Props> = (
+  { experiment, trials, validationHistory, onTagsChange }: Props,
+) => {
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
@@ -137,7 +138,7 @@ const ExperimentOverview: React.FC<Props> = ({ experiment, trials, validationHis
     const handleClick = (event: React.MouseEvent) =>
       handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
     return { onAuxClick: handleClick, onClick: handleClick };
-  }, [ id ]);
+  }, [ experiment.id ]);
 
   const handleCheckpointShow = (
     event: React.MouseEvent,

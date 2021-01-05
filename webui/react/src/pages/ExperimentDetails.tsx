@@ -15,7 +15,8 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, getPaginationConfig, humanReadableFloatRenderer, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig, humanReadableFloatRenderer,
+  MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
@@ -23,7 +24,8 @@ import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox, { TopWorkloads } from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath, paths } from 'routes/utils';
-import { getExperimentDetails2, getExpTrials, getExpValidationHistory, isNotFound } from 'services/api';
+import { getExperimentDetails2, getExpTrials, getExpValidationHistory,
+  isNotFound } from 'services/api';
 import { detApi } from 'services/apiConfig';
 import { decodeCheckpoint } from 'services/decoder';
 import { ApiSorter, ApiState } from 'services/types';

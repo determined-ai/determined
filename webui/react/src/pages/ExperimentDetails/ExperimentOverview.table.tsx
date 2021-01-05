@@ -2,7 +2,7 @@ import { ColumnType } from 'antd/es/table';
 import { ReactNode } from 'react';
 
 import {
-  durationRenderer, humanReadableFloatRenderer, relativeTimeRenderer, stateRenderer,
+  durationRenderer, relativeTimeRenderer, stateRenderer,
 } from 'components/Table';
 import { TrialItem } from 'types';
 import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';

@@ -12,8 +12,8 @@ import {
 import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
-  EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
-  GetExperimentsParams, GetTrialsParams, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
+  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import { HttpApi } from 'services/types';
@@ -274,7 +274,8 @@ TrialDetails[]> = {
     params.orderBy,
     params.offset,
     params.limit,
-    params.states?.map(rs => 'STATE_' + rs.toString() as any), // FIXME
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    params.states?.map(rs => 'STATE_' + rs.toString() as any)
   ),
 };
 

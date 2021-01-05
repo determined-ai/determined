@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CheckpointState, ExperimentBase, ExperimentOld, RunState } from 'types';
+import { ExperimentBase, ExperimentOld } from 'types';
 import { generateOldExperiment } from 'utils/task';
 
 import ExperimentInfoBox from './ExperimentInfoBox';

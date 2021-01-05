@@ -1,7 +1,7 @@
 import { Button, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import yaml from 'js-yaml';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 import TimeAgo from 'timeago-react';
 
@@ -14,8 +14,7 @@ import Section from 'components/Section';
 import TagList from 'components/TagList';
 import tagListCss from 'components/TagList.module.scss';
 import useExperimentTags from 'hooks/useExperimentTags';
-import { detApi } from 'services/apiConfig';
-import { CheckpointDetail, CheckpointState, CheckpointWorkload, CheckpointWorkloadExtended, ExperimentBase, MetricsWorkload, TrialDetails } from 'types';
+import { CheckpointDetail, ExperimentBase } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 
 import css from './ExperimentInfoBox.module.scss';
