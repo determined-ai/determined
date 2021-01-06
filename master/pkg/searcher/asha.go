@@ -23,6 +23,7 @@ type asyncHalvingSearch struct {
 	closedTrials    map[RequestID]bool
 	maxTrials       int
 	trialsCompleted int
+	invalidTrials   int
 }
 
 const ashaExitedMetricValue = math.MaxFloat64
@@ -195,7 +196,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 		}
 	}
 
-	allTrials := len(s.trialRungs)
+	allTrials := len(s.trialRungs) - s.invalidTrials
 	if !addedTrainWorkload && allTrials < s.maxTrials {
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
@@ -237,7 +238,9 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.maxTrials))
 	if allTrials == s.maxTrials {
-		progress = math.Max(float64(s.trialsCompleted)/float64(s.maxTrials), progress)
+		numValidTrials := float64(s.trialsCompleted) - float64(s.invalidTrials)
+		progressNoOverhead := numValidTrials / float64(s.maxTrials)
+		progress = math.Max(progressNoOverhead, progress)
 	}
 	return progress
 }
@@ -245,6 +248,32 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
+	if exitedReason == workload.InvalidHP {
+		var ops []Operation
+		s.earlyExitTrials[requestID] = true
+		ops = append(ops, NewClose(requestID))
+		s.closedTrials[requestID] = true
+		s.invalidTrials++
+		// Remove metrics associated with InvalidHP trial across all rungs
+		highestRungIndex := s.trialRungs[requestID]
+		for rungIndex := 0; rungIndex <= highestRungIndex; rungIndex++ {
+			rung := s.rungs[rungIndex]
+			for i, trialMetric := range rung.metrics {
+				if trialMetric.requestID == requestID {
+					rung.metrics = append(rung.metrics[:i], rung.metrics[i+1:]...)
+				}
+				break
+			}
+		}
+		// Add new trial to searcher queue
+		create := NewCreate(
+			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		s.trialRungs[create.RequestID] = 0
+		ops = append(ops, create)
+		ops = append(ops, NewTrain(create.RequestID, s.rungs[0].unitsNeeded))
+		ops = append(ops, NewValidate(create.RequestID))
+		return ops, nil
+	}
 	s.earlyExitTrials[requestID] = true
 	s.closedTrials[requestID] = true
 	return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil

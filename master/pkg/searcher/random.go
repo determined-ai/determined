@@ -38,10 +38,19 @@ func (s *randomSearch) progress(unitsCompleted float64) float64 {
 	return unitsCompleted / float64(s.MaxLength.MultInt(s.MaxTrials).Units)
 }
 
-// trialExitedEarly does nothing since random does not take actions based on
-// search status or progress.
+// trialExitedEarly creates a new trial upon receiving an InvalidHP workload.
+// Otherwise, it does nothing since actions are not taken based on search status.
 func (s *randomSearch) trialExitedEarly(
-	context, RequestID, workload.ExitedReason,
+	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
+	if exitedReason == workload.InvalidHP {
+		var ops []Operation
+		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		ops = append(ops, create)
+		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
+		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewClose(create.RequestID))
+		return ops, nil
+	}
 	return nil, nil
 }
