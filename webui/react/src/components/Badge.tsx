@@ -15,8 +15,6 @@ export enum BadgeType {
 }
 
 export interface BadgeProps {
-  bgColor?: string; // background color for custom badge.
-  fgColor?: string; // foreground color for custom badge.
   state?: RunState | CommandState | CheckpointState | ResourceState | SlotState;
   tooltip?: string;
   type?: BadgeType;

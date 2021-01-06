@@ -4,7 +4,7 @@ $line-height: 2.2rem;
 
 .base {
   border-radius: var(--theme-sizes-border-radius);
-  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--theme-shadow);
   color: var(--theme-colors-monochrome-0);
   display: flex;
   flex-direction: column;
@@ -19,7 +19,7 @@ $line-height: 2.2rem;
     flex-grow: 1;
   }
   .header {
-    background: #234b65;
+    background: var(--theme-colors-base-3);
     color: white;
     display: flex;
     flex-direction: row;
@@ -113,7 +113,7 @@ $line-height: 2.2rem;
   hr {
     background: #c4c4c4;
     border: none;
-    height: 2px;
+    height: 0.2rem;
     margin: 0;
   }
   section {

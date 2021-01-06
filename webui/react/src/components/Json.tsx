@@ -12,8 +12,6 @@ interface Props {
   transformLabel?: TextTransfomer;
 }
 
-// TODO can be reused in TrialInfoBox.
-
 const row = (
   label: string,
   value: RawJson | string | number | null,
