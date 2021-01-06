@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -158,7 +159,7 @@ func (s *shellManager) newShell(
 	if config.Description == "" {
 		config.Description = fmt.Sprintf(
 			"Shell (%s)",
-			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+			petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 		)
 	}
 
@@ -170,7 +171,7 @@ func (s *shellManager) newShell(
 	// the same port on an agent.
 	port := getPort(minSshdPort, maxSshdPort)
 
-	config.Environment.Ports = map[string]int{"shell": port}
+	config.Environment.Ports = &map[string]int{"shell": port}
 	config.Entrypoint = []string{
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}

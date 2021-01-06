@@ -9,13 +9,14 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // syncHalvingSearch implements a search using the synchronous successive halving algorithm
 // (SHA).
 type syncHalvingSearch struct {
 	defaultSearchMethod
-	model.SyncHalvingConfig
+	expconf.SyncHalvingConfig
 
 	rungs      []*rung
 	trialRungs map[RequestID]int
@@ -23,17 +24,17 @@ type syncHalvingSearch struct {
 	earlyExitTrials map[RequestID]bool
 	trialsCompleted int
 
-	expectedUnits model.Length
+	expectedUnits expconf.Length
 }
 
 const shaExitedMetricValue = math.MaxFloat64
 
-func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
+func newSyncHalvingSearch(config expconf.SyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedUnits := 0
 	for id := 0; id < config.NumRungs; id++ {
-		compound := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
-		unitsNeeded := model.NewLength(
+		compound := math.Pow(*config.Divisor, float64(config.NumRungs-id-1))
+		unitsNeeded := expconf.NewLength(
 			config.Unit(),
 			max(int(float64(config.MaxLength.Units)/compound), 1),
 		)
@@ -60,7 +61,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 			expectedUnits += cur.unitsNeeded.Units * cur.startTrials
 		} else {
 			prev := rungs[id-1]
-			cur.unitsNeeded = model.NewLength(
+			cur.unitsNeeded = expconf.NewLength(
 				config.Unit(),
 				max(cur.unitsNeeded.Units, prev.unitsNeeded.Units),
 			)
@@ -75,7 +76,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 		rungs:             rungs,
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
-		expectedUnits:     model.NewLength(config.Unit(), expectedUnits),
+		expectedUnits:     expconf.NewLength(config.Unit(), expectedUnits),
 	}
 }
 
@@ -88,7 +89,7 @@ type trialMetric struct {
 
 // rung describes a set of trials that are to be trained for the same number of units.
 type rung struct {
-	unitsNeeded   model.Length
+	unitsNeeded   expconf.Length
 	metrics       []trialMetric
 	startTrials   int
 	promoteTrials int
@@ -144,7 +145,7 @@ func (s *syncHalvingSearch) validationCompleted(
 	if err != nil {
 		return nil, err
 	}
-	if !s.SmallerIsBetter {
+	if !*s.SmallerIsBetter {
 		metric *= -1
 	}
 
@@ -174,7 +175,7 @@ func (s *syncHalvingSearch) promoteSync(
 			s.trialRungs[promotionID] = rungIndex + 1
 			if !s.earlyExitTrials[promotionID] {
 				unitsNeeded := max(s.rungs[rungIndex+1].unitsNeeded.Units-rung.unitsNeeded.Units, 1)
-				ops = append(ops, NewTrain(promotionID, model.NewLength(s.Unit(), unitsNeeded)))
+				ops = append(ops, NewTrain(promotionID, expconf.NewLength(s.Unit(), unitsNeeded)))
 				ops = append(ops, NewValidate(promotionID))
 			} else {
 				// Since the trial being promoted has already exited and will never finish any more workloads,

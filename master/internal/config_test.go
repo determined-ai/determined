@@ -13,6 +13,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestUnmarshalConfigWithProvisioner(t *testing.T) {
@@ -123,7 +125,7 @@ scheduler:
 
 checkpoint_storage:
   type: s3
-  access_key: my_key 
+  access_key: my_key
   secret_key: my_secret
   bucket: my_bucket
 `
@@ -139,16 +141,13 @@ checkpoint_storage:
 			Port:     "3000",
 		},
 		Scheduler: &resourcemanagers.Config{Fit: "best"},
-		CheckpointStorage: CheckpointStorageConfig(removeAllWhitespace(`
-{
-  "access_key": "my_key",
-  "bucket": "my_bucket",
-  "save_experiment_best": 0,
-  "save_trial_best": 0,
-  "save_trial_latest": 0,
-  "secret_key": "my_secret",
-  "type":"s3"
-}`)),
+		CheckpointStorage: &expconf.CheckpointStorageConfig{
+			S3Config: &expconf.S3Config{
+				Bucket:    "my_bucket",
+				AccessKey: ptrs.StringPtr("my_key"),
+				SecretKey: ptrs.StringPtr("my_secret"),
+			},
+		},
 	}
 
 	var unmarshaled Config

@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // trialWorkloadSequencer manages transforming the work requested by the searcher into Workloads
@@ -27,10 +28,10 @@ type trialWorkloadSequencer struct {
 	create     searcher.Create
 
 	checkpointPolicy    string
-	minValidationPeriod model.Length
-	minCheckpointPeriod model.Length
+	minValidationPeriod expconf.Length
+	minCheckpointPeriod expconf.Length
 
-	unitContext model.UnitContext
+	unitContext expconf.UnitContext
 
 	schedulingUnit int
 
@@ -86,19 +87,19 @@ func newTrialWorkloadSequencer(
 	exp *model.Experiment, create searcher.Create, firstCheckpoint *model.Checkpoint,
 ) *trialWorkloadSequencer {
 	state := trialWorkloadSequencerState{
-		needInitialValidation: exp.Config.PerformInitialValidation,
+		needInitialValidation: *exp.Config.PerformInitialValidation,
 		latestCheckpoint:      firstCheckpoint,
 		cachedCheckpoints:     map[workload.Workload]workload.CompletedMessage{},
 	}
 	return &trialWorkloadSequencer{
 		trialWorkloadSequencerState:       state,
 		latestCheckpointSequencerSnapshot: state.deepCopy(),
-		checkpointPolicy:                  exp.Config.CheckpointPolicy,
-		minValidationPeriod:               exp.Config.MinValidationPeriod,
-		minCheckpointPeriod:               exp.Config.MinCheckpointPeriod,
-		unitContext: model.NewUnitContext(
-			exp.Config.Unit(), create.Hparams.GlobalBatchSize(), exp.Config.RecordsPerEpoch),
-		schedulingUnit: exp.Config.SchedulingUnit,
+		checkpointPolicy:                  *exp.Config.CheckpointPolicy,
+		minValidationPeriod:               *exp.Config.MinValidationPeriod,
+		minCheckpointPeriod:               *exp.Config.MinCheckpointPeriod,
+		unitContext: expconf.NewUnitContext(
+			exp.Config.Unit(), create.Hparams.GlobalBatchSize(), *exp.Config.RecordsPerEpoch),
+		schedulingUnit: *exp.Config.SchedulingUnit,
 		create:         create,
 		experiment:     exp,
 	}

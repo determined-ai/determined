@@ -9,13 +9,14 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // PBTSearch implements population-based training (PBT). See https://arxiv.org/abs/1711.09846 for
 // details.
 type pbtSearch struct {
 	defaultSearchMethod
-	model.PBTConfig
+	expconf.PBTConfig
 
 	roundsCompleted      int
 	metrics              map[RequestID]float64
@@ -29,7 +30,7 @@ type pbtSearch struct {
 
 const pbtExitedMetricValue = math.MaxFloat64
 
-func newPBTSearch(config model.PBTConfig) SearchMethod {
+func newPBTSearch(config expconf.PBTConfig) SearchMethod {
 	return &pbtSearch{
 		PBTConfig:            config,
 		metrics:              make(map[RequestID]float64),
@@ -67,7 +68,7 @@ func (s *pbtSearch) validationCompleted(
 
 	// If we haven't gotten results from the whole population yet, do nothing.
 	sign := 1.0
-	if !s.SmallerIsBetter {
+	if !*s.SmallerIsBetter {
 		sign = -1.0
 	}
 	s.metrics[requestID] = metric * sign
@@ -160,7 +161,7 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID RequestID) ([]Operation,
 // multiplicative factor.
 func (s *pbtSearch) exploreParams(ctx context, old hparamSample) hparamSample {
 	params := make(hparamSample)
-	ctx.hparams.Each(func(name string, sampler model.Hyperparameter) {
+	ctx.hparams.Each(func(name string, sampler expconf.Hyperparameter) {
 		if ctx.rand.UnitInterval() < s.ResampleProbability {
 			params[name] = sampleOne(sampler, ctx.rand)
 		} else {

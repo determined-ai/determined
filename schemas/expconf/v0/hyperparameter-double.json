@@ -1,0 +1,36 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/hyperparameter-double.json",
+    "title": "DoubleHyperparameter",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type",
+        "minval",
+        "maxval"
+    ],
+    "properties": {
+        "type": {
+            "const": "double"
+        },
+        "minval": {
+            "type": "number"
+        },
+        "maxval": {
+            "type": "number"
+        },
+        "count": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 1
+        }
+    },
+    "compareProperties": {
+        "type": "a<b",
+        "a": "minval",
+        "b": "maxval"
+    }
+}

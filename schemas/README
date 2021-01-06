@@ -30,6 +30,27 @@ Default values:
   - otherwise, there's no way to do client-side defaults, as the master would
     need to be involved in deciding all default values.
 
+  const.yaml:
+
+    hyperparameters:
+      global_batch_size: 100
+
+  Python API (for us and for users):
+
+    exp_conf.min_validation_period.batches        # returns 0
+    exp_conf.min_validation_period                # returns Length(batches=0)
+
+    exp_conf.json() -> return a dictionary
+
+  Golang API (for us):
+
+    1. save what the user provides as raw_exp_conf and Raw=self
+    2. create an exp_conf with defaults and Raw=raw_exp_conf
+
+    exp_conf.MinValidationPeriod.Batches
+    exp_conf.Raw.MinValidationPeriod        # would be nil
+    exp_conf.Raw.Raw -> exp_conf.Raw
+
 Customization strategy:
   - Json-schema alone does not provide the behavior we want out of the box
   - Most json-schema libraries have great support for custom validation logic
@@ -42,3 +63,9 @@ Customization strategy:
     - union: Excellent error messages when validating union types
   - The canonical implementations (with thorough comments) may be found in
     determined_common/schemas/extensions.py
+
+V1 changes:
+ - environments must define both GPU and CPU variants if they go that route
+ - strict additionalProperties on at least resources config
+ - nested hyperparameters
+

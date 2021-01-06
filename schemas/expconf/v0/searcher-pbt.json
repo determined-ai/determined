@@ -1,0 +1,98 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json",
+    "title": "PBTConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name",
+        "metric",
+        "population_size",
+        "length_per_round",
+        "num_rounds",
+        "replace_function",
+        "explore_function"
+    ],
+    "properties": {
+        "name": {
+            "const": "pbt"
+        },
+        "population_size": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "length_per_round": {
+            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "num_rounds": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "replace_function": {
+            "unionKey": "singleproperty",
+            "union": {
+                "items": [
+                    {
+                        "unionKey": "always",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                            "truncate_fraction"
+                        ],
+                        "properties": {
+                            "truncate_fraction": {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 0.5
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "explore_function": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "resample_probability",
+                "perturb_factor"
+            ],
+            "properties": {
+                "resample_probability": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "perturb_factor": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                }
+            }
+        },
+        "metric": {
+            "type": "string"
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}

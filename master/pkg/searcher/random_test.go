@@ -3,35 +3,38 @@ package searcher
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestRandomSearcherRecords(t *testing.T) {
-	actual := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInRecords(19200)}
+	config := expconf.RandomConfig{MaxTrials: 4, MaxLength: expconf.NewLengthInRecords(19200)}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("19200R V"),
 		toOps("19200R V"),
 		toOps("19200R V"),
 		toOps("19200R V"),
 	}
-	search := newRandomSearch(actual)
+	search := newRandomSearch(config)
 	checkSimulation(t, search, nil, ConstantValidation, expected)
 }
 
 func TestRandomSearcherBatches(t *testing.T) {
-	actual := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInBatches(300)}
+	config := expconf.RandomConfig{MaxTrials: 4, MaxLength: expconf.NewLengthInBatches(300)}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("300B V"),
 		toOps("300B V"),
 		toOps("300B V"),
 		toOps("300B V"),
 	}
-	search := newRandomSearch(actual)
+	search := newRandomSearch(config)
 	checkSimulation(t, search, nil, ConstantValidation, expected)
 }
 
 func TestRandomSearcherReproducibility(t *testing.T) {
-	conf := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInBatches(300)}
+	conf := expconf.RandomConfig{MaxTrials: 4, MaxLength: expconf.NewLengthInBatches(300)}
 	gen := func() SearchMethod { return newRandomSearch(conf) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
@@ -46,9 +49,9 @@ func TestRandomSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("500B V"), .1),
 				newEarlyExitPredefinedTrial(toOps("500B"), .1),
 			},
-			config: model.SearcherConfig{
-				RandomConfig: &model.RandomConfig{
-					MaxLength: model.NewLengthInBatches(500),
+			config: expconf.SearcherConfig{
+				RandomConfig: &expconf.RandomConfig{
+					MaxLength: expconf.NewLengthInBatches(500),
 					MaxTrials: 4,
 				},
 			},
@@ -61,9 +64,9 @@ func TestRandomSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("32017R V"), .1),
 				newConstantPredefinedTrial(toOps("32017R V"), .1),
 			},
-			config: model.SearcherConfig{
-				RandomConfig: &model.RandomConfig{
-					MaxLength: model.NewLengthInRecords(32017),
+			config: expconf.SearcherConfig{
+				RandomConfig: &expconf.RandomConfig{
+					MaxLength: expconf.NewLengthInRecords(32017),
 					MaxTrials: 4,
 				},
 			},
@@ -80,9 +83,9 @@ func TestSingleSearchMethod(t *testing.T) {
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(toOps("500B V"), .1),
 			},
-			config: model.SearcherConfig{
-				SingleConfig: &model.SingleConfig{
-					MaxLength: model.NewLengthInBatches(500),
+			config: expconf.SearcherConfig{
+				SingleConfig: &expconf.SingleConfig{
+					MaxLength: expconf.NewLengthInBatches(500),
 				},
 			},
 		},

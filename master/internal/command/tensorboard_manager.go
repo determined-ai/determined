@@ -25,7 +25,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
@@ -227,7 +229,7 @@ func (t *tensorboardManager) newTensorBoard(
 		),
 	}
 
-	uniqMounts := map[model.BindMount]bool{}
+	uniqMounts := map[expconf.BindMount]bool{}
 	uniqEnvVars := map[string]string{}
 
 	taskID := resourcemanagers.NewTaskID()
@@ -245,10 +247,10 @@ func (t *tensorboardManager) newTensorBoard(
 			// Mount the checkpoint location into the TensorBoard container to
 			// make the logs visible to TensorBoard. Bind mounts must be unique
 			// and therefore we use a map here to deduplicate mounts.
-			uniqMounts[model.BindMount{
+			uniqMounts[expconf.BindMount{
 				ContainerPath: model.DefaultSharedFSContainerPath,
 				HostPath:      c.SharedFSConfig.HostPath,
-				Propagation:   model.DefaultSharedFSPropagation,
+				Propagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
 			}] = true
 			logBasePath = c.SharedFSConfig.PathInContainer()
 
@@ -289,7 +291,7 @@ func (t *tensorboardManager) newTensorBoard(
 
 			// The credentials files for HDFS exist on agent machines and are
 			// bind mounted into the container.
-			for _, mount := range exp.Config.BindMounts {
+			for _, mount := range *exp.Config.BindMounts {
 				uniqMounts[mount] = true
 			}
 
@@ -338,12 +340,12 @@ func (t *tensorboardManager) newTensorBoard(
 	// mode, this mitigates the risk of multiple TensorBoard processes binding
 	// the same port on an agent.
 	port := getPort(minTensorBoardPort, maxTensorBoardPort)
-	config.Environment.Ports = map[string]int{"tensorboard": port}
+	config.Environment.Ports = &map[string]int{"tensorboard": port}
 	envVars = append(envVars, fmt.Sprintf("TENSORBOARD_PORT=%d", port))
 
 	config.Description = fmt.Sprintf(
 		"TensorBoard (%s)",
-		petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+		petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 	)
 
 	refineArgs(config.TensorBoardArgs)
@@ -353,9 +355,12 @@ func (t *tensorboardManager) newTensorBoard(
 
 	config.Resources.Slots = tensorboardResourcesSlots
 
-	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
-	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
-	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
+	*config.Environment.EnvironmentVariables.CPU = append(
+		*config.Environment.EnvironmentVariables.CPU, envVars...
+	)
+	*config.Environment.EnvironmentVariables.GPU = append(
+		*config.Environment.EnvironmentVariables.GPU, envVars...
+	)
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
 	setPodSpec(&config, t.taskSpec.TaskContainerDefaults)
@@ -429,8 +434,8 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	return configs, nil
 }
 
-func getMounts(m map[model.BindMount]bool) []model.BindMount {
-	var bindMounts []model.BindMount
+func getMounts(m map[expconf.BindMount]bool) []expconf.BindMount {
+	var bindMounts []expconf.BindMount
 
 	for mount := range m {
 		bindMounts = append(bindMounts, mount)

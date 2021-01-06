@@ -7,6 +7,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 var (
@@ -27,7 +29,10 @@ func (f ExperimentModelOptionFunc) apply(experiment *model.Experiment) {
 
 // ExperimentModel returns a new experiment with the specified options.
 func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
-	c := model.DefaultExperimentConfig(&internal.DefaultConfig().TaskContainerDefaults)
+	c := expconf.ExperimentConfig{}
+	schemas.Merge(&c, internal.DefaultConfig().TaskContainerDefaults.Filler())
+	schemas.FillDefaults(&c)
+
 	c.Entrypoint = "model_def:SomeTrialClass"
 	c.Searcher = model.SearcherConfig{
 		Metric: "loss",

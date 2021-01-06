@@ -7,6 +7,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // AsyncHalvingSearch implements a search using the asynchronous successive halving algorithm
@@ -14,7 +15,7 @@ import (
 // in the bottom rung and no further promotions can be made to higher rungs.
 type asyncHalvingSearch struct {
 	defaultSearchMethod
-	model.AsyncHalvingConfig
+	expconf.AsyncHalvingConfig
 
 	rungs      []*rung
 	trialRungs map[RequestID]int
@@ -28,16 +29,16 @@ type asyncHalvingSearch struct {
 
 const ashaExitedMetricValue = math.MaxFloat64
 
-func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
+func newAsyncHalvingSearch(config expconf.AsyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	for id := 0; id < config.NumRungs; id++ {
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
-		downsamplingRate := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
+		downsamplingRate := math.Pow(*config.Divisor, float64(config.NumRungs-id-1))
 		unitsNeeded := max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
-				unitsNeeded:       model.NewLength(config.Unit(), unitsNeeded),
+				unitsNeeded:       expconf.NewLength(config.Unit(), unitsNeeded),
 				outstandingTrials: 0,
 			})
 	}
@@ -102,11 +103,11 @@ func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error)
 	var ops []Operation
 	var maxConcurrentTrials int
 
-	if s.MaxConcurrentTrials > 0 {
-		maxConcurrentTrials = min(s.MaxConcurrentTrials, s.MaxTrials)
+	if *s.MaxConcurrentTrials > 0 {
+		maxConcurrentTrials = min(*s.MaxConcurrentTrials, s.MaxTrials)
 	} else {
 		maxConcurrentTrials = max(
-			min(int(math.Pow(s.Divisor, float64(s.NumRungs-1))), s.MaxTrials),
+			min(int(math.Pow(*s.Divisor, float64(s.NumRungs-1))), s.MaxTrials),
 			1)
 	}
 
@@ -141,7 +142,7 @@ func (s *asyncHalvingSearch) validationCompleted(
 	if err != nil {
 		return nil, err
 	}
-	if !s.SmallerIsBetter {
+	if !*s.SmallerIsBetter {
 		metric *= -1
 	}
 
@@ -178,13 +179,13 @@ func (s *asyncHalvingSearch) promoteAsync(
 		for _, promotionID := range rung.promotionsAsync(
 			requestID,
 			metric,
-			s.Divisor,
+			*s.Divisor,
 		) {
 			s.trialRungs[promotionID] = rungIndex + 1
 			nextRung.outstandingTrials++
 			if !s.earlyExitTrials[promotionID] {
 				unitsNeeded := max(nextRung.unitsNeeded.Units-rung.unitsNeeded.Units, 1)
-				ops = append(ops, NewTrain(promotionID, model.NewLength(s.Unit(), unitsNeeded)))
+				ops = append(ops, NewTrain(promotionID, expconf.NewLength(s.Unit(), unitsNeeded)))
 				ops = append(ops, NewValidate(promotionID))
 				addedTrainWorkload = true
 			} else {

@@ -5,7 +5,9 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestConservativeMode(t *testing.T) {
@@ -33,12 +35,13 @@ func TestAggressiveMode(t *testing.T) {
 }
 
 func TestAdaptiveSearcherReproducibility(t *testing.T) {
-	conf := model.AdaptiveConfig{
-		Metric: defaultMetric, SmallerIsBetter: true,
-		MaxLength: model.NewLengthInBatches(6400), Budget: model.NewLengthInBatches(102400),
-		Divisor: 4, TrainStragglers: true, Mode: model.AggressiveMode, MaxRungs: 3,
+	config := expconf.AdaptiveConfig{
+		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
+		MaxLength: expconf.NewLengthInBatches(6400), Budget: expconf.NewLengthInBatches(102400),
+		Divisor: ptrs.Float64Ptr(4), TrainStragglers: ptrs.BoolPtr(true), Mode: expconf.AdaptiveModePtr(expconf.AggressiveMode), MaxRungs: ptrs.IntPtr(3),
 	}
-	gen := func() SearchMethod { return newAdaptiveSearch(conf) }
+	schemas.FillDefaults(&config)
+	gen := func() SearchMethod { return newAdaptiveSearch(config) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 
@@ -51,15 +54,15 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("800B V"), 0.2),
 				newConstantPredefinedTrial(toOps("3200B V"), 0.3),
 			},
-			config: model.SearcherConfig{
-				AdaptiveConfig: &model.AdaptiveConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveConfig: &expconf.AdaptiveConfig{
 					Metric:          "error",
-					SmallerIsBetter: true,
-					MaxLength:       model.NewLengthInBatches(3200),
-					Budget:          model.NewLengthInBatches(6400),
-					Mode:            model.StandardMode,
-					MaxRungs:        2,
-					Divisor:         4,
+					SmallerIsBetter: ptrs.BoolPtr(true),
+					MaxLength:       expconf.NewLengthInBatches(3200),
+					Budget:          expconf.NewLengthInBatches(6400),
+					Mode:            expconf.AdaptiveModePtr(expconf.StandardMode),
+					MaxRungs:        ptrs.IntPtr(2),
+					Divisor:         ptrs.Float64Ptr(4),
 				},
 			},
 		},
@@ -70,15 +73,15 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 				newEarlyExitPredefinedTrial(toOps("800B"), 0.2),
 				newConstantPredefinedTrial(toOps("3200B V"), 0.3),
 			},
-			config: model.SearcherConfig{
-				AdaptiveConfig: &model.AdaptiveConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveConfig: &expconf.AdaptiveConfig{
 					Metric:          "error",
-					SmallerIsBetter: true,
-					MaxLength:       model.NewLengthInBatches(3200),
-					Budget:          model.NewLengthInBatches(6400),
-					Mode:            model.StandardMode,
-					MaxRungs:        2,
-					Divisor:         4,
+					SmallerIsBetter: ptrs.BoolPtr(true),
+					MaxLength:       expconf.NewLengthInBatches(3200),
+					Budget:          expconf.NewLengthInBatches(6400),
+					Mode:            expconf.AdaptiveModePtr(expconf.StandardMode),
+					MaxRungs:        ptrs.IntPtr(2),
+					Divisor:         ptrs.Float64Ptr(4),
 				},
 			},
 		},
@@ -89,15 +92,15 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("800B V"), 0.2),
 				newConstantPredefinedTrial(toOps("3200B V"), 0.1),
 			},
-			config: model.SearcherConfig{
-				AdaptiveConfig: &model.AdaptiveConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveConfig: &expconf.AdaptiveConfig{
 					Metric:          "error",
-					SmallerIsBetter: false,
-					MaxLength:       model.NewLengthInBatches(3200),
-					Budget:          model.NewLengthInBatches(6400),
-					Mode:            model.StandardMode,
-					MaxRungs:        2,
-					Divisor:         4,
+					SmallerIsBetter: ptrs.BoolPtr(false),
+					MaxLength:       expconf.NewLengthInBatches(3200),
+					Budget:          expconf.NewLengthInBatches(6400),
+					Mode:            expconf.AdaptiveModePtr(expconf.StandardMode),
+					MaxRungs:        ptrs.IntPtr(2),
+					Divisor:         ptrs.Float64Ptr(4),
 				},
 			},
 		},
@@ -108,15 +111,15 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 				newEarlyExitPredefinedTrial(toOps("800B"), 0.2),
 				newConstantPredefinedTrial(toOps("3200B V"), 0.3),
 			},
-			config: model.SearcherConfig{
-				AdaptiveConfig: &model.AdaptiveConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveConfig: &expconf.AdaptiveConfig{
 					Metric:          "error",
-					SmallerIsBetter: false,
-					MaxLength:       model.NewLengthInBatches(3200),
-					Budget:          model.NewLengthInBatches(6400),
-					Mode:            model.StandardMode,
-					MaxRungs:        2,
-					Divisor:         4,
+					SmallerIsBetter: ptrs.BoolPtr(false),
+					MaxLength:       expconf.NewLengthInBatches(3200),
+					Budget:          expconf.NewLengthInBatches(6400),
+					Mode:            expconf.AdaptiveModePtr(expconf.StandardMode),
+					MaxRungs:        ptrs.IntPtr(2),
+					Divisor:         ptrs.Float64Ptr(4),
 				},
 			},
 		},

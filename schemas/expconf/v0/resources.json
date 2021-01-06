@@ -1,0 +1,69 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/resources.json",
+    "title": "ResourcesConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "agent_label": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
+        "max_slots": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "native_parallel": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "priority": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "maximum": 99,
+            "default": null
+        },
+        "resource_pool": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "shm_size": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "slots_per_trial": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 1
+        },
+        "weight": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "default": 1
+        }
+    }
+}

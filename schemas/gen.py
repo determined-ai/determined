@@ -30,15 +30,30 @@ class Schema:
             self.schema = json.loads(text)
         except Exception as e:
             raise ValueError(f"{url} is not a valid json file") from e
-        self.golang_title = self.schema["title"] + "V1"
+        self.golang_title = self.schema["title"] + self.version().upper()
         self.python_title = camel_to_snake(self.golang_title)
+
+    def version(self) -> str:
+        return os.path.basename(os.path.dirname(self.url))
+
+    def contains_defaults(self) -> bool:
+        # For writing defaulting logic, it is useful to know whether or not a schema defines
+        # defaults or not.
+        if "properties" in self.schema:
+            for prop in self.schema["properties"].values():
+                if not isinstance(prop, dict):
+                    continue
+                if "default" in prop:
+                    return True
+        return False
 
 
 def read_schemas(files: List[str]) -> List[Schema]:
     schemas = []
-    urlbase = "http://determined.ai/schemas/expconf/v1"
+    urlbase = "http://determined.ai/schemas"
     for file in files:
-        url = os.path.join(urlbase, os.path.basename(file))
+        urlend = os.path.relpath(file, os.path.dirname(__file__))
+        url = os.path.join(urlbase, urlend)
         with open(file) as f:
             schema = Schema(url, f.read())
             schemas.append(schema)
@@ -47,13 +62,23 @@ def read_schemas(files: List[str]) -> List[Schema]:
     return schemas
 
 
-def gen_go(schemas: List[Schema]) -> List[str]:
+def gen_go_schemas_package(schemas: List[Schema]) -> List[str]:
+    """
+    Generate a file at the level of pkg/schemas/ that has all of the schemas embedded into it for
+    all config types.
+
+    This is necesary to have a single place that can create validators with all of the schema
+    urls, so that schemas of one type are free to reference schemas of another type.
+    """
     lines = []
     lines.append("// This is a generated file.  Editing it will make you sad.")
     lines.append("")
-    lines.append("package expconf")
+    lines.append("package schemas")
     lines.append("")
-    lines.append('import "encoding/json"')
+    lines.append("import (")
+    lines.append('\t"encoding/json"')
+    lines.append('\t"github.com/santhosh-tekuri/jsonschema/v2"')
+    lines.append(")")
     lines.append("")
 
     # Global variables (lazily loaded but otherwise constants).
@@ -70,11 +95,11 @@ def gen_go(schemas: List[Schema]) -> List[str]:
     lines.append(")")
     lines.append("")
 
-    # Schema getters.
+    # Schema getters.  These are exported so that they can be used in the individual packages.
     for schema in schemas:
         lines.extend(
             [
-                f"func parsed{schema.golang_title}() interface{{}} {{",
+                f"func Parsed{schema.golang_title}() interface{{}} {{",
                 f"\tif schema{schema.golang_title} != nil {{",
                 f"\t\treturn schema{schema.golang_title}",
                 "\t}",
@@ -88,7 +113,7 @@ def gen_go(schemas: List[Schema]) -> List[str]:
         )
         lines.append("")
 
-    # SchemaBytesMap.
+    # SchemaBytesMap, used internally by NewCompiler, which has to have a list of all schemas.
     lines.append("func schemaBytesMap() map[string][]byte {")
     lines.append("\tif cachedSchemaBytesMap != nil {")
     lines.append("\t\treturn cachedSchemaBytesMap")
@@ -101,18 +126,47 @@ def gen_go(schemas: List[Schema]) -> List[str]:
     lines.append("\treturn cachedSchemaBytesMap")
     lines.append("}")
 
-    # SchemaMap.
-    lines.append("func schemaMap() map[string]interface{} {")
-    lines.append("\tif cachedSchemaMap != nil {")
-    lines.append("\t\treturn cachedSchemaMap")
-    lines.append("\t}")
-    lines.append("\tvar url string")
-    lines.append("\tcachedSchemaMap = map[string]interface{}{}")
+    return lines
+
+
+def gen_go_package(schemas: List[Schema], package: str) -> List[str]:
+    """
+    Generate a file at the level of e.g. pkg/schemas/expconf that defines the schemas.Schema
+    interface and schemas.Defaultable interfcae (if applicable) for all the objects in this package.
+    """
+    lines = []
+    lines.append("// This is a generated file.  Editing it will make you sad.")
+    lines.append("")
+    lines.append(f"package {package}")
+    lines.append("")
+    lines.append("import (")
+    lines.append('\t"encoding/json"')
+    lines.append('\t"github.com/santhosh-tekuri/jsonschema/v2"')
+    lines.append('\t"github.com/determined-ai/determined/master/pkg/schemas"')
+    lines.append(")")
+    lines.append("")
+
+    # Implement the Schema interface for all objects.
     for schema in schemas:
-        lines.append(f'\turl = "{schema.url}"')
-        lines.append(f"\tcachedSchemaMap[url] = parsed{schema.golang_title}()")
-    lines.append("\treturn cachedSchemaMap")
-    lines.append("}")
+        if not schema.python_title.startswith("check_"):
+            lines.append("")
+            lines.append(
+                f"func (x *{schema.golang_title}) ParsedSchema() interface{{}} {{"
+            )
+            lines.append(f"\treturn schemas.Parsed{schema.golang_title}()")
+            lines.append("}")
+            lines.append("")
+            lines.append(
+                f"func (x *{schema.golang_title}) SanityValidator() *jsonschema.Schema {{"
+            )
+            lines.append(f'\treturn schemas.GetSanityValidator("{schema.url}")')
+            lines.append("}")
+            lines.append("")
+            lines.append(
+                f"func (x *{schema.golang_title}) CompletenessValidator() *jsonschema.Schema {{"
+            )
+            lines.append(f'\treturn schemas.GetCompletenessValidator("{schema.url}")')
+            lines.append("}")
 
     return lines
 
@@ -133,15 +187,24 @@ def gen_python(schemas: List[Schema]) -> List[str]:
     return lines
 
 
-def main(language: str, files: List[str], output: Optional[str]) -> None:
+def main(
+    language: str, package: Optional[str], files: List[str], output: Optional[str]
+) -> None:
     assert language in ["go", "python"], "language must be 'go' or 'python'"
+    if language == "go":
+        assert package is not None, "--package must be provided for the go generator"
+    else:
+        assert package is None, "--package must not be provided to the python generator"
     assert files, "no input files"
     assert output is not None, "missing output file"
 
     schemas = read_schemas(files)
 
     if language == "go":
-        lines = gen_go(schemas)
+        if package == "schemas":
+            lines = gen_go_schemas_package(schemas)
+        else:
+            lines = gen_go_package(schemas, package)
     else:
         lines = gen_python(schemas)
 
@@ -157,10 +220,11 @@ if __name__ == "__main__":
     parser.add_argument("language", help="go or python")
     parser.add_argument("files", nargs="*", help="input files")
     parser.add_argument("--output")
+    parser.add_argument("--package")
     args = parser.parse_args()
 
     try:
-        main(args.language, args.files, args.output)
+        main(args.language, args.package, args.files, args.output)
     except AssertionError as e:
         print(e, file=sys.stderr)
         sys.exit(1)

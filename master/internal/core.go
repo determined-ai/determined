@@ -44,6 +44,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
@@ -220,9 +221,10 @@ func closeWithErrCheck(name string, closer io.Closer) {
 func (m *Master) restoreExperiment(sema chan struct{}, e *model.Experiment) {
 	sema <- struct{}{}
 	defer func() { <-sema }()
+	// XXX: wait, we can *actually* check this properly now.  Will do after snapshotting lands.
 	// Check if the returned config is the zero value, i.e. the config could not be parsed
 	// correctly. If the config could not be parsed, mark the experiment as errored.
-	if !reflect.DeepEqual(e.Config, model.ExperimentConfig{}) {
+	if !reflect.DeepEqual(e.Config, expconf.ExperimentConfig{}) {
 		err := restoreExperiment(m, e)
 		if err == nil {
 			return

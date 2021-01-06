@@ -1,8 +1,8 @@
 package searcher
 
 import (
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/workload"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Event is the type of searcher events stored by the event log.
@@ -38,7 +38,7 @@ type EventLog struct {
 }
 
 // NewEventLog initializes an empty event log.
-func NewEventLog(unit model.Unit) *EventLog {
+func NewEventLog(unit expconf.Unit) *EventLog {
 	return &EventLog{
 		unitsCompletedByTrial: map[RequestID]float64{},
 		failures:              map[RequestID]bool{},

@@ -40,7 +40,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		config := t.experiment.Config.CheckpointStorage
 
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(t.experiment.ID,
-			&config.SaveExperimentBest, &config.SaveTrialBest, &config.SaveTrialLatest, true)
+			config.SaveExperimentBest, config.SaveTrialBest, config.SaveTrialLatest, true)
 		if err != nil {
 			return err
 		}

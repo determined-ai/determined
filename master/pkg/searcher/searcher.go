@@ -8,20 +8,20 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Searcher encompasses the state as the searcher progresses using the provided search method.
 type Searcher struct {
 	rand     *nprand.State
-	hparams  model.Hyperparameters
+	hparams  expconf.Hyperparameters
 	method   SearchMethod
 	eventLog *EventLog
 }
 
 // NewSearcher creates a new Searcher configured with the provided searcher config.
-func NewSearcher(seed uint32, method SearchMethod, hparams model.Hyperparameters) *Searcher {
+func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparameters) *Searcher {
 	return &Searcher{
 		rand:     nprand.New(seed),
 		hparams:  hparams,

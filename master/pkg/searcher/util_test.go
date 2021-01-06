@@ -11,8 +11,9 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const defaultMetric = "metric"
@@ -48,7 +49,7 @@ func isExpected(actual, expected []Runnable) bool {
 func checkSimulation(
 	t *testing.T,
 	method SearchMethod,
-	params model.Hyperparameters,
+	params expconf.Hyperparameters,
 	validation ValidationFunction,
 	expected [][]Runnable,
 ) {
@@ -76,7 +77,7 @@ func checkSimulation(
 // them, and checks that they produce the same trials and the same sequence of workloads for each
 // trial.
 func checkReproducibility(
-	t assert.TestingT, methodGen func() SearchMethod, hparams model.Hyperparameters, metric string,
+	t assert.TestingT, methodGen func() SearchMethod, hparams expconf.Hyperparameters, metric string,
 ) {
 	seed := int64(17)
 	searcher1 := NewSearcher(uint32(seed), methodGen(), hparams)
@@ -121,11 +122,11 @@ func toOps(types string) (ops []Runnable) {
 			}
 			switch unit := string(unparsed[len(unparsed)-1]); unit {
 			case "R":
-				ops = append(ops, Train{Length: model.NewLengthInRecords(count)})
+				ops = append(ops, Train{Length: expconf.NewLengthInRecords(count)})
 			case "B":
-				ops = append(ops, Train{Length: model.NewLengthInBatches(count)})
+				ops = append(ops, Train{Length: expconf.NewLengthInBatches(count)})
 			case "E":
-				ops = append(ops, Train{Length: model.NewLengthInEpochs(count)})
+				ops = append(ops, Train{Length: expconf.NewLengthInEpochs(count)})
 			}
 		}
 	}
@@ -167,7 +168,7 @@ func newConstantPredefinedTrial(ops []Runnable, valMetric float64) predefinedTri
 	return newPredefinedTrial(ops, nil, valMetrics)
 }
 
-func (t *predefinedTrial) Train(length model.Length, opIndex int) error {
+func (t *predefinedTrial) Train(length expconf.Length, opIndex int) error {
 	if opIndex >= len(t.Ops) {
 		return errors.Errorf("ran out of expected ops trying to train")
 	}
@@ -218,7 +219,7 @@ func (t *predefinedTrial) CheckComplete(opIndex int) error {
 func checkValueSimulation(
 	t *testing.T,
 	method SearchMethod,
-	params model.Hyperparameters,
+	params expconf.Hyperparameters,
 	expectedTrials []predefinedTrial,
 ) error {
 	// Create requests are assigned a predefinedTrial in order.
@@ -322,6 +323,7 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
+			schemas.FillDefaults(&tc.config)
 			method := NewSearchMethod(tc.config)
 			err := checkValueSimulation(t, method, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)
@@ -332,8 +334,8 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 type valueSimulationTestCase struct {
 	name           string
 	expectedTrials []predefinedTrial
-	hparams        model.Hyperparameters
-	config         model.SearcherConfig
+	hparams        expconf.Hyperparameters
+	config         expconf.SearcherConfig
 }
 
 func simulateOperationComplete(

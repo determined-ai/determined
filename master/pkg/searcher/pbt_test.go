@@ -5,27 +5,30 @@ import (
 	"testing"
 
 	"gotest.tools/assert"
+	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestPBTSearcherWorkloads(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		// After the first round, trial 1 beats trial 2, spawning trial 3. Trial 1 lasts for two rounds
 		// and the others last one round each.
-		config := model.PBTConfig{
+		config := expconf.PBTConfig{
 			Metric:          defaultMetric,
-			SmallerIsBetter: false,
+			SmallerIsBetter: ptrs.BoolPtr(false),
 			PopulationSize:  2,
 			NumRounds:       2,
-			LengthPerRound:  model.NewLengthInBatches(200),
-			PBTReplaceConfig: model.PBTReplaceConfig{
+			LengthPerRound:  expconf.NewLengthInBatches(200),
+			PBTReplaceConfig: expconf.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
-			PBTExploreConfig: model.PBTExploreConfig{},
+			PBTExploreConfig: expconf.PBTExploreConfig{},
 		}
+		schemas.FillDefaults(&config)
 
 		val := func(random *rand.Rand, trialID, _ int) float64 {
 			return float64(trialID)
@@ -41,17 +44,18 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 
 	t.Run("no_truncation", func(t *testing.T) {
 		// There is no truncation, so the initial population just survives forever.
-		config := model.PBTConfig{
+		config := expconf.PBTConfig{
 			Metric:          defaultMetric,
-			SmallerIsBetter: false,
+			SmallerIsBetter: ptrs.BoolPtr(false),
 			PopulationSize:  3,
 			NumRounds:       4,
-			LengthPerRound:  model.NewLengthInBatches(400),
-			PBTReplaceConfig: model.PBTReplaceConfig{
+			LengthPerRound:  expconf.NewLengthInBatches(400),
+			PBTReplaceConfig: expconf.PBTReplaceConfig{
 				TruncateFraction: 0.,
 			},
-			PBTExploreConfig: model.PBTExploreConfig{},
+			PBTExploreConfig: expconf.PBTExploreConfig{},
 		}
+		schemas.FillDefaults(&config)
 
 		val := func(random *rand.Rand, trialID, _ int) float64 {
 			return float64(trialID)
@@ -69,17 +73,18 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		// After the first round, trial 1 beats trial 2, spawning trial 3. After the second round, trial 3
 		// beats trial 1, spawning trial 4. Thus we have two trials that run for two rounds (1, 3) and two
 		// that run for one round (2, 4).
-		config := model.PBTConfig{
+		config := expconf.PBTConfig{
 			Metric:          defaultMetric,
-			SmallerIsBetter: false,
+			SmallerIsBetter: ptrs.BoolPtr(false),
 			PopulationSize:  2,
 			NumRounds:       3,
-			LengthPerRound:  model.NewLengthInBatches(1700),
-			PBTReplaceConfig: model.PBTReplaceConfig{
+			LengthPerRound:  expconf.NewLengthInBatches(1700),
+			PBTReplaceConfig: expconf.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
-			PBTExploreConfig: model.PBTExploreConfig{},
+			PBTExploreConfig: expconf.PBTExploreConfig{},
 		}
+		schemas.FillDefaults(&config)
 
 		val := func(random *rand.Rand, trialID, _ int) float64 {
 			if trialID%2 == 0 {
@@ -101,17 +106,18 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		// After each round, the two lowest-numbered trials are replaced by two new trials. Each trial
 		// therefore lasts for two rounds, except for two of the initial population and the two created
 		// right before the last round.
-		config := model.PBTConfig{
+		config := expconf.PBTConfig{
 			Metric:          defaultMetric,
-			SmallerIsBetter: false,
+			SmallerIsBetter: ptrs.BoolPtr(false),
 			PopulationSize:  4,
 			NumRounds:       8,
-			LengthPerRound:  model.NewLengthInBatches(500),
-			PBTReplaceConfig: model.PBTReplaceConfig{
+			LengthPerRound:  expconf.NewLengthInBatches(500),
+			PBTReplaceConfig: expconf.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
-			PBTExploreConfig: model.PBTExploreConfig{},
+			PBTExploreConfig: expconf.PBTExploreConfig{},
 		}
+		schemas.FillDefaults(&config)
 
 		val := func(random *rand.Rand, trialID, _ int) float64 {
 			return float64(trialID)
@@ -143,17 +149,18 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 	t.Run("old_is_better", func(t *testing.T) {
 		// Same as the above case, except that smaller is now better; thus, the two lowest-numbered trials
 		// are always the best and survive forever, but all other trials last only one round.
-		config := model.PBTConfig{
+		config := expconf.PBTConfig{
 			Metric:          defaultMetric,
-			SmallerIsBetter: true,
+			SmallerIsBetter: ptrs.BoolPtr(true),
 			PopulationSize:  4,
 			NumRounds:       8,
-			LengthPerRound:  model.NewLengthInBatches(500),
-			PBTReplaceConfig: model.PBTReplaceConfig{
+			LengthPerRound:  expconf.NewLengthInBatches(500),
+			PBTReplaceConfig: expconf.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
-			PBTExploreConfig: model.PBTExploreConfig{},
+			PBTExploreConfig: expconf.PBTExploreConfig{},
 		}
+		schemas.FillDefaults(&config)
 
 		val := func(random *rand.Rand, trialID, _ int) float64 {
 			return float64(trialID)
@@ -184,50 +191,52 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 }
 
 func TestPBTSearcherReproducibility(t *testing.T) {
-	conf := model.PBTConfig{
-		Metric: defaultMetric, SmallerIsBetter: true,
-		PopulationSize: 10, NumRounds: 10, LengthPerRound: model.NewLengthInBatches(1000),
-		PBTReplaceConfig: model.PBTReplaceConfig{TruncateFraction: 0.5},
-		PBTExploreConfig: model.PBTExploreConfig{ResampleProbability: 0.5, PerturbFactor: 0.5},
+	conf := expconf.PBTConfig{
+		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
+		PopulationSize: 10, NumRounds: 10, LengthPerRound: expconf.NewLengthInBatches(1000),
+		PBTReplaceConfig: expconf.PBTReplaceConfig{TruncateFraction: 0.5},
+		PBTExploreConfig: expconf.PBTExploreConfig{ResampleProbability: 0.5, PerturbFactor: 0.5},
 	}
+	schemas.FillDefaults(&conf)
 	searchMethod := func() SearchMethod { return newPBTSearch(conf) }
 	checkReproducibility(t, searchMethod, nil, defaultMetric)
 }
 
 func testPBTExploreWithSeed(t *testing.T, seed uint32) {
-	nullConfig := model.PBTConfig{
+	nullConfig := expconf.PBTConfig{
 		Metric:           defaultMetric,
-		SmallerIsBetter:  true,
+		SmallerIsBetter:  ptrs.BoolPtr(true),
 		PopulationSize:   10,
 		NumRounds:        10,
-		LengthPerRound:   model.NewLengthInBatches(1000),
-		PBTReplaceConfig: model.PBTReplaceConfig{},
-		PBTExploreConfig: model.PBTExploreConfig{},
+		LengthPerRound:   expconf.NewLengthInBatches(1000),
+		PBTReplaceConfig: expconf.PBTReplaceConfig{},
+		PBTExploreConfig: expconf.PBTExploreConfig{},
 	}
+	schemas.FillDefaults(&nullConfig)
 
-	spec := model.Hyperparameters{
-		"cat": model.Hyperparameter{
-			CategoricalHyperparameter: &model.CategoricalHyperparameter{
+	spec := expconf.Hyperparameters{
+		"cat": expconf.Hyperparameter{
+			CategoricalHyperparameter: &expconf.CategoricalHyperparameter{
 				Vals: []interface{}{0, 1, 2, 3, 4, 5, 6},
 			},
 		},
-		"const": model.Hyperparameter{
-			ConstHyperparameter: &model.ConstHyperparameter{
+		"const": expconf.Hyperparameter{
+			ConstHyperparameter: &expconf.ConstHyperparameter{
 				Val: "val",
 			},
 		},
-		"double": model.Hyperparameter{
-			DoubleHyperparameter: &model.DoubleHyperparameter{
+		"double": expconf.Hyperparameter{
+			DoubleHyperparameter: &expconf.DoubleHyperparameter{
 				Minval: 0, Maxval: 100,
 			},
 		},
-		"int": model.Hyperparameter{
-			IntHyperparameter: &model.IntHyperparameter{
+		"int": expconf.Hyperparameter{
+			IntHyperparameter: &expconf.IntHyperparameter{
 				Minval: 0, Maxval: 100,
 			},
 		},
-		"log": model.Hyperparameter{
-			LogHyperparameter: &model.LogHyperparameter{
+		"log": expconf.Hyperparameter{
+			LogHyperparameter: &expconf.LogHyperparameter{
 				Base: 10, Minval: -4, Maxval: -2,
 			},
 		},
@@ -256,7 +265,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 
 		// Create a hyperparameter sample where none of the values are actually valid, then resample it.
 		invalidSample := make(hparamSample)
-		spec.Each(func(name string, _ model.Hyperparameter) {
+		spec.Each(func(name string, _ expconf.Hyperparameter) {
 			invalidSample[name] = nil
 		})
 		pbt := newPBTSearch(nullConfig).(*pbtSearch)
@@ -303,64 +312,77 @@ func TestPBTExplore(t *testing.T) {
 	}
 }
 
+// XXX: delete this after code stops changing so much.  It's good to have it for now.
+func checkValidate(schema schemas.Schema) error {
+	_, errs := schemas.IsComplete(schema)
+	if errs != nil {
+		return errors.New(schemas.JoinErrors(errs, "\n"))
+	}
+	return nil
+}
+
 func TestPBTValidation(t *testing.T) {
-	goodConfig := model.PBTConfig{
-		Metric:           defaultMetric,
-		SmallerIsBetter:  true,
-		PopulationSize:   10,
-		NumRounds:        10,
-		LengthPerRound:   model.NewLengthInBatches(1000),
-		PBTReplaceConfig: model.PBTReplaceConfig{},
-		PBTExploreConfig: model.PBTExploreConfig{},
+	goodConfig := expconf.SearcherConfig{
+		PBTConfig: &expconf.PBTConfig{
+			Metric:           defaultMetric,
+			SmallerIsBetter:  ptrs.BoolPtr(true),
+			PopulationSize:   10,
+			NumRounds:        10,
+			LengthPerRound:   expconf.NewLengthInBatches(1000),
+			PBTReplaceConfig: expconf.PBTReplaceConfig{},
+			PBTExploreConfig: expconf.PBTExploreConfig{},
+		},
 	}
-	assert.NilError(t, check.Validate(goodConfig))
+	schemas.FillDefaults(&goodConfig)
+	assert.NilError(t, checkValidate(&goodConfig))
 
 	{
-		badConfig := goodConfig
-		badConfig.PopulationSize = 0
-		assert.ErrorContains(t, check.Validate(badConfig), "population_size")
-		badConfig.PopulationSize = -1
-		assert.ErrorContains(t, check.Validate(badConfig), "population_size")
-	}
-
-	{
-		badConfig := goodConfig
-		badConfig.NumRounds = 0
-		assert.ErrorContains(t, check.Validate(badConfig), "num_rounds")
-		badConfig.NumRounds = -1
-		assert.ErrorContains(t, check.Validate(badConfig), "num_rounds")
+		badConfig := expconf.SearcherConfig{}
+		schemas.Merge(&badConfig, goodConfig)
+		badConfig.PBTConfig.PopulationSize = 0
+		assert.ErrorContains(t, checkValidate(&badConfig), "population_size")
+		badConfig.PBTConfig.PopulationSize = -1
+		assert.ErrorContains(t, checkValidate(&badConfig), "population_size")
 	}
 
 	{
 		badConfig := goodConfig
-		badConfig.LengthPerRound = model.NewLengthInBatches(0)
-		assert.ErrorContains(t, check.Validate(badConfig), "length_per_round")
-		badConfig.LengthPerRound = model.NewLengthInBatches(-1)
-		assert.ErrorContains(t, check.Validate(badConfig), "length_per_round")
+		badConfig.PBTConfig.NumRounds = 0
+		assert.ErrorContains(t, checkValidate(&badConfig), "num_rounds")
+		badConfig.PBTConfig.NumRounds = -1
+		assert.ErrorContains(t, checkValidate(&badConfig), "num_rounds")
 	}
 
 	{
 		badConfig := goodConfig
-		badConfig.PerturbFactor = -.1
-		assert.ErrorContains(t, check.Validate(badConfig), "perturb_factor")
-		badConfig.PerturbFactor = 1.1
-		assert.ErrorContains(t, check.Validate(badConfig), "perturb_factor")
+		badConfig.PBTConfig.LengthPerRound = expconf.NewLengthInBatches(0)
+		assert.ErrorContains(t, checkValidate(&badConfig), "length_per_round")
+		badConfig.PBTConfig.LengthPerRound = expconf.NewLengthInBatches(-1)
+		assert.ErrorContains(t, checkValidate(&badConfig), "length_per_round")
 	}
 
 	{
 		badConfig := goodConfig
-		badConfig.TruncateFraction = -.1
-		assert.ErrorContains(t, check.Validate(badConfig), "truncate_fraction")
-		badConfig.TruncateFraction = .6
-		assert.ErrorContains(t, check.Validate(badConfig), "truncate_fraction")
+		badConfig.PBTConfig.PerturbFactor = -.1
+		assert.ErrorContains(t, checkValidate(&badConfig), "perturb_factor")
+		badConfig.PBTConfig.PerturbFactor = 1.1
+		assert.ErrorContains(t, checkValidate(&badConfig), "perturb_factor")
 	}
 
 	{
 		badConfig := goodConfig
-		badConfig.ResampleProbability = -.1
-		assert.ErrorContains(t, check.Validate(badConfig), "resample_probability")
-		badConfig.ResampleProbability = 1.1
-		assert.ErrorContains(t, check.Validate(badConfig), "resample_probability")
+		badConfig.PBTConfig.TruncateFraction = -.1
+		assert.ErrorContains(t, checkValidate(&badConfig), "truncate_fraction")
+		badConfig.PBTConfig.TruncateFraction = .6
+		assert.ErrorContains(t, checkValidate(&badConfig), "truncate_fraction")
+	}
+
+	{
+		badConfig := goodConfig
+		badConfig.PBTConfig.ResampleProbability = -.1
+		assert.ErrorContains(t, checkValidate(&badConfig), "resample_probability")
+		badConfig.PBTConfig.ResampleProbability = 1.1
+		assert.ErrorContains(t, checkValidate(&badConfig), "resample_probability")
 	}
 }
 
@@ -379,17 +401,17 @@ func TestPBTSearchMethod(t *testing.T) {
 				// Fourth generation loses to second generation also.
 				newConstantPredefinedTrial(toOps("200B V"), 0.3),
 			},
-			config: model.SearcherConfig{
-				PBTConfig: &model.PBTConfig{
+			config: expconf.SearcherConfig{
+				PBTConfig: &expconf.PBTConfig{
 					Metric:          "error",
-					SmallerIsBetter: true,
+					SmallerIsBetter: ptrs.BoolPtr(true),
 					PopulationSize:  2,
 					NumRounds:       4,
-					LengthPerRound:  model.NewLengthInBatches(200),
-					PBTReplaceConfig: model.PBTReplaceConfig{
+					LengthPerRound:  expconf.NewLengthInBatches(200),
+					PBTReplaceConfig: expconf.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
-					PBTExploreConfig: model.PBTExploreConfig{},
+					PBTExploreConfig: expconf.PBTExploreConfig{},
 				},
 			},
 		},
@@ -406,17 +428,17 @@ func TestPBTSearchMethod(t *testing.T) {
 				// Fourth generation loses to second generation also.
 				newConstantPredefinedTrial(toOps("200B V"), 0.3),
 			},
-			config: model.SearcherConfig{
-				PBTConfig: &model.PBTConfig{
+			config: expconf.SearcherConfig{
+				PBTConfig: &expconf.PBTConfig{
 					Metric:          "error",
-					SmallerIsBetter: true,
+					SmallerIsBetter: ptrs.BoolPtr(true),
 					PopulationSize:  2,
 					NumRounds:       4,
-					LengthPerRound:  model.NewLengthInBatches(200),
-					PBTReplaceConfig: model.PBTReplaceConfig{
+					LengthPerRound:  expconf.NewLengthInBatches(200),
+					PBTReplaceConfig: expconf.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
-					PBTExploreConfig: model.PBTExploreConfig{},
+					PBTExploreConfig: expconf.PBTExploreConfig{},
 				},
 			},
 		},
@@ -433,17 +455,17 @@ func TestPBTSearchMethod(t *testing.T) {
 				// Fourth generation loses to second generation also.
 				newConstantPredefinedTrial(toOps("200B V"), 0.7),
 			},
-			config: model.SearcherConfig{
-				PBTConfig: &model.PBTConfig{
+			config: expconf.SearcherConfig{
+				PBTConfig: &expconf.PBTConfig{
 					Metric:          "error",
-					SmallerIsBetter: false,
+					SmallerIsBetter: ptrs.BoolPtr(false),
 					PopulationSize:  2,
 					NumRounds:       4,
-					LengthPerRound:  model.NewLengthInBatches(200),
-					PBTReplaceConfig: model.PBTReplaceConfig{
+					LengthPerRound:  expconf.NewLengthInBatches(200),
+					PBTReplaceConfig: expconf.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
-					PBTExploreConfig: model.PBTExploreConfig{},
+					PBTExploreConfig: expconf.PBTExploreConfig{},
 				},
 			},
 		},
@@ -460,17 +482,17 @@ func TestPBTSearchMethod(t *testing.T) {
 				// Fourth generation loses to second generation also.
 				newConstantPredefinedTrial(toOps("200B V"), 0.7),
 			},
-			config: model.SearcherConfig{
-				PBTConfig: &model.PBTConfig{
+			config: expconf.SearcherConfig{
+				PBTConfig: &expconf.PBTConfig{
 					Metric:          "error",
-					SmallerIsBetter: false,
+					SmallerIsBetter: ptrs.BoolPtr(false),
 					PopulationSize:  2,
 					NumRounds:       4,
-					LengthPerRound:  model.NewLengthInBatches(200),
-					PBTReplaceConfig: model.PBTReplaceConfig{
+					LengthPerRound:  expconf.NewLengthInBatches(200),
+					PBTReplaceConfig: expconf.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
-					PBTExploreConfig: model.PBTExploreConfig{},
+					PBTExploreConfig: expconf.PBTExploreConfig{},
 				},
 			},
 		},

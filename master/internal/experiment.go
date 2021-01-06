@@ -101,12 +101,12 @@ type experiment struct {
 func newExperiment(master *Master, expModel *model.Experiment) (*experiment, error) {
 	conf := expModel.Config
 
-	if err := sproto.ValidateRP(master.system, conf.Resources.ResourcePool); err != nil {
+	if err := sproto.ValidateRP(master.system, *conf.Resources.ResourcePool); err != nil {
 		return nil, err
 	}
 
 	method := searcher.NewSearchMethod(conf.Searcher)
-	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
+	search := searcher.NewSearcher(*conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
 
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
@@ -303,7 +303,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			MaxSlots: e.Config.Resources.MaxSlots,
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
+		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: *e.Config.Resources.Weight, Handler: ctx.Self()})
 		ctx.Tell(e.rm, sproto.SetGroupPriority{
 			Priority: e.Config.Resources.Priority,
 			Handler:  ctx.Self(),
@@ -382,7 +382,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 	case sproto.SetGroupWeight:
-		e.Config.Resources.Weight = msg.Weight
+		*e.Config.Resources.Weight = msg.Weight
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 
@@ -585,7 +585,7 @@ func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
 		// TODO: Better error handling here.
 		return false
 	}
-	smallerIsBetter := e.Config.Searcher.SmallerIsBetter
+	smallerIsBetter := *e.Config.Searcher.SmallerIsBetter
 	isBest := (e.bestValidation == nil) ||
 		(smallerIsBetter && validation < *e.bestValidation) ||
 		(!smallerIsBetter && validation > *e.bestValidation)

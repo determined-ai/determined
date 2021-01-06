@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestConfigValidate(t *testing.T) {
 	type fields struct {
 		Description string
-		BindMounts  []BindMount
-		Environment Environment
+		BindMounts  expconf.BindMountsConfig
+		Environment expconf.EnvironmentConfig
 		Resources   ResourcesConfig
 		Entrypoint  []string
 	}
@@ -19,10 +20,9 @@ func TestConfigValidate(t *testing.T) {
 		fields  fields
 		wantErr bool
 	}
-	var environment Environment
+	var environment expconf.EnvironmentConfig
 	resources := ResourcesConfig{
 		Slots:         1,
-		SlotsPerTrial: 1,
 		Weight:        1,
 	}
 

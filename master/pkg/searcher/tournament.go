@@ -1,8 +1,8 @@
 package searcher
 
 import (
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/workload"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // tournamentSearch runs multiple search methods in tandem. Callbacks for completed operations
@@ -89,7 +89,7 @@ func (s *tournamentSearch) progress(float64) float64 {
 	return sum / float64(len(s.subSearches))
 }
 
-func (s *tournamentSearch) Unit() model.Unit {
+func (s *tournamentSearch) Unit() expconf.Unit {
 	return s.subSearches[0].Unit()
 }
 

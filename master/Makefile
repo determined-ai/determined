@@ -1,4 +1,4 @@
-GENERATED_COMMITTED := pkg/schemas/expconf/v1_gen.go
+GENERATED_COMMITTED := pkg/schemas/schema_gen.go pkg/schemas/expconf/schema_gen.go
 GENERATED := $(GENERATED_COMMITTED) packaging/LICENSE
 
 export VERSION := $(shell cat ../VERSION)
@@ -99,9 +99,20 @@ publish-dev:
 packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py master $@
 
-pkg/schemas/expconf/v1_gen.go: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
+# Root schemas generated file; this contains all the schemas we have.
+pkg/schemas/schema_gen.go: ../schemas/gen.py $(shell find ../schemas -regex ".*/v.*/.*\.json")
 	../schemas/gen.py \
 		--output $@ \
+		--package schemas \
 		go \
-		$(shell find ../schemas/expconf/v1 -name "*.json")
+		$(shell find ../schemas -regex ".*/v.*/.*\.json")
+	goimports -l -local github.com/determined-ai -w $@
+
+# Package-level generated file; this only generates code related to expconf objects.
+pkg/schemas/expconf/schema_gen.go: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
+	../schemas/gen.py \
+		--output $@ \
+		--package expconf \
+		go \
+		$(shell find ../schemas/expconf -name "*.json")
 	goimports -l -local github.com/determined-ai -w $@

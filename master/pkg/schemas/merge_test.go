@@ -15,7 +15,7 @@ type X struct {
 }
 
 
-func TestFillWith(t *testing.T) {
+func TestMerge(t *testing.T) {
 	obj := X {
 		A: ptrs.StringPtr("obj:x.a"),
 		B: nil,
@@ -49,7 +49,7 @@ type UB struct {
 	B *string
 }
 
-func TestUnionFillWith(t *testing.T) {
+func TestUnionMerge(t *testing.T) {
 	// 1. src has a union member, obj does not -> recurse into that field.
 	obj := Y {
 		A: nil,
@@ -110,7 +110,7 @@ func TestUnionFillWith(t *testing.T) {
 	assert.Assert(t, obj.C == nil)
 }
 
-func TestMapFillWith(t *testing.T) {
+func TestMapMerge(t *testing.T) {
 	obj := map[string]string{"1": "obj:one", "2": "obj:two"}
 	src := map[string]string{"2": "src:two", "3": "src:three"}
 	Merge(&obj, src)
@@ -119,7 +119,7 @@ func TestMapFillWith(t *testing.T) {
 	assert.Assert(t, obj["3"] == "src:three")
 }
 
-func TestSliceFillWith(t *testing.T) {
+func TestSliceMerge(t *testing.T) {
 	obj := &[]int{0, 1}
 	src := &[]int{2, 3}
 	Merge(&obj, src)

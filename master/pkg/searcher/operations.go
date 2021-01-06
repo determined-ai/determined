@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Operation represents the base interface for possible operations that a search method can return.
@@ -135,11 +136,11 @@ func (create Create) GetRequestID() RequestID { return create.RequestID }
 // Train is an operation emitted by search methods to signal the trial train for a specified length.
 type Train struct {
 	RequestID RequestID
-	Length    model.Length
+	Length    expconf.Length
 }
 
 // NewTrain returns a new train operation.
-func NewTrain(requestID RequestID, length model.Length) Train {
+func NewTrain(requestID RequestID, length expconf.Length) Train {
 	return Train{requestID, length}
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
 )
@@ -134,7 +135,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	if config.Description == "" {
 		config.Description = fmt.Sprintf(
 			"Command (%s)",
-			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+			petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep),
 		)
 	}
 	if len(config.Entrypoint) == 1 {

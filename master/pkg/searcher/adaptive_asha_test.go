@@ -5,7 +5,9 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestBracketMaxTrials(t *testing.T) {
@@ -23,11 +25,12 @@ func TestBracketMaxConcurrentTrials(t *testing.T) {
 }
 
 func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
-	conf := model.AdaptiveASHAConfig{
-		Metric: defaultMetric, SmallerIsBetter: true,
-		MaxLength: model.NewLengthInBatches(6400), MaxTrials: 128, Divisor: 4,
-		Mode: model.AggressiveMode, MaxRungs: 3,
+	conf := expconf.AdaptiveASHAConfig{
+		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
+		MaxLength: expconf.NewLengthInBatches(6400), MaxTrials: 128, Divisor: ptrs.Float64Ptr(4),
+		Mode: expconf.AdaptiveModePtr(expconf.AggressiveMode), MaxRungs: ptrs.IntPtr(3),
 	}
+	schemas.FillDefaults(&conf)
 	gen := func() SearchMethod { return newAdaptiveASHASearch(conf) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
@@ -44,16 +47,16 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("900B V"), 0.4),
 				newConstantPredefinedTrial(toOps("900B V"), 0.5),
 			},
-			config: model.SearcherConfig{
-				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
 					Metric:              "error",
-					SmallerIsBetter:     true,
-					MaxLength:           model.NewLengthInBatches(900),
+					SmallerIsBetter:     ptrs.BoolPtr(true),
+					MaxLength:           expconf.NewLengthInBatches(900),
 					MaxTrials:           5,
-					Mode:                model.StandardMode,
-					MaxRungs:            2,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Mode:                expconf.AdaptiveModePtr(expconf.StandardMode),
+					MaxRungs:            ptrs.IntPtr(2),
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},
@@ -66,16 +69,16 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("900B V"), 0.4),
 				newConstantPredefinedTrial(toOps("900B V"), 0.5),
 			},
-			config: model.SearcherConfig{
-				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
 					Metric:              "error",
-					SmallerIsBetter:     true,
-					MaxLength:           model.NewLengthInBatches(900),
+					SmallerIsBetter:     ptrs.BoolPtr(true),
+					MaxLength:           expconf.NewLengthInBatches(900),
 					MaxTrials:           5,
-					Mode:                model.StandardMode,
-					MaxRungs:            2,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Mode:                expconf.AdaptiveModePtr(expconf.StandardMode),
+					MaxRungs:            ptrs.IntPtr(2),
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},
@@ -88,16 +91,16 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("900B V"), 0.2),
 				newConstantPredefinedTrial(toOps("900B V"), 0.1),
 			},
-			config: model.SearcherConfig{
-				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
 					Metric:              "error",
-					SmallerIsBetter:     false,
-					MaxLength:           model.NewLengthInBatches(900),
+					SmallerIsBetter:     ptrs.BoolPtr(false),
+					MaxLength:           expconf.NewLengthInBatches(900),
 					MaxTrials:           5,
-					Mode:                model.StandardMode,
-					MaxRungs:            2,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Mode:                expconf.AdaptiveModePtr(expconf.StandardMode),
+					MaxRungs:            ptrs.IntPtr(2),
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},
@@ -110,16 +113,16 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("900B V"), 0.2),
 				newConstantPredefinedTrial(toOps("900B V"), 0.1),
 			},
-			config: model.SearcherConfig{
-				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveASHAConfig: &expconf.AdaptiveASHAConfig{
 					Metric:              "error",
-					SmallerIsBetter:     false,
-					MaxLength:           model.NewLengthInBatches(900),
+					SmallerIsBetter:     ptrs.BoolPtr(false),
+					MaxLength:           expconf.NewLengthInBatches(900),
 					MaxTrials:           5,
-					Mode:                model.StandardMode,
-					MaxRungs:            2,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Mode:                expconf.AdaptiveModePtr(expconf.StandardMode),
+					MaxRungs:            ptrs.IntPtr(2),
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},

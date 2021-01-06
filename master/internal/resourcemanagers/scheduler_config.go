@@ -91,5 +91,14 @@ type RoundRobinSchedulerConfig struct{}
 
 // Validate implements the check.Validatable interface.
 func (p PrioritySchedulerConfig) Validate() []error {
-	return model.ValidatePrioritySetting(p.DefaultPriority)
+	var errs []error
+	if p.DefaultPriority != nil {
+		errs = append(errs, check.GreaterThanOrEqualTo(
+			p.DefaultPriority, model.MinUserSchedulingPriority,
+			"default_priority must be greater than 0 and less than 100"))
+		errs = append(errs, check.LessThanOrEqualTo(
+			p.DefaultPriority, model.MaxUserSchedulingPriority,
+			"default_priority must be greater than 0 and less than 100"))
+	}
+	return errs
 }

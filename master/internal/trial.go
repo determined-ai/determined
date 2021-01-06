@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/pkg/union"
@@ -304,7 +305,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if !t.idSet {
 			return nil
 		}
-		if t.restarts > t.experiment.Config.MaxRestarts {
+		if t.restarts > *t.experiment.Config.MaxRestarts {
 			if !t.replaying {
 				if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
 					ctx.Log().Error(err)
@@ -336,9 +337,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			ctx.Self().Stop()
 		} else if !t.sequencer.UpToDate() && t.experimentState == model.ActiveState &&
 			!t.replaying {
-			slotsNeeded := t.experiment.Config.Resources.SlotsPerTrial
-			label := t.experiment.Config.Resources.AgentLabel
-			resourcePool := t.experiment.Config.Resources.ResourcePool
+			slotsNeeded := *t.experiment.Config.Resources.SlotsPerTrial
+			label := *t.experiment.Config.Resources.AgentLabel
+			resourcePool := *t.experiment.Config.Resources.ResourcePool
 			var name string
 			if t.idSet {
 				name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
@@ -547,7 +548,7 @@ func (t *trial) processAllocated(
 			return nil
 		}
 		t.processID(ctx, modelTrial.ID)
-		if t.experiment.Config.PerformInitialValidation {
+		if *t.experiment.Config.PerformInitialValidation {
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
 				t.terminate(ctx, true)
@@ -648,7 +649,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
 
 	completedSearcherOp := false
-	units := model.UnitsFromBatches(msg.Workload.NumBatches, t.sequencer.unitContext)
+	units := expconf.UnitsFromBatches(msg.Workload.NumBatches, t.sequencer.unitContext)
 	isBestValidation := ctx.Ask(ctx.Self().Parent(), trialCompletedWorkload{t.id, msg, units})
 	op, metrics, err := t.sequencer.WorkloadCompleted(msg, isBestValidation)
 	switch {
@@ -1033,7 +1034,7 @@ func (t *trial) restore(ctx *actor.Context) {
 }
 
 func (t *trial) trialClosing() bool {
-	return t.earlyExit || t.killed || t.restarts > t.experiment.Config.MaxRestarts ||
+	return t.earlyExit || t.killed || t.restarts > *t.experiment.Config.MaxRestarts ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
 }
@@ -1119,9 +1120,9 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 
 	ctx.Log().Errorf("unexpected failure of trial after restart %d/%d: %v",
-		t.restarts, t.experiment.Config.MaxRestarts, status)
+		t.restarts, *t.experiment.Config.MaxRestarts, status)
 	t.restarts++
-	if t.restarts <= t.experiment.Config.MaxRestarts {
+	if t.restarts <= *t.experiment.Config.MaxRestarts {
 		t.restore(ctx)
 		return
 	}

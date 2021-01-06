@@ -19,10 +19,11 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -185,13 +186,16 @@ func (a *apiServer) PreviewHPSearch(
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
 	}
-	config := model.DefaultExperimentConfig(&a.m.config.TaskContainerDefaults)
-	if err = json.Unmarshal(bytes, &config); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
+
+	config, err := expconf.ParseAnyExperimentConfigJSON(bytes)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
-	if err = check.Validate(config.Searcher); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment config: %s", err)
-	}
+
+	schemas.FillDefaults(&config)
+
+	schemas.IsComplete(&config.Searcher)
+	schemas.IsComplete(&config.Hyperparameters)
 
 	sm := searcher.NewSearchMethod(config.Searcher)
 	s := searcher.NewSearcher(req.Seed, sm, config.Hyperparameters)
@@ -205,7 +209,7 @@ func (a *apiServer) PreviewHPSearch(
 		switch op := op.(type) {
 		case searcher.Train:
 			switch op.Length.Unit {
-			case model.Records:
+			case expconf.Records:
 				return experimentv1.RunnableOperation{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingUnits{
@@ -213,7 +217,7 @@ func (a *apiServer) PreviewHPSearch(
 						Count: int32(op.Length.Units),
 					},
 				}, nil
-			case model.Batches:
+			case expconf.Batches:
 				return experimentv1.RunnableOperation{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingUnits{
@@ -221,7 +225,7 @@ func (a *apiServer) PreviewHPSearch(
 						Count: int32(op.Length.Units),
 					},
 				}, nil
-			case model.Epochs:
+			case expconf.Epochs:
 				return experimentv1.RunnableOperation{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingUnits{
@@ -741,7 +745,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	}
 }
 
-func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherConfig) (
+func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.SearcherConfig) (
 	trials []int, err error) {
 	type Ranking int
 	const (
@@ -775,9 +779,9 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherC
 	}
 	switch ranking {
 	case ByMetricOfInterest:
-		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric, *s.SmallerIsBetter)
 	case ByTrainingLength:
-		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, *s.SmallerIsBetter)
 	case NoFilter:
 		return a.m.db.TrialIDsByExperiment(experimentID)
 	default:

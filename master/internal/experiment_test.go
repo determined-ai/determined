@@ -8,6 +8,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 type metricCase struct {
@@ -18,10 +19,10 @@ type metricCase struct {
 func testBestValidationCase(t *testing.T, smallerIsBetter bool, metrics []metricCase) {
 	exp := &experiment{
 		Experiment: &model.Experiment{
-			Config: model.ExperimentConfig{
-				Searcher: model.SearcherConfig{
+			Config: expconf.ExperimentConfig{
+				Searcher: expconf.SearcherConfig{
 					Metric:          "metric",
-					SmallerIsBetter: smallerIsBetter,
+					SmallerIsBetter: &smallerIsBetter,
 				},
 			},
 		},

@@ -9,6 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // TaskSpec provides the necessary information for an agent to start a task.
@@ -43,7 +44,7 @@ type GCCheckpoints struct {
 	AgentUserGroup *model.AgentUserGroup
 
 	ExperimentID     int
-	ExperimentConfig model.ExperimentConfig
+	ExperimentConfig expconf.ExperimentConfig
 	ToDelete         json.RawMessage
 }
 
@@ -52,7 +53,7 @@ type StartContainer struct {
 	// AgentUserGroup is the user and group to run this task as.
 	AgentUserGroup *model.AgentUserGroup
 
-	ExperimentConfig    model.ExperimentConfig
+	ExperimentConfig    expconf.ExperimentConfig
 	ModelDefinition     archive.Archive
 	HParams             map[string]interface{}
 	TrialSeed           uint32

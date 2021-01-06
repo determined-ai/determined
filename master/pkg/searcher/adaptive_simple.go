@@ -4,7 +4,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func maxTrials(maxTrials, brackets, index int) int {
@@ -15,19 +15,21 @@ func maxTrials(maxTrials, brackets, index int) int {
 	return count
 }
 
-func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
-	brackets := parseAdaptiveMode(config.Mode)(config.MaxRungs)
+func newAdaptiveSimpleSearch(config expconf.AdaptiveSimpleConfig) SearchMethod {
+	brackets := parseAdaptiveMode(*config.Mode)(*config.MaxRungs)
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
+
+	trueValue := true
 
 	methods := make([]SearchMethod, 0, len(brackets))
 	for i, numRungs := range brackets {
-		c := model.SyncHalvingConfig{
+		c := expconf.SyncHalvingConfig{
 			Metric:          config.Metric,
 			SmallerIsBetter: config.SmallerIsBetter,
 			MaxLength:       config.MaxLength,
 			Divisor:         config.Divisor,
 			NumRungs:        numRungs,
-			TrainStragglers: true,
+			TrainStragglers: &trueValue,
 		}
 		numTrials := max(maxTrials(config.MaxTrials, len(brackets), i), 1)
 		methods = append(methods, newSyncHalvingSimpleSearch(c, numTrials))
@@ -36,13 +38,13 @@ func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
 	return newTournamentSearch(methods...)
 }
 
-func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) SearchMethod {
+func newSyncHalvingSimpleSearch(config expconf.SyncHalvingConfig, trials int) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedUnits := 0
 	for id := 0; id < config.NumRungs; id++ {
 		unitsNeeded := max(int(float64(config.MaxLength.Units)/
-			math.Pow(config.Divisor, float64(config.NumRungs-id-1))), 1)
-		startTrials := max(int(float64(trials)/math.Pow(config.Divisor, float64(id))), 1)
+			math.Pow(*config.Divisor, float64(config.NumRungs-id-1))), 1)
+		startTrials := max(int(float64(trials)/math.Pow(*config.Divisor, float64(id))), 1)
 		if id != 0 {
 			prev := rungs[id-1]
 			unitsNeeded = max(unitsNeeded, prev.unitsNeeded.Units)
@@ -54,18 +56,18 @@ func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) Sear
 		}
 		rungs = append(rungs,
 			&rung{
-				unitsNeeded: model.NewLength(config.Unit(), unitsNeeded),
+				unitsNeeded: expconf.NewLength(config.Unit(), unitsNeeded),
 				startTrials: startTrials,
 			},
 		)
 	}
 
-	config.Budget = model.NewLength(config.Unit(), expectedUnits)
+	config.Budget = expconf.NewLength(config.Unit(), expectedUnits)
 	return &syncHalvingSearch{
 		SyncHalvingConfig: config,
 		rungs:             rungs,
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
-		expectedUnits:     model.NewLength(config.Unit(), expectedUnits),
+		expectedUnits:     expconf.NewLength(config.Unit(), expectedUnits),
 	}
 }

@@ -5,11 +5,11 @@ import (
 
 	"github.com/docker/docker/api/types/mount"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-// ToDockerMounts converts model bind mounts to container mounts.
-func ToDockerMounts(bindMounts []model.BindMount) []mount.Mount {
+// ToDockerMounts converts expconf bind mounts to container mounts.
+func ToDockerMounts(bindMounts []expconf.BindMount) []mount.Mount {
 	dockerMounts := make([]mount.Mount, 0, len(bindMounts))
 	for _, m := range bindMounts {
 		target := m.ContainerPath
@@ -20,9 +20,9 @@ func ToDockerMounts(bindMounts []model.BindMount) []mount.Mount {
 			Type:     mount.TypeBind,
 			Source:   m.HostPath,
 			Target:   target,
-			ReadOnly: m.ReadOnly,
+			ReadOnly: *m.ReadOnly,
 			BindOptions: &mount.BindOptions{
-				Propagation: mount.Propagation(m.Propagation),
+				Propagation: mount.Propagation(*m.Propagation),
 			},
 		})
 	}

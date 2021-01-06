@@ -6,17 +6,18 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/workload"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,
 // one trial is generated per point on the grid and trained for the specified number of steps.
 type gridSearch struct {
 	defaultSearchMethod
-	model.GridConfig
+	expconf.GridConfig
 	trials int
 }
 
-func newGridSearch(config model.GridConfig) SearchMethod {
+func newGridSearch(config expconf.GridConfig) SearchMethod {
 	return &gridSearch{GridConfig: config}
 }
 
@@ -46,10 +47,10 @@ func (s *gridSearch) trialExitedEarly(
 	return nil, nil
 }
 
-func newHyperparameterGrid(params model.Hyperparameters) []hparamSample {
+func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
 	var names []string
 	var values [][]interface{}
-	params.Each(func(name string, param model.Hyperparameter) {
+	params.Each(func(name string, param expconf.Hyperparameter) {
 		names = append(names, name)
 		values = append(values, grid(param))
 	})
@@ -84,7 +85,7 @@ func cartesianProduct(names []string, valueSets [][]interface{}) []hparamSample 
 	}
 }
 
-func grid(h model.Hyperparameter) []interface{} {
+func grid(h expconf.Hyperparameter) []interface{} {
 	switch {
 	case h.ConstHyperparameter != nil:
 		p := *h.ConstHyperparameter

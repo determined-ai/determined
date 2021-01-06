@@ -3,18 +3,21 @@ package searcher
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestSHASearcherWithRecords(t *testing.T) {
-	actual := model.SyncHalvingConfig{
+	config := expconf.SyncHalvingConfig{
 		Metric:          defaultMetric,
 		NumRungs:        4,
-		MaxLength:       model.NewLengthInRecords(5120050),
-		Budget:          model.NewLengthInRecords(3072050),
-		Divisor:         4,
-		TrainStragglers: true,
+		MaxLength:       expconf.NewLengthInRecords(5120050),
+		Budget:          expconf.NewLengthInRecords(3072050),
+		Divisor:         ptrs.Float64Ptr(4),
+		TrainStragglers: ptrs.BoolPtr(true),
 	}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("80000R V"), toOps("80000R V"), toOps("80000R V"),
 		toOps("80000R V"), toOps("80000R V"), toOps("80000R V"),
@@ -22,19 +25,20 @@ func TestSHASearcherWithRecords(t *testing.T) {
 		toOps("80000R V 240003R V"),
 		toOps("80000R V 240003R V 960009R V 3840038R V"),
 	}
-	searchMethod := newSyncHalvingSearch(actual)
+	searchMethod := newSyncHalvingSearch(config)
 	checkSimulation(t, searchMethod, nil, ConstantValidation, expected)
 }
 
 func TestSHASearcherWithBatches(t *testing.T) {
-	actual := model.SyncHalvingConfig{
+	config := expconf.SyncHalvingConfig{
 		Metric:          defaultMetric,
 		NumRungs:        4,
-		MaxLength:       model.NewLengthInBatches(80000),
-		Budget:          model.NewLengthInBatches(48000),
-		Divisor:         4,
-		TrainStragglers: true,
+		MaxLength:       expconf.NewLengthInBatches(80000),
+		Budget:          expconf.NewLengthInBatches(48000),
+		Divisor:         ptrs.Float64Ptr(4),
+		TrainStragglers: ptrs.BoolPtr(true),
 	}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("1250B V"), toOps("1250B V"), toOps("1250B V"),
 		toOps("1250B V"), toOps("1250B V"), toOps("1250B V"),
@@ -42,7 +46,7 @@ func TestSHASearcherWithBatches(t *testing.T) {
 		toOps("1250B V 3750B V"),
 		toOps("1250B V 3750B V 15000B V 60000B V"),
 	}
-	searchMethod := newSyncHalvingSearch(actual)
+	searchMethod := newSyncHalvingSearch(config)
 	checkSimulation(t, searchMethod, nil, ConstantValidation, expected)
 }
 
@@ -63,15 +67,15 @@ func TestSHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1250B V"), 0.10),
 				newConstantPredefinedTrial(toOps("1250B V"), 0.11),
 			},
-			config: model.SearcherConfig{
-				SyncHalvingConfig: &model.SyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				SyncHalvingConfig: &expconf.SyncHalvingConfig{
 					Metric:          "error",
 					NumRungs:        4,
-					SmallerIsBetter: true,
-					MaxLength:       model.NewLengthInBatches(80000),
-					Budget:          model.NewLengthInBatches(48000),
-					Divisor:         4,
-					TrainStragglers: true,
+					SmallerIsBetter: ptrs.BoolPtr(true),
+					MaxLength:       expconf.NewLengthInBatches(80000),
+					Budget:          expconf.NewLengthInBatches(48000),
+					Divisor:         ptrs.Float64Ptr(4),
+					TrainStragglers: ptrs.BoolPtr(true),
 				},
 			},
 		},
@@ -90,15 +94,15 @@ func TestSHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1250B V"), 0.10),
 				newEarlyExitPredefinedTrial(toOps("1250B"), 0.11),
 			},
-			config: model.SearcherConfig{
-				SyncHalvingConfig: &model.SyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				SyncHalvingConfig: &expconf.SyncHalvingConfig{
 					Metric:          "error",
 					NumRungs:        4,
-					SmallerIsBetter: true,
-					MaxLength:       model.NewLengthInBatches(80000),
-					Budget:          model.NewLengthInBatches(48000),
-					Divisor:         4,
-					TrainStragglers: true,
+					SmallerIsBetter: ptrs.BoolPtr(true),
+					MaxLength:       expconf.NewLengthInBatches(80000),
+					Budget:          expconf.NewLengthInBatches(48000),
+					Divisor:         ptrs.Float64Ptr(4),
+					TrainStragglers: ptrs.BoolPtr(true),
 				},
 			},
 		},
@@ -117,15 +121,15 @@ func TestSHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1250B V"), 0.02),
 				newEarlyExitPredefinedTrial(toOps("1250B"), 0.01),
 			},
-			config: model.SearcherConfig{
-				SyncHalvingConfig: &model.SyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				SyncHalvingConfig: &expconf.SyncHalvingConfig{
 					Metric:          "error",
 					NumRungs:        4,
-					SmallerIsBetter: false,
-					MaxLength:       model.NewLengthInBatches(80000),
-					Budget:          model.NewLengthInBatches(48000),
-					Divisor:         4,
-					TrainStragglers: true,
+					SmallerIsBetter: ptrs.BoolPtr(false),
+					MaxLength:       expconf.NewLengthInBatches(80000),
+					Budget:          expconf.NewLengthInBatches(48000),
+					Divisor:         ptrs.Float64Ptr(4),
+					TrainStragglers: ptrs.BoolPtr(true),
 				},
 			},
 		},
@@ -144,15 +148,15 @@ func TestSHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1250B V"), 0.02),
 				newEarlyExitPredefinedTrial(toOps("1250B"), 0.01),
 			},
-			config: model.SearcherConfig{
-				SyncHalvingConfig: &model.SyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				SyncHalvingConfig: &expconf.SyncHalvingConfig{
 					Metric:          "error",
 					NumRungs:        4,
-					SmallerIsBetter: false,
-					MaxLength:       model.NewLengthInBatches(80000),
-					Budget:          model.NewLengthInBatches(48000),
-					Divisor:         4,
-					TrainStragglers: true,
+					SmallerIsBetter: ptrs.BoolPtr(false),
+					MaxLength:       expconf.NewLengthInBatches(80000),
+					Budget:          expconf.NewLengthInBatches(48000),
+					Divisor:         ptrs.Float64Ptr(4),
+					TrainStragglers: ptrs.BoolPtr(true),
 				},
 			},
 		},

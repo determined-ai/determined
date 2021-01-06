@@ -3,44 +3,49 @@ package searcher
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestAdaptiveSimpleConservativeCornerCase(t *testing.T) {
-	actual := model.AdaptiveSimpleConfig{
-		Metric: defaultMetric, SmallerIsBetter: true,
-		MaxLength: model.NewLengthInBatches(100), MaxTrials: 1,
-		Divisor: 4, Mode: model.ConservativeMode, MaxRungs: 3,
+	config := expconf.AdaptiveSimpleConfig{
+		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
+		MaxLength: expconf.NewLengthInBatches(100), MaxTrials: 1,
+		Divisor: ptrs.Float64Ptr(4), Mode: expconf.AdaptiveModePtr(expconf.ConservativeMode), MaxRungs: ptrs.IntPtr(3),
 	}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("100B V"),
 		toOps("25B V 75B V"),
 		toOps("6B V 19B V 75B V"),
 	}
-	searchMethod := newAdaptiveSimpleSearch(actual)
+	searchMethod := newAdaptiveSimpleSearch(config)
 	checkSimulation(t, searchMethod, nil, ConstantValidation, expected)
 }
 
 func TestAdaptiveSimpleAggressiveCornerCase(t *testing.T) {
-	actual := model.AdaptiveSimpleConfig{
-		Metric: defaultMetric, SmallerIsBetter: true,
-		MaxLength: model.NewLengthInBatches(100), MaxTrials: 1,
-		Divisor: 4, Mode: model.AggressiveMode, MaxRungs: 3,
+	config := expconf.AdaptiveSimpleConfig{
+		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
+		MaxLength: expconf.NewLengthInBatches(100), MaxTrials: 1,
+		Divisor: ptrs.Float64Ptr(4), Mode: expconf.AdaptiveModePtr(expconf.AggressiveMode), MaxRungs: ptrs.IntPtr(3),
 	}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("6B V 19B V 75B V"),
 	}
-	searchMethod := newAdaptiveSimpleSearch(actual)
+	searchMethod := newAdaptiveSimpleSearch(config)
 	checkSimulation(t, searchMethod, nil, ConstantValidation, expected)
 }
 
 func TestAdaptiveSimpleSearcherReproducibility(t *testing.T) {
-	conf := model.AdaptiveSimpleConfig{
-		Metric: defaultMetric, SmallerIsBetter: true,
-		MaxLength: model.NewLengthInBatches(6400), MaxTrials: 50,
-		Divisor: 4, Mode: model.ConservativeMode, MaxRungs: 3,
+	config := expconf.AdaptiveSimpleConfig{
+		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
+		MaxLength: expconf.NewLengthInBatches(6400), MaxTrials: 50,
+		Divisor: ptrs.Float64Ptr(4), Mode: expconf.AdaptiveModePtr(expconf.ConservativeMode), MaxRungs: ptrs.IntPtr(3),
 	}
-	gen := func() SearchMethod { return newAdaptiveSimpleSearch(conf) }
+	schemas.FillDefaults(&config)
+	gen := func() SearchMethod { return newAdaptiveSimpleSearch(config) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 
@@ -60,15 +65,15 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("200B V 600B V 2400B V"), 0.7),
 				newConstantPredefinedTrial(toOps("200B V"), 0.8),
 			},
-			config: model.SearcherConfig{
-				AdaptiveSimpleConfig: &model.AdaptiveSimpleConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveSimpleConfig: &expconf.AdaptiveSimpleConfig{
 					Metric:          "error",
-					SmallerIsBetter: true,
-					Mode:            model.StandardMode,
+					SmallerIsBetter: ptrs.BoolPtr(true),
+					Mode:            expconf.AdaptiveModePtr(expconf.StandardMode),
 					MaxTrials:       8,
-					MaxLength:       model.NewLengthInBatches(3200),
-					MaxRungs:        5,
-					Divisor:         4,
+					MaxLength:       expconf.NewLengthInBatches(3200),
+					MaxRungs:        ptrs.IntPtr(5),
+					Divisor:         ptrs.Float64Ptr(4),
 				},
 			},
 		},
@@ -87,15 +92,15 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("200B V 600B V 2400B V"), 0.7),
 				newConstantPredefinedTrial(toOps("200B V"), 0.8),
 			},
-			config: model.SearcherConfig{
-				AdaptiveSimpleConfig: &model.AdaptiveSimpleConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveSimpleConfig: &expconf.AdaptiveSimpleConfig{
 					Metric:          "error",
-					SmallerIsBetter: true,
-					Mode:            model.StandardMode,
+					SmallerIsBetter: ptrs.BoolPtr(true),
+					Mode:            expconf.AdaptiveModePtr(expconf.StandardMode),
 					MaxTrials:       8,
-					MaxLength:       model.NewLengthInBatches(3200),
-					MaxRungs:        5,
-					Divisor:         4,
+					MaxLength:       expconf.NewLengthInBatches(3200),
+					MaxRungs:        ptrs.IntPtr(5),
+					Divisor:         ptrs.Float64Ptr(4),
 				},
 			},
 		},
@@ -113,15 +118,15 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("200B V 600B V 2400B V"), 0.2),
 				newConstantPredefinedTrial(toOps("200B V"), 0.1),
 			},
-			config: model.SearcherConfig{
-				AdaptiveSimpleConfig: &model.AdaptiveSimpleConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveSimpleConfig: &expconf.AdaptiveSimpleConfig{
 					Metric:          "error",
-					SmallerIsBetter: false,
-					Mode:            model.StandardMode,
+					SmallerIsBetter: ptrs.BoolPtr(false),
+					Mode:            expconf.AdaptiveModePtr(expconf.StandardMode),
 					MaxTrials:       8,
-					MaxLength:       model.NewLengthInBatches(3200),
-					MaxRungs:        5,
-					Divisor:         4,
+					MaxLength:       expconf.NewLengthInBatches(3200),
+					MaxRungs:        ptrs.IntPtr(5),
+					Divisor:         ptrs.Float64Ptr(4),
 				},
 			},
 		},
@@ -139,15 +144,15 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("200B V 600B V 2400B V"), 0.2),
 				newConstantPredefinedTrial(toOps("200B V"), 0.1),
 			},
-			config: model.SearcherConfig{
-				AdaptiveSimpleConfig: &model.AdaptiveSimpleConfig{
+			config: expconf.SearcherConfig{
+				AdaptiveSimpleConfig: &expconf.AdaptiveSimpleConfig{
 					Metric:          "error",
-					SmallerIsBetter: false,
-					Mode:            model.StandardMode,
+					SmallerIsBetter: ptrs.BoolPtr(false),
+					Mode:            expconf.AdaptiveModePtr(expconf.StandardMode),
 					MaxTrials:       8,
-					MaxLength:       model.NewLengthInBatches(3200),
-					MaxRungs:        5,
-					Divisor:         4,
+					MaxLength:       expconf.NewLengthInBatches(3200),
+					MaxRungs:        ptrs.IntPtr(5),
+					Divisor:         ptrs.Float64Ptr(4),
 				},
 			},
 		},

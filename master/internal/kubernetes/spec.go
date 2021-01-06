@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/fluent"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -39,7 +40,7 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 
 func (p *pod) configureEnvVars(
 	envVarsMap map[string]string,
-	environment model.Environment,
+	environment expconf.EnvironmentConfig,
 	deviceType device.Type,
 ) ([]k8sV1.EnvVar, error) {
 	for _, envVar := range environment.EnvironmentVariables.For(deviceType) {
@@ -253,7 +254,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 	envVarsMap["DET_K8S_LOG_TO_FILE"] = "true"
 	envVars, err := p.configureEnvVars(
 		envVarsMap,
-		p.taskSpec.StartContainer.ExperimentConfig.Environment,
+		*p.taskSpec.StartContainer.ExperimentConfig.Environment,
 		deviceType,
 	)
 	if err != nil {
@@ -264,14 +265,14 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		len(runArchives),
 		initContainerVolumeMounts,
 		exp.ExperimentConfig.Environment.Image.For(deviceType),
-		configureImagePullPolicy(exp.ExperimentConfig.Environment),
+		configureImagePullPolicy(*exp.ExperimentConfig.Environment),
 	)
 
 	mainContainer := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
 		Command:         []string{"/run/determined/train/entrypoint.sh"},
 		Image:           exp.ExperimentConfig.Environment.Image.For(deviceType),
-		ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
+		ImagePullPolicy: configureImagePullPolicy(*exp.ExperimentConfig.Environment),
 		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    volumeMounts,
@@ -330,7 +331,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		Name:            model.DeterminedK8FluentContainerName,
 		Command:         fluentArgs,
 		Image:           "fluent/fluent-bit:1.6",
-		ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
+		ImagePullPolicy: configureImagePullPolicy(*exp.ExperimentConfig.Environment),
 		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
 		VolumeMounts:    loggingMounts,
 		WorkingDir:      fluentBaseDir,
@@ -365,7 +366,7 @@ func (p *pod) createPodSpecForCommand(ctx *actor.Context) error {
 	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
 
-	for _, port := range cmd.Config.Environment.Ports {
+	for _, port := range *cmd.Config.Environment.Ports {
 		p.ports = append(p.ports, port)
 	}
 
@@ -422,7 +423,7 @@ func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 
 	envVars, err := p.configureEnvVars(
 		tasks.GCEnvVars(),
-		p.taskSpec.GCCheckpoints.ExperimentConfig.Environment,
+		*p.taskSpec.GCCheckpoints.ExperimentConfig.Environment,
 		deviceType,
 	)
 	if err != nil {
@@ -433,7 +434,7 @@ func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 		len(runArchives),
 		initContainerVolumeMounts,
 		gcc.ExperimentConfig.Environment.Image.For(deviceType),
-		configureImagePullPolicy(gcc.ExperimentConfig.Environment),
+		configureImagePullPolicy(*gcc.ExperimentConfig.Environment),
 	)
 
 	container := k8sV1.Container{
@@ -441,7 +442,7 @@ func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 		Command:         tasks.GCCmd(),
 		Env:             envVars,
 		Image:           gcc.ExperimentConfig.Environment.Image.For(deviceType),
-		ImagePullPolicy: configureImagePullPolicy(gcc.ExperimentConfig.Environment),
+		ImagePullPolicy: configureImagePullPolicy(*gcc.ExperimentConfig.Environment),
 		SecurityContext: configureSecurityContext(gcc.AgentUserGroup),
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    volumeMounts,
@@ -492,9 +493,9 @@ func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.Secur
 	return nil
 }
 
-func configureImagePullPolicy(environment model.Environment) k8sV1.PullPolicy {
+func configureImagePullPolicy(environment expconf.EnvironmentConfig) k8sV1.PullPolicy {
 	pullPolicy := k8sV1.PullAlways
-	if !environment.ForcePullImage {
+	if !*environment.ForcePullImage {
 		pullPolicy = k8sV1.PullIfNotPresent
 	}
 	return pullPolicy

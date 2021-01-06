@@ -6,19 +6,19 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func intP(x int) *int {
 	return &x
 }
 
-func generateHyperparameters(counts []int) model.Hyperparameters {
-	params := make(model.Hyperparameters, len(counts))
+func generateHyperparameters(counts []int) expconf.Hyperparameters {
+	params := make(expconf.Hyperparameters, len(counts))
 	for i, count := range counts {
 		c := count
-		params[strconv.Itoa(i)] = model.Hyperparameter{
-			DoubleHyperparameter: &model.DoubleHyperparameter{Minval: -1.0, Maxval: 1.0, Count: &c},
+		params[strconv.Itoa(i)] = expconf.Hyperparameter{
+			DoubleHyperparameter: &expconf.DoubleHyperparameter{Minval: -1.0, Maxval: 1.0, Count: &c},
 		}
 	}
 	return params
@@ -43,24 +43,24 @@ func TestGridFunctionality(t *testing.T) {
 }
 
 func TestHyperparameterGridMethod(t *testing.T) {
-	dParam := model.DoubleHyperparameter{Maxval: 2.0, Count: intP(5)}
-	assert.Equal(t, len(grid(model.Hyperparameter{DoubleHyperparameter: &dParam})), 5)
-	iParam := model.IntHyperparameter{Maxval: 20, Count: intP(7)}
-	assert.Equal(t, len(grid(model.Hyperparameter{IntHyperparameter: &iParam})), 7)
-	lParam := model.LogHyperparameter{Minval: -3.0, Maxval: -2.0, Base: 10, Count: intP(2)}
-	assert.Equal(t, len(grid(model.Hyperparameter{LogHyperparameter: &lParam})), 2)
-	catParam := model.CategoricalHyperparameter{Vals: []interface{}{1, 2, 3}}
-	assert.Equal(t, len(grid(model.Hyperparameter{CategoricalHyperparameter: &catParam})), 3)
-	constParam := model.ConstHyperparameter{Val: 3}
-	assert.Equal(t, len(grid(model.Hyperparameter{ConstHyperparameter: &constParam})), 1)
+	dParam := expconf.DoubleHyperparameter{Maxval: 2.0, Count: intP(5)}
+	assert.Equal(t, len(grid(expconf.Hyperparameter{DoubleHyperparameter: &dParam})), 5)
+	iParam := expconf.IntHyperparameter{Maxval: 20, Count: intP(7)}
+	assert.Equal(t, len(grid(expconf.Hyperparameter{IntHyperparameter: &iParam})), 7)
+	lParam := expconf.LogHyperparameter{Minval: -3.0, Maxval: -2.0, Base: 10, Count: intP(2)}
+	assert.Equal(t, len(grid(expconf.Hyperparameter{LogHyperparameter: &lParam})), 2)
+	catParam := expconf.CategoricalHyperparameter{Vals: []interface{}{1, 2, 3}}
+	assert.Equal(t, len(grid(expconf.Hyperparameter{CategoricalHyperparameter: &catParam})), 3)
+	constParam := expconf.ConstHyperparameter{Val: 3}
+	assert.Equal(t, len(grid(expconf.Hyperparameter{ConstHyperparameter: &constParam})), 1)
 }
 
 func TestGrid(t *testing.T) {
-	iParam1 := &model.IntHyperparameter{Maxval: 20, Count: intP(3)}
-	iParam2 := &model.IntHyperparameter{Maxval: 10, Count: intP(3)}
-	hparams := model.Hyperparameters{
-		"1": model.Hyperparameter{IntHyperparameter: iParam1},
-		"2": model.Hyperparameter{IntHyperparameter: iParam2},
+	iParam1 := &expconf.IntHyperparameter{Maxval: 20, Count: intP(3)}
+	iParam2 := &expconf.IntHyperparameter{Maxval: 10, Count: intP(3)}
+	hparams := expconf.Hyperparameters{
+		"1": expconf.Hyperparameter{IntHyperparameter: iParam1},
+		"2": expconf.Hyperparameter{IntHyperparameter: iParam2},
 	}
 	actual := newHyperparameterGrid(hparams)
 	expected := []hparamSample{
@@ -78,9 +78,9 @@ func TestGrid(t *testing.T) {
 }
 
 func TestGridIntCount(t *testing.T) {
-	hparams := model.Hyperparameters{
-		"1": model.Hyperparameter{
-			IntHyperparameter: &model.IntHyperparameter{Minval: 0, Maxval: 4, Count: intP(5)}},
+	hparams := expconf.Hyperparameters{
+		"1": expconf.Hyperparameter{
+			IntHyperparameter: &expconf.IntHyperparameter{Minval: 0, Maxval: 4, Count: intP(5)}},
 	}
 	actual := newHyperparameterGrid(hparams)
 	expected := []hparamSample{
@@ -94,9 +94,9 @@ func TestGridIntCount(t *testing.T) {
 }
 
 func TestGridIntCountNegative(t *testing.T) {
-	hparams := model.Hyperparameters{
-		"1": model.Hyperparameter{
-			IntHyperparameter: &model.IntHyperparameter{Minval: -4, Maxval: -2, Count: intP(3)}},
+	hparams := expconf.Hyperparameters{
+		"1": expconf.Hyperparameter{
+			IntHyperparameter: &expconf.IntHyperparameter{Minval: -4, Maxval: -2, Count: intP(3)}},
 	}
 	actual := newHyperparameterGrid(hparams)
 	expected := []hparamSample{
@@ -108,7 +108,7 @@ func TestGridIntCountNegative(t *testing.T) {
 }
 
 func TestGridSearcherRecords(t *testing.T) {
-	actual := model.GridConfig{MaxLength: model.NewLengthInRecords(19200)}
+	actual := expconf.GridConfig{MaxLength: expconf.NewLengthInRecords(19200)}
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]Runnable{
 		toOps("19200R V"), toOps("19200R V"), toOps("19200R V"),
@@ -119,7 +119,7 @@ func TestGridSearcherRecords(t *testing.T) {
 }
 
 func TestGridSearcherBatches(t *testing.T) {
-	actual := model.GridConfig{MaxLength: model.NewLengthInBatches(300)}
+	actual := expconf.GridConfig{MaxLength: expconf.NewLengthInBatches(300)}
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]Runnable{
 		toOps("300B V"), toOps("300B V"), toOps("300B V"),
@@ -130,7 +130,7 @@ func TestGridSearcherBatches(t *testing.T) {
 }
 
 func TestGridSearcherEpochs(t *testing.T) {
-	actual := model.GridConfig{MaxLength: model.NewLengthInEpochs(3)}
+	actual := expconf.GridConfig{MaxLength: expconf.NewLengthInEpochs(3)}
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]Runnable{
 		toOps("3E V"), toOps("3E V"), toOps("3E V"),
@@ -152,8 +152,8 @@ func TestGridSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("300B V"), 0.1),
 				newEarlyExitPredefinedTrial(toOps("300B"), .1),
 			},
-			config: model.SearcherConfig{
-				GridConfig: &model.GridConfig{MaxLength: model.NewLengthInBatches(300)},
+			config: expconf.SearcherConfig{
+				GridConfig: &expconf.GridConfig{MaxLength: expconf.NewLengthInBatches(300)},
 			},
 			hparams: generateHyperparameters([]int{2, 1, 3}),
 		},

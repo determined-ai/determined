@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -19,6 +18,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
@@ -975,19 +976,28 @@ ORDER BY id ASC`, id)
 }
 
 // ExperimentConfig returns the full config object for an experiment.
-func (db *PgDB) ExperimentConfig(id int) (*model.ExperimentConfig, error) {
+func (db *PgDB) ExperimentConfig(id int) (expconf.ExperimentConfig, error) {
+	var config expconf.ExperimentConfig
 	expConfigBytes, err := db.rawQuery(`
 SELECT config
 FROM experiments
 WHERE id = $1`, id)
 	if err != nil {
-		return nil, err
+		return config, err
 	}
-	var expConfig model.ExperimentConfig
-	if err = json.Unmarshal(expConfigBytes, &expConfig); err != nil {
-		return nil, errors.WithStack(err)
+
+	config, err = expconf.ParseAnyExperimentConfigJSON(expConfigBytes)
+	if err != nil {
+		return config, errors.WithStack(err)
 	}
-	return &expConfig, nil
+
+	// Make sure it is fully valid before proceeding.
+	if ok, errs := schemas.IsComplete(&config); !ok {
+		err = errors.New(schemas.JoinErrors(errs, "\n"))
+		return config, errors.WithStack(err)
+	}
+
+	return config, nil
 }
 
 // ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment

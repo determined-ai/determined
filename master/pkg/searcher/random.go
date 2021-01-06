@@ -3,22 +3,23 @@ package searcher
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/workload"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // randomSearch corresponds to the standard random search method. Each random trial configuration
 // is trained for the specified number of steps, and then validation metrics are computed.
 type randomSearch struct {
 	defaultSearchMethod
-	model.RandomConfig
+	expconf.RandomConfig
 }
 
-func newRandomSearch(config model.RandomConfig) SearchMethod {
+func newRandomSearch(config expconf.RandomConfig) SearchMethod {
 	return &randomSearch{RandomConfig: config}
 }
 
-func newSingleSearch(config model.SingleConfig) SearchMethod {
+func newSingleSearch(config expconf.SingleConfig) SearchMethod {
 	return &randomSearch{
-		RandomConfig: model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
+		RandomConfig: expconf.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
 	}
 }
 

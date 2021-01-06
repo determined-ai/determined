@@ -4,7 +4,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func getBracketMaxTrials(
@@ -63,36 +63,36 @@ func getBracketMaxConcurrentTrials(
 	return bracketMaxConcurrentTrials
 }
 
-func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
-	modeFunc := parseAdaptiveMode(config.Mode)
+func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig) SearchMethod {
+	modeFunc := parseAdaptiveMode(*config.Mode)
 
-	brackets := config.BracketRungs
+	brackets := *config.BracketRungs
 	if len(brackets) == 0 {
-		config.MaxRungs = min(
-			config.MaxRungs,
-			int(math.Log(float64(config.MaxLength.Units))/math.Log(config.Divisor))+1)
-		config.MaxRungs = min(
-			config.MaxRungs,
-			int(math.Log(float64(config.MaxTrials))/math.Log(config.Divisor))+1)
-		brackets = modeFunc(config.MaxRungs)
+		*config.MaxRungs = min(
+			*config.MaxRungs,
+			int(math.Log(float64(config.MaxLength.Units))/math.Log(*config.Divisor))+1)
+		*config.MaxRungs = min(
+			*config.MaxRungs,
+			int(math.Log(float64(config.MaxTrials))/math.Log(*config.Divisor))+1)
+		brackets = modeFunc(*config.MaxRungs)
 	}
 	// We prioritize brackets that perform more early stopping to try to max speedups early on.
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
 	bracketMaxTrials := getBracketMaxTrials(
-		config.MaxTrials, config.Divisor, brackets)
+		config.MaxTrials, *config.Divisor, brackets)
 	bracketMaxConcurrentTrials := getBracketMaxConcurrentTrials(
-		config.MaxConcurrentTrials, config.Divisor, bracketMaxTrials)
+		*config.MaxConcurrentTrials, *config.Divisor, bracketMaxTrials)
 
 	methods := make([]SearchMethod, 0, len(brackets))
 	for i, numRungs := range brackets {
-		c := model.AsyncHalvingConfig{
+		c := expconf.AsyncHalvingConfig{
 			Metric:              config.Metric,
 			SmallerIsBetter:     config.SmallerIsBetter,
 			NumRungs:            numRungs,
 			MaxLength:           config.MaxLength,
 			MaxTrials:           bracketMaxTrials[i],
 			Divisor:             config.Divisor,
-			MaxConcurrentTrials: bracketMaxConcurrentTrials[i],
+			MaxConcurrentTrials: &bracketMaxConcurrentTrials[i],
 		}
 		methods = append(methods, newAsyncHalvingSearch(c))
 	}

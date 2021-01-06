@@ -146,12 +146,12 @@ func startCommand(t TaskSpec) container.Spec {
 	return container.Spec{
 		PullSpec: container.PullSpec{
 			Registry:  cmd.Config.Environment.RegistryAuth,
-			ForcePull: cmd.Config.Environment.ForcePullImage,
+			ForcePull: *cmd.Config.Environment.ForcePullImage,
 		},
 		RunSpec: container.RunSpec{
 			ContainerConfig: docker.Config{
 				User:         user,
-				ExposedPorts: toPortSet(cmd.Config.Environment.Ports),
+				ExposedPorts: toPortSet(*cmd.Config.Environment.Ports),
 				Env:          envVars,
 				Cmd:          cmd.Config.Entrypoint,
 				Image:        cmd.Config.Environment.Image.For(deviceType),
@@ -170,7 +170,7 @@ func startCommand(t TaskSpec) container.Spec {
 
 // TrialDockerMounts returns the host mounts for a trial container.
 func TrialDockerMounts(exp StartContainer) []mount.Mount {
-	mounts := ToDockerMounts(exp.ExperimentConfig.BindMounts)
+	mounts := ToDockerMounts(*exp.ExperimentConfig.BindMounts)
 	if exp.ExperimentConfig.CheckpointStorage.SharedFSConfig != nil {
 		sharedFS := exp.ExperimentConfig.CheckpointStorage.SharedFSConfig
 		mounts = append(mounts, mount.Mount{
@@ -305,7 +305,7 @@ func startContainer(t TaskSpec) container.Spec {
 
 	spec := container.Spec{
 		PullSpec: container.PullSpec{
-			ForcePull: exp.ExperimentConfig.Environment.ForcePullImage,
+			ForcePull: *exp.ExperimentConfig.Environment.ForcePullImage,
 			Registry:  exp.ExperimentConfig.Environment.RegistryAuth,
 		},
 		RunSpec: container.RunSpec{
@@ -340,7 +340,7 @@ func GCEnvVars() map[string]string {
 
 // GCDockerMounts returns the host mounts for a gc container.
 func GCDockerMounts(gcc GCCheckpoints) []mount.Mount {
-	mounts := ToDockerMounts(gcc.ExperimentConfig.BindMounts)
+	mounts := ToDockerMounts(*gcc.ExperimentConfig.BindMounts)
 	if gcc.ExperimentConfig.CheckpointStorage.SharedFSConfig != nil {
 		sharedFS := gcc.ExperimentConfig.CheckpointStorage.SharedFSConfig
 		mounts = append(mounts, mount.Mount{
@@ -417,7 +417,7 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 
 	return container.Spec{
 		PullSpec: container.PullSpec{
-			ForcePull: gcc.ExperimentConfig.Environment.ForcePullImage,
+			ForcePull: *gcc.ExperimentConfig.Environment.ForcePullImage,
 			Registry:  gcc.ExperimentConfig.Environment.RegistryAuth,
 		},
 		RunSpec: container.RunSpec{

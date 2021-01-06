@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -186,9 +187,9 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
-	ID     int              `db:"id"`
-	State  State            `db:"state"`
-	Config ExperimentConfig `db:"config"`
+	ID     int                      `db:"id"`
+	State  State                    `db:"state"`
+	Config expconf.ExperimentConfig `db:"config"`
 	// The model definition is stored as a .tar.gz file (raw bytes).
 	ModelDefinitionBytes []byte     `db:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
@@ -204,16 +205,16 @@ type Experiment struct {
 
 // ExperimentDescriptor is a minimal description of an experiment.
 type ExperimentDescriptor struct {
-	ID       int              `json:"id"`
-	Archived bool             `json:"archived"`
-	Config   ExperimentConfig `json:"config"`
-	Labels   []string         `json:"labels"`
+	ID       int                      `json:"id"`
+	Archived bool                     `json:"archived"`
+	Config   expconf.ExperimentConfig `json:"config"`
+	Labels   []string                 `json:"labels"`
 }
 
 // NewExperiment creates a new experiment struct in the paused state.  Note
 // that the experiment ID will not be set.
 func NewExperiment(
-	config ExperimentConfig,
+	config expconf.ExperimentConfig,
 	modelDefinitionBytes []byte,
 	parentID *int,
 	archived bool,

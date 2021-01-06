@@ -9,11 +9,12 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestEventLog(t *testing.T) {
 	rand := nprand.New(0)
-	log := NewEventLog(model.Batches)
+	log := NewEventLog(expconf.Batches)
 
 	trialIDs := []int{7, 11, 13, 17}
 

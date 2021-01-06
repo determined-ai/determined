@@ -1,0 +1,110 @@
+- name: a<b compareProperties (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter-int.json
+  case:
+    type: int
+    minval: 2
+    maxval: 10
+
+- name: a<b compareProperties (invalid)
+  errors:
+    http://determined.ai/schemas/expconf/v0/hyperparameter-int.json:
+      - minval must be less than maxval
+  case:
+    type: int
+    minval: 2
+    maxval: 2
+
+- name: same_units and length_a<length_b compareProperties (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/searcher-adaptive.json
+  case:
+    name: adaptive
+    metric: loss
+    budget:
+      epochs: 2
+    max_length:
+      epochs: 1
+
+- name: same_units and length_a<length_b compareProperties (invalid)
+  errors:
+    http://determined.ai/schemas/expconf/v0/searcher-adaptive.json:
+      - max_length and budget must be specified in terms of the same unit
+      - budget must be greater than max_length
+  case:
+    name: adaptive
+    metric: loss
+    budget:
+      epochs: 2
+    max_length:
+      records: 10
+
+- name: a_is_subdir_of_b (valid, no storage path)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+    - http://determined.ai/schemas/expconf/v0/shared-fs.json
+  case:
+    type: shared_fs
+    host_path: /tmp
+
+- name: a_is_subdir_of_b (valid, absolute)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+    - http://determined.ai/schemas/expconf/v0/shared-fs.json
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: /tmp/storage_path
+
+- name: a_is_subdir_of_b (valid, relative)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+    - http://determined.ai/schemas/expconf/v0/shared-fs.json
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: storage_path
+
+- name: a_is_subdir_of_b (invalid, absolute)
+  errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+    http://determined.ai/schemas/expconf/v0/shared-fs.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: /storage_path
+
+- name: a_is_subdir_of_b (invalid, relative)
+  errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+    http://determined.ai/schemas/expconf/v0/shared-fs.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: ../storage_path
+
+- name: a_is_subdir_of_b (invalid, relative, unnormalized)
+  errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+    http://determined.ai/schemas/expconf/v0/shared-fs.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: anywhere/../../storage_path
+
+- name: a_is_subdir_of_b (invalid, absolute, unnormalized)
+  errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+    http://determined.ai/schemas/expconf/v0/shared-fs.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: /tmp/anywhere/../../storage_path

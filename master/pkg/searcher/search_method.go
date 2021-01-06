@@ -1,14 +1,14 @@
 package searcher
 
 import (
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/workload"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 type context struct {
 	rand    *nprand.State
-	hparams model.Hyperparameters
+	hparams expconf.Hyperparameters
 }
 
 // SearchMethod is the interface for hyper-parameter tuning methods. Implementations of this
@@ -47,11 +47,11 @@ type SearchMethod interface {
 		ctx context, requestID RequestID, exitedReason workload.ExitedReason,
 	) ([]Operation, error)
 	// SearchMethod embeds the InUnits interface because it is in terms of a specific unit.
-	model.InUnits
+	expconf.InUnits
 }
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
-func NewSearchMethod(c model.SearcherConfig) SearchMethod {
+func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 	switch {
 	case c.SingleConfig != nil:
 		return newSingleSearch(*c.SingleConfig)

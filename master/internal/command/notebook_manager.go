@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
@@ -53,7 +54,7 @@ func generateNotebookDescription() (string, error) {
 		return "", errors.Wrap(err, "parsing template")
 	}
 
-	petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
+	petName := petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep)
 
 	var buf strings.Builder
 	err = t.Execute(&buf, map[string]string{"PetName": petName})
@@ -219,11 +220,11 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 	notebookPorts := map[string]int{"notebook": port}
 	portVar := fmt.Sprintf("NOTEBOOK_PORT=%d", port)
 
-	config.Environment.Ports = notebookPorts
-	config.Environment.EnvironmentVariables.CPU = append(
-		config.Environment.EnvironmentVariables.CPU, portVar)
-	config.Environment.EnvironmentVariables.GPU = append(
-		config.Environment.EnvironmentVariables.GPU, portVar)
+	config.Environment.Ports = &notebookPorts
+	*config.Environment.EnvironmentVariables.CPU = append(
+		*config.Environment.EnvironmentVariables.CPU, portVar)
+	*config.Environment.EnvironmentVariables.GPU = append(
+		*config.Environment.EnvironmentVariables.GPU, portVar)
 
 	config.Entrypoint = notebookEntrypoint
 

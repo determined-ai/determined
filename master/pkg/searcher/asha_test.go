@@ -3,16 +3,19 @@ package searcher
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestASHASearcherRecords(t *testing.T) {
-	actual := model.AsyncHalvingConfig{
+	config := expconf.AsyncHalvingConfig{
 		Metric: defaultMetric, NumRungs: 3,
-		MaxLength: model.NewLengthInRecords(576000),
-		Divisor:   3,
+		MaxLength: expconf.NewLengthInRecords(576000),
+		Divisor:   ptrs.Float64Ptr(3),
 		MaxTrials: 12,
 	}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("64000R V"), toOps("64000R V"), toOps("64000R V"),
 		toOps("64000R V"), toOps("64000R V"), toOps("64000R V"),
@@ -22,16 +25,17 @@ func TestASHASearcherRecords(t *testing.T) {
 		toOps("64000R V 128000R V"),
 		toOps("64000R V 128000R V 384000R V"),
 	}
-	checkSimulation(t, newAsyncHalvingSearch(actual), nil, ConstantValidation, expected)
+	checkSimulation(t, newAsyncHalvingSearch(config), nil, ConstantValidation, expected)
 }
 
 func TestASHASearcherBatches(t *testing.T) {
-	actual := model.AsyncHalvingConfig{
+	config := expconf.AsyncHalvingConfig{
 		Metric: defaultMetric, NumRungs: 3,
-		MaxLength: model.NewLengthInBatches(9000),
-		Divisor:   3,
+		MaxLength: expconf.NewLengthInBatches(9000),
+		Divisor:   ptrs.Float64Ptr(3),
 		MaxTrials: 12,
 	}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("1000B V"), toOps("1000B V"), toOps("1000B V"),
 		toOps("1000B V"), toOps("1000B V"), toOps("1000B V"),
@@ -41,16 +45,17 @@ func TestASHASearcherBatches(t *testing.T) {
 		toOps("1000B V 2000B V"),
 		toOps("1000B V 2000B V 6000B V"),
 	}
-	checkSimulation(t, newAsyncHalvingSearch(actual), nil, ConstantValidation, expected)
+	checkSimulation(t, newAsyncHalvingSearch(config), nil, ConstantValidation, expected)
 }
 
 func TestASHASearcherEpochs(t *testing.T) {
-	actual := model.AsyncHalvingConfig{
+	config := expconf.AsyncHalvingConfig{
 		Metric: defaultMetric, NumRungs: 3,
-		MaxLength: model.NewLengthInEpochs(12),
-		Divisor:   3,
+		MaxLength: expconf.NewLengthInEpochs(12),
+		Divisor:   ptrs.Float64Ptr(3),
 		MaxTrials: 12,
 	}
+	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
 		toOps("1E V"), toOps("1E V"), toOps("1E V"),
 		toOps("1E V"), toOps("1E V"), toOps("1E V"),
@@ -60,7 +65,7 @@ func TestASHASearcherEpochs(t *testing.T) {
 		toOps("1E V 3E V"),
 		toOps("1E V 3E V 8E V"),
 	}
-	checkSimulation(t, newAsyncHalvingSearch(actual), nil, ConstantValidation, expected)
+	checkSimulation(t, newAsyncHalvingSearch(config), nil, ConstantValidation, expected)
 }
 
 func TestASHASearchMethod(t *testing.T) {
@@ -82,15 +87,15 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B V"), 0.11),
 				newConstantPredefinedTrial(toOps("1000B V"), 0.12),
 			},
-			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				AsyncHalvingConfig: &expconf.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
-					SmallerIsBetter:     true,
-					MaxLength:           model.NewLengthInBatches(9000),
+					SmallerIsBetter:     ptrs.BoolPtr(true),
+					MaxLength:           expconf.NewLengthInBatches(9000),
 					MaxTrials:           12,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},
@@ -110,15 +115,15 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B V"), 0.11),
 				newConstantPredefinedTrial(toOps("1000B V"), 0.12),
 			},
-			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				AsyncHalvingConfig: &expconf.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
-					SmallerIsBetter:     true,
-					MaxLength:           model.NewLengthInBatches(9000),
+					SmallerIsBetter:     ptrs.BoolPtr(true),
+					MaxLength:           expconf.NewLengthInBatches(9000),
 					MaxTrials:           12,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},
@@ -138,15 +143,15 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
 				newConstantPredefinedTrial(toOps("1000B V"), 0.01),
 			},
-			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				AsyncHalvingConfig: &expconf.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
-					SmallerIsBetter:     false,
-					MaxLength:           model.NewLengthInBatches(9000),
+					SmallerIsBetter:     ptrs.BoolPtr(false),
+					MaxLength:           expconf.NewLengthInBatches(9000),
 					MaxTrials:           12,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},
@@ -166,15 +171,15 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
 				newConstantPredefinedTrial(toOps("1000B V"), 0.01),
 			},
-			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				AsyncHalvingConfig: &expconf.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
-					SmallerIsBetter:     false,
-					MaxLength:           model.NewLengthInBatches(9000),
+					SmallerIsBetter:     ptrs.BoolPtr(false),
+					MaxLength:           expconf.NewLengthInBatches(9000),
 					MaxTrials:           12,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},
@@ -197,15 +202,15 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("1000B V"), 0.08),
 				newConstantPredefinedTrial(toOps("1000B V"), 0.09),
 			},
-			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				AsyncHalvingConfig: &expconf.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
-					SmallerIsBetter:     true,
-					MaxLength:           model.NewLengthInBatches(9000),
+					SmallerIsBetter:     ptrs.BoolPtr(true),
+					MaxLength:           expconf.NewLengthInBatches(9000),
 					MaxTrials:           12,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},
@@ -220,15 +225,15 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(toOps("9000B V"), 0.07),
 				newConstantPredefinedTrial(toOps("9000B V"), 0.08),
 			},
-			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+			config: expconf.SearcherConfig{
+				AsyncHalvingConfig: &expconf.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            1,
-					SmallerIsBetter:     true,
-					MaxLength:           model.NewLengthInBatches(9000),
+					SmallerIsBetter:     ptrs.BoolPtr(true),
+					MaxLength:           expconf.NewLengthInBatches(9000),
 					MaxTrials:           4,
-					Divisor:             3,
-					MaxConcurrentTrials: maxConcurrentTrials,
+					Divisor:             ptrs.Float64Ptr(3),
+					MaxConcurrentTrials: ptrs.IntPtr(maxConcurrentTrials),
 				},
 			},
 		},

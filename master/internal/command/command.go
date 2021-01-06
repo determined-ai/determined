@@ -20,6 +20,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
@@ -50,14 +52,14 @@ type commandOwner struct {
 // commands (e.g., commands, notebooks, shells) if a request
 // does not specify any configuration options.
 func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) model.CommandConfig {
-	environment := model.DefaultExperimentConfig(taskContainerDefaults).Environment
+	expConfig := expconf.ExperimentConfig{}
+	schemas.Merge(&expConfig, taskContainerDefaults.Filler())
+	schemas.FillDefaults(&expConfig)
+	environment := *expConfig.Environment
 	return model.CommandConfig{
 		Resources: model.ResourcesConfig{
 			Slots:  1,
 			Weight: 1,
-			// SlotsPerTrial is not used by commands. They prefer Slots instead.
-			// It is only defined here to pass check.Validate.
-			SlotsPerTrial: 1,
 		},
 		Environment: environment,
 	}

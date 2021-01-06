@@ -3,13 +3,13 @@ package internal
 import (
 	"io/ioutil"
 
-	"github.com/ghodss/yaml"
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
@@ -17,13 +17,16 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
-	if uerr := yaml.Unmarshal(body, &config); uerr != nil {
-		return nil, uerr
+
+	config, err := expconf.ParseAnyExperimentConfigYAML(body)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
-	if verr := check.Validate(config.Searcher); verr != nil {
-		return nil, verr
-	}
+
+	schemas.FillDefaults(&config)
+
+	schemas.IsComplete(&config.Searcher)
+	schemas.IsComplete(&config.Hyperparameters)
 
 	sm := searcher.NewSearchMethod(config.Searcher)
 	s := searcher.NewSearcher(0, sm, config.Hyperparameters)

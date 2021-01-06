@@ -5,13 +5,14 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/workload"
 
-	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestTrialWorkloadSequencer(t *testing.T) {
@@ -36,19 +37,19 @@ reproducibility:
   experiment_seed: 42
 checkpoint_policy: none
 `
-
-	expConfig := model.DefaultExperimentConfig(nil)
-	assert.NilError(t, yaml.Unmarshal([]byte(yam), &expConfig, yaml.DisallowUnknownFields))
+	expConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(yam))
+	assert.NilError(t, err)
+	schemas.FillDefaults(&expConfig)
 
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
 	create := searcher.NewCreate(rand, map[string]interface{}{
-		model.GlobalBatchSize: 64,
+		expconf.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
-	schedulingUnit := model.DefaultExperimentConfig(nil).SchedulingUnit
-	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500))
+	schedulingUnit := *expConfig.SchedulingUnit
+	train := searcher.NewTrain(create.RequestID, expconf.NewLength(expconf.Batches, 500))
 	validate := searcher.NewValidate(create.RequestID)
 	checkpoint := searcher.NewCheckpoint(create.RequestID)
 
@@ -154,7 +155,7 @@ checkpoint_policy: none
 	assert.NilError(t, s.OperationRequested(checkpoint))
 
 	// Check that workload() returns an error before setTrialID is set
-	_, err := s.Workload()
+	_, err = s.Workload()
 	assert.Error(t, err, "cannot call sequencer.Workload() before sequencer.SetTrialID()")
 
 	s.SetTrialID(1)
@@ -285,29 +286,39 @@ checkpoint_policy: none
 }
 
 func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
-	expConfig := model.DefaultExperimentConfig(nil)
-	expConfig.MinCheckpointPeriod = model.NewLengthInBatches(100)
+	yam := `
+searcher:
+  name: single
+  metric: loss
+  max_length:
+    batches: 500
+`
+	expConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(yam))
+	assert.NilError(t, err)
+	schemas.FillDefaults(&expConfig)
+	l := expconf.NewLengthInBatches(100)
+	expConfig.MinCheckpointPeriod = &l
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
 	create := searcher.NewCreate(rand, map[string]interface{}{
-		model.GlobalBatchSize: 64,
+		expconf.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
 	assert.NilError(t, s.OperationRequested(
-		searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500)),
+		searcher.NewTrain(create.RequestID, expconf.NewLength(expconf.Batches, 500)),
 	))
 
-	_, _, err := s.WorkloadCompleted(workload.CompletedMessage{
+	_, _, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: workload.Workload{
 			Kind:                  workload.RunStep,
 			ExperimentID:          1,
 			TrialID:               1,
 			StepID:                1,
-			NumBatches:            expConfig.SchedulingUnit,
+			NumBatches:            *expConfig.SchedulingUnit,
 			TotalBatchesProcessed: 0,
 		},
 	}, nil)
@@ -320,7 +331,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 			ExperimentID:          1,
 			TrialID:               1,
 			StepID:                1,
-			TotalBatchesProcessed: expConfig.SchedulingUnit,
+			TotalBatchesProcessed: *expConfig.SchedulingUnit,
 		},
 		CheckpointMetrics: nil,
 		ExitedReason:      &exitedReason,
@@ -331,18 +342,27 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 }
 
 func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
-	expConfig := model.DefaultExperimentConfig(nil)
+	yam := `
+searcher:
+  name: single
+  metric: loss
+  max_length:
+    records: 500
+`
+	expConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(yam))
+	assert.NilError(t, err)
+	schemas.FillDefaults(&expConfig)
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
 	create := searcher.NewCreate(rand, map[string]interface{}{
-		model.GlobalBatchSize: 64,
+		expconf.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
-	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Records, 24))
+	train := searcher.NewTrain(create.RequestID, expconf.NewLength(expconf.Records, 24))
 	assert.NilError(t, s.OperationRequested(
 		train,
 	))
