@@ -32,6 +32,9 @@ Version 0.13.11
 -  Logging: Allow the trial logging backend to be configured in
    Kubernetes deployments of Determined.
 
+-  Agents: Add support for labels when starting agents with
+   ``det-deploy``.
+
 **Bug Fixes**
 
 -  WebUI: Update the Trial Information Table to be usable in mobile
