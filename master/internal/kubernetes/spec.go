@@ -332,7 +332,6 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 		Image:           "fluent/fluent-bit:1.6",
 		ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
 		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
-		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    loggingMounts,
 		WorkingDir:      fluentBaseDir,
 	}
