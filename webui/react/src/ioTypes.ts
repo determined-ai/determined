@@ -250,7 +250,7 @@ const ioExpHParam = io.type({
   maxval: optional(io.number),
   minval: optional(io.number),
   type: io.keyof({ const: null, double: null, int: null, log: null }),
-  val: optional(io.union([ io.number, io.string ])),
+  val: optional(io.union([ io.number, io.string, io.boolean ])),
 });
 
 export const ioExperimentConfig = io.type({
