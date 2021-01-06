@@ -5,14 +5,18 @@ import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import ResourcePoolCard from 'components/ResourcePoolCard';
+import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import Spinner from 'components/Spinner';
+import Spinner, { Indicator } from 'components/Spinner';
+import { defaultRowClassName, getPaginationConfig } from 'components/Table';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
+import { columns } from 'pages/HGICluster.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
 import { Resource } from 'types';
+import { ResourcePool } from 'types/ResourcePool';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
 
@@ -89,6 +93,23 @@ const HGICluster: React.FC = () => {
               rpIndex={idx} />;
           })}
         </Grid>
+      </Section>
+      <Section title="Table">
+        <ResponsiveTable<ResourcePool> // TODO resourcepool type
+          columns={columns}
+          dataSource={resourcePools}
+          loading={{
+            indicator: <Indicator />,
+            spinning: agents.isLoading, // TODO replace with resource pools
+          }}
+          pagination={getPaginationConfig(resourcePools.length, 10)} // TODO config page size
+          rowClassName={defaultRowClassName({})}
+          rowKey="batchNum"
+          scroll={{ x: 1000 }}
+          showSorterTooltip={false}
+          size="small"
+          // onChange={handleTableChange}
+        />
       </Section>
     </Page>
   );
