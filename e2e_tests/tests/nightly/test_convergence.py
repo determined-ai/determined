@@ -260,11 +260,9 @@ def test_gbt_titanic_estimator_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_data_layer_mnist_estimator_accuracy() -> None:
-    config = conf.load_config(
-        conf.data_layer_examples_path("data_layer_mnist_estimator/const.yaml")
-    )
+    config = conf.load_config(conf.features_examples_path("data_layer_mnist_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.data_layer_examples_path("data_layer_mnist_estimator"), 1
+        config, conf.features_examples_path("data_layer_mnist_estimator"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -287,9 +285,9 @@ def test_data_layer_mnist_estimator_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_data_layer_mnist_tf_keras_accuracy() -> None:
-    config = conf.load_config(conf.data_layer_examples_path("data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.data_layer_examples_path("data_layer_mnist_tf_keras"), 1
+        config, conf.features_examples_path("data_layer_mnist_tf_keras"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)

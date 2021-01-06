@@ -8,3 +8,7 @@
    supported. See
    :meth:`determined.pytorch.PyTorchExperimentalContext.wrap_reducer()`
    for detailed documentation and code snippets.
+
+   See ``determined/examples/features/custom_reducers_mnist_pytorch``
+   for a fully running example of custom reducers. The example emits a
+   per-class F1 score using the new custom reducers API.
