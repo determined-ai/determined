@@ -54,11 +54,12 @@ export enum ResourceState { // This is almost CommandState
   Terminated = 'TERMINATED',
 }
 
-// export enum SlotHighState {
-//   Running = 'RUNNING',
-//   Free = 'FREE',
-//   Pending = 'PENDING',
-// }
+// High level Slot state
+export enum SlotState {
+  Running = 'RUNNING',
+  Free = 'FREE',
+  Pending = 'PENDING',
+}
 
 export const resourceStates: ResourceState[] = [
   ResourceState.Unspecified,

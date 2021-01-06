@@ -2,13 +2,12 @@ import { Tooltip } from 'antd';
 import React, { CSSProperties, PropsWithChildren } from 'react';
 
 import { getStateColorCssVar } from 'themes';
-import { CheckpointState, CommandState, ResourceState, RunState } from 'types';
+import { CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
 import { stateToLabel } from 'utils/types';
 
 import css from './Badge.module.scss';
 
 export enum BadgeType {
-  Custom,
   Default,
   Header,
   Id,
@@ -18,7 +17,7 @@ export enum BadgeType {
 export interface BadgeProps {
   bgColor?: string; // background color for custom badge.
   fgColor?: string; // foreground color for custom badge.
-  state?: RunState | CommandState | CheckpointState | ResourceState;
+  state?: RunState | CommandState | CheckpointState | ResourceState | SlotState;
   tooltip?: string;
   type?: BadgeType;
 }
@@ -35,17 +34,17 @@ const Badge: React.FC<BadgeProps> = ({
   if (type === BadgeType.State) {
     classes.push(css.state);
     style.backgroundColor = getStateColorCssVar(state);
+    if (state === SlotState.Free) {
+      style.color = '#234b65';
+    }
   } else if (type === BadgeType.Id) {
     classes.push(css.id);
   } else if (type === BadgeType.Header) {
     classes.push(css.header);
-  } else if (type === BadgeType.Custom) {
-    style.color = props.fgColor;
-    style.backgroundColor = props.bgColor;
   }
 
   const badge = <span className={classes.join(' ')} style={style}>
-    {type === BadgeType.State && state ? stateToLabel(state) : props.children}
+    {props.children ? props.children : type === BadgeType.State && state && stateToLabel(state)}
   </span>;
 
   return tooltip ? <Tooltip title={tooltip}>{badge}</Tooltip> : badge;

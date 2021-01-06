@@ -3,12 +3,12 @@
   display: flex;
   min-height: 2rem;
 
-  ol,
+  .parts,
   li {
     margin: 0;
     padding: 0;
   }
-  ol {
+  .parts {
     display: flex;
     flex-direction: row;
   }

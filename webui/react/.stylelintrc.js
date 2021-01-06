@@ -28,6 +28,7 @@ module.exports = {
     } ],
     'scss/at-rule-no-unknown': true,
     'selector-pseudo-class-no-unknown': [ true, { ignorePseudoClasses: [ 'global' ] } ],
+    'string-quotes': 'single',
     'value-keyword-case': null,
   },
 };

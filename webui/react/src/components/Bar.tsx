@@ -35,7 +35,7 @@ const Bar: React.FC<Props> = ({ barOnly, parts, size }: Props) => {
       <div
         className={css.bar}
         style={{ height: `var(--theme-sizes-layout-${size || ShirtSize.tiny})` }}>
-        <ol>
+        <div className={css.parts}>
           {parts.filter(part => part.percent !== 0 && !isNaN(part.percent)).map((part, idx) => {
             return (
               <Tooltip key={idx} title={part.label}>
@@ -43,7 +43,7 @@ const Bar: React.FC<Props> = ({ barOnly, parts, size }: Props) => {
               </Tooltip>
             );
           })}
-        </ol>
+        </div>
 
       </div>
     </div>

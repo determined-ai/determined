@@ -4,9 +4,10 @@ import React, { useMemo } from 'react';
 import Badge from 'components/Badge';
 import Bar from 'components/Bar';
 import { getStateColorCssVar, ShirtSize } from 'themes';
-import { ResourceState } from 'types';
+import { ResourceState, SlotState } from 'types';
 import { ConditionalWrapper } from 'utils/react';
 import { floatToPercent } from 'utils/string';
+import { resourceStateToLabel } from 'utils/types';
 
 import { BadgeType } from './Badge';
 import css from './SlotAllocation.module.scss';
@@ -70,35 +71,41 @@ const SlotAllocationBar: React.FC<Props> = ({
   const freeSlots = (totalSlots - resourceStates.length);
   const pendingSlots = (resourceStates.length - stateTallies.RUNNING);
 
-  const { barParts, legendParts } = useMemo(() => {
-
+  const barParts = useMemo(() => {
     const parts = {
       free: {
-        color: 'var(--theme-colors-monochrome-15)',
+        color: getStateColorCssVar(SlotState.Free),
         percent: freeSlots / totalSlots,
       },
       pending: {
-        color: '#6666CC',
+        color: getStateColorCssVar(SlotState.Pending),
         percent: pendingSlots / totalSlots,
       },
       running: {
-        color: getStateColorCssVar(ResourceState.Running),
+        color: getStateColorCssVar(SlotState.Running),
         percent: stateTallies.RUNNING / totalSlots,
       },
     };
 
-    return {
-      barParts: [ parts.running, parts.pending, parts.free ],
-      legendParts: parts,
-    };
+    return [ parts.running, parts.pending, parts.free ];
   }, [ totalSlots, stateTallies, pendingSlots, freeSlots ]);
 
   const stateDetails = useMemo(() => {
+    const states = [
+      ResourceState.Assigned,
+      ResourceState.Pulling,
+      ResourceState.Starting,
+      ResourceState.Running,
+    ];
     return (
       <ul className={css.detailedLegends}>
-        {Object.entries(stateTallies).map(([ state, count ]) =>
-          <Legend count={count} key={state} totalSlots={totalSlots}>
-            <Badge state={state as ResourceState} type={BadgeType.State} />
+        {states.map((state) =>
+          <Legend count={stateTallies[state]} key={state} totalSlots={totalSlots}>
+            <Badge
+              state={state === ResourceState.Running ? SlotState.Running : SlotState.Pending}
+              type={BadgeType.State}>
+              {resourceStateToLabel[state]}
+            </Badge>
           </Legend>)}
       </ul>
     );
@@ -134,19 +141,13 @@ const SlotAllocationBar: React.FC<Props> = ({
             <Popover content={stateDetails} placement="bottom">
               <ol>
                 <Legend count={stateTallies.RUNNING} showPercentage totalSlots={totalSlots}>
-                  <Badge bgColor={legendParts.running.color} type={BadgeType.Custom}>
-                Running
-                  </Badge>
+                  <Badge state={SlotState.Running} type={BadgeType.State} />
                 </Legend>
                 <Legend count={pendingSlots} showPercentage totalSlots={totalSlots}>
-                  <Badge bgColor={legendParts.pending.color} type={BadgeType.Custom}>
-                Pending
-                  </Badge>
+                  <Badge state={SlotState.Pending} type={BadgeType.State} />
                 </Legend>
                 <Legend count={freeSlots} showPercentage totalSlots={totalSlots}>
-                  <Badge bgColor={legendParts.free.color} fgColor="#234B65" type={BadgeType.Custom}>
-                Free
-                  </Badge>
+                  <Badge state={SlotState.Free} type={BadgeType.State} />
                 </Legend>
               </ol>
             </Popover>
