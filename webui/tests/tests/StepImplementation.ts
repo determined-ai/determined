@@ -280,12 +280,6 @@ export default class StepImplementation {
   }
   /* Cluster */
 
-  @Step('Should have slot allocation of <allocation>')
-  public async checkSlotAllocation(allocation: string) {
-    const actualVal = await t.$('div[class^="SlotAllocation_header"] span').text();
-    assert.strictEqual(actualVal, allocation);
-  }
-
   @Step('Should show <count> resource pool cards')
   public async checkResourcePoolCardCount(count: string) {
     const elements = await t.$('div[class^="ResourcePoolCard_base"]').elements();

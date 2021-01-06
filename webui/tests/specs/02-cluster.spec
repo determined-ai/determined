@@ -12,8 +12,6 @@ Specification to test the responsive design elements.
 
 * Navigate to React page at "/hgicluster"
 
-* Should have slot allocation of "0/1 (0%)"
-
 * Should show "4" resource pool cards
 
 * Should show "1" agents in stats
