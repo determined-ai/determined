@@ -476,7 +476,6 @@ If the problem persists please contact support.',
 
   return (
     <Page
-      backPath={`/experiments/${experimentId}`}
       breadcrumb={[
         { breadcrumbName: 'Experiments', path: '/experiments' },
         {

@@ -146,7 +146,6 @@ const ExperimentDetailPage: React.FC = () => {
 
   return (
     <Page
-      backPath={'/experiments'}
       breadcrumb={[
         { breadcrumbName: 'Experiments', path: '/experiments' },
         {

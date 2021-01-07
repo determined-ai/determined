@@ -92,7 +92,6 @@ const TaskLogs: React.FC = () => {
       disableLevel
       noWrap
       pageProps={{
-        backPath: '/tasks',
         breadcrumb: [
           { breadcrumbName: 'Tasks', path: '/tasks' },
           { breadcrumbName: `${capitalize(taskType)} ${taskId.substr(0, 4)}`, path: '#' },

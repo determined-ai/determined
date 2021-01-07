@@ -202,7 +202,6 @@ const TrialLogs: React.FC = () => {
       isLoading={isLoading}
       noWrap
       pageProps={{
-        backPath: trialDetailPath,
         breadcrumb: [
           { breadcrumbName: 'Experiments', path: '/experiments' },
           {
