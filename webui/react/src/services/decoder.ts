@@ -1,5 +1,3 @@
-import { isNumber } from 'util';
-
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
@@ -7,15 +5,8 @@ import * as types from 'types';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
+import { V1GetExperimentResponse } from './api-ts-sdk';
 import { LoginResponse } from './types';
-
-const dropNonNumericMetrics = (ioMetrics: ioTypes.ioTypeMetric): Record<string, number> => {
-  const metrics: Record<string, number> = {};
-  Object.entries(ioMetrics).forEach(([ name, value ]) => {
-    if (isNumber(value)) metrics[name] = value;
-  });
-  return metrics;
-};
 
 export const user = (data: Sdk.V1User): types.DetailedUser => {
   return {
@@ -178,46 +169,6 @@ const ioToExperimentConfig = (io: ioTypes.ioTypeExperimentConfig): types.Experim
   return config;
 };
 
-const ioToCheckpoint = (io: ioTypes.ioTypeCheckpoint): types.Checkpoint => {
-  return {
-    endTime: io.end_time || undefined,
-    resources: io.resources,
-    startTime: io.start_time,
-    state: io.state as types.CheckpointState,
-    trialId: io.trial_id,
-    uuid: io.uuid || undefined,
-    validationMetric: io.validation_metric != null ? io.validation_metric : undefined,
-  };
-};
-
-const ioToValidationMetrics = (io: ioTypes.ioTypeValidationMetrics): types.ValidationMetrics => {
-  return {
-    numInputs: io.num_inputs,
-    validationMetrics: dropNonNumericMetrics(io.validation_metrics),
-  };
-};
-
-const ioToTrial = (io: ioTypes.ioTypeTrial): types.TrialItem => {
-  return {
-    bestAvailableCheckpoint: io.best_available_checkpoint
-      ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
-    bestValidationMetric: io.best_validation_metric != null ? io.best_validation_metric : undefined,
-    endTime: io.end_time || undefined,
-    experimentId: io.experiment_id,
-    hparams: io.hparams || {},
-    id: io.id,
-    latestValidationMetrics: io.latest_validation_metrics
-      ? ioToValidationMetrics(io.latest_validation_metrics) : undefined,
-    numCompletedCheckpoints: io.num_completed_checkpoints,
-    numSteps: io.num_steps,
-    seed: io.seed,
-    startTime: io.start_time,
-    state: io.state as types.RunState,// TODO add checkpoint decoder
-    totalBatchesProcessed: io.total_batches_processed || 0,
-    url: `/experiments/${io.experiment_id}/trials/${io.id}`,
-  };
-};
-
 const checkpointStateMap = {
   [Sdk.Determinedcheckpointv1State.UNSPECIFIED]: types.CheckpointState.Unspecified,
   [Sdk.Determinedcheckpointv1State.ACTIVE]: types.CheckpointState.Active,
@@ -258,8 +209,7 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
 };
 
 export const decodeGetV1ExperimentRespToExperimentBase = (
-  exp: Sdk.V1Experiment,
-  config: types.RawJson,
+  { experiment: exp, config }: V1GetExperimentResponse,
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
@@ -269,6 +219,8 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
     configRaw: config,
     endTime: exp.endTime as unknown as string,
     id: exp.id,
+    // numTrials
+    // labels
     progress: exp.progress != null ? exp.progress : undefined,
     startTime: exp.startTime as unknown as string,
     state: decodeExperimentState(exp.state),
@@ -326,7 +278,26 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   };
 };
 
-const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem2 => {
+export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail => {
+  const resources: Record<string, number> = {};
+  Object.entries(data.resources || {}).forEach(([ res, val ]) => {
+    resources[res] = parseFloat(val);
+  });
+
+  return {
+    batch: data.batchNumber,
+    endTime: data.endTime && data.endTime as unknown as string,
+    experimentId: data.experimentId,
+    resources,
+    startTime: data.startTime as unknown as string,
+    state: decodeCheckpointState(data.state),
+    trialId: data.trialId,
+    uuid: data.uuid,
+    validationMetric: data.searcherMetric,
+  };
+};
+
+const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
   return {
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
@@ -343,7 +314,7 @@ const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem2 => {
 
 export const decodeTrialResponseToTrialDetails = (
   data: Sdk.V1GetTrialResponse,
-): types.TrialDetails2 => {
+): types.TrialDetails => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
   let workloads;
 
@@ -358,27 +329,6 @@ export const decodeTrialResponseToTrialDetails = (
   return {
     ...trialItem,
     workloads: workloads || [],
-  };
-};
-
-export const jsonToExperimentDetails = (data: unknown): types.ExperimentDetails => {
-  const io = ioTypes.decode<ioTypes.ioTypeExperimentDetails>(ioTypes.ioExperimentDetails, data);
-  return {
-    archived: io.archived,
-    config: ioToExperimentConfig(io.config),
-    configRaw: (data as { config: types.RawJson }).config,
-    endTime: io.end_time || undefined,
-    id: io.id,
-    progress: io.progress != null ? io.progress : undefined,
-    startTime: io.start_time,
-    state: io.state as types.RunState,
-    trials: io.trials.map(ioToTrial),
-    username: io.owner.username,
-    validationHistory: io.validation_history.map(vh => ({
-      endTime: vh.end_time,
-      trialId: vh.trial_id,
-      validationError: vh.validation_error != null ? vh.validation_error : undefined,
-    })),
   };
 };
 

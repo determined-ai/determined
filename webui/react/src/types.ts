@@ -251,7 +251,6 @@ export interface MetricName {
   type: MetricType;
 }
 
-// Checkpoint sub step.
 export interface Checkpoint extends StartEndTimes {
   resources?: Record<string, number>;
   state: CheckpointState;
@@ -271,6 +270,11 @@ export interface CheckpointWorkload extends Workload {
   uuid? : string;
 }
 
+export interface CheckpointWorkloadExtended extends CheckpointWorkload {
+  experimentId: number;
+  trialId: number;
+}
+
 export interface MetricsWorkload extends Workload {
   metrics?: Record<string, number>;
   numInputs?: number;
@@ -282,26 +286,11 @@ export interface WorkloadWrapper {
   validation?: MetricsWorkload;
 }
 
-// Validation sub step.
-export interface Validation extends StartEndTimes {
-  id: number;
-  metrics?: ValidationMetrics;
-  state: RunState;
-}
-
-export interface Step2 extends WorkloadWrapper, StartEndTimes {
+// This is to support the steps table in trial details and shouldn't be used
+// elsewhere so we can remove it with a redesign.
+export interface Step extends WorkloadWrapper, StartEndTimes {
   batchNum: number;
   training: MetricsWorkload;
-}
-
-export interface Step extends StartEndTimes {
-  avgMetrics?: Record<string, number>;
-  checkpoint?: Checkpoint;
-  id: number;
-  numBatches: number;
-  priorBatchesProcessed: number;
-  state: RunState;
-  validation?: Validation;
 }
 
 export interface CheckpointDetail extends Checkpoint {
@@ -317,34 +306,19 @@ export interface ValidationMetrics {
 type HyperparameterValue = number | string | boolean | RawJson
 export type TrialHyperParameters = Record<string, HyperparameterValue>
 
-interface TrialBase extends StartEndTimes {
+export interface TrialItem extends StartEndTimes {
+  bestAvailableCheckpoint?: CheckpointWorkload;
+  bestValidationMetric?: MetricsWorkload;
   experimentId: number;
   hparams: TrialHyperParameters;
   id: number;
-  state: RunState;
-}
-
-// To replace TrialItem once experiment endpoint is migrated.
-export interface TrialItem2 extends TrialBase {
-  bestAvailableCheckpoint?: CheckpointWorkload;
-  bestValidationMetric?: MetricsWorkload;
   latestValidationMetric?: MetricsWorkload;
+  state: RunState;
   totalBatchesProcessed: number;
 }
 
-export interface TrialDetails2 extends TrialItem2 {
+export interface TrialDetails extends TrialItem {
   workloads: WorkloadWrapper[];
-}
-
-export interface TrialItem extends TrialBase {
-  bestAvailableCheckpoint?: Checkpoint;
-  bestValidationMetric?: number;
-  latestValidationMetrics?: ValidationMetrics;
-  numCompletedCheckpoints: number;
-  numSteps: number;
-  seed: number;
-  totalBatchesProcessed: number;
-  url: string;
 }
 
 export interface ExperimentItem {
@@ -377,12 +351,6 @@ export interface ExperimentOld extends ExperimentBase {
   name: string;
   url: string;
   username: string;
-}
-
-export interface ExperimentDetails extends ExperimentBase {
-  trials: TrialItem[];
-  username: string;
-  validationHistory: ValidationHistory[];
 }
 
 export interface Task {

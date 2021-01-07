@@ -1,10 +1,11 @@
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
-  CommandType, ExperimentHyperParams, ExperimentItem, RawJson, RecentCommandTask,
-  RecentExperimentTask, RecentTask, RunState, TBSource, TBSourceType,
+  CommandType, ExperimentHyperParams, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask,
+  RecentExperimentTask, RecentTask, RunState, TBSource, TBSourceType, Workload,
 } from 'types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
+import { isMetricsWorkload } from './step';
 
 /* Conversions to Tasks */
 
@@ -232,5 +233,24 @@ export const tsbMatchesSource = (tensorboard: Command, source: TBSource): boolea
       return isEqual(tensorboard.misc?.trialIds, source.ids);
     default:
       return false;
+  }
+};
+
+export const getMetricValue = (workload?: Workload, metricName?: string): number | undefined => {
+  const metricsWl = workload as MetricsWorkload;
+  if (!workload || !isMetricsWorkload(metricsWl) || !metricsWl.metrics) return undefined;
+
+  metricName = metricName || Object.keys(metricsWl.metrics)[0];
+
+  return metricsWl.metrics[metricName];
+};
+
+export const getBatchNumber = (
+  data: {batch: number} | {numBatches: number, priorBatchesProcessed: number},
+): number => {
+  if ('batch' in data) {
+    return data.batch;
+  } else {
+    return data.numBatches + data.priorBatchesProcessed;
   }
 };

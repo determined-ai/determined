@@ -5,21 +5,21 @@ import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import {
-  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
+  jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
   jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
   jsonToTensorboard, jsonToTensorboards, jsonToTrialLogs, jsonToUsers,
 } from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
-  EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
-  GetExperimentsParams, LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
+  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentDetails, Log, TBSourceType, Telemetry, TrialDetails2,
+  Log, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -174,7 +174,7 @@ CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase> = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
     return decoder
-      .decodeGetV1ExperimentRespToExperimentBase(resp.experiment, resp.config);
+      .decodeGetV1ExperimentRespToExperimentBase(resp);
   },
   request: (params: CreateExperimentParams) => detApi.Experiments
     .determinedCreateExperiment({ config: params.experimentConfig, parentId: params.parentId }),
@@ -235,10 +235,49 @@ export const patchExperiment: DetApi<PatchExperimentParams, Api.V1PatchExperimen
     .determinedPatchExperiment(params.experimentId, params.body as Api.V1Experiment),
 };
 
-export const getExperimentDetails: HttpApi<ExperimentDetailsParams, ExperimentDetails> = {
-  httpOptions: (params) => ({ url: `/experiments/${params.id}/summary` }),
+export const getExperimentDetails: DetApi<
+ExperimentDetailsParams,
+Api.V1GetExperimentResponse,
+ExperimentBase> = {
   name: 'getExperimentDetails',
-  postProcess: (response) => jsonToExperimentDetails(response.data),
+  postProcess: (response) => decoder.decodeGetV1ExperimentRespToExperimentBase(response),
+  request: (response) => detApi.Experiments.determinedGetExperiment(response.id),
+};
+
+export const getExpValidationHistory: DetApi<SingleEntityParams,
+Api.V1GetExperimentValidationHistoryResponse,
+ValidationHistory[]> = {
+  name: 'getExperimentValidationHistory',
+  postProcess: (response) => {
+    if (!response.validationHistory) return [];
+    return response.validationHistory?.map(vh => ({
+      endTime: vh.endTime as unknown as string,
+      trialId: vh.trialId,
+      validationError: vh.searcherMetric,
+    }));
+  },
+  request: (params) => detApi.Experiments.determinedGetExperimentValidationHistory(
+    params.id,
+  ),
+};
+
+export const getExpTrials: DetApi<
+GetTrialsParams,
+Api.V1GetExperimentTrialsResponse,
+TrialDetails[]> = {
+  name: 'getExperimentValidationHistory',
+  postProcess: (response) => {
+    return response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial }));
+  },
+  request: (params) => detApi.Experiments.determinedGetExperimentTrials(
+    params.id,
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    params.states?.map(rs => 'STATE_' + rs.toString() as any),
+  ),
 };
 
 export const getExperimentLabels: DetApi<
@@ -250,7 +289,7 @@ export const getExperimentLabels: DetApi<
 };
 
 export const getTrialDetails: DetApi<
-TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2> = {
+TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails> = {
   name: 'getTrialDetails',
   postProcess: (resp: Api.V1GetTrialResponse) => {
     return decoder

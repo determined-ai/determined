@@ -1,7 +1,7 @@
 import { Button, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import yaml from 'js-yaml';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 import TimeAgo from 'timeago-react';
 
@@ -14,46 +14,27 @@ import Section from 'components/Section';
 import TagList from 'components/TagList';
 import tagListCss from 'components/TagList.module.scss';
 import useExperimentTags from 'hooks/useExperimentTags';
-import { CheckpointDetail, CheckpointState, ExperimentDetails } from 'types';
+import { CheckpointDetail, ExperimentBase } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 
 import css from './ExperimentInfoBox.module.scss';
 
-interface Props {
-  experiment: ExperimentDetails;
+interface Props extends TopWorkloads {
+  experiment: ExperimentBase;
   onTagsChange?: () => void;
 }
 
-const ExperimentInfoBox: React.FC<Props> = ({ experiment, onTagsChange }: Props) => {
+export interface TopWorkloads {
+  bestCheckpoint?: CheckpointDetail;
+  bestValidation?: number;
+}
+
+const ExperimentInfoBox: React.FC<Props> = (
+  { experiment, bestValidation, bestCheckpoint, onTagsChange }: Props,
+) => {
   const config = experiment.config;
   const [ showConfig, setShowConfig ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
-
-  const orderFactor = experiment.config.searcher.smallerIsBetter ? 1 : -1;
-
-  const bestValidation = useMemo(() => {
-    const sortedValidations = experiment.validationHistory
-      .filter(a => a.validationError !== undefined)
-      .sort((a, b) => (a.validationError as number - (b.validationError as number)) * orderFactor);
-    return sortedValidations[0]?.validationError;
-  }, [ experiment.validationHistory, orderFactor ]);
-
-  const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
-    const sortedCheckpoints: CheckpointDetail[] = experiment.trials
-      .filter(trial => trial.bestAvailableCheckpoint
-        && trial.bestAvailableCheckpoint.validationMetric
-        && trial.bestAvailableCheckpoint.state === CheckpointState.Completed)
-      .map(trial => ({
-        ...trial.bestAvailableCheckpoint,
-        batch: trial.totalBatchesProcessed,
-        experimentId: trial.experimentId,
-        trialId: trial.id,
-      }) as CheckpointDetail)
-      .sort((a, b) => {
-        return (a.validationMetric as number - (b.validationMetric as number)) * orderFactor;
-      });
-    return sortedCheckpoints[0];
-  }, [ experiment.trials, orderFactor ]);
 
   const experimentTags = useExperimentTags(onTagsChange);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
@@ -63,13 +44,13 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment, onTagsChange }: Props)
 
   const infoRows: InfoRow[] = [
     {
-      content: experiment.progress != null && <ProgressBar
+      content: !!experiment.progress && <ProgressBar
         percent={experiment.progress * 100}
         state={experiment.state} />,
       label: 'Progress',
     },
     {
-      content: bestValidation &&
+      content: bestValidation !== undefined &&
         <>
           <HumanReadableFloat num={bestValidation} /> {`(${config.searcher.metric})`}
         </>,
@@ -82,7 +63,7 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment, onTagsChange }: Props)
     },
     {
       content: bestCheckpoint && <Button onClick={handleShowBestCheckpoint}>
-              Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}
+        Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}
       </Button>,
       label: 'Best Checkpoint',
     },

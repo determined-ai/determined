@@ -3,15 +3,15 @@ import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
   ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
-  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams,
-  LoginResponse, LogsParams, PatchExperimentParams, TaskLogsParams, TrialDetailsParams,
-  TrialLogsParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
+  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
+  TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentDetails, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
-  Telemetry, TrialDetails2,
+  ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
+  Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -104,11 +104,18 @@ export const getExperimentList = async (
   }
 };
 
-export const getExperimentDetails =
-  generateApi<ExperimentDetailsParams, ExperimentDetails>(Config.getExperimentDetails);
+export const getExperimentDetails = generateDetApi<ExperimentDetailsParams,
+Api.V1GetExperimentResponse, ExperimentBase>(Config.getExperimentDetails);
+
+export const getExpTrials = generateDetApi<GetTrialsParams, Api.V1GetExperimentTrialsResponse,
+TrialDetails[]>(Config.getExpTrials);
+
+export const getExpValidationHistory = generateDetApi<
+SingleEntityParams, Api.V1GetExperimentValidationHistoryResponse, ValidationHistory[]>
+(Config.getExpValidationHistory);
 
 export const getTrialDetails =
-  generateDetApi<TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails2>(Config.getTrialDetails);
+  generateDetApi<TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails>(Config.getTrialDetails);
 
 export const createExperiment = generateDetApi<
 CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase>(

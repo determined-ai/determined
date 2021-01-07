@@ -6,7 +6,7 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
   openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { ExperimentDetails, RunState, TBSourceType } from 'types';
+import { ExperimentBase, RunState, TBSourceType, TrialItem } from 'types';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -22,11 +22,12 @@ export enum Action {
 }
 
 interface Props {
-  experiment: ExperimentDetails;
+  experiment: ExperimentBase;
   onClick: {
     [key in Action]?: () => void;
   };
   onSettled: () => void; // A callback to trigger after an action is done.
+  trials: TrialItem[];
 }
 
 type ButtonLoadingStates = Record<Action, boolean>;
@@ -35,15 +36,15 @@ type ButtonLoadingStates = Record<Action, boolean>;
   * We use `numSteps` or `totalBatchesProcessed` as a
   * proxy to trials that definietly have some metric.
   */
-const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
+const experimentWillNeverHaveData = (experiment: ExperimentBase, trials: TrialItem[]): boolean => {
   const isTerminal = terminalRunStates.has(experiment.state);
-  const trialsWithSomeMetric = experiment.trials.filter(trial => {
-    return trial.numSteps > 1 || trial.totalBatchesProcessed > 0;
+  const trialsWithSomeMetric = trials.filter(trial => {
+    return trial.totalBatchesProcessed > 0;
   });
   return isTerminal && trialsWithSomeMetric.length === 0;
 };
 
-const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: Props) => {
+const ExperimentActions: React.FC<Props> = ({ experiment, onClick, trials, onSettled }: Props) => {
   const [ btnLoadingStates, setBtnLoadingStates ] = useState<ButtonLoadingStates>({
     Activate: false,
     Archive: false,
@@ -132,7 +133,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
     }
   }, [ experiment.id, onSettled ]);
 
-  const actionButtons: ConditionalButton<ExperimentDetails>[] = [
+  const actionButtons: ConditionalButton<ExperimentBase>[] = [
     {
       button: <Popconfirm
         cancelText="No"
@@ -176,7 +177,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
         key="tensorboard"
         loading={btnLoadingStates.Tensorboard}
         onClick={handleCreateTensorboard}>View in TensorBoard</Button>,
-      showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
+      showIf: (exp): boolean => !experimentWillNeverHaveData(exp, trials),
     },
     {
       button: <Button
@@ -197,7 +198,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
   return (
     <Space size="small">
       {actionButtons
-        .filter(ab => !ab.showIf || ab.showIf(experiment as ExperimentDetails))
+        .filter(ab => !ab.showIf || ab.showIf(experiment as ExperimentBase))
         .map(ab => ab.button)
       }
     </Space>

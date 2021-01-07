@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  CheckpointState, ExperimentDetails, ExperimentOld, RunState, TrialDetails2, TrialItem2,
+  CheckpointState, ExperimentBase, ExperimentOld, RunState, TrialDetails, TrialItem,
 } from 'types';
 import { generateOldExperiment } from 'utils/task';
 
@@ -14,7 +14,7 @@ export default {
 
 const sampleExperiment: ExperimentOld = generateOldExperiment(3);
 
-const sampleTrialItem: TrialItem2 = {
+const sampleTrialItem: TrialItem = {
   bestAvailableCheckpoint: {
     numBatches: 100,
     priorBatchesProcessed: 9900,
@@ -37,22 +37,14 @@ const sampleTrialItem: TrialItem2 = {
   totalBatchesProcessed: 10000,
 };
 
-const trialDetails: TrialDetails2 = {
+const trialDetails: TrialDetails = {
   ...sampleTrialItem,
   workloads: [],
 };
 
-const experimentDetails: ExperimentDetails = {
+const experimentDetails: ExperimentBase = {
   ...sampleExperiment,
-  trials: [
-    // sampleTrialItem, // TODO experiment migration
-  ],
   username: 'hamid',
-  validationHistory: [ {
-    endTime: Date.now().toString(),
-    trialId: 0,
-    validationError: 0.023,
-  } ],
 };
 
 export const state = (): React.ReactNode => (

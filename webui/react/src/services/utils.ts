@@ -43,7 +43,7 @@ export const isNotFound = (e: any): boolean => {
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAborted = (e: any): boolean => {
-  return e && e.name && e.name === 'AbortError';
+  return e && e.name && e.name === 'AbortError'|| axios.isCancel(e);
 };
 
 /* HTTP Helpers */

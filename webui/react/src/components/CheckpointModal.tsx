@@ -3,23 +3,28 @@ import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
-import { CheckpointDetail, CheckpointStorageType, ExperimentConfig, RunState } from 'types';
+import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
+  ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize } from 'utils/types';
+import { checkpointSize, getBatchNumber } from 'utils/types';
 
 import css from './CheckpointModal.module.scss';
 import Link from './Link';
 
 interface Props {
-  checkpoint: CheckpointDetail;
+  checkpoint: CheckpointWorkloadExtended | CheckpointDetail;
   config: ExperimentConfig;
   onHide?: () => void;
+  searcherValidation?: number;
   show?: boolean;
   title: string;
 }
 
-const getStorageLocation = (config: ExperimentConfig, checkpoint: CheckpointDetail): string => {
+const getStorageLocation = (
+  config: ExperimentConfig,
+  checkpoint: CheckpointDetail | CheckpointWorkload,
+): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
   let location = '';
@@ -61,7 +66,9 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, title }: Props) => {
+const CheckpointModal: React.FC<Props> = (
+  { config, checkpoint, onHide, show, title, ...props }: Props,
+) => {
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {
@@ -75,6 +82,12 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
       .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
   }, [ checkpoint.resources ]);
+
+  const totalBatchesProcessed = getBatchNumber(checkpoint);
+
+  const searcherMetric = props.searcherValidation !== undefined ?
+    props.searcherValidation :
+    ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
 
   return (
     <Modal
@@ -95,17 +108,17 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
                 Trial {checkpoint.trialId}
               </Link>
               <span className={css.sourceDivider} />
-              <span>Batch {checkpoint.batch}</span>
+              <span>Batch {totalBatchesProcessed}</span>
             </div>
           ),
         )}
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
-        {checkpoint.validationMetric && renderRow(
+        {searcherMetric && renderRow(
           'Validation Metric',
           <>
-            <HumanReadableFloat num={checkpoint.validationMetric} /> {`(${config.searcher.metric})`}
+            <HumanReadableFloat num={searcherMetric} /> {`(${config.searcher.metric})`}
           </>,
         )}
         {renderRow('Start Time', formatDatetime(checkpoint.startTime))}

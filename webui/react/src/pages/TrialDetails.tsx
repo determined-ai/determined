@@ -31,7 +31,7 @@ import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } f
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import {
-  CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step2, TrialDetails2,
+  CheckpointDetail, ExperimentBase, MetricName, MetricType, RawJson, Step, TrialDetails,
   TrialHyperParameters,
 } from 'types';
 import { clone, isEqual, numericSorter } from 'utils/data';
@@ -114,9 +114,9 @@ const TrialDetailsComp: React.FC = () => {
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
-  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ trialCanceler ] = useState(new AbortController());
-  const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails2>>({
+  const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
     isLoading: true,
@@ -156,7 +156,7 @@ const TrialDetailsComp: React.FC = () => {
 
   const columns = useMemo(() => {
 
-    const checkpointRenderer = (_: string, record: Step2) => {
+    const checkpointRenderer = (_: string, record: Step) => {
       if (record.checkpoint && hasCheckpointStep(record)) {
         const checkpoint = {
           ...record.checkpoint,
@@ -177,7 +177,7 @@ const TrialDetailsComp: React.FC = () => {
     };
 
     const metricRenderer = (metricName: MetricName) => {
-      const metricCol = (_: string, record: Step2) => {
+      const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
         return value ? <HumanReadableFloat num={value} /> : undefined;
       };
@@ -397,8 +397,8 @@ If the problem persists please contact support.',
     const fetchExperimentDetails = async () => {
       try {
         const response = await getExperimentDetails({
-          cancelToken: trialDetails.source?.token,
           id: experimentId,
+          signal: trialCanceler.signal,
         });
         setExperiment(response);
 
@@ -433,6 +433,7 @@ If the problem persists please contact support.',
     fetchExperimentDetails();
   }, [
     experimentId,
+    trialCanceler,
     experimentIdParam,
     history,
     metricNames,
@@ -489,7 +490,6 @@ If the problem persists please contact support.',
       ]}
       options={<TrialActions
         trial={trial}
-        trials={experiment.trials}
         onClick={handleActionClick}
         onSettled={fetchTrialDetails} />}
       showDivider
@@ -509,7 +509,7 @@ If the problem persists please contact support.',
         </Col>
         <Col span={24}>
           <Section options={options} title="Trial Information">
-            <ResponsiveTable<Step2>
+            <ResponsiveTable<Step>
               columns={columns}
               dataSource={workloadSteps}
               loading={{
@@ -517,7 +517,7 @@ If the problem persists please contact support.',
                 spinning: trialDetails.isLoading,
               }}
               pagination={getPaginationConfig(workloadSteps.length, pageSize)}
-              rowClassName={defaultRowClassName()}
+              rowClassName={defaultRowClassName({ clickable: true })}
               rowKey="batchNum"
               scroll={{ x: 1000 }}
               showSorterTooltip={false}

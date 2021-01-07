@@ -128,3 +128,9 @@ export const linkPath = (aPath: string, external = false): string => {
   }
   return path;
 };
+
+export const paths = {
+  trialDetails: (trialId: number | string, experimentId: number | string): string => {
+    return `/experiments/${experimentId}/trials/${trialId}`;
+  },
+};

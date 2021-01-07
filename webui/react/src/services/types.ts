@@ -1,6 +1,6 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 
-import { CommandType, TBSource } from 'types';
+import { CommandType, RunState, TBSource } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -66,14 +66,17 @@ export interface ExperimentIdParams {
   experimentId: number;
 }
 
-export interface GetExperimentsParams {
+interface PaginationParams {
+  limit?: number;
+  offset?: number;
+  orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
+}
+
+export interface GetExperimentsParams extends PaginationParams {
   archived?: boolean;
   description?: string;
   labels?: Array<string>;
-  limit?: number;
-  offset?: number;
   options?: never;
-  orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'
   | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS'
   | 'SORT_BY_USER';
@@ -81,6 +84,12 @@ export interface GetExperimentsParams {
   | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
   | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
   users?: Array<string>;
+}
+
+export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME'
+  | 'SORT_BY_END_TIME' | 'SORT_BY_STATE';
+  states?: RunState[];
 }
 
 export interface CreateExperimentParams {
