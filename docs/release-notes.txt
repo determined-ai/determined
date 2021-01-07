@@ -16,29 +16,27 @@ Version 0.13.11
 **Improvements**
 
 -  Trials: Add experimental support for custom metric reducers with
-   PyTorchTrial. Calculating advanced metrics like F1 score or mean IOU
-   and returning multiple metrics from a single reducer are supported.
-   See
-   :meth:`determined.pytorch.PyTorchExperimentalContext.wrap_reducer()`
-   for detailed documentation and code snippets.
+   PyTorchTrial. This enables calculating advanced metrics like F1 score or mean
+   IOU; returning multiple metrics from a single reducer is also supported.  See
+   :meth:`determined.pytorch.PyTorchExperimentalContext.wrap_reducer()` for
+   detailed documentation and code snippets.
 
-   See ``determined/examples/features/custom_reducers_mnist_pytorch``
-   for a fully running example of custom reducers. The example emits a
-   per-class F1 score using the new custom reducers API.
+   See ``determined/examples/features/custom_reducers_mnist_pytorch`` for a
+   complete example of how to use custom reducers. The example emits a per-class
+   F1 score using the new custom reducer API.
 
 -  Trials: Support more than 1 backward pass per optimizer step for
    distributed training in PyTorchTrial.
 
--  Logging: Allow the trial logging backend to be configured in
-   Kubernetes deployments of Determined.
+-  Logging: Allow the trial logging backend to be configured in Kubernetes-based
+   deployments of Determined.
 
 -  Agents: Add support for labels when starting agents with
    ``det-deploy``.
 
 **Bug Fixes**
 
--  WebUI: Update the Trial Information Table to be usable in mobile
-   view.
+-  WebUI: Update the Trial Information Table to be usable on mobile devices.
 -  HP Search: Fix a bug where ``adaptive_asha`` could run with more
    maximum concurrent trials than intended.
 -  Scheduling: Fix a bug where command priority was not respected.
