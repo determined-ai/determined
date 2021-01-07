@@ -249,8 +249,8 @@ const ioExpHParam = io.type({
   count: optional(io.number),
   maxval: optional(io.number),
   minval: optional(io.number),
-  type: io.keyof({ const: null, double: null, int: null, log: null }),
-  val: optional(io.union([ io.number, io.string, io.boolean ])),
+  type: io.string,
+  val: io.unknown,
 });
 
 export const ioHyperparameters = io.record(io.string, ioExpHParam);
