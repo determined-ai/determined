@@ -1,6 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  Priority Scheduler: Fix a bug where command priority was not
-   respected.
