@@ -6,7 +6,8 @@ import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Section from 'components/Section';
-import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig, humanReadableFloatRenderer,
+  MINIMUM_PAGE_SIZE } from 'components/Table';
 import useStorage from 'hooks/useStorage';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
@@ -84,6 +85,12 @@ const ExperimentOverview: React.FC<Props> = (
         column.sorter = latestValidationSorter;
       }
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
+      if (column.key === 'bestValidation') {
+        column.render = (_: string, record: TrialItem): React.ReactNode => {
+          const value = getMetricValue(record.bestValidationMetric, metric);
+          return value && humanReadableFloatRenderer(value);
+        };
+      }
       return column;
     });
 
