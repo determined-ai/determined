@@ -1,6 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  HP Search: Fix a bug where ``adaptive_asha`` could run with more max
-   concurrent trials than intended.
