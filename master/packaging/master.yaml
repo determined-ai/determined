@@ -3,9 +3,6 @@
 #  type: fair_share
 #  fit: best
 
-scheduler:
-  type: priority
-
 ## Configure the task container defaults. Tasks include trials, commands, tensorboards and more.
 ## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the
 ## network interface used by distributed (multi-machine) training and ports used by the NCCL and
