@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import Auth from 'contexts/Auth';
+import Auth, { AUTH_COOKIE_KEY } from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
 import { getCurrentUser, isAuthFailure } from 'services/api';
 import { isAborted } from 'services/utils';
+import { getCookie } from 'utils/browser';
 
 const useAuthCheck = (): (() => void) => {
   const setAuth = Auth.useActionContext();
@@ -16,7 +17,7 @@ const useAuthCheck = (): (() => void) => {
 
   useEffect(() => {
     const checkAuth = async (signal: AbortSignal): Promise<void> => {
-      const authToken = globalStorage.authToken;
+      const authToken = getCookie(AUTH_COOKIE_KEY) || globalStorage.authToken;
       if (!authToken) {
         setAuth({ type: Auth.ActionType.MarkChecked });
         return;
