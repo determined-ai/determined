@@ -1,38 +1,34 @@
 .. _command-notebook-configuration:
 
-########################################
- Tensorboard and Notebook Configuration
-########################################
+###############################
+ Determined Task Configuration
+###############################
 
-The behavior of tensorboard and notebook workloads can be influenced by
-setting a variety of configuration variables. Configuration settings can
-be specified by passing a YAML configuration file when launching the
-workload via the Determined CLI:
+The behavior of Determined tasks, such as TensorBoards, notebooks,
+commands, and shells, can be influenced by setting a variety of
+configuration variables. Configuration settings can be specified by
+passing a YAML configuration file when launching the workload via the
+Determined CLI:
 
 .. code::
 
    $ det tensorboard start experiment_id --config-file=my_config.yaml
    $ det notebook start --config-file=my_config.yaml
+   $ det cmd run --config-file=my_config.yaml ...
+   $ det shell start --config-file=my_config.yaml
 
-For notebooks, configuration variables can also be set directly on the
-command-line when the workload is launched:
+Configuration variables can also be set directly on the command line
+when any Determined task, except a TensorBoard, is launched:
 
 .. code::
 
    $ det notebook start --config resources.slots=2
+   $ det cmd run --config description="determined_command" ...
+   $ det shell start --config resources.priority=1
 
 Options set via ``--config`` take precedence over values specified in
-the configuration file.
-
-The same configuration methods also work for commands and shells:
-
-.. code::
-
-   $ det cmd run --config-file=my_config.yaml
-   $ det cmd run --config resources.slots=2 ...
-
-   $ det shell start --config-file=my_config.yaml
-   $ det shell start --config resources.slots=2 ...
+the configuration file. Configuration settings are compatible with any
+Determined task unless otherwise specified.
 
 ************************
  Configuration Settings
@@ -90,7 +86,7 @@ The following configuration settings are supported:
       slots. For example, Determined will be unable to schedule a
       command that requests 4 slots if the Determined cluster is
       composed of agents with 2 slots each. The number of slots for
-      Tensorboard is fixed at ``0`` and may not be changed.
+      TensorBoard is fixed at ``0`` and may not be changed.
 
    -  ``agent_label``: If set, the command/notebook will _only_ be
       scheduled on agents that have the given label set. If this is not
@@ -135,5 +131,5 @@ The following configuration settings are supported:
       for replicas of the bind-mount. Defaults to ``rprivate``.
 
 -  ``tensorboard_args``: Lists optional arguments for launching
-   Tensorboard. Each element of the list should be a string of the form
+   TensorBoard. Each element of the list should be a string of the form
    ``NAME=VALUE``.

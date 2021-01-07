@@ -52,6 +52,11 @@ equivalent:
    det s
    det slot list
 
+Commands that launch Determined tasks can take :ref:`configuration
+options <command-notebook-configuration>` that change the behavior of
+the tasks. These configurations affect Determined notebooks, shells,
+commands, and TensorBoards.
+
 Providing ``-h`` or ``--help`` as an argument anywhere will cause the
 CLI to exit after printing help text for the object or action specified
 up to that point.
