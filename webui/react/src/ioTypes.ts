@@ -253,12 +253,15 @@ const ioExpHParam = io.type({
   val: optional(io.union([ io.number, io.string, io.boolean ])),
 });
 
+export const ioHyperparameters = io.record(io.string, ioExpHParam);
+export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;
+
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: optional(ioCheckpointStorage),
   data_layer: optional(ioDataLayer),
   description: io.string,
-  hyperparameters: io.record(io.string, ioExpHParam),
+  hyperparameters: ioHyperparameters,
   labels: optional(io.array(io.string)),
   resources: ioExpResources,
   searcher: io.type({
