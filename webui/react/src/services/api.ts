@@ -105,7 +105,7 @@ export const getExperimentList = async (
 };
 
 export const getExperimentDetails = generateDetApi<ExperimentDetailsParams,
-Api.V1GetExperimentResponse, ExperimentBase>(Config.getExperimentDetails2);
+Api.V1GetExperimentResponse, ExperimentBase>(Config.getExperimentDetails);
 
 export const getExpTrials = generateDetApi<GetTrialsParams, Api.V1GetExperimentTrialsResponse,
 TrialDetails[]>(Config.getExpTrials);

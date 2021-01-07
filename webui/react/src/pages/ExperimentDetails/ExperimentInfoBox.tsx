@@ -21,7 +21,6 @@ import css from './ExperimentInfoBox.module.scss';
 
 interface Props extends TopWorkloads {
   experiment: ExperimentBase;
-  // trials: TrialDetails2[];
   onTagsChange?: () => void;
 }
 

@@ -235,7 +235,7 @@ export const patchExperiment: DetApi<PatchExperimentParams, Api.V1PatchExperimen
     .determinedPatchExperiment(params.experimentId, params.body as Api.V1Experiment),
 };
 
-export const getExperimentDetails2: DetApi<
+export const getExperimentDetails: DetApi<
 ExperimentDetailsParams,
 Api.V1GetExperimentResponse,
 ExperimentBase> = {
