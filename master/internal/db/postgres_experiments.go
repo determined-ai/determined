@@ -414,12 +414,7 @@ func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (model.HPImportance
 		Batches: r.Batches,
 		Metric:  r.Metric,
 	}
-
-	err := json.Unmarshal(r.Hparams, &entry.Hparams)
-	if err != nil {
-		return entry, err
-	}
-	return entry, nil
+	return entry, json.Unmarshal(r.Hparams, &entry.Hparams)
 }
 
 // FetchHPImportanceTrainingData retrieves all the data needed by the hyperparameter importance

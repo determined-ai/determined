@@ -540,19 +540,15 @@ func (hpi *ExperimentHPImportance) GetMetricHPImportance(metricName string, metr
 ) MetricHPImportance {
 	switch metricType {
 	case TrainingMetric:
-		metricHpi, ok := hpi.TrainingMetrics[metricName]
-		if !ok {
-			var newMetricHpi MetricHPImportance
-			metricHpi = newMetricHpi
+		if metricHpi, ok := hpi.TrainingMetrics[metricName]; ok {
+			return metricHpi
 		}
-		return metricHpi
+		return MetricHPImportance{}
 	case ValidationMetric:
-		metricHpi, ok := hpi.ValidationMetrics[metricName]
-		if !ok {
-			var newMetricHpi MetricHPImportance
-			metricHpi = newMetricHpi
+		if metricHpi, ok := hpi.ValidationMetrics[metricName]; ok {
+			return metricHpi
 		}
-		return metricHpi
+		return MetricHPImportance{}
 	default:
 		panic("Invalid metric type!")
 	}

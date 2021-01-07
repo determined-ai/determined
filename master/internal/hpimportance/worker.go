@@ -79,6 +79,7 @@ func (w *worker) Receive(ctx *actor.Context) (err error) {
 		state, progress, err := w.db.GetExperimentStatus(msg.experimentID)
 		if err != nil {
 			w.sendWorkFailed(ctx, msg, err.Error())
+			return nil
 		}
 		if state == model.CompletedState {
 			progress = 1

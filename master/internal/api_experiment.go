@@ -976,6 +976,17 @@ func (a *apiServer) ComputeHPImportance(ctx context.Context,
 	return &resp, nil
 }
 
+// Translates MetricHPImportance to the protobuf form
+func protoMetricHPI(metricHpi model.MetricHPImportance) *apiv1.GetHPImportanceResponse_MetricHPImportance {
+	return &apiv1.GetHPImportanceResponse_MetricHPImportance{
+		Error:              metricHpi.Error,
+		Pending:            metricHpi.Pending,
+		InProgress:         metricHpi.InProgress,
+		ExperimentProgress: metricHpi.ExperimentProgress,
+		HpImportance:       metricHpi.HpImportance,
+	}
+}
+
 func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 	resp apiv1.Determined_GetHPImportanceServer) error {
 	experimentID := int(req.ExperimentId)
@@ -998,22 +1009,10 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 		response.TrainingMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
 		response.ValidationMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
 		for metric, metricHpi := range result.TrainingMetrics {
-			response.TrainingMetrics[metric] = &apiv1.GetHPImportanceResponse_MetricHPImportance{
-				Error:              metricHpi.Error,
-				Pending:            metricHpi.Pending,
-				InProgress:         metricHpi.InProgress,
-				ExperimentProgress: metricHpi.ExperimentProgress,
-				HpImportance:       metricHpi.HpImportance,
-			}
+			response.TrainingMetrics[metric] = protoMetricHPI(metricHpi)
 		}
 		for metric, metricHpi := range result.ValidationMetrics {
-			response.ValidationMetrics[metric] = &apiv1.GetHPImportanceResponse_MetricHPImportance{
-				Error:              metricHpi.Error,
-				Pending:            metricHpi.Pending,
-				InProgress:         metricHpi.InProgress,
-				ExperimentProgress: metricHpi.ExperimentProgress,
-				HpImportance:       metricHpi.HpImportance,
-			}
+			response.ValidationMetrics[metric] = protoMetricHPI(metricHpi)
 		}
 
 		if err := resp.Send(&response); err != nil {
