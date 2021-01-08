@@ -3,6 +3,7 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { Options } from 'uplot';
 
 import useResize from 'hooks/useResize';
+import { MetricName, MetricType } from 'types';
 import { distance } from 'utils/chart';
 import { glasbeyColor } from 'utils/color';
 
@@ -13,6 +14,7 @@ interface Props {
   focusedTrialId?: number;
   onTrialClick?: (event: React.MouseEvent, trialId: number) => void;
   onTrialFocus?: (trialId: number | null) => void;
+  selectedMetric: MetricName;
   trialIds: number[];
   xValues: number[];
 }
@@ -29,15 +31,18 @@ interface ClosestPoint {
 const CHART_HEIGHT = 400;
 const FOCUS_MIN_DISTANCE = 30;
 const SCROLL_THROTTLE_TIME = 500;
+const MAX_METRIC_LABEL_SIZE = 30;
 const UPLOT_OPTIONS = {
   axes: [
     {
       grid: { width: 1 },
+      label: 'Batches Processed',
       scale: 'x',
       side: 2,
     },
     {
       grid: { width: 1 },
+      label: 'Metric',
       scale: 'metric',
       side: 3,
     },
@@ -102,6 +107,7 @@ const LearningCurveChart: React.FC<Props> = ({
   focusedTrialId,
   onTrialClick,
   onTrialFocus,
+  selectedMetric,
   trialIds,
   xValues,
 }: Props) => {
@@ -111,6 +117,7 @@ const LearningCurveChart: React.FC<Props> = ({
   const trialIdRef = useRef<HTMLDivElement>(null);
   const batchesRef = useRef<HTMLDivElement>(null);
   const metricValueRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
   const [ chart, setChart ] = useState<uPlot>();
   const [ focusedPoint, setFocusedPoint ] = useState<ClosestPoint>();
@@ -129,6 +136,23 @@ const LearningCurveChart: React.FC<Props> = ({
       chart.setSeries(seriesIdx + 1, { focus: true });
     }
   }, [ chart, focusedTrialId, trialIds ]);
+
+  const calculateAxesLabelSize = useCallback((plot: uPlot, values: string[], axisIdx: number) => {
+    if (!measureRef.current || !Array.isArray(values)) return 0;
+
+    const axes = plot.axes[axisIdx];
+    if (!Array.isArray(axes.font)) return 0;
+
+    const longestValue = values.reduce((acc, value) => {
+      return value.length > acc.length ? value : acc;
+    }, '');
+
+    measureRef.current.style.font = axes.font[0];
+    measureRef.current.textContent = longestValue;
+
+    const rect = measureRef.current.getBoundingClientRect();
+    return rect.width / window.devicePixelRatio + (axes.labelSize || 0);
+  }, []);
 
   const handleClick = useCallback((event: React.MouseEvent) => {
     if (!chart || !focusedPoint || focusedPoint.seriesIdx == null || !onTrialClick) return;
@@ -237,6 +261,14 @@ const LearningCurveChart: React.FC<Props> = ({
       width: chartRef.current.offsetWidth,
     }) as Options;
 
+    if (options.axes && options.axes?.length >= 2) {
+      const metricTypeLabel = selectedMetric.type === MetricType.Training ? 'T' : 'V';
+      const metricNameLabel = selectedMetric.name.length > MAX_METRIC_LABEL_SIZE ?
+        selectedMetric.name.substr(0, MAX_METRIC_LABEL_SIZE) + '...' : selectedMetric.name;
+      options.axes[1].label = `[${metricTypeLabel}] ${metricNameLabel}`;
+      options.axes[1].size = calculateAxesLabelSize;
+    }
+
     const plotChart = new uPlot(options, [ xValues, ...data ], chartRef.current);
     setChart(plotChart);
 
@@ -244,7 +276,7 @@ const LearningCurveChart: React.FC<Props> = ({
       setChart(undefined);
       plotChart.destroy();
     };
-  }, [ data, handleCursorMove, trialIds, xValues ]);
+  }, [ calculateAxesLabelSize, data, handleCursorMove, selectedMetric, trialIds, xValues ]);
 
   // Focus on a trial series if provided.
   useEffect(() => focusOnTrial(), [ focusOnTrial ]);
@@ -297,6 +329,7 @@ const LearningCurveChart: React.FC<Props> = ({
           </div>
         </div>
       </div>
+      <div className={css.measure} ref={measureRef} />
     </div>
   );
 };

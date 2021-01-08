@@ -46,4 +46,13 @@ $tooltip-offset: 0.5rem;
       right: $tooltip-offset;
     }
   }
+  .measure {
+    display: inline;
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    user-select: none;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
 }
