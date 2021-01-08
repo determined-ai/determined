@@ -9,6 +9,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgconn"
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -131,6 +134,17 @@ func DefaultMasterConfig() (*internal.Config, error) {
 	if err := yaml.Unmarshal([]byte(defaultMasterConfig), c, yaml.DisallowUnknownFields); err != nil {
 		return nil, err
 	}
+
+	pgCfg, err := pgconn.ParseConfig(os.Getenv("DET_INTEGRATION_POSTGRES_URL"))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse database string")
+	}
+
+	c.DB.Host = pgCfg.Host
+	c.DB.Port = strconv.Itoa(int(pgCfg.Port))
+	c.DB.User = pgCfg.User
+	c.DB.Password = pgCfg.Password
+	c.DB.Name = pgCfg.Database
 
 	if err := c.Resolve(); err != nil {
 		return nil, err

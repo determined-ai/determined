@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgconn"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -104,7 +104,7 @@ RETURNING id`)
 
 	var userID model.UserID
 	if err := stmt.QueryRowx(user).Scan(&userID); err != nil {
-		if pgerr, ok := errors.Cause(err).(*pq.Error); ok {
+		if pgerr, ok := errors.Cause(err).(*pgconn.PgError); ok {
 			if pgerr.Code == uniqueViolation {
 				return 0, ErrDuplicateRecord
 			}
