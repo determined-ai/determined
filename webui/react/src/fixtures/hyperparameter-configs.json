@@ -6,6 +6,12 @@
     }
   },
   {
+    "myParam": {
+      "type": "categorical",
+      "vals": ["a", "None"]
+    }
+  },
+  {
     "dense1": {
       "type": "const",
       "val": 1
