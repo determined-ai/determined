@@ -365,7 +365,7 @@ The master supports the following configuration settings:
 
       -  ``username`` (required)
       -  ``password`` (required)
-      -  ``server`` (optional)
+      -  ``serveraddress`` (optional)
       -  ``email`` (optional)
 
 -  ``root``: Specifies the root directory of the state files. Defaults
