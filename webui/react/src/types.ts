@@ -184,7 +184,7 @@ interface ExperimentHyperParam {
   maxval?: number;
   minval?: number;
   type: string;
-  val?: number | string;
+  val?: unknown;
 }
 
 export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;

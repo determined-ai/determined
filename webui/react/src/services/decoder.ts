@@ -140,7 +140,8 @@ export const jsonToTensorboards = (data: unknown): types.Command[] => {
   return jsonToGenericCommands(data, types.CommandType.Tensorboard);
 };
 
-const ioToExperimentConfig = (io: ioTypes.ioTypeExperimentConfig): types.ExperimentConfig => {
+export const ioToExperimentConfig =
+(io: ioTypes.ioTypeExperimentConfig): types.ExperimentConfig => {
   const config: types.ExperimentConfig = {
     checkpointPolicy: io.checkpoint_policy,
     checkpointStorage: io.checkpoint_storage ? {

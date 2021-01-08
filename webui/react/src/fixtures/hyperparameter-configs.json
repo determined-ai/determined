@@ -1,0 +1,3013 @@
+[
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "myParam": {
+      "type": "categorical",
+      "vals": ["a", "None"]
+    }
+  },
+  {
+    "dense1": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "training_batch_seconds": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "dense1": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "sync_bn": {
+      "type": "const",
+      "val": false
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "n_filters_1": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    }
+  },
+  {
+    "b1": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "latent_dim": {
+      "type": "const",
+      "val": 1
+    },
+    "lr": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "layer1_dense_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "learning_rate_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "metrics_base": {
+      "type": "const",
+      "val": 1.1
+    },
+    "metrics_progression": {
+      "type": "const",
+      "val": "decreasing"
+    },
+    "metrics_sigma": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "activation": {
+      "type": "const",
+      "val": "relu"
+    },
+    "dropout": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1,
+      "type": "double"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "kernel_size": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "n_filters1": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "n_filters1": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "amp": {
+      "type": "const",
+      "val": true
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "metrics_base": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "metrics_progression": {
+      "type": "const",
+      "val": "decreasing"
+    },
+    "metrics_sigma": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "output": {
+      "type": "const",
+      "val": "None"
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "momentum": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "OUTPUT_CHANNELS": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "layer1_dense_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "learning_rate_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": -1,
+      "minval": -1,
+      "type": "log"
+    },
+    "momentum": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "dropout1": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1
+    },
+    "n_filters1": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "base_learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "decay_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "decay_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "n_filters": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_cost": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "hidden_layer_1": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "chaos_probability": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "metrics_base": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "metrics_progression": {
+      "type": "const",
+      "val": "decreasing"
+    },
+    "metrics_sigma": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "global_batch_size": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "hdim_1": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": 1,
+      "minval": -1,
+      "type": "log"
+    }
+  },
+  {
+    "global_batch_size": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "layer1_dense_size": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": 1,
+      "minval": -1,
+      "type": "log"
+    },
+    "learning_rate_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "embed_dim": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "gamma": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "global_batch_size": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "learning_rate": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "layer1_dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "learning_rate_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropout1": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "n_filters1": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "l1_regularization": {
+      "type": "const",
+      "val": 1.1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "max_depth": {
+      "type": "const",
+      "val": 1
+    },
+    "min_node_weight": {
+      "type": "const",
+      "val": 1.1
+    },
+    "n_trees": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "dropout": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": -1,
+      "minval": -1,
+      "type": "log"
+    },
+    "n_filters1": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    }
+  },
+  {
+    "amp": {
+      "type": "const",
+      "val": true
+    },
+    "dataset": {
+      "type": "const",
+      "val": "coco"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "model_ema": {
+      "type": "const",
+      "val": true
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    },
+    "sync_bn": {
+      "type": "const",
+      "val": false
+    }
+  },
+  {
+    "base_learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "decay_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "decay_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "image_size": {
+      "type": "const",
+      "val": 1
+    },
+    "n_filters": {
+      "type": "const",
+      "val": 1
+    },
+    "synthetic_data": {
+      "type": "const",
+      "val": true
+    },
+    "visualize": {
+      "type": "const",
+      "val": true
+    },
+    "weight_cost": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "base_learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "decay_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "decay_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "image_size": {
+      "type": "const",
+      "val": 1
+    },
+    "n_filters": {
+      "type": "const",
+      "val": 1
+    },
+    "synthetic_data": {
+      "type": "const",
+      "val": false
+    },
+    "visualize": {
+      "type": "const",
+      "val": false
+    },
+    "weight_cost": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "dropout1": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "n_filters1": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    }
+  },
+  {
+    "dropout": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1,
+      "type": "double"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "hidden_layer_1": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": -1,
+      "minval": -1,
+      "type": "log"
+    }
+  },
+  {
+    "adam_epsilon": {
+      "type": "const",
+      "val": 0.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 0.1
+    },
+    "lr_scheduler_epoch_freq": {
+      "type": "const",
+      "val": 1
+    },
+    "max_seq_length": {
+      "type": "const",
+      "val": 1
+    },
+    "model_type": {
+      "type": "const",
+      "val": "bert"
+    },
+    "num_training_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "num_warmup_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "height_shift_range": {
+      "type": "const",
+      "val": 1.1
+    },
+    "horizontal_flip": {
+      "type": "const",
+      "val": true
+    },
+    "layer1_dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "learning_rate_decay": {
+      "type": "const",
+      "val": 0.1
+    },
+    "width_shift_range": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "dense_1_dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dense_1_hidden_units": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "height_shift_range": {
+      "type": "const",
+      "val": 1.1
+    },
+    "horizontal_flip": {
+      "type": "const",
+      "val": true
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "width_shift_range": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "global_batch_size": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "layer1_dropout": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": 1,
+      "minval": -1,
+      "type": "log"
+    },
+    "learning_rate_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "clip_grads": {
+      "type": "const",
+      "val": false
+    },
+    "clip_grads_norm": {
+      "type": "const",
+      "val": 1.1
+    },
+    "config_file": {
+      "type": "const",
+      "val": "configs/mask_rcnn/mask_rcnn_r1_caffe_fpn_poly_1x_coco_v1.py"
+    },
+    "gamma": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "step1": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup": {
+      "type": "const",
+      "val": "linear"
+    },
+    "warmup_iters": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_ratio": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "l1_regularization": {
+      "base": 1,
+      "count": null,
+      "maxval": -1,
+      "minval": -1,
+      "type": "log"
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": -1,
+      "minval": -1,
+      "type": "log"
+    },
+    "max_depth": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "min_node_weight": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1,
+      "type": "double"
+    },
+    "n_trees": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    }
+  },
+  {
+    "arch_learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "init_channels": {
+      "type": "const",
+      "val": 1
+    },
+    "layers": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "min_learning_rate": {
+      "type": "const",
+      "val": 1
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "n_classes": {
+      "type": "const",
+      "val": 1
+    },
+    "nodes": {
+      "type": "const",
+      "val": 1
+    },
+    "scheduler_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "shuffle_factor": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "embedding_dim": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "hidden_dim": {
+      "type": "const",
+      "val": 1
+    },
+    "img_resize_dim": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_gamma": {
+      "type": "const",
+      "val": 1.1
+    },
+    "num_classes_train": {
+      "type": "const",
+      "val": 1
+    },
+    "num_classes_val": {
+      "type": "const",
+      "val": 1
+    },
+    "num_query_train": {
+      "type": "const",
+      "val": 1
+    },
+    "num_support_train": {
+      "type": "const",
+      "val": 1
+    },
+    "num_support_val": {
+      "type": "const",
+      "val": 1
+    },
+    "reduce_every": {
+      "type": "const",
+      "val": 1
+    },
+    "val_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "amp": {
+      "type": "const",
+      "val": true
+    },
+    "dataset": {
+      "type": "const",
+      "val": "coco"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "initial_checkpoint": {
+      "type": "const",
+      "val": "None"
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "model_ema": {
+      "type": "const",
+      "val": true
+    },
+    "no_pretrained_backbone": {
+      "type": "const",
+      "val": false
+    },
+    "num_classes": {
+      "type": "const",
+      "val": "None"
+    },
+    "pretrained": {
+      "type": "const",
+      "val": false
+    },
+    "redundant_bias": {
+      "type": "const",
+      "val": "None"
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    },
+    "sync_bn": {
+      "type": "const",
+      "val": false
+    },
+    "val_skip": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "global_batch_size": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "height_shift_range": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1,
+      "type": "double"
+    },
+    "horizontal_flip": {
+      "type": "categorical",
+      "vals": [
+        true,
+        false
+      ]
+    },
+    "layer1_dropout": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1.1,
+      "type": "double"
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": 1,
+      "minval": -1,
+      "type": "log"
+    },
+    "learning_rate_decay": {
+      "type": "const",
+      "val": 0.1
+    },
+    "width_shift_range": {
+      "count": null,
+      "maxval": 1.1,
+      "minval": 1,
+      "type": "double"
+    }
+  },
+  {
+    "adam_epsilon": {
+      "type": "const",
+      "val": 0.1
+    },
+    "do_lower_case": {
+      "type": "const",
+      "val": true
+    },
+    "doc_stride": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 0.1
+    },
+    "max_answer_length": {
+      "type": "const",
+      "val": 1
+    },
+    "max_grad_norm": {
+      "type": "const",
+      "val": 1
+    },
+    "max_query_length": {
+      "type": "const",
+      "val": 1
+    },
+    "max_seq_length": {
+      "type": "const",
+      "val": 1
+    },
+    "model_type": {
+      "type": "const",
+      "val": "albert"
+    },
+    "n_best_size": {
+      "type": "const",
+      "val": 1
+    },
+    "null_score_diff_threshold": {
+      "type": "const",
+      "val": 1
+    },
+    "num_training_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "num_warmup_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "adam_epsilon": {
+      "type": "const",
+      "val": 0.1
+    },
+    "doc_stride": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 0.1
+    },
+    "lr_scheduler_epoch_freq": {
+      "type": "const",
+      "val": 1
+    },
+    "max_answer_length": {
+      "type": "const",
+      "val": 1
+    },
+    "max_grad_norm": {
+      "type": "const",
+      "val": 1
+    },
+    "max_query_length": {
+      "type": "const",
+      "val": 1
+    },
+    "max_seq_length": {
+      "type": "const",
+      "val": 1
+    },
+    "model_type": {
+      "type": "const",
+      "val": "bert"
+    },
+    "n_best_size": {
+      "type": "const",
+      "val": 1
+    },
+    "null_score_diff_threshold": {
+      "type": "const",
+      "val": 1
+    },
+    "num_training_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "num_warmup_steps": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "activation": {
+      "type": "const",
+      "val": "relu"
+    },
+    "auxiliary": {
+      "type": "const",
+      "val": true
+    },
+    "auxiliary_weight": {
+      "type": "const",
+      "val": 1.1
+    },
+    "clip_gradients_l1_norm": {
+      "type": "const",
+      "val": 1
+    },
+    "cutout": {
+      "type": "const",
+      "val": true
+    },
+    "cutout_length": {
+      "type": "const",
+      "val": 1
+    },
+    "do_SE": {
+      "type": "const",
+      "val": false
+    },
+    "drop_path_prob": {
+      "type": "const",
+      "val": 1
+    },
+    "drop_prob": {
+      "type": "const",
+      "val": 1
+    },
+    "ema_decay": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "init_channels": {
+      "type": "const",
+      "val": 1
+    },
+    "label_smoothing_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "layers": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_decay_every": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_gamma": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_scheduler": {
+      "type": "const",
+      "val": "linear"
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "num_classes": {
+      "type": "const",
+      "val": 1
+    },
+    "randaugment": {
+      "type": "const",
+      "val": false
+    },
+    "warmup_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "activation": {
+      "type": "const",
+      "val": "swish"
+    },
+    "auxiliary": {
+      "type": "const",
+      "val": false
+    },
+    "auxiliary_weight": {
+      "type": "const",
+      "val": 1.1
+    },
+    "clip_gradients_l1_norm": {
+      "type": "const",
+      "val": 1
+    },
+    "cutout": {
+      "type": "const",
+      "val": true
+    },
+    "cutout_length": {
+      "type": "const",
+      "val": 1
+    },
+    "do_SE": {
+      "type": "const",
+      "val": true
+    },
+    "drop_path_prob": {
+      "type": "const",
+      "val": 1.1
+    },
+    "drop_prob": {
+      "type": "const",
+      "val": 1.1
+    },
+    "ema_decay": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "init_channels": {
+      "type": "const",
+      "val": 1
+    },
+    "label_smoothing_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "layers": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_decay_every": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_gamma": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_scheduler": {
+      "type": "const",
+      "val": "linear"
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "num_classes": {
+      "type": "const",
+      "val": 1
+    },
+    "randaugment": {
+      "type": "const",
+      "val": true
+    },
+    "warmup_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "alpha": {
+      "type": "const",
+      "val": 1
+    },
+    "arch_to_use": {
+      "type": "const",
+      "val": "ASHA"
+    },
+    "beta": {
+      "type": "const",
+      "val": 1.1
+    },
+    "bptt": {
+      "type": "const",
+      "val": 1
+    },
+    "clip_gradients_l1_norm": {
+      "type": "const",
+      "val": 1.1
+    },
+    "depth": {
+      "type": "const",
+      "val": 1
+    },
+    "dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropoute": {
+      "type": "const",
+      "val": 1
+    },
+    "dropouth": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropouti": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropoutx": {
+      "type": "const",
+      "val": 1.1
+    },
+    "emsize": {
+      "type": "const",
+      "val": 1
+    },
+    "eval_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "eval_same_arch": {
+      "type": "const",
+      "val": true
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "init_op": {
+      "type": "const",
+      "val": "tanh"
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1
+    },
+    "log_interval": {
+      "type": "const",
+      "val": 1
+    },
+    "max_seq_length_delta": {
+      "type": "const",
+      "val": 1
+    },
+    "nhid": {
+      "type": "const",
+      "val": 1
+    },
+    "nhidlast": {
+      "type": "const",
+      "val": 1
+    },
+    "nonmono": {
+      "type": "const",
+      "val": 1
+    },
+    "num_archs_to_eval": {
+      "type": "const",
+      "val": 1
+    },
+    "seq_len": {
+      "type": "const",
+      "val": 1
+    },
+    "step_every_batch": {
+      "type": "const",
+      "val": false
+    },
+    "step_every_epoch": {
+      "type": "const",
+      "val": false
+    },
+    "unrolled": {
+      "type": "const",
+      "val": true
+    },
+    "wdecay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "alpha": {
+      "type": "const",
+      "val": 1
+    },
+    "beta": {
+      "type": "const",
+      "val": 1.1
+    },
+    "bptt": {
+      "type": "const",
+      "val": 1
+    },
+    "clip_gradients_l1_norm": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropoute": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropouth": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropouti": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropoutx": {
+      "type": "const",
+      "val": 1.1
+    },
+    "emsize": {
+      "type": "const",
+      "val": 1
+    },
+    "eval_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1
+    },
+    "max_seq_length_delta": {
+      "type": "const",
+      "val": 1
+    },
+    "nhid": {
+      "type": "const",
+      "val": 1
+    },
+    "nhidlast": {
+      "type": "const",
+      "val": 1
+    },
+    "node1_edge": {
+      "type": "const",
+      "val": 1
+    },
+    "node1_op": {
+      "type": "const",
+      "val": "relu"
+    },
+    "nonmono": {
+      "type": "const",
+      "val": 1
+    },
+    "optimizer_switch_epoch": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "global_batch_size": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "layer1_dense_size": {
+      "count": null,
+      "maxval": 1,
+      "minval": 1,
+      "type": "int"
+    },
+    "learning_rate": {
+      "base": 1,
+      "count": null,
+      "maxval": 1,
+      "minval": -1,
+      "type": "log"
+    },
+    "learning_rate_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "alpha": {
+      "type": "const",
+      "val": 1
+    },
+    "beta": {
+      "type": "const",
+      "val": 1.1
+    },
+    "bptt": {
+      "type": "const",
+      "val": 1
+    },
+    "clip_gradients_l1_norm": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropout": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropoute": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropouth": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropouti": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dropoutx": {
+      "type": "const",
+      "val": 1.1
+    },
+    "emsize": {
+      "type": "const",
+      "val": 1
+    },
+    "eval_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1
+    },
+    "max_seq_length_delta": {
+      "type": "const",
+      "val": 1
+    },
+    "nhid": {
+      "type": "const",
+      "val": 1
+    },
+    "nhidlast": {
+      "type": "const",
+      "val": 1
+    },
+    "node1_edge": {
+      "type": "categorical",
+      "vals": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "node1_op": {
+      "type": "categorical",
+      "vals": [
+        "tanh",
+        "relu",
+        "sigmoid",
+        "identity"
+      ]
+    },
+    "nonmono": {
+      "type": "const",
+      "val": 1
+    },
+    "optimizer_switch_epoch": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 0.1
+    }
+  },
+  {
+    "auxiliary": {
+      "type": "const",
+      "val": true
+    },
+    "auxiliary_weight": {
+      "type": "const",
+      "val": 1.1
+    },
+    "clip_gradients_l1_norm": {
+      "type": "const",
+      "val": 1
+    },
+    "cutout": {
+      "type": "const",
+      "val": true
+    },
+    "cutout_length": {
+      "type": "const",
+      "val": 1
+    },
+    "drop_path_prob": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "init_channels": {
+      "type": "const",
+      "val": 1
+    },
+    "layers": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "normal_node1_edge1": {
+      "type": "const",
+      "val": 1
+    },
+    "normal_node1_edge1_op": {
+      "type": "const",
+      "val": "skip_connect"
+    },
+    "reduce_node1_edge1": {
+      "type": "const",
+      "val": 1
+    },
+    "reduce_node1_edge1_op": {
+      "type": "const",
+      "val": "max_pool_1x1"
+    },
+    "train_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1.1
+    }
+  },
+  {
+    "aa": {
+      "type": "const",
+      "val": "None"
+    },
+    "amp": {
+      "type": "const",
+      "val": true
+    },
+    "bench_labeler": {
+      "type": "const",
+      "val": false
+    },
+    "channels_last": {
+      "type": "const",
+      "val": false
+    },
+    "clip_grad": {
+      "type": "const",
+      "val": 1
+    },
+    "color_jitter": {
+      "type": "const",
+      "val": 1.1
+    },
+    "cooldown_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "dataset": {
+      "type": "const",
+      "val": "coco"
+    },
+    "decay_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "decay_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dist_bn": {
+      "type": "const",
+      "val": ""
+    },
+    "eval_metric": {
+      "type": "const",
+      "val": "map"
+    },
+    "fill_color": {
+      "type": "const",
+      "val": "None"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "initial_checkpoint": {
+      "type": "const",
+      "val": "None"
+    },
+    "interpolation": {
+      "type": "const",
+      "val": ""
+    },
+    "jit_loss": {
+      "type": "const",
+      "val": "None"
+    },
+    "lr": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_cycle_limit": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_cycle_mul": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_noise": {
+      "type": "const",
+      "val": "1.1 1.1"
+    },
+    "lr_noise_pct": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_noise_std": {
+      "type": "const",
+      "val": 1
+    },
+    "mean": {
+      "type": "const",
+      "val": "None"
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "min_lr": {
+      "type": "const",
+      "val": 0.1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "model_ema": {
+      "type": "const",
+      "val": true
+    },
+    "model_ema_decay": {
+      "type": "const",
+      "val": 1.1
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "new_focal": {
+      "type": "const",
+      "val": "None"
+    },
+    "no_prefetcher": {
+      "type": "const",
+      "val": false
+    },
+    "no_pretrained_backbone": {
+      "type": "const",
+      "val": false
+    },
+    "no_resume_opt": {
+      "type": "const",
+      "val": false
+    },
+    "num_classes": {
+      "type": "const",
+      "val": "None"
+    },
+    "opt": {
+      "type": "const",
+      "val": "fusedmomentum"
+    },
+    "opt_eps": {
+      "type": "const",
+      "val": 1.1
+    },
+    "output": {
+      "type": "const",
+      "val": null
+    },
+    "patience_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "pin_mem": {
+      "type": "const",
+      "val": false
+    },
+    "pretrained": {
+      "type": "const",
+      "val": false
+    },
+    "recount": {
+      "type": "const",
+      "val": 1
+    },
+    "recovery_interval": {
+      "type": "const",
+      "val": 1
+    },
+    "redundant_bias": {
+      "type": "const",
+      "val": "None"
+    },
+    "remode": {
+      "type": "const",
+      "val": "pixel"
+    },
+    "reprob": {
+      "type": "const",
+      "val": 1
+    },
+    "resume": {
+      "type": "const",
+      "val": ""
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    },
+    "save_images": {
+      "type": "const",
+      "val": false
+    },
+    "sched": {
+      "type": "const",
+      "val": "cosine"
+    },
+    "seed": {
+      "type": "const",
+      "val": 1
+    },
+    "smoothing": {
+      "type": "const",
+      "val": "None"
+    },
+    "start_epoch": {
+      "type": "const",
+      "val": "None"
+    },
+    "std": {
+      "type": "const",
+      "val": "None"
+    },
+    "sync_bn": {
+      "type": "const",
+      "val": false
+    },
+    "train_interpolation": {
+      "type": "const",
+      "val": "random"
+    },
+    "tta": {
+      "type": "const",
+      "val": 1
+    },
+    "val_skip": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_lr": {
+      "type": "const",
+      "val": 1.1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 0.1
+    },
+    "workers": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "aa": {
+      "type": "const",
+      "val": "None"
+    },
+    "amp": {
+      "type": "const",
+      "val": true
+    },
+    "bench_labeler": {
+      "type": "const",
+      "val": false
+    },
+    "channels_last": {
+      "type": "const",
+      "val": false
+    },
+    "clip_grad": {
+      "type": "const",
+      "val": 1
+    },
+    "color_jitter": {
+      "type": "const",
+      "val": 1.1
+    },
+    "cooldown_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "dataset": {
+      "type": "const",
+      "val": "coco"
+    },
+    "decay_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "decay_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dist_bn": {
+      "type": "const",
+      "val": ""
+    },
+    "eval_metric": {
+      "type": "const",
+      "val": "map"
+    },
+    "fill_color": {
+      "type": "const",
+      "val": "None"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "initial_checkpoint": {
+      "type": "const",
+      "val": "None"
+    },
+    "interpolation": {
+      "type": "const",
+      "val": ""
+    },
+    "jit_loss": {
+      "type": "const",
+      "val": "None"
+    },
+    "lr": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_cycle_limit": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_cycle_mul": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_noise": {
+      "type": "const",
+      "val": "1.1 1.1"
+    },
+    "lr_noise_pct": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_noise_std": {
+      "type": "const",
+      "val": 1
+    },
+    "mean": {
+      "type": "const",
+      "val": "None"
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "min_lr": {
+      "type": "const",
+      "val": 0.1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "model_ema": {
+      "type": "const",
+      "val": true
+    },
+    "model_ema_decay": {
+      "type": "const",
+      "val": 1.1
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "new_focal": {
+      "type": "const",
+      "val": "None"
+    },
+    "no_prefetcher": {
+      "type": "const",
+      "val": false
+    },
+    "no_pretrained_backbone": {
+      "type": "const",
+      "val": false
+    },
+    "no_resume_opt": {
+      "type": "const",
+      "val": false
+    },
+    "num_classes": {
+      "type": "const",
+      "val": "None"
+    },
+    "opt": {
+      "type": "const",
+      "val": "fusedmomentum"
+    },
+    "opt_eps": {
+      "type": "const",
+      "val": 1.1
+    },
+    "output": {
+      "type": "const",
+      "val": "None"
+    },
+    "patience_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "pin_mem": {
+      "type": "const",
+      "val": false
+    },
+    "pretrained": {
+      "type": "const",
+      "val": false
+    },
+    "recount": {
+      "type": "const",
+      "val": 1
+    },
+    "recovery_interval": {
+      "type": "const",
+      "val": 1
+    },
+    "redundant_bias": {
+      "type": "const",
+      "val": "None"
+    },
+    "remode": {
+      "type": "const",
+      "val": "pixel"
+    },
+    "reprob": {
+      "type": "const",
+      "val": 1
+    },
+    "resume": {
+      "type": "const",
+      "val": ""
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    },
+    "save_images": {
+      "type": "const",
+      "val": false
+    },
+    "sched": {
+      "type": "const",
+      "val": "cosine"
+    },
+    "seed": {
+      "type": "const",
+      "val": 1
+    },
+    "smoothing": {
+      "type": "const",
+      "val": "None"
+    },
+    "start_epoch": {
+      "type": "const",
+      "val": "None"
+    },
+    "std": {
+      "type": "const",
+      "val": "None"
+    },
+    "sync_bn": {
+      "type": "const",
+      "val": false
+    },
+    "train_interpolation": {
+      "type": "const",
+      "val": "random"
+    },
+    "tta": {
+      "type": "const",
+      "val": 1
+    },
+    "val_skip": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_lr": {
+      "type": "const",
+      "val": 1.1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 0.1
+    },
+    "workers": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "aa": {
+      "type": "const",
+      "val": "None"
+    },
+    "amp": {
+      "type": "const",
+      "val": true
+    },
+    "bench_labeler": {
+      "type": "const",
+      "val": false
+    },
+    "channels_last": {
+      "type": "const",
+      "val": false
+    },
+    "clip_grad": {
+      "type": "const",
+      "val": 1
+    },
+    "color_jitter": {
+      "type": "const",
+      "val": 1.1
+    },
+    "cooldown_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "dataset": {
+      "type": "const",
+      "val": "coco"
+    },
+    "decay_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "decay_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dist_bn": {
+      "type": "const",
+      "val": ""
+    },
+    "epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "eval_metric": {
+      "type": "const",
+      "val": "map"
+    },
+    "fill_color": {
+      "type": "const",
+      "val": "None"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "initial_checkpoint": {
+      "type": "const",
+      "val": "None"
+    },
+    "interpolation": {
+      "type": "const",
+      "val": ""
+    },
+    "jit_loss": {
+      "type": "const",
+      "val": "None"
+    },
+    "lr": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_cycle_limit": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_cycle_mul": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_noise": {
+      "type": "const",
+      "val": "1.1 1.1"
+    },
+    "lr_noise_pct": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_noise_std": {
+      "type": "const",
+      "val": 1
+    },
+    "mean": {
+      "type": "const",
+      "val": "None"
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "min_lr": {
+      "type": "const",
+      "val": 0.1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "model_ema": {
+      "type": "const",
+      "val": true
+    },
+    "model_ema_decay": {
+      "type": "const",
+      "val": 1.1
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "new_focal": {
+      "type": "const",
+      "val": "None"
+    },
+    "no_prefetcher": {
+      "type": "const",
+      "val": false
+    },
+    "no_pretrained_backbone": {
+      "type": "const",
+      "val": false
+    },
+    "no_resume_opt": {
+      "type": "const",
+      "val": false
+    },
+    "num_classes": {
+      "type": "const",
+      "val": "None"
+    },
+    "opt": {
+      "type": "const",
+      "val": "fusedmomentum"
+    },
+    "opt_eps": {
+      "type": "const",
+      "val": 1.1
+    },
+    "output": {
+      "type": "const",
+      "val": null
+    },
+    "patience_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "pin_mem": {
+      "type": "const",
+      "val": false
+    },
+    "pretrained": {
+      "type": "const",
+      "val": false
+    },
+    "recount": {
+      "type": "const",
+      "val": 1
+    },
+    "recovery_interval": {
+      "type": "const",
+      "val": 1
+    },
+    "redundant_bias": {
+      "type": "const",
+      "val": "None"
+    },
+    "remode": {
+      "type": "const",
+      "val": "pixel"
+    },
+    "reprob": {
+      "type": "const",
+      "val": 1
+    },
+    "resume": {
+      "type": "const",
+      "val": ""
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    },
+    "save_images": {
+      "type": "const",
+      "val": false
+    },
+    "sched": {
+      "type": "const",
+      "val": "cosine"
+    },
+    "seed": {
+      "type": "const",
+      "val": 1
+    },
+    "smoothing": {
+      "type": "const",
+      "val": "None"
+    },
+    "start_epoch": {
+      "type": "const",
+      "val": "None"
+    },
+    "std": {
+      "type": "const",
+      "val": "None"
+    },
+    "sync_bn": {
+      "type": "const",
+      "val": false
+    },
+    "train_interpolation": {
+      "type": "const",
+      "val": "random"
+    },
+    "tta": {
+      "type": "const",
+      "val": 1
+    },
+    "val_skip": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_lr": {
+      "type": "const",
+      "val": 1.1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 0.1
+    },
+    "workers": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "aa": {
+      "type": "const",
+      "val": "None"
+    },
+    "amp": {
+      "type": "const",
+      "val": true
+    },
+    "bench_labeler": {
+      "type": "const",
+      "val": false
+    },
+    "channels_last": {
+      "type": "const",
+      "val": false
+    },
+    "clip_grad": {
+      "type": "const",
+      "val": 1
+    },
+    "color_jitter": {
+      "type": "const",
+      "val": 1.1
+    },
+    "cooldown_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "dataset": {
+      "type": "const",
+      "val": "coco"
+    },
+    "decay_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "decay_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "dist_bn": {
+      "type": "const",
+      "val": "None"
+    },
+    "epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "eval_metric": {
+      "type": "const",
+      "val": "map"
+    },
+    "fill_color": {
+      "type": "const",
+      "val": "None"
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "initial_checkpoint": {
+      "type": "const",
+      "val": "None"
+    },
+    "interpolation": {
+      "type": "const",
+      "val": ""
+    },
+    "jit_loss": {
+      "type": "const",
+      "val": "None"
+    },
+    "lr": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_cycle_limit": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_cycle_mul": {
+      "type": "const",
+      "val": 1
+    },
+    "lr_noise": {
+      "type": "const",
+      "val": "1.1 1.1"
+    },
+    "lr_noise_pct": {
+      "type": "const",
+      "val": 1.1
+    },
+    "lr_noise_std": {
+      "type": "const",
+      "val": 1
+    },
+    "mean": {
+      "type": "const",
+      "val": "None"
+    },
+    "min_loss_scale": {
+      "type": "const",
+      "val": 1
+    },
+    "min_lr": {
+      "type": "const",
+      "val": 0.1
+    },
+    "model": {
+      "type": "const",
+      "val": "efficientdet_d1"
+    },
+    "model_ema": {
+      "type": "const",
+      "val": true
+    },
+    "model_ema_decay": {
+      "type": "const",
+      "val": 1.1
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "new_focal": {
+      "type": "const",
+      "val": "None"
+    },
+    "no_prefetcher": {
+      "type": "const",
+      "val": false
+    },
+    "no_pretrained_backbone": {
+      "type": "const",
+      "val": false
+    },
+    "no_resume_opt": {
+      "type": "const",
+      "val": false
+    },
+    "num_classes": {
+      "type": "const",
+      "val": "None"
+    },
+    "opt": {
+      "type": "const",
+      "val": "fusedmomentum"
+    },
+    "opt_eps": {
+      "type": "const",
+      "val": 1.1
+    },
+    "output": {
+      "type": "const",
+      "val": "None"
+    },
+    "patience_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "pin_mem": {
+      "type": "const",
+      "val": false
+    },
+    "pretrained": {
+      "type": "const",
+      "val": false
+    },
+    "recount": {
+      "type": "const",
+      "val": 1
+    },
+    "recovery_interval": {
+      "type": "const",
+      "val": 1
+    },
+    "redundant_bias": {
+      "type": "const",
+      "val": "None"
+    },
+    "remode": {
+      "type": "const",
+      "val": "pixel"
+    },
+    "reprob": {
+      "type": "const",
+      "val": 1
+    },
+    "resume": {
+      "type": "const",
+      "val": ""
+    },
+    "root": {
+      "type": "const",
+      "val": "/mnt/data"
+    },
+    "save_images": {
+      "type": "const",
+      "val": false
+    },
+    "sched": {
+      "type": "const",
+      "val": "cosine"
+    },
+    "seed": {
+      "type": "const",
+      "val": 1
+    },
+    "smoothing": {
+      "type": "const",
+      "val": "None"
+    },
+    "start_epoch": {
+      "type": "const",
+      "val": "None"
+    },
+    "std": {
+      "type": "const",
+      "val": "None"
+    },
+    "sync_bn": {
+      "type": "const",
+      "val": true
+    },
+    "train_interpolation": {
+      "type": "const",
+      "val": "random"
+    },
+    "tta": {
+      "type": "const",
+      "val": 1
+    },
+    "val_skip": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "warmup_lr": {
+      "type": "const",
+      "val": 1.1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 0.1
+    },
+    "workers": {
+      "type": "const",
+      "val": 1
+    }
+  },
+  {
+    "auxiliary": {
+      "type": "const",
+      "val": true
+    },
+    "auxiliary_weight": {
+      "type": "const",
+      "val": 1.1
+    },
+    "clip_gradients_l1_norm": {
+      "type": "const",
+      "val": 1
+    },
+    "cutout": {
+      "type": "const",
+      "val": true
+    },
+    "cutout_length": {
+      "type": "const",
+      "val": 1
+    },
+    "drop_path_prob": {
+      "type": "const",
+      "val": 1.1
+    },
+    "global_batch_size": {
+      "type": "const",
+      "val": 1
+    },
+    "init_channels": {
+      "type": "const",
+      "val": 1
+    },
+    "layers": {
+      "type": "const",
+      "val": 1
+    },
+    "learning_rate": {
+      "type": "const",
+      "val": 1.1
+    },
+    "momentum": {
+      "type": "const",
+      "val": 1.1
+    },
+    "normal_node1_edge1": {
+      "type": "categorical",
+      "vals": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "normal_node1_edge1_op": {
+      "type": "categorical",
+      "vals": [
+        "max_pool_1x1",
+        "avg_pool_1x1",
+        "skip_connect",
+        "sep_conv_1x1",
+        "sep_conv_1x1",
+        "dil_conv_1x1",
+        "dil_conv_1x1"
+      ]
+    },
+    "reduce_node1_edge1": {
+      "type": "categorical",
+      "vals": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "reduce_node1_edge1_op": {
+      "type": "categorical",
+      "vals": [
+        "max_pool_1x1",
+        "avg_pool_1x1",
+        "skip_connect",
+        "sep_conv_1x1",
+        "sep_conv_1x1",
+        "dil_conv_1x1",
+        "dil_conv_1x1"
+      ]
+    },
+    "train_epochs": {
+      "type": "const",
+      "val": 1
+    },
+    "weight_decay": {
+      "type": "const",
+      "val": 1.1
+    }
+  }
+]

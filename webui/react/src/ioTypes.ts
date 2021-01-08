@@ -249,16 +249,19 @@ const ioExpHParam = io.type({
   count: optional(io.number),
   maxval: optional(io.number),
   minval: optional(io.number),
-  type: io.keyof({ const: null, double: null, int: null, log: null }),
-  val: optional(io.union([ io.number, io.string, io.boolean ])),
+  type: io.keyof({ categorical: null, const: null, double: null, int: null, log: null }),
+  val: optional(io.unknown),
 });
+
+export const ioHyperparameters = io.record(io.string, ioExpHParam);
+export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;
 
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: optional(ioCheckpointStorage),
   data_layer: optional(ioDataLayer),
   description: io.string,
-  hyperparameters: io.record(io.string, ioExpHParam),
+  hyperparameters: ioHyperparameters,
   labels: optional(io.array(io.string)),
   resources: ioExpResources,
   searcher: io.type({
