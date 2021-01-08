@@ -5,6 +5,7 @@ import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
+import useStorage from 'hooks/useStorage';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -29,6 +30,8 @@ interface Props {
   type?: VisualizationType;
 }
 
+const STORAGE_PATH = 'experiment-visualization';
+const STORAGE_METRIC_KEY = 'metric';
 const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
@@ -44,11 +47,13 @@ const ExperimentVisualization: React.FC<Props> = ({
   type,
 }: Props) => {
   const history = useHistory();
+  const storage = useStorage(STORAGE_PATH);
+  const defaultUserMetric = storage.get(STORAGE_METRIC_KEY) as MetricName || undefined;
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
   const [ trainingMetrics, setTrainingMetrics ] = useState<string[]>([]);
   const [ validationMetrics, setValidationMetrics ] = useState<string[]>([]);
-  const [ selectedMetric, setSelectedMetric ] = useState<MetricName>();
+  const [ selectedMetric, setSelectedMetric ] = useState<MetricName>(defaultUserMetric);
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
@@ -59,8 +64,9 @@ const ExperimentVisualization: React.FC<Props> = ({
   ];
 
   const handleMetricChange = useCallback((metric: MetricName) => {
+    storage.set(STORAGE_METRIC_KEY, metric);
     setSelectedMetric(metric);
-  }, []);
+  }, [ storage ]);
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
     setTypeKey(type as VisualizationType);
