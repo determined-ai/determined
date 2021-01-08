@@ -21,3 +21,4 @@ services:
     environment:
       discovery.type: 'single-node'
       cluster.routing.allocation.disk.threshold_enabled: 'false'
+      logger.level: 'WARN'

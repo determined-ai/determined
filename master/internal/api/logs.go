@@ -100,11 +100,6 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Self(), tick{})
 
 	case tick:
-		if l.ctx.Err() != nil {
-			ctx.Self().Stop()
-			return nil
-		}
-
 		switch batch, err := l.fetcher(l.req); {
 		case err != nil:
 			return errors.Wrapf(err, "failed to fetch logs")
@@ -130,6 +125,10 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 			}
 			actors.NotifyAfter(ctx, 500*time.Millisecond, tick{})
 		default:
+			if l.ctx.Err() != nil {
+				ctx.Self().Stop()
+				return nil
+			}
 			l.req.Limit -= batch.Size()
 			l.req.Offset += batch.Size()
 			switch err := l.process(batch); {

@@ -130,6 +130,15 @@ func startLoggingContainer(
 		[]fluent.ConfigSection{
 			{
 				{"Name", "forward"},
+				// mem_buf_limit in combination with storage.type filesystem allows
+				// fluentbit to store full buffers in the filesystem if the rest of the
+				// pipeline is backed up. These both in combination with allowing the
+				// docker log driver to run in non-blocking mode allows us to ship
+				// without impacting application performance in bursts.
+				// This scheme is described in more detail at:
+				// https://docs.fluentbit.io/manual/administration/buffering-and-storage
+				{"mem_buf_limit", "10M"},
+				{"storage.type", "filesystem"},
 			},
 		},
 		[]fluent.ConfigSection{

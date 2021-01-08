@@ -53,10 +53,6 @@ func makeOutputConfig(
 
 		fmt.Fprintf(config, `
 [OUTPUT]
-  Name stdout
-  Match *
-
-[OUTPUT]
   Name http
   Match *
   Host %s
@@ -66,6 +62,7 @@ func makeOutputConfig(
   Format json
   Json_date_key timestamp
   Json_date_format iso8601
+  storage.total_limit_size 1G
 `, masterHost, masterPort)
 
 	case loggingConfig.ElasticLoggingConfig != nil:
@@ -87,6 +84,7 @@ func makeOutputConfig(
   Logstash_Prefix triallogs
   Time_Key timestamp
   Time_Key_Nanos On
+  storage.total_limit_size 1G
 `, fluentElasticHost, elasticOpts.Port)
 
 		elasticSecOpts := elasticOpts.Security
@@ -177,6 +175,7 @@ end
   # Flush every .05 seconds to reduce latency for users.
   Flush .05
   Parsers_File %s
+  storage.path /var/log/flb-buffers/
 `, parserConfigPath)
 
 	for _, input := range inputs {
