@@ -287,6 +287,9 @@ func (f *fluentActor) Receive(ctx *actor.Context) error {
 }
 
 func (f *fluentActor) trackLogs(ctx *actor.Context) {
+	exitChan, errChan := f.docker.ContainerWait(
+		context.Background(), f.containerID, container.WaitConditionNotRunning)
+
 	if err := trackLogs(ctx, f.docker, f.containerID, ctx.Self()); err != nil {
 		ctx.Log().Errorf("error tracking Fluent Bit logs: %s", err)
 	}
@@ -296,7 +299,15 @@ func (f *fluentActor) trackLogs(ctx *actor.Context) {
 		RunMessage: &aproto.RunMessage{
 			Value: "detected Fluent Bit exit",
 		},
-	})
+	}).Get()
+
+	select {
+	case err := <-errChan:
+		ctx.Log().WithError(err).Error("failed to wait for Fluent Bit to exit")
+	case exit := <-exitChan:
+		ctx.Log().Errorf("Fluent Bit exit status: %+v", exit)
+	}
+
 	ctx.Log().Error("Fluent Bit failed, dumping all recent logs")
 	i0 := f.fluentLogsCount - len(f.fluentLogs)
 	if i0 < 0 {
