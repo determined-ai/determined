@@ -300,6 +300,7 @@ export const decodeExperimentList = (data: Sdk.V1Experiment[]): types.Experiment
 
 const decodeMetricsWorkload = (data: Sdk.V1MetricsWorkload): types.MetricsWorkload => {
   return {
+    endTime: data.endTime as unknown as string,
     metrics: data.metrics,
     numBatches: data.numBatches,
     priorBatchesProcessed: data.priorBatchesProcessed,
