@@ -5,6 +5,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/pool"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -54,11 +55,19 @@ type stateRecord struct {
 type manager struct {
 	db    *db.PgDB
 	state map[int]stateRecord
+	pool  pool.ActorPool
 }
 
 // NewManager initializes the master actor (of which there should only be one instance running).
-func NewManager(db *db.PgDB) actor.Actor {
-	return &manager{db, make(map[int]stateRecord)}
+func NewManager(db *db.PgDB, system *actor.System) actor.Actor {
+	return &manager{
+		db:    db,
+		state: make(map[int]stateRecord),
+		pool: pool.NewActorPool(
+			system, 64, 4, "hp-importance-pool",
+			taskHandlerFactory(db, system), nil,
+		),
+	}
 }
 
 func (m *manager) Receive(ctx *actor.Context) error {
@@ -169,21 +178,6 @@ func (m *manager) workCompleted(ctx *actor.Context, msg workCompleted) {
 	}
 }
 
-func (m *manager) getChild(ctx *actor.Context, experimentID int) *actor.Ref {
-	var result *actor.Ref
-	/*
-		Currently each experiment gets their own actor, that will persist even after the work
-		for an experiment may be complete. But the child actor's don't need to maintain any state
-		between tasks, so if this becomes a problem in practice we could use a threadpool model
-		where the manager maintains a queue of tasks, workers .Ask() the manager for a task (and it
-		may return a task to sleep for a time), and the manager decides when to spawn or scale down
-		workers. Or each authenticated user can have their own actor, for improved multi-tenancy.
-	*/
-	factory := func() actor.Actor { return newWorker(m.db, ctx.Self()) }
-	result, _ = ctx.ActorOfFromFactory(experimentID, factory)
-	return result
-}
-
 func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 	hpi, err := m.db.GetHPImportance(msg.ExperimentID)
 	if err != nil {
@@ -203,8 +197,7 @@ func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 		return
 	}
 
-	child := m.getChild(ctx, msg.ExperimentID)
-	ctx.Tell(child, startWork{
+	m.pool.SubmitTask(startWork{
 		experimentID: msg.ExperimentID,
 		metricName:   msg.MetricName,
 		metricType:   msg.MetricType,
@@ -243,26 +236,35 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 	}
 
 	if triggerForLoss || triggerForSearcherMetric {
-		err = m.db.SetHPImportance(experimentID, hpi)
-		if err != nil {
-			ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
-			return
-		}
-
-		child := m.getChild(ctx, experimentID)
 		if triggerForLoss {
-			ctx.Tell(child, startWork{
+			err = m.pool.SubmitTask(startWork{
 				experimentID: experimentID,
 				metricName:   loss,
 				metricType:   model.TrainingMetric,
 			})
+			if err != nil {
+				lossHpi.Pending = false
+				lossHpi.Error = err.Error()
+				hpi.SetMetricHPImportance(lossHpi, loss, model.TrainingMetric)
+			}
 		}
 		if triggerForSearcherMetric {
-			ctx.Tell(child, startWork{
+			err = m.pool.SubmitTask(startWork{
 				experimentID: experimentID,
 				metricName:   searcherMetric,
 				metricType:   model.ValidationMetric,
 			})
+			if err != nil {
+				searcherMetricHpi.Pending = false
+				searcherMetricHpi.Error = err.Error()
+				hpi.SetMetricHPImportance(searcherMetricHpi, searcherMetric, model.ValidationMetric)
+			}
+		}
+
+		err = m.db.SetHPImportance(experimentID, hpi)
+		if err != nil {
+			ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
+			return
 		}
 	}
 }

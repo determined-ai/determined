@@ -36,49 +36,46 @@ type (
 	}
 )
 
-type worker struct {
-	db      *db.PgDB
-	manager *actor.Ref
-}
+func taskHandlerFactory(db *db.PgDB, system *actor.System) func(interface{}) interface{} {
 
-func newWorker(db *db.PgDB, manager *actor.Ref) actor.Actor {
-	return &worker{db: db, manager: manager}
-}
+	getManager := func() *actor.Ref {
+		return system.Get(actor.Addr(RootAddr))
+	}
 
-func (w *worker) sendWorkStarted(ctx *actor.Context, msg startWork) {
-	ctx.Tell(w.manager, workStarted(msg))
-}
+	sendWorkStarted := func(system *actor.System, work startWork) {
+		system.Tell(getManager(), workStarted(work))
+	}
 
-func (w *worker) sendWorkFailed(ctx *actor.Context, msg startWork, err string) {
-	ctx.Tell(w.manager, workFailed{
-		experimentID: msg.experimentID,
-		metricType:   msg.metricType,
-		metricName:   msg.metricName,
-		err:          err,
-	})
-}
+	sendWorkFailed := func(system *actor.System, work startWork, err string) {
+		system.Tell(getManager(), workFailed{
+			experimentID: work.experimentID,
+			metricType:   work.metricType,
+			metricName:   work.metricName,
+			err:          err,
+		})
+	}
 
-func (w *worker) sendWorkCompleted(ctx *actor.Context, msg startWork, progress float64,
-	results map[string]float64) {
-	ctx.Tell(w.manager, workCompleted{
-		experimentID: msg.experimentID,
-		metricType:   msg.metricType,
-		metricName:   msg.metricName,
-		progress:     progress,
-		results:      results,
-	})
-}
+	sendWorkCompleted := func(system *actor.System, work startWork, progress float64,
+		results map[string]float64) {
+		system.Tell(getManager(), workCompleted{
+			experimentID: work.experimentID,
+			metricType:   work.metricType,
+			metricName:   work.metricName,
+			progress:     progress,
+			results:      results,
+		})
+	}
 
-func (w *worker) Receive(ctx *actor.Context) (err error) {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart, actor.PostStop:
-		// Do nothing
-	case startWork:
-		w.sendWorkStarted(ctx, msg)
+	return func(task interface{}) interface{} {
+		work, ok := task.(startWork) // TODO rename startWork
+		if !ok {
+			panic("invalid task passed to hp importance actor pool")
+		}
+		sendWorkStarted(system, work)
 
-		state, progress, err := w.db.GetExperimentStatus(msg.experimentID)
+		state, progress, err := db.GetExperimentStatus(work.experimentID)
 		if err != nil {
-			w.sendWorkFailed(ctx, msg, err.Error())
+			sendWorkFailed(system, work, err.Error())
 			return nil
 		}
 		if state == model.CompletedState {
@@ -86,27 +83,25 @@ func (w *worker) Receive(ctx *actor.Context) (err error) {
 		}
 
 		var trials []model.HPImportanceTrialData
-		switch msg.metricType {
+		switch work.metricType {
 		case model.TrainingMetric:
-			trials, err = w.db.FetchHPImportanceTrainingData(msg.experimentID, msg.metricName)
+			trials, err = db.FetchHPImportanceTrainingData(work.experimentID, work.metricName)
 			if err != nil {
-				w.sendWorkFailed(ctx, msg, err.Error())
+				sendWorkFailed(system, work, err.Error())
 				return nil
 			}
 		case model.ValidationMetric:
-			trials, err = w.db.FetchHPImportanceValidationData(msg.experimentID, msg.metricName)
+			trials, err = db.FetchHPImportanceValidationData(work.experimentID, work.metricName)
 			if err != nil {
-				w.sendWorkFailed(ctx, msg, err.Error())
+				sendWorkFailed(system, work, err.Error())
 				return nil
 			}
 		default:
-			w.sendWorkFailed(ctx, msg, "invalid metric type received in hyperparameter importance worker")
+			sendWorkFailed(system, work, "invalid metric type received in hyperparameter importance worker")
 			return nil
 		}
 		results := computeHPImportance(trials)
-		w.sendWorkCompleted(ctx, msg, progress, results)
-	default:
-		ctx.Log().Errorf("Unknown message sent to HP Importance worker: %v!", ctx.Message())
+		sendWorkCompleted(system, work, progress, results)
+		return nil
 	}
-	return nil
 }
