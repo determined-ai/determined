@@ -5,6 +5,7 @@ import tempfile
 from typing import Iterator, Optional
 
 import boto3
+import requests
 
 from determined_common import util
 from determined_common.storage.base import StorageManager, StorageMetadata
@@ -31,6 +32,21 @@ class S3StorageManager(StorageManager):
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
         )
+
+        # Detect if we are talking to minio, because boto3 has a client-side bug parsing the output
+        # of the minio server.
+        self._use_minio_workaround = False
+        if endpoint_url is not None:
+            try:
+                r = requests.get(endpoint_url)
+            except ConnectionError:
+                pass
+            else:
+                logging.info(
+                    "MinIO backend detected.  To work around a boto3 bug, empty directories will "
+                    "not be uploaded in checkpoints."
+                )
+                self._use_minio_workaround = r.headers.get("Server", "").lower() == "minio"
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """post_store_path uploads the checkpoint to s3 and deletes the original files."""
@@ -62,8 +78,17 @@ class S3StorageManager(StorageManager):
             logging.debug("Uploading {} to {}".format(rel_path, url))
 
             if rel_path.endswith("/"):
-                # Create empty S3 keys for each subdirectory.
-                self.client.put_object(Bucket=self.bucket, Key=key_name, Body=b"")
+                # Create empty S3 keys for each subdirectory to mimic what the S3 console does to
+                # represent empty directories.
+                if not self._use_minio_workaround:
+                    self.client.put_object(Bucket=self.bucket, Key=key_name, Body=b"")
+                else:
+                    # boto3 will puke on the following MinIO response if you ever create a
+                    # directory by uploading an empty blob.  Uploading a normal file in the
+                    # directory and then deleting it seems to cause MinIO to prune the empty
+                    # directory.  The AWS authentication scheme is complex and not worth the
+                    # effort for supporting empty directories, so... just ignore empty directories.
+                    pass
             else:
                 abs_path = os.path.join(storage_dir, rel_path)
                 self.client.upload_file(abs_path, self.bucket, key_name)
