@@ -1,0 +1,3836 @@
+[
+  {
+    "experiment": {
+      "id": 259,
+      "description": "Fork of experiment 258 (object_detection_pytorch)",
+      "labels": [],
+      "startTime": "2020-04-13T13:21:03.418835Z",
+      "endTime": "2020-04-13T13:21:07.417664Z",
+      "state": "STATE_CANCELED",
+      "archived": true,
+      "numTrials": 0,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "batches_per_step": 100,
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "debug": false,
+      "description": "Fork of experiment 258 (object_detection_pytorch)",
+      "entrypoint": "model_def:ObjectDetectionTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-f0545f2",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-f0545f2"
+        },
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "type": "const",
+          "val": 2
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 0.005
+        },
+        "momentum": {
+          "type": "const",
+          "val": 0.9
+        },
+        "weight_decay": {
+          "type": "const",
+          "val": 0.0005
+        }
+      },
+      "internal": null,
+      "max_restarts": 0,
+      "min_checkpoint_period": null,
+      "min_validation_period": 1,
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "reproducibility": {
+        "experiment_seed": 1586574477
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "searcher": {
+        "max_steps": 1024,
+        "metric": "val_avg_iou",
+        "name": "single",
+        "smaller_is_better": false,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 207,
+      "description": "cifar10_pytorch_adaptive_search",
+      "labels": [],
+      "startTime": "2020-10-28T17:58:50.729191Z",
+      "endTime": "2020-10-28T18:21:03.316015Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 16,
+      "progress": 0,
+      "username": "ahj"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "cifar10_pytorch_adaptive_search",
+      "entrypoint": "model_def:CIFARTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-1def2ee",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-1def2ee"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "count": null,
+          "maxval": 64,
+          "minval": 16,
+          "type": "int"
+        },
+        "layer1_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer2_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer3_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "learning_rate": {
+          "base": 10,
+          "count": null,
+          "maxval": 1,
+          "minval": -5,
+          "type": "log"
+        },
+        "learning_rate_decay": {
+          "type": "const",
+          "val": 1e-06
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "epochs": 1
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 50000,
+      "reproducibility": {
+        "experiment_seed": 1603907930
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "bracket_rungs": null,
+        "divisor": 4,
+        "max_concurrent_trials": 0,
+        "max_length": {
+          "epochs": 32
+        },
+        "max_rungs": 5,
+        "max_trials": 16,
+        "metric": "validation_error",
+        "mode": "standard",
+        "name": "adaptive_asha",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 614,
+      "description": "fashion_mnist_tf_keras_const_tf2.2",
+      "labels": [],
+      "startTime": "2020-08-20T04:53:22.797366Z",
+      "endTime": "2020-08-20T04:53:35.139788Z",
+      "state": "STATE_CANCELED",
+      "archived": true,
+      "numTrials": 0,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "fashion_mnist_tf_keras_const_tf2.2",
+      "entrypoint": "model_def:FashionMNISTTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0",
+          "gpu": "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "dense1": {
+          "type": "const",
+          "val": 128
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 32
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 500
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 50000,
+      "reproducibility": {
+        "experiment_seed": 1597899202
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "epochs": 200
+        },
+        "metric": "val_accuracy",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 95,
+      "description": "mnist_tp_to_estimator_const",
+      "labels": [],
+      "startTime": "2020-09-03T17:22:38.685393Z",
+      "endTime": "2020-09-03T17:23:00.509216Z",
+      "state": "STATE_ERROR",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data": {
+        "dataflow_to_tf_dataset": true
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_tp_to_estimator_const",
+      "entrypoint": "model_def:MnistTensorpackInEstimator",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+        },
+        "pod_spec": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "customlabel": "my-test-label"
+            }
+          },
+          "spec": {
+            "containers": null
+          },
+          "status": {}
+        },
+        "ports": null
+      },
+      "hyperparameters": {
+        "base_learning_rate": {
+          "type": "const",
+          "val": 0.001
+        },
+        "decay_rate": {
+          "type": "const",
+          "val": 0.3
+        },
+        "decay_steps": {
+          "type": "const",
+          "val": 4680
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "image_size": {
+          "type": "const",
+          "val": 28
+        },
+        "n_filters": {
+          "type": "const",
+          "val": 40
+        },
+        "synthetic_data": {
+          "type": "const",
+          "val": false
+        },
+        "visualize": {
+          "type": "const",
+          "val": false
+        },
+        "weight_cost": {
+          "type": "const",
+          "val": 1e-05
+        }
+      },
+      "internal": null,
+      "max_restarts": 0,
+      "min_checkpoint_period": {
+        "batches": 32
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1599153758
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 4,
+        "weight": 1
+      },
+      "scheduling_unit": 16,
+      "searcher": {
+        "max_length": {
+          "batches": 64
+        },
+        "metric": "loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 180,
+      "description": "mnist_tf_core_to_estimator",
+      "labels": [],
+      "startTime": "2020-09-30T19:43:05.715899Z",
+      "endTime": "2020-09-30T19:43:44.538418Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_tf_core_to_estimator",
+      "entrypoint": "model_def:MNistTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-699677b",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-699677b"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 0.001
+        },
+        "n_filters_1": {
+          "type": "const",
+          "val": 10
+        },
+        "n_filters_2": {
+          "type": "const",
+          "val": 40
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1601494985
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "batches": 2000
+        },
+        "metric": "error",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 71,
+      "description": "mnist_tp_to_estimator_const",
+      "labels": [],
+      "startTime": "2020-09-03T04:16:14.191613Z",
+      "endTime": "2020-09-03T04:16:39.799612Z",
+      "state": "STATE_ERROR",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data": {
+        "dataflow_to_tf_dataset": true
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_tp_to_estimator_const",
+      "entrypoint": "model_def:MnistTensorpackInEstimator",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "base_learning_rate": {
+          "type": "const",
+          "val": 0.001
+        },
+        "decay_rate": {
+          "type": "const",
+          "val": 0.3
+        },
+        "decay_steps": {
+          "type": "const",
+          "val": 4680
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "image_size": {
+          "type": "const",
+          "val": 28
+        },
+        "n_filters": {
+          "type": "const",
+          "val": 40
+        },
+        "synthetic_data": {
+          "type": "const",
+          "val": false
+        },
+        "visualize": {
+          "type": "const",
+          "val": false
+        },
+        "weight_cost": {
+          "type": "const",
+          "val": 1e-05
+        }
+      },
+      "internal": null,
+      "max_restarts": 0,
+      "min_checkpoint_period": {
+        "batches": 32
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1599106574
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 4,
+        "weight": 1
+      },
+      "scheduling_unit": 16,
+      "searcher": {
+        "max_length": {
+          "batches": 64
+        },
+        "metric": "loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 222,
+      "description": "Bert_SQuAD_PyTorch",
+      "labels": [],
+      "startTime": "2021-01-06T18:23:35.205596Z",
+      "endTime": "2021-01-06T18:49:04.595932Z",
+      "state": "STATE_CANCELED",
+      "archived": true,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "narenk"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data": {
+        "download_data": false,
+        "pretrained_model_name": "bert-base-uncased",
+        "task": "SQuAD1.1"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "Bert_SQuAD_PyTorch",
+      "entrypoint": "model_def:BertSQuADPyTorch",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "adam_epsilon": {
+          "type": "const",
+          "val": 1e-08
+        },
+        "doc_stride": {
+          "type": "const",
+          "val": 128
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 12
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 3e-05
+        },
+        "lr_scheduler_epoch_freq": {
+          "type": "const",
+          "val": 1
+        },
+        "max_answer_length": {
+          "type": "const",
+          "val": 30
+        },
+        "max_grad_norm": {
+          "type": "const",
+          "val": 1
+        },
+        "max_query_length": {
+          "type": "const",
+          "val": 64
+        },
+        "max_seq_length": {
+          "type": "const",
+          "val": 384
+        },
+        "model_type": {
+          "type": "const",
+          "val": "bert"
+        },
+        "n_best_size": {
+          "type": "const",
+          "val": 20
+        },
+        "null_score_diff_threshold": {
+          "type": "const",
+          "val": 0
+        },
+        "num_training_steps": {
+          "type": "const",
+          "val": 15000
+        },
+        "num_warmup_steps": {
+          "type": "const",
+          "val": 0
+        },
+        "weight_decay": {
+          "type": "const",
+          "val": 0
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "records": 12000
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1609957415
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "resource_pool": "",
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "records": 180000
+        },
+        "metric": "f1",
+        "name": "single",
+        "smaller_is_better": false,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 277,
+      "description": "fashion_mnist_tf_keras_distributed_k8s_8_gpus",
+      "labels": [],
+      "startTime": "2021-01-06T21:07:14.257882Z",
+      "endTime": "2021-01-06T21:11:13.633316Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "vishnu"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "fashion_mnist_tf_keras_distributed_k8s_8_gpus",
+      "entrypoint": "model_def:FashionMNISTTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b"
+        },
+        "pod_spec": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "provider": "k8s"
+            }
+          },
+          "spec": {
+            "containers": null
+          },
+          "status": {}
+        },
+        "ports": null
+      },
+      "hyperparameters": {
+        "dense1": {
+          "type": "const",
+          "val": 128
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 256
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 60000,
+      "reproducibility": {
+        "experiment_seed": 1609967234
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "resource_pool": "",
+        "slots_per_trial": 8,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "epochs": 5
+        },
+        "metric": "val_accuracy",
+        "name": "single",
+        "smaller_is_better": false,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 101,
+      "description": "gcn",
+      "labels": [],
+      "startTime": "2020-04-01T22:08:02.882684Z",
+      "endTime": "2020-04-01T22:12:59.855159Z",
+      "state": "STATE_ERROR",
+      "archived": true,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "batches_per_step": 100,
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "debug": false,
+      "description": "gcn",
+      "entrypoint": "__init__:GCNTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-6ef47fd",
+          "gpu": "determinedai/environments:cuda-10-pytorch-1.4-tf-1.14-gpu-6ef47fd"
+        },
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "type": "const",
+          "val": 2708
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": null,
+      "min_validation_period": null,
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "reproducibility": {
+        "experiment_seed": 1585778882
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "searcher": {
+        "max_steps": 1000,
+        "metric": "accuracy",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 562,
+      "description": "mnist_pytorch_const",
+      "labels": [
+        "asdf"
+      ],
+      "startTime": "2020-08-03T15:19:43.964371Z",
+      "endTime": "2020-08-03T15:24:39.529097Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "batches_per_step": 100,
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_pytorch_const",
+      "entrypoint": "model_def:MNistTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+        },
+        "ports": null
+      },
+      "hyperparameters": {
+        "dropout1": {
+          "type": "const",
+          "val": 0.25
+        },
+        "dropout2": {
+          "type": "const",
+          "val": 0.5
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 1
+        },
+        "n_filters1": {
+          "type": "const",
+          "val": 32
+        },
+        "n_filters2": {
+          "type": "const",
+          "val": 64
+        }
+      },
+      "internal": null,
+      "labels": [
+        "asdf"
+      ],
+      "max_restarts": 5,
+      "min_checkpoint_period": null,
+      "min_validation_period": null,
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "reproducibility": {
+        "experiment_seed": 1596467983
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "searcher": {
+        "max_steps": 9,
+        "metric": "validation_loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 51,
+      "description": "mnist_pytorch_const_distributed",
+      "labels": [],
+      "startTime": "2020-09-02T21:39:09.204382Z",
+      "endTime": "2020-09-02T21:39:59.748294Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_pytorch_const_distributed",
+      "entrypoint": "model_def:MNistTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "dropout1": {
+          "type": "const",
+          "val": 0.25
+        },
+        "dropout2": {
+          "type": "const",
+          "val": 0.5
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 1
+        },
+        "n_filters1": {
+          "type": "const",
+          "val": 32
+        },
+        "n_filters2": {
+          "type": "const",
+          "val": 64
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 50000,
+      "reproducibility": {
+        "experiment_seed": 1599082749
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 2,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "epochs": 1
+        },
+        "metric": "validation_loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 715,
+      "description": "object_detection_const_hp",
+      "labels": [],
+      "startTime": "2020-10-23T00:00:02.630802Z",
+      "endTime": "2020-10-23T00:15:43.127647Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "object_detection_const_hp",
+      "entrypoint": "model_def:ObjectDetectionModel",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-1def2ee",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-1def2ee"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "type": "const",
+          "val": 4
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 0.000125
+        },
+        "momentum": {
+          "type": "const",
+          "val": 0.75
+        },
+        "weight_decay": {
+          "type": "const",
+          "val": 0.0005
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "epochs": 1
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 136,
+      "reproducibility": {
+        "experiment_seed": 1603411202
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "epochs": 4
+        },
+        "metric": "val_avg_iou",
+        "name": "single",
+        "smaller_is_better": false,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 214,
+      "description": "noop_adaptive_chaos",
+      "labels": [],
+      "startTime": "2020-10-28T18:12:49.848303Z",
+      "endTime": "2020-10-28T18:26:40.974744Z",
+      "state": "STATE_CANCELED",
+      "archived": false,
+      "numTrials": 40,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "host_path": "/tmp",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "storage_path": "determined-integration-checkpoints",
+        "type": "shared_fs"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "noop_adaptive_chaos",
+      "entrypoint": "model_def:NoOpTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-1def2ee",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-1def2ee"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "chaos_probability": {
+          "type": "const",
+          "val": 0.05
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 32
+        },
+        "metrics_base": {
+          "count": null,
+          "maxval": 0.9,
+          "minval": 0.5,
+          "type": "double"
+        },
+        "metrics_progression": {
+          "type": "const",
+          "val": "decreasing"
+        },
+        "metrics_sigma": {
+          "type": "const",
+          "val": 0
+        }
+      },
+      "internal": null,
+      "max_restarts": 1000,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 999
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "bracket_rungs": null,
+        "budget": {
+          "batches": 600000
+        },
+        "divisor": 4,
+        "max_length": {
+          "batches": 64000
+        },
+        "max_rungs": 3,
+        "metric": "validation_error",
+        "mode": "standard",
+        "name": "adaptive",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null,
+        "train_stragglers": true
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 97,
+      "description": "fashion_mnist_tf_keras_const",
+      "labels": [],
+      "startTime": "2020-09-03T17:36:22.751972Z",
+      "endTime": "2020-09-03T17:43:43.645508Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "admin"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "fashion_mnist_tf_keras_const",
+      "entrypoint": "model_def:FashionMNISTTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+        },
+        "pod_spec": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "customlabel": "my-test-label"
+            }
+          },
+          "spec": {
+            "containers": null
+          },
+          "status": {}
+        },
+        "ports": null
+      },
+      "hyperparameters": {
+        "dense1": {
+          "type": "const",
+          "val": 128
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 32
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 50000,
+      "reproducibility": {
+        "experiment_seed": 1599154582
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "epochs": 5
+        },
+        "metric": "val_accuracy",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 714,
+      "description": "CIFAR 10 Adaptive Hyperparameter Search",
+      "labels": [],
+      "startTime": "2020-10-22T21:31:46.081065Z",
+      "endTime": null,
+      "state": "STATE_PAUSED",
+      "archived": false,
+      "numTrials": 6,
+      "progress": 0.02681052803661926,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "CIFAR 10 Adaptive Hyperparameter Search",
+      "entrypoint": "model_def:CIFARTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0c9e956",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0c9e956"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "count": null,
+          "maxval": 64,
+          "minval": 16,
+          "type": "int"
+        },
+        "layer1_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer2_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer3_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "learning_rate": {
+          "base": 10,
+          "count": null,
+          "maxval": 1,
+          "minval": -5,
+          "type": "log"
+        },
+        "learning_rate_decay": {
+          "type": "const",
+          "val": 1e-06
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 1000
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1593719631
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "divisor": 4,
+        "max_length": {
+          "batches": 80000
+        },
+        "max_rungs": 5,
+        "max_trials": 16,
+        "metric": "validation_error",
+        "mode": "standard",
+        "name": "adaptive_simple",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 193,
+      "description": "mnist_pytorch_const",
+      "labels": [],
+      "startTime": "2020-10-14T17:30:44.993250Z",
+      "endTime": "2020-10-14T17:30:56.102097Z",
+      "state": "STATE_CANCELED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "liam"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_pytorch_const",
+      "entrypoint": "model_def:MNistTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-1def2ee",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-1def2ee"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "dropout1": {
+          "type": "const",
+          "val": 0.25
+        },
+        "dropout2": {
+          "type": "const",
+          "val": 0.5
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 1
+        },
+        "n_filters1": {
+          "type": "const",
+          "val": 32
+        },
+        "n_filters2": {
+          "type": "const",
+          "val": 64
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1602696644
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "batches": 937
+        },
+        "metric": "validation_loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 65,
+      "description": "mnist_tp_to_estimator_const",
+      "labels": [],
+      "startTime": "2020-09-03T04:03:38.546208Z",
+      "endTime": "2020-09-03T04:03:58.453327Z",
+      "state": "STATE_ERROR",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-ci",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "gcs"
+      },
+      "data": {
+        "dataflow_to_tf_dataset": true
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_tp_to_estimator_const",
+      "entrypoint": "model_def:MnistTensorpackInEstimator",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "base_learning_rate": {
+          "type": "const",
+          "val": 0.001
+        },
+        "decay_rate": {
+          "type": "const",
+          "val": 0.3
+        },
+        "decay_steps": {
+          "type": "const",
+          "val": 4680
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "image_size": {
+          "type": "const",
+          "val": 28
+        },
+        "n_filters": {
+          "type": "const",
+          "val": 40
+        },
+        "synthetic_data": {
+          "type": "const",
+          "val": false
+        },
+        "visualize": {
+          "type": "const",
+          "val": false
+        },
+        "weight_cost": {
+          "type": "const",
+          "val": 1e-05
+        }
+      },
+      "internal": null,
+      "max_restarts": 0,
+      "min_checkpoint_period": {
+        "batches": 32
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1599105818
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 4,
+        "weight": 1
+      },
+      "scheduling_unit": 16,
+      "searcher": {
+        "max_length": {
+          "batches": 64
+        },
+        "metric": "loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 830,
+      "description": "mnist_pytorch_const",
+      "labels": [],
+      "startTime": "2020-12-14T21:51:15.060347Z",
+      "endTime": "2020-12-14T21:58:14.577578Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_pytorch_const",
+      "entrypoint": "model_def:MNistTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0f2001a",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0f2001a"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "dropout1": {
+          "type": "const",
+          "val": 0.25
+        },
+        "dropout2": {
+          "type": "const",
+          "val": 0.5
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 1
+        },
+        "n_filters1": {
+          "type": "const",
+          "val": 32
+        },
+        "n_filters2": {
+          "type": "const",
+          "val": 64
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 50000,
+      "reproducibility": {
+        "experiment_seed": 1607982675
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "resource_pool": "",
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": {
+          "epochs": 1
+        },
+        "metric": "validation_loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 358,
+      "description": "PEDL DEBUG",
+      "labels": [],
+      "startTime": "2020-04-22T18:36:47.526976Z",
+      "endTime": "2020-04-22T18:37:30.858741Z",
+      "state": "STATE_ERROR",
+      "archived": true,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "batches_per_step": 10,
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "model_type": "single_output",
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "PEDL DEBUG",
+      "entrypoint": "m_model_def:MNistTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-4bd937a"
+        },
+        "ports": null
+      },
+      "hyperparameters": {
+        "dropout": {
+          "type": "const",
+          "val": 0.5
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 0.001
+        },
+        "n_filters1": {
+          "type": "const",
+          "val": 40
+        },
+        "n_filters2": {
+          "type": "const",
+          "val": 40
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": null,
+      "min_validation_period": null,
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "reproducibility": {
+        "experiment_seed": 1587580607
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "searcher": {
+        "max_steps": 1000,
+        "metric": "validation_error",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 367,
+      "description": "mnist_pytorch_const_kt",
+      "labels": [],
+      "startTime": "2020-04-22T21:20:36.026500Z",
+      "endTime": "2020-04-22T21:27:02.423813Z",
+      "state": "STATE_CANCELED",
+      "archived": false,
+      "numTrials": 1,
+      "progress": 0,
+      "username": "determined"
+    },
+    "config": {
+      "batches_per_step": 100,
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "mnist_pytorch_const_kt",
+      "entrypoint": "model_def:MNistTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-4bd937a"
+        },
+        "ports": null
+      },
+      "hyperparameters": {
+        "dropout1": {
+          "type": "const",
+          "val": 0.25
+        },
+        "dropout2": {
+          "type": "const",
+          "val": 0.5
+        },
+        "global_batch_size": {
+          "type": "const",
+          "val": 64
+        },
+        "learning_rate": {
+          "type": "const",
+          "val": 1
+        },
+        "n_filters1": {
+          "type": "const",
+          "val": 32
+        },
+        "n_filters2": {
+          "type": "const",
+          "val": 64
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": null,
+      "min_validation_period": null,
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "reproducibility": {
+        "experiment_seed": 1587590436
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "searcher": {
+        "max_steps": 54,
+        "metric": "validation_loss",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "id": 119,
+    "state": "COMPLETED",
+    "config": {
+      "debug": false,
+      "internal": null,
+      "searcher": {
+        "mode": "standard",
+        "name": "adaptive",
+        "budget": {
+          "batches": 6000
+        },
+        "metric": "validation_error",
+        "divisor": 4,
+        "max_rungs": 3,
+        "max_length": {
+          "batches": 640
+        },
+        "bracket_rungs": null,
+        "source_trial_id": null,
+        "train_stragglers": true,
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null
+      },
+      "resources": {
+        "weight": 1,
+        "agent_label": "",
+        "resource_pool": "",
+        "native_parallel": false,
+        "slots_per_trial": 1
+      },
+      "data_layer": {
+        "type": "shared_fs",
+        "container_storage_path": null
+      },
+      "entrypoint": "model_def:NoOpTrial",
+      "description": "noop_adaptive",
+      "environment": {
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b"
+        },
+        "ports": null,
+        "pod_spec": null,
+        "force_pull_image": false,
+        "environment_variables": {}
+      },
+      "max_restarts": 0,
+      "optimizations": {
+        "mixed_precision": "O0",
+        "gradient_compression": false,
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "tensor_fusion_threshold": 64,
+        "average_training_metrics": false,
+        "tensor_fusion_cycle_time": 5,
+        "average_aggregated_gradients": true
+      },
+      "hyperparameters": {
+        "sync_bn": {
+          "type": "categorical",
+          "vals": [
+            true,
+            false
+          ]
+        },
+        "min_loss_scale": {
+          "type": "double",
+          "count": null,
+          "maxval": 64,
+          "minval": 8
+        },
+        "global_batch_size": {
+          "val": 44,
+          "type": "const"
+        }
+      },
+      "reproducibility": {
+        "experiment_seed": 999
+      },
+      "scheduling_unit": 100,
+      "checkpoint_policy": "best",
+      "records_per_epoch": 0,
+      "checkpoint_storage": {
+        "type": "shared_fs",
+        "host_path": "/tmp",
+        "storage_path": "determined-integration-checkpoints",
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "save_experiment_best": 0
+      },
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "perform_initial_validation": false
+    },
+    "start_time": "2021-01-08T01:24:43.329158+00:00",
+    "end_time": "2021-01-08T01:28:06.003658+00:00",
+    "archived": false,
+    "git_remote": null,
+    "git_commit": null,
+    "git_committer": null,
+    "git_commit_date": null,
+    "progress": null,
+    "trials": [
+      {
+        "id": 188,
+        "seed": 386407839,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 52.99197024446252,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:16.409393+00:00",
+        "num_steps": 8,
+        "start_time": "2021-01-08T01:24:43.494436+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.4304672100000001,
+        "total_batches_processed": 640,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2383,
+          "uuid": "60177fa7-5787-4dee-bdbf-92cd74fd1f32",
+          "state": "COMPLETED",
+          "step_id": 8,
+          "end_time": "2021-01-08T01:27:16.092031+00:00",
+          "metadata": {},
+          "trial_id": 188,
+          "resources": {
+            "no_op_checkpoint": 98
+          },
+          "start_time": "2021-01-08T01:27:16.086786+00:00",
+          "validation_metric": 0.4304672100000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.4304672100000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 189,
+        "seed": 772563120,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 13.091814715348479,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:12.095781+00:00",
+        "num_steps": 3,
+        "start_time": "2021-01-08T01:24:48.441957+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.7290000000000001,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2372,
+          "uuid": "2b80f84b-085b-424d-86d6-6ea3184ab596",
+          "state": "COMPLETED",
+          "step_id": 3,
+          "end_time": "2021-01-08T01:26:32.058404+00:00",
+          "metadata": {},
+          "trial_id": 189,
+          "resources": {
+            "no_op_checkpoint": 38
+          },
+          "start_time": "2021-01-08T01:26:32.054962+00:00",
+          "validation_metric": 0.7290000000000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.7290000000000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 190,
+        "seed": 45667066,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 43.17508525874341,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:12.09546+00:00",
+        "num_steps": 3,
+        "start_time": "2021-01-08T01:24:52.460055+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.7290000000000001,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2374,
+          "uuid": "69c8bbf3-37b6-4748-92d9-fd0ba478f215",
+          "state": "COMPLETED",
+          "step_id": 3,
+          "end_time": "2021-01-08T01:26:39.967285+00:00",
+          "metadata": {},
+          "trial_id": 190,
+          "resources": {
+            "no_op_checkpoint": 38
+          },
+          "start_time": "2021-01-08T01:26:39.962735+00:00",
+          "validation_metric": 0.7290000000000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.7290000000000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 191,
+        "seed": 1627961829,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 27.19514529143147,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:12.094895+00:00",
+        "num_steps": 3,
+        "start_time": "2021-01-08T01:24:56.495611+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.7290000000000001,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2376,
+          "uuid": "aa3df990-2acc-4558-9538-f9e02c2f3fb3",
+          "state": "COMPLETED",
+          "step_id": 3,
+          "end_time": "2021-01-08T01:26:48.034639+00:00",
+          "metadata": {},
+          "trial_id": 191,
+          "resources": {
+            "no_op_checkpoint": 38
+          },
+          "start_time": "2021-01-08T01:26:48.031073+00:00",
+          "validation_metric": 0.7290000000000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.7290000000000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 192,
+        "seed": 1355844109,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 58.91800244205126,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:12.091366+00:00",
+        "num_steps": 3,
+        "start_time": "2021-01-08T01:25:00.472019+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.7290000000000001,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2378,
+          "uuid": "a4e8dd51-b695-4026-af0f-348f7612d5ef",
+          "state": "COMPLETED",
+          "step_id": 3,
+          "end_time": "2021-01-08T01:26:56.039102+00:00",
+          "metadata": {},
+          "trial_id": 192,
+          "resources": {
+            "no_op_checkpoint": 38
+          },
+          "start_time": "2021-01-08T01:26:56.034559+00:00",
+          "validation_metric": 0.7290000000000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.7290000000000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 193,
+        "seed": 2020134935,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 24.056259403680862,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:12.090961+00:00",
+        "num_steps": 3,
+        "start_time": "2021-01-08T01:25:04.46897+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.7290000000000001,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2380,
+          "uuid": "c8fcba13-53c8-442b-8be0-6da6e09db779",
+          "state": "COMPLETED",
+          "step_id": 3,
+          "end_time": "2021-01-08T01:27:03.986999+00:00",
+          "metadata": {},
+          "trial_id": 193,
+          "resources": {
+            "no_op_checkpoint": 38
+          },
+          "start_time": "2021-01-08T01:27:03.981921+00:00",
+          "validation_metric": 0.7290000000000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.7290000000000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 194,
+        "seed": 212852662,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 23.771781903338855,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:12.380599+00:00",
+        "num_steps": 3,
+        "start_time": "2021-01-08T01:25:08.478975+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.7290000000000001,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2382,
+          "uuid": "475efaec-b94b-4981-8781-90f4f37f67e4",
+          "state": "COMPLETED",
+          "step_id": 3,
+          "end_time": "2021-01-08T01:27:12.080584+00:00",
+          "metadata": {},
+          "trial_id": 194,
+          "resources": {
+            "no_op_checkpoint": 38
+          },
+          "start_time": "2021-01-08T01:27:12.075943+00:00",
+          "validation_metric": 0.7290000000000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.7290000000000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 195,
+        "seed": 1659154666,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 39.24414524356627,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.053034+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:12.469418+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2353,
+          "uuid": "d7fc5eb0-8acb-4234-af74-181cc8da9186",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:16.05816+00:00",
+          "metadata": {},
+          "trial_id": 195,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:16.054791+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 196,
+        "seed": 603107849,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 24.031461469963237,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.053749+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:16.516671+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2354,
+          "uuid": "7fad92c2-cd50-401b-aba4-716f62d8ea67",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:20.086456+00:00",
+          "metadata": {},
+          "trial_id": 196,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:20.081963+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 197,
+        "seed": 14120762,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 55.085920601198,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.024317+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:20.474693+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2355,
+          "uuid": "eb90e035-3a8b-48df-a869-e76eaf86b26c",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:23.998834+00:00",
+          "metadata": {},
+          "trial_id": 197,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:23.994818+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 198,
+        "seed": 98305286,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 60.52281095568631,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.007396+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:24.470239+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2356,
+          "uuid": "676ac844-fed0-42fa-9712-ef496423716d",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:28.046224+00:00",
+          "metadata": {},
+          "trial_id": 198,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:28.04052+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 199,
+        "seed": 1243693175,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 30.612383367451372,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.052311+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:28.452192+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2357,
+          "uuid": "f28c1af7-491d-4bcd-b019-000553120989",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:32.010667+00:00",
+          "metadata": {},
+          "trial_id": 199,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:32.006976+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 200,
+        "seed": 1034522151,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 53.86345170066968,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.055608+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:32.469681+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2358,
+          "uuid": "2ed81caf-79c1-465b-b998-97a715948b6e",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:35.996687+00:00",
+          "metadata": {},
+          "trial_id": 200,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:35.992621+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 201,
+        "seed": 981345028,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 63.94949627475135,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.023776+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:36.483105+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2359,
+          "uuid": "f5694025-7c18-4e5c-b928-2c28fd99e8e0",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:40.075675+00:00",
+          "metadata": {},
+          "trial_id": 201,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:40.071842+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 202,
+        "seed": 573177583,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 22.63793411050554,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.054363+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:40.465627+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2360,
+          "uuid": "ca9f037d-ea40-4b8e-a9bd-985f816cfa9b",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:44.057649+00:00",
+          "metadata": {},
+          "trial_id": 202,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:44.051185+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 203,
+        "seed": 1755919615,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 59.248714635383465,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.02394+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:44.463294+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2361,
+          "uuid": "e66000bc-4f21-4e75-9997-76ced7f75365",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:48.025019+00:00",
+          "metadata": {},
+          "trial_id": 203,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:48.020251+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 204,
+        "seed": 638279535,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 9.170981671668573,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.056564+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:48.465583+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2362,
+          "uuid": "77731882-078b-42a2-907f-37afd4805e7c",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:52.079308+00:00",
+          "metadata": {},
+          "trial_id": 204,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:52.074315+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 205,
+        "seed": 924789603,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 49.57058896524339,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.058146+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:52.480706+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2363,
+          "uuid": "784f651c-c980-484a-8e58-ca8ed73f3d38",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:25:56.029802+00:00",
+          "metadata": {},
+          "trial_id": 205,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:25:56.025331+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 206,
+        "seed": 6072705,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 33.146587589499276,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.056733+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:25:56.46697+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2364,
+          "uuid": "cda28487-70a5-4752-8643-27ee0199ffa0",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:00.07404+00:00",
+          "metadata": {},
+          "trial_id": 206,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:00.070003+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 207,
+        "seed": 959542338,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 40.984089387231755,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.024357+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:00.46869+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2365,
+          "uuid": "0cdcf981-44a1-4d72-9372-d9e9a921921c",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:04.086351+00:00",
+          "metadata": {},
+          "trial_id": 207,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:04.080867+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 208,
+        "seed": 1222142999,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 40.325296887325834,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.055757+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:04.471955+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2366,
+          "uuid": "f6426de0-e4b9-4895-a9b0-30e5a57ef1e6",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:08.082299+00:00",
+          "metadata": {},
+          "trial_id": 208,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:08.077599+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 209,
+        "seed": 1580802532,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 54.90948489637871,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.057984+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:08.467118+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2367,
+          "uuid": "9480b3b2-ab2d-4b6a-806f-73ccefa23e97",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:12.068317+00:00",
+          "metadata": {},
+          "trial_id": 209,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:12.064592+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 210,
+        "seed": 802281138,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 54.55570192811159,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.024274+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:12.486419+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2368,
+          "uuid": "feedb534-d4e2-4198-8d27-bf500f1b3afc",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:16.063146+00:00",
+          "metadata": {},
+          "trial_id": 210,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:16.058465+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 211,
+        "seed": 1199061129,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 41.91710178963385,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.053562+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:16.471407+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2369,
+          "uuid": "cd969fa3-3bfe-4ef2-9c1e-c5ed14020e69",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:20.05919+00:00",
+          "metadata": {},
+          "trial_id": 211,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:20.053301+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 212,
+        "seed": 919905644,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 44.549793483610955,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.007556+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:24.474437+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2371,
+          "uuid": "869bf625-3129-4073-91fd-26277f6aac8d",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:28.043423+00:00",
+          "metadata": {},
+          "trial_id": 212,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:28.038319+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 213,
+        "seed": 1304107845,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 61.455009185427286,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.023501+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:32.480224+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2373,
+          "uuid": "db0643fa-d1e3-4e95-a49e-46f669b4c911",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:36.055935+00:00",
+          "metadata": {},
+          "trial_id": 213,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:36.05119+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 214,
+        "seed": 509094293,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 57.81687751692161,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.058649+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:40.472434+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2375,
+          "uuid": "d29aa863-b544-4745-b3fd-2b89a6ff1415",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:44.077844+00:00",
+          "metadata": {},
+          "trial_id": 214,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:44.072963+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 215,
+        "seed": 479074309,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 41.08885047218886,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.056564+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:48.491265+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2377,
+          "uuid": "b8f920c6-b629-4120-b7ed-8d7344a33206",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:26:52.117891+00:00",
+          "metadata": {},
+          "trial_id": 215,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:26:52.112019+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 216,
+        "seed": 1813810598,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 17.70774812310418,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.054472+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:26:56.495298+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2379,
+          "uuid": "eae10ef0-d1ad-4a20-be9a-ff250262ce79",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:27:00.021687+00:00",
+          "metadata": {},
+          "trial_id": 216,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:27:00.017562+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 217,
+        "seed": 1400635941,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 44.51235134985876,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:08.303642+00:00",
+        "num_steps": 1,
+        "start_time": "2021-01-08T01:27:04.48929+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.9,
+        "total_batches_processed": 40,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2381,
+          "uuid": "76ed8ba4-4d82-4dbe-befa-27fd66f14e3e",
+          "state": "COMPLETED",
+          "step_id": 1,
+          "end_time": "2021-01-08T01:27:07.996495+00:00",
+          "metadata": {},
+          "trial_id": 217,
+          "resources": {
+            "no_op_checkpoint": 14
+          },
+          "start_time": "2021-01-08T01:27:07.992022+00:00",
+          "validation_metric": 0.9
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.9
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 218,
+        "seed": 67480266,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 61.39604645224716,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:27:57.89548+00:00",
+        "num_steps": 7,
+        "start_time": "2021-01-08T01:27:16.474115+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.4782969000000001,
+        "total_batches_processed": 640,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2393,
+          "uuid": "06d31c3e-56ec-458c-9c66-ca9aaf36e325",
+          "state": "COMPLETED",
+          "step_id": 7,
+          "end_time": "2021-01-08T01:27:57.573191+00:00",
+          "metadata": {},
+          "trial_id": 218,
+          "resources": {
+            "no_op_checkpoint": 86
+          },
+          "start_time": "2021-01-08T01:27:57.569034+00:00",
+          "validation_metric": 0.4782969000000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.4782969000000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 219,
+        "seed": 647005042,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 37.373172821414656,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:05.99748+00:00",
+        "num_steps": 7,
+        "start_time": "2021-01-08T01:27:20.485175+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.4782969000000001,
+        "total_batches_processed": 640,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2395,
+          "uuid": "bf2a35b4-6be0-4c5b-84ab-f421c1f2c1b1",
+          "state": "COMPLETED",
+          "step_id": 7,
+          "end_time": "2021-01-08T01:28:05.658191+00:00",
+          "metadata": {},
+          "trial_id": 219,
+          "resources": {
+            "no_op_checkpoint": 86
+          },
+          "start_time": "2021-01-08T01:28:05.653889+00:00",
+          "validation_metric": 0.4782969000000001
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.4782969000000001
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 220,
+        "seed": 1247559251,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 26.566223942226717,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:01.545358+00:00",
+        "num_steps": 2,
+        "start_time": "2021-01-08T01:27:24.50076+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.81,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2386,
+          "uuid": "c0579963-51cd-47b3-ac49-470bd78096ae",
+          "state": "COMPLETED",
+          "step_id": 2,
+          "end_time": "2021-01-08T01:27:28.115859+00:00",
+          "metadata": {},
+          "trial_id": 220,
+          "resources": {
+            "no_op_checkpoint": 26
+          },
+          "start_time": "2021-01-08T01:27:28.111893+00:00",
+          "validation_metric": 0.81
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.81
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 221,
+        "seed": 600604914,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 11.403195416187351,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:01.550292+00:00",
+        "num_steps": 2,
+        "start_time": "2021-01-08T01:27:28.504343+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.81,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2387,
+          "uuid": "613d95e5-7b09-4baa-9fcd-a223e03c188f",
+          "state": "COMPLETED",
+          "step_id": 2,
+          "end_time": "2021-01-08T01:27:32.049937+00:00",
+          "metadata": {},
+          "trial_id": 221,
+          "resources": {
+            "no_op_checkpoint": 26
+          },
+          "start_time": "2021-01-08T01:27:32.045457+00:00",
+          "validation_metric": 0.81
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.81
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 222,
+        "seed": 924881328,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 35.05389581467245,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:01.549016+00:00",
+        "num_steps": 2,
+        "start_time": "2021-01-08T01:27:32.478346+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.81,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2388,
+          "uuid": "db87793f-e2c9-4f55-b2e1-ac279333b399",
+          "state": "COMPLETED",
+          "step_id": 2,
+          "end_time": "2021-01-08T01:27:36.136954+00:00",
+          "metadata": {},
+          "trial_id": 222,
+          "resources": {
+            "no_op_checkpoint": 26
+          },
+          "start_time": "2021-01-08T01:27:36.132921+00:00",
+          "validation_metric": 0.81
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.81
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 223,
+        "seed": 1026174314,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 23.878405086313403,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:01.550793+00:00",
+        "num_steps": 2,
+        "start_time": "2021-01-08T01:27:36.495069+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.81,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2389,
+          "uuid": "ec2b962d-8467-4eaa-a768-961c5ea0445c",
+          "state": "COMPLETED",
+          "step_id": 2,
+          "end_time": "2021-01-08T01:27:40.10519+00:00",
+          "metadata": {},
+          "trial_id": 223,
+          "resources": {
+            "no_op_checkpoint": 26
+          },
+          "start_time": "2021-01-08T01:27:40.100329+00:00",
+          "validation_metric": 0.81
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.81
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 224,
+        "seed": 1853344319,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 17.318042953231963,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:01.549776+00:00",
+        "num_steps": 2,
+        "start_time": "2021-01-08T01:27:40.528107+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.81,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2390,
+          "uuid": "215fde2d-3510-41aa-a3da-6af222738788",
+          "state": "COMPLETED",
+          "step_id": 2,
+          "end_time": "2021-01-08T01:27:44.181796+00:00",
+          "metadata": {},
+          "trial_id": 224,
+          "resources": {
+            "no_op_checkpoint": 26
+          },
+          "start_time": "2021-01-08T01:27:44.177835+00:00",
+          "validation_metric": 0.81
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.81
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 225,
+        "seed": 1791156392,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 46.43712163757767,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:01.545619+00:00",
+        "num_steps": 2,
+        "start_time": "2021-01-08T01:27:45.039723+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.81,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2391,
+          "uuid": "3829842e-a555-4ac6-8893-439b6874ff74",
+          "state": "COMPLETED",
+          "step_id": 2,
+          "end_time": "2021-01-08T01:27:48.67448+00:00",
+          "metadata": {},
+          "trial_id": 225,
+          "resources": {
+            "no_op_checkpoint": 26
+          },
+          "start_time": "2021-01-08T01:27:48.671219+00:00",
+          "validation_metric": 0.81
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.81
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 226,
+        "seed": 2068519090,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": false,
+          "min_loss_scale": 28.850789013585583,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:01.549258+00:00",
+        "num_steps": 2,
+        "start_time": "2021-01-08T01:27:49.498731+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.81,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2392,
+          "uuid": "01f5ff05-41f9-4891-8f97-5c8a70490450",
+          "state": "COMPLETED",
+          "step_id": 2,
+          "end_time": "2021-01-08T01:27:53.189611+00:00",
+          "metadata": {},
+          "trial_id": 226,
+          "resources": {
+            "no_op_checkpoint": 26
+          },
+          "start_time": "2021-01-08T01:27:53.185133+00:00",
+          "validation_metric": 0.81
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.81
+          }
+        },
+        "num_completed_checkpoints": 1
+      },
+      {
+        "id": 227,
+        "seed": 1131783565,
+        "state": "COMPLETED",
+        "hparams": {
+          "sync_bn": true,
+          "min_loss_scale": 62.61233018710617,
+          "global_batch_size": 44
+        },
+        "end_time": "2021-01-08T01:28:01.85912+00:00",
+        "num_steps": 2,
+        "start_time": "2021-01-08T01:27:57.992284+00:00",
+        "experiment_id": 119,
+        "best_validation_metric": 0.81,
+        "total_batches_processed": 160,
+        "warm_start_checkpoint_id": null,
+        "best_available_checkpoint": {
+          "id": 2394,
+          "uuid": "6ea4ce7c-8c9a-4a75-9f2e-b4740bd134a8",
+          "state": "COMPLETED",
+          "step_id": 2,
+          "end_time": "2021-01-08T01:28:01.533685+00:00",
+          "metadata": {},
+          "trial_id": 227,
+          "resources": {
+            "no_op_checkpoint": 26
+          },
+          "start_time": "2021-01-08T01:28:01.529773+00:00",
+          "validation_metric": 0.81
+        },
+        "latest_validation_metrics": {
+          "num_inputs": 1024,
+          "validation_metrics": {
+            "validation_error": 0.81
+          }
+        },
+        "num_completed_checkpoints": 1
+      }
+    ],
+    "owner": {
+      "id": 2,
+      "username": "determined"
+    },
+    "validation_history": [
+      {
+        "end_time": "2021-01-08T01:24:48.031466+00:00",
+        "trial_id": 188,
+        "validation_error": 0.9
+      },
+      {
+        "end_time": "2021-01-08T01:26:24.048406+00:00",
+        "trial_id": 188,
+        "validation_error": 0.7290000000000001
+      },
+      {
+        "end_time": "2021-01-08T01:27:16.098465+00:00",
+        "trial_id": 188,
+        "validation_error": 0.4304672100000001
+      }
+    ]
+  }
+]
