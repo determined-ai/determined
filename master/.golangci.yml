@@ -8,6 +8,10 @@ run:
   # The exit code when at least one issue was found.
   issues-exit-code: 1
 
+  # Exclude generated code.
+  skip-files:
+    pkg/schemas/expconf/v1_gen.go
+
 output:
   # Linter output format.
   format: colored-line-number

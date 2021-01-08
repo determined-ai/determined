@@ -1,3 +1,5 @@
+GENERATED := determined_common/schemas/expconf/_v1_gen.py
+
 .PHONY: clean
 clean:
 	rm -rf .pytest_cache/
@@ -7,6 +9,18 @@ clean:
 	rm -rf dist/
 	rm -rf build/
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
+
+.PHONY: ungen
+ungen:
+	rm -f $(GENERATED)
+
+gen: $(GENERATED)
+
+determined_common/schemas/expconf/_v1_gen.py: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
+	../schemas/gen.py \
+		--output $@ \
+		python \
+		$(shell find ../schemas/expconf/v1 -name "*.json")
 
 .PHONY: build
 build:
@@ -22,8 +36,12 @@ fmt:
 	black .
 
 .PHONY: check
-check:
+check: gen
 	isort --check-only
-	black . --check
-	flake8
+	black .
+	flake8 --exclude '*_gen.py'
 	mypy .
+
+.PHONY: test
+test: gen
+	pytest -v tests
