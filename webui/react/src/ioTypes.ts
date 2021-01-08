@@ -250,7 +250,8 @@ const ioExpHParam = io.type({
   maxval: optional(io.number),
   minval: optional(io.number),
   type: io.string,
-  val: io.unknown,
+  val: optional(io.unknown),
+  vals: optional(io.array(io.unknown)),
 });
 
 export const ioHyperparameters = io.record(io.string, ioExpHParam);
