@@ -54,4 +54,5 @@ The full list of our topic guides can be found below:
    hp-tuning-det/index
    distributed-training/*
    model-definitions/*
+   cluster-configuration/*
    *
