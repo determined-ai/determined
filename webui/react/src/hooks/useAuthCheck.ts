@@ -32,7 +32,7 @@ const useAuthCheck = (): (() => void) => {
        * If a cookie token is not found, use the storage token if applicable.
        * Proceed to verify user only if there is an auth token.
        */
-      const authToken = cookieToken || globalStorage.authToken;
+      const authToken = globalStorage.authToken;
       if (!authToken) {
         setAuth({ type: Auth.ActionType.MarkChecked });
         return;
