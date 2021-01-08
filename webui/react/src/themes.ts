@@ -43,6 +43,10 @@ export interface Theme {
       light: string;
       normal: string;
     };
+    core: {
+      background: string;
+      secondary: string;
+    },
     danger: {
       dark: string;
       light: string;
@@ -115,6 +119,10 @@ export const lightTheme: Theme = {
       dark: '#ee6600',
       light: '#ff9933',
       normal: '#f77b21',
+    },
+    core: {
+      background: '#f7f7f7',
+      secondary: '#234B65',
     },
     danger: {
       dark: '#aa0000',
