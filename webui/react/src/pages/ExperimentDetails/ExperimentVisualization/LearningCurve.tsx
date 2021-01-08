@@ -231,12 +231,12 @@ const LearningCurve: React.FC<Props> = ({
     return <Spinner />;
   } else if (!hasTrials && hasLoaded) {
     return (
-      <>
+      <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
           message="Not enough data points to show yet." />
         <Spinner />
-      </>
+      </div>
     );
   }
 
