@@ -24,8 +24,8 @@ export interface Props {
 interface LegendProps {
   children: React.ReactNode;
   count: number;
-  totalSlots: number;
   showPercentage?: boolean;
+  totalSlots: number;
 }
 
 const Legend: React.FC<LegendProps> = ({

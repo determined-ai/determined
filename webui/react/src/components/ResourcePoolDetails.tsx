@@ -9,9 +9,9 @@ import { camelCaseToSentence } from 'utils/string';
 import { rpLogo } from './ResourcePoolCard';
 
 interface Props {
+  finally: () => void;
   rpIndex: number;
   visible: boolean;
-  finally: () => void;
 }
 
 const resourcePools = getResourcePools();

@@ -7,9 +7,9 @@ import { floatToPercent } from 'utils/string';
 import css from './Bar.module.scss';
 
 export interface BarPart {
-  percent: number; // between 0-1
   color: string; // css color
   label?: string;
+  percent: number; // between 0-1
 }
 
 export interface Props {
