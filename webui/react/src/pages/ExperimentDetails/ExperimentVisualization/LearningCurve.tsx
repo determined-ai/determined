@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
+import Link from 'components/Link';
 import Message from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -225,7 +226,23 @@ const LearningCurve: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ experiment.id, maxTrials, selectedMetric ]);
 
-  if (pageError) {
+  if (pageError?.message.includes('single-trial experiments are not supported')) {
+    return <Alert
+      description={<>
+        Please consider using multi-trial searchers such as &nbsp;
+        <Link
+          path="/docs/reference/experiment-config.html#adaptive-asha"
+          popout
+          size="small">Adaptive ASHA</Link>
+        &nbsp; and &nbsp;
+        <Link
+          path="/docs/reference/experiment-config.html#adaptive-simple"
+          popout
+          size="small">Adaptive Simple</Link>
+      </>}
+      message="Visualizations are not supported for single trial experiments"
+      type="warning" />;
+  } else if (pageError) {
     return <Message title={pageError.message} />;
   } else if (!hasLoaded) {
     return <Spinner />;
