@@ -1,0 +1,54 @@
+.base {
+  .header {
+    display: flex;
+    flex-direction: row;
+    font-size: var(--theme-sizes-font-medium);
+    justify-content: space-between;
+  }
+  .bar {
+    margin: var(--theme-sizes-layout-small) 0;
+  }
+}
+li.legend {
+  list-style-type: none;
+
+  .count {
+    margin-right: var(--theme-sizes-layout-small);
+  }
+}
+ul.detailedLegends li {
+  margin-top: var(--theme-sizes-layout-small);
+}
+div.overallLegends {
+  display: flex;
+  flex-direction: row;
+  font-size: var(--theme-sizes-font-small);
+  justify-content: center;
+
+  ol {
+    display: flex;
+    flex-direction: row;
+    font-size: var(--theme-sizes-font-small);
+    justify-content: center;
+    margin: 0 auto;
+    padding: 0;
+  }
+  li {
+    display: block;
+    height: 100%;
+    margin: 0;
+    margin-left: var(--theme-sizes-layout-huge);
+    padding: 0;
+  }
+  li:first-child {
+    margin-left: 0;
+  }
+}
+ul.detailedLegends {
+  margin: 0;
+  padding: 0;
+
+  li:first-child {
+    margin-top: 0;
+  }
+}

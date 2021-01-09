@@ -54,6 +54,13 @@ export enum ResourceState { // This is almost CommandState
   Terminated = 'TERMINATED',
 }
 
+// High level Slot state
+export enum SlotState {
+  Running = 'RUNNING',
+  Free = 'FREE',
+  Pending = 'PENDING',
+}
+
 export const resourceStates: ResourceState[] = [
   ResourceState.Unspecified,
   ResourceState.Assigned,
@@ -80,6 +87,7 @@ export interface Resource {
 export interface Agent {
   id: string;
   registeredTime: number;
+  resourcePool: string;
   resources: Resource[];
 }
 

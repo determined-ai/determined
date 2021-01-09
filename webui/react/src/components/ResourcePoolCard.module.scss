@@ -1,0 +1,136 @@
+$padding: var(--theme-sizes-layout-large);
+$icon-side: 5rem;
+$line-height: 2.2rem;
+
+.base {
+  border-radius: var(--theme-sizes-border-radius);
+  box-shadow: var(--theme-shadow);
+  color: var(--theme-colors-monochrome-0);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--theme-sizes-font-medium);
+  line-height: $line-height;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  .header {
+    background: var(--theme-colors-base-3);
+    color: white;
+    display: flex;
+    flex-direction: row;
+    min-height: 8rem;
+    padding: $padding;
+
+    .icon {
+      align-items: center;
+      background-color: var(--theme-colors-monochrome-17);
+      border:
+        var(--theme-sizes-border-width) solid
+        var(--theme-colors-monochrome-11);
+      border-radius: 50%;
+      display: flex;
+      flex-shrink: 0;
+      height: $icon-side;
+      justify-content: center;
+      margin: auto 2rem auto 0;
+      margin-right: 2rem;
+      width: $icon-side;
+    }
+    .info {
+      margin: auto 0;
+
+      .name {
+        margin-bottom: 0.5rem;
+      }
+    }
+    .tags *[class*='Badge'] {
+      margin-bottom: 0.5rem;
+      margin-right: 1rem;
+    }
+    .tags *[class*='Badge']:last-child {
+      margin-right: 0;
+    }
+  }
+  .agentsStatus {
+    background: var(--theme-colors-state-active);
+    color: white;
+    display: flex;
+    height: var(--theme-sizes-layout-enormous);
+    text-align: center;
+    vertical-align: middle;
+
+    & > * {
+      margin: auto;
+    }
+  }
+  .description {
+    align-content: center;
+    display: flex;
+    flex-direction: column;
+    height: $line-height * 4;
+    padding: 0;
+    position: relative;
+
+    p {
+      margin: auto 0;
+      // https://css-tricks.com/line-clampin/
+      overflow: auto;
+      padding: $padding;
+    }
+    .fade::after {
+      background:
+        linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 1) 50%
+        );
+      bottom: 0;
+      content: '';
+      height: $line-height;
+      left: 0;
+      position: absolute;
+      text-align: center;
+      width: 90%;
+    }
+    .fade::before {
+      background:
+        linear-gradient(
+          to top,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 1) 50%
+        );
+      bottom: unset;
+      top: 0;
+
+      @extend .fade::after;
+    }
+  }
+  hr {
+    background: #c4c4c4;
+    border: none;
+    height: 0.2rem;
+    margin: 0;
+  }
+  section {
+    padding: $padding;
+  }
+}
+section.details {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
+  ul {
+    flex-grow: 1;
+  }
+}
+.spaceBetweenHorizontal {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}

@@ -13,4 +13,9 @@
   font-family: 'Source Code Pro', monospace;
   font-size: var(--theme-sizes-font-small);
 }
-.state { text-transform: uppercase; }
+.header {
+  background-color: #132231;
+}
+.state {
+  text-transform: uppercase;
+}

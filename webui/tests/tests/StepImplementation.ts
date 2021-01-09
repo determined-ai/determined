@@ -152,6 +152,11 @@ export default class StepImplementation {
     }
   }
 
+  @Step('Navigate to React page at <path>')
+  public async navigateToReactPage(path: string) {
+    await goto(`${BASE_URL}${path}`);
+  }
+
   @Step('Navigate to dashboard page')
   public async navigateToDashboard() {
     await goto(`${BASE_URL}/dashboard`);
@@ -272,5 +277,20 @@ export default class StepImplementation {
       await this.checkTableRowCount(count);
       await click($(`[aria-label=${ariaLabel}]`));
     }
+  }
+  /* Cluster */
+
+  @Step('Should show <count> resource pool cards')
+  public async checkResourcePoolCardCount(count: string) {
+    const elements = await t.$('div[class^="ResourcePoolCard_base"]').elements();
+    assert.strictEqual(elements.length, parseInt(count));
+  }
+
+  @Step('Should show <count> agents in stats')
+  public async checkAgentCountStats(count: string) {
+    const stats = await t.$('div[class^="OverviewStats_base"]').elements();
+    assert.strictEqual(stats.length, 3);
+    const numAgents = (await stats[0].text()).replace('Number of Agents', '');
+    assert.strictEqual(parseInt(numAgents), parseInt(count));
   }
 }

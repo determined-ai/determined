@@ -1,7 +1,8 @@
 module.exports = {
   extends: [ 'stylelint-config-standard' ],
-  plugins: [ 'stylelint-order' ],
+  plugins: [ 'stylelint-order', 'stylelint-scss' ],
   rules: {
+    'at-rule-no-unknown': null,
     'at-rule-semicolon-space-before': 'never',
     'custom-property-empty-line-before': 'never',
     'declaration-block-semicolon-newline-after': 'always-multi-line',
@@ -25,7 +26,9 @@ module.exports = {
     'rule-empty-line-before': [ 'always', {
       except: [ 'after-rule', 'first-nested', 'inside-block-and-after-rule' ],
     } ],
+    'scss/at-rule-no-unknown': true,
     'selector-pseudo-class-no-unknown': [ true, { ignorePseudoClasses: [ 'global' ] } ],
+    'string-quotes': 'single',
     'value-keyword-case': null,
   },
 };

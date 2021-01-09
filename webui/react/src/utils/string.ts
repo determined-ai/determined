@@ -41,9 +41,16 @@ export const listToStr = (list: (string|undefined)[], glue = ' '): string => {
 };
 
 export const floatToPercent = (num: number, precision = 2): string => {
+  if (isNaN(num)) num = 0;
   return (num * 100).toFixed(precision) + '%';
 };
 
 export const humanReadableBytes = (bytes: number): string => {
   return prettyBytes(bytes);
+};
+
+export const camelCaseToSentence = (text: string): string => {
+  const result = text.replace( /([A-Z])/g, ' $1' );
+  const finalResult = result.charAt(0).toUpperCase() + result.slice(1);
+  return finalResult;
 };

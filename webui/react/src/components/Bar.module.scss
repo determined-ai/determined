@@ -3,20 +3,36 @@
   display: flex;
   min-height: 2rem;
 
+  .parts,
+  li {
+    margin: 0;
+    padding: 0;
+  }
+  .parts {
+    display: flex;
+    flex-direction: row;
+  }
+  li {
+    display: block;
+    height: 100%;
+    margin-left: 0.1rem;
+  }
+  li:first-child {
+    margin-left: 0;
+  }
   .bar {
     background-color: var(--theme-colors-monochrome-12);
-    border-radius: 0;
+    border-radius: 0.3rem;
     box-shadow: var(--theme-colors-monochrome-6);
     flex-grow: 1;
-    height: var(--theme-sizes-layout-tiny);
     margin: 0;
+    min-height: var(--theme-sizes-layout-tiny);
+    overflow: hidden;
     padding: 0;
     position: relative;
   }
   .bar > * {
-    display: block;
     height: 100%;
-    overflow: hidden;
     position: relative;
   }
 }

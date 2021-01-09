@@ -1,0 +1,24 @@
+.base {
+  padding-inline-start: 0;
+}
+.item {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  list-style-type: none;
+  width: 100%;
+
+  span {
+    display: block;
+  }
+}
+.label {
+  color: var(--theme-colors-monochrome-7);
+  margin-right: var(--theme-sizes-layout-medium);
+}
+.value {
+  overflow-wrap: break-word;
+  text-align: right;
+  word-break: break-all;
+}

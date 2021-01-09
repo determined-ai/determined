@@ -1,4 +1,4 @@
-import { CheckpointState, CommandState, ResourceState, RunState } from 'types';
+import { CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
 
 /*
  * Where did we get our sizes from?
@@ -25,6 +25,8 @@ enum StateColors {
   inactive = 'inactive',
   success = 'success',
   suspended = 'suspended',
+  free = 'free',
+  pending = 'pending',
 }
 
 export interface Theme {
@@ -143,7 +145,9 @@ export const lightTheme: Theme = {
     states: {
       active: '#009bde',
       failed: '#cc0000',
+      free: '#f7f7f7',
       inactive: '#666666',
+      pending: '#6666cc',
       success: '#009900',
       suspended: '#cc9900',
     },
@@ -221,20 +225,21 @@ const stateColorMapping = {
   [CommandState.Terminating]: 'inactive',
   [CommandState.Terminated]: 'inactive',
   [ResourceState.Unspecified]: 'inactive',
+  [SlotState.Free]: 'free',
+  [SlotState.Pending]: 'pending',
+  [SlotState.Running]: 'active',
 };
 
-export const getStateColorCssVar = (
-  state: RunState | CommandState | ResourceState | CheckpointState | undefined,
-): string => {
+type States = RunState | CommandState | ResourceState | CheckpointState | SlotState
+
+export const getStateColorCssVar = ( state: States | undefined): string => {
   const name = state ? stateColorMapping[state] : 'active';
   return `var(--theme-colors-states-${name})`;
 };
 
-export const getStateColor = (
-  state: RunState | CommandState | ResourceState,
-): string => {
-  const name = state ? stateColorMapping[state] : 'active';
-  return window.getComputedStyle(document.body).getPropertyValue(`--theme-colors-states-${name}`);
+export const getStateColor = ( state: States | undefined): string => {
+  const cssVar = getStateColorCssVar(state);
+  return window.getComputedStyle(document.body).getPropertyValue(cssVar);
 };
 
 export enum ThemeId {
