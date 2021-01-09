@@ -48,11 +48,11 @@ $line-height: 2.2rem;
         margin-bottom: 0.5rem;
       }
     }
-    .tags *[class^='Badge'] {
+    .tags *[class*='Badge'] {
       margin-bottom: 0.5rem;
       margin-right: 1rem;
     }
-    .tags *[class^='Badge']:last-child {
+    .tags *[class*='Badge']:last-child {
       margin-right: 0;
     }
   }
