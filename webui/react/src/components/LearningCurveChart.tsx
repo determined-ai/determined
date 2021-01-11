@@ -29,6 +29,8 @@ interface ClosestPoint {
 }
 
 const CHART_HEIGHT = 400;
+const SERIES_WIDTH = 3;
+const SERIES_UNFOCUSED_ALPHA = 0.2;
 const FOCUS_MIN_DISTANCE = 30;
 const SCROLL_THROTTLE_TIME = 500;
 const MAX_METRIC_LABEL_SIZE = 30;
@@ -249,6 +251,7 @@ const LearningCurveChart: React.FC<Props> = ({
 
     const options = uPlot.assign({}, UPLOT_OPTIONS, {
       cursor: { move: handleCursorMove },
+      focus: { alpha: SERIES_UNFOCUSED_ALPHA },
       hooks: {
         setScale: [
           (plot: uPlot, scaleKey: string) => {
@@ -269,7 +272,7 @@ const LearningCurveChart: React.FC<Props> = ({
           scale: 'metric',
           spanGaps: true,
           stroke: glasbeyColor(index),
-          width: 2 / window.devicePixelRatio,
+          width: SERIES_WIDTH / window.devicePixelRatio,
         })),
       ],
       width: chartRef.current.offsetWidth,
