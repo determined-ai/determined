@@ -5,7 +5,6 @@ import gcpLogo from 'assets/gcp-logo.svg';
 import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import { getResourcePools } from 'services/api';
 import { ResourceState } from 'types';
 import { ResourcePool } from 'types/ResourcePool';
 

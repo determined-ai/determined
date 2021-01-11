@@ -26,7 +26,7 @@ const resourcePools = getResourcePools();
 const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
   const overview = ClusterOverview.useStateContext();
-  const [ detailVisible, setDetailVisible ] = useState(false);
+  const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
 
   const availableResources = useMemo(() => {
     if (!agents.data) return {};
@@ -53,17 +53,15 @@ const HGICluster: React.FC = () => {
 
   const slotContainerStates = getSlotContainerStates(agents.data || []);
 
-  const toggleModal = useCallback(
-    () => {
-      setDetailVisible((cur: boolean) => !cur);
-    },
+  const hideModal = useCallback(
+    () => setRpDetail(undefined),
     [],
   );
 
   const handleTableRow = useCallback((record: ResourcePool) => {
     const handleClick = (event: React.MouseEvent) => {
       if (isAlternativeAction(event)) return;
-      toggleModal();
+      setRpDetail(record);
     };
     return { onAuxClick: handleClick, onClick: handleClick };
   }, []);
@@ -127,7 +125,12 @@ const HGICluster: React.FC = () => {
           size="small"
           onRow={handleTableRow}
         />
-        <ResourcePoolDetails finally={toggleModal} resourcePool={resourcePools[0]} visible={detailVisible} />
+        {!!rpDetail &&
+          <ResourcePoolDetails
+            finally={hideModal}
+            resourcePool={rpDetail}
+            visible={!!rpDetail} />
+        }
       </Section>
     </Page>
   );
