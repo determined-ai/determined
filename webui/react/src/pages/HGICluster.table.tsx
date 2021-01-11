@@ -1,65 +1,61 @@
 import { ColumnType } from 'antd/es/table';
-import { ReactNode } from 'react';
+import React from 'react';
 
-import {
-  durationRenderer, relativeTimeRenderer, stateRenderer,
-} from 'components/Table';
 import { ResourcePool } from 'types/ResourcePool';
-import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
-import { getDuration } from 'utils/time';
-import { getMetricValue } from 'utils/types';
+import { alphanumericSorter, numericSorter } from 'utils/data';
+
+import css from './HGICluster.table.module.scss';
+
+const descriptionRender = (_: unknown, record: ResourcePool): React.ReactNode =>
+  <div className={css.descriptionColumn}>{record.description}</div>;
 
 export const columns: ColumnType<ResourcePool>[] = [
   {
-    dataIndex: 'id',
-    key: 'id',
-    sorter: (a: ResourcePool, b: ResourcePool): number => alphanumericSorter(a.id, b.id),
-    title: 'ID',
+    dataIndex: 'name',
+    key: 'name',
+    sorter: (a: ResourcePool, b: ResourcePool): number => alphanumericSorter(a.name, b.name),
+    title: 'Pool Name',
   },
   {
-    key: 'state',
-    render: stateRenderer,
-    sorter: (a: ResourcePool, b: ResourcePool): number => runStateSorter(a.state, b.state),
-    title: 'State',
-  },
-  {
-    dataIndex: 'totalBatchesProcessed',
-    key: 'batches',
-    sorter: (a: ResourcePool, b: ResourcePool): number => {
-      return numericSorter(a.totalBatchesProcessed, b.totalBatchesProcessed);
-    },
-    title: 'Batches',
-  },
-  {
-    key: 'bestValidation',
-    sorter: (a: ResourcePool, b: ResourcePool): number => {
-      return numericSorter(
-        getMetricValue(a.bestValidationMetric),
-        getMetricValue(b.bestValidationMetric),
-      );
-    },
-    title: 'Best Validation Metric',
-  },
-  {
-    key: 'latestValidation',
-    title: 'Latest Validation Metric',
-  },
-  {
-    key: 'startTime',
-    render: (_: string, record: ResourcePool): ReactNode =>
-      relativeTimeRenderer(new Date(record.startTime)),
+    dataIndex: 'description',
+    key: 'description',
+    render: descriptionRender,
     sorter: (a: ResourcePool, b: ResourcePool): number =>
-      stringTimeSorter(a.startTime, b.startTime),
-    title: 'Start Time',
+      alphanumericSorter(a.description, b.description),
+    title: 'Description',
   },
   {
-    key: 'duration',
-    render: (_: string, record: ResourcePool): ReactNode => durationRenderer(record),
-    sorter: (a: ResourcePool, b: ResourcePool): number => getDuration(a) - getDuration(b),
-    title: 'Duration',
+    dataIndex: 'type',
+    key: 'type',
+    sorter: (a: ResourcePool, b: ResourcePool): number => alphanumericSorter(a.type, b.type),
+    title: 'Type',
   },
   {
-    key: 'checkpoint',
-    title: 'Checkpoint',
+    dataIndex: 'numAgents',
+    key: 'numAgents',
+    sorter: (a: ResourcePool, b: ResourcePool): number =>
+      numericSorter(a.numAgents, b.numAgents),
+    title: 'Agents',
+  },
+  {
+    dataIndex: 'slotsAvailable',
+    key: 'slotsAvailable',
+    sorter: (a: ResourcePool, b: ResourcePool): number =>
+      numericSorter(a.slotsAvailable, b.slotsAvailable),
+    title: 'Slots Available',
+  },
+  {
+    dataIndex: 'cpuContainerCapacity',
+    key: 'cpuContainerCapacity',
+    sorter: (a: ResourcePool, b: ResourcePool): number =>
+      numericSorter(a.cpuContainerCapacity, b.cpuContainerCapacity),
+    title: 'CPUs Available',
+  },
+  {
+    dataIndex: 'cpuContainersRunning',
+    key: 'cpuContainersRunning',
+    sorter: (a: ResourcePool, b: ResourcePool): number =>
+      numericSorter(a.cpuContainersRunning, b.cpuContainersRunning),
+    title: 'CPUs Used',
   },
 ];

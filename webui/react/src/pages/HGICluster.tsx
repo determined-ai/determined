@@ -94,8 +94,8 @@ const HGICluster: React.FC = () => {
           })}
         </Grid>
       </Section>
-      <Section title="Table">
-        <ResponsiveTable<ResourcePool> // TODO resourcepool type
+      <Section title={`${resourcePools.length} Resource Pools`}>
+        <ResponsiveTable<ResourcePool>
           columns={columns}
           dataSource={resourcePools}
           loading={{
@@ -103,7 +103,7 @@ const HGICluster: React.FC = () => {
             spinning: agents.isLoading, // TODO replace with resource pools
           }}
           pagination={getPaginationConfig(resourcePools.length, 10)} // TODO config page size
-          rowClassName={defaultRowClassName({})}
+          rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="batchNum"
           scroll={{ x: 1000 }}
           showSorterTooltip={false}
