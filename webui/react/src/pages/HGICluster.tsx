@@ -13,13 +13,15 @@ import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
-import { columns } from 'pages/HGICluster.table';
+import { columns as defaultColumns } from 'pages/HGICluster.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { Resource } from 'types';
+import { Resource, ResourceState } from 'types';
 import { ResourcePool } from 'types/ResourcePool';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
+
+import css from './HGICluster.module.scss';
 
 const resourcePools = getResourcePools();
 
@@ -52,6 +54,33 @@ const HGICluster: React.FC = () => {
   }, [ ]);
 
   const slotContainerStates = getSlotContainerStates(agents.data || []);
+
+  const columns = useMemo(() => {
+
+    const newColumns = [ ...defaultColumns ].map(column => {
+
+      const descriptionRender = (_: unknown, record: ResourcePool): React.ReactNode =>
+        <div className={css.descriptionColumn}>{record.description}</div>;
+
+      const chartRender = (_:unknown, record: ResourcePool): React.ReactNode => {
+        const containerStates: ResourceState[] =
+          getSlotContainerStates(agents.data || [], record.name);
+
+        return <SlotAllocationBar
+          className={css.chartColumn}
+          hideHeader
+          resourceStates={containerStates}
+          totalSlots={record.numAgents * record.gpusPerAgent} />;
+
+      };
+
+      if (column.key === 'description') column.render = descriptionRender;
+      if (column.key === 'chart') column.render = chartRender;
+      return column;
+    });
+
+    return newColumns;
+  }, [ agents.data ]);
 
   const hideModal = useCallback(
     () => setRpDetail(undefined),

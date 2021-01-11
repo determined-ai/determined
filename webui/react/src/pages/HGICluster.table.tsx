@@ -1,30 +1,7 @@
 import { ColumnType } from 'antd/es/table';
-import React from 'react';
 
-import SlotAllocationBar from 'components/SlotAllocationBar';
-import { ResourceState } from 'types';
 import { ResourcePool } from 'types/ResourcePool';
 import { alphanumericSorter, numericSorter } from 'utils/data';
-
-import css from './HGICluster.table.module.scss';
-
-const descriptionRender = (_: unknown, record: ResourcePool): React.ReactNode =>
-  <div className={css.descriptionColumn}>{record.description}</div>;
-
-const chartRender = (_:unknown, record: ResourcePool): React.ReactNode => {
-  const containerStates: ResourceState[] = [
-    ResourceState.Assigned, ResourceState.Pulling, ResourceState.Running,
-  ]; // GPU. TODO this would come from Agent data.
-
-  return <div className={css.chartColumn}>
-    <SlotAllocationBar
-      className={css.chartColumn}
-      hideHeader
-      resourceStates={containerStates}
-      totalSlots={record.numAgents * record.gpusPerAgent} />
-  </div>;
-
-};
 
 export const columns: ColumnType<ResourcePool>[] = [
   {
@@ -36,14 +13,12 @@ export const columns: ColumnType<ResourcePool>[] = [
   {
     dataIndex: 'description',
     key: 'description',
-    render: descriptionRender,
     sorter: (a: ResourcePool, b: ResourcePool): number =>
       alphanumericSorter(a.description, b.description),
     title: 'Description',
   },
   {
     key: 'chart',
-    render: chartRender,
     title: 'Chart',
   },
   {

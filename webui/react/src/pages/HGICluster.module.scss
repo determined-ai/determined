@@ -1,10 +1,8 @@
-// FIXME not being applied
-
 .descriptionColumn {
+  max-width: calc(max(50vw, 30rem));
   word-break: break-word;
   word-wrap: break-word;
 }
-
 .chartColumn {
   min-width: 20rem;
 }
