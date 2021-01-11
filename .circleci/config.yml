@@ -715,6 +715,7 @@ jobs:
       - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
+    resource_class: medium+
     steps:
       - checkout
       - attach_workspace:
@@ -741,6 +742,7 @@ jobs:
       - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
+    resource_class: medium+
     steps:
       - checkout
       - attach_workspace:
@@ -759,6 +761,7 @@ jobs:
       - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
+    resource_class: medium+
     steps:
       - checkout
       - attach_workspace:
@@ -777,6 +780,7 @@ jobs:
       - image: cimg/go:1.15
         environment:
           GO111MODULE: "on"
+    resource_class: medium+
     steps:
       - checkout
       - attach_workspace:
