@@ -53,9 +53,9 @@ message TrialLogsResponse {
   };
   // The ID of the trial log.
   oneof id_oneof {
-    // The ID when using a log backend that uses int IDs (e.g. Postgres).
+    // The ID when using a backend that uses int IDs (e.g. Postgres).
     int64 id = 1;
-    // The ID when using a log backend that uses string IDs (e.g. Elasticsearch).
+    // The ID when using a backend that uses string IDs (e.g. Elasticsearch).
     string string_id = 2;
   };
   // The log message.

@@ -172,7 +172,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 		}
 		filters = append(filters, api.Filter{
 			Field:     "timestamp",
-			Operation: api.FilterOperationLessThan,
+			Operation: api.FilterOperationLessThanEqual,
 			Values:    t,
 		})
 	}

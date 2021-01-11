@@ -151,7 +151,7 @@ func (e *Elastic) TrialLogs(
 	resp := struct {
 		Hits struct {
 			Hits []struct {
-				ID string `json:"_id"`
+				ID     string          `json:"_id"`
 				Source *model.TrialLog `json:"_source"`
 				Sort   []interface{}   `json:"sort"`
 			} `json:"hits"`
@@ -342,7 +342,7 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 						"should": inTerms,
 					},
 				})
-		case api.FilterOperationLessThan:
+		case api.FilterOperationLessThanEqual:
 			terms = append(terms,
 				jsonObj{
 					"range": jsonObj{

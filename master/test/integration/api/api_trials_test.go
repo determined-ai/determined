@@ -323,7 +323,6 @@ func trialLogFollowingTests(
 		// context.DeadlineExceeded likely means the stream did not terminate as expected.
 		assert.NilError(t, err, "failed to receive trial logs")
 		assertStringContains(t, resp.Message, message)
-		assert.Equal(t, trialLogID, int(resp.Id))
 	}
 
 	err = pgDB.UpdateTrial(trial.ID, model.CompletedState)
