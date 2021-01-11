@@ -229,18 +229,14 @@ const LearningCurve: React.FC<Props> = ({
   if (pageError?.message.includes('single-trial experiments are not supported')) {
     return <Alert
       description={<>
-        Please consider using multi-trial searchers such as &nbsp;
+        Learn about &nbsp;
         <Link
-          path="/docs/reference/experiment-config.html#adaptive-asha"
+          external
+          path="/docs/reference/experiment-config.html#searcher"
           popout
-          size="small">Adaptive ASHA</Link>
-        &nbsp; and &nbsp;
-        <Link
-          path="/docs/reference/experiment-config.html#adaptive-simple"
-          popout
-          size="small">Adaptive Simple</Link>
+          size="small">how to run a hyperparameter search</Link>.
       </>}
-      message="Visualizations are not supported for single trial experiments"
+      message="Hyperparameter visualizations are not applicable for single trial experiments."
       type="warning" />;
   } else if (pageError) {
     return <Message title={pageError.message} />;
