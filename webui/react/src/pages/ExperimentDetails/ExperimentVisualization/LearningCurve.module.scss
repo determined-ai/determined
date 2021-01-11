@@ -1,5 +1,4 @@
 .base {
-  .waiting { height: 30rem; }
   .chart {
     background-color: var(--theme-colors-monochrome-17);
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
@@ -12,3 +11,4 @@
     width: 4rem;
   }
 }
+.waiting { height: 30rem; }
