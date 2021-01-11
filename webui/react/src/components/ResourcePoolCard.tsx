@@ -7,6 +7,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { getResourcePools } from 'services/api';
 import { ResourceState } from 'types';
+import { ResourcePool } from 'types/ResourcePool';
 
 import Json from './Json';
 import Link from './Link';
@@ -15,11 +16,8 @@ import ResourcePoolDetails from './ResourcePoolDetails';
 
 interface Props {
   containerStates: ResourceState[]; // GPU
-  rpIndex: number; // Index into resource pool sample response. This is a temporary
-  // prop until the resource pool api, and its corresponding types are implemented.
+  resourcePool: ResourcePool;
 }
-
-const resourcePools = getResourcePools();
 
 export const rpLogo = (type: string): React.ReactNode => {
   let iconSrc = '';
@@ -64,12 +62,11 @@ const agentStatusText = (numAgents: number, maxInstances: number): string => {
   return prefix + ' Agents Active';
 };
 
-const ResourcePoolCard: React.FC<Props> = ({ containerStates, rpIndex }: Props) => {
-  const rp = resourcePools[rpIndex];
+const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }: Props) => {
   const [ detailVisible, setDetailVisible ] = useState(false);
 
   const shortDetails = rpAttrs.reduce((acc, cur) => {
-    acc[cur[1]] = (rp as SafeRawJson) [cur[0]];
+    acc[cur[1]] = (rp as unknown as SafeRawJson)[cur[0]];
     return acc;
   }, {} as SafeRawJson );
 
@@ -137,7 +134,7 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, rpIndex }: Props) 
           <Json json={shortDetails} />
           <div>
             <Link onClick={toggleModal}>View more info</Link>
-            <ResourcePoolDetails finally={toggleModal} rpIndex={rpIndex} visible={detailVisible} />
+            <ResourcePoolDetails finally={toggleModal} resourcePool={rp} visible={detailVisible} />
           </div>
         </section>
         <div />

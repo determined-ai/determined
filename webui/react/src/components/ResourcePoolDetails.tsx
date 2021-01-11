@@ -2,7 +2,7 @@ import { Divider, Modal } from 'antd';
 import React from 'react';
 
 import Json from 'components/Json';
-import { getResourcePools } from 'services/api';
+import { ResourcePool } from 'types/ResourcePool';
 import { clone } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 
@@ -10,14 +10,11 @@ import { rpLogo } from './ResourcePoolCard';
 
 interface Props {
   finally: () => void;
-  rpIndex: number;
+  resourcePool: ResourcePool;
   visible: boolean;
 }
 
-const resourcePools = getResourcePools();
-
-const ResourcePoolDetails: React.FC<Props> = ({ rpIndex, ...props }: Props) => {
-  const rp = resourcePools[rpIndex];
+const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Props) => {
   const details = clone(rp.details);
   const providerSpecific = details[rp.type];
   delete details[rp.type];

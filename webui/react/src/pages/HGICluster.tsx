@@ -107,7 +107,7 @@ const HGICluster: React.FC = () => {
             return <ResourcePoolCard
               containerStates={getSlotContainerStates(agents.data || [], rp.name)}
               key={idx}
-              rpIndex={idx} />;
+              resourcePool={rp} />;
           })}
         </Grid>
       </Section>
@@ -127,7 +127,7 @@ const HGICluster: React.FC = () => {
           size="small"
           onRow={handleTableRow}
         />
-        <ResourcePoolDetails finally={toggleModal} rpIndex={0} visible={detailVisible} />
+        <ResourcePoolDetails finally={toggleModal} resourcePool={resourcePools[0]} visible={detailVisible} />
       </Section>
     </Page>
   );
