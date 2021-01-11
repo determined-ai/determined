@@ -84,7 +84,7 @@ func makeOutputConfig(
   Host  %s
   Port  %d
   Logstash_Format True
-  Logstash_Prefix triallogs
+  Logstash_Prefix determined-triallogs
   Time_Key timestamp
   Time_Key_Nanos On
 `, fluentElasticHost, elasticOpts.Port)

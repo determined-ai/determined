@@ -433,7 +433,7 @@ func (r intAggResult) toKeysInt32() []int32 {
 }
 
 func logstashIndexFromTimestamp(time *time.Time) string {
-	return time.UTC().Format("triallogs-2006.01.02")
+	return time.UTC().Format("determined-triallogs-2006.01.02")
 }
 
 func checkResponse(res *esapi.Response) error {
