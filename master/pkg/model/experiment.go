@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"time"
 
 	"github.com/pkg/errors"
@@ -388,7 +389,12 @@ func (c *Checkpoint) IsNew() bool {
 
 // TrialLog represents a row from the `trial_logs` table.
 type TrialLog struct {
-	ID      int    `db:"id" json:"id"`
+	// A TrialLog should have one of the follow IDs and GetID is a
+	// shortcut for getting the one present as an interface{}. All
+	// IDs for logs should be unique.
+	ID       *int    `db:"id" json:"id"`
+	StringID *string
+
 	TrialID int    `db:"trial_id" json:"trial_id"`
 	Message string `db:"message" json:"message"`
 
@@ -401,6 +407,30 @@ type TrialLog struct {
 	Log         *string    `db:"log" json:"log"`
 	Source      *string    `db:"source" json:"source"`
 	StdType     *string    `db:"stdtype" json:"stdtype"`
+}
+
+func (l TrialLog) Proto() *apiv1.TrialLogsResponse {
+	resp := &apiv1.TrialLogsResponse{Message: l.Message}
+	switch id := l.GetID().(type) {
+	case int:
+		resp.IdOneof = &apiv1.TrialLogsResponse_Id{Id: int64(id)}
+	case string:
+		resp.IdOneof = &apiv1.TrialLogsResponse_StringId{StringId: id}
+	default:
+		panic(fmt.Sprintf("invalid id from log backend: %T", id))
+	}
+	return resp
+}
+
+func (l TrialLog) GetID() interface{} {
+	switch {
+	case l.ID != nil:
+		return *l.ID
+	case l.StringID != nil:
+		return *l.StringID
+	default:
+		panic("ID missing from TrialLog")
+	}
 }
 
 // Resolve resolves the legacy Message field from the others provided.

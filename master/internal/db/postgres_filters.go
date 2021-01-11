@@ -49,7 +49,7 @@ func filterToSQL(f api.Filter, values []interface{}, paramID int) string {
 	case api.FilterOperationGreaterThan:
 		return fmt.Sprintf("AND %s > $%d", f.Field, paramID)
 	case api.FilterOperationLessThan:
-		return fmt.Sprintf("AND %s < $%d", f.Field, paramID)
+		return fmt.Sprintf("AND %s <= $%d", f.Field, paramID)
 	default:
 		panic(fmt.Sprintf("cannot convert operation %d to SQL", f.Operation))
 	}

@@ -51,10 +51,15 @@ message TrialLogsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id", "message" ] }
   };
-  // The id of the trial log.
-  int32 id = 1;
+  // The ID of the trial log.
+  oneof id_oneof {
+    // The ID when using a log backend that uses int IDs (e.g. Postgres).
+    int64 id = 1;
+    // The ID when using a log backend that uses string IDs (e.g. Elasticsearch).
+    string string_id = 2;
+  };
   // The log message.
-  string message = 2;
+  string message = 3;
 }
 
 // Stream distinct trial log fields.
