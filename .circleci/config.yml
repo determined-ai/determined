@@ -532,15 +532,6 @@ commands:
           make -C webui/tests get-deps
       - run: docker pull determinedai/gauge-taiko-ts
 
-  install-webui-test-deps-cypress:
-    steps:
-      - run: |
-          . /opt/circleci/.nvm/nvm.sh
-          nvm install v12
-          nvm alias default v12
-          make -C webui/cypress get-deps
-      - run: docker pull cypress/included:4.8.0
-
   setup-local-cluster:
     parameters:
       det-version:
@@ -569,22 +560,6 @@ commands:
             --env DET_MASTER=determined-master:8080 \
             determinedai/gauge-taiko-ts
           rm -f webui/tests/reports/videos/*.jpeg
-
-  run-e2e-webui-tests-cypress:
-    steps:
-      - run: python webui/cypress/bin/createUserAndExperiments.py
-      - run: |
-          mkdir -p webui/cypress/results
-          docker run \
-            --name e2e_cypress \
-            --network=determined_default \
-            --mount type=bind,source=$(pwd)/webui,target=/webui \
-            -w /webui/cypress \
-            --env DET_MASTER=determined-master:8080 \
-            cypress/included:4.8.0 \
-            --config-file cypress-ci.json \
-            --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
-            --browser electron
 
   generate-tls-cert:
     steps:
@@ -876,34 +851,6 @@ jobs:
           path: webui/tests/reports/xml-report/
       - store_artifacts:
           path: webui/tests/reports/
-
-  test-e2e-webui-cypress:
-    machine:
-      image: ubuntu-1604:202004-01
-    resource_class: large
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run: docker load --input build/master.image
-      - run: docker load --input build/agent.image
-
-      - install-webui-test-deps-cypress
-      - run: pyenv global 3.6.10
-      - setup-python-venv:
-          determined-common: true
-          determined-cli: true
-          determined-deploy: true
-          extra-requirements-file: "webui/cypress/requirements.txt"
-          executor: ubuntu-1604:202004-01
-      - setup-local-cluster:
-          det-version: ${CIRCLE_SHA1}
-      - run-e2e-webui-tests-cypress
-      - dump-local-cluster-logs
-      - store_test_results:
-          path: webui/cypress/results/
-      - store_artifacts:
-          path: webui/cypress/results/recordings
 
   lint-react:
     docker:
@@ -1503,11 +1450,6 @@ workflows:
               mark: ["e2e_cpu"]
 
       - test-e2e-webui:
-          requires:
-            - build-and-package-ts-sdk
-            - package-and-push-system-local
-
-      - test-e2e-webui-cypress:
           requires:
             - build-and-package-ts-sdk
             - package-and-push-system-local
