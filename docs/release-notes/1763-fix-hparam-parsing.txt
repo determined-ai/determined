@@ -1,6 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  WebUI: fix in issue with unexpected hyperparameter types in
-   experiment configuration.
