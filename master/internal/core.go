@@ -604,7 +604,7 @@ func (m *Master) Run(ctx context.Context) error {
 		log.Info("telemetry reporting is disabled")
 	}
 
-	hpi := hpimportance.NewManager(m.db, m.system)
+	hpi := hpimportance.NewManager(m.db, m.system, m.config.HPImportance)
 	m.hpImportance, _ = m.system.ActorOf(actor.Addr(hpimportance.RootAddr), hpi)
 
 	return m.startServers(ctx, cert)

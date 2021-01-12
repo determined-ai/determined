@@ -18,6 +18,12 @@ const (
 	minPercent = 0.1
 )
 
+// HPImportanceConfig is the configuration in the master for hyperparameter importance.
+type HPImportanceConfig struct {
+	WorkersLimit uint `json:"workers_limit"`
+	QueueLimit   uint `json:"queue_limit"`
+}
+
 // Messages handled by the HP importance manager.
 type (
 	// ExperimentCreated is the message an experiment sends when created.
@@ -53,24 +59,29 @@ type stateRecord struct {
 }
 
 type manager struct {
-	db    *db.PgDB
-	state map[int]stateRecord
-	pool  pool.ActorPool
+	db       *db.PgDB
+	state    map[int]stateRecord
+	pool     pool.ActorPool
+	disabled bool
 }
 
 // NewManager initializes the master actor (of which there should only be one instance running).
-func NewManager(db *db.PgDB, system *actor.System) actor.Actor {
+func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig) actor.Actor {
 	return &manager{
-		db:    db,
-		state: make(map[int]stateRecord),
+		db:       db,
+		disabled: config.WorkersLimit > 0,
+		state:    make(map[int]stateRecord),
 		pool: pool.NewActorPool(
-			system, 64, 4, "hp-importance-pool",
+			system, config.QueueLimit, config.WorkersLimit, "hp-importance-pool",
 			taskHandlerFactory(db, system), nil,
 		),
 	}
 }
 
 func (m *manager) Receive(ctx *actor.Context) error {
+	if m.disabled {
+		return nil
+	}
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		// TODO: fetch any pending or in_progress tasks from the DB and trigger them
