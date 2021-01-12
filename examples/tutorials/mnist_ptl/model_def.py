@@ -17,22 +17,40 @@ from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
 import data
 import ptl
+import pytorch_lightning as pl
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
-# TODO take in and pass in config
-class MNistTrial(PyTorchTrial):
-    def __init__(self, context: PyTorchTrialContext) -> None:
+class PTLAdapter(PyTorchTrial):
+    def __init__(self, context: PyTorchTrialContext, lm: pl.LightningModule) -> None:
+        super().__init__(context)
+        self.lm = lm()  # TODO pass in context.get_hparam and dataloaders?
         self.context = context
-        self.lm = ptl.LightningMNISTClassifier()
         self.model = self.context.wrap_model(self.lm)
+        self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
+
+    def train_batch(
+        self, batch: TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        rv = self.lm.training_step(batch, batch_idx)
+
+        # TODO option to set loss
+        self.context.backward(rv['loss'])
+        self.context.step_optimizer(self.optimizer)
+        return rv
+
+    def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
+        return self.lm.validation_step(batch)
+
+
+class MNistTrial(PTLAdapter): # match PyTorchTrial API
+    def __init__(self, context: PyTorchTrialContext) -> None:
+        super().__init__(context, ptl.LightningMNISTClassifier)
 
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
-
-        self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
 
     def build_training_data_loader(self) -> DataLoader:
         if not self.data_downloaded:
@@ -55,16 +73,3 @@ class MNistTrial(PyTorchTrial):
 
         validation_data = data.get_dataset(self.download_directory, train=False)
         return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
-
-    def train_batch(
-        self, batch: TorchData, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
-        rv = self.lm.training_step(batch, batch_idx)
-
-        # TODO option to set loss
-        self.context.backward(rv['loss'])
-        self.context.step_optimizer(self.optimizer)
-        return rv
-
-    def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
-        return self.lm.validation_step(batch)
