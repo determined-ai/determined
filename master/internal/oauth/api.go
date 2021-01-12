@@ -1,7 +1,7 @@
 package oauth
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // Root is the root of all OAuth-related routes.

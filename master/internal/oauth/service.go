@@ -2,14 +2,14 @@ package oauth
 
 import (
 	"context"
+	"net/http"
+	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 
-	"net/http"
-	"net/url"
-
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 	oauth2Errors "gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/manage"
@@ -42,6 +42,9 @@ func New(users *user.Service, db *db.PgDB) (*Service, error) {
 
 	manager.MapTokenStorage(s.tokenStore)
 	manager.MapClientStorage(s.clientStore)
+	// Increase the RefreshTokenExp to 3 months since Okta only refreshes on use and use is sparse.
+	manager.SetAuthorizeCodeTokenCfg(&manage.Config{
+		AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 30 * 3, IsGenerateRefresh: true})
 
 	s.server.SetAllowGetAccessRequest(true)
 	s.server.SetUserAuthorizationHandler(s.userAuthorizationHandler)
