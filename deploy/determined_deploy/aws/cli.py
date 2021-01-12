@@ -34,6 +34,17 @@ def validate_scheduler_type() -> Callable:
     return validate
 
 
+def make_list_subparser(subparsers: argparse._SubParsersAction) -> None:
+    subparser = subparsers.add_parser("list", help="list CloudFormation stacks")
+    subparser.add_argument(
+        "--region",
+        type=str,
+        default=None,
+        help="AWS region",
+    )
+    subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
+
+
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
     subparser = subparsers.add_parser("down", help="delete CloudFormation stack")
     require_named = subparser.add_argument_group("required named arguments")
@@ -183,6 +194,7 @@ def make_aws_parser(subparsers: argparse._SubParsersAction) -> None:
     parser_aws = subparsers.add_parser("aws", help="AWS help")
 
     aws_subparsers = parser_aws.add_subparsers(help="command", dest="command")
+    make_list_subparser(aws_subparsers)
     make_down_subparser(aws_subparsers)
     make_up_subparser(aws_subparsers)
     aws_subparsers.required = True
@@ -201,6 +213,17 @@ def deploy_aws(args: argparse.Namespace) -> None:
         )
         print("use the --region argument to deploy to a supported region")
         sys.exit(1)
+
+    if args.command == "list":
+        try:
+            output = aws.list_stacks(boto3_session)
+        except Exception as e:
+            print(e)
+            print("Listing stacks failed. Check the AWS CloudFormation Console for details.")
+            sys.exit(1)
+        for item in output:
+            print(item["StackName"])
+        return
 
     # TODO(DET-4258) Uncomment this when we fully support all P3 regions.
     # if boto3_session.region_name == "eu-west-2" and args.agent_instance_type is None:
