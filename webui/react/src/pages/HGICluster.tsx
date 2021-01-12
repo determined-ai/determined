@@ -1,7 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import GridIcon from 'assets/grid-icon.svg';
-import listIcon from 'assets/list-icon.svg';
 import Grid, { GridMode } from 'components/Grid';
 import Icon from 'components/Icon';
 import Link from 'components/Link';

@@ -7,19 +7,19 @@
   .chartColumn {
     min-width: 20rem;
   }
-
   .viewOptions {
+    border: solid 1px var(--theme-colors-monochrome-13);
+    border-radius: var(--theme-sizes-border-radius);
     display: flex;
     flex-direction: row;
     font-size: var(--theme-sizes-font-small);
     justify-content: center;
     margin: 0 auto;
     padding: 0;
-    border: solid 1px var(--theme-colors-monochrome-13);
-    border-radius: var(--theme-sizes-border-radius);
+
     & > * {
-      color: inherit;
       border: solid 1px var(--theme-colors-monochrome-13);
+      color: inherit;
       display: block;
       height: 100%;
       margin: 0;
