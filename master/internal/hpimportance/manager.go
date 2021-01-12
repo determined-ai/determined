@@ -69,7 +69,7 @@ type manager struct {
 func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig) actor.Actor {
 	return &manager{
 		db:       db,
-		disabled: config.WorkersLimit > 0,
+		disabled: config.WorkersLimit == 0,
 		state:    make(map[int]stateRecord),
 		pool: pool.NewActorPool(
 			system, config.QueueLimit, config.WorkersLimit, "hp-importance-pool",
