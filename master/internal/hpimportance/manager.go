@@ -201,18 +201,23 @@ func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 		return
 	}
 	metricHpi.Pending = true
+
+	err = m.pool.SubmitTask(startWork{
+		experimentID: msg.ExperimentID,
+		metricName:   msg.MetricName,
+		metricType:   msg.MetricType,
+	})
+	if err != nil {
+		metricHpi.Pending = false
+		metricHpi.Error = err.Error()
+	}
+
 	hpi.SetMetricHPImportance(metricHpi, msg.MetricName, msg.MetricType)
 	err = m.db.SetHPImportance(msg.ExperimentID, hpi)
 	if err != nil {
 		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
 		return
 	}
-
-	m.pool.SubmitTask(startWork{
-		experimentID: msg.ExperimentID,
-		metricName:   msg.MetricName,
-		metricType:   msg.MetricType,
-	})
 }
 
 func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {

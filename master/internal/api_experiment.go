@@ -977,7 +977,8 @@ func (a *apiServer) ComputeHPImportance(ctx context.Context,
 }
 
 // Translates MetricHPImportance to the protobuf form
-func protoMetricHPI(metricHpi model.MetricHPImportance) *apiv1.GetHPImportanceResponse_MetricHPImportance {
+func protoMetricHPI(metricHpi model.MetricHPImportance,
+) *apiv1.GetHPImportanceResponse_MetricHPImportance {
 	return &apiv1.GetHPImportanceResponse_MetricHPImportance{
 		Error:              metricHpi.Error,
 		Pending:            metricHpi.Pending,

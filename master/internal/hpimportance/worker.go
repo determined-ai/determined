@@ -37,7 +37,6 @@ type (
 )
 
 func taskHandlerFactory(db *db.PgDB, system *actor.System) func(interface{}) interface{} {
-
 	getManager := func() *actor.Ref {
 		return system.Get(actor.Addr(RootAddr))
 	}

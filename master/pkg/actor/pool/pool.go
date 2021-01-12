@@ -1,11 +1,19 @@
 package pool
 
 import (
-	"errors"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
+// ActorPoolQueueFullError is returned by SubmitTask when the pool is so backed up that the queue
+// is full.
+type ActorPoolQueueFullError struct{}
+
+func (e ActorPoolQueueFullError) Error() string {
+	return "actor pool queue is full"
+}
+
+// ActorPool implements thread-pool like behavior in the actor system. It is given a function to
+// handle tasks, and will call this function with each task submitted to the actor pool.
 type ActorPool struct {
 	name string
 
@@ -23,6 +31,7 @@ type ActorPool struct {
 	queue chan interface{}
 }
 
+// NewActorPool initializes a new actor pool and starts its manager actor.
 func NewActorPool(
 	system *actor.System,
 	queueLimit uint,
@@ -30,7 +39,6 @@ func NewActorPool(
 	name string,
 	taskHandler func(task interface{}) interface{},
 	callback func(result interface{})) ActorPool {
-
 	pool := ActorPool{
 		name: name,
 
@@ -49,6 +57,7 @@ func NewActorPool(
 	return pool
 }
 
+// SubmitTask is a convenience function for sending a task to the actor pool's manager actor.
 func (p *ActorPool) SubmitTask(task interface{}) error {
 	result := p.system.Ask(p.manager, sendTask{task}).Get()
 	if result != nil {
@@ -82,6 +91,7 @@ type (
 
 // Manager
 
+// Receive handles all the messages for the actor pool manager.
 func (p *ActorPool) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildStopped:
@@ -90,15 +100,15 @@ func (p *ActorPool) Receive(ctx *actor.Context) error {
 		ctx.Log().Warnf("worker failed in actor pool %s: %+v", p.name, msg)
 	case sendTask:
 		if uint(len(p.queue)) == p.queueLimit {
-			ctx.Respond(errors.New("actor pool queue is full!"))
+			ctx.Respond(ActorPoolQueueFullError{})
 			return nil
 		}
 		p.queue <- msg.task
 		if p.workers < p.workersLimit {
 			newWorker := worker{pool: p}
 			ref, _ := ctx.ActorOf(p.counter, newWorker)
-			p.counter = p.counter + 1
-			p.workers = p.workers + 1
+			p.counter++
+			p.workers++
 			ctx.Tell(ref, workerUp{})
 		}
 	case receiveTask:
@@ -108,7 +118,7 @@ func (p *ActorPool) Receive(ctx *actor.Context) error {
 			response = realTask
 		default:
 			response = workerDown{}
-			p.workers = p.workers - 1
+			p.workers--
 		}
 		ctx.Respond(response)
 	case returnTask:
@@ -128,6 +138,9 @@ type worker struct {
 	pool *ActorPool
 }
 
+// Receive contains the main loop for the worker. Beyond life-cycle messages, it receives a single
+// workerUp message from the manager, then asks for tasks from the master until receiving a
+// workerDown message.
 func (w worker) Receive(ctx *actor.Context) error {
 	// Other than minimal life-cycle messages, a worker receives a workerUp message and is then
 	// stuck in an infinite loop, polling for tasks from the master until it receives a workerDown
