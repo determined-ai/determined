@@ -117,7 +117,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
-		Type:                         "kubernetes",
+		Type:                         resourcepoolv1.ResourcePoolType_KUBERNETES,
 		NumAgents:                    1,
 		SlotsAvailable:               int32(k.agent.numSlots()),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
