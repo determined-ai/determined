@@ -16,8 +16,8 @@ Version 0.13.12
 **Bug fixes**
 
 -  WebUI: fix the Okta sign-in workflow.
--  WebUI: fix issue with unexpected hyperparameter types in experiment
-   configuration.
+-  WebUI: fix an issue with unexpected hyperparameter types in
+   experiment configuration.
 -  WebUI: fix trial metric workload duration reporting in the trial
    detail page.
 
