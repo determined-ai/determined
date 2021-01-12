@@ -10,6 +10,7 @@ import os
 
 class LightningMNISTClassifier(pl.LightningModule):
 
+    # TODO expect determined config.
     def __init__(self):
         super().__init__()
 
