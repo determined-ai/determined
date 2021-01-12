@@ -3,15 +3,13 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-
-	"time"
-
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
@@ -232,16 +230,16 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	if pool.Scheduler == nil {
 		ctx.Log().Errorf("scheduler is not present in config")
 		return &resourcepoolv1.ResourcePool{}, err
-	} else {
-		if pool.Scheduler.FairShare != nil {
-			schedulerType = resourcepoolv1.SchedulerType_FAIR_SHARE
-		}
-		if pool.Scheduler.Priority != nil {
-			schedulerType = resourcepoolv1.SchedulerType_PRIORITY
-		}
-		if pool.Scheduler.RoundRobin != nil {
-			schedulerType = resourcepoolv1.SchedulerType_ROUND_ROBIN
-		}
+	}
+
+	if pool.Scheduler.FairShare != nil {
+		schedulerType = resourcepoolv1.SchedulerType_FAIR_SHARE
+	}
+	if pool.Scheduler.Priority != nil {
+		schedulerType = resourcepoolv1.SchedulerType_PRIORITY
+	}
+	if pool.Scheduler.RoundRobin != nil {
+		schedulerType = resourcepoolv1.SchedulerType_ROUND_ROBIN
 	}
 
 	resp := &resourcepoolv1.ResourcePool{
@@ -284,7 +282,6 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			ctx.Log().Errorf("unrecognized scheduler fitting policy")
 			return &resourcepoolv1.ResourcePool{}, err
 		}
-
 	}
 	if poolType == resourcepoolv1.ResourcePoolType_AWS {
 		aws := pool.Provider.AWS
