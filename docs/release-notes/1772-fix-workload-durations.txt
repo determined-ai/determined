@@ -1,6 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
--  WebUI: fix trial metric workload duration reporting in trial detail
-   page.
