@@ -305,6 +305,7 @@ export default class StepImplementation {
       await t.click($(`[aria-label=${ariaLabel}]`));
     }
   }
+
   /* Cluster */
 
   @Step('Should show <count> resource pool cards')
@@ -319,5 +320,11 @@ export default class StepImplementation {
     assert.strictEqual(stats.length, 3);
     const numAgents = (await stats[0].text()).replace('Number of Agents', '');
     assert.strictEqual(parseInt(numAgents), parseInt(count));
+  }
+
+  /* Logs */
+  @Step('Should have some log entries')
+  public async checkSomeLogLines() {
+    assert.ok((await $('[class*=LogViewer_line]').elements()).length > 0);
   }
 }
