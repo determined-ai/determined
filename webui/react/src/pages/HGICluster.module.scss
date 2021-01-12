@@ -1,8 +1,33 @@
-.descriptionColumn {
-  max-width: calc(max(50vw, 30rem));
-  word-break: break-word;
-  word-wrap: break-word;
-}
-.chartColumn {
-  min-width: 20rem;
+.base {
+  .descriptionColumn {
+    max-width: calc(max(50vw, 30rem));
+    word-break: break-word;
+    word-wrap: break-word;
+  }
+  .chartColumn {
+    min-width: 20rem;
+  }
+
+  .viewOptions {
+    display: flex;
+    flex-direction: row;
+    font-size: var(--theme-sizes-font-small);
+    justify-content: center;
+    margin: 0 auto;
+    padding: 0;
+    border: solid 1px var(--theme-colors-monochrome-10);
+    border-radius: var(--theme-sizes-border-radius);
+    & > * {
+      border: solid 1px var(--theme-colors-monochrome-10);
+      display: block;
+      height: 100%;
+      margin: 0;
+      margin-left: var(--theme-sizes-layout-tiny);
+      padding: 0;
+    }
+    & > *:first-child {
+      margin-left: 0;
+      // margin-right: var(--theme-sizes-layout-tiny);
+    }
+  }
 }

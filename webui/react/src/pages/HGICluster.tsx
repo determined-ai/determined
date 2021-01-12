@@ -1,6 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
+import gridIcon from 'assets/grid-icon.svg';
+import listIcon from 'assets/list-icon.svg';
 import Grid, { GridMode } from 'components/Grid';
+import Link from 'components/Link';
 import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
@@ -25,10 +28,16 @@ import css from './HGICluster.module.scss';
 
 const resourcePools = getResourcePools();
 
+enum View {
+  Table,
+  Cards
+}
+
 const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
+  const [ selectedView, setSelectedView ] = useState<View>(View.Cards);
 
   const availableResources = useMemo(() => {
     if (!agents.data) return {};
@@ -87,6 +96,16 @@ const HGICluster: React.FC = () => {
     [],
   );
 
+  const setTableView = useCallback(
+    () => setSelectedView(View.Table),
+    [],
+  );
+
+  const setCardView = useCallback(
+    () => setSelectedView(View.Cards),
+    [],
+  );
+
   const handleTableRow = useCallback((record: ResourcePool) => {
     const handleClick = (event: React.MouseEvent) => {
       if (isAlternativeAction(event)) return;
@@ -103,8 +122,19 @@ const HGICluster: React.FC = () => {
     return <Message title="No Slots available" />;
   }
 
+  const viewOptions = (
+    <div className={css.viewOptions}>
+      <Link onClick={setCardView}>
+        <img alt="grid view" src={gridIcon} />
+      </Link>
+      <Link onClick={setTableView}>
+        <img alt="list view" src={listIcon} />
+      </Link>
+    </div>
+  );
+
   return (
-    <Page id="cluster" title="HGI Cluster">
+    <Page className={css.base} id="cluster" title="HGI Cluster">
       <Section hideTitle title="Overview Stats">
         <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
           <OverviewStats title="Number of Agents">
@@ -125,42 +155,47 @@ const HGICluster: React.FC = () => {
           size={ShirtSize.enormous}
           totalSlots={overview.GPU.total} />
       </Section>
-      <Section title={`${resourcePools.length} Resource Pools`}>
-        <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
-          {resourcePools.map((_, idx) => {
-            const rp = resourcePools[Math.floor(
-              Math.random() * resourcePools.length,
-            )];
-            return <ResourcePoolCard
-              containerStates={getSlotContainerStates(agents.data || [], rp.name)}
-              key={idx}
-              resourcePool={rp} />;
-          })}
-        </Grid>
-      </Section>
-      <Section title={`${resourcePools.length} Resource Pools`}>
-        <ResponsiveTable<ResourcePool>
-          columns={columns}
-          dataSource={resourcePools}
-          loading={{
-            indicator: <Indicator />,
-            spinning: agents.isLoading, // TODO replace with resource pools
-          }}
-          pagination={getPaginationConfig(resourcePools.length, 10)} // TODO config page size
-          rowClassName={defaultRowClassName({ clickable: true })}
-          rowKey="batchNum"
-          scroll={{ x: 1000 }}
-          showSorterTooltip={false}
-          size="small"
-          onRow={handleTableRow}
-        />
-        {!!rpDetail &&
-          <ResourcePoolDetails
-            finally={hideModal}
-            resourcePool={rpDetail}
-            visible={!!rpDetail} />
+      <Section
+        options={viewOptions}
+        title={`${resourcePools.length} Resource Pools`}
+      >
+        {selectedView === View.Cards &&
+          <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
+            {resourcePools.map((_, idx) => {
+              const rp = resourcePools[Math.floor(
+                Math.random() * resourcePools.length,
+              )];
+              return <ResourcePoolCard
+                containerStates={getSlotContainerStates(agents.data || [], rp.name)}
+                key={idx}
+                resourcePool={rp} />;
+            })}
+          </Grid>
+        }
+        {selectedView === View.Table &&
+          <ResponsiveTable<ResourcePool>
+            columns={columns}
+            dataSource={resourcePools}
+            loading={{
+              indicator: <Indicator />,
+              spinning: agents.isLoading, // TODO replace with resource pools
+            }}
+            pagination={getPaginationConfig(resourcePools.length, 10)} // TODO config page size
+            rowClassName={defaultRowClassName({ clickable: true })}
+            rowKey="batchNum"
+            scroll={{ x: 1000 }}
+            showSorterTooltip={false}
+            size="small"
+            onRow={handleTableRow}
+          />
         }
       </Section>
+      {!!rpDetail &&
+            <ResourcePoolDetails
+              finally={hideModal}
+              resourcePool={rpDetail}
+              visible={!!rpDetail} />
+      }
     </Page>
   );
 };
