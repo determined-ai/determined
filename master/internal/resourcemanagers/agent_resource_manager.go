@@ -57,7 +57,6 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 			}
 		}
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
-
 	case ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
