@@ -10,12 +10,13 @@ Specification to test the task list page.
 
 ## Task batch operations
 
-* Select all table rows
+* Toggle all table row selection
 * Table batch should have following buttons
 
   |table batch buttons|disabled|
   |-------------------|--------|
   |Kill               |false   |
+* Toggle all table row selection
 
 ## Filter tasks by type
 
