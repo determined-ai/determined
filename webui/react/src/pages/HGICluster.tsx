@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import gridIcon from 'assets/grid-icon.svg';
+import GridIcon from 'assets/grid-icon.svg';
 import listIcon from 'assets/list-icon.svg';
 import Grid, { GridMode } from 'components/Grid';
+import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
@@ -29,15 +30,15 @@ import css from './HGICluster.module.scss';
 const resourcePools = getResourcePools();
 
 enum View {
-  Table,
-  Cards
+  List,
+  Grid
 }
 
 const HGICluster: React.FC = () => {
   const agents = Agents.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
-  const [ selectedView, setSelectedView ] = useState<View>(View.Cards);
+  const [ selectedView, setSelectedView ] = useState<View>(View.Grid);
 
   const availableResources = useMemo(() => {
     if (!agents.data) return {};
@@ -97,12 +98,12 @@ const HGICluster: React.FC = () => {
   );
 
   const setTableView = useCallback(
-    () => setSelectedView(View.Table),
+    () => setSelectedView(View.List),
     [],
   );
 
   const setCardView = useCallback(
-    () => setSelectedView(View.Cards),
+    () => setSelectedView(View.Grid),
     [],
   );
 
@@ -124,11 +125,11 @@ const HGICluster: React.FC = () => {
 
   const viewOptions = (
     <div className={css.viewOptions}>
-      <Link onClick={setCardView}>
-        <img alt="grid view" src={gridIcon} />
+      <Link className={selectedView === View.Grid ? css.active : ''} onClick={setCardView}>
+        <Icon name="grid" size="large" />
       </Link>
-      <Link onClick={setTableView}>
-        <img alt="list view" src={listIcon} />
+      <Link className={selectedView === View.List ? css.active : ''} onClick={setTableView}>
+        <Icon name="list" size="large" />
       </Link>
     </div>
   );
@@ -159,7 +160,7 @@ const HGICluster: React.FC = () => {
         options={viewOptions}
         title={`${resourcePools.length} Resource Pools`}
       >
-        {selectedView === View.Cards &&
+        {selectedView === View.Grid &&
           <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
             {resourcePools.map((_, idx) => {
               const rp = resourcePools[Math.floor(
@@ -172,7 +173,7 @@ const HGICluster: React.FC = () => {
             })}
           </Grid>
         }
-        {selectedView === View.Table &&
+        {selectedView === View.List &&
           <ResponsiveTable<ResourcePool>
             columns={columns}
             dataSource={resourcePools}
@@ -182,7 +183,7 @@ const HGICluster: React.FC = () => {
             }}
             pagination={getPaginationConfig(resourcePools.length, 10)} // TODO config page size
             rowClassName={defaultRowClassName({ clickable: true })}
-            rowKey="batchNum"
+            rowKey="name"
             scroll={{ x: 1000 }}
             showSorterTooltip={false}
             size="small"

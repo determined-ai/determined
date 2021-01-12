@@ -15,19 +15,26 @@
     justify-content: center;
     margin: 0 auto;
     padding: 0;
-    border: solid 1px var(--theme-colors-monochrome-10);
+    border: solid 1px var(--theme-colors-monochrome-13);
     border-radius: var(--theme-sizes-border-radius);
     & > * {
-      border: solid 1px var(--theme-colors-monochrome-10);
+      color: inherit;
+      border: solid 1px var(--theme-colors-monochrome-13);
       display: block;
       height: 100%;
       margin: 0;
       margin-left: var(--theme-sizes-layout-tiny);
       padding: 0;
+
+      &:hover {
+        @extend .active;
+      }
     }
     & > *:first-child {
       margin-left: 0;
-      // margin-right: var(--theme-sizes-layout-tiny);
+    }
+    .active {
+      color: var(--theme-colors-states-active);
     }
   }
 }
