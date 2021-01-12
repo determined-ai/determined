@@ -61,6 +61,11 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  :download:`detr_coco_pytorch.tgz
          </examples/detr_coco_pytorch.tgz>`
 
+   -  -  PyTorch
+      -  COCO
+      -  :download:`deformabledetr_coco_pytorch.tgz
+         </examples/deformabledetr_coco_pytorch.tgz>`
+
    -  -  TensorFlow (Estimator API)
       -  MNIST
       -  :download:`mnist_estimator.tgz </examples/mnist_estimator.tgz>`
