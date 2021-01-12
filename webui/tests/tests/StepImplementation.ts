@@ -31,7 +31,6 @@ const {
   switchTo,
   tableCell,
   text,
-  textBox,
   waitFor,
   within,
   write,
@@ -88,10 +87,10 @@ export default class StepImplementation {
   @Step('Sign in as <username> with <password>')
   public async signInWithPassword(username: string, password: string) {
     await goto(`${BASE_URL}/login`);
-    await clear(focus(textBox('username')));
+    await clear(focus(t.textBox({ id: 'login_username' })));
     await write(username);
     if (password !== '') {
-      await focus(textBox('password'));
+      await focus(t.textBox({ id: 'login_password' }));
       await write(password);
     }
     await clickAndWaitForPage(button('Sign In'));
@@ -232,7 +231,6 @@ export default class StepImplementation {
   @Step('Launch notebook')
   public async launchNotebook() {
     await clickAndWaitForPage(button('Launch Notebook'));
-    await /http(.*)(wait|proxy)/;
   }
 
   @Step('Launch cpu-only notebook')
@@ -248,7 +246,7 @@ export default class StepImplementation {
 
   @Step('Close wait page tab')
   public async closeTab() {
-    await t.closeTab(/http.*?\/wait/);
+    await t.closeTab(/http.*\/(wait|proxy)/);
   }
 
   /* Dashboard Page Steps */
