@@ -105,7 +105,7 @@ def set_aggregation_frequency(config: Dict[Any, Any], aggregation_frequency: int
     return config
 
 
-def set_amp_level(config: Dict[Any, Any], amp_level: str) -> Dict[Any, Any]:
+def set_apex_level(config: Dict[Any, Any], amp_level: str) -> Dict[Any, Any]:
     config = config.copy()
     config.setdefault("optimizations", {})
     config["optimizations"]["mixed_precision"] = amp_level
