@@ -750,18 +750,20 @@ The master supports the following configuration settings:
 
       -  ``port``: Port for the cluster.
 
-      -  ``security``: Security-related configurations.
+      -  ``security``: Security-related configuration settings.
 
          -  ``username``: Username to use when accessing the cluster.
 
          -  ``password``: Password to use when accessing the cluster.
 
-         -  ``tls``: TLS-related configurations.
+         -  ``tls``: TLS-related configuration settings.
 
             -  ``enabled``: Enable TLS.
             -  ``skip_verify``: Skip server certificate verification.
-            -  ``certificate``: Path to the cluster's public
-               certificate, to use if ``skip_verify`` is not enabled.
+            -  ``certificate``: Path to a file containing the cluster's TLS
+               certificate. Only needed if the certificate is not signed
+               by a well-known CA; cannot be specified if
+               ``skip_verify`` is enabled.
 
 .. _agent-configuration:
 
