@@ -10,7 +10,7 @@ Specification to test the experiment list page.
 
 ## Experiment batch operations
 
-* Select all table rows
+* Toggle all table row selection
 * Table batch should have following buttons
 
   |table batch buttons|disabled|
@@ -22,6 +22,7 @@ Specification to test the experiment list page.
   |Unarchive          |true    |
   |Cancel             |false   |
   |Kill               |false   |
+* Toggle all table row selection
 
 ## Filter experiments by archived
 

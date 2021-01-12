@@ -1,9 +1,7 @@
 /* eslint-disable no-unused-vars */
 import {
-  AfterScenario,
   AfterSpec,
   AfterSuite,
-  BeforeScenario,
   BeforeSpec,
   BeforeSuite,
   ExecutionContext,
@@ -24,12 +22,9 @@ const {
   $,
   button,
   clear,
-  click,
   closeBrowser,
-  closeTab,
   currentURL,
   focus,
-  goto,
   link,
   near,
   openBrowser,
@@ -51,12 +46,23 @@ const viewports = {
   desktop: { width: 1366, height: 768 },
 };
 
+/* Helper functions */
+
+const clickAndWaitForPage = async (selector: t.SearchElement | t.MouseCoordinates) => {
+  await t.click(selector, { waitForEvents: ['loadEventFired'] });
+};
+
+const goto = async (url: string) => {
+  await t.goto(url, { waitForEvents: ['loadEventFired'] });
+};
+
 export default class StepImplementation {
   @BeforeSuite()
   public async beforeSuite() {
+    const defaultArgs = [`--window-size=${viewports.desktop.width},${viewports.desktop.height}`];
     const browserArgs = HEADLESS
-      ? { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] }
-      : { headless: false };
+      ? { headless: true, args: [...defaultArgs, '--no-sandbox', '--disable-setuid-sandbox'] }
+      : { headless: false, args: defaultArgs };
     await openBrowser(browserArgs);
   }
 
@@ -88,7 +94,7 @@ export default class StepImplementation {
       await focus(textBox('password'));
       await write(password);
     }
-    await click(button('Sign In'));
+    await clickAndWaitForPage(button('Sign In'));
     await text(username, near($('#avatar'))).exists();
   }
 
@@ -99,8 +105,8 @@ export default class StepImplementation {
 
   @Step('Sign out')
   public async signOut() {
-    await click($('#avatar'));
-    await click(link('Sign Out'));
+    await t.click($('#avatar'));
+    await t.click(link('Sign Out'));
     await button('Sign In').exists();
   }
 
@@ -133,7 +139,7 @@ export default class StepImplementation {
   public async navigateWithTable(table: Table) {
     for (var row of table.getTableRows()) {
       const label = row.getCell('label');
-      await click(link(label, within($('[class*=Navigation_base]'))));
+      await clickAndWaitForPage(link(label, within($('[class*=Navigation_base]'))));
 
       const external = row.getCell('external') === 'true';
       if (external) {
@@ -147,7 +153,7 @@ export default class StepImplementation {
       assert.ok(url.includes(path));
 
       if (external) {
-        await closeTab();
+        await t.closeTab();
       }
     }
   }
@@ -192,12 +198,12 @@ export default class StepImplementation {
 
   @Step('Sort table by column <column>')
   public async sortTableByColumn(column: string) {
-    await click(text(column));
+    await t.click(text(column));
   }
 
-  @Step('Select all table rows')
-  public async selectAllTableRows() {
-    await click($('th input[type=checkbox]'));
+  @Step('Toggle all table row selection')
+  public async toggleAllTableRowSelection() {
+    await t.click($('th input[type=checkbox]'));
   }
 
   @Step('Table batch should have following buttons <table>')
@@ -213,10 +219,10 @@ export default class StepImplementation {
 
   @Step('<action> all table rows')
   public async actionOnAllExperiments(action: string) {
-    await click(button(action, within($('[class*=TableBatch_base]'))));
+    await t.click(button(action, within($('[class*=TableBatch_base]'))));
     // Wait for the modal to animate in
     await waitFor(async () => !(await $('.ant-modal.zoom-enter').exists()));
-    await click(button(action, within($('.ant-modal-body'))));
+    await t.click(button(action, within($('.ant-modal-body'))));
     // Wait for the modal to animate away
     await waitFor(async () => !(await $('.ant-modal.zoom-leave').exists()));
   }
@@ -225,24 +231,24 @@ export default class StepImplementation {
 
   @Step('Launch notebook')
   public async launchNotebook() {
-    await click(button('Launch Notebook'), { waitForEvents: ['targetNavigated'] });
+    await clickAndWaitForPage(button('Launch Notebook'));
     await /http(.*)(wait|proxy)/;
   }
 
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
-    await click($('[class*=Navigation_launchIcon]'));
-    await click(text('Launch CPU-only Notebook'));
+    await t.click($('[class*=Navigation_launchIcon]'));
+    await clickAndWaitForPage(text('Launch CPU-only Notebook'));
   }
 
   @Step('Launch tensorboard')
   public async launchTensorboard() {
-    await click(button('View in TensorBoard'), { waitForEvents: ['targetNavigated'] });
+    await clickAndWaitForPage(button('View in TensorBoard'));
   }
 
-  @Step('Close current tab')
-  public async closeWaitPage() {
-    await closeTab();
+  @Step('Close wait page tab')
+  public async closeTab() {
+    await t.closeTab(/http.*?\/wait/);
   }
 
   /* Dashboard Page Steps */
@@ -257,13 +263,36 @@ export default class StepImplementation {
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    await click(tableCell({ row: parseInt(row) + 1, col: 11 }));
-    await click(text(action, within($('.ant-dropdown'))));
+    await t.click(tableCell({ row: parseInt(row) + 1, col: 11 }));
+    await t.click(text(action, within($('.ant-dropdown'))));
   }
 
   @Step('Toggle show archived button')
   public async toggleShowArchived() {
-    await click(button({ class: 'ant-switch' }));
+    await t.click(text('Show Archived'));
+  }
+
+  /* Experiment Detail Page Steps */
+
+  @Step('Archive experiment')
+  public async archiveExperiment() {
+    await t.click(button('Archive'));
+  }
+
+  @Step('Unarchive experiment')
+  public async unarchiveExperiment() {
+    await t.click(button('Unarchive'));
+  }
+
+  @Step('Kill experiment')
+  public async killExperiment() {
+    await t.click(button('Kill'));
+    await t.click(button('Yes'));
+  }
+
+  @Step('View experiment in TensorBoard')
+  public async viewExperimentInTensorBoard() {
+    await t.click(button('View in TensorBoard'));
   }
 
   /* Task List Page Steps */
@@ -273,9 +302,9 @@ export default class StepImplementation {
     for (var row of table.getTableRows()) {
       const ariaLabel = row.getCell('aria-label');
       const count = row.getCell('count');
-      await click($(`[aria-label=${ariaLabel}]`));
+      await t.click($(`[aria-label=${ariaLabel}]`));
       await this.checkTableRowCount(count);
-      await click($(`[aria-label=${ariaLabel}]`));
+      await t.click($(`[aria-label=${ariaLabel}]`));
     }
   }
   /* Cluster */
