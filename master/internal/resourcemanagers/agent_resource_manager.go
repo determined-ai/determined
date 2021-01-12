@@ -43,10 +43,8 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 	case AllocateRequest:
-		if len(msg.ResourcePool) == 0 {
-			msg.ResourcePool = a.getDefaultResourcePool(msg)
-		}
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
+
 	case ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
