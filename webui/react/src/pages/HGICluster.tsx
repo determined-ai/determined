@@ -123,11 +123,15 @@ const HGICluster: React.FC = () => {
 
   const viewOptions = (
     <div className={css.viewOptions}>
-      <Link className={selectedView === View.Grid ? css.active : ''} onClick={setCardView}>
-        <Icon name="grid" size="large" />
+      <Link
+        className={selectedView === View.Grid ? css.active : ''}
+        onClick={setCardView}>
+        <Icon name="grid" size="large" title="Card View" />
       </Link>
-      <Link className={selectedView === View.List ? css.active : ''} onClick={setTableView}>
-        <Icon name="list" size="large" />
+      <Link
+        className={selectedView === View.List ? css.active : ''}
+        onClick={setTableView}>
+        <Icon name="list" size="large" title="Table View" />
       </Link>
     </div>
   );
