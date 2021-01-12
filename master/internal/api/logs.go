@@ -100,6 +100,10 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Self(), tick{})
 
 	case tick:
+		if l.ctx.Err() != nil {
+			ctx.Self().Stop()
+			return nil
+		}
 		switch batch, err := l.fetcher(l.req); {
 		case err != nil:
 			return errors.Wrapf(err, "failed to fetch logs")
@@ -125,6 +129,8 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 			}
 			actors.NotifyAfter(ctx, 500*time.Millisecond, tick{})
 		default:
+			// Check the ctx again before we process, since fetch takes most of the time and
+			// a send on a closed ctx will print errors in the master log that can be misleading.
 			if l.ctx.Err() != nil {
 				ctx.Self().Stop()
 				return nil
