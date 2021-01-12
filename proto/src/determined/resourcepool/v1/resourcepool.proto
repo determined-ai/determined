@@ -7,37 +7,43 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 // The type of the ResourcePool.
 enum ResourcePoolType {
+  // Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.
+  RESOURCE_POOL_TYPE_UNSPECIFIED = 0;
   // An AWS resource pool.
-  AWS = 0;
+  RESOURCE_POOL_TYPE_AWS = 1;
   // A GCP resource pool.
-  GCP = 1;
+  RESOURCE_POOL_TYPE_GCP = 2;
   // A static resource pool.
-  STATIC = 2;
+  RESOURCE_POOL_TYPE_STATIC = 3;
   // The kubernetes resource pool.
-  K8S = 3;
+  RESOURCE_POOL_TYPE_K8S = 4;
 }
 
 // The type of the Scheduler.
 enum SchedulerType {
+  // Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.
+  SCHEDULER_TYPE_UNSPECIFIED = 0;
   // The priority scheduler.
-  PRIORITY = 0;
+  SCHEDULER_TYPE_PRIORITY = 1;
   // The fair share scheduler.
-  FAIR_SHARE = 1;
+  SCHEDULER_TYPE_FAIR_SHARE = 2;
   // The round robin scheduler
-  ROUND_ROBIN = 2;
+  SCHEDULER_TYPE_ROUND_ROBIN = 3;
   // The kubernetes scheduler.
-  KUBERNETES_SCHEDULER = 3;
+  SCHEDULER_TYPE_KUBERNETES = 4;
 }
 
 // The fitting policy of the scheduler.
-enum FittingPolicyType {
+enum FittingPolicy {
+  // Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.
+  FITTING_POLICY_UNSPECIFIED = 0;
   // Best fit. Tasks are preferentially “packed” together on the smallest number of agents
-  BEST = 0;
+  FITTING_POLICY_BEST = 1;
   // Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.
-  WORST = 1;
+  FITTING_POLICY_WORST = 2;
   // A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler
   // so the fitting policy is not relevant.
-  KUBERNETES = 2;
+  FITTING_POLICY_KUBERNETES = 3;
 }
 
 
@@ -110,7 +116,7 @@ message ResourcePool {
   // The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or 'ROUND_ROBIN'
   SchedulerType scheduler_type=16;
   // The fitting policy of the scheduler.
-  FittingPolicyType scheduler_fitting_policy=17;
+  FittingPolicy scheduler_fitting_policy=17;
   // The location of the resource pool. For AWS this returns the region and for GCP this return the zone.
   string location=18;
   // The VM image used for the agents when using dynamic agents.

@@ -196,7 +196,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	}
 
 	// Static Pool defaults
-	poolType := resourcepoolv1.ResourcePoolType_STATIC
+	poolType := resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC
 	preemptible := false
 	location := "on-prem"
 	imageID := na
@@ -204,14 +204,14 @@ func (a *agentResourceManager) createResourcePoolSummary(
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
-			poolType = resourcepoolv1.ResourcePoolType_AWS
+			poolType = resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_AWS
 			preemptible = pool.Provider.AWS.SpotEnabled
 			location = pool.Provider.AWS.Region
 			imageID = pool.Provider.AWS.ImageID
 			instanceType = string(pool.Provider.AWS.InstanceType)
 		}
 		if pool.Provider.GCP != nil {
-			poolType = resourcepoolv1.ResourcePoolType_GCP
+			poolType = resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_GCP
 			preemptible = pool.Provider.GCP.InstanceType.Preemptible
 			location = pool.Provider.GCP.Zone
 			imageID = pool.Provider.GCP.BootDiskSourceImage
@@ -233,13 +233,13 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	}
 
 	if pool.Scheduler.FairShare != nil {
-		schedulerType = resourcepoolv1.SchedulerType_FAIR_SHARE
+		schedulerType = resourcepoolv1.SchedulerType_SCHEDULER_TYPE_FAIR_SHARE
 	}
 	if pool.Scheduler.Priority != nil {
-		schedulerType = resourcepoolv1.SchedulerType_PRIORITY
+		schedulerType = resourcepoolv1.SchedulerType_SCHEDULER_TYPE_PRIORITY
 	}
 	if pool.Scheduler.RoundRobin != nil {
-		schedulerType = resourcepoolv1.SchedulerType_ROUND_ROBIN
+		schedulerType = resourcepoolv1.SchedulerType_SCHEDULER_TYPE_ROUND_ROBIN
 	}
 
 	resp := &resourcepoolv1.ResourcePool{
@@ -272,10 +272,10 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	}
 	if pool.Scheduler != nil {
 		if pool.Scheduler.FittingPolicy == best {
-			resp.SchedulerFittingPolicy = resourcepoolv1.FittingPolicyType_BEST
+			resp.SchedulerFittingPolicy = resourcepoolv1.FittingPolicy_FITTING_POLICY_BEST
 		}
 		if pool.Scheduler.FittingPolicy == worst {
-			resp.SchedulerFittingPolicy = resourcepoolv1.FittingPolicyType_WORST
+			resp.SchedulerFittingPolicy = resourcepoolv1.FittingPolicy_FITTING_POLICY_WORST
 		}
 
 		if pool.Scheduler.FittingPolicy != best && pool.Scheduler.FittingPolicy != worst {
@@ -283,7 +283,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			return &resourcepoolv1.ResourcePool{}, err
 		}
 	}
-	if poolType == resourcepoolv1.ResourcePoolType_AWS {
+	if poolType == resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_AWS {
 		aws := pool.Provider.AWS
 		resp.Details.Aws = &resourcepoolv1.ResourcePoolAwsDetail{
 			Region:                aws.Region,
@@ -312,7 +312,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		}
 		resp.Details.Aws.CustomTags = customTags
 	}
-	if poolType == resourcepoolv1.ResourcePoolType_GCP {
+	if poolType == resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_GCP {
 		gcp := pool.Provider.GCP
 		resp.Details.Gcp = &resourcepoolv1.ResourcePoolGcpDetail{
 			Project:                gcp.Project,
@@ -336,7 +336,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		}
 	}
 
-	if schedulerType == resourcepoolv1.SchedulerType_PRIORITY {
+	if schedulerType == resourcepoolv1.SchedulerType_SCHEDULER_TYPE_PRIORITY {
 		resp.Details.PriorityScheduler = &resourcepoolv1.ResourcePoolPrioritySchedulerDetail{
 			Preemption:      pool.Scheduler.Priority.Preemption,
 			DefaultPriority: int32(*pool.Scheduler.Priority.DefaultPriority),
