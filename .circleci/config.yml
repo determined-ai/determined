@@ -875,12 +875,21 @@ jobs:
           destination: /
 
   build-react:
+    parameters:
+      dev-mode:
+        type: boolean
+        default: false
     docker:
       - image: cimg/node:12.16
     steps:
       - checkout
       - react-get-deps
-      - run: make -C webui/react build
+      - run: |
+            if <<parameters.dev-mode>>; then
+              echo 'Setting development mode...'
+              export DET_NODE_ENV=development
+            fi
+            make -C webui/react build
       - persist_to_workspace:
           root: .
           paths:
@@ -1392,6 +1401,7 @@ workflows:
           requires:
             - build-and-package-ts-sdk
       - build-react:
+          dev-mode: true
           requires:
             - build-and-package-ts-sdk
       - build-storybook:
