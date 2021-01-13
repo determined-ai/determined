@@ -2,6 +2,7 @@ import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import BadgeTag from 'components/BadgeTag';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Link from 'components/Link';
@@ -19,7 +20,7 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, MetricName, metricTypeParamMap, RunState } from 'types';
 import { glasbeyColor } from 'utils/color';
-import { alphanumericSorter, hpSorter } from 'utils/data';
+import { alphanumericSorter, hpSorter, numericSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './LearningCurve.module.scss';
@@ -38,6 +39,7 @@ type HParams = Record<string, boolean | number | string>;
 interface TrialHParams {
   hparams: HParams;
   id: number;
+  metric: number | null;
   url: string;
 }
 
@@ -79,6 +81,22 @@ const LearningCurve: React.FC<Props> = ({
     const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
     const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
 
+    const metricRenderer = (_: string, record: TrialHParams) => {
+      return record.metric ? <HumanReadableFloat num={record.metric} /> : null;
+    };
+    const metricSorter = (recordA: TrialHParams, recordB: TrialHParams): number => {
+      return numericSorter(recordA.metric || undefined, recordB.metric || undefined);
+    };
+    const metricColumn = {
+      dataIndex: 'metric',
+      key: 'metric',
+      render: metricRenderer,
+      sorter: metricSorter,
+      title: <BadgeTag
+        label={selectedMetric.name}
+        tooltip={selectedMetric.type}>{selectedMetric.type.substr(0, 1).toUpperCase()}</BadgeTag>,
+    };
+
     const hpRenderer = (key: string) => {
       return (_: string, record: TrialHParams) => {
         const value = record.hparams[key];
@@ -103,8 +121,8 @@ const LearningCurve: React.FC<Props> = ({
       title: key,
     }));
 
-    return [ idColumn, ...hpColumns ];
-  }, [ experiment.config.hyperparameters, trialIds ]);
+    return [ idColumn, metricColumn, ...hpColumns ];
+  }, [ experiment.config.hyperparameters, selectedMetric, trialIds ]);
 
   const resetData = useCallback(() => {
     setChartData([]);
@@ -191,6 +209,7 @@ const LearningCurve: React.FC<Props> = ({
             trialHpMap[id] = {
               hparams: trial.hparams,
               id,
+              metric: null,
               url: `/experiments/${experiment.id}/trials/${id}`,
             };
           }
@@ -201,6 +220,7 @@ const LearningCurve: React.FC<Props> = ({
           trial.data.forEach(datapoint => {
             batchesMap[datapoint.batches] = datapoint.batches;
             metricsMap[id][datapoint.batches] = datapoint.value;
+            trialHpMap[id].metric = datapoint.value;
           });
         });
 
