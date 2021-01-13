@@ -1,0 +1,40 @@
+:orphan:
+
+**Deprecated Features**
+
+-  API: The old Pytorch API is deprecated and will be removed in the
+   next release. See the :ref:`migration guide
+   <migration-guide-flexible-primitives>` for details on updating your
+   PyTorch model code to use the new API.
+
+   -  The new API supports PyTorch code that uses multiple models,
+      optimizers, and LR schedulers. In your trial class, you should
+      instantiate those objects and wrap them with
+      :meth:`~determined.pytorch.PyTorchTrialContext.wrap_model`,
+      :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer`,
+      and
+      :meth:`~determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler`
+      in the constructor of your PyTorch trial class. The previous API
+      methods ``build_model``, ``optimizer``, and
+      ``create_lr_scheduler`` in
+      :class:`~determined.pytorch.PyTorchTrial` will be removed.
+
+   -  Support customizing forward and backward passes in
+      :meth:`~determined.pytorch.PyTorchTrial.train_batch`. Gradient
+      clipping should now be done by passing a function to the
+      ``clip_grads`` argument of
+      :meth:`~determined.pytorch.PyTorchTrialContext.step_optimizer`.
+      The callback ``on_before_optimizer_step`` will be removed.
+
+   -  Configuring automatic mixed precision (AMP) in PyTorch should now
+      be done by calling
+      :meth:`~determined.pytorch.PyTorchTrialContext.configure_apex_amp`
+      in the constructor of your PyTorch trial class. The
+      ``optimizations.mixed_precision`` experiment configuration key
+      will be removed.
+
+   -  The ``model`` arguments to
+      :meth:`~determined.pytorch.PyTorchTrial.train_batch`,
+      :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch`, and
+      :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset`
+      will be removed.
