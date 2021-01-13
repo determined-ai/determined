@@ -37,6 +37,7 @@ export interface Telemetry {
 export enum ResourceType {
   CPU = 'CPU',
   GPU = 'GPU',
+  ALL = 'ALL',
   UNSPECIFIED = 'UNSPECIFIED',
 }
 
@@ -92,16 +93,12 @@ export interface Agent {
 }
 
 export interface ClusterOverviewResource {
+  allocation: number;
   available: number;
   total: number;
 }
 
-export interface ClusterOverview {
-  [ResourceType.CPU]: ClusterOverviewResource;
-  [ResourceType.GPU]: ClusterOverviewResource;
-  allocation: number;
-  totalResources: ClusterOverviewResource;
-}
+export type ClusterOverview = Record<ResourceType, ClusterOverviewResource>;
 
 export interface StartEndTimes {
   endTime?: string;
