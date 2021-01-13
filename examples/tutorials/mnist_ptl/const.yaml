@@ -2,12 +2,8 @@ description: mnist_ptl_const
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
-  learning_rate: 1.0
   global_batch_size: 64
-  n_filters1: 32
-  n_filters2: 64
-  dropout1: 0.25
-  dropout2: 0.5
+  learning_rate: 0.001
 searcher:
   name: single
   metric: val_loss
