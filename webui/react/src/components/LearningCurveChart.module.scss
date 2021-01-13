@@ -8,6 +8,7 @@ $tooltip-offset: 0.5rem;
     display: none;
     pointer-events: none;
     position: absolute;
+    z-index: 100;
 
     .point {
       background-color: rgba(0, 155, 222, 1);
@@ -45,5 +46,14 @@ $tooltip-offset: 0.5rem;
       left: auto;
       right: $tooltip-offset;
     }
+  }
+  .measure {
+    display: inline;
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    user-select: none;
+    white-space: pre-wrap;
+    word-break: break-all;
   }
 }

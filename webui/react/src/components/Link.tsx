@@ -15,6 +15,7 @@ export interface Props {
   onClick?: MouseEventHandler;
   path?: string;
   popout?: boolean;
+  size?: 'tiny' | 'small' | 'medium' | 'large';
 }
 
 const Link: React.FC<Props> = ({
@@ -30,6 +31,7 @@ const Link: React.FC<Props> = ({
   if (!props.disabled) classes.push(css.link);
   if (props.inherit) classes.push(css.inherit);
   if (props.isButton) classes.push('ant-btn');
+  if (props.size) classes.push(css[props.size]);
 
   const href = props.path ? linkPath(props.path, external) : undefined;
   const handleClick = useCallback((event: MouseEvent) => {

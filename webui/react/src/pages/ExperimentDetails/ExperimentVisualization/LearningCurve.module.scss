@@ -1,6 +1,19 @@
 .base {
-  background-color: var(--theme-colors-monochrome-17);
-  border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-  border-radius: var(--theme-sizes-border-radius);
-  height: 40rem;
+  .chart {
+    background-color: var(--theme-colors-monochrome-17);
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    border-radius: var(--theme-sizes-border-radius);
+    height: 40rem;
+  }
+  .idLayout {
+    align-items: center;
+    display: flex;
+  }
+  .colorLegend {
+    border-radius: var(--theme-sizes-border-radius);
+    height: 2rem;
+    margin-right: var(--theme-sizes-layout-medium);
+    width: 2rem;
+  }
 }
+.waiting { height: 30rem; }

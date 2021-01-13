@@ -12,3 +12,7 @@
 .link {
   cursor: pointer;
 }
+.tiny { font-size: var(--theme-sizes-font-tiny); }
+.small { font-size: var(--theme-sizes-font-small); }
+.medium { font-size: var(--theme-sizes-font-medium); }
+.large { font-size: var(--theme-sizes-font-large); }

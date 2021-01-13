@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
-import Message from 'components/Message';
+import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -16,8 +17,10 @@ import { handlePath } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, MetricName, metricTypeParamMap } from 'types';
+import { ExperimentBase, MetricName, metricTypeParamMap, RunState } from 'types';
+import { glasbeyColor } from 'utils/color';
 import { alphanumericSorter, hpSorter } from 'utils/data';
+import { terminalRunStates } from 'utils/types';
 
 import css from './LearningCurve.module.scss';
 
@@ -60,10 +63,21 @@ const LearningCurve: React.FC<Props> = ({
   const [ pageError, setPageError ] = useState<Error>();
 
   const hasTrials = trialHps.length !== 0;
+  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const columns = useMemo(() => {
+    const idRenderer = (_: string, record: TrialHParams) => {
+      const index = trialIds.findIndex(trialId => trialId === record.id);
+      const color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
+      return (
+        <div className={css.idLayout}>
+          <div className={css.colorLegend} style={{ backgroundColor: color }} />
+          <div>{record.id}</div>
+        </div>
+      );
+    };
     const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
-    const idColumn = { dataIndex: 'id', key: 'id', sorter: idSorter, title: 'Trial ID' };
+    const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
 
     const hpRenderer = (key: string) => {
       return (_: string, record: TrialHParams) => {
@@ -90,7 +104,7 @@ const LearningCurve: React.FC<Props> = ({
     }));
 
     return [ idColumn, ...hpColumns ];
-  }, [ experiment.config.hyperparameters ]);
+  }, [ experiment.config.hyperparameters, trialIds ]);
 
   const resetData = useCallback(() => {
     setChartData([]);
@@ -213,23 +227,37 @@ const LearningCurve: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ experiment.id, maxTrials, selectedMetric ]);
 
-  if (pageError) {
+  if (pageError?.message.includes('single-trial experiments are not supported')) {
+    return <Alert
+      description={<>
+        Learn about &nbsp;
+        <Link
+          external
+          path="/docs/reference/experiment-config.html#searcher"
+          popout
+          size="small">how to run a hyperparameter search</Link>.
+      </>}
+      message="Hyperparameter visualizations are not applicable for single trial experiments."
+      type="warning" />;
+  } else if (pageError) {
     return <Message title={pageError.message} />;
   } else if (!hasLoaded) {
     return <Spinner />;
   } else if (!hasTrials && hasLoaded) {
-    return (
-      <>
+    return isExperimentTerminal ? (
+      <Message title="No experiment visualization data to show." type={MessageType.Empty} />
+    ) : (
+      <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
           message="Not enough data points to show yet." />
         <Spinner />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className={css.base}>
       <Section
         options={<ResponsiveFilters>
           <SelectFilter
@@ -253,10 +281,11 @@ const LearningCurve: React.FC<Props> = ({
             onChange={handleMetricChange} />
         </ResponsiveFilters>}
         title="Learning Curve">
-        <div className={css.base}>
+        <div className={css.chart}>
           <LearningCurveChart
             data={chartData}
             focusedTrialId={tableTrialId}
+            selectedMetric={selectedMetric}
             trialIds={trialIds}
             xValues={batches}
             onTrialClick={handleTrialClick}
@@ -276,7 +305,7 @@ const LearningCurve: React.FC<Props> = ({
           onChange={handleTableChange}
           onRow={handleTableRow} />
       </Section>
-    </>
+    </div>
   );
 };
 
