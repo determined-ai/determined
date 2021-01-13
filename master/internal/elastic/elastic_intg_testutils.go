@@ -57,9 +57,8 @@ func (e *Elastic) AddDateNanosTemplate() error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to put index template")
 	}
-	err = checkResponse(res)
-	closeWithErrCheck(res.Body)
-	if err != nil {
+	defer closeWithErrCheck(res.Body)
+	if err = checkResponse(res); err != nil {
 		return errors.Wrap(err, "failed to put index template")
 	}
 	return nil
