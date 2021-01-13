@@ -359,6 +359,7 @@ WHERE t.id=$2
   AND (prior_batches_processed + num_batches) >= $3
   AND (prior_batches_processed + num_batches) <= $4
   AND s.end_time > $5
+  AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
 		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
@@ -386,6 +387,7 @@ WHERE t.id=$2
   AND (prior_batches_processed + num_batches) >= $3
   AND (prior_batches_processed + num_batches) <= $4
   AND v.end_time > $5
+  AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
 		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
