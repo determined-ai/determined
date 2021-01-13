@@ -37,6 +37,8 @@ class Secure(base.DeterminedDeployment):
         constants.cloudformation.MAX_DYNAMIC_AGENTS,
         constants.cloudformation.SPOT_ENABLED,
         constants.cloudformation.SPOT_MAX_PRICE,
+        constants.cloudformation.CPU_ENV_IMAGE,
+        constants.cloudformation.GPU_ENV_IMAGE,
     ]
 
     def deploy(self) -> None:

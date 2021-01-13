@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from typing import Callable
 
 import determined_deploy
@@ -209,6 +210,18 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="whether task preemption is supported in the scheduler "
         "(only configurable for priority scheduler).",
     )
+    optional_named.add_argument(
+        "--cpu-env-image",
+        type=str,
+        default="",
+        help="Docker image for CPU tasks",
+    )
+    optional_named.add_argument(
+        "--gpu-env-image",
+        type=str,
+        default="",
+        help="Docker image for GPU tasks",
+    )
 
 
 def make_gcp_parser(subparsers: argparse._SubParsersAction) -> None:
@@ -257,6 +270,12 @@ def deploy_gcp(args: argparse.Namespace) -> None:
         gcp.delete(det_configs, env)
         print("Delete Successful")
         return
+
+    if (args.cpu_env_image and not args.gpu_env_image) or (
+        args.gpu_env_image and not args.cpu_env_image
+    ):
+        print("If a CPU or GPU image is specified, both should be.")
+        sys.exit(1)
 
     # Dry-run flag
     if args.dry_run:

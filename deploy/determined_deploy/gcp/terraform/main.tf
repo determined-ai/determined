@@ -141,6 +141,8 @@ module "compute" {
   db_password = var.db_password
   scheduler_type = var.scheduler_type
   preemption_enabled = var.preemption_enabled
+  cpu_env_image = var.cpu_env_image
+  gpu_env_image = var.gpu_env_image
 
   network_name = module.network.network_name
   subnetwork_name = module.network.subnetwork_name

@@ -149,6 +149,16 @@ variable "det_version_key" {
   type = string
 }
 
+variable "cpu_env_image" {
+  type = string
+  default = ""
+}
+
+variable "gpu_env_image" {
+  type = string
+  default = ""
+}
+
 // MASTER
 
 variable "scheme" {
