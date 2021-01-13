@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Link from 'components/Link';
-import Message from 'components/Message';
+import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -17,9 +17,10 @@ import { handlePath } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, MetricName, metricTypeParamMap } from 'types';
+import { ExperimentBase, MetricName, metricTypeParamMap, RunState } from 'types';
 import { glasbeyColor } from 'utils/color';
 import { alphanumericSorter, hpSorter } from 'utils/data';
+import { terminalRunStates } from 'utils/types';
 
 import css from './LearningCurve.module.scss';
 
@@ -62,6 +63,7 @@ const LearningCurve: React.FC<Props> = ({
   const [ pageError, setPageError ] = useState<Error>();
 
   const hasTrials = trialHps.length !== 0;
+  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
@@ -242,7 +244,9 @@ const LearningCurve: React.FC<Props> = ({
   } else if (!hasLoaded) {
     return <Spinner />;
   } else if (!hasTrials && hasLoaded) {
-    return (
+    return isExperimentTerminal ? (
+      <Message title="No experiment visualization data to show." type={MessageType.Empty} />
+    ) : (
       <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
