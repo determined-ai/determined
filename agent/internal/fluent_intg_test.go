@@ -77,6 +77,8 @@ func TestFluentLoggingElastic(t *testing.T) {
 	elastic, err := testutils.ResolveElastic()
 	assert.NilError(t, err, "unable to connect to master")
 
+	assert.NilError(t, elastic.AddDateNanosTemplate(), "unable to add template")
+
 	// AND a successfully started fluent actor
 	aConf := defaultAgentConfig()
 	f, err := newFluentActor(aConf, aproto.MasterSetAgentOptions{
