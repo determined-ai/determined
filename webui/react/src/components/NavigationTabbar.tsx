@@ -43,8 +43,8 @@ const NavigationTabbar: React.FC = () => {
   const overview = ClusterOverview.useStateContext();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
 
-  const cluster = overview[ResourceType.ALL].allocation === 0 ?
-    undefined : `${overview[ResourceType.ALL].allocation}%`;
+  const cluster = overview[ResourceType.GPU].allocation === 0 ?
+    undefined : `${overview[ResourceType.GPU].allocation}%`;
   const showNavigation = isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
