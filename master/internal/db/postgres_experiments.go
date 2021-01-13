@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -322,19 +323,31 @@ SELECT t.id FROM (
 	return trials, err
 }
 
-type metricsSeriesWrapper struct {
-	Batches int       `db:"batches"`
-	Value   float64   `db:"value"`
-	EndTime time.Time `db:"end_time"`
+func scanMetricsSeries(metricSeries []lttb.Point, rows *sql.Rows) ([]lttb.Point, time.Time) {
+	var maxEndTime time.Time
+	for rows.Next() {
+		var batches uint
+		var value float64
+		var endTime time.Time
+		err := rows.Scan(&batches, &value, &endTime)
+		if err != nil {
+			// Could be a bad metric name, sparse metric, nested type, etc.
+			continue
+		}
+		metricSeries = append(metricSeries, lttb.Point{X: float64(batches), Y: value})
+		if endTime.After(maxEndTime) {
+			maxEndTime = endTime
+		}
+	}
+	return metricSeries, maxEndTime
 }
 
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeries []lttb.Point, endTime time.Time,
+	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
 	err error) {
-	var rows []metricsSeriesWrapper
-	err = db.queryRows(`
+	rows, err := db.sql.Query(`
 SELECT 
   (prior_batches_processed + num_batches) AS batches,
   s.metrics->'avg_metrics'->$1 AS value,
@@ -346,26 +359,21 @@ WHERE t.id=$2
   AND (prior_batches_processed + num_batches) >= $3
   AND (prior_batches_processed + num_batches) <= $4
   AND s.end_time > $5
-ORDER BY batches;`, &rows, metricName, trialID, startBatches, endBatches, startTime)
+ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
+	defer rows.Close()
 	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	for _, row := range rows {
-		metricSeries = append(metricSeries, lttb.Point{X: float64(row.Batches), Y: row.Value})
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-	return metricSeries, endTime, nil
+	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
+	return metricSeries, maxEndTime, nil
 }
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeries []lttb.Point, endTime time.Time,
+	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
 	err error) {
-	var rows []metricsSeriesWrapper
-	err = db.queryRows(`
+	rows, err := db.sql.Query(`
 SELECT 
   (prior_batches_processed + num_batches) AS batches,
   v.metrics->'validation_metrics'->$1 AS value,
@@ -378,15 +386,11 @@ WHERE t.id=$2
   AND (prior_batches_processed + num_batches) >= $3
   AND (prior_batches_processed + num_batches) <= $4
   AND v.end_time > $5
-ORDER BY batches;`, &rows, metricName, trialID, startBatches, endBatches, startTime)
+ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
+	defer rows.Close()
 	if err != nil {
-		return nil, endTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
-	for _, row := range rows {
-		metricSeries = append(metricSeries, lttb.Point{X: float64(row.Batches), Y: row.Value})
-		if row.EndTime.After(endTime) {
-			endTime = row.EndTime
-		}
-	}
-	return metricSeries, endTime, nil
+	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
+	return metricSeries, maxEndTime, nil
 }
