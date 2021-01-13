@@ -18,14 +18,15 @@ from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 import data
 import ptl
 import pytorch_lightning as pl
+from include.adapter import DETLightningModule
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
 class PTLAdapter(PyTorchTrial):
-    def __init__(self, context: PyTorchTrialContext, lm: pl.LightningModule) -> None:
+    def __init__(self, context: PyTorchTrialContext, lm: DETLightningModule) -> None:
         super().__init__(context)
-        self.lm = lm()  # TODO pass in context.get_hparam and dataloaders?
+        self.lm = lm(context.get_hparam)  # TODO pass in context.get_hparam and dataloaders?
         self.context = context
         self.model = self.context.wrap_model(self.lm)
         self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())

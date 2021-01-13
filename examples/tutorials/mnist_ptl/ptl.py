@@ -5,14 +5,15 @@ from torch.utils.data import DataLoader, random_split
 from torch.nn import functional as F
 from torchvision.datasets import MNIST
 from torchvision import datasets, transforms
+from include.adapter import DETLightningModule, GH
 import os
 
 
-class LightningMNISTClassifier(pl.LightningModule):
+class LightningMNISTClassifier(DETLightningModule):  # CHANGE: use DETLightningModule
 
     # TODO expect determined config.
-    def __init__(self):
-        super().__init__()
+    def __init__(self, get_hparam: GH):
+        super().__init__(get_hparam)
 
         # mnist images are (1, 28, 28) (channels, width, height) 
         self.layer_1 = torch.nn.Linear(28 * 28, 128)
@@ -41,6 +42,7 @@ class LightningMNISTClassifier(pl.LightningModule):
 
         return x
 
+    # CHANGE: define loss fn. TODO a hyperparam?
     def loss_fn(self, logits, labels):
         return F.nll_loss(logits, labels)
 
@@ -62,7 +64,8 @@ class LightningMNISTClassifier(pl.LightningModule):
         return {'val_loss': loss, 'accuracy': accuracy}
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(),
+                                     lr=self.get_hparam('learning_rate'))
         return optimizer
 
 
@@ -80,7 +83,15 @@ if __name__ == '__main__':
     val_loader = DataLoader(mnist_test, batch_size=64)
 
     # train
-    model = LightningMNISTClassifier()
+    # CHANGE: define hyperparameters to be used
+    def get_hparam(key: str):
+        params = {
+            'learning_rate': 1e-3,
+        }
+        return params[key]
+
+    # CHANGE: provide the hyperparameters
+    model = LightningMNISTClassifier(get_hparam)
     trainer = pl.Trainer(max_epochs=2)
 
     trainer.fit(model, train_dataloader, val_loader)
