@@ -360,10 +360,10 @@ WHERE t.id=$2
   AND (prior_batches_processed + num_batches) <= $4
   AND s.end_time > $5
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
-	defer rows.Close()
 	if err != nil {
 		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
+	defer rows.Close()
 	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
 	return metricSeries, maxEndTime, nil
 }
@@ -387,10 +387,10 @@ WHERE t.id=$2
   AND (prior_batches_processed + num_batches) <= $4
   AND v.end_time > $5
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
-	defer rows.Close()
 	if err != nil {
 		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
+	defer rows.Close()
 	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
 	return metricSeries, maxEndTime, nil
 }
