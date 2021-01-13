@@ -64,19 +64,18 @@ const LearningCurve: React.FC<Props> = ({
   const hasTrials = trialHps.length !== 0;
 
   const columns = useMemo(() => {
-    const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
-    const idColumn = { dataIndex: 'id', key: 'id', sorter: idSorter, title: 'Trial ID' };
-
-    const colorRenderer = (_: string, record: TrialHParams) => {
+    const idRenderer = (_: string, record: TrialHParams) => {
       const index = trialIds.findIndex(trialId => trialId === record.id);
       const color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
-      return <div className={css.colorLegend} style={{ backgroundColor: color }} />;
+      return (
+        <div className={css.idLayout}>
+          <div className={css.colorLegend} style={{ backgroundColor: color }} />
+          <div>{record.id}</div>
+        </div>
+      );
     };
-    const colorColumn = {
-      key: 'color',
-      render: colorRenderer,
-      title: 'Color',
-    };
+    const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
+    const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
 
     const hpRenderer = (key: string) => {
       return (_: string, record: TrialHParams) => {
@@ -102,7 +101,7 @@ const LearningCurve: React.FC<Props> = ({
       title: key,
     }));
 
-    return [ idColumn, colorColumn, ...hpColumns ];
+    return [ idColumn, ...hpColumns ];
   }, [ experiment.config.hyperparameters, trialIds ]);
 
   const resetData = useCallback(() => {
