@@ -76,25 +76,6 @@ html {
     font-size: var(--theme-sizes-icon-small);
   }
 
-  /* PageHeader */
-
-  .ant-page-header {
-    padding: 0 0 var(--theme-sizes-layout-medium) 0;
-    width: 100%;
-  }
-  .ant-page-header.has-breadcrumb { padding-top: 0; }
-  .ant-page-header-heading,
-  .ant-page-header-heading + .ant-breadcrumb { margin-top: 0; }
-  .ant-page-header-heading-left,
-  .ant-page-header-heading-extra { margin: 0; }
-  .ant-page-header-heading-title {
-    font-size: var(--theme-sizes-font-great);
-    font-weight: normal;
-  }
-  .ant-page-header-content {
-    padding: var(--theme-sizes-layout-medium) 0;
-  }
-
   /* Picker */
 
   .ant-picker {
@@ -230,12 +211,21 @@ html {
   .ant-tabs {
     height: 100%;
   }
+  .ant-tabs .ant-tabs-tab {
+    padding-top: 0;
+  }
   .ant-tabs > .ant-tabs-nav {
     margin: 0;
   }
-  .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content {
+  .ant-tabs > .ant-tabs-content-holder {
     height: 100%;
     overflow: auto;
     padding: var(--theme-sizes-layout-big) 0;
+  }
+  .ant-tabs-top > .ant-tabs-nav::before,
+  .ant-tabs-bottom > .ant-tabs-nav::before,
+  .ant-tabs-top > div > .ant-tabs-nav::before,
+  .ant-tabs-bottom > div > .ant-tabs-nav::before {
+    border-color: var(--theme-colors-monochrome-12);
   }
 }
