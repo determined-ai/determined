@@ -6,23 +6,18 @@
   height: inherit;
   justify-content: flex-start;
   overflow: auto;
-  padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big) 0 var(--theme-sizes-layout-big);
   width: 100%;
 
-  .breadcrumbs { align-self: flex-start; }
-  .title {
-    color: var(--theme-colors-base-0);
-    width: 100%
-  }
-  .divider {
-    border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-    margin-bottom: var(--theme-sizes-layout-medium);
-    width: 100%;
-  }
   .body {
     height: max-content;
     height: 100%;
     min-height: 0;
+    padding: var(--theme-sizes-layout-big);
     width: 100%;
   }
+}
+.stickyHeader {
+  overflow: inherit;
+
+  .body { overflow: auto; }
 }

@@ -1,0 +1,6 @@
+:orphan:
+
+**IMPROVEMENTS**
+
+-  WebUI: Apply a background color to increase section contrast on
+   pages.

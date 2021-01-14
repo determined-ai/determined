@@ -28,8 +28,6 @@ import { getPath } from 'utils/data';
 import { filterTasks } from 'utils/task';
 import { activeCommandStates, commandToTask, experimentToTask } from 'utils/types';
 
-import css from './Dashboard.module.scss';
-
 const defaultFilters: TaskFilters = {
   limit: 25,
   states: [ ALL_VALUE ],
@@ -132,38 +130,36 @@ const Dashboard: React.FC = () => {
   const taskFilter = <TaskFilter filters={filters} onChange={handleFilterChange} />;
 
   return (
-    <Page className={css.base} docTitle="Overview" id="dashboard">
+    <Page docTitle="Overview" id="dashboard">
       <Section title="Overview">
-        <div className={css.overview}>
-          <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
-            <OverviewStats title="Cluster Allocation">
-              {overview.allocation}<small>%</small>
-            </OverviewStats>
-            {overview[ResourceType.GPU].total ? <OverviewStats title="Available GPUs">
-              {overview[ResourceType.GPU].available}
-              <small>/{overview[ResourceType.GPU].total}</small>
-            </OverviewStats> : null}
-            {overview[ResourceType.CPU].total ? <OverviewStats title="Available CPUs">
-              {overview[ResourceType.CPU].available}
-              <small>/{overview[ResourceType.CPU].total}</small>
-            </OverviewStats> : null}
-            {activeTaskTally.Experiment ? <OverviewStats title="Active Experiments">
-              {activeTaskTally.Experiment}
-            </OverviewStats> : null}
-            {activeTaskTally[CommandType.Notebook] ? <OverviewStats title="Active Notebooks">
-              {activeTaskTally[CommandType.Notebook]}
-            </OverviewStats> : null}
-            {activeTaskTally[CommandType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
-              {activeTaskTally[CommandType.Tensorboard]}
-            </OverviewStats> : null}
-            {activeTaskTally[CommandType.Shell] ? <OverviewStats title="Active Shells">
-              {activeTaskTally[CommandType.Shell]}
-            </OverviewStats> : null}
-            {activeTaskTally[CommandType.Command] ? <OverviewStats title="Active Commands">
-              {activeTaskTally[CommandType.Command]}
-            </OverviewStats> : null}
-          </Grid>
-        </div>
+        <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
+          <OverviewStats title="Cluster Allocation">
+            {overview.allocation}<small>%</small>
+          </OverviewStats>
+          {overview[ResourceType.GPU].total ? <OverviewStats title="Available GPUs">
+            {overview[ResourceType.GPU].available}
+            <small>/{overview[ResourceType.GPU].total}</small>
+          </OverviewStats> : null}
+          {overview[ResourceType.CPU].total ? <OverviewStats title="Available CPUs">
+            {overview[ResourceType.CPU].available}
+            <small>/{overview[ResourceType.CPU].total}</small>
+          </OverviewStats> : null}
+          {activeTaskTally.Experiment ? <OverviewStats title="Active Experiments">
+            {activeTaskTally.Experiment}
+          </OverviewStats> : null}
+          {activeTaskTally[CommandType.Notebook] ? <OverviewStats title="Active Notebooks">
+            {activeTaskTally[CommandType.Notebook]}
+          </OverviewStats> : null}
+          {activeTaskTally[CommandType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
+            {activeTaskTally[CommandType.Tensorboard]}
+          </OverviewStats> : null}
+          {activeTaskTally[CommandType.Shell] ? <OverviewStats title="Active Shells">
+            {activeTaskTally[CommandType.Shell]}
+          </OverviewStats> : null}
+          {activeTaskTally[CommandType.Command] ? <OverviewStats title="Active Commands">
+            {activeTaskTally[CommandType.Command]}
+          </OverviewStats> : null}
+        </Grid>
       </Section>
       <Section divider={true} options={taskFilter} title="Recent Tasks">
         {showTasksSpinner

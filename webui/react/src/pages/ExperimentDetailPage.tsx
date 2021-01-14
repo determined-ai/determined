@@ -146,7 +146,6 @@ const ExperimentDetailPage: React.FC = () => {
 
   return (
     <Page
-      backPath={'/experiments'}
       breadcrumb={[
         { breadcrumbName: 'Experiments', path: '/experiments' },
         {
@@ -159,7 +158,7 @@ const ExperimentDetailPage: React.FC = () => {
         trials={trials}
         onClick={{ Fork: showForkModal }}
         onSettled={fetchExperimentDetails} />}
-      showDivider
+      stickHeader
       subTitle={<Space align="center" size="small">
         {experiment?.config.description}
         <Badge state={experiment.state} type={BadgeType.State} />

@@ -476,7 +476,6 @@ If the problem persists please contact support.',
 
   return (
     <Page
-      backPath={`/experiments/${experimentId}`}
       breadcrumb={[
         { breadcrumbName: 'Experiments', path: '/experiments' },
         {
@@ -492,7 +491,7 @@ If the problem persists please contact support.',
         trial={trial}
         onClick={handleActionClick}
         onSettled={fetchTrialDetails} />}
-      showDivider
+      stickHeader
       subTitle={<Badge state={trial?.state} type={BadgeType.State} />}
       title={`Trial ${trialId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>

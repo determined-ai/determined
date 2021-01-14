@@ -17,11 +17,14 @@ const defaultResizeInfo = {
 export const DEFAULT_RESIZE_THROTTLE_TIME = 500;
 
 const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
-  const element = ref ? ref.current : document.body;
   const [ resizeInfo, setResizeInfo ] = useState<ResizeInfo>(defaultResizeInfo);
 
   useEffect(() => {
-    if (!element) return;
+    let element = document.body;
+    if (ref) {
+      if (ref.current) element = ref.current;
+      else return;
+    }
 
     const handleResize: ResizeObserverCallback = entries => {
       // Check to make sure the ref container is being observed for resize.
@@ -34,8 +37,12 @@ const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(element);
 
+    // Set initial resize info
+    const rect = element.getBoundingClientRect();
+    setResizeInfo(rect);
+
     return (): void => resizeObserver.unobserve(element);
-  }, [ element ]);
+  }, [ ref ]);
 
   return resizeInfo;
 };
