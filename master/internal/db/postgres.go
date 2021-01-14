@@ -1173,6 +1173,7 @@ RETURNING id`, trial)
 	return nil
 }
 
+// TrialIDsByExperiment returns the trial IDs from a given experiment.
 func (db *PgDB) TrialIDsByExperiment(experiment_id int) (trial_ids []int, err error) {
 	err = db.sql.Select(&trial_ids, `SELECT id FROM trials WHERE experiment_id=$1`, experiment_id)
 	if err != nil {
