@@ -797,7 +797,7 @@ func (a *apiServer) fetchTrialSample(trialID int, metricName string, metricType 
 
 	if _, current := currentTrials[trialID]; !current {
 		var trialConfig *model.Trial
-		trialConfig, err = a.m.db.TrialByID(int(trialID))
+		trialConfig, err = a.m.db.TrialByID(trialID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "error fetching trial metadata")
 		}
