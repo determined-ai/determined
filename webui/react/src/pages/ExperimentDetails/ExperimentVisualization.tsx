@@ -36,9 +36,9 @@ const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
-  { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoord },
-  { label: 'HP Importance', type: VisualizationType.HpImportance },
-  { label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
+  // { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoord },
+  // { label: 'HP Importance', type: VisualizationType.HpImportance },
+  // { label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
 ];
 
 const ExperimentVisualization: React.FC<Props> = ({
