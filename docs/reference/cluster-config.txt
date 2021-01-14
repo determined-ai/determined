@@ -759,10 +759,12 @@ The master supports the following configuration settings:
          -  ``tls``: TLS-related configuration settings.
 
             -  ``enabled``: Enable TLS.
+
             -  ``skip_verify``: Skip server certificate verification.
-            -  ``certificate``: Path to a file containing the cluster's TLS
-               certificate. Only needed if the certificate is not signed
-               by a well-known CA; cannot be specified if
+
+            -  ``certificate``: Path to a file containing the cluster's
+               TLS certificate. Only needed if the certificate is not
+               signed by a well-known CA; cannot be specified if
                ``skip_verify`` is enabled.
 
 .. _agent-configuration:
