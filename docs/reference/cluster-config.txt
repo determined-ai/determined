@@ -735,6 +735,38 @@ The master supports the following configuration settings:
 
    -  ``enabled``: Whether telemetry is enabled. Defaults to ``true``.
 
+-  ``logging``: Specifies configuration settings for the logging backend
+   for trial logs.
+
+   -  ``type: default``: Trial logs are shipped to the master and stored
+      in Postgres. If nothing is set, this is the default.
+
+   -  ``type: elastic``: Trial logs are shipped to the Elasticsearch
+      cluster described by the configuration settings in the section.
+      See :ref:`the topic guide <elasticsearch-logging-backend>` for a
+      more detailed explanation of how and when to use Elasticsearch.
+
+      -  ``host``: Hostname or IP address for the cluster.
+
+      -  ``port``: Port for the cluster.
+
+      -  ``security``: Security-related configuration settings.
+
+         -  ``username``: Username to use when accessing the cluster.
+
+         -  ``password``: Password to use when accessing the cluster.
+
+         -  ``tls``: TLS-related configuration settings.
+
+            -  ``enabled``: Enable TLS.
+
+            -  ``skip_verify``: Skip server certificate verification.
+
+            -  ``certificate``: Path to a file containing the cluster's
+               TLS certificate. Only needed if the certificate is not
+               signed by a well-known CA; cannot be specified if
+               ``skip_verify`` is enabled.
+
 .. _agent-configuration:
 
 *********************
