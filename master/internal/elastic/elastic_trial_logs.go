@@ -119,7 +119,7 @@ func (e *Elastic) TrialLogs(
 					jsonObj{
 						"range": jsonObj{
 							"timestamp": jsonObj{
-								"lt": time.Now().UTC().Add(elasticTimeWindowDelay),
+								"lte": time.Now().UTC().Add(elasticTimeWindowDelay),
 							},
 						},
 					}),
@@ -151,6 +151,7 @@ func (e *Elastic) TrialLogs(
 	resp := struct {
 		Hits struct {
 			Hits []struct {
+				ID     string          `json:"_id"`
 				Source *model.TrialLog `json:"_source"`
 				Sort   []interface{}   `json:"sort"`
 			} `json:"hits"`
@@ -164,6 +165,7 @@ func (e *Elastic) TrialLogs(
 	var logs []*model.TrialLog
 	for _, h := range resp.Hits.Hits {
 		h.Source.Resolve()
+		h.Source.StringID = &h.ID
 		logs = append(logs, h.Source)
 	}
 
@@ -340,12 +342,12 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 						"should": inTerms,
 					},
 				})
-		case api.FilterOperationLessThan:
+		case api.FilterOperationLessThanEqual:
 			terms = append(terms,
 				jsonObj{
 					"range": jsonObj{
 						f.Field: jsonObj{
-							"lt": f.Values,
+							"lte": f.Values,
 						},
 					},
 				})

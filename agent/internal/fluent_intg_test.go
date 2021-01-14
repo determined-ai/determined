@@ -264,6 +264,9 @@ func assertLogEquals(t *testing.T, l, expected model.TrialLog) {
 	l.Timestamp = nil
 	// nil out the message since we don't really care, we just want to see the structured fields.
 	l.Message = ""
+	// IDs are assigned unpredictably by the backend, so don't compare them.
+	l.ID = nil
+	l.StringID = nil
 	assert.DeepEqual(t, l, expected)
 }
 

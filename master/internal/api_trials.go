@@ -75,15 +75,9 @@ func (a *apiServer) TrialLogs(
 	}
 	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
-	logID := int32(offset - 1) // WebUI assumes logs are 0-indexed.
 	onBatch := func(b api.LogBatch) error {
 		return b.ForEach(func(r interface{}) error {
-			trialLog := r.(*model.TrialLog)
-			logID++
-			return resp.Send(&apiv1.TrialLogsResponse{
-				Id:      logID,
-				Message: trialLog.Message,
-			})
+			return resp.Send(r.(*model.TrialLog).Proto())
 		})
 	}
 
@@ -178,7 +172,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 		}
 		filters = append(filters, api.Filter{
 			Field:     "timestamp",
-			Operation: api.FilterOperationLessThan,
+			Operation: api.FilterOperationLessThanEqual,
 			Values:    t,
 		})
 	}

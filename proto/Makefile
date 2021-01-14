@@ -50,13 +50,13 @@ $(swagger_out): $(source_files) build/swagger
 
 # Update buf image for breaking change check.
 .PHONY: gen-buf-image
-gen-buf-image: check
+gen-buf-image:
 	# disallow untracked or dirty files.
 	test -z "$(shell git status --porcelain)"
 	buf image build -o $(buf_image)
 
 .PHONY: check
-check:
+check: check-fmt
 	buf check lint
 	buf check breaking --against-input $(buf_image)
 

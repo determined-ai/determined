@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/version"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // State is the run state of an experiment / trial / step / etc.
@@ -388,7 +389,14 @@ func (c *Checkpoint) IsNew() bool {
 
 // TrialLog represents a row from the `trial_logs` table.
 type TrialLog struct {
-	ID      int    `db:"id" json:"id"`
+	// A trial log should have one of these IDs. All should be unique.
+	ID *int `db:"id" json:"id"`
+	// The body of an Elasticsearch log response will look something like
+	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
+	// StringID doesn't have serialization tags because it is not part of
+	// _source and populated from from _id.
+	StringID *string
+
 	TrialID int    `db:"trial_id" json:"trial_id"`
 	Message string `db:"message" json:"message"`
 
@@ -401,6 +409,20 @@ type TrialLog struct {
 	Log         *string    `db:"log" json:"log"`
 	Source      *string    `db:"source" json:"source"`
 	StdType     *string    `db:"stdtype" json:"stdtype"`
+}
+
+// Proto converts a trial log to its protobuf representation.
+func (t TrialLog) Proto() *apiv1.TrialLogsResponse {
+	resp := &apiv1.TrialLogsResponse{Message: t.Message}
+	switch {
+	case t.ID != nil:
+		resp.IdOneof = &apiv1.TrialLogsResponse_Id{Id: int64(*t.ID)}
+	case t.StringID != nil:
+		resp.IdOneof = &apiv1.TrialLogsResponse_StringId{StringId: *t.StringID}
+	default:
+		panic("log had no valid ID")
+	}
+	return resp
 }
 
 // Resolve resolves the legacy Message field from the others provided.
