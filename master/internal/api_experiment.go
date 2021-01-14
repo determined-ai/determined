@@ -742,11 +742,12 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 }
 
 func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherConfig) (
-	trials []int32, err error) {
+	trials []int, err error) {
 	type Ranking int
 	const (
-		ByMetricOfInterest Ranking = 1
-		ByTrainingLength   Ranking = 2
+		ByMetricOfInterest Ranking = iota
+		ByTrainingLength   Ranking = iota
+		NoFilter           Ranking = iota
 	)
 	var ranking Ranking
 
@@ -766,7 +767,7 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherC
 	case s.AdaptiveASHAConfig != nil:
 		ranking = ByTrainingLength
 	case s.SingleConfig != nil:
-		return nil, errors.New("single-trial experiments are not supported for trial sampling")
+		ranking = NoFilter
 	case s.PBTConfig != nil:
 		return nil, errors.New("population-based training not supported for trial sampling")
 	default:
@@ -777,20 +778,22 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherC
 		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
 	case ByTrainingLength:
 		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+	case NoFilter:
+		return a.m.db.TrialIDsByExperiment(experimentID)
 	default:
 		panic("Invalid state in trial sampling")
 	}
 }
 
-func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricType apiv1.MetricType,
-	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int32]bool,
-	trialCursors map[int32]time.Time) (*apiv1.TrialsSampleResponse_Trial, error) {
+func (a *apiServer) fetchTrialSample(trialID int, metricName string, metricType apiv1.MetricType,
+	maxDatapoints int, startBatches int, endBatches int, currentTrials map[int]bool,
+	trialCursors map[int]time.Time) (*apiv1.TrialsSampleResponse_Trial, error) {
 	var metricSeries []lttb.Point
 	var endTime time.Time
 	var zeroTime time.Time
 	var err error
 	var trial apiv1.TrialsSampleResponse_Trial
-	trial.TrialId = trialID
+	trial.TrialId = int32(trialID)
 
 	if _, current := currentTrials[trialID]; !current {
 		var trialConfig *model.Trial
@@ -875,15 +878,15 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	}
 	searcherConfig := config.Searcher
 
-	trialCursors := make(map[int32]time.Time)
-	currentTrials := make(map[int32]bool)
+	trialCursors := make(map[int]time.Time)
+	currentTrials := make(map[int]bool)
 	for {
 		var response apiv1.TrialsSampleResponse
 		var promotedTrials []int32
 		var demotedTrials []int32
 		var trials []*apiv1.TrialsSampleResponse_Trial
 
-		seenThisRound := make(map[int32]bool)
+		seenThisRound := make(map[int]bool)
 
 		trialIDs, err := a.topTrials(experimentID, maxTrials, searcherConfig)
 		if err != nil {
@@ -898,7 +901,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 			}
 
 			if _, current := currentTrials[trialID]; !current {
-				promotedTrials = append(promotedTrials, trialID)
+				promotedTrials = append(promotedTrials, int32(trialID))
 				currentTrials[trialID] = true
 			}
 			seenThisRound[trialID] = true
@@ -907,13 +910,13 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		}
 		for oldTrial := range currentTrials {
 			if !seenThisRound[oldTrial] {
-				demotedTrials = append(demotedTrials, oldTrial)
+				demotedTrials = append(demotedTrials, int32(oldTrial))
 				delete(trialCursors, oldTrial)
 			}
 		}
 		// Deletes from currentTrials have to happen when not looping over currentTrials
 		for _, oldTrial := range demotedTrials {
-			delete(currentTrials, oldTrial)
+			delete(currentTrials, int(oldTrial))
 		}
 
 		response.Trials = trials
