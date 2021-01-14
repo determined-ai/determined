@@ -402,7 +402,7 @@ CREATE TABLE public.templates (
 --
 
 CREATE TABLE public.trial_logs (
-    id integer NOT NULL,
+    id int8 NOT NULL,
     trial_id integer NOT NULL,
     message bytea NOT NULL
 );
