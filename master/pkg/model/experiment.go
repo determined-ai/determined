@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/version"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // State is the run state of an experiment / trial / step / etc.
@@ -391,7 +390,11 @@ func (c *Checkpoint) IsNew() bool {
 // TrialLog represents a row from the `trial_logs` table.
 type TrialLog struct {
 	// A trial log should have one of these IDs. All should be unique.
-	ID       *int `db:"id" json:"id"`
+	ID *int `db:"id" json:"id"`
+	// The body of an Elasticsearch log response will look something like
+	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
+	// StringID doesn't have serialization tags because it is not part of
+	// _source and populated from from _id.
 	StringID *string
 
 	TrialID int    `db:"trial_id" json:"trial_id"`

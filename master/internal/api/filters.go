@@ -8,7 +8,7 @@ const (
 	FilterOperationIn FilterOperation = iota
 	// FilterOperationGreaterThan checks if the field is greater than a value.
 	FilterOperationGreaterThan
-	// FilterOperationLessThanEqual checks if the field is less than a value.
+	// FilterOperationLessThanEqual checks if the field is less than or equal to a value.
 	FilterOperationLessThanEqual
 )
 

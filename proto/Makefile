@@ -56,7 +56,7 @@ gen-buf-image:
 	buf image build -o $(buf_image)
 
 .PHONY: check
-check:
+check: check-fmt
 	buf check lint
 	buf check breaking --against-input $(buf_image)
 
