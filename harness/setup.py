@@ -31,6 +31,11 @@ setup(
         "tf-114-cpu": ["tensorflow==1.14.0"],
         "pytorch-14-cuda100": ["torch==1.4.0+cu100", "torchvision==0.5.0+cu100"],
         "pytorch-14-cpu": ["torch==1.4.0", "torchvision==0.5.0"],
+        "tf-240-cuda110": ["tensorflow-gpu==2.4.0"],
+        "tf-240-cpu": ["tensorflow==2.4.0"],
+        "pytorch-17-cuda100": ["torch==1.7.0+cu100", "torchvision==0.8.1+cu100"],
+        "pytorch-17-cuda110": ["torch==1.7.0+cu110", "torchvision==0.8.1+cu110"],
+        "pytorch-17-cpu": ["torch==1.7.0", "torchvision==0.8.1"],
     },
     zip_safe=False,
 )

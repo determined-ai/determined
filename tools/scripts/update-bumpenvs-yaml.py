@@ -29,6 +29,7 @@ from typing import Any, Dict
 import requests
 import yaml
 
+NON_EXISTENT_IMAGE = "determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-5f6f6e1"
 USER = "determined-ai"
 PROJECT = "environments"
 BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
@@ -39,6 +40,7 @@ EXPECT_JOBS = {
     "build-and-publish-docker-tf1-cpu",
     "build-and-publish-docker-tf1-gpu",
     "build-and-publish-docker-tf2-gpu",
+    "build-and-publish-docker-cuda-11",
 }
 
 EXPECT_ARTIFACTS = {
@@ -47,6 +49,7 @@ EXPECT_ARTIFACTS = {
     "publish-tf1-cpu",
     "publish-tf1-gpu",
     "publish-tf2-gpu",
+    "publish-cuda-11",
 }
 
 
@@ -197,11 +200,16 @@ if __name__ == "__main__":
         **yaml.safe_load(artifacts["publish-tf1-gpu"]),
         **yaml.safe_load(artifacts["publish-tf2-cpu"]),
         **yaml.safe_load(artifacts["publish-tf2-gpu"]),
+        **yaml.safe_load(artifacts["publish-cuda-11"]),
         **parse_packer_log(artifacts["packer-log"]),
     }
 
     saw_change = False
     for image_type, new_tag in new_tags.items():
+        if image_type not in conf:
+            # Add a placeholder to use as the new "old" image.
+            # This string should not appear elsewhere in the codebase.
+            conf[image_type] = {"new": NON_EXISTENT_IMAGE}
         saw_change |= update_tag_for_image_type(conf[image_type], new_tag)
 
     if not saw_change:
