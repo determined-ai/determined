@@ -43,7 +43,7 @@ interface TrialHParams {
 
 const DEFAULT_MAX_TRIALS = 100;
 const MAX_DATAPOINTS = 5000;
-const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100, 200, 500 ];
+const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
