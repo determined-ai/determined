@@ -177,6 +177,8 @@ func overwriteSpec(
 			Config: map[string]string{
 				"fluentd-address":              "localhost:" + strconv.Itoa(fluentPort),
 				"fluentd-sub-second-precision": "true",
+				"mode":                         "non-blocking",
+				"max-buffer-size":              "10m",
 				"env":                          strings.Join(fluentEnvVarNames, ","),
 				"labels":                       dockerContainerParentLabel,
 			},
