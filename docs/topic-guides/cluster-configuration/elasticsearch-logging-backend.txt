@@ -25,11 +25,11 @@ from the default, we recommend increasing the capacity of the database.
 At a certain point, the master instance itself will become the
 bottleneck, since it has limited incoming network bandwidth for HTTP
 requests delivering logs and limited resources to process them. For
-example, ``m5.large`` Amazon instances the max bandwidth is 0.74 Gb/s.
-At this point, the master instance size can also be increased but,
-eventually, once the limits of vertical scaling are reached (likely
-around hundreds of megabytes of logs per second), it is recommended to
-move to Elasticsearch.
+example, ``m5.large`` Amazon instances support a maximum bandwidth of 0.74 Gb/s.
+The master instance size can be increased, but vertical scaling is
+likely to be limited to a log throughput of around hundreds of megabytes
+per second; we recommend moving to Elasticsearch to get past that limit.
+
 
 Determined offers some additional recommendations for the Elasticsearch
 cluster configuration based on how the cluster will be used:
