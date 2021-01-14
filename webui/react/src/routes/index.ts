@@ -2,7 +2,6 @@ import { FC } from 'react';
 
 import Cluster from 'pages/Cluster';
 import Dashboard from 'pages/Dashboard';
-import ExperimentDetailPage from 'pages/ExperimentDetailPage';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import ExperimentList from 'pages/ExperimentList';
 import HGICluster from 'pages/HGICluster';
@@ -21,7 +20,6 @@ import { RouteConfig } from './types';
 const routeComponentMap: Record<string, FC> = {
   cluster: Cluster,
   dashboard: Dashboard,
-  experimentDetailPage: ExperimentDetailPage,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,
   hgiCluster: HGICluster,
