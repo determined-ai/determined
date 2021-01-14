@@ -921,6 +921,7 @@ jobs:
     steps:
       - checkout
       - go-get-deps
+      - run: sudo apt-get update && sudo apt-get install -y clang-format
       - run: make -C proto build
       - run: make -C proto check
       - run: make -C master check
