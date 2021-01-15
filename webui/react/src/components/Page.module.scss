@@ -19,5 +19,8 @@
 .stickyHeader {
   overflow: inherit;
 
-  .body { overflow: auto; }
+  .body {
+    overflow: auto;
+    padding-bottom: 0;
+  }
 }
