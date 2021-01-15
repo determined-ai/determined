@@ -24,7 +24,6 @@ import {
   ALL_VALUE, Command, CommandType, ExperimentItem, RecentTask,
   ResourceType, TaskFilters, TaskType,
 } from 'types';
-import { getPath } from 'utils/data';
 import { filterTasks } from 'utils/task';
 import { activeCommandStates, commandToTask, experimentToTask } from 'utils/types';
 
@@ -41,9 +40,21 @@ const defaultFilters: TaskFilters = {
   username: undefined,
 };
 
+const STORAGE_PATH = 'dashboard';
+const STORAGE_FILTERS_KEY = 'filters';
+
 const Dashboard: React.FC = () => {
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
+  const storage = useStorage(STORAGE_PATH);
+  const initFilters = storage.getWithDefault(
+    STORAGE_FILTERS_KEY,
+    (!auth.user || auth.user?.isAdmin) ? defaultFilters : {
+      ...defaultFilters,
+      username: auth.user?.username,
+    },
+  );
+  const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
   const overview = ClusterOverview.useStateContext();
   const activeExperiments = ActiveExperiments.useStateContext();
   const commands = Commands.useStateContext();
@@ -51,13 +62,6 @@ const Dashboard: React.FC = () => {
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
-
-  const storage = useStorage('dashboard/tasks');
-  const initFilters = storage.getWithDefault('filters', {
-    ...defaultFilters,
-    username: getPath<string>(auth, 'user.username'),
-  });
-  const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -122,7 +126,7 @@ const Dashboard: React.FC = () => {
   });
 
   const handleFilterChange = useCallback((filters: TaskFilters): void => {
-    storage.set('filters', filters);
+    storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
     setExperiments(undefined);
   }, [ setExperiments, setFilters, storage ]);

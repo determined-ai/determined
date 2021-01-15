@@ -75,7 +75,10 @@ const ExperimentList: React.FC = () => {
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,
-    { ...defaultFilters, username: (auth.user || {}).username },
+    (!auth.user || auth.user?.isAdmin) ? defaultFilters : {
+      ...defaultFilters,
+      username: auth.user?.username,
+    },
   );
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
