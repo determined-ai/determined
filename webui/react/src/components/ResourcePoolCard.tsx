@@ -123,7 +123,7 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }
           <SlotAllocationBar
             resourceStates={containerStates}
             totalSlots={numAgents * gpusPerAgent} />
-          <div className={css.spaceBetweenHorizontal}>
+          <div className={css.cpuContainers}>
             <span>CPU containers running:</span>
             <span>{rp.cpuContainersRunning}</span>
           </div>

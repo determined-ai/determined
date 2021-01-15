@@ -19,7 +19,7 @@ export const columns: ColumnType<ResourcePool>[] = [
   },
   {
     key: 'chart',
-    title: 'Chart',
+    title: 'GPU Slots Allocation',
   },
   {
     dataIndex: 'type',

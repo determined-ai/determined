@@ -129,6 +129,11 @@ section.details {
     flex-grow: 1;
   }
 }
+.cpuContainers {
+  margin-top: $padding;
+
+  @extend .spaceBetweenHorizontal;
+}
 .spaceBetweenHorizontal {
   display: flex;
   flex-direction: row;

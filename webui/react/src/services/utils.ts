@@ -56,7 +56,7 @@ export const processApiError = (name: string, e: Error): DaError => {
   if (isDaError(e)) {
     if (e.type === ErrorType.ApiBadResponse) {
       e.message = `failed in decoding ${name} API response`;
-      e.publicMessage = 'Failed to interpret data sent from the server.';
+      e.publicMessage = 'Unexpected response from the server.';
       e.publicSubject = 'Unexpected API response';
       e.silent = silent;
     }
