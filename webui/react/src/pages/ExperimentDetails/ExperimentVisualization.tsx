@@ -1,4 +1,4 @@
-import { Col, Row, Select } from 'antd';
+import { Col, Row, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -36,9 +36,9 @@ const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
-  // { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoord },
-  // { label: 'HP Importance', type: VisualizationType.HpImportance },
-  // { label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
+  { disabled: true, label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoord },
+  { disabled: true, label: 'HP Importance', type: VisualizationType.HpImportance },
+  { disabled: true, label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
 ];
 
 const ExperimentVisualization: React.FC<Props> = ({
@@ -168,13 +168,25 @@ const ExperimentVisualization: React.FC<Props> = ({
           xs={{ order: 1, span: 24 }}>
           <div className={css.inspector}>
             <div className={css.menu}>
-              {MENU.map(item => (
-                <Link
-                  className={typeKey === item.type ? css.active : undefined}
-                  key={item.type}
-                  path={`${basePath}/${item.type}`}
-                  onClick={() => setTypeKey(item.type)}>{item.label}</Link>
-              ))}
+              {MENU.map(item => {
+                const linkClasses = [ css.link ];
+                if (typeKey === item.type) linkClasses.push(css.active);
+
+                const link = (
+                  <Link
+                    className={linkClasses.join(' ')}
+                    disabled={item.disabled}
+                    key={item.type}
+                    path={`${basePath}/${item.type}`}
+                    onClick={() => setTypeKey(item.type)}>{item.label}</Link>
+                );
+
+                return item.disabled ? (
+                  <Tooltip key={item.type} placement="left" title="Coming soon!">
+                    <div>{link}</div>
+                  </Tooltip>
+                ) : link;
+              })}
             </div>
             <div className={css.mobileMenu}>
               <SelectFilter
