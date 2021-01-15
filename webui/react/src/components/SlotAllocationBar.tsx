@@ -124,7 +124,7 @@ const SlotAllocationBar: React.FC<Props> = ({
           {totalSlots === 0 ? <span>0/0</span> :
             <span>
               {resourceStates.length}/{totalSlots}
-              {totalSlots > 0 ? ` (${floatToPercent( resourceStates.length/totalSlots, 0)})` : ''}
+              {totalSlots > 0 ? ` (${floatToPercent(resourceStates.length/totalSlots, 0)})` : ''}
             </span>
           }
         </div>

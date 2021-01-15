@@ -65,23 +65,22 @@ const HGICluster: React.FC = () => {
 
   const columns = useMemo(() => {
 
-    const newColumns = [ ...defaultColumns ].map(column => {
+    const descriptionRender = (_: unknown, record: ResourcePool): React.ReactNode =>
+      <div className={css.descriptionColumn}>{record.description}</div>;
 
-      const descriptionRender = (_: unknown, record: ResourcePool): React.ReactNode =>
-        <div className={css.descriptionColumn}>{record.description}</div>;
-
-      const chartRender = (_:unknown, record: ResourcePool): React.ReactNode => {
-        const containerStates: ResourceState[] =
+    const chartRender = (_:unknown, record: ResourcePool): React.ReactNode => {
+      const containerStates: ResourceState[] =
           getSlotContainerStates(agents.data || [], record.name);
 
-        return <SlotAllocationBar
-          className={css.chartColumn}
-          hideHeader
-          resourceStates={containerStates}
-          totalSlots={record.numAgents * record.gpusPerAgent} />;
+      return <SlotAllocationBar
+        className={css.chartColumn}
+        hideHeader
+        resourceStates={containerStates}
+        totalSlots={record.numAgents * record.gpusPerAgent} />;
 
-      };
+    };
 
+    const newColumns = [ ...defaultColumns ].map(column => {
       if (column.key === 'description') column.render = descriptionRender;
       if (column.key === 'chart') column.render = chartRender;
       return column;
@@ -90,20 +89,10 @@ const HGICluster: React.FC = () => {
     return newColumns;
   }, [ agents.data ]);
 
-  const hideModal = useCallback(
-    () => setRpDetail(undefined),
-    [],
-  );
+  const hideModal = useCallback(() => setRpDetail(undefined), []);
 
-  const setTableView = useCallback(
-    () => setSelectedView(View.List),
-    [],
-  );
-
-  const setCardView = useCallback(
-    () => setSelectedView(View.Grid),
-    [],
-  );
+  const setTableView = useCallback(() => setSelectedView(View.List), []);
+  const setCardView = useCallback(() => setSelectedView(View.Grid), []);
 
   const handleTableRow = useCallback((record: ResourcePool) => {
     const handleClick = (event: React.MouseEvent) => {
@@ -137,7 +126,7 @@ const HGICluster: React.FC = () => {
   );
 
   return (
-    <Page className={css.base} id="cluster" title="HGI Cluster">
+    <Page className={css.base} id="cluster" title="Cluster">
       <Section hideTitle title="Overview Stats">
         <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
           <OverviewStats title="Number of Agents">
