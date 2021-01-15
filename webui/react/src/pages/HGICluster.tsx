@@ -1,8 +1,9 @@
+import { Radio } from 'antd';
+import { RadioChangeEvent } from 'antd/lib/radio';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Icon from 'components/Icon';
-import Link from 'components/Link';
 import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
@@ -91,8 +92,9 @@ const HGICluster: React.FC = () => {
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
-  const setTableView = useCallback(() => setSelectedView(View.List), []);
-  const setCardView = useCallback(() => setSelectedView(View.Grid), []);
+  const onChange = useCallback((e: RadioChangeEvent) => {
+    setSelectedView(e.target.value as View);
+  }, []);
 
   const handleTableRow = useCallback((record: ResourcePool) => {
     const handleClick = (event: React.MouseEvent) => {
@@ -111,18 +113,14 @@ const HGICluster: React.FC = () => {
   }
 
   const viewOptions = (
-    <div className={css.viewOptions}>
-      <Link
-        className={selectedView === View.Grid ? css.active : ''}
-        onClick={setCardView}>
+    <Radio.Group value={selectedView} onChange={onChange}>
+      <Radio.Button value={View.Grid}>
         <Icon name="grid" size="large" title="Card View" />
-      </Link>
-      <Link
-        className={selectedView === View.List ? css.active : ''}
-        onClick={setTableView}>
+      </Radio.Button>
+      <Radio.Button value={View.List}>
         <Icon name="list" size="large" title="Table View" />
-      </Link>
-    </div>
+      </Radio.Button>
+    </Radio.Group>
   );
 
   return (

@@ -7,39 +7,10 @@
   .chartColumn {
     min-width: 15rem;
   }
-  .viewOptions {
-    border: solid 1px var(--theme-colors-monochrome-13);
-    border-radius: var(--theme-sizes-border-radius);
-    display: flex;
-    flex-direction: row;
-    font-size: var(--theme-sizes-font-small);
-    justify-content: center;
-    margin: 0 auto;
-    padding: 0;
-
-    & > * {
-      align-items: center;
-      border:
-        var(--theme-sizes-border-width) solid
-        var(--theme-colors-monochrome-11);
-      border-radius: var(--theme-sizes-border-radius);
-      color: inherit;
-      display: flex;
-      flex-shrink: 0;
-      height: 3rem;
-      justify-content: center;
-      margin-left: var(--theme-sizes-layout-tiny);
-      width: 3rem;
-
-      &:hover {
-        @extend .active;
-      }
-    }
-    & > *:first-child {
-      margin-left: 0;
-    }
-    .active {
-      color: var(--theme-colors-states-active);
-    }
+  :global(label.ant-radio-button-wrapper) {
+    font-size: inherit;
+    height: inherit;
+    line-height: inherit;
+    padding: var(--theme-sizes-layout-tiny);
   }
 }
