@@ -45,7 +45,8 @@ interface TrialHParams {
 
 const DEFAULT_MAX_TRIALS = 100;
 const MAX_DATAPOINTS = 5000;
-const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100, 200, 500 ];
+const MAX_ALLOWED_METRIC_VALUE = 100000;
+const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
@@ -174,6 +175,7 @@ const LearningCurve: React.FC<Props> = ({
     const trialHpMap: Record<number, TrialHParams> = {};
     const batchesMap: Record<number, number> = {};
     const metricsMap: Record<number, Record<number, number>> = {};
+    const filterTrialMap: Record<number, boolean> = {};
 
     consumeStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.determinedTrialsSample(
@@ -198,8 +200,6 @@ const LearningCurve: React.FC<Props> = ({
 
         (event.promotedTrials || []).forEach(trialId => trialIdsMap[trialId] = trialId);
         (event.demotedTrials || []).forEach(trialId => delete trialIdsMap[trialId]);
-        const newTrialIds = Object.values(trialIdsMap);
-        setTrialIds(newTrialIds);
 
         (event.trials || []).forEach(trial => {
           const id = trial.trialId;
@@ -216,11 +216,13 @@ const LearningCurve: React.FC<Props> = ({
 
           trialDataMap[id] = trialDataMap[id] || [];
           metricsMap[id] = metricsMap[id] || {};
+          filterTrialMap[id] = filterTrialMap[id] || false;
 
           trial.data.forEach(datapoint => {
             batchesMap[datapoint.batches] = datapoint.batches;
             metricsMap[id][datapoint.batches] = datapoint.value;
             trialHpMap[id].metric = datapoint.value;
+            if (datapoint.value > MAX_ALLOWED_METRIC_VALUE) filterTrialMap[id] = true;
           });
         });
 
@@ -232,6 +234,9 @@ const LearningCurve: React.FC<Props> = ({
 
         const newBatches = Object.values(batchesMap);
         setBatches(newBatches);
+
+        const newTrialIds = Object.values(trialIdsMap).filter(trialId => !filterTrialMap[trialId]);
+        setTrialIds(newTrialIds);
 
         const newChartData = newTrialIds.map(trialId => newBatches.map(batch => {
           const value = metricsMap[trialId][batch];
