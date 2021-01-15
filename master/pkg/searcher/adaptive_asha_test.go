@@ -127,3 +127,103 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 
 	runValueSimulationTestCases(t, testCases)
 }
+
+func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
+	maxConcurrentTrials := 5
+	testCases := []valueSimulationTestCase{
+		{
+			name: "smaller is better",
+			expectedTrials: []predefinedTrial{
+				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B V"), 0.2),
+				newConstantPredefinedTrial(toOps("300B V"), 0.3),
+				newConstantPredefinedTrial(toOps("900B V"), 0.4),
+				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+			},
+			config: model.SearcherConfig{
+				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
+					Metric:              "error",
+					SmallerIsBetter:     true,
+					MaxLength:           model.NewLengthInBatches(900),
+					MaxTrials:           5,
+					Mode:                model.StandardMode,
+					MaxRungs:            2,
+					Divisor:             3,
+					MaxConcurrentTrials: maxConcurrentTrials,
+					StopOnce:            true,
+				},
+			},
+		},
+		{
+			name: "early exit -- smaller is better",
+			expectedTrials: []predefinedTrial{
+				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
+				newEarlyExitPredefinedTrial(toOps("300B"), 0.2),
+				newConstantPredefinedTrial(toOps("300B V"), 0.3),
+				newConstantPredefinedTrial(toOps("900B V"), 0.4),
+				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+			},
+			config: model.SearcherConfig{
+				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
+					Metric:              "error",
+					SmallerIsBetter:     true,
+					MaxLength:           model.NewLengthInBatches(900),
+					MaxTrials:           5,
+					Mode:                model.StandardMode,
+					MaxRungs:            2,
+					Divisor:             3,
+					MaxConcurrentTrials: maxConcurrentTrials,
+					StopOnce:            true,
+				},
+			},
+		},
+		{
+			name: "smaller is not better",
+			expectedTrials: []predefinedTrial{
+				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.2),
+				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.3),
+				newConstantPredefinedTrial(toOps("900B V"), 0.4),
+				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+			},
+			config: model.SearcherConfig{
+				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
+					Metric:              "error",
+					SmallerIsBetter:     false,
+					MaxLength:           model.NewLengthInBatches(900),
+					MaxTrials:           5,
+					Mode:                model.StandardMode,
+					MaxRungs:            2,
+					Divisor:             3,
+					MaxConcurrentTrials: maxConcurrentTrials,
+					StopOnce:            true,
+				},
+			},
+		},
+		{
+			name: "early exit -- smaller is not better",
+			expectedTrials: []predefinedTrial{
+				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
+				newEarlyExitPredefinedTrial(toOps("300B"), 0.2),
+				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.3),
+				newConstantPredefinedTrial(toOps("900B V"), 0.4),
+				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+			},
+			config: model.SearcherConfig{
+				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
+					Metric:              "error",
+					SmallerIsBetter:     false,
+					MaxLength:           model.NewLengthInBatches(900),
+					MaxTrials:           5,
+					Mode:                model.StandardMode,
+					MaxRungs:            2,
+					Divisor:             3,
+					MaxConcurrentTrials: maxConcurrentTrials,
+					StopOnce:            true,
+				},
+			},
+		},
+	}
+
+	runValueSimulationTestCases(t, testCases)
+}
