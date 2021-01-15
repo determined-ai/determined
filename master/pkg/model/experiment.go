@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/golang/protobuf/ptypes"
 	"time"
 
 	"github.com/pkg/errors"
@@ -412,17 +413,25 @@ type TrialLog struct {
 }
 
 // Proto converts a trial log to its protobuf representation.
-func (t TrialLog) Proto() *apiv1.TrialLogsResponse {
+func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 	resp := &apiv1.TrialLogsResponse{Message: t.Message}
 	switch {
 	case t.ID != nil:
-		resp.IdOneof = &apiv1.TrialLogsResponse_Id{Id: int64(*t.ID)}
+		a, err := ptypes.MarshalAny(&apiv1.TrialLogsResponse_TrialLogsIntID{Id: int32(*t.ID)})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal int into any")
+		}
+		resp.Id = a
 	case t.StringID != nil:
-		resp.IdOneof = &apiv1.TrialLogsResponse_StringId{StringId: *t.StringID}
+		a, err := ptypes.MarshalAny(&apiv1.TrialLogsResponse_TrialLogsStringID{Id: *t.StringID})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal string into any")
+		}
+		resp.Id = a
 	default:
 		panic("log had no valid ID")
 	}
-	return resp
+	return resp, nil
 }
 
 // Resolve resolves the legacy Message field from the others provided.

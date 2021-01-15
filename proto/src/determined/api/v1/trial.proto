@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
 import "determined/experiment/v1/experiment.proto";
@@ -51,13 +52,22 @@ message TrialLogsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id", "message" ] }
   };
-  // The ID of the trial log.
-  oneof id_oneof {
-    // The ID when using a backend that uses int IDs (e.g. Postgres).
-    int64 id = 1;
-    // The ID when using a backend that uses string IDs (e.g. Elasticsearch).
-    string string_id = 2;
-  };
+  // TrialLogsIntID is the message for storing int IDs.
+  message TrialLogsIntID {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: { required: [ "id", "message" ] }
+    };
+    int32 id = 1;
+  }
+  // TrialLogsStringID is the message for storing string IDs.
+  message TrialLogsStringID {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: { required: [ "id", "message" ] }
+    };
+    string id = 1;
+  }
+  // The ID of the trial log. One of TrialLogsIntID or TrialLogsStringID.
+  google.protobuf.Any id = 1;
   // The log message.
   string message = 3;
 }

@@ -77,7 +77,11 @@ func (a *apiServer) TrialLogs(
 
 	onBatch := func(b api.LogBatch) error {
 		return b.ForEach(func(r interface{}) error {
-			return resp.Send(r.(*model.TrialLog).Proto())
+			lr, err := r.(*model.TrialLog).Proto()
+			if err != nil {
+				return err
+			}
+			return resp.Send(lr)
 		})
 	}
 
