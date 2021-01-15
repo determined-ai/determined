@@ -60,7 +60,7 @@ const ExperimentDetails: React.FC = () => {
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
 
   const id = parseInt(experimentId);
-  const basePath = `/experiments/${experimentId}/hp`;
+  const basePath = `/experiments/${experimentId}`;
   const experiment = experimentDetails.data;
 
   const fetchExperimentDetails = useCallback(async () => {
