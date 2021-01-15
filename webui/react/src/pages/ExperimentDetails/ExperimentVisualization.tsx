@@ -31,7 +31,6 @@ interface Props {
 }
 
 const STORAGE_PATH = 'experiment-visualization';
-const STORAGE_METRIC_KEY = 'metric';
 const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
@@ -48,6 +47,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 }: Props) => {
   const history = useHistory();
   const storage = useStorage(STORAGE_PATH);
+  const STORAGE_METRIC_KEY = `${experiment.id}/metric`;
   const defaultUserMetric = storage.get(STORAGE_METRIC_KEY) as MetricName || undefined;
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
@@ -66,7 +66,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
     setSelectedMetric(metric);
-  }, [ storage ]);
+  }, [ storage, STORAGE_METRIC_KEY ]);
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
     setTypeKey(type as VisualizationType);
