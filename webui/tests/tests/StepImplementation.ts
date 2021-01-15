@@ -14,28 +14,10 @@ import * as assert from 'assert';
 import * as t from 'taiko';
 
 /*
- * A require is used here to allow for plugins
- * such as video to come through.
+ * A require is used here to allow for plugins such as video to come through.
  * Using an import will not work.
  */
-const {
-  $,
-  button,
-  clear,
-  closeBrowser,
-  currentURL,
-  focus,
-  link,
-  near,
-  openBrowser,
-  switchTo,
-  tableCell,
-  text,
-  waitFor,
-  within,
-  write,
-  video,
-} = require('taiko');
+const { video } = require('taiko');
 
 const HEADLESS = process.env.HEADLESS === 'true';
 const HOST = process.env.DET_MASTER || 'localhost:8080';
@@ -62,12 +44,12 @@ export default class StepImplementation {
     const browserArgs = HEADLESS
       ? { headless: true, args: [...defaultArgs, '--no-sandbox', '--disable-setuid-sandbox'] }
       : { headless: false, args: defaultArgs };
-    await openBrowser(browserArgs);
+    await t.openBrowser(browserArgs);
   }
 
   @AfterSuite()
   public async afterSuite() {
-    await closeBrowser();
+    await t.closeBrowser();
   }
 
   @BeforeSpec()
@@ -87,14 +69,14 @@ export default class StepImplementation {
   @Step('Sign in as <username> with <password>')
   public async signInWithPassword(username: string, password: string) {
     await goto(`${BASE_URL}/login`);
-    await clear(focus(t.textBox({ id: 'login_username' })));
-    await write(username);
+    await t.clear(t.focus(t.textBox({ id: 'login_username' })));
+    await t.write(username);
     if (password !== '') {
-      await focus(t.textBox({ id: 'login_password' }));
-      await write(password);
+      await t.focus(t.textBox({ id: 'login_password' }));
+      await t.write(password);
     }
-    await clickAndWaitForPage(button('Sign In'));
-    await text(username, near($('#avatar'))).exists();
+    await clickAndWaitForPage(t.button('Sign In'));
+    await t.text(username, t.near(t.$('#avatar'))).exists();
   }
 
   @Step('Sign in as <username> without password')
@@ -104,9 +86,9 @@ export default class StepImplementation {
 
   @Step('Sign out')
   public async signOut() {
-    await t.click($('#avatar'));
-    await t.click(link('Sign Out'));
-    await button('Sign In').exists();
+    await t.click(t.$('#avatar'));
+    await t.click(t.link('Sign Out'));
+    await t.button('Sign In').exists();
   }
 
   /* Browser Utility Steps */
@@ -138,17 +120,17 @@ export default class StepImplementation {
   public async navigateWithTable(table: Table) {
     for (var row of table.getTableRows()) {
       const label = row.getCell('label');
-      await clickAndWaitForPage(link(label, within($('[class*=Navigation_base]'))));
+      await clickAndWaitForPage(t.link(label, t.within(t.$('[class*=Navigation_base]'))));
 
       const external = row.getCell('external') === 'true';
       if (external) {
         const title = row.getCell('title');
         const titleRegex = new RegExp(title, 'i');
-        await switchTo(titleRegex);
+        await t.switchTo(titleRegex);
       }
 
       const path = row.getCell('route');
-      const url = await currentURL();
+      const url = await t.currentURL();
       assert.ok(url.includes(path));
 
       if (external) {
@@ -192,17 +174,17 @@ export default class StepImplementation {
   @Step('Should have <count> table rows')
   public async checkTableRowCount(count: string) {
     const expectedCount = parseInt(count);
-    await assert.strictEqual((await $('tr[data-row-key]').elements()).length, expectedCount);
+    await assert.strictEqual((await t.$('tr[data-row-key]').elements()).length, expectedCount);
   }
 
   @Step('Sort table by column <column>')
   public async sortTableByColumn(column: string) {
-    await t.click(text(column));
+    await t.click(t.text(column));
   }
 
   @Step('Toggle all table row selection')
   public async toggleAllTableRowSelection() {
-    await t.click($('th input[type=checkbox]'));
+    await t.click(t.$('th input[type=checkbox]'));
   }
 
   @Step('Table batch should have following buttons <table>')
@@ -210,7 +192,7 @@ export default class StepImplementation {
     for (var row of table.getTableRows()) {
       const label = row.getCell('table batch buttons');
       const disabled = row.getCell('disabled') === 'true';
-      const batchButton = await button(label, within($('[class*=TableBatch_base]')));
+      const batchButton = await t.button(label, t.within(t.$('[class*=TableBatch_base]')));
       await batchButton.exists();
       assert.strictEqual(await batchButton.isDisabled(), disabled);
     }
@@ -218,30 +200,30 @@ export default class StepImplementation {
 
   @Step('<action> all table rows')
   public async actionOnAllExperiments(action: string) {
-    await t.click(button(action, within($('[class*=TableBatch_base]'))));
+    await t.click(t.button(action, t.within(t.$('[class*=TableBatch_base]'))));
     // Wait for the modal to animate in
-    await waitFor(async () => !(await $('.ant-modal.zoom-enter').exists()));
-    await t.click(button(action, within($('.ant-modal-body'))));
+    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
+    await t.click(t.button(action, t.within(t.$('.ant-modal-body'))));
     // Wait for the modal to animate away
-    await waitFor(async () => !(await $('.ant-modal.zoom-leave').exists()));
+    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-leave').exists()));
   }
 
   /* Notebook and TensorBoard Steps */
 
   @Step('Launch notebook')
   public async launchNotebook() {
-    await clickAndWaitForPage(button('Launch Notebook'));
+    await clickAndWaitForPage(t.button('Launch Notebook'));
   }
 
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
-    await t.click($('[class*=Navigation_launchIcon]'));
-    await clickAndWaitForPage(text('Launch CPU-only Notebook'));
+    await t.click(t.$('[class*=Navigation_launchIcon]'));
+    await clickAndWaitForPage(t.text('Launch CPU-only Notebook'));
   }
 
   @Step('Launch tensorboard')
   public async launchTensorboard() {
-    await clickAndWaitForPage(button('View in TensorBoard'));
+    await clickAndWaitForPage(t.button('View in TensorBoard'));
   }
 
   @Step('Close wait page tab')
@@ -256,43 +238,46 @@ export default class StepImplementation {
   @Step('Should have <count> recent task cards')
   public async checkRecentTasks(count: string) {
     const expectedCount = parseInt(count);
-    await assert.strictEqual((await $('[class*=TaskCard_base]').elements()).length, expectedCount);
+    await assert.strictEqual(
+      (await t.$('[class*=TaskCard_base]').elements()).length,
+      expectedCount,
+    );
   }
 
   /* Experiment List Page Steps */
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    await t.click(tableCell({ row: parseInt(row) + 1, col: 11 }));
-    await t.click(text(action, within($('.ant-dropdown'))));
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 11 }));
+    await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
   }
 
   @Step('Toggle show archived button')
   public async toggleShowArchived() {
-    await t.click(text('Show Archived'));
+    await t.click(t.text('Show Archived'));
   }
 
   /* Experiment Detail Page Steps */
 
   @Step('Archive experiment')
   public async archiveExperiment() {
-    await t.click(button('Archive'));
+    await t.click(t.button('Archive'));
   }
 
   @Step('Unarchive experiment')
   public async unarchiveExperiment() {
-    await t.click(button('Unarchive'));
+    await t.click(t.button('Unarchive'));
   }
 
   @Step('Kill experiment')
   public async killExperiment() {
-    await t.click(button('Kill'));
-    await t.click(button('Yes'));
+    await t.click(t.button('Kill'));
+    await t.click(t.button('Yes'));
   }
 
   @Step('View experiment in TensorBoard')
   public async viewExperimentInTensorBoard() {
-    await t.click(button('View in TensorBoard'));
+    await t.click(t.button('View in TensorBoard'));
   }
 
   /* Task List Page Steps */
@@ -302,9 +287,9 @@ export default class StepImplementation {
     for (var row of table.getTableRows()) {
       const ariaLabel = row.getCell('aria-label');
       const count = row.getCell('count');
-      await t.click($(`[aria-label=${ariaLabel}]`));
+      await t.click(t.$(`[aria-label=${ariaLabel}]`));
       await this.checkTableRowCount(count);
-      await t.click($(`[aria-label=${ariaLabel}]`));
+      await t.click(t.$(`[aria-label=${ariaLabel}]`));
     }
   }
 
@@ -327,6 +312,6 @@ export default class StepImplementation {
   /* Logs */
   @Step('Should have some log entries')
   public async checkSomeLogLines() {
-    assert.ok((await $('[class*=LogViewer_line]').elements()).length > 0);
+    assert.ok((await t.$('[class*=LogViewer_line]').elements()).length > 0);
   }
 }
