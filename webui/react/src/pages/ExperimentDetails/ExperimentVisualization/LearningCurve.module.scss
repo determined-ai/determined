@@ -1,8 +1,11 @@
 .base {
-  .chart {
+  .container {
     background-color: var(--theme-colors-monochrome-17);
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
     border-radius: var(--theme-sizes-border-radius);
+    min-height: 40rem;
+  }
+  .chart {
     height: 40rem;
   }
   .idLayout {
@@ -14,6 +17,9 @@
     height: 2rem;
     margin-right: var(--theme-sizes-layout-medium);
     width: 2rem;
+  }
+  .table {
+    padding: var(--theme-sizes-layout-big);
   }
 }
 .waiting { height: 30rem; }

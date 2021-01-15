@@ -241,8 +241,6 @@ const LearningCurve: React.FC<Props> = ({
       type="warning" />;
   } else if (pageError) {
     return <Message title={pageError.message} />;
-  } else if (!hasLoaded) {
-    return <Spinner />;
   } else if (!hasTrials && hasLoaded) {
     return isExperimentTerminal ? (
       <Message title="No experiment visualization data to show." type={MessageType.Empty} />
@@ -281,29 +279,35 @@ const LearningCurve: React.FC<Props> = ({
             onChange={handleMetricChange} />
         </ResponsiveFilters>}
         title="Learning Curve">
-        <div className={css.chart}>
-          <LearningCurveChart
-            data={chartData}
-            focusedTrialId={tableTrialId}
-            selectedMetric={selectedMetric}
-            trialIds={trialIds}
-            xValues={batches}
-            onTrialClick={handleTrialClick}
-            onTrialFocus={handleTrialFocus} />
+        <div className={css.container}>
+          {!hasLoaded ? <Spinner /> : (
+            <>
+              <div className={css.chart}>
+                <LearningCurveChart
+                  data={chartData}
+                  focusedTrialId={tableTrialId}
+                  selectedMetric={selectedMetric}
+                  trialIds={trialIds}
+                  xValues={batches}
+                  onTrialClick={handleTrialClick}
+                  onTrialFocus={handleTrialFocus} />
+              </div>
+              <div className={css.table}>
+                <ResponsiveTable<TrialHParams>
+                  columns={columns}
+                  dataSource={trialHps}
+                  pagination={getPaginationConfig(trialHps.length, pageSize)}
+                  rowClassName={rowClassName}
+                  rowKey="id"
+                  scroll={{ x: 1000 }}
+                  showSorterTooltip={false}
+                  size="small"
+                  onChange={handleTableChange}
+                  onRow={handleTableRow} />
+              </div>
+            </>
+          )}
         </div>
-      </Section>
-      <Section title="Trial Hyperparameters">
-        <ResponsiveTable<TrialHParams>
-          columns={columns}
-          dataSource={trialHps}
-          pagination={getPaginationConfig(trialHps.length, pageSize)}
-          rowClassName={rowClassName}
-          rowKey="id"
-          scroll={{ x: 1000 }}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange}
-          onRow={handleTableRow} />
       </Section>
     </div>
   );
