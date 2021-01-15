@@ -246,7 +246,9 @@ export default class StepImplementation {
 
   @Step('Close wait page tab')
   public async closeTab() {
+    await t.waitFor(100);
     await t.closeTab(/http.*\/(wait|proxy)/);
+    await t.waitFor(100);
   }
 
   /* Dashboard Page Steps */
