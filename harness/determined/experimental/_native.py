@@ -100,7 +100,6 @@ def _make_test_workloads(
     logging.info("Validating one step")
     yield from interceptor.send(workload.validation_workload(1, num_batches=config.scheduling_unit()), [])
     validation = interceptor.metrics_result()
-    check.eq(validation["metric"]["num_batches"], config.scheduling_unit())
     v_metrics = validation["metrics"]["validation_metrics"]
     logging.debug(f"Finished validating, validation metrics: {v_metrics}")
 
