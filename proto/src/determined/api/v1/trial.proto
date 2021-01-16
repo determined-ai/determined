@@ -52,12 +52,7 @@ message TrialLogsResponse {
     json_schema: { required: [ "id", "message" ] }
   };
   // The ID of the trial log.
-  oneof id_oneof {
-    // The ID when using a backend that uses int IDs (e.g. Postgres).
-    int64 id = 1;
-    // The ID when using a backend that uses string IDs (e.g. Elasticsearch).
-    string string_id = 2;
-  };
+  string id = 1;
   // The log message.
   string message = 3;
 }

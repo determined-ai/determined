@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -416,9 +417,9 @@ func (t TrialLog) Proto() *apiv1.TrialLogsResponse {
 	resp := &apiv1.TrialLogsResponse{Message: t.Message}
 	switch {
 	case t.ID != nil:
-		resp.IdOneof = &apiv1.TrialLogsResponse_Id{Id: int64(*t.ID)}
+		resp.Id = strconv.Itoa(*t.ID)
 	case t.StringID != nil:
-		resp.IdOneof = &apiv1.TrialLogsResponse_StringId{StringId: *t.StringID}
+		resp.Id = *t.StringID
 	default:
 		panic("log had no valid ID")
 	}
