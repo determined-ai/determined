@@ -22,6 +22,7 @@ type (
 		ClosedTrials     map[model.RequestID]bool `json:"closed_trials"`
 		TrialsCompleted  int                      `json:"trials_completed"`
 		InvalidTrials    int                      `json:"invalid_trials"`
+		PendingTrials    int                      `json:"pending_trials"`
 		SearchMethodType SearchMethodType         `json:"search_method_type"`
 	}
 
@@ -131,6 +132,7 @@ func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error)
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
 		ops = append(ops, NewValidate(create.RequestID))
+		s.PendingTrials++
 	}
 	return ops, nil
 }
@@ -154,6 +156,7 @@ func (s *asyncHalvingSearch) trialClosed(
 func (s *asyncHalvingSearch) validationCompleted(
 	ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
+	s.PendingTrials--
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.Metric)
 	if err != nil {
@@ -205,6 +208,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 				ops = append(ops, NewTrain(promotionID, model.NewLength(s.Unit(), unitsNeeded)))
 				ops = append(ops, NewValidate(promotionID))
 				addedTrainWorkload = true
+				s.PendingTrials++
 			} else {
 				// We make a recursive call that will behave the same
 				// as if we'd actually run the promoted job and received
@@ -216,6 +220,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 
 	allTrials := len(s.TrialRungs) - s.InvalidTrials
 	if !addedTrainWorkload && allTrials < s.MaxTrials {
+		s.PendingTrials++
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialRungs[create.RequestID] = 0
@@ -252,6 +257,9 @@ func (s *asyncHalvingSearch) closeOutRungs() []Operation {
 }
 
 func (s *asyncHalvingSearch) progress(float64) float64 {
+	if s.MaxConcurrentTrials > 0 && s.PendingTrials > s.MaxConcurrentTrials {
+		panic("pending trials is greater than max_concurrent_trials")
+	}
 	allTrials := len(s.Rungs[0].Metrics)
 	// Give ourselves an overhead of 20% of MaxTrials when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.MaxTrials))
@@ -266,6 +274,7 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
+	s.PendingTrials--
 	if exitedReason == workload.InvalidHP {
 		var ops []Operation
 		s.EarlyExitTrials[requestID] = true
@@ -292,6 +301,7 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
 		ops = append(ops, NewValidate(create.RequestID))
+		s.PendingTrials++
 		return ops, nil
 	}
 	s.EarlyExitTrials[requestID] = true

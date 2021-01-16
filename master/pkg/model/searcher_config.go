@@ -92,8 +92,9 @@ func (s SingleConfig) Unit() Unit {
 
 // RandomConfig configures a random search.
 type RandomConfig struct {
-	MaxLength Length `json:"max_length"`
-	MaxTrials int    `json:"max_trials"`
+	MaxLength           Length `json:"max_length"`
+	MaxTrials           int    `json:"max_trials"`
+	MaxConcurrentTrials int    `json:"max_concurrent_trials"`
 }
 
 // Unit implements the model.InUnits interface.
@@ -106,12 +107,14 @@ func (r RandomConfig) Validate() (errs []error) {
 	return []error{
 		check.GreaterThan(r.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(r.MaxTrials, 0, "max_trials must be > 0"),
+		check.GreaterThanOrEqualTo(r.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
 }
 
 // GridConfig configures a grid search.
 type GridConfig struct {
-	MaxLength Length `json:"max_length"`
+	MaxLength           Length `json:"max_length"`
+	MaxConcurrentTrials int    `json:"max_concurrent_trials"`
 }
 
 // Unit implements the model.InUnits interface.
@@ -123,6 +126,7 @@ func (g GridConfig) Unit() Unit {
 func (g GridConfig) Validate() (errs []error) {
 	return []error{
 		check.GreaterThan(g.MaxLength.Units, 0, "max_length must be > 0"),
+		check.GreaterThanOrEqualTo(g.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
 }
 

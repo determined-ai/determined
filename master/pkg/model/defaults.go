@@ -50,6 +50,12 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		Hyperparameters: make(map[string]Hyperparameter),
 		Searcher: SearcherConfig{
 			SmallerIsBetter: true,
+			RandomConfig: &RandomConfig{
+				MaxConcurrentTrials: 0,
+			},
+			GridConfig: &GridConfig{
+				MaxConcurrentTrials: 0,
+			},
 			SyncHalvingConfig: &SyncHalvingConfig{
 				SmallerIsBetter: true,
 				Divisor:         4,

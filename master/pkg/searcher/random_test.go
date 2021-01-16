@@ -48,8 +48,9 @@ func TestRandomSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				RandomConfig: &model.RandomConfig{
-					MaxLength: model.NewLengthInBatches(500),
-					MaxTrials: 4,
+					MaxLength:           model.NewLengthInBatches(500),
+					MaxTrials:           4,
+					MaxConcurrentTrials: 2,
 				},
 			},
 		},
