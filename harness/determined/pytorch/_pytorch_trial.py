@@ -3,10 +3,13 @@ import pathlib
 import random
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from determined.workload import Workload
 
 import cloudpickle
 import numpy as np
 import torch
+import torch.nn as nn
+from itertools import islice
 
 import determined as det
 from determined import horovod, ipc, pytorch, util, workload
@@ -152,7 +155,7 @@ class PyTorchTrialController(det.LoopTrialController):
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response_func(
                     util.wrap_metrics(
-                        self._compute_validation_metrics(), self.context.get_stop_requested()
+                        self._compute_validation_metrics(w), self.context.get_stop_requested()
                     )
                 )
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
@@ -309,8 +312,8 @@ class PyTorchTrialController(det.LoopTrialController):
                 metrics[metric_name] = metric_val.cpu().numpy()
         return metrics
 
-    @torch.no_grad()  # type: ignore
-    def _compute_validation_metrics(self) -> workload.Response:
+    @torch.no_grad()
+    def _compute_validation_metrics(self, wl: Workload) -> workload.Response:
         self.context.experimental.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
         # different between training and inference.
@@ -334,8 +337,10 @@ class PyTorchTrialController(det.LoopTrialController):
             batch_metrics = []
 
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
-            check.gt(len(self.validation_loader), 0)
-            for batch in self.validation_loader:
+            val_loader_len = len(self.validation_loader)
+            check.gt(val_loader_len, 0)
+            batch_stop_idx = wl.num_batches if wl.num_batches > 0 else val_loader_len
+            for batch in islice(self.validation_loader, 0, batch_stop_idx):
                 batch = self.context.to_device(batch)
                 num_inputs += pytorch.data_length(batch)
 
