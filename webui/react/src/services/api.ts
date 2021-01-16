@@ -11,7 +11,7 @@ import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
   ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
-  Telemetry, TrialDetails, ValidationHistory,
+  Telemetry, TrialDetails, TrialLog, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -206,4 +206,4 @@ export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs
 
 export const getTaskLogs = generateApi<TaskLogsParams, Log[]>(Config.getTaskLogs);
 
-export const getTrialLogs = generateApi<TrialLogsParams, Log[]>(Config.getTrialLogs);
+export const getTrialLogs = generateApi<TrialLogsParams, TrialLog[]>(Config.getTrialLogs);
