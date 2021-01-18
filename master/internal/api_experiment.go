@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
@@ -30,27 +32,6 @@ import (
 )
 
 var experimentsAddr = actor.Addr("experiments")
-
-func isInList(srcList []string, item string) bool {
-	item = strings.ToLower(item)
-	for _, src := range srcList {
-		if strings.Contains(strings.ToLower(src), item) {
-			return true
-		}
-	}
-	return false
-}
-
-// matchesList checks whether srcList contains all strings provided in matchList.
-func matchesList(srcList []string, matchList []string) bool {
-	for _, match := range matchList {
-		if !isInList(srcList, match) {
-			return false
-		}
-	}
-
-	return true
-}
 
 func (a *apiServer) checkExperimentExists(id int) error {
 	ok, err := a.m.db.CheckExperimentExists(id)
@@ -100,44 +81,100 @@ func (a *apiServer) GetExperiment(
 
 func (a *apiServer) GetExperiments(
 	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
+	// Construct the experiment filtering expression.
+	var allStates []string
+	for _, state := range req.States {
+		allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
+	}
+	stateFilterExpr := strings.Join(allStates, ",")
+	userFilterExpr := strings.Join(req.Users, ",")
+	labelFilterExpr := strings.Join(req.Labels, ",")
+	archivedExpr := ""
+	if req.Archived != nil {
+		archivedExpr = strconv.FormatBool(req.Archived.Value)
+	}
+
+	// Construct the ordering expression.
+	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
+		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED: "id",
+		apiv1.GetExperimentsRequest_SORT_BY_ID:          "id",
+		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION: "description",
+		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:  "start_time",
+		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:    "end_time",
+		apiv1.GetExperimentsRequest_SORT_BY_STATE:       "state",
+		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:  "num_trials",
+		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "progress",
+		apiv1.GetExperimentsRequest_SORT_BY_USER:        "username",
+	}
+	sortByMap := map[apiv1.OrderBy]string{
+		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+	}
+	orderExpr := ""
+	if orderColMap[req.SortBy] != "id" {
+		orderExpr = fmt.Sprintf(
+			"%s %s, id %s",
+			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
+		)
+	} else {
+		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
+	}
+
+	// Query the database.
 	resp := &apiv1.GetExperimentsResponse{}
-	if err := a.m.db.QueryProto("get_experiments", &resp.Experiments); err != nil {
+	type experimentsWrapper struct {
+		Count       int32  `db:"count"`
+		Experiments []byte `db:"experiments"`
+	}
+	res := experimentsWrapper{}
+	if err := a.m.db.QueryF(
+		"get_experiments",
+		[]interface{}{orderExpr},
+		&res,
+		stateFilterExpr,
+		archivedExpr,
+		userFilterExpr,
+		labelFilterExpr,
+		req.Description,
+		req.Offset,
+		req.Limit,
+	); err != nil {
 		return nil, err
 	}
-	a.filter(&resp.Experiments, func(i int) bool {
-		v := resp.Experiments[i]
-		if req.Archived != nil && req.Archived.Value != v.Archived {
-			return false
+	if len(res.Experiments) > 0 {
+		unmarshaled := make([]interface{}, 0)
+		if err := json.Unmarshal(res.Experiments, &unmarshaled); err != nil {
+			return nil, errors.Wrapf(err, "error parsing experiments json from the db: %s", res.Experiments)
 		}
-		found := false
-		for _, state := range req.States {
-			if state == v.State {
-				found = true
-				break
+		for _, exp := range unmarshaled {
+			bytes, err := json.Marshal(exp)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error converting row to json bytes: %s", exp)
 			}
-		}
-		if len(req.States) != 0 && !found {
-			return false
-		}
-		found = false
-		for _, user := range req.Users {
-			if user == v.Username {
-				found = true
-				break
+			protoExp := &experimentv1.Experiment{}
+			err = protojson.Unmarshal(bytes, protoExp)
+			if err != nil {
+				return nil, errors.Wrap(err, "error converting row to Protobuf struct")
 			}
+			resp.Experiments = append(resp.Experiments, protoExp)
 		}
-		if len(req.Users) != 0 && !found {
-			return false
-		}
+	}
 
-		if !matchesList(v.Labels, req.Labels) {
-			return false
-		}
+	// Set pagination
+	pagination, err := api.Paginate(int(res.Count), int(req.Offset), int(req.Limit))
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	resp.Pagination = &apiv1.Pagination{
+		Offset:     req.Offset,
+		Limit:      req.Limit,
+		StartIndex: int32(pagination.StartIndex),
+		EndIndex:   int32(pagination.EndIndex),
+		Total:      res.Count,
+	}
 
-		return strings.Contains(strings.ToLower(v.Description), strings.ToLower(req.Description))
-	})
-	a.sort(resp.Experiments, req.OrderBy, req.SortBy, apiv1.GetExperimentsRequest_SORT_BY_ID)
-	return resp, a.paginate(&resp.Pagination, &resp.Experiments, req.Offset, req.Limit)
+	return resp, nil
 }
 
 func (a *apiServer) GetExperimentLabels(_ context.Context,
