@@ -2,6 +2,7 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
+	"fmt"
 	"strings"
 	"time"
 
@@ -219,7 +220,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			instanceTypeStringBuilder := strings.Builder{}
 			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
 			instanceTypeStringBuilder.WriteString(", ")
-			instanceTypeStringBuilder.WriteString(string(pool.Provider.GCP.InstanceType.GPUNum))
+			instanceTypeStringBuilder.WriteString(fmt.Sprint(pool.Provider.GCP.InstanceType.GPUNum))
 			instanceTypeStringBuilder.WriteString("x")
 			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.GPUType)
 			instanceType = instanceTypeStringBuilder.String()
