@@ -19,8 +19,7 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import { columns as defaultColumns } from 'pages/HGICluster.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { Resource, ResourceState } from 'types';
-import { ResourcePool } from 'types/ResourcePool';
+import { Resource, ResourcePool, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
 

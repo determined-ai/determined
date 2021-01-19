@@ -1,6 +1,6 @@
 import { ColumnType } from 'antd/es/table';
 
-import { ResourcePool } from 'types/ResourcePool';
+import { ResourcePool } from 'types';
 import { alphanumericSorter, numericSorter } from 'utils/data';
 
 export const columns: ColumnType<ResourcePool>[] = [

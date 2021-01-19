@@ -2,7 +2,7 @@ import { Divider, Modal } from 'antd';
 import React from 'react';
 
 import Json from 'components/Json';
-import { ResourcePool } from 'types/ResourcePool';
+import { ResourcePool } from 'types';
 import { clone } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 

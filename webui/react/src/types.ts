@@ -454,3 +454,101 @@ export interface TrialLog {
   message: string;
   time: string;
 }
+
+export interface ResourcePool {
+  cpuContainerCapacity: number;
+  cpuContainerCapacityPerAgent: number;
+  cpuContainersRunning: number;
+  defaultCpuPool: boolean;
+  defaultGpuPool?: boolean;
+  description: string;
+  details: Details;
+  gpusPerAgent: number;
+  imageId: string;
+  instanceType: string;
+  location: string;
+  maxInstances: number;
+  minInstances: number;
+  name: string;
+  numAgents: number;
+  schedulerFittingPolicy: string;
+  schedulerType: string;
+  slotsAvailable: number;
+  slotsUsed: number;
+  spotOrPreemptible: boolean;
+  type: string;
+}
+
+interface Details {
+  agentDockerImage: string;
+  agentDockerRuntime: string;
+  agentFluentImage: string;
+  aws?: Aws;
+  containerStartupScript: string;
+  description: string;
+  gcp?: Gcp;
+  masterCertName: string;
+  masterUrl: string;
+  maxAgentStartingPeriod: string;
+  maxCpuContainersPerAgent: number;
+  maxIdleAgentPeriod: string;
+  maxInstances: number;
+  minInstances: number;
+  poolName: string;
+  priorityScheduler?: PriorityScheduler;
+  provisionerType: string;
+  schedulerFittingPolicy: string;
+  schedulerType: string;
+  startupScript: string;
+}
+
+export interface Aws {
+  customTags: CustomTag[];
+  iamInstanceProfileArn: string;
+  imageId: string;
+  instanceName: string;
+  instanceType: string;
+  logGroup: string;
+  logStream: string;
+  publicIp: boolean;
+  region: string;
+  rootVolumeSize: number;
+  securityGroupId: string;
+  spotEnabled: boolean;
+  spotMaxPrice: string;
+  sshKeyName: string;
+  subnetId: string;
+  tagKey: string;
+  tagValue: string;
+}
+
+interface CustomTag {
+  key: string;
+  value: string;
+}
+
+export interface Gcp {
+  bootDiskSize: number;
+  bootDiskSourceImage: string;
+  externalIp: boolean;
+  gpuNum: number;
+  gpuType: string;
+  labelKey: string;
+  labelValue: string;
+  machineType: string;
+  namePrefix: string;
+  network: string;
+  networkTags: string[];
+  operationTimeoutPeriod: string;
+  preemptible: boolean;
+  project: string;
+  serviceAccountEmail: string;
+  serviceAccountScopes: string[];
+  subnetwork: string;
+  zone: string;
+}
+
+export interface PriorityScheduler {
+  defaultPriority: number;
+  preemption: boolean;
+}

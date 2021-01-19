@@ -5,8 +5,7 @@ import gcpLogo from 'assets/gcp-logo.svg';
 import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import { ResourceState } from 'types';
-import { ResourcePool } from 'types/ResourcePool';
+import { ResourcePool, ResourceState } from 'types';
 
 import Json from './Json';
 import Link from './Link';
