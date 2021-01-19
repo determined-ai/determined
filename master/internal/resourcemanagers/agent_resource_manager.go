@@ -62,10 +62,10 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
 
-	case sproto.GetDefaultGPUResourcePoolReq:
+	case sproto.GetDefaultGPUResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultGPUResourcePoolResponse{PoolName: a.config.DefaultGPUResourcePool})
 
-	case sproto.GetDefaultCPUResourcePoolReq:
+	case sproto.GetDefaultCPUResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: a.config.DefaultCPUResourcePool})
 
 	case *apiv1.GetResourcePoolsRequest:

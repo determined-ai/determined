@@ -20,18 +20,18 @@ var (
 )
 
 type (
-	// GetDefaultGPUResourcePoolReq is a message asking for the name of the default GPU resource pool
-	GetDefaultGPUResourcePoolReq struct{}
+	// GetDefaultGPUResourcePoolRequest is a message asking for the name of the default GPU resource pool
+	GetDefaultGPUResourcePoolRequest struct{}
 
-	// GetDefaultGPUResourcePoolResponse is the response to GetDefaultGPUResourcePoolReq
+	// GetDefaultGPUResourcePoolResponse is the response to GetDefaultGPUResourcePoolRequest
 	GetDefaultGPUResourcePoolResponse struct {
 		PoolName string
 	}
 
-	// GetDefaultCPUResourcePoolReq is a message asking for the name of the default CPU resource pool
-	GetDefaultCPUResourcePoolReq struct{}
+	// GetDefaultCPUResourcePoolRequest is a message asking for the name of the default CPU resource pool
+	GetDefaultCPUResourcePoolRequest struct{}
 
-	// GetDefaultCPUResourcePoolResponse is the response to GetDefaultCPUResourcePoolReq
+	// GetDefaultCPUResourcePoolResponse is the response to GetDefaultCPUResourcePoolRequest
 	GetDefaultCPUResourcePoolResponse struct {
 		PoolName string
 	}
@@ -74,13 +74,13 @@ func GetCurrentRM(system *actor.System) *actor.Ref {
 
 // GetDefaultGPUResourcePool returns the default GPU resource pool
 func GetDefaultGPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetCurrentRM(system), GetDefaultGPUResourcePoolReq{}).Get()
+	resp := system.Ask(GetCurrentRM(system), GetDefaultGPUResourcePoolRequest{}).Get()
 	return resp.(GetDefaultGPUResourcePoolResponse).PoolName
 }
 
 // GetDefaultCPUResourcePool returns the default CPU resource pool
 func GetDefaultCPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetCurrentRM(system), GetDefaultGPUResourcePoolReq{}).Get()
+	resp := system.Ask(GetCurrentRM(system), GetDefaultGPUResourcePoolRequest{}).Get()
 	return resp.(GetDefaultCPUResourcePoolResponse).PoolName
 }
 

@@ -90,10 +90,10 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
-	case sproto.GetDefaultGPUResourcePoolReq:
+	case sproto.GetDefaultGPUResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultGPUResourcePoolResponse{PoolName: "default"})
 
-	case sproto.GetDefaultCPUResourcePoolReq:
+	case sproto.GetDefaultCPUResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: "default"})
 
 	case schedulerTick:
