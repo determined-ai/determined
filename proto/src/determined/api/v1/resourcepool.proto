@@ -35,7 +35,10 @@ message ResourcePoolStatesRequest {
 // Response to ResourcePoolStatesRequest.
 message ResourcePoolStatesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "message" ] }
+    json_schema: { required: [ "states" ] }
   };
+
+  // The states of the resource pools. The first message will include all pools and all subsequent
+  // messages will only include pools whose state has changed.
   resourcepool.v1.ResourcePoolStates states = 1;
 }

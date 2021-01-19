@@ -13,7 +13,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
-type GetResourceSummaries struct {}
+// GetResourceSummaries is a requests to get a summary of how many resource are available in
+// each resource pool and how many resources are in use.
+type GetResourceSummaries struct{}
+
+// ResourceSummaries is the response to GetResourceSummaries, which lists, for each resource
+// pool, how many resource are available and how many resources are in use.
 type ResourceSummaries struct {
 	Summaries []ResourceSummary
 }

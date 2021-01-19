@@ -96,6 +96,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.GetDefaultCPUResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: "default"})
 
+	case GetResourceSummaries:
+		ctx.Respond(ResourceSummaries{Summaries: []ResourceSummary{k.createResourceSummary(ctx)}})
+
 	case schedulerTick:
 		if k.reschedule {
 			k.schedulePendingTasks(ctx)
@@ -292,6 +295,29 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 		}
 	}
 }
+
+func (k *kubernetesResourceManager) createResourceSummary(ctx *actor.Context) ResourceSummary {
+	slotsUsed := 0
+	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
+		slotsUsed += slotsUsedByGroup
+	}
+	return ResourceSummary{
+		Name:                   kubernetesDummyResourcePool,
+		NumAgents:              1,
+		NumTotalSlots:          k.agent.numSlots(),
+		NumActiveSlots:         k.agent.numUsedSlots(),
+		MaxNumCPUContainers:    k.agent.maxZeroSlotContainers,
+		NumActiveCPUContainers: k.agent.numZeroSlotContainers(),
+	}
+
+}
+
+
+// summaries := make([]ResourceSummary, 0, len(a.poolsConfig.ResourcePools))
+//		for _, pool := range a.pools {
+//			summary := ctx.Ask(pool, GetResourceSummary{}).Get().(ResourceSummary)
+//			summaries = append(summaries, summary)
+//		}
 
 type podAllocation struct {
 	req       *AllocateRequest

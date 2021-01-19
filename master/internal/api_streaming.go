@@ -2,11 +2,12 @@ package internal
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -14,28 +15,28 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
+const tickInterval = 1 * time.Second
+
 func (a *apiServer) ResourcePoolStates(
 	req *apiv1.ResourcePoolStatesRequest,
 	resp apiv1.Determined_ResourcePoolStatesServer,
 ) error {
-
-
-
 	return a.m.system.MustActorOf(
 		actor.Addr("resourcepool-api-state-stream-"+uuid.New().String()),
 		NewResourcePoolAPIStatesStreamActor(resp),
 	).AwaitTermination()
 }
 
-const tickInterval = 1 * time.Second
-
+// ResourcePoolAPIStatesStreamActor is the actor that streams state updates
+// for the resource pool state streaming API.
 type ResourcePoolAPIStatesStreamActor struct {
 	resp         apiv1.Determined_ResourcePoolStatesServer
 	tickInterval time.Duration
 	lastStates   []*resourcepoolv1.ResourcePoolState
 }
 
-// NewLogStoreProcessor creates a new LogStoreProcessor.
+// NewResourcePoolAPIStatesStreamActor creates a new actor that streams updates until
+// the stream finishes.
 func NewResourcePoolAPIStatesStreamActor(
 	server apiv1.Determined_ResourcePoolStatesServer,
 ) *ResourcePoolAPIStatesStreamActor {
@@ -46,29 +47,24 @@ func NewResourcePoolAPIStatesStreamActor(
 	}
 }
 
-
-// Launch an actor
-// Receive TICK
-
-
-
-// Receive implements the actor.Actor interface.
+// Receive implements the actor's "receive message and act" loop.
 func (a *ResourcePoolAPIStatesStreamActor) Receive(ctx *actor.Context) error {
 	type tick struct{}
 	switch ctx.Message().(type) {
 	case actor.PreStart:
-		resp := ctx.Ask(sproto.GetCurrentRM(ctx.Self().System()), resourcemanagers.GetResourceSummaries{}).Get()
+		resp := ctx.Ask(sproto.GetCurrentRM(ctx.Self().System()),
+			resourcemanagers.GetResourceSummaries{}).Get()
 		summaries := resp.(resourcemanagers.ResourceSummaries).Summaries
 
 		states := make([]*resourcepoolv1.ResourcePoolState, 0, len(summaries))
 		for _, summary := range summaries {
 			state := resourcepoolv1.ResourcePoolState{
-				Name:                  summary.Name,
+				Name:                   summary.Name,
 				NumAgents:              int32(summary.NumAgents),
 				NumTotalSlots:          int32(summary.NumTotalSlots),
 				NumActiveSlots:         int32(summary.NumActiveSlots),
-				MaxCpuContainers:       int32(summary.MaxNumCpuContainers),
-				NumActiveCpuContainers: int32(summary.NumActiveCpuContainers),
+				MaxCpuContainers:       int32(summary.MaxNumCPUContainers),
+				NumActiveCpuContainers: int32(summary.NumActiveCPUContainers),
 			}
 			states = append(states, &state)
 		}
@@ -86,34 +82,30 @@ func (a *ResourcePoolAPIStatesStreamActor) Receive(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, a.tickInterval, tick{})
 
 	case tick:
-		// TODO: Is checking for Err() the same as checking for Done()?
 		if a.resp.Context().Err() != nil {
-			// TODO: Add more informative logging here
 			ctx.Self().Stop()
 			return nil
 		}
 
-		// Check done channel
-			// if done, shut down (return nil)
-
-
 		// Get the full state from the resource pools
-		resp := ctx.Ask(sproto.GetCurrentRM(ctx.Self().System()), resourcemanagers.GetResourceSummaries{}).Get()
+		resp := ctx.Ask(sproto.GetCurrentRM(ctx.Self().System()),
+			resourcemanagers.GetResourceSummaries{}).Get()
 		summaries := resp.(resourcemanagers.ResourceSummaries).Summaries
 
 		currentStates := make([]*resourcepoolv1.ResourcePoolState, 0, len(summaries))
 		for _, summary := range summaries {
 			state := resourcepoolv1.ResourcePoolState{
-				Name:                  summary.Name,
+				Name:                   summary.Name,
 				NumAgents:              int32(summary.NumAgents),
 				NumTotalSlots:          int32(summary.NumTotalSlots),
 				NumActiveSlots:         int32(summary.NumActiveSlots),
-				MaxCpuContainers:       int32(summary.MaxNumCpuContainers),
-				NumActiveCpuContainers: int32(summary.NumActiveCpuContainers),
+				MaxCpuContainers:       int32(summary.MaxNumCPUContainers),
+				NumActiveCpuContainers: int32(summary.NumActiveCPUContainers),
 			}
 			currentStates = append(currentStates, &state)
 		}
 
+		// Convert full state into diff to send to client
 		updatesToSend := calculateUpdates(a.lastStates, currentStates)
 		a.lastStates = currentStates
 
@@ -135,7 +127,10 @@ func (a *ResourcePoolAPIStatesStreamActor) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func calculateUpdates(previous, current []*resourcepoolv1.ResourcePoolState) []*resourcepoolv1.ResourcePoolState {
+func calculateUpdates(
+	previous,
+	current []*resourcepoolv1.ResourcePoolState,
+) []*resourcepoolv1.ResourcePoolState {
 	// We assume that the number of resource pools is fixed.
 	if len(previous) != len(current) {
 		panic("The length of resource pools has changed, which should never happen")
@@ -147,7 +142,6 @@ func calculateUpdates(previous, current []*resourcepoolv1.ResourcePoolState) []*
 		poolName := previous[i].Name
 		previousMap[poolName] = previous[i]
 	}
-
 
 	for i := range current {
 		newState := current[i]
@@ -166,5 +160,4 @@ func calculateUpdates(previous, current []*resourcepoolv1.ResourcePoolState) []*
 		}
 	}
 	return updates
-
 }
