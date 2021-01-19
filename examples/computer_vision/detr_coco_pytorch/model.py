@@ -1,4 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 """
 Copied from: https://github.com/facebookresearch/detr/blob/4e1a9281bc5621dcd65f3438631de25e255c4269/models/detr.py
 The SetCriterion module is modified to sync num_boxes using horovod allreduce instead of pytorch all_reduce.
@@ -242,7 +241,7 @@ def build_model(args, world_size):
     # you should pass `num_classes` to be 2 (max_obj_id + 1).
     # For more details on this, check the following discussion
     # https://github.com/facebookresearch/detr/issues/108#issuecomment-650269223
-    num_classes = 20 if args.dataset_file != "coco" else 91
+    num_classes = 91 if "num_classes" not in args else args.num_classes
     device = torch.device(args.device)
 
     backbone = build_backbone(args)

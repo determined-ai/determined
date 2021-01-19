@@ -17,6 +17,7 @@ from determined.pytorch import (
     LRScheduler,
     PyTorchTrial,
     PyTorchTrialContext,
+    MetricReducer,
 )
 
 # DETR imports
@@ -31,6 +32,54 @@ from data_utils import download_coco_from_source
 
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
+
+
+class COCOReducer(MetricReducer):
+    def __init__(self, base_ds, iou_types, cat_ids=[]):
+        self.base_ds = base_ds
+        self.iou_types = iou_types
+        self.cat_ids = cat_ids
+        self.reset()
+
+    def reset(self):
+        self.results = []
+
+    def update(self, result):
+        self.results.extend(result)
+
+    def per_slot_reduce(self):
+        return self.results
+
+    def cross_slot_reduce(self, per_slot_metrics):
+        coco_evaluator = CocoEvaluator(self.base_ds, self.iou_types)
+        if len(self.cat_ids):
+            for iou_type in self.iou_types:
+                coco_evaluator.coco_eval[iou_type].params.catIds = self.cat_ids
+        for results in per_slot_metrics:
+            results_dict = {r[0]: r[1] for r in results}
+            coco_evaluator.update(results_dict)
+
+        for iou_type in coco_evaluator.iou_types:
+            coco_eval = coco_evaluator.coco_eval[iou_type]
+            coco_evaluator.eval_imgs[iou_type] = np.concatenate(
+                coco_evaluator.eval_imgs[iou_type], 2
+            )
+            create_common_coco_eval(
+                coco_eval, coco_evaluator.img_ids, coco_evaluator.eval_imgs[iou_type]
+            )
+        coco_evaluator.accumulate()
+        coco_evaluator.summarize()
+
+        coco_stats = coco_evaluator.coco_eval["bbox"].stats.tolist()
+
+        loss_dict = {}
+        loss_dict["mAP"] = coco_stats[0]
+        loss_dict["mAP_50"] = coco_stats[1]
+        loss_dict["mAP_75"] = coco_stats[2]
+        loss_dict["mAP_small"] = coco_stats[3]
+        loss_dict["mAP_medium"] = coco_stats[4]
+        loss_dict["mAP_large"] = coco_stats[5]
+        return loss_dict
 
 
 class DETRTrial(PyTorchTrial):
@@ -56,10 +105,27 @@ class DETRTrial(PyTorchTrial):
                 ):
                     time.sleep(10)
 
+        self.cat_ids = []
+
         # Build the model and configure postprocessors for evaluation.
         model, self.criterion, self.postprocessors = build_model(
             self.hparams, world_size=self.context.distributed.get_size()
         )
+
+        # Load checkpoint from DETR repo.
+        if "warmstart" in self.hparams and self.hparams.warmstart:
+            checkpoint = torch.hub.load_state_dict_from_url(
+                url="https://dl.fbaipublicfiles.com/detr/detr-r50-e632da11.pth",
+                map_location="cpu",
+                check_hash=True,
+            )
+
+            # Remove class weights if finetuning.
+            if "cat_ids" in self.hparams and len(self.hparams.cat_ids):
+                del checkpoint["model"]["class_embed.weight"]
+                del checkpoint["model"]["class_embed.bias"]
+            model.load_state_dict(checkpoint["model"], strict=False)
+
         self.model = self.context.wrap_model(model)
 
         n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -112,8 +178,20 @@ class DETRTrial(PyTorchTrial):
 
     def build_validation_data_loader(self) -> DataLoader:
         dataset_val = build_dataset(image_set="val", args=self.hparams)
+        if "cat_ids" in self.hparams:
+            self.cat_ids = self.hparams.cat_ids
+            self.catIdtoCls = dataset_val.catIdtoCls
         # Set up evaluator
         self.base_ds = get_coco_api_from_dataset(dataset_val)
+        iou_types = tuple(
+            k for k in ("segm", "bbox") if k in self.postprocessors.keys()
+        )
+        self.reducer = self.context.experimental.wrap_reducer(
+            COCOReducer(self.base_ds, iou_types, self.cat_ids),
+            for_training=False,
+            for_validation=True,
+        )
+
         return DataLoader(
             dataset_val,
             batch_size=self.context.get_per_slot_batch_size(),
@@ -150,70 +228,34 @@ class DETRTrial(PyTorchTrial):
 
         return loss_dict
 
-    def evaluate_full_dataset(
-        self, data_loader: torch.utils.data.DataLoader
-    ) -> Dict[str, Any]:
-        # This is slow, need to have custom reducer to suppport multi-GPU eval.
-        iou_types = tuple(
-            k for k in ("segm", "bbox") if k in self.postprocessors.keys()
-        )
-        coco_evaluator = CocoEvaluator(self.base_ds, iou_types)
-        results = {}
-        loss_dict_aggregated = defaultdict(int)
-        with torch.no_grad():
-            for i, batch in enumerate(data_loader):
-                samples, targets = self.context.to_device(batch)
-                samples = utils.NestedTensor(samples["tensors"], samples["mask"])
+    def evaluate_batch(self, batch):
+        samples, targets = batch
+        samples = utils.NestedTensor(samples["tensors"], samples["mask"])
 
-                outputs = self.model(samples)
-                loss_dict = self.criterion(outputs, targets, eval=True)
-                weight_dict = self.criterion.weight_dict
+        outputs = self.model(samples)
+        loss_dict = self.criterion(outputs, targets, eval=True)
+        weight_dict = self.criterion.weight_dict
 
-                # Compute losses for logging
-                loss_dict_scaled = {
-                    f"{k}_scaled": v * weight_dict[k]
-                    for k, v in loss_dict.items()
-                    if k in weight_dict
-                }
-                loss_dict["sum_unscaled"] = sum(loss_dict.values())
-                loss_dict["sum_scaled"] = sum(loss_dict_scaled.values())
-                loss_dict.update(loss_dict_scaled)
+        # Compute losses for logging
+        loss_dict_scaled = {
+            f"{k}_scaled": v * weight_dict[k]
+            for k, v in loss_dict.items()
+            if k in weight_dict
+        }
+        loss_dict["sum_unscaled"] = sum(loss_dict.values())
+        loss_dict["sum_scaled"] = sum(loss_dict_scaled.values())
+        loss_dict.update(loss_dict_scaled)
 
-                for k in loss_dict:
-                    loss_dict_aggregated[k] += loss_dict[k]
-
-                orig_target_sizes = torch.stack(
-                    [t["orig_size"] for t in targets], dim=0
+        orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
+        res = self.postprocessors["bbox"](outputs, orig_target_sizes)
+        res = [{k: v.cpu() for k, v in r.items()} for r in res]
+        if len(self.cat_ids):
+            for row in res:
+                row["labels"] = torch.tensor(
+                    [self.cat_ids[l.item()] for l in row["labels"]], dtype=torch.int64
                 )
-                res = self.postprocessors["bbox"](outputs, orig_target_sizes)
-                results.update(
-                    {
-                        target["image_id"].item(): output
-                        for target, output in zip(targets, res)
-                    }
-                )
-
-        for k in loss_dict_aggregated:
-            loss_dict_aggregated[k] /= i + 1
-
-        coco_evaluator.update(results)
-        for iou_type in coco_evaluator.iou_types:
-            coco_eval = coco_evaluator.coco_eval[iou_type]
-            coco_evaluator.eval_imgs[iou_type] = np.concatenate(
-                coco_evaluator.eval_imgs[iou_type], 2
-            )
-            create_common_coco_eval(
-                coco_eval, coco_evaluator.img_ids, coco_evaluator.eval_imgs[iou_type]
-            )
-        coco_evaluator.accumulate()
-        coco_evaluator.summarize()
-
-        coco_stats = coco_evaluator.coco_eval["bbox"].stats.tolist()
-
-        loss_dict_aggregated["mAP"] = coco_stats[0]
-        loss_dict_aggregated["mAP_50"] = coco_stats[1]
-        loss_dict_aggregated["mAP_75"] = coco_stats[2]
-        loss_dict_aggregated["mAP_small"] = coco_stats[3]
-        loss_dict_aggregated["mAP_medium"] = coco_stats[4]
-        loss_dict_aggregated["mAP_large"] = coco_stats[5]
-        return loss_dict_aggregated
+        result = [
+            (target["image_id"].item(), output) for target, output in zip(targets, res)
+        ]
+        self.reducer.update(result)
+        return loss_dict
