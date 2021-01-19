@@ -14,7 +14,6 @@ directories set up.
 from collections import namedtuple
 from typing import Any, Dict
 
-import torch
 import torchvision.transforms as transforms
 from torch import nn
 
@@ -24,8 +23,6 @@ from determined.pytorch import (
     LRScheduler,
     PyTorchTrial,
     PyTorchTrialContext,
-    PyTorchCallback,
-    ClipGradsL2Norm,
 )
 from model import NetworkImageNet
 from utils import (
@@ -233,7 +230,12 @@ class GAEAEvalTrial(PyTorchTrial):
         top1, top5 = accuracy(logits, target, topk=(1, 5))
 
         self.context.backward(loss)
-        self.context.step_optimizer(self.optimizer)
+        self.context.step_optimizer(
+            self.optimizer,
+            clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
+                params, self.context.get_hparam("clip_gradients_l2_norm"),
+            ),
+        )
 
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
 
@@ -260,9 +262,3 @@ class GAEAEvalTrial(PyTorchTrial):
             "top5_ema": ema_top5,
         }
 
-    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
-        return {
-            "clip_grads": ClipGradsL2Norm(
-                self.context.get_hparam("clip_gradients_l2_norm")
-            )
-        }

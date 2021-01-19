@@ -10,17 +10,13 @@ from collections import namedtuple
 from typing import Any, Dict
 
 import torch
-from torch import nn
 import torchvision.datasets as dset
 
-import determined as det
 from determined.pytorch import (
     DataLoader,
     LRScheduler,
     PyTorchTrial,
-    reset_parameters,
-    PyTorchCallback,
-    ClipGradsL2Norm,
+    PyTorchTrialContext,
 )
 
 from model import NetworkCIFAR as Network
@@ -36,7 +32,7 @@ class AttrDict(dict):
 
 
 class DARTSCNNTrial(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
         self.data_config = context.get_data_config()
         self.hparams = context.get_hparams()
@@ -44,6 +40,37 @@ class DARTSCNNTrial(PyTorchTrial):
         # The last epoch is only used for logging.
         self._last_epoch = -1
         self.results = {"loss": float("inf"), "top1_accuracy": 0, "top5_accuracy": 0}
+
+        # Define the model
+        genotype = self.get_genotype_from_hps()
+        self.model = self.context.wrap_model(Network(
+            self.hparams["init_channels"],
+            10,  # num_classes
+            self.hparams["layers"],
+            self.hparams["auxiliary"],
+            genotype,
+        ))
+        print("param size = {} MB".format(utils.count_parameters_in_MB(self.model)))
+        size = 0
+        for p in self.model.parameters():
+            size += p.nelement()
+        print("param count: {}".format(size))
+
+        # Define the optimizer
+        self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
+            self.model.parameters(),
+            lr=self.context.get_hparam("learning_rate"),
+            momentum=self.context.get_hparam("momentum"),
+            weight_decay=self.context.get_hparam("weight_decay"),
+        ))
+
+        # Define the LR scheduler
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            self.optimizer, self.context.get_hparam("train_epochs"),
+        )
+        step_mode = LRScheduler.StepMode.STEP_EVERY_EPOCH
+        self.wrapped_scheduler = self.context.wrap_lr_scheduler(self.scheduler, step_mode=step_mode)
+
 
     def build_training_data_loader(self) -> DataLoader:
         train_transform, valid_transform = utils._data_transforms_cifar10(
@@ -116,68 +143,38 @@ class DARTSCNNTrial(PyTorchTrial):
             reduce_concat=range(2, 6),
         )
 
-    def build_model(self) -> nn.Module:
-        genotype = self.get_genotype_from_hps()
-
-        model = Network(
-            self.hparams["init_channels"],
-            10,  # num_classes
-            self.hparams["layers"],
-            self.hparams["auxiliary"],
-            genotype,
-        )
-        print("param size = {} MB".format(utils.count_parameters_in_MB(model)))
-        size = 0
-        for p in model.parameters():
-            size += p.nelement()
-        print("param count: {}".format(size))
-
-        # If loading backbone weights, do not call reset_parameters() or
-        # call before loading the backbone weights.
-        reset_parameters(model)
-        return model
-
-    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:
-        return torch.optim.SGD(
-            model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            momentum=self.context.get_hparam("momentum"),
-            weight_decay=self.context.get_hparam("weight_decay"),
-        )
-
-    def create_lr_scheduler(self, optimizer):
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, self.context.get_hparam("train_epochs")
-        )
-        step_mode = LRScheduler.StepMode.STEP_EVERY_EPOCH
-        return LRScheduler(self.scheduler, step_mode=step_mode)
-
-    def train_batch(
-        self, batch: Any, model: nn.Module, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
+    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
         input, target = batch
-        model.drop_path_prob = (
+        self.model.drop_path_prob = (
             self.hparams["drop_path_prob"]
             * (self.scheduler.last_epoch)
             / self.hparams["train_epochs"]
         )
         if batch_idx == 0 or epoch_idx > self._last_epoch:
             print("epoch {} lr: {}".format(epoch_idx, self.scheduler.get_last_lr()[0]))
-            print("drop_path_prob: {}".format(model.drop_path_prob))
+            print("drop_path_prob: {}".format(self.model.drop_path_prob))
         self._last_epoch = epoch_idx
 
-        logits, logits_aux = model(input)
+        # Forward pass
+        logits, logits_aux = self.model(input)
         loss = self.criterion(logits, target)
         if self.context.get_hparam("auxiliary"):
             loss_aux = self.criterion(logits_aux, target)
             loss += self.context.get_hparam("auxiliary_weight") * loss_aux
         top1, top5 = utils.accuracy(logits, target, topk=(1, 5))
 
+        # Backward pass
+        self.context.backward(loss)
+        self.context.step_optimizer(
+            optimizer=self.optimizer,
+            clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
+                params, self.context.get_hparam("clip_gradients_l2_norm"),
+            ),
+        )
+
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
 
-    def evaluate_full_dataset(
-        self, model, data_loader: torch.utils.data.DataLoader
-    ) -> Dict[str, Any]:
+    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
         acc_top1 = 0
         acc_top5 = 0
         loss_avg = 0
@@ -187,7 +184,7 @@ class DARTSCNNTrial(PyTorchTrial):
                 batch = self.context.to_device(batch)
                 input, target = batch
                 num_batches += 1
-                logits, _ = model(input)
+                logits, _ = self.model(input)
                 loss = self.criterion(logits, target)
                 top1, top5 = utils.accuracy(logits, target, topk=(1, 5))
                 acc_top1 += top1
@@ -202,10 +199,3 @@ class DARTSCNNTrial(PyTorchTrial):
             self.results = results
 
         return self.results
-
-    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
-        return {
-            "clip_grads": ClipGradsL2Norm(
-                self.context.get_hparam("clip_gradients_l2_norm")
-            )
-        }
