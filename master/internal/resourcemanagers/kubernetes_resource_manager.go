@@ -123,15 +123,16 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
 		slotsUsed += slotsUsedByGroup
 	}
+	resourceSummary := k.createResourceSummary(ctx)
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
-		NumAgents:                    1,
-		SlotsAvailable:               int32(k.agent.numSlots()),
-		SlotsUsed:                    int32(k.agent.numUsedSlots()),
-		CpuContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
-		CpuContainersRunning:         int32(k.agent.numZeroSlotContainers()),
+		NumAgents:                    int32(resourceSummary.NumAgents),
+		SlotsAvailable:               int32(resourceSummary.NumTotalSlots),
+		SlotsUsed:                    int32(resourceSummary.NumActiveSlots),
+		CpuContainerCapacity:         int32(resourceSummary.MaxNumCPUContainers),
+		CpuContainersRunning:         int32(resourceSummary.NumActiveCPUContainers),
 		DefaultGpuPool:               true,
 		DefaultCpuPool:               true,
 		Preemptible:                  false,

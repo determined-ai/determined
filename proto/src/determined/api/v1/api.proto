@@ -16,10 +16,10 @@ import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
-import "determined/api/v1/resourcepool.proto";
 import "determined/api/v1/trial.proto";
 import "determined/api/v1/shell.proto";
 import "determined/api/v1/user.proto";
+import "determined/api/v1/resourcepool.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
   info: {

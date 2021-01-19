@@ -249,10 +249,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getResourceSummary(rp.config.PoolName, rp.agents))
 
-	case GetResourceSummary:
-		reschedule = false
-		ctx.Respond(getResourceSummary(rp.agents))
-
 	case schedulerTick:
 		if rp.reschedule {
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
