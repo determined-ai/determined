@@ -43,6 +43,19 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 	case AllocateRequest:
+		// This code exists to handle the case where an experiment does not have
+		// an explicit resource pool specified in the config. This should never happen
+		// for newly created/forked experiments as the default pool is filled in to the
+		// config at creation time. However, old experiments which were created prior to
+		// the introduction of resource pools could have no resource pool associated with
+		// them and so we need to handle that case gracefully.
+		if len(msg.ResourcePool) == 0 {
+			if msg.SlotsNeeded == 0 {
+				msg.ResourcePool = a.config.DefaultCPUResourcePool
+			} else {
+				msg.ResourcePool = a.config.DefaultGPUResourcePool
+			}
+		}
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
 
 	case ResourcesReleased:
