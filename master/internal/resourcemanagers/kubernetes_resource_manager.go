@@ -310,10 +310,7 @@ func (k *kubernetesResourceManager) createResourceSummary(ctx *actor.Context) Re
 		CPUContainerCapacity: k.agent.maxZeroSlotContainers,
 		CPUContainersRunning: k.agent.numZeroSlotContainers(),
 	}
-
 }
-
-
 
 type podAllocation struct {
 	req       *AllocateRequest

@@ -9,7 +9,6 @@ import "determined/resourcepool/v1/resourcepool.proto";
 import "determined/resourcepool/v1/state.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-
 // Get the list of resource pools from the cluster.
 message GetResourcePoolsRequest {
   // Skip the number of resource pools before returning results. Negative values
@@ -29,8 +28,7 @@ message GetResourcePoolsResponse {
 }
 
 // Stream resource pool states.
-message ResourcePoolStatesRequest {
-}
+message ResourcePoolStatesRequest {}
 
 // Response to ResourcePoolStatesRequest.
 message ResourcePoolStatesResponse {
@@ -38,7 +36,8 @@ message ResourcePoolStatesResponse {
     json_schema: { required: [ "states" ] }
   };
 
-  // The states of the resource pools. The first message will include all pools and all subsequent
-  // messages will only include pools whose state has changed.
+  // The states of the resource pools. The first message will include all pools
+  // and all subsequent messages will only include pools whose state has
+  // changed.
   resourcepool.v1.ResourcePoolStates states = 1;
 }

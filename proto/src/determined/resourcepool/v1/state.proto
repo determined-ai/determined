@@ -5,19 +5,20 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/resourcepoolv
 
 import "protoc-gen-swagger/options/annotations.proto";
 
-
-// The state of the ResourcePool, which is the resources available (agents, slots, cpu container
-// capacity) and the amount of resource used.
+// The state of the ResourcePool, which is the resources available (agents,
+// slots, cpu container capacity) and the amount of resource used.
 message ResourcePoolState {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {required: [
-      "name",
-      "num_agents",
-      "slots_available",
-      "slots_used",
-      "cpu_container_capacity",
-      "cpu_containers_running"
-    ] }
+    json_schema: {
+      required: [
+        "name",
+        "num_agents",
+        "slots_available",
+        "slots_used",
+        "cpu_container_capacity",
+        "cpu_containers_running"
+      ]
+    }
   };
   // The name of the resource pool.
   string name = 1;
@@ -33,10 +34,10 @@ message ResourcePoolState {
   int32 cpu_containers_running = 6;
 }
 
-// ResourcePoolStates is a collection of ResourcePoolState, one for each pool. After the initial
-// state is sent, only pools whose state has changed will be included in ResourcePoolStates.
+// ResourcePoolStates is a collection of ResourcePoolState, one for each pool.
+// After the initial state is sent, only pools whose state has changed will be
+// included in ResourcePoolStates.
 message ResourcePoolStates {
   // The collection of ResourcePoolState, one for each pool.
   repeated ResourcePoolState resource_pools = 1;
 }
-

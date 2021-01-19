@@ -122,4 +122,3 @@ func getResourceSummary(
 	}
 	return summary
 }
-

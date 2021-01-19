@@ -3,11 +3,12 @@ package internal
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,7 +17,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/google/uuid"
-
 )
 
 func (a *apiServer) GetResourcePools(
@@ -37,11 +37,6 @@ func (a *apiServer) GetResourcePools(
 
 	return resp, a.paginate(&resp.Pagination, &resp.ResourcePools, req.Offset, req.Limit)
 }
-
-
-
-
-
 
 const tickInterval = 1 * time.Second
 
@@ -87,11 +82,11 @@ func (a *ResourcePoolAPIStatesStreamActor) Receive(ctx *actor.Context) error {
 		states := make([]*resourcepoolv1.ResourcePoolState, 0, len(summaries))
 		for _, summary := range summaries {
 			state := resourcepoolv1.ResourcePoolState{
-				Name:                   summary.Name,
-				NumAgents:              int32(summary.NumAgents),
-				SlotsAvailable:          int32(summary.SlotsAvailable),
-				SlotsUsed:         int32(summary.SlotsUsed),
-				CpuContainerCapacity:       int32(summary.CPUContainerCapacity),
+				Name:                 summary.Name,
+				NumAgents:            int32(summary.NumAgents),
+				SlotsAvailable:       int32(summary.SlotsAvailable),
+				SlotsUsed:            int32(summary.SlotsUsed),
+				CpuContainerCapacity: int32(summary.CPUContainerCapacity),
 				CpuContainersRunning: int32(summary.CPUContainersRunning),
 			}
 			states = append(states, &state)
@@ -123,11 +118,11 @@ func (a *ResourcePoolAPIStatesStreamActor) Receive(ctx *actor.Context) error {
 		currentStates := make([]*resourcepoolv1.ResourcePoolState, 0, len(summaries))
 		for _, summary := range summaries {
 			state := resourcepoolv1.ResourcePoolState{
-				Name:                   summary.Name,
-				NumAgents:              int32(summary.NumAgents),
-				SlotsAvailable:          int32(summary.SlotsAvailable),
-				SlotsUsed:         int32(summary.SlotsUsed),
-				CpuContainerCapacity:       int32(summary.CPUContainerCapacity),
+				Name:                 summary.Name,
+				NumAgents:            int32(summary.NumAgents),
+				SlotsAvailable:       int32(summary.SlotsAvailable),
+				SlotsUsed:            int32(summary.SlotsUsed),
+				CpuContainerCapacity: int32(summary.CPUContainerCapacity),
 				CpuContainersRunning: int32(summary.CPUContainersRunning),
 			}
 			currentStates = append(currentStates, &state)

@@ -831,12 +831,13 @@ service Determined {
   }
 
   // Stream resource pool states.
-  rpc ResourcePoolStates(ResourcePoolStatesRequest) returns (stream ResourcePoolStatesResponse) {
+  rpc ResourcePoolStates(ResourcePoolStatesRequest)
+      returns (stream ResourcePoolStatesResponse) {
     option (google.api.http) = {
       get: "/api/v1/resource-pool-states"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Cluster"]
+      tags: [ "Cluster" ]
     };
   }
 }
