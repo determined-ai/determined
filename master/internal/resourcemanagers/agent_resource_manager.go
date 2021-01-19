@@ -2,11 +2,15 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 type agentResourceManager struct {
@@ -57,6 +61,21 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
+
+	case *apiv1.GetResourcePoolsRequest:
+		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig.ResourcePools))
+		for _, pool := range a.poolsConfig.ResourcePools {
+			summary, err := a.createResourcePoolSummary(ctx, pool.PoolName)
+			if err != nil {
+				// Should only raise an error if the resource pool doesn't exist and that can't happen.
+				// But best to handle it anyway in case the implementation changes in the future.
+				ctx.Log().WithError(err).Error("")
+				ctx.Respond(err)
+			}
+			summaries = append(summaries, summary)
+		}
+		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
+		ctx.Respond(resp)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -155,4 +174,182 @@ func (a *agentResourceManager) aggregateTaskSummaries(
 		}
 	}
 	return summaries
+}
+
+func (a *agentResourceManager) getResourcePoolConfig(poolName string) (ResourcePoolConfig, error) {
+	for i := range a.poolsConfig.ResourcePools {
+		if a.poolsConfig.ResourcePools[i].PoolName == poolName {
+			return a.poolsConfig.ResourcePools[i], nil
+		}
+	}
+	return ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
+}
+
+func (a *agentResourceManager) createResourcePoolSummary(
+	ctx *actor.Context,
+	poolName string,
+) (*resourcepoolv1.ResourcePool, error) {
+	const na = "N/A"
+	pool, err := a.getResourcePoolConfig(poolName)
+	if err != nil {
+		return &resourcepoolv1.ResourcePool{}, err
+	}
+
+	// Static Pool defaults
+	poolType := resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC
+	preemptible := false
+	location := "on-prem"
+	imageID := na
+	instanceType := na
+
+	if pool.Provider != nil {
+		if pool.Provider.AWS != nil {
+			poolType = resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_AWS
+			preemptible = pool.Provider.AWS.SpotEnabled
+			location = pool.Provider.AWS.Region
+			imageID = pool.Provider.AWS.ImageID
+			instanceType = string(pool.Provider.AWS.InstanceType)
+		}
+		if pool.Provider.GCP != nil {
+			poolType = resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_GCP
+			preemptible = pool.Provider.GCP.InstanceType.Preemptible
+			location = pool.Provider.GCP.Zone
+			imageID = pool.Provider.GCP.BootDiskSourceImage
+
+			instanceTypeStringBuilder := strings.Builder{}
+			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
+			instanceTypeStringBuilder.WriteString(", ")
+			instanceTypeStringBuilder.WriteString(string(pool.Provider.GCP.InstanceType.GPUNum))
+			instanceTypeStringBuilder.WriteString("x")
+			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.GPUType)
+			instanceType = instanceTypeStringBuilder.String()
+		}
+	}
+
+	var schedulerType resourcepoolv1.SchedulerType
+	if pool.Scheduler == nil {
+		ctx.Log().Errorf("scheduler is not present in config")
+		return &resourcepoolv1.ResourcePool{}, err
+	}
+
+	if pool.Scheduler.FairShare != nil {
+		schedulerType = resourcepoolv1.SchedulerType_SCHEDULER_TYPE_FAIR_SHARE
+	}
+	if pool.Scheduler.Priority != nil {
+		schedulerType = resourcepoolv1.SchedulerType_SCHEDULER_TYPE_PRIORITY
+	}
+	if pool.Scheduler.RoundRobin != nil {
+		schedulerType = resourcepoolv1.SchedulerType_SCHEDULER_TYPE_ROUND_ROBIN
+	}
+
+	resp := &resourcepoolv1.ResourcePool{
+		Name:                         pool.PoolName,
+		Description:                  pool.Description,
+		Type:                         poolType,
+		DefaultCpuPool:               a.config.DefaultCPUResourcePool == poolName,
+		DefaultGpuPool:               a.config.DefaultGPUResourcePool == poolName,
+		Preemptible:                  preemptible,
+		CpuContainerCapacityPerAgent: int32(pool.MaxCPUContainersPerAgent),
+		SchedulerType:                schedulerType,
+		Location:                     location,
+		ImageId:                      imageID,
+		InstanceType:                 instanceType,
+		Details:                      &resourcepoolv1.ResourcePoolDetail{},
+	}
+	if pool.Provider != nil {
+		resp.MinAgents = int32(pool.Provider.MinInstances)
+		resp.MaxAgents = int32(pool.Provider.MaxInstances)
+		resp.MasterUrl = pool.Provider.MasterURL
+		resp.MasterCertName = pool.Provider.MasterCertName
+		resp.StartupScript = pool.Provider.StartupScript
+		resp.ContainerStartupScript = pool.Provider.ContainerStartupScript
+		resp.AgentDockerNetwork = pool.Provider.AgentDockerNetwork
+		resp.AgentDockerRuntime = pool.Provider.AgentDockerRuntime
+		resp.AgentDockerImage = pool.Provider.AgentDockerImage
+		resp.AgentFluentImage = pool.Provider.AgentFluentImage
+		resp.MaxIdleAgentPeriod = float32(time.Duration(pool.Provider.MaxIdleAgentPeriod).Seconds())
+		startingPeriodSecs := time.Duration(pool.Provider.MaxAgentStartingPeriod).Seconds()
+		resp.MaxAgentStartingPeriod = float32(startingPeriodSecs)
+	}
+	if pool.Scheduler != nil {
+		if pool.Scheduler.FittingPolicy == best {
+			resp.SchedulerFittingPolicy = resourcepoolv1.FittingPolicy_FITTING_POLICY_BEST
+		}
+		if pool.Scheduler.FittingPolicy == worst {
+			resp.SchedulerFittingPolicy = resourcepoolv1.FittingPolicy_FITTING_POLICY_WORST
+		}
+
+		if pool.Scheduler.FittingPolicy != best && pool.Scheduler.FittingPolicy != worst {
+			ctx.Log().Errorf("unrecognized scheduler fitting policy")
+			return &resourcepoolv1.ResourcePool{}, err
+		}
+	}
+	if poolType == resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_AWS {
+		aws := pool.Provider.AWS
+		resp.Details.Aws = &resourcepoolv1.ResourcePoolAwsDetail{
+			Region:                aws.Region,
+			RootVolumeSize:        int32(aws.RootVolumeSize),
+			ImageId:               aws.ImageID,
+			TagKey:                aws.TagKey,
+			TagValue:              aws.TagValue,
+			InstanceName:          aws.InstanceName,
+			SshKeyName:            aws.SSHKeyName,
+			PublicIp:              aws.NetworkInterface.PublicIP,
+			SubnetId:              aws.NetworkInterface.SubnetID,
+			SecurityGroupId:       aws.NetworkInterface.SecurityGroupID,
+			IamInstanceProfileArn: aws.IamInstanceProfileArn,
+			InstanceType:          string(aws.InstanceType),
+			LogGroup:              aws.LogGroup,
+			LogStream:             aws.LogStream,
+			SpotEnabled:           aws.SpotEnabled,
+			SpotMaxPrice:          aws.SpotMaxPrice,
+		}
+		customTags := make([]*resourcepoolv1.AwsCustomTag, len(aws.CustomTags))
+		for i, tagInfo := range aws.CustomTags {
+			customTags[i] = &resourcepoolv1.AwsCustomTag{
+				Key:   tagInfo.Key,
+				Value: tagInfo.Value,
+			}
+		}
+		resp.Details.Aws.CustomTags = customTags
+	}
+	if poolType == resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_GCP {
+		gcp := pool.Provider.GCP
+		resp.Details.Gcp = &resourcepoolv1.ResourcePoolGcpDetail{
+			Project:                gcp.Project,
+			Zone:                   gcp.Zone,
+			BootDiskSize:           int32(gcp.BootDiskSize),
+			BootDiskSourceImage:    gcp.BootDiskSourceImage,
+			LabelKey:               gcp.LabelKey,
+			LabelValue:             gcp.LabelValue,
+			NamePrefix:             gcp.NamePrefix,
+			Network:                gcp.NetworkInterface.Network,
+			Subnetwork:             gcp.NetworkInterface.Subnetwork,
+			ExternalIp:             gcp.NetworkInterface.ExternalIP,
+			NetworkTags:            gcp.NetworkTags,
+			ServiceAccountEmail:    gcp.ServiceAccount.Email,
+			ServiceAccountScopes:   gcp.ServiceAccount.Scopes,
+			MachineType:            gcp.InstanceType.MachineType,
+			GpuType:                gcp.InstanceType.GPUType,
+			GpuNum:                 int32(gcp.InstanceType.GPUNum),
+			Preemptible:            gcp.InstanceType.Preemptible,
+			OperationTimeoutPeriod: float32(time.Duration(gcp.OperationTimeoutPeriod).Seconds()),
+		}
+	}
+
+	if schedulerType == resourcepoolv1.SchedulerType_SCHEDULER_TYPE_PRIORITY {
+		resp.Details.PriorityScheduler = &resourcepoolv1.ResourcePoolPrioritySchedulerDetail{
+			Preemption:      pool.Scheduler.Priority.Preemption,
+			DefaultPriority: int32(*pool.Scheduler.Priority.DefaultPriority),
+		}
+	}
+
+	resourceSummary := ctx.Ask(a.pools[poolName], GetResourceSummary{}).Get().(ResourceSummary)
+	resp.NumAgents = int32(resourceSummary.numAgents)
+	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
+	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
+	resp.CpuContainerCapacity = int32(resourceSummary.maxNumCPUContainers)
+	resp.CpuContainersRunning = int32(resourceSummary.numActiveCPUContainers)
+
+	return resp, nil
 }

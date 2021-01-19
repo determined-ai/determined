@@ -19,6 +19,7 @@ import "determined/api/v1/tensorboard.proto";
 import "determined/api/v1/trial.proto";
 import "determined/api/v1/shell.proto";
 import "determined/api/v1/user.proto";
+import "determined/api/v1/resourcepool.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
   info: {
@@ -790,4 +791,15 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Get a list of all resource pools from the cluster.
+  rpc GetResourcePools(GetResourcePoolsRequest) returns (GetResourcePoolsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resource-pools"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
 }

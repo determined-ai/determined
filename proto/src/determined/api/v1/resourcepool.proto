@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/api/v1/pagination.proto";
+
+import "determined/resourcepool/v1/resourcepool.proto";
+
+// Get the list of resource pools from the cluster.
+message GetResourcePoolsRequest {
+  // Skip the number of resource pools before returning results. Negative values
+  // denote number of resource pools to skip from the end before returning results.
+  int32 offset = 1;
+  // Limit the number of resource pools. A value of 0 denotes no limit.
+  int32 limit = 2;
+}
+
+// Response to GetResourcePoolsRequest.
+message GetResourcePoolsResponse {
+  // The list of returned resource pools.
+  repeated determined.resourcepool.v1.ResourcePool resource_pools = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}
+

@@ -10,9 +10,12 @@ import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 const kubernetesScheduler = "kubernetes"
+const kubernetesDummyResourcePool = "kubernetes"
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
@@ -80,6 +83,13 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
+	case *apiv1.GetResourcePoolsRequest:
+		resourcePoolSummary := k.summarizeDummyResourcePool(ctx)
+		resp := &apiv1.GetResourcePoolsResponse{
+			ResourcePools: []*resourcepoolv1.ResourcePool{resourcePoolSummary},
+		}
+		ctx.Respond(resp)
+
 	case schedulerTick:
 		if k.reschedule {
 			k.schedulePendingTasks(ctx)
@@ -95,6 +105,37 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	}
 
 	return nil
+}
+
+func (k *kubernetesResourceManager) summarizeDummyResourcePool(
+	ctx *actor.Context,
+) *resourcepoolv1.ResourcePool {
+	slotsUsed := 0
+	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
+		slotsUsed += slotsUsedByGroup
+	}
+	return &resourcepoolv1.ResourcePool{
+		Name:                         kubernetesDummyResourcePool,
+		Description:                  "Kubernetes-managed pool of resources",
+		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
+		NumAgents:                    1,
+		SlotsAvailable:               int32(k.agent.numSlots()),
+		SlotsUsed:                    int32(k.agent.numUsedSlots()),
+		CpuContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
+		CpuContainersRunning:         int32(k.agent.numZeroSlotContainers()),
+		DefaultGpuPool:               true,
+		DefaultCpuPool:               true,
+		Preemptible:                  false,
+		MinAgents:                    0,
+		MaxAgents:                    0,
+		CpuContainerCapacityPerAgent: 0,
+		SchedulerType:                resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
+		SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
+		Location:                     "kubernetes",
+		ImageId:                      "",
+		InstanceType:                 "kubernetes",
+		Details:                      nil,
+	}
 }
 
 func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error {
