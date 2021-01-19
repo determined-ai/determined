@@ -1,6 +1,6 @@
 import sys
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
 import tqdm
@@ -183,6 +183,12 @@ def create_stack(
             TemplateBody=template_body,
             Parameters=parameters,
             Capabilities=["CAPABILITY_IAM"],
+            Tags=[
+                {
+                    "Key": constants.defaults.STACK_TAG_KEY,
+                    "Value": constants.defaults.STACK_TAG_VALUE,
+                }
+            ],
         )
     else:
         cfn.create_stack(
@@ -190,6 +196,21 @@ def create_stack(
         )
 
     create_waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 10})
+
+
+def list_stacks(boto3_session: boto3.session.Session) -> List[Dict[str, Any]]:
+    cfn = boto3_session.client("cloudformation")
+    response = cfn.describe_stacks()
+
+    output = []
+    for stack in response["Stacks"]:
+        for tag in stack["Tags"]:
+            if (
+                tag["Key"] == constants.defaults.STACK_TAG_KEY
+                and tag["Value"] == constants.defaults.STACK_TAG_VALUE
+            ):
+                output.append(stack)
+    return output
 
 
 def get_output(stack_name: str, boto3_session: boto3.session.Session) -> Dict[str, str]:

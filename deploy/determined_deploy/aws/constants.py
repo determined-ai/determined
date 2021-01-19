@@ -11,6 +11,8 @@ class defaults:
     DEPLOYMENT_TYPE = deployment_types.SIMPLE
     DB_PASSWORD = "postgres"
     REGION = "us-west-2"
+    STACK_TAG_KEY = "managed-by"
+    STACK_TAG_VALUE = "determined"
 
 
 class cloudformation:
