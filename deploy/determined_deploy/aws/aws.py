@@ -192,7 +192,15 @@ def create_stack(
         )
     else:
         cfn.create_stack(
-            StackName=stack_name, TemplateBody=template_body, Capabilities=["CAPABILITY_IAM"]
+            StackName=stack_name,
+            TemplateBody=template_body,
+            Capabilities=["CAPABILITY_IAM"],
+            Tags=[
+                {
+                    "Key": constants.defaults.STACK_TAG_KEY,
+                    "Value": constants.defaults.STACK_TAG_VALUE,
+                }
+            ],
         )
 
     create_waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 10})
