@@ -119,8 +119,7 @@ message ResourcePool {
   int32 max_agents = 13;
   // The maximum number of CPU containers that can run on an individual agent
   int32 cpu_container_capacity_per_agent = 15;
-  // The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or
-  // 'ROUND_ROBIN'
+  // The type of the scheduler.
   SchedulerType scheduler_type = 16;
   // The fitting policy of the scheduler.
   FittingPolicy scheduler_fitting_policy = 17;
@@ -131,11 +130,10 @@ message ResourcePool {
   string image_id = 19;
   // The instance type of the agents when using dynamic agents. For AWS this is
   // the Instance Type. For GCP this is the machine type combined with the
-  // number and types of GPUs. To work with this data programattically, we
+  // number and types of GPUs. To work with this data programmatically, we
   // recommend working with the ResourcePool.details.aws.instanceType and
   // ResourcePool.details.gcp.machineType/gpuType/gpuNum.
   string instance_type = 20;
-
   // The url of the Determined master
   string master_url = 21;
   // A hostname for which the master’s TLS certificate is valid, if the host

@@ -3,8 +3,9 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
-	"time"
+	"strings"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 
