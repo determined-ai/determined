@@ -793,7 +793,8 @@ service Determined {
   }
 
   // Get a list of all resource pools from the cluster.
-  rpc GetResourcePools(GetResourcePoolsRequest) returns (GetResourcePoolsResponse) {
+  rpc GetResourcePools(GetResourcePoolsRequest)
+      returns (GetResourcePoolsResponse) {
     option (google.api.http) = {
       get: "/api/v1/resource-pools"
     };
@@ -801,5 +802,4 @@ service Determined {
       tags: "Internal"
     };
   }
-
 }
