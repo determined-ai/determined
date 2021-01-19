@@ -1,7 +1,4 @@
-import logging
-from typing import Any, Dict, Iterator
-
-import torch
+from typing import Any, Dict
 
 
 class PyTorchCallback:
@@ -21,19 +18,6 @@ class PyTorchCallback:
         :meth:`on_checkpoint_end`). To configure a callback implementation to execute on a subset of
         GPUs, please condition your implementation on ``trial.context.distributed.get_rank()``.
     """
-
-    # TODO(DET-3262): remove this backward compatibility of old interface.
-    def on_before_optimizer_step(self, parameters: Iterator) -> None:
-        """
-        Run before every ``optimizer.step()``.  For multi-GPU training, executes
-        after gradient updates have been communicated. Typically used to perform
-        gradient clipping.
-
-        .. warning::
-            This is deprecated. Please pass a function into
-            ``context.optimizer.step(clip_gradients=...)`` if you want to clip gradients.
-        """
-        pass
 
     def on_validation_start(self) -> None:
         """
@@ -88,50 +72,3 @@ class PyTorchCallback:
         Load the state of this using the deserialized ``state_dict``.
         """
         pass
-
-
-# TODO(DET-3262): remove this backward compatibility of old interface.
-class ClipGradsL2Norm(PyTorchCallback):
-    """Callback that performs gradient clipping using
-    `L2 Norm <https://pytorch.org/docs/stable/nn.html#clip-grad-norm>`_.
-
-    .. warning::
-
-        This is deprecated. Please use clip_grads argument in
-        ``PytorchTrialContext.step_optimizer(optimizer, clip_grads=...)``
-        for clipping the gradients.
-    """
-
-    def __init__(self, clip_value: float) -> None:
-        logging.warning(
-            "The ClipGradsL2Norm callback is deprecated. Please use clip_grads "
-            "argument in PytorchTrialContext.step_optimizer(optimizer, clip_grads=...) "
-            "for clipping the gradients."
-        )
-        self._clip_value = clip_value
-
-    def on_before_optimizer_step(self, parameters: Iterator) -> None:
-        torch.nn.utils.clip_grad_norm_(parameters, self._clip_value)  # type: ignore
-
-
-# TODO(DET-3262): remove this backward compatibility of old interface.
-class ClipGradsL2Value(PyTorchCallback):
-    """Callback that performs gradient clipping using
-    `L2 Value <https://pytorch.org/docs/stable/nn.html#clip-grad-value>`_.
-
-    .. warning::
-        This is deprecated. Please use clip_grads argument in
-        ``PytorchTrialContext.step_optimizer(optimizer, clip_grads=...)``
-        for clipping the gradients.
-    """
-
-    def __init__(self, clip_value: float) -> None:
-        logging.warning(
-            "The ClipGradsL2Value callback is deprecated. Please use clip_grads "
-            "argument in PytorchTrialContext.step_optimizer(optimizer, clip_grads=...) "
-            "for clipping the gradients."
-        )
-        self._clip_value = clip_value
-
-    def on_before_optimizer_step(self, parameters: Iterator) -> None:
-        torch.nn.utils.clip_grad_value_(parameters, self._clip_value)  # type: ignore

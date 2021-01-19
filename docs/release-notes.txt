@@ -43,9 +43,9 @@ Version 0.13.13
 **Deprecated Features**
 
 -  The old PyTorch API was deprecated in 0.12.13 and will be removed in
-   the next release. See the :ref:`migration guide
-   <migration-guide-flexible-primitives>` for details on updating your
-   PyTorch model code to use the new API.
+   the next release. See the `migration guide
+   <https://docs.determined.ai/0.13.13/reference/api/pytorch.html#migration-from-deprecated-interface>`_
+   for details on updating your PyTorch model code to use the new API.
 
 Version 0.13.12
 ===============
@@ -993,10 +993,10 @@ Version 0.12.13
    more flexible and supports deep learning experiments that use
    multiple models, optimizers, and LR schedulers. The old API is still
    supported but is now deprecated and will be removed in a future
-   release. See the :ref:`migration guide
-   <migration-guide-flexible-primitives>` for details on updating your
-   PyTorch model code. *Deprecated methods will be supported until at
-   least the next minor release.*
+   release. See the `Pytorch migration guide
+   <https://docs.determined.ai/0.12.13/reference/api/pytorch.html#migration-from-deprecated-interface>`_
+   for details on updating your PyTorch model code. *Deprecated methods
+   will be supported until at least the next minor release.*
 
    -  The new API supports PyTorch code that uses multiple models,
       optimizers, and LR schedulers. In your trial class, you should

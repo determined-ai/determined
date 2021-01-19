@@ -36,6 +36,15 @@ class InvalidConfigurationException(InvalidExperimentException):
         super().__init__(f"Invalid configuration ({config}): {message}.")
 
 
+class InvalidCheckpointException(Exception):
+    """
+    InvalidCheckpointException is used if a checkpoint is invalid.
+    """
+
+    def __init__(self) -> None:
+        super().__init__("Invalid checkpoint.")
+
+
 class StopLoadingImplementation(Exception):
     """
     Exception that intercepts loading the user code.
