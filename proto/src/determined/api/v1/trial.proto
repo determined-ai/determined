@@ -53,8 +53,12 @@ message TrialLogsResponse {
   };
   // The ID of the trial log.
   string id = 1;
+  // The timestamp of the log.
+  google.protobuf.Timestamp timestamp = 2;
   // The log message.
   string message = 3;
+  // The level of the logs.
+  determined.log.v1.LogLevel level = 4;
 }
 
 // Stream distinct trial log fields.

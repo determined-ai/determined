@@ -5,6 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
+
+	"github.com/determined-ai/determined/proto/pkg/logv1"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/version"
@@ -413,8 +417,9 @@ type TrialLog struct {
 }
 
 // Proto converts a trial log to its protobuf representation.
-func (t TrialLog) Proto() *apiv1.TrialLogsResponse {
+func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 	resp := &apiv1.TrialLogsResponse{Message: t.Message}
+
 	switch {
 	case t.ID != nil:
 		resp.Id = strconv.Itoa(*t.ID)
@@ -423,7 +428,37 @@ func (t TrialLog) Proto() *apiv1.TrialLogsResponse {
 	default:
 		panic("log had no valid ID")
 	}
-	return resp
+
+	if t.Timestamp != nil {
+		tsProto, err := ptypes.TimestampProto(*t.Timestamp)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to convert log timestamp to proto")
+		}
+		resp.Timestamp = tsProto
+	}
+
+	if t.Level != nil {
+		switch *t.Level {
+		case "DEBUG":
+			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+		case "TRACE":
+			resp.Level = logv1.LogLevel_LOG_LEVEL_TRACE
+		case "INFO":
+			resp.Level = logv1.LogLevel_LOG_LEVEL_INFO
+		case "WARNING":
+			resp.Level = logv1.LogLevel_LOG_LEVEL_WARNING
+		case "ERROR":
+			resp.Level = logv1.LogLevel_LOG_LEVEL_ERROR
+		case "CRITICAL":
+			resp.Level = logv1.LogLevel_LOG_LEVEL_CRITICAL
+		default:
+			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+		}
+	} else {
+		resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+	}
+
+	return resp, nil
 }
 
 // Resolve resolves the legacy Message field from the others provided.
