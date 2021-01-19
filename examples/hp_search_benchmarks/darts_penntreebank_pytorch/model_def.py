@@ -15,8 +15,7 @@ import torch
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
-import determined as det
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, reset_parameters, PyTorchCallback, ClipGradsL2Norm
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 import randomNAS_files.data_util as data_util
 from randomNAS_files.model import RNNModel
@@ -56,7 +55,7 @@ class MyLR(_LRScheduler):
 
 
 class DARTSRNNTrial(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
         self.data_config = context.get_data_config()
         self.hparams = AttrDict(context.get_hparams())
@@ -74,6 +73,38 @@ class DARTSRNNTrial(PyTorchTrial):
         self._last_loss = None
         self._eval_history = []
         self._last_epoch = -1
+
+        # Define the model
+        genotype = self.get_genotype_from_hps()
+        self.model = self.context.wrap_model(RNNModel(
+            self.ntokens,
+            self.hparams.emsize,
+            self.hparams.nhid,
+            self.hparams.nhidlast,
+            self.hparams.dropout,
+            self.hparams.dropouth,
+            self.hparams.dropoutx,
+            self.hparams.dropouti,
+            self.hparams.dropoute,
+            genotype=genotype,
+        ))
+        total_params = sum(x.data.nelement() for x in self.model.parameters())
+        logging.info("Model total parameters: {}".format(total_params))
+
+        # Define the optimizer
+        self.optimizer = HybridSGD(
+            self.model.parameters(),
+            self.hparams.learning_rate,
+            self.hparams.weight_decay,
+            lambd=0,
+            t0=0,
+        )
+
+        # Define the LR scheduler
+        self.myLR = MyLR(self.optimizer, self.hparams)
+        step_mode = LRScheduler.StepMode.MANUAL_STEP
+        self._optimizer = self.myLR
+        self.wrapped_LR = self.context.wrap_lr_scheduler(self.myLR, step_mode=step_mode)
 
     def build_training_data_loader(self) -> DataLoader:
         train_dataset = data.PTBData(
@@ -118,49 +149,6 @@ class DARTSRNNTrial(PyTorchTrial):
             cell_config.append((edge_op, edge_ind))
         return Genotype(recurrent=cell_config, concat=range(1, 9))
 
-    def build_model(self) -> nn.Module:
-        genotype = self.get_genotype_from_hps()
-
-        model = RNNModel(
-            self.ntokens,
-            self.hparams.emsize,
-            self.hparams.nhid,
-            self.hparams.nhidlast,
-            self.hparams.dropout,
-            self.hparams.dropouth,
-            self.hparams.dropoutx,
-            self.hparams.dropouti,
-            self.hparams.dropoute,
-            genotype=genotype,
-        )
-        total_params = sum(x.data.nelement() for x in model.parameters())
-        logging.info("Model total parameters: {}".format(total_params))
-
-        # If loading backbone weights, do not call reset_parameters() or
-        # call before loading the backbone weights.
-        reset_parameters(model)
-        return model
-
-    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:  # type: ignore
-        optimizer = HybridSGD(
-            model.parameters(),
-            self.hparams.learning_rate,
-            self.hparams.weight_decay,
-            lambd=0,
-            t0=0,
-        )
-        return optimizer
-
-    def create_lr_scheduler(self, optimizer: torch.optim.Optimizer):
-        """
-        Required Method to use a learning rate scheduler
-        Returns: Determined scheduler object
-        """
-        self.myLR = MyLR(optimizer, self.hparams)
-        step_mode = LRScheduler.StepMode.MANUAL_STEP
-        self._optimizer = self.context.get_optimizer()
-        return LRScheduler(self.myLR, step_mode=step_mode)
-
     def update_and_step_lr(self, seq_len):
         """
         Updates and steps the learning rate
@@ -174,9 +162,7 @@ class DARTSRNNTrial(PyTorchTrial):
                 logging.info("Switching to ASGD.")
                 self._optimizer.set_optim("ASGD")
 
-    def train_batch(
-        self, batch: Any, model: nn.Module, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
+    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
         """
         Trains the provided batch.
         Returns: Dictionary of the calculated Metrics
@@ -194,13 +180,13 @@ class DARTSRNNTrial(PyTorchTrial):
 
         # set hidden if it's the first run
         if batch_idx == 0 or self.hidden is None:
-            self.hidden = model.init_hidden(self.context.get_per_slot_batch_size())
+            self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
 
         # detach to prevent backpropagating to far
         for i in range(len(self.hidden)):
             self.hidden[i] = self.hidden[i].detach()
 
-        log_prob, self.hidden, rnn_hs, dropped_rnn_hs = model(
+        log_prob, self.hidden, rnn_hs, dropped_rnn_hs = self.model(
             features, self.hidden, return_h=True
         )
 
@@ -223,6 +209,14 @@ class DARTSRNNTrial(PyTorchTrial):
             )
         ) * 1.0
 
+        self.context.backward(loss)
+        self.context.step_optimizer(
+            self.optimizer,
+            clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
+                params, self.context.get_hparam("clip_gradients_l2_norm"),
+            ),
+        )
+
         try:
             perplexity = math.exp(raw_loss)
         except Exception as e:
@@ -236,9 +230,7 @@ class DARTSRNNTrial(PyTorchTrial):
 
         return {"loss": loss, "raw_loss": raw_loss, "perplexity": perplexity}
 
-    def evaluate_full_dataset(
-        self, data_loader: torch.utils.data.DataLoader, model: nn.Module
-    ):
+    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader):
         """
         Evaluates the full dataset against the given arch
         """
@@ -246,11 +238,11 @@ class DARTSRNNTrial(PyTorchTrial):
         # to a tmp var and copy over averaged params to use for eval.
         if self._optimizer.optim_name == "ASGD":
             tmp = {}
-            for prm in model.parameters():
+            for prm in self.model.parameters():
                 tmp[prm] = prm.data.clone()
                 prm.data = self._optimizer.ASGD.state[prm]["ax"].clone()
 
-        hidden = model.init_hidden(self.hparams.eval_batch_size)
+        hidden = self.model.init_hidden(self.hparams.eval_batch_size)
 
         total_loss = 0
         num_samples_seen = 0
@@ -258,7 +250,7 @@ class DARTSRNNTrial(PyTorchTrial):
             features, targets = batch
             features, targets = features.cuda(), targets.cuda()
 
-            log_prob, hidden = model(features, hidden)
+            log_prob, hidden = self.model(features, hidden)
             loss = nn.functional.nll_loss(
                 log_prob.contiguous().view(-1, log_prob.size(2)), targets
             ).data
@@ -290,14 +282,7 @@ class DARTSRNNTrial(PyTorchTrial):
 
         # If optimizer is ASGD, restore current params
         if self._optimizer.optim_name == "ASGD":
-            for prm in model.parameters():
+            for prm in self.model.parameters():
                 prm.data = tmp[prm].clone()
 
         return {"loss": total_loss, "perplexity": perplexity}
-
-    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
-        return {
-            "clip_grads": ClipGradsL2Norm(
-                self.context.get_hparam("clip_gradients_l2_norm")
-            )   
-        }
