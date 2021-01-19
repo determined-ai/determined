@@ -1,4 +1,5 @@
 import copy
+import os
 import re
 import subprocess
 import tempfile
@@ -522,6 +523,8 @@ def test_horovod_optimizer(
     image = conf.TF1_GPU_IMAGE
     if tf2:
         image = conf.TF2_GPU_IMAGE
+    if not tf2 and "CUDA" in os.environ and os.environ["CUDA"] == "11":
+        pytest.skip("CUDA 11 is not supported by TensorFlow 1")
 
     config = {
         "environment": {
