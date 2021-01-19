@@ -63,8 +63,8 @@ const Navigation: React.FC = () => {
   const shortVersion = version.split('.').slice(0, 3).join('.');
   const isVersionLong = (version.match(/\./g) || []).length > 2;
   const username = user?.username || 'Anonymous';
-  const cluster = overview[ResourceType.GPU].allocation === 0 ?
-    undefined : `${overview[ResourceType.GPU].allocation}%`;
+  const cluster = overview[ResourceType.ALL].allocation === 0 ?
+    undefined : `${overview[ResourceType.ALL].allocation}%`;
 
   const handleNotebookLaunch = useCallback(() => launchNotebook(1), []);
   const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), []);

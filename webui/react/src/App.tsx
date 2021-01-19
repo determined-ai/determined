@@ -46,7 +46,7 @@ const AppView: React.FC = () => {
 
   if (!ui.showChrome || !isAuthenticated) classes.push(css.noChrome);
 
-  updateFaviconType(cluster[ResourceType.GPU].allocation !== 0);
+  updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
 
   useRouteTracker();
   useTheme();
