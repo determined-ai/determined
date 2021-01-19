@@ -23,6 +23,8 @@ To use Determined, you can continue using popular DL frameworks such as
 TensorFlow and PyTorch; you just need to update your model code to integrate
 with the Determined API.
 
+:sparkles: _Want to learn more? Join us on the 26th at 2pm PT for our [Lunch & Learn](https://www.eventbrite.com/e/lunch-learn-scalable-object-detection-with-determined-tickets-133386266915) where we'll walk through how to train Facebook's DEtection TRansformers ([DETR](https://github.com/facebookresearch/detr)) model with Determined!_ :sparkles:
+
 ## Try out Determined Locally
  
 Follow [these instructions](https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker) to install and set up docker.
