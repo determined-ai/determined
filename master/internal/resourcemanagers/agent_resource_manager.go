@@ -189,7 +189,6 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	ctx *actor.Context,
 	poolName string,
 ) (*resourcepoolv1.ResourcePool, error) {
-	const na = "N/A"
 	pool, err := a.getResourcePoolConfig(poolName)
 	if err != nil {
 		return &resourcepoolv1.ResourcePool{}, err
@@ -199,8 +198,8 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	poolType := resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC
 	preemptible := false
 	location := "on-prem"
-	imageID := na
-	instanceType := na
+	imageID := ""
+	instanceType := ""
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
