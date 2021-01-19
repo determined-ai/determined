@@ -55,8 +55,10 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
 		}
+
 	case GetTaskSummaries:
 		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
+
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
 
