@@ -431,20 +431,27 @@ message TrialsSampleResponse {
   repeated int32 demoted_trials = 3;
 }
 
-// Trigger the computation of hyperparameter importance on-demand for a specific metric on a
-// specific experiment.
+// Trigger the computation of hyperparameter importance on-demand for a specific
+// metric on a specific experiment.
 message ComputeHPImportanceRequest {
   // The id of the experiment.
   int32 experiment_id = 1;
   // A metric name.
-  string metric_name = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_name"]; }];
+  string metric_name = 2
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["metric_name"];
+      }];
   // The type of metric.
-  MetricType metric_type = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = { required: ["metric_type"]; }];
+  MetricType metric_type = 3
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["metric_type"];
+      }];
 }
 
 // Response to ComputeHPImportanceRequest
-message ComputeHPImportanceResponse {
-}
+message ComputeHPImportanceResponse {}
 
 // Retrieve the status and results of hyperparameter importance computation.
 message GetHPImportanceRequest {
@@ -459,10 +466,12 @@ message GetHPImportanceResponse {
   // Hyperparameter importance as computed with respect for one specific metric.
   message MetricHPImportance {
     // A map between hyperparameter names and their relative importance.
-    map<string,double> hp_importance = 1;
-    // The approximate portion of the experiment that was complete when the data was read.
+    map<string, double> hp_importance = 1;
+    // The approximate portion of the experiment that was complete when the data
+    // was read.
     double experiment_progress = 2;
-    // A description of why computation failed. Empty unless the state is (or was) 'failed'.
+    // A description of why computation failed. Empty unless the state is (or
+    // was) 'failed'.
     string error = 3;
     // Whether or not a request to compute results for this metric is queued.
     bool pending = 4;
@@ -470,7 +479,7 @@ message GetHPImportanceResponse {
     bool in_progress = 5;
   }
   // A map of training metric names to their respective entries.
-  map<string,MetricHPImportance> training_metrics = 1;
+  map<string, MetricHPImportance> training_metrics = 1;
   // A map of validation metric names to their respective entries.
-  map<string,MetricHPImportance> validation_metrics = 2;
+  map<string, MetricHPImportance> validation_metrics = 2;
 }
