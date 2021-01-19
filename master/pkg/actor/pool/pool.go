@@ -148,13 +148,14 @@ func (w worker) Receive(ctx *actor.Context) error {
 	case actor.PreStart, actor.PostStop:
 		// Expected life-cycle messages; do nothing
 	case workerUp:
+	workLoop:
 		for {
 			task := ctx.Ask(ctx.Sender(), receiveTask{}).Get()
 
 			switch realTask := task.(type) {
 			case workerDown:
 				ctx.Self().Stop()
-				break
+				break workLoop
 			default:
 				result := w.pool.taskHandler(realTask)
 				ctx.Tell(ctx.Sender(), returnTask{result})
