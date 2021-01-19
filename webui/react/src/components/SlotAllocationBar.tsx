@@ -15,6 +15,7 @@ import css from './SlotAllocation.module.scss';
 export interface Props {
   barOnly?: boolean;
   className?: string;
+  hideHeader?: boolean;
   resourceStates: ResourceState[];
   showLegends?: boolean;
   size?: ShirtSize;
@@ -50,6 +51,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   totalSlots,
   showLegends,
   className,
+  hideHeader,
   ...barProps
 }: Props) => {
 
@@ -116,15 +118,17 @@ const SlotAllocationBar: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')}>
-      <div className={css.header}>
-        <header>GPU Slots Allocated</header>
-        {totalSlots === 0 ? <span>0/0</span> :
-          <span>
-            {resourceStates.length}/{totalSlots}
-            {totalSlots > 0 ? ` (${floatToPercent( resourceStates.length/totalSlots, 0)})` : ''}
-          </span>
-        }
-      </div>
+      {!hideHeader &&
+        <div className={css.header}>
+          <header>GPU Slots Allocated</header>
+          {totalSlots === 0 ? <span>0/0</span> :
+            <span>
+              {resourceStates.length}/{totalSlots}
+              {totalSlots > 0 ? ` (${floatToPercent(resourceStates.length/totalSlots, 0)})` : ''}
+            </span>
+          }
+        </div>
+      }
       <ConditionalWrapper
         condition={!showLegends}
         wrapper={(ch) => (

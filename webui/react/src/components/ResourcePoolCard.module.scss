@@ -37,8 +37,7 @@ $line-height: 2.2rem;
       flex-shrink: 0;
       height: $icon-side;
       justify-content: center;
-      margin: auto 2rem auto 0;
-      margin-right: 2rem;
+      margin: auto $padding auto 0;
       width: $icon-side;
     }
     .info {
@@ -60,6 +59,7 @@ $line-height: 2.2rem;
     background: var(--theme-colors-state-active);
     color: white;
     display: flex;
+    font-size: var(--theme-sizes-font-small);
     height: var(--theme-sizes-layout-enormous);
     text-align: center;
     vertical-align: middle;
@@ -128,6 +128,11 @@ section.details {
   ul {
     flex-grow: 1;
   }
+}
+.cpuContainers {
+  margin-top: $padding;
+
+  @extend .spaceBetweenHorizontal;
 }
 .spaceBetweenHorizontal {
   display: flex;
