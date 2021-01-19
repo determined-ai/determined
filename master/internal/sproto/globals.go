@@ -20,7 +20,8 @@ var (
 )
 
 type (
-	// GetDefaultGPUResourcePoolRequest is a message asking for the name of the default GPU resource pool
+	// GetDefaultGPUResourcePoolRequest is a message asking for the name of the default
+	// GPU resource pool
 	GetDefaultGPUResourcePoolRequest struct{}
 
 	// GetDefaultGPUResourcePoolResponse is the response to GetDefaultGPUResourcePoolRequest
@@ -28,7 +29,8 @@ type (
 		PoolName string
 	}
 
-	// GetDefaultCPUResourcePoolRequest is a message asking for the name of the default CPU resource pool
+	// GetDefaultCPUResourcePoolRequest is a message asking for the name of the default
+	// CPU resource pool
 	GetDefaultCPUResourcePoolRequest struct{}
 
 	// GetDefaultCPUResourcePoolResponse is the response to GetDefaultCPUResourcePoolRequest

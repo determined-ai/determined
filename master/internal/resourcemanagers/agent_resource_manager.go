@@ -118,13 +118,6 @@ func (a *agentResourceManager) createResourcePool(
 	return ref
 }
 
-func (a *agentResourceManager) getDefaultResourcePool(msg AllocateRequest) string {
-	if msg.SlotsNeeded == 0 {
-		return a.config.DefaultCPUResourcePool
-	}
-	return a.config.DefaultGPUResourcePool
-}
-
 func (a *agentResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
