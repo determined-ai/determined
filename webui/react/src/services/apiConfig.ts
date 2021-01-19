@@ -34,7 +34,7 @@ export const detApi = {
   Cluster: new Api.ClusterApi(ApiConfig),
   Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
-  InternalApi: new Api.InternalApi(ApiConfig),
+  Internal: new Api.InternalApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
@@ -58,7 +58,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Cluster = new Api.ClusterApi(config);
   detApi.Commands = new Api.CommandsApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
-  detApi.InternalApi = new Api.InternalApi(config);
+  detApi.Internal = new Api.InternalApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
@@ -127,7 +127,7 @@ export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInf
 export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry> = {
   name: 'getTelemetry',
   postProcess: (response) => response,
-  request: () => detApi.InternalApi.determinedGetTelemetry(),
+  request: () => detApi.Internal.determinedGetTelemetry(),
 };
 
 /* Agent */
