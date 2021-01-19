@@ -267,8 +267,9 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		resp.AgentDockerRuntime = pool.Provider.AgentDockerRuntime
 		resp.AgentDockerImage = pool.Provider.AgentDockerImage
 		resp.AgentFluentImage = pool.Provider.AgentFluentImage
-		resp.MaxIdleAgentPeriod = time.Duration(pool.Provider.MaxIdleAgentPeriod).String()
-		resp.MaxAgentStartingPeriod = time.Duration(pool.Provider.MaxAgentStartingPeriod).String()
+		resp.MaxIdleAgentPeriod = float32(time.Duration(pool.Provider.MaxIdleAgentPeriod).Seconds())
+		startingPeriodSecs := time.Duration(pool.Provider.MaxAgentStartingPeriod).Seconds()
+		resp.MaxAgentStartingPeriod = float32(startingPeriodSecs)
 	}
 	if pool.Scheduler != nil {
 		if pool.Scheduler.FittingPolicy == best {
@@ -332,7 +333,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			GpuType:                gcp.InstanceType.GPUType,
 			GpuNum:                 int32(gcp.InstanceType.GPUNum),
 			Preemptible:            gcp.InstanceType.Preemptible,
-			OperationTimeoutPeriod: time.Duration(gcp.OperationTimeoutPeriod).String(),
+			OperationTimeoutPeriod: float32(time.Duration(gcp.OperationTimeoutPeriod).Seconds()),
 		}
 	}
 

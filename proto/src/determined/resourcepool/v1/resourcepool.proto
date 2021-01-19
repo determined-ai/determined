@@ -144,12 +144,12 @@ message ResourcePool {
   string agent_docker_image=27;
   // The Fluent docker image to use
   string agent_fluent_image=28;
-  // The maximum idle period of agents. The master waits for this period of time
+  // The maximum idle period of agents in seconds. The master waits for this period of time
   // before shutting down idle agents.
-  string max_idle_agent_period=29;
-  // The maximum starting period of agents. The master waits for this period of time for starting
+  float max_idle_agent_period=29;
+  // The maximum starting period of agents in seconds. The master waits for this period of time for starting
   // agents before retrying.
-  string max_agent_starting_period=30;
+  float max_agent_starting_period=30;
 
   // GCP, AWS and Priority Scheduler details
   determined.resourcepool.v1.ResourcePoolDetail details=31;
@@ -294,8 +294,8 @@ message ResourcePoolGcpDetail {
   int32 gpu_num=16;
   // Whether to use preemptible instances
   bool preemptible=17;
-  // The timeout period for tracking a GCP operation
-  string operation_timeout_period=18;
+  // The timeout period for tracking a GCP operation in seconds
+  float operation_timeout_period=18;
 }
 
 // Details related to the priority scheduler. This will only be present if the schedulerType=priority

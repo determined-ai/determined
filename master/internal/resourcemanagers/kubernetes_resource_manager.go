@@ -132,7 +132,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		SchedulerType:                resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
 		SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
 		Location:                     "kubernetes",
-		ImageId:                      "N/A",
+		ImageId:                      "",
 		InstanceType:                 "kubernetes",
 		Details:                      nil,
 	}
