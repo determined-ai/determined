@@ -11,20 +11,20 @@
 Version 0.13.12
 ===============
 
-**Release Date:** January 11, 2020
+**Release Date:** January 11, 2021
 
-**Bug fixes**
+**Bug Fixes**
 
--  WebUI: fix the Okta sign-in workflow.
--  WebUI: fix an issue with unexpected hyperparameter types in
+-  WebUI: Fix the Okta sign-in workflow.
+-  WebUI: Fix an issue with unexpected hyperparameter types in
    experiment configuration.
--  WebUI: fix trial metric workload duration reporting in the trial
+-  WebUI: Fix trial metric workload duration reporting in the trial
    detail page.
 
 Version 0.13.11
 ===============
 
-**Release Date:** January 6, 2020
+**Release Date:** January 6, 2021
 
 **Improvements**
 
