@@ -13,7 +13,7 @@ export interface DetailedUser extends User {
 export interface Auth {
   isAuthenticated: boolean;
   token?: string;
-  user?: User;
+  user?: DetailedUser;
 }
 
 export interface Credentials {

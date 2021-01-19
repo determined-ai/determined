@@ -28,7 +28,7 @@ import {
 import { ApiSorter, EmptyParams } from 'services/types';
 import { ShirtSize } from 'themes';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
-import { alphanumericSorter, getPath, numericSorter } from 'utils/data';
+import { alphanumericSorter, numericSorter } from 'utils/data';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 import { openCommand } from 'wait';
@@ -84,7 +84,10 @@ const TaskList: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,
-    { ...defaultFilters, username: getPath<string>(auth, 'user.username') },
+    (!auth.user || auth.user?.isAdmin) ? defaultFilters : {
+      ...defaultFilters,
+      username: auth.user?.username,
+    },
   );
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
