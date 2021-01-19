@@ -4,11 +4,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-// ActorPoolQueueFullError is returned by SubmitTask when the pool is so backed up that the queue
-// is full.
-type ActorPoolQueueFullError struct{}
+// QueueFullError is returned by SubmitTask when the pool is so backed up that the queue is full.
+type QueueFullError struct{}
 
-func (e ActorPoolQueueFullError) Error() string {
+func (e QueueFullError) Error() string {
 	return "actor pool queue is full"
 }
 
@@ -100,7 +99,7 @@ func (p *ActorPool) Receive(ctx *actor.Context) error {
 		ctx.Log().Warnf("worker failed in actor pool %s: %+v", p.name, msg)
 	case sendTask:
 		if uint(len(p.queue)) == p.queueLimit {
-			ctx.Respond(ActorPoolQueueFullError{})
+			ctx.Respond(QueueFullError{})
 			return nil
 		}
 		p.queue <- msg.task
@@ -154,11 +153,8 @@ func (w worker) Receive(ctx *actor.Context) error {
 
 			switch realTask := task.(type) {
 			case workerDown:
-				err := ctx.Self().StopAndAwaitTermination()
-				if err != nil {
-					return nil
-					// TODO log error, because now there's gonna be a zombie actor
-				}
+				ctx.Self().Stop()
+				break
 			default:
 				result := w.pool.taskHandler(realTask)
 				ctx.Tell(ctx.Sender(), returnTask{result})
