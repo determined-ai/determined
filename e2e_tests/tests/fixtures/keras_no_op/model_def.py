@@ -36,7 +36,7 @@ class TensorFlowRandomMetric(tf.keras.metrics.Metric):
     def result(self):
         def my_func(x):
             if version.parse(tf.__version__) >= version.parse("2.0.0"):
-                return tf.random.get_global_generator().uniform
+                return tf.random.get_global_generator().uniform()
             else:
                 return 0.0
 

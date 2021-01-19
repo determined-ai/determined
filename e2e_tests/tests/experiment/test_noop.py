@@ -310,7 +310,7 @@ def test_keras_rng_restore() -> None:
 @pytest.mark.tensorflow1_cpu  # type: ignore
 @pytest.mark.tensorflow2_cpu  # type: ignore
 def test_estimator_rng_restore() -> None:
-    _test_rng_restore("estimator_no_op", ["rand_rand", "np_rand", "tf_rand"])
+    _test_rng_restore("estimator_no_op", ["rand_rand", "np_rand"])
 
 
 @pytest.mark.e2e_cpu  # type: ignore
