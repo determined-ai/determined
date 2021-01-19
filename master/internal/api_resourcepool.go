@@ -89,10 +89,10 @@ func (a *ResourcePoolAPIStatesStreamActor) Receive(ctx *actor.Context) error {
 			state := resourcepoolv1.ResourcePoolState{
 				Name:                   summary.Name,
 				NumAgents:              int32(summary.NumAgents),
-				NumTotalSlots:          int32(summary.NumTotalSlots),
-				NumActiveSlots:         int32(summary.NumActiveSlots),
-				MaxCpuContainers:       int32(summary.MaxNumCPUContainers),
-				NumActiveCpuContainers: int32(summary.NumActiveCPUContainers),
+				SlotsAvailable:          int32(summary.SlotsAvailable),
+				SlotsUsed:         int32(summary.SlotsUsed),
+				CpuContainerCapacity:       int32(summary.CPUContainerCapacity),
+				CpuContainersRunning: int32(summary.CPUContainersRunning),
 			}
 			states = append(states, &state)
 		}
@@ -125,10 +125,10 @@ func (a *ResourcePoolAPIStatesStreamActor) Receive(ctx *actor.Context) error {
 			state := resourcepoolv1.ResourcePoolState{
 				Name:                   summary.Name,
 				NumAgents:              int32(summary.NumAgents),
-				NumTotalSlots:          int32(summary.NumTotalSlots),
-				NumActiveSlots:         int32(summary.NumActiveSlots),
-				MaxCpuContainers:       int32(summary.MaxNumCPUContainers),
-				NumActiveCpuContainers: int32(summary.NumActiveCPUContainers),
+				SlotsAvailable:          int32(summary.SlotsAvailable),
+				SlotsUsed:         int32(summary.SlotsUsed),
+				CpuContainerCapacity:       int32(summary.CPUContainerCapacity),
+				CpuContainersRunning: int32(summary.CPUContainersRunning),
 			}
 			currentStates = append(currentStates, &state)
 		}
@@ -176,10 +176,10 @@ func calculateUpdates(
 		oldState := previousMap[newState.Name]
 		var update *resourcepoolv1.ResourcePoolState = nil
 		if newState.NumAgents != oldState.NumAgents ||
-			newState.NumTotalSlots != oldState.NumTotalSlots ||
-			newState.NumActiveSlots != oldState.NumActiveSlots ||
-			newState.MaxCpuContainers != oldState.MaxCpuContainers ||
-			newState.NumActiveCpuContainers != oldState.NumActiveCpuContainers {
+			newState.SlotsAvailable != oldState.SlotsAvailable ||
+			newState.SlotsUsed != oldState.SlotsUsed ||
+			newState.CpuContainerCapacity != oldState.CpuContainerCapacity ||
+			newState.CpuContainersRunning != oldState.CpuContainersRunning {
 			update = newState
 		}
 

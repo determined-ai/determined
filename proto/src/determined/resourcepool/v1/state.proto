@@ -13,10 +13,10 @@ message ResourcePoolState {
     json_schema: {required: [
       "name",
       "num_agents",
-      "num_total_slots",
-      "num_active_slots",
-      "max_cpu_containers",
-      "num_active_cpu_containers"
+      "slots_available",
+      "slots_used",
+      "cpu_container_capacity",
+      "cpu_containers_running"
     ] }
   };
   // The name of the resource pool.
@@ -24,13 +24,13 @@ message ResourcePoolState {
   // The number of agents that exist in the pool.
   int32 num_agents = 2;
   // The total number of slots available in the pool (both unused and in-use).
-  int32 num_total_slots = 3;
+  int32 slots_available = 3;
   // The number of slots current being used by tasks in the pool.
-  int32 num_active_slots = 4;
+  int32 slots_used = 4;
   // The maximum number of CPU containers that can run in the pool.
-  int32 max_cpu_containers = 5;
+  int32 cpu_container_capacity = 5;
   // The number of CPU containers currently running in the pool.
-  int32 num_active_cpu_containers = 6;
+  int32 cpu_containers_running = 6;
 }
 
 // ResourcePoolStates is a collection of ResourcePoolState, one for each pool. After the initial

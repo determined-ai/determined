@@ -129,10 +129,10 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
 		NumAgents:                    int32(resourceSummary.NumAgents),
-		SlotsAvailable:               int32(resourceSummary.NumTotalSlots),
-		SlotsUsed:                    int32(resourceSummary.NumActiveSlots),
-		CpuContainerCapacity:         int32(resourceSummary.MaxNumCPUContainers),
-		CpuContainersRunning:         int32(resourceSummary.NumActiveCPUContainers),
+		SlotsAvailable:               int32(resourceSummary.SlotsAvailable),
+		SlotsUsed:                    int32(resourceSummary.SlotsUsed),
+		CpuContainerCapacity:         int32(resourceSummary.CPUContainerCapacity),
+		CpuContainersRunning:         int32(resourceSummary.CPUContainersRunning),
 		DefaultGpuPool:               true,
 		DefaultCpuPool:               true,
 		Preemptible:                  false,
@@ -303,22 +303,17 @@ func (k *kubernetesResourceManager) createResourceSummary(ctx *actor.Context) Re
 		slotsUsed += slotsUsedByGroup
 	}
 	return ResourceSummary{
-		Name:                   kubernetesDummyResourcePool,
-		NumAgents:              1,
-		NumTotalSlots:          k.agent.numSlots(),
-		NumActiveSlots:         k.agent.numUsedSlots(),
-		MaxNumCPUContainers:    k.agent.maxZeroSlotContainers,
-		NumActiveCPUContainers: k.agent.numZeroSlotContainers(),
+		Name:                 kubernetesDummyResourcePool,
+		NumAgents:            1,
+		SlotsAvailable:       k.agent.numSlots(),
+		SlotsUsed:            k.agent.numUsedSlots(),
+		CPUContainerCapacity: k.agent.maxZeroSlotContainers,
+		CPUContainersRunning: k.agent.numZeroSlotContainers(),
 	}
 
 }
 
 
-// summaries := make([]ResourceSummary, 0, len(a.poolsConfig.ResourcePools))
-//		for _, pool := range a.pools {
-//			summary := ctx.Ask(pool, GetResourceSummary{}).Get().(ResourceSummary)
-//			summaries = append(summaries, summary)
-//		}
 
 type podAllocation struct {
 	req       *AllocateRequest

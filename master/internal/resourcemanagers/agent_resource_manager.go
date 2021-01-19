@@ -376,11 +376,11 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	}
 
 	resourceSummary := ctx.Ask(a.pools[poolName], GetResourceSummary{}).Get().(ResourceSummary)
-	resp.NumAgents = int32(resourceSummary.numAgents)
-	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
-	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
-	resp.CpuContainerCapacity = int32(resourceSummary.maxNumCPUContainers)
-	resp.CpuContainersRunning = int32(resourceSummary.numActiveCPUContainers)
+	resp.NumAgents = int32(resourceSummary.NumAgents)
+	resp.SlotsAvailable = int32(resourceSummary.SlotsAvailable)
+	resp.SlotsUsed = int32(resourceSummary.SlotsUsed)
+	resp.CpuContainerCapacity = int32(resourceSummary.CPUContainerCapacity)
+	resp.CpuContainersRunning = int32(resourceSummary.CPUContainersRunning)
 
 	return resp, nil
 }

@@ -94,12 +94,12 @@ func getTaskSummaries(
 // ResourceSummary is the response to GetResourceSummary. It summarizes how many
 // resource are available in the pool and how many resources are in use.
 type ResourceSummary struct {
-	Name                   string
-	NumAgents              int
-	NumTotalSlots          int
-	NumActiveSlots         int
-	MaxNumCPUContainers    int
-	NumActiveCPUContainers int
+	Name                 string
+	NumAgents            int
+	SlotsAvailable       int
+	SlotsUsed            int
+	CPUContainerCapacity int
+	CPUContainersRunning int
 }
 
 func getResourceSummary(
@@ -107,18 +107,18 @@ func getResourceSummary(
 	agentInfo map[*actor.Ref]*agentState,
 ) ResourceSummary {
 	summary := ResourceSummary{
-		Name:                   poolName,
-		NumTotalSlots:          0,
-		NumActiveSlots:         0,
-		MaxNumCPUContainers:    0,
-		NumActiveCPUContainers: 0,
+		Name:                 poolName,
+		SlotsAvailable:       0,
+		SlotsUsed:            0,
+		CPUContainerCapacity: 0,
+		CPUContainersRunning: 0,
 	}
 	for _, agentState := range agentInfo {
 		summary.NumAgents++
-		summary.NumTotalSlots += agentState.numSlots()
-		summary.NumActiveSlots += agentState.numUsedSlots()
-		summary.MaxNumCPUContainers += agentState.maxZeroSlotContainers
-		summary.NumActiveCPUContainers += agentState.numZeroSlotContainers()
+		summary.SlotsAvailable += agentState.numSlots()
+		summary.SlotsUsed += agentState.numUsedSlots()
+		summary.CPUContainerCapacity += agentState.maxZeroSlotContainers
+		summary.CPUContainersRunning += agentState.numZeroSlotContainers()
 	}
 	return summary
 }
