@@ -3,7 +3,6 @@ package resourcemanagers
 import (
 	"crypto/tls"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -217,13 +216,11 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			location = pool.Provider.GCP.Zone
 			imageID = pool.Provider.GCP.BootDiskSourceImage
 
-			instanceTypeStringBuilder := strings.Builder{}
-			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.MachineType)
-			instanceTypeStringBuilder.WriteString(", ")
-			instanceTypeStringBuilder.WriteString(fmt.Sprint(pool.Provider.GCP.InstanceType.GPUNum))
-			instanceTypeStringBuilder.WriteString("x")
-			instanceTypeStringBuilder.WriteString(pool.Provider.GCP.InstanceType.GPUType)
-			instanceType = instanceTypeStringBuilder.String()
+			instanceType = fmt.Sprintf("%s, %dx%s",
+				pool.Provider.GCP.InstanceType.MachineType,
+				pool.Provider.GCP.InstanceType.GPUNum,
+				pool.Provider.GCP.InstanceType.GPUType,
+			)
 		}
 	}
 
