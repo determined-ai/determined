@@ -337,11 +337,11 @@ export interface ExperimentItem {
   name: string;
   numTrials: number;
   progress?: number;
+  resourcePool?: string
   startTime: string;
   state: RunState;
   url: string;
   username: string;
-  resourcepool?: string
 }
 
 export interface ExperimentBase {

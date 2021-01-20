@@ -241,7 +241,7 @@ const decodeV1ExperimentToExperimentItem = (
     name: data.description,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
-    resourcepool: data.resourcePool,
+    resourcePool: data.resourcePool,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     url: `/experiments/${data.id}`,
