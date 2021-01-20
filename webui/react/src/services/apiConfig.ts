@@ -19,7 +19,7 @@ import {
 import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  Log, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
+  Log, TBSourceType, Telemetry, TrialDetails, TrialLog, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -406,7 +406,7 @@ export const getTaskLogs: HttpApi<TaskLogsParams, Log[]> = {
   postProcess: response => jsonToTaskLogs(response.data),
 };
 
-export const getTrialLogs: HttpApi<TrialLogsParams, Log[]> = {
+export const getTrialLogs: HttpApi<TrialLogsParams, TrialLog[]> = {
   httpOptions: (params: TrialLogsParams) => ({
     url: [
       `/experiments/${params.experimentId}/trials/${params.trialId}/logs`,

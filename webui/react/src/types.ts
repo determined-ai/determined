@@ -445,3 +445,10 @@ export interface Log {
   meta?: string;
   time?: string;
 }
+
+export interface TrialLog {
+  id: string;
+  level?: LogLevel;
+  message: string;
+  time?: string;
+}

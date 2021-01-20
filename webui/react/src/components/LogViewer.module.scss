@@ -117,7 +117,8 @@
       width: 100%;
     }
   }
-  .enableTailing.enabled {
+  .enableTailing.enabled,
+  .scrollToTop.enabled {
     border-color: var(--theme-colors-action-normal);
     color: var(--theme-colors-action-normal);
   }

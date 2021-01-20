@@ -319,11 +319,20 @@ export const ioLog = io.type({
   message: io.string,
   time: optional(io.string),
 });
+export const ioTrialLog = io.type({
+  id: io.string,
+  level: optional(ioLogLevelType),
+  message: io.string,
+  time: optional(io.string),
+});
 
 export const ioLogs = io.array(ioLog);
+export const ioTrialLogs = io.array(ioTrialLog);
 
 export type ioTypeLog = io.TypeOf<typeof ioLog>;
 export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
+export type ioTypeTrialLog = io.TypeOf<typeof ioTrialLog>;
+export type ioTypeTrialLogs = io.TypeOf<typeof ioTrialLogs>;
 
 const ioTaskLog = io.type({
   assigned_event: io.unknown,

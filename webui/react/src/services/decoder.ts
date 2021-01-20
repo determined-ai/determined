@@ -349,7 +349,7 @@ export const jsonToLogs = (data: unknown): types.Log[] => {
 const defaultRegex = /^\[([^\]]+)\]\s([\s\S]*)(\r|\n)$/im;
 const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(\r|\n)$/im;
 
-const ioToTrialLog = (io: ioTypes.ioTypeLog): types.Log => {
+const ioToTrialLog = (io: ioTypes.ioTypeTrialLog): types.TrialLog => {
   if (defaultRegex.test(io.message)) {
     const matches = io.message.match(defaultRegex) || [];
     const time = matches[1];
@@ -364,8 +364,8 @@ const ioToTrialLog = (io: ioTypes.ioTypeLog): types.Log => {
   return { id: io.id, message: io.message };
 };
 
-export const jsonToTrialLog = (data: unknown): types.Log => {
-  const io = ioTypes.decode<ioTypes.ioTypeLog>(ioTypes.ioLog, data);
+export const jsonToTrialLog = (data: unknown): types.TrialLog => {
+  const io = ioTypes.decode<ioTypes.ioTypeTrialLog>(ioTypes.ioTrialLog, data);
   return ioToTrialLog(io);
 };
 
@@ -405,7 +405,7 @@ export const jsonToTaskLogs = (data: unknown): types.Log[] => {
     });
 };
 
-export const jsonToTrialLogs = (data: unknown): types.Log[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeLogs>(ioTypes.ioLogs, data);
+export const jsonToTrialLogs = (data: unknown): types.TrialLog[] => {
+  const io = ioTypes.decode<ioTypes.ioTypeTrialLogs>(ioTypes.ioTrialLogs, data);
   return io.map(ioToTrialLog);
 };
