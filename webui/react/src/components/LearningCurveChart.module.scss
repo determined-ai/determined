@@ -47,6 +47,20 @@ $tooltip-offset: 0.5rem;
       right: $tooltip-offset;
     }
   }
+  .zoomOutTip {
+    background-color: var(--theme-colors-monochrome-17);
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+    border-radius: var(--theme-sizes-border-radius);
+    box-shadow: var(--theme-shadow);
+    opacity: 0;
+    padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
+    pointer-events: none;
+    position: absolute;
+    right: var(--theme-sizes-layout-big);
+    top: var(--theme-sizes-layout-big);
+    transition: opacity 0.2s ease-in-out;
+    z-index: 100;
+  }
   .measure {
     display: inline;
     opacity: 0;
