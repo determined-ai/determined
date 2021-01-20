@@ -131,6 +131,7 @@ const LearningCurveChart: React.FC<Props> = ({
   const [ focusedPoint, setFocusedPoint ] = useState<ClosestPoint>();
   const [ mouseDownPoint, setMouseDownPoint ] = useState<Point>();
   const [ xScale, setXScale ] = useState<{ max: number, min: number }>();
+  const [ showZoomOutTip, setShowZoomOutTip ] = useState(false);
 
   const focusOnTrial = useCallback(() => {
     if (!chart) return;
@@ -165,16 +166,20 @@ const LearningCurveChart: React.FC<Props> = ({
   }, []);
 
   const handleClick = useCallback((event: React.MouseEvent) => {
-    if (!mouseDownPoint) return;
+    if (!chart || !mouseDownPoint) return;
 
     /*
      * Make sure the mouse down and mouse up distance is fairly close
      * to be considered a click instead of a drag movement for chart zoom.
      */
-    const dist = distance(event.clientY, mouseDownPoint?.y, event.clientY, mouseDownPoint?.y);
-    if (chart && focusedPoint && focusedPoint.seriesIdx != null &&
-        onTrialClick && dist < MOUSE_CLICK_THRESHOLD) {
-      onTrialClick(event, trialIds[focusedPoint.seriesIdx]);
+    const dist = distance(event.clientX, event.clientY, mouseDownPoint?.x, mouseDownPoint?.y);
+    if (dist < MOUSE_CLICK_THRESHOLD) {
+      if (focusedPoint && focusedPoint.seriesIdx != null && onTrialClick) {
+        onTrialClick(event, trialIds[focusedPoint.seriesIdx]);
+      }
+      setShowZoomOutTip(false);
+    } else {
+      setShowZoomOutTip(true);
     }
 
     setMouseDownPoint(undefined);
@@ -194,7 +199,6 @@ const LearningCurveChart: React.FC<Props> = ({
     mouseTop: number,
   ) => {
     const position = [ mouseLeft, mouseTop ];
-    // if (isMouseDown) return position;
     if (mouseLeft < 0 && mouseTop < 0) return position;
     if (!plot.data || plot.data.length === 0) return;
     if (!tooltipRef.current || !pointRef.current || !trialIdRef.current ||
@@ -378,6 +382,9 @@ const LearningCurveChart: React.FC<Props> = ({
             <div ref={metricValueRef} />
           </div>
         </div>
+      </div>
+      <div className={css.zoomOutTip} style={{ opacity: showZoomOutTip ? 1 : 0 }}>
+        Double-click to reset zoom level
       </div>
       <div className={css.measure} ref={measureRef} />
     </div>
