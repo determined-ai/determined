@@ -98,11 +98,11 @@ data:
 
     {{- if .Values.logging }}
     logging:
-      {{- if .Values.logging.backend }}
-      backend: {{ .Values.logging.backend }}
+      {{- if .Values.logging.type }}
+      type: {{ .Values.logging.type }}
       {{- end }}
 
-      {{- if (eq (default "" .Values.logging.backend) "elastic") }}
+      {{- if (eq (default "" .Values.logging.type) "elastic") }}
       host: {{ required "A valid host must be provided if logging to Elasticsearch!" .Values.logging.host }}
       port: {{ required "A valid port must be provided if logging to Elasticsearch!" .Values.logging.port }}
       {{- if .Values.logging.security }}
