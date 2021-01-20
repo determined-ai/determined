@@ -132,7 +132,7 @@ telemetry:
   ## The backend to use. Can be `default` to send logs to the master to store in the PostgreSQL
   ## database or `elastic` to store logs in an Elasticsearch cluster (without going through the
   ## master).
-  # backend: default
+  # type: default
 
   ## The remaining options should be provided only for the `elastic` backend.
 

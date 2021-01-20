@@ -90,8 +90,8 @@ func makeOutputConfig(
 		elasticSecOpts := elasticOpts.Security
 		if elasticSecOpts.Username != nil && elasticSecOpts.Password != nil {
 			fmt.Fprintf(config, `
-  HTTPUser   %s
-  HTTPPasswd %s
+  HTTP_User   %s
+  HTTP_Passwd %s
 `, *elasticOpts.Security.Username, *elasticOpts.Security.Password)
 		}
 
