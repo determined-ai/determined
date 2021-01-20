@@ -126,7 +126,7 @@ func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 	}
 	s.eventLog.OperationsCreated(operations...)
 	if s.eventLog.TrialsRequested == s.eventLog.TrialsClosed {
-		shutdown := Shutdown{Failure: len(s.eventLog.earlyExits) >= s.eventLog.TrialsRequested}
+		shutdown := Shutdown{Failure: len(s.eventLog.failures) >= s.eventLog.TrialsRequested}
 		s.eventLog.OperationsCreated(shutdown)
 		operations = append(operations, shutdown)
 	}
