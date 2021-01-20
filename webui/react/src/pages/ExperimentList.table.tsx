@@ -46,6 +46,7 @@ export const columns: ColumnType<ExperimentItem>[] = [
     title: 'State',
   },
   {
+    dataIndex: 'resourcePool',
     key: 'resourcePool',
     sorter: true,
     title: 'Resource Pool',

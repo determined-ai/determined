@@ -224,6 +224,7 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
     // numTrials
     // labels
     progress: exp.progress != null ? exp.progress : undefined,
+    resourcePool: exp.resourcePool,
     startTime: exp.startTime as unknown as string,
     state: decodeExperimentState(exp.state),
     username: exp.username,
