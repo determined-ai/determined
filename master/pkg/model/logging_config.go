@@ -11,8 +11,8 @@ import (
 
 // LoggingConfig configures logging for tasks (currently only trials) in Determined.
 type LoggingConfig struct {
-	DefaultLoggingConfig *DefaultLoggingConfig `union:"backend,default" json:"-"`
-	ElasticLoggingConfig *ElasticLoggingConfig `union:"backend,elastic" json:"-"`
+	DefaultLoggingConfig *DefaultLoggingConfig `union:"type,default" json:"-"`
+	ElasticLoggingConfig *ElasticLoggingConfig `union:"type,elastic" json:"-"`
 }
 
 // Resolve resolves the parts of the TaskContainerDefaultsConfig that must be evaluated on

@@ -2,7 +2,7 @@ task_container_defaults:
   network_mode: host
 
 #logging:
-#  backend: elastic
+#  type: elastic
 #  host: 127.0.0.1
 #  port: 9200
 
