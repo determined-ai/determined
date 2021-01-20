@@ -471,11 +471,11 @@ export interface ResourcePool {
   minAgents: number;
   name: string;
   numAgents: number;
+  preemptible: boolean;
   schedulerFittingPolicy: string;
   schedulerType: string;
   slotsAvailable: number;
   slotsUsed: number;
-  spotOrPreemptible: boolean;
   type: string;
 }
 
