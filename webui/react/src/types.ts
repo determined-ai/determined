@@ -438,6 +438,16 @@ export enum LogLevel {
   Warning = 'warning',
 }
 
+export enum LogLevel2 {
+  Critical = 'LOG_LEVEL_CRITICAL',
+  Debug = 'LOG_LEVEL_DEBUG',
+  Error = 'LOG_LEVEL_ERROR',
+  Info = 'LOG_LEVEL_INFO',
+  Trace = 'LOG_LEVEL_TRACE',
+  Unspecified = 'LOG_LEVEL_UNSPECIFIED',
+  Warning = 'LOG_LEVEL_WARNING',
+}
+
 export interface Log {
   id: number;
   level?: LogLevel;

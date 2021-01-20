@@ -2,7 +2,9 @@ import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { CheckpointState, CheckpointStorageType, CommandState, LogLevel, RunState } from 'types';
+import {
+  CheckpointState, CheckpointStorageType, CommandState, LogLevel, LogLevel2, RunState,
+} from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -319,9 +321,13 @@ export const ioLog = io.type({
   message: io.string,
   time: optional(io.string),
 });
+
+const ioLogLevels2: Record<string, null> = Object.values(LogLevel2)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const ioLogLevelType2 = io.keyof(ioLogLevels2);
 export const ioTrialLog = io.type({
   id: io.string,
-  level: optional(ioLogLevelType),
+  level: optional(ioLogLevelType2),
   message: io.string,
   time: optional(io.string),
 });
