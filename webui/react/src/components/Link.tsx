@@ -15,6 +15,7 @@ export interface Props {
   onClick?: MouseEventHandler;
   path?: string;
   popout?: boolean;
+  rawLink?: boolean;
   size?: 'tiny' | 'small' | 'medium' | 'large';
 }
 
@@ -46,7 +47,7 @@ const Link: React.FC<Props> = ({
       className={classes.join(' ')}
       href={href}
       rel={rel}
-      onClick={handleClick}>
+      onClick={!props.rawLink ? handleClick : undefined}>
       {props.children}
     </a>
   );
