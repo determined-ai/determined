@@ -22,7 +22,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // ExperimentRequestQuery contains values for the experiments request queries with defaults already
@@ -390,11 +389,6 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	}
 
 	if cerr := check.Validate(config); cerr != nil {
-		if ok, msgs := expconf.SaneYamlV1([]byte(params.ConfigBytes)); !ok {
-			// Return the errors from json-schema, which will be much clearer.
-			cerr = errors.New("\n" + strings.Join(msgs, "\n"))
-			return nil, false, errors.Wrap(cerr, "invalid experiment configuration")
-		}
 		return nil, false, errors.Wrap(cerr, "invalid experiment configuration")
 	}
 
