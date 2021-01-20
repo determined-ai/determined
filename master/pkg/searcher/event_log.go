@@ -26,7 +26,7 @@ type EventLog struct {
 
 	// Searcher state.
 	unitsCompletedByTrial map[RequestID]float64
-	earlyExits            map[RequestID]bool
+	failures              map[RequestID]bool
 	TotalUnitsCompleted   float64
 	Shutdown              bool
 
@@ -41,7 +41,7 @@ type EventLog struct {
 func NewEventLog(unit model.Unit) *EventLog {
 	return &EventLog{
 		unitsCompletedByTrial: map[RequestID]float64{},
-		earlyExits:            map[RequestID]bool{},
+		failures:              map[RequestID]bool{},
 		TotalUnitsCompleted:   0,
 		Shutdown:              false,
 		TrialsRequested:       0,
@@ -84,8 +84,10 @@ func (el *EventLog) TrialExitedEarly(requestID RequestID, exitedReason workload.
 		unitsCancelled := el.unitsCompletedByTrial[requestID]
 		el.TotalUnitsCompleted -= unitsCancelled
 	}
-	if _, ok := el.earlyExits[requestID]; !ok {
-		el.earlyExits[requestID] = true
+	// Only workload.Errored is considered a failure (since failures cause an experiment
+	// to be in the failed state).
+	if _, ok := el.failures[requestID]; !ok && exitedReason == workload.Errored {
+		el.failures[requestID] = true
 	}
 }
 
