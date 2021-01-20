@@ -220,6 +220,29 @@ Tearing Down the Cluster
          CloudFormation stack name.
       -  *required*
 
+   -  -  ``--region``
+      -  AWS region to deploy into.
+      -  The default region for the AWS user
+
+Listing the Clusters
+--------------------
+
+.. code::
+
+   det-deploy aws list
+
+.. list-table::
+   :widths: 25 50 25
+   :header-rows: 1
+
+   -  -  Argument
+      -  Description
+      -  Default Value
+
+   -  -  ``--region``
+      -  AWS region to deploy into.
+      -  The default region for the AWS user
+
 .. _aws-manual-deployment:
 
 *******************
