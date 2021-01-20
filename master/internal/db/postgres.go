@@ -1173,15 +1173,6 @@ RETURNING id`, trial)
 	return nil
 }
 
-// TrialIDsByExperiment returns the trial IDs from a given experiment.
-func (db *PgDB) TrialIDsByExperiment(experimentID int) (trialIDs []int, err error) {
-	err = db.sql.Select(&trialIDs, `SELECT id FROM trials WHERE experiment_id=$1`, experimentID)
-	if err != nil {
-		err = errors.Wrapf(err, "error querying trial ids for experiment")
-	}
-	return trialIDs, err
-}
-
 // TrialByID looks up a trial by ID, returning an error if none exists.
 func (db *PgDB) TrialByID(id int) (*model.Trial, error) {
 	trial := model.Trial{}
