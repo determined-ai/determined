@@ -1,9 +1,10 @@
 import { Col, Row, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import SelectFilter from 'components/SelectFilter';
 import useStorage from 'hooks/useStorage';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
@@ -57,11 +58,12 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
+  const [ hasLoaded, setHasLoaded ] = useState(false);
 
-  const metrics: MetricName[] = [
+  const metrics: MetricName[] = useMemo(() => ([
     ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
     ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
-  ];
+  ]), [ trainingMetrics, validationMetrics ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
@@ -91,6 +93,8 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
+        setHasLoaded(true);
+
         if (!event) return;
         /*
          * The metrics endpoint can intermittently send empty lists,
@@ -141,7 +145,11 @@ const ExperimentVisualization: React.FC<Props> = ({
   useEffect(() => {
     if (selectedMetric) return;
     if (searcherMetric) setSelectedMetric({ name: searcherMetric, type: MetricType.Validation });
-  }, [ searcherMetric, selectedMetric ]);
+  }, [ metrics, searcherMetric, selectedMetric ]);
+
+  if (hasLoaded && metrics.length === 0) return (
+    <Message title="Unable to find any metrics." type={MessageType.Empty} />
+  );
 
   return (
     <div className={css.base}>
