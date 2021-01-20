@@ -57,7 +57,7 @@ message TrialLogsResponse {
   google.protobuf.Timestamp timestamp = 2;
   // The log message.
   string message = 3;
-  // The level of the logs.
+  // The level of the log.
   determined.log.v1.LogLevel level = 4;
 }
 

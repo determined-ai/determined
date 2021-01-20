@@ -437,12 +437,14 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 		resp.Timestamp = tsProto
 	}
 
-	if t.Level != nil {
+	if t.Level == nil {
+		resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+	} else {
 		switch *t.Level {
-		case "DEBUG":
-			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
 		case "TRACE":
 			resp.Level = logv1.LogLevel_LOG_LEVEL_TRACE
+		case "DEBUG":
+			resp.Level = logv1.LogLevel_LOG_LEVEL_DEBUG
 		case "INFO":
 			resp.Level = logv1.LogLevel_LOG_LEVEL_INFO
 		case "WARNING":
@@ -454,8 +456,6 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 		default:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
 		}
-	} else {
-		resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
 	}
 
 	return resp, nil
