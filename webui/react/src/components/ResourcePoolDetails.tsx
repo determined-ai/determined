@@ -37,11 +37,11 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Pr
       onCancel={props.finally}
       onOk={props.finally}
     >
-      <Json json={details} transformLabel={camelCaseToSentence} />
+      <Json json={details} translateLabel={camelCaseToSentence} />
       {providerSpecific &&
       <>
         <Divider />
-        <Json json={providerSpecific} transformLabel={camelCaseToSentence} />
+        <Json json={providerSpecific} translateLabel={camelCaseToSentence} />
       </>
       }
     </Modal>

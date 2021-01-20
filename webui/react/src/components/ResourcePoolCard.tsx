@@ -5,9 +5,9 @@ import gcpLogo from 'assets/gcp-logo.svg';
 import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { ResourcePool, ResourceState } from 'types';
-import { V1ResourcePoolTypeToLabel } from 'utils/types';
+import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'utils/types';
 
 import Json from './Json';
 import Link from './Link';
@@ -71,6 +71,8 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }
     acc[cur[1]] = (rp as unknown as SafeRawJson)[cur[0]];
     return acc;
   }, {} as SafeRawJson );
+  shortDetails['Scheduler Type'] =
+    V1SchedulerTypeToLabel[shortDetails['Scheduler Type'] as V1SchedulerType];
 
   const {
     name,

@@ -9,13 +9,13 @@ type TextTransfomer = (key: string) => string;
 
 interface Props {
   json: RawJson;
-  transformLabel?: TextTransfomer;
+  translateLabel?: TextTransfomer;
 }
 
 const row = (
   label: string,
   value: RawJson | string | number | null,
-  transformLabel?: TextTransfomer,
+  translateLabel?: TextTransfomer,
 ): React.ReactNode => {
   let textValue = '';
   if (isObject(value)) {
@@ -27,17 +27,19 @@ const row = (
   }
   return <li className={css.item} key={label}>
     <span className={css.label}>
-      {typeof label === 'string' && transformLabel ? transformLabel(label) : label}
+      {typeof label === 'string' && translateLabel ? translateLabel(label) : label}
       :</span>
-    <span className={css.value}>{textValue}</span>
+    <span className={css.value}>
+      {textValue}
+    </span>
   </li>;
 };
 
-const Json: React.FC<Props> = ({ json, transformLabel }: Props) => {
+const Json: React.FC<Props> = ({ json, translateLabel }: Props) => {
 
   return (
     <ul className={css.base}>
-      {Object.entries(json).map(([ label, value ]) => row(label, value, transformLabel))}
+      {Object.entries(json).map(([ label, value ]) => row(label, value, translateLabel))}
     </ul>
   );
 };

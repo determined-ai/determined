@@ -1,4 +1,4 @@
-import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
   CommandType, ExperimentHyperParams, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask,
@@ -108,6 +108,14 @@ export const V1ResourcePoolTypeToLabel: {[key in V1ResourcePoolType]: string} = 
   [V1ResourcePoolType.GCP]: 'GCP',
   [V1ResourcePoolType.STATIC]: 'Static',
   [V1ResourcePoolType.K8S]: 'Kubernetes',
+};
+
+export const V1SchedulerTypeToLabel : {[key in V1SchedulerType]: string} = {
+  [V1SchedulerType.FAIRSHARE]: 'Fairshare',
+  [V1SchedulerType.KUBERNETES]: 'Kubernetes',
+  [V1SchedulerType.PRIORITY]: 'Priority',
+  [V1SchedulerType.ROUNDROBIN]: 'RoundRobin',
+  [V1SchedulerType.UNSPECIFIED]: 'Unspecified',
 };
 
 export const commandStateToLabel: {[key in CommandState]: string} = {
