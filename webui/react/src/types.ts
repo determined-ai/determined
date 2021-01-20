@@ -341,6 +341,7 @@ export interface ExperimentItem {
   state: RunState;
   url: string;
   username: string;
+  resourcepool?: string
 }
 
 export interface ExperimentBase {

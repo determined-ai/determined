@@ -46,6 +46,11 @@ export const columns: ColumnType<ExperimentItem>[] = [
     title: 'State',
   },
   {
+    key: 'resourcePool',
+    sorter: true,
+    title: 'Resource Pool',
+  },
+  {
     key: V1GetExperimentsRequestSortBy.PROGRESS,
     render: experimentProgressRenderer,
     sorter: true,

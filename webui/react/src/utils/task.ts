@@ -131,6 +131,7 @@ export const generateExperiments = (count = 30): ExperimentItem[] => {
         labels: [],
         name: experimentTask.name,
         numTrials: Math.round(Math.random() * 60000),
+        resourcepool: `ResourcePool-${Math.floor(Math.random()*3)}`,
         username: user.username,
       } as ExperimentItem;
     });
