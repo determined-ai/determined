@@ -272,7 +272,7 @@ ORDER BY v.end_time;`, &rows, metricName, experimentID, batchesProcessed, startT
 // TopTrialsByMetric chooses the subset of trials from an experiment that recorded the best values
 // for the specified metric at any point during the trial.
 func (db *PgDB) TopTrialsByMetric(experimentID int, maxTrials int, metric string,
-	smallerIsBetter bool) (trials []int, err error) {
+	smallerIsBetter bool) (trials []int32, err error) {
 	order := desc
 	aggregate := max
 	if smallerIsBetter {
@@ -298,7 +298,7 @@ SELECT t.id FROM (
 // TopTrialsByTrainingLength chooses the subset of trials that has been training for the highest
 // number of batches, using the specified metric as a tie breaker.
 func (db *PgDB) TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
-	smallerIsBetter bool) (trials []int, err error) {
+	smallerIsBetter bool) (trials []int32, err error) {
 	order := desc
 	aggregate := max
 	if smallerIsBetter {
@@ -344,7 +344,7 @@ func scanMetricsSeries(metricSeries []lttb.Point, rows *sql.Rows) ([]lttb.Point,
 
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
-func (db *PgDB) TrainingMetricsSeries(trialID int, startTime time.Time, metricName string,
+func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
 	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
 	err error) {
 	rows, err := db.sql.Query(`
@@ -371,7 +371,7 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
-func (db *PgDB) ValidationMetricsSeries(trialID int, startTime time.Time, metricName string,
+func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
 	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
 	err error) {
 	rows, err := db.sql.Query(`
