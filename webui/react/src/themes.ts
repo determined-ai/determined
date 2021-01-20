@@ -153,7 +153,7 @@ export const lightTheme: Theme = {
     states: {
       active: '#009bde',
       failed: '#cc0000',
-      free: '#f7f7f7',
+      free: '#ececec',
       inactive: '#666666',
       pending: '#6666cc',
       success: '#009900',

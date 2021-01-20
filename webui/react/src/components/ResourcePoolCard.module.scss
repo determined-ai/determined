@@ -3,6 +3,7 @@ $icon-side: 5rem;
 $line-height: 2.2rem;
 
 .base {
+  background-color: var(--theme-colors-monochrome-17);
   border-radius: var(--theme-sizes-border-radius);
   box-shadow: var(--theme-shadow);
   color: var(--theme-colors-monochrome-0);

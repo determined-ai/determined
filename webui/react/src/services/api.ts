@@ -1,6 +1,5 @@
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import * as Api from 'services/api-ts-sdk';
-import { V1FittingPolicy } from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
   ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
