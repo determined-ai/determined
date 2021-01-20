@@ -13,13 +13,12 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
-  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
+  HttpApi, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
   TrialDetailsParams,
 } from 'services/types';
-import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  Log, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
+  Log, ResourcePool, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -130,12 +129,21 @@ export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telem
   request: () => detApi.Internal.determinedGetTelemetry(),
 };
 
-/* Agent */
+/* Cluster */
 
 export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> = {
   name: 'getAgents',
   postProcess: (response) => jsonToAgents(response.agents || []),
   request: () => detApi.Cluster.determinedGetAgents(),
+};
+
+export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]> =
+{
+  name: 'getResourcePools',
+  postProcess: (response) => {
+    return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
+  },
+  request: () => detApi.Internal.determinedGetResourcePools(),
 };
 
 /* Experiment */

@@ -38,8 +38,8 @@ const rpAttrs = [
   [ 'location', 'Location' ] ,
   [ 'instanceType', 'Instance Type' ],
   [ 'spotOrPreemptible', 'Spot/Preemptible' ],
-  [ 'minInstances', 'Min Agents' ],
-  [ 'maxInstances', 'Max Agents' ],
+  [ 'minAgents', 'Min Agents' ],
+  [ 'maxAgents', 'Max Agents' ],
   [ 'gpusPerAgent', 'GPUs per Agent' ],
   [ 'cpuContainerCapacityPerAgent', 'CPU Containers per Agent' ],
   [ 'schedulerType', 'Scheduler Type' ],
@@ -47,15 +47,15 @@ const rpAttrs = [
 
 type SafeRawJson = Record<string, unknown>;
 
-const agentStatusText = (numAgents: number, maxInstances: number): string => {
+const agentStatusText = (numAgents: number, maxAgents: number): string => {
   let prefix = '';
   if (numAgents === 0) {
     prefix = 'No';
-  } else if (maxInstances === 0) {
+  } else if (maxAgents === 0) {
     prefix = numAgents + '';
 
   } else {
-    prefix = `${numAgents}/${maxInstances}`;
+    prefix = `${numAgents}/${maxAgents}`;
   }
   return prefix + ' Agents Active';
 };
@@ -108,7 +108,7 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }
             'var(--theme-colors-states-active)' : 'var(--theme-colors-states-inactive)',
         }}>
         <p>
-          {agentStatusText(numAgents, rp.maxInstances)}
+          {agentStatusText(numAgents, rp.maxAgents)}
         </p>
       </div>
       <div className={css.body}>

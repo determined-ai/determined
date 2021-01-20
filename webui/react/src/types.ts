@@ -467,8 +467,8 @@ export interface ResourcePool {
   imageId: string;
   instanceType: string;
   location: string;
-  maxInstances: number;
-  minInstances: number;
+  maxAgents: number;
+  minAgents: number;
   name: string;
   numAgents: number;
   schedulerFittingPolicy: string;
@@ -490,10 +490,10 @@ interface Details {
   masterCertName: string;
   masterUrl: string;
   maxAgentStartingPeriod: string;
+  maxAgents: number;
   maxCpuContainersPerAgent: number;
   maxIdleAgentPeriod: string;
-  maxInstances: number;
-  minInstances: number;
+  minAgents: number;
   poolName: string;
   priorityScheduler?: PriorityScheduler;
   provisionerType: string;

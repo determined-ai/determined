@@ -41,6 +41,12 @@ export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.Deter
   };
 };
 
+export const mapV1ResourcePool = (
+  data: Sdk.V1ResourcePool,
+): types.ResourcePool => {
+  return {} as types.ResourcePool;
+};
+
 export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
   return agents.map(agent => {
     const agentSlots = agent.slots || {};

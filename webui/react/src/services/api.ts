@@ -10,7 +10,7 @@ import {
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
+  ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, ResourcePool, RunState,
   Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
@@ -58,7 +58,7 @@ export const getAgents =
 
 // Placeholder for getResourcePools API.
 /* eslint-disable */
-export const getResourcePools = () => {
+export const getResourcePools = (): ResourcePool[] => {
   return resourcePools;
 };
 /* eslint-enable */
