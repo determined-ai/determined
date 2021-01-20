@@ -26,21 +26,15 @@ const routes: RouteConfig[] = [
     title: 'Trial',
   },
   {
-    id: 'experimentDetailPage',
+    id: 'experimentDetails',
     needAuth: true,
-    path: '/experiments/:experimentId/hp/:tab/:viz',
+    path: '/experiments/:experimentId/:tab/:viz',
     title: 'Experiment',
   },
   {
-    id: 'experimentDetailPage',
+    id: 'experimentDetails',
     needAuth: true,
-    path: '/experiments/:experimentId/hp/:tab',
-    title: 'Experiment',
-  },
-  {
-    id: 'experimentDetailPage',
-    needAuth: true,
-    path: '/experiments/:experimentId/hp',
+    path: '/experiments/:experimentId/:tab',
     title: 'Experiment',
   },
   {

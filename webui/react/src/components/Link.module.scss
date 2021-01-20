@@ -1,4 +1,6 @@
 .base {
+  cursor: pointer;
+
   &:focus { box-shadow: var(--theme-outline); }
 }
 .inherit {
@@ -9,8 +11,9 @@
     text-decoration: none;
   }
 }
-.link {
-  cursor: pointer;
+.disabled {
+  color: var(--theme-colors-monochrome-9);
+  cursor: not-allowed;
 }
 .tiny { font-size: var(--theme-sizes-font-tiny); }
 .small { font-size: var(--theme-sizes-font-small); }

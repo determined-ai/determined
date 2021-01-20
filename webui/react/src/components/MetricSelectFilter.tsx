@@ -190,9 +190,9 @@ const MetricSelectFilter: React.FC<Props> = ({
     onSelect={handleMetricSelect}>
 
     { multiple && visibleMetrics.length > 0 &&
-    <Option key={resetOptionId} value={resetOptionId}>
-      <BadgeTag label='Reset to Default' />
-    </Option>}
+      <Option key={resetOptionId} value={resetOptionId}>
+        <BadgeTag label='Reset to Default' />
+      </Option>}
 
     { multiple && visibleMetrics.length > 1 && allOption}
 

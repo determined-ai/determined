@@ -1,9 +1,10 @@
-import { Col, Row, Select } from 'antd';
+import { Col, Row, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
+import Message, { MessageType } from 'components/Message';
 import SelectFilter from 'components/SelectFilter';
 import useStorage from 'hooks/useStorage';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
@@ -31,14 +32,13 @@ interface Props {
 }
 
 const STORAGE_PATH = 'experiment-visualization';
-const STORAGE_METRIC_KEY = 'metric';
 const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
-  { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoord },
-  { label: 'HP Importance', type: VisualizationType.HpImportance },
-  { label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
+  { disabled: true, label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoord },
+  { disabled: true, label: 'HP Importance', type: VisualizationType.HpImportance },
+  { disabled: true, label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
 ];
 
 const ExperimentVisualization: React.FC<Props> = ({
@@ -48,6 +48,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 }: Props) => {
   const history = useHistory();
   const storage = useStorage(STORAGE_PATH);
+  const STORAGE_METRIC_KEY = `${experiment.id}/metric`;
   const defaultUserMetric = storage.get(STORAGE_METRIC_KEY) as MetricName || undefined;
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
@@ -57,16 +58,17 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
+  const [ hasLoaded, setHasLoaded ] = useState(false);
 
-  const metrics: MetricName[] = [
+  const metrics: MetricName[] = useMemo(() => ([
     ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
     ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
-  ];
+  ]), [ trainingMetrics, validationMetrics ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
     setSelectedMetric(metric);
-  }, [ storage ]);
+  }, [ storage, STORAGE_METRIC_KEY ]);
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
     setTypeKey(type as VisualizationType);
@@ -91,6 +93,8 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
+        setHasLoaded(true);
+
         if (!event) return;
         /*
          * The metrics endpoint can intermittently send empty lists,
@@ -141,7 +145,11 @@ const ExperimentVisualization: React.FC<Props> = ({
   useEffect(() => {
     if (selectedMetric) return;
     if (searcherMetric) setSelectedMetric({ name: searcherMetric, type: MetricType.Validation });
-  }, [ searcherMetric, selectedMetric ]);
+  }, [ metrics, searcherMetric, selectedMetric ]);
+
+  if (hasLoaded && metrics.length === 0) return (
+    <Message title="Unable to find any metrics." type={MessageType.Empty} />
+  );
 
   return (
     <div className={css.base}>
@@ -168,13 +176,25 @@ const ExperimentVisualization: React.FC<Props> = ({
           xs={{ order: 1, span: 24 }}>
           <div className={css.inspector}>
             <div className={css.menu}>
-              {MENU.map(item => (
-                <Link
-                  className={typeKey === item.type ? css.active : undefined}
-                  key={item.type}
-                  path={`${basePath}/${item.type}`}
-                  onClick={() => setTypeKey(item.type)}>{item.label}</Link>
-              ))}
+              {MENU.map(item => {
+                const linkClasses = [ css.link ];
+                if (typeKey === item.type) linkClasses.push(css.active);
+
+                const link = (
+                  <Link
+                    className={linkClasses.join(' ')}
+                    disabled={item.disabled}
+                    key={item.type}
+                    path={`${basePath}/${item.type}`}
+                    onClick={() => setTypeKey(item.type)}>{item.label}</Link>
+                );
+
+                return item.disabled ? (
+                  <Tooltip key={item.type} placement="left" title="Coming soon!">
+                    <div>{link}</div>
+                  </Tooltip>
+                ) : link;
+              })}
             </div>
             <div className={css.mobileMenu}>
               <SelectFilter

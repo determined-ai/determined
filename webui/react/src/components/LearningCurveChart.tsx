@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
-import uPlot, { Options } from 'uplot';
+import uPlot, { Cursor, Options } from 'uplot';
 
 import useResize from 'hooks/useResize';
 import { MetricName, MetricType } from 'types';
@@ -28,10 +28,16 @@ interface ClosestPoint {
   y?: number;
 }
 
+interface Point {
+  x: number;
+  y: number;
+}
+
 const CHART_HEIGHT = 400;
 const SERIES_WIDTH = 3;
 const SERIES_UNFOCUSED_ALPHA = 0.2;
 const FOCUS_MIN_DISTANCE = 30;
+const MOUSE_CLICK_THRESHOLD = 5;
 const SCROLL_THROTTLE_TIME = 500;
 const MAX_METRIC_LABEL_SIZE = 30;
 const UPLOT_OPTIONS = {
@@ -123,6 +129,7 @@ const LearningCurveChart: React.FC<Props> = ({
   const resize = useResize(chartRef);
   const [ chart, setChart ] = useState<uPlot>();
   const [ focusedPoint, setFocusedPoint ] = useState<ClosestPoint>();
+  const [ mouseDownPoint, setMouseDownPoint ] = useState<Point>();
   const [ xScale, setXScale ] = useState<{ max: number, min: number }>();
 
   const focusOnTrial = useCallback(() => {
@@ -158,9 +165,20 @@ const LearningCurveChart: React.FC<Props> = ({
   }, []);
 
   const handleClick = useCallback((event: React.MouseEvent) => {
-    if (!chart || !focusedPoint || focusedPoint.seriesIdx == null || !onTrialClick) return;
-    onTrialClick(event, trialIds[focusedPoint.seriesIdx]);
-  }, [ chart, focusedPoint, onTrialClick, trialIds ]);
+    if (!mouseDownPoint) return;
+
+    /*
+     * Make sure the mouse down and mouse up distance is fairly close
+     * to be considered a click instead of a drag movement for chart zoom.
+     */
+    const dist = distance(event.clientY, mouseDownPoint?.y, event.clientY, mouseDownPoint?.y);
+    if (chart && focusedPoint && focusedPoint.seriesIdx != null &&
+        onTrialClick && dist < MOUSE_CLICK_THRESHOLD) {
+      onTrialClick(event, trialIds[focusedPoint.seriesIdx]);
+    }
+
+    setMouseDownPoint(undefined);
+  }, [ chart, focusedPoint, mouseDownPoint, onTrialClick, trialIds ]);
 
   const handleMouseLeave = useCallback(() => {
     focusOnTrial();
@@ -176,6 +194,7 @@ const LearningCurveChart: React.FC<Props> = ({
     mouseTop: number,
   ) => {
     const position = [ mouseLeft, mouseTop ];
+    // if (isMouseDown) return position;
     if (mouseLeft < 0 && mouseTop < 0) return position;
     if (!plot.data || plot.data.length === 0) return;
     if (!tooltipRef.current || !pointRef.current || !trialIdRef.current ||
@@ -250,7 +269,17 @@ const LearningCurveChart: React.FC<Props> = ({
     if (!chartRef.current) return;
 
     const options = uPlot.assign({}, UPLOT_OPTIONS, {
-      cursor: { move: handleCursorMove },
+      cursor: {
+        bind: {
+          mousedown: (plot: uPlot, targ: HTMLElement, handler: Cursor.MouseListener) => {
+            return (e: MouseEvent) => {
+              handler(e);
+              setMouseDownPoint({ x: e.clientX, y: e.clientY });
+            };
+          },
+        },
+        move: handleCursorMove,
+      },
       focus: { alpha: SERIES_UNFOCUSED_ALPHA },
       hooks: {
         setScale: [

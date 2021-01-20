@@ -28,7 +28,7 @@ const Link: React.FC<Props> = ({
   const rel = windowOpenFeatures.join(' ');
 
   if (props.className) classes.push(props.className);
-  if (!props.disabled) classes.push(css.link);
+  if (props.disabled) classes.push(css.disabled);
   if (props.inherit) classes.push(css.inherit);
   if (props.isButton) classes.push('ant-btn');
   if (props.size) classes.push(css[props.size]);
