@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { getResourcePools } from 'services/api';
+import { getResourcePoolSamples } from 'services/api';
 
 import ResourcePoolCard from './ResourcePoolCard';
 
-const resourcePools = getResourcePools();
+const resourcePools = getResourcePoolSamples();
 
 export default {
   component: ResourcePoolCard,

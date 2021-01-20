@@ -5,7 +5,9 @@ import gcpLogo from 'assets/gcp-logo.svg';
 import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
+import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { ResourcePool, ResourceState } from 'types';
+import { V1ResourcePoolTypeToLabel } from 'utils/types';
 
 import Json from './Json';
 import Link from './Link';
@@ -17,16 +19,18 @@ interface Props {
   resourcePool: ResourcePool;
 }
 
-export const rpLogo = (type: string): React.ReactNode => {
+export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
   let iconSrc = '';
   switch (type) {
-    case 'aws':
+    case V1ResourcePoolType.AWS:
       iconSrc = awsLogo;
       break;
-    case 'gcp':
+    case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;
       break;
-    case 'static':
+    case V1ResourcePoolType.K8S: // TODO add dedicated logo
+    case V1ResourcePoolType.UNSPECIFIED:
+    case V1ResourcePoolType.STATIC:
       iconSrc = staticLogo;
       break;
   }
@@ -76,7 +80,7 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }
     numAgents,
   } = rp;
 
-  const tags: string[] = [ type ];
+  const tags: string[] = [ V1ResourcePoolTypeToLabel[type] ];
   if (rp.defaultGpuPool) tags.push('default gpu pool');
   if (rp.defaultCpuPool) tags.push('default cpu pool');
 

@@ -17,7 +17,7 @@ import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'c
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { columns as defaultColumns } from 'pages/HGICluster.table';
-import { getResourcePools } from 'services/api';
+import { getResourcePoolSamples } from 'services/api';
 import { ShirtSize } from 'themes';
 import { Resource, ResourcePool, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
@@ -25,7 +25,7 @@ import { categorize } from 'utils/data';
 
 import css from './HGICluster.module.scss';
 
-const resourcePools = getResourcePools();
+const resourcePools = getResourcePoolSamples();
 
 enum View {
   List,

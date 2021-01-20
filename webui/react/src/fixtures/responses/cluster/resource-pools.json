@@ -2,7 +2,7 @@
     {
         "name": "perception-cpu-aws",
         "description": "AWS CPU-only resource pool for tensorboard AWS CPU-only resource pool for tensorboard AWS CPU-only resource pool for tensorboards AWS CPU-only resource pool for tensorboards AWS CPU-only resource pool for tensorboards",
-        "type": "aws",
+        "type": "RESOURCE_POOL_TYPE_AWS",
         "numAgents": 1,
         "slotsAvailable": 0,
         "slotsUsed": 0,
@@ -15,8 +15,8 @@
         "maxAgents": 5,
         "gpusPerAgent": 0,
         "cpuContainerCapacityPerAgent": 100,
-        "schedulerType": "fair share",
-        "schedulerFittingPolicy": "best fit",
+        "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
+        "schedulerFittingPolicy": "FITTING_POLICY_BEST",
         "location": "us-east-1",
         "imageId": "ami-0e4b739ea71222f80",
         "instanceType": "m5.large",
@@ -60,14 +60,14 @@
                     }
                 ]
             },
-            "schedulerType": "fair share",
-            "schedulerFittingPolicy": "best fit"
+            "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
+            "schedulerFittingPolicy": "FITTING_POLICY_BEST"
         }
     },
     {
         "name": "v100-gcp",
         "description": "GCP resource pool with V100s",
-        "type": "gcp",
+        "type": "RESOURCE_POOL_TYPE_GCP",
         "numAgents": 1,
         "slotsAvailable": 8,
         "slotsUsed": 4,
@@ -84,7 +84,7 @@
         "imageId": "ubuntu-1604-xenial-v20200611",
         "instanceType": "n1-standard-32, 8 nvidia-tesla-v100",
         "schedulerType": "priority",
-        "schedulerFittingPolicy": "best fit",
+        "schedulerFittingPolicy": "FITTING_POLICY_BEST",
         "details": {
             "poolName": "v100-gcp",
             "description": "GCP resource pool with V100s",
@@ -127,8 +127,8 @@
                 "preemptible": true,
                 "operationTimeoutPeriod": "5m"
             },
-            "schedulerType": "priority",
-            "schedulerFittingPolicy": "best fit",
+            "schedulerType": "SCHEDULER_TYPE_PRIORITY",
+            "schedulerFittingPolicy": "FITTING_POLICY_BEST",
             "priorityScheduler": {
                 "preemption": true,
                 "defaultPriority": 42
@@ -138,7 +138,7 @@
     {
         "name": "on-prem-1",
         "description": "On prem cluster with K80s. Use for prototyping",
-        "type": "static",
+        "type": "RESOURCE_POOL_TYPE_STATIC",
         "numAgents": 3,
         "slotsAvailable": 12,
         "slotsUsed": 2,
@@ -150,8 +150,8 @@
         "maxAgents": 0,
         "gpusPerAgent": 4,
         "cpuContainerCapacityPerAgent": 100,
-        "schedulerType": "fair share",
-        "schedulerFittingPolicy": "worst fit",
+        "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
+        "schedulerFittingPolicy": "FITTING_POLICY_WORST",
         "location": "",
         "imageId": "",
         "instanceType": "",
@@ -171,14 +171,14 @@
             "maxAgentStartingPeriod": "5m",
             "minAgents": 0,
             "maxAgents": 0,
-            "schedulerType": "fair share",
-            "schedulerFittingPolicy": "worst fit"
+            "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
+            "schedulerFittingPolicy": "FITTING_POLICY_WORST"
         }
     },
     {
         "name": "on-prem-2",
         "description": "On prem cluster 2 with K80s. Use for prototyping",
-        "type": "static",
+        "type": "RESOURCE_POOL_TYPE_STATIC",
         "numAgents": 0,
         "slotsAvailable": 12,
         "slotsUsed": 2,
@@ -190,8 +190,8 @@
         "maxAgents": 0,
         "gpusPerAgent": 8,
         "cpuContainerCapacityPerAgent": 100,
-        "schedulerType": "fair share",
-        "schedulerFittingPolicy": "best fit",
+        "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
+        "schedulerFittingPolicy": "FITTING_POLICY_BEST",
         "location": "",
         "imageId": "",
         "instanceType": "",
@@ -211,8 +211,8 @@
             "maxAgentStartingPeriod": "5m",
             "minAgents": 0,
             "maxAgents": 0,
-            "schedulerType": "fair share",
-            "schedulerFittingPolicy": "worst fit"
+            "schedulerType": "SCHEDULER_TYPE_FAIR_SHARE",
+            "schedulerFittingPolicy": "FITTING_POLICY_WORST"
         }
     }
 ]

@@ -1,3 +1,5 @@
+import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
 
@@ -472,38 +474,21 @@ export interface ResourcePool {
   name: string;
   numAgents: number;
   preemptible: boolean;
-  schedulerFittingPolicy: string;
-  schedulerType: string;
+  schedulerFittingPolicy: V1FittingPolicy;
+  schedulerType: V1SchedulerType;
   slotsAvailable: number;
   slotsUsed: number;
-  type: string;
+  type: V1ResourcePoolType;
 }
 
 interface Details {
-  agentDockerImage: string;
-  agentDockerRuntime: string;
-  agentFluentImage: string;
-  aws?: Aws;
-  containerStartupScript: string;
-  description: string;
-  gcp?: Gcp;
-  masterCertName: string;
-  masterUrl: string;
-  maxAgentStartingPeriod: string;
-  maxAgents: number;
-  maxCpuContainersPerAgent: number;
-  maxIdleAgentPeriod: string;
-  minAgents: number;
-  poolName: string;
+  aws?: Partial<Aws>;
+  gcp?: Partial<Gcp>;
   priorityScheduler?: PriorityScheduler;
-  provisionerType: string;
-  schedulerFittingPolicy: string;
-  schedulerType: string;
-  startupScript: string;
 }
 
 export interface Aws {
-  customTags: CustomTag[];
+  customTags?: CustomTag[];
   iamInstanceProfileArn: string;
   imageId: string;
   instanceName: string;
@@ -539,7 +524,7 @@ export interface Gcp {
   namePrefix: string;
   network: string;
   networkTags: string[];
-  operationTimeoutPeriod: string;
+  operationTimeoutPeriod: number;
   preemptible: boolean;
   project: string;
   serviceAccountEmail: string;
