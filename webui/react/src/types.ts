@@ -366,26 +366,26 @@ export interface ExperimentOld extends ExperimentBase {
 export interface Task {
   id: string;
   name: string;
+  resourcePool?: string;
   serviceAddress?: string;
   startTime: string;
   url?: string;
-  resourcePool?: string;
 }
 
 export interface ExperimentTask extends Task {
   archived: boolean;
   progress?: number;
+  resourcePool?: string;
   state: RunState;
   username: string;
-  resourcePool?: string;
 }
 
 export interface CommandTask extends Task {
   misc?: CommandMisc;
+  resourcePool?: string;
   state: CommandState;
   type: CommandType;
   username: string;
-  resourcePool?: string;
 }
 
 export type RecentEvent = {
