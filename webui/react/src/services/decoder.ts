@@ -109,6 +109,7 @@ export const jsonToGenericCommand = (data: unknown, type: types.CommandType): ty
       trialIds: io.misc.trial_ids || [],
     } : undefined,
     registeredTime: io.registered_time,
+    resourcePool: io.resource_pool,
     serviceAddress: io.service_address || undefined,
     state: io.state as types.CommandState,
     user: { username: io.owner.username },

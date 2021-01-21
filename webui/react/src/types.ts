@@ -157,6 +157,7 @@ export interface Command {
   kind: CommandType; // TODO rename to type
   misc?: CommandMisc;
   registeredTime: string;
+  resourcePool: string;
   serviceAddress?: string;
   state: CommandState;
   user: User;
