@@ -182,8 +182,7 @@ const ExperimentVisualization: React.FC<Props> = ({
         <Link
           external
           path="/docs/reference/experiment-config.html#searcher"
-          popout
-          size="small">how to run a hyperparameter search</Link>.
+          popout>how to run a hyperparameter search</Link>.
       </>}
       message={alertMessage}
       type="warning" />;
