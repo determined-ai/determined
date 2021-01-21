@@ -559,7 +559,10 @@ commands:
             -w /webui/tests \
             --env DET_MASTER=determined-master:8080 \
             determinedai/gauge-taiko-ts
-          rm -f webui/tests/reports/videos/*.jpeg
+      - run:
+          name: Clean up images
+          when: always
+          command: rm -f webui/tests/reports/videos/*.jpeg
 
   generate-tls-cert:
     steps:
