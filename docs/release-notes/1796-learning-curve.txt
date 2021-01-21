@@ -1,8 +1,0 @@
-:orphan:
-
-**Features**
-
-   -  WebUI: We have a new hyperparameter visualization section on
-      experiment detail! Check out the new learning curve visualization
-      to see how your different trials with different hyperparameters
-      performed relative to each other within an experiment.
