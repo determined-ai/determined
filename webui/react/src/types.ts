@@ -369,6 +369,7 @@ export interface Task {
   serviceAddress?: string;
   startTime: string;
   url?: string;
+  resourcePool?: string;
 }
 
 export interface ExperimentTask extends Task {
@@ -376,6 +377,7 @@ export interface ExperimentTask extends Task {
   progress?: number;
   state: RunState;
   username: string;
+  resourcePool?: string;
 }
 
 export interface CommandTask extends Task {
@@ -383,6 +385,7 @@ export interface CommandTask extends Task {
   state: CommandState;
   type: CommandType;
   username: string;
+  resourcePool?: string;
 }
 
 export type RecentEvent = {
