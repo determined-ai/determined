@@ -27,8 +27,8 @@ import Page, { Props as PageProps } from './Page';
 
 export interface LogViewerTimestampFilter {
   limit?: number,
-  timestampAfter?: Dayjs,
-  timestampBefore?: Dayjs,
+  timestampAfter?: Dayjs,   // exclusive of the specified date time
+  timestampBefore?: Dayjs,  // inclusive of the specified date time
 }
 
 interface Props {
@@ -418,9 +418,9 @@ const LogViewerTimestamp: React.FC<Props> = ({
       if (!max || log.time > max) max = log.time;
       if (!min || log.time < min) min = log.time;
     });
-    setLogTimestampRange(prevRange => ({
-      max: (prevRange.max && max && prevRange.max > max) ? prevRange.max : max,
-      min: (prevRange.min && min && prevRange.min < min) ? prevRange.min : min,
+    setLogTimestampRange(prev => ({
+      max: (prev.max && max && dayjs(prev.max).isAfter(dayjs(max))) ? prev.max : max,
+      min: (prev.min && min && dayjs(prev.min).isBefore(dayjs(min))) ? prev.min : min,
     }));
   }, [ container ]);
 
@@ -503,7 +503,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
       fetchArgs = onFetchLogBefore({
         ...filter,
-        timestampBefore: dayjs(logTimestampRange.min).add(1, 'second'),
+        timestampBefore: dayjs(logTimestampRange.min),
       }, canceler);
       isPrepend = true;
     }
@@ -515,7 +515,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
       fetchArgs = onFetchLogAfter({
         ...filter,
-        timestampAfter: dayjs(logTimestampRange.max).subtract(1, 'second'),
+        timestampAfter: dayjs(logTimestampRange.max),
       }, canceler);
       isPrepend = false;
     }

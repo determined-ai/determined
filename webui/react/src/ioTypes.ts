@@ -327,7 +327,7 @@ const ioLogLevels2: Record<string, null> = Object.values(LogLevel2)
 const ioLogLevelType2 = io.keyof(ioLogLevels2);
 export const ioTrialLog = io.type({
   id: io.string,
-  level: optional(ioLogLevelType2),
+  level: ioLogLevelType2,
   message: io.string,
   timestamp: io.string,
 });
