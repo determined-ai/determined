@@ -43,7 +43,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 	case AllocateRequest:
-		// armand: this code exists to handle the case where an experiment does not have
+		// this code exists to handle the case where an experiment does not have
 		// an explicit resource pool specified in the config. This should never happen
 		// for newly created/forked experiments as the default pool is filled in to the
 		// config at creation time. However, old experiments which were created prior to

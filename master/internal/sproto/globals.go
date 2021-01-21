@@ -82,7 +82,7 @@ func GetDefaultGPUResourcePool(system *actor.System) string {
 
 // GetDefaultCPUResourcePool returns the default CPU resource pool
 func GetDefaultCPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetCurrentRM(system), GetDefaultGPUResourcePoolRequest{}).Get()
+	resp := system.Ask(GetCurrentRM(system), GetDefaultCPUResourcePoolRequest{}).Get()
 	return resp.(GetDefaultCPUResourcePoolResponse).PoolName
 }
 
