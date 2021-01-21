@@ -108,7 +108,7 @@ func (a *apiServer) TrialLogs(
 		state, endTime, err := a.m.db.TrialStatus(int(req.TrialId))
 		if err != nil ||
 			// Give trials a bit to finish sending logs after termination.
-			(model.TerminalStates[state] && endTime.After(time.Now().Add(-30*time.Second))) {
+			(model.TerminalStates[state] && endTime.Before(time.Now().Add(-20*time.Second))) {
 			return true, err
 		}
 		return false, nil
