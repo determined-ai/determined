@@ -62,6 +62,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
+  detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config),
   detApi.Tensorboards = new Api.TensorboardsApi(config);
 };
 
