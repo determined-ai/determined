@@ -94,6 +94,9 @@ const ResourcePoolCard: React.FC<Props> = (
     [],
   );
 
+  const descriptionClasses = [ css.description ];
+  if (!description) descriptionClasses.push(css.empty);
+
   return (
     <div className={css.base}>
       <div className={css.header}>
@@ -119,7 +122,7 @@ const ResourcePoolCard: React.FC<Props> = (
         </p>
       </div>
       <div className={css.body}>
-        <section className={css.description}>
+        <section className={descriptionClasses.join(' ')}>
           <p className={css.fade}>
             {description || 'No description provided.'}
           </p>
