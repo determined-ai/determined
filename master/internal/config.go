@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -63,6 +64,10 @@ func DefaultConfig() *Config {
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
+		HPImportance: hpimportance.HPImportanceConfig{
+			WorkersLimit: 0,
+			QueueLimit:   1,
+		},
 	}
 }
 
@@ -85,6 +90,7 @@ type Config struct {
 	EnableCors            bool                              `json:"enable_cors"`
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
+	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
 
 	Scheduler   *resourcemanagers.Config `json:"scheduler"`
 	Provisioner *provisioner.Config      `json:"provisioner"`

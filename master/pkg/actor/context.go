@@ -65,6 +65,13 @@ func (c *Context) ActorOf(id interface{}, actor Actor) (*Ref, bool) {
 	return c.recipient.createChild(c.recipient.address.Child(id), actor)
 }
 
+// ActorOfFromFactory behaves the same as ActorOf but will only create the actor instance if it's
+// needed. It is intended for cases where an actor needs to be looked up many times safely but
+// usually exists.
+func (c *Context) ActorOfFromFactory(id interface{}, factory func() Actor) (*Ref, bool) {
+	return c.recipient.createChildFromFactory(c.recipient.address.Child(id), factory)
+}
+
 // Sender returns the reference to the actor that sent the message.
 func (c *Context) Sender() *Ref {
 	return c.sender

@@ -17,6 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -590,7 +591,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 			return err
 		}
 
-		state, err := a.m.db.GetExperimentState(experimentID)
+		state, _, err := a.m.db.GetExperimentStatus(experimentID)
 		if err != nil {
 			return errors.Wrap(err, "error looking up experiment state")
 		}
@@ -659,7 +660,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 			return errors.Wrapf(err, "error sending batches recorded for metric")
 		}
 
-		state, err := a.m.db.GetExperimentState(experimentID)
+		state, _, err := a.m.db.GetExperimentStatus(experimentID)
 		if err != nil {
 			return errors.Wrap(err, "error looking up experiment state")
 		}
@@ -725,7 +726,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 			return errors.Wrapf(err, "error sending batches recorded for metrics")
 		}
 
-		state, err := a.m.db.GetExperimentState(experimentID)
+		state, _, err := a.m.db.GetExperimentStatus(experimentID)
 		if err != nil {
 			return errors.Wrap(err, "error looking up experiment state")
 		}
@@ -924,12 +925,120 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 			return errors.Wrap(err, "error sending sample of trial metric streams")
 		}
 
-		state, err := a.m.db.GetExperimentState(experimentID)
+		state, _, err := a.m.db.GetExperimentStatus(experimentID)
 		if err != nil {
 			return errors.Wrap(err, "error looking up experiment state")
 		}
 		if model.TerminalStates[state] {
 			return nil
+		}
+
+		time.Sleep(period)
+		if err := resp.Context().Err(); err != nil {
+			// connection is closed
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) ComputeHPImportance(ctx context.Context,
+	req *apiv1.ComputeHPImportanceRequest) (*apiv1.ComputeHPImportanceResponse, error) {
+	experimentID := int(req.ExperimentId)
+	if err := a.checkExperimentExists(experimentID); err != nil {
+		return nil, err
+	}
+	metricName := req.MetricName
+	if metricName == "" {
+		return nil, status.Error(codes.InvalidArgument, "must specify a metric name")
+	}
+	var metricType model.MetricType
+	switch req.MetricType {
+	case apiv1.MetricType_METRIC_TYPE_UNSPECIFIED:
+		return nil, status.Error(codes.InvalidArgument, "must specify a metric type")
+	case apiv1.MetricType_METRIC_TYPE_TRAINING:
+		metricType = model.TrainingMetric
+	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
+		metricType = model.ValidationMetric
+	default:
+		panic("Invalid metric type")
+	}
+
+	a.m.system.Ask(a.m.hpImportance, hpimportance.WorkRequest{
+		ExperimentID: experimentID,
+		MetricName:   metricName,
+		MetricType:   metricType,
+	})
+
+	var resp apiv1.ComputeHPImportanceResponse
+	return &resp, nil
+}
+
+// Translates MetricHPImportance to the protobuf form
+func protoMetricHPI(metricHpi model.MetricHPImportance,
+) *apiv1.GetHPImportanceResponse_MetricHPImportance {
+	return &apiv1.GetHPImportanceResponse_MetricHPImportance{
+		Error:              metricHpi.Error,
+		Pending:            metricHpi.Pending,
+		InProgress:         metricHpi.InProgress,
+		ExperimentProgress: metricHpi.ExperimentProgress,
+		HpImportance:       metricHpi.HpImportance,
+	}
+}
+
+func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
+	resp apiv1.Determined_GetHPImportanceServer) error {
+	experimentID := int(req.ExperimentId)
+	if err := a.checkExperimentExists(experimentID); err != nil {
+		return err
+	}
+
+	period := time.Duration(req.PeriodSeconds) * time.Second
+	if period == 0 {
+		period = defaultMetricsStreamPeriod
+	}
+
+	for {
+		var response apiv1.GetHPImportanceResponse
+
+		result, err := a.m.db.GetHPImportance(experimentID)
+		if err != nil {
+			return errors.Wrap(err, "error looking up hyperparameter importance")
+		}
+		response.TrainingMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
+		response.ValidationMetrics = make(map[string]*apiv1.GetHPImportanceResponse_MetricHPImportance)
+		for metric, metricHpi := range result.TrainingMetrics {
+			response.TrainingMetrics[metric] = protoMetricHPI(metricHpi)
+		}
+		for metric, metricHpi := range result.ValidationMetrics {
+			response.ValidationMetrics[metric] = protoMetricHPI(metricHpi)
+		}
+
+		if err := resp.Send(&response); err != nil {
+			return errors.Wrap(err, "error sending hyperparameter importance response")
+		}
+
+		allComplete := true
+		if len(result.TrainingMetrics)+len(result.ValidationMetrics) == 0 {
+			allComplete = false
+		}
+		for _, metricHpi := range result.TrainingMetrics {
+			if metricHpi.Pending || metricHpi.InProgress {
+				allComplete = false
+			}
+		}
+		for _, metricHpi := range result.ValidationMetrics {
+			if metricHpi.Pending || metricHpi.InProgress {
+				allComplete = false
+			}
+		}
+		if allComplete {
+			state, _, err := a.m.db.GetExperimentStatus(experimentID)
+			if err != nil {
+				return errors.Wrap(err, "error looking up experiment state")
+			}
+			if model.TerminalStates[state] {
+				return nil
+			}
 		}
 
 		time.Sleep(period)

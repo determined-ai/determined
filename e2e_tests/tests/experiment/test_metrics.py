@@ -15,7 +15,7 @@ from tests import experiment as exp
 def test_streaming_metrics_api() -> None:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
 
-    pool = mp.pool.ThreadPool(processes=7)
+    pool = mp.pool.ThreadPool(processes=8)
 
     experiment_id = exp.create_experiment(
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
@@ -25,6 +25,9 @@ def test_streaming_metrics_api() -> None:
     # experiment, and then stay open until the experiment is complete. To accomplish this with all
     # of the API calls on a single experiment, we spawn them all in threads.
 
+    # The HP importance portion of this test is commented out until the feature is enabled by
+    # default
+
     metric_names_thread = pool.apply_async(request_metric_names, (experiment_id,))
     train_metric_batches_thread = pool.apply_async(request_train_metric_batches, (experiment_id,))
     valid_metric_batches_thread = pool.apply_async(request_valid_metric_batches, (experiment_id,))
@@ -32,6 +35,7 @@ def test_streaming_metrics_api() -> None:
     valid_trials_snapshot_thread = pool.apply_async(request_valid_trials_snapshot, (experiment_id,))
     train_trials_sample_thread = pool.apply_async(request_train_trials_sample, (experiment_id,))
     valid_trials_sample_thread = pool.apply_async(request_valid_trials_sample, (experiment_id,))
+    # hp_importance_thread = pool.apply_async(request_hp_importance, (experiment_id,))
 
     metric_names_results = metric_names_thread.get()
     train_metric_batches_results = train_metric_batches_thread.get()
@@ -40,6 +44,7 @@ def test_streaming_metrics_api() -> None:
     valid_trials_snapshot_results = valid_trials_snapshot_thread.get()
     train_trials_sample_results = train_trials_sample_thread.get()
     valid_trials_sample_results = valid_trials_sample_thread.get()
+    # hp_importance_results = hp_importance_thread.get()
 
     if metric_names_results is not None:
         pytest.fail("metric-names: %s. Results: %s" % metric_names_results)
@@ -55,6 +60,8 @@ def test_streaming_metrics_api() -> None:
         pytest.fail("trials-sample (training): %s. Results: %s" % train_trials_sample_results)
     if valid_trials_sample_results is not None:
         pytest.fail("trials-sample (validation): %s. Results: %s" % valid_trials_sample_results)
+    # if hp_importance_results is not None:
+    #    pytest.fail("hyperparameter-importance: %s. Results: %s" % hp_importance_results)
 
 
 def request_metric_names(experiment_id):  # type: ignore
@@ -278,3 +285,41 @@ def request_valid_trials_sample(experiment_id):  # type: ignore
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
     return check_trials_sample_result(results)
+
+
+def request_hp_importance(experiment_id):  # type: ignore
+    response = api.get(
+        conf.make_master_url(),
+        "api/v1/experiments/{}/hyperparameter-importance".format(experiment_id),
+        params={"period_seconds": 1},
+    )
+    results = [message["result"] for message in map(json.loads, response.text.splitlines())]
+
+    lastResult = results[-1]
+    if len(lastResult["trainingMetrics"]) != 1 or len(lastResult["validationMetrics"]) != 1:
+        return ("Unexpected number of metrics", lastResult)
+
+    def valid_importance(x: float) -> bool:
+        return x >= 0 and x <= 1
+
+    loss = lastResult["trainingMetrics"]["loss"]
+    searcherMetric = lastResult["validationMetrics"]["validation_loss"]
+
+    for metric in [loss, searcherMetric]:
+        for hparam in [
+            "dropout1",
+            "dropout2",
+            "global_batch_size",
+            "learning_rate",
+            "n_filters1",
+            "n_filters2",
+        ]:
+            if not valid_importance(loss["hpImportance"][hparam]):
+                return ("Unexpected importance for hparam %s" % hparam, lastResult)
+        if not metric["experimentProgress"] == 1:
+            return ("HP importance from unfinished experiment included!", lastResult)
+        if metric["pending"] or metric["inProgress"]:
+            return ("Unexpected incomplete status in HP importance", lastResult)
+        if not metric["error"] == "":
+            return ("Unexpected error in HP importance", lastResult)
+    return None

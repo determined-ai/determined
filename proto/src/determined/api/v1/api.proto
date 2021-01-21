@@ -802,4 +802,31 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Trigger the computation of hyperparameter importance on-demand for a
+  // specific metric on a specific experiment. The status and results can be
+  // retrieved with GetHPImportance.
+  rpc ComputeHPImportance(ComputeHPImportanceRequest)
+      returns (ComputeHPImportanceResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experiment_id}/hyperparameter-importance"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Retrieve the latest computation of hyperparameter importance. Currently
+  // this is triggered for training loss (if emitted) and the searcher metric
+  // after 10% increments in an experiment's progress, but no more than every 10
+  // minutes.
+  rpc GetHPImportance(GetHPImportanceRequest)
+      returns (stream GetHPImportanceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/hyperparameter-importance"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }
