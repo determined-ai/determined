@@ -12,7 +12,7 @@ Specification to test the responsive design elements.
 
 * Navigate to React page at "/hgicluster"
 
-* Should show "4" resource pool cards
+* Should show "1" resource pool cards
 
 * Should show "1" agents in stats
 
