@@ -28,7 +28,7 @@ func DefaultRPConfig() *ResourcePoolConfig {
 	}
 }
 
-// ResourcePoolConfig hosts the configuration for a resource pool
+// ResourcePoolConfig hosts the configuration for a resource pool.
 type ResourcePoolConfig struct {
 	PoolName                 string              `json:"pool_name"`
 	Description              string              `json:"description"`
@@ -54,7 +54,7 @@ func (r *ResourcePoolConfig) UnmarshalJSON(data []byte) error {
 	return errors.Wrap(json.Unmarshal(data, DefaultRPConfig()), "failed to parse resource pool")
 }
 
-// ResourcePoolsConfig hosts the configuration for resource pools
+// ResourcePoolsConfig hosts the configuration for resource pools.
 type ResourcePoolsConfig struct {
 	ResourcePools []ResourcePoolConfig `json:"resource_pools"`
 }

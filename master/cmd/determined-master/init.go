@@ -23,6 +23,7 @@ var v *viper.Viper
 // already broken and fixes some parts of what was broken that people care about.
 const viperKeyDelimiter = ".."
 
+//nolint:gochecknoinit
 func init() {
 	// The version of rootCmd is set in init() rather than when `rootCmd` is initialized,
 	// because link-time variable assignments are not applied when package-scoped variables
