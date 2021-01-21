@@ -329,7 +329,7 @@ export const ioTrialLog = io.type({
   id: io.string,
   level: optional(ioLogLevelType2),
   message: io.string,
-  time: optional(io.string),
+  timestamp: io.string,
 });
 
 export const ioLogs = io.array(ioLog);

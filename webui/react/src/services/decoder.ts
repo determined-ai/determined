@@ -350,18 +350,17 @@ const defaultRegex = /^\[([^\]]+)\]\s([\s\S]*)(\r|\n)$/im;
 const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(\r|\n)$/im;
 
 const ioToTrialLog = (io: ioTypes.ioTypeTrialLog): types.TrialLog => {
+  const log = { id: io.id, level: io.level, message: io.message, time: io.timestamp };
   if (defaultRegex.test(io.message)) {
     const matches = io.message.match(defaultRegex) || [];
-    const time = matches[1];
     const message = matches[2] || '';
-    return { id: io.id, message, time };
+    log.message = message;
   } else if (kubernetesRegex.test(io.message)) {
     const matches = io.message.match(kubernetesRegex) || [];
-    const time = matches[3];
     const message = [ matches[1], matches[2], matches[4] ].join(' ');
-    return { id: io.id, message, time };
+    log.message = message;
   }
-  return { id: io.id, message: io.message };
+  return log;
 };
 
 export const jsonToTrialLog = (data: unknown): types.TrialLog => {
