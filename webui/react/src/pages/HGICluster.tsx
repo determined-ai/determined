@@ -70,7 +70,7 @@ const HGICluster: React.FC = () => {
 
   const slotContainerStates = getSlotContainerStates(agents.data || []);
 
-  const totalGpuSlots = useCallback((resPoolName: string) => {
+  const getTotalGpuSlots = useCallback((resPoolName: string) => {
     if (!agents.hasLoaded || !agents.data) return 0;
     const resPoolAgents = agents.data.filter(agent => agent.resourcePool === resPoolName);
     const overview = agentsToOverview(resPoolAgents);
@@ -86,11 +86,14 @@ const HGICluster: React.FC = () => {
       const containerStates: ResourceState[] =
           getSlotContainerStates(agents.data || [], record.name);
 
+      const totalGpuSlots = getTotalGpuSlots(record.name);
+
+      if (totalGpuSlots === 0) return null;
       return <SlotAllocationBar
         className={css.chartColumn}
         hideHeader
         resourceStates={containerStates}
-        totalSlots={record.numAgents * record.gpusPerAgent} />;
+        totalSlots={totalGpuSlots} />;
 
     };
 
@@ -172,7 +175,7 @@ const HGICluster: React.FC = () => {
                 containerStates={getSlotContainerStates(agents.data || [], rp.name)}
                 key={idx}
                 resourcePool={rp}
-                totalGpuSlots={totalGpuSlots(rp.name)} />;
+                totalGpuSlots={getTotalGpuSlots(rp.name)} />;
             })}
           </Grid>
         }

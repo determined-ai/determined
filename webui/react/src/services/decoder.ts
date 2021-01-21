@@ -44,10 +44,7 @@ export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.Deter
 export const mapV1ResourcePool = (
   data: Sdk.V1ResourcePool,
 ): types.ResourcePool => {
-  return {
-    ...data,
-    gpusPerAgent: 1, // FIXME. QUESTION where is this provided in the API?
-  };
+  return { ...data };
 };
 
 export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {

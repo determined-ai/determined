@@ -465,7 +465,6 @@ export interface ResourcePool {
   defaultGpuPool?: boolean;
   description: string;
   details: Details;
-  gpusPerAgent: number;
   imageId: string;
   instanceType: string;
   location: string;
