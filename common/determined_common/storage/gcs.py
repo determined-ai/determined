@@ -4,6 +4,7 @@ import os
 import tempfile
 from typing import Iterator, Optional
 
+import google.api_core.exceptions
 import requests.exceptions
 import urllib3.exceptions
 from google.api_core import retry
@@ -14,7 +15,10 @@ from determined_common.storage.base import StorageManager, StorageMetadata
 
 retry_network_errors = retry.Retry(
     retry.if_exception_type(
-        ConnectionError, urllib3.exceptions.ProtocolError, requests.exceptions.ConnectionError
+        ConnectionError,
+        google.api_core.exceptions.ServerError,
+        urllib3.exceptions.ProtocolError,
+        requests.exceptions.ConnectionError,
     )
 )
 
