@@ -64,13 +64,10 @@ linters:
   enable-all: true
   disable:
     - exhaustive
-    - exportloopref
     - funlen
     - gochecknoglobals
-    - gochecknoinits
     - gocognit
     - gocyclo
-    - godot
     - godox
     - goerr113
     - gofumpt
