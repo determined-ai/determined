@@ -351,10 +351,10 @@ export interface ExperimentBase {
   endTime?: string;
   id: number;
   progress?: number;
+  resourcePool?: string;
   startTime: string;
   state: RunState;
   username: string;
-  resourcePool?: string;
 }
 
 export interface ExperimentOld extends ExperimentBase {
