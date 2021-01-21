@@ -15,7 +15,7 @@ import SlotAllocationBar from 'components/SlotAllocationBar';
 import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
 import Agents from 'contexts/Agents';
-import ClusterOverview from 'contexts/ClusterOverview';
+import ClusterOverview, { agentsToOverview } from 'contexts/ClusterOverview';
 import usePolling from 'hooks/usePolling';
 import { columns as defaultColumns } from 'pages/HGICluster.table';
 import { getResourcePools } from 'services/api';
@@ -69,6 +69,13 @@ const HGICluster: React.FC = () => {
   }, [ resourcePools ]);
 
   const slotContainerStates = getSlotContainerStates(agents.data || []);
+
+  const totalGpuSlots = useCallback((resPoolName: string) => {
+    if (!agents.hasLoaded || !agents.data) return 0;
+    const resPoolAgents = agents.data.filter(agent => agent.resourcePool === resPoolName);
+    const overview = agentsToOverview(resPoolAgents);
+    return overview.GPU.total;
+  }, [ agents ]);
 
   const columns = useMemo(() => {
 
@@ -164,7 +171,8 @@ const HGICluster: React.FC = () => {
               return <ResourcePoolCard
                 containerStates={getSlotContainerStates(agents.data || [], rp.name)}
                 key={idx}
-                resourcePool={rp} />;
+                resourcePool={rp}
+                totalGpuSlots={totalGpuSlots(rp.name)} />;
             })}
           </Grid>
         }

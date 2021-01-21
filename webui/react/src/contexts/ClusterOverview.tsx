@@ -23,7 +23,7 @@ const defaultClusterOverview: ClusterOverview = {
   totalResources: { available: 0, total: 0 },
 };
 
-const agentsToOverview = (agents: Agent[]): ClusterOverview => {
+export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   // Deep clone for render detection.
   const overview = clone(defaultClusterOverview);
   const tally = { available: 0, total: 0 };
