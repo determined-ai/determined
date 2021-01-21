@@ -104,7 +104,7 @@ const HGICluster: React.FC = () => {
     });
 
     return newColumns;
-  }, [ agents.data ]);
+  }, [ agents.data, getTotalGpuSlots ]);
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
