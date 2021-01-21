@@ -528,8 +528,25 @@ func (db *PgDB) GetHPImportance(experimentID int) (result model.ExperimentHPImpo
 }
 
 // SetHPImportance writes the current hyperparameter importance data and status to the database.
-// It should only be called from the HPImportance manager actor, to ensure coherence.
+// It should only be called from the HPImportance manager actor, to ensure coherence. It will set
+// hpi.Partial according to the individual metric statuses to facilitate faster querying for any
+// incomplete work.
 func (db *PgDB) SetHPImportance(experimentID int, value model.ExperimentHPImportance) error {
+	value.Partial = false
+	for _, metricHpi := range value.TrainingMetrics {
+		if metricHpi.Pending || metricHpi.InProgress {
+			value.Partial = true
+			break
+		}
+	}
+	if !value.Partial {
+		for _, metricHpi := range value.ValidationMetrics {
+			if metricHpi.Pending || metricHpi.InProgress {
+				value.Partial = true
+				break
+			}
+		}
+	}
 	jsonString, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -537,4 +554,40 @@ func (db *PgDB) SetHPImportance(experimentID int, value model.ExperimentHPImport
 	_, err = db.sql.Exec("UPDATE experiments SET hpimportance=$1 WHERE id=$2",
 		jsonString, experimentID)
 	return err
+}
+
+func (db *PgDB) GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error) {
+	type partialHPImportanceRow struct {
+		Id           int    `db:"id"`
+		HPImportance []byte `db:"hpimportance"`
+	}
+
+	var rows []partialHPImportanceRow
+	var ids []int
+	var hpis []model.ExperimentHPImportance
+	err := db.queryRows(`
+SELECT id, hpimportance FROM experiments
+WHERE (hpimportance->>'partial')::boolean=true`, &rows)
+	if err != nil {
+		return nil, nil, errors.Wrapf(err,
+			"failed to request partial hyperparameter importance work")
+	}
+	for _, row := range rows {
+		var hpi model.ExperimentHPImportance
+		err = json.Unmarshal(row.HPImportance, &hpi)
+		if err != nil {
+			return nil, nil, errors.Wrapf(err,
+				"Failed to parse partial hyperparameter importance for experiment %d", row.Id)
+		}
+		if hpi.TrainingMetrics == nil {
+			hpi.TrainingMetrics = make(map[string]model.MetricHPImportance)
+		}
+		if hpi.ValidationMetrics == nil {
+			hpi.ValidationMetrics = make(map[string]model.MetricHPImportance)
+		}
+		hpis = append(hpis, hpi)
+		ids = append(ids, row.Id)
+	}
+	return ids, hpis, nil
+
 }

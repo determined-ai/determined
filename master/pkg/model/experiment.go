@@ -543,6 +543,7 @@ type HPImportanceTrialData struct {
 // ExperimentHPImportance is hyperparameter importance for an experiment, and consists of
 // independent measurements of importance for any of the metrics recorded by the experiment.
 type ExperimentHPImportance struct {
+	Partial           bool                          `json:"partial"`
 	TrainingMetrics   map[string]MetricHPImportance `json:"training_metrics"`
 	ValidationMetrics map[string]MetricHPImportance `json:"validation_metrics"`
 }
