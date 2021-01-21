@@ -25,7 +25,7 @@ export const columns: ColumnType<ResourcePool>[] = [
   {
     dataIndex: 'type',
     key: 'type',
-    render: (_, record, __) => V1ResourcePoolTypeToLabel[record.type],
+    render: (_, record) => V1ResourcePoolTypeToLabel[record.type],
     sorter: (a: ResourcePool, b: ResourcePool): number => alphanumericSorter(a.type, b.type),
     title: 'Type',
   },

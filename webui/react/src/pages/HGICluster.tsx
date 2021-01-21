@@ -16,16 +16,15 @@ import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
+import usePolling from 'hooks/usePolling';
 import { columns as defaultColumns } from 'pages/HGICluster.table';
-import { getResourcePoolSamples } from 'services/api';
+import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
 import { Resource, ResourcePool, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
 
 import css from './HGICluster.module.scss';
-
-const resourcePools = getResourcePoolSamples();
 
 enum View {
   List,
@@ -37,6 +36,14 @@ const HGICluster: React.FC = () => {
   const overview = ClusterOverview.useStateContext();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
   const [ selectedView, setSelectedView ] = useState<View>(View.Grid);
+  const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+
+  const pollResourcePools = useCallback(async () => {
+    const resourcePools = await getResourcePools({});
+    setResourcePools(resourcePools);
+  }, []);
+
+  usePolling(pollResourcePools, { delay: 10000 });
 
   const availableResources = useMemo(() => {
     if (!agents.data) return {};
@@ -59,7 +66,7 @@ const HGICluster: React.FC = () => {
       tally.running += rp.cpuContainersRunning;
     });
     return tally;
-  }, [ ]);
+  }, [ resourcePools ]);
 
   const slotContainerStates = getSlotContainerStates(agents.data || []);
 
