@@ -318,3 +318,14 @@ WHERE id = :id`, setClause(fs)))
 
 	return nil
 }
+
+// DeleteSessionsForSCIMUser deletes sessions belonging to a given scim user ID.
+func (db *PgDB) DeleteSessionsForSCIMUser(user *model.SCIMUser) error {
+	_, err := db.sql.Exec(`
+DELETE FROM user_sessions
+WHERE user_id IN (SELECT u.id 
+                FROM users u
+                JOIN scim.users su on u.id = su.user_id
+                WHERE su.id = $1)`, user.ID)
+	return err
+}

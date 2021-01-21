@@ -239,6 +239,12 @@ func (s *service) PutUser(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
+	if !updated.Active {
+		if err := s.db.DeleteSessionsForSCIMUser(updated); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := updated.SetSCIMFields(s.locationRoot); err != nil {
 		return nil, err
 	}
@@ -341,6 +347,12 @@ func (s *service) PatchUser(c echo.Context) (interface{}, error) {
 	updated, err := s.db.UpdateSCIMUser(req.ID, &changes, toUpdate)
 	if err != nil {
 		return nil, err
+	}
+
+	if !updated.Active {
+		if err := s.db.DeleteSessionsForSCIMUser(updated); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := updated.SetSCIMFields(s.locationRoot); err != nil {
