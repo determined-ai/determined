@@ -63,6 +63,11 @@ const HGICluster: React.FC = () => {
 
   const slotContainerStates = getSlotContainerStates(agents.data || []);
 
+  const totalGpuSlots = useCallback((resPoolName: string) => {
+    if (!agents.hasLoaded || !agents.data) return 0;
+    return agents.data.filter(agent => agent.resourcePool === resPoolName).length;
+  }, [ agents ]);
+
   const columns = useMemo(() => {
 
     const descriptionRender = (_: unknown, record: ResourcePool): React.ReactNode =>
@@ -157,7 +162,8 @@ const HGICluster: React.FC = () => {
               return <ResourcePoolCard
                 containerStates={getSlotContainerStates(agents.data || [], rp.name)}
                 key={idx}
-                resourcePool={rp} />;
+                resourcePool={rp}
+                totalGpuSlots={totalGpuSlots(rp.name)} />;
             })}
           </Grid>
         }

@@ -16,6 +16,7 @@ import ResourcePoolDetails from './ResourcePoolDetails';
 
 interface Props {
   containerStates: ResourceState[]; // GPU
+  totalGpuSlots: number;
   resourcePool: ResourcePool;
 }
 
@@ -64,7 +65,9 @@ const agentStatusText = (numAgents: number, maxAgents: number): string => {
   return prefix + ' Agents Active';
 };
 
-const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }: Props) => {
+const ResourcePoolCard: React.FC<Props> = (
+  { containerStates, resourcePool: rp, totalGpuSlots }: Props,
+) => {
   const [ detailVisible, setDetailVisible ] = useState(false);
 
   const shortDetails = rpAttrs.reduce((acc, cur) => {
@@ -127,7 +130,7 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }
         <section>
           <SlotAllocationBar
             resourceStates={containerStates}
-            totalSlots={numAgents * gpusPerAgent} />
+            totalSlots={totalGpuSlots} />
           <div className={css.cpuContainers}>
             <span>CPU containers running:</span>
             <span>{rp.cpuContainersRunning}</span>
