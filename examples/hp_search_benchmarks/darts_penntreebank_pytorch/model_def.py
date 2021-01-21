@@ -92,18 +92,17 @@ class DARTSRNNTrial(PyTorchTrial):
         logging.info("Model total parameters: {}".format(total_params))
 
         # Define the optimizer
-        self.optimizer = HybridSGD(
+        self._optimizer = self.context.wrap_optimizer(HybridSGD(
             self.model.parameters(),
             self.hparams.learning_rate,
             self.hparams.weight_decay,
             lambd=0,
             t0=0,
-        )
+        ))
 
         # Define the LR scheduler
-        self.myLR = MyLR(self.optimizer, self.hparams)
+        self.myLR = MyLR(self._optimizer, self.hparams)
         step_mode = LRScheduler.StepMode.MANUAL_STEP
-        self._optimizer = self.myLR
         self.wrapped_LR = self.context.wrap_lr_scheduler(self.myLR, step_mode=step_mode)
 
     def build_training_data_loader(self) -> DataLoader:
@@ -209,14 +208,6 @@ class DARTSRNNTrial(PyTorchTrial):
             )
         ) * 1.0
 
-        self.context.backward(loss)
-        self.context.step_optimizer(
-            self.optimizer,
-            clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
-                params, self.context.get_hparam("clip_gradients_l2_norm"),
-            ),
-        )
-
         try:
             perplexity = math.exp(raw_loss)
         except Exception as e:
@@ -227,6 +218,14 @@ class DARTSRNNTrial(PyTorchTrial):
             perplexity = 100000
 
         self._last_epoch = epoch_idx
+
+        self.context.backward(loss)
+        self.context.step_optimizer(
+            self._optimizer,
+            clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
+                params, self.context.get_hparam("clip_gradients_l2_norm"),
+            ),
+        )
 
         return {"loss": loss, "raw_loss": raw_loss, "perplexity": perplexity}
 
