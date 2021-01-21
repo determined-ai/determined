@@ -29,7 +29,7 @@ type (
 		Misc           map[string]interface{}  `json:"misc"`
 		IsReady        bool                    `json:"is_ready"`
 		AgentUserGroup *model.AgentUserGroup   `json:"agent_user_group"`
-		ResourcePool   string				   `json:"resource_pool"`
+		ResourcePool   string                  `json:"resource_pool"`
 	}
 )
 
@@ -54,6 +54,6 @@ func newSummary(c *command) summary {
 		Misc:           c.metadata,
 		IsReady:        c.readinessMessageSent,
 		AgentUserGroup: c.agentUserGroup,
-		ResourcePool: c.config.Resources.ResourcePool,
+		ResourcePool:   c.config.Resources.ResourcePool,
 	}
 }
