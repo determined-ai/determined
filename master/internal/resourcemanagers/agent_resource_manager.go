@@ -43,10 +43,21 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 
 	case AllocateRequest:
+		// this code exists to handle the case where an experiment does not have
+		// an explicit resource pool specified in the config. This should never happen
+		// for newly created/forked experiments as the default pool is filled in to the
+		// config at creation time. However, old experiments which were created prior to
+		// the introduction of resource pools could have no resource pool associated with
+		// them and so we need to handle that case gracefully.
 		if len(msg.ResourcePool) == 0 {
-			msg.ResourcePool = a.getDefaultResourcePool(msg)
+			if msg.SlotsNeeded == 0 {
+				msg.ResourcePool = a.config.DefaultCPUResourcePool
+			} else {
+				msg.ResourcePool = a.config.DefaultGPUResourcePool
+			}
 		}
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
+
 	case ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
@@ -57,10 +68,18 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
 		}
+
 	case GetTaskSummaries:
 		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
+
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
+
+	case sproto.GetDefaultGPUResourcePoolRequest:
+		ctx.Respond(sproto.GetDefaultGPUResourcePoolResponse{PoolName: a.config.DefaultGPUResourcePool})
+
+	case sproto.GetDefaultCPUResourcePoolRequest:
+		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: a.config.DefaultCPUResourcePool})
 
 	case *apiv1.GetResourcePoolsRequest:
 		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig.ResourcePools))
@@ -110,13 +129,6 @@ func (a *agentResourceManager) createResourcePool(
 		return nil
 	}
 	return ref
-}
-
-func (a *agentResourceManager) getDefaultResourcePool(msg AllocateRequest) string {
-	if msg.SlotsNeeded == 0 {
-		return a.config.DefaultCPUResourcePool
-	}
-	return a.config.DefaultGPUResourcePool
 }
 
 func (a *agentResourceManager) forwardToPool(

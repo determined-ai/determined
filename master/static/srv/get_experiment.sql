@@ -2,6 +2,7 @@ SELECT
     e.id AS id,
     e.config->>'description' AS description,
     e.config->'labels' AS labels,
+    e.config->'resources'->>'resource_pool' as resource_pool,
     e.start_time AS start_time,
     e.end_time AS end_time,
     'STATE_' || e.state AS state,

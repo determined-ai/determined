@@ -105,6 +105,11 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		return nil, err
 	}
 
+	// If the resource pool isn't set, fill in the default.
+	if conf.Resources.ResourcePool == "" {
+		conf.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(master.system)
+	}
+
 	method := searcher.NewSearchMethod(conf.Searcher)
 	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
 
