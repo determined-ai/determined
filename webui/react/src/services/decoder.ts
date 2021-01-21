@@ -98,7 +98,6 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
 };
 
 export const jsonToGenericCommand = (data: unknown, type: types.CommandType): types.Command => {
-  console.log('decoing command', data);
   const io = ioTypes.decode<ioTypes.ioTypeGenericCommand>(ioTypes.ioGenericCommand, data);
   const command: types.Command = {
     config: { ...io.config },
