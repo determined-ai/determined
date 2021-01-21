@@ -244,6 +244,7 @@ func trialLogAPITests(
 			ctx, _ := context.WithTimeout(creds, time.Minute)
 			tlCl, err := cl.TrialLogs(ctx, tc.req)
 			i := 0
+			ids := map[string]bool{}
 			for {
 				resp, err := tlCl.Recv()
 				if err == io.EOF {
@@ -254,6 +255,10 @@ func trialLogAPITests(
 				assert.NilError(t, err, "failed to receive trial logs")
 				assert.Assert(t, i < len(tc.matches), "received too many logs")
 				assertStringContains(t, resp.Message, tc.matches[i])
+
+				// assert IDs are unique
+				assert.Equal(t, ids[resp.Id], false, "log ID was not unique: %s", resp.Id)
+				ids[resp.Id] = true
 				i++
 			}
 		})
