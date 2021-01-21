@@ -25,19 +25,19 @@ Version 0.13.13
 
 **Improvements**
 
+-  **Breaking Change:** REST API: Update trial logs API to return string IDs.
+
 -  WebUI: Enable filtering of trial logs by agent, container, rank, log
    level, and timestamp.
 
 -  WebUI: Improve section contrast on all pages.
 
--  Deployment: Add the command ```det-deploy aws list``, which shows all
-   the CloudFormation stacks that are managed by ```det-deploy aws```
-   (using the tag ```managed-by:determined```). This only applies to new
+-  Deployment: Add the command ``det-deploy aws list``, which shows all
+   the CloudFormation stacks that are managed by ``det-deploy aws``
+   (using the tag ``managed-by: determined``). This only applies to new
    deployments since this version, not previous deployments.
 
 -  Update examples to use the new PyTorch APIs.
-
--  **Breaking Change** API: Update trial logs API to return string IDs.
 
 **Deprecated Features**
 
