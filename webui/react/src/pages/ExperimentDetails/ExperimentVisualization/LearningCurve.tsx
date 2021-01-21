@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BadgeTag from 'components/BadgeTag';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
-import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
