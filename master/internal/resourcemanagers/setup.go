@@ -53,23 +53,22 @@ func makeTLSConfig(cert *tls.Certificate) (model.TLSClientConfig, error) {
 func Setup(
 	system *actor.System,
 	echo *echo.Echo,
-	config *ResourceConfig,
+	resourceConfig *ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *actor.Ref {
 	var ref *actor.Ref
 	switch {
-	case config.ResourceManager.AgentRM != nil:
-		ref = setupAgentResourceManager(system, echo, config, opts, cert)
-	case config.ResourceManager.KubernetesRM != nil:
+	case resourceConfig.ResourceManager.AgentRM != nil:
+		ref = setupAgentResourceManager(system, echo, resourceConfig, opts, cert)
+	case resourceConfig.ResourceManager.KubernetesRM != nil:
 		config, err := makeTLSConfig(cert)
 		if err != nil {
 			panic(errors.Wrap(err, "failed to set up TLS config"))
 		}
 		ref = setupKubernetesResourceManager(
-			system, echo, rmConfig.KubernetesRM, config, opts.LoggingOptions,
+			system, echo, resourceConfig.ResourceManager.KubernetesRM, config, opts.LoggingOptions,
 		)
-		ref = setupKubernetesResourceManager(system, echo, config.ResourceManager.KubernetesRM)
 	default:
 		panic("no expected resource manager config is defined")
 	}
