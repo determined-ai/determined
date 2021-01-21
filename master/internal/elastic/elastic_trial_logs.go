@@ -163,7 +163,10 @@ func (e *Elastic) TrialLogs(
 	}
 
 	var logs []*model.TrialLog
-	for _, h := range resp.Hits.Hits {
+	for i := range resp.Hits.Hits {
+		// The short form `for _, h := range resp.Hits.Hits` will result in &h.ID being
+		// the same address and all logs having identical IDs.
+		h := resp.Hits.Hits[i]
 		h.Source.Resolve()
 		h.Source.StringID = &h.ID
 		logs = append(logs, h.Source)
