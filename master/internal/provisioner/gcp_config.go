@@ -241,7 +241,7 @@ func getCPUPlatform(machineType string) string {
 	return "Intel Broadwell"
 }
 
-// First prefix match found is applied
+// First prefix match found is applied.
 var gceCPUPlatforms = map[string]string{
 	"a2-highgpu": "Intel Cascade Lake",
 	"a2-megagpu": "Intel Cascade Lake",

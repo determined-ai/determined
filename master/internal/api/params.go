@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Pagination contains resolved pagination indecies.
+// Pagination contains resolved pagination indices.
 type Pagination struct {
 	StartIndex int // Inclusive
 	EndIndex   int // Exclusive
@@ -49,7 +49,7 @@ func EffectiveOffset(reqOffset int, total int) (offset int) {
 
 // EffectiveLimit computes a hard limit based on the offset and total available items if there is a
 // limit set.
-// Input: non-negative offset
+// Input: non-negative offset.
 func EffectiveLimit(limit int, offset int, total int) int {
 	if offset < 0 {
 		panic("input offset has to be non-negative")
