@@ -6,6 +6,7 @@ from torch.nn import functional as F
 from torchvision.datasets import MNIST
 from torchvision import datasets, transforms
 from include.adapter import DETLightningModule, GH
+from typing import Optional
 import os
 
 
@@ -79,35 +80,25 @@ class MNISTDataModule(pl.LightningDataModule):
         # download, split, etc...
         # only called on 1 GPU/TPU in distributed
         pass
-    def setup(self):
+    def setup(self, stage: Optional[str] = None):
         # make assignments here (val/train/test split)
         # called on every process in DDP
-        pass
+        # transforms for images
+        transform = transforms.Compose([transforms.ToTensor(), 
+                                        transforms.Normalize((0.1307,), (0.3081,))])
+
+        # prepare transforms standard to MNIST
+        self.mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
+        self.mnist_val = MNIST(os.getcwd(), train=False, download=True, transform=transform)
+
     def train_dataloader(self):
-        train_split = Dataset(...)
-        return DataLoader(train_split)
+        return DataLoader(self.mnist_train, batch_size=64, num_workers=12)
     def val_dataloader(self):
-        val_split = Dataset(...)
-        return DataLoader(val_split)
-    def test_dataloader(self):
-        test_split = Dataset(...)
-        return DataLoader(test_split)
+        return DataLoader(self.mnist_val, batch_size=64)
+    # def test_dataloader(self):
+    #     pass
 
 if __name__ == '__main__':
-
-
-    # data
-    # transforms for images
-    transform = transforms.Compose([transforms.ToTensor(), 
-                                    transforms.Normalize((0.1307,), (0.3081,))])
-
-    # prepare transforms standard to MNIST
-    mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
-    mnist_test = MNIST(os.getcwd(), train=False, download=True, transform=transform)
-
-    train_dataloader = DataLoader(mnist_train, batch_size=64, num_workers=12)
-    val_loader = DataLoader(mnist_test, batch_size=64)
-
     # train
     # CHANGE: define hyperparameters to be used
     def get_hparam(key: str):
@@ -120,4 +111,5 @@ if __name__ == '__main__':
     model = LightningMNISTClassifier(get_hparam)
     trainer = pl.Trainer(max_epochs=2)
 
-    trainer.fit(model, train_dataloader, val_loader)
+    dm = MNISTDataModule()
+    trainer.fit(model, datamodule=dm)
