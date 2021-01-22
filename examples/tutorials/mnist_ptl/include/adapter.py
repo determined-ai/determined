@@ -19,16 +19,15 @@ class PTLAdapter(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: pl.LightningDataModule = None) -> None:
         super().__init__(context)
         self.lm = lightning_module(context.get_hparam)
-        self.dm = data_module
+        self.dm = data_module()
         self.context = context
         self.model = self.context.wrap_model(self.lm)
         self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
-        self.lm.datamodule = data_module
         if self.dm is not None:
             # QUESTION call only on one gpu (once per node). the expected behavior could change with trainer
             # need to find a place to run this
             # https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.datamodule.html#pytorch_lightning.core.datamodule.LightningDataModule.prepare_data
-            self.lm.prepare_data() # TODO check args
+            self.dm.prepare_data() # TODO check args
             # FIXME either self.lm or dm
 
     def train_batch(
