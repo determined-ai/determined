@@ -22,6 +22,8 @@ build:
 
 .PHONY: check
 check:
+	go mod tidy
+	git diff --quiet go.mod go.sum
 	golangci-lint --build-tags integration run
 
 .PHONY: fmt
