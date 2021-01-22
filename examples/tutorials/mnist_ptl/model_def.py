@@ -25,7 +25,7 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 class MNistTrial(PTLAdapter): # match PyTorchTrial API
     def __init__(self, context: PyTorchTrialContext) -> None:
-        super().__init__(context, ptl.LightningMNISTClassifier)
+        super().__init__(context, ptl.LightningMNISTClassifier, data_module=ptl.MNISTDataModule)
 
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"

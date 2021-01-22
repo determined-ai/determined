@@ -76,10 +76,11 @@ class MNISTDataModule(pl.LightningDataModule):
     def __init__(self):
         super().__init__()
 
-    def prepare_data(self):
-        # download, split, etc...
-        # only called on 1 GPU/TPU in distributed
-        pass
+    # def prepare_data(self):
+    #     # download, split, etc...
+    #     # only called on 1 GPU/TPU in distributed
+    #     return super().prepare_data()
+
     def setup(self, stage: Optional[str] = None):
         # make assignments here (val/train/test split)
         # called on every process in DDP
