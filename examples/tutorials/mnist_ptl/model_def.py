@@ -27,8 +27,8 @@ class MNistTrial(PTLAdapter): # match PyTorchTrial API
         super().__init__(context, ptl.LightningMNISTClassifier, data_module=ptl.MNISTDataModule)
 
         # Create a unique download directory for each rank so they don't overwrite each other.
-        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
-        self.data_downloaded = False
+        # self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
+        # self.data_downloaded = False
 
     # def build_training_data_loader(self) -> DataLoader:
     #     if not self.data_downloaded:

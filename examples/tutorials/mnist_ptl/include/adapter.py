@@ -1,6 +1,7 @@
 from typing import Callable, NewType, Any
 import pytorch_lightning as pl
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import DataLoader as DetDataLoader
 from typing import Any, Dict, Sequence, Union
 import torch
 
@@ -34,9 +35,25 @@ class DETLightningDataModule(pl.LightningDataModule):
         super().__init__(*args, **kwargs)
 
 
+    def train_det_dataloader(self) -> DetDataLoader:
+        raise NotImplementedError
+
+    def val_det_dataloader(self) -> DetDataLoader:
+        raise NotImplementedError
+
+    # def test...
+
+    def train_dataloader(self) -> torch.utils.data.DataLoader:
+        return self.train_det_dataloader().get_data_loader()
+
+    def val_dataloader(self) -> torch.utils.data.DataLoader:
+        return self.train_det_dataloader().get_data_loader()
+        
+
+
 
 class PTLAdapter(PyTorchTrial):
-    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: pl.LightningDataModule = None) -> None:
+    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: DETLightningDataModule = None) -> None:
         super().__init__(context)
         self.lm = lightning_module(context.get_hparam)
         self.context = context
@@ -49,6 +66,12 @@ class PTLAdapter(PyTorchTrial):
             # https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.datamodule.html#pytorch_lightning.core.datamodule.LightningDataModule.prepare_data
             self.dm.prepare_data() # TODO check args
             # FIXME either self.lm or dm
+
+    # TODO def loss_fn
+    # QUESTION: how does user tell lightining what loss to use
+    def loss_fn(self, logits, labels):
+        raise NotImplementedError()
+
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -68,10 +91,10 @@ class PTLAdapter(PyTorchTrial):
         if self.dm is None: raise NotImplementedError()
         if not self.dm._has_setup_fit:
             self.dm.setup() # TODO call once per GPU
-        return self.dm.train_dataloader()
+        return self.dm.train_det_dataloader()
     
     def build_validation_data_loader(self):
         if self.dm is None: raise NotImplementedError()
         if not self.dm._has_setup_fit:
             self.dm.setup()
-        return self.dm.val_dataloader()
+        return self.dm.val_det_dataloader()

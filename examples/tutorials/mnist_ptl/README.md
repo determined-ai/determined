@@ -9,7 +9,7 @@ LM wraps and organizes PyTorch code. [ref](https://pytorch-lightning.readthedocs
 
 check rest of lightning module hooks and methods
 
-methods:
+methods: TODO check the signatures
 - `configure_optimizers`
 - `forward`
 - `freeze`

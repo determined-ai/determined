@@ -1,11 +1,12 @@
 import torch
 from torch import nn
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import random_split
+from determined.pytorch import DataLoader
 from torch.nn import functional as F
 from torchvision.datasets import MNIST
 from torchvision import datasets, transforms
-from include.adapter import DETLightningModule, GH
+from include.adapter import DETLightningModule, GH, DETLightningDataModule
 from typing import Optional
 import os
 
@@ -72,7 +73,8 @@ class LightningMNISTClassifier(DETLightningModule):  # CHANGE: use DETLightningM
     # TODO audit other available LightningModule hooks
 
 
-class MNISTDataModule(pl.LightningDataModule):
+# CHANGE to DETLightningModule
+class MNISTDataModule(DETLightningDataModule):
     def __init__(self):
         super().__init__()
 
@@ -92,9 +94,9 @@ class MNISTDataModule(pl.LightningDataModule):
         self.mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
         self.mnist_val = MNIST(os.getcwd(), train=False, download=True, transform=transform)
 
-    def train_dataloader(self):
+    def train_det_dataloader(self):
         return DataLoader(self.mnist_train, batch_size=64, num_workers=12)
-    def val_dataloader(self):
+    def val_det_dataloader(self):
         return DataLoader(self.mnist_val, batch_size=64)
     # def test_dataloader(self):
     #     pass
