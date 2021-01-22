@@ -20,18 +20,13 @@ type (
 	Archive []Item
 )
 
-var defaultModifiedTime UnixTime
-
-func init() {
+var defaultModifiedTime UnixTime = func() UnixTime {
 	t, err := time.Parse(time.RFC3339, pkg.DeterminedBirthday)
 	if err != nil {
 		panic(err)
 	}
-
-	defaultModifiedTime = UnixTime{
-		Time: t,
-	}
-}
+	return UnixTime{Time: t}
+}()
 
 // Item is an in-memory representation of a file.  It contains the content and additional metadata
 // of a file.

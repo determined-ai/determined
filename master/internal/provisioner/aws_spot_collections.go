@@ -12,19 +12,19 @@ type setOfSpotRequests struct {
 	keyMap map[string]*spotRequest
 }
 
-// add spotRequest to the set
+// add spotRequest to the set.
 func (c *setOfSpotRequests) add(s *spotRequest) *setOfSpotRequests {
 	c.keyMap[s.SpotRequestID] = s
 	return c
 }
 
-// delete spotRequest from the set
+// delete spotRequest from the set.
 func (c *setOfSpotRequests) delete(s *spotRequest) *setOfSpotRequests {
 	delete(c.keyMap, s.SpotRequestID)
 	return c
 }
 
-// deleteByID deletes spotRequest with the given id from the set
+// deleteByID deletes spotRequest with the given ID from the set.
 func (c *setOfSpotRequests) deleteByID(s string) *setOfSpotRequests {
 	delete(c.keyMap, s)
 	return c
@@ -38,7 +38,7 @@ func (c *setOfSpotRequests) deleteIntersection(set2 setOfSpotRequests) *setOfSpo
 	return c
 }
 
-// copy creates a shallow copy of the set
+// copy creates a shallow copy of the set.
 func (c *setOfSpotRequests) copy() setOfSpotRequests {
 	set := newSetOfSpotRequests()
 	for _, req := range c.iter() {
@@ -47,7 +47,7 @@ func (c *setOfSpotRequests) copy() setOfSpotRequests {
 	return set
 }
 
-// asList return the spotRequests in the set as a slice
+// asList return the spotRequests in the set as a slice.
 func (c *setOfSpotRequests) asList() []*spotRequest {
 	list := make([]*spotRequest, 0, len(c.keyMap))
 	for _, sr := range c.keyMap {
@@ -57,7 +57,7 @@ func (c *setOfSpotRequests) asList() []*spotRequest {
 }
 
 // asListInChronologicalOrder returns the spotRequests in the set as a slice,
-// sorted in chronological order
+// sorted in chronological order.
 func (c *setOfSpotRequests) asListInChronologicalOrder() []*spotRequest {
 	l := c.asList()
 	sort.SliceStable(l, func(i, j int) bool {
@@ -66,7 +66,7 @@ func (c *setOfSpotRequests) asListInChronologicalOrder() []*spotRequest {
 	return l
 }
 
-// instanceIds goes through the spotRequests and returns all instanceIds that are not nil
+// instanceIds goes through the spotRequests and returns all instanceIds that are not nil.
 func (c *setOfSpotRequests) instanceIds() []*string {
 	instanceIDs := make([]*string, 0)
 	for _, req := range c.keyMap {
@@ -80,7 +80,7 @@ func (c *setOfSpotRequests) instanceIds() []*string {
 	return instanceIDs
 }
 
-// idsAsList returns the spotRequest ids as a slice of strings
+// idsAsList returns the spotRequest ids as a slice of strings.
 func (c *setOfSpotRequests) idsAsList() []string {
 	list := make([]string, 0, len(c.keyMap))
 	for reqID := range c.keyMap {
@@ -89,7 +89,7 @@ func (c *setOfSpotRequests) idsAsList() []string {
 	return list
 }
 
-// idsAsListOfPointers returns the spotRequest ids as a slice of string pointers
+// idsAsListOfPointers returns the spotRequest ids as a slice of string pointers.
 func (c *setOfSpotRequests) idsAsListOfPointers() []*string {
 	list := make([]*string, 0, len(c.keyMap))
 	for reqID := range c.keyMap {
@@ -102,18 +102,17 @@ func (c *setOfSpotRequests) idsAsListOfPointers() []*string {
 }
 
 // iter returns the underlying map to make iterating over setOfSpotRequests as clean as
-// iterating over a map. e.g.:
-// for reqId, req := range set.iter() { ... }
+// iterating over a map: `for reqId, req := range set.iter() { ... }`.
 func (c *setOfSpotRequests) iter() map[string]*spotRequest {
 	return c.keyMap
 }
 
-// numReqs returns the number of spotRequests in the set
+// numReqs returns the number of spotRequests in the set.
 func (c *setOfSpotRequests) numReqs() int {
 	return len(c.keyMap)
 }
 
-// newSetOfSpotRequests creates a new, empty setOfSpotRequests
+// newSetOfSpotRequests creates a new, empty setOfSpotRequests.
 func newSetOfSpotRequests() setOfSpotRequests {
 	return setOfSpotRequests{
 		keyMap: make(map[string]*spotRequest),
@@ -127,17 +126,17 @@ type setOfStrings struct {
 	keyMap map[string]bool
 }
 
-// add a string to the set
+// add a string to the set.
 func (c *setOfStrings) add(s string) {
 	c.keyMap[s] = true
 }
 
-// length returns the number of items in the set
+// length returns the number of items in the set.
 func (c *setOfStrings) length() int {
 	return len(c.keyMap)
 }
 
-// asList returns the strings in the set as a slice of strings
+// asList returns the strings in the set as a slice of strings.
 func (c *setOfStrings) asList() []string {
 	list := make([]string, 0, len(c.keyMap))
 	for key := range c.keyMap {
@@ -146,7 +145,7 @@ func (c *setOfStrings) asList() []string {
 	return list
 }
 
-// asListOfPointers returns the strings in the set as a slice of string pointers
+// asListOfPointers returns the strings in the set as a slice of string pointers.
 func (c *setOfStrings) asListOfPointers() []*string {
 	list := make([]*string, 0, len(c.keyMap))
 	for key := range c.keyMap {
@@ -159,13 +158,13 @@ func (c *setOfStrings) asListOfPointers() []*string {
 }
 
 // string returns a string representation of the set, which is the list of strings
-// separated by commas
+// separated by commas.
 func (c *setOfStrings) string() string {
 	l := c.asList()
 	return strings.Join(l, ",")
 }
 
-// newSetOfStrings creates a new, empty setOfStrings
+// newSetOfStrings creates a new, empty setOfStrings.
 func newSetOfStrings() setOfStrings {
 	return setOfStrings{
 		keyMap: make(map[string]bool),

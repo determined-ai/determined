@@ -416,10 +416,6 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 }
 
 func getPort(min, max int) int {
-	// Set the seed here or else the compiler will generate a random number at
-	// compile time and each invocation of this function will return the same
-	// number.
-	rand.Seed(time.Now().Unix())
 	return rand.Intn(max-min) + min
 }
 

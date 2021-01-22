@@ -26,7 +26,7 @@ func DefaultRPConfig() *ResourcePoolConfig {
 	}
 }
 
-// ResourcePoolConfig hosts the configuration for a resource pool
+// ResourcePoolConfig hosts the configuration for a resource pool.
 type ResourcePoolConfig struct {
 	PoolName                 string              `json:"pool_name"`
 	Description              string              `json:"description"`
@@ -50,3 +50,4 @@ func (r ResourcePoolConfig) Validate() []error {
 			"resource pool max cpu containers per agent should be >= 0"),
 	}
 }
+

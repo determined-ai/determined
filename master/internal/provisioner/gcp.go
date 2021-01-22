@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"math/rand"
 	"net/url"
 	"strings"
 	"time"
@@ -18,11 +17,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
-
-func init() {
-	// set the seed of the random package for pet name generator
-	rand.Seed(time.Now().UTC().UnixNano())
-}
 
 // gcpCluster wraps a GCE client. Determined recognizes agent GCE instances by:
 // 1. A specific key/value pair label.
@@ -155,7 +149,9 @@ func (c *gcpCluster) generateInstanceName() string {
 	return c.NamePrefix + petname.Generate(2, "-")
 }
 
-func (c *gcpCluster) prestart(ctx *actor.Context) {}
+func (c *gcpCluster) prestart(ctx *actor.Context) {
+	petname.NonDeterministicMode()
+}
 
 func (c *gcpCluster) list(ctx *actor.Context) ([]*Instance, error) {
 	clientCtx := context.Background()

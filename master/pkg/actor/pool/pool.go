@@ -65,7 +65,7 @@ func (p *ActorPool) SubmitTask(task interface{}) error {
 	return nil
 }
 
-// Internal message types
+// Internal message types.
 type (
 	// For giving a new task to the manager.
 	sendTask struct {

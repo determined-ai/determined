@@ -973,7 +973,7 @@ func (a *apiServer) ComputeHPImportance(ctx context.Context,
 	return &resp, nil
 }
 
-// Translates MetricHPImportance to the protobuf form
+// Translates MetricHPImportance to the protobuf form.
 func protoMetricHPI(metricHpi model.MetricHPImportance,
 ) *apiv1.GetHPImportanceResponse_MetricHPImportance {
 	return &apiv1.GetHPImportanceResponse_MetricHPImportance{
