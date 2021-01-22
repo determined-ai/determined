@@ -346,21 +346,21 @@ export const jsonToLogs = (data: unknown): types.Log[] => {
   }));
 };
 
-const defaultRegex = /^\[([^\]]+)\]\s([\s\S]*)(\r|\n)$/im;
-const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(\r|\n)$/im;
-const logLevelMap: Record<Sdk.V1LogLevel, types.LogLevel | undefined> = {
-  [Sdk.V1LogLevel.UNSPECIFIED]: undefined,
-  [Sdk.V1LogLevel.CRITICAL]: types.LogLevel.Critical,
-  [Sdk.V1LogLevel.DEBUG]: types.LogLevel.Debug,
-  [Sdk.V1LogLevel.ERROR]: types.LogLevel.Error,
-  [Sdk.V1LogLevel.INFO]: types.LogLevel.Info,
-  [Sdk.V1LogLevel.TRACE]: types.LogLevel.Trace,
-  [Sdk.V1LogLevel.WARNING]: types.LogLevel.Warning,
-};
-
 const decodeV1LogLevelToLogLevel = (level: Sdk.V1LogLevel): types.LogLevel | undefined => {
+  const logLevelMap: Record<Sdk.V1LogLevel, types.LogLevel | undefined> = {
+    [Sdk.V1LogLevel.UNSPECIFIED]: undefined,
+    [Sdk.V1LogLevel.CRITICAL]: types.LogLevel.Critical,
+    [Sdk.V1LogLevel.DEBUG]: types.LogLevel.Debug,
+    [Sdk.V1LogLevel.ERROR]: types.LogLevel.Error,
+    [Sdk.V1LogLevel.INFO]: types.LogLevel.Info,
+    [Sdk.V1LogLevel.TRACE]: types.LogLevel.Trace,
+    [Sdk.V1LogLevel.WARNING]: types.LogLevel.Warning,
+  };
   return logLevelMap[level];
 };
+
+const defaultRegex = /^\[([^\]]+)\]\s([\s\S]*)(\r|\n)$/im;
+const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(\r|\n)$/im;
 
 export const jsonToTrialLog = (data: unknown): types.TrialLog => {
   const logData = data as Sdk.V1TrialLogsResponse;
