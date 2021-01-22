@@ -59,7 +59,7 @@ cluster configuration based on how the cluster will be used:
 .. code:: json
 
    {
-     "index_patterns": ["determined-triallogs*"],
+     "index_patterns": ["determined-triallogs-*"],
      "mappings": {
        "properties": {
            "agent_id": {"type": "keyword", "index": true},
