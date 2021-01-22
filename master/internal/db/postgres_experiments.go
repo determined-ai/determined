@@ -588,7 +588,7 @@ WHERE (hpimportance->>'partial')::boolean=true`, &rows)
 			hpi.ValidationMetrics = make(map[string]model.MetricHPImportance)
 		}
 		hpis = append(hpis, hpi)
-		ids = append(ids, row.IdD
+		ids = append(ids, row.ID)
 	}
 	return ids, hpis, nil
 
