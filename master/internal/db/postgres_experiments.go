@@ -591,5 +591,4 @@ WHERE (hpimportance->>'partial')::boolean=true`, &rows)
 		ids = append(ids, row.ID)
 	}
 	return ids, hpis, nil
-
 }
