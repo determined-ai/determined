@@ -63,7 +63,7 @@ interface MessageSize {
   top: number;
 }
 
-export const TAIL_SIZE = 100;
+export const TAIL_SIZE = 500;
 
 // What factor to multiply against the displayable lines in the visible view.
 const BUFFER_FACTOR = 1;
