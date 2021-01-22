@@ -67,12 +67,6 @@ class PTLAdapter(PyTorchTrial):
             self.dm.prepare_data() # TODO check args
             # FIXME either self.lm or dm
 
-    # TODO def loss_fn
-    # QUESTION: how does user tell lightining what loss to use
-    def loss_fn(self, logits, labels):
-        raise NotImplementedError()
-
-
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:

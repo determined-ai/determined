@@ -1,5 +1,13 @@
 # PTL Adapter
 
+user flow:
+
+- have a ptl project with lightningModule (LM), lightningTrainer, and maybe lightningDataModule (DM)
+- have LM extend DETLM instead
+  - implement (and/or pick) loss_fn
+- have DM extend DETDM instead
+  - impl methods to return detDataloader
+
 
 ## LightningModule
 

@@ -45,20 +45,20 @@ class LightningMNISTClassifier(DETLightningModule):  # CHANGE: use DETLightningM
         return x
 
     # CHANGE: define loss fn. TODO a hyperparam?
-    def loss_fn(self, logits, labels):
+    def _loss_fn(self, logits, labels):
         return F.nll_loss(logits, labels)
 
     def training_step(self, train_batch, batch_idx):
         x, y = train_batch
         logits = self.forward(x)
-        loss = self.loss_fn(logits, y)
+        loss = self._loss_fn(logits, y)
         self.log('train_loss', loss)
         return {'loss': loss}
 
     def validation_step(self, val_batch, batch_idx=None):
         x, y = val_batch
         logits = self.forward(x)
-        loss = self.loss_fn(logits, y)
+        loss = self._loss_fn(logits, y)
         self.log('val_loss', loss)
 
         pred = logits.argmax(dim=1, keepdim=True)
