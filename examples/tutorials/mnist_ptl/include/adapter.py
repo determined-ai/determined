@@ -14,16 +14,36 @@ class DETLightningModule(pl.LightningModule):
         super().__init__(*args, **kwargs)
         self.get_hparam = get_hparam
 
+class DETLightningDataModule(pl.LightningDataModule):
+    """
+    ## user defines these as usual
+    def prepare_data
+    def setup
+
+    ## user defines these for DET usage. similar to normal ptl datamodule
+    def train_det_dataloader: DetDataloader
+    def val_det_dataloader: DetDataloader
+    def test_det_dataloader: DetDataloader
+
+    ## user gets these for free
+    def train_dataloader
+    def val_dataloader
+    def test_dataloader
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 
 class PTLAdapter(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: pl.LightningDataModule = None) -> None:
         super().__init__(context)
         self.lm = lightning_module(context.get_hparam)
-        self.dm = data_module()
         self.context = context
         self.model = self.context.wrap_model(self.lm)
         self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
-        if self.dm is not None:
+        if data_module is not None:
+            self.dm = data_module()
             # QUESTION call only on one gpu (once per node). the expected behavior could change with trainer
             # need to find a place to run this
             # https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.datamodule.html#pytorch_lightning.core.datamodule.LightningDataModule.prepare_data
@@ -54,4 +74,4 @@ class PTLAdapter(PyTorchTrial):
         if self.dm is None: raise NotImplementedError()
         if not self.dm._has_setup_fit:
             self.dm.setup()
-        return self.dm.train_dataloader()
+        return self.dm.val_dataloader()

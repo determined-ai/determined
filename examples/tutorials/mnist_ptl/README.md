@@ -1,29 +1,82 @@
-# PyTorch MNIST CNN Tutorial
-This tutorial shows how to build a simple CNN on the MNIST dataset using
-Determined's PyTorch API. This example is adapted from this [PyTorch MNIST
-tutorial](https://github.com/pytorch/examples/tree/master/mnist).
+# PTL Adapter
 
-## Files
-* **model_def.py**: The core code for the model. This includes building and compiling the model.
-* **data.py**: The data loading and preparation code for the model.
-* **layers.py**: Defines the convolutional layers that the model uses. 
 
-### Configuration Files
-* **const.yaml**: Train the model with constant hyperparameter values.
-* **distributed.yaml**: Same as `const.yaml`, but trains the model with multiple GPUs (distributed training).
-* **adaptive.yaml**: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm.
+## LightningModule
 
-## Data
-The current implementation uses MNIST data downloaded from AWS S3.
+LM wraps and organizes PyTorch code. [ref](https://pytorch-lightning.readthedocs.io/en/latest/lightning_module.html)
 
-## To Run
-If you have not yet installed Determined, installation instructions can be found
-under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
+### TODO
 
-Run the following command: `det -m <master host:port> experiment create -f 
-const.yaml .`. The other configurations can be run by specifying the appropriate 
-configuration file in place of `const.yaml`.
+check rest of lightning module hooks and methods
 
-## Results
-Training the model with the hyperparameter settings in `const.yaml` should yield
-a validation accuracy of ~97%. 
+methods:
+- `configure_optimizers`
+- `forward`
+- `freeze`
+- `log`
+- `log_dict`
+- `print`
+- `save_hyperparameters`
+- `test_step`
+- `test_step_end`
+- `test_epoch_end`
+- `to_onnx`
+- `to_torchscript`
+- `training_step`
+- `training_step_end`
+- `training_epoch_end`
+- `unfreeze`
+- `validation_step`
+- `validation_step_end`
+- `validation_epoch_end`
+
+hooks:
+- `backward`
+- `get_progress_bar_dict`
+- `manual_backward`
+- `on_after_backward`
+- `on_before_zero_grad`
+- `on_fit_start`
+- `on_fit_end`
+- `on_load_checkpoint`
+- `on_save_checkpoint`
+- `on_pretrain_routine_start`
+- `on_pretrain_routine_end`
+- `on_test_batch_start`
+- `on_test_batch_end`
+- `on_test_epoch_start`
+- `on_test_epoch_end`
+- `on_train_batch_start`
+- `on_train_batch_end`
+- `on_train_epoch_start`
+- `on_train_epoch_end`
+- `on_validation_batch_start`
+- `on_validation_batch_end`
+- `on_validation_epoch_start`
+- `on_validation_epoch_end`
+- `optimizer_step`
+- `optimizer_zero_grad`
+- `prepare_data`
+- `setup`
+- `tbptt_split_batch`
+- `teardown`
+- `train_dataloader`
+- `val_dataloader`
+- `test_dataloader`
+- `transfer_batch_to_device`
+
+## DataModule
+
+LM wraps and organizes PyTorch DataLoaders. [ref](https://pytorch-lightning.readthedocs.io/en/latest/lightning_module.html)
+[ref](https://pytorch-lightning.readthedocs.io/en/latest/datamodules.html)
+
+
+### TODO
+
+- turn pytorch dataloader into determined pytorch dataloader
+  - or ask user to provide conversions for their DataLoaders to DetDataLoader
+
+### Unsupported?
+
+- `def transfer_batch_to_device(self, batch, device):`
+  - does `LightningDataModule` reference this internally?
