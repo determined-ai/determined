@@ -50,6 +50,29 @@ cluster configuration based on how the cluster will be used:
    <https://www.elastic.co/guide/en/elasticsearch/reference/master/tune-for-indexing-speed.html#_unset_or_increase_the_refresh_interval>`__
    may help increase total throughput.
 
+-  Apply the following `index template
+   <https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-templates-v1.html>`__
+   to optimize the mappings in Determined log indices for ingest speed.
+   This turns off analysis and in some cases indexing on properties for
+   which Determined does not use these features.
+
+.. code:: json
+
+   {
+     "index_patterns": ["determined-triallogs*"],
+     "mappings": {
+       "properties": {
+           "agent_id": {"type": "keyword", "index": true},
+           "container_id": {"type": "keyword", "index": true},
+           "level": {"type": "keyword", "index": true},
+           "log": {"type": "text", "index": false},
+           "message": {"type": "text", "index": false},
+           "source": {"type": "keyword", "index": true},
+           "stdtype": {"type": "keyword", "index": true}
+       }
+     }
+   }
+
 The configuration settings to enable Elasticsearch as the trial log
 backend are described in the :ref:`cluster configuration
 <cluster-configuration>` reference.

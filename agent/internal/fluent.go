@@ -148,6 +148,8 @@ func startLoggingContainer(
 				// Delete Docker's container information, which we don't want.
 				{"Remove", "container_id"},
 				{"Remove", "container_name"},
+				// Remove metadata about the container parent that we set on the container.
+				{"Remove", "ai.determined.container.parent"},
 				// Rename environment variables to normal names.
 				{"Rename", containerIDEnvVar + " container_id"},
 				{"Rename", trialIDEnvVar + " trial_id"},
