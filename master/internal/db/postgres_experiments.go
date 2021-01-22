@@ -560,7 +560,7 @@ func (db *PgDB) SetHPImportance(experimentID int, value model.ExperimentHPImport
 // any pending or in-progress tasks the last time they were written to the DB.
 func (db *PgDB) GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error) {
 	type partialHPImportanceRow struct {
-		Id           int    `db:"id"`
+		ID           int    `db:"id"`
 		HPImportance []byte `db:"hpimportance"`
 	}
 
@@ -579,7 +579,7 @@ WHERE (hpimportance->>'partial')::boolean=true`, &rows)
 		err = json.Unmarshal(row.HPImportance, &hpi)
 		if err != nil {
 			return nil, nil, errors.Wrapf(err,
-				"Failed to parse partial hyperparameter importance for experiment %d", row.Id)
+				"Failed to parse partial hyperparameter importance for experiment %d", row.ID)
 		}
 		if hpi.TrainingMetrics == nil {
 			hpi.TrainingMetrics = make(map[string]model.MetricHPImportance)
@@ -588,7 +588,7 @@ WHERE (hpimportance->>'partial')::boolean=true`, &rows)
 			hpi.ValidationMetrics = make(map[string]model.MetricHPImportance)
 		}
 		hpis = append(hpis, hpi)
-		ids = append(ids, row.Id)
+		ids = append(ids, row.IdD
 	}
 	return ids, hpis, nil
 
