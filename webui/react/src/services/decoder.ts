@@ -382,10 +382,6 @@ export const jsonToTrialLog = (data: unknown): types.TrialLog => {
   return log;
 };
 
-export const jsonToTrialLogs = (data: unknown): types.TrialLog[] => {
-  return (data as Sdk.V1TrialLogsResponse[]).map(d => jsonToTrialLog(d));
-};
-
 const ioTaskEventToMessage = (event: string): string => {
   if (defaultRegex.test(event)) {
     const matches = event.match(defaultRegex) || [];

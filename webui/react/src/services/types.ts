@@ -120,10 +120,5 @@ export interface TaskLogsParams extends LogsParams {
   taskType: CommandType;
 }
 
-export interface TrialLogsParams extends LogsParams {
-  experimentId: number;
-  trialId: number;
-}
-
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 export type EmptyParams = {}
