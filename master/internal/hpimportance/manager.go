@@ -84,8 +84,7 @@ func (m *manager) Receive(ctx *actor.Context) error {
 	}
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-
-		// TODO: fetch any pending or in_progress tasks from the DB and trigger them
+		m.triggerPartialWork(ctx)
 	case actor.PostStop:
 		// Do nothing
 	case actor.ChildFailed:

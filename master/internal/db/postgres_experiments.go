@@ -556,6 +556,8 @@ func (db *PgDB) SetHPImportance(experimentID int, value model.ExperimentHPImport
 	return err
 }
 
+// GetPartialHPImportance returns all the experiment IDs and their HP importance data if they had
+// any pending or in-progress tasks the last time they were written to the DB.
 func (db *PgDB) GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error) {
 	type partialHPImportanceRow struct {
 		Id           int    `db:"id"`
