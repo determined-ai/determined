@@ -154,7 +154,6 @@ const TrialLogs: React.FC = () => {
 
   return (
     <LogViewerTimestamp
-      disableLevel
       fetchToLogConverter={jsonToTrialLog}
       FilterComponent={TrialLogFilters}
       noWrap

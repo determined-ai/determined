@@ -348,24 +348,42 @@ export const jsonToLogs = (data: unknown): types.Log[] => {
 
 const defaultRegex = /^\[([^\]]+)\]\s([\s\S]*)(\r|\n)$/im;
 const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(\r|\n)$/im;
+const logLevelMap: Record<Sdk.V1LogLevel, types.LogLevel | undefined> = {
+  [Sdk.V1LogLevel.UNSPECIFIED]: undefined,
+  [Sdk.V1LogLevel.CRITICAL]: types.LogLevel.Critical,
+  [Sdk.V1LogLevel.DEBUG]: types.LogLevel.Debug,
+  [Sdk.V1LogLevel.ERROR]: types.LogLevel.Error,
+  [Sdk.V1LogLevel.INFO]: types.LogLevel.Info,
+  [Sdk.V1LogLevel.TRACE]: types.LogLevel.Trace,
+  [Sdk.V1LogLevel.WARNING]: types.LogLevel.Warning,
+};
 
-const ioToTrialLog = (io: ioTypes.ioTypeTrialLog): types.TrialLog => {
-  const log = { id: io.id, level: io.level, message: io.message, time: io.timestamp };
-  if (defaultRegex.test(io.message)) {
-    const matches = io.message.match(defaultRegex) || [];
+const decodeV1LogLevelToLogLevel = (level: Sdk.V1LogLevel): types.LogLevel | undefined => {
+  return logLevelMap[level];
+};
+
+export const jsonToTrialLog = (data: unknown): types.TrialLog => {
+  const logData = data as Sdk.V1TrialLogsResponse;
+  const log = {
+    id: logData.id,
+    level: decodeV1LogLevelToLogLevel(logData.level),
+    message: logData.message,
+    time: logData.timestamp as unknown as string,
+  };
+  if (defaultRegex.test(logData.message)) {
+    const matches = logData.message.match(defaultRegex) || [];
     const message = matches[2] || '';
     log.message = message;
-  } else if (kubernetesRegex.test(io.message)) {
-    const matches = io.message.match(kubernetesRegex) || [];
+  } else if (kubernetesRegex.test(logData.message)) {
+    const matches = logData.message.match(kubernetesRegex) || [];
     const message = [ matches[1], matches[2], matches[4] ].join(' ');
     log.message = message;
   }
   return log;
 };
 
-export const jsonToTrialLog = (data: unknown): types.TrialLog => {
-  const io = ioTypes.decode<ioTypes.ioTypeTrialLog>(ioTypes.ioTrialLog, data);
-  return ioToTrialLog(io);
+export const jsonToTrialLogs = (data: unknown): types.TrialLog[] => {
+  return (data as Sdk.V1TrialLogsResponse[]).map(d => jsonToTrialLog(d));
 };
 
 const ioTaskEventToMessage = (event: string): string => {
@@ -402,9 +420,4 @@ export const jsonToTaskLogs = (data: unknown): types.Log[] => {
         time: log.time,
       };
     });
-};
-
-export const jsonToTrialLogs = (data: unknown): types.TrialLog[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeTrialLogs>(ioTypes.ioTrialLogs, data);
-  return io.map(ioToTrialLog);
 };

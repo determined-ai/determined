@@ -52,8 +52,10 @@
     padding: 0.1rem;
   }
   .line > .level > .levelLabel { font-size: 0; }
+  .line > .critical { color: var(--theme-colors-states-failed); }
   .line > .debug { color: var(--theme-colors-states-active); }
   .line > .error { color: var(--theme-colors-states-failed); }
+  .line > .trace { color: var(--theme-colors-states-active); }
   .line > .warning { color: var(--theme-colors-states-suspended); }
   .line > .time {
     color: var(--theme-colors-base-0);

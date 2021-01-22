@@ -415,5 +415,5 @@ export const getTrialLogs: HttpApi<TrialLogsParams, TrialLog[]> = {
     ].join('?'),
   }),
   name: 'getTrialLogs',
-  postProcess: response => jsonToTrialLogs(response.data),
+  postProcess: response => jsonToTrialLogs(response.data as Api.V1TrialLogsResponse[]),
 };
