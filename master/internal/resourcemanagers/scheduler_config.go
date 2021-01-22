@@ -20,6 +20,13 @@ const (
 	defaultFitPolicy = best
 )
 
+func DefaultSchedulerConfig() *SchedulerConfig {
+	return &SchedulerConfig{
+		FairShare:     &FairShareSchedulerConfig{},
+		FittingPolicy: defaultFitPolicy,
+	}
+}
+
 // SchedulerConfig holds the configurations for scheduling policies.
 type SchedulerConfig struct {
 	FairShare     *FairShareSchedulerConfig  `union:"type,fair_share" json:"-"`

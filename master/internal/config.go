@@ -133,6 +133,10 @@ func (c *Config) Resolve() error {
 
 	c.DB.Migrations = fmt.Sprintf("file://%s", filepath.Join(c.Root, "static/migrations"))
 
+	if c.ResourceManager.AgentRM != nil && c.ResourceManager.AgentRM.Scheduler == nil {
+		c.ResourceManager.AgentRM.Scheduler = resourcemanagers.DefaultSchedulerConfig()
+	}
+
 	if err := c.ResolveResource(); err != nil {
 		return err
 	}
