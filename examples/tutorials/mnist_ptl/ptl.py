@@ -67,9 +67,35 @@ class LightningMNISTClassifier(DETLightningModule):  # CHANGE: use DETLightningM
         optimizer = torch.optim.Adam(self.parameters(),
                                      lr=self.get_hparam('learning_rate'))
         return optimizer
+    
+    # TODO audit other available LightningModule hooks
 
+
+class MNISTDataModule(pl.LightningDataModule):
+    def __init__(self):
+        super().__init__()
+
+    def prepare_data(self):
+        # download, split, etc...
+        # only called on 1 GPU/TPU in distributed
+        pass
+    def setup(self):
+        # make assignments here (val/train/test split)
+        # called on every process in DDP
+        pass
+    def train_dataloader(self):
+        train_split = Dataset(...)
+        return DataLoader(train_split)
+    def val_dataloader(self):
+        val_split = Dataset(...)
+        return DataLoader(val_split)
+    def test_dataloader(self):
+        test_split = Dataset(...)
+        return DataLoader(test_split)
 
 if __name__ == '__main__':
+
+
     # data
     # transforms for images
     transform = transforms.Compose([transforms.ToTensor(), 
