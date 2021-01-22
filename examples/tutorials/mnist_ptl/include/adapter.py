@@ -15,24 +15,21 @@ class DETLightningModule(pl.LightningModule):
         self.get_hparam = get_hparam
 
 
-
 class PTLAdapter(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: pl.LightningDataModule = None) -> None:
         super().__init__(context)
         self.lm = lightning_module(context.get_hparam)
+        self.dm = data_module
         self.context = context
         self.model = self.context.wrap_model(self.lm)
         self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
-
-        # set the data module
-        if data_module is not None:
-            print(data_module)
-            self.lm.datamodule = data_module
-        if self.lm.datamodule is not None:
+        self.lm.datamodule = data_module
+        if self.dm is not None:
             # QUESTION call only on one gpu (once per node). the expected behavior could change with trainer
             # need to find a place to run this
             # https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.datamodule.html#pytorch_lightning.core.datamodule.LightningDataModule.prepare_data
             self.lm.prepare_data() # TODO check args
+            # FIXME either self.lm or dm
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -49,15 +46,13 @@ class PTLAdapter(PyTorchTrial):
 
 
     def build_training_data_loader(self):
-        dm = self.lm.datamodule
-        if dm is None: raise NotImplementedError()
-        if not dm._has_setup_fit:
-            dm.setup() # TODO call once per GPU
-        return dm.train_dataloader()
+        if self.dm is None: raise NotImplementedError()
+        if not self.dm._has_setup_fit:
+            self.dm.setup() # TODO call once per GPU
+        return self.dm.train_dataloader()
     
     def build_validation_data_loader(self):
-        dm = self.lm.datamodule
-        if dm is None: raise NotImplementedError()
-        if not dm._has_setup_fit:
-            dm.setup()
-        return dm.train_dataloader()
+        if self.dm is None: raise NotImplementedError()
+        if not self.dm._has_setup_fit:
+            self.dm.setup()
+        return self.dm.train_dataloader()
