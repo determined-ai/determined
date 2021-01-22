@@ -8,9 +8,8 @@ import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
-import usePrevious from 'hooks/usePrevious';
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
-import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
+import useScroll from 'hooks/useScroll';
 import {
   LogViewerTimestampFilterComponentProp,
   TrialLogFiltersInterface,
@@ -26,7 +25,6 @@ import css from './LogViewer.module.scss';
 import Page, { Props as PageProps } from './Page';
 
 export interface LogViewerTimestampFilter {
-  limit?: number,
   timestampAfter?: Dayjs,   // exclusive of the specified date time
   timestampBefore?: Dayjs,  // inclusive of the specified date time
 }
@@ -63,7 +61,7 @@ interface MessageSize {
   top: number;
 }
 
-export const TAIL_SIZE = 500;
+export const TAIL_SIZE = 200;
 
 // What factor to multiply against the displayable lines in the visible view.
 const BUFFER_FACTOR = 1;
@@ -117,21 +115,14 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const resize = useResize(container);
   const scroll = useScroll(container);
 
-  const previousScroll = usePrevious(scroll, defaultScrollInfo);
-
   const [ config, setConfig ] = useState<LogConfig>(defaultLogConfig);
   const [ direction, setDirection ] = useState(DIRECTIONS.TAILING);
-  const [ filter, setFilter ] = useState<LogViewerTimestampFilter>({ limit: TAIL_SIZE });
+  const [ filter, setFilter ] = useState<LogViewerTimestampFilter>({});
   const [ filterOptions, setFilterOptions ] = useState<LogViewerTimestampFilter>({});
-  const [ historyCanceler ] = useState(new AbortController());
   const [ isLastReached, setIsLastReached ] = useState(false);
-  const [ isPrevScrollOnBottom, setIsPrevScrollOnBottom ] = useState(false);
-  const [ isPrevScrollOnTop, setIsPrevScrollOnTop ] = useState(false);
-  const [ isScrollOnBottom, setIsScrollOnBottom ] = useState(true);
-  const [ isScrollOnTop, setIsScrollOnTop ] = useState(false);
-  const [ logTimestampRange, setLogTimestampRange ] = useState<{max:null|string, min:null|string}>({
-    max: null,
-    min: null,
+  const [ isScrollOn, setIsScrollOn ] = useState<{bottom: boolean, top: boolean}>({
+    bottom: true,
+    top: true,
   });
   const [ logs, setLogs ] = useState<ViewerLog[]>([]);
 
@@ -249,31 +240,18 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * Check if user scroll is on top/bottom.
    */
   useLayoutEffect(() => {
-    setIsScrollOnBottom(
-      scroll.scrollHeight
-      - scroll.viewHeight
-      - scroll.scrollTop
-      < SCROLL_BOTTOM_THRESHOLD,
-    );
-    setIsScrollOnTop(
-      scroll.scrollTop < SCROLL_TOP_THRESHOLD,
-    );
+    setIsScrollOn({
+      bottom: (
+        scroll.scrollHeight
+        - scroll.viewHeight
+        - scroll.scrollTop
+        < SCROLL_BOTTOM_THRESHOLD
+      ),
+      top: (
+        scroll.scrollTop < SCROLL_TOP_THRESHOLD
+      ),
+    });
   }, [ scroll ]);
-
-  /*
-   * Check if user previous scroll was on top/bottom.
-   */
-  useLayoutEffect(() => {
-    setIsPrevScrollOnBottom(
-      previousScroll.scrollHeight
-      - previousScroll.viewHeight
-      - previousScroll.scrollTop
-      < SCROLL_BOTTOM_THRESHOLD,
-    );
-    setIsPrevScrollOnTop(
-      previousScroll.scrollTop < SCROLL_TOP_THRESHOLD,
-    );
-  }, [ previousScroll ]);
 
   /*
    * Automatically scroll to log tail (if tailing).
@@ -283,14 +261,14 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
     if (
       !element
-      || !isScrollOnBottom
+      || !isScrollOn.bottom
       || direction !== DIRECTIONS.TAILING
     ) return;
 
     setTimeout(() => {
       element.scrollTo({ top: element.scrollHeight });
     });
-  }, [ container, direction, isScrollOnBottom, logs ]);
+  }, [ container, direction, isScrollOn.bottom, logs ]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -364,31 +342,28 @@ const LogViewerTimestamp: React.FC<Props> = ({
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
-  const handleScrollToTop = useCallback(() => {
-    if (!container.current) return;
-    setDirection(DIRECTIONS.OLDEST);
-    container.current.scrollTo({ behavior: 'auto', top: 0 });
-  }, []);
-
-  const handleEnableTailing = useCallback(() => {
-    if (!container.current) return;
-    setDirection(DIRECTIONS.TAILING);
-    container.current.scrollTo({ behavior: 'auto', top: container.current.scrollHeight });
-  }, []);
-
-  const handleDownload = useCallback(() => {
-    if (onDownloadClick) onDownloadClick();
-  }, [ onDownloadClick ]);
-
   const addLogs = useCallback((addedLogs: TrialLog[], isPrepend = false): void => {
     const newLogs = addedLogs
       .map(log => {
         const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
         return { ...log, formattedTime };
+      })
+      .sort((logA, logB) => {
+        const logATime = logA.time || '';
+        const logBTime = logB.time || '';
+        return logATime.localeCompare(logBTime);
       });
     if (newLogs.length === 0) return;
 
     const prevScrollHeight = container?.current?.scrollHeight;
+
+    /*
+     * Forcing both to false to prevent a race condition: when "logs" (useState) changes,
+     * it triggers loading other logs via useEffect, which watches "isScrollOn", which
+     * is not already updated (will refresh in another useEffect but only after the re-render
+     * will trigger a "scroll" (useState) update, which happens only after logs are appended).
+     */
+    setIsScrollOn({ bottom: false, top: false });
 
     setLogs(prevLogs => {
       const logs = isPrepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ];
@@ -397,9 +372,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
       });
     });
 
-    /*
-     * Restore the previous scroll position when prepending log entries.
-     */
+    // Restore the previous scroll position when prepending log entries.
     if (isPrepend && container?.current && prevScrollHeight) {
       container.current.scrollTo({
         top: (
@@ -409,48 +382,54 @@ const LogViewerTimestamp: React.FC<Props> = ({
         ),
       });
     }
-
-    // update log timestamp range
-    let max: string|null = null;
-    let min: string|null = null;
-    newLogs.forEach(log => {
-      if (!log.time) return;
-      if (!max || log.time > max) max = log.time;
-      if (!min || log.time < min) min = log.time;
-    });
-    setLogTimestampRange(prev => ({
-      max: (prev.max && max && dayjs(prev.max).isAfter(dayjs(max))) ? prev.max : max,
-      min: (prev.min && min && dayjs(prev.min).isBefore(dayjs(min))) ? prev.min : min,
-    }));
   }, [ container ]);
 
   const clearLogs = useCallback(() => {
+    setIsScrollOn({ bottom: true, top: true });
     setIsLastReached(false);
     setLogs([]);
-    setLogTimestampRange({
-      max: null,
-      min: null,
-    });
   }, []);
+
+  const handleFilterChange = useCallback((newFilters: TrialLogFiltersInterface) => {
+    clearLogs();
+    setFilter(newFilters);
+  }, [ clearLogs ]);
+
+  const handleScrollToTop = useCallback(() => {
+    clearLogs();
+    setDirection(DIRECTIONS.OLDEST);
+  }, [ clearLogs ]);
+
+  const handleEnableTailing = useCallback(() => {
+    clearLogs();
+    setDirection(DIRECTIONS.TAILING);
+  }, [ clearLogs ]);
+
+  const handleDownload = useCallback(() => {
+    if (onDownloadClick) onDownloadClick();
+  }, [ onDownloadClick ]);
 
   /*
    * Fetch filters data.
    */
   useEffect(() => {
+    const canceler = new AbortController();
+
     consumeStream(
-      onFetchLogFilter(historyCanceler),
+      onFetchLogFilter(canceler),
       event => setFilterOptions(event as LogViewerTimestampFilter),
     );
 
-    return () => historyCanceler.abort();
-  }, [ historyCanceler, onFetchLogFilter ]);
+    return () => canceler.abort();
+  }, [ onFetchLogFilter ]);
 
   /*
-   * Load first batch of logs (tail or oldest).
+   * Watch Log tail (api follow).
    */
   useEffect(() => {
+    if (direction !== DIRECTIONS.TAILING) return;
+
     const canceler = new AbortController();
-    clearLogs();
 
     let buffer: TrialLog[] = [];
     const throttleFunc = throttle(THROTTLE_TIME, () => {
@@ -458,14 +437,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
       buffer = [];
     });
 
-    const fetchArgs = (
-      direction === DIRECTIONS.TAILING
-        ? onFetchLogTail(filter, canceler)
-        : onFetchLogAfter({ ...filter, timestampAfter: dayjs(0) }, canceler)
-    );
-
     consumeStream(
-      fetchArgs,
+      onFetchLogTail(filter, canceler),
       event => {
         buffer.push(fetchToLogConverter(event));
         throttleFunc();
@@ -478,44 +451,41 @@ const LogViewerTimestamp: React.FC<Props> = ({
     };
   }, [
     addLogs,
-    clearLogs,
     direction,
     fetchToLogConverter,
     filter,
-    onFetchLogAfter,
     onFetchLogTail,
   ]);
 
   /*
-   * Load older/newer log entries when the user scroll to the top/bottom.
+   * Load old Log entries (api no-follow) when container scroll is at the top or bottom.
    */
   useEffect(() => {
     if (isLastReached) return;
 
     const canceler = new AbortController();
+    const logTimes = logs.map(log => log.time).sort();
     let fetchArgs = null;
     let isPrepend = false;
 
-    if (direction === DIRECTIONS.TAILING) {
-      if (!logTimestampRange.min) return;
-      if (!isScrollOnTop) return;
-      if (isPrevScrollOnTop) return;
-
+    if (direction === DIRECTIONS.TAILING && isScrollOn.top) {
+      const firstLogTime = logTimes[0];
       fetchArgs = onFetchLogBefore({
         ...filter,
-        timestampBefore: dayjs(logTimestampRange.min),
+        timestampBefore: (
+          firstLogTime ? dayjs(firstLogTime) : filter.timestampBefore
+        ),
       }, canceler);
       isPrepend = true;
     }
 
-    if (direction === DIRECTIONS.OLDEST) {
-      if (!logTimestampRange.max) return;
-      if (!isScrollOnBottom) return;
-      if (isPrevScrollOnBottom) return;
-
+    if (direction === DIRECTIONS.OLDEST && isScrollOn.bottom) {
+      const lastLogTime = logTimes[logTimes.length - 1];
       fetchArgs = onFetchLogAfter({
         ...filter,
-        timestampAfter: dayjs(logTimestampRange.max),
+        timestampAfter: (
+          lastLogTime ? dayjs(lastLogTime).subtract(1, 'millisecond') : filter.timestampAfter
+        ),
       }, canceler);
       isPrepend = false;
     }
@@ -524,26 +494,27 @@ const LogViewerTimestamp: React.FC<Props> = ({
       let buffer: TrialLog[] = [];
       consumeStream(
         fetchArgs,
-        event => buffer.push(fetchToLogConverter(event)),
+        event => {
+          buffer.push(fetchToLogConverter(event));
+        },
       ).then(() => {
         if (buffer.length < TAIL_SIZE) setIsLastReached(true);
 
         addLogs(buffer, isPrepend);
         buffer = [];
       });
+
+      return () => canceler.abort();
     }
   }, [
     addLogs,
     direction,
+    logs,
     fetchToLogConverter,
     filter,
     isLastReached,
-    isPrevScrollOnBottom,
-    isPrevScrollOnTop,
-    isScrollOnBottom,
-    isScrollOnTop,
-    logs,
-    logTimestampRange,
+    isScrollOn.bottom,
+    isScrollOn.top,
     onFetchLogAfter,
     onFetchLogBefore,
   ]);
@@ -554,7 +525,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
         <FilterComponent
           filter={filter}
           filterOptions={filterOptions}
-          onChange={(newFilters: TrialLogFiltersInterface) => setFilter(newFilters)}
+          onChange={handleFilterChange}
         />
       )}
       {props.debugMode && <div className={css.debugger}>
