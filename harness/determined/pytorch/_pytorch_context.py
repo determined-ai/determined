@@ -210,11 +210,31 @@ class PyTorchTrialContext(det.TrialContext):
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
         step_mode: pytorch.LRScheduler.StepMode,
     ) -> torch.optim.lr_scheduler._LRScheduler:
-        """Returns a wrapped LR scheduler.
+        """
+        Returns a wrapped LR scheduler.
 
         The LR scheduler must use an optimizer wrapped by :meth:`wrap_optimizer`.  If ``apex.amp``
         is in use, the optimizer must also have been configured with :meth:`configure_apex_amp`.
         """
+        if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            if step_mode != pytorch.LRScheduler.StepMode.MANUAL_STEP:
+                raise det.errors.InvalidExperimentException(
+                    "detected that context.wrap_lr_scheduler() was called with an instance of "
+                    "torch.optim.lr_scheduer.ReduceLROnPlateau as the lr_scheduler.  This lr "
+                    "scheduler class does not have the usual step() parameters, and so it can "
+                    "only be used with step_mode=MANUAL_STEP.\n"
+                    "\n"
+                    "For example, if you wanted to step it on every validation step, you might "
+                    "wrap your lr_scheduler and pass it to a callback like this:\n"
+                    "\n"
+                    "class MyLRStepper(PyTorchCallback):\n"
+                    "    def __init__(self, wrapped_lr_scheduler):\n"
+                    "        self.wrapped_lr_scheduler = wrapped_lr_scheduler\n"
+                    "\n"
+                    "    def on_validation_end(self, metrics):\n"
+                    '        self.wrapped_lr_scheduler.step(metrics["validation_error"])\n'
+                )
+
         opt = getattr(lr_scheduler, "optimizer", None)
         if opt is not None:
             check.is_in(
