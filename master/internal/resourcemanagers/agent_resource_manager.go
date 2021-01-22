@@ -80,8 +80,8 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: a.config.DefaultCPUResourcePool})
 
 	case *apiv1.GetResourcePoolsRequest:
-		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig.ResourcePools))
-		for _, pool := range a.poolsConfig.ResourcePools {
+		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig))
+		for _, pool := range a.poolsConfig {
 			summary, err := a.createResourcePoolSummary(ctx, pool.PoolName)
 			if err != nil {
 				// Should only raise an error if the resource pool doesn't exist and that can't happen.
@@ -187,9 +187,9 @@ func (a *agentResourceManager) aggregateTaskSummaries(
 }
 
 func (a *agentResourceManager) getResourcePoolConfig(poolName string) (ResourcePoolConfig, error) {
-	for i := range a.poolsConfig.ResourcePools {
-		if a.poolsConfig.ResourcePools[i].PoolName == poolName {
-			return a.poolsConfig.ResourcePools[i], nil
+	for i := range a.poolsConfig {
+		if a.poolsConfig[i].PoolName == poolName {
+			return a.poolsConfig[i], nil
 		}
 	}
 	return ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
