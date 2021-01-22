@@ -21,6 +21,7 @@ func DefaultRPsConfig() *ResourcePoolsConfig {
 func defaultRPConfig() *ResourcePoolConfig {
 	return &ResourcePoolConfig{
 		MaxCPUContainersPerAgent: 100,
+		Scheduler:                defaultSchedulerConfig(),
 	}
 }
 
