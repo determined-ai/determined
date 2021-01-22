@@ -7,19 +7,19 @@ import * as Api from 'services/api-ts-sdk';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
   jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
-  jsonToTensorboard, jsonToTensorboards, jsonToTrialLogs, jsonToUsers,
+  jsonToTensorboard, jsonToTensorboards, jsonToUsers,
 } from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
   LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
-  TrialDetailsParams, TrialLogsParams,
+  TrialDetailsParams,
 } from 'services/types';
 import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  Log, TBSourceType, Telemetry, TrialDetails, TrialLog, ValidationHistory,
+  Log, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -405,15 +405,4 @@ export const getTaskLogs: HttpApi<TaskLogsParams, Log[]> = {
   }),
   name: 'getTaskLogs',
   postProcess: response => jsonToTaskLogs(response.data),
-};
-
-export const getTrialLogs: HttpApi<TrialLogsParams, TrialLog[]> = {
-  httpOptions: (params: TrialLogsParams) => ({
-    url: [
-      `/experiments/${params.experimentId}/trials/${params.trialId}/logs`,
-      buildQuery(params),
-    ].join('?'),
-  }),
-  name: 'getTrialLogs',
-  postProcess: response => jsonToTrialLogs(response.data),
 };

@@ -5,13 +5,13 @@ import {
   ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
   LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
-  TrialDetailsParams, TrialLogsParams,
+  TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
   ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
-  Telemetry, TrialDetails, TrialLog, ValidationHistory,
+  Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -205,5 +205,3 @@ export const killTask = async (task: CommandTask): Promise<void> => {
 export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
 
 export const getTaskLogs = generateApi<TaskLogsParams, Log[]>(Config.getTaskLogs);
-
-export const getTrialLogs = generateApi<TrialLogsParams, TrialLog[]>(Config.getTrialLogs);

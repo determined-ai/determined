@@ -3,7 +3,7 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointState, CheckpointStorageType, CommandState, LogLevel, LogLevel2, RunState,
+  CheckpointState, CheckpointStorageType, CommandState, LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -322,23 +322,10 @@ export const ioLog = io.type({
   time: optional(io.string),
 });
 
-const ioLogLevels2: Record<string, null> = Object.values(LogLevel2)
-  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
-const ioLogLevelType2 = io.keyof(ioLogLevels2);
-export const ioTrialLog = io.type({
-  id: io.string,
-  level: optional(ioLogLevelType2),
-  message: io.string,
-  time: optional(io.string),
-});
-
 export const ioLogs = io.array(ioLog);
-export const ioTrialLogs = io.array(ioTrialLog);
 
 export type ioTypeLog = io.TypeOf<typeof ioLog>;
 export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
-export type ioTypeTrialLog = io.TypeOf<typeof ioTrialLog>;
-export type ioTypeTrialLogs = io.TypeOf<typeof ioTrialLogs>;
 
 const ioTaskLog = io.type({
   assigned_event: io.unknown,
