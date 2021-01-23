@@ -29,7 +29,9 @@ from typing import Any, Dict
 import requests
 import yaml
 
-NON_EXISTENT_IMAGE = "determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-5f6f6e1"
+NON_EXISTENT_IMAGE = (
+    "determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-5f6f6e1"
+)
 USER = "determined-ai"
 PROJECT = "environments"
 BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
