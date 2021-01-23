@@ -7,7 +7,7 @@ all: get-deps build
 .PHONY: get-deps-swagger
 get-deps-swagger:
 	mkdir -p deps
-	[ -f deps/swagger-codegen-cli.jar ] || curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/swagger-codegen-cli-2.4.14.jar \
+	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/swagger-codegen-cli-2.4.14.jar \
 		-o deps/swagger-codegen-cli.jar
 
 .PHONY: get-deps-package
