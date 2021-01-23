@@ -12,11 +12,13 @@ interface Props {
   translateLabel?: TextTransfomer;
 }
 
-const row = (
-  label: string,
-  value: RawJson | string | number | null,
-  translateLabel?: TextTransfomer,
-): React.ReactNode => {
+interface RowProps {
+  label: string;
+  translateLabel?: TextTransfomer;
+  value: RawJson | string | number | null;
+}
+
+const Row: React.FC<RowProps> = ({ translateLabel, label, value }: RowProps) => {
   let textValue = '';
   if (isObject(value)) {
     textValue = JSON.stringify(value, null, 2);
@@ -39,7 +41,8 @@ const Json: React.FC<Props> = ({ json, translateLabel }: Props) => {
 
   return (
     <ul className={css.base}>
-      {Object.entries(json).map(([ label, value ]) => row(label, value, translateLabel))}
+      {Object.entries(json).map(([ label, value ]) =>
+        <Row key={label} label={label} translateLabel={translateLabel} value={value} />)}
     </ul>
   );
 };
