@@ -18,7 +18,7 @@ from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 import data
 import ptl
 import pytorch_lightning as pl
-from include.adapter import DETLightningModule, PTLAdapter
+from include.adapter import PTLAdapter
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

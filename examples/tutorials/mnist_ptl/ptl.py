@@ -1,21 +1,22 @@
 import torch
 from torch import nn
-import pytorch_lightning as pl
+import pytorch_lightning as ptl
 from torch.utils.data import random_split
 from determined.pytorch import DataLoader
 from torch.nn import functional as F
 from torchvision.datasets import MNIST
 from torchvision import datasets, transforms
-from include.adapter import DETLightningModule, GH, DETLightningDataModule
+from include.adapter import GH, DETLightningDataModule
 from typing import Optional
 import os
 
 
-class LightningMNISTClassifier(DETLightningModule):  # CHANGE: use DETLightningModule
+class LightningMNISTClassifier(ptl.LightningModule):
 
     # TODO expect determined config.
-    def __init__(self, get_hparam: GH):
-        super().__init__(get_hparam)
+    def __init__(self, get_hparam: GH = None):
+        super().__init__()
+        self.get_hparam = get_hparam
 
         # mnist images are (1, 28, 28) (channels, width, height) 
         self.layer_1 = torch.nn.Linear(28 * 28, 128)
@@ -73,11 +74,12 @@ class LightningMNISTClassifier(DETLightningModule):  # CHANGE: use DETLightningM
     # TODO audit other available LightningModule hooks
 
 
-# CHANGE to DETLightningModule
+# CHANGE to DETLightningDataModule
 class MNISTDataModule(DETLightningDataModule):
     def __init__(self):
         super().__init__()
 
+    # rank (id of proc across all machines) and local(machine) rank. horovard. 1proc per gpu
     # def prepare_data(self):
     #     # download, split, etc...
     #     # only called on 1 GPU/TPU in distributed
@@ -112,7 +114,7 @@ if __name__ == '__main__':
 
     # CHANGE: provide the hyperparameters
     model = LightningMNISTClassifier(get_hparam)
-    trainer = pl.Trainer(max_epochs=2)
+    trainer = ptl.Trainer(max_epochs=2)
 
     dm = MNISTDataModule()
     trainer.fit(model, datamodule=dm)

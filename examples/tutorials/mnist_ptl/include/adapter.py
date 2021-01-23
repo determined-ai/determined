@@ -1,5 +1,5 @@
 from typing import Callable, NewType, Any
-import pytorch_lightning as pl
+import pytorch_lightning as ptl
 from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 from determined.pytorch import DataLoader as DetDataLoader
 from typing import Any, Dict, Sequence, Union
@@ -10,12 +10,12 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 GH = NewType('GH', Callable[[str], Any])
 
 
-class DETLightningModule(pl.LightningModule):
-    def __init__(self, get_hparam: GH, *args, **kwargs):  # Py QUESTION should I add this is kwarg?
-        super().__init__(*args, **kwargs)
-        self.get_hparam = get_hparam
+# class DETLightningModule(ptl.LightningModule):
+#     def __init__(self, get_hparam: GH, *args, **kwargs):  # Py QUESTION should I add this is kwarg?
+#         super().__init__(*args, **kwargs)
+#         self.get_hparam = get_hparam
 
-class DETLightningDataModule(pl.LightningDataModule):
+class DETLightningDataModule(ptl.LightningDataModule):
     """
     ## user defines these as usual
     def prepare_data
@@ -41,23 +41,25 @@ class DETLightningDataModule(pl.LightningDataModule):
     def val_det_dataloader(self) -> DetDataLoader:
         raise NotImplementedError
 
-    # def test...
-
     def train_dataloader(self) -> torch.utils.data.DataLoader:
         return self.train_det_dataloader().get_data_loader()
 
     def val_dataloader(self) -> torch.utils.data.DataLoader:
         return self.train_det_dataloader().get_data_loader()
+    
+    # def test_dataloader(self) -> torch.utils.data.DataLoader:
+    #     raise TypeError('not supported')
         
 
 
 
 class PTLAdapter(PyTorchTrial):
-    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: DETLightningDataModule = None) -> None:
+    def __init__(self, context: PyTorchTrialContext, lightning_module: ptl.LightningModule, data_module: DETLightningDataModule = None) -> None:
         super().__init__(context)
-        self.lm = lightning_module(context.get_hparam)
+        self.lm = lightning_module(get_hparam=context.get_hparam)
         self.context = context
         self.model = self.context.wrap_model(self.lm)
+        # TODO multiple optimizer
         self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
         if data_module is not None:
             self.dm = data_module()
