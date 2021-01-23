@@ -83,6 +83,9 @@ const ResourcePoolCard: React.FC<Props> = (
     numAgents,
   } = rp;
 
+  const descriptionClasses = [ css.description ];
+  if (!description) descriptionClasses.push(css.empty);
+
   const tags: string[] = [ V1ResourcePoolTypeToLabel[type] ];
   if (rp.defaultGpuPool) tags.push('default gpu pool');
   if (rp.defaultCpuPool) tags.push('default cpu pool');
@@ -93,9 +96,6 @@ const ResourcePoolCard: React.FC<Props> = (
     },
     [],
   );
-
-  const descriptionClasses = [ css.description ];
-  if (!description) descriptionClasses.push(css.empty);
 
   return (
     <div className={css.base}>
