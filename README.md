@@ -40,13 +40,14 @@ python3.7 -m venv ~/.virtualenvs/test
 . ~/.virtualenvs/test/bin/activate
 pip install determined-cli determined-deploy
 det-deploy local cluster-up --no-gpu
+## To start a cluster with GPUs, remove no-gpu flag
 ## Access web UI at localhost:8080. By default, "determined" user accepts a blank password.
  
 # Navigate to a Determined example
 git clone https://github.com/determined-ai/determined
 cd determined/examples/computer_vision/cifar10_pytorch
 
-# Submit job to train a single model on a single GPU 
+# Submit job to train a single model on a single node
 det experiment create const.yaml . 
  ```
 
