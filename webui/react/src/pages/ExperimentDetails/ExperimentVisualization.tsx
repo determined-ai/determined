@@ -70,7 +70,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
-  const [ selectedBatch, setSelectedBatch ] = useState<number>();
+  const [ selectedBatch, setSelectedBatch ] = useState<number>(0);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
 
@@ -159,6 +159,9 @@ const ExperimentVisualization: React.FC<Props> = ({
         (event.batches || []).forEach(batch => batchesMap[batch] = batch);
         const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
         setBatches(newBatches);
+        if (selectedBatch === 0 && newBatches.length !== 0) {
+          setSelectedBatch(newBatches[newBatches.length - 1]);
+        }
       },
     ).catch(() => {
       setHasLoaded(true);
@@ -166,7 +169,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedMetric ]);
+  }, [ experiment.id, selectedBatch, selectedMetric ]);
 
   // Set the default metric of interest
   useEffect(() => {
@@ -213,7 +216,8 @@ const ExperimentVisualization: React.FC<Props> = ({
               selectedMetric={selectedMetric}
               onMetricChange={handleMetricChange} />
           )}
-          {typeKey === VisualizationType.HpParallelCoordinates && (
+          {typeKey === VisualizationType.HpParallelCoordinates &&
+           selectedBatch && selectedMetric && (
             <HpParallelCoordinates
               batches={batches}
               experiment={experiment}
