@@ -119,6 +119,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const [ direction, setDirection ] = useState(DIRECTIONS.TAILING);
   const [ filter, setFilter ] = useState<LogViewerTimestampFilter>({});
   const [ filterOptions, setFilterOptions ] = useState<LogViewerTimestampFilter>({});
+  const [ isFirstLogBatchLoaded, setIsFirstLogBatchLoaded ] = useState<boolean>(false);
   const [ isLastReached, setIsLastReached ] = useState(false);
   const [ isScrollOn, setIsScrollOn ] = useState<{bottom: boolean, top: boolean}>({
     bottom: true,
@@ -357,14 +358,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
     const prevScrollHeight = container?.current?.scrollHeight;
 
-    /*
-     * Forcing both to false to prevent a race condition: when "logs" (useState) changes,
-     * it triggers loading other logs via useEffect, which watches "isScrollOn", which
-     * is not already updated (will refresh in another useEffect but only after the re-render
-     * will trigger a "scroll" (useState) update, which happens only after logs are appended).
-     */
-    setIsScrollOn({ bottom: false, top: false });
-
     setLogs(prevLogs => {
       const logs = isPrepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ];
       return logs.filter((log, index, self) => {
@@ -385,6 +378,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ container ]);
 
   const clearLogs = useCallback(() => {
+    setIsFirstLogBatchLoaded(false);
     setIsScrollOn({ bottom: true, top: true });
     setIsLastReached(false);
     setLogs([]);
@@ -427,6 +421,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * Watch Log tail (api follow).
    */
   useEffect(() => {
+    if (!isFirstLogBatchLoaded) return;
     if (direction !== DIRECTIONS.TAILING) return;
 
     const canceler = new AbortController();
@@ -454,6 +449,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     direction,
     fetchToLogConverter,
     filter,
+    isFirstLogBatchLoaded,
     onFetchLogTail,
   ]);
 
@@ -500,11 +496,23 @@ const LogViewerTimestamp: React.FC<Props> = ({
       ).then(() => {
         if (buffer.length < TAIL_SIZE) setIsLastReached(true);
 
+        /*
+         * Forcing both to false to prevent a race condition: when "logs" (useState) changes,
+         * it triggers loading other logs via useEffect, which watches "isScrollOn", which
+         * is not already updated (will refresh in another useEffect but only after the re-render
+         * will trigger a "scroll" (useState) update, which happens only after logs are appended).
+         */
+        setIsScrollOn({ bottom: false, top: false });
+
         addLogs(buffer, isPrepend);
         buffer = [];
+
+        setIsFirstLogBatchLoaded(true);
       });
 
-      return () => canceler.abort();
+      return () => {
+        canceler.abort();
+      };
     }
   }, [
     addLogs,
