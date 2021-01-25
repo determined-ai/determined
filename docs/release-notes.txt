@@ -25,7 +25,8 @@ Version 0.13.13
 
 **Improvements**
 
--  **Breaking Change:** REST API: Update trial logs API to return string IDs.
+-  **Breaking Change:** REST API: Update trial logs API to return string
+   IDs.
 
 -  WebUI: Enable filtering of trial logs by agent, container, rank, log
    level, and timestamp.
