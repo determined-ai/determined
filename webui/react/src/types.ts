@@ -337,7 +337,7 @@ export interface ExperimentItem {
   name: string;
   numTrials: number;
   progress?: number;
-  resourcePool?: string
+  resourcePool: string
   startTime: string;
   state: RunState;
   url: string;
@@ -351,7 +351,7 @@ export interface ExperimentBase {
   endTime?: string;
   id: number;
   progress?: number;
-  resourcePool?: string;
+  resourcePool: string;
   startTime: string;
   state: RunState;
   username: string;
@@ -366,7 +366,7 @@ export interface ExperimentOld extends ExperimentBase {
 export interface Task {
   id: string;
   name: string;
-  resourcePool?: string;
+  resourcePool: string;
   serviceAddress?: string;
   startTime: string;
   url?: string;
@@ -375,14 +375,14 @@ export interface Task {
 export interface ExperimentTask extends Task {
   archived: boolean;
   progress?: number;
-  resourcePool?: string;
+  resourcePool: string;
   state: RunState;
   username: string;
 }
 
 export interface CommandTask extends Task {
   misc?: CommandMisc;
-  resourcePool?: string;
+  resourcePool: string;
   state: CommandState;
   type: CommandType;
   username: string;
