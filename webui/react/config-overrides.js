@@ -1,6 +1,7 @@
 /* eslint-disable */
 const {
   addLessLoader,
+  addWebpackModuleRule,
   addWebpackPlugin,
   adjustStyleLoaders,
   disableEsLint,
@@ -91,6 +92,12 @@ const webpackConfig = override(
       publicPath: process.env.PUBLIC_URL,
     })
   ),
+
+  /*
+   * This is needed to allow `parcoords` plotly.js chart to function.
+   * https://github.com/plotly/plotly.js/issues/3936
+   */
+  addWebpackModuleRule({ test: /\.js$/, use: 'ify-loader' }),
 
   // Webapp version is hardcoded but handled by `bumpversion`
   addWebpackPlugin(
