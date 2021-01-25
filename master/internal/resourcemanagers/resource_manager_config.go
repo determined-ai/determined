@@ -30,7 +30,6 @@ func ResolveConfig(
 					PoolName:                 defaultResourcePoolName,
 					Provider:                 provisionerConf,
 					MaxCPUContainersPerAgent: 100,
-					Scheduler:                defaultSchedulerConfig(),
 				},
 			},
 		}
