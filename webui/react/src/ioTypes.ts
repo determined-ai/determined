@@ -280,6 +280,7 @@ export const ioExperiment = io.type({
   id: io.number,
   owner_id: io.number,
   progress: optional(io.number),
+  resource_pool: io.string,
   start_time: io.string,
   state: runStatesIoType,
 });

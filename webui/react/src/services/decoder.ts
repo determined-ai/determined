@@ -230,6 +230,7 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
     // numTrials
     // labels
     progress: exp.progress != null ? exp.progress : undefined,
+    resourcePool: exp.resourcePool,
     startTime: exp.startTime as unknown as string,
     state: decodeExperimentState(exp.state),
     username: exp.username,
@@ -247,6 +248,7 @@ const decodeV1ExperimentToExperimentItem = (
     name: data.description,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
+    resourcePool: data.resourcePool,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     url: `/experiments/${data.id}`,

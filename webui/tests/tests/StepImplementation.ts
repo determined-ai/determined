@@ -248,7 +248,7 @@ export default class StepImplementation {
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 11 }));
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 12 }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
   }
 

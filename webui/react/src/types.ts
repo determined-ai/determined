@@ -336,6 +336,7 @@ export interface ExperimentItem {
   name: string;
   numTrials: number;
   progress?: number;
+  resourcePool?: string
   startTime: string;
   state: RunState;
   url: string;
@@ -349,6 +350,7 @@ export interface ExperimentBase {
   endTime?: string;
   id: number;
   progress?: number;
+  resourcePool?: string;
   startTime: string;
   state: RunState;
   username: string;
