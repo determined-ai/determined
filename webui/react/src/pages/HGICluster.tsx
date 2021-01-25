@@ -15,18 +15,16 @@ import SlotAllocationBar from 'components/SlotAllocationBar';
 import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
 import Agents from 'contexts/Agents';
-import ClusterOverview from 'contexts/ClusterOverview';
+import ClusterOverview, { agentsToOverview } from 'contexts/ClusterOverview';
+import usePolling from 'hooks/usePolling';
 import { columns as defaultColumns } from 'pages/HGICluster.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { Resource, ResourceState } from 'types';
-import { ResourcePool } from 'types/ResourcePool';
+import { Resource, ResourcePool, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
 
 import css from './HGICluster.module.scss';
-
-const resourcePools = getResourcePools();
 
 enum View {
   List,
@@ -38,6 +36,14 @@ const HGICluster: React.FC = () => {
   const overview = ClusterOverview.useStateContext();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
   const [ selectedView, setSelectedView ] = useState<View>(View.Grid);
+  const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+
+  const pollResourcePools = useCallback(async () => {
+    const resourcePools = await getResourcePools({});
+    setResourcePools(resourcePools);
+  }, []);
+
+  usePolling(pollResourcePools, { delay: 10000 });
 
   const availableResources = useMemo(() => {
     if (!agents.data) return {};
@@ -60,9 +66,16 @@ const HGICluster: React.FC = () => {
       tally.running += rp.cpuContainersRunning;
     });
     return tally;
-  }, [ ]);
+  }, [ resourcePools ]);
 
   const slotContainerStates = getSlotContainerStates(agents.data || []);
+
+  const getTotalGpuSlots = useCallback((resPoolName: string) => {
+    if (!agents.hasLoaded || !agents.data) return 0;
+    const resPoolAgents = agents.data.filter(agent => agent.resourcePool === resPoolName);
+    const overview = agentsToOverview(resPoolAgents);
+    return overview.GPU.total;
+  }, [ agents ]);
 
   const columns = useMemo(() => {
 
@@ -73,11 +86,14 @@ const HGICluster: React.FC = () => {
       const containerStates: ResourceState[] =
           getSlotContainerStates(agents.data || [], record.name);
 
+      const totalGpuSlots = getTotalGpuSlots(record.name);
+
+      if (totalGpuSlots === 0) return null;
       return <SlotAllocationBar
         className={css.chartColumn}
         hideHeader
         resourceStates={containerStates}
-        totalSlots={record.numAgents * record.gpusPerAgent} />;
+        totalSlots={totalGpuSlots} />;
 
     };
 
@@ -88,7 +104,7 @@ const HGICluster: React.FC = () => {
     });
 
     return newColumns;
-  }, [ agents.data ]);
+  }, [ agents.data, getTotalGpuSlots ]);
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
@@ -165,7 +181,8 @@ const HGICluster: React.FC = () => {
               return <ResourcePoolCard
                 containerStates={getSlotContainerStates(agents.data || [], rp.name)}
                 key={idx}
-                resourcePool={rp} />;
+                resourcePool={rp}
+                totalGpuSlots={getTotalGpuSlots(rp.name)} />;
             })}
           </Grid>
         }

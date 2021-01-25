@@ -1,3 +1,5 @@
+import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
 
@@ -450,4 +452,84 @@ export interface TrialLog {
   level?: LogLevel;
   message: string;
   time: string;
+}
+
+export interface ResourcePool {
+  cpuContainerCapacity: number;
+  cpuContainerCapacityPerAgent: number;
+  cpuContainersRunning: number;
+  defaultCpuPool: boolean;
+  defaultGpuPool?: boolean;
+  description: string;
+  details: Details;
+  imageId: string;
+  instanceType: string;
+  location: string;
+  maxAgents: number;
+  minAgents: number;
+  name: string;
+  numAgents: number;
+  preemptible: boolean;
+  schedulerFittingPolicy: V1FittingPolicy;
+  schedulerType: V1SchedulerType;
+  slotsAvailable: number;
+  slotsUsed: number;
+  type: V1ResourcePoolType;
+}
+
+interface Details {
+  aws?: Partial<Aws>;
+  gcp?: Partial<Gcp>;
+  priorityScheduler?: PriorityScheduler;
+}
+
+export interface Aws {
+  customTags?: CustomTag[];
+  iamInstanceProfileArn: string;
+  imageId: string;
+  instanceName: string;
+  instanceType: string;
+  logGroup: string;
+  logStream: string;
+  publicIp: boolean;
+  region: string;
+  rootVolumeSize: number;
+  securityGroupId: string;
+  spotEnabled: boolean;
+  spotMaxPrice: string;
+  sshKeyName: string;
+  subnetId: string;
+  tagKey: string;
+  tagValue: string;
+}
+
+interface CustomTag {
+  key: string;
+  value: string;
+}
+
+export interface Gcp {
+  bootDiskSize: number;
+  bootDiskSourceImage: string;
+  externalIp: boolean;
+  gpuNum: number;
+  gpuType: string;
+  labelKey: string;
+  labelValue: string;
+  machineType: string;
+  namePrefix: string;
+  network: string;
+  networkTags: string[];
+  operationTimeoutPeriod: number;
+  preemptible: boolean;
+  project: string;
+  serviceAccountEmail: string;
+  serviceAccountScopes: string[];
+  subnetwork: string;
+  zone: string;
+}
+
+export interface PriorityScheduler {
+  defaultPriority: number;
+  preemption: boolean;
 }

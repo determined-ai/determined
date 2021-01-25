@@ -25,7 +25,7 @@ const defaultClusterOverview: ClusterOverview = {
   [ResourceType.UNSPECIFIED]: clone(defaultResourceTally),
 };
 
-const agentsToOverview = (agents: Agent[]): ClusterOverview => {
+export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   // Deep clone for render detection.
   const overview = clone(defaultClusterOverview) as ClusterOverview;
 

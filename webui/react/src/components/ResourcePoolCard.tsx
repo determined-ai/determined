@@ -2,11 +2,13 @@ import React, { useCallback, useState } from 'react';
 
 import awsLogo from 'assets/aws-logo.svg';
 import gcpLogo from 'assets/gcp-logo.svg';
+import k8sLogo from 'assets/k8s-logo.svg';
 import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import { ResourceState } from 'types';
-import { ResourcePool } from 'types/ResourcePool';
+import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { ResourcePool, ResourceState } from 'types';
+import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'utils/types';
 
 import Json from './Json';
 import Link from './Link';
@@ -16,18 +18,23 @@ import ResourcePoolDetails from './ResourcePoolDetails';
 interface Props {
   containerStates: ResourceState[]; // GPU
   resourcePool: ResourcePool;
+  totalGpuSlots: number;
 }
 
-export const rpLogo = (type: string): React.ReactNode => {
+export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
   let iconSrc = '';
   switch (type) {
-    case 'aws':
+    case V1ResourcePoolType.AWS:
       iconSrc = awsLogo;
       break;
-    case 'gcp':
+    case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;
       break;
-    case 'static':
+    case V1ResourcePoolType.K8S:
+      iconSrc = k8sLogo;
+      break;
+    case V1ResourcePoolType.UNSPECIFIED:
+    case V1ResourcePoolType.STATIC:
       iconSrc = staticLogo;
       break;
   }
@@ -38,46 +45,51 @@ export const rpLogo = (type: string): React.ReactNode => {
 const rpAttrs = [
   [ 'location', 'Location' ] ,
   [ 'instanceType', 'Instance Type' ],
-  [ 'spotOrPreemptible', 'Spot/Preemptible' ],
-  [ 'minInstances', 'Min Agents' ],
-  [ 'maxInstances', 'Max Agents' ],
-  [ 'gpusPerAgent', 'GPUs per Agent' ],
+  [ 'preemptible', 'Spot/Preemptible' ],
+  [ 'minAgents', 'Min Agents' ],
+  [ 'maxAgents', 'Max Agents' ],
   [ 'cpuContainerCapacityPerAgent', 'CPU Containers per Agent' ],
   [ 'schedulerType', 'Scheduler Type' ],
 ];
 
 type SafeRawJson = Record<string, unknown>;
 
-const agentStatusText = (numAgents: number, maxInstances: number): string => {
+const agentStatusText = (numAgents: number, maxAgents: number): string => {
   let prefix = '';
   if (numAgents === 0) {
     prefix = 'No';
-  } else if (maxInstances === 0) {
+  } else if (maxAgents === 0) {
     prefix = numAgents + '';
 
   } else {
-    prefix = `${numAgents}/${maxInstances}`;
+    prefix = `${numAgents}/${maxAgents}`;
   }
   return prefix + ' Agents Active';
 };
 
-const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }: Props) => {
+const ResourcePoolCard: React.FC<Props> = (
+  { containerStates, resourcePool: rp, totalGpuSlots }: Props,
+) => {
   const [ detailVisible, setDetailVisible ] = useState(false);
 
   const shortDetails = rpAttrs.reduce((acc, cur) => {
     acc[cur[1]] = (rp as unknown as SafeRawJson)[cur[0]];
     return acc;
   }, {} as SafeRawJson );
+  shortDetails['Scheduler Type'] =
+    V1SchedulerTypeToLabel[shortDetails['Scheduler Type'] as V1SchedulerType];
 
   const {
     name,
     description,
     type,
-    gpusPerAgent,
     numAgents,
   } = rp;
 
-  const tags: string[] = [ type ];
+  const descriptionClasses = [ css.description ];
+  if (!description) descriptionClasses.push(css.empty);
+
+  const tags: string[] = [ V1ResourcePoolTypeToLabel[type] ];
   if (rp.defaultGpuPool) tags.push('default gpu pool');
   if (rp.defaultCpuPool) tags.push('default cpu pool');
 
@@ -109,20 +121,20 @@ const ResourcePoolCard: React.FC<Props> = ({ containerStates, resourcePool: rp }
             'var(--theme-colors-states-active)' : 'var(--theme-colors-states-inactive)',
         }}>
         <p>
-          {agentStatusText(numAgents, rp.maxInstances)}
+          {agentStatusText(numAgents, rp.maxAgents)}
         </p>
       </div>
       <div className={css.body}>
-        <section className={css.description}>
+        <section className={descriptionClasses.join(' ')}>
           <p className={css.fade}>
-            {description}
+            {description || 'No description provided.'}
           </p>
         </section>
         <hr />
         <section>
           <SlotAllocationBar
             resourceStates={containerStates}
-            totalSlots={numAgents * gpusPerAgent} />
+            totalSlots={totalGpuSlots} />
           <div className={css.cpuContainers}>
             <span>CPU containers running:</span>
             <span>{rp.cpuContainersRunning}</span>

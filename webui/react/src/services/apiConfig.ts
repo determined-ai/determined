@@ -13,13 +13,12 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
-  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
+  HttpApi, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
   TrialDetailsParams,
 } from 'services/types';
-import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  Log, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
+  Log, ResourcePool, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -34,7 +33,7 @@ export const detApi = {
   Cluster: new Api.ClusterApi(ApiConfig),
   Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
-  InternalApi: new Api.InternalApi(ApiConfig),
+  Internal: new Api.InternalApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
@@ -58,7 +57,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Cluster = new Api.ClusterApi(config);
   detApi.Commands = new Api.CommandsApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
-  detApi.InternalApi = new Api.InternalApi(config);
+  detApi.Internal = new Api.InternalApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
@@ -127,15 +126,24 @@ export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInf
 export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry> = {
   name: 'getTelemetry',
   postProcess: (response) => response,
-  request: () => detApi.InternalApi.determinedGetTelemetry(),
+  request: () => detApi.Internal.determinedGetTelemetry(),
 };
 
-/* Agent */
+/* Cluster */
 
 export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> = {
   name: 'getAgents',
   postProcess: (response) => jsonToAgents(response.agents || []),
   request: () => detApi.Cluster.determinedGetAgents(),
+};
+
+export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]> =
+{
+  name: 'getResourcePools',
+  postProcess: (response) => {
+    return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
+  },
+  request: () => detApi.Internal.determinedGetResourcePools(),
 };
 
 /* Experiment */
