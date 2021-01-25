@@ -109,6 +109,7 @@ export const jsonToGenericCommand = (data: unknown, type: types.CommandType): ty
       trialIds: io.misc.trial_ids || [],
     } : undefined,
     registeredTime: io.registered_time,
+    resourcePool: io.resource_pool || '',
     serviceAddress: io.service_address || undefined,
     state: io.state as types.CommandState,
     user: { username: io.owner.username },
@@ -230,7 +231,7 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
     // numTrials
     // labels
     progress: exp.progress != null ? exp.progress : undefined,
-    resourcePool: exp.resourcePool,
+    resourcePool: exp.resourcePool || '',
     startTime: exp.startTime as unknown as string,
     state: decodeExperimentState(exp.state),
     username: exp.username,
@@ -248,7 +249,7 @@ const decodeV1ExperimentToExperimentItem = (
     name: data.description,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
-    resourcePool: data.resourcePool,
+    resourcePool: data.resourcePool || '',
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     url: `/experiments/${data.id}`,

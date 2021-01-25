@@ -49,6 +49,7 @@ function generateTask(idx: number): Task & RecentEvent {
       name: 'opened',
     },
     name: `${idx}`,
+    resourcePool: `ResourcePool-${Math.floor(Math.random()*3)}`,
     startTime,
     url: '#',
   };

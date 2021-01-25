@@ -41,6 +41,12 @@ export const columns: ColumnType<CommandTask>[] = [
     title: 'State',
   },
   {
+    dataIndex: 'resourcePool',
+    key: 'resourcePool',
+    sorter: true,
+    title: 'Resource Pool',
+  },
+  {
     key: 'user',
     render: userRenderer,
     sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.username, b.username),

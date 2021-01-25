@@ -125,6 +125,7 @@ export const ioGenericCommand = io.type({
   misc: optional(ioCommandMisc),
   owner: ioUser,
   registered_time: io.string,
+  resource_pool: io.string,
   service_address: optional(io.string),
   state: commandStatesIoType,
 });
