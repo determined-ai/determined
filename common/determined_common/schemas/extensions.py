@@ -317,3 +317,29 @@ def eventuallyRequired(
     for key in eventuallyRequired:
         if key not in instance:
             yield jsonschema.ValidationError(f"{key} is a required property")
+
+
+def optionalRef(
+    validator: jsonschema.Draft7Validator, optionalRef: Dict, instance: Any, schema: Dict
+) -> Iterator[jsonschema.ValidationError]:
+    """
+    optionalRef behaves like $ref, except that it also allows the value to be null.
+
+    This is logically equivalent to an anyOf with a {"type": "null"} element, but it has better
+    error messages.
+
+    Example: The "internal" property of the experiment config may be a literal null:
+
+        "internal": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/internal.json",
+            "default": null
+        }
+    """
+    if instance is None:
+        return
+
+    yield from validator.descend(instance, schema={"$ref": optionalRef}, schema_path="optional")
