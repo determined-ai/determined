@@ -54,18 +54,6 @@ func UseK8sRM(system *actor.System) bool {
 	return system.Get(PodsAddr) != nil
 }
 
-// GetCurrentRM returns either the k8s resource manager or the agents
-// resource manager, depending on which exists
-func GetCurrentRM(system *actor.System) *actor.Ref {
-	if UseK8sRM(system) {
-		return system.Get(K8sRMAddr)
-	}
-	if UseAgentRM(system) {
-		return system.Get(AgentRMAddr)
-	}
-	panic("There should either be a k8s resource manager or an agent resource manager")
-}
-
 // GetRP returns the resource pool.
 func GetRP(system *actor.System, name string) *actor.Ref {
 	if rm := system.Get(AgentRMAddr); rm != nil {
