@@ -42,16 +42,20 @@ def logs(args: Namespace) -> None:
         except ValueError:
             raise Exception("invalid log level: {}".format(level))
 
-    def print_logs(
-        offset: Optional[int], limit: Optional[int] = 5000, follow: bool = False
-    ) -> None:
+    try:
+        reverse = False
         query = {}  # type: Dict[str, Any]
-        if offset is not None:
-            query["offset"] = offset
-        if limit is not None:
-            query["limit"] = limit
-        if follow:
+        if args.head is not None:
+            query["limit"] = args.head
+        elif args.tail is not None:
+            query["limit"] = args.tail
+            query["order_by"] = "ORDER_BY_DESC"
+            reverse = True
+        elif args.follow:
             query["follow"] = "true"
+        else:
+            query["limit"] = 5000
+
         for f in [
             "agent_ids",
             "container_ids",
@@ -69,17 +73,12 @@ def logs(args: Namespace) -> None:
 
         path = "/api/v1/trials/{}/logs?{}".format(args.trial_id, urlencode(query, doseq=True))
         with api.get(args.master, path, stream=True) as r:
-            for line in r.iter_lines():
+            line_iter = r.iter_lines()
+            if reverse:
+                line_iter = reversed(list(line_iter))
+            for line in line_iter:
                 log = simplejson.loads(line)["result"]
                 print(log["message"], end="")
-
-    try:
-        if args.head is not None:
-            print_logs(0, args.head)
-        elif args.tail is not None:
-            print_logs(-args.tail, args.tail)
-        else:
-            print_logs(0, 0, args.follow)
     except KeyboardInterrupt:
         pass
     finally:
