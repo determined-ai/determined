@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 
 import awsLogo from 'assets/aws-logo.svg';
 import gcpLogo from 'assets/gcp-logo.svg';
+import k8sLogo from 'assets/k8s-logo.svg';
 import staticLogo from 'assets/on-prem-logo.svg';
 import Badge, { BadgeType } from 'components/Badge';
 import SlotAllocationBar from 'components/SlotAllocationBar';
@@ -29,7 +30,9 @@ export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
     case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;
       break;
-    case V1ResourcePoolType.K8S: // TODO add dedicated logo
+    case V1ResourcePoolType.K8S:
+      iconSrc = k8sLogo;
+      break;
     case V1ResourcePoolType.UNSPECIFIED:
     case V1ResourcePoolType.STATIC:
       iconSrc = staticLogo;
