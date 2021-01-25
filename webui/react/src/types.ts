@@ -467,7 +467,7 @@ export interface ResourcePool {
   defaultCpuPool: boolean;
   defaultGpuPool?: boolean;
   description: string;
-  details: Details;
+  details: RPDetails;
   imageId: string;
   instanceType: string;
   location: string;
@@ -483,7 +483,7 @@ export interface ResourcePool {
   type: V1ResourcePoolType;
 }
 
-interface Details {
+export interface RPDetails {
   aws?: Partial<Aws>;
   gcp?: Partial<Gcp>;
   priorityScheduler?: PriorityScheduler;
