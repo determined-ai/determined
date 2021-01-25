@@ -26,7 +26,7 @@ import useTheme from 'hooks/useTheme';
 import appRoutes from 'routes';
 import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';
-import { DeterminedInfo } from 'types';
+import { DeterminedInfo, ResourceType } from 'types';
 import { correctViewportHeight, refreshPage, updateFaviconType } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -46,7 +46,7 @@ const AppView: React.FC = () => {
 
   if (!ui.showChrome || !isAuthenticated) classes.push(css.noChrome);
 
-  updateFaviconType(cluster.allocation !== 0);
+  updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
 
   useRouteTracker();
   useTheme();

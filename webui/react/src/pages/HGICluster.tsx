@@ -130,9 +130,16 @@ const HGICluster: React.FC = () => {
           <OverviewStats title="Number of Agents">
             {agents.data ? agents.data.length : '?'}
           </OverviewStats>
-          <OverviewStats title="GPU Slots Allocated">
-            {overview.GPU.total - overview.GPU.available} / {overview.GPU.total}
-          </OverviewStats>
+          {overview.GPU.total ?
+            <OverviewStats title="GPU Slots Allocated">
+              {overview.GPU.total - overview.GPU.available} / {overview.GPU.total}
+            </OverviewStats>: null
+          }
+          {overview.CPU.total ?
+            <OverviewStats title="CPU Slots Allocated">
+              {overview.CPU.total - overview.CPU.available} / {overview.CPU.total}
+            </OverviewStats> : null
+          }
           <OverviewStats title="CPU Containers Running">
             {cpuContainers.running}/{cpuContainers.total}
           </OverviewStats>

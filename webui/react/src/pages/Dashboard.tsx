@@ -138,7 +138,7 @@ const Dashboard: React.FC = () => {
       <Section title="Overview">
         <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
           <OverviewStats title="Cluster Allocation">
-            {overview.allocation}<small>%</small>
+            {overview[ResourceType.ALL].allocation}<small>%</small>
           </OverviewStats>
           {overview[ResourceType.GPU].total ? <OverviewStats title="Available GPUs">
             {overview[ResourceType.GPU].available}
