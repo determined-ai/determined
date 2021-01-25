@@ -53,8 +53,6 @@ def logs(args: Namespace) -> None:
             reverse = True
         elif args.follow:
             query["follow"] = "true"
-        else:
-            query["limit"] = 5000
 
         for f in [
             "agent_ids",
