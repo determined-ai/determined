@@ -131,37 +131,6 @@ To execute arbitrary Python code during the lifecycle of a
 .. autoclass:: determined.pytorch.PyTorchCallback
    :members:
 
-``ReduceLROnPlateau``
----------------------
-
-To use the `torch.optim.lr_scheduler.ReduceLROnPlateau
-<https://pytorch.org/docs/stable/optim.html#torch.optim.lr_scheduler.ReduceLROnPlateau>`_
-class with ``PyTorchTrial``, implement the following callback:
-
-.. code::
-
-   class ReduceLROnPlateauEveryValidationStep(PyTorchCallback):
-       def __init__(self, context):
-           self.reduce_lr = torch.optim.lr_scheduler.ReduceLROnPlateau(
-               context.get_optimizer(), "min", verbose=True
-           )  # customize arguments as desired here
-
-       def on_validation_end(self, metrics):
-           self.reduce_lr.step(metrics["validation_error"])
-
-       def state_dict(self):
-           return self.reduce_lr.state_dict()
-
-       def load_state_dict(self, state_dict):
-           self.reduce_lr.load_state_dict(state_dict)
-
-Then, implement the ``build_callbacks`` function in ``PyTorchTrial``:
-
-.. code::
-
-   def build_callbacks(self):
-       return {"reduce_lr": ReduceLROnPlateauEveryValidationStep(self.context)}
-
 .. _migration-guide-flexible-primitives:
 
 *************************************
