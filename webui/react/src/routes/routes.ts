@@ -72,6 +72,13 @@ const routes: RouteConfig[] = [
     title: 'Cluster',
   },
   {
+    icon: 'cluster',
+    id: 'clusterV1',
+    needAuth: true,
+    path: '/cluster/v1',
+    title: 'Cluster',
+  },
+  {
     icon: 'logs',
     id: 'masterLogs',
     needAuth: true,
