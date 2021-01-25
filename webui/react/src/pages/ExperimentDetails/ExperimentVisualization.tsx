@@ -15,12 +15,13 @@ import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType } from '
 import { alphanumericSorter } from 'utils/data';
 
 import css from './ExperimentVisualization.module.scss';
+import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
 
 const { Option } = Select;
 
 export enum VisualizationType {
-  HpParallelCoord = 'hp-parallel-coord',
+  HpParallelCoordinates = 'hp-parallel-coordinates',
   HpImportance = 'hp-importance',
   LearningCurve = 'learning-curve',
   ScatterPlots = 'scatter-plots',
@@ -42,7 +43,7 @@ const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
-  { disabled: true, label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoord },
+  { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
   { disabled: true, label: 'HP Importance', type: VisualizationType.HpImportance },
   { disabled: true, label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
 ];
@@ -58,6 +59,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 }: Props) => {
   const history = useHistory();
   const storage = useStorage(STORAGE_PATH);
+  const STORAGE_BATCH_KEY = `${experiment.id}/batch`;
   const STORAGE_METRIC_KEY = `${experiment.id}/metric`;
   const defaultUserMetric = storage.get(STORAGE_METRIC_KEY) as MetricName || undefined;
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
@@ -68,6 +70,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
+  const [ selectedBatch, setSelectedBatch ] = useState<number>();
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
 
@@ -76,6 +79,11 @@ const ExperimentVisualization: React.FC<Props> = ({
     ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
   ]), [ trainingMetrics, validationMetrics ]);
 
+  const handleBatchChange = useCallback((batch: number) => {
+    storage.set(STORAGE_BATCH_KEY, batch);
+    setSelectedBatch(batch);
+  }, [ storage, STORAGE_BATCH_KEY ]);
+
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
     setSelectedMetric(metric);
@@ -83,7 +91,8 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
     setTypeKey(type as VisualizationType);
-  }, []);
+    history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
+  }, [ basePath, history ]);
 
   // Sets the default sub route
   useEffect(() => {
@@ -204,6 +213,16 @@ const ExperimentVisualization: React.FC<Props> = ({
               selectedMetric={selectedMetric}
               onMetricChange={handleMetricChange} />
           )}
+          {typeKey === VisualizationType.HpParallelCoordinates && (
+            <HpParallelCoordinates
+              batches={batches}
+              experiment={experiment}
+              metrics={metrics}
+              selectedBatch={selectedBatch}
+              selectedMetric={selectedMetric}
+              onBatchChange={handleBatchChange}
+              onMetricChange={handleMetricChange} />
+          )}
         </Col>
         <Col
           lg={{ order: 2, span: 4 }}
@@ -223,7 +242,7 @@ const ExperimentVisualization: React.FC<Props> = ({
                     disabled={item.disabled}
                     key={item.type}
                     path={`${basePath}/${item.type}`}
-                    onClick={() => setTypeKey(item.type)}>{item.label}</Link>
+                    onClick={() => handleChartTypeChange(item.type)}>{item.label}</Link>
                 );
 
                 return item.disabled ? (
