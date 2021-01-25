@@ -1,6 +1,7 @@
 package expconf
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 	"database/sql/driver"
@@ -54,6 +55,76 @@ func runtimeDefaultDescription(descriptionField **string) {
 }
 
 func (e *ExperimentConfigV0) RuntimeDefaults() {
+	runtimeDefaultDescription(&e.Description)
+}
+
+// shim will convert a valid, complete V0 config into a V1 config.
+func (e *ExperimentConfigV0) shim(out *ExperimentConfigV1) error {
+	// Set obsolete fields to nil so they do not show up in the marshaled config.
+	// This works because the only transitions between V0 and V1 were removing obselete fields.
+	e.Security = nil
+	e.TensorboardStorage = nil
+
+	if e.CheckpointStorage != nil && e.CheckpointStorage.SharedFSConfig != nil {
+		e.CheckpointStorage.SharedFSConfig.ContainerPath = nil
+		e.CheckpointStorage.SharedFSConfig.CheckpointPath = nil
+		e.CheckpointStorage.SharedFSConfig.TensorboardPath = nil
+	}
+
+	if e.Optimizations != nil {
+		e.Optimizations.MixedPrecision = nil
+	}
+
+	byts, err := json.Marshal(e)
+	if err != nil {
+		return errors.Wrap(err, "unable to marshal v0 config")
+	}
+
+	// Ensure that the v1 config is valid; it may be stricter.
+	validator := e.SanityValidator()
+	err = validator.Validate(bytes.NewReader(byts))
+	if err == nil {
+		return errors.New(schemas.JoinErrors(schemas.GetRenderedErrors(err, byts), "\n"))
+	}
+
+	err = json.Unmarshal(byts, out)
+	if err != nil {
+		return errors.Wrap(err, "unable to unmarshal v0 config into v1")
+	}
+
+	return nil
+}
+
+// ExperimentConfig is the latest versioned config.
+type ExperimentConfigV1 struct {
+	// Fields which can be omitted or defined at the cluster level.
+	BindMounts               *BindMountsConfigV0        `json:"bind_mounts"`
+	CheckpointPolicy         *string                    `json:"checkpoint_policy"`
+	CheckpointStorage        *CheckpointStorageConfigV1 `json:"checkpoint_storage"`
+	DataLayer                *DataLayerConfigV0         `json:"data_layer"`
+	Data                     *map[string]interface{}    `json:"data"`
+	Debug                    *bool                      `json:"debug"`
+	Description              *string                    `json:"description"`
+	Environment              *EnvironmentConfigV0       `json:"environment"`
+	Internal                 *InternalConfigV0          `json:"internal"`
+	Labels                   *LabelsV0                  `json:"labels"`
+	MaxRestarts              *int                       `json:"max_restarts"`
+	MinCheckpointPeriod      *LengthV0                  `json:"min_checkpoint_period"`
+	MinValidationPeriod      *LengthV0                  `json:"min_validation_period"`
+	Optimizations            *OptimizationsConfigV0     `json:"optimizations"`
+	PerformInitialValidation *bool                      `json:"perform_initial_validation"`
+	RecordsPerEpoch          *int                       `json:"records_per_epoch"`
+	Reproducibility          *ReproducibilityConfigV0   `json:"reproducibility"`
+	Resources                *ResourcesConfigV0         `json:"resources"`
+	SchedulingUnit           *int                       `json:"scheduling_unit"`
+
+	// Fields which must be defined by the user.
+	Entrypoint      string            `json:"entrypoint"`
+	Hyperparameters HyperparametersV0 `json:"hyperparameters"`
+	Searcher        SearcherConfigV0  `json:"searcher"`
+}
+
+func (e *ExperimentConfigV1) RuntimeDefaults() {
 	runtimeDefaultDescription(&e.Description)
 }
 
@@ -150,6 +221,18 @@ type OptimizationsConfigV0 struct {
 	GradientCompression        *bool   `json:"gradient_compression"`
 	GradUpdateSizeFile         *string `json:"grad_updates_size_file"`
 	MixedPrecision             *string `json:"mixed_precision,omitempty"`
+	TensorFusionThreshold      *int    `json:"tensor_fusion_threshold"`
+	TensorFusionCycleTime      *int    `json:"tensor_fusion_cycle_time"`
+	AutoTuneTensorFusion       *bool   `json:"auto_tune_tensor_fusion"`
+}
+
+// OptimizationsConfigV1 configures performance optimizations for Horovod training.
+type OptimizationsConfigV1 struct {
+	AggregationFrequency       *int    `json:"aggregation_frequency"`
+	AverageAggregatedGradients *bool   `json:"average_aggregated_gradients"`
+	AverageTrainingMetrics     *bool   `json:"average_training_metrics"`
+	GradientCompression        *bool   `json:"gradient_compression"`
+	GradUpdateSizeFile         *string `json:"grad_updates_size_file"`
 	TensorFusionThreshold      *int    `json:"tensor_fusion_threshold"`
 	TensorFusionCycleTime      *int    `json:"tensor_fusion_cycle_time"`
 	AutoTuneTensorFusion       *bool   `json:"auto_tune_tensor_fusion"`

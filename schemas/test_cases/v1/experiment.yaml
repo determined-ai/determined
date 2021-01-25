@@ -1,0 +1,43 @@
+- name: disallow fields removed in v1 (invalid)
+  errors:
+    http://determined.ai/schemas/expconf/v1/experiment.json:
+      - '<config>.checkpoint_storage: .*checkpoint_path'
+      - '<config>.checkpoint_storage: .*tensorboard_path'
+      - '<config>.checkpoint_storage: .*container_path'
+      - '<config>.checkpoint_storage: .*propagation'
+      - '<config>.security:'
+      - '<config>.tensorboard_storage:'
+  case:
+    hyperparameters:
+      global_batch_size: 32
+    searcher:
+      name: single
+      metric: loss
+      max_length:
+        batches: 1000
+    entrypoint: model_def:MyTrial
+    checkpoint_storage:
+      type: shared_fs
+      host_path: /tmp
+      # removed fields:
+      container_path: /asdf
+      checkpoint_path: /qwer
+      tensorboard_path: /zxcv
+      propagation: qwer
+    optimizations:
+      mixed_precision: "O0"
+    # removed fields:
+    security:
+      keberos:
+        True
+    internal:
+      native:
+        - asdf
+        - qwer
+        - zxcv
+    tensorboard_storage:
+      type: shared_fs
+      host_path: /tmp
+      container_path: /asdf
+      checkpoint_path: /qwer
+      tensorboard_path: /zxcv

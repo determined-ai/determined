@@ -48,6 +48,37 @@ func (c *CheckpointStorageConfigV0) DefaultSource() interface{} {
 	return schemas.UnionDefaultSchema(c)
 }
 
+// CheckpointStorageConfigV1 has the common checkpoint config params.
+type CheckpointStorageConfigV1 struct {
+	SaveExperimentBest *int `json:"save_experiment_best"`
+	SaveTrialBest      *int `json:"save_trial_best"`
+	SaveTrialLatest    *int `json:"save_trial_latest"`
+
+	SharedFSConfig *SharedFSConfigV1 `union:"type,shared_fs" json:"-"`
+	HDFSConfig     *HDFSConfigV0     `union:"type,hdfs" json:"-"`
+	S3Config       *S3ConfigV0       `union:"type,s3" json:"-"`
+	GCSConfig      *GCSConfigV0      `union:"type,gcs" json:"-"`
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (c CheckpointStorageConfigV1) MarshalJSON() ([]byte, error) {
+	return union.MarshalEx(c, true)
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (c *CheckpointStorageConfigV1) UnmarshalJSON(data []byte) error {
+	if err := union.Unmarshal(data, c); err != nil {
+		return err
+	}
+	type DefaultParser *CheckpointStorageConfigV1
+	return errors.Wrap(json.Unmarshal(data, DefaultParser(c)), "failed to parse checkpoint storage")
+}
+
+// DefaultSource implements the Defaultable interface.
+func (c *CheckpointStorageConfigV1) DefaultSource() interface{} {
+	return schemas.UnionDefaultSchema(c)
+}
+
 // Printable modifies the object with secrets hidden.
 func (c *CheckpointStorageConfig) Printable() {
 	hiddenValue := "********"
@@ -92,6 +123,14 @@ type SharedFSConfigV0 struct {
 	TensorboardPath *string `json:"tensorboard_path,omitempty"`
 	StoragePath     *string `json:"storage_path"`
 	Propagation     *string `json:"propagation"`
+}
+
+// SharedFSConfigV1 configures storing on a shared filesystem (e.g., NFS).
+type SharedFSConfigV1 struct {
+	HostPath      string  `json:"host_path"`
+	ContainerPath *string `json:"container_path"`
+	StoragePath   *string `json:"storage_path"`
+	Propagation   *string `json:"propagation"`
 }
 
 // PathInContainer caclulates where the full StoragePath will be inside the container.

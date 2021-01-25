@@ -14,6 +14,7 @@ import (
 // is an issue in the process.
 func ParseAnyExperimentConfigJSON(byts []byte) (ExperimentConfig, error) {
 	var v0 ExperimentConfigV0
+	var v1 ExperimentConfigV1
 
 	var versioned struct {
 		Version int `json:"version"`
@@ -22,7 +23,7 @@ func ParseAnyExperimentConfigJSON(byts []byte) (ExperimentConfig, error) {
 	// Detect version
 	err := json.Unmarshal(byts, &versioned)
 	if err != nil {
-		return v0, errors.Wrap(err, "unable to unmarshal json-formatted experiment config")
+		return v1, errors.Wrap(err, "unable to unmarshal json-formatted experiment config")
 	}
 	version := versioned.Version
 
@@ -31,14 +32,29 @@ func ParseAnyExperimentConfigJSON(byts []byte) (ExperimentConfig, error) {
 	case 0:
 		err = json.Unmarshal(byts, &v0)
 		if err != nil {
-			return v0, errors.Wrap(err, "unable to unmarshal experiment config as V0")
+			return v1, errors.Wrap(err, "unable to unmarshal experiment config as V0")
+		}
+
+	case 1:
+		err = json.Unmarshal(byts, &v1)
+		if err != nil {
+			return v1, errors.Wrap(err, "unable to unmarshal experiment config as V1")
 		}
 
 	default:
-		return v0, errors.New(fmt.Sprintf("invalid version: %d", version))
+		return v1, errors.New(fmt.Sprintf("invalid version: %d", version))
 	}
 
-	return v0, nil
+	// Call shim on each old versions, walking our way to the latest version.
+	if version == 0 {
+		err := v0.shim(&v1)
+		if err != nil {
+			return v1, errors.Wrap(err, "unable to shim v0 config to v1 config")
+		}
+		version++
+	}
+
+	return v1, nil
 }
 
 // ParseAnyExperimentConfigYAML just wraps ParseAnyExperimentConfigJSON

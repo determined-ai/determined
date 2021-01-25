@@ -2447,6 +2447,406 @@ var (
     }
 }
 `)
+	textCheckpointStorageConfigV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/checkpoint-storage.json",
+    "title": "CheckpointStorageConfig",
+    "union": {
+        "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', or 'gcs'",
+        "items": [
+            {
+                "unionKey": "const:type=shared_fs",
+                "$ref": "http://determined.ai/schemas/expconf/v1/shared-fs.json"
+            },
+            {
+                "unionKey": "const:type=hdfs",
+                "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
+            },
+            {
+                "unionKey": "const:type=s3",
+                "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
+            },
+            {
+                "unionKey": "const:type=gcs",
+                "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+            }
+        ]
+    }
+}
+`)
+	textExperimentConfigV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/experiment.json",
+    "title": "ExperimentConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "entrypoint",
+        "hyperparameters",
+        "searcher"
+    ],
+    "eventuallyRequired": [
+        "checkpoint_storage"
+    ],
+    "properties": {
+        "bind_mounts": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/bind-mount.json"
+            },
+            "default": []
+        },
+        "checkpoint_policy": {
+            "enum": [
+                null,
+                "best",
+                "all",
+                "none"
+            ],
+            "default": "best"
+        },
+        "checkpoint_storage": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v1/checkpoint-storage.json"
+        },
+        "data": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {}
+        },
+        "data_layer": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {
+                "type": "shared_fs"
+            },
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/data-layer.json"
+        },
+        "debug": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "description": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "entrypoint": {
+            "type": "string",
+            "checks": {
+                "entrypoint must be of the form \"module.submodule:ClassName\"": {
+                    "pattern": "^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$"
+                }
+            }
+        },
+        "environment": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/environment.json"
+        },
+        "hyperparameters": {
+            "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
+        },
+        "internal": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/internal.json"
+        },
+        "labels": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "max_restarts": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 5
+        },
+        "min_checkpoint_period": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {
+                "batches": 0
+            },
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/length.json"
+        },
+        "min_validation_period": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {
+                "batches": 0
+            },
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/length.json"
+        },
+        "optimizations": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v1/optimizations.json"
+        },
+        "perform_initial_validation": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "records_per_epoch": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0
+        },
+        "reproducibility": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/reproducibility.json"
+        },
+        "resources": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/resources.json"
+        },
+        "scheduling_unit": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 100
+        },
+        "searcher": {
+            "$ref": "http://determined.ai/schemas/expconf/v0/searcher.json"
+        },
+        "security": {
+            "type": "null",
+            "default": null
+        },
+        "tensorboard_storage": {
+            "type": "null",
+            "default": null
+        }
+    },
+    "allOf": [
+        {
+            "conditional": {
+                "$comment": "when grid search is in use, expect hp counts",
+                "when": {
+                    "properties": {
+                        "searcher": {
+                            "properties": {
+                                "name": {
+                                    "const": "grid"
+                                }
+                            }
+                        }
+                    }
+                },
+                "enforce": {
+                    "properties": {
+                        "hyperparameters": {
+                            "additionalProperties": {
+                                "$ref": "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "conditional": {
+                "$comment": "when records per epoch not set, forbid epoch lengths",
+                "when": {
+                    "properties": {
+                        "records_per_epoch": {
+                            "maximum": 0
+                        }
+                    }
+                },
+                "enforce": {
+                    "properties": {
+                        "min_validation_period": {
+                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                        },
+                        "min_checkpoint_period": {
+                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                        },
+                        "searcher": {
+                            "$ref": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
+`)
+	textOptimizationsConfigV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/optimizations.json",
+    "title": "OptimizationsConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "aggregation_frequency": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 1
+        },
+        "auto_tune_tensor_fusion": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "average_aggregated_gradients": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "average_training_metrics": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "gradient_compression": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "tensor_fusion_cycle_time": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 5
+        },
+        "tensor_fusion_threshold": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 64
+        }
+    }
+}
+`)
+	textSharedFSConfigV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/shared-fs.json",
+    "title": "SharedFSConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type",
+        "host_path"
+    ],
+    "properties": {
+        "type": {
+            "const": "shared_fs"
+        },
+        "host_path": {
+            "type": "string"
+        },
+        "storage_path": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "save_experiment_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "save_trial_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        },
+        "save_trial_latest": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        }
+    },
+    "checks": {
+        "storage_path must either be a relative directory or a subdirectory of host_path": {
+            "compareProperties": {
+                "type": "a_is_subdir_of_b",
+                "a": "storage_path",
+                "b": "host_path"
+            }
+        }
+    }
+}
+`)
 	schemaBindMountV0                 interface{}
 	schemaCheckDataLayerCacheV0       interface{}
 	schemaCheckEpochNotUsedV0         interface{}
@@ -2493,6 +2893,10 @@ var (
 	schemaSecurityConfigV0            interface{}
 	schemaSharedFSConfigV0            interface{}
 	schemaTensorboardStorageConfigV0  interface{}
+	schemaCheckpointStorageConfigV1   interface{}
+	schemaExperimentConfigV1          interface{}
+	schemaOptimizationsConfigV1       interface{}
+	schemaSharedFSConfigV1            interface{}
 	cachedSchemaMap                   map[string]interface{}
 	cachedSchemaBytesMap              map[string][]byte
 )
@@ -3003,6 +3407,50 @@ func ParsedTensorboardStorageConfigV0() interface{} {
 	return schemaTensorboardStorageConfigV0
 }
 
+func ParsedCheckpointStorageConfigV1() interface{} {
+	if schemaCheckpointStorageConfigV1 != nil {
+		return schemaCheckpointStorageConfigV1
+	}
+	err := json.Unmarshal(textCheckpointStorageConfigV1, &schemaCheckpointStorageConfigV1)
+	if err != nil {
+		panic("invalid embedded json for CheckpointStorageConfigV1")
+	}
+	return schemaCheckpointStorageConfigV1
+}
+
+func ParsedExperimentConfigV1() interface{} {
+	if schemaExperimentConfigV1 != nil {
+		return schemaExperimentConfigV1
+	}
+	err := json.Unmarshal(textExperimentConfigV1, &schemaExperimentConfigV1)
+	if err != nil {
+		panic("invalid embedded json for ExperimentConfigV1")
+	}
+	return schemaExperimentConfigV1
+}
+
+func ParsedOptimizationsConfigV1() interface{} {
+	if schemaOptimizationsConfigV1 != nil {
+		return schemaOptimizationsConfigV1
+	}
+	err := json.Unmarshal(textOptimizationsConfigV1, &schemaOptimizationsConfigV1)
+	if err != nil {
+		panic("invalid embedded json for OptimizationsConfigV1")
+	}
+	return schemaOptimizationsConfigV1
+}
+
+func ParsedSharedFSConfigV1() interface{} {
+	if schemaSharedFSConfigV1 != nil {
+		return schemaSharedFSConfigV1
+	}
+	err := json.Unmarshal(textSharedFSConfigV1, &schemaSharedFSConfigV1)
+	if err != nil {
+		panic("invalid embedded json for SharedFSConfigV1")
+	}
+	return schemaSharedFSConfigV1
+}
+
 func schemaBytesMap() map[string][]byte {
 	if cachedSchemaBytesMap != nil {
 		return cachedSchemaBytesMap
@@ -3101,5 +3549,13 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textSharedFSConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/tensorboard-storage.json"
 	cachedSchemaBytesMap[url] = textTensorboardStorageConfigV0
+	url = "http://determined.ai/schemas/expconf/v1/checkpoint-storage.json"
+	cachedSchemaBytesMap[url] = textCheckpointStorageConfigV1
+	url = "http://determined.ai/schemas/expconf/v1/experiment.json"
+	cachedSchemaBytesMap[url] = textExperimentConfigV1
+	url = "http://determined.ai/schemas/expconf/v1/optimizations.json"
+	cachedSchemaBytesMap[url] = textOptimizationsConfigV1
+	url = "http://determined.ai/schemas/expconf/v1/shared-fs.json"
+	cachedSchemaBytesMap[url] = textSharedFSConfigV1
 	return cachedSchemaBytesMap
 }

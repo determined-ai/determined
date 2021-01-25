@@ -499,3 +499,51 @@ func (x *TensorboardStorageConfigV0) SanityValidator() *jsonschema.Schema {
 func (x *TensorboardStorageConfigV0) CompletenessValidator() *jsonschema.Schema {
 	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v0/tensorboard-storage.json")
 }
+
+func (x *CheckpointStorageConfigV1) ParsedSchema() interface{} {
+	return schemas.ParsedCheckpointStorageConfigV1()
+}
+
+func (x *CheckpointStorageConfigV1) SanityValidator() *jsonschema.Schema {
+	return schemas.GetSanityValidator("http://determined.ai/schemas/expconf/v1/checkpoint-storage.json")
+}
+
+func (x *CheckpointStorageConfigV1) CompletenessValidator() *jsonschema.Schema {
+	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v1/checkpoint-storage.json")
+}
+
+func (x *ExperimentConfigV1) ParsedSchema() interface{} {
+	return schemas.ParsedExperimentConfigV1()
+}
+
+func (x *ExperimentConfigV1) SanityValidator() *jsonschema.Schema {
+	return schemas.GetSanityValidator("http://determined.ai/schemas/expconf/v1/experiment.json")
+}
+
+func (x *ExperimentConfigV1) CompletenessValidator() *jsonschema.Schema {
+	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v1/experiment.json")
+}
+
+func (x *OptimizationsConfigV1) ParsedSchema() interface{} {
+	return schemas.ParsedOptimizationsConfigV1()
+}
+
+func (x *OptimizationsConfigV1) SanityValidator() *jsonschema.Schema {
+	return schemas.GetSanityValidator("http://determined.ai/schemas/expconf/v1/optimizations.json")
+}
+
+func (x *OptimizationsConfigV1) CompletenessValidator() *jsonschema.Schema {
+	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v1/optimizations.json")
+}
+
+func (x *SharedFSConfigV1) ParsedSchema() interface{} {
+	return schemas.ParsedSharedFSConfigV1()
+}
+
+func (x *SharedFSConfigV1) SanityValidator() *jsonschema.Schema {
+	return schemas.GetSanityValidator("http://determined.ai/schemas/expconf/v1/shared-fs.json")
+}
+
+func (x *SharedFSConfigV1) CompletenessValidator() *jsonschema.Schema {
+	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v1/shared-fs.json")
+}

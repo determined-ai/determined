@@ -1,0 +1,62 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/optimizations.json",
+    "title": "OptimizationsConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "aggregation_frequency": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 1
+        },
+        "auto_tune_tensor_fusion": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "average_aggregated_gradients": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "average_training_metrics": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "gradient_compression": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "tensor_fusion_cycle_time": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 5
+        },
+        "tensor_fusion_threshold": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 64
+        }
+    }
+}
