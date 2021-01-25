@@ -1,9 +1,9 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js/lib/core';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
+import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'Plotly';
 import { clone } from 'utils/data';
 import { capitalize, generateAlphaNumeric } from 'utils/string';
 
