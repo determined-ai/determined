@@ -17,21 +17,21 @@ import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'c
 import Agents from 'contexts/Agents';
 import ClusterOverview, { agentsToOverview } from 'contexts/ClusterOverview';
 import usePolling from 'hooks/usePolling';
-import { columns as defaultColumns } from 'pages/HGICluster.table';
+import { columns as defaultColumns } from 'pages/Cluster.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
 import { Resource, ResourcePool, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { categorize } from 'utils/data';
 
-import css from './HGICluster.module.scss';
+import css from './Cluster.module.scss';
 
 enum View {
   List,
   Grid
 }
 
-const HGICluster: React.FC = () => {
+const Cluster: React.FC = () => {
   const agents = Agents.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
@@ -214,4 +214,4 @@ const HGICluster: React.FC = () => {
   );
 };
 
-export default HGICluster;
+export default Cluster;
