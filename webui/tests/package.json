@@ -21,7 +21,7 @@
     "eslint-plugin-no-instanceof": "file:./eslint-plugin-no-instanceof",
     "eslint-plugin-prettier": "^3.1.2",
     "prettier": "^2.0.1",
-    "taiko": "1.0.26",
+    "taiko": "1.1.4",
     "taiko-video": "^0.1.4",
     "typescript": "^4.0.3"
   }
