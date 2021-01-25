@@ -225,8 +225,12 @@ func (a *agentResourceManager) createResourcePoolSummary(
 
 	var schedulerType resourcepoolv1.SchedulerType
 	if pool.Scheduler == nil {
-		ctx.Log().Errorf("scheduler is not present in config")
-		return &resourcepoolv1.ResourcePool{}, err
+		// This means the scheduler setting should be inherited from the resource manager
+		pool.Scheduler = a.config.Scheduler
+		if a.config.Scheduler == nil {
+			ctx.Log().Errorf("scheduler is not present in config or in resource manager")
+			return &resourcepoolv1.ResourcePool{}, err
+		}
 	}
 
 	if pool.Scheduler.FairShare != nil {
