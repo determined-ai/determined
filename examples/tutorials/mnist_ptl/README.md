@@ -53,33 +53,31 @@ methods:
 - `print`: NUD;
     - r: exclude or print a warning. or have them simply print
 - `save_hyperparameters`: NUD; saves model inputs in model.hparams. eg determined context?
-  - QUESTION: do we have this work with det context?
   - no work needed? `get_hparam`. TODO check source code
 - `test_step`: unsupported in determined
 - `test_step_end`: unsupported in determined
 - `test_epoch_end`: unsupported in determined
 - `to_onnx`: NUD; given a file_path save in onnx format
-  - QUESTION: support? in checkpoint? do we save arbitrary files in checkpoint.
+  - needs support for saving arbitrary files in checkpoint.
   - potentially out of scope
 - `to_torchscript`: NUD; export as torchscript
   - same as `to_onnx`
 - `training_step`: required; full training loop
-  - QUESTION hiddens: passed in for bptt (rnn)
-    - not supported TODO create pytorch trial ticket for supporting?
-  - optimizer index arguments this is todo
+  - hiddens: passed in for bptt (rnn)
+    - this argument won't be supported TODO create pytorch trial ticket for supporting?
+  - TODO optimizer index arguments
 - `training_step_end`
   - used for softmax or NCE loss
   - in dp or ddp2: this will be called with `[training_step(part) for part in batch_parts]`
-  - QUESTION do we support dp, ddp2
   - TODO checkout trainer sourcecode.
 - `training_epoch_end`: use this in case you need to do something with all the outputs for every training_step.
-  - QUESTION: do we have such a hook in PyTorch trial
   - no support in `pytorch/_callback`.
+  - will depend on adding this hook to pytorch trial
 - `unfreeze`: NUD; unfreeze all params
   - r: no direct work. checkout trainer for freeze/unfreeze around trainstep
 - `validation_step`
   - TODO need batch index.
-  - QUESTION: would we support multiple validation dataloaders? this fn would expect dataloader_idx if so
+  - if we support multiple validation dataloaders? this fn would expect dataloader_idx
   - out of scope for now. would require changing pytorchtrial api
 - `validation_step_end`
   - similar to other x_step_end
@@ -87,11 +85,11 @@ methods:
   - similar to other x_epoch_end
 
 properties:
-QUESTION: where does each of these get set. if it's the trainer how do we set it without it.
+TODO: find where does each of these gets set in pytorch trial or lower and update at the right time
 - `current_epoch`: figure out a good place to update this
 - `device`: use to make your code device agnostic
-- `global_rank`: sg
-- `global_step`: sg
+- `global_rank`: from context.distributed
+- `global_step`: from context.distributed
 - `hparams`: leave as is. no work to do
 - `logger`: no need to support. but what do we do if user uses it.
   - fake logger?
@@ -108,7 +106,7 @@ QUESTION: where does each of these get set. if it's the trainer how do we set it
 - `use_tpu`: False
 
 hooks:
-support in our pytorch callback. construct a callback class with these most of these hooks. only support easy or nontrainer hooks
+TODO Need added support in our pytorch callback. construct a callback class with most of these hooks. only support relatively easy or nontrainer hooks
 
 - `backward`:
   - instead of loss.backward user should call context.backward but with what api
@@ -118,16 +116,15 @@ support in our pytorch callback. construct a callback class with these most of t
 - `manual_backward`: check with trainer. new hook.
   - this lets user call backward themselves
   - we can ensure that all the proper scaling when using 16-bit etc has been done for you: needs checking with trainer
-  - good candidate for leaving for next milestones
-  - potentially skip for first pass. 
-- `on_after_backward`: TODO support
+  - good candidate for leaving for next milestones. skip for first pass. 
+- `on_after_backward`: TODO
 - `on_before_zero_grad`: TODO
   - need to change pytorch `step_optimizer` auto zero grad
 - `on_fit_start`: not supported. a trainer fn
 - `on_fit_end`: not supported. a trainer fn
-- `on_load_checkpoint`: QUESTION do we support this? how is our checkpoint generated.
+- `on_load_checkpoint`: TODO
   - Gives model a chance to load something before state_dict is restored.
-- `on_save_checkpoint`: QUESTION do we support this?
+- `on_save_checkpoint`: TODO
 - `on_pretrain_routine_start`: internal to trainer. don't support
 - `on_pretrain_routine_end`: internal to trainer. don't supportsame
 - `on_test_batch_start`: not supported
@@ -150,16 +147,16 @@ support in our pytorch callback. construct a callback class with these most of t
   - affects train_batch
   - an internal trainer hook?
   - potentially skip for first pass. user can use pytorchtrial or lightningtrial with trainer
-  - have to fail if user is using this.
+  - fail if the user is defining this
 - `optimizer_zero_grad`: control when zerograd is called
   - potentially skip for first pass. 
 - `prepare_data`: like datamodule: user can use in buildxdataloader
   - no direct work? we won't directly use in adapter. user can use as usual.
   - what about distributed setup. call during init?
-- `setup`: like teardown but on the begining. runs on every process in ddp
+- `setup`: like teardown but on the beginning. runs on every process in ddp
   - either run at begining of training or skip since fit is trainer internal
   - not supported
-- `tbptt_split_batch`: When using truncated backpropagation through time: not supported
+- `tbptt_split_batch`: when using truncated backpropagation through time: not supported
 - `teardown`: runs after fit and test stages. no fit or test. not supported
 - `train_dataloader` alternative to datamodule
   - no direct work? user will use it in buildxdataloader
