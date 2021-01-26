@@ -1,8 +1,8 @@
 DO $$
     BEGIN
         IF NOT EXISTS (SELECT 1
-				  FROM public.trial_logs
-				  WHERE id > 2147483647)
+                                 FROM public.trial_logs
+                                 WHERE id > 2147483647)
 		    AND EXISTS (SELECT 1
                                           FROM information_schema.columns
                                           WHERE table_schema = 'public'
