@@ -428,9 +428,12 @@ commands:
         type: string
       det-version:
         type: string
-      agent-instance-type:
+      agent-gpu-instance-type:
         type: string
         default: "p2.xlarge"
+      agent-cpu-instance-type:
+        type: string
+        default: "m5.large"
       max-dynamic-agents:
         type: integer
         default: 1
@@ -446,7 +449,8 @@ commands:
       - deploy-aws-cluster:
           cluster-id: ${CLUSTER_ID}
           det-version: <<parameters.det-version>>
-          agent-instance-type: <<parameters.agent-instance-type>>
+          agent-cpu-instance-type: <<parameters.agent-cpu-instance-type>>
+          agent-gpu-instance-type: <<parameters.agent-gpu-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           master-tls-cert: <<parameters.master-tls-cert>>
           master-tls-key: <<parameters.master-tls-key>>
@@ -1143,9 +1147,13 @@ jobs:
 
   deploy:
     parameters:
-      agent-instance-type:
+      agent-gpu-instance-type:
         type: string
         default: "p2.xlarge"
+      agent-cpu-instance-type:
+        type: string
+        default: "m5.large"
+
       max-dynamic-agents:
         type: integer
         default: 1
@@ -1164,7 +1172,8 @@ jobs:
       - deploy-aws-cluster:
           cluster-id: determined-${CIRCLE_BRANCH////--}
           det-version: ${CIRCLE_SHA1}
-          agent-instance-type: <<parameters.agent-instance-type>>
+          agent-gpu-instance-type: <<parameters.agent-gpu-instance-type>>
+          agent-cpu-instance-type: <<parameters.agent-cpu-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           enable-cors: <<parameters.enable-cors>>
       - slack/status:
@@ -1178,9 +1187,12 @@ jobs:
         type: string
       mark:
         type: string
-      agent-instance-type:
+      agent-gpu-instance-type:
         type: string
         default: p2.xlarge
+      agent-cpu-instance-type:
+        type: string
+        default: m5.large
       max-dynamic-agents:
         type: integer
         default: 1
@@ -1216,7 +1228,8 @@ jobs:
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
-          agent-instance-type: <<parameters.agent-instance-type>>
+          agent-cpu-instance-type: <<parameters.agent-cpu-instance-type>>
+          agent-gpu-instance-type: <<parameters.agent-gpu-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           master-tls-cert: ${MASTER_TLS_CERT}
           master-tls-key: ${MASTER_TLS_KEY}
@@ -1490,7 +1503,8 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              agent-instance-type: ["p2.8xlarge"]
+              agent-gpu-instance-type: ["p2.8xlarge"]
+              agent-cpu-instance-type: ["m5.large"]
               max-dynamic-agents: [8]
 
       - test-e2e-aws:
@@ -1504,7 +1518,8 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              agent-instance-type: ["p2.8xlarge"]
+              agent-gpu-instance-type: ["p2.8xlarge"]
+              agent-cpu-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               slack-mentions: ["${SLACK_USER_ID}"]
@@ -1550,7 +1565,8 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              agent-instance-type: ["p2.8xlarge"]
+              agent-gpu-instance-type: ["p2.8xlarge"]
+              agent-cpu-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               slack-mentions: ["${SLACK_USER_ID}"]
@@ -1674,7 +1690,8 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              agent-instance-type: ["p2.8xlarge"]
+              agent-gpu-instance-type: ["p2.8xlarge"]
+              agent-cpu-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
