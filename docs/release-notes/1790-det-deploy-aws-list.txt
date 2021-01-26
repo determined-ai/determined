@@ -1,9 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  deployment: support the deployment tool command ```det-deploy aws
-   list``. It lists all the cloudFormation stacks that are managed by
-   det-deploy aws. It recognizes the Determined stacks by finding if
-   there exists a tag pair ``managed-by:determined``. It does not list
-   out the stacks that are spun up by previous versions of det-deploy.
