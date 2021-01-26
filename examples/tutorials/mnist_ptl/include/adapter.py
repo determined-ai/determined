@@ -52,6 +52,7 @@ class DETLightningDataModule(ptl.LightningDataModule):
         
 
 
+not_supported = TypeError('not supported')
 
 class PTLAdapter(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext, lightning_module: ptl.LightningModule, data_module: DETLightningDataModule = None) -> None:
@@ -59,8 +60,21 @@ class PTLAdapter(PyTorchTrial):
         self.lm = lightning_module(get_hparam=context.get_hparam)
         self.context = context
         self.model = self.context.wrap_model(self.lm)
-        # TODO multiple optimizer
-        self.optimizer = self.context.wrap_optimizer(self.lm.configure_optimizers())
+
+        optimizer = self.lm.configure_optimizers()
+        """
+        LM optimizer
+        - Single optimizer.
+        - List or Tuple - List of optimizers.
+        - Two lists - The first list has multiple optimizers, the second a list of LR schedulers (or lr_dict).
+        - Dictionary, with an ‘optimizer’ key, and (optionally) a ‘lr_scheduler’ key whose value is a single LR scheduler or lr_dict.
+        - Tuple of dictionaries as described, with an optional ‘frequency’ key.
+        - None - Fit will run without any optimizer.
+        """
+        if not isinstance(optimizer, torch.optim.Optimizer):
+            raise not_supported
+        self.optimizer = self.context.wrap_optimizer(optimizer)
+
         if data_module is not None:
             self.dm = data_module()
             # QUESTION call only on one gpu (once per node). the expected behavior could change with trainer
@@ -72,7 +86,11 @@ class PTLAdapter(PyTorchTrial):
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
+        # no optimizer index to pass down
         rv = self.lm.training_step(batch, batch_idx)
+        if rv is None:  return None # skip to next batch
+        if type(rv) != dict:
+            rv = {'loss': rv}
 
         # TODO option to set loss
         self.context.backward(rv['loss'])

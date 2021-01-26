@@ -9,6 +9,13 @@ user flow:
   - impl methods to return detDataloader
 
 
+## QUESTION
+
+- What are dp, ddp2: data paraller and dist data prallel
+  - do we support these with Horovad?
+  - ddp seems to differ from dp and ddp2 (no batch parts)
+  - https://pytorch-lightning.readthedocs.io/en/latest/multi_gpu.html#multi-gpu
+
 ## LightningModule
 
 LM wraps and organizes PyTorch code. [ref](https://pytorch-lightning.readthedocs.io/en/latest/lightning_module.html)
@@ -16,27 +23,62 @@ LM wraps and organizes PyTorch code. [ref](https://pytorch-lightning.readthedocs
 ### TODO
 
 check rest of lightning module hooks and methods
+check the signatures
 
-methods: TODO check the signatures
-- `configure_optimizers`
-- `forward`
-- `freeze`
-- `log`
-- `log_dict`
-- `print`
-- `save_hyperparameters`
-- `test_step`
-- `test_step_end`
-- `test_epoch_end`
-- `to_onnx`
-- `to_torchscript`
-- `training_step`
+### API
+
+methods:
+- `configure_optimizers`: required; 
+  - only a single optimizer case is supported
+  - QUESTION: can return combination of optimizers and lr schedulers. what do we support here.
+
+- `forward`: required; inference only
+- `freeze`: NUD; freeze  all params for inference
+- `log`: NUD; can be called to log on_step or on_epoch with reduce_fx
+- `log_dict`: NUD; can be called to log on_step or on_epoch with reduce_fx
+- `print`: NUD;
+- `save_hyperparameters`: NUD; saves model inputs in model.hparams. eg determined context?
+  - QUESTION: do we have this work with det context?
+- `test_step`: unsupported in determined
+- `test_step_end`: unsupported in determined
+- `test_epoch_end`: unsupported in determined
+- `to_onnx`: NUD; given a file_path save in onxx format
+  - QUESTION: support? in checkpoint?
+- `to_torchscript`: NUD; export as torchscript
+- `training_step`: required; full training loop
+  - QUESTION hiddens and optimizer index arguments
 - `training_step_end`
-- `training_epoch_end`
-- `unfreeze`
+  - used for softmax or NCE loss
+  - in dp or ddp2: this will be called with `[training_step(part) for part in batch_parts]`
+  - QUESTION do we support dp, ddp2
+- `training_epoch_end`: use this in case you need to do something with all the outputs for every training_step.
+  - QUESTION: do we have such a hook in PyTorch trial
+- `unfreeze`: NUD; unfreeze all params
 - `validation_step`
+  - TODO need batch index.
+  - QUESTION: would we support multiple validation dataloaders? this fn would expect dataloader_idx if so
 - `validation_step_end`
+  - similar to other x_step_end
 - `validation_epoch_end`
+  - similar to other x_epoch_end
+
+properties:
+QUESTION: where does each of these get set. if it's the trainer how do we set it without it.
+- `current_epoch`
+- `device`: use to make your code device agnostic
+- `global_rank`
+- `global_step`
+- `hparams`: QUESTION map to determined hparams or mark unsupported?
+- `logger`
+- `local_rank`
+- `precision`
+- `trainer`: pointer to the trainer
+  - QUESTION unsupported?
+- `use_amp`
+- `use_ddp`
+- `use_ddp2`
+- `use_dp`
+- `use_tpu`
 
 hooks:
 - `backward`
@@ -62,7 +104,7 @@ hooks:
 - `on_validation_batch_end`
 - `on_validation_epoch_start`
 - `on_validation_epoch_end`
-- `optimizer_step`
+- `optimizer_step`: to control how often optimizers step
 - `optimizer_zero_grad`
 - `prepare_data`
 - `setup`
@@ -75,7 +117,7 @@ hooks:
 
 ## DataModule
 
-LM wraps and organizes PyTorch DataLoaders. [ref](https://pytorch-lightning.readthedocs.io/en/latest/lightning_module.html)
+DM wraps and organizes PyTorch DataLoaders. [ref](https://pytorch-lightning.readthedocs.io/en/latest/lightning_module.html)
 [ref](https://pytorch-lightning.readthedocs.io/en/latest/datamodules.html)
 
 
