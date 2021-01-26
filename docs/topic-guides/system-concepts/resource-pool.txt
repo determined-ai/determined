@@ -4,94 +4,101 @@
  Resource Pool
 ###############
 
-To run tasks such as experiments or notebooks, Determined needs to have resources
-(CPUs, GPUs) on which to run the tasks. However, different tasks have different
-resource requirements. For example, you may want to run your training on beefy
-V100 GPU machines, while you want your Tensorboards to run on cheap CPU machines
-with minimal resources. Given the cost of GPU resources, it's important to get
-the most value of our money by choosing different resource for different goals.
+To run tasks such as experiments or notebooks, Determined needs to have
+resources (CPUs, GPUs) on which to run the tasks. However, different
+tasks have different resource requirements. For example, you may want to
+run your training on beefy V100 GPU machines, while you want your
+Tensorboards to run on cheap CPU machines with minimal resources. Given
+the cost of GPU resources, it's important to get the most value of our
+money by choosing different resource for different goals.
 
-Determined has the concept of *resource pools*, which is a set of agents that
-are identical and located physically close to each other. Determined allows you
-to configure your cluster to have multiple resource pools and to assign tasks
-to a specific resource pool, so that you can use different sets of resources
-for different tasks. Each resource pool handles scheduling and instance
-provisioning independently.
+Determined has the concept of *resource pools*, which is a set of agents
+that are identical and located physically close to each other.
+Determined allows you to configure your cluster to have multiple
+resource pools and to assign tasks to a specific resource pool, so that
+you can use different sets of resources for different tasks. Each
+resource pool handles scheduling and instance provisioning
+independently.
 
-Here are some scenarios where it can be valuable to use multiple resource pools:
+Here are some scenarios where it can be valuable to use multiple
+resource pools:
 
-- You create one pool, "aws-v100", that provisions p3dn.24xlarge instances (large V100
-  EC2 instances) and another pool, "aws-cpu" that provisions m5.large instances (small
-  and cheap CPU instances). You train your experiments using the aws-v100 pool, while
-  you run your Tensorboards in the aws-cpu pool. When your experiments complete, the
-  aws-v100 pool can scale down to zero to save money, but you can continue to run your
-  Tensorboard. Without resource pools, you would have needed to keep a p3dn.24xlarge
-  instance running to keep the Tensorboard alive.
+-  You create one pool, "aws-v100", that provisions p3dn.24xlarge
+   instances (large V100 EC2 instances) and another pool, "aws-cpu" that
+   provisions m5.large instances (small and cheap CPU instances). You
+   train your experiments using the aws-v100 pool, while you run your
+   Tensorboards in the aws-cpu pool. When your experiments complete, the
+   aws-v100 pool can scale down to zero to save money, but you can
+   continue to run your Tensorboard. Without resource pools, you would
+   have needed to keep a p3dn.24xlarge instance running to keep the
+   Tensorboard alive.
 
-- You have one pool "aws-v100-us-east-1a" that runs p3dn.24xlarge in the us-east-1a
-  availability zone and another pool "aws-v100-us-east-1b" that runs p3dn.24xlarge
-  instances in the us-east-1b availability zone. You can launch an experiment into
-  aws-v100-us-east-1a and if AWS does not have sufficient p3dn.24xlarge capacity in
-  that availability zone, you can launch the experiment in aws-v100-us-east-1b to
-  check if that availability zone has capacity. Note that currently, the 'AWS does
-  not have capacity' notification is only visible in the master logs, not on the
-  experiment itself.
+-  You have one pool "aws-v100-us-east-1a" that runs p3dn.24xlarge in
+   the us-east-1a availability zone and another pool
+   "aws-v100-us-east-1b" that runs p3dn.24xlarge instances in the
+   us-east-1b availability zone. You can launch an experiment into
+   aws-v100-us-east-1a and if AWS does not have sufficient p3dn.24xlarge
+   capacity in that availability zone, you can launch the experiment in
+   aws-v100-us-east-1b to check if that availability zone has capacity.
+   Note that currently, the 'AWS does not have capacity' notification is
+   only visible in the master logs, not on the experiment itself.
 
-- You have one pool "aws-v100-spot" that you use to try to run training on spot
-  instances and another pool "aws-v100-on-demand" that you fall back to if AWS
-  does not have enough spot capacity to run your job.
+-  You have one pool "aws-v100-spot" that you use to try to run training
+   on spot instances and another pool "aws-v100-on-demand" that you fall
+   back to if AWS does not have enough spot capacity to run your job.
 
-- You have one pool with less expensive GPUs that you use for initial prototyping
-  on small data sets and another pool that you use for training more mature models
-  on large datasets,
+-  You have one pool with less expensive GPUs that you use for initial
+   prototyping on small data sets and another pool that you use for
+   training more mature models on large datasets,
 
-- You have one pool "fair-share-pool" that uses a fair share scheduler and another
-  pool "priority-pool" that uses the priority scheduler.
+-  You have one pool "fair-share-pool" that uses a fair share scheduler
+   and another pool "priority-pool" that uses the priority scheduler.
 
-
-
-
-**********
+*************
  Limitations
-**********
+*************
 
-Currently resource pools are completely independent from each other so it is not
-possible to launch an experiment that tries to use one pool and then falls back to
-another one if a certain condition is met. You will need to manually decide to
-shift an experiment from one pool to another. We know this isn't ideal.
+Currently resource pools are completely independent from each other so
+it is not possible to launch an experiment that tries to use one pool
+and then falls back to another one if a certain condition is met. You
+will need to manually decide to shift an experiment from one pool to
+another. We know this isn't ideal.
 
-We do not currently allow a cluster to have resource pools in multiple AWS
-regions/GCP zones or across multiple cloud providers.
+We do not currently allow a cluster to have resource pools in multiple
+AWS regions/GCP zones or across multiple cloud providers.
 
-We are constantly working to improve Determined and would love to hear your
-feedback either through GitHub issues or in our community Slack.
+We are constantly working to improve Determined and would love to hear
+your feedback either through GitHub issues or in our community Slack.
 
-
-******************************
+***************************
  Setting Up Resource Pools
-******************************
+***************************
 
-Resource pools are configured via the the cluster configuration (aka the master.yaml).
-For each resource pool, you can configure scheduler and provisioner information.
+Resource pools are configured via the the cluster configuration (aka the
+master.yaml). For each resource pool, you can configure scheduler and
+provisioner information.
 
-If you are using static resource pools and launching agents by hand, you will need to
-update the agent.yaml to specify which resource pool the agent should join.
+If you are using static resource pools and launching agents by hand, you
+will need to update the agent.yaml to specify which resource pool the
+agent should join.
 
-******************************
+*************************************
  Launching Tasks Into Resource Pools
-******************************
+*************************************
 
-When creating a task, the configuration file has section called "resources". You can
-set the resource_pool subfield to specify the resource_pool that a task should be
-launched into.
+When creating a task, the configuration file has section called
+"resources". You can set the resource_pool subfield to specify the
+resource_pool that a task should be launched into.
 
 .. code:: yaml
 
    resources:
        resource_pool: gpu-pool
 
-If this field is not set, the task will be launched into one of the two default pools
-defined in the master.yaml. Experiments will be launched into the default GPU pool. Commands,
-Shells, Notebooks and Tensorboards that do not specify in their configuration that they
-need a slot will be launched into the default CPU pool. Commands, Shells, Notebooks and
-Tensorboards that requests one or more slots will be launched into the default GPU pool
+If this field is not set, the task will be launched into one of the two
+default pools defined in the master.yaml. Experiments will be launched
+into the default GPU pool. Commands, Shells, Notebooks and Tensorboards
+that do not specify in their configuration that they need a slot will be
+launched into the default CPU pool. Commands, Shells, Notebooks and
+Tensorboards that requests one or more slots will be launched into the
+default GPU pool
