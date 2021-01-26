@@ -368,7 +368,10 @@ commands:
       master-cert-name:
         type: string
         default: ""
-      agent-instance-type:
+      agent-cpu-instance-type:
+        type: string
+        default: "m5.large"
+      agent-gpu-instance-type:
         type: string
         default: "p2.xlarge"
       max-dynamic-agents:
@@ -403,7 +406,8 @@ commands:
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
-              --agent-instance-type <<parameters.agent-instance-type>> \
+              --agent-cpu-instance-type <<parameters.agent-cpu-instance-type>> \
+              --agent-gpu-instance-type <<parameters.agent-gpu-instance-type>> \
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>>
   terminate-aws-cluster:
