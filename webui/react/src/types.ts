@@ -192,13 +192,24 @@ interface DataLayer {
   type: string;
 }
 
-interface ExperimentHyperParam {
+export enum ExperimentHyperParamType {
+  Categorical = 'categorical',
+  Constant = 'const',
+  Double = 'double',
+  Int = 'int',
+  Log = 'log',
+}
+
+type ExperimentHyperParamValue = boolean | number | string;
+
+export interface ExperimentHyperParam {
   base?: number;
   count?: number;
   maxval?: number;
   minval?: number;
-  type: string;
-  val?: unknown;
+  type: ExperimentHyperParamType;
+  val?: ExperimentHyperParamValue;
+  vals?: ExperimentHyperParamValue[];
 }
 
 export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;

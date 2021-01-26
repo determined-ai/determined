@@ -1,9 +1,9 @@
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
-  CommandType, ExperimentHyperParams, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask,
-  RecentExperimentTask, RecentTask, ResourceState, RunState, SlotState,
-  Workload,
+  CommandType, ExperimentHyperParams, ExperimentHyperParamType, ExperimentItem, MetricsWorkload,
+  RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, ResourceState, RunState,
+  SlotState, Workload,
 } from 'types';
 
 import { LaunchTensorboardParams } from '../services/types';
@@ -208,7 +208,7 @@ export const trialHParamsToExperimentHParams = (hParams: Record<string, unknown>
   const experimentHParams: ExperimentHyperParams = {};
   Object.entries(hParams).forEach(([ param, value ]) => {
     experimentHParams[param] = {
-      type: 'const',
+      type: ExperimentHyperParamType.Constant,
       val: value as number,
     };
   });

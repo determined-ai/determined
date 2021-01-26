@@ -23,8 +23,7 @@ export const decode = <T>(type: io.Mixed, data: any): T => {
   }
 };
 
-const ioNullOrUndefined = io.union([ io.null, io.undefined ]);
-const optional = (x: io.Mixed) => io.union([ x, ioNullOrUndefined ]);
+const optional = (x: io.Mixed) => io.union([ x, io.null, io.undefined ]);
 
 /* User */
 
@@ -189,14 +188,18 @@ const ioDataLayer = io.type({
 
 const ioExpResources = io.type({ max_slots: optional(io.number) });
 
+const ioExpHParamVal = optional(io.union([ io.boolean, io.number, io.string ]));
 const ioExpHParam = io.type({
   base: optional(io.number),
   count: optional(io.number),
   maxval: optional(io.number),
   minval: optional(io.number),
   type: io.keyof({ categorical: null, const: null, double: null, int: null, log: null }),
-  val: optional(io.unknown),
+  val: ioExpHParamVal,
+  vals: optional(io.array(ioExpHParamVal)),
 });
+
+export type ioTypeHyperparameter = io.TypeOf<typeof ioExpHParam>;
 
 export const ioHyperparameters = io.record(io.string, ioExpHParam);
 export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;

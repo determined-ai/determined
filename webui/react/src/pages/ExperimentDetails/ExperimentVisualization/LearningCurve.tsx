@@ -17,7 +17,9 @@ import { handlePath } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, MetricName, metricTypeParamMap, RunState } from 'types';
+import {
+  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, RunState,
+} from 'types';
 import { glasbeyColor } from 'utils/color';
 import { alphanumericSorter, hpSorter, numericSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
@@ -100,7 +102,13 @@ const LearningCurve: React.FC<Props> = ({
       return (_: string, record: TrialHParams) => {
         const value = record.hparams[key];
         const type = experiment.config.hyperparameters[key].type;
-        if (typeof value === 'number' && [ 'const', 'double', 'float', 'log' ].includes(type)) {
+        const isValidType = [
+          ExperimentHyperParamType.Constant,
+          ExperimentHyperParamType.Double,
+          ExperimentHyperParamType.Int,
+          ExperimentHyperParamType.Log,
+        ].includes(type);
+        if (typeof value === 'number' && isValidType) {
           return <HumanReadableFloat num={value} />;
         }
         return record.hparams[key];
