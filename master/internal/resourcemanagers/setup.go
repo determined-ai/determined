@@ -53,22 +53,21 @@ func makeTLSConfig(cert *tls.Certificate) (model.TLSClientConfig, error) {
 func Setup(
 	system *actor.System,
 	echo *echo.Echo,
-	rmConfig *ResourceManagerConfig,
-	poolsConfig *ResourcePoolsConfig,
+	config *ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *actor.Ref {
 	var ref *actor.Ref
 	switch {
-	case rmConfig.AgentRM != nil:
-		ref = setupAgentResourceManager(system, echo, rmConfig.AgentRM, poolsConfig, opts, cert)
-	case rmConfig.KubernetesRM != nil:
-		config, err := makeTLSConfig(cert)
+	case config.ResourceManager.AgentRM != nil:
+		ref = setupAgentResourceManager(system, echo, config, opts, cert)
+	case config.ResourceManager.KubernetesRM != nil:
+		tlsConfig, err := makeTLSConfig(cert)
 		if err != nil {
 			panic(errors.Wrap(err, "failed to set up TLS config"))
 		}
 		ref = setupKubernetesResourceManager(
-			system, echo, rmConfig.KubernetesRM, config, opts.LoggingOptions,
+			system, echo, config.ResourceManager.KubernetesRM, tlsConfig, opts.LoggingOptions,
 		)
 	default:
 		panic("no expected resource manager config is defined")
@@ -84,14 +83,13 @@ func Setup(
 func setupAgentResourceManager(
 	system *actor.System,
 	echo *echo.Echo,
-	rmConfig *AgentResourceManagerConfig,
-	poolsConfig *ResourcePoolsConfig,
+	config *ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
 		actor.Addr("agentRM"),
-		newAgentResourceManager(rmConfig, poolsConfig, cert),
+		newAgentResourceManager(config, cert),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 

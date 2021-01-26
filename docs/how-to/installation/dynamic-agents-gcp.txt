@@ -98,45 +98,9 @@ See :ref:`network-requirements` for details.
 ***********************
 
 The Determined Cluster is configured with ``master.yaml`` file located
-at ``/usr/local/determined/etc`` on the Determined master instance.
-Below you'll find an example configuration. See
+at ``/usr/local/determined/etc`` on the Determined master instance. We
+need to configure GPU dynamic agents in each resource pool. See
 :ref:`cluster-configuration` for details.
-
-.. code:: yaml
-
-   provisioner:
-     master_url: <scheme://host:port>
-     startup_script: <startup script>
-     container_startup_script: <container startup script>
-     agent_docker_network: host
-     agent_docker_image: <agent docker image>
-     max_idle_agent_period: 5m
-     max_agent_starting_period: 5m
-
-     provider: gcp
-     base_config: <instance resource base configuration>
-     project: <project ID>
-     zone: <zone>
-     boot_disk_size: 200
-     boot_disk_source_image: projects/<project-id>/global/images/<image-name>
-     label_key: <label key for agent discovery>
-     label_value: <label value for agent discovery>
-     name_prefix: <name prefix>
-     network_interface:
-       network: projects/<project>/global/networks/<network>
-       subnetwork: projects/<project>/regions/<region>/subnetworks/<subnetwork>
-       external_ip: false
-     network_tags: ["<tag1>", "<tag2>"]
-     service_account:
-       email: "<service account email>"
-       scopes: ["https://www.googleapis.com/auth/cloud-platform"]
-     instance_type:
-       machine_type: n1-standard-32
-       gpu_type: nvidia-tesla-v100
-       gpu_num: 4
-       preemptible: false
-     max_instances: 5
-     operation_timeout_period: 5m
 
 .. _gcp-attach-disk:
 
@@ -159,13 +123,13 @@ disk to each dynamic agent.
 
 .. code:: yaml
 
-   provisioner:
+   provider:
      startup_script: |
                      lsblk
                      mkdir -p /mnt/disks/second
                      mount -o discard,defaults /dev/sdb1 /mnt/disks/second
                      lsblk
-     provider: gcp
+     type: gcp
      base_config:
        disks:
          - mode: READ_ONLY
@@ -214,7 +178,7 @@ instance, for accessing GCR.
 
 .. code:: yaml
 
-   provisioner:
+   provider:
      container_startup_script: |
          export HOME=/root
          apt-get update && apt-get install -y curl docker.io

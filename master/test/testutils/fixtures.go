@@ -36,6 +36,9 @@ checkpoint_storage:
   type: shared_fs
   host_path: /tmp
 
+resource_manager:
+  type: agent
+
 db:
   user: postgres
   password: postgres

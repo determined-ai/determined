@@ -1,8 +1,3 @@
-## Scheduler configuration. Defaults to using best fit scheduler.
-#scheduler:
-#  type: fair_share
-#  fit: best
-
 ## Configure the task container defaults. Tasks include trials, commands, tensorboards and more.
 ## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the
 ## network interface used by distributed (multi-machine) training and ports used by the NCCL and
@@ -15,81 +10,94 @@
 #  nccl_port_range: <MIN:MAX>
 #  gloo_port_range: <MIN:MAX>
 
-## Elastic AI infrastructure configuration. Configure only one of the
-## dynamic agent types.
-#provisioner:
+## Resource manager configuration. Defaults to using the agent resource manager.
+#resource_manager:
+#  type: agent
+#  scheduler:
+#    type: fair_share
+#    fit: best
+
+## Resource pools configuration.
+#resource_pools:
+#  - pool_name: default
+
+## The maximum CPU containers for the agent. Defaults to 100.
+#    max_cpu_containers_per_agent: 100
+
+## The provider of dynamic agents.
+#    provider:
 
 ## The url of the Determined master.
-#  master_url: <scheme://host:port>
+#      master_url: <scheme://host:port>
 
 ## The startup script for the agent. This runs on the node the agent runs on.
-#  startup_script: <startup script>
+#      startup_script: <startup script>
 
 ## The startup script for the agent's container. This runs in the container determined-agent runs in.
-#  container_startup_script: <container startup script>
+#      container_startup_script: <container startup script>
 
 ## The Docker network to use for the agent when using dynamic agents. If this is
 ## set to "host", Docker host-mode networking will be used instead. Defaults to "default".
-#  agent_docker_network: default
+#      agent_docker_network: default
 
 ## The docker runtime to use for the agent when using dynamic agent. Defaults to "runc.
-#  agent_docker_runtime: runc
+#      agent_docker_runtime: runc
 
 ## The docker image to use for the agent when using dynamic agents. This value
 ## must be configured.
-#  agent_docker_image: determinedai/determined-agent:<version>
+#      agent_docker_image: determinedai/determined-agent:<version>
 
 ## The maximum idle period of agents. The master waits for this period of time
 ## before shutting down idle agents. Defaults to 5 min.
-#  max_idle_agent_period: 5m
+#      max_idle_agent_period: 5m
 
 ## The maximum starting period of agents. The master waits for this period of time
 ## for starting agents before retrying. Defaults to 5 min.
-#  max_agent_starting_period: 5m
+#      max_agent_starting_period: 5m
 
 ## Configure AWS dynamic agents. The `provider`, `image_id`, `security_group`, and
 ## `ssh_key_name` are required to be set to use AWS dynamic agents.
-#  provider: aws
-#  region: <region>
-#  root_volume_size: 200
-#  image_id: <AMI id>
-#  tag_key: <tag key for agent discovery>
-#  tag_value: <tag value for agent discovery>
-#  instance_name: determined-ai-agent
-#  ssh_key_name: <ssh key name>
-#  iam_instance_profile_arn: <iam_instance_profile_arn>
-#  network_interface:
-#    public_ip: true
-#    security_group_id: <security group id>
-#    subnet_id: <subnet id>
-#  instance_type: p3.8xlarge
-#  max_instances: 5
+#      type: aws
+#      region: <region>
+#      root_volume_size: 200
+#      image_id: <AMI id>
+#      tag_key: <tag key for agent discovery>
+#      tag_value: <tag value for agent discovery>
+#      instance_name: determined-ai-agent
+#      ssh_key_name: <ssh key name>
+#      iam_instance_profile_arn: <iam_instance_profile_arn>
+#      network_interface:
+#        public_ip: true
+#        security_group_id: <security group id>
+#        subnet_id: <subnet id>
+#      instance_type: p3.8xlarge
+#      max_instances: 5
 
 ## Configure GCP dynamic agents. The `provider`, `boot_disk_source_image`,
 ## `network_interface` are required to be set to use GCP dynamic agents.
-#  provider: gcp
-#  base_config: <instance resource base configuration>
-#  project: <project id>
-#  zone: <zone>
-#  boot_disk_size: 200
-#  boot_disk_source_image: projects/<project-id>/global/images/<image-name>
-#  label_key: <label key for agent discovery>
-#  label_value: <label value for agent discovery>
-#  name_prefix: <name prefix>
-#  network_interface:
-#    network: projects/<project>/global/networks/<network>
-#    subnetwork: projects/<project>/regions/<region>/subnetworks/<subnetwork>
-#    external_ip: false
-#  network_tags: ["<tag1>", "<tag2>"]
-#  service_account:
-#    email: "<service account email>"
-#    scopes: ["https://www.googleapis.com/auth/cloud-platform"]
-#  instance_type:
-#    machine_type: n1-standard-32
-#    gpu_type: nvidia-tesla-v100
-#    gpu_num: 4
-#  max_instances: 5
-#  operation_timeout_period: 5m
+#      type: gcp
+#      base_config: <instance resource base configuration>
+#      project: <project id>
+#      zone: <zone>
+#      boot_disk_size: 200
+#      boot_disk_source_image: projects/<project-id>/global/images/<image-name>
+#      label_key: <label key for agent discovery>
+#      label_value: <label value for agent discovery>
+#      name_prefix: <name prefix>
+#      network_interface:
+#        network: projects/<project>/global/networks/<network>
+#        subnetwork: projects/<project>/regions/<region>/subnetworks/<subnetwork>
+#        external_ip: false
+#      network_tags: ["<tag1>", "<tag2>"]
+#      service_account:
+#        email: "<service account email>"
+#        scopes: ["https://www.googleapis.com/auth/cloud-platform"]
+#      instance_type:
+#        machine_type: n1-standard-32
+#        gpu_type: nvidia-tesla-v100
+#        gpu_num: 4
+#      max_instances: 5
+#      operation_timeout_period: 5m
 
 ## Configure default checkpoint storage configuration.
 checkpoint_storage:

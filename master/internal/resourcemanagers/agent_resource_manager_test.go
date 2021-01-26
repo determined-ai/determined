@@ -12,12 +12,17 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 
 	// Set up one CPU resource pool and one GPU resource pool.
-	rmConfig := &AgentResourceManagerConfig{
-		Scheduler:              defaultSchedulerConfig(),
-		DefaultCPUResourcePool: "cpu-pool",
-		DefaultGPUResourcePool: "gpu-pool",
-	}
-	poolsConfig := &ResourcePoolsConfig{
+	config := &ResourceConfig{
+		ResourceManager: &ResourceManagerConfig{
+			AgentRM: &AgentResourceManagerConfig{
+				Scheduler: &SchedulerConfig{
+					FairShare:     &FairShareSchedulerConfig{},
+					FittingPolicy: defaultFitPolicy,
+				},
+				DefaultCPUResourcePool: "cpu-pool",
+				DefaultGPUResourcePool: "gpu-pool",
+			},
+		},
 		ResourcePools: []ResourcePoolConfig{
 			{PoolName: "cpu-pool"},
 			{PoolName: "gpu-pool"},
@@ -32,8 +37,8 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 		nil, nil, []*mockAgent{{id: "agent2", slots: 4}},
 	)
 	agentRM := &agentResourceManager{
-		config:      rmConfig,
-		poolsConfig: poolsConfig,
+		config:      config.ResourceManager.AgentRM,
+		poolsConfig: config.ResourcePools,
 		pools: map[string]*actor.Ref{
 			"cpu-pool": cpuPoolRef,
 			"gpu-pool": gpuPoolRef,

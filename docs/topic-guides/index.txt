@@ -10,6 +10,7 @@ explanation. Below you will find some suggested starting guides.
 
 -  :ref:`det-system-architecture`
 -  :ref:`terminology-concepts`
+-  :ref:`resource-pool`
 -  :ref:`scheduling`
 -  :ref:`elastic-infrastructure`
 

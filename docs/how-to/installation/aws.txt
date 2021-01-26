@@ -147,14 +147,29 @@ Spinning up the Cluster
       -  AWS instance type to use for the master.
       -  m5.large
 
-   -  -  ``--agent-instance-type``
+   -  -  ``--cpu-agent-instance-type``
 
-      -  AWS instance type to use for the agents. Must be one of the
-         following instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``,
-         ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``,
-         ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
-         ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
-         ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``.
+      -  AWS instance type to use for the agents in the CPU resource
+         pool. Must be one of the following instance types:
+         ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
+         ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``,
+         ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
+         ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``,
+         ``p3dn.24xlarge``, ``t2.medium``, ``t2.large``, ``t2.xlarge``,
+         or ``t2.2xlarge``.
+
+      -  t2.xlarge
+
+   -  -  ``--gpu-agent-instance-type``
+
+      -  AWS instance type to use for the agents in the GPU resource
+         pool. Must be one of the following instance types:
+         ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
+         ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``,
+         ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
+         ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``,
+         ``p3dn.24xlarge``, ``t2.medium``, ``t2.large``, ``t2.xlarge``,
+         or ``t2.2xlarge``.
 
       -  p2.8xlarge
 
@@ -174,6 +189,11 @@ Spinning up the Cluster
    -  -  ``--region``
       -  AWS region to deploy into.
       -  The default region for the AWS user
+
+   -  -  ``--max-cpu-containers-per-agent``
+      -  The maximum cpu containers that runs on agents in the CPU
+         resource pool
+      -  100
 
    -  -  ``--max-idle-agent-period``
       -  The length of time to wait before idle dynamic agents will be
