@@ -16,7 +16,8 @@
 #  scheduler:
 #    type: fair_share
 #    fit: best
-
+#  default_cpu_resource_pool: default
+#  default_gpu_resource_pool: default
 ## Resource pools configuration.
 #resource_pools:
 #  - pool_name: default
