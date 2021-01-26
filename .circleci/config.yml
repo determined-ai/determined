@@ -198,7 +198,7 @@ commands:
       - run:
           name: Setup venv
           command: |
-            python3.6 -m venv /tmp/venv
+            python3 -m venv /tmp/venv
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
 
@@ -1109,6 +1109,9 @@ jobs:
       - attach_workspace:
           at: .
 
+      - run: pyenv uninstall -f 3.6.10
+      - run: sudo apt install -y liblzma-dev lzma
+      - run: pyenv install 3.6.10
       - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
