@@ -31,8 +31,9 @@ LM wraps and organizes PyTorch code. [ref](https://pytorch-lightning.readthedocs
 
 ### TODO
 
-check rest of lightning module hooks and methods
-check the signatures
+- sort out what won't be in phase one or be unsupported
+  - time estimate
+- put out an initial pr in experimental with mnist
 
 ### API
 
