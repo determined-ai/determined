@@ -43,9 +43,9 @@ func DefaultConfig() *Config {
 			},
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
-		Port:              0,
-		HarnessPath:       "/opt/determined",
-		Root:              "/usr/share/determined/master",
+		Port:        0,
+		HarnessPath: "/opt/determined",
+		Root:        "/usr/share/determined/master",
 		Telemetry: TelemetryConfig{
 			Enabled:          true,
 			SegmentMasterKey: DefaultSegmentMasterKey,
@@ -88,8 +88,8 @@ type Config struct {
 // Validate implements the check.Validate interface.
 func (c *Config) Validate() []error {
 	if c.CheckpointStorage != nil {
-		if ok, errs := schemas.IsComplete(c.CheckpointStorage); !ok {
-			return errs
+		if err := schemas.IsComplete(c.CheckpointStorage); err != nil {
+			return []error{err}
 		}
 	}
 	return nil

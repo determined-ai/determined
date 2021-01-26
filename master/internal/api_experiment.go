@@ -21,9 +21,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -194,8 +194,14 @@ func (a *apiServer) PreviewHPSearch(
 
 	schemas.FillDefaults(&config)
 
-	schemas.IsComplete(&config.Searcher)
-	schemas.IsComplete(&config.Hyperparameters)
+	err = schemas.IsComplete(&config.Searcher)
+	if err != nil {
+		return nil, errors.Wrap(err, "incomplete searcher config")
+	}
+	err = schemas.IsComplete(&config.Hyperparameters)
+	if err != nil {
+		return nil, errors.Wrap(err, "incomplete hyperparameters config")
+	}
 
 	sm := searcher.NewSearchMethod(config.Searcher)
 	s := searcher.NewSearcher(req.Seed, sm, config.Hyperparameters)

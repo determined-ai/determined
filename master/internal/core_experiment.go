@@ -366,7 +366,8 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 			return nil, false, terr
 		}
 		var templateConfig expconf.ExperimentConfig
-		if yerr := yaml.Unmarshal(template.Config, &templateConfig, yaml.DisallowUnknownFields); yerr != nil {
+		yerr := yaml.Unmarshal(template.Config, &templateConfig, yaml.DisallowUnknownFields)
+		if yerr != nil {
 			return nil, false, yerr
 		}
 		schemas.Merge(&config, templateConfig)
@@ -389,7 +390,10 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	}
 
 	// Validate the fully-constructed experiment config.
-	schemas.IsComplete(&config)
+	err = schemas.IsComplete(&config)
+	if err != nil {
+		return nil, false, errors.Wrap(err, "incomplete experiment config")
+	}
 
 	var modelBytes []byte
 	if params.ParentID != nil {

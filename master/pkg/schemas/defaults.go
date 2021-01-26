@@ -27,7 +27,7 @@ type Defaultable interface {
 //
 // There are some forms of defaults which must be filled at runtimes, such as giving a default
 // description to experiments with no description.  This can be accomplished by implementing
-// the RuntimeDefaultable interface for that object.  See ExperimentConfig for and example.
+// the RuntimeDefaultable interface for that object.  See ExperimentConfig for an example.
 //
 // There are some objects which get their defaults from other objects' defaults.  This an
 // unforutnate detail of our union types which have common members that appear on the root union
@@ -45,10 +45,14 @@ type Defaultable interface {
 //    schemas.FillDefaults(&config)
 //
 func FillDefaults(x interface{}) {
+	obj := reflect.ValueOf(x)
+	if obj.Kind() != reflect.Ptr {
+		panic("FillDefaults must be called on a pointer")
+	}
 	// Enter the recursive default filling with no default bytes for the root object (which must
 	// already exist), and starting with the name of the object type.
 	name := derefType(reflect.TypeOf(x)).Name()
-	fillDefaults(reflect.ValueOf(x), nil, name)
+	fillDefaults(obj, nil, name)
 }
 
 // fillOneDefault is the helper function to fillDefaults which actually sets values.
@@ -79,7 +83,7 @@ func fillOneDefault(obj reflect.Value, defaultBytes []byte, name string) {
 	}
 
 	// If the default value would be nil, exit now so we don't allocate anything.
-	if bytes.Compare(defaultBytes, []byte("null")) == 0 {
+	if bytes.Equal(defaultBytes, []byte("null")) {
 		return
 	}
 
@@ -123,10 +127,8 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) {
 	// Use PtrTo/Addr so that if the DefaultSource is defined on a struct pointer, it still works.
 	var defaultSource interface{}
 	if defaultable, ok := obj.Addr().Interface().(Defaultable); ok {
-		fmt.Printf("%T is defaultable\n", obj.Interface())
 		defaultSource = defaultable.DefaultSource()
-	}else if schema, ok := obj.Addr().Interface().(Schema); ok {
-		fmt.Printf("%T is schema\n", obj.Interface())
+	} else if schema, ok := obj.Addr().Interface().(Schema); ok {
 		defaultSource = schema.ParsedSchema()
 	}
 
@@ -171,7 +173,9 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) {
 		reflect.Interface,
 		reflect.UnsafePointer,
 		reflect.Ptr:
-		panic(fmt.Sprintf("unable to fillDefaults at %v of type %T, kind %v", name, obj.Interface(), obj.Kind()))
+		panic(fmt.Sprintf(
+			"unable to fillDefaults at %v of type %T, kind %v", name, obj.Interface(), obj.Kind(),
+		))
 	}
 
 	// AFTER the automatic defaults, we apply any runtime defaults.  This way, we've already filled
@@ -181,8 +185,8 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) {
 	}
 }
 
-// jsonNameFromJsonTag is based on encoding/json's parseTag().
-func jsonNameFromJsonTag(tag string) string {
+// jsonNameFromJSONTag is based on encoding/json's parseTag().
+func jsonNameFromJSONTag(tag string) string {
 	if idx := strings.Index(tag, ","); idx != -1 {
 		return tag[:idx]
 	}
@@ -190,7 +194,7 @@ func jsonNameFromJsonTag(tag string) string {
 }
 
 // findDefaultInSchema takes a json-schema and a StructField, and tries to use the json tag on the
-// StructField to find a byte string that represents the json value of the deafult for the field.
+// StructField to find a byte string that represents the json value of the default for the field.
 //
 // It looks for defaults as `properties.JSONTAG.default`, and returns nil if none was found.  It
 // also returns nil if the bytes found match `null` exactly.
@@ -219,7 +223,7 @@ func findDefaultInSchema(schema interface{}, field reflect.StructField) []byte {
 	}()
 
 	jsonTag := field.Tag.Get("json")
-	jsonName := jsonNameFromJsonTag(jsonTag)
+	jsonName := jsonNameFromJSONTag(jsonTag)
 
 	schemaObj := schema.(map[string]interface{})
 	propertiesObj := schemaObj["properties"].(map[string]interface{})

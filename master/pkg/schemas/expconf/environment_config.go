@@ -14,12 +14,12 @@ import (
 
 // EnvironmentConfigV0 configures the environment of a Determined command or experiment.
 type EnvironmentConfigV0 struct {
-	Image                *RuntimeItem  `json:"image"`
+	Image                *RuntimeItem               `json:"image"`
 	EnvironmentVariables *EnvironmentVariablesMapV0 `json:"environment_variables"`
 
-	Ports          *map[string]int    `json:"ports"`
+	Ports          *map[string]int   `json:"ports"`
 	RegistryAuth   *types.AuthConfig `json:"registry_auth"`
-	ForcePullImage *bool              `json:"force_pull_image"`
+	ForcePullImage *bool             `json:"force_pull_image"`
 	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
 }
 
@@ -29,6 +29,7 @@ type RuntimeItem struct {
 	GPU *string `json:"gpu"`
 }
 
+// RuntimeDefaults implements the RuntimeDefautlable interface.
 func (r *RuntimeItem) RuntimeDefaults() {
 	if r.CPU == nil {
 		s := DefaultCPUImage
@@ -115,6 +116,12 @@ func (r *EnvironmentVariablesMapV0) For(deviceType device.Type) []string {
 }
 
 // XXX: what to do about these dummy types?
-type EnvironmentImageMapV0 struct {}
-type EnvironmentImageV0 struct {}
-type EnvironmentVariablesV0 struct {}
+
+// EnvironmentImageMapV0 is a dummy type.
+type EnvironmentImageMapV0 struct{}
+
+// EnvironmentImageV0 is a dummy type.
+type EnvironmentImageV0 struct{}
+
+// EnvironmentVariablesV0 is a dummy type.
+type EnvironmentVariablesV0 struct{}

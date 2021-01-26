@@ -11,8 +11,11 @@ import (
 func TestAdaptiveSimpleConservativeCornerCase(t *testing.T) {
 	config := expconf.AdaptiveSimpleConfig{
 		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
-		MaxLength: expconf.NewLengthInBatches(100), MaxTrials: 1,
-		Divisor: ptrs.Float64Ptr(4), Mode: expconf.AdaptiveModePtr(expconf.ConservativeMode), MaxRungs: ptrs.IntPtr(3),
+		MaxLength: expconf.NewLengthInBatches(100),
+		MaxTrials: 1,
+		Divisor:   ptrs.Float64Ptr(4),
+		Mode:      expconf.AdaptiveModePtr(expconf.ConservativeMode),
+		MaxRungs:  ptrs.IntPtr(3),
 	}
 	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
@@ -28,7 +31,9 @@ func TestAdaptiveSimpleAggressiveCornerCase(t *testing.T) {
 	config := expconf.AdaptiveSimpleConfig{
 		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
 		MaxLength: expconf.NewLengthInBatches(100), MaxTrials: 1,
-		Divisor: ptrs.Float64Ptr(4), Mode: expconf.AdaptiveModePtr(expconf.AggressiveMode), MaxRungs: ptrs.IntPtr(3),
+		Divisor:  ptrs.Float64Ptr(4),
+		Mode:     expconf.AdaptiveModePtr(expconf.AggressiveMode),
+		MaxRungs: ptrs.IntPtr(3),
 	}
 	schemas.FillDefaults(&config)
 	expected := [][]Runnable{
@@ -42,7 +47,9 @@ func TestAdaptiveSimpleSearcherReproducibility(t *testing.T) {
 	config := expconf.AdaptiveSimpleConfig{
 		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
 		MaxLength: expconf.NewLengthInBatches(6400), MaxTrials: 50,
-		Divisor: ptrs.Float64Ptr(4), Mode: expconf.AdaptiveModePtr(expconf.ConservativeMode), MaxRungs: ptrs.IntPtr(3),
+		Divisor:  ptrs.Float64Ptr(4),
+		Mode:     expconf.AdaptiveModePtr(expconf.ConservativeMode),
+		MaxRungs: ptrs.IntPtr(3),
 	}
 	schemas.FillDefaults(&config)
 	gen := func() SearchMethod { return newAdaptiveSimpleSearch(config) }

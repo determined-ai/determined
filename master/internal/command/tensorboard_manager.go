@@ -26,8 +26,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
@@ -248,9 +248,9 @@ func (t *tensorboardManager) newTensorBoard(
 			// make the logs visible to TensorBoard. Bind mounts must be unique
 			// and therefore we use a map here to deduplicate mounts.
 			uniqMounts[expconf.BindMount{
-				ContainerPath: model.DefaultSharedFSContainerPath,
+				ContainerPath: expconf.DefaultSharedFSContainerPath,
 				HostPath:      c.SharedFSConfig.HostPath,
-				Propagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
+				Propagation:   ptrs.StringPtr(expconf.DefaultSharedFSPropagation),
 			}] = true
 			logBasePath = c.SharedFSConfig.PathInContainer()
 
@@ -356,10 +356,10 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Resources.Slots = tensorboardResourcesSlots
 
 	*config.Environment.EnvironmentVariables.CPU = append(
-		*config.Environment.EnvironmentVariables.CPU, envVars...
+		*config.Environment.EnvironmentVariables.CPU, envVars...,
 	)
 	*config.Environment.EnvironmentVariables.GPU = append(
-		*config.Environment.EnvironmentVariables.GPU, envVars...
+		*config.Environment.EnvironmentVariables.GPU, envVars...,
 	)
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 

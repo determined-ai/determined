@@ -36,17 +36,6 @@ class Schema:
     def version(self) -> str:
         return os.path.basename(os.path.dirname(self.url))
 
-    def contains_defaults(self) -> bool:
-        # For writing defaulting logic, it is useful to know whether or not a schema defines
-        # defaults or not.
-        if "properties" in self.schema:
-            for prop in self.schema["properties"].values():
-                if not isinstance(prop, dict):
-                    continue
-                if "default" in prop:
-                    return True
-        return False
-
 
 def read_schemas(files: List[str]) -> List[Schema]:
     schemas = []
@@ -149,21 +138,22 @@ def gen_go_package(schemas: List[Schema], package: str) -> List[str]:
     # Implement the Schema interface for all objects.
     for schema in schemas:
         if not schema.python_title.startswith("check_"):
+            x = schema.golang_title[0].lower()
             lines.append("")
             lines.append(
-                f"func (x *{schema.golang_title}) ParsedSchema() interface{{}} {{"
+                f"func ({x} *{schema.golang_title}) ParsedSchema() interface{{}} {{"
             )
             lines.append(f"\treturn schemas.Parsed{schema.golang_title}()")
             lines.append("}")
             lines.append("")
             lines.append(
-                f"func (x *{schema.golang_title}) SanityValidator() *jsonschema.Schema {{"
+                f"func ({x} *{schema.golang_title}) SanityValidator() *jsonschema.Schema {{"
             )
             lines.append(f'\treturn schemas.GetSanityValidator("{schema.url}")')
             lines.append("}")
             lines.append("")
             lines.append(
-                f"func (x *{schema.golang_title}) CompletenessValidator() *jsonschema.Schema {{"
+                f"func ({x} *{schema.golang_title}) CompletenessValidator() *jsonschema.Schema {{"
             )
             lines.append(f'\treturn schemas.GetCompletenessValidator("{schema.url}")')
             lines.append("}")

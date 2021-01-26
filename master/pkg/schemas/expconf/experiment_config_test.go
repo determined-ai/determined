@@ -12,7 +12,7 @@ func TestBindMountsMerge(t *testing.T) {
 	e1 := ExperimentConfig{
 		BindMounts: &BindMountsConfig{
 			BindMount{
-				HostPath: "/host/e1",
+				HostPath:      "/host/e1",
 				ContainerPath: "/container/e1",
 			},
 		},
@@ -20,7 +20,7 @@ func TestBindMountsMerge(t *testing.T) {
 	e2 := ExperimentConfig{
 		BindMounts: &BindMountsConfig{
 			BindMount{
-				HostPath: "/host/e2",
+				HostPath:      "/host/e2",
 				ContainerPath: "/container/e2",
 			},
 		},

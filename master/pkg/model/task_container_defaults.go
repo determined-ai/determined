@@ -139,18 +139,18 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 }
 
 // Filler returns a config suitable for schemas.Merge().
-func (t *TaskContainerDefaultsConfig) Filler() expconf.ExperimentConfig {
+func (c *TaskContainerDefaultsConfig) Filler() expconf.ExperimentConfig {
 	var e expconf.ExperimentConfig
-	if t == nil {
+	if c == nil {
 		return e
 	}
 
 	e.Environment = &expconf.EnvironmentConfig{}
 
-	schemas.Merge(&e.Environment.RegistryAuth, t.RegistryAuth)
-	schemas.Merge(&e.Environment.ForcePullImage, t.ForcePullImage)
-	schemas.Merge(&e.Environment.ForcePullImage, t.ForcePullImage)
-	schemas.Merge(&e.Environment.Image, t.Image)
+	schemas.Merge(&e.Environment.RegistryAuth, c.RegistryAuth)
+	schemas.Merge(&e.Environment.ForcePullImage, c.ForcePullImage)
+	schemas.Merge(&e.Environment.ForcePullImage, c.ForcePullImage)
+	schemas.Merge(&e.Environment.Image, c.Image)
 
 	return e
 }

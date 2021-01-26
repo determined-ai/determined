@@ -10,9 +10,9 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
-	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
 func TestTrialWorkloadSequencer(t *testing.T) {
@@ -24,6 +24,7 @@ checkpoint_storage:
   bucket: my bucket
 hyperparameters:
   global_batch_size: 64
+entrypoint: model_def:Trial
 min_validation_period:
   batches: 200
 min_checkpoint_period:
@@ -287,6 +288,9 @@ checkpoint_policy: none
 
 func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	yam := `
+hyperparameters:
+  global_batch_size: 64
+entrypoint: model_def:Trial
 searcher:
   name: single
   metric: loss
@@ -343,6 +347,9 @@ searcher:
 
 func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 	yam := `
+hyperparameters:
+  global_batch_size: 64
+entrypoint: model_def:Trial
 searcher:
   name: single
   metric: loss

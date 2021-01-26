@@ -1,6 +1,5 @@
 package model
 
-
 const (
 	// DeterminedK8ContainerName is the name of the container that executes the task within Kubernetes
 	// pods that are launched by Determined.

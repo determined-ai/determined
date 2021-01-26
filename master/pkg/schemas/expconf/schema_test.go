@@ -19,11 +19,11 @@ import (
 type JSON = interface{}
 
 type SchemaTestCase struct {
-	Name       string                  `json:"name"`
-	Matches    *[]string               `json:"matches"`
-	Errors     *map[string][]string    `json:"errors"`
-	Defaulted  *JSON                   `json:"defaulted"`
-	Case       JSON                    `json:"case"`
+	Name      string               `json:"name"`
+	Matches   *[]string            `json:"matches"`
+	Errors    *map[string][]string `json:"errors"`
+	Defaulted *JSON                `json:"defaulted"`
+	Case      JSON                 `json:"case"`
 }
 
 func errorIn(expect string, errors []error) bool {
@@ -86,7 +86,7 @@ func (tc SchemaTestCase) CheckErrors(t *testing.T) {
 }
 
 // Reverse-lookup of which object to umarshal into for a url, needed for default testing.
-func objectForUrl(url string) interface{} {
+func objectForURL(url string) interface{} {
 	switch url {
 	case "http://determined.ai/schemas/expconf/v0/experiment.json":
 		return &ExperimentConfigV0{}
@@ -133,9 +133,10 @@ func clearRuntimeDefaults(obj *interface{}, defaulted interface{}) {
 		}
 		for key, objValue := range tObj {
 			if defaultedValue, ok := tDefaulted[key]; ok {
-				clearRuntimeDefaults(&objValue, defaultedValue)
+				cpy := objValue
+				clearRuntimeDefaults(&cpy, defaultedValue)
 				// Update the modified value in the original map.
-				tObj[key] = objValue
+				tObj[key] = cpy
 			}
 		}
 	case []interface{}:
@@ -152,7 +153,6 @@ func clearRuntimeDefaults(obj *interface{}, defaulted interface{}) {
 	}
 }
 
-
 func (tc SchemaTestCase) CheckDefaulted(t *testing.T) {
 	if tc.Defaulted == nil {
 		return
@@ -166,16 +166,14 @@ func (tc SchemaTestCase) CheckDefaulted(t *testing.T) {
 	url := (*tc.Matches)[0]
 
 	// Get an empty object to marshal into.
-	obj := objectForUrl(url)
+	obj := objectForURL(url)
 
 	testName := fmt.Sprintf("defaulted %T", obj)
 	t.Run(testName, func(t *testing.T) {
-
 		err = json.Unmarshal(byts, &obj)
 		assert.NilError(t, err)
 
-		// XXX: this fails with &obj... but I do not understand why at all
-		schemas.FillDefaults(obj)
+		schemas.FillDefaults(&obj)
 
 		// Compare json-to-json.
 		defaultedBytes, err := json.Marshal(obj)
@@ -188,7 +186,7 @@ func (tc SchemaTestCase) CheckDefaulted(t *testing.T) {
 		// any non-nil value.
 		clearRuntimeDefaults(&rawObj, *tc.Defaulted)
 
-		assert.DeepEqual(t, *tc.Defaulted, rawObj)
+		assert.DeepEqual(t, rawObj, *tc.Defaulted)
 	})
 }
 
@@ -204,14 +202,14 @@ func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 	url := (*tc.Matches)[0]
 
 	// Unmarshal into an object once.
-	obj := objectForUrl(url)
+	obj := objectForURL(url)
 	err = json.Unmarshal(byts, &obj)
 	assert.NilError(t, err)
 
 	// Round-trip through json.
 	jByts, err := json.Marshal(obj)
 	assert.NilError(t, err)
-	cpy := objectForUrl(url)
+	cpy := objectForURL(url)
 	err = json.Unmarshal(jByts, &cpy)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, obj, cpy)
@@ -220,7 +218,7 @@ func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 	schemas.FillDefaults(obj)
 	jByts, err = json.Marshal(obj)
 	assert.NilError(t, err)
-	cpy = objectForUrl(url)
+	cpy = objectForURL(url)
 	schemas.FillDefaults(cpy)
 	err = json.Unmarshal(jByts, &cpy)
 	assert.NilError(t, err)
@@ -232,7 +230,7 @@ func RunCasesFile(t *testing.T, path string, displayPath string) {
 	byts, err := ioutil.ReadFile(path) //nolint: gosec
 	assert.NilError(t, err)
 
-	jbyts, err := schemas.JsonFromYaml(byts)
+	jbyts, err := schemas.JSONFromYaml(byts)
 	assert.NilError(t, err)
 
 	var cases []SchemaTestCase
@@ -255,6 +253,7 @@ func TestExperimentConfig(t *testing.T) {
 	// Call RunCasesFile on every .yaml file in the test_cases directory tree.
 	dir := "../../../../schemas/test_cases"
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		assert.NilError(t, err)
 		if !strings.HasSuffix(path, ".yaml") {
 			return nil
 		}

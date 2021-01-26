@@ -33,8 +33,8 @@ func optionalRefValidate(
 	return ctx.Validate(refSchema, instance)
 }
 
-// OptionalRefExtension creates the metaschema and returns the full jsonschema.Extension object, gluing
-// together the metaschema, the compile function, and the validate function.
+// OptionalRefExtension creates the metaschema and returns the full jsonschema.Extension object,
+// gluing together the metaschema, the compile function, and the validate function.
 func OptionalRefExtension() jsonschema.Extension {
 	meta, err := jsonschema.CompileString("optionalRefExtension.json", `{
 		"properties" : {

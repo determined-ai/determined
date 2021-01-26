@@ -10,8 +10,8 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
 // trialWorkloadSequencer manages transforming the work requested by the searcher into Workloads

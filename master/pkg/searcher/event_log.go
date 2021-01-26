@@ -1,8 +1,8 @@
 package searcher
 
 import (
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // Event is the type of searcher events stored by the event log.

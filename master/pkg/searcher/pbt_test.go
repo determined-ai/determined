@@ -5,10 +5,9 @@ import (
 	"testing"
 
 	"gotest.tools/assert"
-	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -314,11 +313,7 @@ func TestPBTExplore(t *testing.T) {
 
 // XXX: delete this after code stops changing so much.  It's good to have it for now.
 func checkValidate(schema schemas.Schema) error {
-	_, errs := schemas.IsComplete(schema)
-	if errs != nil {
-		return errors.New(schemas.JoinErrors(errs, "\n"))
-	}
-	return nil
+	return schemas.IsComplete(schema)
 }
 
 func TestPBTValidation(t *testing.T) {

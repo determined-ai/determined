@@ -18,7 +18,7 @@ const MaxAllowedTrials = 2000
 // SearcherConfigV0 holds the searcher configurations.
 type SearcherConfigV0 struct {
 	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool    `json:"smaller_is_better"`
+	SmallerIsBetter      *bool   `json:"smaller_is_better"`
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
@@ -48,8 +48,8 @@ func (s *SearcherConfigV0) UnmarshalJSON(data []byte) error {
 }
 
 // DefaultSource implements the Defaultable interface.
-func (c *SearcherConfigV0) DefaultSource() interface{} {
-	return schemas.UnionDefaultSchema(c)
+func (s *SearcherConfigV0) DefaultSource() interface{} {
+	return schemas.UnionDefaultSchema(s)
 }
 
 // Unit implements the model.InUnits interface.
@@ -111,11 +111,11 @@ func (g GridConfigV0) Unit() Unit {
 
 // SyncHalvingConfigV0 configures synchronous successive halving.
 type SyncHalvingConfigV0 struct {
-	Metric          string  `json:"metric"`
+	Metric          string   `json:"metric"`
 	SmallerIsBetter *bool    `json:"smaller_is_better"`
-	NumRungs        int     `json:"num_rungs"`
-	MaxLength       Length  `json:"max_length"`
-	Budget          Length  `json:"budget"`
+	NumRungs        int      `json:"num_rungs"`
+	MaxLength       Length   `json:"max_length"`
+	Budget          Length   `json:"budget"`
 	Divisor         *float64 `json:"divisor"`
 	TrainStragglers *bool    `json:"train_stragglers"`
 }
@@ -127,11 +127,11 @@ func (s SyncHalvingConfigV0) Unit() Unit {
 
 // AsyncHalvingConfigV0 configures asynchronous successive halving.
 type AsyncHalvingConfigV0 struct {
-	Metric              string  `json:"metric"`
+	Metric              string   `json:"metric"`
 	SmallerIsBetter     *bool    `json:"smaller_is_better"`
-	NumRungs            int     `json:"num_rungs"`
-	MaxLength           Length  `json:"max_length"`
-	MaxTrials           int     `json:"max_trials"`
+	NumRungs            int      `json:"num_rungs"`
+	MaxLength           Length   `json:"max_length"`
+	MaxTrials           int      `json:"max_trials"`
 	Divisor             *float64 `json:"divisor"`
 	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
 }
@@ -155,6 +155,7 @@ const (
 	ConservativeMode = "conservative"
 )
 
+// AdaptiveModePtr is like &AdaptiveMode("standard"), except it works.
 func AdaptiveModePtr(mode string) *AdaptiveMode {
 	tmp := AdaptiveMode(mode)
 	return &tmp
@@ -162,10 +163,10 @@ func AdaptiveModePtr(mode string) *AdaptiveMode {
 
 // AdaptiveConfigV0 configures an adaptive search.
 type AdaptiveConfigV0 struct {
-	Metric          string       `json:"metric"`
+	Metric          string        `json:"metric"`
 	SmallerIsBetter *bool         `json:"smaller_is_better"`
-	MaxLength       Length       `json:"max_length"`
-	Budget          Length       `json:"budget"`
+	MaxLength       Length        `json:"max_length"`
+	Budget          Length        `json:"budget"`
 	BracketRungs    *[]int        `json:"bracket_rungs"`
 	Divisor         *float64      `json:"divisor"`
 	TrainStragglers *bool         `json:"train_stragglers"`
@@ -180,10 +181,10 @@ func (a AdaptiveConfigV0) Unit() Unit {
 
 // AdaptiveSimpleConfigV0 configures an simplified adaptive search.
 type AdaptiveSimpleConfigV0 struct {
-	Metric          string       `json:"metric"`
+	Metric          string        `json:"metric"`
 	SmallerIsBetter *bool         `json:"smaller_is_better"`
-	MaxLength       Length       `json:"max_length"`
-	MaxTrials       int          `json:"max_trials"`
+	MaxLength       Length        `json:"max_length"`
+	MaxTrials       int           `json:"max_trials"`
 	Divisor         *float64      `json:"divisor"`
 	Mode            *AdaptiveMode `json:"mode"`
 	MaxRungs        *int          `json:"max_rungs"`
@@ -196,10 +197,10 @@ func (a AdaptiveSimpleConfigV0) Unit() Unit {
 
 // AdaptiveASHAConfigV0 configures an adaptive searcher for use with ASHA.
 type AdaptiveASHAConfigV0 struct {
-	Metric              string       `json:"metric"`
+	Metric              string        `json:"metric"`
 	SmallerIsBetter     *bool         `json:"smaller_is_better"`
-	MaxLength           Length       `json:"max_length"`
-	MaxTrials           int          `json:"max_trials"`
+	MaxLength           Length        `json:"max_length"`
+	MaxTrials           int           `json:"max_trials"`
 	BracketRungs        *[]int        `json:"bracket_rungs"`
 	Divisor             *float64      `json:"divisor"`
 	Mode                *AdaptiveMode `json:"mode"`
@@ -226,7 +227,7 @@ type PBTExploreConfig struct {
 // PBTConfigV0 configures a PBT search.
 type PBTConfigV0 struct {
 	Metric          string `json:"metric"`
-	SmallerIsBetter *bool   `json:"smaller_is_better"`
+	SmallerIsBetter *bool  `json:"smaller_is_better"`
 	PopulationSize  int    `json:"population_size"`
 	NumRounds       int    `json:"num_rounds"`
 	LengthPerRound  Length `json:"length_per_round"`

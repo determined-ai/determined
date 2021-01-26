@@ -10,46 +10,45 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/extensions"
 )
 
-// Schema defines some basic knowledge that helper functions like IsSane or
-// IsComplete need to operate.
+// Schema defines some basic knowledge needed by helper functions like SaneBytes or IsComplete.
+// Outside of testing, the Schema interface should always be defined in generated code.
 type Schema interface {
 	ParsedSchema() interface{}
 	SanityValidator() *jsonschema.Schema
 	CompletenessValidator() *jsonschema.Schema
 }
 
-// IsSane ensure that the schema is valid, modulo some fields which are
-// eventuallyRequired but not required.
-func IsSane(schema Schema) (bool, []error) {
-	byts, err := json.Marshal(schema)
-	if err != nil {
-		return false, []error{errors.Wrap(err, "json marshal failed")}
-	}
-
+// SaneBytes will ensure that bytes for a given schema object are valid.  Unlike IsComplete,
+// SaneBytes operates on a byte array, because if you unmarshal into the object and then check, you
+// will already have silently dropped the unrecognized fields.
+//
+// The Schema object is only used for its type, and it may be nil.
+func SaneBytes(schema Schema, byts []byte) error {
 	validator := schema.SanityValidator()
-	err = validator.Validate(bytes.NewReader(byts))
-	if err == nil {
-		return true, nil
+	err := validator.Validate(bytes.NewReader(byts))
+	if err != nil {
+		err = errors.New(JoinErrors(GetRenderedErrors(err, byts), "\n"))
+		return errors.Wrap(err, "config is invalid")
 	}
-
-	return false, GetRenderedErrors(err, byts)
+	return nil
 }
 
 // IsComplete ensures that the schema is totally valid, including
 // eventuallyRequired fields.
-func IsComplete(schema Schema) (bool, []error) {
+func IsComplete(schema Schema) error {
 	byts, err := json.Marshal(schema)
 	if err != nil {
-		return false, []error{errors.Wrap(err, "json marshal failed")}
+		return errors.Wrap(err, "json marshal failed")
 	}
 
 	validator := schema.CompletenessValidator()
 	err = validator.Validate(bytes.NewReader(byts))
-	if err == nil {
-		return true, nil
+	if err != nil {
+		err = errors.New(JoinErrors(GetRenderedErrors(err, byts), "\n"))
+		return errors.Wrap(err, "config is invalid or incomplete")
 	}
 
-	return false, GetRenderedErrors(err, byts)
+	return nil
 }
 
 var sanityValidators = map[string]*jsonschema.Schema{}
@@ -68,6 +67,7 @@ func newCompiler() *jsonschema.Compiler {
 	return compiler
 }
 
+// GetSanityValidator returns a jsonschema validator for bytes from a particular URL.
 func GetSanityValidator(url string) *jsonschema.Schema {
 	// Check if we have a pre-compiled validator already.
 	if validator, ok := sanityValidators[url]; ok {
@@ -95,6 +95,7 @@ func GetSanityValidator(url string) *jsonschema.Schema {
 	return validator
 }
 
+// GetCompletenessValidator returns a jsonschema validator for bytes from a particular URL.
 func GetCompletenessValidator(url string) *jsonschema.Schema {
 	if validator, ok := completenessValidators[url]; ok {
 		return validator

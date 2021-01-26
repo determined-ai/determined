@@ -111,8 +111,8 @@ func (t *TensorboardStorageConfigV0) UnmarshalJSON(data []byte) error {
 }
 
 // DefaultSource implements the Defaultable interface.
-func (c *TensorboardStorageConfigV0) DefaultSource() interface{} {
-	return schemas.UnionDefaultSchema(c)
+func (t *TensorboardStorageConfigV0) DefaultSource() interface{} {
+	return schemas.UnionDefaultSchema(t)
 }
 
 // SharedFSConfigV0 is a legacy config.

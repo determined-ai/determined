@@ -22,8 +22,8 @@ func TestConfigValidate(t *testing.T) {
 	}
 	var environment expconf.EnvironmentConfig
 	resources := ResourcesConfig{
-		Slots:         1,
-		Weight:        1,
+		Slots:  1,
+		Weight: 1,
 	}
 
 	tests := []testCase{

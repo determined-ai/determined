@@ -992,8 +992,8 @@ WHERE id = $1`, id)
 	}
 
 	// Make sure it is fully valid before proceeding.
-	if ok, errs := schemas.IsComplete(&config); !ok {
-		err = errors.New(schemas.JoinErrors(errs, "\n"))
+	err = schemas.IsComplete(&config)
+	if err != nil {
 		return config, errors.WithStack(err)
 	}
 

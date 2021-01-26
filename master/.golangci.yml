@@ -10,7 +10,9 @@ run:
 
   # Exclude generated code.
   skip-files:
-    pkg/schemas/expconf/v1_gen.go
+    - pkg/schemas/schema_gen.go
+    - pkg/schemas/expconf/latest.go
+    - pkg/schemas/expconf/schema_gen.go
 
 output:
   # Linter output format.

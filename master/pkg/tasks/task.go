@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
@@ -176,9 +177,9 @@ func TrialDockerMounts(exp StartContainer) []mount.Mount {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: sharedFS.HostPath,
-			Target: model.DefaultSharedFSContainerPath,
+			Target: expconf.DefaultSharedFSContainerPath,
 			BindOptions: &mount.BindOptions{
-				Propagation: model.DefaultSharedFSPropagation,
+				Propagation: expconf.DefaultSharedFSPropagation,
 			},
 		})
 	}
@@ -346,9 +347,9 @@ func GCDockerMounts(gcc GCCheckpoints) []mount.Mount {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: sharedFS.HostPath,
-			Target: model.DefaultSharedFSContainerPath,
+			Target: expconf.DefaultSharedFSContainerPath,
 			BindOptions: &mount.BindOptions{
-				Propagation: model.DefaultSharedFSPropagation,
+				Propagation: expconf.DefaultSharedFSPropagation,
 			},
 		})
 	}

@@ -129,7 +129,7 @@ func merge(obj reflect.Value, src reflect.Value, name string) {
 	mergeOne(obj, src, name, objAllocated)
 
 	// Recurse into structs.
-	if src.Kind() == reflect.Struct{
+	if src.Kind() == reflect.Struct {
 		// Detect what to do with union fields.  There are 4 important cases:
 		//  1. src has a union member, obj does not -> recurse into that field.
 		//  2. src has a union member, obj has the same one -> recurse into that field.

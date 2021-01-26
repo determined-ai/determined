@@ -1,19 +1,18 @@
 package expconf
 
 import (
-	"bytes"
-	"fmt"
-	"time"
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
+	"time"
 
-	"github.com/pkg/errors"
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-// ExperimentConfigV0 is a versioned config.
+// ExperimentConfigV0 is a versioned experiment config.
 type ExperimentConfigV0 struct {
 	// Fields which can be omitted or defined at the cluster level.
 	BindMounts               *BindMountsConfigV0         `json:"bind_mounts"`
@@ -54,11 +53,12 @@ func runtimeDefaultDescription(descriptionField **string) {
 	}
 }
 
+// RuntimeDefaults implements the RuntimeDefaultable interface.
 func (e *ExperimentConfigV0) RuntimeDefaults() {
 	runtimeDefaultDescription(&e.Description)
 }
 
-// shim will convert a valid, complete V0 config into a V1 config.
+// shim will convert a valid-but-maybe-incomplete V0 config into a V1 config.
 func (e *ExperimentConfigV0) shim(out *ExperimentConfigV1) error {
 	// Set obsolete fields to nil so they do not show up in the marshaled config.
 	// This works because the only transitions between V0 and V1 were removing obselete fields.
@@ -81,10 +81,9 @@ func (e *ExperimentConfigV0) shim(out *ExperimentConfigV1) error {
 	}
 
 	// Ensure that the v1 config is valid; it may be stricter.
-	validator := e.SanityValidator()
-	err = validator.Validate(bytes.NewReader(byts))
-	if err == nil {
-		return errors.New(schemas.JoinErrors(schemas.GetRenderedErrors(err, byts), "\n"))
+	err = schemas.SaneBytes(out, byts)
+	if err != nil {
+		return errors.Wrap(err, "shimmed v0 config is not a valid v1 config")
 	}
 
 	err = json.Unmarshal(byts, out)
@@ -95,7 +94,7 @@ func (e *ExperimentConfigV0) shim(out *ExperimentConfigV1) error {
 	return nil
 }
 
-// ExperimentConfig is the latest versioned config.
+// ExperimentConfigV1 is a versioned experiment config.
 type ExperimentConfigV1 struct {
 	// Fields which can be omitted or defined at the cluster level.
 	BindMounts               *BindMountsConfigV0        `json:"bind_mounts"`
@@ -124,6 +123,7 @@ type ExperimentConfigV1 struct {
 	Searcher        SearcherConfigV0  `json:"searcher"`
 }
 
+// RuntimeDefaults implements the RuntimeDefaultable interface.
 func (e *ExperimentConfigV1) RuntimeDefaults() {
 	runtimeDefaultDescription(&e.Description)
 }
@@ -136,10 +136,9 @@ func (e *ExperimentConfig) Unit() Unit {
 // Value implements the driver.Valuer interface.
 func (e ExperimentConfig) Value() (driver.Value, error) {
 	// Validate the object before passing it to the database.
-	if ok, errs := schemas.IsComplete(&e); !ok {
-		return nil, errors.New(
-			"refusing to save invalid experiment config:\n" + schemas.JoinErrors(errs, "\n"),
-		)
+	err := schemas.IsComplete(&e)
+	if err != nil {
+		return nil, errors.Wrap(err, "refusing to save invalid experiment config")
 	}
 
 	byts, err := json.Marshal(e)
@@ -169,7 +168,7 @@ type InUnits interface {
 	Unit() Unit
 }
 
-// Labels holds the set of labels on the experiment.
+// LabelsV0 holds the set of labels on the experiment.
 type LabelsV0 map[string]bool
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -203,14 +202,14 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 
 // ResourcesConfigV0 configures experiment resource usage.
 type ResourcesConfigV0 struct {
-	MaxSlots       *int    `json:"max_slots"`
+	MaxSlots       *int     `json:"max_slots"`
 	SlotsPerTrial  *int     `json:"slots_per_trial"`
 	Weight         *float64 `json:"weight"`
 	NativeParallel *bool    `json:"native_parallel,omitempty"`
-	ShmSize        *int    `json:"shm_size,omitempty"`
+	ShmSize        *int     `json:"shm_size,omitempty"`
 	AgentLabel     *string  `json:"agent_label"`
 	ResourcePool   *string  `json:"resource_pool"`
-	Priority       *int    `json:"priority"`
+	Priority       *int     `json:"priority"`
 }
 
 // OptimizationsConfigV0 is a legacy config value.
@@ -248,8 +247,8 @@ func (b *BindMountsConfig) Merge(src interface{}) {
 
 // BindMountV0 configures trial runner filesystem bind mounts.
 type BindMountV0 struct {
-	HostPath      string `json:"host_path"`
-	ContainerPath string `json:"container_path"`
+	HostPath      string  `json:"host_path"`
+	ContainerPath string  `json:"container_path"`
 	ReadOnly      *bool   `json:"read_only"`
 	Propagation   *string `json:"propagation"`
 }
@@ -259,6 +258,7 @@ type ReproducibilityConfigV0 struct {
 	ExperimentSeed *uint32 `json:"experiment_seed"`
 }
 
+// RuntimeDefaults implements the RuntimeDefaultable interface.
 func (r *ReproducibilityConfigV0) RuntimeDefaults() {
 	if r.ExperimentSeed == nil {
 		t := uint32(time.Now().Unix())

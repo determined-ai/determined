@@ -5,8 +5,8 @@ import (
 	"math"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,

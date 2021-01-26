@@ -5,7 +5,7 @@ import (
 )
 
 // UnionDefaultSchema is a helper function for defining DefaultSchema on union-like objects.
-// It searches for the non-nil union memeber and uses that member to define defaults for the common
+// It searches for the non-nil union member and uses that member to define defaults for the common
 // fields.  In short it turns this:
 //
 //     func (c *CheckpointStorageConfigV0) DefaultSource {
@@ -55,7 +55,7 @@ func UnionDefaultSchema(in interface{}) interface{} {
 		// Get a source of defaults from a Defaultable or Schema interface.
 		if defaultable, ok := field.Interface().(Defaultable); ok {
 			return defaultable.DefaultSource()
-		}else if schema, ok := field.Interface().(Schema); ok {
+		} else if schema, ok := field.Interface().(Schema); ok {
 			return schema.ParsedSchema()
 		}
 	}

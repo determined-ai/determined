@@ -3,13 +3,13 @@ package schemas
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
-	"reflect"
 
-	"github.com/pkg/errors"
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	"github.com/santhosh-tekuri/jsonschema/v2"
 )
 
@@ -22,9 +22,9 @@ type (
 	JSONArray = []interface{}
 )
 
-// JsonFromYaml takes yaml-formatted bytes and converts them to json-format for the purpose of
+// JSONFromYaml takes yaml-formatted bytes and converts them to json-format for the purpose of
 // applying json-schema validation.
-func JsonFromYaml(byts []byte) ([]byte, error) {
+func JSONFromYaml(byts []byte) ([]byte, error) {
 	var blob JSON
 	err := yaml.Unmarshal(byts, &blob)
 	if err != nil {
@@ -129,7 +129,7 @@ func derefType(typ reflect.Type) reflect.Type {
 }
 
 func derefInput(val reflect.Value) (reflect.Value, bool) {
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
 		if val.IsZero() {
 			return val, false
 		}
@@ -140,7 +140,7 @@ func derefInput(val reflect.Value) (reflect.Value, bool) {
 
 func derefOutput(val reflect.Value) (reflect.Value, bool) {
 	allocated := false
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
 		if val.IsZero() {
 			val.Set(reflect.New(val.Type().Elem()))
 			allocated = true

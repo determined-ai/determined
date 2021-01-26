@@ -7,7 +7,7 @@ Linting:
 
 Validation:
   - Validation happens in two steps:
-    - Sanity check: make sure everything is parsable
+    - Sanity check: make sure everything is parsble
     - Validation: make sure everything is present
   - Sanity check is applied to raw user inputs
   - Validation is applied after cluster defaults have been applied
@@ -30,27 +30,6 @@ Default values:
   - otherwise, there's no way to do client-side defaults, as the master would
     need to be involved in deciding all default values.
 
-  const.yaml:
-
-    hyperparameters:
-      global_batch_size: 100
-
-  Python API (for us and for users):
-
-    exp_conf.min_validation_period.batches        # returns 0
-    exp_conf.min_validation_period                # returns Length(batches=0)
-
-    exp_conf.json() -> return a dictionary
-
-  Golang API (for us):
-
-    1. save what the user provides as raw_exp_conf and Raw=self
-    2. create an exp_conf with defaults and Raw=raw_exp_conf
-
-    exp_conf.MinValidationPeriod.Batches
-    exp_conf.Raw.MinValidationPeriod        # would be nil
-    exp_conf.Raw.Raw -> exp_conf.Raw
-
 Customization strategy:
   - Json-schema alone does not provide the behavior we want out of the box
   - Most json-schema libraries have great support for custom validation logic
@@ -61,11 +40,30 @@ Customization strategy:
     - disallowProperties: Custom messages when disallowing properties
     - eventuallyRequired: Support two-step validation
     - union: Excellent error messages when validating union types
+    - optionalRef: like $ref, but only enforced for non-null values
   - The canonical implementations (with thorough comments) may be found in
     determined_common/schemas/extensions.py
 
-V1 changes:
- - environments must define both GPU and CPU variants if they go that route
- - strict additionalProperties on at least resources config
- - nested hyperparameters
-
+Migrating the experiment config:
+  - See pkg/schemas/expconf/parse.go for an example of shimming logic.
+  - Bumping the version is only necessary when previously-valid configs become
+    no longer valid.  For instance, removing a once-available fields requires a
+    version bump, but appending a new field or accepting a new type in an
+    existing field does not.
+  - To bump versions, take the following steps (assume you are adding v2):
+      - create a new `v2` directory, like `schemas/expconf/v2`
+      - copy the json schemas files you are updating from the v1 directory into
+        the v2 directory.  Also copy any files which referenced any of those
+        files; for example, if you update the v1/hyperparameters.json, you'll
+        have to copy v1/experiment-config.json as well since its $ref will need
+        to now point to the v2/hyperparameters.json.
+      - Populate test_cases/v2 with test cases to the new json schemas you just
+        made.
+      - Make the golang changes:
+          - Create the corresponding objects in pkg/schemas/expconf, such as a
+            new ExperimentConfigV2 and new HyperparametersV2
+          - update expconf/latest.go to point to the correct new object
+          - update any uses of that object throughout the codebase to reflect
+            the new structure.
+          - ensure that `make gen && go test ./pkg/schemas/expconf` passes
+      - Currently there are no python or JS changes needed.

@@ -1,10 +1,8 @@
 package internal
 
 import (
-	"strings"
 	"testing"
 	"time"
-	"unicode"
 
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
@@ -95,18 +93,6 @@ scheduler:
 	err := yaml.Unmarshal([]byte(raw), &unmarshaled, yaml.DisallowUnknownFields)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, unmarshaled, expected)
-}
-
-func removeAllWhitespace(s string) string {
-	var b strings.Builder
-	b.Grow(len(s))
-	for _, r := range s {
-		if unicode.IsSpace(r) {
-			continue
-		}
-		b.WriteRune(r)
-	}
-	return b.String()
 }
 
 func TestUnmarshalConfigWithExperiment(t *testing.T) {

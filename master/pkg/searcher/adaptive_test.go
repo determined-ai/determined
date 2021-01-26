@@ -38,7 +38,10 @@ func TestAdaptiveSearcherReproducibility(t *testing.T) {
 	config := expconf.AdaptiveConfig{
 		Metric: defaultMetric, SmallerIsBetter: ptrs.BoolPtr(true),
 		MaxLength: expconf.NewLengthInBatches(6400), Budget: expconf.NewLengthInBatches(102400),
-		Divisor: ptrs.Float64Ptr(4), TrainStragglers: ptrs.BoolPtr(true), Mode: expconf.AdaptiveModePtr(expconf.AggressiveMode), MaxRungs: ptrs.IntPtr(3),
+		Divisor:         ptrs.Float64Ptr(4),
+		TrainStragglers: ptrs.BoolPtr(true),
+		Mode:            expconf.AdaptiveModePtr(expconf.AggressiveMode),
+		MaxRungs:        ptrs.IntPtr(3),
 	}
 	schemas.FillDefaults(&config)
 	gen := func() SearchMethod { return newAdaptiveSearch(config) }

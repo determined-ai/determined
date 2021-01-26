@@ -1,8 +1,8 @@
 package searcher
 
 import (
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // tournamentSearch runs multiple search methods in tandem. Callbacks for completed operations

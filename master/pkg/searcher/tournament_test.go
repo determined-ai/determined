@@ -10,7 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-
 func TestRandomTournamentSearcher(t *testing.T) {
 	subConfig1 := expconf.RandomConfig{
 		MaxTrials: 2,

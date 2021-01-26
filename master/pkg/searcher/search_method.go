@@ -2,8 +2,8 @@ package searcher
 
 import (
 	"github.com/determined-ai/determined/master/pkg/nprand"
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 type context struct {

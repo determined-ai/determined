@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -220,7 +221,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 	notebookPorts := map[string]int{"notebook": port}
 	portVar := fmt.Sprintf("NOTEBOOK_PORT=%d", port)
 
-	config.Environment.Ports = &notebookPorts
+	schemas.Merge(&config.Environment.Ports, notebookPorts)
 	*config.Environment.EnvironmentVariables.CPU = append(
 		*config.Environment.EnvironmentVariables.CPU, portVar)
 	*config.Environment.EnvironmentVariables.GPU = append(
