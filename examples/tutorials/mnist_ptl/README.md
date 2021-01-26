@@ -15,6 +15,7 @@ user flow:
   - do we support these with Horovad?
   - ddp seems to differ from dp and ddp2 (no batch parts)
   - https://pytorch-lightning.readthedocs.io/en/latest/multi_gpu.html#multi-gpu
+- What is AMP
 
 ## LightningModule
 
@@ -31,6 +32,7 @@ methods:
 - `configure_optimizers`: required; 
   - only a single optimizer case is supported
   - QUESTION: can return combination of optimizers and lr schedulers. what do we support here.
+  - commit 183601649d1da6e5d941d0192718f3848f9e5625 multiple optimizer support for pytorch
 
 - `forward`: required; inference only
 - `freeze`: NUD; freeze  all params for inference
@@ -81,39 +83,46 @@ QUESTION: where does each of these get set. if it's the trainer how do we set it
 - `use_tpu`
 
 hooks:
-- `backward`
-- `get_progress_bar_dict`
-- `manual_backward`
-- `on_after_backward`
-- `on_before_zero_grad`
-- `on_fit_start`
-- `on_fit_end`
-- `on_load_checkpoint`
-- `on_save_checkpoint`
-- `on_pretrain_routine_start`
-- `on_pretrain_routine_end`
-- `on_test_batch_start`
-- `on_test_batch_end`
-- `on_test_epoch_start`
-- `on_test_epoch_end`
-- `on_train_batch_start`
-- `on_train_batch_end`
-- `on_train_epoch_start`
-- `on_train_epoch_end`
-- `on_validation_batch_start`
-- `on_validation_batch_end`
-- `on_validation_epoch_start`
-- `on_validation_epoch_end`
-- `optimizer_step`: to control how often optimizers step
+- `backward`: QUESTION how does it related to `manual_backward`
+- `get_progress_bar_dict`: QUESTION do we support the default progress bar? if so we need this as well
+- `manual_backward`: TODO support
+- `on_after_backward`: TODO support
+- `on_before_zero_grad`: QUESTION support? what's our pytorch support
+- `on_fit_start`: QUESTION support?
+- `on_fit_end`QUESTION support?
+- `on_load_checkpoint`: QUESTION do we support this? how is our checkpoint generated.
+- `on_save_checkpoint`: QUESTION do we support this?
+- `on_pretrain_routine_start`: TODO what's the pretrain routine
+- `on_pretrain_routine_end`: same
+- `on_test_batch_start`: not supported
+- `on_test_batch_end`: not supported
+- `on_test_epoch_start`: not supported
+- `on_test_epoch_end`: not supported
+- `on_train_batch_start`: TODO support
+- `on_train_batch_end`: TODO support
+- `on_train_epoch_start`: QUESTION epoch hooks for PytorchTrial
+- `on_train_epoch_end`: QUESTION epoch hooks for PytorchTrial
+- `on_validation_batch_start`: TODO support
+- `on_validation_batch_end`: TODO support
+- `on_validation_epoch_start`: QUESTION epoch hooks for PytorchTrial
+- `on_validation_epoch_end`: QUESTION epoch hooks for PytorchTrial
+- `optimizer_step`: to control how often optimizers step. to adjust the default way the Trainer calls each optimizer.
+  - affects train_batch
+  - TODO support. seems like we need to support
 - `optimizer_zero_grad`
-- `prepare_data`
-- `setup`
-- `tbptt_split_batch`
-- `teardown`
-- `train_dataloader`
-- `val_dataloader`
-- `test_dataloader`
-- `transfer_batch_to_device`
+- `prepare_data`: like datamodule
+- `setup`: like teardown but on the begining. runs on every process in ddp
+- `tbptt_split_batch`: When using truncated backpropagation through time. Huh?
+  - QUESTION do we support?
+- `teardown`: runs after fit and test stages
+  - QUESTION corresponding hook
+- `train_dataloader` alternative to datamodule
+  - TODO support
+- `val_dataloader`: alternative to datamodule
+  - TODO support
+- `test_dataloader`: not supported
+- `transfer_batch_to_device` added if dataloader returns custom data structure
+  - QUESTION do we support?
 
 ## DataModule
 
