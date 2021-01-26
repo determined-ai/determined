@@ -1,11 +1,14 @@
 DO $$
     BEGIN
-        IF EXISTS (SELECT 1
-                  FROM information_schema.columns
-                  WHERE table_schema = 'public'
-                    AND table_name = 'trial_logs'
-                    AND column_name = 'id'
-                    AND numeric_precision = 64) THEN
+        IF NOT EXISTS (SELECT 1
+				  FROM public.trial_logs
+				  WHERE id > 2147483647)
+		    AND EXISTS (SELECT 1
+                                          FROM information_schema.columns
+                                          WHERE table_schema = 'public'
+                                            AND table_name = 'trial_logs'
+                                            AND column_name = 'id'
+                                            AND numeric_precision = 64) THEN
             ALTER TABLE public.trial_logs ADD COLUMN id_new int4 NULL;
             UPDATE public.trial_logs SET id_new = id;
             ALTER TABLE public.trial_logs DROP CONSTRAINT trial_logs_pkey;
