@@ -20,6 +20,7 @@ const (
 	defaultFitPolicy = best
 )
 
+// DefaultSchedulerConfig returns the default fair share configuration for the scheduler.
 func DefaultSchedulerConfig() *SchedulerConfig {
 	return &SchedulerConfig{
 		FairShare:     &FairShareSchedulerConfig{},

@@ -9,7 +9,6 @@ import (
 
 const defaultResourcePoolName = "default"
 
-
 // ResourceManagerConfig hosts configuration fields for the resource manager.
 type ResourceManagerConfig struct {
 	AgentRM      *AgentResourceManagerConfig      `union:"type,agent" json:"-"`
