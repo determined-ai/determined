@@ -11,7 +11,7 @@ hyperparameters:
     minval: 0.5
     maxval: 0.9
   metrics_sigma: 0
-  chaos_probability: 0.05
+  chaos_probability: 0.005
 searcher:
   name: adaptive
   metric: validation_error

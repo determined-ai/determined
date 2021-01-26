@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"bytes"
 	"strconv"
 	"strings"
 	"testing"
@@ -225,8 +226,8 @@ func checkValueSimulation(
 	var nextTrialID int
 	var pending []Operation
 
-	trialIDs := map[RequestID]int{}
-	trialOpIdx := map[RequestID]int{}
+	trialIDs := map[model.RequestID]int{}
+	trialOpIdx := map[model.RequestID]int{}
 
 	ctx := context{
 		rand:    nprand.New(0),
@@ -242,7 +243,7 @@ func checkValueSimulation(
 
 	for len(pending) > 0 {
 		var exitEarly bool
-		var requestID RequestID
+		var requestID model.RequestID
 		operation := pending[0]
 		pending = pending[1:]
 
@@ -385,10 +386,27 @@ func simulateOperationComplete(
 		if err != nil {
 			return nil, errors.Wrap(err, "checkpointCompleted")
 		}
+		if err = saveAndReload(method); err != nil {
+			return nil, errors.Wrap(err, "error saving searcher state after checkpoint")
+		}
 
 	default:
 		return nil, errors.Errorf("invalid runnable %q", operation)
 	}
 
 	return ops, nil
+}
+
+func saveAndReload(method SearchMethod) error {
+	// take the state back and forth through a round of serialization to test.
+	if state, err := method.Snapshot(); err != nil {
+		return err
+	} else if err := method.Restore(state); err != nil {
+		return err
+	} else if state2, err := method.Snapshot(); err != nil { // Test restore is correct.
+		return err
+	} else if !bytes.Equal(state, state2) {
+		return errors.New("successive snapshots were not identical")
+	}
+	return nil
 }

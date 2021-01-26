@@ -263,6 +263,7 @@ func (e *Experiment) Transition(state State) (bool, error) {
 // Trial represents a row from the `trials` table.
 type Trial struct {
 	ID                    int        `db:"id"`
+	RequestID             RequestID  `db:"request_id"`
 	ExperimentID          int        `db:"experiment_id"`
 	State                 State      `db:"state"`
 	StartTime             time.Time  `db:"start_time"`
@@ -275,11 +276,13 @@ type Trial struct {
 // NewTrial creates a new trial in the active state.  Note that the trial ID
 // will not be set.
 func NewTrial(
+	requestID RequestID,
 	experimentID int,
 	hparams JSONObj,
 	warmStartCheckpointID *int,
 	trialSeed int64) *Trial {
 	return &Trial{
+		RequestID:             requestID,
 		ExperimentID:          experimentID,
 		State:                 ActiveState,
 		StartTime:             time.Now().UTC(),
@@ -512,14 +515,6 @@ func (t TrialLogBatch) ForEach(f func(interface{}) error) error {
 		}
 	}
 	return nil
-}
-
-// SearcherEvent represents a row from the `searcher_events` table.
-type SearcherEvent struct {
-	ID           int     `db:"id"`
-	ExperimentID int     `db:"experiment_id"`
-	EventType    string  `db:"event_type"`
-	Content      JSONObj `db:"content"`
 }
 
 // MetricType denotes what type of step (training / validation) a metric is from.
