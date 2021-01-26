@@ -11,7 +11,7 @@
 Version 0.13.13
 ===============
 
-**Release Date:** January 21, 2021
+**Release Date:** January 25, 2021
 
 **New Features**
 
