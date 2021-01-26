@@ -159,6 +159,11 @@ def extract_columns(output: str, column_indices: List[int]) -> List[Tuple[str, .
         if not line:
             continue
         columns = line.split("|")
+        print("***")
+        print(line)
+        print(columns)
+        print(column_indices)
+        print("---")
         parsed.append(tuple(columns[i].strip() for i in column_indices))
 
     return parsed
@@ -449,6 +454,7 @@ def test_command_creation_and_listing(auth: Authentication) -> None:
 
     with logged_in_user(creds1):
         output = extract_columns(det_run(["cmd", "list"]), [0, 1])
+        print(output)
         assert (command_id1, creds1.username) in output
         assert (command_id2, creds2.username) not in output
 
