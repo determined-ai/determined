@@ -8,6 +8,45 @@
  Version 0.13
 **************
 
+Version 0.13.13
+===============
+
+**Release Date:** January 25, 2021
+
+**New Features**
+
+-  Update experiment details pages to include a learning curve
+   visualization. This will enable a comparison of hyperparameter
+   performance among many different trials within an experiment.
+
+-  Support Elasticsearch as an alternative backend for logging. Read
+   more about :ref:`elasticsearch-logging-backend` to see if it's
+   appropriate for your Determined deployment.
+
+**Improvements**
+
+-  **Breaking Change:** REST API: Update trial logs API to return string
+   IDs.
+
+-  WebUI: Enable filtering of trial logs by agent, container, rank, log
+   level, and timestamp.
+
+-  WebUI: Improve section contrast on all pages.
+
+-  Deployment: Add the command ``det-deploy aws list``, which shows all
+   the CloudFormation stacks that are managed by ``det-deploy aws``
+   (using the tag ``managed-by: determined``). This only applies to new
+   deployments since this version, not previous deployments.
+
+-  Update examples to use the new PyTorch APIs.
+
+**Deprecated Features**
+
+-  The old PyTorch API was deprecated in 0.12.13 and will be removed in
+   the next release. See the :ref:`migration guide
+   <migration-guide-flexible-primitives>` for details on updating your
+   PyTorch model code to use the new API.
+
 Version 0.13.12
 ===============
 

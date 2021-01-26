@@ -1,6 +1,0 @@
-:orphan:
-
-**IMPROVEMENTS**
-
--  **Breaking Change**: API: Update Trial Logs API to return string IDs
-   to accommodate when Elasticsearch is used as the logging backend.
