@@ -415,8 +415,29 @@ The master supports the following configuration settings:
             available resources depending on the resource they require
             and their weight.
 
-         -  ``priority``: Tasks are scheduled in the order of the order
-            in which they arrive at the cluster.
+         -  ``round_robin``: Tasks are scheduled in the order of the
+               order which they arrive at the cluster. in which they
+               arrive at the cluster.
+
+         -  ``priority``: Tasks are scheduled based on their
+               priority, which can range from the values 1 to 99
+               inclusive. Lower priority numbers indicate higher
+               priority tasks. A lower priority task will never be
+               scheduled while a higher priority task is pending.
+               Zero-slot tasks (e.g., cpu-only notebooks, tensorboards)
+               are prioritized separately from tasks requiring slots
+               (e.g., experiments running on GPUs). Task priority can be
+               assigned using the the ``resources.priority`` field. If a
+               task does not specify a priority it is assigned the
+               ``default_priority``.
+
+               -  ``preemption``: Specifies whether lower priority tasks
+                  should be preempted to schedule higher priority tasks.
+                  Tasks are preempted in order of lowest priority first.
+
+               -  ``default_priority``: The priority that is assigned to
+                  tasks that do not specify a priority. Can be
+                  configured to 1 to 99 inclusively. Defaults to 42.
 
       -  ``fitting_policy``: The scheduling policy to use when assigning
          tasks to agents in the cluster. Defaults to ``best``.
