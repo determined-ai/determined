@@ -7,16 +7,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
-// DefaultRPsConfig returns the default resources pools configuration.
-func DefaultRPsConfig() *ResourcePoolsConfig {
-	return &ResourcePoolsConfig{
-		ResourcePools: []ResourcePoolConfig{{
-			PoolName:                 defaultResourcePoolName,
-			MaxCPUContainersPerAgent: 100,
-		}},
-	}
-}
-
 // DefaultRPConfig returns the default resources pool configuration.
 func defaultRPConfig() *ResourcePoolConfig {
 	return &ResourcePoolConfig{

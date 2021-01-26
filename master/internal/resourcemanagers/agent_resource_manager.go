@@ -115,7 +115,6 @@ func (a *agentResourceManager) createResourcePool(
 		ctx.Log().Infof("pool %s using global scheduling config", config.PoolName)
 	}
 
-
 	rp := NewResourcePool(
 		&config,
 		cert,
