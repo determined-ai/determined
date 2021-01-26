@@ -197,6 +197,16 @@ interface ExperimentHyperParam {
 
 export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;
 
+export enum ExperimentSearcherName {
+  AdaptiveAdvanced = 'adaptive',
+  AdaptiveAsha = 'adaptive_asha',
+  AdaptiveSimple = 'adaptive_simple',
+  Grid = 'grid',
+  Pbt = 'pbt',
+  Random = 'random',
+  Single = 'single',
+}
+
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
@@ -209,6 +219,7 @@ export interface ExperimentConfig {
   };
   searcher: {
     metric: string;
+    name: ExperimentSearcherName;
     smallerIsBetter: boolean;
   };
 }

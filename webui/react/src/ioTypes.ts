@@ -3,7 +3,7 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointState, CheckpointStorageType, CommandState, LogLevel, RunState,
+  CheckpointState, CheckpointStorageType, CommandState, ExperimentSearcherName, LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -259,6 +259,8 @@ const ioExpHParam = io.type({
 export const ioHyperparameters = io.record(io.string, ioExpHParam);
 export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;
 
+const experimentSearcherName: Record<string, null> = Object.values(ExperimentSearcherName)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: optional(ioCheckpointStorage),
@@ -269,6 +271,7 @@ export const ioExperimentConfig = io.type({
   resources: ioExpResources,
   searcher: io.type({
     metric: io.string,
+    name: io.keyof(experimentSearcherName),
     smaller_is_better: io.boolean,
   }),
 });

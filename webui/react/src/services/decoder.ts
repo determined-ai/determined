@@ -171,6 +171,7 @@ export const ioToExperimentConfig =
     resources: {},
     searcher: {
       ...io.searcher,
+      name: io.searcher.name as types.ExperimentSearcherName,
       smallerIsBetter: io.searcher.smaller_is_better,
     },
   };

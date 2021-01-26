@@ -88,7 +88,7 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
   const config = {
     description: experimentTask.name,
     resources: {},
-    searcher: { metric: 'val_error', smallerIsBetter: true },
+    searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
   };
   return {
     ...experimentTask,
@@ -106,7 +106,7 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
       description: experimentTask.name,
       hyperparameters: {},
       resources: {},
-      searcher: { metric: 'val_error', smallerIsBetter: true },
+      searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
     },
     configRaw: config,
     id: id,
