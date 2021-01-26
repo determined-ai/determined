@@ -11,11 +11,19 @@ user flow:
 
 ## QUESTION
 
-- What are dp, ddp2: data paraller and dist data prallel
+- What are dp, ddp2: data parallel and dist data prallel: don't directly support these but we do 
   - do we support these with Horovad?
   - ddp seems to differ from dp and ddp2 (no batch parts)
   - https://pytorch-lightning.readthedocs.io/en/latest/multi_gpu.html#multi-gpu
-- What is AMP
+- What is AMP: automatic mixed precision
+
+
+## Resp
+
+- no dp ddp 2
+- globalbatch = local batch * number of gpus
+- for anything we don't support print warning. use our moneky patching library
+  - monkey_patch.py
 
 ## LightningModule
 
@@ -31,34 +39,47 @@ check the signatures
 methods:
 - `configure_optimizers`: required; 
   - only a single optimizer case is supported
-  - QUESTION: can return combination of optimizers and lr schedulers. what do we support here.
+    - TODO figure out the other cases: support at least what's supported in pytorch trial.
   - commit 183601649d1da6e5d941d0192718f3848f9e5625 multiple optimizer support for pytorch
 
 - `forward`: required; inference only
 - `freeze`: NUD; freeze  all params for inference
+  - r: no direct work
 - `log`: NUD; can be called to log on_step or on_epoch with reduce_fx
+  - r: exclude or print a warning. or have them simply print
 - `log_dict`: NUD; can be called to log on_step or on_epoch with reduce_fx
+  - r: exclude or print a warning. or have them simply print
 - `print`: NUD;
+    - r: exclude or print a warning. or have them simply print
 - `save_hyperparameters`: NUD; saves model inputs in model.hparams. eg determined context?
   - QUESTION: do we have this work with det context?
+  - no work needed? `get_hparam`. TODO check source code
 - `test_step`: unsupported in determined
 - `test_step_end`: unsupported in determined
 - `test_epoch_end`: unsupported in determined
-- `to_onnx`: NUD; given a file_path save in onxx format
-  - QUESTION: support? in checkpoint?
+- `to_onnx`: NUD; given a file_path save in onnx format
+  - QUESTION: support? in checkpoint? do we save arbitrary files in checkpoint.
+  - potentially out of scope
 - `to_torchscript`: NUD; export as torchscript
+  - same as `to_onnx`
 - `training_step`: required; full training loop
-  - QUESTION hiddens and optimizer index arguments
+  - QUESTION hiddens: passed in for bptt (rnn)
+    - not supported TODO create pytorch trial ticket for supporting?
+  - optimizer index arguments this is todo
 - `training_step_end`
   - used for softmax or NCE loss
   - in dp or ddp2: this will be called with `[training_step(part) for part in batch_parts]`
   - QUESTION do we support dp, ddp2
+  - TODO checkout trainer sourcecode.
 - `training_epoch_end`: use this in case you need to do something with all the outputs for every training_step.
   - QUESTION: do we have such a hook in PyTorch trial
+  - no support in `pytorch/_callback`.
 - `unfreeze`: NUD; unfreeze all params
+  - r: no direct work. checkout trainer for freeze/unfreeze around trainstep
 - `validation_step`
   - TODO need batch index.
   - QUESTION: would we support multiple validation dataloaders? this fn would expect dataloader_idx if so
+  - out of scope for now. would require changing pytorchtrial api
 - `validation_step_end`
   - similar to other x_step_end
 - `validation_epoch_end`
@@ -66,63 +87,86 @@ methods:
 
 properties:
 QUESTION: where does each of these get set. if it's the trainer how do we set it without it.
-- `current_epoch`
+- `current_epoch`: figure out a good place to update this
 - `device`: use to make your code device agnostic
-- `global_rank`
-- `global_step`
-- `hparams`: QUESTION map to determined hparams or mark unsupported?
-- `logger`
-- `local_rank`
-- `precision`
+- `global_rank`: sg
+- `global_step`: sg
+- `hparams`: leave as is. no work to do
+- `logger`: no need to support. but what do we do if user uses it.
+  - fake logger?
+- `local_rank`: rank on a machine context.distributed.local_rank
+- `precision`: type of precision used. AMP = read and set? use apex library. called in wrapoptimizers. users need to configure in a config
+  - configure-apex-amp fn
+  - TODO read how configure-apex is used and figure out how this merges into lightning module. no way to directly support configure-apex?
+- `use_amp`: using
 - `trainer`: pointer to the trainer
-  - QUESTION unsupported?
-- `use_amp`
-- `use_ddp`
-- `use_ddp2`
-- `use_dp`
-- `use_tpu`
+  - unsupported = raise and warn?
+- `use_ddp`: False
+- `use_ddp2`: False
+- `use_dp`: False
+- `use_tpu`: False
 
 hooks:
-- `backward`: QUESTION how does it related to `manual_backward`
+support in our pytorch callback. construct a callback class with these most of these hooks. only support easy or nontrainer hooks
+
+- `backward`:
+  - instead of loss.backward user should call context.backward but with what api
+  - more involved
+  - potentially skip for first pass. 
 - `get_progress_bar_dict`: QUESTION do we support the default progress bar? if so we need this as well
-- `manual_backward`: TODO support
+- `manual_backward`: check with trainer. new hook.
+  - this lets user call backward themselves
+  - we can ensure that all the proper scaling when using 16-bit etc has been done for you: needs checking with trainer
+  - good candidate for leaving for next milestones
+  - potentially skip for first pass. 
 - `on_after_backward`: TODO support
-- `on_before_zero_grad`: QUESTION support? what's our pytorch support
-- `on_fit_start`: QUESTION support?
-- `on_fit_end`QUESTION support?
+- `on_before_zero_grad`: TODO
+  - need to change pytorch `step_optimizer` auto zero grad
+- `on_fit_start`: not supported. a trainer fn
+- `on_fit_end`: not supported. a trainer fn
 - `on_load_checkpoint`: QUESTION do we support this? how is our checkpoint generated.
+  - Gives model a chance to load something before state_dict is restored.
 - `on_save_checkpoint`: QUESTION do we support this?
-- `on_pretrain_routine_start`: TODO what's the pretrain routine
-- `on_pretrain_routine_end`: same
+- `on_pretrain_routine_start`: internal to trainer. don't support
+- `on_pretrain_routine_end`: internal to trainer. don't supportsame
 - `on_test_batch_start`: not supported
 - `on_test_batch_end`: not supported
 - `on_test_epoch_start`: not supported
 - `on_test_epoch_end`: not supported
 - `on_train_batch_start`: TODO support
 - `on_train_batch_end`: TODO support
-- `on_train_epoch_start`: QUESTION epoch hooks for PytorchTrial
-- `on_train_epoch_end`: QUESTION epoch hooks for PytorchTrial
+- `on_train_epoch_start`:
+  - needs callback support in pytorchcallback
+- `on_train_epoch_end`:
+  - needs callback support in pytorchcallback
 - `on_validation_batch_start`: TODO support
 - `on_validation_batch_end`: TODO support
-- `on_validation_epoch_start`: QUESTION epoch hooks for PytorchTrial
-- `on_validation_epoch_end`: QUESTION epoch hooks for PytorchTrial
+- `on_validation_epoch_start`:
+  - needs callback support in pytorchcallback
+- `on_validation_epoch_end`:
+  - needs callback support in pytorchcallback
 - `optimizer_step`: to control how often optimizers step. to adjust the default way the Trainer calls each optimizer.
   - affects train_batch
-  - TODO support. seems like we need to support
-- `optimizer_zero_grad`
-- `prepare_data`: like datamodule
+  - an internal trainer hook?
+  - potentially skip for first pass. user can use pytorchtrial or lightningtrial with trainer
+  - have to fail if user is using this.
+- `optimizer_zero_grad`: control when zerograd is called
+  - potentially skip for first pass. 
+- `prepare_data`: like datamodule: user can use in buildxdataloader
+  - no direct work? we won't directly use in adapter. user can use as usual.
+  - what about distributed setup. call during init?
 - `setup`: like teardown but on the begining. runs on every process in ddp
-- `tbptt_split_batch`: When using truncated backpropagation through time. Huh?
-  - QUESTION do we support?
-- `teardown`: runs after fit and test stages
-  - QUESTION corresponding hook
+  - either run at begining of training or skip since fit is trainer internal
+  - not supported
+- `tbptt_split_batch`: When using truncated backpropagation through time: not supported
+- `teardown`: runs after fit and test stages. no fit or test. not supported
 - `train_dataloader` alternative to datamodule
-  - TODO support
+  - no direct work? user will use it in buildxdataloader
 - `val_dataloader`: alternative to datamodule
-  - TODO support
+  - no direct work? user will use it in buildxdataloader
 - `test_dataloader`: not supported
 - `transfer_batch_to_device` added if dataloader returns custom data structure
-  - QUESTION do we support?
+  - not supported in pytorch trial. skip
 
 ## DataModule
 

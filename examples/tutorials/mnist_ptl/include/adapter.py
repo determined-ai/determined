@@ -61,6 +61,9 @@ class PTLAdapter(PyTorchTrial):
         self.context = context
         self.model = self.context.wrap_model(self.lm)
 
+        # pass context here?
+        # returns instantiated lrscheduler and optimizers. link to wrapx
+        # lrschduler is initialized with params from optimizer.?
         optimizer = self.lm.configure_optimizers()
         """
         LM optimizer
@@ -73,6 +76,7 @@ class PTLAdapter(PyTorchTrial):
         """
         if not isinstance(optimizer, torch.optim.Optimizer):
             raise not_supported
+        # TODO look at how we wrap/create learning scheduler
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
         if data_module is not None:
@@ -87,6 +91,7 @@ class PTLAdapter(PyTorchTrial):
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         # no optimizer index to pass down
+        # TODO step through all the optimizers freeze other models? check trainer source code
         rv = self.lm.training_step(batch, batch_idx)
         if rv is None:  return None # skip to next batch
         if type(rv) != dict:
