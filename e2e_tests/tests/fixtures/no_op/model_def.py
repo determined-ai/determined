@@ -102,6 +102,7 @@ class NoOpTrialController(det.CallbackTrialController):
             ),
             "stop_requested": self.context.get_stop_requested(),
         }
+        response['metrics']['test'] = random.choice(["", False, "yo", 3, 4.5, 1e+3, {}, [3, False], True])
         return response
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:
@@ -112,6 +113,7 @@ class NoOpTrialController(det.CallbackTrialController):
         metrics = {
             name: self.current_metric() for name in ["validation_error", *self.validation_metrics()]
         }
+        metrics['test'] = random.choice(["", False, "yo", 3, 4.5, 1e+3, {}, [3, False], True])
         response = {
             "metrics": {"validation_metrics": metrics, "num_inputs": self.validation_set_size},
             "stop_requested": self.context.get_stop_requested(),
@@ -119,12 +121,14 @@ class NoOpTrialController(det.CallbackTrialController):
         return response
 
     def training_metrics(self) -> Dict[str, Any]:
-        return {"metric_{}".format(i): None for i in range(1, self.num_training_metrics)}
+        metrics = {"metric_{}".format(i): None for i in range(1, self.num_training_metrics)}
+        return metrics
 
     def validation_metrics(self) -> Dict[str, Any]:
-        return {
+        metrics = {
             "validation_metric_{}".format(i): None for i in range(1, self.num_validation_metrics)
         }
+        return metrics
 
     def batch_size(self) -> int:
         return self._batch_size
