@@ -12,4 +12,4 @@ check:
 	isort --check-only
 	black . --check
 	flake8
-	mypy `find -name '*.py'`
+	mypy `find . -name '*.py'`
