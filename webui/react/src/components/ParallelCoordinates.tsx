@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import Plotly, { Layout, PlotData, PlotType } from 'Plotly';
+import { ExperimentHyperParamType, ExperimentHyperParamValue } from 'types';
 import { clone } from 'utils/data';
 import { generateAlphaNumeric } from 'utils/string';
 
-type Range = [number, number];
+export type Range = [ number, number ];
 
 enum DimensionType {
   Categorical = 'categorical',
@@ -12,7 +13,11 @@ enum DimensionType {
 }
 
 interface Props {
+  colors: number[];
+  data: Record<string, ExperimentHyperParamValue[]>;
+  dimensions: ConfigDimension[];
   id?: string;
+  lineIds: number[];
 }
 
 interface Dimension {
@@ -30,7 +35,7 @@ interface Trace {
   type: PlotType,
 }
 
-interface ConfigDimension {
+export interface ConfigDimension {
   categories?: string[];
   constraintrange?: Range;
   label: string;
@@ -44,6 +49,14 @@ interface Config {
   dimensions: ConfigDimension[];
   trialCount: number;
 }
+
+export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> = {
+  [ExperimentHyperParamType.Categorical]: DimensionType.Categorical,
+  [ExperimentHyperParamType.Constant]: DimensionType.Scalar,
+  [ExperimentHyperParamType.Double]: DimensionType.Scalar,
+  [ExperimentHyperParamType.Int]: DimensionType.Scalar,
+  [ExperimentHyperParamType.Log]: DimensionType.Scalar,
+};
 
 const plotlyLayout: Partial<Layout> = { paper_bgcolor: 'transparent' };
 const plotlyConfig: Partial<Plotly.Config> = {
@@ -171,7 +184,7 @@ const chartConfig: Config = {
 const ParallelCoordinates: React.FC<Props> = (props: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
-  const [ data ] = useState<Partial<PlotData>[]>([ generateTrace(chartConfig) ]);
+  // const [ data ] = useState<Partial<PlotData>[]>([ generateTrace(chartConfig) ]);
 
   // const addDataPoint = useCallback(() => {
   //   const trace = data[0] as Trace;
@@ -188,11 +201,23 @@ const ParallelCoordinates: React.FC<Props> = (props: Props) => {
   // }, []);
 
   // usePolling(addDataPoint, { delay: 5 });
+  const data: Partial<PlotData> = useMemo(() => {
+    const dimensions = props.dimensions.map(dim => {
+      const hpDimension = { label: dim.label };
+      return hpDimension;
+    });
+    return {
+      dimensions,
+      line: { color: props.colors },
+      type: 'parcoords',
+    };
+  }, [ props.colors, props.dimensions ]);
 
   useEffect(() => {
     if (!chartRef.current) return;
-    Plotly.react(chartRef.current, data, plotlyLayout, plotlyConfig);
-  }, [ data ]);
+    console.log('data', data);
+    // Plotly.react(chartRef.current, data, plotlyLayout, plotlyConfig);
+  }, [ chartRef, data ]);
 
   return <div id={id} ref={chartRef} />;
 };

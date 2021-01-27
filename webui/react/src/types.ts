@@ -200,7 +200,7 @@ export enum ExperimentHyperParamType {
   Log = 'log',
 }
 
-type ExperimentHyperParamValue = boolean | number | string;
+export type ExperimentHyperParamValue = boolean | number | string;
 
 export interface ExperimentHyperParam {
   base?: number;

@@ -209,7 +209,7 @@ const ExperimentVisualization: React.FC<Props> = ({
           sm={{ order: 2, span: 24 }}
           span={24}
           xs={{ order: 2, span: 24 }}>
-          {selectedMetric && typeKey === VisualizationType.LearningCurve && (
+          {typeKey === VisualizationType.LearningCurve && selectedMetric && (
             <LearningCurve
               experiment={experiment}
               metrics={metrics}
