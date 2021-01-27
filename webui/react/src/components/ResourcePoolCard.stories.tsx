@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { getResourcePools } from 'services/api';
+import { getResourcePoolSamples } from 'services/api';
 
 import ResourcePoolCard from './ResourcePoolCard';
 
-const resourcePools = getResourcePools();
+const resourcePools = getResourcePoolSamples();
 
 export default {
   component: ResourcePoolCard,
@@ -14,5 +14,7 @@ export default {
 export const Default = (): React.ReactNode => {
   return <ResourcePoolCard
     containerStates={[]}
-    resourcePool={resourcePools[Math.floor(Math.random()*resourcePools.length)]} />;
+    resourcePool={resourcePools[Math.floor(Math.random()*resourcePools.length)]}
+    totalGpuSlots={3}
+  />;
 };

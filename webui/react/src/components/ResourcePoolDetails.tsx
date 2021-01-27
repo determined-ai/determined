@@ -2,7 +2,7 @@ import { Divider, Modal } from 'antd';
 import React from 'react';
 
 import Json from 'components/Json';
-import { ResourcePool } from 'types/ResourcePool';
+import { ResourcePool } from 'types';
 import { clone } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 
@@ -15,9 +15,16 @@ interface Props {
 }
 
 const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Props) => {
+
   const details = clone(rp.details);
-  const providerSpecific = details[rp.type];
-  delete details[rp.type];
+  for (const key in details) {
+    if (details[key] === null) {
+      delete details[key];
+    }
+  }
+
+  const mainSection = clone(rp);
+  delete mainSection.details;
 
   const title = (
     <div>
@@ -37,11 +44,11 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Pr
       onCancel={props.finally}
       onOk={props.finally}
     >
-      <Json json={details} transformLabel={camelCaseToSentence} />
-      {providerSpecific &&
+      <Json json={mainSection} translateLabel={camelCaseToSentence} />
+      {Object.keys(details).length > 0 &&
       <>
         <Divider />
-        <Json json={providerSpecific} transformLabel={camelCaseToSentence} />
+        <Json json={details} translateLabel={camelCaseToSentence} />
       </>
       }
     </Modal>

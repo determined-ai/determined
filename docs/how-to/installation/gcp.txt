@@ -190,6 +190,11 @@ Optional Arguments:
       -  Number of static agent instances.
       -  0
 
+   -  -  ``--max-cpu-containers-per-agent``
+      -  The maximum CPU containers running for agents in the CPU
+         resource pool.
+      -  100
+
    -  -  ``--max-idle-agent-period``
       -  The length of time to wait before idle dynamic agents will be
          automatically terminated.
@@ -215,8 +220,14 @@ Optional Arguments:
       -  Instance type to use for the master instance.
       -  n1-standard-2
 
-   -  -  ``--agent-instance-type``
-      -  Instance type to use for the agent instances.
+   -  -  ``--cpu-agent-instance-type``
+      -  Instance type to use for the agent instances in the CPU
+         resource pool.
+      -  n1-standard-4
+
+   -  -  ``--gpu-agent-instance-type``
+      -  Instance type to use for the agent instances in the GPU
+         resource pool.
       -  n1-standard-32
 
    -  -  ``--min-cpu-platform-master``

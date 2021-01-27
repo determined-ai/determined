@@ -11,21 +11,24 @@ import (
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/provisioner"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 )
 
 func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
 	raw := `
-provisioner:
-  provider: gcp
-  base_config:
-    disks:
-      - mode: READ_ONLY
-        boot: false
-        initializeParams:
-          sourceImage: projects/determined-ai/global/images/determined-agent
-          diskSizeGb: "200"
-          diskType: projects/determined-ai/zones/us-central1-a/diskTypes/pd-ssd
-        autoDelete: true
+resource_pools:
+  - pool_name: default
+    provider: 
+      type: gcp
+      base_config:
+        disks:
+          - mode: READ_ONLY
+            boot: false
+            initializeParams:
+              sourceImage: projects/determined-ai/global/images/determined-agent
+              diskSizeGb: "200"
+              diskType: projects/determined-ai/zones/us-central1-a/diskTypes/pd-ssd
+            autoDelete: true
 task_container_defaults:
   cpu_pod_spec:
     apiVersion: v1
@@ -38,9 +41,9 @@ task_container_defaults:
         - name: determined-container
 `
 	expected := internal.DefaultConfig()
-	expected.Provisioner = provisioner.DefaultConfig()
-	expected.Provisioner.GCP = provisioner.DefaultGCPClusterConfig()
-	expected.Provisioner.GCP.BaseConfig = &compute.Instance{
+	providerConf := provisioner.DefaultConfig()
+	providerConf.GCP = provisioner.DefaultGCPClusterConfig()
+	providerConf.GCP.BaseConfig = &compute.Instance{
 		Disks: []*compute.AttachedDisk{
 			{
 				AutoDelete: true,
@@ -51,6 +54,13 @@ task_container_defaults:
 					SourceImage: "projects/determined-ai/global/images/determined-agent",
 				},
 			},
+		},
+	}
+	expected.ResourcePools = []resourcemanagers.ResourcePoolConfig{
+		{
+			PoolName:                 "default",
+			Provider:                 providerConf,
+			MaxCPUContainersPerAgent: 100,
 		},
 	}
 	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{
@@ -91,5 +101,54 @@ func TestUnmarshalMasterConfiguration(t *testing.T) {
 
 	if f := c.SaveTrialBest; f <= 0 {
 		t.Errorf("SaveTrialBest %d <= 0", f)
+	}
+}
+
+func TestApplyBackwardsCompatibility(t *testing.T) {
+	type testcase struct {
+		name     string
+		before   map[string]interface{}
+		expected map[string]interface{}
+		err      error
+	}
+	tcs := []testcase{
+		{
+			before: map[string]interface{}{
+				"scheduler": map[string]interface{}{
+					"fit": "best",
+				},
+				"provisioner": map[string]interface{}{
+					"max_idle_agent_period":     "30s",
+					"max_agent_starting_period": "30s",
+				},
+			},
+			expected: map[string]interface{}{
+				"resource_manager": map[string]interface{}{
+					"type": "agent",
+					"scheduler": map[string]interface{}{
+						"fitting_policy": "best",
+					},
+					"default_cpu_resource_pool": "default",
+					"default_gpu_resource_pool": "default",
+				},
+				"resource_pools": []map[string]interface{}{
+					{
+						"pool_name": "default",
+						"provider": map[string]interface{}{
+							"max_idle_agent_period":     "30s",
+							"max_agent_starting_period": "30s",
+						},
+					},
+				},
+			},
+		},
+	}
+	for ix := range tcs {
+		tc := tcs[ix]
+		t.Run(tc.name, func(t *testing.T) {
+			after, err := applyBackwardsCompatibility(tc.before)
+			assert.Equal(t, err, tc.err)
+			assert.DeepEqual(t, after, tc.expected)
+		})
 	}
 }

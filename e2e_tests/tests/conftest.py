@@ -1,7 +1,8 @@
 import json
 import subprocess
+import time
 from pathlib import Path
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Iterator, Optional, cast
 
 import boto3
 import pytest
@@ -68,8 +69,8 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addoption("--follow-local-logs", action="store_true", help="Follow local docker logs")
 
 
-@pytest.fixture(scope="session", autouse=True)  # type: ignore
-def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
+@pytest.fixture(scope="session", autouse=True)
+def cluster_log_manager(request: SubRequest) -> Iterator[Optional[ClusterLogManager]]:
     master_config_path = request.config.getoption("--master-config-path")
     master_config_path = Path(master_config_path) if master_config_path else None
     master_scheme = request.config.getoption("--master-scheme")
@@ -139,3 +140,13 @@ def using_k8s(request: SubRequest) -> bool:
 
     rp = json.loads(output)["resource_manager"]["type"]
     return bool(rp == "kubernetes")
+
+
+@pytest.fixture(autouse=True)
+def test_start_timer(request: SubRequest) -> Iterator[None]:
+    # If pytest is run with minimal verbosity, individual test names are not printed and the output
+    # of this would look funny.
+    if request.config.option.verbose >= 1:
+        # This ends up concatenated to the line pytest prints containing the test file and name.
+        print("starting at", time.strftime("%Y-%m-%d %H:%M:%S"))
+    yield

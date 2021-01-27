@@ -1642,6 +1642,381 @@
   },
   {
     "experiment": {
+      "id": 714,
+      "description": "CIFAR 10 Grid Hyperparameter Search",
+      "labels": [],
+      "startTime": "2020-10-22T21:31:46.081065Z",
+      "endTime": null,
+      "state": "STATE_PAUSED",
+      "archived": false,
+      "numTrials": 6,
+      "progress": 0.02681052803661926,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "CIFAR 10 Grid Hyperparameter Search",
+      "entrypoint": "model_def:CIFARTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0c9e956",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0c9e956"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "count": null,
+          "maxval": 64,
+          "minval": 16,
+          "type": "int"
+        },
+        "layer1_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer2_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer3_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "learning_rate": {
+          "base": 10,
+          "count": null,
+          "maxval": 1,
+          "minval": -5,
+          "type": "log"
+        },
+        "learning_rate_decay": {
+          "type": "const",
+          "val": 1e-06
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 1000
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1593719631
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "divisor": 4,
+        "max_length": {
+          "batches": 80000
+        },
+        "max_rungs": 5,
+        "max_trials": 16,
+        "metric": "validation_error",
+        "mode": "standard",
+        "name": "grid",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 714,
+      "description": "CIFAR 10 Random Hyperparameter Search",
+      "labels": [],
+      "startTime": "2020-10-22T21:31:46.081065Z",
+      "endTime": null,
+      "state": "STATE_PAUSED",
+      "archived": false,
+      "numTrials": 6,
+      "progress": 0.02681052803661926,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "CIFAR 10 Random Hyperparameter Search",
+      "entrypoint": "model_def:CIFARTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0c9e956",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0c9e956"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "count": null,
+          "maxval": 64,
+          "minval": 16,
+          "type": "int"
+        },
+        "layer1_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer2_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer3_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "learning_rate": {
+          "base": 10,
+          "count": null,
+          "maxval": 1,
+          "minval": -5,
+          "type": "log"
+        },
+        "learning_rate_decay": {
+          "type": "const",
+          "val": 1e-06
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 1000
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1593719631
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "divisor": 4,
+        "max_length": {
+          "batches": 80000
+        },
+        "max_rungs": 5,
+        "max_trials": 16,
+        "metric": "validation_error",
+        "mode": "standard",
+        "name": "random",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
+      "id": 714,
+      "description": "CIFAR 10 PBT Hyperparameter Search",
+      "labels": [],
+      "startTime": "2020-10-22T21:31:46.081065Z",
+      "endTime": null,
+      "state": "STATE_PAUSED",
+      "archived": false,
+      "numTrials": 6,
+      "progress": 0.02681052803661926,
+      "username": "determined"
+    },
+    "config": {
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "bucket": "det-determined-master-us-west-2-573932760021",
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "type": "s3"
+      },
+      "data": {
+        "url": "abc"
+      },
+      "data_layer": {
+        "container_storage_path": null,
+        "type": "shared_fs"
+      },
+      "debug": false,
+      "description": "CIFAR 10 PBT Hyperparameter Search",
+      "entrypoint": "model_def:CIFARTrial",
+      "environment": {
+        "environment_variables": {},
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0c9e956",
+          "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0c9e956"
+        },
+        "pod_spec": null,
+        "ports": null
+      },
+      "hyperparameters": {
+        "global_batch_size": {
+          "count": null,
+          "maxval": 64,
+          "minval": 16,
+          "type": "int"
+        },
+        "layer1_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer2_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "layer3_dropout": {
+          "count": null,
+          "maxval": 0.5,
+          "minval": 0.2,
+          "type": "double"
+        },
+        "learning_rate": {
+          "base": 10,
+          "count": null,
+          "maxval": 1,
+          "minval": -5,
+          "type": "log"
+        },
+        "learning_rate_decay": {
+          "type": "const",
+          "val": 1e-06
+        }
+      },
+      "internal": null,
+      "max_restarts": 5,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 1000
+      },
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": false,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 5,
+        "tensor_fusion_threshold": 64
+      },
+      "perform_initial_validation": false,
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1593719631
+      },
+      "resources": {
+        "agent_label": "",
+        "native_parallel": false,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "divisor": 4,
+        "max_length": {
+          "batches": 80000
+        },
+        "max_rungs": 5,
+        "max_trials": 16,
+        "metric": "validation_error",
+        "mode": "standard",
+        "name": "pbt",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      }
+    }
+  },
+  {
+    "experiment": {
       "id": 193,
       "description": "mnist_pytorch_const",
       "labels": [],

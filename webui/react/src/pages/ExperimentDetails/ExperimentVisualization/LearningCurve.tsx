@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BadgeTag from 'components/BadgeTag';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
-import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -247,23 +246,11 @@ const LearningCurve: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ experiment.id, maxTrials, selectedMetric ]);
 
-  if (pageError?.message.includes('single-trial experiments are not supported')) {
-    return <Alert
-      description={<>
-        Learn about &nbsp;
-        <Link
-          external
-          path="/docs/reference/experiment-config.html#searcher"
-          popout
-          size="small">how to run a hyperparameter search</Link>.
-      </>}
-      message="Hyperparameter visualizations are not applicable for single trial experiments."
-      type="warning" />;
-  } else if (pageError) {
+  if (pageError) {
     return <Message title={pageError.message} />;
-  } else if (!hasTrials && hasLoaded) {
+  } else if (hasLoaded && !hasTrials) {
     return isExperimentTerminal ? (
-      <Message title="No experiment visualization data to show." type={MessageType.Empty} />
+      <Message title="No learning curve data to show." type={MessageType.Empty} />
     ) : (
       <div className={css.waiting}>
         <Alert

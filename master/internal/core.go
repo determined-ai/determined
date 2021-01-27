@@ -219,13 +219,13 @@ func closeWithErrCheck(name string, closer io.Closer) {
 	}
 }
 
-func (m *Master) restoreExperiment(sema chan struct{}, e *model.Experiment) {
+func (m *Master) tryRestoreExperiment(sema chan struct{}, e *model.Experiment) {
 	sema <- struct{}{}
 	defer func() { <-sema }()
 	// Check if the returned config is the zero value, i.e. the config could not be parsed
 	// correctly. If the config could not be parsed, mark the experiment as errored.
 	if !reflect.DeepEqual(e.Config, model.ExperimentConfig{}) {
-		err := restoreExperiment(m, e)
+		err := m.restoreExperiment(e)
 		if err == nil {
 			return
 		}
@@ -342,7 +342,7 @@ func (m *Master) Run(ctx context.Context) error {
 		MasterCert:            cert,
 	}
 
-	go m.cleanUpSearcherEvents()
+	go m.cleanUpExperimentSnapshots()
 
 	// Actor structure:
 	// master system
@@ -440,9 +440,7 @@ func (m *Master) Run(ctx context.Context) error {
 		MasterInfo:     m.Info(),
 		LoggingOptions: m.config.Logging,
 	}
-	m.rm = resourcemanagers.Setup(
-		m.system, m.echo, m.config.ResourceManager, m.config.ResourcePoolsConfig, agentOpts, cert,
-	)
+	m.rm = resourcemanagers.Setup(m.system, m.echo, m.config.ResourceConfig, agentOpts, cert)
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))
@@ -453,10 +451,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	// Restore non-terminal experiments from the database.
 	// Limit the number of concurrent restores at any time within the system to maxConcurrentRestores.
-	// This avoids an issue where the connection pool can be exhausted and the system deadlock. For
-	// example if there are N connections in the pool and N experiments restoring, since a connection
-	// is pinned per restore streaming events, if during any restore blocks for a connection before
-	// completing, we are deadlocked.
+	// This has avoided resource exhaustion in the past (on the db connection pool) and probably is
+	// good still to avoid overwhelming us on restart after a crash.
 	sema := make(chan struct{}, maxConcurrentRestores)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 	toRestore, err := m.db.NonTerminalExperiments()
@@ -464,7 +460,7 @@ func (m *Master) Run(ctx context.Context) error {
 		return errors.Wrap(err, "couldn't retrieve experiments to restore")
 	}
 	for _, exp := range toRestore {
-		go m.restoreExperiment(sema, exp)
+		go m.tryRestoreExperiment(sema, exp)
 	}
 
 	// Docs and WebUI.

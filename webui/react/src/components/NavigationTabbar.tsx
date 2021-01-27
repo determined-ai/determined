@@ -5,6 +5,7 @@ import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
 import { handlePath } from 'routes/utils';
+import { ResourceType } from 'types';
 import { launchNotebook } from 'utils/task';
 
 import ActionSheet from './ActionSheet';
@@ -42,7 +43,8 @@ const NavigationTabbar: React.FC = () => {
   const overview = ClusterOverview.useStateContext();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
 
-  const cluster = overview.allocation === 0 ? undefined : `${overview.allocation}%`;
+  const cluster = overview[ResourceType.ALL].allocation === 0 ?
+    undefined : `${overview[ResourceType.ALL].allocation}%`;
   const showNavigation = isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);

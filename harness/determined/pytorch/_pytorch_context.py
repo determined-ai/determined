@@ -64,69 +64,6 @@ class PyTorchTrialContext(det.TrialContext):
 
         self.experimental = pytorch.PyTorchExperimentalContext()
 
-    def get_model(self) -> torch.nn.Module:
-        """
-        Get the model associated with the trial. This function should not be
-        called from:
-
-            * ``__init__``
-            * ``build_model()``
-
-        .. warning::
-            This is deprecated.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
-            "PyTorchTrialContext.get_model is deprecated. "
-            "Please directly use the model wrapped by context.wrap_model()."
-        )
-        check.len_eq(self.models, 1)
-        return self.models[0]
-
-    def get_optimizer(self) -> torch.optim.Optimizer:  # type: ignore
-        """
-        Get the optimizer associated with the trial. This function should not be
-        called from:
-
-            * ``__init__``
-            * ``build_model()``
-            * ``optimizer()``
-
-
-        .. warning::
-            This is deprecated.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
-            "PyTorchTrialContext.get_optimizer is deprecated. "
-            "Please directly use the model wrapped by context.wrap_optimizer()."
-        )
-        check.len_eq(self.optimizers, 1)
-        return self.optimizers[0]
-
-    def get_lr_scheduler(self) -> Optional[pytorch.LRScheduler]:
-        """
-        Get the scheduler associated with the trial, if one is defined. This
-        function should not be called from:
-
-            * ``__init__``
-            * ``build_model()``
-            * ``optimizer()``
-            * ``create_lr_scheduler()``
-
-        .. warning::
-            This is deprecated.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
-            "PyTorchTrialContext.get_lr_scheduler is deprecated. "
-            "Please directly use the model wrapped by context.wrap_lr_scheduler()."
-        )
-        check.lt_eq(len(self.lr_schedulers), 1)
-        if len(self.lr_schedulers) == 1:
-            return self.lr_schedulers[0]
-        return None
-
     def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:
         """Returns a wrapped model."""
 
@@ -210,11 +147,31 @@ class PyTorchTrialContext(det.TrialContext):
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
         step_mode: pytorch.LRScheduler.StepMode,
     ) -> torch.optim.lr_scheduler._LRScheduler:
-        """Returns a wrapped LR scheduler.
+        """
+        Returns a wrapped LR scheduler.
 
         The LR scheduler must use an optimizer wrapped by :meth:`wrap_optimizer`.  If ``apex.amp``
         is in use, the optimizer must also have been configured with :meth:`configure_apex_amp`.
         """
+        if isinstance(lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            if step_mode != pytorch.LRScheduler.StepMode.MANUAL_STEP:
+                raise det.errors.InvalidExperimentException(
+                    "detected that context.wrap_lr_scheduler() was called with an instance of "
+                    "torch.optim.lr_scheduer.ReduceLROnPlateau as the lr_scheduler.  This lr "
+                    "scheduler class does not have the usual step() parameters, and so it can "
+                    "only be used with step_mode=MANUAL_STEP.\n"
+                    "\n"
+                    "For example, if you wanted to step it on every validation step, you might "
+                    "wrap your lr_scheduler and pass it to a callback like this:\n"
+                    "\n"
+                    "class MyLRStepper(PyTorchCallback):\n"
+                    "    def __init__(self, wrapped_lr_scheduler):\n"
+                    "        self.wrapped_lr_scheduler = wrapped_lr_scheduler\n"
+                    "\n"
+                    "    def on_validation_end(self, metrics):\n"
+                    '        self.wrapped_lr_scheduler.step(metrics["validation_error"])\n'
+                )
+
         opt = getattr(lr_scheduler, "optimizer", None)
         if opt is not None:
             check.is_in(

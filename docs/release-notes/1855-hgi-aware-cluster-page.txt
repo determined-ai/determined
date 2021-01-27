@@ -1,0 +1,6 @@
+:orphan:
+
+**Features**
+
+   -  WebUI: We have a new cluster page with all sorts of information
+      around resource pools that are defined in the cluster.

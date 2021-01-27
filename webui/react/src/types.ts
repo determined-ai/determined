@@ -1,3 +1,5 @@
+import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
 
@@ -37,6 +39,7 @@ export interface Telemetry {
 export enum ResourceType {
   CPU = 'CPU',
   GPU = 'GPU',
+  ALL = 'ALL',
   UNSPECIFIED = 'UNSPECIFIED',
 }
 
@@ -92,16 +95,12 @@ export interface Agent {
 }
 
 export interface ClusterOverviewResource {
+  allocation: number;
   available: number;
   total: number;
 }
 
-export interface ClusterOverview {
-  [ResourceType.CPU]: ClusterOverviewResource;
-  [ResourceType.GPU]: ClusterOverviewResource;
-  allocation: number;
-  totalResources: ClusterOverviewResource;
-}
+export type ClusterOverview = Record<ResourceType, ClusterOverviewResource>;
 
 export interface StartEndTimes {
   endTime?: string;
@@ -158,6 +157,7 @@ export interface Command {
   kind: CommandType; // TODO rename to type
   misc?: CommandMisc;
   registeredTime: string;
+  resourcePool: string;
   serviceAddress?: string;
   state: CommandState;
   user: User;
@@ -197,6 +197,16 @@ interface ExperimentHyperParam {
 
 export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;
 
+export enum ExperimentSearcherName {
+  AdaptiveAdvanced = 'adaptive',
+  AdaptiveAsha = 'adaptive_asha',
+  AdaptiveSimple = 'adaptive_simple',
+  Grid = 'grid',
+  Pbt = 'pbt',
+  Random = 'random',
+  Single = 'single',
+}
+
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
@@ -209,6 +219,7 @@ export interface ExperimentConfig {
   };
   searcher: {
     metric: string;
+    name: ExperimentSearcherName;
     smallerIsBetter: boolean;
   };
 }
@@ -337,6 +348,7 @@ export interface ExperimentItem {
   name: string;
   numTrials: number;
   progress?: number;
+  resourcePool: string
   startTime: string;
   state: RunState;
   url: string;
@@ -350,6 +362,7 @@ export interface ExperimentBase {
   endTime?: string;
   id: number;
   progress?: number;
+  resourcePool: string;
   startTime: string;
   state: RunState;
   username: string;
@@ -364,6 +377,7 @@ export interface ExperimentOld extends ExperimentBase {
 export interface Task {
   id: string;
   name: string;
+  resourcePool: string;
   serviceAddress?: string;
   startTime: string;
   url?: string;
@@ -372,12 +386,14 @@ export interface Task {
 export interface ExperimentTask extends Task {
   archived: boolean;
   progress?: number;
+  resourcePool: string;
   state: RunState;
   username: string;
 }
 
 export interface CommandTask extends Task {
   misc?: CommandMisc;
+  resourcePool: string;
   state: CommandState;
   type: CommandType;
   username: string;
@@ -432,20 +448,12 @@ export type CommonProps = {
 };
 
 export enum LogLevel {
+  Critical = 'critical',
   Debug = 'debug',
   Error = 'error',
   Info = 'info',
+  Trace = 'trace',
   Warning = 'warning',
-}
-
-export enum LogLevel2 {
-  Critical = 'LOG_LEVEL_CRITICAL',
-  Debug = 'LOG_LEVEL_DEBUG',
-  Error = 'LOG_LEVEL_ERROR',
-  Info = 'LOG_LEVEL_INFO',
-  Trace = 'LOG_LEVEL_TRACE',
-  Unspecified = 'LOG_LEVEL_UNSPECIFIED',
-  Warning = 'LOG_LEVEL_WARNING',
 }
 
 export interface Log {
@@ -460,5 +468,85 @@ export interface TrialLog {
   id: string;
   level?: LogLevel;
   message: string;
-  time?: string;
+  time: string;
+}
+
+export interface ResourcePool {
+  cpuContainerCapacity: number;
+  cpuContainerCapacityPerAgent: number;
+  cpuContainersRunning: number;
+  defaultCpuPool: boolean;
+  defaultGpuPool?: boolean;
+  description: string;
+  details: RPDetails;
+  imageId: string;
+  instanceType: string;
+  location: string;
+  maxAgents: number;
+  minAgents: number;
+  name: string;
+  numAgents: number;
+  preemptible: boolean;
+  schedulerFittingPolicy: V1FittingPolicy;
+  schedulerType: V1SchedulerType;
+  slotsAvailable: number;
+  slotsUsed: number;
+  type: V1ResourcePoolType;
+}
+
+export interface RPDetails {
+  aws?: Partial<Aws>;
+  gcp?: Partial<Gcp>;
+  priorityScheduler?: PriorityScheduler;
+}
+
+export interface Aws {
+  customTags?: CustomTag[];
+  iamInstanceProfileArn: string;
+  imageId: string;
+  instanceName: string;
+  instanceType: string;
+  logGroup: string;
+  logStream: string;
+  publicIp: boolean;
+  region: string;
+  rootVolumeSize: number;
+  securityGroupId: string;
+  spotEnabled: boolean;
+  spotMaxPrice: string;
+  sshKeyName: string;
+  subnetId: string;
+  tagKey: string;
+  tagValue: string;
+}
+
+interface CustomTag {
+  key: string;
+  value: string;
+}
+
+export interface Gcp {
+  bootDiskSize: number;
+  bootDiskSourceImage: string;
+  externalIp: boolean;
+  gpuNum: number;
+  gpuType: string;
+  labelKey: string;
+  labelValue: string;
+  machineType: string;
+  namePrefix: string;
+  network: string;
+  networkTags: string[];
+  operationTimeoutPeriod: number;
+  preemptible: boolean;
+  project: string;
+  serviceAccountEmail: string;
+  serviceAccountScopes: string[];
+  subnetwork: string;
+  zone: string;
+}
+
+export interface PriorityScheduler {
+  defaultPriority: number;
+  preemption: boolean;
 }

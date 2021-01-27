@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"encoding/json"
 	"math"
 	"sort"
 
@@ -11,20 +12,26 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// syncHalvingSearch implements a search using the synchronous successive halving algorithm
-// (SHA).
-type syncHalvingSearch struct {
-	defaultSearchMethod
-	model.SyncHalvingConfig
+type (
+	// syncHalvingSearchState is the persistent state for the SHA algorithm.
+	syncHalvingSearchState struct {
+		Rungs      []*rung                 `json:"rungs"`
+		TrialRungs map[model.RequestID]int `json:"trial_rungs"`
+		// EarlyExitTrials contains trials that exited early that are still considered in the search.
+		EarlyExitTrials map[model.RequestID]bool `json:"early_exit_trials"`
+		TrialsCompleted int                      `json:"trials_completed"`
+	}
 
-	rungs      []*rung
-	trialRungs map[RequestID]int
-	// earlyExitTrials contains trials that exited early that are still considered in the search.
-	earlyExitTrials map[RequestID]bool
-	trialsCompleted int
+	// syncHalvingSearch implements a search using the synchronous successive halving algorithm
+	// (SHA).
+	syncHalvingSearch struct {
+		defaultSearchMethod
+		model.SyncHalvingConfig
+		syncHalvingSearchState
 
-	expectedUnits model.Length
-}
+		expectedUnits model.Length
+	}
+)
 
 const shaExitedMetricValue = math.MaxFloat64
 
@@ -40,14 +47,14 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 		startTrials := max(int(compound), 1)
 		rungs = append(rungs,
 			&rung{
-				unitsNeeded: unitsNeeded,
-				startTrials: startTrials,
+				UnitsNeeded: unitsNeeded,
+				StartTrials: startTrials,
 			},
 		)
 		if id == 0 {
 			expectedUnits += unitsNeeded.Units * startTrials
 		} else {
-			expectedUnits += (unitsNeeded.Units - rungs[id-1].unitsNeeded.Units) * startTrials
+			expectedUnits += (unitsNeeded.Units - rungs[id-1].UnitsNeeded.Units) * startTrials
 		}
 	}
 
@@ -55,89 +62,91 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 	expectedUnits = 0
 	for id := 0; id < config.NumRungs; id++ {
 		cur := rungs[id]
-		cur.startTrials = int(multiplier * float64(cur.startTrials))
+		cur.StartTrials = int(multiplier * float64(cur.StartTrials))
 		if id == 0 {
-			expectedUnits += cur.unitsNeeded.Units * cur.startTrials
+			expectedUnits += cur.UnitsNeeded.Units * cur.StartTrials
 		} else {
 			prev := rungs[id-1]
-			cur.unitsNeeded = model.NewLength(
+			cur.UnitsNeeded = model.NewLength(
 				config.Unit(),
-				max(cur.unitsNeeded.Units, prev.unitsNeeded.Units),
+				max(cur.UnitsNeeded.Units, prev.UnitsNeeded.Units),
 			)
-			cur.startTrials = max(min(cur.startTrials, prev.startTrials), 1)
-			prev.promoteTrials = cur.startTrials
-			expectedUnits += (cur.unitsNeeded.Units - prev.unitsNeeded.Units) * cur.startTrials
+			cur.StartTrials = max(min(cur.StartTrials, prev.StartTrials), 1)
+			prev.PromoteTrials = cur.StartTrials
+			expectedUnits += (cur.UnitsNeeded.Units - prev.UnitsNeeded.Units) * cur.StartTrials
 		}
 	}
 
 	return &syncHalvingSearch{
 		SyncHalvingConfig: config,
-		rungs:             rungs,
-		trialRungs:        make(map[RequestID]int),
-		earlyExitTrials:   make(map[RequestID]bool),
-		expectedUnits:     model.NewLength(config.Unit(), expectedUnits),
+		syncHalvingSearchState: syncHalvingSearchState{
+			Rungs:           rungs,
+			TrialRungs:      make(map[model.RequestID]int),
+			EarlyExitTrials: make(map[model.RequestID]bool),
+		},
+		expectedUnits: model.NewLength(config.Unit(), expectedUnits),
 	}
 }
 
 type trialMetric struct {
-	requestID RequestID
-	metric    float64
+	RequestID model.RequestID `json:"request_id"`
+	Metric    float64         `json:"metric"`
 	// fields below used by asha.go.
-	promoted bool
+	Promoted bool `json:"promoted"`
 }
 
 // rung describes a set of trials that are to be trained for the same number of units.
 type rung struct {
-	unitsNeeded   model.Length
-	metrics       []trialMetric
-	startTrials   int
-	promoteTrials int
+	UnitsNeeded   model.Length  `json:"units_needed"`
+	Metrics       []trialMetric `json:"metrics"`
+	StartTrials   int           `json:"start_trials"`
+	PromoteTrials int           `json:"promote_trials"`
 	// field below used by asha.go.
-	outstandingTrials int
+	OutstandingTrials int `json:"outstanding_trials"`
 }
 
 // promotions handles bookkeeping of validation metrics and returns a RequestID to promote if
 // appropriate.
-func (r *rung) promotionsSync(requestID RequestID, metric float64) []RequestID {
+func (r *rung) promotionsSync(requestID model.RequestID, metric float64) []model.RequestID {
 	// Insert the new trial result in the appropriate place in the sorted list.
 	insertIndex := sort.Search(
-		len(r.metrics),
-		func(i int) bool { return r.metrics[i].metric > metric },
+		len(r.Metrics),
+		func(i int) bool { return r.Metrics[i].Metric > metric },
 	)
-	r.metrics = append(r.metrics, trialMetric{})
-	copy(r.metrics[insertIndex+1:], r.metrics[insertIndex:])
-	r.metrics[insertIndex] = trialMetric{
-		requestID: requestID,
-		metric:    metric,
+	r.Metrics = append(r.Metrics, trialMetric{})
+	copy(r.Metrics[insertIndex+1:], r.Metrics[insertIndex:])
+	r.Metrics[insertIndex] = trialMetric{
+		RequestID: requestID,
+		Metric:    metric,
 	}
 
 	// If there are enough trials done to definitively promote one, do so. Otherwise, return nil.
-	currPromote := len(r.metrics) + r.promoteTrials - r.startTrials
+	currPromote := len(r.Metrics) + r.PromoteTrials - r.StartTrials
 	switch {
 	case currPromote <= 0: // Not enough trials completed for any promotions.
 		return nil
 	case insertIndex < currPromote: // Incoming trial should be promoted.
-		return []RequestID{requestID}
+		return []model.RequestID{requestID}
 	default: // Promote next trial in sorted metrics array.
-		t := &r.metrics[currPromote-1]
-		return []RequestID{t.requestID}
+		t := &r.Metrics[currPromote-1]
+		return []model.RequestID{t.RequestID}
 	}
 }
 
 func (s *syncHalvingSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
-	for trial := 0; trial < s.rungs[0].startTrials; trial++ {
+	for trial := 0; trial < s.Rungs[0].StartTrials; trial++ {
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.rungs[0].unitsNeeded))
+		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
 		ops = append(ops, NewValidate(create.RequestID))
 	}
 	return ops, nil
 }
 
 func (s *syncHalvingSearch) validationCompleted(
-	ctx context, requestID RequestID, validate Validate, metrics workload.ValidationMetrics,
+	ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.Metric)
@@ -152,15 +161,15 @@ func (s *syncHalvingSearch) validationCompleted(
 }
 
 func (s *syncHalvingSearch) promoteSync(
-	ctx context, requestID RequestID, metric float64,
+	ctx context, requestID model.RequestID, metric float64,
 ) ([]Operation, error) {
-	rungIndex := s.trialRungs[requestID]
-	rung := s.rungs[rungIndex]
+	rungIndex := s.TrialRungs[requestID]
+	rung := s.Rungs[rungIndex]
 
 	// If the trial has completed the top rung's validation, close the trial and do nothing else.
 	if rungIndex == s.NumRungs-1 {
-		s.trialsCompleted++
-		if !s.earlyExitTrials[requestID] {
+		s.TrialsCompleted++
+		if !s.EarlyExitTrials[requestID] {
 			return []Operation{NewClose(requestID)}, nil
 		}
 		return nil, nil
@@ -171,9 +180,9 @@ func (s *syncHalvingSearch) promoteSync(
 	// all trials have finished.
 	if toPromote := rung.promotionsSync(requestID, metric); len(toPromote) > 0 {
 		for _, promotionID := range toPromote {
-			s.trialRungs[promotionID] = rungIndex + 1
-			if !s.earlyExitTrials[promotionID] {
-				unitsNeeded := max(s.rungs[rungIndex+1].unitsNeeded.Units-rung.unitsNeeded.Units, 1)
+			s.TrialRungs[promotionID] = rungIndex + 1
+			if !s.EarlyExitTrials[promotionID] {
+				unitsNeeded := max(s.Rungs[rungIndex+1].UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
 				ops = append(ops, NewTrain(promotionID, model.NewLength(s.Unit(), unitsNeeded)))
 				ops = append(ops, NewValidate(promotionID))
 			} else {
@@ -185,15 +194,15 @@ func (s *syncHalvingSearch) promoteSync(
 			}
 		}
 		// Close the unpromoted trials in the rung once all trials in the rung finish.
-		if rung.startTrials < len(rung.metrics) {
+		if rung.StartTrials < len(rung.Metrics) {
 			return nil, errors.Errorf("number of trials exceeded initial trials for rung: %d < %d",
-				rung.startTrials, len(rung.metrics))
+				rung.StartTrials, len(rung.Metrics))
 		}
-		if len(rung.metrics) == rung.startTrials {
-			for _, trialMetric := range rung.metrics[rung.promoteTrials:] {
-				s.trialsCompleted++
-				if !s.earlyExitTrials[trialMetric.requestID] {
-					ops = append(ops, NewClose(trialMetric.requestID))
+		if len(rung.Metrics) == rung.StartTrials {
+			for _, trialMetric := range rung.Metrics[rung.PromoteTrials:] {
+				s.TrialsCompleted++
+				if !s.EarlyExitTrials[trialMetric.RequestID] {
+					ops = append(ops, NewClose(trialMetric.RequestID))
 				}
 			}
 		}
@@ -206,10 +215,18 @@ func (s *syncHalvingSearch) progress(unitsCompleted float64) float64 {
 }
 
 func (s *syncHalvingSearch) trialExitedEarly(
-	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
+	ctx context, requestID model.RequestID, _ workload.ExitedReason,
 ) ([]Operation, error) {
-	s.earlyExitTrials[requestID] = true
+	s.EarlyExitTrials[requestID] = true
 	return s.promoteSync(ctx, requestID, shaExitedMetricValue)
+}
+
+func (s *syncHalvingSearch) Snapshot() (json.RawMessage, error) {
+	return json.Marshal(s.syncHalvingSearchState)
+}
+
+func (s *syncHalvingSearch) Restore(state json.RawMessage) error {
+	return json.Unmarshal(state, &s.syncHalvingSearchState)
 }
 
 func max(initial int, values ...int) int {

@@ -11,7 +11,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
-	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -68,6 +67,7 @@ func DefaultConfig() *Config {
 			WorkersLimit: 0,
 			QueueLimit:   1,
 		},
+		ResourceConfig: resourcemanagers.DefaultResourceConfig(),
 	}
 }
 
@@ -92,10 +92,7 @@ type Config struct {
 	Logging               model.LoggingConfig               `json:"logging"`
 	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
 
-	Scheduler   *resourcemanagers.Config `json:"scheduler"`
-	Provisioner *provisioner.Config      `json:"provisioner"`
-	*resourcemanagers.ResourcePoolsConfig
-	ResourceManager *resourcemanagers.ResourceManagerConfig `json:"resource_manager"`
+	*resourcemanagers.ResourceConfig
 }
 
 // Printable returns a printable string.
@@ -136,13 +133,13 @@ func (c *Config) Resolve() error {
 
 	c.DB.Migrations = fmt.Sprintf("file://%s", filepath.Join(c.Root, "static/migrations"))
 
-	c.ResourceManager, c.ResourcePoolsConfig, err = resourcemanagers.ResolveConfig(
-		c.Scheduler, c.Provisioner, c.ResourceManager, c.ResourcePoolsConfig,
-	)
-	if err != nil {
+	if c.ResourceManager.AgentRM != nil && c.ResourceManager.AgentRM.Scheduler == nil {
+		c.ResourceManager.AgentRM.Scheduler = resourcemanagers.DefaultSchedulerConfig()
+	}
+
+	if err := c.ResolveResource(); err != nil {
 		return err
 	}
-	c.Scheduler, c.Provisioner = nil, nil
 
 	if err := c.Logging.Resolve(); err != nil {
 		return err

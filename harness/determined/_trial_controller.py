@@ -111,13 +111,6 @@ class TrialController(metaclass=abc.ABCMeta):
         pass
 
     def _check_if_trial_supports_configurations(self, env: det.EnvContext) -> None:
-        if self.env.experiment_config.mixed_precision_enabled():
-            check.true(
-                self.supports_mixed_precision(),
-                "Mixed precision training is not supported for this framework interface. "
-                'Please set `mixed_precision = "O0"`.',
-            )
-
         if env.experiment_config.averaging_training_metrics_enabled():
             check.true(self.supports_averaging_training_metrics())
 

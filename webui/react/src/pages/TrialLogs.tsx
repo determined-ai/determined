@@ -36,7 +36,7 @@ const TrialLogs: React.FC = () => {
       return detApi.StreamingExperiments.determinedTrialLogs(
         trialId,
         0,
-        filters.limit || TAIL_SIZE,
+        TAIL_SIZE,
         false,
         filters.agentIds,
         filters.containerIds,
@@ -55,8 +55,8 @@ const TrialLogs: React.FC = () => {
     useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
         trialId,
-        ((filters.limit || TAIL_SIZE) * -1),
         0,
+        TAIL_SIZE,
         false,
         filters.agentIds,
         filters.containerIds,
@@ -66,7 +66,7 @@ const TrialLogs: React.FC = () => {
         filters.sources,
         filters.timestampBefore ? filters.timestampBefore.toDate() : undefined,
         filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
-        'ORDER_BY_ASC',
+        'ORDER_BY_DESC',
         { signal: canceler.signal },
       );
     }, [ trialId ]);
@@ -83,7 +83,7 @@ const TrialLogs: React.FC = () => {
     useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
         trialId,
-        ((filters.limit || TAIL_SIZE) * -1),
+        0,
         0,
         true,
         filters.agentIds,
@@ -92,8 +92,8 @@ const TrialLogs: React.FC = () => {
         filters.levels,
         filters.stdtypes,
         filters.sources,
-        filters.timestampBefore ? filters.timestampBefore.toDate() : undefined,
-        filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
+        undefined,
+        new Date(),
         'ORDER_BY_ASC',
         { signal: canceler.signal },
       );
@@ -154,7 +154,6 @@ const TrialLogs: React.FC = () => {
 
   return (
     <LogViewerTimestamp
-      disableLevel
       fetchToLogConverter={jsonToTrialLog}
       FilterComponent={TrialLogFilters}
       noWrap

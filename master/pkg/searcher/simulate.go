@@ -27,7 +27,7 @@ func ConstantValidation(_ *rand.Rand, _, _ int) float64 { return 1 }
 func RandomValidation(rand *rand.Rand, _, _ int) float64 { return rand.Float64() }
 
 // SimulationResults holds all created trials and all executed workloads for each trial.
-type SimulationResults map[RequestID][]Runnable
+type SimulationResults map[model.RequestID][]Runnable
 
 // MarshalJSON implements the json.Marshaler interface.
 func (s SimulationResults) MarshalJSON() ([]byte, error) {
@@ -80,9 +80,9 @@ func Simulate(
 		random = rand.New(rand.NewSource(*seed))
 	}
 
-	pending := make(map[RequestID][]Operation)
-	trialIDs := make(map[RequestID]int)
-	var requestIDs []RequestID
+	pending := make(map[model.RequestID][]Operation)
+	trialIDs := make(map[model.RequestID]int)
+	var requestIDs []model.RequestID
 	ops, err := s.InitialOperations()
 	if err != nil {
 		return simulation, err
@@ -99,7 +99,7 @@ func Simulate(
 	}
 
 	nextTrialID := 1
-	trialOpIdxs := map[RequestID]int{}
+	trialOpIdxs := map[model.RequestID]int{}
 	for !shutdown {
 		requestID, err := pickTrial(random, pending, requestIDs, randomOrder)
 		if err != nil {
@@ -130,13 +130,7 @@ func Simulate(
 			}
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
 			if train, ok := operation.(Train); ok {
-				// If it's a train simulate we ran it to the event log as one huge workload,
-				// so that progress is correctly updated.
-				s.WorkloadCompleted(workload.CompletedMessage{Workload: workload.Workload{
-					Kind:    workload.RunStep,
-					TrialID: trialIDs[requestID],
-					StepID:  trialOpIdxs[requestID],
-				}}, float64(train.Length.Units))
+				s.WorkloadCompleted(requestID, float64(train.Length.Units))
 			}
 			ops, err := s.OperationCompleted(trialIDs[requestID], operation, metrics)
 			if err != nil {
@@ -187,7 +181,7 @@ func Simulate(
 }
 
 func handleOperations(
-	pending map[RequestID][]Operation, requestIDs *[]RequestID, operations []Operation,
+	pending map[model.RequestID][]Operation, requestIDs *[]model.RequestID, operations []Operation,
 ) (bool, error) {
 	for _, operation := range operations {
 		switch op := operation.(type) {
@@ -206,8 +200,9 @@ func handleOperations(
 }
 
 func pickTrial(
-	random *rand.Rand, pending map[RequestID][]Operation, requestIDs []RequestID, randomOrder bool,
-) (RequestID, error) {
+	random *rand.Rand, pending map[model.RequestID][]Operation, requestIDs []model.RequestID,
+	randomOrder bool,
+) (model.RequestID, error) {
 	// If randomOrder is false, then return the first id from requestIDs that has any operations
 	// pending.
 	if !randomOrder {
@@ -217,18 +212,18 @@ func pickTrial(
 				return requestID, nil
 			}
 		}
-		return RequestID{}, errors.New("tried to pick a trial when no trial had pending operations")
+		return model.RequestID{}, errors.New("tried to pick a trial when no trial had pending operations")
 	}
 
 	// If randomOrder is true, pseudo-randomly select a trial that has pending operations.
-	var candidates []RequestID
+	var candidates []model.RequestID
 	for requestID, operations := range pending {
 		if len(operations) > 0 {
 			candidates = append(candidates, requestID)
 		}
 	}
 	if len(candidates) == 0 {
-		return RequestID{}, errors.New("tried to pick a trial when no trial had pending operations")
+		return model.RequestID{}, errors.New("tried to pick a trial when no trial had pending operations")
 	}
 
 	// Map iteration order is nondeterministic, even for identical maps in the same run, so sort the

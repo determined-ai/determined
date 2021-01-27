@@ -3,7 +3,7 @@ from typing import Any, Dict, Union, cast
 
 import torch
 
-from determined import experimental, util
+from determined import errors, experimental, util
 from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 
 
@@ -22,14 +22,18 @@ def load_model(
     trial_context = cast(PyTorchTrialContext, trial_context)
     trial = cast(PyTorchTrial, trial_cls(trial_context))
     if "model_state_dict" in checkpoint:
-        # Backward compatible with older checkpoint format.
-        model = trial.build_model()
-        model.load_state_dict(checkpoint["model_state_dict"])
-        return model
+        # Backward compatible with older checkpoint
+        model_func = util.get_member_func(trial, "build_model")
+        if model_func is not None:
+            model = cast(torch.nn.Module, model_func())
+            model.load_state_dict(checkpoint["model_state_dict"])
+            return model
+        raise errors.InvalidCheckpointException()
     else:
-        # Backward compatible with older interface
-        if util.is_overridden(trial.build_model, PyTorchTrial):
-            model = trial.build_model()
+        # Backward compatible with older checkpoint
+        model_func = util.get_member_func(trial, "build_model")
+        if model_func is not None:
+            model = cast(torch.nn.Module, model_func())
             model.load_state_dict(checkpoint["models_state_dict"][0])
             return model
         else:

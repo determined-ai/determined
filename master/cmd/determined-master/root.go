@@ -117,6 +117,11 @@ func mergeConfigBytesIntoViper(bs []byte) error {
 }
 
 func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
+	configMap, err := applyBackwardsCompatibility(configMap)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot apply backwards compatibility")
+	}
+
 	config := internal.DefaultConfig()
 	bs, err := json.Marshal(configMap)
 	if err != nil {
@@ -130,4 +135,104 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 		return nil, err
 	}
 	return config, nil
+}
+
+func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]interface{}, error) {
+	const (
+		agent      = "agent"
+		kubernetes = "kubernetes"
+	)
+
+	_, ok1 := configMap["resource_manager"]
+	_, ok2 := configMap["resource_pools"]
+	_, ok3 := configMap["scheduler"]
+	_, ok4 := configMap["provisioner"]
+	if (ok1 || ok2) && (ok3 || ok4) {
+		return nil, errors.New(
+			"cannot use the old and the new configuration schema at the same time",
+		)
+	}
+	if ok1 || ok2 {
+		return configMap, nil
+	}
+
+	newRM := map[string]interface{}{
+		"type":                      agent,
+		"default_cpu_resource_pool": "default",
+		"default_gpu_resource_pool": "default",
+		"scheduler": map[string]interface{}{
+			"type":           "fair_share",
+			"fitting_policy": "best",
+		},
+	}
+	if v, ok := configMap["scheduler"]; ok {
+		vScheduler, ok := v.(map[string]interface{})
+		if !ok {
+			return nil, errors.New("wrong type for scheduler field")
+		}
+
+		newScheduler := make(map[string]interface{})
+		if vFit, ok := vScheduler["fit"]; ok {
+			if newScheduler["fitting_policy"], ok = vFit.(string); !ok {
+				return nil, errors.New("wrong type for scheduler.fit field")
+			}
+		}
+		if vType, ok := vScheduler["type"]; ok {
+			if newScheduler["type"], ok = vType.(string); !ok {
+				return nil, errors.New("wrong type for scheduler.type field")
+			}
+		}
+
+		if vRP, ok := v.(map[string]interface{})["resource_provider"]; ok {
+			if newRM, ok = vRP.(map[string]interface{}); ok {
+				if vRPType, ok := newRM["type"]; ok {
+					if vRPTypeStr, ok := vRPType.(string); ok {
+						if vRPTypeStr != agent && vRPTypeStr != kubernetes {
+							return nil, errors.New("wrong value for scheduler.resource_provider.type field")
+						}
+						if vRPTypeStr == kubernetes {
+							newRM["type"] = kubernetes
+						} else {
+							newRM["type"] = agent
+						}
+					} else {
+						return nil, errors.New("wrong type for scheduler.resource_provider.type field")
+					}
+				} else {
+					newRM["type"] = "agent"
+				}
+			} else {
+				return nil, errors.New("wrong type for scheduler.resource_provider field")
+			}
+		}
+
+		newRM["scheduler"] = newScheduler
+	}
+	configMap["resource_manager"] = newRM
+	delete(configMap, "scheduler")
+
+	newRP := make(map[string]interface{})
+	newRP["pool_name"] = "default"
+	if v, ok := configMap["provisioner"]; ok {
+		if vProvisioner, ok := v.(map[string]interface{}); ok {
+			newRP["provider"] = vProvisioner
+			if vProvider, ok := vProvisioner["provider"]; ok {
+				if vProviderStr, ok := vProvider.(string); ok {
+					if vProviderStr != "aws" && vProviderStr != "gcp" {
+						return nil, errors.New("wrong value for provisioner.provider field")
+					}
+					vProvisioner["type"] = vProvisioner["provider"]
+					delete(vProvisioner, "provider")
+				} else {
+					return nil, errors.New("wrong type for provisioner.provider field")
+				}
+			}
+		} else {
+			return nil, errors.New("wrong type for provisioner field")
+		}
+	}
+	configMap["resource_pools"] = []map[string]interface{}{newRP}
+	delete(configMap, "provisioner")
+
+	return configMap, nil
 }

@@ -3,7 +3,7 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointState, CheckpointStorageType, CommandState, LogLevel, LogLevel2, RunState,
+  CheckpointState, CheckpointStorageType, CommandState, ExperimentSearcherName, LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -125,6 +125,7 @@ export const ioGenericCommand = io.type({
   misc: optional(ioCommandMisc),
   owner: ioUser,
   registered_time: io.string,
+  resource_pool: io.string,
   service_address: optional(io.string),
   state: commandStatesIoType,
 });
@@ -258,6 +259,8 @@ const ioExpHParam = io.type({
 export const ioHyperparameters = io.record(io.string, ioExpHParam);
 export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;
 
+const experimentSearcherName: Record<string, null> = Object.values(ExperimentSearcherName)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: optional(ioCheckpointStorage),
@@ -268,6 +271,7 @@ export const ioExperimentConfig = io.type({
   resources: ioExpResources,
   searcher: io.type({
     metric: io.string,
+    name: io.keyof(experimentSearcherName),
     smaller_is_better: io.boolean,
   }),
 });
@@ -280,6 +284,7 @@ export const ioExperiment = io.type({
   id: io.number,
   owner_id: io.number,
   progress: optional(io.number),
+  resource_pool: io.string,
   start_time: io.string,
   state: runStatesIoType,
 });
@@ -322,23 +327,10 @@ export const ioLog = io.type({
   time: optional(io.string),
 });
 
-const ioLogLevels2: Record<string, null> = Object.values(LogLevel2)
-  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
-const ioLogLevelType2 = io.keyof(ioLogLevels2);
-export const ioTrialLog = io.type({
-  id: io.string,
-  level: optional(ioLogLevelType2),
-  message: io.string,
-  time: optional(io.string),
-});
-
 export const ioLogs = io.array(ioLog);
-export const ioTrialLogs = io.array(ioTrialLog);
 
 export type ioTypeLog = io.TypeOf<typeof ioLog>;
 export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
-export type ioTypeTrialLog = io.TypeOf<typeof ioTrialLog>;
-export type ioTypeTrialLogs = io.TypeOf<typeof ioTrialLogs>;
 
 const ioTaskLog = io.type({
   assigned_event: io.unknown,

@@ -41,7 +41,7 @@ func (s *randomSearch) progress(unitsCompleted float64) float64 {
 // trialExitedEarly creates a new trial upon receiving an InvalidHP workload.
 // Otherwise, it does nothing since actions are not taken based on search status.
 func (s *randomSearch) trialExitedEarly(
-	ctx context, requestID RequestID, exitedReason workload.ExitedReason,
+	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
 	if exitedReason == workload.InvalidHP {
 		var ops []Operation

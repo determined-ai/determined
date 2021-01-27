@@ -16,17 +16,18 @@ type Action =
   | { type: ActionType.Set; value: State }
   | { type: ActionType.SetAgents; value: Agent[] }
 
+const defaultResourceTally = { allocation:0, available: 0, total: 0 };
+
 const defaultClusterOverview: ClusterOverview = {
-  [ResourceType.CPU]: { available: 0, total: 0 },
-  [ResourceType.GPU]: { available: 0, total: 0 },
-  allocation: 0,
-  totalResources: { available: 0, total: 0 },
+  [ResourceType.CPU]: clone(defaultResourceTally),
+  [ResourceType.GPU]: clone(defaultResourceTally),
+  [ResourceType.ALL]: clone(defaultResourceTally),
+  [ResourceType.UNSPECIFIED]: clone(defaultResourceTally),
 };
 
-const agentsToOverview = (agents: Agent[]): ClusterOverview => {
+export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   // Deep clone for render detection.
-  const overview = clone(defaultClusterOverview);
-  const tally = { available: 0, total: 0 };
+  const overview = clone(defaultClusterOverview) as ClusterOverview;
 
   agents.forEach(agent => {
     agent.resources
@@ -36,13 +37,16 @@ const agentsToOverview = (agents: Agent[]): ClusterOverview => {
         const availableResource = isResourceFree ? 1 : 0;
         overview[resource.type].available += availableResource;
         overview[resource.type].total++;
-        tally.available += availableResource;
-        tally.total++;
+        overview[ResourceType.ALL].available += availableResource;
+        overview[ResourceType.ALL].total++;
       });
   });
 
-  overview.totalResources = tally;
-  overview.allocation = tally.total ? percent((tally.total - tally.available) / tally.total) : 0;
+  for (const key in overview) {
+    const rt = key as ResourceType;
+    overview[rt].allocation = overview[rt].total !== 0 ?
+      percent((overview[rt].total - overview[rt].available) / overview[rt].total) : 0;
+  }
 
   return overview;
 };

@@ -1,0 +1,25 @@
+.. _resource-pool:
+
+###############
+ Resource Pool
+###############
+
+Large-scale deep learning requires using different resources, including
+computation resources, memory, network, and storage. Typically, we start
+off prototyping our models with immediately available instance types
+with few accelerators. Once our models are mature enough, we want to
+scale up the training speed with larger instance types that have more
+powerful accelerators and high-performing processors and more instances.
+We also want to use instance types without expensive accelerators to run
+TensorBoard or any bash commands to avoid wasting accelerators.
+
+Determined provides the abstraction of physical resources for users to
+choose on their tasks. We call this abstraction *resource pools*. We can
+get the most value of our money by choosing different resource pools for
+different goals.
+
+Each resource pool is intended to map resources that are physically
+close to each other. Each resource pool can be set to use one cloud
+provider and one instance type and limited to have one region on AWS or
+zone on GCP. Each resource pool handles scheduling and scaling
+independently.

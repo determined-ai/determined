@@ -263,6 +263,7 @@ func (e *Experiment) Transition(state State) (bool, error) {
 // Trial represents a row from the `trials` table.
 type Trial struct {
 	ID                    int        `db:"id"`
+	RequestID             RequestID  `db:"request_id"`
 	ExperimentID          int        `db:"experiment_id"`
 	State                 State      `db:"state"`
 	StartTime             time.Time  `db:"start_time"`
@@ -275,11 +276,13 @@ type Trial struct {
 // NewTrial creates a new trial in the active state.  Note that the trial ID
 // will not be set.
 func NewTrial(
+	requestID RequestID,
 	experimentID int,
 	hparams JSONObj,
 	warmStartCheckpointID *int,
 	trialSeed int64) *Trial {
 	return &Trial{
+		RequestID:             requestID,
 		ExperimentID:          experimentID,
 		State:                 ActiveState,
 		StartTime:             time.Now().UTC(),
@@ -395,25 +398,25 @@ func (c *Checkpoint) IsNew() bool {
 // TrialLog represents a row from the `trial_logs` table.
 type TrialLog struct {
 	// A trial log should have one of these IDs. All should be unique.
-	ID *int `db:"id" json:"id"`
+	ID *int `db:"id" json:"id,omitempty"`
 	// The body of an Elasticsearch log response will look something like
 	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
 	// StringID doesn't have serialization tags because it is not part of
 	// _source and populated from from _id.
-	StringID *string
+	StringID *string `json:"-"`
 
 	TrialID int    `db:"trial_id" json:"trial_id"`
-	Message string `db:"message" json:"message"`
+	Message string `db:"message" json:"message,omitempty"`
 
-	AgentID *string `db:"agent_id" json:"agent_id"`
+	AgentID *string `db:"agent_id" json:"agent_id,omitempty"`
 	// In the case of k8s, container_id is a pod name instead.
-	ContainerID *string    `db:"container_id" json:"container_id"`
-	RankID      *int       `db:"rank_id" json:"rank_id"`
+	ContainerID *string    `db:"container_id" json:"container_id,omitempty"`
+	RankID      *int       `db:"rank_id" json:"rank_id,omitempty"`
 	Timestamp   *time.Time `db:"timestamp" json:"timestamp"`
 	Level       *string    `db:"level" json:"level"`
 	Log         *string    `db:"log" json:"log"`
-	Source      *string    `db:"source" json:"source"`
-	StdType     *string    `db:"stdtype" json:"stdtype"`
+	Source      *string    `db:"source" json:"source,omitempty"`
+	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
 }
 
 // Proto converts a trial log to its protobuf representation.
@@ -512,14 +515,6 @@ func (t TrialLogBatch) ForEach(f func(interface{}) error) error {
 		}
 	}
 	return nil
-}
-
-// SearcherEvent represents a row from the `searcher_events` table.
-type SearcherEvent struct {
-	ID           int     `db:"id"`
-	ExperimentID int     `db:"experiment_id"`
-	EventType    string  `db:"event_type"`
-	Content      JSONObj `db:"content"`
 }
 
 // MetricType denotes what type of step (training / validation) a metric is from.

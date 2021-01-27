@@ -42,6 +42,8 @@ build: gen
 
 .PHONY: check
 check: check-gen
+	go mod tidy
+	git diff --quiet go.mod go.sum
 	golangci-lint run --timeout 10m
 
 .PHONY: fmt

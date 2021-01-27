@@ -1,4 +1,4 @@
-import { Col, Row, Select, Tooltip } from 'antd';
+import { Alert, Col, Row, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -6,11 +6,12 @@ import { useHistory } from 'react-router-dom';
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import SelectFilter from 'components/SelectFilter';
+import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, MetricName, MetricType } from 'types';
+import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType } from 'types';
 import { alphanumericSorter } from 'utils/data';
 
 import css from './ExperimentVisualization.module.scss';
@@ -31,6 +32,11 @@ interface Props {
   type?: VisualizationType;
 }
 
+enum PageError {
+  MetricBatches,
+  MetricNames,
+}
+
 const STORAGE_PATH = 'experiment-visualization';
 const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
@@ -40,6 +46,10 @@ const MENU = [
   { disabled: true, label: 'HP Importance', type: VisualizationType.HpImportance },
   { disabled: true, label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
 ];
+const PAGE_ERROR_MESSAGES = {
+  [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
+  [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
+};
 
 const ExperimentVisualization: React.FC<Props> = ({
   basePath,
@@ -59,6 +69,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ hasLoaded, setHasLoaded ] = useState(false);
+  const [ pageError, setPageError ] = useState<PageError>();
 
   const metrics: MetricName[] = useMemo(() => ([
     ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
@@ -86,6 +97,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
+
     consumeStream<V1MetricNamesResponse>(
       detApi.StreamingInternal.determinedMetricNames(
         experiment.id,
@@ -93,8 +105,6 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        setHasLoaded(true);
-
         if (!event) return;
         /*
          * The metrics endpoint can intermittently send empty lists,
@@ -109,7 +119,10 @@ const ExperimentVisualization: React.FC<Props> = ({
         setValidationMetrics(newValidationMetrics);
         if (event.searcherMetric) setSearcherMetric(event.searcherMetric);
       },
-    );
+    ).catch(() => {
+      setHasLoaded(true);
+      setPageError(PageError.MetricNames);
+    });
 
     return () => canceler.abort();
   }, [ experiment.id ]);
@@ -131,12 +144,17 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
+        setHasLoaded(true);
+
         if (!event) return;
         (event.batches || []).forEach(batch => batchesMap[batch] = batch);
         const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
         setBatches(newBatches);
       },
-    );
+    ).catch(() => {
+      setHasLoaded(true);
+      setPageError(PageError.MetricBatches);
+    });
 
     return () => canceler.abort();
   }, [ experiment.id, selectedMetric ]);
@@ -147,9 +165,28 @@ const ExperimentVisualization: React.FC<Props> = ({
     if (searcherMetric) setSelectedMetric({ name: searcherMetric, type: MetricType.Validation });
   }, [ metrics, searcherMetric, selectedMetric ]);
 
-  if (hasLoaded && metrics.length === 0) return (
-    <Message title="Unable to find any metrics." type={MessageType.Empty} />
-  );
+  if (!hasLoaded) {
+    return <Spinner />;
+  } else if (pageError) {
+    return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
+  } else if ([
+    ExperimentSearcherName.Single,
+    ExperimentSearcherName.Pbt,
+  ].includes(experiment.config.searcher.name)) {
+    const alertMessage = `
+      Hyperparameter visualizations are not applicable for single trial or PBT experiments.
+    `;
+    return <Alert
+      description={<>
+      Learn about &nbsp;
+        <Link
+          external
+          path="/docs/reference/experiment-config.html#searcher"
+          popout>how to run a hyperparameter search</Link>.
+      </>}
+      message={alertMessage}
+      type="warning" />;
+  }
 
   return (
     <div className={css.base}>

@@ -9,14 +9,16 @@ type TextTransfomer = (key: string) => string;
 
 interface Props {
   json: RawJson;
-  transformLabel?: TextTransfomer;
+  translateLabel?: TextTransfomer;
 }
 
-const row = (
-  label: string,
-  value: RawJson | string | number | null,
-  transformLabel?: TextTransfomer,
-): React.ReactNode => {
+interface RowProps {
+  label: string;
+  translateLabel?: TextTransfomer;
+  value: RawJson | string | number | null;
+}
+
+const Row: React.FC<RowProps> = ({ translateLabel, label, value }: RowProps) => {
   let textValue = '';
   if (isObject(value)) {
     textValue = JSON.stringify(value, null, 2);
@@ -27,17 +29,20 @@ const row = (
   }
   return <li className={css.item} key={label}>
     <span className={css.label}>
-      {typeof label === 'string' && transformLabel ? transformLabel(label) : label}
+      {typeof label === 'string' && translateLabel ? translateLabel(label) : label}
       :</span>
-    <span className={css.value}>{textValue}</span>
+    <span className={css.value}>
+      {textValue}
+    </span>
   </li>;
 };
 
-const Json: React.FC<Props> = ({ json, transformLabel }: Props) => {
+const Json: React.FC<Props> = ({ json, translateLabel }: Props) => {
 
   return (
     <ul className={css.base}>
-      {Object.entries(json).map(([ label, value ]) => row(label, value, transformLabel))}
+      {Object.entries(json).map(([ label, value ]) =>
+        <Row key={label} label={label} translateLabel={translateLabel} value={value} />)}
     </ul>
   );
 };

@@ -15,7 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
-func TestUnmarshalConfigWithProvisioner(t *testing.T) {
+func TestUnmarshalConfigWithAgentResourceManager(t *testing.T) {
 	raw := `
 log:
   level: info
@@ -26,12 +26,16 @@ db:
   host: hostname
   port: "3000"
 
-scheduler:
-  fit: best
+resource_manager:
+  type: agent
+  scheduler:
+     fitting_policy: best
 
-provisioner:
-  max_idle_agent_period: 30s
-  max_agent_starting_period: 30s
+resource_pools:
+  - pool_name: default
+    provider:
+      max_idle_agent_period: 30s
+      max_agent_starting_period: 30s
 `
 	expected := Config{
 		Log: logger.Config{
@@ -44,24 +48,41 @@ provisioner:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: &resourcemanagers.Config{Fit: "best"},
-		Provisioner: &provisioner.Config{
-			AgentDockerRuntime:     "runc",
-			AgentDockerNetwork:     "default",
-			AgentFluentImage:       "fluent/fluent-bit:1.6",
-			MaxIdleAgentPeriod:     provisioner.Duration(30 * time.Second),
-			MaxAgentStartingPeriod: provisioner.Duration(30 * time.Second),
-			MaxInstances:           5,
+		ResourceConfig: &resourcemanagers.ResourceConfig{
+			ResourceManager: &resourcemanagers.ResourceManagerConfig{
+				AgentRM: &resourcemanagers.AgentResourceManagerConfig{
+					Scheduler: &resourcemanagers.SchedulerConfig{
+						FairShare:     &resourcemanagers.FairShareSchedulerConfig{},
+						FittingPolicy: "best",
+					},
+					DefaultGPUResourcePool: "default",
+					DefaultCPUResourcePool: "default",
+				},
+			},
+			ResourcePools: []resourcemanagers.ResourcePoolConfig{
+				{
+					PoolName: "default",
+					Provider: &provisioner.Config{
+						AgentDockerRuntime:     "runc",
+						AgentDockerNetwork:     "default",
+						AgentFluentImage:       "fluent/fluent-bit:1.6",
+						MaxIdleAgentPeriod:     provisioner.Duration(30 * time.Second),
+						MaxAgentStartingPeriod: provisioner.Duration(30 * time.Second),
+						MaxInstances:           5,
+					},
+					MaxCPUContainersPerAgent: 100,
+				},
+			},
 		},
 	}
 
-	var unmarshaled Config
+	unmarshaled := Config{}
 	err := yaml.Unmarshal([]byte(raw), &unmarshaled, yaml.DisallowUnknownFields)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, unmarshaled, expected)
 }
 
-func TestUnmarshalConfigWithoutProvisioner(t *testing.T) {
+func TestUnmarshalConfigWithoutResourceManager(t *testing.T) {
 	raw := `
 log:
   level: info
@@ -71,9 +92,6 @@ db:
   password: password
   host: hostname
   port: "3000"
-
-scheduler:
-  fit: best
 `
 	expected := Config{
 		Log: logger.Config{
@@ -86,7 +104,6 @@ scheduler:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: &resourcemanagers.Config{Fit: "best"},
 	}
 
 	var unmarshaled Config
@@ -118,9 +135,6 @@ db:
   host: hostname
   port: "3000"
 
-scheduler:
-  fit: best
-
 checkpoint_storage:
   type: s3
   access_key: my_key 
@@ -138,7 +152,6 @@ checkpoint_storage:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		Scheduler: &resourcemanagers.Config{Fit: "best"},
 		CheckpointStorage: CheckpointStorageConfig(removeAllWhitespace(`
 {
   "access_key": "my_key",

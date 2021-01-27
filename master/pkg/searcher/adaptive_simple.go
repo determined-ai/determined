@@ -45,17 +45,17 @@ func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) Sear
 		startTrials := max(int(float64(trials)/math.Pow(config.Divisor, float64(id))), 1)
 		if id != 0 {
 			prev := rungs[id-1]
-			unitsNeeded = max(unitsNeeded, prev.unitsNeeded.Units)
-			startTrials = max(startTrials, prev.promoteTrials)
-			prev.promoteTrials = startTrials
-			expectedUnits += (unitsNeeded - rungs[id-1].unitsNeeded.Units) * startTrials
+			unitsNeeded = max(unitsNeeded, prev.UnitsNeeded.Units)
+			startTrials = max(startTrials, prev.PromoteTrials)
+			prev.PromoteTrials = startTrials
+			expectedUnits += (unitsNeeded - rungs[id-1].UnitsNeeded.Units) * startTrials
 		} else {
 			expectedUnits += unitsNeeded * startTrials
 		}
 		rungs = append(rungs,
 			&rung{
-				unitsNeeded: model.NewLength(config.Unit(), unitsNeeded),
-				startTrials: startTrials,
+				UnitsNeeded: model.NewLength(config.Unit(), unitsNeeded),
+				StartTrials: startTrials,
 			},
 		)
 	}
@@ -63,9 +63,11 @@ func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) Sear
 	config.Budget = model.NewLength(config.Unit(), expectedUnits)
 	return &syncHalvingSearch{
 		SyncHalvingConfig: config,
-		rungs:             rungs,
-		trialRungs:        make(map[RequestID]int),
-		earlyExitTrials:   make(map[RequestID]bool),
-		expectedUnits:     model.NewLength(config.Unit(), expectedUnits),
+		syncHalvingSearchState: syncHalvingSearchState{
+			Rungs:           rungs,
+			TrialRungs:      make(map[model.RequestID]int),
+			EarlyExitTrials: make(map[model.RequestID]bool),
+		},
+		expectedUnits: model.NewLength(config.Unit(), expectedUnits),
 	}
 }

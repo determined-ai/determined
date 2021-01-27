@@ -5,13 +5,13 @@ import {
   ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
   LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
-  TrialDetailsParams, TrialLogsParams,
+  TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, RunState,
-  Telemetry, TrialDetails, TrialLog, ValidationHistory,
+  ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, ResourcePool, RunState,
+  Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -51,15 +51,19 @@ export const getInfo =
 export const getTelemetry =
   generateDetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry>(Config.getTelemetry);
 
-/* Agent */
+/* Cluster */
 
 export const getAgents =
   generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]>(Config.getAgents);
 
+export const getResourcePools = generateDetApi<
+EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]
+>(Config.getResourcePools);
+
 // Placeholder for getResourcePools API.
 /* eslint-disable */
-export const getResourcePools = () => {
-  return resourcePools;
+export const getResourcePoolSamples = (): ResourcePool[] => {
+  return resourcePools as unknown as ResourcePool[];
 };
 /* eslint-enable */
 
@@ -205,5 +209,3 @@ export const killTask = async (task: CommandTask): Promise<void> => {
 export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
 
 export const getTaskLogs = generateApi<TaskLogsParams, Log[]>(Config.getTaskLogs);
-
-export const getTrialLogs = generateApi<TrialLogsParams, TrialLog[]>(Config.getTrialLogs);

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -25,77 +24,78 @@ import (
 // Experiment-specific actor messages.
 type (
 	trialCreated struct {
-		create  searcher.Create
-		trialID int
+		create searcher.Create
+		trialSnapshot
 	}
 	trialCompletedOperation struct {
-		trialID int
 		op      searcher.Runnable
 		metrics interface{}
+		trialSnapshot
+	}
+	trialValidation struct {
+		validationMetrics *workload.ValidationMetrics
 	}
 	trialCompletedWorkload struct {
-		trialID          int
 		completedMessage workload.CompletedMessage
 		// unitsCompleted is passed as a float because while the searcher will only request integral
 		// units, a trial may complete partial units (especially in the case of epochs).
 		unitsCompleted float64
+		completedOps   []trialCompletedOperation
+		earlyExit      *trialExitedEarly
+		trialSnapshot
+	}
+	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
+	// its actor.PostStop and when the experiment snapshots the trial closed.
+	trialClosed struct {
+		requestID model.RequestID
 	}
 	trialExitedEarly struct {
 		trialID      int
-		exitedReason *workload.ExitedReason
+		exitedReason workload.ExitedReason
+	}
+	trialSnapshot struct {
+		requestID model.RequestID
+		trialID   int
+		snapshot  []byte
 	}
 	getProgress    struct{}
 	getTrial       struct{ trialID int }
-	restoreTrials  struct{}
-	trialsRestored struct{}
 	killExperiment struct{}
-
-	// doneProcessingSearcherOperations message is only used during master restart, to ensure that
-	// all the searcher operations created by a given event (experiment created / trial created /
-	// workload completed) are fully handled before passing another event to the actor system. This
-	// ensures we do not pass a workload completed event to a trial which either a) does not exist
-	// yet, or b) has not yet seen that workload request.
-	//
-	// TODO(ryan): Rework the trial/experiment interface to remove the need for this level of
-	// synchronization as part of DET-675, which would put the WorkloadSequencer alongside the
-	// SearchMethod in the experiment actor instead of the trial actor. With that change, all of
-	// the restorable state would be in a single actor and the complex replay synchronization would
-	// be eliminated.
-	doneProcessingSearcherOperations struct{}
 )
 
-const (
-	// TrialCreatedEventType is the event type in the database for a searcher.TrialCreatedEvent.
-	TrialCreatedEventType = "TrialCreated"
-	// TrialClosedEventType is the event type in the database for a searcher.TrialClosedEvent.
-	TrialClosedEventType = "TrialClosed"
-	// WorkloadCompletedEventType is the event type in the database for a workload.CompletedMessage.
-	WorkloadCompletedEventType = "WorkloadCompleted"
-
-	// searcherEventBuffer is the maximum number of SearcherEvents that can be buffered before
-	// writing to the database.  In reality, it is much more likely flushing the buffer happens
-	// due to the contents of the SearcherEvents than the number of them; see the comment in
-	// convertSearcherEvent()
-	searcherEventBuffer = 20
-)
-
-type experiment struct {
-	*model.Experiment
-	modelDefinition     archive.Archive
-	rm                  *actor.Ref
-	trialLogger         *actor.Ref
-	hpImportance        *actor.Ref
-	db                  *db.PgDB
-	searcher            *searcher.Searcher
-	warmStartCheckpoint *model.Checkpoint
-	bestValidation      *float64
-	replaying           bool
-
-	pendingEvents []*model.SearcherEvent
-
-	agentUserGroup *model.AgentUserGroup
-	taskSpec       *tasks.TaskSpec
+type trialSnapshotCarrier interface {
+	getSnapshot() trialSnapshot
 }
+
+func (t trialSnapshot) getSnapshot() trialSnapshot {
+	return t
+}
+
+type (
+	experimentState struct {
+		SearcherState  json.RawMessage `json:"searcher_state"`
+		BestValidation *float64        `json:"best_validation"`
+	}
+
+	experiment struct {
+		experimentState
+
+		*model.Experiment
+		modelDefinition     archive.Archive
+		rm                  *actor.Ref
+		trialLogger         *actor.Ref
+		hpImportance        *actor.Ref
+		db                  *db.PgDB
+		searcher            *searcher.Searcher
+		warmStartCheckpoint *model.Checkpoint
+
+		agentUserGroup *model.AgentUserGroup
+		taskSpec       *tasks.TaskSpec
+
+		faultToleranceEnabled bool
+		restored              bool
+	}
+)
 
 // Create a new experiment object from the given model experiment object, along with its searcher
 // and log. If the input object has no ID set, also create a new experiment in the database and set
@@ -108,12 +108,20 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 	}
 
 	// If the resource pool isn't set, fill in the default.
-	if conf.Resources.ResourcePool == "" {
-		conf.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(master.system)
+	if expModel.Config.Resources.ResourcePool == "" {
+		expModel.Config.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(master.system)
 	}
 
 	method := searcher.NewSearchMethod(conf.Searcher)
 	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
+
+	// Call InitialOperations which adds operations to the record in the Searcher. These
+	// will be sent back to their respective trials in experiment prestart. This allows them to
+	// be discarded if we Restore from a snapshot (since they will already exist in the snapshot
+	// and have been accounted for).
+	if _, err := search.InitialOperations(); err != nil {
+		return nil, errors.Wrap(err, "failed to generate initial operations")
+	}
 
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
@@ -152,156 +160,18 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		db:                  master.db,
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
-		pendingEvents:       make([]*model.SearcherEvent, 0, searcherEventBuffer),
 
 		agentUserGroup: agentUserGroup,
 		taskSpec:       master.taskSpec,
+
+		faultToleranceEnabled: true,
 	}, nil
 }
 
-// marshalInto marshals a generic JSON object into the content of obj.
-func marshalInto(unmarshaled interface{}, obj interface{}) error {
-	bytes, err := json.Marshal(unmarshaled)
-	if err != nil {
-		return errors.Wrapf(err, "failed to marshal from %T", unmarshaled)
-	}
-	if err = json.Unmarshal(bytes, obj); err != nil {
-		return errors.Wrapf(err, "failed to unmarshal into %T", obj)
-	}
-	return nil
-}
-
-// newSearcherEventCallback returns a closure replays SearcherEvents to restore in-progress
-// experiments during Master restart. The SearcherEvent log can become tens of GB for a large
-// experiment when loaded into memory, and this lets us avoid asking the database to pass us all
-// the rows at once.
-func newSearcherEventCallback(master *Master, ref *actor.Ref) func(model.SearcherEvent) error {
-	requestIDs := make(map[int]searcher.RequestID)
-
-	// Seen tracks if this is the first time we've seen a workload. For example: if a trial runs
-	// steps 1, 2, 3 and fails during step 4, then restarts and runs 1, 2, 3, 4... the event log
-	// will look like 1, 2, 3, 1, 2, 3, 4... which the trial workload sequencer will barf over.
-	// We only replay the first of each event.
-	seen := make(map[workload.Workload]bool)
-
-	return func(event model.SearcherEvent) error {
-		switch event.EventType {
-		case TrialCreatedEventType:
-			log.Debugf("\x1b[32mrestore: trial created\x1b[m %v %v",
-				event.Content["request_id"], event.Content["trial_id"])
-
-			// Convert the JSON representation of the create operation into an actual operation object.
-			obj := event.Content["operation"].(map[string]interface{})["Create"]
-			create := searcher.Create{}
-			if err := marshalInto(obj, &create); err != nil {
-				return errors.Wrap(err, "failed to process create operation")
-			}
-
-			trialID := int(event.Content["trial_id"].(float64))
-			requestIDs[trialID] = create.RequestID
-
-			// We pass the TrialCreated event to the trial so that it knows its TrialID from
-			// before, and the trial will pass the TrialCreated to the experiment before we get a
-			// response from this Ask.
-			master.system.AskAt(ref.Address().Child(create.RequestID),
-				trialCreated{create: create, trialID: trialID}).Get()
-
-			// Wait for the experiment to handle any searcher operations due to the created trial.
-			master.system.Ask(ref, doneProcessingSearcherOperations{}).Get()
-
-		case WorkloadCompletedEventType:
-			{
-				w := event.Content["msg"].(map[string]interface{})["workload"].(map[string]interface{})
-				log.Debugf("\x1b[32mrestore workload\x1b[m: %d %v %v %s",
-					event.ID, w["trial_id"], w["step_id"], w["kind"])
-			}
-			// Convert the JSON representation of the message to an actual message object.
-			obj := event.Content["msg"]
-			var msg workload.CompletedMessage
-			if err := marshalInto(obj, &msg); err != nil {
-				return errors.Wrap(err, "failed to process completed message")
-			}
-
-			// Check if we've already passed this exact workload to the trial once.
-			if seen[msg.Workload] {
-				return nil
-			}
-			seen[msg.Workload] = true
-
-			// Pass the workload completed message to the Trial. It will pass the event along to
-			// the experiment before this Ask gets a response.
-			master.system.AskAt(ref.Address().Child(requestIDs[msg.Workload.TrialID]), msg).Get()
-
-			// Wait for the experiment to handle any searcher operations due to the completed
-			// workload.
-			master.system.Ask(ref, doneProcessingSearcherOperations{}).Get()
-
-		case TrialClosedEventType:
-			// Ignore these events; the trial actors' closing will notify the experiment naturally.
-		}
-		return nil
-	}
-}
-
-func restoreExperiment(master *Master, expModel *model.Experiment) error {
-	// Experiments which were trying to stop need to be marked as terminal in the database.
-	if terminal, ok := model.StoppingToTerminalStates[expModel.State]; ok {
-		if err := master.db.TerminateExperimentInRestart(expModel.ID, terminal); err != nil {
-			return errors.Wrapf(err, "terminating experiment %d", expModel.ID)
-		}
-		expModel.State = terminal
-		telemetry.ReportExperimentStateChanged(master.system, master.db, *expModel)
-		return nil
-	} else if _, ok := model.RunningStates[expModel.State]; !ok {
-		return errors.Errorf(
-			"cannot restore experiment %d from state %v", expModel.ID, expModel.State,
-		)
-	}
-
-	e, err := newExperiment(master, expModel)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
-	}
-
-	log := log.WithField("experiment", e.ID)
-
-	log.Info("restoring experiment")
-	e.replaying = true
-
-	ref, _ := master.system.ActorOf(actor.Addr("experiments", e.ID), e)
-
-	// Wait for the experiment to handle any initial searcher operations.
-	master.system.Ask(ref, doneProcessingSearcherOperations{}).Get()
-
-	if err = e.db.RollbackSearcherEvents(e.ID); err != nil {
-		return errors.Wrapf(err, "failed to rollback searcher events")
-	}
-
-	if err = e.db.ForEachSearcherEvent(e.ID, newSearcherEventCallback(master, ref)); err != nil {
-		return errors.Wrapf(err, "failed to get searcher events")
-	}
-
-	// We have the experiment ask all the trials to restore (since we don't know all of the trial
-	// actor children) and wait here for them to finish. Since the trials might ask things of the
-	// experiment while restoring, we can't have the experiment itself wait for the trials.
-	trialResponses := master.system.Ask(ref, restoreTrials{}).Get()
-
-	// If the experiment failed during the replay we may receive a nil response.
-	if trialResponses == nil {
-		return errors.Errorf("experiment %v did not respond to 'restoreTrials' message", e.ID)
-	}
-
-	for range trialResponses.(actor.Responses) {
-	}
-
-	// Now notify the experiment that the trials are done and wait for a response, so that this
-	// function doesn't exit before the experiment and trials are fully caught up.
-	master.system.Ask(ref, trialsRestored{}).Get()
-
-	return nil
-}
-
 func (e *experiment) Receive(ctx *actor.Context) error {
+	if msg, ok := ctx.Message().(trialSnapshotCarrier); ok && e.faultToleranceEnabled {
+		defer e.snapshotAndSave(ctx, msg.getSnapshot())
+	}
 	switch msg := ctx.Message().(type) {
 	// Searcher-related messages.
 	case actor.PreStart:
@@ -316,9 +186,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			Priority: e.Config.Resources.Priority,
 			Handler:  ctx.Self(),
 		})
-		ops, err := e.searcher.InitialOperations()
-		e.processOperations(ctx, ops, err)
+
+		e.processOperations(ctx, e.searcher.TrialOperations, nil)
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
+		// Since e.searcher.TrialOperations should have all trials that were previously
+		// allocated, we can stop trying to restore new trials after processing these.
+		e.restored = false
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
 		e.processOperations(ctx, ops, err)
@@ -326,24 +199,23 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ops, err := e.searcher.OperationCompleted(msg.trialID, msg.op, msg.metrics)
 		e.processOperations(ctx, ops, err)
 	case trialCompletedWorkload:
-		e.searcher.WorkloadCompleted(msg.completedMessage, msg.unitsCompleted)
-		e.processOperations(ctx, nil, nil) // We call processOperations to flush searcher events.
-		if msg.completedMessage.Workload.Kind == workload.ComputeValidationMetrics &&
-			// Messages indicating trial failures won't have metrics (or need their status).
-			msg.completedMessage.ExitedReason == nil {
-			ctx.Respond(e.isBestValidation(*msg.completedMessage.ValidationMetrics))
+		e.searcher.WorkloadCompleted(msg.requestID, msg.unitsCompleted)
+		for _, op := range msg.completedOps {
+			ops, err := e.searcher.OperationCompleted(msg.trialID, op.op, op.metrics)
+			e.processOperations(ctx, ops, err)
+		}
+		if msg.earlyExit != nil {
+			ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.earlyExit.exitedReason)
+			e.processOperations(ctx, ops, err)
 		}
 		progress := e.searcher.Progress()
 		if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
-	case trialExitedEarly:
-		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.exitedReason)
-		e.processOperations(ctx, ops, err)
-		progress := e.searcher.Progress()
-		if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
-			ctx.Log().WithError(err).Error("failed to save experiment progress")
+	case trialValidation:
+		if msg.validationMetrics != nil {
+			ctx.Respond(e.isBestValidation(*msg.validationMetrics))
 		}
 	case sendNextWorkload:
 		// Pass this back to the trial; this message is just used to allow the trial to synchronize
@@ -351,19 +223,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Sender(), msg)
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
-		requestID := searcher.MustParse(msg.Child.Address().Local())
-		ops, err := e.searcher.TrialClosed(requestID)
-		e.processOperations(ctx, ops, err)
-		if e.canTerminate(ctx) {
-			ctx.Self().Stop()
-		}
+		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
 	case actor.ChildStopped:
-		requestID := searcher.MustParse(msg.Child.Address().Local())
-		ops, err := e.searcher.TrialClosed(requestID)
-		e.processOperations(ctx, ops, err)
-		if e.canTerminate(ctx) {
-			ctx.Self().Stop()
-		}
+		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
+	case trialClosed:
+		e.trialClosed(ctx, msg.requestID)
 	case getProgress:
 		progress := e.searcher.Progress()
 		ctx.Respond(&progress)
@@ -374,15 +238,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if ok && ref != nil {
 			ctx.Respond(ref)
 		}
-
-	// Restoration-related messages.
-	case doneProcessingSearcherOperations:
-		// This is just a synchronization tool for master restarts; the actor system's default
-		// response is fine.
-	case restoreTrials:
-		ctx.Respond(ctx.AskAll(restoreTrial{}, ctx.Children()...))
-	case trialsRestored:
-		e.replaying = false
 
 	// Patch experiment messages.
 	case model.State:
@@ -411,12 +266,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().Error(err)
 		}
 
-		// Flush any remaining searcher logs
-		if err := e.db.AddSearcherEvents(e.pendingEvents); err != nil {
-			ctx.Log().Error(err)
-			e.updateState(ctx, model.StoppingErrorState)
-		}
-
 		state := model.StoppingToTerminalStates[e.State]
 		if wasPatched, err := e.Transition(state); err != nil {
 			return err
@@ -440,12 +289,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
 
-		// Discard searcher events for all terminal experiments (even failed ones).
-		// This is safe because we never try to restore the state of the searcher for
-		// terminated experiments.
-		if err := e.db.DeleteSearcherEvents(e.Experiment.ID); err != nil {
+		if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {
 			ctx.Log().WithError(err).Errorf(
-				"failure to delete searcher events for experiment: %d", e.Experiment.ID)
+				"failure to delete snapshots for experiment: %d", e.Experiment.ID)
 		}
 
 		ctx.Log().Info("experiment shut down successfully")
@@ -506,6 +352,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (e *experiment) trialClosed(ctx *actor.Context, requestID model.RequestID) {
+	ops, err := e.searcher.TrialClosed(requestID)
+	e.processOperations(ctx, ops, err)
+	if e.canTerminate(ctx) {
+		ctx.Self().Stop()
+	}
+}
+
 func (e *experiment) processOperations(
 	ctx *actor.Context, ops []searcher.Operation, err error) {
 	if _, ok := model.StoppingStates[e.State]; ok {
@@ -517,7 +371,8 @@ func (e *experiment) processOperations(
 		return
 	}
 
-	trialOperations := make(map[searcher.RequestID][]searcher.Operation)
+	trialOperations := make(map[model.RequestID][]searcher.Operation)
+	terminalTrials := make(map[model.RequestID]bool)
 	for _, operation := range ops {
 		ctx.Log().Debugf("handling searcher op: %v", operation)
 		switch op := operation.(type) {
@@ -540,9 +395,20 @@ func (e *experiment) processOperations(
 				}
 				checkpoint = checkpointModel
 			}
+			if e.restored {
+				terminal := e.restoreTrial(ctx, op, checkpoint)
+				terminalTrials[op.RequestID] = terminal
+				// In the event a trial is terminal and is not recorded in the searcher, replay the close.
+				if terminal && !e.searcher.TrialsClosed[op.RequestID] {
+					ctx.Tell(ctx.Self(), trialClosed{requestID: op.RequestID})
+				}
+				continue
+			}
 			ctx.ActorOf(op.RequestID, newTrial(e, op, checkpoint))
 		case searcher.Requested:
-			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
+			if !terminalTrials[op.GetRequestID()] {
+				trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
+			}
 		case searcher.Shutdown:
 			if op.Failure {
 				e.updateState(ctx, model.StoppingErrorState)
@@ -556,38 +422,6 @@ func (e *experiment) processOperations(
 	for requestID, ops := range trialOperations {
 		ctx.Tell(ctx.Child(requestID), ops)
 	}
-
-	// Commit new searcher events to the database.
-	events := e.searcher.UncommittedEvents()
-	if !e.replaying {
-		flushEvents := false
-		for _, event := range events {
-			modelEvent, flush, err := convertSearcherEvent(e.ID, event)
-			if err != nil {
-				ctx.Log().Error(err)
-				e.updateState(ctx, model.StoppingErrorState)
-				return
-			}
-			flushEvents = flushEvents || flush
-			e.pendingEvents = append(e.pendingEvents, modelEvent)
-		}
-		// Flush events to the database if either we have enough to be efficient or if the most
-		// recent event is important for the consistency of the searcher state and the database
-		// state. See comment in convertSearcherEvent().
-		//
-		// TODO(ryan): This keeps the experiment actor's inbox much smaller under heavy loads,
-		// which results in a much more performant system, since things like `det e list` or the
-		// webui have to Ask() the experiment for its state. However, chunking like this may not
-		// be strictly valid, which is non-ideal, but Searcher Reload (DET-816) is the "real" fix.
-		if flushEvents || len(e.pendingEvents) > searcherEventBuffer {
-			if err := e.db.AddSearcherEvents(e.pendingEvents); err != nil {
-				ctx.Log().Error(err)
-				e.updateState(ctx, model.StoppingErrorState)
-				return
-			}
-			e.pendingEvents = e.pendingEvents[:0]
-		}
-	}
 }
 
 func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
@@ -598,11 +432,11 @@ func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
 		return false
 	}
 	smallerIsBetter := e.Config.Searcher.SmallerIsBetter
-	isBest := (e.bestValidation == nil) ||
-		(smallerIsBetter && validation < *e.bestValidation) ||
-		(!smallerIsBetter && validation > *e.bestValidation)
+	isBest := (e.BestValidation == nil) ||
+		(smallerIsBetter && validation <= *e.BestValidation) ||
+		(!smallerIsBetter && validation >= *e.BestValidation)
 	if isBest {
-		e.bestValidation = &validation
+		e.BestValidation = &validation
 	}
 	return isBest
 }
@@ -632,4 +466,24 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 
 func (e *experiment) canTerminate(ctx *actor.Context) bool {
 	return model.StoppingStates[e.State] && len(ctx.Children()) == 0
+}
+
+func (e *experiment) Snapshot() (json.RawMessage, error) {
+	searcherSnapshot, err := e.searcher.Snapshot()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to snapshot searcher")
+	}
+	e.SearcherState = searcherSnapshot
+	experimentSnapshot, err := json.Marshal(e.experimentState)
+	return experimentSnapshot, errors.Wrap(err, "failed to marshal experiment")
+}
+
+func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
+	if err := json.Unmarshal(experimentSnapshot, &e.experimentState); err != nil {
+		return errors.Wrap(err, "failed to unmarshal experiment snapshot")
+	}
+	if err := e.searcher.Restore(e.SearcherState); err != nil {
+		return errors.Wrap(err, "failed to restore searcher snapshot")
+	}
+	return nil
 }

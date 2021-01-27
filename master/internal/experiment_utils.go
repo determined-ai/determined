@@ -1,8 +1,6 @@
 package internal
 
 import (
-	"encoding/json"
-
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/google/uuid"
@@ -10,7 +8,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
 func checkpointFromTrialIDOrUUID(
@@ -42,66 +39,6 @@ func checkpointFromTrialIDOrUUID(
 		}
 	}
 	return checkpoint, nil
-}
-
-func convertSearcherEvent(id int, event searcher.Event) (
-	*model.SearcherEvent, bool, error,
-) {
-	var eventType string
-	var content model.JSONObj
-
-	// In order to not lose any work in case of crashing and to keep the state of the database
-	// consistent with the searcher state, we indicate to the experiment that this event must be
-	// flushed to the log under the following conditions:
-	//  - We have a checkpoint that has occurred
-	//  - We have a trial created
-	//  - We have computed validation metrics
-	var flush bool
-	switch event := event.(type) {
-	case searcher.TrialCreatedEvent:
-		createBytes, err := json.Marshal(event)
-		if err != nil {
-			return nil, false, err
-		}
-		eventType = "TrialCreated"
-		content = model.JSONObj{
-			"trial_id":   event.TrialID,
-			"request_id": uuid.UUID(event.Create.RequestID).String(),
-			"operation":  json.RawMessage(createBytes),
-		}
-		flush = true
-
-	case searcher.TrialClosedEvent:
-		eventType = "TrialClosed"
-		content = model.JSONObj{
-			"request_id": event.RequestID.String(),
-		}
-
-	case workload.CompletedMessage:
-		switch event.Workload.Kind {
-		case workload.RunStep:
-			event.RawMetrics = json.RawMessage("")
-		case workload.CheckpointModel:
-			flush = true
-		case workload.ComputeValidationMetrics:
-			flush = true
-		}
-		workloadBytes, err := json.Marshal(event)
-		if err != nil {
-			return nil, false, err
-		}
-
-		eventType = "WorkloadCompleted"
-		content = model.JSONObj{
-			"msg": json.RawMessage(workloadBytes),
-		}
-	}
-	modelEvent := &model.SearcherEvent{
-		ExperimentID: id,
-		EventType:    eventType,
-		Content:      content,
-	}
-	return modelEvent, flush, nil
 }
 
 // checkpointFromCheckpointMetrics converts a workload.CheckpointMetrics into a model.Checkpoint
