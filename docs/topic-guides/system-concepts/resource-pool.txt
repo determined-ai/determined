@@ -96,7 +96,7 @@ pool the agent should join.
 ***************************
 
 With the introduction of resource pools, the :ref:`master-configuration` format
-has changed to the V1.0 format. The old format had the top level fields of ``scheduler``
+has changed to a new format. The old format had the top level fields of ``scheduler``
 and ``provisioner`` which set the scheduler and provisioner settings for the cluster.
 
 The new format has the top level fields ``resource_manager`` and ``resource_pools``.
