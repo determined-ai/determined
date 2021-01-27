@@ -68,7 +68,9 @@ func newGRPCGatewayMux() *runtime.ServeMux {
 // RegisterHTTPProxy registers grpc-gateway with the master echo server.
 func RegisterHTTPProxy(ctx context.Context, e *echo.Echo, port int, cert *tls.Certificate) error {
 	addr := fmt.Sprintf(":%d", port)
-	var opts []grpc.DialOption
+	opts := []grpc.DialOption{
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1 << 26)),
+	}
 	if cert == nil {
 		opts = append(opts, grpc.WithInsecure())
 	} else {
