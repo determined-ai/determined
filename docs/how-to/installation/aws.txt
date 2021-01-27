@@ -544,6 +544,7 @@ Running Determined
 
    -  ``image_id`` should be the latest Determined agent AMI.
    -  ``instance_type`` should be any p2 or p3 EC2 instance type.
+   - For more information about resource pools, see  :ref:`_resource-pool`
 
    .. warning::
 
@@ -570,22 +571,25 @@ Running Determined
         port: 5432
         name: determined
 
-      provisioner:
-        iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
-        image_id: ${AgentAmiId}
-        agent_docker_image: determinedai/determined-agent:${Version}
-        instance_name: determined-agent-${UserName}
-        instance_type: ${AgentInstanceType}
-        master_url: http://local-ipv4:8080
-        max_idle_agent_period: ${MaxIdleAgentPeriod}
-        max_instances: ${MaxInstances}
-        network_interface:
-          public_ip: true
-          security_group_id: ${AgentSecurityGroup.GroupId}
-        provider: aws
-        ssh_key_name: ${Keypair}
-        tag_key: determined-${UserName}
-        tag_value: determined-${UserName}-agent
+      resource_pools:
+        - pool_name: default
+          description: The default resource pool
+          provider:
+            iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+            image_id: ${AgentAmiId}
+            agent_docker_image: determinedai/determined-agent:${Version}
+            instance_name: determined-agent-${UserName}
+            instance_type: ${AgentInstanceType}
+            master_url: http://local-ipv4:8080
+            max_idle_agent_period: ${MaxIdleAgentPeriod}
+            max_instances: ${MaxInstances}
+            network_interface:
+              public_ip: true
+              security_group_id: ${AgentSecurityGroup.GroupId}
+            provider: aws
+            ssh_key_name: ${Keypair}
+            tag_key: determined-${UserName}
+            tag_value: determined-${UserName}-agent
 
 #. Start the Determined master.
 

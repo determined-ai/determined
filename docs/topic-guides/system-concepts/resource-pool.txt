@@ -157,7 +157,7 @@ redefine the scheduler type at the pool-specific level:
     resource_pools:
       - pool_name: pool1
         scheduler:
-          type: round_robine
+          type: round_robin
           fitting_policy: worst
 
 
