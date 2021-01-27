@@ -16,12 +16,13 @@ class InvalidHP(Exception):
     Attributes:
         message -- explanation of the error
     """
+
     def __init__(self, message="Invalid hyperparameter exception encountered"):
         self.message = message
         super().__init__(self.message)
 
     def __str__(self):
-        return(repr(self.message))
+        return repr(self.message)
 
 
 def _get_gpus(limit_gpus: Optional[int]) -> Tuple[bool, List[str], List[int]]:
@@ -46,7 +47,7 @@ def _catch_sys_exit() -> Any:
 
 
 @contextlib.contextmanager
-def _catch_invalid_hp(workloads: workload.stream) -> Any:
+def _catch_invalid_hp(workloads: iter) -> Any:
     try:
         yield
     except InvalidHP as e:
