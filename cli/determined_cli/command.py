@@ -54,7 +54,7 @@ CommandDescription = namedtuple(
 
 
 def describe_command(command: Command) -> CommandDescription:
-    print(command.config)
+    # print(command.config)
     return CommandDescription(
         command.id,
         command.owner["username"],
