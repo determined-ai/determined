@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ParallelCoordinates, {
-  ConfigDimension, dimensionTypeMap, Range,
+  ConfigDimension, dimensionTypeMap,
 } from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
@@ -14,9 +14,10 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParamType, ExperimentHyperParamValue, MetricName, metricTypeParamMap,
+  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, Primitive, Range,
 } from 'types';
-import { hpSorter, isObject } from 'utils/data';
+import { defaultNumericRange, normalizeRange, updateRange } from 'utils/chart';
+import { isObject } from 'utils/data';
 
 import css from './HpParallelCoordinates.module.scss';
 
@@ -34,7 +35,7 @@ interface Props {
 
 interface HpTrialData {
   colors: number[];
-  hparams: Record<string, ExperimentHyperParamValue[]>;
+  hparams: Record<string, Primitive[]>;
   lineIds: number[];
 }
 
@@ -51,15 +52,22 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ data, setData ] = useState<HpTrialData>({ colors: [], hparams: {}, lineIds: [] });
 
   const dimensions = useMemo(() => {
+    console.log('exp config', experiment.config.hyperparameters);
     return Object.keys(experiment.config.hyperparameters).map(key => {
       const hp = experiment.config.hyperparameters[key];
+      const isConstant = hp.type === ExperimentHyperParamType.Constant;
       const isCategorical = hp.type === ExperimentHyperParamType.Categorical;
       const range = hp.minval != null && hp.maxval != null ?
-        [ hp.minval, hp.maxval ] as Range : undefined;
-      const dimension: ConfigDimension = { label: key, range, type: dimensionTypeMap[hp.type] };
+        [ hp.minval, hp.maxval ] as Range<number> : undefined;
+      const dimension: ConfigDimension = {
+        categories: hp.vals,
+        label: key,
+        range,
+        type: dimensionTypeMap[hp.type],
+      };
 
-      if (isCategorical && Array.isArray(hp.vals)) {
-        dimension.categories = hp.vals.map(val => val.toString());
+      if (isConstant && hp.val != null) {
+        dimension.range = updateRange(undefined, hp.val);
       }
 
       return dimension;
@@ -102,27 +110,21 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
         const trialIds: number[] = [];
         const trialMetrics: number[] = [];
-        const trialHps: Record<string, ExperimentHyperParamValue[]> = {};
-        const trialHpMap: Record<string, Record<number, ExperimentHyperParamValue>> = {};
+        const trialHps: Record<string, Primitive[]> = {};
+        const trialHpMap: Record<string, Record<number, Primitive>> = {};
         const trialHpRanges: Record<string, Range> = {};
+        let trialMetricRange: Range<number> = defaultNumericRange();
 
         event.trials.forEach(trial => {
           trialIds.push(trial.trialId);
           trialMetrics.push(trial.metric);
+          trialMetricRange = updateRange<number>(trialMetricRange, trial.metric);
 
           Object.keys(trial.hparams || {}).forEach(hpKey => {
             const hpValue = trial.hparams[hpKey];
-            const defaultRange = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
             trialHpMap[hpKey][trial.trialId] = hpValue;
-            trialHpRanges[hpKey] = trialHpRanges[hpKey] || defaultRange;
-
-            if (hpSorter(trialHpRanges[hpKey][0], hpValue) === -1) {
-              trialHpRanges[hpKey][0] = hpValue;
-            }
-            if (hpSorter(trialHpRanges[hpKey][1], hpValue) === 1) {
-              trialHpRanges[hpKey][1] = hpValue;
-            }
+            trialHpRanges[hpKey] = updateRange(trialHpRanges[hpKey], hpValue);
           });
         });
 
@@ -130,12 +132,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
           trialHps[hpKey] = trialIds.map(trialId => trialHpMap[hpKey][trialId]);
         });
 
+        // Normalize metrics values for parallel coordinates colors.
+        const colors = normalizeRange(trialMetrics, trialMetricRange);
+
         setData({
-          colors: trialMetrics,
+          colors,
           hparams: trialHps,
           lineIds: trialIds,
         });
-        console.log(trialIds, trialMetrics, trialHps, trialHpRanges);
+        console.log(trialIds, trialHps, trialHpRanges);
 
         setHasLoaded(true);
       },

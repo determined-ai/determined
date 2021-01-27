@@ -21,7 +21,7 @@ import {
   ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, RunState,
 } from 'types';
 import { glasbeyColor } from 'utils/color';
-import { alphanumericSorter, hpSorter, numericSorter } from 'utils/data';
+import { alphanumericSorter, numericSorter, primitiveSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './LearningCurve.module.scss';
@@ -118,7 +118,7 @@ const LearningCurve: React.FC<Props> = ({
       return (recordA: TrialHParams, recordB: TrialHParams): number => {
         const a = recordA.hparams[key];
         const b = recordB.hparams[key];
-        return hpSorter(a, b);
+        return primitiveSorter(a, b);
       };
     };
     const hpColumns = Object.keys(experiment.config.hyperparameters || {}).map(key => ({
