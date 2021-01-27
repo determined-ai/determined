@@ -15,7 +15,7 @@
 #  type: agent
 #  scheduler:
 #    type: fair_share
-#    fit: best
+#    fitting_policy: best
 #  default_cpu_resource_pool: default
 #  default_gpu_resource_pool: default
 ## Resource pools configuration.
@@ -127,3 +127,6 @@ db:
 ## Determined.
 # telemetry:
 #   enabled: true
+
+
+
