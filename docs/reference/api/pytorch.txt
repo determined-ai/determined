@@ -10,7 +10,7 @@
 
 .. autoclass:: determined.pytorch.PyTorchTrial
    :members:
-   :exclude-members: trial_controller_class, trial_context_class, build_model, optimizer, create_lr_scheduler
+   :exclude-members: trial_controller_class, trial_context_class
    :inherited-members:
    :member-order: bysource
    :special-members: __init__
@@ -92,7 +92,6 @@ Trial Context
 
 .. autoclass:: determined.pytorch.PyTorchTrialContext
    :members:
-   :exclude-members: get_model, get_optimizer, get_lr_scheduler
 
 .. autoclass:: determined.pytorch.PyTorchExperimentalContext
    :members:
@@ -130,44 +129,6 @@ To execute arbitrary Python code during the lifecycle of a
 
 .. autoclass:: determined.pytorch.PyTorchCallback
    :members:
-
-.. _migration-guide-flexible-primitives:
-
-*************************************
- Migration from deprecated interface
-*************************************
-
-The current PyTorch interface is designed to be flexible and to support
-multiple models, optimizers, and LR schedulers. The ability to run
-forward and backward passes in an arbitrary order affords users much
-greater flexibility compared to the `deprecated approach
-<https://docs.determined.ai/0.12.12/reference/api/pytorch.html>`__ used
-in Determined 0.12.12 and earlier.
-
-To migrate from the previous PyTorch API, please change the following
-places in your code:
-
-#. Wrap models, optimizers, and LR schedulers in the :meth:`__init__`
-   method with the ``wrap_model``, ``wrap_optimizer``, and
-   ``wrap_lr_scheduler`` methods that are provided by
-   :class:`PyTorchTrialContext
-   <determined.pytorch.PyTorchTrialContext>`. At the same time, remove
-   the implementation of :meth:`build_model`, :meth:`optimizer`,
-   :meth:`create_lr_scheduler`.
-
-#. If using automatic mixed precision (AMP), configure Apex AMP in the
-   ``__init__`` method with the :meth:`context.configure_apex_amp
-   <determined.pytorch.PyTorchTrialContext>` method. At the same time,
-   remove the experiment configuration field
-   ``optimizations.mixed_precision``.
-
-#. Run backward passes on losses and step optimizers in the
-   :meth:`train_batch` method with the ``backward`` and
-   ``step_optimizer`` methods provided by :class:`PyTorchTrialContext
-   <determined.pytorch.PyTorchTrialContext>`. Clip gradients by passing
-   a function to the ``clip_grads`` argument of ``step_optimizer`` while
-   removing the ``PyTorchCallback`` counterpart in the
-   :meth:`build_callbacks` method.
 
 **********
  Examples

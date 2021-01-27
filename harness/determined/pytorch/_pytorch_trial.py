@@ -2,12 +2,11 @@ import logging
 import pathlib
 import random
 from abc import abstractmethod
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import cloudpickle
 import numpy as np
 import torch
-import torch.nn as nn
 
 import determined as det
 from determined import horovod, ipc, pytorch, util, workload
@@ -30,8 +29,6 @@ class PyTorchTrialController(det.LoopTrialController):
         self.context = cast(pytorch.PyTorchTrialContext, self.context)
         self.context.experimental._set_allgather_fn(self.allgather_metrics)
         self.callbacks = self.trial.build_callbacks()
-
-        self._apply_backwards_compatibility()
 
         check.gt_eq(
             len(self.context.models),
@@ -121,114 +118,6 @@ class PyTorchTrialController(det.LoopTrialController):
 
     def _evaluate_full_dataset_defined(self) -> bool:
         return util.is_overridden(self.trial.evaluate_full_dataset, PyTorchTrial)
-
-    def _apply_backwards_compatibility(self) -> None:
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        if (
-            util.is_overridden(self.trial.build_model, PyTorchTrial)
-            or util.is_overridden(self.trial.optimizer, PyTorchTrial)
-            or util.is_overridden(self.trial.create_lr_scheduler, PyTorchTrial)
-        ):
-            logging.warning(
-                "build_model(), optimizer(), and create_lr_scheduler(), which belong to "
-                "the old interface, are deprecated. Please see the following documentation "
-                "of PyTorchTrial for the new interface \n"
-                f"{PyTorchTrial.__doc__}"
-            )
-            logging.warning(
-                "The callback on_before_optimizer_step is deprecated."
-                "Please use context.step_optimizer to clip gradients."
-            )
-            check.true(
-                util.is_overridden(self.trial.build_model, PyTorchTrial)
-                and util.is_overridden(self.trial.optimizer, PyTorchTrial),
-                "Both build_model() and optimizer() must be defined "
-                "if any of build_model(), optimizer(), and create_lr_scheduler() are defined. "
-                "If you want to use the new interface, you should instead instantiate your models, "
-                "optimizers, and LR schedulers in __init__ and call context.backward(loss) "
-                "and context.step_optimizer(optimizer) in train_batch.",
-            )
-
-            model = self.context.wrap_model(self.trial.build_model())
-            optim = self.context.wrap_optimizer(self.trial.optimizer(model))
-
-            lr_scheduler = self.trial.create_lr_scheduler(optim)
-            if lr_scheduler is not None:
-                opt = getattr(lr_scheduler._scheduler, "optimizer", None)
-                if opt is not None:
-                    check.is_in(
-                        opt,
-                        self.context.optimizers,
-                        "Must use a wrapped optimizer that is passed in by the optimizer "
-                        "argument of create_lr_scheduler",
-                    )
-                self.context.lr_schedulers.append(lr_scheduler)
-
-            if det.ExperimentConfig(self.context.get_experiment_config()).mixed_precision_enabled():
-                logging.warning(
-                    "The experiment configuration field optimization.mixed_precision is deprecated."
-                    "Please use configure_apex_amp in __init__ to configrue apex amp. "
-                    "See the following documentation of PyTorchTrial for the new interface \n"
-                    f"{PyTorchTrial.__doc__}"
-                )
-                self.context.configure_apex_amp(
-                    models=model,
-                    optimizers=optim,
-                    opt_level=self.context.get_experiment_config()
-                    .get("optimizations", {})
-                    .get("mixed_precision", "O0"),
-                )
-
-            # Backward compatibility: train_batch
-            train_batch = cast(Callable, self.trial.train_batch)
-
-            def new_train_batch(batch: pytorch.TorchData, epoch_idx: int, batch_idx: int) -> Any:
-                tr_metrics = train_batch(
-                    batch=batch,
-                    model=model,
-                    epoch_idx=epoch_idx,
-                    batch_idx=batch_idx,
-                )
-                if isinstance(tr_metrics, torch.Tensor):
-                    tr_metrics = {"loss": tr_metrics}
-                check.is_instance(
-                    tr_metrics,
-                    dict,
-                    "train_batch() must return a dictionary "
-                    f"mapping string names to Tensor metrics, got {type(tr_metrics)}",
-                )
-                check.is_in(
-                    "loss", tr_metrics.keys(), 'Please include "loss" in you training metrics.'
-                )
-
-                def clip_grads(parameters: Iterator) -> None:
-                    for callback in self.callbacks.values():
-                        callback.on_before_optimizer_step(parameters)
-
-                self.context.backward(tr_metrics["loss"])
-                self.context.step_optimizer(self.context.optimizers[0], clip_grads=clip_grads)
-
-                return tr_metrics
-
-            self.trial.__setattr__("train_batch", new_train_batch)
-
-            # Backward compatibility: evaluate_batch
-            if self._evaluate_batch_defined():
-                evaluate_batch = cast(Callable, self.trial.evaluate_batch)
-
-                def new_evaluate_batch(batch: pytorch.TorchData) -> Any:
-                    return evaluate_batch(model=model, batch=batch)
-
-                self.trial.__setattr__("evaluate_batch", new_evaluate_batch)
-
-            # Backward compatibility: evaluate_full_dataset
-            if self._evaluate_full_dataset_defined():
-                evaluate_full_dataset = cast(Callable, self.trial.evaluate_full_dataset)
-
-                def new_evaluate_full_dataset(data_loader: torch.utils.data.DataLoader) -> Any:
-                    return evaluate_full_dataset(model=model, data_loader=data_loader)
-
-                self.trial.__setattr__("evaluate_full_dataset", new_evaluate_full_dataset)
 
     def _set_data_loaders(self) -> None:
         skip_batches = self.env.initial_workload.total_batches_processed
@@ -843,52 +732,6 @@ class PyTorchTrial(det.Trial):
                 step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
             ))
         """
-        pass
-
-    def build_model(self) -> nn.Module:
-        """
-        Defines the deep learning architecture associated with a trial. This method
-        returns the model as an instance or subclass of :py:class:`nn.Module`.
-
-        .. warning::
-            This is deprecated. Please instantiate your model and wrap it with
-            :meth:`determined.pytorch.PytorchTrialContext.wrap_model`.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        pass
-
-    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:  # type: ignore
-        """
-        Describes the optimizer to be used during training of the given model,
-        an instance of :py:class:`torch.optim.Optimizer`.
-
-        .. warning::
-            This is deprecated. Please instantiate your optimizer and wrap it with
-            :meth:`determined.pytorch.PytorchTrialContext.wrap_optimizer`.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        pass
-
-    def create_lr_scheduler(
-        self, optimizer: torch.optim.Optimizer  # type: ignore
-    ) -> Optional[pytorch.LRScheduler]:
-        """
-        Create a learning rate scheduler for the trial given an instance of the
-        optimizer.
-
-        .. warning::
-            This is deprecated. Please instantiate your LR scheduler and wrap it with
-            :meth:`determined.pytorch.PytorchTrialContext.wrap_lr_scheduler`.
-
-        Arguments:
-            optimizer (torch.optim.Optimizer): instance of the optimizer to be
-                used for training
-
-        Returns:
-            :py:class:`determined.pytorch.LRScheduler`:
-                Wrapper around a :obj:`torch.optim.lr_scheduler._LRScheduler`.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
         pass
 
     @abstractmethod

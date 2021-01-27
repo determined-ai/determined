@@ -37,6 +37,13 @@ def is_overridden(full_method: Any, parent_class: Any) -> bool:
     return False
 
 
+def get_member_func(obj: Any, func_name: str) -> Any:
+    member = getattr(obj, func_name, None)
+    if callable(member):
+        return member
+    return None
+
+
 def _list_to_dict(list_of_dicts: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
     """Transpose list of dicts to dict of lists."""
     dict_of_lists = collections.defaultdict(list)  # type: Dict[str, List[Any]]

@@ -64,69 +64,6 @@ class PyTorchTrialContext(det.TrialContext):
 
         self.experimental = pytorch.PyTorchExperimentalContext()
 
-    def get_model(self) -> torch.nn.Module:
-        """
-        Get the model associated with the trial. This function should not be
-        called from:
-
-            * ``__init__``
-            * ``build_model()``
-
-        .. warning::
-            This is deprecated.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
-            "PyTorchTrialContext.get_model is deprecated. "
-            "Please directly use the model wrapped by context.wrap_model()."
-        )
-        check.len_eq(self.models, 1)
-        return self.models[0]
-
-    def get_optimizer(self) -> torch.optim.Optimizer:  # type: ignore
-        """
-        Get the optimizer associated with the trial. This function should not be
-        called from:
-
-            * ``__init__``
-            * ``build_model()``
-            * ``optimizer()``
-
-
-        .. warning::
-            This is deprecated.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
-            "PyTorchTrialContext.get_optimizer is deprecated. "
-            "Please directly use the model wrapped by context.wrap_optimizer()."
-        )
-        check.len_eq(self.optimizers, 1)
-        return self.optimizers[0]
-
-    def get_lr_scheduler(self) -> Optional[pytorch.LRScheduler]:
-        """
-        Get the scheduler associated with the trial, if one is defined. This
-        function should not be called from:
-
-            * ``__init__``
-            * ``build_model()``
-            * ``optimizer()``
-            * ``create_lr_scheduler()``
-
-        .. warning::
-            This is deprecated.
-        """
-        # TODO(DET-3262): remove this backward compatibility of old interface.
-        logging.warning(
-            "PyTorchTrialContext.get_lr_scheduler is deprecated. "
-            "Please directly use the model wrapped by context.wrap_lr_scheduler()."
-        )
-        check.lt_eq(len(self.lr_schedulers), 1)
-        if len(self.lr_schedulers) == 1:
-            return self.lr_schedulers[0]
-        return None
-
     def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:
         """Returns a wrapped model."""
 
