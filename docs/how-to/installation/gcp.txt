@@ -160,7 +160,7 @@ Optional Arguments:
       -  *none*
 
    -  -  ``--preemptible``
-      -  Whether to use preemptible agent instances.
+      -  Whether to use preemptible dynamic agent instances.
       -  False
 
    -  -  ``--gpu-type``
@@ -187,7 +187,7 @@ Optional Arguments:
       -  5
 
    -  -  ``--static-agents``
-      -  Number of static agent instances.
+      -  Number of non-preemptible static agent instances.
       -  0
 
    -  -  ``--max-cpu-containers-per-agent``

@@ -699,8 +699,8 @@ The master supports the following configuration settings:
             -  ``gpu_num``: Number of GPUs for the Determined agents.
                Defaults to 4.
 
-            -  ``preemptible``: Whether to use preemptible instances.
-               Defaults to ``false``.
+            -  ``preemptible``: Whether to use preemptible dynamic agent
+               instances. Defaults to ``false``.
 
          -  ``operation_timeout_period``: The timeout period for
             tracking a GCP operation. This string is a sequence of

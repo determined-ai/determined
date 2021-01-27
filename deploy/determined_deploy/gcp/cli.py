@@ -111,7 +111,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--preemptible",
         type=str,
         default="false",
-        help="whether to use preemptible instances for agents",
+        help="whether to use preemptible instances for dynamic agents",
     )
     optional_named.add_argument(
         "--operation-timeout-period",
