@@ -36,7 +36,6 @@ const (
 	minTensorBoardPort        = 2600
 	maxTensorBoardPort        = minTensorBoardPort + 299
 	tensorboardEntrypointFile = "/run/determined/workdir/tensorboard-entrypoint.sh"
-	tensorboardResourcesSlots = 0
 	tensorboardServiceAddress = "/proxy/%s/"
 	tickInterval              = 5 * time.Second
 )
@@ -123,8 +122,11 @@ func (t *tensorboardManager) processLaunchRequest(
 	user *model.User,
 	req *TensorboardRequest,
 ) (*summary, int, error) {
+	// Tensorboards always use zero slots. We need to know this when parsing the command
+	// request to make sure that we fill in the correct default value for 'slots' if the
+	// user didn't set it explicitly.
 	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), t.db, *user, req.CommandParams, &t.taskSpec.TaskContainerDefaults,
+		ctx.Self().System(), t.db, *user, req.CommandParams, &t.taskSpec.TaskContainerDefaults, true,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
@@ -350,8 +352,6 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Entrypoint = append(
 		[]string{tensorboardEntrypointFile, "--logdir", strings.Join(logDirs, ",")},
 		config.TensorBoardArgs...)
-
-	config.Resources.Slots = tensorboardResourcesSlots
 
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
 	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)

@@ -121,7 +121,7 @@ func (n *notebookManager) processLaunchRequest(
 	req NotebookLaunchRequest,
 ) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), n.db, *req.User, req.CommandParams, &n.taskSpec.TaskContainerDefaults,
+		ctx.Self().System(), n.db, *req.User, req.CommandParams, &n.taskSpec.TaskContainerDefaults, false,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
