@@ -53,7 +53,7 @@ entrypoint: model_def:NoOpTrial
 """
 
 
-@pytest.mark.skip() # type: ignore
+@pytest.mark.skip()  # type: ignore
 @pytest.mark.slow  # type: ignore
 @pytest.mark.e2e_cpu  # type: ignore
 def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
@@ -102,7 +102,7 @@ def test_start_tensorboard_for_s3_experiment(tmp_path: Path, secrets: Dict[str, 
             raise AssertionError(f"Did not find {SERVICE_READY} in output")
 
 
-@pytest.mark.skip() # type: ignore
+@pytest.mark.skip()  # type: ignore
 @pytest.mark.slow  # type: ignore
 @pytest.mark.e2e_gpu  # type: ignore
 def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[str, str]) -> None:
