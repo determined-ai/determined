@@ -554,7 +554,7 @@ Resources:
                   tag_value: det-agent-${AWS::StackName}
 
               - pool_name: gpu-pool
-                max_cpu_containers_per_agent: 10
+                max_cpu_containers_per_agent: 0
                 provider:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}

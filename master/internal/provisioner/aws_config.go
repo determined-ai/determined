@@ -189,7 +189,7 @@ var ec2InstanceSlots = map[ec2InstanceType]int{
 	"t2.large":      0,
 	"t2.xlarge":     0,
 	"t2.2xlarge":    0,
-	"m5.large":		 0,
+	"m5.large":      0,
 }
 
 func (t ec2InstanceType) name() string {

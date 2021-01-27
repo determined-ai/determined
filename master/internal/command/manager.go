@@ -96,7 +96,6 @@ func parseCommandRequest(
 		return nil, err
 	}
 
-
 	// If the resource pool isn't set, fill in the default at creation time.
 	if config.Resources.ResourcePool == "" {
 		if config.Resources.Slots == 0 {
