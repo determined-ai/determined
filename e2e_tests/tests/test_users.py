@@ -153,9 +153,16 @@ def activate_deactivate_user(
 def extract_columns(output: str, column_indices: List[int]) -> List[Tuple[str, ...]]:
     lines = output.split("\n")
     # Ignore the header.
+    print("Lines")
+    print(lines)
+    print("done lines")
     lines = lines[2:]
     parsed = []
+    i = 0
     for line in lines:
+        i += 1
+        print(f'line iterator {i}')
+        print(i, line)
         if not line:
             continue
         columns = line.split("|")
