@@ -25,32 +25,32 @@ resource pools:
 
 -  Uses GPU for training while using CPUs for TensorBoard.
 
-   You create one pool, "aws-v100", that provisions `p3dn.24xlarge`
+   You create one pool, "aws-v100", that provisions ``p3dn.24xlarge`
    instances (large V100 EC2 instances) and another pool, "aws-cpu" that
    provisions `m5.large` instances (small and cheap CPU instances). You
    train your experiments using the aws-v100 pool, while you run your
    Tensorboards in the aws-cpu pool. When your experiments complete, the
    aws-v100 pool can scale down to zero to save money, but you can
    continue to run your Tensorboard. Without resource pools, you would
-   have needed to keep a `p3dn.24xlarge` instance running to keep the
+   have needed to keep a ``p3dn.24xlarge`` instance running to keep the
    Tensorboard alive.
 
 -  Use GPUs in different availability zones on AWS
 
-   You have one pool `aws-v100-us-east-1a` that runs `p3dn.24xlarge` in
-   the `us-east-1a` availability zone and another pool
-   `aws-v100-us-east-1b` that runs `p3dn.24xlarge` instances in the
-   `us-east-1b` availability zone. You can launch an experiment into
-   `aws-v100-us-east-1a` and, if AWS does not have sufficient `p3dn.24xlarge`
+   You have one pool `aws-v100-us-east-1a` that runs ``p3dn.24xlarge`` in
+   the ``us-east-1a`` availability zone and another pool
+   ``aws-v100-us-east-1b`` that runs ``p3dn.24xlarge`` instances in the
+   ``us-east-1b`` availability zone. You can launch an experiment into
+   ``aws-v100-us-east-1a`` and, if AWS does not have sufficient ``p3dn.24xlarge``
    capacity in that availability zone, you can launch the experiment in
-   `aws-v100-us-east-1b` to check if that availability zone has capacity.
+   ``aws-v100-us-east-1b`` to check if that availability zone has capacity.
    Note that currently, the 'AWS does not have capacity' notification is
    only visible in the master logs, not on the experiment itself.
 
 -  Use spot/preemptible instance and fall back to on-demand if needed.
 
-  You have one pool "aws-v100-spot" that you use to try to run training
-   on spot instances and another pool "aws-v100-on-demand" that you fall
+  You have one pool ``aws-v100-spot`` that you use to try to run training
+   on spot instances and another pool ``aws-v100-on-demand`` that you fall
    back to if AWS does not have enough spot capacity to run your job.
 
 -  Use cheaper GPUs for prototyping on small datasets and expensive GPU for training on full datasets
