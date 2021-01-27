@@ -12,8 +12,8 @@ Tensorboards to run on cheap CPU machines with minimal resources. Given
 the cost of GPU resources, it's important to get the most value of our
 money by choosing different resource for different goals.
 
-Determined has the concept of *resource pools*, which is a set of resources
-that are identical and located physically close to each other.
+Determined has the concept of *resource pools*, which is a set of
+resources that are identical and located physically close to each other.
 Determined allows you to configure your cluster to have multiple
 resource pools and to assign tasks to a specific resource pool, so that
 you can use different sets of resources for different tasks. Each
@@ -37,28 +37,30 @@ resource pools:
 
 -  Use GPUs in different availability zones on AWS
 
-   You have one pool `aws-v100-us-east-1a` that runs ``p3dn.24xlarge`` in
-   the ``us-east-1a`` availability zone and another pool
+   You have one pool `aws-v100-us-east-1a` that runs ``p3dn.24xlarge``
+   in the ``us-east-1a`` availability zone and another pool
    ``aws-v100-us-east-1b`` that runs ``p3dn.24xlarge`` instances in the
    ``us-east-1b`` availability zone. You can launch an experiment into
-   ``aws-v100-us-east-1a`` and, if AWS does not have sufficient ``p3dn.24xlarge``
-   capacity in that availability zone, you can launch the experiment in
-   ``aws-v100-us-east-1b`` to check if that availability zone has capacity.
-   Note that currently, the 'AWS does not have capacity' notification is
-   only visible in the master logs, not on the experiment itself.
+   ``aws-v100-us-east-1a`` and, if AWS does not have sufficient
+   ``p3dn.24xlarge`` capacity in that availability zone, you can launch
+   the experiment in ``aws-v100-us-east-1b`` to check if that
+   availability zone has capacity. Note that currently, the 'AWS does
+   not have capacity' notification is only visible in the master logs,
+   not on the experiment itself.
 
 -  Use spot/preemptible instance and fall back to on-demand if needed.
 
-  You have one pool ``aws-v100-spot`` that you use to try to run training
-   on spot instances and another pool ``aws-v100-on-demand`` that you fall
-   back to if AWS does not have enough spot capacity to run your job.
+   You have one pool ``aws-v100-spot`` that you use to try to run training
+      on spot instances and another pool ``aws-v100-on-demand`` that you
+      fall back to if AWS does not have enough spot capacity to run your
+      job.
 
--  Use cheaper GPUs for prototyping on small datasets and expensive GPU for training on full datasets
+-  Use cheaper GPUs for prototyping on small datasets and expensive GPU
+   for training on full datasets
 
    You have one pool with less expensive GPUs that you use for initial
    prototyping on small data sets and another pool that you use for
    training more mature models on large datasets,
-
 
 *************
  Limitations
@@ -87,81 +89,83 @@ For each resource pool, you can configure scheduler and provisioner
 information.
 
 If you are using static resource pools and launching agents by hand, you
-will need to update the :ref:`_agent-configuration` to specify which resource
-pool the agent should join.
+will need to update the :ref:`_agent-configuration` to specify which
+resource pool the agent should join.
 
-
-***************************
+*****************************
  Migrating to Resource Pools
-***************************
+*****************************
 
-With the introduction of resource pools, the :ref:`master-configuration` format
-has changed to a new format. The old format had the top level fields of ``scheduler``
-and ``provisioner`` which set the scheduler and provisioner settings for the cluster.
+With the introduction of resource pools, the :ref:`master-configuration`
+format has changed to a new format. The old format had the top level
+fields of ``scheduler`` and ``provisioner`` which set the scheduler and
+provisioner settings for the cluster.
 
-The new format has the top level fields ``resource_manager`` and ``resource_pools``.
-The ``resource_manager`` section is for cluster level setting such as which pools
-should be used by default and the default scheduler settings. The
-``scheduler`` information is identical to the the ``scheduler`` field in the legacy format.
-The ``resource_pools`` section is a list of resource pools each of which has a name,
- description and resource pool level settings. Each resource pool can be configured
- with a ``provider`` field that contains the same information as the ``provisioner``
- field in the legacy format. Each resource pool can also have a ``scheduler`` field
- that sets resource pool specific scheduler settings. If the ``scheduler`` field is
- not set for a specific resource pool, the default settings are used.
+The new format has the top level fields ``resource_manager`` and
+``resource_pools``. The ``resource_manager`` section is for cluster
+level setting such as which pools should be used by default and the
+default scheduler settings. The ``scheduler`` information is identical
+to the the ``scheduler`` field in the legacy format. The
+``resource_pools`` section is a list of resource pools each of which has
+a name, description and resource pool level settings. Each resource pool
+can be configured with a ``provider`` field that contains the same
+information as the ``provisioner`` field in the legacy format. Each
+resource pool can also have a ``scheduler`` field that sets resource
+pool specific scheduler settings. If the ``scheduler`` field is not set
+for a specific resource pool, the default settings are used.
 
- Note that defining resource pool-specific scheduler settings is all-or-nothing. If
- the pool-specific scheduler field is blank, all scheduler settings will be inherited
- from the settings defined in ``resource_manager.scheduler``. If any fields are set in
- the pool-specific ``scheduler`` field, no settings will be inherited from
- ``resource_manager.scheduler`` - you need to redefine everything.
+Note that defining resource pool-specific scheduler settings is
+all-or-nothing. If the pool-specific scheduler field is blank, all
+scheduler settings will be inherited from the settings defined in
+``resource_manager.scheduler``. If any fields are set in the
+pool-specific ``scheduler`` field, no settings will be inherited from
+``resource_manager.scheduler`` - you need to redefine everything.
 
-
-Here is an example master configuration illustrating the potential problem.
-
-.. code:: yaml
-
-    resource_manager:
-      type: agent
-      scheduler:
-        type: round_robin
-        fitting_policy: best
-      default_cpu_resource_pool: pool1
-      default_gpu_resource_pool: pool1
-
-    resource_pools:
-      - pool_name: pool1
-        scheduler:
-          fitting_policy: worst
-
-In this example, we are setting the cluster-wide scheduler defaults to use a best-fit,
-round robin scheduler in ``resource_manager.scheduler``. We are then overwriting the
-scheduler settings at the pool level for ``pool1``. Because we set ``scheduler.fitting_policy=worst``,
-no settings are inherited from ``resource_manager.scheduler`` so pool1 will end up using a worst-fit,
-fair share scheduler (because when ``scheduler.type`` is left blank, the default value is ``fair_share``).
-
-If you want to have ``pool1`` use a worst-fit, round robin scheduler, you need to make sure you
-redefine the scheduler type at the pool-specific level:
-
+Here is an example master configuration illustrating the potential
+problem.
 
 .. code:: yaml
 
-    resource_manager:
-      type: agent
-      scheduler:
-        type: round_robin
-        fitting_policy: best
-      default_cpu_resource_pool: pool1
-      default_gpu_resource_pool: pool1
+   resource_manager:
+     type: agent
+     scheduler:
+       type: round_robin
+       fitting_policy: best
+     default_cpu_resource_pool: pool1
+     default_gpu_resource_pool: pool1
 
-    resource_pools:
-      - pool_name: pool1
-        scheduler:
-          type: round_robin
-          fitting_policy: worst
+   resource_pools:
+     - pool_name: pool1
+       scheduler:
+         fitting_policy: worst
 
+In this example, we are setting the cluster-wide scheduler defaults to
+use a best-fit, round robin scheduler in ``resource_manager.scheduler``.
+We are then overwriting the scheduler settings at the pool level for
+``pool1``. Because we set ``scheduler.fitting_policy=worst``, no
+settings are inherited from ``resource_manager.scheduler`` so pool1 will
+end up using a worst-fit, fair share scheduler (because when
+``scheduler.type`` is left blank, the default value is ``fair_share``).
 
+If you want to have ``pool1`` use a worst-fit, round robin scheduler,
+you need to make sure you redefine the scheduler type at the
+pool-specific level:
 
+.. code:: yaml
+
+   resource_manager:
+     type: agent
+     scheduler:
+       type: round_robin
+       fitting_policy: best
+     default_cpu_resource_pool: pool1
+     default_gpu_resource_pool: pool1
+
+   resource_pools:
+     - pool_name: pool1
+       scheduler:
+         type: round_robin
+         fitting_policy: worst
 
 *************************************
  Launching Tasks Into Resource Pools
@@ -178,9 +182,10 @@ resource_pool that a task should be launched into.
 
 If this field is not set, the task will be launched into one of the two
 default pools defined in the :ref:`master-configuration`. Experiments
-will be launched into the default GPU pool. Tensorboards will be launched
-into the default CPU pool. Commands, Shells, and Notebooks that request a
-slot (which is the default behavior if the 'slots' field is not set) will
-be launched into the default GPU pool. Commands, Shells, and Notebooks that
-explicitly request 0 slots (for example the 'Launch CPU-only Notebook' button
-in the Web UI) will be launched into the CPU pool.
+will be launched into the default GPU pool. Tensorboards will be
+launched into the default CPU pool. Commands, Shells, and Notebooks that
+request a slot (which is the default behavior if the 'slots' field is
+not set) will be launched into the default GPU pool. Commands, Shells,
+and Notebooks that explicitly request 0 slots (for example the 'Launch
+CPU-only Notebook' button in the Web UI) will be launched into the CPU
+pool.
