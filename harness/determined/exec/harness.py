@@ -117,6 +117,7 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
             tensorboard_writer,
         )
 
+        workloads = iter(workload_mgr)
         hvd_config = horovod.HorovodContext.from_configs(
             env.experiment_config, socket_mgr.get_rendezvous_info(), env.hparams
         )
@@ -129,17 +130,17 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
             # Horovod distributed training is done inside subprocesses.
             if hvd_config.use:
                 subproc = layers.SubprocessLauncher(
-                    env, iter(workload_mgr), load_path, socket_mgr.get_rendezvous_info(), hvd_config
+                    env, workloads, load_path, socket_mgr.get_rendezvous_info(), hvd_config
                 )
                 subproc.run()
             else:
                 if env.experiment_config.debug_enabled():
                     faulthandler.dump_traceback_later(30, repeat=True)
 
-                with det._catch_sys_exit():
+                with det._catch_sys_exit(), det._catch_invalid_hp(workloads):
                     controller = load.prepare_controller(
                         env,
-                        iter(workload_mgr),
+                        workloads,
                         load_path,
                         socket_mgr.get_rendezvous_info(),
                         hvd_config,

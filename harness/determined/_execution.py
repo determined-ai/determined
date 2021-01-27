@@ -10,6 +10,20 @@ from determined import constants, gpu, horovod, workload
 from determined_common import api
 
 
+class InvalidHP(Exception):
+    """Raised by user when InvalidHP exception is encountered
+
+    Attributes:
+        message -- explanation of the error
+    """
+    def __init__(self, message="Invalid hyperparameter exception encountered"):
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return(repr(self.message))
+
+
 def _get_gpus(limit_gpus: Optional[int]) -> Tuple[bool, List[str], List[int]]:
     gpu_ids, gpu_uuids = gpu.get_gpu_ids_and_uuids()
     if limit_gpus is not None:
@@ -29,6 +43,18 @@ def _catch_sys_exit() -> Any:
             "This might be raised by directly calling or using a library calling sys.exit(). "
             "Please remove any calls to sys.exit() from your model code."
         ) from e
+
+
+@contextlib.contextmanager
+def _catch_invalid_hp(workloads: workload.stream) -> Any:
+    try:
+        yield
+    except InvalidHP as e:
+        logging.info("Invalid hyperparameter exception encountered: e\n", e)
+        wkld, args, response_func = next(workloads)
+        wkld.CompletedMessage.ExitedReason = workload.InvalidHP
+        response_func(wkld.CompletedMessage)
+        sys.exit()
 
 
 def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
