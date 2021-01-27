@@ -84,7 +84,7 @@ func (m *manager) Receive(ctx *actor.Context) error {
 	}
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		// TODO: fetch any pending or in_progress tasks from the DB and trigger them
+		m.triggerPartialWork(ctx)
 	case actor.PostStop:
 		// Do nothing
 	case actor.ChildFailed:
@@ -110,6 +110,33 @@ func (m *manager) Receive(ctx *actor.Context) error {
 			ctx.Message())
 	}
 	return nil
+}
+
+func (m *manager) triggerPartialWork(ctx *actor.Context) {
+	ids, hpis, err := m.db.GetPartialHPImportance()
+	if err != nil {
+		ctx.Log().Errorf("failed to resume hyperparameter importance work on restart: %v", err)
+	}
+	for i := 0; i < len(ids) && i < len(hpis); i++ {
+		for metric, metricHpi := range hpis[i].TrainingMetrics {
+			if metricHpi.Pending || metricHpi.InProgress {
+				ctx.Tell(ctx.Self(), WorkRequest{
+					ExperimentID: ids[i],
+					MetricName:   metric,
+					MetricType:   model.TrainingMetric,
+				})
+			}
+		}
+		for metric, metricHpi := range hpis[i].ValidationMetrics {
+			if metricHpi.Pending || metricHpi.InProgress {
+				ctx.Tell(ctx.Self(), WorkRequest{
+					ExperimentID: ids[i],
+					MetricName:   metric,
+					MetricType:   model.ValidationMetric,
+				})
+			}
+		}
+	}
 }
 
 func (m *manager) experimentCompleted(ctx *actor.Context, msg ExperimentCompleted) {
@@ -160,6 +187,7 @@ func (m *manager) workFailed(ctx *actor.Context, msg workFailed) {
 	metricData.InProgress = false
 	metricData.Error = msg.err
 	hpi.SetMetricHPImportance(metricData, msg.metricName, msg.metricType)
+
 	err = m.db.SetHPImportance(msg.experimentID, hpi)
 	if err != nil {
 		ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
@@ -276,7 +304,6 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 				hpi.SetMetricHPImportance(searcherMetricHpi, searcherMetric, model.ValidationMetric)
 			}
 		}
-
 		err = m.db.SetHPImportance(experimentID, hpi)
 		if err != nil {
 			ctx.Log().Errorf("error writing hyperparameter importance state: %s", err.Error())
