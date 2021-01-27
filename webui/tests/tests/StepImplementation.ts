@@ -12,6 +12,7 @@ import {
 
 import * as assert from 'assert';
 import * as t from 'taiko';
+import mockResponses from '../fixtures'
 
 /*
  * A require is used here to allow for plugins such as video to come through.
@@ -40,7 +41,7 @@ const goto = async (url: string) => {
 export default class StepImplementation {
   @BeforeSuite()
   public async beforeSuite() {
-    const defaultArgs = [`--window-size=${viewports.desktop.width},${viewports.desktop.height}`];
+    const defaultArgs = [`--window-size=${viewports.desktop.width},${viewports.desktop.height}`, '--enable-accelerated-video-decode', '--disable-gpu'];
     const browserArgs = HEADLESS
       ? { headless: true, args: [...defaultArgs, '--no-sandbox', '--disable-setuid-sandbox'] }
       : { headless: false, args: defaultArgs };
@@ -299,6 +300,14 @@ export default class StepImplementation {
   public async checkResourcePoolCardCount(count: string) {
     const elements = await t.$('div[class^="ResourcePoolCard_base"]').elements();
     assert.strictEqual(elements.length, parseInt(count));
+  }
+
+  @Step('Intercept get request <requestId> with response <responseId>')
+  public async mockGetRequest(requestId: string, responseId: string) {
+    const entry = mockResponses[requestId]
+    if (!entry) throw new Error(`bad request id: ${requestId}`);
+    if (!entry.responses[responseId]) throw new Error(`bad request response id: ${requestId}`);
+    await t.intercept(entry.url, entry.responses[responseId]);
   }
 
   @Step('Should show <count> agents in stats')
