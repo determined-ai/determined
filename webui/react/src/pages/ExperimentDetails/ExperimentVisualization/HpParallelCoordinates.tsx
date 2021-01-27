@@ -2,10 +2,9 @@ import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
-import ParallelCoordinates, {
-  ConfigDimension, dimensionTypeMap,
-} from 'components/ParallelCoordinates';
+import ParallelCoordinates, { Dimension, dimensionTypeMap } from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
@@ -14,10 +13,11 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, Primitive, Range,
+  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, Primitive, Range, RunState,
 } from 'types';
 import { defaultNumericRange, normalizeRange, updateRange } from 'utils/chart';
 import { isObject } from 'utils/data';
+import { terminalRunStates } from 'utils/types';
 
 import css from './HpParallelCoordinates.module.scss';
 
@@ -49,25 +49,25 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedMetric,
 }: Props) => {
   const [ hasLoaded, setHasLoaded ] = useState(false);
-  const [ data, setData ] = useState<HpTrialData>({ colors: [], hparams: {}, lineIds: [] });
+  const [ chartData, setChartData ] = useState<HpTrialData>();
+  const [ pageError, setPageError ] = useState<Error>();
+
+  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const dimensions = useMemo(() => {
-    console.log('exp config', experiment.config.hyperparameters);
     return Object.keys(experiment.config.hyperparameters).map(key => {
       const hp = experiment.config.hyperparameters[key];
       const isConstant = hp.type === ExperimentHyperParamType.Constant;
-      const isCategorical = hp.type === ExperimentHyperParamType.Categorical;
-      const range = hp.minval != null && hp.maxval != null ?
-        [ hp.minval, hp.maxval ] as Range<number> : undefined;
-      const dimension: ConfigDimension = {
+      const dimension: Dimension = {
         categories: hp.vals,
         label: key,
-        range,
         type: dimensionTypeMap[hp.type],
       };
 
       if (isConstant && hp.val != null) {
         dimension.range = updateRange(undefined, hp.val);
+      } else if (hp.minval != null && hp.maxval != null) {
+        dimension.range = [ hp.minval, hp.maxval ] as Range<number>;
       }
 
       return dimension;
@@ -75,9 +75,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [ experiment.config.hyperparameters ]);
 
   const resetData = useCallback(() => {
-    // setChartData([]);
-    // setTrialHps([]);
-    // setTrialIds([]);
+    setChartData(undefined);
     setHasLoaded(false);
   }, []);
 
@@ -106,7 +104,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        if (!event || !event.trials || !isObject(event.trials)) return;
+        if (!event || !event.trials || !isObject(event.trials) ||
+          Object.keys(event.trials).length === 0) return;
 
         const trialIds: number[] = [];
         const trialMetrics: number[] = [];
@@ -135,21 +134,28 @@ const HpParallelCoordinates: React.FC<Props> = ({
         // Normalize metrics values for parallel coordinates colors.
         const colors = normalizeRange(trialMetrics, trialMetricRange);
 
-        setData({
-          colors,
-          hparams: trialHps,
-          lineIds: trialIds,
-        });
-        console.log(trialIds, trialHps, trialHpRanges);
-
+        setChartData({ colors, hparams: trialHps, lineIds: trialIds });
         setHasLoaded(true);
       },
-    );
+    ).catch(e => setPageError(e));
 
     return () => canceler.abort();
   }, [ experiment.id, selectedBatch, selectedMetric ]);
 
-  if (!hasLoaded) return <Spinner />;
+  if (pageError) {
+    return <Message title={pageError.message} />;
+  } else if (hasLoaded && !chartData) {
+    return isExperimentTerminal ? (
+      <Message title="No data to plot." type={MessageType.Empty} />
+    ) : (
+      <div className={css.waiting}>
+        <Alert
+          description="Please wait until the experiment is further along."
+          message="Not enough data points to plot." />
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className={css.base}>
@@ -174,11 +180,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
         </ResponsiveFilters>}
         title="HP Parallel Coordinates">
         <div className={css.container}>
-          <ParallelCoordinates
-            colors={data.colors}
-            data={data.hparams}
-            dimensions={dimensions}
-            lineIds={data.lineIds} />
+          {!hasLoaded || !chartData ? <Spinner /> : (
+            <ParallelCoordinates
+              colors={chartData.colors}
+              data={chartData.hparams}
+              dimensions={dimensions}
+              lineIds={chartData.lineIds} />
+          )}
         </div>
       </Section>
     </div>

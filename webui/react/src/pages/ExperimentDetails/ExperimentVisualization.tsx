@@ -11,8 +11,9 @@ import useStorage from 'hooks/useStorage';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType } from 'types';
+import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType, RunState } from 'types';
 import { alphanumericSorter } from 'utils/data';
+import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
@@ -78,6 +79,10 @@ const ExperimentVisualization: React.FC<Props> = ({
     ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
     ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
   ]), [ trainingMetrics, validationMetrics ]);
+
+  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
+  const hasBatches = batches.length !== 0;
+  const hasMetrics = metrics.length !== 0;
 
   const handleBatchChange = useCallback((batch: number) => {
     storage.set(STORAGE_BATCH_KEY, batch);
@@ -198,6 +203,17 @@ const ExperimentVisualization: React.FC<Props> = ({
       </>}
       message={alertMessage}
       type="warning" />;
+  } else if (!hasMetrics || !hasBatches) {
+    return isExperimentTerminal ? (
+      <Message title="No data to plot." type={MessageType.Empty} />
+    ) : (
+      <div className={css.waiting}>
+        <Alert
+          description="Please wait until the experiment is further along."
+          message="Not enough data points to plot." />
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -209,15 +225,14 @@ const ExperimentVisualization: React.FC<Props> = ({
           sm={{ order: 2, span: 24 }}
           span={24}
           xs={{ order: 2, span: 24 }}>
-          {typeKey === VisualizationType.LearningCurve && selectedMetric && (
+          {typeKey === VisualizationType.LearningCurve && (
             <LearningCurve
               experiment={experiment}
               metrics={metrics}
               selectedMetric={selectedMetric}
               onMetricChange={handleMetricChange} />
           )}
-          {typeKey === VisualizationType.HpParallelCoordinates &&
-           selectedBatch && selectedMetric && (
+          {typeKey === VisualizationType.HpParallelCoordinates && (
             <HpParallelCoordinates
               batches={batches}
               experiment={experiment}
