@@ -42,7 +42,7 @@ def make_list_subparser(subparsers: argparse._SubParsersAction) -> None:
         default=None,
         help="AWS region",
     )
-    subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
+    subparser.add_argument("--profile", type=str, default=None, help="AWS profile")
 
 
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -58,7 +58,7 @@ def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
         default=None,
         help="AWS region",
     )
-    subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
+    subparser.add_argument("--profile", type=str, default=None, help="AWS profile")
 
 
 def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -70,6 +70,13 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     require_named.add_argument(
         "--keypair", type=str, help="aws ec2 keypair for master and agent", required=True
     )
+    subparser.add_argument(
+        "--region",
+        type=str,
+        default=None,
+        help="AWS region",
+    )
+    subparser.add_argument("--profile", type=str, default=None, help="AWS profile")
     subparser.add_argument(
         "--master-instance-type",
         type=str,
@@ -107,7 +114,6 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help=f"deployment type - "
         f'must be one of [{", ".join(constants.deployment_types.DEPLOYMENT_TYPES)}]',
     )
-    subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
     subparser.add_argument(
         "--inbound-cidr",
         type=str,
@@ -128,12 +134,6 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         type=str,
         default=constants.defaults.DB_PASSWORD,
         help="password for master database",
-    )
-    subparser.add_argument(
-        "--region",
-        type=str,
-        default=None,
-        help="AWS region",
     )
     subparser.add_argument(
         "--max-idle-agent-period",
@@ -211,8 +211,8 @@ def make_aws_parser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def deploy_aws(args: argparse.Namespace) -> None:
-    if args.aws_profile:
-        boto3_session = boto3.Session(profile_name=args.aws_profile, region_name=args.region)
+    if args.profile:
+        boto3_session = boto3.Session(profile_name=args.profile, region_name=args.region)
     else:
         boto3_session = boto3.Session(region_name=args.region)
 

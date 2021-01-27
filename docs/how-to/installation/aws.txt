@@ -134,14 +134,22 @@ Spinning up the Cluster
       -  Default Value
 
    -  -  ``--cluster-id``
-      -  Unique ID for the cluster; it will be used as the
-         CloudFormation stack name.
+      -  Unique ID for the cluster (used as the CloudFormation stack
+         name).
       -  *required*
 
    -  -  ``--keypair``
       -  The name of the AWS EC2 key pair to use for both master and
          agent instances.
       -  *required*
+
+   -  -  ``--region``
+      -  AWS region to deploy into.
+      -  The default region for the AWS user
+
+   -  -  ``--profile``
+      -  AWS profile to use for deploying cluster resources.
+      -  default
 
    -  -  ``--master-instance-type``
       -  AWS instance type to use for the master.
@@ -185,10 +193,6 @@ Spinning up the Cluster
    -  -  ``--db-password``
       -  The password for ``postgres`` user for database.
       -  postgres
-
-   -  -  ``--region``
-      -  AWS region to deploy into.
-      -  The default region for the AWS user
 
    -  -  ``--max-cpu-containers-per-agent``
       -  The maximum cpu containers that runs on agents in the CPU
@@ -236,13 +240,17 @@ Tearing Down the Cluster
       -  Default Value
 
    -  -  ``--cluster-id``
-      -  Unique ID for the cluster; it will be used for the
-         CloudFormation stack name.
+      -  Unique ID for the cluster (used as the CloudFormation stack
+         name).
       -  *required*
 
    -  -  ``--region``
-      -  AWS region to deploy into.
+      -  AWS region deployed into.
       -  The default region for the AWS user
+
+   -  -  ``--profile``
+      -  AWS profile used for deploying cluster resources.
+      -  default
 
 Listing the Clusters
 --------------------
@@ -262,6 +270,10 @@ Listing the Clusters
    -  -  ``--region``
       -  AWS region to deploy into.
       -  The default region for the AWS user
+
+   -  -  ``--profile``
+      -  AWS profile used for deploying cluster resources.
+      -  default
 
 .. _aws-manual-deployment:
 
