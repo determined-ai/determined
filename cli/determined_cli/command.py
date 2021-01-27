@@ -49,7 +49,7 @@ Command = namedtuple(
 )
 
 CommandDescription = namedtuple(
-    "CommandDescription", ["id", "owner", "description", "state", "exit_status"]
+    "CommandDescription", ["id", "owner", "description", "state", "exit_status", "resource_pool"]
 )
 
 
@@ -60,6 +60,7 @@ def describe_command(command: Command) -> CommandDescription:
         command.config["description"],
         command.state,
         command.exit_status,
+        command.config["resources"].get("resource_pool"),
     )
 
 

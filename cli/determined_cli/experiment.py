@@ -223,6 +223,7 @@ def describe(args: Namespace) -> None:
         "End Time",
         "Description",
         "Archived",
+        "Resource Pool",
         "Labels",
     ]
     values = [
@@ -234,6 +235,7 @@ def describe(args: Namespace) -> None:
             render.format_time(doc.get("end_time")),
             doc["config"].get("description"),
             doc["archived"],
+            doc["config"]["resources"].get("resource_pool"),
             ", ".join(sorted(doc["config"].get("labels", []))),
         ]
         for doc in docs
@@ -438,12 +440,22 @@ def list_experiments(args: Namespace) -> None:
             render.format_percent(e["progress"]),
             render.format_time(e["start_time"]),
             render.format_time(e["end_time"]),
+            e["config"]["resources"].get("resource_pool"),
         ]
         if args.all:
             result.append(e["archived"])
         return result
 
-    headers = ["ID", "Owner", "Description", "State", "Progress", "Start Time", "End Time"]
+    headers = [
+        "ID",
+        "Owner",
+        "Description",
+        "State",
+        "Progress",
+        "Start Time",
+        "End Time",
+        "Resource Pool",
+    ]
     if args.all:
         headers.append("Archived")
 

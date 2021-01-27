@@ -69,6 +69,7 @@ def list_notebooks(args: Namespace) -> None:
         params = {}  # type: Dict[str, Any]
     else:
         params = {"user": api.Authentication.instance().get_session_user()}
+
     commands = [
         render.unmarshal(Command, command)
         for command in api.get(args.master, "notebooks", params=params).json().values()

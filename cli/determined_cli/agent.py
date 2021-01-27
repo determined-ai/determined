@@ -29,6 +29,7 @@ def list_agents(args: argparse.Namespace) -> None:
                 ("registered_time", render.format_time(agent["registered_time"])),
                 ("num_slots", len(agent["slots"])),
                 ("num_containers", agent["num_containers"]),
+                ("resource_pool", agent["resource_pool"]),
                 ("label", agent["label"]),
             ]
         )
@@ -39,7 +40,7 @@ def list_agents(args: argparse.Namespace) -> None:
         print(json.dumps(agents, indent=4))
         return
 
-    headers = ["Agent ID", "Registered Time", "Slots", "Containers", "Label"]
+    headers = ["Agent ID", "Registered Time", "Slots", "Containers", "Resource Pool", "Label"]
     values = [a.values() for a in agents]
 
     render.tabulate_or_csv(headers, values, args.csv)
@@ -62,6 +63,7 @@ def list_slots(args: argparse.Namespace) -> None:
         OrderedDict(
             [
                 ("agent_id", local_id(agent_id)),
+                ("resource_pool", agent["resource_pool"]),
                 ("slot_id", local_id(slot_id)),
                 ("enabled", slot["enabled"]),
                 (
@@ -84,7 +86,16 @@ def list_slots(args: argparse.Namespace) -> None:
         print(json.dumps(slots, indent=4))
         return
 
-    headers = ["Agent ID", "Slot ID", "Enabled", "Task ID", "Task Name", "Type", "Device"]
+    headers = [
+        "Agent ID",
+        "Resource Pool",
+        "Slot ID",
+        "Enabled",
+        "Task ID",
+        "Task Name",
+        "Type",
+        "Device",
+    ]
     values = [s.values() for s in slots]
 
     render.tabulate_or_csv(headers, values, args.csv)
