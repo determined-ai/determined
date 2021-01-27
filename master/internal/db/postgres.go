@@ -1878,16 +1878,28 @@ func (db *PgDB) queryRowsWithParser(
 }
 
 // Query returns the result of the query. Any placeholder parameters are replaced
-// with supplied args.
-func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) error {
+// with supplied params.
+func (db *PgDB) Query(queryName string, v interface{}, params ...interface{}) error {
 	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
-	return db.queryRowsWithParser(db.queries.getOrLoad(queryName), parser, v, args...)
+	return db.queryRowsWithParser(db.queries.getOrLoad(queryName), parser, v, params...)
+}
+
+// QueryF returns the result of the formated query. Any placeholder parameters are replaced
+// with supplied params.
+func (db *PgDB) QueryF(
+	queryName string, args []interface{}, v interface{}, params ...interface{}) error {
+	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
+	query := db.queries.getOrLoad(queryName)
+	if len(args) > 0 {
+		query = fmt.Sprintf(query, args...)
+	}
+	return db.queryRowsWithParser(query, parser, v, params...)
 }
 
 // RawQuery returns the result of the query as a raw byte string. Any placeholder parameters are
-// replaced with supplied args.
-func (db *PgDB) RawQuery(queryName string, args ...interface{}) ([]byte, error) {
-	return db.rawQuery(db.queries.getOrLoad(queryName), args...)
+// replaced with supplied params.
+func (db *PgDB) RawQuery(queryName string, params ...interface{}) ([]byte, error) {
+	return db.rawQuery(db.queries.getOrLoad(queryName), params...)
 }
 
 // withTransaction executes a function with a transaction.
