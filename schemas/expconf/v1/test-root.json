@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/test-root.json",
+    "title": "TestRoot",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["val_x"],
+    "properties": {
+        "val_x": {
+            "type": "integer"
+        },
+        "sub_obj": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "optionalRef": "http://determined.ai/schemas/expconf/v1/test-sub.json",
+            "default": {"val_y": "asdf"}
+        },
+        "sub_union": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "optionalRef": "http://determined.ai/schemas/expconf/v1/test-union.json"
+        }
+    }
+}
+
