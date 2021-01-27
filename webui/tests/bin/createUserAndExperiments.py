@@ -9,6 +9,7 @@ USER_WITH_PASSWORD_PASSWORD = "special-pw"
 USER_WITHOUT_PASSWORD_USERNAME = "user-wo-pw"
 
 determined_root_dir = pathlib.Path(__file__).absolute().parents[3]
+experiments_dir = determined_root_dir.joinpath("webui", "tests", "fixtures", "experiments")
 noop_dir = determined_root_dir.joinpath("e2e_tests", "tests", "fixtures", "no_op")
 noop_config = "single-very-many-long-steps.yaml"
 
@@ -86,6 +87,7 @@ def main():
 
     print("creating experiments..")
     createExperiment(noop_dir, noop_config, 4)
+    createExperiment(experiments_dir.joinpath("no-op-metrics"), experiments_dir.joinpath("no-op-metrics", "single.yaml"), 4)
 
 
 if __name__ == "__main__":

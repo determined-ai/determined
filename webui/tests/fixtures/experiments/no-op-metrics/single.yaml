@@ -1,0 +1,25 @@
+description: noop_single
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp
+  storage_path: determined-integration-checkpoints
+  save_trial_best: 30
+hyperparameters:
+  global_batch_size: 32
+  metrics_progression: decreasing
+  metrics_base: 0.9
+  metrics_sigma: 0
+searcher:
+  metric: validation_error
+  smaller_is_better: true
+  name: single
+  max_length:
+    batches: 3000
+reproducibility:
+  experiment_seed: 999
+min_validation_period:
+  batches: 100
+min_checkpoint_period:
+  batches: 100
+max_restarts: 0
+entrypoint: model_def:NoOpTrial
