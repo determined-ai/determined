@@ -14,7 +14,9 @@ guide is based on the official `PyTorch MNIST example
 This guide focuses on demonstrating Determined's features at a high
 level. We will lightly touch on major concepts and terminology. For a
 more slow-paced introduction to developing models with Determined, check
-out :ref:`pytorch-mnist-tutorial` or :ref:`tf-mnist-tutorial`.
+out :ref:`pytorch-mnist-tutorial` or :ref:`tf-mnist-tutorial`. Or, for
+an even faster (but less structured) way to start using a Determined
+cluster without writing a model, see :ref:`commands-and-shells`.
 
 ***************
  Prerequisites

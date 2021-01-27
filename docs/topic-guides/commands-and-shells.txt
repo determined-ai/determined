@@ -1,0 +1,137 @@
+.. _commands-and-shells:
+
+#####################
+ Commands and Shells
+#####################
+
+In addition to structured model training workloads, which are handled
+using :ref:`experiments <experiment-lifecycle>`, Determined also
+supports more free-form tasks using *commands* and *shells*. Commands
+and shells enable developers to use a Determined cluster and its GPUs
+without having to write code conforming to the trial APIs. Commands are
+useful for running existing code in a batch manner; shells provide
+access to the cluster in the form of interactive `SSH
+<https://en.wikipedia.org/wiki/SSH_(Secure_Shell)>`_ sessions.
+
+This document provides an overview of the most common CLI commands
+related to shells and commands; see :ref:`cli` for full documentation.
+
+*****************
+ Getting Started
+*****************
+
+Commands
+========
+
+Command-related CLI commands start with ``det command`` (which can be
+abbreviated to ``det cmd``). The main subcommand is ``det cmd run``,
+which runs a command in the cluster and streams its output. For example,
+the following CLI command uses ``nvidia-smi`` to display information
+about the GPUs available to tasks in the container:
+
+.. code::
+
+   det cmd run nvidia-smi
+
+More complex commands including shell constructs can be run as well, as
+long as they are quoted to prevent interpretation by the local shell:
+
+.. code::
+
+   det cmd run 'for x in a b c; do echo $x; done'
+
+``det cmd run`` will stream output from the command until it finishes,
+but the command will continue executing and occupying cluster resources
+even if the CLI is interrupted or killed (e.g., due to Control-C being
+pressed). In order to stop the command or view further output from it,
+you'll need its UUID, which can be obtained from the output of either
+the original ``det cmd run`` or ``det cmd list``. Once you have the
+UUID, run ``det cmd logs <UUID>`` to view a snapshot of logs, ``det cmd
+logs -f <UUID>`` to view the current logs and continue streaming future
+output, or ``det cmd kill <UUID>`` to stop the command.
+
+Shells
+======
+
+Shell-related CLI commands start with ``det shell``. To start a
+persistent SSH server container in the Determined cluster and connect an
+interactive session to it, use ``det shell start``:
+
+.. code::
+
+   det shell start
+
+After starting a server with ``det shell start``, you can make another
+independent connection to the same server by running ``det shell open
+<UUID>``. The UUID can be obtained from the output of either the
+original ``det shell start`` command or ``det shell list``:
+
+.. code::
+
+   $ det shell list
+    Id                                   | Owner      | Description                  | State   | Exit Status
+   --------------------------------------+------------+------------------------------+---------+---------------
+    d75c3908-fb11-4fa5-852c-4c32ed30703b | determined | Shell (annually-alert-crane) | RUNNING | N/A
+   $ det shell open d75c3908-fb11-4fa5-852c-4c32ed30703b
+
+Optionally, you can provide extra options to pass to the SSH client when
+using ``det shell start`` or ``det shell open`` by including them after
+``--``. For example, this command will start a new shell and forward a
+port from the local machine to the container:
+
+.. code::
+
+   det shell start -- -L8080:localhost:8080
+
+In order to stop the SSH server container and free up cluster resources,
+run ``det shell kill <UUID>``.
+
+*********************
+ Context Directories
+*********************
+
+Commands and shells become much more powerful with the use of the ``-c
+<directory>`` option, which tells Determined to transfer files from a
+directory on the local machine (the "context directory") to the
+container. The contents of the context directory are placed into the
+directory ``/run/determined/workdir`` within the container before the
+command or shell starts running. ``/run/determined/workdir`` is also the
+initial working directory for commands, so they can easily access files
+from the context using relative paths.
+
+.. code::
+
+   $ mkdir context
+   $ echo 'print("hello world")' > context/run.py
+   $ det cmd run -c context python run.py
+
+The total size of the files in the context directory must be less than
+95 MB. Larger files, such as datasets, must be mounted into the
+container (see next section), downloaded after the container starts, or
+included in a :ref:`custom Docker image <custom-docker-images>`.
+
+************************
+ Advanced Configuration
+************************
+
+:ref:`Additional configuration settings
+<command-notebook-configuration>` for both commands and shells can be
+set using the ``--config`` and ``--config-file`` options. Commonly
+useful settings include:
+
+-  ``bind_mounts``: Specifies directories to be bind-mounted into the
+   container from the host machine. (Due to the structured values
+   required for this setting, it needs to be specified in a config
+   file.)
+
+-  ``resources.slots``: Specifies the number of slots the container will
+   have access to. (Distributed commands and shells are not supported;
+   all slots will be on one machine and attempting to use more slots
+   than are available on one machine will prevent the container from
+   being scheduled.)
+
+-  ``environment.image``: Specifies a custom Docker image to use for the
+   container.
+
+-  ``description``: Specifies a description for the command or shell to
+   distinguish it from others.
