@@ -1111,7 +1111,7 @@ jobs:
 
       - run: pyenv uninstall -f 3.6.10
       - run: sudo apt install -y liblzma-dev lzma
-      - run: pyenv install 3.6.10
+      - run: PYTHON_BUILD_MIRROR_URL=https://detpyenv.s3.amazonaws.com pyenv install 3.6.10
       - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
