@@ -6,6 +6,10 @@ interface WithPagination {
   pagination: V1Pagination;
 }
 
+export type Primitive = boolean | number | string;
+export type Point = { x: number; y: number };
+export type Range<T = Primitive> = [ T, T ];
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
 
@@ -200,16 +204,14 @@ export enum ExperimentHyperParamType {
   Log = 'log',
 }
 
-export type ExperimentHyperParamValue = boolean | number | string;
-
 export interface ExperimentHyperParam {
   base?: number;
   count?: number;
   maxval?: number;
   minval?: number;
   type: ExperimentHyperParamType;
-  val?: ExperimentHyperParamValue;
-  vals?: ExperimentHyperParamValue[];
+  val?: Primitive;
+  vals?: Primitive[];
 }
 
 export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;

@@ -1,4 +1,4 @@
-import { CommandState, MetricName, MetricType, RawJson, RunState, State } from 'types';
+import { CommandState, MetricName, MetricType, Primitive, RawJson, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
@@ -81,7 +81,7 @@ const commandStateSortValues: Record<CommandState, number> = {
 
 /* Sorters */
 
-export const alphanumericSorter = (a: string|number, b: string|number): number => {
+export const alphanumericSorter = (a: string | number, b: string | number): number => {
   return a.toString().localeCompare(b.toString(), 'en', { numeric: true });
 };
 
@@ -94,7 +94,7 @@ export const commandStateSorter = (a: CommandState, b: CommandState): number => 
   return commandStateSortValues[a] - commandStateSortValues[b];
 };
 
-export const hpSorter = (a: boolean|number|string, b: boolean|number|string): number => {
+export const primitiveSorter = (a: Primitive, b: Primitive): number => {
   if (typeof a === 'boolean' && typeof b === 'boolean') {
     return booleanSorter(a, b);
   } else if (typeof a === 'number' && typeof b === 'number') {
