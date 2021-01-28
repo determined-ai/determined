@@ -1430,7 +1430,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.12-gke.1200"
+        default: "1.18.12-gke.1205"
       machine-type:
         type: string
         default: "a2-highgpu-1g"
