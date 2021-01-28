@@ -587,7 +587,7 @@ Running Determined
             network_interface:
               public_ip: true
               security_group_id: ${AgentSecurityGroup.GroupId}
-            provider: aws
+            type: aws
             ssh_key_name: ${Keypair}
             tag_key: determined-${UserName}
             tag_value: determined-${UserName}-agent
