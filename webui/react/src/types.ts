@@ -446,16 +446,6 @@ export interface TaskFilters<T extends TaskType = TaskType> {
   username?: string;
 }
 
-export enum TBSourceType {
-  Trial,
-  Experiment
-}
-
-export interface TBSource {
-  ids: number[];
-  type: TBSourceType;
-}
-
 export type CommonProps = {
   children?: React.ReactNode;
   className?: string;

@@ -1,7 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid from 'components/Grid';
 import Icon from 'components/Icon';
@@ -17,17 +17,17 @@ import TableBatch from 'components/TableBatch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
-import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
+import {
+  Commands, Notebooks, Shells, Tensorboards, useFetchCommands, useFetchNotebooks, useFetchShells,
+  useFetchTensorboards,
+} from 'contexts/Commands';
 import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import {
-  getCommands, getNotebooks, getShells, getTensorboards, killTask,
-} from 'services/api';
-import { ApiSorter, EmptyParams } from 'services/types';
+import { killTask } from 'services/api';
+import { ApiSorter } from 'services/types';
 import { ShirtSize } from 'themes';
-import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
+import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
 import { alphanumericSorter, numericSorter } from 'utils/data';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
@@ -75,6 +75,7 @@ const STORAGE_FILTERS_KEY = 'filters';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const TaskList: React.FC = () => {
+  const [ canceler ] = useState(new AbortController());
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
   const commands = Commands.useStateContext();
@@ -95,14 +96,11 @@ const TaskList: React.FC = () => {
   const [ search, setSearch ] = useState('');
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
-  const [ commandsResponse, triggerCommandsRequest ] =
-    useRestApi<EmptyParams, Command[]>(getCommands, {});
-  const [ notebooksResponse, triggerNotebooksRequest ] =
-    useRestApi<EmptyParams, Command[]>(getNotebooks, {});
-  const [ shellsResponse, triggerShellsRequest ] =
-    useRestApi<EmptyParams, Command[]>(getShells, {});
-  const [ tensorboardsResponse, triggerTensorboardsRequest ] =
-    useRestApi<EmptyParams, Command[]>(getTensorboards, {});
+
+  const fetchCommands = useFetchCommands(canceler);
+  const fetchNotebooks = useFetchNotebooks(canceler);
+  const fetchShells = useFetchShells(canceler);
+  const fetchTensorboards = useFetchTensorboards(canceler);
 
   const sources = [ commands, notebooks, shells, tensorboards ];
 
@@ -137,15 +135,15 @@ const TaskList: React.FC = () => {
   }, [ selectedTasks ]);
 
   const fetchTasks = useCallback((): void => {
-    triggerCommandsRequest({});
-    triggerNotebooksRequest({});
-    triggerShellsRequest({});
-    triggerTensorboardsRequest({});
+    fetchCommands();
+    fetchNotebooks();
+    fetchShells();
+    fetchTensorboards();
   }, [
-    triggerCommandsRequest,
-    triggerNotebooksRequest,
-    triggerShellsRequest,
-    triggerTensorboardsRequest,
+    fetchCommands,
+    fetchNotebooks,
+    fetchShells,
+    fetchTensorboards,
   ]);
 
   const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
@@ -194,39 +192,14 @@ const TaskList: React.FC = () => {
       <TaskActionDropdown task={record} onComplete={handleActionComplete} />
     );
 
-    const newColumns = [ ...defaultColumns ].map(column => {
+    return [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
       if (column.key === 'name') column.render = nameRenderer;
       if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
-
-    return newColumns;
   }, [ handleActionComplete, handleSourceShow, sorter ]);
-
-  /*
-   * Check once every second to see if all task endpoints have resolved.
-   * Consider it a failure if the number of checks exceed 10 times.
-   */
-  const checkForTaskListUpdate = useCallback((): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      let counter = 0;
-      const timer = setInterval(() => {
-        if (!commandsResponse.isLoading && !notebooksResponse.isLoading &&
-            !shellsResponse.isLoading && !tensorboardsResponse.isLoading) {
-          clearInterval(timer);
-          resolve();
-        } else if (counter > 10) reject();
-        counter++;
-      }, 1000);
-    });
-  }, [
-    commandsResponse.isLoading,
-    notebooksResponse.isLoading,
-    shellsResponse.isLoading,
-    tensorboardsResponse.isLoading,
-  ]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
@@ -252,7 +225,6 @@ const TaskList: React.FC = () => {
 
       // Refetch task list to get updates based on batch action.
       fetchTasks();
-      await checkForTaskListUpdate();
     } catch (e) {
       handleError({
         error: e,
@@ -264,7 +236,7 @@ const TaskList: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ checkForTaskListUpdate, fetchTasks, selectedTasks ]);
+  }, [ fetchTasks, selectedTasks ]);
 
   const handleConfirmation = useCallback(() => {
     Modal.confirm({
@@ -299,6 +271,10 @@ const TaskList: React.FC = () => {
       openCommand(record);
     },
   }), []);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   return (
     <Page id="tasks" title="Tasks">

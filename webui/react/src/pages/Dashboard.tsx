@@ -21,7 +21,7 @@ import { getExperimentList } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import {
-  ALL_VALUE, Command, CommandType, ExperimentItem, RecentTask,
+  ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,
   ResourceType, TaskFilters, TaskType,
 } from 'types';
 import { filterTasks } from 'utils/task';
@@ -80,7 +80,7 @@ const Dashboard: React.FC = () => {
 
   /* Overview */
 
-  const countActiveCommand = (commands: Command[]): number => {
+  const countActiveCommand = (commands: CommandTask[]): number => {
     return commands.filter(command => activeCommandStates.includes(command.state)).length;
   };
 

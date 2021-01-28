@@ -6,7 +6,7 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
   openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { ExperimentBase, RunState, TBSourceType } from 'types';
+import { ExperimentBase, RunState } from 'types';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -76,10 +76,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
   const handleCreateTensorboard = useCallback(async () => {
     setBtnLoadingStates(state => ({ ...state, Tensorboard: true }));
     try {
-      const tensorboard = await openOrCreateTensorboard({
-        ids: [ experiment.id ],
-        type: TBSourceType.Experiment,
-      });
+      const tensorboard = await openOrCreateTensorboard({ experimentIds: [ experiment.id ] });
       openCommand(tensorboard);
       onSettled();
     } finally {

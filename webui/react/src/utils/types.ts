@@ -2,34 +2,25 @@ import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
   CommandType, ExperimentHyperParams, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask,
-  RecentExperimentTask, RecentTask, ResourceState, RunState, SlotState, TBSource, TBSourceType,
+  RecentExperimentTask, RecentTask, ResourceState, RunState, SlotState,
   Workload,
 } from 'types';
+
+import { LaunchTensorboardParams } from '../services/types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
 import { isMetricsWorkload } from './step';
 
 /* Conversions to Tasks */
 
-export const commandToTask = (command: Command): RecentCommandTask => {
-  // We expect the name to be in the form of 'Type (pet-name-generated)'.
-  const name = command.config.description.replace(/.*\((.*)\).*/, '$1');
-  const task: RecentTask = {
-    id: command.id,
+export const commandToTask = (command: CommandTask): RecentCommandTask => {
+  return {
+    ...command,
     lastEvent: {
-      date: command.registeredTime,
+      date: command.startTime,
       name: 'requested',
     },
-    misc: command.misc,
-    name,
-    resourcePool: command.resourcePool,
-    serviceAddress: command.serviceAddress,
-    startTime: command.registeredTime,
-    state: command.state as CommandState,
-    type: command.kind,
-    username: command.user.username,
   };
-  return task;
 };
 
 export const experimentToTask = (experiment: ExperimentItem): RecentExperimentTask => {
@@ -261,19 +252,18 @@ export const upgradeConfig = (config: RawJson): void => {
 };
 
 // Checks whether tensorboard source matches a given source list.
-export const tsbMatchesSource = (tensorboard: Command, source: TBSource): boolean => {
-  source.ids.sort();
-  switch (source.type) {
-    case TBSourceType.Experiment:
-      tensorboard.misc?.experimentIds?.sort();
-      return isEqual(tensorboard.misc?.experimentIds, source.ids);
-    case TBSourceType.Trial:
-      tensorboard.misc?.trialIds?.sort();
-      return isEqual(tensorboard.misc?.trialIds, source.ids);
-    default:
-      return false;
-  }
-};
+export const tsbMatchesSource =
+  (tensorboard: CommandTask, source: LaunchTensorboardParams): boolean => {
+    source.experimentIds?.sort();
+    source.trialIds?.sort();
+    tensorboard.misc?.experimentIds?.sort();
+    tensorboard.misc?.trialIds?.sort();
+
+    return (
+      isEqual(tensorboard.misc?.experimentIds, source.experimentIds)
+      || isEqual(tensorboard.misc?.trialIds, source.trialIds)
+    );
+  };
 
 export const getMetricValue = (workload?: Workload, metricName?: string): number | undefined => {
   const metricsWl = workload as MetricsWorkload;

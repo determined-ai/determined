@@ -8,6 +8,7 @@ import "google/protobuf/struct.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/tensorboard/v1/tensorboard.proto";
 import "determined/util/v1/util.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get a list of tensorboards.
 message GetTensorboardsRequest {
@@ -78,6 +79,9 @@ message LaunchTensorboardRequest {
 }
 // Response to LaunchTensorboardRequest.
 message LaunchTensorboardResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "tensorboard" ] }
+  };
   // The requested tensorboard.
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
 }

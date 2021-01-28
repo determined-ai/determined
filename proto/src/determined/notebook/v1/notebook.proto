@@ -4,11 +4,23 @@ package determined.notebook.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/notebookv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
 
 // Notebook is a Jupyter notebook in a containerized environment.
 message Notebook {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "id",
+        "description",
+        "start_time",
+        "username",
+        "resource_pool"
+      ]
+    }
+  };
   // The id of the notebook.
   string id = 1;
   // The description of the notebook.

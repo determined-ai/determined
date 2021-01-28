@@ -2,10 +2,11 @@ import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
-  ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
-  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
-  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
-  TrialDetailsParams,
+  ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentIdParams, GetCommandsParams, GetExperimentsParams,
+  GetNotebooksParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams,
+  LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams,
+  TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError, validateDetApiEnum } from 'services/utils';
 import {
@@ -161,10 +162,21 @@ export const getExperimentLabels = generateDetApi<
 
 /* Tasks */
 
-export const getCommands = generateApi<EmptyParams, Command[]>(Config.getCommands);
-export const getNotebooks = generateApi<EmptyParams, Command[]>(Config.getNotebooks);
-export const getShells = generateApi<EmptyParams, Command[]>(Config.getShells);
-export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTensorboards);
+export const getCommands = generateDetApi<
+  GetCommandsParams, Api.V1GetCommandsResponse, CommandTask[]
+>(Config.getCommands);
+
+export const getNotebooks = generateDetApi<
+  GetNotebooksParams, Api.V1GetNotebooksResponse, CommandTask[]
+>(Config.getNotebooks);
+
+export const getShells = generateDetApi<
+  GetShellsParams, Api.V1GetShellsResponse, CommandTask[]
+>(Config.getShells);
+
+export const getTensorboards = generateDetApi<
+  GetTensorboardsParams, Api.V1GetTensorboardsResponse, CommandTask[]
+>(Config.getTensorboards);
 
 export const killCommand = generateDetApi<
   CommandIdParams, Api.V1KillCommandResponse, void
@@ -184,19 +196,19 @@ export const killTensorboard = generateDetApi<
 
 export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
 
-export const createTensorboard = generateApi<
-  CreateTensorboardParams, Command
->(Config.createTensorboard);
+export const launchTensorboard = generateDetApi<
+  LaunchTensorboardParams, Api.V1LaunchTensorboardResponse, CommandTask
+>(Config.launchTensorboard);
 
 export const openOrCreateTensorboard = async (
-  params: CreateTensorboardParams,
-): Promise<Command> => {
+  params: LaunchTensorboardParams,
+): Promise<CommandTask> => {
   const tensorboards = await getTensorboards({});
   const match = tensorboards.find(tensorboard =>
     !terminalCommandStates.has(tensorboard.state)
     && tsbMatchesSource(tensorboard, params));
   if (match) return match;
-  return createTensorboard(params);
+  return launchTensorboard(params);
 };
 
 export const killTask = async (task: CommandTask): Promise<void> => {
