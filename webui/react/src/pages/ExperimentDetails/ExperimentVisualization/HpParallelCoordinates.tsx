@@ -10,6 +10,7 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
+import useStorage from 'hooks/useStorage';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -40,6 +41,8 @@ interface HpTrialData {
   lineIds: number[];
 }
 
+const STORAGE_PATH = 'experiment-visualization';
+const STORAGE_HP_KEY = 'hps';
 const MAX_HP_COUNT = 20;
 
 const HpParallelCoordinates: React.FC<Props> = ({
@@ -51,6 +54,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedBatch,
   selectedMetric,
 }: Props) => {
+  const storage = useStorage(`${STORAGE_PATH}/${experiment.id}/parcoords`);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpTrialData>();
   const [ pageError, setPageError ] = useState<Error>();
