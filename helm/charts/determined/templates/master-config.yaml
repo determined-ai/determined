@@ -43,12 +43,11 @@ data:
     {{ end }}
     port: {{ include "determined.masterPort" . }}
 
-    scheduler:
-      resource_provider:
-        type: "kubernetes"
-        namespace: {{ .Release.Namespace }}
-        max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
-        master_service_name: determined-master-service-{{ .Release.Name }}
+    resource_manager:
+      type: "kubernetes"
+      namespace: {{ .Release.Namespace }}
+      max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
+      master_service_name: determined-master-service-{{ .Release.Name }}
 
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:

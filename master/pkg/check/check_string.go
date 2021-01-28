@@ -19,7 +19,7 @@ func In(actual string, expected []string, msgAndArgs ...interface{}) error {
 // NotEmpty checks whether the first argument is empty string. The method returns an error with the
 // provided message if the string is empty.
 func NotEmpty(actual string, msgAndArgs ...interface{}) error {
-	return check(len(actual) > 0, msgAndArgs, "%s must be non-empty")
+	return check(len(actual) > 0, msgAndArgs, "%s must be non-empty", actual)
 }
 
 // Match checks whether the first argument matches the regular expression of the second argument.
