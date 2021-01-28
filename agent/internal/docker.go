@@ -166,6 +166,10 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 }
 
 func (d *dockerActor) runContainer(ctx *actor.Context, msg container.RunSpec) {
+	if !d.spec.RunSpec.UseFluentLogging {
+		msg.HostConfig.AutoRemove = false
+	}
+
 	response, err := d.ContainerCreate(
 		context.Background(), &msg.ContainerConfig, &msg.HostConfig, &msg.NetworkingConfig, "")
 	if err != nil {
@@ -175,6 +179,16 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg container.RunSpec) {
 	containerID := response.ID
 	for _, w := range response.Warnings {
 		d.sendAuxLog(ctx, fmt.Sprintf("warning when creating container: %s", w))
+	}
+
+	if !d.spec.RunSpec.UseFluentLogging {
+		defer func() {
+			if err = d.Client.ContainerRemove(
+				context.Background(), containerID, types.ContainerRemoveOptions{},
+			); err != nil {
+				sendErr(ctx, errors.Wrap(err, "error removing container"))
+			}
+		}()
 	}
 
 	for _, copyArx := range msg.Archives {
@@ -219,7 +233,7 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg container.RunSpec) {
 	)
 
 	if !d.spec.RunSpec.UseFluentLogging {
-		if lerr := trackLogs(ctx, d.Client, containerID, ctx.Sender()); err != nil {
+		if lerr := trackLogs(ctx, d.Client, containerID, ctx.Sender()); lerr != nil {
 			sendErr(ctx, lerr)
 		}
 	}
