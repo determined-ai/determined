@@ -36,10 +36,8 @@ ap_southeast_2_master_ami:
   old: ami-004d0fb87d10716c6
 cuda_11_hashed:
   new: determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-5f6f6e1
-  old: __NON-EXISTANT-IMAGE__
 cuda_11_versioned:
   new: determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-0.9.0
-  old: __NON-EXISTANT-IMAGE__
 eu_central_1_agent_ami:
   new: ami-0a7e28c7ffceaaca3
   old: ami-0474e45bb1a45bbfe
