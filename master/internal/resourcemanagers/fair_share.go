@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/determined-ai/determined/master/pkg/check"
-
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/check"
 )
 
 type fairShare struct{}
@@ -33,9 +33,9 @@ type groupState struct {
 	offered int
 
 	// reqs contains the contents of both pendingReqs and allocatedReqs.
-	reqs          []*AllocateRequest
-	pendingReqs   []*AllocateRequest
-	allocatedReqs []*AllocateRequest
+	reqs          []*sproto.AllocateRequest
+	pendingReqs   []*sproto.AllocateRequest
+	allocatedReqs []*sproto.AllocateRequest
 }
 
 func (g groupState) String() string {
@@ -47,7 +47,7 @@ func (g groupState) String() string {
 		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
 }
 
-func (f *fairShare) Schedule(rp *ResourcePool) ([]*AllocateRequest, []*actor.Ref) {
+func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
@@ -56,8 +56,8 @@ func fairshareSchedule(
 	groups map[*actor.Ref]*group,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
-) ([]*AllocateRequest, []*actor.Ref) {
-	allToAllocate := make([]*AllocateRequest, 0)
+) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	allToAllocate := make([]*sproto.AllocateRequest, 0)
 	allToRelease := make([]*actor.Ref, 0)
 
 	for it := taskList.iterator(); it.next(); {
@@ -280,7 +280,7 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 	}
 }
 
-func calculateSmallestAllocatableTask(state *groupState) (smallest *AllocateRequest) {
+func calculateSmallestAllocatableTask(state *groupState) (smallest *sproto.AllocateRequest) {
 	for _, req := range state.pendingReqs {
 		if smallest == nil || req.SlotsNeeded < smallest.SlotsNeeded {
 			smallest = req
@@ -291,8 +291,8 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *AllocateRequ
 
 func assignTasks(
 	agents map[*actor.Ref]*agentState, states []*groupState, fittingMethod SoftConstraint,
-) ([]*AllocateRequest, []*actor.Ref) {
-	toAllocate := make([]*AllocateRequest, 0)
+) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)
 
 	for _, state := range states {

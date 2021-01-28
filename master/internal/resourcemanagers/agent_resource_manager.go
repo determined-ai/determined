@@ -40,7 +40,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 			}
 		}
 
-	case AllocateRequest:
+	case sproto.AllocateRequest:
 		// this code exists to handle the case where an experiment does not have
 		// an explicit resource pool specified in the config. This should never happen
 		// for newly created/forked experiments as the default pool is filled in to the
@@ -56,21 +56,21 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		}
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
 
-	case ResourcesReleased:
+	case sproto.ResourcesReleased:
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority:
 		a.forwardToAllPools(ctx, msg)
 
-	case GetTaskSummary:
+	case sproto.GetTaskSummary:
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
 		}
 
-	case GetTaskSummaries:
+	case sproto.GetTaskSummaries:
 		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
 
-	case SetTaskName:
+	case sproto.SetTaskName:
 		a.forwardToAllPools(ctx, msg)
 
 	case sproto.GetDefaultGPUResourcePoolRequest:
@@ -173,11 +173,11 @@ func (a *agentResourceManager) aggregateTaskSummary(
 
 func (a *agentResourceManager) aggregateTaskSummaries(
 	resps map[*actor.Ref]actor.Message,
-) map[TaskID]TaskSummary {
-	summaries := make(map[TaskID]TaskSummary)
+) map[sproto.TaskID]TaskSummary {
+	summaries := make(map[sproto.TaskID]TaskSummary)
 	for _, resp := range resps {
 		if resp != nil {
-			typed := resp.(map[TaskID]TaskSummary)
+			typed := resp.(map[sproto.TaskID]TaskSummary)
 			for id, summary := range typed {
 				summaries[id] = summary
 			}

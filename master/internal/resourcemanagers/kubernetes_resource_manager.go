@@ -68,18 +68,18 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
 		sproto.SetGroupPriority,
-		SetTaskName,
-		AllocateRequest,
-		ResourcesReleased:
+		sproto.SetTaskName,
+		sproto.AllocateRequest,
+		sproto.ResourcesReleased:
 		return k.receiveRequestMsg(ctx)
 
-	case GetTaskSummary:
+	case sproto.GetTaskSummary:
 		if resp := getTaskSummary(k.reqList, *msg.ID, k.groups, kubernetesScheduler); resp != nil {
 			ctx.Respond(*resp)
 		}
 		reschedule = false
 
-	case GetTaskSummaries:
+	case sproto.GetTaskSummaries:
 		reschedule = false
 		ctx.Respond(getTaskSummaries(k.reqList, k.groups, kubernetesScheduler))
 
@@ -156,13 +156,13 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	case sproto.SetGroupWeight, sproto.SetGroupPriority:
 		// SetGroupWeight and SetGroupPriority are not supported by the Kubernetes RP.
 
-	case SetTaskName:
+	case sproto.SetTaskName:
 		k.receiveSetTaskName(ctx, msg)
 
-	case AllocateRequest:
+	case sproto.AllocateRequest:
 		k.addTask(ctx, msg)
 
-	case ResourcesReleased:
+	case sproto.ResourcesReleased:
 		k.resourcesReleased(ctx, msg.TaskActor)
 
 	default:
@@ -171,11 +171,11 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	return nil
 }
 
-func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg AllocateRequest) {
-	actors.NotifyOnStop(ctx, msg.TaskActor, ResourcesReleased{TaskActor: msg.TaskActor})
+func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
+	actors.NotifyOnStop(ctx, msg.TaskActor, sproto.ResourcesReleased{TaskActor: msg.TaskActor})
 
 	if len(msg.ID) == 0 {
-		msg.ID = TaskID(uuid.New().String())
+		msg.ID = sproto.TaskID(uuid.New().String())
 	}
 	if msg.Group == nil {
 		msg.Group = msg.TaskActor
@@ -192,13 +192,15 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg AllocateRequ
 	k.reqList.AddTask(&msg)
 }
 
-func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
+func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
 	if task, found := k.reqList.GetTaskByHandler(msg.TaskHandler); found {
 		task.Name = msg.Name
 	}
 }
 
-func (k *kubernetesResourceManager) assignResources(ctx *actor.Context, req *AllocateRequest) {
+func (k *kubernetesResourceManager) assignResources(
+	ctx *actor.Context, req *sproto.AllocateRequest,
+) {
 	numPods := 1
 	slotsPerPod := req.SlotsNeeded
 	if req.SlotsNeeded > 1 {
@@ -226,7 +228,7 @@ func (k *kubernetesResourceManager) assignResources(ctx *actor.Context, req *All
 
 	k.slotsUsedPerGroup[k.groups[req.Group]] += req.SlotsNeeded
 
-	allocations := make([]Allocation, 0, numPods)
+	allocations := make([]sproto.Allocation, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
 		container := newContainer(req, k.agent, slotsPerPod)
 		allocations = append(allocations, &podAllocation{
@@ -236,7 +238,7 @@ func (k *kubernetesResourceManager) assignResources(ctx *actor.Context, req *All
 		})
 	}
 
-	assigned := ResourcesAllocated{ID: req.ID, Allocations: allocations}
+	assigned := sproto.ResourcesAllocated{ID: req.ID, Allocations: allocations}
 	k.reqList.SetAllocations(req.TaskActor, &assigned)
 	req.TaskActor.System().Tell(req.TaskActor, assigned)
 
@@ -294,14 +296,14 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 }
 
 type podAllocation struct {
-	req       *AllocateRequest
+	req       *sproto.AllocateRequest
 	container *container
 	agent     *agentState
 }
 
 // Summary summarizes a container allocation.
-func (p podAllocation) Summary() ContainerSummary {
-	return ContainerSummary{
+func (p podAllocation) Summary() sproto.ContainerSummary {
+	return sproto.ContainerSummary{
 		TaskID: p.req.ID,
 		ID:     p.container.id,
 		Agent:  p.agent.handler.Address().Local(),

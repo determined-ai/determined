@@ -3,8 +3,6 @@ package resourcemanagers
 import (
 	"testing"
 
-	image "github.com/determined-ai/determined/master/pkg/tasks"
-
 	"github.com/google/uuid"
 
 	"github.com/pkg/errors"
@@ -14,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
+	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 func newMaxSlot(maxSlot int) *int {
@@ -49,7 +48,7 @@ var errMock = errors.New("mock error")
 type mockTask struct {
 	rmRef *actor.Ref
 
-	id               TaskID
+	id               sproto.TaskID
 	group            *mockGroup
 	slotsNeeded      int
 	nonPreemptible   bool
@@ -64,7 +63,7 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 	case actor.PostStop:
 	case SendRequestResourcesToResourceManager:
-		task := AllocateRequest{
+		task := sproto.AllocateRequest{
 			ID:             t.id,
 			Name:           string(t.id),
 			SlotsNeeded:    t.slotsNeeded,
@@ -84,7 +83,7 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 			ctx.Tell(t.rmRef, task)
 		}
 	case SendResourcesReleasedToResourceManager:
-		task := ResourcesReleased{TaskActor: ctx.Self()}
+		task := sproto.ResourcesReleased{TaskActor: ctx.Self()}
 		if ctx.ExpectingResponse() {
 			ctx.Respond(ctx.Ask(t.rmRef, task).Get())
 		} else {
@@ -95,12 +94,12 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 	case ThrowPanic:
 		panic(errMock)
 
-	case ResourcesAllocated:
+	case sproto.ResourcesAllocated:
 		for _, allocation := range msg.Allocations {
 			allocation.Start(ctx, image.TaskSpec{})
 		}
-	case ReleaseResources:
-		ctx.Tell(t.rmRef, ResourcesReleased{TaskActor: ctx.Self()})
+	case sproto.ReleaseResources:
+		ctx.Tell(t.rmRef, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 
 	case sproto.TaskContainerStateChanged:
 
@@ -231,7 +230,7 @@ func newFakeAgentState(
 	}
 
 	if slotsUsed > 0 {
-		req := &AllocateRequest{
+		req := &sproto.AllocateRequest{
 			SlotsNeeded:    slotsUsed,
 			NonPreemptible: false,
 		}
@@ -240,7 +239,7 @@ func newFakeAgentState(
 	}
 
 	for i := 0; i < zeroSlotContainers; i++ {
-		req := &AllocateRequest{}
+		req := &sproto.AllocateRequest{}
 		container := newContainer(req, state, req.SlotsNeeded)
 		state.allocateFreeDevices(req.SlotsNeeded, container.id)
 	}
@@ -255,12 +254,12 @@ func forceAddTask(
 	numAllocated int,
 	slotsNeeded int,
 ) {
-	task := &mockTask{id: TaskID(taskID), slotsNeeded: slotsNeeded}
+	task := &mockTask{id: sproto.TaskID(taskID), slotsNeeded: slotsNeeded}
 	ref, created := system.ActorOf(actor.Addr(taskID), task)
 	assert.Assert(t, created)
 
-	req := &AllocateRequest{
-		ID:          TaskID(taskID),
+	req := &sproto.AllocateRequest{
+		ID:          sproto.TaskID(taskID),
 		TaskActor:   ref,
 		Group:       ref,
 		SlotsNeeded: slotsNeeded,
@@ -275,10 +274,13 @@ func forceSetTaskAllocations(
 	taskID string,
 	numAllocated int,
 ) {
-	req, ok := taskList.GetTaskByID(TaskID(taskID))
+	req, ok := taskList.GetTaskByID(sproto.TaskID(taskID))
 	assert.Check(t, ok)
 	if numAllocated > 0 {
-		allocated := &ResourcesAllocated{ID: TaskID(taskID), Allocations: []Allocation{}}
+		allocated := &sproto.ResourcesAllocated{
+			ID:          sproto.TaskID(taskID),
+			Allocations: []sproto.Allocation{},
+		}
 		for i := 0; i < numAllocated; i++ {
 			allocated.Allocations = append(allocated.Allocations, containerAllocation{})
 		}
@@ -340,7 +342,7 @@ func setupSchedulerStates(
 
 		groups[ref] = &group{handler: ref}
 
-		req := &AllocateRequest{
+		req := &sproto.AllocateRequest{
 			ID:             mockTask.id,
 			SlotsNeeded:    mockTask.slotsNeeded,
 			Label:          mockTask.label,
@@ -381,9 +383,9 @@ func setupSchedulerStates(
 				}
 			}
 
-			allocated := &ResourcesAllocated{
+			allocated := &sproto.ResourcesAllocated{
 				ID: req.ID,
-				Allocations: []Allocation{
+				Allocations: []sproto.Allocation{
 					&containerAllocation{
 						req:       req,
 						agent:     agentState,
@@ -401,10 +403,10 @@ func setupSchedulerStates(
 
 func assertEqualToAllocate(
 	t *testing.T,
-	actual []*AllocateRequest,
+	actual []*sproto.AllocateRequest,
 	expected []*mockTask,
 ) {
-	expectedMap := map[TaskID]bool{}
+	expectedMap := map[sproto.TaskID]bool{}
 	for _, task := range expected {
 		expectedMap[task.id] = true
 	}
@@ -422,7 +424,7 @@ func assertEqualToRelease(
 	actual []*actor.Ref,
 	expected []*mockTask,
 ) {
-	expectedMap := map[TaskID]bool{}
+	expectedMap := map[sproto.TaskID]bool{}
 	for _, task := range expected {
 		expectedMap[task.id] = true
 	}

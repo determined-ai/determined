@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/proxy"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -71,7 +70,7 @@ type command struct {
 	agentUserGroup *model.AgentUserGroup
 	taskSpec       *tasks.TaskSpec
 
-	taskID               resourcemanagers.TaskID
+	taskID               sproto.TaskID
 	userFiles            archive.Archive
 	additionalFiles      archive.Archive
 	readinessChecks      map[string]readinessCheck
@@ -80,9 +79,9 @@ type command struct {
 	serviceAddress       *string
 
 	registeredTime time.Time
-	task           *resourcemanagers.AllocateRequest
+	task           *sproto.AllocateRequest
 	container      *container.Container
-	allocation     resourcemanagers.Allocation
+	allocation     sproto.Allocation
 	proxyNames     []string
 	exitStatus     *string
 	addresses      []container.Address
@@ -103,14 +102,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Schedule the command with the cluster.
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
 
-		c.task = &resourcemanagers.AllocateRequest{
+		c.task = &sproto.AllocateRequest{
 			ID:             c.taskID,
 			Name:           c.config.Description,
 			SlotsNeeded:    c.config.Resources.Slots,
 			Label:          c.config.Resources.AgentLabel,
 			ResourcePool:   c.config.Resources.ResourcePool,
 			NonPreemptible: true,
-			FittingRequirements: resourcemanagers.FittingRequirements{
+			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
 			TaskActor: ctx.Self(),
@@ -127,7 +126,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		c.terminate(ctx)
 
-	case resourcemanagers.ResourcesAllocated:
+	case sproto.ResourcesAllocated:
 		return c.receiveSchedulerMsg(ctx)
 
 	case getSummary:
@@ -278,7 +277,7 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 
 func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case resourcemanagers.ResourcesAllocated:
+	case sproto.ResourcesAllocated:
 		// Ignore this message if the command has exited.
 		if c.task == nil || msg.ID != c.task.ID {
 			ctx.Log().Info("ignoring resource allocation since the command has exited.")
@@ -316,7 +315,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 // 1. Command is aborted before being allocated.
 // 2. Forcible terminating a command by killing containers.
 func (c *command) terminate(ctx *actor.Context) {
-	if msg, ok := ctx.Message().(resourcemanagers.ReleaseResources); ok {
+	if msg, ok := ctx.Message().(sproto.ReleaseResources); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}
 
@@ -338,7 +337,7 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 
 	ctx.Tell(
 		sproto.GetRM(ctx.Self().System()),
-		resourcemanagers.ResourcesReleased{TaskActor: ctx.Self()},
+		sproto.ResourcesReleased{TaskActor: ctx.Self()},
 	)
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }

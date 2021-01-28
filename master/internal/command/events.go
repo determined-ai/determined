@@ -11,7 +11,6 @@ import (
 	"github.com/labstack/echo"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -41,9 +40,9 @@ type event struct {
 	Seq      int       `json:"seq"`
 	Time     time.Time `json:"time"`
 
-	ScheduledEvent *resourcemanagers.TaskID `json:"scheduled_event"`
+	ScheduledEvent *sproto.TaskID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
-	AssignedEvent *resourcemanagers.ResourcesAllocated `json:"assigned_event"`
+	AssignedEvent *sproto.ResourcesAllocated `json:"assigned_event"`
 	// ContainerStartedEvent is triggered when the container started on an agent.
 	ContainerStartedEvent *sproto.TaskContainerStarted `json:"container_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
@@ -51,7 +50,7 @@ type event struct {
 	ServiceReadyEvent *sproto.ContainerLog `json:"service_ready_event"`
 	// TerminateRequestEvent is triggered when the scheduler has requested the container to
 	// terminate.
-	TerminateRequestEvent *resourcemanagers.ReleaseResources `json:"terminate_request_event"`
+	TerminateRequestEvent *sproto.ReleaseResources `json:"terminate_request_event"`
 	// ExitedEvent is triggered when the command has terminated.
 	ExitedEvent *string `json:"exited_event"`
 	// LogEvent is triggered when a new log message is available.

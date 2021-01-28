@@ -6,29 +6,28 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
-	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
 
 // TaskSummary contains information about a task for external display.
 type TaskSummary struct {
-	ID             TaskID             `json:"id"`
-	Name           string             `json:"name"`
-	RegisteredTime time.Time          `json:"registered_time"`
-	ResourcePool   string             `json:"resource_pool"`
-	SlotsNeeded    int                `json:"slots_needed"`
-	Containers     []ContainerSummary `json:"containers"`
-	SchedulerType  string             `json:"scheduler_type"`
-	Priority       *int               `json:"priority"`
+	ID             sproto.TaskID             `json:"id"`
+	Name           string                    `json:"name"`
+	RegisteredTime time.Time                 `json:"registered_time"`
+	ResourcePool   string                    `json:"resource_pool"`
+	SlotsNeeded    int                       `json:"slots_needed"`
+	Containers     []sproto.ContainerSummary `json:"containers"`
+	SchedulerType  string                    `json:"scheduler_type"`
+	Priority       *int                      `json:"priority"`
 }
 
 func newTaskSummary(
-	request *AllocateRequest,
-	allocated *ResourcesAllocated,
+	request *sproto.AllocateRequest,
+	allocated *sproto.ResourcesAllocated,
 	groups map[*actor.Ref]*group,
 	schedulerType string,
 ) TaskSummary {
 	// Summary returns a new immutable view of the task state.
-	containerSummaries := make([]ContainerSummary, 0)
+	containerSummaries := make([]sproto.ContainerSummary, 0)
 	if allocated != nil {
 		for _, c := range allocated.Allocations {
 			containerSummaries = append(containerSummaries, c.Summary())
@@ -50,13 +49,6 @@ func newTaskSummary(
 	return summary
 }
 
-// ContainerSummary contains information about a task container for external display.
-type ContainerSummary struct {
-	TaskID TaskID    `json:"task_id"`
-	ID     cproto.ID `json:"id"`
-	Agent  string    `json:"agent"`
-}
-
 // newAgentSummary returns a new immutable view of the agent.
 func newAgentSummary(state *agentState) sproto.AgentSummary {
 	return sproto.AgentSummary{
@@ -67,7 +59,7 @@ func newAgentSummary(state *agentState) sproto.AgentSummary {
 
 func getTaskSummary(
 	reqList *taskList,
-	id TaskID,
+	id sproto.TaskID,
 	groups map[*actor.Ref]*group,
 	schedulerType string,
 ) *TaskSummary {
@@ -82,8 +74,8 @@ func getTaskSummaries(
 	reqList *taskList,
 	groups map[*actor.Ref]*group,
 	schedulerType string,
-) map[TaskID]TaskSummary {
-	ret := make(map[TaskID]TaskSummary)
+) map[sproto.TaskID]TaskSummary {
+	ret := make(map[sproto.TaskID]TaskSummary)
 	for it := reqList.iterator(); it.next(); {
 		req := it.value()
 		ret[req.ID] = newTaskSummary(req, reqList.GetAllocations(req.TaskActor), groups, schedulerType)

@@ -13,7 +13,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -212,8 +211,8 @@ type (
 		sequencer *trialWorkloadSequencer
 
 		// The following fields tracks the interaction with the resource providers.
-		task        *resourcemanagers.AllocateRequest
-		allocations []resourcemanagers.Allocation
+		task        *sproto.AllocateRequest
+		allocations []sproto.Allocation
 
 		// The following fields tracks containers and their states.
 		lastContainerConnectedTime time.Time
@@ -348,15 +347,15 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				name = fmt.Sprintf("Trial (Experiment %d)", t.experiment.ID)
 			}
 
-			t.task = &resourcemanagers.AllocateRequest{
-				ID:             resourcemanagers.NewTaskID(),
+			t.task = &sproto.AllocateRequest{
+				ID:             sproto.NewTaskID(),
 				Name:           name,
 				Group:          ctx.Self().Parent(),
 				SlotsNeeded:    slotsNeeded,
 				NonPreemptible: false,
 				Label:          label,
 				ResourcePool:   resourcePool,
-				FittingRequirements: resourcemanagers.FittingRequirements{
+				FittingRequirements: sproto.FittingRequirements{
 					SingleAgent: false,
 				},
 				TaskActor: ctx.Self(),
@@ -375,7 +374,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 
 func (t *trial) runningReceive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case resourcemanagers.ResourcesAllocated, resourcemanagers.ReleaseResources:
+	case sproto.ResourcesAllocated, sproto.ReleaseResources:
 		return t.processSchedulerMsg(ctx)
 
 	case containerConnected, sproto.TaskContainerStateChanged:
@@ -436,12 +435,12 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 
 func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case resourcemanagers.ResourcesAllocated:
+	case sproto.ResourcesAllocated:
 		if err := t.processAllocated(ctx, msg); err != nil {
 			return err
 		}
 
-	case resourcemanagers.ReleaseResources:
+	case sproto.ReleaseResources:
 		ctx.Log().Info("releasing resources because of being preempted")
 		return t.releaseResource(ctx)
 
@@ -513,7 +512,7 @@ func (t *trial) processID(id int) {
 }
 
 func (t *trial) processAllocated(
-	ctx *actor.Context, msg resourcemanagers.ResourcesAllocated,
+	ctx *actor.Context, msg sproto.ResourcesAllocated,
 ) error {
 	// Ignore this message if the resources are already released or
 	// it is from the last run of the trial.
@@ -557,7 +556,7 @@ func (t *trial) processAllocated(
 				return err
 			}
 		}
-		ctx.Tell(t.rm, resourcemanagers.SetTaskName{
+		ctx.Tell(t.rm, sproto.SetTaskName{
 			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
 			TaskHandler: ctx.Self(),
 		})
@@ -1091,7 +1090,7 @@ func (t *trial) terminated(ctx *actor.Context) {
 	t.task = nil
 	t.allocations = nil
 	t.containerRanks = make(map[cproto.ID]int)
-	ctx.Tell(t.rm, resourcemanagers.ResourcesReleased{TaskActor: ctx.Self()})
+	ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 
 	t.allReadySucceeded = false
 	t.PendingGracefulTermination = false

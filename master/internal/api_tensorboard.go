@@ -7,7 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -92,7 +92,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, err
 	}
 
-	tensorboardID := tensorboardIDFut.Get().(resourcemanagers.TaskID)
+	tensorboardID := tensorboardIDFut.Get().(sproto.TaskID)
 	tensorboard := a.m.system.AskAt(
 		tensorboardsAddr.Child(tensorboardID),
 		&tensorboardv1.Tensorboard{},

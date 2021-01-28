@@ -5,6 +5,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
@@ -30,7 +31,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 		NewResourceManagers(system, conf, nil))
 	assert.Assert(t, created)
 
-	taskSummary := system.Ask(rpActor, GetTaskSummaries{}).Get()
-	assert.DeepEqual(t, taskSummary, make(map[TaskID]TaskSummary))
+	taskSummary := system.Ask(rpActor, sproto.GetTaskSummaries{}).Get()
+	assert.DeepEqual(t, taskSummary, make(map[sproto.TaskID]TaskSummary))
 	assert.NilError(t, rpActor.StopAndAwaitTermination())
 }
