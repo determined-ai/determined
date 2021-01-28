@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: New chart added to experiment hyperparameters visualization
+   suite! Now you can visualize the most impactful hyperparameters of a
+   multi-trial experiment.
