@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from contextlib import contextmanager
+from typing import Optional
 import logging
 import time
 import requests
@@ -35,7 +36,7 @@ def run(cmd: List[str], config) -> None:
     return subprocess.check_call(cmd, env=config["env"])
 
 
-def run_forget(cmd: List[str], logfile, config) -> None:
+def run_forget(cmd: List[str], logfile, config) -> subprocess.Popen:
     return subprocess.Popen(cmd, stdout=logfile)
 
 
@@ -52,34 +53,33 @@ def setup_reports_dir(config):
     run(["mkdir", "-p", str(videos_dir)], config)
 
 
-def setup_cluster(logfile, config):
+def setup_cluster(config):
     logger.info("setting up the cluster..")
-    # run(CLUSTER_CMD_PREFIX + ["start-db"], config)
-    cluster_process = run_forget(["devcluster", "server", "--port", "3356"], logfile, config)
-    time.sleep(5)  # FIXME add a ready check for master
+    cluster_process = run_forget([
+        "devcluster", "server", "-c", str(test_cluster_dir.joinpath("devcluster.yaml")) , "--port", "3356"
+        ], None, config)
     logger.info(f"cluster pid: {cluster_process.pid}")
     return cluster_process
 
 
-def teardown_cluster(config):
+def teardown_cluster(proccess: subprocess.Popen, config):
     logger.info("tearing down the cluster..")
-    # FIXME
-    run_ignore_failure(["pkill", "determined"], config)
-    run_ignore_failure(["pkill", "run-server"], config)
+    proccess.kill()
+    run_ignore_failure(["pkill", "devcluster"], config)
 
-    run(CLUSTER_CMD_PREFIX + ["stop-db"], config)
 
 
 @contextmanager
 def det_cluster(config):
+    cluster_proc: subprocess.Popen
     try:
-        log_path = str(test_cluster_dir.joinpath("cluster.stdout.log"))
-        with open(log_path, "w") as f:
-            yield setup_cluster(f, config)
+        cluster_proc = setup_cluster(config)
+        if not wait_until(is_cluster_up, 0.5, 5, config):
+            raise Exception('failed to setup the cluster')
+        yield cluster_proc
 
     finally:
-        # use pid to kill
-        teardown_cluster(config)
+        teardown_cluster(cluster_proc, config)
 
 def is_cluster_up(config):
     try:
@@ -87,6 +87,15 @@ def is_cluster_up(config):
     except:
         return False
     return True
+
+# assuming condition take relatively short time.
+def wait_until(condition, interval=0.1, timeout=1, *args):
+    start = time.time()
+    while time.time() - start < timeout:
+        if condition(*args): return True
+        time.sleep(interval)
+    return False # timed out
+
 
 def pre_e2e_tests(config):
     if not is_cluster_up(config):
@@ -161,8 +170,6 @@ def get_config(args):
 
 def main():
     operation_to_fn = {
-        "setup-test-cluster": setup_cluster,
-        "teardown-test-cluster": teardown_cluster,
         "pre-e2e-tests": pre_e2e_tests,
         "run-e2e-tests": run_e2e_tests,
         "run-dev-tests": run_dev_tests,

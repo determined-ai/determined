@@ -16,7 +16,7 @@ stages:
   # db is predefined type of stage specific to how determined runs the
   # database.
   - db:
-      # port: 5432
+      port: 5432
       # db_name: determined
       # password: postgres
       # container_name: determined_db
