@@ -6,7 +6,7 @@ pexpect
 torch==1.7
 torchvision==0.8.1
 tensorflow==2.4.0
-numpy==1.19.2
+numpy
 pandas
 pyyaml
 docker
