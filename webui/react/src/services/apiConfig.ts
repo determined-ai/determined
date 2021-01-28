@@ -18,8 +18,8 @@ import {
 } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentPagination,
-  Log, ResourcePool, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
+  ExperimentPagination, Log, ResourcePool, TBSourceType, Telemetry, TrialDetails,
+  TrialPagination, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -287,11 +287,14 @@ export const getExpValidationHistory: DetApi<
 };
 
 export const getExpTrials: DetApi<
-  GetTrialsParams, Api.V1GetExperimentTrialsResponse, TrialDetails[]
+  GetTrialsParams, Api.V1GetExperimentTrialsResponse, TrialPagination
 > = {
   name: 'getExperimentTrials',
   postProcess: (response) => {
-    return response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial }));
+    return {
+      pagination: response.pagination,
+      trials: response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial })),
+    };
   },
   request: (params, options) => {
     return detApi.Experiments.determinedGetExperimentTrials(

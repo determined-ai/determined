@@ -69,7 +69,7 @@ const ExperimentDetails: React.FC = () => {
       const trials = await getExpTrials({ id });
       const validationHistory = await getExpValidationHistory({ id });
       setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
-      setTrials(trials);
+      setTrials(trials.trials);
       setValHistory(validationHistory);
     } catch (e) {
       if (!experimentDetails.error && !isAborted(e)) {
@@ -169,7 +169,6 @@ const ExperimentDetails: React.FC = () => {
         <TabPane key="overview" tab="Overview">
           <ExperimentOverview
             experiment={experiment}
-            trials={trials}
             validationHistory={valHistory}
             onTagsChange={fetchExperimentDetails} />
         </TabPane>

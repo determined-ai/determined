@@ -333,6 +333,11 @@ export interface ValidationMetrics {
   validationMetrics: Record<string, number>;
 }
 
+export interface TrialPagination {
+  pagination: V1Pagination;
+  trials: TrialDetails[];
+}
+
 type HyperparameterValue = number | string | boolean | RawJson
 export type TrialHyperParameters = Record<string, HyperparameterValue>
 

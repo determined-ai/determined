@@ -1,19 +1,25 @@
 import { Button, Col, Row, Table, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Section from 'components/Section';
-import { defaultRowClassName, getPaginationConfig, humanReadableFloatRenderer,
-  MINIMUM_PAGE_SIZE } from 'components/Table';
+import {
+  defaultRowClassName, getFullPaginationConfig, humanReadableFloatRenderer, MINIMUM_PAGE_SIZE,
+} from 'components/Table';
+import handleError, { ErrorType } from 'ErrorHandler';
+import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath, paths } from 'routes/utils';
+import { getExpTrials } from 'services/api';
 import { ApiSorter } from 'services/types';
-import { CheckpointWorkloadExtended, ExperimentBase, TrialItem, ValidationHistory } from 'types';
+import {
+  CheckpointWorkloadExtended, ExperimentBase, Pagination, TrialItem, ValidationHistory,
+} from 'types';
 import { numericSorter } from 'utils/data';
 import { getMetricValue } from 'utils/types';
 
@@ -23,7 +29,6 @@ import { columns as defaultColumns } from './ExperimentOverview.table';
 interface Props {
   experiment: ExperimentBase;
   onTagsChange: () => void;
-  trials: TrialItem[];
   validationHistory: ValidationHistory[];
 }
 
@@ -32,15 +37,18 @@ const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const ExperimentOverview: React.FC<Props> = (
-  { experiment, trials, validationHistory, onTagsChange }: Props,
+  { experiment, validationHistory, onTagsChange }: Props,
 ) => {
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
-  const [ pageSize, setPageSize ] = useState(initLimit);
+  const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
+  const [ total, setTotal ] = useState(0);
   const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
+  const [ trials, setTrials ] = useState<TrialItem[]>();
+  const [ canceler ] = useState(new AbortController());
 
   const columns = useMemo(() => {
     const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
@@ -107,7 +115,11 @@ const ExperimentOverview: React.FC<Props> = (
     setSorter({ descend: order === 'descend', key: columnKey as string });
 
     storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
-    setPageSize(tablePagination.pageSize);
+    setPagination(prev => ({
+      ...prev,
+      limit: tablePagination.pageSize,
+      offset: (tablePagination.current - 1) * tablePagination.pageSize,
+    }));
   }, [ columns, setSorter, storage ]);
 
   const handleTableRow = useCallback((record: TrialItem) => {
@@ -126,6 +138,32 @@ const ExperimentOverview: React.FC<Props> = (
   };
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
+
+  const fetchExperimentTrials = useCallback(async () => {
+    try {
+      const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
+        { id: experiment.id },
+        { signal: canceler.signal },
+      );
+      setTotal(responsePagination?.total || 0);
+      setTrials(experimentTrials);
+    } catch (e) {
+      handleError({
+        message: `Unable to fetch experiments ${experiment.id} trials.`,
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ experiment.id, canceler ]);
+
+  const stopPolling = usePolling(fetchExperimentTrials);
+
+  useEffect(() => {
+    return () => {
+      stopPolling();
+      canceler.abort();
+    };
+  }, [ canceler, stopPolling ]);
 
   return (
     <div className={css.base}>
@@ -147,7 +185,7 @@ const ExperimentOverview: React.FC<Props> = (
             <Table
               columns={columns}
               dataSource={trials}
-              pagination={getPaginationConfig(trials.length || 0, pageSize)}
+              pagination={getFullPaginationConfig(pagination, total)}
               rowClassName={defaultRowClassName({ clickable: true })}
               rowKey="id"
               showSorterTooltip={false}

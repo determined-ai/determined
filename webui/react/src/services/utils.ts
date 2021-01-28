@@ -102,9 +102,10 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 }
 
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
-  return async function(params: Input & FetchOptionParams): Promise<Output> {
+  return async function(params: Input & FetchOptionParams, options?: unknown): Promise<Output> {
     try {
-      const response = api.stubbedResponse ? api.stubbedResponse : await api.request(params);
+      const response = api.stubbedResponse ?
+        api.stubbedResponse : await api.request(params, options);
       return api.postProcess(response);
     } catch (e) {
       if (!isAborted(e)) processApiError(api.name, e);
