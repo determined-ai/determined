@@ -80,6 +80,11 @@ export default class StepImplementation {
 
   /* Authentication Steps */
 
+  @Step('Sign in')
+  public async justSignIn() {
+    await this.signIn('determined');
+  }
+
   @Step('Sign in as <username> with <password>')
   public async signInWithPassword(username: string, password: string) {
     await goto(`${BASE_URL}/login`);
