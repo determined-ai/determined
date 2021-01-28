@@ -25,7 +25,7 @@ resource pools:
 
 -  Uses GPU for training while using CPUs for TensorBoard.
 
-   You create one pool, "aws-v100", that provisions ``p3dn.24xlarge`
+   You create one pool, "aws-v100", that provisions ``p3dn.24xlarge``
    instances (large V100 EC2 instances) and another pool, "aws-cpu" that
    provisions `m5.large` instances (small and cheap CPU instances). You
    train your experiments using the aws-v100 pool, while you run your
@@ -85,7 +85,7 @@ your feedback either through GitHub issues or in our community Slack.
 ***************************
 
 Resource pools are configured via the the :ref:`master-configuration`.
-For each resource pool, you can configure scheduler and provisioner
+For each resource pool, you can configure scheduler and provider
 information.
 
 If you are using static resource pools and launching agents by hand, you
