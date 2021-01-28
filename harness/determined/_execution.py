@@ -47,7 +47,7 @@ def _catch_sys_exit() -> Any:
 
 
 @contextlib.contextmanager
-def _catch_invalid_hp(workloads: Iterator[workload.Workload]) -> Any:
+def _catch_invalid_hp(workloads: Iterator[Any]) -> Any:
     try:
         yield
     except InvalidHP as e:
