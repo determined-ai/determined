@@ -15,7 +15,8 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, Primitive, Range, RunState,
+  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap,
+  Primitive, Range, RunState,
 } from 'types';
 import { defaultNumericRange, normalizeRange, updateRange } from 'utils/chart';
 import { isObject } from 'utils/data';
