@@ -89,7 +89,7 @@ For each resource pool, you can configure scheduler and provider
 information.
 
 If you are using static resource pools and launching agents by hand, you
-will need to update the :ref:`_agent-configuration` to specify which
+will need to update the :ref:`agent-configuration` to specify which
 resource pool the agent should join.
 
 *****************************
