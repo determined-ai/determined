@@ -27,15 +27,13 @@ def upload_cloud_watch_logs(log_group_name: str, bucket_name: str, prefix: str, 
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'LimitExceededException':
                 print(f"Got an error possibly due to concurrent uploads: {error}.")
+                attempts += 1
+                if attempts > retries:
+                    raise error
+                time.sleep(20)
+                print("Retrying...")
             else:
                 raise error
-
-            attempts += 1
-            if attempts > retries:
-                raise error
-
-            time.sleep(10)
-            print("Retrying...")
 
     raise AssertionError
 
@@ -74,7 +72,7 @@ def main() -> None:
         log_group_name=args.log_group_name,
         bucket_name=args.bucket_name,
         prefix=args.prefix,
-        retries=3
+        retries=10,
     )
     wait_for_export_task(task_id)
 
