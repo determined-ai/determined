@@ -34,6 +34,19 @@ const clickAndWaitForPage = async (selector: t.SearchElement | t.MouseCoordinate
   await t.click(selector, { waitForEvents: ['loadEventFired'] });
 };
 
+const checkTextContent = async (includes: string[], excludes: string[], timeout = 500) => {
+  const existPromises = includes.map(async (text) => assert.ok(
+    await t.text(text).exists(undefined, timeout))
+  );
+  const notExistPromises = excludes.map(async (text) => assert.ok(
+    !(await t.text(text).exists(undefined, timeout)))
+  );
+  return Promise.all([
+    Promise.all(existPromises),
+    Promise.all(notExistPromises),
+  ]);
+};
+
 const goto = async (url: string) => {
   await t.goto(url, { waitForEvents: ['loadEventFired'] });
 };
@@ -158,6 +171,7 @@ export default class StepImplementation {
   @Step('Navigate to experiment <id> page')
   public async navigateToExperimentDetail(id: string) {
     await goto(`${BASE_URL}/experiments/${id}`);
+    await checkTextContent([`experiment ${id}`, 'trial', 'summary', 'scale'], ['fail', 'error', 'warn'])
   }
 
   @Step('Navigate to task list page')
