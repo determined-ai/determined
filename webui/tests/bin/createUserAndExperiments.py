@@ -86,8 +86,8 @@ def main():
     login_as(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
 
     print("creating experiments..")
-    createExperiment(noop_dir, noop_config, 4)
-    createExperiment(experiments_dir.joinpath("no-op-metrics"), experiments_dir.joinpath("no-op-metrics", "single.yaml"), 4)
+    createExperiment(noop_dir, noop_config, 3)
+    createExperiment(experiments_dir.joinpath("no-op-metrics"), experiments_dir.joinpath("no-op-metrics", "single.yaml"), 1)
 
 
 if __name__ == "__main__":

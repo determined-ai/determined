@@ -21,8 +21,6 @@ Specification to test navigation.
   |Docs       |/docs          |true    |Documentation|
   |API (Beta) |/docs/rest-api |true    |Swagger UI   |
 
-* Navigate to experiment "5" page
-
 ## Sign out
 
 * Sign out

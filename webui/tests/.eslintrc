@@ -15,6 +15,7 @@
   ],
   "extends": [
     "eslint:recommended",
+    "prettier"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -23,10 +24,14 @@
   },
   "plugins": [
     "jest",
+    "prettier",
     "@typescript-eslint",
     "no-instanceof"
   ],
   "rules": {
+    "prettier/prettier": [
+      "error"
+    ],
     "no-control-regex": 0,
     "no-instanceof/no-instanceof": [
       "error"
