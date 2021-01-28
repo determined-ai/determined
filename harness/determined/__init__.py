@@ -3,6 +3,7 @@ from determined._env_context import EnvContext
 from determined._rendezvous_info import RendezvousInfo
 from determined._execution import (
     _catch_sys_exit,
+    _catch_invalid_hp,
     _make_local_execution_env,
     _local_execution_manager,
 )

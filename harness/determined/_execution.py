@@ -3,7 +3,7 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 import determined as det
 from determined import constants, gpu, horovod, workload
@@ -47,7 +47,7 @@ def _catch_sys_exit() -> Any:
 
 
 @contextlib.contextmanager
-def _catch_invalid_hp(workloads: iter[workload]) -> Any:
+def _catch_invalid_hp(workloads: Iterable[workload.Workload]) -> Any:
     try:
         yield
     except InvalidHP as e:
