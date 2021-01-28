@@ -274,7 +274,7 @@ export const getExpTrials: DetApi<
 GetTrialsParams,
 Api.V1GetExperimentTrialsResponse,
 TrialDetails[]> = {
-  name: 'getExperimentValidationHistory',
+  name: 'getExperimentTrials',
   postProcess: (response) => {
     return response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial }));
   },
