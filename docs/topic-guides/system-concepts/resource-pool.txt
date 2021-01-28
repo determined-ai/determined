@@ -6,11 +6,12 @@
 
 To run tasks such as experiments or notebooks, Determined needs to have
 resources (CPUs, GPUs) on which to run the tasks. However, different
-tasks have different resource requirements. For example, you may want to
-run your training on beefy V100 GPU machines, while you want your
-Tensorboards to run on cheap CPU machines with minimal resources. Given
-the cost of GPU resources, it's important to get the most value of our
-money by choosing different resource for different goals.
+tasks have different resource requirements and, given the cost of GPU
+resources, it's important to choose the right resources for specific
+goals so that you get the most value out of your money. For example,
+you may want to run your training on beefy V100 GPU machines, while you
+want your Tensorboards to run on cheap CPU machines with minimal resources.
+
 
 Determined has the concept of *resource pools*, which is a set of
 resources that are identical and located physically close to each other.
@@ -23,40 +24,40 @@ independently.
 Here are some scenarios where it can be valuable to use multiple
 resource pools:
 
--  Uses GPU for training while using CPUs for TensorBoard.
+-  *Use GPU for training while using CPUs for TensorBoard.*
 
-   You create one pool, "aws-v100", that provisions ``p3dn.24xlarge``
-   instances (large V100 EC2 instances) and another pool, "aws-cpu" that
-   provisions `m5.large` instances (small and cheap CPU instances). You
-   train your experiments using the aws-v100 pool, while you run your
-   Tensorboards in the aws-cpu pool. When your experiments complete, the
-   aws-v100 pool can scale down to zero to save money, but you can
+   You create one pool, ``aws-v100``, that provisions ``p3dn.24xlarge``
+   instances (large V100 EC2 instances) and another pool, ``aws-cpu`` that
+   provisions ``m5.large`` instances (small and cheap CPU instances). You
+   train your experiments using the ``aws-v100`` pool, while you run your
+   Tensorboards in the ``aws-cpu`` pool. When your experiments complete, the
+   ``aws-v100 pool`` can scale down to zero to save money, but you can
    continue to run your Tensorboard. Without resource pools, you would
    have needed to keep a ``p3dn.24xlarge`` instance running to keep the
    Tensorboard alive.
 
--  Use GPUs in different availability zones on AWS
+-  *Use GPUs in different availability zones on AWS*
 
-   You have one pool `aws-v100-us-east-1a` that runs ``p3dn.24xlarge``
+   You have one pool ``aws-v100-us-east-1a`` that runs ``p3dn.24xlarge``
    in the ``us-east-1a`` availability zone and another pool
    ``aws-v100-us-east-1b`` that runs ``p3dn.24xlarge`` instances in the
    ``us-east-1b`` availability zone. You can launch an experiment into
    ``aws-v100-us-east-1a`` and, if AWS does not have sufficient
    ``p3dn.24xlarge`` capacity in that availability zone, you can launch
    the experiment in ``aws-v100-us-east-1b`` to check if that
-   availability zone has capacity. Note that currently, the 'AWS does
-   not have capacity' notification is only visible in the master logs,
+   availability zone has capacity. Note that currently the "AWS does
+   not have capacity" notification is only visible in the master logs,
    not on the experiment itself.
 
--  Use spot/preemptible instance and fall back to on-demand if needed.
+-  *Use spot/preemptible instance and fall back to on-demand if needed.*
 
    You have one pool ``aws-v100-spot`` that you use to try to run training
-      on spot instances and another pool ``aws-v100-on-demand`` that you
-      fall back to if AWS does not have enough spot capacity to run your
-      job.
+   on spot instances and another pool ``aws-v100-on-demand`` that you
+   fall back to if AWS does not have enough spot capacity to run your
+   job.
 
--  Use cheaper GPUs for prototyping on small datasets and expensive GPU
-   for training on full datasets
+-  *Use cheaper GPUs for prototyping on small datasets and expensive GPU
+   for training on full datasets*
 
    You have one pool with less expensive GPUs that you use for initial
    prototyping on small data sets and another pool that you use for
@@ -114,11 +115,11 @@ resource pool can also have a ``scheduler`` field that sets resource
 pool specific scheduler settings. If the ``scheduler`` field is not set
 for a specific resource pool, the default settings are used.
 
-Note that defining resource pool-specific scheduler settings is
-all-or-nothing. If the pool-specific scheduler field is blank, all
+Note that defining resource pool-specific ``scheduler`` settings is
+all-or-nothing. If the pool-specific ``scheduler`` field is blank, all
 scheduler settings will be inherited from the settings defined in
 ``resource_manager.scheduler``. If any fields are set in the
-pool-specific ``scheduler`` field, no settings will be inherited from
+pool-specific ``scheduler`` section, no settings will be inherited from
 ``resource_manager.scheduler`` - you need to redefine everything.
 
 Here is an example master configuration illustrating the potential
@@ -178,7 +179,7 @@ resource_pool that a task should be launched into.
 .. code:: yaml
 
    resources:
-       resource_pool: gpu-pool
+       resource_pool: pool1
 
 If this field is not set, the task will be launched into one of the two
 default pools defined in the :ref:`master-configuration`. Experiments
