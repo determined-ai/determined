@@ -21,7 +21,7 @@ tests_dir = webui_dir.joinpath("tests")
 reports_dir = tests_dir.joinpath("reports")
 logs_dir = reports_dir.joinpath("logs")
 videos_dir = reports_dir.joinpath("videos")
-test_cluster_dir = root_path.joinpath("tools")
+test_cluster_dir = tests_dir.joinpath("test-cluster")
 
 CLUSTER_CMD_PREFIX = ["make", "-C", str(test_cluster_dir)]
 
