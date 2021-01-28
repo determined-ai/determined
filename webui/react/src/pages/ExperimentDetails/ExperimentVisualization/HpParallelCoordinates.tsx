@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
+import MultiSelect from 'components/MultiSelect';
 import ParallelCoordinates, { Dimension, dimensionTypeMap } from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
@@ -39,6 +40,8 @@ interface HpTrialData {
   lineIds: number[];
 }
 
+const MAX_HP_COUNT = 20;
+
 const HpParallelCoordinates: React.FC<Props> = ({
   batches,
   experiment,
@@ -51,11 +54,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpTrialData>();
   const [ pageError, setPageError ] = useState<Error>();
+  const fullHpList = Object.keys(experiment.config.hyperparameters) || [];
+  const limitedHpList = fullHpList.slice(0, MAX_HP_COUNT);
+  const defaultHpList = storage.get<string[]>(STORAGE_HP_KEY);
+  const [ hpList, setHpList ] = useState<string[]>(defaultHpList || limitedHpList);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const dimensions = useMemo(() => {
-    return Object.keys(experiment.config.hyperparameters).map(key => {
+    return hpList.map(key => {
       const hp = experiment.config.hyperparameters[key];
       const isConstant = hp.type === ExperimentHyperParamType.Constant;
       const dimension: Dimension = {
@@ -72,7 +79,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
       return dimension;
     });
-  }, [ experiment.config.hyperparameters ]);
+  }, [ experiment.config.hyperparameters, hpList ]);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -90,6 +97,16 @@ const HpParallelCoordinates: React.FC<Props> = ({
     resetData();
     onMetricChange(metric);
   }, [ onMetricChange, resetData ]);
+
+  const handleHpChange = useCallback((hps: SelectValue) => {
+    if (Array.isArray(hps) && hps.length === 0) {
+      storage.remove(STORAGE_HP_KEY);
+      setHpList(limitedHpList);
+    } else {
+      storage.set(STORAGE_HP_KEY, hps);
+      setHpList(hps as string[]);
+    }
+  }, [ limitedHpList, storage ]);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -177,6 +194,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
             value={selectedMetric}
             width={'100%'}
             onChange={handleMetricChange} />
+          <MultiSelect
+            label="HP"
+            value={hpList}
+            onChange={handleHpChange}>
+            {fullHpList.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
+          </MultiSelect>
         </ResponsiveFilters>}
         title="HP Parallel Coordinates">
         <div className={css.container}>
