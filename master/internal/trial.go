@@ -546,7 +546,7 @@ func (t *trial) processAllocated(
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			ctx.Log().WithError(err).Error("failed to save trial to database")
 			t.terminate(ctx, true)
-			return nil
+			return err
 		}
 		t.processID(modelTrial.ID)
 		ctx.AddLabel("trial-id", t.id)
@@ -554,7 +554,7 @@ func (t *trial) processAllocated(
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
 				t.terminate(ctx, true)
-				return nil
+				return err
 			}
 		}
 		ctx.Tell(t.rm, resourcemanagers.SetTaskName{
