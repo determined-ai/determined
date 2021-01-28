@@ -1,0 +1,76 @@
+# startup_input is how you configure the UI.  It's literally just a set of keys
+# that will be passed into the UI as if you typed them.  This key will turn
+# off the db logs:
+# startup_input: "!"
+
+# temp_dir is where temporary config files and persistent logs are written to.
+# You might overwrite it if you wanted to run multiple concurrent clusters.
+# temp_dir: /tmp/devcluster
+
+# stages is the configuration of the whole cluster.  Each stage must be
+# completed before moving to the next stage, so order matters.  This example
+# assumes that devcluster.py is responsible for the database, but if you wanted
+# to run it externally then you could just remove the "db" stage here.
+stages:
+
+  # db is predefined type of stage specific to how determined runs the
+  # database.
+  - db:
+      # port: 5432
+      # db_name: determined
+      # password: postgres
+      # container_name: determined_db
+
+      # data_dir is where the persistent files will be saved to.  If this key
+      # is not present, the database will not persist at all.
+      # data_dir: ~/.postgres
+
+  # master is a predefined type of stage for to how determined runs the master.
+  - master:
+      # pre is a set of precommands to be run before starting the master.
+      # In this case those commands are just a few make targets, specified
+      # as shell commands.
+      pre:
+        - sh: make -C proto build
+        - sh: make -C master build
+        - sh: make -C tools prep-root
+
+      # post is the set of postcommands to run after starting the master.  You
+      # probably don't have to change these from the default unless you change
+      # the http_port for the master:
+      # post:
+      #   - conn_check
+      #       host: localhost
+      #       port: 8080
+
+      # config_file is the most important config detail for the master stage.
+      # It is literally just master.yaml.
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        # This is important: we have to use the symbolic links in the
+        # tools/build directory to run properly.
+        root: tools/build
+        port: 8080
+        enable_cors: true
+
+  - agent:
+      pre:
+        - sh: make -C agent build
+      config_file:
+        # NOTE: you need to put in an address for the master which is
+        # resolvable from BOTH inside and outside docker.  I have been using my
+        # laptop's external IP address, 192.168.0.4, but you may be able to
+        # put your computer's hostname here.  host.docker.internal will not work.
+        master_host: 172.17.0.1 # 192.168.1.175
+        master_port: 8080
