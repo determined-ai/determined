@@ -79,7 +79,7 @@ func (s *shellManager) processLaunchRequest(
 	req ShellLaunchRequest,
 ) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), s.db, *req.User, req.CommandParams, &s.taskSpec.TaskContainerDefaults,
+		ctx.Self().System(), s.db, *req.User, req.CommandParams, &s.taskSpec.TaskContainerDefaults, false,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err

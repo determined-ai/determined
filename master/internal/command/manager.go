@@ -43,12 +43,18 @@ func respondBadRequest(ctx *actor.Context, err error) {
 // - template: The configuration template name.
 // - user_files: The files to run with the command.
 // - data: Additional data for a command.
+//
+// mustBeZeroSlot indicates that this type of command may never use more than
+// zero slots (as of Jan 2021, this is only Tensorboards). This is important
+// when building up the config, so that we can route the command to the
+// correct default resource pool.
 func parseCommandRequest(
 	system *actor.System,
 	db *db.PgDB,
 	user model.User,
 	params *CommandParams,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
+	mustBeZeroSlot bool,
 ) (*commandRequest, error) {
 	config := DefaultConfig(taskContainerDefaults)
 	if params.Template != nil {
@@ -77,6 +83,13 @@ func parseCommandRequest(
 	agentUserGroup, err := db.AgentUserGroup(user.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find user and group information for user %s", user.Username)
+	}
+
+	// If the user didn't explicitly set the 'slots' field, the DefaultConfig will set
+	// slots=1. We need to correct that before attempting to fill in the default resource
+	// pool as otherwise we will mistakenly route this CPU task to the default GPU pool.
+	if mustBeZeroSlot {
+		config.Resources.Slots = 0
 	}
 
 	if err := sproto.ValidateRP(system, config.Resources.ResourcePool); err != nil {
