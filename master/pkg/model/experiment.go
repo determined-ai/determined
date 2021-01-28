@@ -263,7 +263,7 @@ func (e *Experiment) Transition(state State) (bool, error) {
 // Trial represents a row from the `trials` table.
 type Trial struct {
 	ID                    int        `db:"id"`
-	RequestID             RequestID  `db:"request_id"`
+	RequestID             *RequestID `db:"request_id"`
 	ExperimentID          int        `db:"experiment_id"`
 	State                 State      `db:"state"`
 	StartTime             time.Time  `db:"start_time"`
@@ -282,7 +282,7 @@ func NewTrial(
 	warmStartCheckpointID *int,
 	trialSeed int64) *Trial {
 	return &Trial{
-		RequestID:             requestID,
+		RequestID:             &requestID,
 		ExperimentID:          experimentID,
 		State:                 ActiveState,
 		StartTime:             time.Now().UTC(),
