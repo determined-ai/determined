@@ -17,11 +17,11 @@ class InvalidHP(Exception):
         message -- explanation of the error
     """
 
-    def __init__(self, message="Invalid hyperparameter exception encountered"):
+    def __init__(self, message="Invalid hyperparameter exception encountered") -> None:
         self.message = message
         super().__init__(self.message)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self.message)
 
 
@@ -47,13 +47,13 @@ def _catch_sys_exit() -> Any:
 
 
 @contextlib.contextmanager
-def _catch_invalid_hp(workloads: iter) -> Any:
+def _catch_invalid_hp(workloads: iter(workload)) -> Any:
     try:
         yield
     except InvalidHP as e:
         logging.info("Invalid hyperparameter exception encountered: e\n", e)
         wkld, args, response_func = next(workloads)
-        wkld.CompletedMessage.ExitedReason = workload.InvalidHP
+        wkld.CompletedMessage.ExitedReason = workload.CompletedMessage.InvalidHP
         response_func(wkld.CompletedMessage)
         sys.exit()
 
