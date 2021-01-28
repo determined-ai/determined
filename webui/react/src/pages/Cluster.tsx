@@ -174,10 +174,7 @@ const Cluster: React.FC = () => {
       >
         {selectedView === View.Grid &&
           <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
-            {resourcePools.map((_, idx) => {
-              const rp = resourcePools[Math.floor(
-                Math.random() * resourcePools.length,
-              )];
+            {resourcePools.map((rp, idx) => {
               return <ResourcePoolCard
                 containerStates={getSlotContainerStates(agents.data || [], rp.name)}
                 key={idx}
