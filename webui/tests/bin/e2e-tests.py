@@ -3,6 +3,7 @@ import argparse
 from contextlib import contextmanager
 import logging
 import time
+import requests
 import os
 import pathlib
 import subprocess
@@ -20,7 +21,7 @@ tests_dir = webui_dir.joinpath("tests")
 reports_dir = tests_dir.joinpath("reports")
 logs_dir = reports_dir.joinpath("logs")
 videos_dir = reports_dir.joinpath("videos")
-test_cluster_dir = tests_dir.joinpath("test-cluster")
+test_cluster_dir = root_path.joinpath("tools")
 
 CLUSTER_CMD_PREFIX = ["make", "-C", str(test_cluster_dir)]
 
@@ -79,10 +80,18 @@ def det_cluster(config):
     finally:
         teardown_cluster(config)
 
+def is_cluster_up(config):
+    try:
+        requests.get(config['DET_MASTER'] + '/api/v1/master')
+    except:
+        return False
+    return True
 
 def pre_e2e_tests(config):
-    # TODO add a check for cluster condition
+    if not is_cluster_up(config):
+        raise Exception(f'cluster not ready at {config["DET_MASTER"]}')
     setup_reports_dir(config)
+    time.sleep(30)
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
         config,
@@ -167,7 +176,7 @@ def main():
     parser.add_argument("--det-port", default="8081", help="det master port")
     parser.add_argument(
         "--det-host",
-        default="localhost",
+        default="http://localhost",
         help="det master address eg localhost or 192.168.1.2",
     )
     parser.add_argument("--log-level")
