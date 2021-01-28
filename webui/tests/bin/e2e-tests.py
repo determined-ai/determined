@@ -54,8 +54,8 @@ def setup_reports_dir(config):
 
 def setup_cluster(logfile, config):
     logger.info("setting up the cluster..")
-    run(CLUSTER_CMD_PREFIX + ["start-db"], config)
-    cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], logfile, config)
+    # run(CLUSTER_CMD_PREFIX + ["start-db"], config)
+    cluster_process = run_forget(["devcluster", "server", "--port", "3356"], logfile, config)
     time.sleep(5)  # FIXME add a ready check for master
     logger.info(f"cluster pid: {cluster_process.pid}")
     return cluster_process
@@ -78,6 +78,7 @@ def det_cluster(config):
             yield setup_cluster(f, config)
 
     finally:
+        # use pid to kill
         teardown_cluster(config)
 
 def is_cluster_up(config):
@@ -91,7 +92,6 @@ def pre_e2e_tests(config):
     if not is_cluster_up(config):
         raise Exception(f'cluster not ready at {config["DET_MASTER"]}')
     setup_reports_dir(config)
-    time.sleep(30)
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
         config,
