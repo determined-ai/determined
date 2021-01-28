@@ -62,6 +62,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const storage = useStorage(STORAGE_PATH);
   const STORAGE_BATCH_KEY = `${experiment.id}/batch`;
   const STORAGE_METRIC_KEY = `${experiment.id}/metric`;
+  const defaultUserBatch = storage.get(STORAGE_BATCH_KEY) as number || 0;
   const defaultUserMetric = storage.get(STORAGE_METRIC_KEY) as MetricName || undefined;
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
@@ -71,7 +72,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
-  const [ selectedBatch, setSelectedBatch ] = useState<number>(0);
+  const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultUserBatch);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
 
