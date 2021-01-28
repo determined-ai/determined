@@ -27,7 +27,7 @@ interface ApiBase {
 // Designed for use with Swagger generated api bindings.
 export interface DetApi<Input, DetOutput, Output> extends ApiBase {
   postProcess: (response: DetOutput) => Output;
-  request: (params: Input) => Promise<DetOutput>;
+  request: (params: Input, options?: unknown) => Promise<DetOutput>;
   stubbedResponse?: DetOutput;
 }
 export interface HttpApi<Input, Output> extends ApiBase {
