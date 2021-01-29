@@ -67,23 +67,25 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const dimensions = useMemo(() => {
-    return hpList.map(key => {
-      const hp = experiment.config.hyperparameters[key];
-      const isConstant = hp.type === ExperimentHyperParamType.Constant;
-      const dimension: Dimension = {
-        categories: hp.vals,
-        label: key,
-        type: dimensionTypeMap[hp.type],
-      };
+    return hpList
+      .filter(key => {
+        const hp = experiment.config.hyperparameters[key];
+        return hp.type !== ExperimentHyperParamType.Constant;
+      })
+      .map(key => {
+        const hp = experiment.config.hyperparameters[key];
+        const dimension: Dimension = {
+          categories: hp.vals,
+          label: key,
+          type: dimensionTypeMap[hp.type],
+        };
 
-      if (isConstant && hp.val != null) {
-        dimension.range = updateRange(undefined, hp.val);
-      } else if (hp.minval != null && hp.maxval != null) {
-        dimension.range = [ hp.minval, hp.maxval ] as Range<number>;
-      }
+        if (hp.minval != null && hp.maxval != null) {
+          dimension.range = [ hp.minval, hp.maxval ] as Range<number>;
+        }
 
-      return dimension;
-    });
+        return dimension;
+      });
   }, [ experiment.config.hyperparameters, hpList ]);
 
   const resetData = useCallback(() => {
