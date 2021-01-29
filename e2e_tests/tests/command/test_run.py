@@ -1,4 +1,5 @@
 import copy
+import os
 import re
 import subprocess
 import tempfile
@@ -522,6 +523,13 @@ def test_horovod_optimizer(
     image = conf.TF1_GPU_IMAGE
     if tf2:
         image = conf.TF2_GPU_IMAGE
+    if not tf2 and "CUDA" in os.environ and os.environ["CUDA"] == "11":
+        # TODO: (DET-4918): we should ensure a consistent way to have tests that can run against
+        # both major TensorFlow versions do so regularly (but not others).
+        pytest.skip(
+            "CUDA 11 is not supported by TensorFlow 1.x, and this test will fail if it is "
+            "run against TensorFlow 2.x without expecting it."
+        )
 
     config = {
         "environment": {

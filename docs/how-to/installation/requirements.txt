@@ -35,8 +35,8 @@ Hardware
 -  Each Determined agent node should be configured with at least 2 CPUs
    (Intel Broadwell or later), 4GB of RAM, and 50GB of free disk space.
    If using GPUs, Nvidia GPUs with compute capability 3.7 or greater are
-   required (e.g., K80, P100, V100, GTX 1080, GTX 1080 Ti, TITAN, TITAN
-   XP).
+   required (e.g., K80, P100, V100, A100, GTX 1080, GTX 1080 Ti, TITAN,
+   TITAN XP).
 
 .. note::
 
