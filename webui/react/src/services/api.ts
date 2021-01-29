@@ -7,7 +7,7 @@ import {
   LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
   TrialDetailsParams,
 } from 'services/types';
-import { generateApi, generateDetApi, processApiError } from 'services/utils';
+import { generateApi, generateDetApi, processApiError, validateDetApiEnum } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
   ExperimentBase, ExperimentFilters, ExperimentItem, ExperimentPagination, Log, Pagination,
@@ -84,12 +84,8 @@ export const getExperimentList = async (
   search?: string,
 ): Promise<{ experiments: ExperimentItem[], pagination?: Api.V1Pagination }> => {
   try {
-    const sortBy = Object.values(Api.V1GetExperimentsRequestSortBy).includes(sorter.key) ?
-      sorter.key : Api.V1GetExperimentsRequestSortBy.UNSPECIFIED;
-
     const response = await Config.detApi.Experiments.determinedGetExperiments(
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      sortBy as any,
+      validateDetApiEnum(Api.V1GetExperimentsRequestSortBy, sorter.key),
       sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
       pagination.offset,
       pagination.limit,

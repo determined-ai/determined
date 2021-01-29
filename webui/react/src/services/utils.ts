@@ -1,4 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
+import { unknown } from 'io-ts';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
@@ -168,6 +169,20 @@ export const consumeStream = async <T = unknown>(
       throw e;
     }
   }
+};
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any => {
+  if (isObject(enumObject)) {
+    const enumRecord = enumObject as Record<string, string>;
+    const stringValue = value as string;
+    const validOptions = Object
+      .values(enumRecord)
+      .filter((_, index) => index % 2 === 0);
+    if (validOptions.includes(stringValue)) return stringValue;
+    return enumRecord.UNSPECIFIED;
+  }
+  return undefined;
 };
 
 /* eslint-disable-next-line */

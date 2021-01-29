@@ -7,7 +7,7 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Section from 'components/Section';
 import {
-  defaultRowClassName, getFullPaginationConfig, humanReadableFloatRenderer, MINIMUM_PAGE_SIZE,
+  defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -16,11 +16,12 @@ import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath, paths } from 'routes/utils';
 import { getExpTrials } from 'services/api';
+import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { ApiSorter } from 'services/types';
+import { validateDetApiEnum } from 'services/utils';
 import {
   CheckpointWorkloadExtended, ExperimentBase, Pagination, TrialItem, ValidationHistory,
 } from 'types';
-import { numericSorter } from 'utils/data';
 import { getMetricValue } from 'utils/types';
 
 import css from './ExperimentOverview.module.scss';
@@ -36,31 +37,36 @@ const STORAGE_PATH = 'experiment-detail';
 const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
-const ExperimentOverview: React.FC<Props> = (
-  { experiment, validationHistory, onTagsChange }: Props,
-) => {
+const defaultSorter: ApiSorter<V1GetExperimentTrialsRequestSortBy> = {
+  descend: true,
+  key: V1GetExperimentTrialsRequestSortBy.ID,
+};
+
+const ExperimentOverview: React.FC<Props> = ({
+  experiment,
+  validationHistory,
+  onTagsChange,
+}: Props) => {
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
-  const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
+  const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
-  const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
+  const [ sorter, setSorter ] = useState(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ trials, setTrials ] = useState<TrialItem[]>();
   const [ canceler ] = useState(new AbortController());
 
   const columns = useMemo(() => {
-    const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      const value = getMetricValue(record.latestValidationMetric, metric);
-      return value && <HumanReadableFloat num={value} />;
-    };
+    const { metric, smallerIsBetter } = experiment.config?.searcher || {};
 
-    const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
-      if (!metric) return 0;
-      const aMetric = getMetricValue(a.latestValidationMetric, metric);
-      const bMetric = getMetricValue(b.latestValidationMetric, metric);
-      return numericSorter(aMetric, bMetric);
+    const validationRenderer = (key: string) => {
+      return function renderer (_: string, record: TrialItem): React.ReactNode {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        const value = getMetricValue((record as any)[key], metric);
+        return value && <HumanReadableFloat num={value} />;
+      };
     };
 
     const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
@@ -80,24 +86,18 @@ const ExperimentOverview: React.FC<Props> = (
       );
     };
 
-    const { metric, smallerIsBetter } = experiment.config?.searcher || {};
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
-      if (!sorter && column.key === 'bestValidation') {
+      if (column.key === 'checkpoint') {
+        column.render = checkpointRenderer;
+      } else if (column.key === 'bestValidation') {
+        column.render = validationRenderer('bestValidationMetric');
         column.sortOrder = smallerIsBetter ? 'ascend' : 'descend';
-      } else if (sorter && column.key === sorter.key) {
+      } else if (column.key === 'latestValidation') {
+        column.render = validationRenderer('latestValidationMetric');
+        column.sortOrder = smallerIsBetter ? 'ascend' : 'descend';
+      } else if (column.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      }
-      if (column.key === 'latestValidation') {
-        column.render = latestValidationRenderer;
-        column.sorter = latestValidationSorter;
-      }
-      if (column.key === 'checkpoint') column.render = checkpointRenderer;
-      if (column.key === 'bestValidation') {
-        column.render = (_: string, record: TrialItem): React.ReactNode => {
-          const value = getMetricValue(record.bestValidationMetric, metric);
-          return value && humanReadableFloatRenderer(value);
-        };
       }
       return column;
     });
@@ -112,7 +112,10 @@ const ExperimentOverview: React.FC<Props> = (
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
-    setSorter({ descend: order === 'descend', key: columnKey as string });
+    setSorter({
+      descend: order === 'descend',
+      key: columnKey as V1GetExperimentTrialsRequestSortBy,
+    });
 
     storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
     setPagination(prev => ({
@@ -142,7 +145,13 @@ const ExperimentOverview: React.FC<Props> = (
   const fetchExperimentTrials = useCallback(async () => {
     try {
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
-        { id: experiment.id },
+        {
+          id: experiment.id,
+          limit: pagination.limit,
+          offset: pagination.offset,
+          orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortBy: validateDetApiEnum(V1GetExperimentTrialsRequestSortBy, sorter.key),
+        },
         { signal: canceler.signal },
       );
       setTotal(responsePagination?.total || 0);
@@ -154,7 +163,7 @@ const ExperimentOverview: React.FC<Props> = (
         type: ErrorType.Api,
       });
     }
-  }, [ experiment.id, canceler ]);
+  }, [ experiment.id, canceler, pagination, sorter ]);
 
   const stopPolling = usePolling(fetchExperimentTrials);
 

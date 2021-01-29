@@ -12,8 +12,7 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
-import { getExperimentDetails, getExpValidationHistory,
-  isNotFound } from 'services/api';
+import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentBase, ValidationHistory } from 'types';
