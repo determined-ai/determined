@@ -158,8 +158,6 @@ message GetExperimentTrialsRequest {
     // Return trials sorted by end time. Trials without end times are
     // returned after trials that are.
     SORT_BY_END_TIME = 5;
-    // Return trials sorted by state.
-    SORT_BY_STATE = 6;
   }
   // Sort trials by the given field.
   SortBy sort_by = 1;
