@@ -4,6 +4,16 @@ import (
 	"reflect"
 )
 
+func derefInput(val reflect.Value) (reflect.Value, bool) {
+	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
+		if val.IsZero() {
+			return val, false
+		}
+		val = val.Elem()
+	}
+	return val, true
+}
+
 // UnionDefaultSchema is a helper function for defining DefaultSchema on union-like objects.
 // It searches for the non-nil union member and uses that member to define defaults for the common
 // fields.  In short it turns this:

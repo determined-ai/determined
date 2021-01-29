@@ -3,7 +3,6 @@ package schemas
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -119,33 +118,4 @@ func getChildErrors(valError *jsonschema.ValidationError, instance JSON) []strin
 	errs = append(errs, fmt.Sprintf("% *s<config>%v: %v", 0, "", displayPtr, msg))
 
 	return errs
-}
-
-func derefType(typ reflect.Type) reflect.Type {
-	for typ.Kind() == reflect.Ptr {
-		typ = typ.Elem()
-	}
-	return typ
-}
-
-func derefInput(val reflect.Value) (reflect.Value, bool) {
-	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
-		if val.IsZero() {
-			return val, false
-		}
-		val = val.Elem()
-	}
-	return val, true
-}
-
-func derefOutput(val reflect.Value) (reflect.Value, bool) {
-	allocated := false
-	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
-		if val.IsZero() {
-			val.Set(reflect.New(val.Type().Elem()))
-			allocated = true
-		}
-		val = val.Elem()
-	}
-	return val, allocated
 }

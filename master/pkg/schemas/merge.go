@@ -35,101 +35,76 @@ type Mergable interface {
 //    schemas.Merge(&config.CheckpointStorage, cluster_default_checkpoint_storage)
 //
 func Merge(obj interface{}, src interface{}) {
-	name := derefType(reflect.TypeOf(obj)).Name()
-	merge(reflect.ValueOf(obj), reflect.ValueOf(src), name)
+	// fmt.Printf("--------------------\n")
+	name := fmt.Sprintf("%T", obj)
+	merge(reflect.ValueOf(obj), reflect.ValueOf(src), false, name)
 }
 
-func mergeOne(obj reflect.Value, src reflect.Value, name string, allocated bool) {
+func assertTypeMatch(obj reflect.Value, src reflect.Value) {
+	if obj.Type() == src.Type() {
+		return
+	}
+	panic(
+		fmt.Sprintf(
+			"type mismatch in merge; can't fill %T with %T",
+			obj.Interface(),
+			src.Interface(),
+		),
+	)
+}
+
+// merge is the recursive layer under Merge.
+func merge(obj reflect.Value, src reflect.Value, allocated bool, name string) {
+	// fmt.Printf("merge(%T, %T)\n", obj.Interface(), src.Interface())
+	// First deref src.  If it is ultimately nil, stop.
+	for src.Kind() == reflect.Ptr || src.Kind() == reflect.Interface {
+		if src.IsZero() {
+			return
+		}
+		// Recurse with dereferenced src.
+		merge(obj, src.Elem(), allocated, name)
+		return
+	}
+
 	// If the object is Mergable, we only call Merge and nothing else.
-	if mergeable, ok := obj.Addr().Interface().(Mergable); ok {
+	if mergeable, ok := obj.Interface().(Mergable); ok {
 		mergeable.Merge(src.Interface())
 		return
 	}
 
-	switch src.Kind() {
+	// obj should always be a pointer, because Merge(&x, y) will act on x in-place.
+	if obj.Kind() != reflect.Ptr {
+		panic("non-pointer in merge")
+	}
+	// obj can't be a nil pointer, because Merge(nil, y) doesn't make any sense.
+	if obj.IsZero() {
+		panic("nil pointer in merge")
+	}
+	// Now operate on what obj points to.
+	obj = obj.Elem()
+
+	switch obj.Kind() {
+	case reflect.Interface:
+		if obj.IsZero() {
+			// This doesn't make any sense; we need a type.
+			panic("got a nil interface as the obj to merge into")
+		}
+		// Dereference the type but not the original pointer.
+		merge(obj.Elem().Addr(), src, allocated, name)
+
+	case reflect.Ptr:
+		// Note that this is a double-pointer since we already dereference the object once.
+		if obj.IsZero() {
+			// Allocate, then recurse with allocated = true.
+			tmp := reflect.New(obj.Type().Elem())
+			obj.Set(tmp)
+			merge(obj, src, true, name)
+		} else {
+			merge(obj, src, false, name)
+		}
+
 	case reflect.Struct:
-		// Don't recurse yet; just ignore structs for now.
-
-	case reflect.Map:
-		// Maps get fused together; all input keys are written into the output map.
-		for _, key := range src.MapKeys() {
-			// Ensure key is not already set in obj.
-			if objVal := obj.MapIndex(key); objVal.IsValid() {
-				continue
-			}
-			elemName := fmt.Sprintf("%v.[%v]", name, key.Interface())
-			val := src.MapIndex(key)
-
-			// Since Map objects always need to be copied (we know that cpy needs to be filled),
-			// we need to get a pointer to a nil pointer to the type.  Otherwise, when we recurse,
-			// if the map's value type is not a pointer, the objAlreadySet check will prevent the
-			// copy from happening.  That's the purpose of the PtrTo() within the New().
-			cpy := reflect.New(reflect.PtrTo(val.Type()))
-
-			merge(cpy, val, elemName)
-
-			// Update the original value with the defaulted value.
-			// Deref both layers of pointers we created.
-			obj.SetMapIndex(key, cpy.Elem().Elem())
-		}
-
-	case reflect.Slice:
-		// Slices get copied only if the original was nil.
-		if allocated {
-			for i := 0; i < src.Len(); i++ {
-				val := src.Index(i)
-				elemName := fmt.Sprintf("%v.[%d]", name, i)
-				// Similar to map, we use an extra layer of indirection to force a copy to happen.
-				cpy := reflect.New(reflect.PtrTo(val.Type()))
-				merge(cpy, val, elemName)
-				obj.Set(reflect.Append(obj, cpy.Elem().Elem()))
-			}
-		}
-
-	// Assert that none of the "complex" kinds are present (or Ptr, which we should have deref'ed).
-	case reflect.Array,
-		reflect.Chan,
-		reflect.Func,
-		reflect.Interface,
-		reflect.UnsafePointer,
-		reflect.Ptr:
-		panic(fmt.Sprintf("unable to fill %T with %T at %v", obj, src, name))
-
-	default:
-		// Simple types get a simple copy, but only if the original was nil.
-		if allocated {
-			obj.Set(src)
-		}
-	}
-}
-
-// merge is the recursive layer under Merge.
-func merge(obj reflect.Value, src reflect.Value, name string) {
-	// Stop recursing if there's nothing to copy.
-	src, ok := derefInput(src)
-	if !ok {
-		return
-	}
-
-	// Fill any nil pointers.
-	var objAllocated bool
-	obj, objAllocated = derefOutput(obj)
-
-	// Make sure that the types match.  This function does not handle cross-type operations.
-	if obj.Type() != src.Type() {
-		panic(
-			fmt.Sprintf(
-				"type mismatch in merge; can't fill %T with %T",
-				obj.Interface(),
-				src.Interface(),
-			),
-		)
-	}
-
-	mergeOne(obj, src, name, objAllocated)
-
-	// Recurse into structs.
-	if src.Kind() == reflect.Struct {
+		assertTypeMatch(obj, src)
 		// Detect what to do with union fields.  There are 4 important cases:
 		//  1. src has a union member, obj does not -> recurse into that field.
 		//  2. src has a union member, obj has the same one -> recurse into that field.
@@ -157,7 +132,56 @@ func merge(obj reflect.Value, src reflect.Value, name string) {
 				continue
 			}
 			fieldName := fmt.Sprintf("%v.%v", name, structField.Name)
-			merge(objField.Addr(), srcField, fieldName)
+			merge(objField.Addr(), srcField, false, fieldName)
 		}
+
+	case reflect.Map:
+		assertTypeMatch(obj, src)
+		// Maps get fused together; all input keys are written into the output map.
+		for _, key := range src.MapKeys() {
+			// Ensure key is not already set in obj.
+			if objVal := obj.MapIndex(key); objVal.IsValid() {
+				continue
+			}
+			elemName := fmt.Sprintf("%v.[%v]", name, key.Interface())
+			val := src.MapIndex(key)
+
+			cpy := reflect.New(val.Type())
+			merge(cpy, val, true, elemName)
+
+			// Update the original value with the defaulted value.
+			// Deref both layers of pointers we created.
+			obj.SetMapIndex(key, cpy.Elem())
+		}
+
+	case reflect.Slice:
+		assertTypeMatch(obj, src)
+		if !allocated {
+			// Don't override non-newly-allocated slices.
+			return
+		}
+		// Slices get copied only if the original was nil.
+		for i := 0; i < src.Len(); i++ {
+			val := src.Index(i)
+			elemName := fmt.Sprintf("%v.[%d]", name, i)
+			cpy := reflect.New(val.Type())
+			merge(cpy, val, true, elemName)
+			obj.Set(reflect.Append(obj, cpy.Elem()))
+		}
+
+	// Assert that none of the "complex" kinds are present.
+	case reflect.Array,
+		reflect.Chan,
+		reflect.Func,
+		reflect.UnsafePointer:
+		panic(fmt.Sprintf("unable to fill %T with %T at %v", obj, src, name))
+
+	default:
+		assertTypeMatch(obj, src)
+		if !allocated {
+			// Don't override non-newly-allocated values.
+			return
+		}
+		obj.Set(src)
 	}
 }
