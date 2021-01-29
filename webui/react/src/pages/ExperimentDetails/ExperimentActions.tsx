@@ -6,7 +6,7 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
   openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { ExperimentBase, RunState, TBSourceType, TrialItem } from 'types';
+import { ExperimentBase, RunState, TBSourceType } from 'types';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -27,24 +27,11 @@ interface Props {
     [key in Action]?: () => void;
   };
   onSettled: () => void; // A callback to trigger after an action is done.
-  trials: TrialItem[];
 }
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
-/*
-  * We use `numSteps` or `totalBatchesProcessed` as a
-  * proxy to trials that definietly have some metric.
-  */
-const experimentWillNeverHaveData = (experiment: ExperimentBase, trials: TrialItem[]): boolean => {
-  const isTerminal = terminalRunStates.has(experiment.state);
-  const trialsWithSomeMetric = trials.filter(trial => {
-    return trial.totalBatchesProcessed > 0;
-  });
-  return isTerminal && trialsWithSomeMetric.length === 0;
-};
-
-const ExperimentActions: React.FC<Props> = ({ experiment, onClick, trials, onSettled }: Props) => {
+const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: Props) => {
   const [ btnLoadingStates, setBtnLoadingStates ] = useState<ButtonLoadingStates>({
     Activate: false,
     Archive: false,
@@ -177,7 +164,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, trials, onSet
         key="tensorboard"
         loading={btnLoadingStates.Tensorboard}
         onClick={handleCreateTensorboard}>View in TensorBoard</Button>,
-      showIf: (exp): boolean => !experimentWillNeverHaveData(exp, trials),
+      showIf: (exp): boolean => terminalRunStates.has(exp.state),
     },
     {
       button: <Button
