@@ -11,7 +11,6 @@ import {
 /* eslint-enable no-unused-vars */
 
 import * as assert from 'assert';
-import * as expect from 'expect';
 import * as t from 'taiko';
 
 /*
@@ -34,18 +33,6 @@ const clickAndWaitForPage = async (selector: t.SearchElement | t.MouseCoordinate
   await t.click(selector, { waitForEvents: ['loadEventFired'] });
 };
 
-const checkTextContentFor = async (keywords: string[], shouldExit: boolean, timeout = 1500) => {
-  const promises = keywords.map(async (text) => 
-    await t.text(text).exists(undefined, timeout)
-  );
-  const misses = [];
-  const results = await Promise.all(promises);
-  results.forEach((exists, idx) => {
-    if (exists != shouldExit) {misses.push(keywords[idx]);}
-  });
-  expect(misses).toHaveLength(0);
-};
-
 const goto = async (url: string) => {
   await t.goto(url, { waitForEvents: ['loadEventFired'] });
 };
@@ -53,8 +40,7 @@ const goto = async (url: string) => {
 export default class StepImplementation {
   @BeforeSuite()
   public async beforeSuite() {
-    const defaultArgs = [`--window-size=${viewports.desktop.width},${viewports.desktop.height}`, 
-  '--disable-gpu'];
+    const defaultArgs = [`--window-size=${viewports.desktop.width},${viewports.desktop.height}`];
     const browserArgs = HEADLESS
       ? { headless: true, args: [...defaultArgs, '--no-sandbox', '--disable-setuid-sandbox'] }
       : { headless: false, args: defaultArgs };
@@ -79,11 +65,6 @@ export default class StepImplementation {
   }
 
   /* Authentication Steps */
-
-  @Step('Sign in')
-  public async justSignIn() {
-    await this.signIn('determined');
-  }
 
   @Step('Sign in as <username> with <password>')
   public async signInWithPassword(username: string, password: string) {
@@ -176,19 +157,6 @@ export default class StepImplementation {
   @Step('Navigate to experiment <id> page')
   public async navigateToExperimentDetail(id: string) {
     await goto(`${BASE_URL}/experiments/${id}`);
-    await t.text(`experiment ${id}`).exists();
-  }
-
-  @Step('Require page to have <keywords>')
-  public async checkPageHas(keywordsTxt: string) {
-    const keywords = keywordsTxt.split(', ');
-    await checkTextContentFor(keywords, true);
-  }
-
-  @Step('Require page to not have <keywords>')
-  public async checkPageDoesNotHave(keywordsTxt: string) {
-    const keywords = keywordsTxt.split(', ');
-    await checkTextContentFor(keywords, false);
   }
 
   @Step('Navigate to task list page')
@@ -199,14 +167,6 @@ export default class StepImplementation {
   @Step('Navigate to master logs page')
   public async navigateToMasterLogs() {
     await goto(`${BASE_URL}/logs`);
-  }
-
-  /* Experiment Actions */
-  @Step('Activate experiment <id>')
-  public async activateExperiment(id: string) {
-    await this.navigateToExperimentDetail(id);
-    await t.click(t.text('activate'));
-    await t.text('pause');
   }
 
   /* Table Steps */
