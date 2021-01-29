@@ -87,35 +87,3 @@ func TrialModel(eID int, opts ...TrialModelOption) *model.Trial {
 	}
 	return t
 }
-
-// StepModelOption is an option that can be applied to a step.
-type StepModelOption interface {
-	apply(*model.Step)
-}
-
-// // StepModelOptionFunc is a type that implements StepModelOption.
-// type StepModelOptionFunc func(*model.Step)
-
-// func (f StepModelOptionFunc) apply(step *model.Step) {
-// 	f(step)
-// }
-
-// // WithStepState is a StepModeOption that sets a steps state.
-// func WithStepState(state model.State) StepModelOption {
-// 	return StepModelOptionFunc(func(step *model.Step) {
-// 		step.State = state
-// 	})
-// }
-
-// StepModel returns a new step with the specified options.
-func StepModel(tID int, opts ...StepModelOption) *model.Step {
-	t := &model.Step{
-		TrialID:   tID,
-		State:     model.ActiveState,
-		StartTime: time.Now(),
-	}
-	for _, o := range opts {
-		o.apply(t)
-	}
-	return t
-}

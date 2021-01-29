@@ -58,7 +58,7 @@ message MetricsWorkload {
   // The current validation state.
   determined.experiment.v1.State state = 3;
   // Metrics.
-  google.protobuf.Struct metrics = 4;
+  map<string, float> metrics = 4;
   // Number of inputs processed.
   int32 num_inputs = 5;
   // Number of batches in this workload.

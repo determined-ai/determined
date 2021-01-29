@@ -12,7 +12,7 @@ message Metrics {
   // Number of inputs to the model.
   int32 num_inputs = 1;
   // Metrics calculated on the validation set.
-  google.protobuf.Struct validation_metrics = 2;
+  map<string, float> validation_metrics = 2;
 }
 
 // The current state of the checkpoint.

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal"
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
 
 	"github.com/determined-ai/determined/master/test/testutils"
@@ -48,87 +47,6 @@ func TestTrialLogAPIElastic(t *testing.T) {
 	trialLogAPITests(t, creds, cl, es, func() error {
 		return es.WaitForIngest(elastic.CurrentLogstashIndex())
 	})
-}
-
-func TestTrialDetail(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
-	defer cancel()
-	assert.NilError(t, err, "failed to start master")
-
-	trialDetailAPITests(t, creds, cl, pgDB)
-}
-
-func trialDetailAPITests(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
-) {
-	type testCase struct {
-		name    string
-		req     *apiv1.GetTrialRequest
-		metrics map[string]interface{}
-	}
-
-	testCases := []testCase{
-		{
-			name: "scalar metric",
-			metrics: map[string]interface{}{
-				"myMetricName": 3,
-			},
-		},
-		{
-			name: "boolean metric",
-			metrics: map[string]interface{}{
-				"myMetricName": true,
-			},
-		},
-		{
-			name: "null metric",
-			metrics: map[string]interface{}{
-				"myMetricName": nil,
-			},
-		},
-		{
-			name: "list of scalars metric",
-			metrics: map[string]interface{}{
-				"myMetricName": []float32{1, 2.3, 3},
-			},
-		},
-	}
-
-	runTestCase := func(t *testing.T, tc testCase, id int) {
-		t.Run(tc.name, func(t *testing.T) {
-			experiment := testutils.ExperimentModel()
-			err := db.AddExperiment(experiment)
-			assert.NilError(t, err, "failed to insert experiment")
-
-			trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
-			err = db.AddTrial(trial)
-			assert.NilError(t, err, "failed to insert trial")
-
-			step := testutils.StepModel(trial.ID)
-			step.ID = id
-			err = db.AddStep(step)
-			assert.NilError(t, err, "failed to insert step")
-
-			metrics := map[string]interface{}{
-				"avg_metrics": tc.metrics,
-			}
-			err = db.UpdateStep(trial.ID, step.ID, model.CompletedState, metrics)
-			assert.NilError(t, err, "failed to update step")
-
-			ctx, _ := context.WithTimeout(creds, 10*time.Second)
-			req := apiv1.GetTrialRequest{TrialId: int32(trial.ID)}
-
-			tlCl, err := cl.GetTrial(ctx, &req)
-			assert.NilError(t, err, "failed to fetch api details")
-			assert.Equal(t, len(tlCl.Workloads), 1, "mismatching workload length")
-		})
-	}
-
-	for idx, tc := range testCases {
-		runTestCase(t, tc, idx)
-	}
-
 }
 
 func trialLogAPITests(
