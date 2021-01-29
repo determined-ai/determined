@@ -1,9 +1,10 @@
-package resourcemanagers
+package sproto
 
 import (
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // Task-related cluster level messages.
@@ -55,4 +56,12 @@ type TaskID string
 // NewTaskID returns a new unique task id.
 func NewTaskID() TaskID {
 	return TaskID(uuid.New().String())
+}
+
+// Allocation is an interface that provides function for task actors
+// to start tasks on assigned resources.
+type Allocation interface {
+	Summary() ContainerSummary
+	Start(ctx *actor.Context, spec tasks.TaskSpec)
+	Kill(ctx *actor.Context)
 }

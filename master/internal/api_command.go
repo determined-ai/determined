@@ -14,7 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -104,7 +104,7 @@ func (a *apiServer) LaunchCommand(
 		return nil, err
 	}
 
-	commandID := commandIDFut.Get().(resourcemanagers.TaskID)
+	commandID := commandIDFut.Get().(sproto.TaskID)
 	command := a.m.system.AskAt(commandsAddr.Child(commandID), &commandv1.Command{})
 	if err = api.ProcessActorResponseError(&command); err != nil {
 		return nil, err

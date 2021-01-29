@@ -34,8 +34,8 @@ func (a *mockActor) Receive(ctx *actor.Context) error {
 type mockAllocation struct {
 }
 
-func (mockAllocation) Summary() resourcemanagers.ContainerSummary {
-	return resourcemanagers.ContainerSummary{}
+func (mockAllocation) Summary() sproto.ContainerSummary {
+	return sproto.ContainerSummary{}
 }
 func (mockAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec) {}
 func (mockAllocation) Kill(ctx *actor.Context)                       {}
@@ -101,8 +101,8 @@ func TestRendezvousInfo(t *testing.T) {
 	trial := &trial{
 		rm:                   rp,
 		experiment:           &model.Experiment{},
-		task:                 &resourcemanagers.AllocateRequest{},
-		allocations:          []resourcemanagers.Allocation{mockAllocation{}, mockAllocation{}},
+		task:                 &sproto.AllocateRequest{},
+		allocations:          []sproto.Allocation{mockAllocation{}, mockAllocation{}},
 		experimentState:      model.ActiveState,
 		startedContainers:    make(map[cproto.ID]bool),
 		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),

@@ -6,11 +6,11 @@ import (
 	"github.com/labstack/echo"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
-	return m.system.Ask(m.rm, resourcemanagers.GetTaskSummaries{}).Get(), nil
+	return m.system.Ask(m.rm, sproto.GetTaskSummaries{}).Get(), nil
 }
 
 func (m *Master) getTask(c echo.Context) (interface{}, error) {
@@ -20,8 +20,8 @@ func (m *Master) getTask(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	id := resourcemanagers.TaskID(args.TaskID)
-	resp := m.system.Ask(m.rm, resourcemanagers.GetTaskSummary{ID: &id})
+	id := sproto.TaskID(args.TaskID)
+	resp := m.system.Ask(m.rm, sproto.GetTaskSummary{ID: &id})
 	if resp.Empty() {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "task not found: %s", args.TaskID)
 	}

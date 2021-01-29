@@ -3,7 +3,7 @@ package command
 import (
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -18,18 +18,18 @@ type (
 type (
 	// summary holds an immutable snapshot of the command.
 	summary struct {
-		RegisteredTime time.Time               `json:"registered_time"`
-		Owner          commandOwner            `json:"owner"`
-		ID             resourcemanagers.TaskID `json:"id"`
-		Config         model.CommandConfig     `json:"config"`
-		State          string                  `json:"state"`
-		ServiceAddress *string                 `json:"service_address"`
-		Addresses      []container.Address     `json:"addresses"`
-		ExitStatus     *string                 `json:"exit_status"`
-		Misc           map[string]interface{}  `json:"misc"`
-		IsReady        bool                    `json:"is_ready"`
-		AgentUserGroup *model.AgentUserGroup   `json:"agent_user_group"`
-		ResourcePool   string                  `json:"resource_pool"`
+		RegisteredTime time.Time              `json:"registered_time"`
+		Owner          commandOwner           `json:"owner"`
+		ID             sproto.TaskID          `json:"id"`
+		Config         model.CommandConfig    `json:"config"`
+		State          string                 `json:"state"`
+		ServiceAddress *string                `json:"service_address"`
+		Addresses      []container.Address    `json:"addresses"`
+		ExitStatus     *string                `json:"exit_status"`
+		Misc           map[string]interface{} `json:"misc"`
+		IsReady        bool                   `json:"is_ready"`
+		AgentUserGroup *model.AgentUserGroup  `json:"agent_user_group"`
+		ResourcePool   string                 `json:"resource_pool"`
 	}
 )
 

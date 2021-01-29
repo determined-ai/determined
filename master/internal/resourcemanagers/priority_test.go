@@ -3,12 +3,12 @@ package resourcemanagers
 import (
 	"testing"
 
-	cproto "github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/device"
-
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
@@ -836,7 +836,7 @@ func TestPrioritySchedulingNoPreemptionZeroSlotTask(t *testing.T) {
 }
 
 func AllocateTasks(
-	toAllocate []*AllocateRequest,
+	toAllocate []*sproto.AllocateRequest,
 	agents map[*actor.Ref]*agentState,
 	taskList *taskList,
 ) {
@@ -846,9 +846,9 @@ func AllocateTasks(
 		for _, fit := range fits {
 			container := newContainer(req, fit.Agent, fit.Slots)
 			devices := fit.Agent.allocateFreeDevices(fit.Slots, container.id)
-			allocated := &ResourcesAllocated{
+			allocated := &sproto.ResourcesAllocated{
 				ID: req.ID,
-				Allocations: []Allocation{
+				Allocations: []sproto.Allocation{
 					&containerAllocation{
 						req:       req,
 						agent:     fit.Agent,
@@ -872,7 +872,7 @@ func AddUnallocatedTasks(
 		ref, created := system.ActorOf(actor.Addr(mockTask.id), mockTask)
 		assert.Assert(t, created)
 
-		req := &AllocateRequest{
+		req := &sproto.AllocateRequest{
 			ID:             mockTask.id,
 			SlotsNeeded:    mockTask.slotsNeeded,
 			Label:          mockTask.label,
@@ -918,7 +918,7 @@ func BatchRemove(t *testing.T,
 	taskList *taskList,
 	delete bool,
 ) {
-	taskToSlots := map[TaskID]int{}
+	taskToSlots := map[sproto.TaskID]int{}
 	for _, task := range expectedToRelease {
 		taskToSlots[task.id] = task.slotsNeeded
 	}

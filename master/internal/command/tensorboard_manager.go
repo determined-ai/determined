@@ -16,7 +16,6 @@ import (
 	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/proxy"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -232,7 +231,7 @@ func (t *tensorboardManager) newTensorBoard(
 	uniqMounts := map[model.BindMount]bool{}
 	uniqEnvVars := map[string]string{}
 
-	taskID := resourcemanagers.NewTaskID()
+	taskID := sproto.NewTaskID()
 	serviceAddress := fmt.Sprintf(tensorboardServiceAddress, taskID)
 
 	config := commandReq.Config

@@ -20,7 +20,7 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(ref, GetTaskSummaries{}).Get().(map[TaskID]TaskSummary)
+	taskSummaries := system.Ask(ref, sproto.GetTaskSummaries{}).Get().(map[sproto.TaskID]TaskSummary)
 	assert.Equal(t, len(taskSummaries), 1)
 
 	system.Ask(taskRef, ThrowError{})
@@ -42,7 +42,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(ref, GetTaskSummaries{}).Get().(map[TaskID]TaskSummary)
+	taskSummaries := system.Ask(ref, sproto.GetTaskSummaries{}).Get().(map[sproto.TaskID]TaskSummary)
 	assert.Equal(t, len(taskSummaries), 1)
 
 	system.Ask(taskRef, ThrowPanic{})
@@ -64,7 +64,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(ref, GetTaskSummaries{}).Get().(map[TaskID]TaskSummary)
+	taskSummaries := system.Ask(ref, sproto.GetTaskSummaries{}).Get().(map[sproto.TaskID]TaskSummary)
 	assert.Equal(t, len(taskSummaries), 1)
 
 	assert.NilError(t, taskRef.StopAndAwaitTermination())
@@ -85,10 +85,10 @@ func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(ref, GetTaskSummaries{}).Get().(map[TaskID]TaskSummary)
+	taskSummaries := system.Ask(ref, sproto.GetTaskSummaries{}).Get().(map[sproto.TaskID]TaskSummary)
 	assert.Equal(t, len(taskSummaries), 1)
 
-	system.Ask(taskRef, ReleaseResources{}).Get()
+	system.Ask(taskRef, sproto.ReleaseResources{}).Get()
 
 	assert.NilError(t, ref.StopAndAwaitTermination())
 	assert.Equal(t, rp.taskList.len(), 0)

@@ -13,7 +13,6 @@ import (
 
 	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -162,7 +161,7 @@ func (s *shellManager) newShell(
 		)
 	}
 
-	taskID := resourcemanagers.NewTaskID()
+	taskID := sproto.NewTaskID()
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
 	// Select a random port from the range to assign to sshd. In host

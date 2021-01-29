@@ -82,11 +82,11 @@ func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
 	return nil
 }
 
-func (rp *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
-	rp.notifyOnStop(ctx, msg.TaskActor, ResourcesReleased{TaskActor: msg.TaskActor})
+func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
+	rp.notifyOnStop(ctx, msg.TaskActor, sproto.ResourcesReleased{TaskActor: msg.TaskActor})
 
 	if len(msg.ID) == 0 {
-		msg.ID = TaskID(uuid.New().String())
+		msg.ID = sproto.TaskID(uuid.New().String())
 	}
 	if msg.Group == nil {
 		msg.Group = msg.TaskActor
@@ -103,7 +103,7 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg AllocateRequest) {
 	rp.taskList.AddTask(&msg)
 }
 
-func (rp *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
+func (rp *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
 	if task, found := rp.taskList.GetTaskByHandler(msg.TaskHandler); found {
 		task.Name = msg.Name
 	}
@@ -111,14 +111,14 @@ func (rp *ResourcePool) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) 
 
 // allocateResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully allocated.
-func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *AllocateRequest) bool {
+func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.AllocateRequest) bool {
 	fits := findFits(req, rp.agents, rp.fittingMethod)
 
 	if len(fits) == 0 {
 		return false
 	}
 
-	allocations := make([]Allocation, 0, len(fits))
+	allocations := make([]sproto.Allocation, 0, len(fits))
 	for _, fit := range fits {
 		container := newContainer(req, fit.Agent, fit.Slots)
 		allocations = append(allocations, &containerAllocation{
@@ -129,7 +129,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *AllocateReque
 		})
 	}
 
-	allocated := ResourcesAllocated{
+	allocated := sproto.ResourcesAllocated{
 		ID: req.ID, ResourcePool: rp.config.PoolName, Allocations: allocations,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
@@ -141,7 +141,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *AllocateReque
 
 func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("releasing resources taken by %s", handler.Address())
-	handler.System().Tell(handler, ReleaseResources{ResourcePool: rp.config.PoolName})
+	handler.System().Tell(handler, sproto.ReleaseResources{ResourcePool: rp.config.PoolName})
 }
 
 func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
@@ -229,19 +229,19 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
 		sproto.SetGroupPriority,
-		SetTaskName,
-		AllocateRequest,
-		ResourcesReleased:
+		sproto.SetTaskName,
+		sproto.AllocateRequest,
+		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
 
-	case GetTaskSummary:
+	case sproto.GetTaskSummary:
 		reschedule = false
 		if resp := getTaskSummary(
 			rp.taskList, *msg.ID, rp.groups, rp.config.Scheduler.GetType()); resp != nil {
 			ctx.Respond(*resp)
 		}
 
-	case GetTaskSummaries:
+	case sproto.GetTaskSummaries:
 		reschedule = false
 		ctx.Respond(getTaskSummaries(rp.taskList, rp.groups, rp.config.Scheduler.GetType()))
 
@@ -328,13 +328,13 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 				msg.Handler.Address().String(), *group.priority)
 		}
 
-	case SetTaskName:
+	case sproto.SetTaskName:
 		rp.receiveSetTaskName(ctx, msg)
 
-	case AllocateRequest:
+	case sproto.AllocateRequest:
 		rp.addTask(ctx, msg)
 
-	case ResourcesReleased:
+	case sproto.ResourcesReleased:
 		rp.resourcesReleased(ctx, msg.TaskActor)
 
 	default:
@@ -345,15 +345,15 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 
 // containerAllocation contains information for tasks have been allocated but not yet started.
 type containerAllocation struct {
-	req       *AllocateRequest
+	req       *sproto.AllocateRequest
 	container *container
 	agent     *agentState
 	devices   []device.Device
 }
 
 // Summary summarizes a container allocation.
-func (c containerAllocation) Summary() ContainerSummary {
-	return ContainerSummary{
+func (c containerAllocation) Summary() sproto.ContainerSummary {
+	return sproto.ContainerSummary{
 		TaskID: c.req.ID,
 		ID:     c.container.id,
 		Agent:  c.agent.handler.Address().Local(),

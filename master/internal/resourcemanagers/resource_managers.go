@@ -50,10 +50,10 @@ func NewResourceManagers(
 func (rm *ResourceManagers) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case
-		AllocateRequest, ResourcesReleased,
+		sproto.AllocateRequest, sproto.ResourcesReleased,
 		sproto.SetGroupMaxSlots, sproto.SetGroupWeight,
-		sproto.SetGroupPriority, GetTaskSummary,
-		GetTaskSummaries, SetTaskName:
+		sproto.SetGroupPriority, sproto.GetTaskSummary,
+		sproto.GetTaskSummaries, sproto.SetTaskName:
 		rm.forward(ctx, msg)
 
 	default:

@@ -10,7 +10,7 @@ import (
 
 	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -143,7 +143,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	setPodSpec(&config, c.taskSpec.TaskContainerDefaults)
 
 	return &command{
-		taskID:    resourcemanagers.NewTaskID(),
+		taskID:    sproto.NewTaskID(),
 		config:    config,
 		userFiles: req.UserFiles,
 

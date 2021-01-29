@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/proto/pkg/logv1"
-
 	"github.com/google/uuid"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
 
@@ -99,7 +98,7 @@ func (a *apiServer) LaunchNotebook(
 		return nil, err
 	}
 
-	notebookID := notebookIDFut.Get().(resourcemanagers.TaskID)
+	notebookID := notebookIDFut.Get().(sproto.TaskID)
 	notebook := a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookv1.Notebook{})
 	if err = api.ProcessActorResponseError(&notebook); err != nil {
 		return nil, err
