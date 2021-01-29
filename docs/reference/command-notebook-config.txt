@@ -5,10 +5,10 @@
 ###############################
 
 The behavior of Determined tasks, such as TensorBoards, notebooks,
-commands, and shells, can be influenced by setting a variety of
-configuration variables. Configuration settings can be specified by
-passing a YAML configuration file when launching the workload via the
-Determined CLI:
+:ref:`commands, and shells <commands-and-shells>`, can be influenced by
+setting a variety of configuration variables. Configuration settings can
+be specified by passing a YAML configuration file when launching the
+workload via the Determined CLI:
 
 .. code::
 
@@ -88,7 +88,7 @@ The following configuration settings are supported:
       composed of agents with 2 slots each. The number of slots for
       TensorBoard is fixed at ``0`` and may not be changed.
 
-   -  ``agent_label``: If set, the command/notebook will _only_ be
+   -  ``agent_label``: If set, the command/notebook will *only* be
       scheduled on agents that have the given label set. If this is not
       set (the default behavior), the command/notebook will only be
       scheduled on unlabeled agents. An agent's label can be configured

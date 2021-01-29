@@ -11,6 +11,11 @@ agent
    settings. More information can be found at
    :ref:`det-system-architecture`.
 
+command
+   A non-trial task that can be run on a Determined cluster. Instead of
+   running model code, the task executes a user-specified program on the
+   cluster. See :ref:`commands-and-shells` for more information.
+
 command-line interface (CLI)
    A tool for interacting with Determined from a command line. The CLI
    is installed with the command name ``det``. More information can be
@@ -65,6 +70,12 @@ searcher, search algorithm
    determines how many trials will be run for a particular experiment
    and how the hyperparameters will be set. More information can be
    found at :ref:`topic-guides_hp-tuning-det`.
+
+shell
+   A non-trial task that can be run on a Determined cluster. Instead of
+   running model code, the task starts an SSH server that allows
+   developers to use cluster resources interactively. See
+   :ref:`commands-and-shells` for more information.
 
 slot
    A resource (GPU or CPU) that can be used for training. The maximum
