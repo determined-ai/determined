@@ -6,6 +6,8 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "determined/api/v1/pagination.proto";
 
 import "determined/resourcepool/v1/resourcepool.proto";
+import "determined/resourcepool/v1/state.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get the list of resource pools from the cluster.
 message GetResourcePoolsRequest {
@@ -23,4 +25,19 @@ message GetResourcePoolsResponse {
   repeated determined.resourcepool.v1.ResourcePool resource_pools = 1;
   // Pagination information of the full dataset.
   Pagination pagination = 2;
+}
+
+// Stream resource pool states.
+message ResourcePoolStatesRequest {}
+
+// Response to ResourcePoolStatesRequest.
+message ResourcePoolStatesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "states" ] }
+  };
+
+  // The states of the resource pools. The first message will include all pools
+  // and all subsequent messages will only include pools whose state has
+  // changed.
+  resourcepool.v1.ResourcePoolStates states = 1;
 }

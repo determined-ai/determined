@@ -96,6 +96,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.GetDefaultCPUResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: "default"})
 
+	case GetResourceSummaries:
+		ctx.Respond(ResourceSummaries{Summaries: []ResourceSummary{k.createResourceSummary(ctx)}})
+
 	case schedulerTick:
 		if k.reschedule {
 			k.schedulePendingTasks(ctx)
@@ -120,15 +123,16 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
 		slotsUsed += slotsUsedByGroup
 	}
+	resourceSummary := k.createResourceSummary(ctx)
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
-		NumAgents:                    1,
-		SlotsAvailable:               int32(k.agent.numSlots()),
-		SlotsUsed:                    int32(k.agent.numUsedSlots()),
-		CpuContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
-		CpuContainersRunning:         int32(k.agent.numZeroSlotContainers()),
+		NumAgents:                    int32(resourceSummary.NumAgents),
+		SlotsAvailable:               int32(resourceSummary.SlotsAvailable),
+		SlotsUsed:                    int32(resourceSummary.SlotsUsed),
+		CpuContainerCapacity:         int32(resourceSummary.CPUContainerCapacity),
+		CpuContainersRunning:         int32(resourceSummary.CPUContainersRunning),
 		DefaultGpuPool:               true,
 		DefaultCpuPool:               true,
 		Preemptible:                  false,
@@ -290,6 +294,21 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 
 			k.assignResources(ctx, req)
 		}
+	}
+}
+
+func (k *kubernetesResourceManager) createResourceSummary(ctx *actor.Context) ResourceSummary {
+	slotsUsed := 0
+	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
+		slotsUsed += slotsUsedByGroup
+	}
+	return ResourceSummary{
+		Name:                 kubernetesDummyResourcePool,
+		NumAgents:            1,
+		SlotsAvailable:       k.agent.numSlots(),
+		SlotsUsed:            k.agent.numUsedSlots(),
+		CPUContainerCapacity: k.agent.maxZeroSlotContainers,
+		CPUContainersRunning: k.agent.numZeroSlotContainers(),
 	}
 }
 

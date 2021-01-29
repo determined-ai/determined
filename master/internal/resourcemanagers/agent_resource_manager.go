@@ -13,6 +13,16 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
+// GetResourceSummaries is a requests to get a summary of how many resource are available in
+// each resource pool and how many resources are in use.
+type GetResourceSummaries struct{}
+
+// ResourceSummaries is the response to GetResourceSummaries, which lists, for each resource
+// pool, how many resource are available and how many resources are in use.
+type ResourceSummaries struct {
+	Summaries []ResourceSummary
+}
+
 type agentResourceManager struct {
 	config      *AgentResourceManagerConfig
 	poolsConfig []ResourcePoolConfig
@@ -69,6 +79,14 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 
 	case GetTaskSummaries:
 		ctx.Respond(a.aggregateTaskSummaries(a.forwardToAllPools(ctx, msg)))
+
+	case GetResourceSummaries:
+		summaries := make([]ResourceSummary, 0, len(a.poolsConfig.ResourcePools))
+		for _, pool := range a.pools {
+			summary := ctx.Ask(pool, GetResourceSummary{}).Get().(ResourceSummary)
+			summaries = append(summaries, summary)
+		}
+		ctx.Respond(ResourceSummaries{Summaries: summaries})
 
 	case SetTaskName:
 		a.forwardToAllPools(ctx, msg)
@@ -356,11 +374,11 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	}
 
 	resourceSummary := ctx.Ask(a.pools[poolName], GetResourceSummary{}).Get().(ResourceSummary)
-	resp.NumAgents = int32(resourceSummary.numAgents)
-	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
-	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
-	resp.CpuContainerCapacity = int32(resourceSummary.maxNumCPUContainers)
-	resp.CpuContainersRunning = int32(resourceSummary.numActiveCPUContainers)
+	resp.NumAgents = int32(resourceSummary.NumAgents)
+	resp.SlotsAvailable = int32(resourceSummary.SlotsAvailable)
+	resp.SlotsUsed = int32(resourceSummary.SlotsUsed)
+	resp.CpuContainerCapacity = int32(resourceSummary.CPUContainerCapacity)
+	resp.CpuContainersRunning = int32(resourceSummary.CPUContainersRunning)
 
 	return resp, nil
 }
