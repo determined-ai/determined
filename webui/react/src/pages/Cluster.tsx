@@ -143,7 +143,7 @@ const Cluster: React.FC = () => {
     <Page className={css.base} id="cluster" title="Cluster">
       <Section hideTitle title="Overview Stats">
         <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
-          <OverviewStats title="Number of Agents">
+          <OverviewStats title="Connected Agents">
             {agents.data ? agents.data.length : '?'}
           </OverviewStats>
           {overview.GPU.total ?
