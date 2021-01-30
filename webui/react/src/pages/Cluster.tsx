@@ -4,7 +4,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Icon from 'components/Icon';
-import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import ResourcePoolCard from 'components/ResourcePoolCard';
@@ -12,7 +11,7 @@ import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import Spinner, { Indicator } from 'components/Spinner';
+import { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
 import Agents from 'contexts/Agents';
 import ClusterOverview, { agentsToOverview } from 'contexts/ClusterOverview';
@@ -20,9 +19,8 @@ import usePolling from 'hooks/usePolling';
 import { columns as defaultColumns } from 'pages/Cluster.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { Resource, ResourcePool, ResourceState } from 'types';
+import { ResourcePool, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
-import { categorize } from 'utils/data';
 
 import css from './Cluster.module.scss';
 
@@ -45,17 +43,6 @@ const Cluster: React.FC = () => {
 
   usePolling(pollResourcePools, { delay: 10000 });
 
-  const availableResources = useMemo(() => {
-    if (!agents.data) return {};
-    const resourceList = agents.data
-      .map(agent => agent.resources)
-      .flat()
-      .filter(resource => resource.enabled);
-    return categorize(resourceList, (res: Resource) => res.type);
-  }, [ agents ]);
-
-  const availableResourceTypes = Object.keys(availableResources);
-
   const cpuContainers = useMemo(() => {
     const tally = {
       running: 0,
@@ -68,7 +55,9 @@ const Cluster: React.FC = () => {
     return tally;
   }, [ resourcePools ]);
 
-  const slotContainerStates = getSlotContainerStates(agents.data || []);
+  const slotContainerStates = useMemo(() => {
+    return getSlotContainerStates(agents.data || []);
+  }, [ agents.data ]);
 
   const getTotalGpuSlots = useCallback((resPoolName: string) => {
     if (!agents.hasLoaded || !agents.data) return 0;
@@ -119,14 +108,6 @@ const Cluster: React.FC = () => {
     };
     return { onAuxClick: handleClick, onClick: handleClick };
   }, []);
-
-  if (!agents.data) {
-    return <Spinner />;
-  } else if (agents.data.length === 0) {
-    return <Message title="No Agents connected" />;
-  } else if (availableResourceTypes.length === 0) {
-    return <Message title="No Slots available" />;
-  }
 
   const viewOptions = (
     <Radio.Group value={selectedView} onChange={onChange}>
@@ -191,7 +172,7 @@ const Cluster: React.FC = () => {
               indicator: <Indicator />,
               spinning: agents.isLoading, // TODO replace with resource pools
             }}
-            pagination={getPaginationConfig(resourcePools.length, 10)} // TODO config page size
+            pagination={getPaginationConfig(resourcePools.length, 10)}
             rowClassName={defaultRowClassName({ clickable: true })}
             rowKey="name"
             scroll={{ x: 1000 }}
