@@ -129,34 +129,50 @@ def wrap_metrics(
         return {"metrics": metrics, "stop_requested": stop_requested, "invalid_hp": invalid_hp}
 
 
-def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:
-    def json_serializer(obj: Any) -> Any:
-        if isinstance(obj, datetime.datetime):
-            return obj.isoformat()
-        if isinstance(obj, enum.Enum):
-            return obj.name
-        if isinstance(obj, np.float64):
-            return float(obj)
-        if isinstance(obj, np.float32):
-            return float(obj)
-        if isinstance(obj, np.int64):
-            return int(obj)
-        if isinstance(obj, np.int32):
-            return int(obj)
-        if isinstance(obj, uuid.UUID):
-            return str(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        # Objects that provide their own custom JSON serialization.
-        if hasattr(obj, "__json__"):
-            return obj.__json__()
-
-        raise TypeError("Unserializable object {} of type {}".format(obj, type(obj)))
-
+def make_serializable(obj: Any, raise_type_error: bool = False) -> Any:
     # NB: We serialize NaN, Infinity, and -Infinity as `null`, because
     # those are not allowed by the JSON spec.
+    if isinstance(obj, dict):
+        for k in obj:
+            obj[k] = make_serializable(obj[k])
+        return obj
+    if isinstance(obj, list):
+        return [make_serializable(item) for item in obj]
+    if isinstance(obj, tuple):
+        return (make_serializable(item) for item in obj)
+    if isinstance(obj, datetime.datetime):
+        return obj.isoformat()
+    if isinstance(obj, enum.Enum):
+        return obj.name
+    if isinstance(obj, np.float64):
+        return float(obj)
+    if isinstance(obj, np.float32):
+        return float(obj)
+    if isinstance(obj, np.int64):
+        return int(obj)
+    if isinstance(obj, np.int32):
+        return int(obj)
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    # Objects that provide their own custom JSON serialization.
+    if hasattr(obj, "__json__"):
+        return obj.__json__()
+
+    if raise_type_error:
+        raise TypeError(f"Unserializable object {obj} of type {type(obj)}")
+
+    return obj
+
+
+def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:
     s = simplejson.dumps(
-        obj, default=json_serializer, ignore_nan=True, indent=indent, sort_keys=sort_keys
+        obj,
+        default=lambda x: make_serializable(x, True),
+        ignore_nan=True,
+        indent=indent,
+        sort_keys=sort_keys,
     )  # type: str
     return s
 

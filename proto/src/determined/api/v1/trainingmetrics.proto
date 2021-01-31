@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/modelmetrics/v1/modelmetrics.proto";
+
+// Request for create a training metrics.
+message CreateTrainingMetricsRequest {
+  // The desired training metrics fields and values.
+  determined.modelmetrics.v1.TrainingMetrics training_metrics = 1;
+}
+
+// Response to CreateTrainingMetricsRequest.
+message CreateTrainingMetricsResponse {
+  // The updated training metrics.
+  determined.modelmetrics.v1.TrainingMetrics training_metrics = 1;
+}
+
+// Request for patch a training metrics.
+message PatchTrainingMetricsRequest {
+  // The desired training metrics fields and values.
+  determined.modelmetrics.v1.TrainingMetrics training_metrics = 1;
+}
+
+// Response to PatchTrainingMetricsRequest.
+message PatchTrainingMetricsResponse {
+  // The patched training metrics.
+  determined.modelmetrics.v1.TrainingMetrics training_metrics = 1;
+}

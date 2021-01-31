@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, cast
 
 import determined as det
-from determined import tensorboard, workload
+from determined import tensorboard, util, workload
 from determined_common import storage
+from determined_common.api import request as req
 from determined_common.check import (
     check_eq,
     check_len,
@@ -14,6 +15,8 @@ from determined_common.check import (
     check_not_isinstance,
     check_not_none,
 )
+
+TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def _current_timestamp() -> datetime:
@@ -122,15 +125,6 @@ class _TrialWorkloadManager(WorkloadManager):
     def yield_train_for_step(
         self, wkld: workload.Workload, respond: workload.ResponseFunc
     ) -> workload.Stream:
-        start_time = _current_timestamp()
-
-        for callback in self.callbacks:
-            if wkld.step_id == 1:
-                callback.on_trial_begin()
-            callback.on_train_step_begin(
-                wkld.step_id, wkld.num_batches, wkld.total_batches_processed
-            )
-
         def _respond(in_response: workload.Response) -> None:
             # Only the chief container should actually respond to TRAIN_FOR_STEP.
             if self.rendezvous_info.get_rank() != 0:
@@ -143,12 +137,14 @@ class _TrialWorkloadManager(WorkloadManager):
             metrics = in_response["metrics"]
             metrics = cast(workload.Metrics, metrics)
 
+            end_time = _current_timestamp()
+
             if in_response.get("invalid_hp", False):
                 out_response = {
                     "type": "WORKLOAD_COMPLETED",
                     "workload": wkld,
                     "start_time": start_time,
-                    "end_time": _current_timestamp(),
+                    "end_time": end_time,
                     "metrics": metrics,
                 }
                 out_response["exited_reason"] = "INVALID_HP"
@@ -157,7 +153,7 @@ class _TrialWorkloadManager(WorkloadManager):
 
             batch_metrics = metrics["batch_metrics"]
             # Sanity-check training metrics.
-            det.util.validate_batch_metrics(batch_metrics)
+            util.validate_batch_metrics(batch_metrics)
             check_len(batch_metrics, wkld.num_batches)
 
             for callback in self.callbacks:
@@ -171,23 +167,63 @@ class _TrialWorkloadManager(WorkloadManager):
                 "type": "WORKLOAD_COMPLETED",
                 "workload": wkld,
                 "start_time": start_time,
-                "end_time": _current_timestamp(),
+                "end_time": end_time,
                 "metrics": metrics,
             }
 
             if in_response.get("stop_requested", False):
                 out_response["exited_reason"] = "USER_CANCELED"
 
-            # Send the response up.
+            if not self.env.local_mode:
+                training_metrics = {
+                    "trial_id": self.env.get_trial_id(),
+                    "step_id": wkld.step_id,
+                    "start_batch": wkld.total_batches_processed,
+                    "end_batch": wkld.target_batch(),
+                    "start_time": start_time.strftime(TIMESTAMP_FORMAT),
+                    "end_time": end_time.strftime(TIMESTAMP_FORMAT),
+                    "state": "STATE_COMPLETED",
+                    "metrics": util.make_serializable(metrics),
+                }
+                req.put(
+                    self.env.get_unary_host(),
+                    "/api/v1/training_metrics",
+                    body={"training_metrics": training_metrics},
+                )
+
+            # Send the response up to the socket manager.
             respond(out_response)
 
+        start_time = _current_timestamp()
+
+        for callback in self.callbacks:
+            if wkld.step_id == 1:
+                callback.on_trial_begin()
+            callback.on_train_step_begin(
+                wkld.step_id, wkld.num_batches, wkld.total_batches_processed
+            )
+
+        if not self.env.local_mode:
+            training_metrics = {
+                "trial_id": self.env.get_trial_id(),
+                "step_id": wkld.step_id,
+                "start_batch": wkld.total_batches_processed,
+                "end_batch": wkld.target_batch(),
+                "start_time": start_time.strftime(TIMESTAMP_FORMAT),
+                "state": "STATE_ACTIVE",
+            }
+            req.post(
+                self.env.get_unary_host(),
+                "/api/v1/training_metrics",
+                body={"training_metrics": training_metrics},
+            )
+
+        # Yield the workload to the framework layer.
         yield wkld, [], _respond
 
     def yield_compute_validation_metrics(
         self, wkld: workload.Workload, respond: workload.ResponseFunc
     ) -> workload.Stream:
-        start_time = _current_timestamp()
-
         def _respond(in_response: workload.Response) -> None:
 
             # Only the chief container should actually respond to COMPUTE_VALIDATION_METRICS.
@@ -274,47 +310,77 @@ class _TrialWorkloadManager(WorkloadManager):
                 for metric_name in non_serializable_metrics:
                     del v_metrics[metric_name]
 
+            end_time = _current_timestamp()
+
             out_response = {
                 "type": "WORKLOAD_COMPLETED",
                 "workload": wkld,
                 "start_time": start_time,
-                "end_time": _current_timestamp(),
+                "end_time": end_time,
                 "metrics": metrics,
             }
 
             if in_response.get("stop_requested", False):
                 out_response["exited_reason"] = "USER_CANCELED"
 
+            if not self.env.local_mode:
+                validation_metrics = {
+                    "trial_id": self.env.get_trial_id(),
+                    "total_batches": wkld.target_batch(),
+                    "start_time": start_time.strftime(TIMESTAMP_FORMAT),
+                    "end_time": end_time.strftime(TIMESTAMP_FORMAT),
+                    "state": "STATE_COMPLETED",
+                    "metrics": util.make_serializable(metrics),
+                }
+                req.put(
+                    self.env.get_unary_host(),
+                    "/api/v1/validation_metrics",
+                    body={"validation_metrics": validation_metrics},
+                )
+
+            # Send the response up to the socket manager.
             respond(out_response)
+
+        start_time = _current_timestamp()
+        if not self.env.local_mode:
+            validation_metrics = {
+                "trial_id": self.env.get_trial_id(),
+                "total_batches": wkld.target_batch(),
+                "start_time": start_time.strftime(TIMESTAMP_FORMAT),
+                "state": "STATE_ACTIVE",
+            }
+            req.post(
+                self.env.get_unary_host(),
+                "/api/v1/validation_metrics",
+                body={"validation_metrics": validation_metrics},
+            )
 
         for callback in self.callbacks:
             callback.on_validation_step_begin(wkld.step_id, wkld.total_batches_processed)
 
+        # Yield the workload to the framework layer.
         yield wkld, [], _respond
 
     def yield_checkpoint_model(
         self, wkld: workload.Workload, respond: workload.ResponseFunc
     ) -> workload.Stream:
-        start_time = _current_timestamp()
-
-        # Only the chief container should checkpoint.
-        if self.rendezvous_info.get_rank() != 0:
-            respond(workload.Skipped())
-            return
 
         # Save the workload completed message for after checkpoint upload completes.
         message = None  # type: Optional[workload.Response]
 
         def _respond(checkpoint_info: workload.Response) -> None:
             checkpoint_info = cast(Dict[str, Any], checkpoint_info)
+            resources = storage.StorageManager._list_directory(path)
+            framework = checkpoint_info.get("framework", "")
+            format = checkpoint_info.get("format", "")
+
             metadata = storage.StorageMetadata(
-                storage_id,
-                storage.StorageManager._list_directory(path),
-                checkpoint_info.get("framework", ""),
-                checkpoint_info.get("format", ""),
+                uuid,
+                resources,
+                framework,
+                format,
             )
 
-            logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
             self.tensorboard_mgr.sync()
 
             nonlocal message
@@ -326,12 +392,60 @@ class _TrialWorkloadManager(WorkloadManager):
                 "metrics": metadata,
             }
 
-        with self.storage_mgr.store_path() as (storage_id, path):
+        # Only the chief container should checkpoint.
+        if self.rendezvous_info.get_rank() != 0:
+            respond(workload.Skipped())
+            return
+
+        start_time = _current_timestamp()
+
+        with self.storage_mgr.store_path() as (uuid, path):
+            if not self.env.local_mode:
+                # Add an active checkpoint.
+                checkpoint = {
+                    "trial_id": self.env.get_trial_id(),
+                    "batch_number": wkld.target_batch(),
+                    "start_time": start_time.strftime(TIMESTAMP_FORMAT),
+                    "state": "STATE_ACTIVE",
+                    "determined_version": det.__version__,
+                }
+                req.post(
+                    self.env.get_unary_host(),
+                    "/api/v1/checkpoints",
+                    body={"checkpoint": checkpoint},
+                )
+
+            # Yield the workload to the framework layer.
             yield wkld, [pathlib.Path(path)], _respond
+
+        end_time = _current_timestamp()
 
         # Because the messaging is synchronous, the layer below us must have called _respond.
         check_not_none(message, "response function did not get called")
         message = cast(workload.Response, message)
+
+        if not isinstance(message, workload.Skipped):
+            metrics = cast(workload.Metrics, message["metrics"])
+            if not self.env.local_mode:
+                metadata = cast(storage.StorageMetadata, metrics)
+                checkpoint = {
+                    "trial_id": self.env.get_trial_id(),
+                    "batch_number": wkld.target_batch(),
+                    "start_time": start_time.strftime(TIMESTAMP_FORMAT),
+                    "end_time": end_time.strftime(TIMESTAMP_FORMAT),
+                    "state": "STATE_COMPLETED",
+                    "uuid": uuid,
+                    "resources": metadata.resources,
+                    "metadata": metadata.__dict__,
+                    "format": format,
+                    "framework": metadata.framework,
+                    "determined_version": det.__version__,
+                }
+                req.put(
+                    self.env.get_unary_host(),
+                    "/api/v1/checkpoints",
+                    body={"checkpoint": checkpoint},
+                )
 
         respond(message)
 

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/modelmetrics/v1/modelmetrics.proto";
+
+// Request for create a validation metrics.
+message CreateValidationMetricsRequest {
+  // The desired validation metrics fields and values.
+  determined.modelmetrics.v1.ValidationMetrics validation_metrics = 1;
+}
+
+// Response to CreateValidationMetricsRequest.
+message CreateValidationMetricsResponse {
+  // The updated validation metrics.
+  determined.modelmetrics.v1.ValidationMetrics validation_metrics = 1;
+}
+
+// Request for patch a validation metrics.
+message PatchValidationMetricsRequest {
+  // The desired validation metrics fields and values.
+  determined.modelmetrics.v1.ValidationMetrics validation_metrics = 1;
+}
+
+// Response to PatchValidationMetricsRequest.
+message PatchValidationMetricsResponse {
+  // The patched validation metrics.
+  determined.modelmetrics.v1.ValidationMetrics validation_metrics = 1;
+}

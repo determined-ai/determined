@@ -33,6 +33,7 @@ class EnvContext:
         trial_seed: int,
         managed_training: bool = True,
         test_mode: bool = False,
+        local_mode: bool = False,
     ):
         self.master_addr = master_addr
         self.master_port = master_port
@@ -58,6 +59,7 @@ class EnvContext:
         self.trial_seed = trial_seed
         self.managed_training = managed_training
         self.test_mode = test_mode
+        self.local_mode = local_mode
 
         self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
 
@@ -117,3 +119,58 @@ class EnvContext:
     @property
     def global_batch_size(self) -> int:
         return self._global_batch_size
+
+    def get_experiment_config(self) -> Dict[str, Any]:
+        """
+        Return the experiment configuration.
+        """
+        return self.experiment_config
+
+    def get_data_config(self) -> Dict[str, Any]:
+        """
+        Return the data configuration.
+        """
+        return self.get_experiment_config().get("data", {})
+
+    def get_experiment_id(self) -> int:
+        """
+        Return the experiment ID of the current trial.
+        """
+        return int(self.det_experiment_id)
+
+    def get_trial_id(self) -> int:
+        """
+        Return the trial ID of the current trial.
+        """
+        return int(self.det_trial_id)
+
+    def get_trial_seed(self) -> int:
+        return self.trial_seed
+
+    def get_hparams(self) -> Dict[str, Any]:
+        """
+        Return a dictionary of hyperparameter names to values.
+        """
+        return self.hparams
+
+    def get_hparam(self, name: str) -> Any:
+        """
+        Return the current value of the hyperparameter with the given name.
+        """
+        if name not in self.hparams:
+            raise ValueError(
+                "Could not find name '{}' in experiment "
+                "hyperparameters. Please check your experiment "
+                "configuration 'hyperparameters' section.".format(name)
+            )
+        if name == "global_batch_size":
+            logging.warning(
+                "Please use `context.get_per_slot_batch_size()` and "
+                "`context.get_global_batch_size()` instead of accessing "
+                "`global_batch_size` directly."
+            )
+        return self.hparams[name]
+
+    def get_unary_host(self) -> str:
+        scheme = "https" if self.use_tls else "http"
+        return f"{scheme}://{self.master_addr}:{self.master_port}"

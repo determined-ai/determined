@@ -4,11 +4,32 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/pkg/errors"
 )
 
 // JSONObj is a JSON object that converts to a []byte in SQL queries.
 type JSONObj map[string]interface{}
+
+// ProtoToJSONObj returns a JSONObj from a protobuf map-like message.
+func ProtoToJSONObj(m proto.Message) (JSONObj, error) {
+	if m == nil {
+		return nil, nil
+	}
+
+	bytes, err := protojson.Marshal(m)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot marshal proto to JSONObj")
+	}
+	res := JSONObj{}
+	err = json.Unmarshal(bytes, &res)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot unmarshal to JSONObj: %s", bytes)
+	}
+	return res, nil
+}
 
 // Value marshals a []byte.
 func (j JSONObj) Value() (driver.Value, error) {

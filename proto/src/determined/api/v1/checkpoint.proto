@@ -17,6 +17,30 @@ message GetCheckpointResponse {
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }
 
+// Request for create a checkpoint.
+message CreateCheckpointRequest {
+  // The desired checkpoint fields and values.
+  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+}
+
+// Response to CreateCheckpointRequest.
+message CreateCheckpointResponse {
+  // The updated checkpoint.
+  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+}
+
+// Request for update a checkpoint.
+message PatchCheckpointRequest {
+  // The desired checkpoint fields and values.
+  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+}
+
+// Response to PatchCheckpointRequest.
+message PatchCheckpointResponse {
+  // The patched checkpoint.
+  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+}
+
 // Request for updating a checkpoints metadata.
 message PostCheckpointMetadataRequest {
   // The desired checkpoint fields and values.

@@ -1324,24 +1324,14 @@ FROM (
 
 // AddStep adds the step to the database.
 func (db *PgDB) AddStep(step *model.Step) error {
-	if !step.IsNew() {
-		return errors.Errorf("unexpected state for new step: %v", step)
-	}
-	trial, err := db.TrialByID(step.TrialID)
-	if err != nil {
-		return errors.Wrapf(err, "error finding trial %v for new step", step.TrialID)
-	}
-	if trial.State != model.ActiveState {
-		return errors.Errorf("can't add step to trial %v with state %v", trial.ID, trial.State)
-	}
-	err = db.namedExecOne(`
+	if err := db.namedExecOne(`
 INSERT INTO steps
-(trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
+	(id, trial_id, total_batches, num_batches, prior_batches_processed, 
+	state, start_time, end_time, metrics)
 VALUES (
-	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
-	:num_batches, :prior_batches_processed
-)`, step)
-	if err != nil {
+	:id, :trial_id, :total_batches, :num_batches, :prior_batches_processed, 
+	:state, :start_time, :end_time, :metrics
+)`, step); err != nil {
 		return errors.Wrapf(err, "error inserting step %v", *step)
 	}
 	return nil
@@ -1360,73 +1350,62 @@ func (db *PgDB) AddNoOpStep(step *model.Step) error {
 	if trial.State != model.ActiveState {
 		return errors.Errorf("can't add step to trial %v with state %v", trial.ID, trial.State)
 	}
-	err = db.namedExecOne(`
+	if err = db.namedExecOne(`
 INSERT INTO steps
-(trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
+	(id, trial_id, total_batches, num_batches, prior_batches_processed, 
+	state, start_time, end_time)
 VALUES (
-	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
-	:num_batches, :prior_batches_processed
+	:id, :trial_id, :total_batches, :num_batches, :prior_batches_processed, 
+	:state, :start_time, :end_time
 )`,
-		step)
-	if err != nil {
+		step); err != nil {
 		return errors.Wrapf(err, "error inserting step %v", *step)
 	}
 	return nil
 }
 
-// StepByTotalBatches looks up a step by (TrialID, TotalBatches) pair,
-// returning an error if none exists.
-func (db *PgDB) StepByTotalBatches(trialID, totalBatches int) (*model.Step, error) {
+// UpdateStep updates an existing step. Fields that are nil or zero are not
+// updated.  end_time is set if the step moves to a terminal state.
+func (db *PgDB) UpdateStep(trialID, totalBatches int, newStep model.Step) error {
 	var step model.Step
 	if err := db.query(`
 SELECT 
-	trial_id, id, total_batches, state, start_time, end_time, metrics, 
-	num_batches, prior_batches_processed
+	id, trial_id, total_batches, num_batches, prior_batches_processed, 
+	state, start_time, end_time, metrics
 FROM steps
-WHERE trial_id = $1 AND total_batches = $2`, &step, trialID, totalBatches); err != nil {
-		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, totalBatches)
-	}
-	return &step, nil
-}
-
-// UpdateStep updates an existing step. Fields that are nil or zero are not
-// updated.  end_time is set if the step moves to a terminal state.
-func (db *PgDB) UpdateStep(
-	trialID, totalBatches int, newState model.State, metrics model.JSONObj) error {
-	if len(newState) == 0 && len(metrics) == 0 {
-		return nil
-	}
-	step, err := db.StepByTotalBatches(trialID, totalBatches)
-	if err != nil {
+WHERE trial_id = $1 AND total_batches = $2
+`, &step, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
 		return errors.Wrapf(err, "error finding step (%v, %v) to update", trialID, totalBatches)
+	} else if err != nil {
+		return errors.Errorf("cannot update missing step (%v, %v)", trialID, totalBatches)
 	}
+
 	toUpdate := []string{}
-	if len(newState) != 0 {
-		if !model.StepTransitions[step.State][newState] {
+	if len(newStep.State) != 0 {
+		if !model.StepTransitions[step.State][newStep.State] {
 			return errors.Errorf("illegal transition %v -> %v for step (%v, %v)",
-				step.State, newState, step.TrialID, step.TotalBatches)
+				step.State, newStep.State, step.TrialID, step.TotalBatches)
 		}
-		step.State = newState
+		step.State = newStep.State
 		toUpdate = append(toUpdate, "state")
-		if model.TerminalStates[newState] {
+		if model.TerminalStates[newStep.State] {
 			now := time.Now().UTC()
 			step.EndTime = &now
 			toUpdate = append(toUpdate, "end_time")
 		}
 	}
-	if len(metrics) != 0 {
+	if len(newStep.Metrics) != 0 {
 		if len(step.Metrics) != 0 {
 			return errors.Errorf("step (%v, %v) already has metrics", trialID, totalBatches)
 		}
-		step.Metrics = metrics
+		step.Metrics = newStep.Metrics
 		toUpdate = append(toUpdate, "metrics")
 	}
-	err = db.namedExecOne(fmt.Sprintf(`
+	if err := db.namedExecOne(fmt.Sprintf(`
 UPDATE steps
 %v
-WHERE trial_id = :trial_id
-AND id = :id`, setClause(toUpdate)), step)
-	if err != nil {
+WHERE trial_id = :trial_id AND total_batches = :total_batches
+`, setClause(toUpdate)), step); err != nil {
 		return errors.Wrapf(err, "error updating (%v) in step (%v, %v)",
 			strings.Join(toUpdate, ", "), step.TrialID, step.TotalBatches)
 	}
@@ -1435,102 +1414,73 @@ AND id = :id`, setClause(toUpdate)), step)
 
 // AddValidation adds the validation to the database and sets its ID.
 func (db *PgDB) AddValidation(validation *model.Validation) error {
-	if !validation.IsNew() {
-		return errors.Errorf("unexpected state for new validation: %v", validation)
-	}
-	trial, err := db.TrialByID(validation.TrialID)
-	if err != nil {
-		return errors.Wrapf(err, "error finding trial %v for new validation", validation.TrialID)
-	}
-	if trial.State != model.ActiveState {
-		return errors.Errorf("can't add validation to trial %v with state %v", trial.ID, trial.State)
-	}
-	var count int
-	err = db.namedGet(&count, `
-SELECT COUNT(*)
-FROM validations
-WHERE trial_id = :trial_id
-AND total_batches = :total_batches`, validation)
-	if err != nil {
-		return errors.Wrapf(err, "error checking at-most-one validation %v", *validation)
-	}
-	if count > 0 {
-		return errors.Errorf("duplicate validation for trial %v total batch %v",
-			validation.TrialID, validation.TotalBatches)
-	}
-	err = db.namedGet(&validation.ID, `
+	err := db.namedGet(&validation.ID, `
 INSERT INTO validations
-(trial_id, total_batches, state, start_time, end_time)
-VALUES (:trial_id, :total_batches, :state, :start_time, :end_time)
-RETURNING id`, validation)
+	(trial_id, total_batches, state, start_time, end_time, metrics)
+VALUES 
+	(:trial_id, :total_batches, :state, :start_time, :end_time, :metrics)
+RETURNING id
+`, validation)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting validation %v", *validation)
 	}
 	return nil
 }
 
-// ValidationByTotalBatches looks up a validation by trial and step ID,
-// returning nil if none exists.
-func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.Validation, error) {
+// UpdateValidation updates an existing validation. Fields that are nil or zero
+// are not updated. end_time is set if the validation moves to a terminal
+// state.
+func (db *PgDB) UpdateValidation(trialID, totalBatches int, newValidation model.Validation) error {
 	var validation model.Validation
 	if err := db.query(`
 SELECT id, trial_id, total_batches, state, start_time, end_time, metrics
 FROM validations
-WHERE trial_id = $1
-AND total_batches = $2`, &validation, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
-		return nil, nil
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "error querying for validation (%v, %v)",
+WHERE trial_id = $1 AND total_batches = $2
+`, &validation, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
+		return errors.Wrapf(err, "can't update missing validation (%v, %v)",
 			trialID, totalBatches)
-	}
-	return &validation, nil
-}
-
-// UpdateValidation updates an existing validation. Fields that are nil or zero
-// are not updated. end_time is set if the validation moves to a terminal
-// state.
-func (db *PgDB) UpdateValidation(
-	trialID, totalBatches int, newState model.State, metrics model.JSONObj,
-) error {
-	if len(newState) == 0 && len(metrics) == 0 {
-		return nil
-	}
-	validation, err := db.ValidationByTotalBatches(trialID, totalBatches)
-	if err != nil {
+	} else if err != nil {
 		return errors.Wrapf(err, "error querying for validation (%v, %v) to update",
 			trialID, totalBatches)
 	}
-	if validation == nil {
-		return errors.Wrapf(err, "can't update missing validation (%v, %v)",
-			trialID, totalBatches)
-	}
+
 	toUpdate := []string{}
-	if len(newState) != 0 {
-		if !model.StepTransitions[validation.State][newState] {
+	if len(newValidation.State) != 0 {
+		if !model.StepTransitions[validation.State][newValidation.State] {
 			return errors.Errorf("illegal transition %v -> %v for validation %v",
-				validation.State, newState, validation.ID)
+				validation.State, newValidation.State, validation.ID)
 		}
-		validation.State = newState
+		validation.State = newValidation.State
 		toUpdate = append(toUpdate, "state")
-		if model.TerminalStates[newState] {
+		if model.TerminalStates[newValidation.State] {
 			now := time.Now().UTC()
 			validation.EndTime = &now
 			toUpdate = append(toUpdate, "end_time")
 		}
 	}
-	if len(metrics) != 0 {
+	if len(newValidation.Metrics) != 0 {
+		if _, ok := newValidation.Metrics["validation_metrics"]; !ok {
+			return errors.Errorf("validation metrics must have key validation_metrics: %v",
+				newValidation.Metrics)
+		}
+		if _, ok := newValidation.Metrics["num_inputs"]; !ok {
+			return errors.Errorf("validation metrics must have key num_inputs: %v",
+				newValidation.Metrics)
+		}
+
 		if len(validation.Metrics) != 0 {
 			return errors.Errorf("validation (%v, %v) already has metrics",
 				trialID, totalBatches)
 		}
-		validation.Metrics = metrics
+		validation.Metrics = newValidation.Metrics
 		toUpdate = append(toUpdate, "metrics")
 	}
-	err = db.namedExecOne(fmt.Sprintf(`
+
+	if err := db.namedExecOne(fmt.Sprintf(`
 UPDATE validations
 %v
-WHERE id = :id`, setClause(toUpdate)), validation)
-	if err != nil {
+WHERE trial_id = :trial_id AND total_batches = :total_batches
+`, setClause(toUpdate)), validation); err != nil {
 		return errors.Wrapf(err, "error updating (%v) in validation (%v, %v)",
 			strings.Join(toUpdate, ", "), trialID, totalBatches)
 	}
@@ -1544,48 +1494,19 @@ WHERE id = :id`, setClause(toUpdate)), validation)
 
 // AddCheckpoint adds the checkpoint to the database and sets its ID.
 func (db *PgDB) AddCheckpoint(checkpoint *model.Checkpoint) error {
-	if !checkpoint.IsNew() {
-		return errors.Errorf("unexpected state for new checkpoint: %v", checkpoint)
-	}
-	var count int
-	err := db.namedGet(&count, `
-SELECT COUNT(*)
-FROM checkpoints
-WHERE trial_id = :trial_id
-AND total_batches = :total_batches`, checkpoint)
-	if err != nil {
-		return errors.Wrapf(err, "error checking at-most-one checkpoint %v", *checkpoint)
-	}
-	if count > 0 {
-		return errors.Errorf("duplicate checkpoint for trial %v total batch %v",
-			checkpoint.TrialID, checkpoint.TotalBatches)
-	}
-	err = db.namedGet(&checkpoint.ID, `
+	err := db.namedGet(&checkpoint.ID, `
 INSERT INTO checkpoints
-(trial_id, total_batches, state, start_time, metadata, determined_version)
-VALUES (:trial_id, :total_batches, :state, :start_time, :metadata, :determined_version)
-RETURNING id`, checkpoint)
+	(trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata, 
+	framework, format, determined_version)
+VALUES 
+	(:trial_id, :total_batches, :state, :start_time, :end_time, :uuid, :resources, :metadata, 
+	:framework, :format, :determined_version)
+RETURNING id
+`, checkpoint)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting checkpoint %v", *checkpoint)
 	}
 	return nil
-}
-
-// CheckpointByTotalBatches looks up a checkpoint by trial and total batch,
-// returning nil if none exists.
-func (db *PgDB) CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error) {
-	var checkpoint model.Checkpoint
-	if err := db.query(`
-SELECT id, trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata
-FROM checkpoints
-WHERE trial_id = $1
-AND total_batches = $2`, &checkpoint, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
-		return nil, nil
-	} else if err != nil {
-		return nil, errors.Wrapf(err, "error querying for checkpoint (%v, %v)",
-			trialID, totalBatches)
-	}
-	return &checkpoint, nil
 }
 
 // CheckpointByUUID looks up a checkpoint by UUID, returning nil if none exists.
@@ -1622,30 +1543,27 @@ LIMIT 1`, &checkpoint, trialID); errors.Cause(err) == ErrNotFound {
 // UpdateCheckpoint updates an existing checkpoint. Fields that are nil or zero
 // are not updated. end_time is set if the checkpoint moves to a terminal
 // state.
-func (db *PgDB) UpdateCheckpoint(
-	trialID, totalBatches int,
-	newCheckpoint model.Checkpoint,
-) error {
-	if len(newCheckpoint.State) == 0 && len(*newCheckpoint.UUID) == 0 &&
-		len(newCheckpoint.Resources) == 0 && len(newCheckpoint.Metadata) == 0 {
-		return nil
-	}
-
-	checkpoint, err := db.CheckpointByTotalBatches(trialID, totalBatches)
-	if err != nil {
-		return errors.Wrapf(err, "error querying for checkpoint (%v, %v) to update",
+func (db *PgDB) UpdateCheckpoint(trialID, totalBatches int, newCheckpoint model.Checkpoint) error {
+	var checkpoint model.Checkpoint
+	if err := db.query(`
+SELECT 
+	id, trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata, 
+	framework, format, determined_version 
+FROM checkpoints
+WHERE trial_id = $1 AND total_batches = $2
+`, &checkpoint, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
+		return errors.Errorf("cannot update missing checkpoint (%v, %v)",
 			trialID, totalBatches)
-	}
-	if checkpoint == nil {
-		return errors.Wrapf(err, "can't update missing checkpoint (%v, %v)",
+	} else if err != nil {
+		return errors.Wrapf(err, "error querying for checkpoint (%v, %v) to update",
 			trialID, totalBatches)
 	}
 
 	toUpdate := []string{}
 	if len(newCheckpoint.State) != 0 {
 		if !model.CheckpointTransitions[checkpoint.State][newCheckpoint.State] {
-			return errors.Errorf("illegal transition %v -> %v for checkpoint %v",
-				checkpoint.State, newCheckpoint.State, checkpoint.ID)
+			return errors.Errorf("illegal transition %v -> %v for checkpoint (%v, %v)",
+				checkpoint.State, newCheckpoint.State, checkpoint.TrialID, checkpoint.TotalBatches)
 		}
 		checkpoint.State = newCheckpoint.State
 		toUpdate = append(toUpdate, "state")
@@ -1682,7 +1600,6 @@ func (db *PgDB) UpdateCheckpoint(
 
 		toUpdate = append(toUpdate, "metadata")
 	}
-
 	if len(newCheckpoint.Framework) != 0 {
 		if len(checkpoint.Framework) != 0 {
 			return errors.Errorf("checkpoint (%v, %v) already has a framework", trialID, totalBatches)
@@ -1691,7 +1608,6 @@ func (db *PgDB) UpdateCheckpoint(
 		checkpoint.Framework = newCheckpoint.Framework
 		toUpdate = append(toUpdate, "framework")
 	}
-
 	if len(newCheckpoint.Format) != 0 {
 		if len(checkpoint.Format) != 0 {
 			return errors.Errorf("checkpoint (%v, %v) already has a format", trialID, totalBatches)
@@ -1701,10 +1617,11 @@ func (db *PgDB) UpdateCheckpoint(
 		toUpdate = append(toUpdate, "format")
 	}
 
-	err = db.namedExecOne(fmt.Sprintf(`
+	err := db.namedExecOne(fmt.Sprintf(`
 UPDATE checkpoints
 %v
-WHERE id = :id`, setClause(toUpdate)), checkpoint)
+WHERE id = :id
+`, setClause(toUpdate)), checkpoint)
 	if err != nil {
 		return errors.Wrapf(err, "error updating (%v) in checkpoint (%v, %v)",
 			strings.Join(toUpdate, ", "), trialID, totalBatches)

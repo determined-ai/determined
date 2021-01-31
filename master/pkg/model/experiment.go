@@ -3,14 +3,16 @@ package model
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
+	"github.com/determined-ai/determined/proto/pkg/modelmetricsv1"
 )
 
 // State is the run state of an experiment / trial / step / etc.
@@ -52,6 +54,11 @@ const (
 )
 
 // States and transitions
+
+// StateFromProto returns a db model state from a protobuf.
+func StateFromProto(proto string) State {
+	return State(strings.TrimPrefix(proto, "STATE_"))
+}
 
 // reverseTransitions computes the reverse transition table.
 func reverseTransitions(
@@ -292,28 +299,15 @@ func NewTrial(
 
 // Step represents a row from the `steps` table.
 type Step struct {
-	TrialID               int        `db:"trial_id"`
 	ID                    int        `db:"id"`
+	TrialID               int        `db:"trial_id"`
 	TotalBatches          int        `db:"total_batches"`
+	NumBatches            int        `db:"num_batches"`
+	PriorBatchesProcessed int        `db:"prior_batches_processed"`
 	State                 State      `db:"state"`
 	StartTime             time.Time  `db:"start_time"`
 	EndTime               *time.Time `db:"end_time"`
-	NumBatches            int        `db:"num_batches"`
-	PriorBatchesProcessed int        `db:"prior_batches_processed"`
 	Metrics               JSONObj    `db:"metrics"`
-}
-
-// NewStep creates a new step in the active state.
-func NewStep(trialID, stepID, numBatches, priorBatchesProcessed int) *Step {
-	return &Step{
-		TrialID:               trialID,
-		ID:                    stepID,
-		TotalBatches:          numBatches + priorBatchesProcessed,
-		State:                 ActiveState,
-		StartTime:             time.Now().UTC(),
-		NumBatches:            numBatches,
-		PriorBatchesProcessed: priorBatchesProcessed,
-	}
 }
 
 // NewNoOpStep creates a new step in the completed state.
@@ -328,6 +322,41 @@ func NewNoOpStep(trialID, stepID int) *Step {
 		NumBatches:            0,
 		PriorBatchesProcessed: 0,
 	}
+}
+
+// TrainingMetricsFromProto returns a step db model from the protobuf model.
+func TrainingMetricsFromProto(proto *modelmetricsv1.TrainingMetrics) (*Step, error) {
+	startTime, err := ptypes.Timestamp(proto.StartTime)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot convert start_time field for training metrics")
+	}
+
+	var endTime *time.Time
+	if proto.EndTime != nil {
+		var t time.Time
+		t, err = ptypes.Timestamp(proto.EndTime)
+		endTime = &t
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot convert endtime field for training metrics")
+		}
+	}
+
+	metrics, err := ProtoToJSONObj(proto.Metrics)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot convert metrics field for training metrics")
+	}
+
+	return &Step{
+		ID:                    int(proto.StepId),
+		TrialID:               int(proto.TrialId),
+		TotalBatches:          int(proto.EndBatch),
+		NumBatches:            int(proto.EndBatch - proto.StartBatch),
+		PriorBatchesProcessed: int(proto.StartBatch),
+		State:                 StateFromProto(proto.State.String()),
+		StartTime:             startTime,
+		EndTime:               endTime,
+		Metrics:               metrics,
+	}, nil
 }
 
 // IsNew checks whether this step describes a new, in-progress step.
@@ -346,14 +375,36 @@ type Validation struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
-// NewValidation creates a new validation in the active state.
-func NewValidation(trialID, totalBatches int) *Validation {
-	return &Validation{
-		TrialID:      trialID,
-		TotalBatches: totalBatches,
-		State:        ActiveState,
-		StartTime:    time.Now().UTC(),
+// ValidationMetricsFromProto returns a validation db model from the protobuf model.
+func ValidationMetricsFromProto(proto *modelmetricsv1.ValidationMetrics) (*Validation, error) {
+	startTime, err := ptypes.Timestamp(proto.StartTime)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot convert start_time field for validation metrics")
 	}
+
+	var endTime *time.Time
+	if proto.EndTime != nil {
+		var t time.Time
+		t, err = ptypes.Timestamp(proto.EndTime)
+		endTime = &t
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot convert endtime field for validation metrics")
+		}
+	}
+
+	metrics, err := ProtoToJSONObj(proto.Metrics)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot convert metrics field for validation metrics")
+	}
+
+	return &Validation{
+		TrialID:      int(proto.TrialId),
+		TotalBatches: int(proto.TotalBatches),
+		State:        StateFromProto(proto.State.String()),
+		StartTime:    startTime,
+		EndTime:      endTime,
+		Metrics:      metrics,
+	}, nil
 }
 
 // IsNew checks whether this validation describes a new, in-progress validation operation.
@@ -377,16 +428,51 @@ type Checkpoint struct {
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
 }
 
-// NewCheckpoint creates a new checkpoint in the active state.
-func NewCheckpoint(trialID, totalBatches int) *Checkpoint {
-	return &Checkpoint{
-		TrialID:           trialID,
-		TotalBatches:      totalBatches,
-		State:             ActiveState,
-		StartTime:         time.Now().UTC(),
-		Metadata:          JSONObj{},
-		DeterminedVersion: version.Version,
+// CheckpointFromProto returns a checkpoint db model from the protobuf model.
+func CheckpointFromProto(proto *checkpointv1.Checkpoint) (*Checkpoint, error) {
+	startTime, err := ptypes.Timestamp(proto.StartTime)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot convert start_time field for checkpoint")
 	}
+
+	var endTime *time.Time
+	if proto.EndTime != nil {
+		var t time.Time
+		t, err = ptypes.Timestamp(proto.EndTime)
+		endTime = &t
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot convert endtime field for checkpoint")
+		}
+	}
+
+	var uuid *string
+	if proto.Uuid != "" {
+		uuid = &proto.Uuid
+	}
+
+	resources := JSONObj{}
+	for k, v := range proto.Resources {
+		resources[k] = v
+	}
+
+	metadata, err := ProtoToJSONObj(proto.Metadata)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot convert metadata field for checkpoint")
+	}
+
+	return &Checkpoint{
+		TrialID:           int(proto.TrialId),
+		TotalBatches:      int(proto.BatchNumber),
+		State:             StateFromProto(proto.State.String()),
+		StartTime:         startTime,
+		EndTime:           endTime,
+		UUID:              uuid,
+		Resources:         resources,
+		Metadata:          metadata,
+		Framework:         proto.Framework,
+		Format:            proto.Format,
+		DeterminedVersion: proto.DeterminedVersion,
+	}, nil
 }
 
 // IsNew checks whether this checkpoint describes a new, in-progress checkpoint operation.

@@ -1,4 +1,5 @@
 from determined.__version__ import __version__
+from determined import errors, workload
 from determined._env_context import EnvContext
 from determined._rendezvous_info import RendezvousInfo
 from determined._execution import (
@@ -17,5 +18,4 @@ from determined._trial_controller import (
     LoopTrialController,
     TrialController,
 )
-from determined import errors
 from determined import util

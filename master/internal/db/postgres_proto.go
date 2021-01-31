@@ -57,5 +57,5 @@ func protoParser(rows *sqlx.Rows, val interface{}) error {
 		return errors.Wrapf(err, "error converting row to json bytes: %s", dest)
 	}
 	return errors.Wrapf(protojson.Unmarshal(bytes, message),
-		"error converting row to Protobuf struct")
+		"error converting row to Protobuf struct: %s", bytes)
 }

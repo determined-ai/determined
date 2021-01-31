@@ -576,10 +576,6 @@ func (t *trial) processAllocated(
 		return errors.Wrap(err, "failed to get workload from sequencer after allocation")
 	}
 
-	if err = saveWorkload(t.db, w); err != nil {
-		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
-	}
-
 	ctx.Log().Infof("starting trial container: %v", w)
 
 	additionalFiles := archive.Archive{
@@ -643,13 +639,6 @@ func (t *trial) processAllocated(
 }
 
 func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.CompletedMessage) error {
-	if msg.ExitedReason == nil || *msg.ExitedReason == workload.UserCanceled ||
-		*msg.ExitedReason == workload.InvalidHP {
-		if err := markWorkloadCompleted(t.db, msg); err != nil {
-			ctx.Log().Error(err)
-		}
-	}
-
 	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
 	out := trialCompletedWorkload{
 		completedMessage: msg,
@@ -739,9 +728,6 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 		t.TerminationSent = true
 		actors.NotifyAfter(ctx, terminateTimeoutPeriod, terminateTimeout{runID: t.RunID})
 	} else {
-		if err := saveWorkload(t.db, w); err != nil {
-			ctx.Log().WithError(err).Error("failed to save workload to the database")
-		}
 		msg = &trialMessage{
 			RunWorkload: &runWorkload{
 				Workload: w,

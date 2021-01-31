@@ -16,10 +16,12 @@ import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
+import "determined/api/v1/trainingmetrics.proto";
 import "determined/api/v1/trial.proto";
 import "determined/api/v1/shell.proto";
 import "determined/api/v1/user.proto";
 import "determined/api/v1/resourcepool.proto";
+import "determined/api/v1/validationmetrics.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
   info: {
@@ -726,6 +728,54 @@ service Determined {
     };
   }
 
+  // Create training metrics.
+  rpc CreateTrainingMetrics(CreateTrainingMetricsRequest)
+      returns (CreateTrainingMetricsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/training_metrics"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Patch training metrics.
+  rpc PatchTrainingMetrics(PatchTrainingMetricsRequest)
+      returns (PatchTrainingMetricsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/training_metrics"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Create validation metrics.
+  rpc CreateValidationMetrics(CreateValidationMetricsRequest)
+      returns (CreateValidationMetricsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/validation_metrics"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Patch validation metrics.
+  rpc PatchValidationMetrics(PatchValidationMetricsRequest)
+      returns (PatchValidationMetricsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/validation_metrics"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get the requested checkpoint.
   rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse) {
     option (google.api.http) = {
@@ -733,6 +783,30 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"
+    };
+  }
+
+  // Create a checkpoint.
+  rpc CreateCheckpoint(CreateCheckpointRequest)
+      returns (CreateCheckpointResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/checkpoints"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Patch a checkpoint.
+  rpc PatchCheckpoint(PatchCheckpointRequest)
+      returns (PatchCheckpointResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/checkpoints"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
     };
   }
 

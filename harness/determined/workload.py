@@ -58,6 +58,9 @@ class Workload:
             dict["total_batches_processed"],
         )
 
+    def target_batch(self) -> int:
+        return self.num_batches + self.total_batches_processed
+
 
 """Metrics is the general structure of metrics used in response messages throughout the harness."""
 Metrics = Dict[str, Any]

@@ -113,10 +113,11 @@ func trialDetailAPITests(
 			err = db.AddStep(step)
 			assert.NilError(t, err, "failed to insert step")
 
-			metrics := map[string]interface{}{
+			step.State = model.CompletedState
+			step.Metrics = map[string]interface{}{
 				"avg_metrics": tc.metrics,
 			}
-			err = db.UpdateStep(trial.ID, step.TotalBatches, model.CompletedState, metrics)
+			err = db.UpdateStep(trial.ID, step.TotalBatches, *step)
 			assert.NilError(t, err, "failed to update step")
 
 			ctx, _ := context.WithTimeout(creds, 10*time.Second)

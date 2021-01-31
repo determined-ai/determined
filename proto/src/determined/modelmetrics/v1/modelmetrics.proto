@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package determined.modelmetrics.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/modelmetricsv1";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// The current state of the metrics.
+enum State {
+  // The state of the metrics is unknown.
+  STATE_UNSPECIFIED = 0;
+  // The metrics is in an active state.
+  STATE_ACTIVE = 1;
+  // The metrics is persisted to checkpoint storage.
+  STATE_COMPLETED = 2;
+  // The metrics errored.
+  STATE_ERROR = 3;
+  // The metrics has been deleted.
+  STATE_DELETED = 4;
+}
+
+// TrainingMetrics represents model training metrics.
+message TrainingMetrics {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "experiment_id",
+        "trial_id",
+        "step_id",
+        "start_batch",
+        "end_batch",
+        "state"
+      ]
+    }
+  };
+  // The UUID.
+  string uuid = 1;
+  // The ID of the experiment that created this.
+  int32 experiment_id = 2;
+  // The ID of the trial that created this.
+  int32 trial_id = 3;
+  // The ID of the step in the trial.
+  int32 step_id = 4;
+  // The state.
+  State state = 5;
+  // Start batch number of training metrics, equivalent to prior processed
+  // batches for checkpoints and validations.
+  int32 start_batch = 6;
+  // End batch number of training metrics, equivalent to total batches
+  // for checkpoints and validations.
+  int32 end_batch = 7;
+  // Timestamp when this began being saved to persistent storage.
+  google.protobuf.Timestamp start_time = 8;
+  // Timestamp when this completed being saved to persistent storage.
+  google.protobuf.Timestamp end_time = 9;
+  // Metrics calculated on the training set.
+  google.protobuf.Struct metrics = 10;
+}
+
+// ValidationMetrics represents model validation metrics.
+message ValidationMetrics {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "experiment_id", "trial_id", "total_batches", "state" ]
+    }
+  };
+  // The UUID.
+  string uuid = 1;
+  // The ID of the experiment that created this.
+  int32 experiment_id = 2;
+  // The ID of the trial that created this.
+  int32 trial_id = 3;
+  // The state.
+  State state = 4;
+  // batch number of validation metrics.
+  int32 total_batches = 5;
+  // Timestamp when this began being saved to persistent storage.
+  google.protobuf.Timestamp start_time = 6;
+  // Timestamp when this completed being saved to persistent storage.
+  google.protobuf.Timestamp end_time = 7;
+  // Metrics calculated on the validation set.
+  google.protobuf.Struct metrics = 8;
+}
