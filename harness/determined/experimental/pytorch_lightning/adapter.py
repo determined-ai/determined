@@ -8,8 +8,10 @@ import torch
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 HyperparamsProvider = Callable[[str], Any]
 
+not_supported = TypeError('not supported')
+
 class DETLightningModule(ptl.LightningModule):
-    def __init__(self, *args, get_hparam: HyperparamsProvider, **kwargs):
+    def __init__(self, *args, get_hparam: HyperparamsProvider = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.get_hparam = get_hparam
 
@@ -17,7 +19,11 @@ class DETLightningDataModule(ptl.LightningDataModule):
     """
     ## user defines these as usual
     def prepare_data
+        download, split, etc...
+        only called on 1 GPU/TPU in distributed
+
     def setup
+        in memory assignments. called on every process in DDP
 
     ## user defines these for DET usage. similar to normal ptl datamodule
     def train_det_dataloader: DetDataloader
@@ -50,12 +56,12 @@ class DETLightningDataModule(ptl.LightningDataModule):
 
 
 
-not_supported = TypeError('not supported')
 
 class PTLAdapter(PyTorchTrial):
+    # QUESTION: take uninstantiated lightning and datamodule so we isntatiate it instead? less code for the user but might be better if the user sees this?
     def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: DETLightningDataModule = None) -> None:
         super().__init__(context)
-        self.lm = lightning_module(get_hparam=context.get_hparam)
+        self.lm = lightning_module
         self.context = context
         self.model = self.context.wrap_model(self.lm)
 
@@ -78,12 +84,12 @@ class PTLAdapter(PyTorchTrial):
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
         if data_module is not None:
-            self.dm = data_module()
+            self.dm = data_module
             # QUESTION call only on one gpu (once per node). the expected behavior could change with trainer
             # need to find a place to run this
             # https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.datamodule.html#pytorch_lightning.core.datamodule.LightningDataModule.prepare_data
+            # there are some methods on lm that overlaps with dm
             self.dm.prepare_data() # TODO check args
-            # FIXME either self.lm or dm
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -91,7 +97,7 @@ class PTLAdapter(PyTorchTrial):
         # no optimizer index to pass down
         # TODO step through all the optimizers freeze other models? check trainer source code
         rv = self.lm.training_step(batch, batch_idx)
-        if rv is None:  return None # skip to next batch
+        if rv is None:  return {} # skip to next batch
         if type(rv) != dict:
             rv = {'loss': rv}
 

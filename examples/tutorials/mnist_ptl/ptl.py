@@ -1,18 +1,17 @@
 import torch
 import pytorch_lightning as ptl
-from torch.utils.data import random_split
 from determined.pytorch import DataLoader
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torchvision.datasets import MNIST
-from determined.experimental.pytorch_lightning import DETLightningDataModule, HyperparamsProvider, DETLightningModule
+from determined.experimental.pytorch_lightning import DETLightningDataModule, DETLightningModule
 from typing import Optional
 import os
 
 
+# CHANGE exnted DETLightningModule
 class LightningMNISTClassifier(DETLightningModule):
 
-    # TODO expect determined config.
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -44,19 +43,18 @@ class LightningMNISTClassifier(DETLightningModule):
 
         return x
 
-    # CHANGE: define loss fn. TODO a hyperparam?
     def _loss_fn(self, logits, labels):
         return F.nll_loss(logits, labels)
 
-    def training_step(self, train_batch, batch_idx):
-        x, y = train_batch
+    def training_step(self, batch, batch_idx):
+        x, y = batch
         logits = self.forward(x)
         loss = self._loss_fn(logits, y)
         self.log('train_loss', loss)
         return {'loss': loss}
 
-    def validation_step(self, val_batch, batch_idx=None):
-        x, y = val_batch
+    def validation_step(self, batch, batch_idx=None):
+        x, y = batch
         logits = self.forward(x)
         loss = self._loss_fn(logits, y)
         self.log('val_loss', loss)
@@ -66,11 +64,10 @@ class LightningMNISTClassifier(DETLightningModule):
         return {'val_loss': loss, 'accuracy': accuracy}
 
     def configure_optimizers(self):
+        # CHANGE read externally provided hyperparameters
         optimizer = torch.optim.Adam(self.parameters(),
                                      lr=self.get_hparam('learning_rate'))
         return optimizer
-    
-    # TODO audit other available LightningModule hooks
 
 
 # CHANGE to DETLightningDataModule
@@ -78,16 +75,7 @@ class MNISTDataModule(DETLightningDataModule):
     def __init__(self):
         super().__init__()
 
-    # rank (id of proc across all machines) and local(machine) rank. horovard. 1proc per gpu
-    # def prepare_data(self):
-    #     # download, split, etc...
-    #     # only called on 1 GPU/TPU in distributed
-    #     return super().prepare_data()
-
     def setup(self, stage: Optional[str] = None):
-        # make assignments here (val/train/test split)
-        # called on every process in DDP
-        # transforms for images
         transform = transforms.Compose([transforms.ToTensor(), 
                                         transforms.Normalize((0.1307,), (0.3081,))])
 
@@ -99,8 +87,6 @@ class MNISTDataModule(DETLightningDataModule):
         return DataLoader(self.mnist_train, batch_size=64, num_workers=12)
     def val_det_dataloader(self):
         return DataLoader(self.mnist_val, batch_size=64)
-    # def test_dataloader(self):
-    #     pass
 
 if __name__ == '__main__':
     # train
@@ -112,7 +98,7 @@ if __name__ == '__main__':
         return params[key]
 
     # CHANGE: provide the hyperparameters
-    model = LightningMNISTClassifier(get_hparam)
+    model = LightningMNISTClassifier(get_hparam=get_hparam)
     trainer = ptl.Trainer(max_epochs=2)
 
     dm = MNISTDataModule()
