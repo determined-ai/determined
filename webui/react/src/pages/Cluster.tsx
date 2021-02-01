@@ -16,6 +16,7 @@ import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'c
 import Agents from 'contexts/Agents';
 import ClusterOverview, { agentsToOverview } from 'contexts/ClusterOverview';
 import usePolling from 'hooks/usePolling';
+import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
@@ -29,11 +30,16 @@ enum View {
   Grid
 }
 
+const STORAGE_PATH = 'cluster';
+const VIEW_CHOICE_KEY = 'view-choice';
+
 const Cluster: React.FC = () => {
+  const storage = useStorage(STORAGE_PATH);
+  const initView = storage.getWithDefault(VIEW_CHOICE_KEY, View.Grid);
   const agents = Agents.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
-  const [ selectedView, setSelectedView ] = useState<View>(View.Grid);
+  const [ selectedView, setSelectedView ] = useState<View>(initView);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
 
   const pollResourcePools = useCallback(async () => {
@@ -98,8 +104,10 @@ const Cluster: React.FC = () => {
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
   const onChange = useCallback((e: RadioChangeEvent) => {
-    setSelectedView(e.target.value as View);
-  }, []);
+    const view = e.target.value as View;
+    storage.set(VIEW_CHOICE_KEY, view);
+    setSelectedView(view);
+  }, [ storage ]);
 
   const handleTableRow = useCallback((record: ResourcePool) => {
     const handleClick = (event: React.MouseEvent) => {
