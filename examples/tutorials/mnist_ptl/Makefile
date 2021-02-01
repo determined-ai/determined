@@ -1,2 +1,2 @@
 build:
-	docker build -f Dockerfile -t ptl-image
+	docker build -f Dockerfile -t ptl-image .
