@@ -158,6 +158,15 @@ message GetExperimentTrialsRequest {
     // Return trials sorted by end time. Trials without end times are
     // returned after trials that are.
     SORT_BY_END_TIME = 5;
+    // Return the trials sorted by the `searcher.metric` specified in the
+    // experiment configuration.
+    SORT_BY_VALIDATION_METRIC = 6;
+    // Return the trials sorted by their latest validation end time.
+    SORT_BY_VALIDATION_END_TIME = 7;
+    // Return the trials sorted by the number of batches completed.
+    SORT_BY_BATCHES_PROCESSED = 8;
+    // Return the trials sorted by the total duration.
+    SORT_BY_DURATION = 9;
   }
   // Sort trials by the given field.
   SortBy sort_by = 1;

@@ -129,3 +129,9 @@ FROM searcher_info
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
+  -- Return the same ordering of IDs given by $1.
+  JOIN (
+    SELECT *
+    FROM unnest($1::int []) WITH ORDINALITY
+  ) AS x (id, ordering) ON t.id = x.id
+  ORDER BY x.ordering;

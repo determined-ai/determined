@@ -1571,6 +1571,38 @@ WHERE id = :id`, setClause(toUpdate)), validation)
 		return errors.Wrapf(err, "error updating (%v) in validation (%v, %v)",
 			strings.Join(toUpdate, ", "), trialID, stepID)
 	}
+
+	if validation.State == model.CompletedState {
+		_, err = db.sql.Exec(`
+WITH const AS (
+    SELECT t.id as trial_id,
+           config->'searcher'->>'metric' AS metric_name,
+           (SELECT
+               CASE
+                   WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+                   THEN 1
+                   ELSE -1
+               END) AS sign
+    FROM experiments e
+    INNER JOIN trials t ON t.experiment_id = e.id
+  	WHERE t.id = $1
+)
+UPDATE trials t
+SET best_validation_id = $2
+FROM validations, const
+WHERE t.id = $1
+  AND (t.best_validation_id IS NULL OR
+		  (const.sign * ($3::jsonb->'validation_metrics'->>const.metric_name)::float8 < 
+			  (SELECT const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8
+			  FROM validations v
+			  WHERE v.id = t.best_validation_id
+			  LIMIT 1))
+      )
+`, trialID, validation.ID, validation.Metrics)
+		if err != nil {
+			return errors.Wrapf(err, "error updating best validation %v", *validation)
+		}
+	}
 	return nil
 }
 

@@ -311,36 +311,53 @@ func (a *apiServer) KillTrial(
 func (a *apiServer) GetExperimentTrials(
 	_ context.Context, req *apiv1.GetExperimentTrialsRequest,
 ) (*apiv1.GetExperimentTrialsResponse, error) {
-	resp := &apiv1.GetExperimentTrialsResponse{}
+	// Construct the experiment filtering expression.
+	var allStates []string
+	for _, state := range req.States {
+		allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
+	}
+	stateFilterExpr := strings.Join(allStates, ",")
 
-	switch err := a.m.db.QueryProto(
-		"proto_get_trials_for_experiment",
-		&resp.Trials,
+	// Construct the ordering expression.
+	orderColMap := map[apiv1.GetExperimentTrialsRequest_SortBy]string{
+		apiv1.GetExperimentTrialsRequest_SORT_BY_UNSPECIFIED:         "id",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_ID:                  "id",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_START_TIME:          "start_time",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_END_TIME:            "end_time",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_VALIDATION_METRIC:   "best_signed_search_metric",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_VALIDATION_END_TIME: "validation_end_time",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_BATCHES_PROCESSED:   "total_batches_processed",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_DURATION:            "duration",
+	}
+	sortByMap := map[apiv1.OrderBy]string{
+		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+	}
+	orderExpr := ""
+	if orderColMap[req.SortBy] != "id" {
+		orderExpr = fmt.Sprintf(
+			"%s %s, id %s",
+			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
+		)
+	} else {
+		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
+	}
+
+	resp := &apiv1.GetExperimentTrialsResponse{}
+	switch err := a.m.db.QueryProtof(
+		"proto_get_trial_ids_for_experiment",
+		[]interface{}{orderExpr},
+		resp,
 		req.ExperimentId,
+		stateFilterExpr,
+		req.Offset,
+		req.Limit,
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found:", req.ExperimentId)
 	case err != nil:
 		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
-	}
-	a.filter(&resp.Trials, func(i int) bool {
-		v := resp.Trials[i]
-		if len(req.States) == 0 {
-			return true
-		}
-
-		for _, state := range req.States {
-			if state == v.State {
-				return true
-			}
-		}
-
-		return false
-	})
-
-	a.sort(resp.Trials, req.OrderBy, req.SortBy, apiv1.GetExperimentTrialsRequest_SORT_BY_ID)
-	if err := a.paginate(&resp.Pagination, &resp.Trials, req.Offset, req.Limit); err != nil {
-		return nil, err
 	}
 
 	trialIds := make([]string, 0)
