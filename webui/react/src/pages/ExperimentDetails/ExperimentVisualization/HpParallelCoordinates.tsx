@@ -5,7 +5,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
-import ParallelCoordinates, { Dimension, dimensionTypeMap } from 'components/ParallelCoordinates';
+import ParallelCoordinates, {
+  Dimension, DimensionType, dimensionTypeMap,
+} from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
@@ -18,7 +20,7 @@ import {
   ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap,
   Primitive, Range, RunState,
 } from 'types';
-import { defaultNumericRange, normalizeRange, updateRange } from 'utils/chart';
+import { defaultNumericRange, getNumericRange, normalizeRange, updateRange } from 'utils/chart';
 import { isObject } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
@@ -38,8 +40,9 @@ interface Props {
 
 interface HpTrialData {
   colors: number[];
-  hparams: Record<string, Primitive[]>;
+  data: Record<string, Primitive[]>;
   lineIds: number[];
+  metricRange?: Range<number>;
 }
 
 const STORAGE_PATH = 'experiment-visualization';
@@ -67,26 +70,34 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const dimensions = useMemo(() => {
-    return hpList
+    const newDimensions = hpList
       .filter(key => {
         const hp = experiment.config.hyperparameters[key];
         return hp.type !== ExperimentHyperParamType.Constant;
       })
       .map(key => {
         const hp = experiment.config.hyperparameters[key];
-        const dimension: Dimension = {
-          categories: hp.vals,
-          label: key,
-          type: dimensionTypeMap[hp.type],
-        };
+        const dimension: Dimension = { label: key, type: dimensionTypeMap[hp.type] };
 
+        if (hp.vals) dimension.categories = hp.vals;
         if (hp.minval != null && hp.maxval != null) {
           dimension.range = [ hp.minval, hp.maxval ] as Range<number>;
         }
 
         return dimension;
       });
-  }, [ experiment.config.hyperparameters, hpList ]);
+
+    // Add metric as column to parcoords dimension list
+    if (chartData?.metricRange) {
+      newDimensions.push({
+        label: selectedMetric.name,
+        range: chartData.metricRange,
+        type: DimensionType.Scalar,
+      });
+    }
+
+    return newDimensions;
+  }, [ chartData, experiment.config.hyperparameters, hpList, selectedMetric.name ]);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -133,9 +144,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
         const trialIds: number[] = [];
         const trialMetrics: number[] = [];
-        const trialHps: Record<string, Primitive[]> = {};
         const trialHpMap: Record<string, Record<number, Primitive>> = {};
         const trialHpRanges: Record<string, Range> = {};
+        const data: Record<string, Primitive[]> = {};
         let trialMetricRange: Range<number> = defaultNumericRange();
 
         event.trials.forEach(trial => {
@@ -152,13 +163,22 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
 
         Object.keys(trialHpMap).forEach(hpKey => {
-          trialHps[hpKey] = trialIds.map(trialId => trialHpMap[hpKey][trialId]);
+          data[hpKey] = trialIds.map(trialId => trialHpMap[hpKey][trialId]);
         });
+
+        // Add metric of interest
+        data[selectedMetric.name] = trialMetrics;
 
         // Normalize metrics values for parallel coordinates colors.
         const colors = normalizeRange(trialMetrics, trialMetricRange);
+        const metricRange = getNumericRange(trialMetrics);
 
-        setChartData(() => ({ colors, hparams: trialHps, lineIds: trialIds }));
+        setChartData(() => ({
+          colors,
+          data,
+          lineIds: trialIds,
+          metricRange,
+        }));
         setHasLoaded(true);
       },
     ).catch(e => setPageError(e));
@@ -213,7 +233,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           {!hasLoaded || !chartData ? <Spinner /> : (
             <ParallelCoordinates
               colors={chartData.colors}
-              data={chartData.hparams}
+              data={chartData.data}
               dimensions={dimensions}
               lineIds={chartData.lineIds} />
           )}

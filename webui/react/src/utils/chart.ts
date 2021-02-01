@@ -7,6 +7,22 @@ export const defaultNumericRange = (): Range<number> => {
   return [ Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY ];
 };
 
+export const getNumericRange = (values: number[], forceRange = true): Range<number> | undefined => {
+  if (values.length === 0) return;
+  const range = values.reduce((acc, value) => {
+    acc[0] = Math.min(acc[0], value);
+    acc[1] = Math.max(acc[1], value);
+    return acc;
+  }, [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ] as Range<number>);
+
+  if (forceRange && range[0] === range[1]) {
+    range[0] = Math.floor(range[0]);
+    range[1] = Math.ceil(range[1]);
+  }
+
+  return range;
+};
+
 export const updateRange = <T extends Primitive>(
   range: Range<T> | undefined,
   value: T,

@@ -7,7 +7,7 @@ import { generateAlphaNumeric } from 'utils/string';
 
 export type NumRange = [ number, number ];
 
-enum DimensionType {
+export enum DimensionType {
   Categorical = 'categorical',
   Scalar = 'scalar',
 }
@@ -61,11 +61,25 @@ const ParallelCoordinates: React.FC<Props> = ({
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ chartState, setChartState ] = useState<ChartState>({});
 
+  const sortedDimensions: Dimension[] = useMemo(() => {
+    const dimensionOrder = chartState.dimensionOrder;
+    if (!dimensionOrder) return dimensions;
+
+    const unorderedDimensionKeys: string[] = [];
+    dimensions.forEach(dimension => {
+      if (!dimensionOrder.includes(dimension.label)) unorderedDimensionKeys.push(dimension.label);
+    });
+
+    const dimensionMap = dimensions.reduce((acc, dimension) => {
+      acc[dimension.label] = dimension;
+      return acc;
+    }, {} as Record<string, Dimension>);
+
+    return [ ...dimensionOrder, ...unorderedDimensionKeys ].map(key => dimensionMap[key]);
+  }, [ chartState, dimensions ]);
+
   const chartData: Partial<PlotData> = useMemo(() => {
-    const orderedDimensions = chartState.dimensionOrder ? chartState.dimensionOrder.map(key => {
-      return dimensions.find(dimension => dimension.label === key);
-    }) : dimensions;
-    const chartDimensions = orderedDimensions
+    const chartDimensions = sortedDimensions
       .map((dimension, index) => {
         if (!dimension) return;
 
@@ -117,7 +131,7 @@ const ParallelCoordinates: React.FC<Props> = ({
       },
       type: 'parcoords',
     };
-  }, [ chartState, colors, data, dimensions ]);
+  }, [ chartState, colors, data, sortedDimensions ]);
 
   useEffect(() => {
     const ref = chartRef.current;
