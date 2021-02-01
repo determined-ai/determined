@@ -1216,6 +1216,11 @@ WHERE trial_id = $1 AND step_id = $2 AND state != 'COMPLETED'
 	if err != nil {
 		return errors.Wrapf(err, "error rolling back vals for trial %v on step %v", id, lastStep)
 	}
+
+	err = db.SetTrialBestValidation(id)
+	if err != nil {
+		return errors.Wrapf(err, "error rolling back best val for trial %v on step %v", id, lastStep)
+	}
 	return nil
 }
 
@@ -1572,37 +1577,10 @@ WHERE id = :id`, setClause(toUpdate)), validation)
 			strings.Join(toUpdate, ", "), trialID, stepID)
 	}
 
-	if validation.State == model.CompletedState {
-		_, err = db.sql.Exec(`
-WITH const AS (
-    SELECT t.id as trial_id,
-           config->'searcher'->>'metric' AS metric_name,
-           (SELECT
-               CASE
-                   WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-                   THEN 1
-                   ELSE -1
-               END) AS sign
-    FROM experiments e
-    INNER JOIN trials t ON t.experiment_id = e.id
-  	WHERE t.id = $1
-)
-UPDATE trials t
-SET best_validation_id = $2
-FROM validations, const
-WHERE t.id = $1
-  AND (t.best_validation_id IS NULL OR
-		  (const.sign * ($3::jsonb->'validation_metrics'->>const.metric_name)::float8 < 
-			  (SELECT const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8
-			  FROM validations v
-			  WHERE v.id = t.best_validation_id
-			  LIMIT 1))
-      )
-`, trialID, validation.ID, validation.Metrics)
-		if err != nil {
-			return errors.Wrapf(err, "error updating best validation %v", *validation)
-		}
+	if err := db.SetTrialBestValidation(trialID); err != nil {
+		return errors.Wrapf(err, "error setting best validation for (%v, %v)", trialID, stepID)
 	}
+
 	return nil
 }
 
@@ -1960,4 +1938,34 @@ func (db *PgDB) withTransaction(name string, exec func(tx *sql.Tx) error) error 
 
 	tx = nil
 	return nil
+}
+
+// SetTrialBestValidation sets `public.trials.best_validation_id` to the `id` of the row in
+// `public.validations` corresponding to the trial's best validation.
+func (db *PgDB) SetTrialBestValidation(id int) error {
+	_, err := db.sql.Exec(`
+WITH const AS (
+    SELECT t.id as trial_id,
+           config->'searcher'->>'metric' AS metric_name,
+           (SELECT
+               CASE WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+			   THEN 1
+			   ELSE -1 END) AS sign
+    FROM experiments e
+    INNER JOIN trials t ON t.experiment_id = e.id
+  	WHERE t.id = $1
+), best_validation AS (
+	SELECT
+		v.id AS id,
+		const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 AS metric
+	FROM validations v, const
+	WHERE v.trial_id = $1
+	ORDER BY metric ASC
+	LIMIT 1
+)
+UPDATE trials t
+SET best_validation_id = (SELECT bv.id FROM best_validation bv)
+WHERE t.id = $1;
+`, id)
+	return errors.Wrapf(err, "error updating best validation for trial %d", id)
 }
