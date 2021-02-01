@@ -12,6 +12,9 @@ enum DimensionType {
   Scalar = 'scalar',
 }
 
+/*
+ * `colors` - list of numbers between 0.0 and 1.0
+ */
 interface Props {
   colors: number[];
   data: Record<string, Primitive[]>;
@@ -103,7 +106,15 @@ const ParallelCoordinates: React.FC<Props> = ({
 
     return {
       dimensions: chartDimensions,
-      line: { color: colors },
+      line: {
+        color: colors,
+        colorbar: {},
+        colorscale: [
+          [ 0.0, 'rgba(238, 0, 0, 1.0)' ],
+          [ 0.5, 'rgba(238, 238, 0, 1.0)' ],
+          [ 1.0, 'rgba(0, 238, 0, 1.0)' ],
+        ],
+      },
       type: 'parcoords',
     };
   }, [ chartState, colors, data, dimensions ]);
