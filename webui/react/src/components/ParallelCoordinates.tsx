@@ -20,6 +20,11 @@ interface Props {
   lineIds: number[];
 }
 
+interface ChartState {
+  constraintRanges?: Range[];
+  dimensionOrder?: string[];
+}
+
 export interface Dimension {
   categories?: Primitive[];
   label: string;
@@ -47,55 +52,61 @@ const ParallelCoordinates: React.FC<Props> = ({
   colors,
   data,
   dimensions,
-  lineIds,
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
-  const [ constraintRanges, setConstraintRanges ] = useState<Range[]>([]);
+  const [ chartState, setChartState ] = useState<ChartState>({});
 
   const chartData: Partial<PlotData> = useMemo(() => {
-    const chartDimensions = dimensions.map((dimension, index) => {
-      const key = dimension.label;
-      const hpDimension: Record<string, unknown> = {
-        // constraintrange: dimension.range,
-        label: key,
-        range: dimension.range,
-        values: data[key],
-      };
+    const orderedDimensions = chartState.dimensionOrder ? chartState.dimensionOrder.map(key => {
+      return dimensions.find(dimension => dimension.label === key);
+    }) : dimensions;
+    const chartDimensions = orderedDimensions
+      .map((dimension, index) => {
+        if (!dimension) return;
 
-      if (dimension.categories) {
-        const { map, ticktext, tickvals } = dimension.categories.reduce((acc, category, index) => {
-          const key = category.toString();
-          const value = index * 2 + 1;
-          acc.map[key] = value;
-          acc.ticktext.push(key);
-          acc.tickvals.push(value);
-          return acc;
-        }, {
-          map: {} as Record<string, number>,
-          ticktext: [] as string[],
-          tickvals: [] as number[],
-        });
-        hpDimension.range = [ 0, dimension.categories.length * 2 ];
-        hpDimension.ticktext = ticktext;
-        hpDimension.tickvals = tickvals;
-        hpDimension.values = data[key].map(value => map[value.toString()]);
-      }
+        const key = dimension.label;
+        const hpDimension: Record<string, unknown> = {
+          label: key,
+          range: dimension.range,
+          values: data[key],
+        };
 
-      if (constraintRanges[index] != null) {
-        hpDimension.constraintrange = clone(constraintRanges[index]);
-      }
+        if (dimension.categories) {
+          const { map, ticktext, tickvals } = dimension.categories
+            .reduce((acc, category, index) => {
+              const key = category.toString();
+              const value = index * 2 + 1;
+              acc.map[key] = value;
+              acc.ticktext.push(key);
+              acc.tickvals.push(value);
+              return acc;
+            }, {
+              map: {} as Record<string, number>,
+              ticktext: [] as string[],
+              tickvals: [] as number[],
+            });
+          hpDimension.range = [ 0, dimension.categories.length * 2 ];
+          hpDimension.ticktext = ticktext;
+          hpDimension.tickvals = tickvals;
+          hpDimension.values = data[key].map(value => map[value.toString()]);
+        }
 
-      return hpDimension;
-    });
+        if (chartState.constraintRanges && chartState.constraintRanges[index] != null) {
+          hpDimension.constraintrange = clone(chartState?.constraintRanges[index]);
+        }
+
+        return hpDimension;
+      })
+      .filter(dimension => dimension !== undefined);
 
     return {
       dimensions: chartDimensions,
       line: { color: colors },
       type: 'parcoords',
     };
-  }, [ constraintRanges, colors, data, dimensions ]);
+  }, [ chartState, colors, data, dimensions ]);
 
   useEffect(() => {
     const ref = chartRef.current;
@@ -113,25 +124,39 @@ const ParallelCoordinates: React.FC<Props> = ({
       const keys = Object.keys(data[0]);
       if (!Array.isArray(keys) || keys.length === 0) return;
 
+      // Check for user applied dimension reorder
+      if (keys[0] === 'dimensions') {
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        const dimensions = data[0][keys[0]][0] || [];
+        const dimensionKeys = dimensions.map((dimension: any) => dimension.label);
+        const constraints = dimensions.map((dimension: any) => dimension.constraintrange);
+        /* eslint-enable @typescript-eslint/no-explicit-any */
+
+        setChartState({ constraintRanges: constraints, dimensionOrder: dimensionKeys });
+      }
+
+      // Check for user applied filter on a dimension
       const regex = /^dimensions\[(\d+)\]\.constraintrange/i;
       const matches = keys[0].match(regex);
-      if (!Array.isArray(matches) || matches.length !== 2) return;
+      if (Array.isArray(matches) && matches.length === 2) {
+        const constraint: Range = data[0][keys[0]] ? data[0][keys[0]][0] : undefined;
+        const hpIndex = parseInt(matches[1]);
 
-      const constraint: Range = data[0][keys[0]][0];
-      const hpIndex = parseInt(matches[1]);
-      setConstraintRanges(prev => {
-        const newRanges = clone(prev);
-        newRanges[hpIndex] = null;
-        if (constraint) {
-          if (isNumber(constraint[0]) && isNumber(constraint[1]) &&
+        setChartState(prev => {
+          const newChartState = clone(prev);
+          newChartState.constraintRanges = newChartState.constraintRanges || [];
+          newChartState.constraintRanges[hpIndex] = undefined;
+          if (constraint) {
+            if (isNumber(constraint[0]) && isNumber(constraint[1]) &&
               Math.abs(constraint[0] - constraint[1]) > CONSTRAINT_REMOVE_THRESHOLD) {
-            newRanges[hpIndex] = constraint;
-          } else if (constraint[0] !== constraint[1]) {
-            newRanges[hpIndex] = constraint;
+              newChartState.constraintRanges[hpIndex] = constraint;
+            } else if (constraint[0] !== constraint[1]) {
+              newChartState.constraintRanges[hpIndex] = constraint;
+            }
           }
-        }
-        return newRanges;
-      });
+          return newChartState;
+        });
+      }
     });
 
     return () => {
