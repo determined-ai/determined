@@ -6,12 +6,10 @@ from typing import Any, Dict, Sequence, Union
 import torch
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
-
-GH = NewType('GH', Callable[[str], Any])
-
+HyperparamsProvider = Callable[[str], Any]
 
 # class DETLightningModule(ptl.LightningModule):
-#     def __init__(self, get_hparam: GH, *args, **kwargs):  # Py QUESTION should I add this is kwarg?
+#     def __init__(self, get_hparam: HyperparamsProvider, *args, **kwargs):  # Py QUESTION should I add this is kwarg?
 #         super().__init__(*args, **kwargs)
 #         self.get_hparam = get_hparam
 
@@ -46,10 +44,10 @@ class DETLightningDataModule(ptl.LightningDataModule):
 
     def val_dataloader(self) -> torch.utils.data.DataLoader:
         return self.train_det_dataloader().get_data_loader()
-    
+
     # def test_dataloader(self) -> torch.utils.data.DataLoader:
     #     raise TypeError('not supported')
-        
+
 
 
 not_supported = TypeError('not supported')
@@ -111,7 +109,7 @@ class PTLAdapter(PyTorchTrial):
         if not self.dm._has_setup_fit:
             self.dm.setup() # TODO call once per GPU
         return self.dm.train_det_dataloader()
-    
+
     def build_validation_data_loader(self):
         if self.dm is None: raise NotImplementedError()
         if not self.dm._has_setup_fit:
