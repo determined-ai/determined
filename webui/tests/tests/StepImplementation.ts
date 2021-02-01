@@ -305,7 +305,7 @@ export default class StepImplementation {
   public async checkAgentCountStats(count: string) {
     const stats = await t.$('div[class^="OverviewStats_base"]').elements();
     assert.strictEqual(stats.length, 3);
-    const numAgents = (await stats[0].text()).replace('Number of Agents', '');
+    const numAgents = (await stats[0].text()).replace('Connected Agents', '');
     assert.strictEqual(parseInt(numAgents), parseInt(count));
   }
 
