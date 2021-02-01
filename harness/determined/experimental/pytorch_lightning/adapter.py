@@ -8,10 +8,10 @@ import torch
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 HyperparamsProvider = Callable[[str], Any]
 
-# class DETLightningModule(ptl.LightningModule):
-#     def __init__(self, get_hparam: HyperparamsProvider, *args, **kwargs):  # Py QUESTION should I add this is kwarg?
-#         super().__init__(*args, **kwargs)
-#         self.get_hparam = get_hparam
+class DETLightningModule(ptl.LightningModule):
+    def __init__(self, *args, get_hparam: HyperparamsProvider, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.get_hparam = get_hparam
 
 class DETLightningDataModule(ptl.LightningDataModule):
     """
@@ -53,7 +53,7 @@ class DETLightningDataModule(ptl.LightningDataModule):
 not_supported = TypeError('not supported')
 
 class PTLAdapter(PyTorchTrial):
-    def __init__(self, context: PyTorchTrialContext, lightning_module: ptl.LightningModule, data_module: DETLightningDataModule = None) -> None:
+    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: DETLightningDataModule = None) -> None:
         super().__init__(context)
         self.lm = lightning_module(get_hparam=context.get_hparam)
         self.context = context

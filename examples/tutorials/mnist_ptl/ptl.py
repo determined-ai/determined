@@ -1,27 +1,26 @@
 import torch
-from torch import nn
 import pytorch_lightning as ptl
 from torch.utils.data import random_split
 from determined.pytorch import DataLoader
 from torch.nn import functional as F
-from torchvision.datasets import MNIST
 from torchvision import datasets, transforms
-from determined.experimental.pytorch_lightning import DETLightningDataModule, HyperparamsProvider
+from torchvision.datasets import MNIST
+from determined.experimental.pytorch_lightning import DETLightningDataModule, HyperparamsProvider, DETLightningModule
 from typing import Optional
 import os
 
 
-class LightningMNISTClassifier(ptl.LightningModule):
+class LightningMNISTClassifier(DETLightningModule):
 
     # TODO expect determined config.
-    def __init__(self, get_hparam: HyperparamsProvider = None):
-        super().__init__()
-        self.get_hparam = get_hparam
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # mnist images are (1, 28, 28) (channels, width, height)
         self.layer_1 = torch.nn.Linear(28 * 28, 128)
         self.layer_2 = torch.nn.Linear(128, 256)
         self.layer_3 = torch.nn.Linear(256, 10)
+
 
     def forward(self, x):
         batch_size, channels, width, height = x.size()

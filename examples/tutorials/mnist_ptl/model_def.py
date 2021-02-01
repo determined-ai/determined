@@ -16,11 +16,10 @@ import torch
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
 import ptl
-import pytorch_lightning as pl
 from determined.experimental.pytorch_lightning import PTLAdapter
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
-class MNistTrial(PTLAdapter): # match PyTorchTrial API
+class MNistTrial(PTLAdapter):  # match PyTorchTrial API
     def __init__(self, context: PyTorchTrialContext) -> None:
         super().__init__(context, ptl.LightningMNISTClassifier, data_module=ptl.MNISTDataModule)
