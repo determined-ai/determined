@@ -45,8 +45,6 @@ message GetExperimentsRequest {
     // Return experiments sorted by end time. Experiments without end_time are
     // returned after the ones with end_time.
     SORT_BY_END_TIME = 5;
-    // Return experiments sorted by state.
-    SORT_BY_STATE = 6;
     // Return experiments sorted by number of trials.
     SORT_BY_NUM_TRIALS = 8;
     // Return experiments sorted by progress.
@@ -183,8 +181,6 @@ message GetExperimentCheckpointsRequest {
     SORT_BY_END_TIME = 8;
     // Returns checkpoints sorted by validation state.
     SORT_BY_VALIDATION_STATE = 15;
-    // Returns checkpoints sorted by state.
-    SORT_BY_STATE = 16;
     // Returns checkpoints sorted by the experiment's `searcher.metric`
     // configuration setting.
     SORT_BY_SEARCHER_METRIC = 17;

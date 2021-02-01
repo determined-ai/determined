@@ -88,7 +88,7 @@ export interface GetExperimentsParams extends PaginationParams {
 
 export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME'
-  | 'SORT_BY_END_TIME' | 'SORT_BY_STATE';
+  | 'SORT_BY_END_TIME';
   states?: RunState[];
 }
 

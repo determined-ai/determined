@@ -105,8 +105,6 @@ message GetTrialCheckpointsRequest {
     SORT_BY_END_TIME = 8;
     // Returns checkpoints sorted by validation state.
     SORT_BY_VALIDATION_STATE = 15;
-    // Returns checkpoints sorted by state.
-    SORT_BY_STATE = 16;
   }
   // The trial id.
   int32 id = 1;
