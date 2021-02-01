@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import Plotly, { Layout, PlotData } from 'Plotly';
 import { ExperimentHyperParamType, Primitive, Range } from 'types';
+import { clone, isNumber } from 'utils/data';
 import { generateAlphaNumeric } from 'utils/string';
 
 export type NumRange = [ number, number ];
@@ -34,22 +35,33 @@ export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> =
   [ExperimentHyperParamType.Log]: DimensionType.Scalar,
 };
 
+const CONSTRAINT_REMOVE_THRESHOLD = 0.000000001;
+
 const plotlyLayout: Partial<Layout> = { paper_bgcolor: 'transparent' };
 const plotlyConfig: Partial<Plotly.Config> = {
   displayModeBar: false,
   responsive: true,
 };
 
-const ParallelCoordinates: React.FC<Props> = (props: Props) => {
+const ParallelCoordinates: React.FC<Props> = ({
+  colors,
+  data,
+  dimensions,
+  lineIds,
+  ...props
+}: Props) => {
+  const chartRef = useRef<HTMLDivElement>(null);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
+  const [ constraintRanges, setConstraintRanges ] = useState<Range[]>([]);
 
-  const data: Partial<PlotData> = useMemo(() => {
-    const dimensions = props.dimensions.map(dimension => {
+  const chartData: Partial<PlotData> = useMemo(() => {
+    const chartDimensions = dimensions.map((dimension, index) => {
       const key = dimension.label;
       const hpDimension: Record<string, unknown> = {
+        // constraintrange: dimension.range,
         label: key,
         range: dimension.range,
-        values: props.data[key],
+        values: data[key],
       };
 
       if (dimension.categories) {
@@ -68,26 +80,67 @@ const ParallelCoordinates: React.FC<Props> = (props: Props) => {
         hpDimension.range = [ 0, dimension.categories.length * 2 ];
         hpDimension.ticktext = ticktext;
         hpDimension.tickvals = tickvals;
-        hpDimension.values = props.data[key].map(value => map[value.toString()]);
+        hpDimension.values = data[key].map(value => map[value.toString()]);
+      }
+
+      if (constraintRanges[index] != null) {
+        hpDimension.constraintrange = clone(constraintRanges[index]);
       }
 
       return hpDimension;
     });
 
     return {
-      dimensions,
-      line: { color: props.colors },
+      dimensions: chartDimensions,
+      line: { color: colors },
       type: 'parcoords',
     };
-  }, [ props.colors, props.data, props.dimensions ]);
+  }, [ constraintRanges, colors, data, dimensions ]);
 
   useEffect(() => {
-    Plotly.react(id, [ data ], plotlyLayout, plotlyConfig);
+    const ref = chartRef.current;
+    if (!ref) return;
 
-    return () => Plotly.purge(id);
-  }, [ id, data ]);
+    Plotly.react(ref, [ chartData ], plotlyLayout, plotlyConfig);
 
-  return <div id={id} />;
+    /*
+     * During filtering, save all the constraint ranges to reconstruct the
+     * filter during a re-rendering of the chart.
+     */
+    (ref as unknown as Plotly.PlotlyHTMLElement).on('plotly_restyle', data => {
+      if (!Array.isArray(data) || data.length < 1) return;
+
+      const keys = Object.keys(data[0]);
+      if (!Array.isArray(keys) || keys.length === 0) return;
+
+      const regex = /^dimensions\[(\d+)\]\.constraintrange/i;
+      const matches = keys[0].match(regex);
+      if (!Array.isArray(matches) || matches.length !== 2) return;
+
+      const constraint: Range = data[0][keys[0]][0];
+      const hpIndex = parseInt(matches[1]);
+      setConstraintRanges(prev => {
+        const newRanges = clone(prev);
+        newRanges[hpIndex] = null;
+        if (constraint) {
+          if (isNumber(constraint[0]) && isNumber(constraint[1]) &&
+              Math.abs(constraint[0] - constraint[1]) > CONSTRAINT_REMOVE_THRESHOLD) {
+            newRanges[hpIndex] = constraint;
+          } else if (constraint[0] !== constraint[1]) {
+            newRanges[hpIndex] = constraint;
+          }
+        }
+        return newRanges;
+      });
+    });
+
+    return () => {
+      if (ref) Plotly.purge(ref);
+    };
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [ chartData ]);
+
+  return <div id={id} ref={chartRef} />;
 };
 
 export default ParallelCoordinates;

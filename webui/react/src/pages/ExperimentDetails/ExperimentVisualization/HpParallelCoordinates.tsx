@@ -158,7 +158,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         // Normalize metrics values for parallel coordinates colors.
         const colors = normalizeRange(trialMetrics, trialMetricRange);
 
-        setChartData({ colors, hparams: trialHps, lineIds: trialIds });
+        setChartData(() => ({ colors, hparams: trialHps, lineIds: trialIds }));
         setHasLoaded(true);
       },
     ).catch(e => setPageError(e));
