@@ -21,6 +21,7 @@ interface Props {
   dimensions: Dimension[];
   id?: string;
   lineIds: number[];
+  smallerIsBetter?: boolean;
 }
 
 interface ChartState {
@@ -44,6 +45,16 @@ export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> =
 };
 
 const CONSTRAINT_REMOVE_THRESHOLD = 0.000000001;
+const COLOR_SCALE = [
+  [ 0.0, 'rgba(238, 0, 0, 1.0)' ],
+  [ 0.5, 'rgba(238, 238, 0, 1.0)' ],
+  [ 1.0, 'rgba(0, 238, 0, 1.0)' ],
+];
+const COLOR_SCALE_INVERSE = [
+  [ 0.0, 'rgba(0, 238, 0, 1.0)' ],
+  [ 0.5, 'rgba(238, 238, 0, 1.0)' ],
+  [ 1.0, 'rgba(238, 0, 0, 1.0)' ],
+];
 
 const plotlyLayout: Partial<Layout> = { paper_bgcolor: 'transparent' };
 const plotlyConfig: Partial<Plotly.Config> = {
@@ -55,6 +66,7 @@ const ParallelCoordinates: React.FC<Props> = ({
   colors,
   data,
   dimensions,
+  smallerIsBetter,
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -123,15 +135,11 @@ const ParallelCoordinates: React.FC<Props> = ({
       line: {
         color: colors,
         colorbar: {},
-        colorscale: [
-          [ 0.0, 'rgba(238, 0, 0, 1.0)' ],
-          [ 0.5, 'rgba(238, 238, 0, 1.0)' ],
-          [ 1.0, 'rgba(0, 238, 0, 1.0)' ],
-        ],
+        colorscale: smallerIsBetter ? COLOR_SCALE_INVERSE : COLOR_SCALE,
       },
       type: 'parcoords',
     };
-  }, [ chartState, colors, data, sortedDimensions ]);
+  }, [ chartState, colors, data, smallerIsBetter, sortedDimensions ]);
 
   useEffect(() => {
     const ref = chartRef.current;

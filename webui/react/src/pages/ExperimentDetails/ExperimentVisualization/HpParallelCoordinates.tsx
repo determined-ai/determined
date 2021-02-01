@@ -17,7 +17,7 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap,
+  ExperimentBase, ExperimentHyperParamType, MetricName, MetricType, metricTypeParamMap,
   Primitive, Range, RunState,
 } from 'types';
 import { defaultNumericRange, getNumericRange, normalizeRange, updateRange } from 'utils/chart';
@@ -68,6 +68,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ hpList, setHpList ] = useState<string[]>(defaultHpList || limitedHpList);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
+
+  const smallerIsBetter = useMemo(() => {
+    if (selectedMetric.type === MetricType.Validation &&
+        selectedMetric.name === experiment.config.searcher.metric) {
+      return experiment.config.searcher.smallerIsBetter;
+    }
+    return undefined;
+  }, [ experiment.config.searcher, selectedMetric ]);
 
   const dimensions = useMemo(() => {
     const newDimensions = hpList
@@ -235,7 +243,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
               colors={chartData.colors}
               data={chartData.data}
               dimensions={dimensions}
-              lineIds={chartData.lineIds} />
+              lineIds={chartData.lineIds}
+              smallerIsBetter={smallerIsBetter} />
           )}
         </div>
       </Section>
