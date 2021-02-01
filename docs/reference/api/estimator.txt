@@ -53,6 +53,8 @@ context object where these functions will be found will be in
    :members: cache_train_dataset, cache_validation_dataset, make_metric
    :member-order: bysource
 
+.. _estimators-custom-reducers:
+
 Reducing Metrics
 ================
 

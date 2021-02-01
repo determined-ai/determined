@@ -103,7 +103,7 @@ Gradient Clipping
 Users need to pass a gradient clipping function to
 :meth:`determined.pytorch.PyTorchTrialContext.step_optimizer`.
 
-.. _pytorch-callbacks:
+.. _pytorch-custom-reducers:
 
 Reducing Metrics
 ================
@@ -120,6 +120,8 @@ for more details.
 .. autoclass:: determined.pytorch.MetricReducer
    :members: reset, per_slot_reduce, cross_slot_reduce
    :member-order: bysource
+
+.. _pytorch-callbacks:
 
 Callbacks
 =========

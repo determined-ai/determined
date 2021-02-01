@@ -7,37 +7,50 @@
 This document aims to provide useful guidelines for debugging models
 with Determined. Hopefully, it will help you become a power user of
 Determined, but if you get stuck please don't hesitate to contact us on
-TODO:ref-support-channels!
+`Slack <https://determined-community.slack.com>`_! (`signup link
+<https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`_)
 
 This document focuses on model debugging, not cluster debugging, so it
 is assumed that you have already successfully :ref:`installed Determined
 <install-cluster>`.
 
+Successfully running code on a Determined cluster differs from normal
+training scripts in the following ways:
+
+   -  Your code will be organized into a Trial API.
+   -  The code will run in a docker container on another machine.
+   -  Your model may be ran many times in a hyperparameter search,
+      and/or it may be distributed across multiple GPUs or machines.
+
+This guide will introduce each change incrementally as we work towards
+achieving a fully-function model in Determined.
+
 The basic steps for debugging are:
 
-   -  Model-related issues:
+**Model-related issues:**
 
-        1. Does the original code run locally?
-        2. Does each method of your Trial class work locally?
-        3. Does local test mode work?
+   1. Does the original code run locally?
+   2. Does each method of your Trial class work locally?
+   3. Does local test mode work?
 
-   -  Docker- or Cluster-related issues
+**Docker- or Cluster-related issues**
 
-        4. Does the original code run in a Notebook or Shell?
-        5. Does each method of your Trial class work in a Notebook or Shell?
-        6. Does local test mode work in a Notebook or Shell?
+   4. Does the original code run in a Notebook or Shell?
+   5. Does each method of your Trial class work in a Notebook or Shell?
+   6. Does local test mode work in a Notebook or Shell?
 
-   -  Higher-level issues
+**Higher-level issues**
 
-        7. Does cluster test mode work with ``slots_per_trial=1``?
-        8. Does a single-GPU experiment work?
-        9. Does a multi-GPU experiment work?
+   7. Does cluster test mode work with ``slots_per_trial=1``?
+   8. Does a single-GPU experiment work?
+   9. Does a multi-GPU experiment work?
 
-Model-related issues
-====================
+**********************
+ Model-related issues
+**********************
 
 1. Does the original code run locally?
---------------------------------------
+======================================
 
 This step assumes you have have ported your model from some code outside
 of Determined. If your Trial code is not based on any such code, skip to
@@ -47,19 +60,23 @@ Probably you already know your code works, but this is a reminder to
 double-check before proceeding.
 
 2. Does each method of your Trial class work locally?
------------------------------------------------------
+=====================================================
 
 This step assumes you have a working local environment for training. If
-you normally run your code in a docker environment of some instead, skip
-to Step 4.
+you normally run your code in a docker environment instead, skip to Step
+4.
+
+The goal of this step is to ensure that your Trial API is behaving the
+way you think it should by calling its methods yourself and verifying
+the output.
 
 **How to test:** You should create some simple tests to verify that each
 method of your Trial is doing what you think it ought to be doing. There
 are some simple and practical examples of what these tests might look
 like for ``PyTorchTrial`` and ``TFKerasTrial`` in the
-:meth:`determined.TrainContext.from_config` documentation, but
-ultimately only you know what a reasonable test for your Trial needs to
-look like.
+:meth:`determined.TrialContext.from_config`
+documentation, but ultimately only you know what a reasonable test for
+your Trial needs to look like.
 
 **How to diagnose failures:** If you hit any issues running the methods
 of your Trial code locally, there are most likely errors in your Trial
@@ -68,10 +85,15 @@ file. Ideally, breaking it down method-by-method like this makes finding
 and solving issues much faster.
 
 3. Does local test mode work?
------------------------------
+=============================
 
 This step assumes you have a working local environment for training. If
 you do not, skip to Step 4.
+
+In Step 2, you validated that your Trial API calls are behaving the way
+you want them to. Now we will run the real Determined training loop
+(with abbreviated workloads) with your Trial to make sure that it is
+meeting the Determined requirements.
 
 **How to test:** Simply create an experiment, passing ``--local --test``
 on the command line:
@@ -80,20 +102,29 @@ on the command line:
 
    det experiment create myconfig.yaml my_model_dir --local --test
 
+``--local`` mean the training happens right where you launch it, rather
+than submitting the code to a cluster.
+
+``--test`` means that we are going to run abbreviated workloads to try
+to hit bugs sooner, and then exit right afterwards.
+
+If the command exits successfully, the test passed.
+
 **How to diagnose failures:** Local test mode does very few things; it
 builds a model, runs a single batch of training data, evaluates the
 model, and saves a checkpoint (to a dummy location). If your per-method
 checks in Step 2 were all successful but local test mode does not work,
 you may not be implementing your framework's Trial class correctly
 (double-check the documentation) or you may have found a bug in an
-invalid assumption in Determined (please file a github issue or contact
-us on TODO:ref:slack).
+invalid assumption in Determined (please file a Github issue or contact
+us on `slack <https://determined-community.slack.com>`_).
 
-Docker- or Cluster-related issues
-=================================
+***********************************
+ Docker- or Cluster-related issues
+***********************************
 
 4. Does the original code run in a Notebook or Shell?
------------------------------------------------------
+=====================================================
 
 This step is basically identical to Step 1, except we are going to run
 the original code on the Determined cluster rather than locally.
@@ -104,7 +135,8 @@ a ``--context`` option on the command line.
 
 Note that changes made to the ``--context`` directory while inside the
 Notebook or Shell will not affect the original files outside of the
-Notebook or Shell; see TODO for more details.
+Notebook or Shell; see :ref:`this description <notebook-state>` for more
+details.
 
 If you prefer to interact with your model via a Jupyter Notebook, try:
 
@@ -127,22 +159,24 @@ Once you are on the cluster, testing is identical to Step 1.
       context directory exceeding the maximum allowed size, it is
       because the ``--context`` directory has an upper limit of around
       128MB. If you need files larger than that as part of your model
-      definition, have a look at TODO:how-to-get-files-into-a-container.
+      definition, consider setting up a bind mount via the
+      ``bind_mounts`` field of :ref:`command-notebook-configuration`.
 
    -  You may be referencing files which exist locally but outside of
       the ``--context`` directory. If they are small, you may be able to
-      just copy them into the ``--context`` directory, see
-      TODO:how-to-get-files-into-a-container
+      just copy them into the ``--context`` directory.  Otherwise bind
+      mounting the files may be an option.
 
    -  If you hit dependency errors, you may have dependencies installed
       locally that are not installed in the Docker environment used on
-      the cluster. See TODO:customizing-commands
+      the cluster. See :ref:`custom-env` and :ref:`custom-docker-images`
+      for some options.
 
    -  If you have environment variables that you need set for your model
-      to work, see TODO:customizing-commands
+      to work, see :ref:`command-notebook-configuration`.
 
 5. Does each method of your Trial class work in a Notebook or Shell?
---------------------------------------------------------------------
+====================================================================
 
 This step is basically identical to Step 2, except we are going to run
 the original code on the Determined cluster rather than locally.
@@ -156,7 +190,7 @@ identical to Step 2.
 failure diagnosis for Step 2 and for Step 4.
 
 6. Does local test mode work in a Notebook or Shell?
-----------------------------------------------------
+====================================================
 
 This step is basically identical to Step 3, except we are going to run
 the original code on the Determined cluster rather than locally.
@@ -177,11 +211,12 @@ experiment create`` would.
 **How to diagnose failures:** Failure diagnosis is a combination of the
 failure diagnosis for both Step 3 and Step 4.
 
-Higher-level issues
-===================
+*********************
+ Higher-level issues
+*********************
 
 7. Does cluster test mode work with ``slots_per_trial=1``?
---------------------------------------------------------
+==========================================================
 
 This step is conceptually similar to Step 6, except instead of launching
 the command from an interactive environment, we will submit it to the
@@ -215,20 +250,16 @@ replicated in your experiment config:
       experiment config.
 
    -  Any ``pip``-install or ``apt``-install commands needed in the
-      interactive environment must either be built into a custom
-      docker image or they can be written into file called
-      ``startup-hook.sh`` in the root of the model definition
-      directory.  The commands in ``startup-hook.sh`` will be executed
-      automatically before training begins.
-
-      The startup-hook.sh option is quiker to try but will be slower at
-      runtime since it runs at the beginning of every trial.
+      interactive environment must either be built into a custom docker
+      image or they can be written into file called ``startup-hook.sh``
+      in the root of the model definition directory.  See
+      :ref:`startup-hooks` for more details.
 
    -  Any custom bind mounts to run in the interactive environment are
       also specified in the experiment config.
 
-   -  Environment variables are set properly in the experiment config
-      TODO:ref
+   -  Environment variables are set properly in the
+      :ref:`experiment-configuration`
 
 If no missing customizations are to blame, there are still several new
 layers introduced with a cluster-managed experiment that would not cause
@@ -240,32 +271,32 @@ issues with local training mode:
       message during experiment config validation, before any experiment
       or trials are created. To correct it, simply provide a
       ``checkpoint_storage`` configuration in one of those locations
-      (TODO:ref:master.yaml or TODO:ref:experiment_config).
+      (:ref:`master-configuration` or :ref:`experiment-configuration`).
 
    -  The configured ``checkpoint_storage`` settings are validated
-      before training starts for an experiment on the cluster. If you get
-      a message saying ``Checkpoint storage validation failed``, please
-      review the correctness of the values in your
+      before training starts for an experiment on the cluster. If you
+      get a message saying ``Checkpoint storage validation failed``,
+      please review the correctness of the values in your
       ``checkpoint_storage`` settings.
 
    -  The experiment config is fully validated for cluster-managed
       experiments, more strictly than it is for ``--local --test`` mode.
       If you get errors related to ``unmarshaling JSON`` when trying to
       submit the experiment to the cluster, that is an indication that
-      the experiment config has errors. Please review the TODO:
-      experiment-config-reference
+      the experiment config has errors. Please review the
+      :ref:`experiment-configuration`
 
-Again, if you are unable to identify the root cause of the issue yourself,
-please do not hesitate to contact Determined through our community
-support channels! TODO: link to support
+Again, if you are unable to identify the root cause of the issue
+yourself, please do not hesitate to contact Determined through our
+`community support <https://determined-community.slack.com>`_!
 
 8. Does a single-GPU experiment work?
--------------------------------------
+=====================================
 
 This step is just like to Step 7, except it introduces hyperparameter
 search and will execute full training for each trial.
 
-**How to test:** Configuration should be identical to Step 7.  Again,
+**How to test:** Configuration should be identical to Step 7. Again,
 confirm that your experiment config either does not specify
 ``resources.slots_per_trial`` at all, or that it is set to 1, like:
 
@@ -286,19 +317,19 @@ helpful):
 there are a few high-level categories of issues to check for:
 
    -  Does the error happen when the experiment has a
-      ``searcher.source_trial_id`` set?  One thing that can occur in a
+      ``searcher.source_trial_id`` set? One thing that can occur in a
       real experiment that does not occur in a ``--test`` experiment is
-      the loading of a of a previous checkpoint.  Errors when loading
+      the loading of a of a previous checkpoint. Errors when loading
       from a checkpoint can be caused by architecture change, where the
       new model code is not architecture-compatible with the old trial
       code.
 
-   - Generally, issues at this step are caused by doing training and
-     evaluation continuously, so focus on how that change may cause
-     issues with your code.
+   -  Generally, issues at this step are caused by doing training and
+      evaluation continuously, so focus on how that change may cause
+      issues with your code.
 
 9. Does a multi-GPU experiment work?
--------------------------------------
+====================================
 
 This step is like Step 8, but introduces distributed training.
 Naturally, this step is only relevant if you have multiple GPUs and you
@@ -318,20 +349,34 @@ Then create your experiment:
 
    det experiment create myconfig.yaml my_model_dir -f
 
-**How to diagnose failures:**  If you are using the ``determined``
+**How to diagnose failures:** If you are using the ``determined``
 library APIs correctly, then theoretically distributed training should
-"just work".  However, you should be aware of some common pitfalls:
+"just work". However, you should be aware of some common pitfalls:
 
-   - Determined normally controls the details of distributed training
-     for you.  If you are also trying to control those details, such as
-     calling ``tf.config.set_visible_devices()`` in a KerasTrial or
-     EstimatorTrial will very likely cause issues.
+   -  If your experiment is not being scheduled on the cluster, ensure
+      that your ``slots_per_trial`` setting is valid for your cluster.
+      E.g. if you have 4 Detrmined Agents running with 4 GPUs each, your
+      ``slots_per_trial`` could be ``1``, ``2,``, ``3``, ``4`` (which
+      would all fit on a single machine), or it could be ``8`` or ``12``
+      or ``16`` (which would take up some number of complete Agent
+      machines), but it couldn't be ``5`` (more than one Agent but not a
+      multiple of Agent size) and it couldn't be ``32`` (too big for the
+      cluster). Also ensure that there are no other notebooks, shells,
+      or experiments on the cluster which may be consuming too many
+      resources and preventing from starting.
 
-   - Some classes of metrics must be calculated specially during
-     distributed training.  Most metrics, like loss or accuracy, can be
-     calculated piecemeal on each worker in a distributed training job
-     and averaged afterwards.  Those metrics are handled automatically
-     by Determined and need no special handling.  Other metrics, like
-     F1 score, cannot be averaged from individual workers' F1 scores.
-     Determined has tooling for handling these metrics, see
-     TODO:ref:pytorch-reducers and TODO:ref:estimators-reducers.
+   -  Determined normally controls the details of distributed training
+      for you. Attempting to also control those details yourself, such
+      as calling ``tf.config.set_visible_devices()`` in a KerasTrial or
+      EstimatorTrial will very likely cause issues.
+
+   -  Some classes of metrics must be calculated specially during
+      distributed training. Most metrics, like loss or accuracy, can be
+      calculated piecemeal on each worker in a distributed training job
+      and averaged afterwards. Those metrics are handled automatically
+      by Determined and need no special handling. Other metrics, like F1
+      score, cannot be averaged from individual workers' F1 scores.
+      Determined has tooling for handling these metrics; see the docs
+      for using custom metric reducers with
+      :ref:`PyTorchTrial <pytorch-custom-reducers>` and
+      :ref:`EstimatorTrial <estimators-custom-reducers>`.
