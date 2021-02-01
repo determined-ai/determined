@@ -48,7 +48,7 @@ const rpAttrs = [
   [ 'preemptible', 'Spot/Preemptible' ],
   [ 'minAgents', 'Min Agents' ],
   [ 'maxAgents', 'Max Agents' ],
-  [ 'cpuContainerCapacityPerAgent', 'Max CPU containers / agent' ],
+  [ 'cpuContainerCapacityPerAgent', 'Max CPU containers per agent' ],
   [ 'schedulerType', 'Scheduler Type' ],
 ];
 
