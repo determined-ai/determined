@@ -48,7 +48,7 @@ const rpAttrs = [
   [ 'preemptible', 'Spot/Preemptible' ],
   [ 'minAgents', 'Min Agents' ],
   [ 'maxAgents', 'Max Agents' ],
-  [ 'cpuContainerCapacityPerAgent', 'CPU Containers per Agent' ],
+  [ 'cpuContainerCapacityPerAgent', 'Max CPU containers per agent' ],
   [ 'schedulerType', 'Scheduler Type' ],
 ];
 
@@ -60,11 +60,10 @@ const agentStatusText = (numAgents: number, maxAgents: number): string => {
     prefix = 'No';
   } else if (maxAgents === 0) {
     prefix = numAgents + '';
-
   } else {
     prefix = `${numAgents}/${maxAgents}`;
   }
-  return prefix + ' Agents Active';
+  return prefix + ' Connected Agent' + (numAgents > 1 ? 's' : '');
 };
 
 const ResourcePoolCard: React.FC<Props> = (

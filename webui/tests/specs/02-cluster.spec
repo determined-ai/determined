@@ -8,7 +8,7 @@ Specification to test the responsive design elements.
 * Sign in as "user-w-pw" with "special-pw"
 * Navigate to dashboard page
 
-## Check HGI Cluster elements
+## Check Cluster elements
 
 * Navigate to React page at "/cluster"
 
