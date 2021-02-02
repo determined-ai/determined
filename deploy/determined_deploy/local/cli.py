@@ -133,6 +133,7 @@ def add_agent_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument("--det-version", type=str, default=None, help="version or commit to use")
     parser.add_argument("--agent-name", type=str, default="det-agent", help="agent name")
     parser.add_argument("--agent-label", type=str, default=None, help="agent label")
+    parser.add_argument("--agent-resource-pool", type=str, default=None, help="agent resource pool")
     parser.add_argument("--no-gpu", help="disable GPU support", action="store_true")
     parser.add_argument(
         "--no-autorestart",
@@ -218,6 +219,7 @@ def handle_agent_up(args: argparse.Namespace) -> None:
         no_gpu=args.no_gpu,
         agent_name=args.agent_name,
         agent_label=args.agent_label,
+        agent_resource_pool=args.agent_resource_pool,
         version=args.det_version,
         labels=None,
         autorestart=(not args.no_autorestart),
