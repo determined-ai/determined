@@ -1,4 +1,10 @@
-import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import {
+  V1FittingPolicy, V1Pagination, V1ResourcePoolType, V1SchedulerType,
+} from 'services/api-ts-sdk';
+
+interface WithPagination {
+  pagination: V1Pagination;
+}
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
@@ -225,6 +231,11 @@ export interface ExperimentConfig {
 }
 
 /* Experiment */
+
+export interface ExperimentPagination extends WithPagination {
+  experiments: ExperimentBase[];
+}
+
 export enum RunState {
   Active = 'ACTIVE',
   Paused = 'PAUSED',

@@ -10,8 +10,8 @@ import {
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, ResourcePool, RunState,
-  Telemetry, TrialDetails, ValidationHistory,
+  ExperimentBase, ExperimentFilters, ExperimentItem, ExperimentPagination, Log, Pagination,
+  ResourcePool, RunState, Telemetry, TrialDetails, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -70,7 +70,7 @@ export const getResourcePoolSamples = (): ResourcePool[] => {
 /* Experiments */
 
 export const getExperiments =
-  generateDetApi<GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentBase[]> (
+  generateDetApi<GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentPagination> (
     Config.getExperiments,
   );
 
