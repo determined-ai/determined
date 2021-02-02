@@ -170,6 +170,12 @@ export const consumeStream = async <T = unknown>(
   }
 };
 
+/*
+ * This function is primarily used to convert an enum option into a string value
+ * that the generated API can take as a request param.
+ * More specifically the function takes a value and checks it against a Typescript enum,
+ * to make sure the the value is one of the enum option and returns the value as a string.
+ */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any => {
   if (isObject(enumObject)) {

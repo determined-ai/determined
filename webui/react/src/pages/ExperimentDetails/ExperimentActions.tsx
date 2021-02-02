@@ -164,7 +164,6 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
         key="tensorboard"
         loading={btnLoadingStates.Tensorboard}
         onClick={handleCreateTensorboard}>View in TensorBoard</Button>,
-      showIf: (exp): boolean => terminalRunStates.has(exp.state),
     },
     {
       button: <Button

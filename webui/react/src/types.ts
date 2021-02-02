@@ -333,8 +333,7 @@ export interface ValidationMetrics {
   validationMetrics: Record<string, number>;
 }
 
-export interface TrialPagination {
-  pagination: V1Pagination;
+export interface TrialPagination extends WithPagination {
   trials: TrialDetails[];
 }
 
