@@ -1,7 +1,7 @@
 from typing import Callable, NewType, Any
 import pytorch_lightning as ptl
 from determined.pytorch import PyTorchTrial, PyTorchTrialContext
-from determined.pytorch import DataLoader as DetDataLoader
+from determined.experimental.pytorch_lightning.data_module import DETLightningDataModule
 from typing import Any, Dict, Sequence, Union
 import torch
 
@@ -11,55 +11,19 @@ HyperparamsProvider = Callable[[str], Any]
 not_supported = TypeError('not supported')
 
 class DETLightningModule(ptl.LightningModule):
+    """
+    DETLightningModule helps us dictate what extra inputs the user's lightning module should expect.
+    Aleternatively we can avoid this and have the user take care of it.
+    """
     def __init__(self, *args, get_hparam: HyperparamsProvider = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.get_hparam = get_hparam
-
-class DETLightningDataModule(ptl.LightningDataModule):
-    """
-    ## user defines these as usual
-    def prepare_data
-        download, split, etc...
-        only called on 1 GPU/TPU in distributed
-
-    def setup
-        in memory assignments. called on every process in DDP
-
-    ## user defines these for DET usage. similar to normal ptl datamodule
-    def train_det_dataloader: DetDataloader
-    def val_det_dataloader: DetDataloader
-    def test_det_dataloader: DetDataloader
-
-    ## user gets these for free
-    def train_dataloader
-    def val_dataloader
-    def test_dataloader
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-    def train_det_dataloader(self) -> DetDataLoader:
-        raise NotImplementedError
-
-    def val_det_dataloader(self) -> DetDataLoader:
-        raise NotImplementedError
-
-    def train_dataloader(self) -> torch.utils.data.DataLoader:
-        return self.train_det_dataloader().get_data_loader()
-
-    def val_dataloader(self) -> torch.utils.data.DataLoader:
-        return self.train_det_dataloader().get_data_loader()
-
-    # def test_dataloader(self) -> torch.utils.data.DataLoader:
-    #     raise TypeError('not supported')
-
 
 
 
 class PTLAdapter(PyTorchTrial):
     # QUESTION: take uninstantiated lightning and datamodule so we isntatiate it instead? less code for the user but might be better if the user sees this?
-    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: DETLightningDataModule = None) -> None:
+    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: DETLightningDataModule = None):
         super().__init__(context)
         self.lm = lightning_module
         self.context = context
