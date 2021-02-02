@@ -1259,8 +1259,8 @@ jobs:
     steps:
       - queue/until_front_of_line:
           only-on-branch: master
-          # Basically wait.. forever - we would prefer not to fail
-          # deploys and we'll likely never be this backend up.
+          # Basically wait forever -- we would prefer not to fail deploys and
+          # we'll likely never be this backed up.
           time: '10000'
       - checkout
       - set-slack-user-id
