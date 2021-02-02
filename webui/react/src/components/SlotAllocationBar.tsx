@@ -77,15 +77,15 @@ const SlotAllocationBar: React.FC<Props> = ({
     const parts = {
       free: {
         color: getStateColorCssVar(SlotState.Free),
-        percent: freeSlots / totalSlots,
+        percent: totalSlots < 1 ? 0 : freeSlots / totalSlots,
       },
       pending: {
         color: getStateColorCssVar(SlotState.Pending),
-        percent: pendingSlots / totalSlots,
+        percent: totalSlots < 1 ? 0 : pendingSlots / totalSlots,
       },
       running: {
         color: getStateColorCssVar(SlotState.Running),
-        percent: stateTallies.RUNNING / totalSlots,
+        percent: totalSlots < 1 ? 0 : stateTallies.RUNNING / totalSlots,
       },
     };
 
