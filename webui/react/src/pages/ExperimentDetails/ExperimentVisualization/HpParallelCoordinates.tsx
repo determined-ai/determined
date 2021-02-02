@@ -1,6 +1,6 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/lib/select';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -13,11 +13,13 @@ import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
+import { handlePath, paths } from 'routes/utils';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
   ExperimentBase, ExperimentHyperParamType, MetricName, MetricType, metricTypeParamMap,
+  Point,
   Primitive, Range, RunState,
 } from 'types';
 import { defaultNumericRange, getNumericRange, normalizeRange, updateRange } from 'utils/chart';
@@ -41,8 +43,9 @@ interface Props {
 interface HpTrialData {
   colors: number[];
   data: Record<string, Primitive[]>;
-  lineIds: number[];
   metricRange?: Range<number>;
+  metricValues: number[];
+  trialIds: number[];
 }
 
 const STORAGE_PATH = 'experiment-visualization';
@@ -58,6 +61,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
   selectedBatch,
   selectedMetric,
 }: Props) => {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const trialIdRef = useRef<HTMLDivElement>(null);
+  const metricValueRef = useRef<HTMLDivElement>(null);
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}/parcoords`);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpTrialData>();
@@ -66,6 +72,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const limitedHpList = fullHpList.slice(0, MAX_HP_COUNT);
   const defaultHpList = storage.get<string[]>(STORAGE_HP_KEY);
   const [ hpList, setHpList ] = useState<string[]>(defaultHpList || limitedHpList);
+  const [ hoverTrialId, setHoverTrialId ] = useState<number>();
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
@@ -134,6 +141,33 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
   }, [ limitedHpList, storage ]);
 
+  const handleChartClick = useCallback((event: React.MouseEvent) => {
+    if (!hoverTrialId) return;
+    handlePath(event, { path: paths.trialDetails(hoverTrialId, experiment.id) });
+  }, [ experiment.id, hoverTrialId ]);
+
+  const handleChartHover = useCallback((lineIndex: number, point: Point) => {
+    if (!tooltipRef.current || !trialIdRef.current || !metricValueRef.current) return;
+
+    const trialId = chartData?.trialIds[lineIndex];
+    const metricValue = chartData?.metricValues[lineIndex];
+    if (!trialId || !metricValue) return;
+
+    setHoverTrialId(trialId);
+    trialIdRef.current.innerText = trialId.toString();
+    metricValueRef.current.innerText = metricValue.toString();
+    tooltipRef.current.style.display = 'block';
+    tooltipRef.current.style.left = `${point.x}px`;
+    tooltipRef.current.style.top = `${point.y}px`;
+  }, [ chartData ]);
+
+  const handleChartUnhover = useCallback(() => {
+    if (!tooltipRef.current) return;
+
+    setHoverTrialId(undefined);
+    tooltipRef.current.style.display = 'none';
+  }, []);
+
   useEffect(() => {
     const canceler = new AbortController();
 
@@ -184,8 +218,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
         setChartData(() => ({
           colors,
           data,
-          lineIds: trialIds,
           metricRange,
+          metricValues: trialMetrics,
+          trialIds,
         }));
         setHasLoaded(true);
       },
@@ -237,15 +272,28 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </MultiSelect>
         </ResponsiveFilters>}
         title="HP Parallel Coordinates">
-        <div className={css.container}>
+        <div className={css.container} onClick={handleChartClick}>
           {!hasLoaded || !chartData ? <Spinner /> : (
             <ParallelCoordinates
               colors={chartData.colors}
               data={chartData.data}
               dimensions={dimensions}
-              lineIds={chartData.lineIds}
-              smallerIsBetter={smallerIsBetter} />
+              smallerIsBetter={smallerIsBetter}
+              onHover={handleChartHover}
+              onUnhover={handleChartUnhover} />
           )}
+          <div className={css.tooltip} ref={tooltipRef}>
+            <div className={css.box}>
+              <div className={css.row}>
+                <div>Trial Id:</div>
+                <div ref={trialIdRef} />
+              </div>
+              <div className={css.row}>
+                <div>Metric:</div>
+                <div ref={metricValueRef} />
+              </div>
+            </div>
+          </div>
         </div>
       </Section>
     </div>

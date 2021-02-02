@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import Plotly, { Layout, PlotData } from 'Plotly';
-import { ExperimentHyperParamType, Primitive, Range } from 'types';
+import { ExperimentHyperParamType, Point, Primitive, Range } from 'types';
 import { clone, isNumber } from 'utils/data';
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -20,13 +20,23 @@ interface Props {
   data: Record<string, Primitive[]>;
   dimensions: Dimension[];
   id?: string;
-  lineIds: number[];
+  onHover?: (lineIndex: number, point: Point) => void;
+  onUnhover?: () => void;
   smallerIsBetter?: boolean;
 }
 
 interface ChartState {
   constraintRanges?: Range[];
   dimensionOrder?: string[];
+}
+
+interface HoverEvent {
+  clientX: number;
+  clientY: number;
+  curveNumber: number;
+  dataIndex: number;
+  x: number;
+  y: number;
 }
 
 export interface Dimension {
@@ -66,6 +76,8 @@ const ParallelCoordinates: React.FC<Props> = ({
   colors,
   data,
   dimensions,
+  onHover,
+  onUnhover,
   smallerIsBetter,
   ...props
 }: Props) => {
@@ -147,11 +159,13 @@ const ParallelCoordinates: React.FC<Props> = ({
 
     Plotly.react(ref, [ chartData ], plotlyLayout, plotlyConfig);
 
+    const plotly = ref as unknown as Plotly.PlotlyHTMLElement;
+
     /*
-     * During filtering, save all the constraint ranges to reconstruct the
-     * filter during a re-rendering of the chart.
+     * During filtering or ordering, save all the constraint ranges and column order
+     * to reconstruct the chart correctly when re-rendering the chart.
      */
-    (ref as unknown as Plotly.PlotlyHTMLElement).on('plotly_restyle', data => {
+    plotly.on('plotly_restyle', data => {
       if (!Array.isArray(data) || data.length < 1) return;
 
       const keys = Object.keys(data[0]);
@@ -190,6 +204,18 @@ const ParallelCoordinates: React.FC<Props> = ({
           return newChartState;
         });
       }
+    });
+
+    plotly.on('plotly_hover', data => {
+      if (!onHover) return;
+
+      const event = data as unknown as HoverEvent;
+      const lineIndex = event.curveNumber;
+      onHover(lineIndex, { x: event.x, y: event.y });
+    });
+
+    plotly.on('plotly_unhover', () => {
+      if (onUnhover) onUnhover();
     });
 
     return () => {

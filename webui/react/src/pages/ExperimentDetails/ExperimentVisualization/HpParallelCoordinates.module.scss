@@ -1,9 +1,40 @@
+$tooltip-offset: 0.5rem;
+
 .base {
   .container {
     background-color: var(--theme-colors-monochrome-17);
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
     border-radius: var(--theme-sizes-border-radius);
     min-height: 40rem;
+    position: relative;
+  }
+  .tooltip {
+    display: none;
+    margin-left: $tooltip-offset;
+    margin-top: $tooltip-offset;
+    pointer-events: none;
+    position: absolute;
+    z-index: 100;
+
+    .box {
+      background-color: var(--theme-colors-monochrome-17);
+      border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+      border-radius: var(--theme-sizes-border-radius);
+      box-shadow: var(--theme-shadow);
+      left: $tooltip-offset;
+      padding: var(--theme-sizes-layout-medium);
+      position: absolute;
+      top: $tooltip-offset;
+    }
+    .row {
+      display: table-row;
+    }
+    .row > * {
+      display: table-cell;
+    }
+    .row > *:last-child {
+      padding-left: var(--theme-sizes-layout-medium);
+    }
   }
 }
 .waiting { height: 30rem; }
