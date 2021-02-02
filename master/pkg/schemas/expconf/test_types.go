@@ -80,4 +80,3 @@ func (t *TestRootV1) RuntimeDefaults() {
 		t.RuntimeDefaultable = ptrs.IntPtr(10)
 	}
 }
-

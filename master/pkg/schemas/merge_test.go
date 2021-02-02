@@ -121,22 +121,6 @@ func TestMapMerge(t *testing.T) {
 	src := map[string]string{"2": "src:two", "3": "src:three"}
 	Merge(&obj, src)
 	assertCorrectMerge(obj)
-
-	// Make sure the number of pointers on the input does not affect merging.
-	objRef := &map[string]string{"1": "obj:one", "2": "obj:two"}
-	Merge(&objRef, src)
-	assertCorrectMerge(*objRef)
-
-	objRef = &map[string]string{"1": "obj:one", "2": "obj:two"}
-	objRefRef := &objRef
-	Merge(&objRefRef, src)
-	assertCorrectMerge(**objRefRef)
-
-	// Make sure the nubmer of input pointers is irrelevant as well.
-	obj = map[string]string{"1": "obj:one", "2": "obj:two"}
-	srcRef := &src
-	Merge(&obj, &srcRef)
-	assertCorrectMerge(obj)
 }
 
 func TestSliceMerge(t *testing.T) {
@@ -164,7 +148,7 @@ func (z *Z) Merge(src interface{}) {
 func TestMergable(t *testing.T) {
 	obj := &Z{0, 1}
 	src := &Z{2, 3}
-	Merge(obj, src)
+	Merge(&obj, src)
 	assert.Assert(t, len(*obj) == 4)
 	assert.Assert(t, (*obj)[0] == 0)
 	assert.Assert(t, (*obj)[1] == 1)

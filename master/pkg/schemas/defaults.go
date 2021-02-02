@@ -1,7 +1,6 @@
 package schemas
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -44,62 +43,55 @@ type Defaultable interface {
 //    // Define any remaining undefined values.
 //    schemas.FillDefaults(&config)
 //
-func FillDefaults(x interface{}) {
-	obj := reflect.ValueOf(x)
-	if obj.Kind() != reflect.Ptr {
+func FillDefaults(obj interface{}) {
+	vObj := reflect.ValueOf(obj)
+	// obj can't be a non-pointer, because it edits in-place.
+	if vObj.Kind() != reflect.Ptr {
 		panic("FillDefaults must be called on a pointer")
+	}
+	// obj can't be a nil pointer, because FillDefaults(nil) doesn't make any sense.
+	if vObj.IsZero() {
+		panic("FillDefaults must be called on a non-nil pointer")
 	}
 	// Enter the recursive default filling with no default bytes for the root object (which must
 	// already exist), and starting with the name of the object type.
-	name := fmt.Sprintf("%T", x)
-	fillDefaults(obj, nil, false, name)
+	name := fmt.Sprintf("%T", obj)
+	vObj.Elem().Set(fillDefaults(vObj.Elem(), nil, false, name))
 }
 
-func fillDefaults(obj reflect.Value, defaultBytes []byte, inPtr bool, name string) {
-	// obj should always be a pointer, because FillDefaults(&x) will act on x in-place.
-	if obj.Kind() != reflect.Ptr {
-		panic("non-pointer in fillDefaults")
-	}
-	// obj can't be a nil pointer, because FillDefaults(nil) doesn't make any sense.
-	if obj.IsZero() {
-		panic("nil pointer in fillDefaults")
-	}
-	// Now operate on what obj points to.
-	obj = obj.Elem()
-
+func fillDefaults(obj reflect.Value, defaultBytes []byte, inPtr bool, name string) reflect.Value {
 	switch obj.Kind() {
 	case reflect.Interface:
 		if obj.IsZero() {
 			// This doesn't make any sense; we need a type.
 			panic("got a nil interface as the obj to FillDefaults into")
 		}
-		// Dereference the type but not the original pointer.
-		fillDefaults(obj.Elem().Addr(), defaultBytes, inPtr, name)
+		obj.Elem().Set(fillDefaults(obj.Elem(), defaultBytes, inPtr, name))
 
 	case reflect.Ptr:
 		if obj.IsZero() {
-			if defaultBytes == nil || bytes.Equal(defaultBytes, []byte("null")) {
-				return
+			if defaultBytes == nil {
+				// Nil pointer with no defaultBytes means we are done recursing.
+				return obj
 			}
-			// allocate the new object
-			tmp := reflect.New(obj.Type())
-			// fill the object with default bytes.
-			err := json.Unmarshal(defaultBytes, tmp.Interface())
+			// Otherwise, since we have default bytes, allocate the new object.
+			obj = reflect.New(obj.Type().Elem())
+			// Fill the object with default bytes.
+			err := json.Unmarshal(defaultBytes, obj.Interface())
 			if err != nil {
 				panic(
 					fmt.Sprintf(
 						"failed to unmarshal defaultBytes into %T: %v",
-						tmp.Elem().Interface(),
+						obj.Interface(),
 						string(defaultBytes),
 					),
 				)
 			}
-			obj.Set(tmp.Elem())
-			// We already used defaultBytes, so now set it to nil.
-			fillDefaults(obj, nil, true, name)
+			// We already consumed defaultBytes, so set it to nil when we recurse.
+			obj.Elem().Set(fillDefaults(obj.Elem(), nil, true, name))
 		} else {
-			// Just recurse.
-			fillDefaults(obj, defaultBytes, true, name)
+			// Recurse into the element inside the pointer.
+			obj.Elem().Set(fillDefaults(obj.Elem(), defaultBytes, true, name))
 		}
 
 	case reflect.Struct:
@@ -135,13 +127,10 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, inPtr bool, name strin
 		for _, key := range obj.MapKeys() {
 			elemName := fmt.Sprintf("%v.[%v]", name, key.Interface())
 			val := obj.MapIndex(key)
-			// cpy is a copy of the object that is settable.
-			cpy := reflect.New(val.Type())
-			cpy.Elem().Set(val)
 			// Recurse into the elem (there's no per-element defaults yet).
-			fillDefaults(cpy, nil, false, elemName)
+			tmp := fillDefaults(val, nil, false, elemName)
 			// Update the original value with the defaulted value.
-			obj.SetMapIndex(key, cpy.Elem())
+			obj.SetMapIndex(key, tmp)
 		}
 
 	// Assert that none of the "complex" kinds are present.
@@ -170,9 +159,11 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, inPtr bool, name strin
 
 	// AFTER the automatic defaults, we apply any runtime defaults.  This way, we've already filled
 	// any nil pointers with valid objects.
-	if runtimeDefaultable, ok := obj.Addr().Interface().(RuntimeDefaultable); ok {
+	if runtimeDefaultable, ok := obj.Interface().(RuntimeDefaultable); ok {
 		runtimeDefaultable.RuntimeDefaults()
 	}
+
+	return obj
 }
 
 // jsonNameFromJSONTag is based on encoding/json's parseTag().
@@ -221,6 +212,11 @@ func findDefaultInSchema(schema interface{}, field reflect.StructField) []byte {
 
 	defaultObj, ok := property["default"]
 	if !ok {
+		return nil
+	}
+
+	if defaultObj == nil {
+		// Don't marshal nil values into []byte("null").
 		return nil
 	}
 
