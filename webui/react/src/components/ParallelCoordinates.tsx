@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { throttle } from 'throttle-debounce';
 
+import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData } from 'Plotly';
 import { ExperimentHyperParamType, Point, Primitive, Range } from 'types';
 import { clone, isNumber } from 'utils/data';
@@ -82,6 +84,7 @@ const ParallelCoordinates: React.FC<Props> = ({
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
+  const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ chartState, setChartState ] = useState<ChartState>({});
 
@@ -223,6 +226,18 @@ const ParallelCoordinates: React.FC<Props> = ({
     };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ chartData ]);
+
+  // Resize the chart when resize events happen.
+  useEffect(() => {
+    const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
+      if (!chartRef.current) return;
+      const rect = chartRef.current.getBoundingClientRect();
+      const layout = { ...plotlyLayout, width: rect.width };
+      Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);
+    });
+
+    throttleResize();
+  }, [ chartData, resize ]);
 
   return <div id={id} ref={chartRef} />;
 };
