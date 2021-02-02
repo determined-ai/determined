@@ -609,12 +609,14 @@ The master supports the following configuration settings:
                VPC.
 
          -  ``instance_type``: AWS instance type to use for dynamic
-            agents. This must be one of the following: ``g4dn.xlarge``,
+            agents. For GPU instances, this must be one of the following: ``g4dn.xlarge``,
             ``g4dn.2xlarge``, ``g4dn.4xlarge``, ``g4dn.8xlarge``,
             ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``,
             ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
             ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, or
-            ``p3dn.24xlarge``. Defaults to ``p3.8xlarge``.
+            ``p3dn.24xlarge``. For CPU instances, most general purpose
+            instance types are allowed (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5``
+            and variants). Defaults to ``p3.8xlarge``.
 
          -  ``spot``: Whether to use spot instances. Defaults to
             ``false``. See :ref:`aws-spot` for more details.
