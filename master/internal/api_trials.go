@@ -311,7 +311,7 @@ func (a *apiServer) KillTrial(
 func (a *apiServer) GetExperimentTrials(
 	_ context.Context, req *apiv1.GetExperimentTrialsRequest,
 ) (*apiv1.GetExperimentTrialsResponse, error) {
-	// Construct the experiment filtering expression.
+	// Construct the trial filtering expression.
 	var allStates []string
 	for _, state := range req.States {
 		allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
