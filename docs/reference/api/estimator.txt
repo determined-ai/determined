@@ -110,6 +110,12 @@ metadata checkpoints:
                hooks=[MyHook(self.context, "my_metadata")],
            )
 
+***********
+ Debugging
+***********
+
+Please see :ref:`model-debug`.
+
 **********
  Examples
 **********

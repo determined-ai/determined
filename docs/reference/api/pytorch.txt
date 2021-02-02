@@ -132,6 +132,12 @@ To execute arbitrary Python code during the lifecycle of a
 .. autoclass:: determined.pytorch.PyTorchCallback
    :members:
 
+***********
+ Debugging
+***********
+
+Please see :ref:`model-debug`.
+
 **********
  Examples
 **********

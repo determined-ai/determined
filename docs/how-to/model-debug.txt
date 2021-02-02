@@ -29,21 +29,21 @@ The basic steps for debugging are:
 
 **Model-related issues:**
 
-   1. Does the original code run locally?
-   2. Does each method of your Trial class work locally?
-   3. Does local test mode work?
+   #. Does the original code run locally?
+   #. Does each method of your Trial class work locally?
+   #. Does local test mode work?
 
 **Docker- or Cluster-related issues**
 
    4. Does the original code run in a Notebook or Shell?
-   5. Does each method of your Trial class work in a Notebook or Shell?
-   6. Does local test mode work in a Notebook or Shell?
+   #. Does each method of your Trial class work in a Notebook or Shell?
+   #. Does local test mode work in a Notebook or Shell?
 
 **Higher-level issues**
 
    7. Does cluster test mode work with ``slots_per_trial=1``?
-   8. Does a single-GPU experiment work?
-   9. Does a multi-GPU experiment work?
+   #. Does a single-GPU experiment work?
+   #. Does a multi-GPU experiment work?
 
 **********************
  Model-related issues
@@ -74,9 +74,9 @@ the output.
 method of your Trial is doing what you think it ought to be doing. There
 are some simple and practical examples of what these tests might look
 like for ``PyTorchTrial`` and ``TFKerasTrial`` in the
-:meth:`determined.TrialContext.from_config`
-documentation, but ultimately only you know what a reasonable test for
-your Trial needs to look like.
+:meth:`determined.TrialContext.from_config` documentation, but
+ultimately only you know what a reasonable test for your Trial needs to
+look like.
 
 **How to diagnose failures:** If you hit any issues running the methods
 of your Trial code locally, there are most likely errors in your Trial
@@ -161,10 +161,13 @@ Once you are on the cluster, testing is identical to Step 1.
       128MB. If you need files larger than that as part of your model
       definition, consider setting up a bind mount via the
       ``bind_mounts`` field of :ref:`command-notebook-configuration`.
+      The tutorial on `ref:`data-access` lists some additional
+      strategies for accessing files inside a containerized environment
+      which may also be relevant.
 
    -  You may be referencing files which exist locally but outside of
       the ``--context`` directory. If they are small, you may be able to
-      just copy them into the ``--context`` directory.  Otherwise bind
+      just copy them into the ``--context`` directory. Otherwise bind
       mounting the files may be an option.
 
    -  If you hit dependency errors, you may have dependencies installed
@@ -252,7 +255,7 @@ replicated in your experiment config:
    -  Any ``pip``-install or ``apt``-install commands needed in the
       interactive environment must either be built into a custom docker
       image or they can be written into file called ``startup-hook.sh``
-      in the root of the model definition directory.  See
+      in the root of the model definition directory. See
       :ref:`startup-hooks` for more details.
 
    -  Any custom bind mounts to run in the interactive environment are
@@ -377,6 +380,6 @@ library APIs correctly, then theoretically distributed training should
       by Determined and need no special handling. Other metrics, like F1
       score, cannot be averaged from individual workers' F1 scores.
       Determined has tooling for handling these metrics; see the docs
-      for using custom metric reducers with
-      :ref:`PyTorchTrial <pytorch-custom-reducers>` and
-      :ref:`EstimatorTrial <estimators-custom-reducers>`.
+      for using custom metric reducers with :ref:`PyTorchTrial
+      <pytorch-custom-reducers>` and :ref:`EstimatorTrial
+      <estimators-custom-reducers>`.
