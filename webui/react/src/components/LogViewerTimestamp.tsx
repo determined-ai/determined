@@ -491,7 +491,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
       consumeStream(
         fetchArgs,
         event => {
-          buffer.push(fetchToLogConverter(event));
+          const logEntry = fetchToLogConverter(event);
+          direction === DIRECTIONS.OLDEST ? buffer.unshift(logEntry) : buffer.push(logEntry);
         },
       ).then(() => {
         if (buffer.length < TAIL_SIZE) setIsLastReached(true);
