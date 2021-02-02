@@ -76,6 +76,9 @@ message GetExperimentsRequest {
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiments", "pagination" ] }
+  };
   // The list of returned experiments.
   repeated determined.experiment.v1.Experiment experiments = 1;
   // Pagination information of the full dataset.
