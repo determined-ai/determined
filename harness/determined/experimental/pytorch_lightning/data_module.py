@@ -6,11 +6,11 @@ class DETLightningDataModule(ptl.LightningDataModule):
     """
     ## user defines these as usual
     def prepare_data
-        download, split, etc...
-        only called on 1 GPU/TPU in distributed
+        # download, split, etc...
+        # only called on 1 GPU/TPU in distributed
 
     def setup
-        in memory assignments. called on every process in DDP
+        # in memory assignments. called on every process in DDP
 
     ## user defines these for DET usage. similar to normal ptl datamodule
     def train_det_dataloader: DetDataloader

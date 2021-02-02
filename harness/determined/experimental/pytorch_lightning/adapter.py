@@ -2,13 +2,25 @@ from typing import Callable, NewType, Any
 import pytorch_lightning as ptl
 from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 from determined.experimental.pytorch_lightning.data_module import DETLightningDataModule
+from determined import monkey_patch
 from typing import Any, Dict, Sequence, Union
+from inspect import signature
 import torch
+import sys
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 HyperparamsProvider = Callable[[str], Any]
 
 not_supported = TypeError('not supported')
+
+def bail(msg: str = '', fail: bool = True):
+    msg = f'Not Supported: {msg}'
+    if fail:
+        raise Exception(msg)
+    else:
+        # TODO use a logger
+        print(msg, file=sys.stderr)
+
 
 class DETLightningModule(ptl.LightningModule):
     """
@@ -18,13 +30,20 @@ class DETLightningModule(ptl.LightningModule):
     def __init__(self, *args, get_hparam: HyperparamsProvider = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.get_hparam = get_hparam
+        check_compat(self)
 
+
+def check_compat(lm: DETLightningModule):
+    sig = signature(lm.training_step)
+    if len(sig.parameters) > 2:
+        bail('`optimizer_idx` and `hiddens` are not supported.')
 
 
 class PTLAdapter(PyTorchTrial):
     # QUESTION: take uninstantiated lightning and datamodule so we isntatiate it instead? less code for the user but might be better if the user sees this?
     def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: DETLightningDataModule = None):
         super().__init__(context)
+        check_compat(lightning_module)
         self.lm = lightning_module
         self.context = context
         self.model = self.context.wrap_model(self.lm)
@@ -45,6 +64,7 @@ class PTLAdapter(PyTorchTrial):
         if not isinstance(optimizer, torch.optim.Optimizer):
             raise not_supported
         # TODO look at how we wrap/create learning scheduler
+        # currently this is only supporting a single optimizer
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
         if data_module is not None:
@@ -65,7 +85,6 @@ class PTLAdapter(PyTorchTrial):
         if type(rv) != dict:
             rv = {'loss': rv}
 
-        # TODO option to set loss
         self.context.backward(rv['loss'])
         self.context.step_optimizer(self.optimizer)
         return rv
@@ -77,7 +96,7 @@ class PTLAdapter(PyTorchTrial):
     def build_training_data_loader(self):
         if self.dm is None: raise NotImplementedError()
         if not self.dm._has_setup_fit:
-            self.dm.setup() # TODO call once per GPU
+            self.dm.setup()
         return self.dm.train_det_dataloader()
 
     def build_validation_data_loader(self):
