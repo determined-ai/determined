@@ -44,7 +44,7 @@ func JoinErrors(errs []error, joiner string) string {
 	for _, err := range errs {
 		strs = append(strs, err.Error())
 	}
-	return strings.Join(strs, "\n")
+	return strings.Join(strs, joiner)
 }
 
 // GetRenderedErrors takes a jsonschema valiation plus the bytes that caused it and returns

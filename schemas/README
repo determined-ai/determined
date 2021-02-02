@@ -7,7 +7,7 @@ Linting:
 
 Validation:
   - Validation happens in two steps:
-    - Sanity check: make sure everything is parsble
+    - Sanity check: make sure everything is parsable
     - Validation: make sure everything is present
   - Sanity check is applied to raw user inputs
   - Validation is applied after cluster defaults have been applied
