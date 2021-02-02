@@ -72,7 +72,7 @@ func (db *PgDB) Migrate(migrationURL string) error {
 	}
 
 	if err = m.Up(); err != migrate.ErrNoChange {
-		return errors.Wrap(err, "d")
+		return errors.Wrap(err, "error applying migrations")
 	}
 
 	return nil
