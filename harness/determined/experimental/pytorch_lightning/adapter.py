@@ -11,12 +11,10 @@ import sys
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 HyperparamsProvider = Callable[[str], Any]
 
-not_supported = TypeError('not supported')
-
 def bail(msg: str = '', fail: bool = True):
-    msg = f'Not Supported: {msg}'
+    msg = f'NotSupported: {msg}'
     if fail:
-        raise Exception(msg)
+        raise TypeError(msg)
     else:
         # TODO use a logger
         print(msg, file=sys.stderr)
@@ -34,9 +32,10 @@ class DETLightningModule(ptl.LightningModule):
 
 
 def check_compat(lm: DETLightningModule):
-    sig = signature(lm.training_step)
-    if len(sig.parameters) > 2:
+    if len(signature(lm.training_step).parameters) > 2:
         bail('`optimizer_idx` and `hiddens` are not supported.')
+    if len(signature(lm.validation_step).parameters) > 2:
+        bail('`dataloader_idx` is not supported.')
 
 
 class PTLAdapter(PyTorchTrial):
@@ -62,7 +61,7 @@ class PTLAdapter(PyTorchTrial):
         - None - Fit will run without any optimizer.
         """
         if not isinstance(optimizer, torch.optim.Optimizer):
-            raise not_supported
+            bail('currently only returning a single optimizer is supported')
         # TODO look at how we wrap/create learning scheduler
         # currently this is only supporting a single optimizer
         self.optimizer = self.context.wrap_optimizer(optimizer)

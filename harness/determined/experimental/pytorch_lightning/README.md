@@ -40,7 +40,7 @@ LM wraps and organizes PyTorch code. [ref](https://pytorch-lightning.readthedocs
 
 methods:
 - `configure_optimizers`: required; 
-  - only a single optimizer case is supported
+  - only a single optimizer case is supported rn. TODO support the other cases
     - TODO figure out the other cases: support at least what's supported in pytorch trial.
   - commit 183601649d1da6e5d941d0192718f3848f9e5625 multiple optimizer support for pytorch
 - `freeze`: NUD; freeze  all params for inference
