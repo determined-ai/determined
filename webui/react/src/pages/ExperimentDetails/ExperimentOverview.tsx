@@ -1,10 +1,11 @@
-import { Button, Col, Row, Table, Tooltip } from 'antd';
+import { Button, Col, Row, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
+import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import {
   defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
@@ -87,17 +88,19 @@ const ExperimentOverview: React.FC<Props> = ({
     };
 
     const newColumns = [ ...defaultColumns ].map(column => {
-      column.sortOrder = null;
+      const columnKey = column.key as unknown as string;
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
       } else if (column.key === 'bestValidation') {
         column.render = validationRenderer('bestValidationMetric');
-        column.sortOrder = smallerIsBetter ? 'ascend' : 'descend';
       } else if (column.key === 'latestValidation') {
         column.render = validationRenderer('latestValidationMetric');
-        column.sortOrder = smallerIsBetter ? 'ascend' : 'descend';
-      } else if (column.key) {
+      }
+      if (column.key === sorter.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+        if ([ 'bestValidation', 'latestValidation' ].includes(columnKey) && smallerIsBetter) {
+          column.sortOrder = sorter.descend ? 'ascend' : 'descend';
+        }
       }
       return column;
     });
@@ -191,7 +194,7 @@ const ExperimentOverview: React.FC<Props> = ({
         </Col>
         <Col span={24}>
           <Section title="Trials">
-            <Table
+            <ResponsiveTable
               columns={columns}
               dataSource={trials}
               pagination={getFullPaginationConfig(pagination, total)}
