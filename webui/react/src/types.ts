@@ -500,8 +500,8 @@ export interface ResourcePool {
   preemptible: boolean;
   schedulerFittingPolicy: V1FittingPolicy;
   schedulerType: V1SchedulerType;
-  slotsAvailable: number;
-  slotsUsed: number;
+  numSlots: number;
+  numSlotsInUse: number;
   type: V1ResourcePoolType;
 }
 
@@ -540,7 +540,7 @@ export interface Gcp {
   bootDiskSize: number;
   bootDiskSourceImage: string;
   externalIp: boolean;
-  gpuNum: number;
+  numGpus: number;
   gpuType: string;
   labelKey: string;
   labelValue: string;

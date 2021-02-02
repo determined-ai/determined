@@ -144,7 +144,7 @@ export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsRespons
   postProcess: (response) => {
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
-  request: () => detApi.Internal.determinedGetResourcePools(),
+  request: () => detApi.Cluster.determinedGetResourcePools(),
 };
 
 /* Experiment */

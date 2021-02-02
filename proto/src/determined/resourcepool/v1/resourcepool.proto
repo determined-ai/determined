@@ -59,8 +59,8 @@ message ResourcePool {
         "description",
         "type",
         "num_agents",
-        "slots_available",
-        "slots_used",
+        "num_slots",
+        "num_slots_in_use",
         "cpu_container_capacity",
         "cpu_containers_running",
         "default_gpu_pool",
@@ -97,9 +97,9 @@ message ResourcePool {
   // The number of agents running in the resource pool
   int32 num_agents = 4;
   // The total number of slots that exist in the resource pool
-  int32 slots_available = 5;
+  int32 num_slots = 5;
   // The number of slots that are actively running workloads
-  int32 slots_used = 6;
+  int32 num_slots_in_use = 6;
   // The max number of CPU containers that can run in this resource pool
   int32 cpu_container_capacity = 7;
   // The current number of CPU containers running in this resource pool
@@ -302,7 +302,7 @@ message ResourcePoolGcpDetail {
   // Type of GPU for the Determined agents
   string gpu_type = 15;
   // Number of GPUs for the Determined agents
-  int32 gpu_num = 16;
+  int32 num_gpus = 16;
   // Whether to use preemptible instances
   bool preemptible = 17;
   // The timeout period for tracking a GCP operation in seconds

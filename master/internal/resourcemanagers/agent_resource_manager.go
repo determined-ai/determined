@@ -342,7 +342,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			ServiceAccountScopes:   gcp.ServiceAccount.Scopes,
 			MachineType:            gcp.InstanceType.MachineType,
 			GpuType:                gcp.InstanceType.GPUType,
-			GpuNum:                 int32(gcp.InstanceType.GPUNum),
+			NumGpus:                 int32(gcp.InstanceType.GPUNum),
 			Preemptible:            gcp.InstanceType.Preemptible,
 			OperationTimeoutPeriod: float32(time.Duration(gcp.OperationTimeoutPeriod).Seconds()),
 		}
@@ -357,8 +357,8 @@ func (a *agentResourceManager) createResourcePoolSummary(
 
 	resourceSummary := ctx.Ask(a.pools[poolName], GetResourceSummary{}).Get().(ResourceSummary)
 	resp.NumAgents = int32(resourceSummary.numAgents)
-	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
-	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
+	resp.NumSlots = int32(resourceSummary.numTotalSlots)
+	resp.NumSlotsInUse = int32(resourceSummary.numActiveSlots)
 	resp.CpuContainerCapacity = int32(resourceSummary.maxNumCPUContainers)
 	resp.CpuContainersRunning = int32(resourceSummary.numActiveCPUContainers)
 
