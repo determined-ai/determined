@@ -21,6 +21,11 @@ application frameworks it supports:
 -  :ref:`tf-keras-trial`
 -  :ref:`estimator-trial`
 
+If you hit any issues creating your Trial API model definition, you can
+visit :ref:`model-debug`. It may also be useful for writing your first
+trial, as it has a framework for incrementally testing each of the
+features you will need in a successful Trial definition.
+
 .. _model-definitions_trial-api-create:
 
 ********************************************************

@@ -24,6 +24,10 @@ starting guides.
 
 -  :ref:`multi-gpu-training`
 
+**Model Debugging**
+
+-  :ref:`model-debug`
+
 The full list of our how-to guides can be found below:
 
 .. toctree::

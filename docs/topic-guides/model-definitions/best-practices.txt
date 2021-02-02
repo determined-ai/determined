@@ -102,6 +102,9 @@ Do not:
 
 Do:
 
+-  Use the :ref:`model-debug` guide if you run into issues with your
+   Trial class.
+
 -  Use framework abstractions to implement learning rate scheduling
    instead of directly changing the learning rate. See
    `tf.keras.optimizers.schedules.LearningRateSchedule

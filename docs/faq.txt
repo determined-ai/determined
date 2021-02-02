@@ -219,9 +219,19 @@ To change the container image used for an experiment, specify
 configuration file. Please see :ref:`container-images` for more details
 about configuring training environments.
 
+How do I debug a TensorFlow model inside Determined?
+====================================================
+
+Please see :ref:`model-debug`.
+
 *****************
  PyTorch Support
 *****************
+
+How do I debug a PyTorch model inside Determined?
+=================================================
+
+Please see :ref:`model-debug`.
 
 Why am I seeing significantly different metrics for trials which are paused and later continued than trials which aren't paused?
 ================================================================================================================================
