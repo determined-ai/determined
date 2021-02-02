@@ -1,5 +1,4 @@
 import axios, { AxiosResponse } from 'axios';
-import { unknown } from 'io-ts';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
