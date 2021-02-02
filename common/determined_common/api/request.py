@@ -1,9 +1,13 @@
+import atexit
+import builtins
 import os
+import tempfile
 import webbrowser
 from types import TracebackType
 from typing import Any, Dict, Iterator, Optional, Union
 from urllib import parse
 
+import certifi
 import lomond
 import requests
 import simplejson
@@ -12,18 +16,36 @@ import determined_common.requests
 from determined_common.api import authentication, errors
 
 # The path to a file containing an SSL certificate to trust specifically for the master, if any, or
-# False to disable cert verification entirely.
-_master_cert_bundle = None
+# False to disable cert verification entirely. If set to a path, it should always be a temporary
+# file that we own and can delete.
+_master_cert_bundle = None  # type: Optional[Union[str, bool]]
 
 # The name we use to verify the master.
 _master_cert_name = None
 
 
 def set_master_cert_bundle(path: Optional[Union[str, bool]]) -> None:
+    global _master_cert_bundle
+
     if path == "":
         path = None
-    global _master_cert_bundle
-    _master_cert_bundle = path
+    if path is None or isinstance(path, bool):
+        _master_cert_bundle = path
+        return
+
+    # Don't use NamedTemporaryFile, since it would make the file inaccessible by path on Windows
+    # after this (see https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile).
+    fd, combined_path = tempfile.mkstemp(prefix="det-master-cert-")
+    atexit.register(os.unlink, combined_path)
+
+    with builtins.open(fd, "wb") as out:
+        with builtins.open(certifi.where(), "rb") as base_certs:
+            out.write(base_certs.read())
+        out.write(b"\n")
+        with builtins.open(path, "rb") as custom_certs:
+            out.write(custom_certs.read())
+
+    _master_cert_bundle = combined_path
 
 
 def set_master_cert_name(name: Optional[str]) -> None:
