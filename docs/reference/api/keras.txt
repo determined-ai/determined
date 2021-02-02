@@ -114,6 +114,12 @@ the ``tf.keras.callbacks.Callbacks`` interface) and supply them to the
 
 .. autoclass:: determined.keras.callbacks.TensorBoard
 
+***********
+ Debugging
+***********
+
+Please see :ref:`model-debug`.
+
 **********
  Examples
 **********

@@ -91,11 +91,11 @@ Default Images
 In the current version of Determined, the experiments and commands are
 executed in containers with the following:
 
--  Ubuntu 18.04
--  CUDA 10.0
+-  Ubuntu 20.04
+-  CUDA 10.1
 -  Python 3.6.9
--  TensorFlow 1.15.0
--  PyTorch 1.4.0
+-  TensorFlow 1.15.4
+-  PyTorch 1.7.0
 
 Determined will automatically select GPU-specific versions of each
 library when running on agents with GPUs.
@@ -120,11 +120,11 @@ TensorFlow 2 Images
 Determined also supports TensorFlow 2.2 and has a Docker image you can
 use for experiments and commands containing the following:
 
--  Ubuntu 18.04
+-  Ubuntu 20.04
 -  CUDA 10.1
 -  Python 3.6.9
--  TensorFlow 2.2.0
--  PyTorch 1.4.0
+-  TensorFlow 2.4.1
+-  PyTorch 1.7.0
 
 This can be configured in your experiment configuration like below:
 
