@@ -1,0 +1,7 @@
+:orphan:
+
+**BUG FIXES**
+
+-  Database: Migrate ``public.trial_logs.id`` to an ``int8`` in
+   Postgres. **Note**: This migration may be more time-consuming than
+   usual for users with large amounts of trial logs.
