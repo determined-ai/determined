@@ -342,7 +342,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			ServiceAccountScopes:   gcp.ServiceAccount.Scopes,
 			MachineType:            gcp.InstanceType.MachineType,
 			GpuType:                gcp.InstanceType.GPUType,
-			NumGpus:                 int32(gcp.InstanceType.GPUNum),
+			NumGpus:                int32(gcp.InstanceType.GPUNum),
 			Preemptible:            gcp.InstanceType.Preemptible,
 			OperationTimeoutPeriod: float32(time.Duration(gcp.OperationTimeoutPeriod).Seconds()),
 		}

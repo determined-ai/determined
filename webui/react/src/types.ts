@@ -497,11 +497,11 @@ export interface ResourcePool {
   minAgents: number;
   name: string;
   numAgents: number;
+  numSlots: number;
+  numSlotsInUse: number;
   preemptible: boolean;
   schedulerFittingPolicy: V1FittingPolicy;
   schedulerType: V1SchedulerType;
-  numSlots: number;
-  numSlotsInUse: number;
   type: V1ResourcePoolType;
 }
 
@@ -540,7 +540,6 @@ export interface Gcp {
   bootDiskSize: number;
   bootDiskSourceImage: string;
   externalIp: boolean;
-  numGpus: number;
   gpuType: string;
   labelKey: string;
   labelValue: string;
@@ -548,6 +547,7 @@ export interface Gcp {
   namePrefix: string;
   network: string;
   networkTags: string[];
+  numGpus: number;
   operationTimeoutPeriod: number;
   preemptible: boolean;
   project: string;
