@@ -8,6 +8,7 @@ orbs:
   kubernetes: circleci/kubernetes@0.11.0
   helm: circleci/helm@1.1.2
   gcloud: circleci/gcp-cli@2.1.0
+  queue: eddiewebb/queue@volatile
 
 executors:
   python-35:
@@ -544,7 +545,7 @@ commands:
             checkpointStorage.bucket=det-ci
       - set-master-address-gke:
           release-name: "ci"
-          namespace: "default" 
+          namespace: "default"
 
   setup-gke-cluster-cuda-11:
     parameters:
@@ -1256,6 +1257,11 @@ jobs:
     docker:
       - image: determinedai/cimg-base:stable
     steps:
+      - queue/until_front_of_line:
+          only-on-branch: master
+          # Basically wait.. forever - we would prefer not to fail
+          # deploys and we'll likely never be this backend up.
+          time: '10000'
       - checkout
       - set-slack-user-id
       - setup-python-venv:
@@ -1727,7 +1733,7 @@ workflows:
       - request-gpu-tests:
           type: approval
           filters: *upstream-feature-branch
-      
+
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
           context: aws
@@ -1903,7 +1909,7 @@ workflows:
               max-dynamic-agents: [2]
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
-  
+
   weekly-cuda-11:
     triggers:
       - schedule:
