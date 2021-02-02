@@ -1,28 +1,18 @@
 # PTL Adapter
 
-user flow:
+potential user flow:
 
 - have a ptl project with lightningModule (LM), lightningTrainer, and maybe lightningDataModule (DM)
 - have LM extend DETLM instead
-  - implement (and/or pick) loss_fn
 - have DM extend DETDM instead
-  - impl methods to return detDataloader
+  - current constraint: easy to go from DetDataloader to PyTorch DataLoader
+  - implement methods to return detDataloader
 
 
-## QUESTION
+## Resources
 
-- What are dp, ddp2: data parallel and dist data prallel: don't directly support these but we do 
-  - do we support these with Horovad?
-  - ddp seems to differ from dp and ddp2 (no batch parts)
-  - https://pytorch-lightning.readthedocs.io/en/latest/multi_gpu.html#multi-gpu
-- What is AMP: automatic mixed precision
+- https://pytorch-lightning.readthedocs.io/en/latest/multi_gpu.html#multi-gpu
 
-### Responses
-
-- no dp ddp 2
-- globalbatch = local batch * number of gpus
-- for anything we don't support print warning. use our moneky patching library
-  - monkey_patch.py
 
 ## LightningModule
 
@@ -30,9 +20,7 @@ LM wraps and organizes PyTorch code. [ref](https://pytorch-lightning.readthedocs
 
 ### TODO
 
-- sort out what won't be in phase one or be unsupported
-  - time estimate
-- put out an initial pr in experimental with mnist
+- increase support for the rest of LM methods, props, and hooks
 
 ### API
 
