@@ -45,7 +45,7 @@ resource pools:
    save money, but you can continue to run your Tensorboard. Without
    resource pools, you would have needed to keep a ``p3dn.24xlarge``
    instance running to keep the Tensorboard alive. By default
-   Tensorboard will always run on the default CPU pool
+   Tensorboard will always run on the default CPU pool.
 
 -  *Use GPUs in different availability zones on AWS*
 
