@@ -8,13 +8,7 @@ import pytest
 import torch
 
 import determined as det
-from determined.pytorch import (
-    DistributedBatchSampler,
-    RepeatBatchSampler,
-    SkipBatchSampler,
-    data_length,
-    to_device,
-)
+from determined.pytorch import data_length, samplers, to_device
 
 
 def make_dataset() -> torch.utils.data.Dataset:
@@ -34,9 +28,9 @@ def test_skip_batch_sampler():
     sampler = torch.utils.data.BatchSampler(
         torch.utils.data.SequentialSampler(range(15)), batch_size=2, drop_last=False
     )
-    skip_sampler = SkipBatchSampler(sampler, skip)
+    skip_sampler = samplers.SkipBatchSampler(sampler, skip)
 
-    assert len(skip_sampler) == 6
+    assert len(skip_sampler) == 8
 
     iterator = iter(sampler)
 
@@ -47,14 +41,10 @@ def test_skip_batch_sampler():
     for samp, skip_samp in zip(iterator, iter(skip_sampler)):
         assert samp == skip_samp
 
-    # Confirm that same_length works.
-    same_size_skip_sampler = SkipBatchSampler(sampler, skip, same_length=True)
-    assert len(same_size_skip_sampler) == len(sampler)
-
 
 def test_repeat_batch_sampler():
     sampler = torch.utils.data.BatchSampler(torch.utils.data.SequentialSampler(range(10)), 3, False)
-    repeat_sampler = RepeatBatchSampler(sampler)
+    repeat_sampler = samplers.RepeatBatchSampler(sampler)
 
     assert len(repeat_sampler) == 4
 
@@ -79,7 +69,7 @@ def test_distributed_batch_sampler():
     expected_samples.append([[6, 7], [14, 15]])
 
     for rank in range(num_replicas):
-        dist_sampler = DistributedBatchSampler(sampler, 4, rank)
+        dist_sampler = samplers.DistributedBatchSampler(sampler, 4, rank)
         samples = list(dist_sampler)
         assert len(dist_sampler) == len(samples)
         assert samples == expected_samples[rank]

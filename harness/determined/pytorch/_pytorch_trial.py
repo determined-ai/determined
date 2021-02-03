@@ -111,20 +111,56 @@ class PyTorchTrialController(det.LoopTrialController):
         nreplicas = hvd.size() if self.hvd_config.use else 1
         rank = hvd.rank() if self.hvd_config.use else 0
 
-        self.training_loader = self.trial.build_training_data_loader().get_data_loader(
-            repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
-        )
+        def _dataset_repro_warning(fn: str, data_obj: Any) -> str:
+            return (
+                f"{fn}() returned an instance of {type(data_obj).__name__}, which is not a "
+                "subclass of det.pytorch.DataLoader.  For most non-Iterable DataSets, "
+                "det.pytorch.DataLoader is a drop-in replacement for torch.utils.data.DataLoader "
+                "but which offers easy and transparent reproducibility in Determined experiments. "
+                "It is highly recommended that you use det.pytorch.DataLoader if possible.  If "
+                "not, you can disable this check by calling "
+                "context.experimental.disable_dataset_reproducibility_checks() at some point in "
+                "your trial's __init__() method."
+            )
+
+        train_data = self.trial.build_training_data_loader()
+        if isinstance(train_data, pytorch.DataLoader):
+            self.training_loader = train_data.get_data_loader(
+                repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
+            )
+        else:
+            # Non-determined DataLoader; ensure the user meant to do this.
+            if not self.context.experimental._data_repro_checks_disabled:
+                raise RuntimeError(_dataset_repro_warning("build_training_data_loader", train_data))
+            self.training_loader = train_data
+
         self.context._epoch_len = len(self.training_loader)
 
-        validation_dataset = self.trial.build_validation_data_loader()
+        validation_data = self.trial.build_validation_data_loader()
         if self._evaluate_batch_defined():
-            self.validation_loader = validation_dataset.get_data_loader(
-                repeat=False, skip=0, num_replicas=nreplicas, rank=rank
-            )
+            if isinstance(validation_data, pytorch.DataLoader):
+                self.validation_loader = validation_data.get_data_loader(
+                    repeat=False, skip=0, num_replicas=nreplicas, rank=rank
+                )
+            else:
+                # Non-determined DataLoader; ensure the user meant to do this.
+                if not self.context.experimental._data_repro_checks_disabled:
+                    raise RuntimeError(
+                        _dataset_repro_warning("build_validation_data_loader", validation_data)
+                    )
+                self.validation_loader = validation_data
         elif self.is_chief:
-            self.validation_loader = validation_dataset.get_data_loader(
-                repeat=False, skip=0, num_replicas=1, rank=0
-            )
+            if isinstance(validation_data, pytorch.DataLoader):
+                self.validation_loader = validation_data.get_data_loader(
+                    repeat=False, skip=0, num_replicas=1, rank=0
+                )
+            else:
+                # Non-determined DataLoader; ensure the user meant to do this.
+                if not self.context.experimental._data_repro_checks_disabled:
+                    raise RuntimeError(
+                        _dataset_repro_warning("build_validation_data_loader", validation_data)
+                    )
+                self.validation_loader = validation_data
 
     def run(self) -> None:
         # We create the training_iterator here rather than in __init__ because we have to be careful

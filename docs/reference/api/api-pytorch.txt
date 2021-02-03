@@ -33,7 +33,7 @@ Loading data into ``PyTorchTrial`` models is done by defining two functions,
 :meth:`~determined.pytorch.PyTorchTrial.build_training_data_loader` and
 :meth:`~determined.pytorch.PyTorchTrial.build_validation_data_loader`. These functions should each
 return an instance of :class:`determined.pytorch.DataLoader`. ``determined.pytorch.DataLoader``
-behaves the same as ``torch.utils.data.DataLoader`` and is a drop-in replacement.
+behaves the same as ``torch.utils.data.DataLoader`` and is a drop-in replacement in most cases.
 
 Each ``DataLoader`` is allowed to return batches with arbitrary structures of the following types,
 which will be fed directly to the :meth:`~determined.pytorch.PyTorchTrial.train_batch` and
