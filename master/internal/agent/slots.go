@@ -7,12 +7,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 type slots struct {
@@ -81,17 +79,7 @@ func (s *slots) summarize(ctx *actor.Context) SlotsSummary {
 }
 
 func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor.Message) {
-	if len(c.Devices) == 0 && c.State == container.Terminated {
-		// This is to handle the case where the task is not using GPU devices and is running
-		// on agent where only GPUs are modeled as devices.
-		ctx.Tell(s.resourcePool, sproto.FreeDevice{
-			DeviceID: sproto.DeviceID{
-				Agent: ctx.Self().Parent(), Device: device.Device{Type: device.ZeroSlot}},
-			ContainerID: &c.ID,
-		})
-	} else {
-		for _, d := range c.Devices {
-			ctx.Tell(ctx.Child(d.ID), msg)
-		}
+	for _, d := range c.Devices {
+		ctx.Tell(ctx.Child(d.ID), msg)
 	}
 }

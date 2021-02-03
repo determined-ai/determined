@@ -80,15 +80,13 @@ func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Devic
 	return devices
 }
 
-func (a *agentState) deallocateDevice(t device.Type, id cproto.ID, d device.Device) {
-	if t == device.ZeroSlot {
-		delete(a.zeroSlotContainers, id)
-		return
+func (a *agentState) deallocateContainer(id cproto.ID) {
+	delete(a.zeroSlotContainers, id)
+	for d, cid := range a.devices {
+		if cid != nil && *cid == id {
+			a.devices[d] = nil
+		}
 	}
-	cid, ok := a.devices[d]
-	check.Panic(check.True(ok, "error freeing device, device not found: %s", d))
-	check.Panic(check.True(cid != nil, "error freeing device, device not assigned: %s", d))
-	a.devices[d] = nil
 }
 
 func (a *agentState) deepCopy() *agentState {

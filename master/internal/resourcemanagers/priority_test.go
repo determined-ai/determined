@@ -7,8 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	cproto "github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
@@ -886,23 +884,13 @@ func AddUnallocatedTasks(
 	}
 }
 
-func deallocateDevices(a *agentState, slots int, id cproto.ID, devices []device.Device) {
-	if slots == 0 {
-		a.deallocateDevice(device.ZeroSlot, id, device.Device{})
-	}
-
-	for _, d := range devices {
-		a.deallocateDevice(device.CPU, id, d)
-	}
-}
-
 func RemoveTask(slots int, toRelease *actor.Ref, taskList *taskList, delete bool) bool {
 	for _, alloc := range taskList.GetAllocations(toRelease).Allocations {
 		alloc, ok := alloc.(*containerAllocation)
 		if !ok {
 			return false
 		}
-		deallocateDevices(alloc.agent, slots, alloc.container.id, alloc.devices)
+		alloc.agent.deallocateContainer(alloc.container.id)
 	}
 	if delete {
 		taskList.RemoveTaskByHandler(toRelease)
