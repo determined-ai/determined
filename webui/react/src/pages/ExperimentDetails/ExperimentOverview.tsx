@@ -60,7 +60,7 @@ const ExperimentOverview: React.FC<Props> = ({
   const [ canceler ] = useState(new AbortController());
 
   const columns = useMemo(() => {
-    const { metric, smallerIsBetter } = experiment.config?.searcher || {};
+    const { metric } = experiment.config?.searcher || {};
 
     const validationRenderer = (key: string) => {
       return function renderer (_: string, record: TrialItem): React.ReactNode {
@@ -88,19 +88,16 @@ const ExperimentOverview: React.FC<Props> = ({
     };
 
     const newColumns = [ ...defaultColumns ].map(column => {
-      const columnKey = column.key as unknown as string;
+      column.sortOrder = null;
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
-      } else if (column.key === 'bestValidation') {
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC) {
         column.render = validationRenderer('bestValidationMetric');
-      } else if (column.key === 'latestValidation') {
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC) {
         column.render = validationRenderer('latestValidationMetric');
       }
       if (column.key === sorter.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-        if ([ 'bestValidation', 'latestValidation' ].includes(columnKey) && smallerIsBetter) {
-          column.sortOrder = sorter.descend ? 'ascend' : 'descend';
-        }
       }
       return column;
     });
@@ -157,7 +154,6 @@ const ExperimentOverview: React.FC<Props> = ({
         },
         { signal: canceler.signal },
       );
-      console.log('trials', experimentTrials);
       setTotal(responsePagination?.total || 0);
       setTrials(experimentTrials);
     } catch (e) {

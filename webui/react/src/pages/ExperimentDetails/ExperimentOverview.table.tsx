@@ -21,15 +21,18 @@ export const columns: ColumnType<TrialItem>[] = [
   },
   {
     dataIndex: 'totalBatchesProcessed',
-    key: 'batches',
+    key: V1GetExperimentTrialsRequestSortBy.BATCHESPROCESSED,
+    sorter: true,
     title: 'Batches',
   },
   {
-    key: 'bestValidation',
+    key: V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC,
+    sorter: true,
     title: 'Best Validation Metric',
   },
   {
-    key: 'latestValidation',
+    key: V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC,
+    sorter: true,
     title: 'Latest Validation Metric',
   },
   {
@@ -40,8 +43,9 @@ export const columns: ColumnType<TrialItem>[] = [
     title: 'Start Time',
   },
   {
-    key: 'duration',
+    key: V1GetExperimentTrialsRequestSortBy.DURATION,
     render: (_: string, record: TrialItem): ReactNode => durationRenderer(record),
+    sorter: true,
     title: 'Duration',
   },
   {
