@@ -284,7 +284,7 @@ const ExperimentList: React.FC = () => {
         all the eligible selected experiments?
       `,
       icon: <ExclamationCircleOutlined />,
-      okText: action,
+      okText: /cancel/i.test(action) ? 'Confirm' : action,
       onOk: () => handleBatchAction(action),
       title: 'Confirm Batch Action',
     });
