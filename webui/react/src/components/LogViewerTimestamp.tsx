@@ -491,7 +491,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
       consumeStream(
         fetchArgs,
         event => {
-          buffer.push(fetchToLogConverter(event));
+          const logEntry = fetchToLogConverter(event);
+          direction === DIRECTIONS.OLDEST ? buffer.unshift(logEntry) : buffer.push(logEntry);
         },
       ).then(() => {
         if (buffer.length < TAIL_SIZE) setIsLastReached(true);
@@ -603,7 +604,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
           <div className={css.measure} ref={measure} />
         </div>
         <div className={css.scrollTo}>
-          <Tooltip placement="topRight" title="Scroll to Top">
+          <Tooltip placement="left" title="Scroll to Top">
             <Button
               aria-label="Scroll to Top"
               className={scrollToTopClasses.join(' ')}
@@ -611,7 +612,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
               onClick={handleScrollToTop} />
           </Tooltip>
           <Tooltip
-            placement="topRight"
+            placement="left"
             title={direction === DIRECTIONS.TAILING ? 'Tailing Enabled' : 'Enable Tailing'}
           >
             <Button
