@@ -74,7 +74,7 @@ export const getResourcePoolSamples = (): ResourcePool[] => {
 /* Experiments */
 
 export const getExperiments = generateDetApi<
-  GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentBase[]
+  GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentPagination
 >(Config.getExperiments);
 
 export const getExperimentList = async (

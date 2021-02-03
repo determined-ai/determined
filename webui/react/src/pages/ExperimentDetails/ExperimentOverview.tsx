@@ -7,6 +7,7 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
+import { Indicator } from 'components/Spinner';
 import {
   defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
@@ -194,6 +195,10 @@ const ExperimentOverview: React.FC<Props> = ({
             <ResponsiveTable
               columns={columns}
               dataSource={trials}
+              loading={{
+                indicator: <Indicator />,
+                spinning: !trials,
+              }}
               pagination={getFullPaginationConfig(pagination, total)}
               rowClassName={defaultRowClassName({ clickable: true })}
               rowKey="id"

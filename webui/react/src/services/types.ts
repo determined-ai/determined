@@ -6,7 +6,7 @@ export interface ApiCommonParams {
   cancelToken?: CancelToken,
 }
 
-export interface FetchRequestOptions {
+export interface FetchOptions {
   signal?: AbortSignal;
 }
 
@@ -27,7 +27,7 @@ interface ApiBase {
 // Designed for use with Swagger generated api bindings.
 export interface DetApi<Input, DetOutput, Output> extends ApiBase {
   postProcess: (response: DetOutput) => Output;
-  request: (params: Input, options?: FetchRequestOptions) => Promise<DetOutput>;
+  request: (params: Input, options?: FetchOptions) => Promise<DetOutput>;
   stubbedResponse?: DetOutput;
 }
 export interface HttpApi<Input, Output> extends ApiBase {
