@@ -93,20 +93,6 @@ type StepModelOption interface {
 	apply(*model.Step)
 }
 
-// // StepModelOptionFunc is a type that implements StepModelOption.
-// type StepModelOptionFunc func(*model.Step)
-
-// func (f StepModelOptionFunc) apply(step *model.Step) {
-// 	f(step)
-// }
-
-// // WithStepState is a StepModeOption that sets a steps state.
-// func WithStepState(state model.State) StepModelOption {
-// 	return StepModelOptionFunc(func(step *model.Step) {
-// 		step.State = state
-// 	})
-// }
-
 // StepModel returns a new step with the specified options.
 func StepModel(tID int, opts ...StepModelOption) *model.Step {
 	t := &model.Step{
