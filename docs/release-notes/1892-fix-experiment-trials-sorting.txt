@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Fix sorting on the experiment trials table within the
-   experiment detail page.

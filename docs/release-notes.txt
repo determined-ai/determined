@@ -5,6 +5,96 @@
 ###############
 
 **************
+ Version 0.14
+**************
+
+Version 0.14.0
+==============
+
+**Release Date:** February 4, 2021
+
+**New Features**
+
+-  Add resource pools, which allows for different types of tasks to be
+   scheduled onto different types of agents. For more information see
+   :ref:`resource-pools`.
+
+-  ``det-deploy`` will now create clusters with two resource pools, one
+   that uses GPU instances and one that uses CPU instances for tasks
+   that only require CPUs.
+
+-  WebUI: Revamp cluster page with information about configured resource
+   pools.
+
+**Removed Features**
+
+-  Trial API: Remove the old PyTorch APIs, including:
+
+   -  the ``build_model``, ``optimizer``, and ``create_lr_scheduler``
+      methods in :class:`~determined.pytorch.PyTorchTrial`;
+
+   -  the callback ``on_before_optimizer_step``;
+
+   -  the field ``optimizations.mixed_precision`` in the experiment
+      configuration;
+
+   -  the ``model`` arguments to
+      :meth:`~determined.pytorch.PyTorchTrial.train_batch`,
+      :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch`, and
+      :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset`.
+
+   Model code that uses these APIs will no longer run in Determined
+   0.14.0 or later. However, model checkpoints produced by old
+   experiments that used these APIs will still be supported.
+
+**Improvements**
+
+-  **Breaking Change** REST API: The trial and checkpoint API endpoints
+   can now return non-scalar metric values, which are represented as
+   JSON objects or `protobuf structs
+   <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct>`__.
+
+-  Documentation: Add a topic guide on :ref:`debugging models
+   <model-debug>`. The new guide will walk you step-by-step through
+   solving problems with a model in Determined, with a focus on testing
+   features incrementally until the model is fully working. It may also
+   be useful when porting new models to Determined.
+
+-  Documentation: Add a topic guide on :ref:`commands and shells
+   <commands-and-shells>`. It describes how to use Determined's support
+   for managing GPU-powered batch commands and interactive shells.
+
+-  REST API: Improve the performance of the experiments API.
+
+**Bug Fixes**
+
+-  Database: Migrate ``public.trial_logs.id`` to be an ``int8`` in
+   Postgres, instead of an ``int4``. This avoids issues for customers
+   with extremely large amounts of trial logs. **Note**: This migration
+   will be more time-consuming than usual for deployments with large
+   amounts of trial logs.
+
+-  REST API: Fix an issue where requesting checkpoint or trial details
+   of a trial that had non-scalar metric values associated with it would
+   fail.
+
+-  Trial: Fix an issue where the trial was not deallocating resources
+   when it failed to write to the DB.
+
+-  WebUI: Show better messaging for different learning curve edge cases.
+
+-  WebUI: Fix sorting on the experiment trials table within the
+   experiment detail page.
+
+-  WebUI: Fix issue of incorrect trial log order when viewing oldest
+   logs first.
+
+-  WebUI: Update Cancel confirm button label to show `Confirm` to avoid
+   double `Cancel` buttons.
+
+-  WebUI: Improve the sorting behavior for numeric table columns.
+
+**************
  Version 0.13
 **************
 

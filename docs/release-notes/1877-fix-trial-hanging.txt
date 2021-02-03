@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Trial: fix the trial not deallocating resources when it fails at
-   writing to the DB.

@@ -1,9 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Documentation: Add a guide for :ref:`model-debug`. The new guide will
-   walk you step-by-step through solving problems with a model in
-   Determined, with a focus on testing features incrementally until the
-   model is fully working. It may also be useful when porting new models
-   to Determined.

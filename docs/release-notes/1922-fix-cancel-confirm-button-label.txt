@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Update Cancel confirm button label to show `Confirm` to avoid
-   double `Cancel` buttons.
