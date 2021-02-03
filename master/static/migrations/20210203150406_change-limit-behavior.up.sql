@@ -8,7 +8,7 @@ WITH start_index AS (
                  ELSE "offset" END) AS start_index
 ), end_index AS (
     SELECT (CASE WHEN (SELECT start_index FROM start_index) + "limit" > total THEN total
-                 WHEN "limit" = 0 THEN least(100::bigint, total - (SELECT start_index FROM start_index))
+                 WHEN "limit" = 0 THEN least(100::bigint + (SELECT start_index FROM start_index), total)
                  WHEN "limit" = -1 THEN total
                  WHEN "limit" = -2 THEN (SELECT start_index FROM start_index)
                  ELSE (SELECT start_index FROM start_index) + "limit" END) AS end_index

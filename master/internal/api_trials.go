@@ -336,12 +336,15 @@ func (a *apiServer) GetExperimentTrials(
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
 	}
 	orderExpr := ""
-	if orderColMap[req.SortBy] != "id" {
+	switch _, ok := orderColMap[req.SortBy]; {
+	case !ok:
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
+	case orderColMap[req.SortBy] != "id":
 		orderExpr = fmt.Sprintf(
 			"%s %s, id %s",
 			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
 		)
-	} else {
+	default:
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
 
