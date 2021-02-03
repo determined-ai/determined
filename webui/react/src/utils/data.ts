@@ -126,7 +126,7 @@ export const numericSorter = (a?: number, b?: number, reverseOrder = false): num
     return 0;
   }
   if (a != null && b == null) return reverseOrder ? -1 : 1;
-  if (b == null && b != null) return reverseOrder ? 1 : -1;
+  if (a == null && b != null) return reverseOrder ? 1 : -1;
   return 0;
 };
 
