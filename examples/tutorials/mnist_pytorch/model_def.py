@@ -16,7 +16,7 @@ from torch import nn
 
 from layers import Flatten
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 
 import data
 
@@ -53,7 +53,7 @@ class MNistTrial(PyTorchTrial):
             self.model.parameters(), lr=self.context.get_hparam("learning_rate"))
         )
 
-    def build_training_data_loader(self) -> DataLoader:
+    def build_training_data_loader(self) -> torch.utils.data.DataLoader:
         if not self.data_downloaded:
             self.download_directory = data.download_dataset(
                 download_directory=self.download_directory,
@@ -62,9 +62,34 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         train_data = data.get_dataset(self.download_directory, train=True)
-        return DataLoader(train_data, batch_size=self.context.get_per_slot_batch_size())
 
-    def build_validation_data_loader(self) -> DataLoader:
+        mode = "I like pain"
+
+        if mode == "I like easy":
+            return self.context.TrainingDataLoader(train_data)
+
+        if mode == "I like pain":
+
+            from determined.pytorch import samplers
+
+            seed = self.context.get_trial_seed()
+            rank = self.context.distributed.get_rank()
+            size = self.context.distributed.get_size()
+            skip = self.context.get_initial_batch()
+            batch_size = self.context.get_per_slot_batch_size()
+
+            # Shuffle-repeat-shard-batch-skip, just like Determined told me to.
+            sampler = torch.utils.data.SequentialSampler(train_data)
+            sampler = samplers.ReproducibleShuffleSampler(sampler, seed)
+            sampler = samplers.RepeatSampler(sampler)
+            sampler = samplers.DistributedSampler(sampler, num_workers=size, rank=rank)
+            batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size, drop_last=False)
+            batch_sampler = samplers.SkipBatchSampler(batch_sampler, skip)
+
+            return torch.utils.data.DataLoader(train_data, batch_sampler=batch_sampler)
+
+
+    def build_validation_data_loader(self) -> torch.utils.data.DataLoader:
         if not self.data_downloaded:
             self.download_directory = data.download_dataset(
                 download_directory=self.download_directory,
@@ -73,7 +98,8 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         validation_data = data.get_dataset(self.download_directory, train=False)
-        return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
+
+        return self.context.ValidationDataLoader(validation_data)
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int

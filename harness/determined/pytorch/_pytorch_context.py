@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union
 
 import torch
 import torch.nn as nn
@@ -8,6 +8,10 @@ import determined as det
 from determined import pytorch
 from determined.common import check
 from determined.horovod import hvd
+
+_worker_init_fn_t = Optional[Callable[[int], None]]
+T = TypeVar("T")
+_collate_fn_t = Optional[Callable[[List[T]], Any]]
 
 # Apex is included only for GPU trials.
 try:
@@ -73,6 +77,7 @@ class PyTorchTrialContext(det.TrialContext):
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
         self._last_backward_batch_idx = None  # type: Optional[int]
         self._current_batch_idx = None  # type: Optional[int]
+        self._validation_shuffles = 0
 
         self.experimental = pytorch.PyTorchExperimentalContext(self)
 
