@@ -18,8 +18,8 @@ import {
 } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentPagination,
-  Log, ResourcePool, TBSourceType, Telemetry, TrialDetails, ValidationHistory,
+  ExperimentPagination, Log, ResourcePool, TBSourceType, Telemetry, TrialDetails,
+  TrialPagination, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -161,8 +161,8 @@ export const getExperiments: DetApi<
       pagination: response.pagination,
     };
   },
-  request: (params: GetExperimentsParams) => detApi.Experiments
-    .determinedGetExperiments(
+  request: (params: GetExperimentsParams, options) => {
+    return detApi.Experiments.determinedGetExperiments(
       params.sortBy,
       params.orderBy,
       params.offset,
@@ -172,19 +172,27 @@ export const getExperiments: DetApi<
       params.archived,
       params.states,
       params.users,
-      params.options,
-    ),
+      options,
+    );
+  },
 };
 
 export const createExperiment: DetApi<
-CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase> = {
+  CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase
+> = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
-    return decoder
-      .decodeGetV1ExperimentRespToExperimentBase(resp);
+    return decoder.decodeGetV1ExperimentRespToExperimentBase(resp);
   },
-  request: (params: CreateExperimentParams) => detApi.Experiments
-    .determinedCreateExperiment({ config: params.experimentConfig, parentId: params.parentId }),
+  request: (params: CreateExperimentParams, options) => {
+    return detApi.Experiments.determinedCreateExperiment(
+      {
+        config: params.experimentConfig,
+        parentId: params.parentId,
+      },
+      options,
+    );
+  },
 };
 
 export const archiveExperiment: DetApi<
@@ -192,8 +200,9 @@ export const archiveExperiment: DetApi<
 > = {
   name: 'archiveExperiment',
   postProcess: noOp,
-  request: (params: ExperimentIdParams) => detApi.Experiments
-    .determinedArchiveExperiment(params.experimentId),
+  request: (params: ExperimentIdParams, options) => {
+    return detApi.Experiments.determinedArchiveExperiment(params.experimentId, options);
+  },
 };
 
 export const unarchiveExperiment: DetApi<
@@ -201,8 +210,9 @@ export const unarchiveExperiment: DetApi<
 > = {
   name: 'unarchiveExperiment',
   postProcess: noOp,
-  request: (params: ExperimentIdParams) => detApi.Experiments
-    .determinedUnarchiveExperiment(params.experimentId),
+  request: (params: ExperimentIdParams, options) => {
+    return detApi.Experiments.determinedUnarchiveExperiment(params.experimentId, options);
+  },
 };
 
 export const activateExperiment: DetApi<
@@ -210,50 +220,58 @@ export const activateExperiment: DetApi<
 > = {
   name: 'activateExperiment',
   postProcess: noOp,
-  request: (params: ExperimentIdParams) => detApi.Experiments
-    .determinedActivateExperiment(params.experimentId),
+  request: (params: ExperimentIdParams, options) => {
+    return detApi.Experiments.determinedActivateExperiment(params.experimentId, options);
+  },
 };
 
 export const pauseExperiment: DetApi<ExperimentIdParams, Api.V1PauseExperimentResponse, void> = {
   name: 'pauseExperiment',
   postProcess: noOp,
-  request: (params: ExperimentIdParams) => detApi.Experiments
-    .determinedPauseExperiment(params.experimentId),
+  request: (params: ExperimentIdParams, options) => {
+    return detApi.Experiments.determinedPauseExperiment(params.experimentId, options);
+  },
 };
 
 export const cancelExperiment: DetApi<ExperimentIdParams, Api.V1CancelExperimentResponse, void> = {
   name: 'cancelExperiment',
   postProcess: noOp,
-  request: (params: ExperimentIdParams) => detApi.Experiments
-    .determinedCancelExperiment(params.experimentId),
+  request: (params: ExperimentIdParams, options) => {
+    return detApi.Experiments.determinedCancelExperiment(params.experimentId, options);
+  },
 };
 
 export const killExperiment: DetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void> = {
   name: 'killExperiment',
   postProcess: noOp,
-  request: (params: ExperimentIdParams) => detApi.Experiments
-    .determinedKillExperiment(params.experimentId),
+  request: (params: ExperimentIdParams, options) => {
+    return detApi.Experiments.determinedKillExperiment(params.experimentId, options);
+  },
 };
 
 export const patchExperiment: DetApi<PatchExperimentParams, Api.V1PatchExperimentResponse, void> = {
   name: 'patchExperiment',
   postProcess: noOp,
-  request: (params: PatchExperimentParams) => detApi.Experiments
-    .determinedPatchExperiment(params.experimentId, params.body as Api.V1Experiment),
+  request: (params: PatchExperimentParams, options) => {
+    return detApi.Experiments.determinedPatchExperiment(
+      params.experimentId,
+      params.body as Api.V1Experiment,
+      options,
+    );
+  },
 };
 
 export const getExperimentDetails: DetApi<
-ExperimentDetailsParams,
-Api.V1GetExperimentResponse,
-ExperimentBase> = {
+  ExperimentDetailsParams, Api.V1GetExperimentResponse, ExperimentBase
+> = {
   name: 'getExperimentDetails',
   postProcess: (response) => decoder.decodeGetV1ExperimentRespToExperimentBase(response),
-  request: (response) => detApi.Experiments.determinedGetExperiment(response.id),
+  request: (params, options) => detApi.Experiments.determinedGetExperiment(params.id, options),
 };
 
-export const getExpValidationHistory: DetApi<SingleEntityParams,
-Api.V1GetExperimentValidationHistoryResponse,
-ValidationHistory[]> = {
+export const getExpValidationHistory: DetApi<
+  SingleEntityParams, Api.V1GetExperimentValidationHistoryResponse, ValidationHistory[]
+> = {
   name: 'getExperimentValidationHistory',
   postProcess: (response) => {
     if (!response.validationHistory) return [];
@@ -263,28 +281,33 @@ ValidationHistory[]> = {
       validationError: vh.searcherMetric,
     }));
   },
-  request: (params) => detApi.Experiments.determinedGetExperimentValidationHistory(
-    params.id,
-  ),
+  request: (params, options) => {
+    return detApi.Experiments.determinedGetExperimentValidationHistory(params.id, options);
+  },
 };
 
 export const getExpTrials: DetApi<
-GetTrialsParams,
-Api.V1GetExperimentTrialsResponse,
-TrialDetails[]> = {
+  GetTrialsParams, Api.V1GetExperimentTrialsResponse, TrialPagination
+> = {
   name: 'getExperimentTrials',
   postProcess: (response) => {
-    return response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial }));
+    return {
+      pagination: response.pagination,
+      trials: response.trials.map(trial => decoder.decodeTrialResponseToTrialDetails({ trial })),
+    };
   },
-  request: (params) => detApi.Experiments.determinedGetExperimentTrials(
-    params.id,
-    params.sortBy,
-    params.orderBy,
-    params.offset,
-    params.limit,
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    params.states?.map(rs => 'STATE_' + rs.toString() as any),
-  ),
+  request: (params, options) => {
+    return detApi.Experiments.determinedGetExperimentTrials(
+      params.id,
+      params.sortBy,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      params.states?.map(state => `STATE_${state.toString()}` as any),
+      options,
+    );
+  },
 };
 
 export const getExperimentLabels: DetApi<
@@ -292,11 +315,12 @@ export const getExperimentLabels: DetApi<
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
-  request: (params) => detApi.Experiments.determinedGetExperimentLabels(params),
+  request: (options) => detApi.Experiments.determinedGetExperimentLabels(options),
 };
 
 export const getTrialDetails: DetApi<
-TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails> = {
+  TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails
+> = {
   name: 'getTrialDetails',
   postProcess: (resp: Api.V1GetTrialResponse) => {
     return decoder

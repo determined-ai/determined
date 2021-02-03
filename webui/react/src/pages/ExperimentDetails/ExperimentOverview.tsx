@@ -1,20 +1,29 @@
-import { Button, Col, Row, Table, Tooltip } from 'antd';
+import { Button, Col, Row, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
+import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
-import { defaultRowClassName, getPaginationConfig, humanReadableFloatRenderer,
-  MINIMUM_PAGE_SIZE } from 'components/Table';
+import { Indicator } from 'components/Spinner';
+import {
+  defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
+} from 'components/Table';
+import handleError, { ErrorType } from 'ErrorHandler';
+import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath, paths } from 'routes/utils';
+import { getExpTrials } from 'services/api';
+import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { ApiSorter } from 'services/types';
-import { CheckpointWorkloadExtended, ExperimentBase, TrialItem, ValidationHistory } from 'types';
-import { numericSorter } from 'utils/data';
+import { validateDetApiEnum } from 'services/utils';
+import {
+  CheckpointWorkloadExtended, ExperimentBase, Pagination, TrialItem, ValidationHistory,
+} from 'types';
 import { getMetricValue } from 'utils/types';
 
 import css from './ExperimentOverview.module.scss';
@@ -23,7 +32,6 @@ import { columns as defaultColumns } from './ExperimentOverview.table';
 interface Props {
   experiment: ExperimentBase;
   onTagsChange: () => void;
-  trials: TrialItem[];
   validationHistory: ValidationHistory[];
 }
 
@@ -31,28 +39,36 @@ const STORAGE_PATH = 'experiment-detail';
 const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
-const ExperimentOverview: React.FC<Props> = (
-  { experiment, trials, validationHistory, onTagsChange }: Props,
-) => {
+const defaultSorter: ApiSorter<V1GetExperimentTrialsRequestSortBy> = {
+  descend: true,
+  key: V1GetExperimentTrialsRequestSortBy.ID,
+};
+
+const ExperimentOverview: React.FC<Props> = ({
+  experiment,
+  validationHistory,
+  onTagsChange,
+}: Props) => {
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
-  const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
-  const [ pageSize, setPageSize ] = useState(initLimit);
-  const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
+  const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+  const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
+  const [ total, setTotal ] = useState(0);
+  const [ sorter, setSorter ] = useState(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
+  const [ trials, setTrials ] = useState<TrialItem[]>();
+  const [ canceler ] = useState(new AbortController());
 
   const columns = useMemo(() => {
-    const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      const value = getMetricValue(record.latestValidationMetric, metric);
-      return value && <HumanReadableFloat num={value} />;
-    };
+    const { metric } = experiment.config?.searcher || {};
 
-    const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
-      if (!metric) return 0;
-      const aMetric = getMetricValue(a.latestValidationMetric, metric);
-      const bMetric = getMetricValue(b.latestValidationMetric, metric);
-      return numericSorter(aMetric, bMetric);
+    const validationRenderer = (key: string) => {
+      return function renderer (_: string, record: TrialItem): React.ReactNode {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        const value = getMetricValue((record as any)[key], metric);
+        return value && <HumanReadableFloat num={value} />;
+      };
     };
 
     const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
@@ -72,24 +88,17 @@ const ExperimentOverview: React.FC<Props> = (
       );
     };
 
-    const { metric, smallerIsBetter } = experiment.config?.searcher || {};
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
-      if (!sorter && column.key === 'bestValidation') {
-        column.sortOrder = smallerIsBetter ? 'ascend' : 'descend';
-      } else if (sorter && column.key === sorter.key) {
+      if (column.key === 'checkpoint') {
+        column.render = checkpointRenderer;
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC) {
+        column.render = validationRenderer('bestValidationMetric');
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC) {
+        column.render = validationRenderer('latestValidationMetric');
+      }
+      if (column.key === sorter.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      }
-      if (column.key === 'latestValidation') {
-        column.render = latestValidationRenderer;
-        column.sorter = latestValidationSorter;
-      }
-      if (column.key === 'checkpoint') column.render = checkpointRenderer;
-      if (column.key === 'bestValidation') {
-        column.render = (_: string, record: TrialItem): React.ReactNode => {
-          const value = getMetricValue(record.bestValidationMetric, metric);
-          return value && humanReadableFloatRenderer(value);
-        };
       }
       return column;
     });
@@ -104,10 +113,17 @@ const ExperimentOverview: React.FC<Props> = (
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
-    setSorter({ descend: order === 'descend', key: columnKey as string });
+    setSorter({
+      descend: order === 'descend',
+      key: columnKey as V1GetExperimentTrialsRequestSortBy,
+    });
 
     storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
-    setPageSize(tablePagination.pageSize);
+    setPagination(prev => ({
+      ...prev,
+      limit: tablePagination.pageSize,
+      offset: (tablePagination.current - 1) * tablePagination.pageSize,
+    }));
   }, [ columns, setSorter, storage ]);
 
   const handleTableRow = useCallback((record: TrialItem) => {
@@ -127,6 +143,38 @@ const ExperimentOverview: React.FC<Props> = (
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
+  const fetchExperimentTrials = useCallback(async () => {
+    try {
+      const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
+        {
+          id: experiment.id,
+          limit: pagination.limit,
+          offset: pagination.offset,
+          orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortBy: validateDetApiEnum(V1GetExperimentTrialsRequestSortBy, sorter.key),
+        },
+        { signal: canceler.signal },
+      );
+      setTotal(responsePagination?.total || 0);
+      setTrials(experimentTrials);
+    } catch (e) {
+      handleError({
+        message: `Unable to fetch experiments ${experiment.id} trials.`,
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ experiment.id, canceler, pagination, sorter ]);
+
+  const stopPolling = usePolling(fetchExperimentTrials);
+
+  useEffect(() => {
+    return () => {
+      stopPolling();
+      canceler.abort();
+    };
+  }, [ canceler, stopPolling ]);
+
   return (
     <div className={css.base}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>
@@ -144,10 +192,14 @@ const ExperimentOverview: React.FC<Props> = (
         </Col>
         <Col span={24}>
           <Section title="Trials">
-            <Table
+            <ResponsiveTable
               columns={columns}
               dataSource={trials}
-              pagination={getPaginationConfig(trials.length || 0, pageSize)}
+              loading={{
+                indicator: <Indicator />,
+                spinning: !trials,
+              }}
+              pagination={getFullPaginationConfig(pagination, total)}
               rowClassName={defaultRowClassName({ clickable: true })}
               rowKey="id"
               showSorterTooltip={false}
