@@ -6,7 +6,7 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
 
-import { ApiCommonParams, DetApi, FetchOptionParams, HttpApi } from './types';
+import { ApiCommonParams, DetApi, FetchRequestOptions, HttpApi } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
@@ -102,7 +102,7 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 }
 
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
-  return async function(params: Input & FetchOptionParams, options?: unknown): Promise<Output> {
+  return async function(params: Input, options?: FetchRequestOptions): Promise<Output> {
     try {
       const response = api.stubbedResponse ?
         api.stubbedResponse : await api.request(params, options);

@@ -63,7 +63,7 @@ const ExperimentDetails: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const experiment = await getExperimentDetails({ id, signal: experimentCanceler.signal });
+      const experiment = await getExperimentDetails({ id }, { signal: experimentCanceler.signal });
       const validationHistory = await getExpValidationHistory({ id });
       setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
       setValHistory(validationHistory);

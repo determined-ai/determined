@@ -157,6 +157,7 @@ const ExperimentOverview: React.FC<Props> = ({
         },
         { signal: canceler.signal },
       );
+      console.log('trials', experimentTrials);
       setTotal(responsePagination?.total || 0);
       setTrials(experimentTrials);
     } catch (e) {
