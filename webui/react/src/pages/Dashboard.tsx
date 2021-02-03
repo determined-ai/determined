@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
     [CommandType.Notebook]: countActiveCommand(notebooks.data || []),
     [CommandType.Shell]: countActiveCommand(shells.data || []),
     [CommandType.Tensorboard]: countActiveCommand(tensorboards.data || []),
-    Experiment: (activeExperiments.data || []).length,
+    Experiment: activeExperiments.data?.pagination.total,
   };
 
   /* Recent Tasks */

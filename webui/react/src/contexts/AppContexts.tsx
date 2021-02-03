@@ -12,7 +12,7 @@ import {
   getShells, getTensorboards, getUsers,
 } from 'services/api';
 import { EmptyParams, GetExperimentsParams } from 'services/types';
-import { Command, DetailedUser, ExperimentBase } from 'types';
+import { Command, DetailedUser, ExperimentPagination } from 'types';
 import { activeRunStates } from 'utils/types';
 
 const AppContexts: React.FC = () => {
@@ -36,7 +36,7 @@ const AppContexts: React.FC = () => {
   const [ tensorboardsResponse, triggerTensorboardsRequest ] =
     useRestApi<EmptyParams, Command[]>(getTensorboards, {});
   const [ activeExperimentsResponse, triggerActiveExperimentsRequest ] =
-    useRestApi<GetExperimentsParams, ExperimentBase[]>(getExperiments, {});
+    useRestApi<GetExperimentsParams, ExperimentPagination>(getExperiments, {});
 
   const fetchAgents = useCallback(async (): Promise<void> => {
     try {
@@ -59,7 +59,7 @@ const AppContexts: React.FC = () => {
     triggerNotebooksRequest({});
     triggerShellsRequest({});
     triggerTensorboardsRequest({});
-    triggerActiveExperimentsRequest({ states: activeRunStates });
+    triggerActiveExperimentsRequest({ limit: 0, states: activeRunStates });
   }, [
     triggerCommandsRequest,
     triggerNotebooksRequest,
