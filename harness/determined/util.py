@@ -126,11 +126,7 @@ def wrap_metrics(
     if isinstance(metrics, det.workload.Skipped):
         return metrics
     else:
-        return {
-            "metrics": metrics,
-            "stop_requested": stop_requested,
-            "invalid_hp": invalid_hp
-        }
+        return {"metrics": metrics, "stop_requested": stop_requested, "invalid_hp": invalid_hp}
 
 
 def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:

@@ -1,7 +1,7 @@
 import logging
 import pathlib
-import sys
 import random
+import sys
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -148,9 +148,7 @@ class PyTorchTrialController(det.LoopTrialController):
                     response_func(
                         util.wrap_metrics(
                             self._train_for_step(
-                                w.step_id,
-                                w.num_batches,
-                                w.total_batches_processed
+                                w.step_id, w.num_batches, w.total_batches_processed
                             ),
                             self.context.get_stop_requested(),
                             self.context.get_invalid_hp(),
@@ -161,9 +159,7 @@ class PyTorchTrialController(det.LoopTrialController):
                     response_func(
                         util.wrap_metrics(
                             self._train_for_step(
-                                w.step_id,
-                                w.num_batches,
-                                w.total_batches_processed
+                                w.step_id, w.num_batches, w.total_batches_processed
                             ),
                             self.context.get_stop_requested(),
                             self.context.set_invalid_hp(True),
