@@ -16,7 +16,7 @@ from torch import nn
 
 from layers import Flatten
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 
 import data
 
@@ -52,7 +52,7 @@ class MNistTrial(PyTorchTrial):
             self.model.parameters(), lr=self.context.get_hparam("learning_rate"))
         )
 
-    def build_training_data_loader(self) -> DataLoader:
+    def build_training_data_loader(self) -> torch.utils.data.DataLoader:
         if not self.data_downloaded:
             self.download_directory = data.download_dataset(
                 download_directory=self.download_directory,
@@ -61,9 +61,14 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         train_data = data.get_dataset(self.download_directory, train=True)
-        return DataLoader(train_data, batch_size=self.context.get_per_slot_batch_size())
 
-    def build_validation_data_loader(self) -> DataLoader:
+        batch_sampler = self.context.make_training_batch_sampler(
+            train_data, batch_size=self.context.get_per_slot_batch_size()
+        )
+
+        return torch.utils.data.DataLoader(train_data, batch_sampler=batch_sampler)
+
+    def build_validation_data_loader(self) -> torch.utils.data.DataLoader:
         if not self.data_downloaded:
             self.download_directory = data.download_dataset(
                 download_directory=self.download_directory,
@@ -72,7 +77,12 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         validation_data = data.get_dataset(self.download_directory, train=False)
-        return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
+
+        batch_sampler = self.context.make_validation_batch_sampler(
+            validation_data, batch_size=self.context.get_per_slot_batch_size()
+        )
+
+        return torch.utils.data.DataLoader(validation_data, batch_sampler=batch_sampler)
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int

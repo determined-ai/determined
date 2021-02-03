@@ -343,6 +343,94 @@ class SkipBatchSampler(torch.utils.data.BatchSampler):
         yield from iterator
 
 
+class ReproducibleShuffleSampler(torch.utils.data.Sampler):
+    def __init__(self, sampler, seed):
+        self._sampler = sampler
+        self._rng = np.random.RandomState(seed)
+
+    def __iter__(self):
+        indices = list(self._sampler)
+        self._rng.shuffle(indices)
+        return iter(indices)
+
+    def __len__(self):
+        # Check the original sampler in case its length changes every epoch.
+        # TODO: this will cause reproducibility issues.
+        return len(self._sampler)
+
+
+class DistributedSampler(torch.utils.data.Sampler):
+    def __init__(
+        self, sampler: torch.utils.data.Sampler, num_replicas: int, rank: int
+    ) -> None:
+        self.sampler = sampler
+        self._num_replicas = num_replicas
+        self._rank = rank
+
+    def __len__(self) -> int:
+        full_global_batches = len(self.sampler) // self._num_replicas
+        worker_gets_partial_batch = int(len(self.sampler) % self._num_replicas > self._rank)
+        return full_global_batches + worker_gets_partial_batch
+
+    def __iter__(self) -> Generator:
+        if self._num_replicas == 1:
+            yield from self.sampler
+        else:
+            for i, batch in enumerate(self.sampler):
+                if i % self._num_replicas == self._rank:
+                    yield batch
+
+
+class RepeatSampler(torch.utils.data.Sampler):
+    def __init__(self, sampler: torch.utils.data.Sampler) -> None:
+        self._sampler = sampler
+
+    def __len__(self) -> int:
+        return len(self._sampler)
+
+    def __iter__(self) -> Generator:
+        while True:
+            yield from self._sampler
+
+
+def reproducible_distributable_batch_sampler(
+    sampler_or_dataset,
+    batch_size,
+    repeat,
+    shuffle,
+    seed,
+    skip,
+    num_workers,
+    rank,
+):
+    """
+    All of the goodness of Determined's reproducibility and distributability in a single call.
+    """
+    if isinstance(sampler_or_dataset, torch.utils.data.Sampler):
+        sampler = sampler_or_dataset
+    else:
+        sampler = torch.utils.data.SequentialSampler(sampler_or_dataset)
+
+    # Shuffle before repeat, or shuffing becomes impossible.
+    if shuffle:
+        sampler = ReproducibleShuffleSampler(sampler, seed)
+
+    if repeat:
+        sampler = RepeatSampler(sampler)
+
+    if num_workers > 1:
+        sampler = DistributedSampler(sampler, num_replicas=num_workers, rank=rank)
+
+    # Batch before skip, because it's far easier to count batches than records.
+    batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size, drop_last=False)
+
+    # Finally, skip batches we've already trained against.
+    if skip:
+        batch_sampler = pytorch.SkipBatchSampler(batch_sampler, skip)
+
+    return batch_sampler
+
+
 def data_length(data: _Data) -> int:
     """
     Calculate length of data input.

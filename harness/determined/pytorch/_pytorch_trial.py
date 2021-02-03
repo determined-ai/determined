@@ -125,20 +125,41 @@ class PyTorchTrialController(det.LoopTrialController):
         nreplicas = hvd.size() if self.hvd_config.use else 1
         rank = hvd.rank() if self.hvd_config.use else 0
 
-        self.training_loader = self.trial.build_training_data_loader().get_data_loader(
-            repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
-        )
+        # TODO: the number of ways a user could get this wrong is alarming.  Right now we don't
+        # have any validation, but we should add some.  Maybe deprecate the old way?  Or mark the
+        # new way as "advanced"?
+        train_data = self.trial.build_training_data_loader()
+        if isinstance(train_data, pytorch.DataLoader):
+            # Old-API, a user-provided det.pytorch.DataLoader.
+            self.training_loader = train_data.get_data_loader(
+                repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
+            )
+        else:
+            # New-API, assume the user called context.make_training_batch_sampler.
+            self.training_loader = train_data
+
         self.context._epoch_len = len(self.training_loader)
 
-        validation_dataset = self.trial.build_validation_data_loader()
+        validation_data = self.trial.build_validation_data_loader()
         if self._evaluate_batch_defined():
-            self.validation_loader = validation_dataset.get_data_loader(
-                repeat=False, skip=0, num_replicas=nreplicas, rank=rank
-            )
+            if isinstance(validation_data, pytorch.DataLoader):
+                # Old-API, a user-provided det.pytorch.DataLoader.
+                self.validation_loader = validation_data.get_data_loader(
+                    repeat=False, skip=0, num_replicas=nreplicas, rank=rank
+                )
+            else:
+                # New-API, assume the user called context.make_validation_batch_sampler.
+                self.validation_loader = validation_data
         elif self.is_chief:
-            self.validation_loader = validation_dataset.get_data_loader(
-                repeat=False, skip=0, num_replicas=1, rank=0
-            )
+            if isinstance(validation_data, pytorch.DataLoader):
+                # Old-API, a user-provided det.pytorch.DataLoader.
+                self.validation_loader = validation_data.get_data_loader(
+                    repeat=False, skip=0, num_replicas=1, rank=0
+                )
+            else:
+                # Oh shit, I hope the user didn't call make_validation_batch_sampler; that would
+                # be bad for them here.
+                self.validation_loader = validation_data
 
     def run(self) -> None:
         for w, args, response_func in self.workloads:

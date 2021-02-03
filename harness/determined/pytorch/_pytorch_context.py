@@ -528,3 +528,57 @@ class PyTorchTrialContext(det.TrialContext):
         if self._epoch_len is None:
             raise det.errors.InternalException("Training DataLoader uninitialized.")
         return self._current_batch_idx % self._epoch_len == self._epoch_len - 1
+
+    def make_training_batch_sampler(self, sampler_or_dataset, batch_size, shuffle=True):
+        """
+        A training batch sampler will have the following properties:
+         - A repeat is always applied.
+         - If shuffled (defaults to True) the shuffle will be reproducible, even across pauses
+           and restarts.
+         - The shuffle seed is the experiment seed.
+         - If training is continuing after a pause, it will skip the appropriate number of batches
+           before starting from where it left off before.
+         - Sharding will be applied in accordance with the distributed training settings.
+         - All workers in distributed training will shuffle-then-shard, resulting in a superior
+           shuffle vs shard-then-shuffle semantics.  The reproducible shuffle guarantees each
+           worker still sees unique data.
+        """
+        seed = self.get_trial_seed()
+        skip = self.env.initial_workload.total_batches_processed
+        num_workers = self.distributed.get_size()
+        rank = self.distributed.get_rank()
+
+        return pytorch.reproducible_distributable_batch_sampler(
+            sampler_or_dataset=sampler_or_dataset,
+            batch_size=batch_size,
+            # Training dataset always repeat in Determined.
+            repeat=True,
+            shuffle=shuffle,
+            seed=seed,
+            skip=skip,
+            num_workers=num_workers,
+            rank=rank,
+        )
+
+    def make_validation_batch_sampler(self, sampler_or_dataset, batch_size):
+        """
+        A training batch sampler will have the following properties:
+         - No repeat is ever applied.
+         - No shuffle is applied (TODO: we could make this optional).
+         - Sharding will be applied in accordance with the distributed training settings.
+        """
+        num_workers = self.distributed.get_size()
+        rank = self.distributed.get_rank()
+
+        return pytorch.reproducible_distributable_batch_sampler(
+            sampler_or_dataset=sampler_or_dataset,
+            batch_size=batch_size,
+            # Validation datasets must not repeat in Determined.
+            repeat=False,
+            shuffle=False,
+            seed=0,
+            # Nothing to skip for a validation dataset.
+            skip=0,
+            num_workers=num_workers,
+            rank=rank,
+        )

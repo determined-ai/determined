@@ -6,6 +6,10 @@ from determined.pytorch._data import (
     TorchData,
     _Data,
     adapt_batch_sampler,
+    ReproducibleShuffleSampler,
+    DistributedSampler,
+    RepeatSampler,
+    reproducible_distributable_batch_sampler,
     data_length,
     to_device,
 )
