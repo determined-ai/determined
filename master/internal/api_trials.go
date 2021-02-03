@@ -324,6 +324,7 @@ func (a *apiServer) GetExperimentTrials(
 		apiv1.GetExperimentTrialsRequest_SORT_BY_ID:                       "id",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_START_TIME:               "start_time",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_END_TIME:                 "end_time",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_STATE:                    "state",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_BEST_VALIDATION_METRIC:   "best_signed_search_metric",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_LATEST_VALIDATION_METRIC: "latest_signed_search_metric",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_BATCHES_PROCESSED:        "total_batches_processed",
