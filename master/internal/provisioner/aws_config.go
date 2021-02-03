@@ -170,8 +170,6 @@ type ec2Tag struct {
 
 type ec2InstanceType string
 
-
-
 func (t ec2InstanceType) name() string {
 	return string(t)
 }
