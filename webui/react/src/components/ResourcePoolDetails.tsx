@@ -10,7 +10,7 @@ import { rpLogo } from './ResourcePoolCard';
 import css from './ResourcePoolDetails.module.scss';
 
 interface Props {
-  finally: () => void;
+  finally?: () => void;
   resourcePool: ResourcePool;
   visible: boolean;
 }
