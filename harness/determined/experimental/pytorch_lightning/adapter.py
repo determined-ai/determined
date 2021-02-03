@@ -11,6 +11,7 @@ import sys
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 HyperparamsProvider = Callable[[str], Any]
 
+
 def bail(msg: str = '', fail: bool = True):
     msg = f'NotSupported: {msg}'
     if fail:
@@ -40,7 +41,7 @@ def check_compat(lm: DETLightningModule):
 
 class PTLAdapter(PyTorchTrial):
     # QUESTION: take uninstantiated lightning and datamodule so we isntatiate it instead? less code for the user but might be better if the user sees this?
-    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule, data_module: DETLightningDataModule = None):
+    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule):
         super().__init__(context)
         check_compat(lightning_module)
         self.lm = lightning_module
@@ -66,14 +67,6 @@ class PTLAdapter(PyTorchTrial):
         # currently this is only supporting a single optimizer
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
-        if data_module is not None:
-            self.dm = data_module
-            # QUESTION call only on one gpu (once per node). the expected behavior could change with trainer
-            # need to find a place to run this
-            # https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.core.datamodule.html#pytorch_lightning.core.datamodule.LightningDataModule.prepare_data
-            # there are some methods on lm that overlaps with dm
-            self.dm.prepare_data() # TODO check args
-
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
@@ -90,16 +83,3 @@ class PTLAdapter(PyTorchTrial):
 
     def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
         return self.lm.validation_step(batch)
-
-
-    def build_training_data_loader(self):
-        if self.dm is None: raise NotImplementedError()
-        if not self.dm._has_setup_fit:
-            self.dm.setup()
-        return self.dm.train_det_dataloader()
-
-    def build_validation_data_loader(self):
-        if self.dm is None: raise NotImplementedError()
-        if not self.dm._has_setup_fit:
-            self.dm.setup()
-        return self.dm.val_det_dataloader()

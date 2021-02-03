@@ -1,6 +1,6 @@
 import torch
 import pytorch_lightning as ptl
-from determined.pytorch import DataLoader
+from torch.utils.data import DataLoader
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torchvision.datasets import MNIST
@@ -70,8 +70,7 @@ class LightningMNISTClassifier(DETLightningModule):
         return optimizer
 
 
-# CHANGE to DETLightningDataModule
-class MNISTDataModule(DETLightningDataModule):
+class MNISTDataModule(ptl.LightningDataModule):
     def __init__(self):
         super().__init__()
 
@@ -83,9 +82,9 @@ class MNISTDataModule(DETLightningDataModule):
         self.mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
         self.mnist_val = MNIST(os.getcwd(), train=False, download=True, transform=transform)
 
-    def train_det_dataloader(self):
+    def train_dataloader(self):
         return DataLoader(self.mnist_train, batch_size=64, num_workers=12)
-    def val_det_dataloader(self):
+    def val_dataloader(self):
         return DataLoader(self.mnist_val, batch_size=64)
 
 if __name__ == '__main__':
