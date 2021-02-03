@@ -6,7 +6,7 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
 
-import { ApiCommonParams, DetApi, FetchOptionParams, HttpApi } from './types';
+import { ApiCommonParams, DetApi, FetchOptions, HttpApi } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
@@ -102,9 +102,10 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 }
 
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
-  return async function(params: Input & FetchOptionParams): Promise<Output> {
+  return async function(params: Input, options?: FetchOptions): Promise<Output> {
     try {
-      const response = api.stubbedResponse ? api.stubbedResponse : await api.request(params);
+      const response = api.stubbedResponse ?
+        api.stubbedResponse : await api.request(params, options);
       return api.postProcess(response);
     } catch (e) {
       if (!isAborted(e)) processApiError(api.name, e);
@@ -167,6 +168,26 @@ export const consumeStream = async <T = unknown>(
       throw e;
     }
   }
+};
+
+/*
+ * This function is primarily used to convert an enum option into a string value
+ * that the generated API can take as a request param.
+ * More specifically the function takes a value and checks it against a Typescript enum,
+ * to make sure the the value is one of the enum option and returns the value as a string.
+ */
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any => {
+  if (isObject(enumObject)) {
+    const enumRecord = enumObject as Record<string, string>;
+    const stringValue = value as string;
+    const validOptions = Object
+      .values(enumRecord)
+      .filter((_, index) => index % 2 === 0);
+    if (validOptions.includes(stringValue)) return stringValue;
+    return enumRecord.UNSPECIFIED;
+  }
+  return undefined;
 };
 
 /* eslint-disable-next-line */

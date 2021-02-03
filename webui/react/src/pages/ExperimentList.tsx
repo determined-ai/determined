@@ -53,6 +53,11 @@ enum Action {
   Unarchive = 'Unarchive',
 }
 
+const STORAGE_PATH = 'experiment-list';
+const STORAGE_FILTERS_KEY = 'filters';
+const STORAGE_LIMIT_KEY = 'limit';
+const STORAGE_SORTER_KEY = 'sorter';
+
 const defaultFilters: ExperimentFilters = {
   showArchived: false,
   states: [ ALL_VALUE ],
@@ -63,11 +68,6 @@ const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
   descend: true,
   key: V1GetExperimentsRequestSortBy.STARTTIME,
 };
-
-const STORAGE_PATH = 'experiment-list';
-const STORAGE_FILTERS_KEY = 'filters';
-const STORAGE_LIMIT_KEY = 'limit';
-const STORAGE_SORTER_KEY = 'sorter';
 
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
