@@ -15,8 +15,7 @@ Version 0.14.0
 
 **New Features**
 
--  WebUI: Revamp Cluster page with information about currently-defined
-   resource pools.
+-  WebUI: Revamp Cluster page with information about configured resource pools
 
 **Removed Features**
 
@@ -45,6 +44,10 @@ Version 0.14.0
    model is fully working. It may also be useful when porting new models
    to Determined.
 
+-  Documentation: Add a guide on :ref:`commands-and-shells`. This describes
+   how to use Determined's support for managing GPU-powered batch commands
+   and interactive shells.
+
 -  **Breaking Change** Metrics: Metric values returned by the trial and
    checkpoint APIs can now return non-float values, and are defined
    using
@@ -52,10 +55,11 @@ Version 0.14.0
 
 -  PyTorch: Upgrade the default PyTorch version to 1.7.0.
 
--  REST API: Improve the performance of the experiments API.
+-  TensorFlow: Upgrade the default TensorFlow versions to
+   1.15.5. TensorFlow 2 task environments have also been upgraded to
+   TensorFlow 2.4.1.
 
--  TensorFlow: Upgrade the default TensorFlow version to 1.15.5 (or
-   TensorFlow 2.4.1 in -tf2 task environments).
+-  REST API: Improve the performance of the experiments API.
 
 **Bug Fixes**
 
@@ -63,9 +67,11 @@ Version 0.14.0
    trial that had non-scalar metric values associated with it would
    fail.
 
--  Database: Migrate ``public.trial_logs.id`` to an ``int8`` in
-   Postgres. **Note**: This migration may be more time-consuming than
-   usual for users with large amounts of trial logs.
+-  Database: Migrate ``public.trial_logs.id`` to be an ``int8`` in
+   Postgres, instead of an ``int4``. This avoids issues for customers
+   with extremely large amounts of trial logs. **Note**: This migration
+   may be more time-consuming than usual for deployments with large
+   amounts of trial logs.
 
 -  Trial: Fix an issue where the trial was not deallocating resources
    when it failed to write to the DB.
