@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import sys
 import random
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
@@ -143,18 +144,51 @@ class PyTorchTrialController(det.LoopTrialController):
     def run(self) -> None:
         for w, args, response_func in self.workloads:
             if w.kind == workload.Workload.Kind.RUN_STEP:
-                response_func(
-                    util.wrap_metrics(
-                        self._train_for_step(w.step_id, w.num_batches, w.total_batches_processed),
-                        self.context.get_stop_requested(),
+                try:
+                    response_func(
+                        util.wrap_metrics(
+                            self._train_for_step(
+                                w.step_id,
+                                w.num_batches,
+                                w.total_batches_processed
+                            ),
+                            self.context.get_stop_requested(),
+                            self.context.get_invalid_hp(),
+                        )
                     )
-                )
+                except det.InvalidHP as e:
+                    logging.info("Invalid hyperparameter exception in trial __init__: {}".format(e))
+                    response_func(
+                        util.wrap_metrics(
+                            self._train_for_step(
+                                w.step_id,
+                                w.num_batches,
+                                w.total_batches_processed
+                            ),
+                            self.context.get_stop_requested(),
+                            self.context.set_invalid_hp(True),
+                        )
+                    )
+                    raise
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(
-                    util.wrap_metrics(
-                        self._compute_validation_metrics(), self.context.get_stop_requested()
+                try:
+                    response_func(
+                        util.wrap_metrics(
+                            self._compute_validation_metrics(),
+                            self.context.get_stop_requested(),
+                            self.context.get_invalid_hp(),
+                        )
                     )
-                )
+                except det.InvalidHP as e:
+                    logging.info("Invalid hyperparameter exception in trial __init__: {}".format(e))
+                    response_func(
+                        util.wrap_metrics(
+                            self._compute_validation_metrics(),
+                            self.context.get_stop_requested(),
+                            self.context.set_invalid_hp(True),
+                        )
+                    )
+                    raise
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.eq(len(args), 1)
                 check.is_instance(args[0], pathlib.Path)

@@ -137,14 +137,15 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 if env.experiment_config.debug_enabled():
                     faulthandler.dump_traceback_later(30, repeat=True)
 
-                with det._catch_sys_exit(), det._catch_invalid_hp(workloads):
-                    controller = load.prepare_controller(
-                        env,
-                        workloads,
-                        load_path,
-                        socket_mgr.get_rendezvous_info(),
-                        hvd_config,
-                    )
+                with det._catch_sys_exit():
+                    with det._catch_init_invalid_hp(workloads):
+                        controller = load.prepare_controller(
+                            env,
+                            workloads,
+                            load_path,
+                            socket_mgr.get_rendezvous_info(),
+                            hvd_config,
+                        )
                     controller.run()
 
 
@@ -225,4 +226,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except det.InvalidHP as e:
+        logging.info("InvalidHP Exception Encountered: {}".format(e))
+        pass

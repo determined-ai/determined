@@ -17,6 +17,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
         self.distributed = DistributedContext(env, hvd_config)
         self._stop_requested = False
+        self._invalid_hp = False
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> "_TrainContext":
@@ -144,6 +145,26 @@ class _TrainContext(metaclass=abc.ABCMeta):
             "at the end of the current step."
         )
         self._stop_requested = stop_requested
+
+    def get_invalid_hp(self) -> bool:
+        """
+        Return whether a trial invalid hp has been requested.
+        """
+        return self._invalid_hp
+
+    def set_invalid_hp(self, invalid_hp: bool) -> None:
+        """
+        Set a flag to request a trial stoppage due to InvalidHP. When this flag is set to True,
+        we finish the step, checkpoint, then exit.
+        """
+        if not isinstance(invalid_hp, bool):
+            raise AssertionError("invalid_hp must be a boolean")
+
+        logging.info(
+            "A trial InvalidHP stoppage has requested. The trial will be stopped "
+            "at the end of the current step."
+        )
+        self._invalid_hp = invalid_hp
 
 
 class TrialContext(_TrainContext):

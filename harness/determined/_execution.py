@@ -6,7 +6,7 @@ import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import determined as det
-from determined import constants, gpu, horovod, workload
+from determined import constants, gpu, horovod, util, workload
 from determined_common import api
 
 
@@ -47,15 +47,16 @@ def _catch_sys_exit() -> Any:
 
 
 @contextlib.contextmanager
-def _catch_invalid_hp(workloads: Iterator[Any]) -> Any:
+def _catch_init_invalid_hp(workloads: Iterator[Any]) -> Any:
     try:
         yield
     except InvalidHP as e:
-        logging.info("Invalid hyperparameter exception encountered: e\n", e)
+        logging.info("Invalid hyperparameter exception in trial __init__: {}".format(e))
         wkld, args, response_func = next(workloads)
-        wkld.CompletedMessage.ExitedReason = "INVALID_HP"
-        response_func(wkld.CompletedMessage)
-        sys.exit()
+        response_func(
+            util.wrap_metrics({}, False, True)
+        )
+        raise
 
 
 def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:

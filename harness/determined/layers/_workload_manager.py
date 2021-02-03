@@ -132,7 +132,7 @@ class _TrialWorkloadManager(WorkloadManager):
             )
 
         def _respond(in_response: workload.Response) -> None:
-
+            # raise ValueError(in_response)
             # Only the chief container should actually respond to TRAIN_FOR_STEP.
             if self.rendezvous_info.get_rank() != 0:
                 respond(workload.Skipped())
@@ -167,6 +167,8 @@ class _TrialWorkloadManager(WorkloadManager):
 
             if in_response.get("stop_requested", False):
                 out_response["exited_reason"] = "USER_CANCELED"
+            if in_response.get("invalid_hp", False):
+                out_response["exited_reason"] = "INVALID_HP"
 
             # Send the response up.
             respond(out_response)
@@ -262,6 +264,8 @@ class _TrialWorkloadManager(WorkloadManager):
 
             if in_response.get("stop_requested", False):
                 out_response["exited_reason"] = "USER_CANCELED"
+            if in_response.get("invalid_hp", False):
+                out_response["exited_reason"] = "INVALID_HP"
 
             respond(out_response)
 
