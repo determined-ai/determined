@@ -1,8 +1,8 @@
-.. _resource-pool:
+.. _resource-pools:
 
-###############
- Resource Pool
-###############
+################
+ Resource Pools
+################
 
 To run tasks such as experiments or notebooks, Determined needs to have
 resources (CPUs, GPUs) on which to run the tasks. However, different
@@ -20,6 +20,17 @@ you can use different sets of resources for different tasks. Each
 resource pool handles scheduling and instance provisioning
 independently.
 
+When you configure a cluster, you set which pool is the default for CPU
+tasks and which pool is the default for GPU tasks. CPU-only tasks such a
+Tensorboards will run on the default CPU pool unless you specify that it
+should run in a different pool when launching the task. Tasks which
+require a slot such as Experiments or GPU-notebooks will launch on to
+the default GPU pool unless otherwise specified. For this reason we
+recommend that you always create a cluster with at least two pools, one
+with low-cost CPU instances for CPU-only tasks and one with GPU
+instances for GPU tasks. This is the default setup when launching a
+cluster via ``det-deploy``.
+
 Here are some scenarios where it can be valuable to use multiple
 resource pools:
 
@@ -33,7 +44,8 @@ resource pools:
    experiments complete, the ``aws-v100 pool`` can scale down to zero to
    save money, but you can continue to run your Tensorboard. Without
    resource pools, you would have needed to keep a ``p3dn.24xlarge``
-   instance running to keep the Tensorboard alive.
+   instance running to keep the Tensorboard alive. By default
+   Tensorboard will always run on the default CPU pool.
 
 -  *Use GPUs in different availability zones on AWS*
 
@@ -77,6 +89,11 @@ AWS regions/GCP zones or across multiple cloud providers. If the master
 is running in one AWS region/GCP zone, all resource pools must also be
 in that AWS region/GCP zone.
 
+If you create a task that needs slots and specify a pool that will never
+have slots (i.e. a pool with CPU-only instances), that task can never
+get scheduled. Currently that task will appear to be PENDING
+permanently.
+
 We are constantly working to improve Determined and would love to hear
 your feedback either through GitHub issues or in our community Slack.
 
@@ -84,8 +101,8 @@ your feedback either through GitHub issues or in our community Slack.
  Setting Up Resource Pools
 ***************************
 
-Resource pools are configured via the the :ref:`master-configuration`.
-For each resource pool, you can configure scheduler and provider
+Resource pools are configured via the :ref:`master-configuration`. For
+each resource pool, you can configure scheduler and provider
 information.
 
 If you are using static resource pools and launching agents by hand, you
@@ -97,22 +114,30 @@ resource pool the agent should join.
 *****************************
 
 With the introduction of resource pools, the :ref:`master-configuration`
-format has changed to a new format. The old format had the top level
-fields of ``scheduler`` and ``provisioner`` which set the scheduler and
-provisioner settings for the cluster.
+format has changed to a new format.
 
-The new format has the top level fields ``resource_manager`` and
-``resource_pools``. The ``resource_manager`` section is for cluster
+This is a backwards compatible change and cluster configurations in the
+old format will continue to work. A configuration in the old format is
+interpreted as a cluster with a single resource pool that is the default
+for both CPU and GPU tasks. However, to take full advantage of resource
+pools, you will need to convert to the new format, which is a simple
+process of moving around and renaming a small number of top-level
+fields.
+
+The old format had the top level fields of ``scheduler`` and
+``provisioner`` which set the scheduler and provisioner settings for the
+cluster. The new format has the top level fields ``resource_manager``
+and ``resource_pools``. The ``resource_manager`` section is for cluster
 level setting such as which pools should be used by default and the
 default scheduler settings. The ``scheduler`` information is identical
-to the the ``scheduler`` field in the legacy format. The
-``resource_pools`` section is a list of resource pools each of which has
-a name, description and resource pool level settings. Each resource pool
-can be configured with a ``provider`` field that contains the same
-information as the ``provisioner`` field in the legacy format. Each
-resource pool can also have a ``scheduler`` field that sets resource
-pool specific scheduler settings. If the ``scheduler`` field is not set
-for a specific resource pool, the default settings are used.
+to the ``scheduler`` field in the legacy format. The ``resource_pools``
+section is a list of resource pools each of which has a name,
+description and resource pool level settings. Each resource pool can be
+configured with a ``provider`` field that contains the same information
+as the ``provisioner`` field in the legacy format. Each resource pool
+can also have a ``scheduler`` field that sets resource pool specific
+scheduler settings. If the ``scheduler`` field is not set for a specific
+resource pool, the default settings are used.
 
 Note that defining resource pool-specific ``scheduler`` settings is
 all-or-nothing. If the pool-specific ``scheduler`` field is blank, all
@@ -172,8 +197,8 @@ pool-specific level:
 *************************************
 
 When creating a task, the configuration file has a section called
-"resources". You can set the resource_pool subfield to specify the
-resource_pool that a task should be launched into.
+"resources". You can set the ``resource_pool`` subfield to specify the
+``resource_pool`` that a task should be launched into.
 
 .. code:: yaml
 

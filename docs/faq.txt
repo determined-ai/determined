@@ -176,16 +176,9 @@ explicitly in the :ref:`cluster-configuration`.
 How can I control which agents a task is scheduled on?
 ======================================================
 
-This can be done by assigning a label to certain agents in the cluster,
-and then using the :ref:`resources.agent_label <exp-config-agent_label>`
-setting in experiment, notebook, or command configurations. Each agent
-can have at most one label, which can be set via the :ref:`agent
-configuration <agent-configuration>`. Similarly, each task can have at
-most one ``agent_label``. If a task is configured with an
-``agent_label``, it will *only* be launched on agents that have that
-label. Similarly, if an agent has a label, it will never be assigned
-tasks that do not have an ``agent_label`` or that specify a different
-``agent_label``.
+Agents can now be grouped into multiple resource pools and tasks can be
+assigned to specific resource pools. For more information, please see
+:ref:`resource-pools`.
 
 ********************
  TensorFlow Support
