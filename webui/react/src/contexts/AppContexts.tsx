@@ -59,7 +59,7 @@ const AppContexts: React.FC = () => {
     triggerNotebooksRequest({});
     triggerShellsRequest({});
     triggerTensorboardsRequest({});
-    triggerActiveExperimentsRequest({ limit: 0, states: activeRunStates });
+    triggerActiveExperimentsRequest({ limit: -2, states: activeRunStates });
   }, [
     triggerCommandsRequest,
     triggerNotebooksRequest,
