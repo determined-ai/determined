@@ -92,7 +92,7 @@ in that AWS region/GCP zone.
 If you create a task that needs slots and specify a pool that will never
 have slots (i.e. a pool with CPU-only instances), that task can never
 get scheduled. Currently that task will appear to be PENDING
-permanently. This will be improved in an upcoming release.
+permanently.
 
 We are constantly working to improve Determined and would love to hear
 your feedback either through GitHub issues or in our community Slack.
