@@ -254,15 +254,25 @@ export const upgradeConfig = (config: RawJson): void => {
 // Checks whether tensorboard source matches a given source list.
 export const tsbMatchesSource =
   (tensorboard: CommandTask, source: LaunchTensorboardParams): boolean => {
-    source.experimentIds?.sort();
-    source.trialIds?.sort();
-    tensorboard.misc?.experimentIds?.sort();
-    tensorboard.misc?.trialIds?.sort();
+    if (source.experimentIds) {
+      source.experimentIds?.sort();
+      tensorboard.misc?.experimentIds?.sort();
 
-    return (
-      isEqual(tensorboard.misc?.experimentIds, source.experimentIds)
-      || isEqual(tensorboard.misc?.trialIds, source.trialIds)
-    );
+      if (isEqual(tensorboard.misc?.experimentIds, source.experimentIds)) {
+        return true;
+      }
+    }
+
+    if (source.trialIds) {
+      source.trialIds?.sort();
+      tensorboard.misc?.trialIds?.sort();
+
+      if (isEqual(tensorboard.misc?.trialIds, source.trialIds)) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
 export const getMetricValue = (workload?: Workload, metricName?: string): number | undefined => {

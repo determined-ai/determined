@@ -175,6 +175,10 @@ export const mapV1TensorboardToCommandTask =
   (tensorboard: Sdk.V1Tensorboard): types.CommandTask => {
     return {
       id: tensorboard.id,
+      misc: {
+        experimentIds: tensorboard.experimentIds || [],
+        trialIds: tensorboard.trialIds || [],
+      },
       name: tensorboard.description,
       resourcePool: tensorboard.resourcePool,
       serviceAddress: tensorboard.serviceAddress,
