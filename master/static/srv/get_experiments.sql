@@ -22,12 +22,15 @@ WITH filtered_exps AS (
                 OR string_to_array($4, ',') <@ ARRAY(SELECT jsonb_array_elements_text(e.config->'labels'))
             )
         AND ($5 = '' OR POSITION($5 IN (e.config->>'description')) > 0)
-    )
+), page_info AS (
+    SELECT public.page_info((SELECT COUNT(*) AS count FROM filtered_exps), $6, $7) AS page_info
+)
 SELECT
-    (SELECT COUNT(*) FROM filtered_exps) as count,
-    (SELECT json_agg(paginated_exps) FROM (
+   (SELECT coalesce(json_agg(paginated_exps), '[]'::json) FROM (
         SELECT * FROM filtered_exps
         ORDER BY %s
-        OFFSET $6
-        LIMIT $7
-    ) AS paginated_exps) AS experiments
+        OFFSET (SELECT p.page_info->>'start_index' FROM page_info p)::bigint
+        LIMIT (SELECT (p.page_info->>'end_index')::bigint - (p.page_info->>'start_index')::bigint FROM page_info p)
+    ) AS paginated_exps) AS experiments,
+    (SELECT p.page_info FROM page_info p) AS pagination
+
