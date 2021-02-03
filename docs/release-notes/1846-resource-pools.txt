@@ -2,7 +2,10 @@
 
 **Features**
 
-   -  Added resource pools, which allows for different types of tasks to be scheduled
-      onto different types of agents. For more information see :ref:`resource-pools`.
-   - ``det-deploy`` will now create clusters with two resource pools, one that uses GPU
-     instances and one that uses CPU instances for tasks that only require CPUs.
+   -  Added resource pools, which allows for different types of tasks to
+      be scheduled onto different types of agents. For more information
+      see :ref:`resource-pools`.
+
+   -  ``det-deploy`` will now create clusters with two resource pools,
+      one that uses GPU instances and one that uses CPU instances for
+      tasks that only require CPUs.
