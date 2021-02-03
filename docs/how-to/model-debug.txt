@@ -161,7 +161,7 @@ Once you are on the cluster, testing is identical to Step 1.
       128MB. If you need files larger than that as part of your model
       definition, consider setting up a bind mount via the
       ``bind_mounts`` field of :ref:`command-notebook-configuration`.
-      The tutorial on `ref:`data-access` lists some additional
+      The tutorial on :ref:`data-access` lists some additional
       strategies for accessing files inside a containerized environment
       which may also be relevant.
 
@@ -358,15 +358,15 @@ library APIs correctly, then theoretically distributed training should
 
    -  If your experiment is not being scheduled on the cluster, ensure
       that your ``slots_per_trial`` setting is valid for your cluster.
-      E.g. if you have 4 Detrmined Agents running with 4 GPUs each, your
-      ``slots_per_trial`` could be ``1``, ``2,``, ``3``, ``4`` (which
-      would all fit on a single machine), or it could be ``8`` or ``12``
-      or ``16`` (which would take up some number of complete Agent
-      machines), but it couldn't be ``5`` (more than one Agent but not a
-      multiple of Agent size) and it couldn't be ``32`` (too big for the
-      cluster). Also ensure that there are no other notebooks, shells,
-      or experiments on the cluster which may be consuming too many
-      resources and preventing from starting.
+      E.g. if you have 4 Determined Agents running with 4 GPUs each,
+      your ``slots_per_trial`` could be ``1``, ``2,``, ``3``, ``4``
+      (which would all fit on a single machine), or it could be ``8`` or
+      ``12`` or ``16`` (which would take up some number of complete
+      Agent machines), but it couldn't be ``5`` (more than one Agent but
+      not a multiple of Agent size) and it couldn't be ``32`` (too big
+      for the cluster). Also ensure that there are no other notebooks,
+      shells, or experiments on the cluster which may be consuming too
+      many resources and preventing the experiment from starting.
 
    -  Determined normally controls the details of distributed training
       for you. Attempting to also control those details yourself, such
