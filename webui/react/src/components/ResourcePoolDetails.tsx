@@ -7,6 +7,7 @@ import { clone } from 'utils/data';
 import { camelCaseToSentence } from 'utils/string';
 
 import { rpLogo } from './ResourcePoolCard';
+import css from './ResourcePoolDetails.module.scss';
 
 interface Props {
   finally: () => void;
@@ -45,11 +46,14 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Pr
       onOk={props.finally}
     >
       <Json json={mainSection} translateLabel={camelCaseToSentence} />
-      {Object.keys(details).length > 0 &&
-      <>
-        <Divider />
-        <Json json={details} translateLabel={camelCaseToSentence} />
-      </>
+      {Object.keys(details).map(key => {
+        const title = camelCaseToSentence(key);
+        return <>
+          <Divider />
+          <div className={css.subTitle}>{title}</div>
+          <Json json={details[key]} translateLabel={camelCaseToSentence} />
+        </>;
+      })
       }
     </Modal>
   );
