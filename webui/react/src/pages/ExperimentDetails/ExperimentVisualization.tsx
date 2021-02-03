@@ -254,6 +254,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             <div className={css.menu}>
               {MENU.map(item => {
                 const linkClasses = [ css.link ];
+                if (item.disabled) linkClasses.push(css.disabled);
                 if (typeKey === item.type) linkClasses.push(css.active);
 
                 const link = (

@@ -12,6 +12,12 @@
     & > * {
       padding: var(--theme-sizes-layout-medium) 0 var(--theme-sizes-layout-medium) var(--theme-sizes-layout-big);
     }
+    .link {
+      color: var(--theme-colors-monochrome-7);
+    }
+    .disabled {
+      color: var(--theme-colors-monochrome-10);
+    }
     .active {
       border-left: solid 0.2rem var(--theme-colors-action-normal);
       color: var(--theme-colors-action-normal);
