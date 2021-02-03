@@ -51,15 +51,14 @@ Version 0.14.0
    <commands-and-shells>`. It describes how to use Determined's support
    for managing GPU-powered batch commands and interactive shells.
 
--  **Breaking Change** Metrics: Metric values returned by the trial and
-   checkpoint APIs can now return non-float values, and are defined
-   using
-   https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct.
+-  **Breaking Change** Metrics: The trial and checkpoint API endpoints
+   can now return non-scalar metric values, which are represented as
+   JSON objects or `protobuf structs
+   <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct>`__.
 
 -  PyTorch: Upgrade the default PyTorch version to 1.7.0.
 
--  TensorFlow: Upgrade the default TensorFlow versions to 1.15.5.
-   TensorFlow 2 task environments have also been upgraded to TensorFlow
+-  TensorFlow: Upgrade the default TensorFlow versions to 1.15.5 and
    2.4.1.
 
 -  REST API: Improve the performance of the experiments API.
