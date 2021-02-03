@@ -137,7 +137,8 @@ This will create an agent on that machine. To verify whether it has
 successfully connected to the master, navigate to the WebUI and check
 whether slots have appeared on the ``Cluster`` page.
 
-To launch the agent into a specific resource pool, use the ``--agent-resource-pool`` flag:
+To launch the agent into a specific resource pool, use the
+``--agent-resource-pool`` flag:
 
 .. code::
 
