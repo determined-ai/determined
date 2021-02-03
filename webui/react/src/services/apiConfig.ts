@@ -1,11 +1,9 @@
 import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
-import rps from 'fixtures/responses/resource-pools/a.json';
 import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
-import { V1ResourcePool } from 'services/api-ts-sdk';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
   jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
@@ -147,10 +145,6 @@ export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsRespons
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
   request: () => detApi.Internal.determinedGetResourcePools(),
-  stubbedResponse: {
-    pagination: rps.pagination,
-    resourcePools: rps.resourcePools as unknown as V1ResourcePool[],
-  },
 };
 
 /* Experiment */
