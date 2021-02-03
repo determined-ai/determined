@@ -16,7 +16,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
@@ -112,7 +111,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
 	}
 	orderExpr := ""
-	if orderColMap[req.SortBy] != "id" {
+	if orderColMap[req.SortBy] != "id" { //nolint:goconst // Not actually the same constant.
 		orderExpr = fmt.Sprintf(
 			"%s %s, id %s",
 			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
@@ -121,17 +120,11 @@ func (a *apiServer) GetExperiments(
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
 
-	// Query the database.
 	resp := &apiv1.GetExperimentsResponse{}
-	type experimentsWrapper struct {
-		Count       int32  `db:"count"`
-		Experiments []byte `db:"experiments"`
-	}
-	res := experimentsWrapper{}
-	if err := a.m.db.QueryF(
+	return resp, a.m.db.QueryProtof(
 		"get_experiments",
 		[]interface{}{orderExpr},
-		&res,
+		resp,
 		stateFilterExpr,
 		archivedExpr,
 		userFilterExpr,
@@ -139,42 +132,7 @@ func (a *apiServer) GetExperiments(
 		req.Description,
 		req.Offset,
 		req.Limit,
-	); err != nil {
-		return nil, err
-	}
-	if len(res.Experiments) > 0 {
-		unmarshaled := make([]interface{}, 0)
-		if err := json.Unmarshal(res.Experiments, &unmarshaled); err != nil {
-			return nil, errors.Wrapf(err, "error parsing experiments json from the db: %s", res.Experiments)
-		}
-		for _, exp := range unmarshaled {
-			bytes, err := json.Marshal(exp)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error converting row to json bytes: %s", exp)
-			}
-			protoExp := &experimentv1.Experiment{}
-			err = protojson.Unmarshal(bytes, protoExp)
-			if err != nil {
-				return nil, errors.Wrap(err, "error converting row to Protobuf struct")
-			}
-			resp.Experiments = append(resp.Experiments, protoExp)
-		}
-	}
-
-	// Set pagination
-	pagination, err := api.Paginate(int(res.Count), int(req.Offset), int(req.Limit))
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	resp.Pagination = &apiv1.Pagination{
-		Offset:     req.Offset,
-		Limit:      req.Limit,
-		StartIndex: int32(pagination.StartIndex),
-		EndIndex:   int32(pagination.EndIndex),
-		Total:      res.Count,
-	}
-
-	return resp, nil
+	)
 }
 
 func (a *apiServer) GetExperimentLabels(_ context.Context,
