@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
 import * as types from 'types';
-import { isNumber } from 'utils/data';
+import { isNumber, isObject } from 'utils/data';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -264,7 +264,7 @@ export const decodeExperimentList = (data: Sdk.V1Experiment[]): types.Experiment
 };
 
 const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefined => {
-  if (typeof metrics !== 'object') return undefined;
+  if (!isObject(metrics)) return undefined;
   const scalarMetrics: types.RawJson = {};
   for (const key in metrics){
     if (isNumber(metrics[key])) {
@@ -277,7 +277,7 @@ const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefin
 const decodeMetricsWorkload = (data: Sdk.V1MetricsWorkload): types.MetricsWorkload => {
   return {
     endTime: data.endTime as unknown as string,
-    metrics: filterNonScalarMetrics(data.metrics),
+    metrics: data.metrics ? filterNonScalarMetrics(data.metrics) : undefined,
     numBatches: data.numBatches,
     priorBatchesProcessed: data.priorBatchesProcessed,
     startTime: data.startTime as unknown as string,
