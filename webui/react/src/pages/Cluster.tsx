@@ -20,7 +20,7 @@ import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { ResourcePool, ResourceState } from 'types';
+import { ResourcePool, ResourceState, ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 import css from './Cluster.module.scss';
@@ -61,8 +61,8 @@ const Cluster: React.FC = () => {
     return tally;
   }, [ resourcePools ]);
 
-  const slotContainerStates = useMemo(() => {
-    return getSlotContainerStates(agents.data || []);
+  const gpuSlotStates = useMemo(() => {
+    return getSlotContainerStates(agents.data || [], ResourceType.GPU);
   }, [ agents.data ]);
 
   const getTotalGpuSlots = useCallback((resPoolName: string) => {
@@ -77,9 +77,9 @@ const Cluster: React.FC = () => {
     const descriptionRender = (_: unknown, record: ResourcePool): React.ReactNode =>
       <div className={css.descriptionColumn}>{record.description}</div>;
 
-    const chartRender = (_:unknown, record: ResourcePool): React.ReactNode => {
+    const slotsBarRender = (_:unknown, record: ResourcePool): React.ReactNode => {
       const containerStates: ResourceState[] =
-          getSlotContainerStates(agents.data || [], record.name);
+          getSlotContainerStates(agents.data || [], ResourceType.GPU, record.name);
 
       const totalGpuSlots = getTotalGpuSlots(record.name);
 
@@ -94,7 +94,7 @@ const Cluster: React.FC = () => {
 
     const newColumns = [ ...defaultColumns ].map(column => {
       if (column.key === 'description') column.render = descriptionRender;
-      if (column.key === 'chart') column.render = chartRender;
+      if (column.key === 'chart') column.render = slotsBarRender;
       return column;
     });
 
@@ -152,7 +152,7 @@ const Cluster: React.FC = () => {
       </Section>
       <Section hideTitle title="Overall Allocation">
         <SlotAllocationBar
-          resourceStates={slotContainerStates}
+          resourceStates={gpuSlotStates}
           showLegends
           size={ShirtSize.enormous}
           totalSlots={overview.GPU.total} />
@@ -165,7 +165,9 @@ const Cluster: React.FC = () => {
           <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
             {resourcePools.map((rp, idx) => {
               return <ResourcePoolCard
-                containerStates={getSlotContainerStates(agents.data || [], rp.name)}
+                gpuContainerStates={
+                  getSlotContainerStates(agents.data || [], ResourceType.GPU, rp.name)
+                }
                 key={idx}
                 resourcePool={rp}
                 totalGpuSlots={getTotalGpuSlots(rp.name)} />;
