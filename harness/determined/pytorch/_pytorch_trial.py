@@ -1,7 +1,6 @@
 import logging
 import pathlib
 import random
-import sys
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 

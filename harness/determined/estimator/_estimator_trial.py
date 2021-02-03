@@ -149,6 +149,7 @@ class DeterminedControlHook(estimator.RunHook):
             response = {
                 "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
+                "invalid_hp": self.estimator_trial_controller.context.get_invalid_hp(),
             }
             self.train_response_func(response)
         else:
@@ -281,6 +282,7 @@ class DeterminedControlHook(estimator.RunHook):
                     det.util.wrap_metrics(
                         self._compute_validation_metrics(),
                         self.estimator_trial_controller.context.get_stop_requested(),
+                        self.estimator_trial_controller.context.get_invalid_hp(),
                     )
                 )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:

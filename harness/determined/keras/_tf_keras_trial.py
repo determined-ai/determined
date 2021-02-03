@@ -786,7 +786,9 @@ class TFKerasTrialController(det.LoopTrialController):
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response_func(
                     det.util.wrap_metrics(
-                        self._compute_validation_metrics(), self.context.get_stop_requested()
+                        self._compute_validation_metrics(),
+                        self.context.get_stop_requested(),
+                        self.context.get_invalid_hp(),
                     )
                 )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
@@ -881,6 +883,7 @@ class TFKerasTrialController(det.LoopTrialController):
                     "avg_metrics": final_metrics,
                 },
                 "stop_requested": self.context.get_stop_requested(),
+                "invalid_hp": self.context.get_invalid_hp(),
             }
             self.train_response_func(response)
         else:
