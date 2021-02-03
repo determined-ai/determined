@@ -1,3 +1,13 @@
+# The image registry to use. Defaults to the determinedai repository in DockerHub.
+imageRegistry: determinedai
+
+# Install Determined enterprise edition.
+enterpriseEdition: false
+
+# Should be configured if using the master image in the Determined enterprise edition
+# or private registry.
+imagePullSecretName:
+
 # masterPort configures the port at which the Determined master listens for connections on.
 masterPort: 8080
 
@@ -109,13 +119,6 @@ taskContainerDefaults:
   # If specifying a default image, both GPU and CPU default images must be defined.
   # cpuImage:
   # gpuImage:
-
-# Install Determined enterprise edition.
-enterpriseEdition: false
-
-# Should be configured if using the Determined enterprise edition master. Used to access
-# the master image.
-# imagePullSecretName:
 
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:

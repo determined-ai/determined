@@ -70,10 +70,10 @@ Please see :ref:`useful-kubectl-commands` for more debugging tips.
 When installing Determined on Kubernetes, I get an ``ImagePullBackOff`` error
 =============================================================================
 
-You are trying to install a non-released version of Determined. Please
-see the documentation on how to configure which :ref:`version of
-Determined <configure-determined-kubernetes-version>` to install on
-Kubernetes.
+You may be trying to install a non-released version of Determined or a
+version in a private registry without the right secret. Please see the
+documentation on how to configure which :ref:`version of Determined
+<configure-determined-kubernetes-version>` to install on Kubernetes.
 
 *************************
  Packages and Containers
