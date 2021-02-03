@@ -44,12 +44,13 @@ WITH searcher_info AS (
             END
         ) as best_signed_search_metric,
         (
-           SELECT v.end_time
+           SELECT searcher_info.sign * (v.metrics->'validation_metrics'->>searcher_info.metric_name)::float8
            FROM validations v
-           WHERE v.end_time IS NOT NULL
+           WHERE v.trial_id = t.id
+             AND v.state = 'COMPLETED'
            ORDER BY v.id DESC
            LIMIT 1
-        ) as validation_end_time
+        ) as latest_signed_search_metric
     FROM trials t, searcher_info
     WHERE t.experiment_id = $1
       AND ($2 = '' OR t.state IN (SELECT unnest(string_to_array($2, ','))::trial_state))
