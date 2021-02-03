@@ -15,7 +15,8 @@ Version 0.14.0
 
 **New Features**
 
--  WebUI: Revamp Cluster page with information about configured resource pools
+-  WebUI: Revamp cluster page with information about configured resource
+   pools.
 
 **Removed Features**
 
@@ -26,7 +27,8 @@ Version 0.14.0
 
    -  the callback ``on_before_optimizer_step``;
 
-   -  the field ``optimizations.mixed_precision`` in the experiment configuration;
+   -  the field ``optimizations.mixed_precision`` in the experiment
+      configuration;
 
    -  the ``model`` arguments to
       :meth:`~determined.pytorch.PyTorchTrial.train_batch`,
@@ -39,26 +41,26 @@ Version 0.14.0
 
 **Improvements**
 
--  Documentation: Add a guide for :ref:`model-debug`. The new guide will
-   walk you step-by-step through solving problems with a model in
-   Determined, with a focus on testing features incrementally until the
-   model is fully working. It may also be useful when porting new models
-   to Determined.
+-  Documentation: Add a topic guide on :ref:`debugging models
+   <model-debug>`. The new guide will walk you step-by-step through
+   solving problems with a model in Determined, with a focus on testing
+   features incrementally until the model is fully working. It may also
+   be useful when porting new models to Determined.
 
--  Documentation: Add a guide on :ref:`commands-and-shells`. This describes
-   how to use Determined's support for managing GPU-powered batch commands
-   and interactive shells.
+-  Documentation: Add a topic guide on :ref:`commands and shells
+   <commands-and-shells>`. It describes how to use Determined's support
+   for managing GPU-powered batch commands and interactive shells.
 
 -  **Breaking Change** Metrics: Metric values returned by the trial and
    checkpoint APIs can now return non-float values, and are defined
    using
-   https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct
+   https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct.
 
 -  PyTorch: Upgrade the default PyTorch version to 1.7.0.
 
--  TensorFlow: Upgrade the default TensorFlow versions to
-   1.15.5. TensorFlow 2 task environments have also been upgraded to
-   TensorFlow 2.4.1.
+-  TensorFlow: Upgrade the default TensorFlow versions to 1.15.5.
+   TensorFlow 2 task environments have also been upgraded to TensorFlow
+   2.4.1.
 
 -  REST API: Improve the performance of the experiments API.
 
