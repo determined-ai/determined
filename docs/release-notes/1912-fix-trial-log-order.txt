@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: fix issue of incorrect trial log order when viewing oldest
+   logs first.
