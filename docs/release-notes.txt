@@ -5,6 +5,74 @@
 ###############
 
 **************
+ Version 0.14
+**************
+
+Version 0.14.0
+==============
+
+**Release Date:** February 4, 2021
+
+**New Features**
+
+-  WebUI: Revamp Cluster page with information about currently-defined
+   resource pools.
+
+**Removed Features**
+
+-  Trial API: Remove the old Pytorch APIs, including:
+
+   -  the ``build_model``, ``optimizer``, and ``create_lr_scheduler``
+      methods in :class:`~determined.pytorch.PyTorchTrial`;
+
+   -  the callback ``on_before_optimizer_step``,
+      ``optimizations.mixed_precision`` in the experiment configuration;
+
+   -  the ``model`` arguments to
+      :meth:`~determined.pytorch.PyTorchTrial.train_batch`,
+      :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch`, and
+      :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset`.
+
+   The experiments that are forked from those which use the old Pytorch
+   APIs cannot run. However, the checkpoints from those experiments will
+   still be supported.
+
+**Improvements**
+
+-  Documentation: Add a guide for :ref:`model-debug`. The new guide will
+   walk you step-by-step through solving problems with a model in
+   Determined, with a focus on testing features incrementally until the
+   model is fully working. It may also be useful when porting new models
+   to Determined.
+
+-  **Breaking Change** Metrics: Metric values returned by the trial and
+   checkpoint APIs can now return non-float values, and are defined
+   using
+   https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct
+
+-  PyTorch: Upgrade the default PyTorch version to 1.7.0.
+
+-  REST API: Improve the performance of the experiments API.
+
+-  TensorFlow: Upgrade the default TensorFlow version to 1.15.5 (or
+   TensorFlow 2.4.1 in -tf2 task environments).
+
+**Bug Fixes**
+
+-  API: Fix an issue where requesting checkpoint or trial details of a
+   trial that had non-scalar metric values associated with it would
+   fail.
+
+-  Database: Migrate ``public.trial_logs.id`` to an ``int8`` in
+   Postgres. **Note**: This migration may be more time-consuming than
+   usual for users with large amounts of trial logs.
+
+-  Trial: Fix an issue where the trial was not deallocating resources
+   when it failed to write to the DB.
+
+-  WebUI: Show better messaging for different learning curve edge cases.
+
+**************
  Version 0.13
 **************
 
