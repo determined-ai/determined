@@ -26,39 +26,6 @@ visit :ref:`model-debug`. It may also be useful for writing your first
 trial, as it has a framework for incrementally testing each of the
 features you will need in a successful Trial definition.
 
-.. _model-definitions_trial-api-create:
-
-********************************************************
- Create an Experiment via ``det.experimental.create()``
-********************************************************
-
-A user can submit an experiment from Python by executing the
-:py:func:`determined.experimental.create` function:
-
-.. code::
-
-   class MyTrial(...):
-       ...
-
-   det.experimental.create(trial_def=MyTrial, context_dir=".")
-
-In addition to a trial class definition, the ``create()`` API requires a
-*context directory* (``context_dir``). The context directory specifies
-the root directory of the code containing the trial implementation --
-for a majority of users this is the current working directory (`.`). The
-``create()`` API also accepts two boolean keyword arguments:
-
-``local`` (``bool``):
-   ``local=False`` will submit the experiment to a Determined cluster.
-   ``local=True`` will execute the the training loop in your local
-   Python environment (although currently, local training is not
-   implemented, so you must also set ``test=True``). Defaults to False.
-
-``test`` (``bool``):
-   ``test=True`` will execute a minimal training loop rather than a full
-   experiment. This can be useful for porting or debugging a model
-   because many common errors will surface quickly. Defaults to False.
-
 **********************************
  Create an Experiment via the CLI
 **********************************
