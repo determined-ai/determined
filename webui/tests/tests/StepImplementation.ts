@@ -34,14 +34,14 @@ const clickAndWaitForPage = async (selector: t.SearchElement | t.MouseCoordinate
   await t.click(selector, { waitForEvents: ['loadEventFired'] });
 };
 
-const checkTextContentFor = async (keywords: string[], shouldExit: boolean, timeout = 1500) => {
-  const promises = keywords.map(async (text) => 
-    await t.text(text).exists(undefined, timeout)
-  );
+const checkTextContentFor = async (keywords: string[], shouldExist: boolean, timeout = 1500) => {
+  const promises = keywords.map(async (text) => await t.text(text).exists(undefined, timeout));
   const misses = [];
   const results = await Promise.all(promises);
   results.forEach((exists, idx) => {
-    if (exists != shouldExit) {misses.push(keywords[idx]);}
+    if (exists != shouldExist) {
+      misses.push(keywords[idx]);
+    }
   });
   expect(misses).toHaveLength(0);
 };
@@ -53,8 +53,10 @@ const goto = async (url: string) => {
 export default class StepImplementation {
   @BeforeSuite()
   public async beforeSuite() {
-    const defaultArgs = [`--window-size=${viewports.desktop.width},${viewports.desktop.height}`, 
-  '--disable-gpu'];
+    const defaultArgs = [
+      `--window-size=${viewports.desktop.width},${viewports.desktop.height}`,
+      '--disable-gpu',
+    ];
     const browserArgs = HEADLESS
       ? { headless: true, args: [...defaultArgs, '--no-sandbox', '--disable-setuid-sandbox'] }
       : { headless: false, args: defaultArgs };
