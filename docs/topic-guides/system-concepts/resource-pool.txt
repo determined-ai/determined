@@ -21,7 +21,7 @@ resource pool handles scheduling and instance provisioning
 independently.
 
 When you configure a cluster, you set which pool is the default for CPU
-tasks and which pool is the default for GPU task. CPU-only tasks such a
+tasks and which pool is the default for GPU tasks. CPU-only tasks such a
 Tensorboards will run on the default CPU pool unless you specify that it
 should run in a different pool when launching the task. Tasks which
 require a slot such as Experiments or GPU-notebooks will launch on to
