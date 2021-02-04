@@ -4,45 +4,45 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-03ec47ea54612a98d
-      Agent: ami-055e84fd91eebace4
-      Bastion: ami-09dac16017637391f
+      Agent: ami-0881b60d3da7bd055
+      Bastion: ami-07faf6b16c502e9e1
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-00813ad98dc81f443
-    #   Agent: ami-098f3d295106b7e70
-    #   Bastion: ami-0b50511490117e709
+    #   Agent: ami-045eb8957d930ee48
+    #   Bastion: ami-0ee428c63274f56c1
     # ap-southeast-1:
     #   Master: ami-0acac505592775345
-    #   Agent: ami-00de94d5b3e68b0da
-    #   Bastion: ami-0ae3e6717dc99c62b
+    #   Agent: ami-0b5cca90cd338e59d
+    #   Bastion: ami-06bcc4026e190b380
     # ap-southeast-2:
     #   Master: ami-07c5b4ba4c9dd25a3
-    #   Agent: ami-0af10fa7e8454d943
-    #   Bastion: ami-080b87fdc6d5ca853
+    #   Agent: ami-0725e68bb3b036074
+    #   Bastion: ami-0b079c5b689b2d44e
     eu-central-1:
       Master: ami-01c74b7d55cbb6e31
-      Agent: ami-0171d0a466f6d4ac3
-      Bastion: ami-0093cac2bf998a669
+      Agent: ami-0a7e28c7ffceaaca3
+      Bastion: ami-0a4938aa802d3fc05
     eu-west-1:
       Master: ami-06f91a2970093cb47
-      Agent: ami-09925722b0ba31d90
-      Bastion: ami-0e5657f6d3c3ea350
+      Agent: ami-01ff907f77946e9c0
+      Bastion: ami-0074515a838fb8787
     # eu-west-2:
     #   Master: ami-0be58974fa441cb39
-    #   Agent: ami-0aa3396d882c02376
-    #   Bastion: ami-09b984029e6b0326b
+    #   Agent: ami-08b697d6313df6508
+    #   Bastion: ami-0789c35b922fefc1e
     us-east-1:
       Master: ami-0f593aebffc0070e1
-      Agent: ami-0281f5b6b2ae2df84
-      Bastion: ami-02fe94dee086c0c37
+      Agent: ami-0abefee50ebdc21f4
+      Bastion: ami-007e8beb808004fdc
     us-east-2:
       Master: ami-096cdd827d38ca4d8
-      Agent: ami-02a26ef27a997c7de
-      Bastion: ami-02aa7f3de34db391a
+      Agent: ami-0d074fb7abacd5219
+      Bastion: ami-05c386ebc03ca06da
     us-west-2:
       Master: ami-04e9aec1ab665f323
-      Agent: ami-0fc52ebf88f40652b
-      Bastion: ami-025102f49d03bec05
+      Agent: ami-0685e5e3534f24db8
+      Bastion: ami-0b5f687730c825c7d
 
 Parameters:
   VpcCIDR:

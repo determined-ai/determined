@@ -3,7 +3,7 @@ class defaults:
     CPU_AGENT_INSTANCE_TYPE = "n1-standard-4"
     GPU_AGENT_INSTANCE_TYPE = "n1-standard-32"
     DB_PASSWORD = "postgres"
-    ENVIRONMENT_IMAGE = "det-environments-4a93d25"
+    ENVIRONMENT_IMAGE = "det-environments-5f6f6e1"
     GPU_NUM = 8
     GPU_TYPE = "nvidia-tesla-k80"
     MASTER_INSTANCE_TYPE = "n1-standard-2"

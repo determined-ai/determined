@@ -5,7 +5,7 @@ pytest-timeout
 pexpect
 torch==1.7
 torchvision==0.8.1
-tensorflow==2.4.1
+tensorflow==2.4.0
 numpy
 pandas
 pyyaml

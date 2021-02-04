@@ -3,5 +3,5 @@
 **Improvements**
 
 -  Upgrade the default PyTorch version to 1.7.0 and the default
-   TensorFlow version to 1.15.5 (or TensorFlow 2.4.1 in -tf2 task
+   TensorFlow version to 1.15.5 (or TensorFlow 2.4.0 in -tf2 task
    environments).
