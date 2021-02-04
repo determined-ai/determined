@@ -58,7 +58,7 @@ checkpoint_policy: none
 		TrialID:               1,
 		StepID:                1,
 		NumBatches:            schedulingUnit,
-		TotalBatchesProcessed: 0,
+		PriorBatchesProcessed: 0,
 	}
 	trainWorkload2 := workload.Workload{
 		Kind:                  workload.RunStep,
@@ -66,7 +66,7 @@ checkpoint_policy: none
 		TrialID:               1,
 		StepID:                2,
 		NumBatches:            schedulingUnit,
-		TotalBatchesProcessed: schedulingUnit,
+		PriorBatchesProcessed: schedulingUnit,
 	}
 	trainWorkload3 := workload.Workload{
 		Kind:                  workload.RunStep,
@@ -74,7 +74,7 @@ checkpoint_policy: none
 		TrialID:               1,
 		StepID:                3,
 		NumBatches:            schedulingUnit,
-		TotalBatchesProcessed: 2 * schedulingUnit,
+		PriorBatchesProcessed: 2 * schedulingUnit,
 	}
 	trainWorkload4 := workload.Workload{
 		Kind:                  workload.RunStep,
@@ -82,7 +82,7 @@ checkpoint_policy: none
 		TrialID:               1,
 		StepID:                4,
 		NumBatches:            schedulingUnit,
-		TotalBatchesProcessed: 3 * schedulingUnit,
+		PriorBatchesProcessed: 3 * schedulingUnit,
 	}
 	trainWorkload5 := workload.Workload{
 		Kind:                  workload.RunStep,
@@ -90,56 +90,56 @@ checkpoint_policy: none
 		TrialID:               1,
 		StepID:                5,
 		NumBatches:            schedulingUnit,
-		TotalBatchesProcessed: 4 * schedulingUnit,
+		PriorBatchesProcessed: 4 * schedulingUnit,
 	}
 	checkpointWorkload1 := workload.Workload{
 		Kind:                  workload.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                1,
-		TotalBatchesProcessed: schedulingUnit,
+		PriorBatchesProcessed: schedulingUnit,
 	}
 	checkpointWorkload2 := workload.Workload{
 		Kind:                  workload.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
-		TotalBatchesProcessed: schedulingUnit * 2,
+		PriorBatchesProcessed: schedulingUnit * 2,
 	}
 	checkpointWorkload4 := workload.Workload{
 		Kind:                  workload.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
-		TotalBatchesProcessed: schedulingUnit * 4,
+		PriorBatchesProcessed: schedulingUnit * 4,
 	}
 	checkpointWorkload5 := workload.Workload{
 		Kind:                  workload.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
-		TotalBatchesProcessed: schedulingUnit * 5,
+		PriorBatchesProcessed: schedulingUnit * 5,
 	}
 	validationWorkload2 := workload.Workload{
 		Kind:                  workload.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
-		TotalBatchesProcessed: schedulingUnit * 2,
+		PriorBatchesProcessed: schedulingUnit * 2,
 	}
 	validationWorkload4 := workload.Workload{
 		Kind:                  workload.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
-		TotalBatchesProcessed: schedulingUnit * 4,
+		PriorBatchesProcessed: schedulingUnit * 4,
 	}
 	validationWorkload5 := workload.Workload{
 		Kind:                  workload.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
-		TotalBatchesProcessed: schedulingUnit * 5,
+		PriorBatchesProcessed: schedulingUnit * 5,
 	}
 
 	s := newTrialWorkloadSequencer(experiment, create, nil)
@@ -237,7 +237,9 @@ checkpoint_policy: none
 	assert.Equal(t, w, checkpointWorkload5)
 
 	// Check that rollBackSequencer() affects nothing before a completed checkpoint.
-	assert.Equal(t, s.RollBackSequencer(), 4)
+	totalBatches, err := s.RollBackSequencer()
+	assert.NilError(t, err)
+	assert.Equal(t, totalBatches, 400)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload5)
@@ -308,7 +310,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 			TrialID:               1,
 			StepID:                1,
 			NumBatches:            expConfig.SchedulingUnit,
-			TotalBatchesProcessed: 0,
+			PriorBatchesProcessed: 0,
 		},
 	}, nil)
 	assert.NilError(t, err)
@@ -323,7 +325,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 			ExperimentID:          1,
 			TrialID:               1,
 			StepID:                1,
-			TotalBatchesProcessed: expConfig.SchedulingUnit,
+			PriorBatchesProcessed: expConfig.SchedulingUnit,
 		},
 		CheckpointMetrics: nil,
 		ExitedReason:      &exitedReason,
@@ -357,7 +359,7 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 			TrialID:               1,
 			StepID:                1,
 			NumBatches:            1,
-			TotalBatchesProcessed: 0,
+			PriorBatchesProcessed: 0,
 		},
 	}, nil)
 	assert.NilError(t, err)

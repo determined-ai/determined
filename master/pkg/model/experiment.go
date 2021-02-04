@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-
-	"github.com/determined-ai/determined/proto/pkg/logv1"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
 // State is the run state of an experiment / trial / step / etc.
@@ -296,6 +294,7 @@ func NewTrial(
 type Step struct {
 	TrialID               int        `db:"trial_id"`
 	ID                    int        `db:"id"`
+	TotalBatches          int        `db:"total_batches"`
 	State                 State      `db:"state"`
 	StartTime             time.Time  `db:"start_time"`
 	EndTime               *time.Time `db:"end_time"`
@@ -309,6 +308,7 @@ func NewStep(trialID, stepID, numBatches, priorBatchesProcessed int) *Step {
 	return &Step{
 		TrialID:               trialID,
 		ID:                    stepID,
+		TotalBatches:          numBatches + priorBatchesProcessed,
 		State:                 ActiveState,
 		StartTime:             time.Now().UTC(),
 		NumBatches:            numBatches,
@@ -337,22 +337,22 @@ func (s *Step) IsNew() bool {
 
 // Validation represents a row from the `validations` table.
 type Validation struct {
-	ID        int        `db:"id" json:"id"`
-	TrialID   int        `db:"trial_id" json:"trial_id"`
-	StepID    int        `db:"step_id" json:"step_id"`
-	State     State      `db:"state" json:"state"`
-	StartTime time.Time  `db:"start_time" json:"start_time"`
-	EndTime   *time.Time `db:"end_time" json:"end_time"`
-	Metrics   JSONObj    `db:"metrics" json:"metrics"`
+	ID           int        `db:"id" json:"id"`
+	TrialID      int        `db:"trial_id" json:"trial_id"`
+	TotalBatches int        `db:"total_batches" json:"total_batches"`
+	State        State      `db:"state" json:"state"`
+	StartTime    time.Time  `db:"start_time" json:"start_time"`
+	EndTime      *time.Time `db:"end_time" json:"end_time"`
+	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
 // NewValidation creates a new validation in the active state.
-func NewValidation(trialID, stepID int) *Validation {
+func NewValidation(trialID, totalBatches int) *Validation {
 	return &Validation{
-		TrialID:   trialID,
-		StepID:    stepID,
-		State:     ActiveState,
-		StartTime: time.Now().UTC(),
+		TrialID:      trialID,
+		TotalBatches: totalBatches,
+		State:        ActiveState,
+		StartTime:    time.Now().UTC(),
 	}
 }
 
@@ -365,7 +365,7 @@ func (v *Validation) IsNew() bool {
 type Checkpoint struct {
 	ID                int        `db:"id" json:"id"`
 	TrialID           int        `db:"trial_id" json:"trial_id"`
-	StepID            int        `db:"step_id" json:"step_id"`
+	TotalBatches      int        `db:"total_batches" json:"total_batches"`
 	State             State      `db:"state" json:"state"`
 	StartTime         time.Time  `db:"start_time" json:"start_time"`
 	EndTime           *time.Time `db:"end_time" json:"end_time"`
@@ -378,10 +378,10 @@ type Checkpoint struct {
 }
 
 // NewCheckpoint creates a new checkpoint in the active state.
-func NewCheckpoint(trialID, stepID int) *Checkpoint {
+func NewCheckpoint(trialID, totalBatches int) *Checkpoint {
 	return &Checkpoint{
 		TrialID:           trialID,
-		StepID:            stepID,
+		TotalBatches:      totalBatches,
 		State:             ActiveState,
 		StartTime:         time.Now().UTC(),
 		Metadata:          JSONObj{},

@@ -93,7 +93,8 @@ class ExperimentReference:
             smaller_is_better = checkpoints[0]["experimentConfig"]["searcher"]["smaller_is_better"]
 
         checkpoints.sort(
-            reverse=not smaller_is_better, key=lambda x: x["metrics"]["validationMetrics"][sort_by]
+            reverse=not smaller_is_better,
+            key=lambda x: (x["metrics"]["validationMetrics"][sort_by], x["trialId"]),
         )
 
         # Ensure returned checkpoints are from distinct trials.

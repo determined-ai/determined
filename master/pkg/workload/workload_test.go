@@ -14,7 +14,7 @@ func TestWorkloadMarshaling(t *testing.T) {
 		TrialID:               2,
 		StepID:                3,
 		NumBatches:            10,
-		TotalBatchesProcessed: 0,
+		PriorBatchesProcessed: 0,
 	}
 	blob, marshalErr := json.Marshal(marshaled)
 	assert.NilError(t, marshalErr)

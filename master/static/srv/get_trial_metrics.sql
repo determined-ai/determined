@@ -13,6 +13,7 @@ FROM
                                 ORDER BY r2.id ASC), '[]'::JSONB)
       FROM
         (SELECT s.id,
+                s.total_batches,
                 s.trial_id,
                 s.state,
                 s.start_time,
@@ -25,7 +26,7 @@ FROM
             FROM
               (SELECT c.id,
                       c.trial_id,
-                      c.step_id,
+                      c.total_batches,
                       c.state,
                       c.start_time,
                       c.end_time,
@@ -34,20 +35,20 @@ FROM
                       c.metadata
                FROM checkpoints c
                WHERE c.trial_id = t.id
-                 AND c.step_id = s.id ) r3) AS CHECKPOINT,
+                 AND c.total_batches = s.total_batches ) r3) AS CHECKPOINT,
 
            (SELECT row_to_json(r4)
             FROM
               (SELECT v.id,
                       v.trial_id,
-                      v.step_id,
+                      v.total_batches,
                       v.state,
                       v.start_time,
                       v.end_time,
                       v.metrics
                FROM validations v
                WHERE v.trial_id = t.id
-                 AND v.step_id = s.id ) r4) AS validation
+                 AND v.total_batches = s.total_batches ) r4) AS validation
          FROM steps s
          WHERE s.trial_id = t.id ) r2) AS steps
    FROM trials t

@@ -13,7 +13,10 @@ import (
 // QueryProto returns the result of the query. Any placeholder parameters are replaced
 // with supplied args. Enum values must be the full name of the enum.
 func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{}) error {
-	return db.queryRowsWithParser(db.queries.getOrLoad(queryName), protoParser, v, args...)
+	return errors.Wrapf(
+		db.queryRowsWithParser(db.queries.getOrLoad(queryName), protoParser, v, args...),
+		"error running query: %v", queryName,
+	)
 }
 
 // QueryProtof returns the result of the formated query. Any placeholder parameters are replaced
@@ -24,7 +27,10 @@ func (db *PgDB) QueryProtof(
 	if len(args) > 0 {
 		query = fmt.Sprintf(query, args...)
 	}
-	return db.queryRowsWithParser(query, protoParser, v, params...)
+	return errors.Wrapf(
+		db.queryRowsWithParser(query, protoParser, v, params...),
+		"error running query: %v", queryName,
+	)
 }
 
 func protoParser(rows *sqlx.Rows, val interface{}) error {
