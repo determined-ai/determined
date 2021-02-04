@@ -179,7 +179,7 @@ const TrialDetailsComp: React.FC = () => {
     const metricRenderer = (metricName: MetricName) => {
       const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
-        return value ? <HumanReadableFloat num={value} /> : undefined;
+        return value != null ? <HumanReadableFloat num={value} /> : undefined;
       };
       return metricCol;
     };
