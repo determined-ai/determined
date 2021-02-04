@@ -580,7 +580,8 @@ func (m *Master) Run(ctx context.Context) error {
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
-		if telemetry, err := telemetry.NewActor(
+		var telemetryActor actor.Actor
+		if telemetryActor, err = telemetry.NewActor(
 			m.db,
 			m.ClusterID,
 			m.MasterID,
@@ -592,13 +593,16 @@ func (m *Master) Run(ctx context.Context) error {
 			log.WithError(err).Errorf("failed to initialize telemetry")
 		} else {
 			log.Info("telemetry reporting is enabled; run with `--telemetry-enabled=false` to disable")
-			m.system.ActorOf(actor.Addr("telemetry"), telemetry)
+			m.system.ActorOf(actor.Addr("telemetry"), telemetryActor)
 		}
 	} else {
 		log.Info("telemetry reporting is disabled")
 	}
 
-	hpi := hpimportance.NewManager(m.db, m.system, m.config.HPImportance)
+	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
+	if err != nil {
+		return err
+	}
 	m.hpImportance, _ = m.system.ActorOf(actor.Addr(hpimportance.RootAddr), hpi)
 
 	return m.startServers(ctx, cert)

@@ -410,22 +410,22 @@ type hpImportanceDataWrapper struct {
 	Metric  float64 `db:"metric"`
 }
 
-func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (model.HPImportanceTrialData, error) {
+func unmarshalHPImportanceHParams(r hpImportanceDataWrapper) (model.HPImportanceTrialData, int,
+	error) {
 	entry := model.HPImportanceTrialData{
 		TrialID: r.TrialID,
-		Batches: r.Batches,
 		Metric:  r.Metric,
 	}
-	return entry, json.Unmarshal(r.Hparams, &entry.Hparams)
+	return entry, r.Batches, json.Unmarshal(r.Hparams, &entry.Hparams)
 }
 
 // FetchHPImportanceTrainingData retrieves all the data needed by the hyperparameter importance
 // algorithm to measure the relative importance of various hyperparameters for one specific training
 // metric across all the trials in an experiment.
 func (db *PgDB) FetchHPImportanceTrainingData(experimentID int, metric string) (
-	[]model.HPImportanceTrialData, error) {
+	map[int][]model.HPImportanceTrialData, error) {
 	var rows []hpImportanceDataWrapper
-	var results []model.HPImportanceTrialData
+	results := make(map[int][]model.HPImportanceTrialData)
 	// TODO: aren't we ignoring overtraining by taking the last?
 	err := db.queryRows(`
 SELECT
@@ -444,7 +444,7 @@ FROM trials t
   	INNER JOIN steps s ON t.id=s.trial_id
     WHERE t.experiment_id=$2
 	  AND s.state = 'COMPLETED'
-    GROUP BY t.id, s.id
+    GROUP BY t.id, s.total_batches
   ) filter
 	ON s.total_batches = filter.total_batches
 	AND t.id = filter.trial_id`, &rows, metric, experimentID)
@@ -452,12 +452,16 @@ FROM trials t
 		return nil, errors.Wrapf(err, "failed to get training metrics for hyperparameter importance")
 	}
 	for _, row := range rows {
-		result, err := unmarshalHPImportanceHParams(row)
+		result, batches, err := unmarshalHPImportanceHParams(row)
 		if err != nil {
 			return nil, errors.Wrap(err,
 				"failed to process training metrics for hyperparameter importance")
 		}
-		results = append(results, result)
+		if previous, exists := results[batches]; exists {
+			results[batches] = append(previous, result)
+		} else {
+			results[batches] = []model.HPImportanceTrialData{result}
+		}
 	}
 	return results, nil
 }
@@ -466,9 +470,9 @@ FROM trials t
 // algorithm to measure the relative importance of various hyperparameters for one specific
 // validation metric across all the trials in an experiment.
 func (db *PgDB) FetchHPImportanceValidationData(experimentID int, metric string) (
-	[]model.HPImportanceTrialData, error) {
+	map[int][]model.HPImportanceTrialData, error) {
 	var rows []hpImportanceDataWrapper
-	var results []model.HPImportanceTrialData
+	results := make(map[int][]model.HPImportanceTrialData)
 	err := db.queryRows(`
 SELECT
   t.id AS trial_id,
@@ -488,7 +492,7 @@ FROM trials t
       RIGHT JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
     WHERE t.experiment_id=$2
       AND v.state = 'COMPLETED'
-    GROUP BY t.id, s.id
+    GROUP BY t.id, s.total_batches
   ) filter
 	ON s.total_batches = filter.total_batches
 	AND t.id = filter.trial_id`, &rows, metric, experimentID)
@@ -497,12 +501,16 @@ FROM trials t
 			"failed to get validation metrics for hyperparameter importance")
 	}
 	for _, row := range rows {
-		result, err := unmarshalHPImportanceHParams(row)
+		result, batches, err := unmarshalHPImportanceHParams(row)
 		if err != nil {
 			return nil, errors.Wrap(err,
 				"Failed to process validation metrics for hyperparameter importance")
 		}
-		results = append(results, result)
+		if previous, exists := results[batches]; exists {
+			results[batches] = append(previous, result)
+		} else {
+			results[batches] = []model.HPImportanceTrialData{result}
+		}
 	}
 	return results, nil
 }

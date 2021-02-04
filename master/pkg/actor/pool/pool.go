@@ -16,7 +16,7 @@ func (e QueueFullError) Error() string {
 type ActorPool struct {
 	name string
 
-	taskHandler func(task interface{}) interface{}
+	taskHandler func(actorId uint64, task interface{}, ctx *actor.Context) interface{}
 	callback    func(result interface{})
 
 	queueLimit   uint
@@ -36,7 +36,7 @@ func NewActorPool(
 	queueLimit uint,
 	workersLimit uint,
 	name string,
-	taskHandler func(task interface{}) interface{},
+	taskHandler func(actorId uint64, task interface{}, ctx *actor.Context) interface{},
 	callback func(result interface{})) ActorPool {
 	pool := ActorPool{
 		name: name,
@@ -104,7 +104,7 @@ func (p *ActorPool) Receive(ctx *actor.Context) error {
 		}
 		p.queue <- msg.task
 		if p.workers < p.workersLimit {
-			newWorker := worker{pool: p}
+			newWorker := worker{id: p.counter, pool: p}
 			ref, _ := ctx.ActorOf(p.counter, newWorker)
 			p.counter++
 			p.workers++
@@ -134,6 +134,7 @@ func (p *ActorPool) Receive(ctx *actor.Context) error {
 // Worker
 
 type worker struct {
+	id   uint64
 	pool *ActorPool
 }
 
@@ -157,7 +158,7 @@ func (w worker) Receive(ctx *actor.Context) error {
 				ctx.Self().Stop()
 				break workLoop
 			default:
-				result := w.pool.taskHandler(realTask)
+				result := w.pool.taskHandler(w.id, realTask, ctx)
 				ctx.Tell(ctx.Sender(), returnTask{result})
 			}
 		}

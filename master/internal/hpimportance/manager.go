@@ -1,7 +1,11 @@
 package hpimportance
 
 import (
+	"os"
+	"path"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -20,8 +24,10 @@ const (
 
 // HPImportanceConfig is the configuration in the master for hyperparameter importance.
 type HPImportanceConfig struct {
-	WorkersLimit uint `json:"workers_limit"`
-	QueueLimit   uint `json:"queue_limit"`
+	WorkersLimit   uint `json:"workers_limit"`
+	QueueLimit     uint `json:"queue_limit"`
+	CoresPerWorker uint `json:"cores_per_worker"`
+	MaxTrees       uint `json:"max_trees"`
 }
 
 // Messages handled by the HP importance manager.
@@ -66,16 +72,31 @@ type manager struct {
 }
 
 // NewManager initializes the master actor (of which there should only be one instance running).
-func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig) actor.Actor {
+func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig, masterRoot string,
+) (actor.Actor, error) {
+	// growforest should either be installed in PATH (when running from source) or package with the
+	// master (when running from binary packages).
+	growforest := path.Join(masterRoot, "growforest")
+	_, err := os.Stat(growforest)
+	if os.IsNotExist(err) {
+		growforest = "growforest"
+	}
+
+	workingDir := "/tmp/determined/growforest"
+	err = os.MkdirAll(workingDir, 0700)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create scratch space for HP importance computation")
+	}
+
 	return &manager{
 		db:       db,
 		disabled: config.WorkersLimit == 0,
 		state:    make(map[int]stateRecord),
 		pool: pool.NewActorPool(
 			system, config.QueueLimit, config.WorkersLimit, "hp-importance-pool",
-			taskHandlerFactory(db, system), nil,
+			taskHandlerFactory(db, system, growforest, workingDir), nil,
 		),
-	}
+	}, nil
 }
 
 func (m *manager) Receive(ctx *actor.Context) error {

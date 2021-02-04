@@ -1,6 +1,10 @@
 package hpimportance
 
 import (
+	"fmt"
+	"os"
+	"path"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -12,6 +16,7 @@ type (
 		experimentID int
 		metricName   string
 		metricType   model.MetricType
+		config       HPImportanceConfig
 	}
 
 	workStarted struct {
@@ -36,13 +41,18 @@ type (
 	}
 )
 
-func taskHandlerFactory(db *db.PgDB, system *actor.System) func(interface{}) interface{} {
+func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, workingDir string,
+) func(uint64, interface{}, *actor.Context) interface{} {
 	getManager := func() *actor.Ref {
 		return system.Get(actor.Addr(RootAddr))
 	}
 
 	sendWorkStarted := func(system *actor.System, work startWork) {
-		system.Tell(getManager(), workStarted(work))
+		system.Tell(getManager(), workStarted{
+			experimentID: work.experimentID,
+			metricType:   work.metricType,
+			metricName:   work.metricName,
+		})
 	}
 
 	sendWorkFailed := func(system *actor.System, work startWork, err string) {
@@ -65,8 +75,8 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System) func(interface{}) int
 		})
 	}
 
-	return func(task interface{}) interface{} {
-		work, ok := task.(startWork) // TODO rename startWork
+	return func(actorId uint64, task interface{}, ctx *actor.Context) interface{} {
+		work, ok := task.(startWork)
 		if !ok {
 			panic("invalid task passed to hp importance actor pool")
 		}
@@ -81,7 +91,15 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System) func(interface{}) int
 			progress = 1
 		}
 
-		var trials []model.HPImportanceTrialData
+		masterConfig := work.config
+
+		experimentConfig, err := db.ExperimentConfig(work.experimentID)
+		if err != nil {
+			sendWorkFailed(system, work, err.Error())
+			return nil
+		}
+
+		var trials map[int][]model.HPImportanceTrialData
 		switch work.metricType {
 		case model.TrainingMetric:
 			trials, err = db.FetchHPImportanceTrainingData(work.experimentID, work.metricName)
@@ -99,7 +117,16 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System) func(interface{}) int
 			sendWorkFailed(system, work, "invalid metric type received in hyperparameter importance worker")
 			return nil
 		}
-		results := computeHPImportance(trials)
+		taskDir := path.Join(workingDir, fmt.Sprint(actorId))
+		err = os.Mkdir(taskDir, 0066)
+		if err != nil {
+			sendWorkFailed(system, work, err.Error())
+		}
+		results := computeHPImportance(trials, experimentConfig, masterConfig, growforest, taskDir)
+		err = os.RemoveAll(taskDir)
+		if err != nil {
+			ctx.Log().Errorf("Failed to clean up temporary directory %s", taskDir)
+		}
 		sendWorkCompleted(system, work, progress, results)
 		return nil
 	}

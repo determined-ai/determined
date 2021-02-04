@@ -33,6 +33,9 @@ get-deps:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
+	# For hyperparameter importance computation
+	go get github.com/ryanbressler/CloudForest
+	go install github.com/ryanbressler/CloudForest/growforest
 
 .PHONY: build
 build: gen
@@ -74,6 +77,7 @@ pre-package:
 	cp ../common/dist/*.whl build/wheels/
 	cp ../cli/dist/*.whl build/wheels/
 	cp ../harness/dist/*.whl build/wheels/
+	cp $(shell which growforest) build/
 
 .PHONY: package
 package: export DET_SEGMENT_MASTER_KEY ?=

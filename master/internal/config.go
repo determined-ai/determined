@@ -64,8 +64,10 @@ func DefaultConfig() *Config {
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
 		HPImportance: hpimportance.HPImportanceConfig{
-			WorkersLimit: 0,
-			QueueLimit:   1,
+			WorkersLimit:   2,
+			QueueLimit:     16,
+			CoresPerWorker: 1,
+			MaxTrees:       100,
 		},
 		ResourceConfig: resourcemanagers.DefaultResourceConfig(),
 	}
@@ -223,73 +225,4 @@ func (c CheckpointStorageConfig) ToModel() (*model.CheckpointStorageConfig, erro
 	}
 
 	return &m, nil
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (c CheckpointStorageConfig) MarshalJSON() ([]byte, error) {
-	return c, nil
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (c *CheckpointStorageConfig) UnmarshalJSON(data []byte) error {
-	// Roundtrip through json.Unmarshal so that fields are updated elementwise,
-	// which would be the behavior if CheckpointStorageConfig were a pure
-	// struct. If we simply set *c = data, we would not preserve fields not
-	// mentioned by data.
-
-	m, err := c.ToModel()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err := json.Unmarshal(data, &m); err != nil {
-		return errors.WithStack(err)
-	}
-
-	return c.FromModel(m)
-}
-
-// SecurityConfig is the security configuration for the master.
-type SecurityConfig struct {
-	DefaultTask model.AgentUserGroup `json:"default_task"`
-	TLS         TLSConfig            `json:"tls"`
-}
-
-// TLSConfig is the configuration for setting up serving over TLS.
-type TLSConfig struct {
-	Cert string `json:"cert"`
-	Key  string `json:"key"`
-}
-
-// Validate implements the check.Validatable interface.
-func (t *TLSConfig) Validate() []error {
-	var errs []error
-	if t.Cert == "" && t.Key != "" {
-		errs = append(errs, errors.New("TLS key file provided without a cert file"))
-	} else if t.Key == "" && t.Cert != "" {
-		errs = append(errs, errors.New("TLS cert file provided without a key file"))
-	}
-	return errs
-}
-
-// Enabled returns whether this configuration makes it possible to enable TLS.
-func (t *TLSConfig) Enabled() bool {
-	return t.Cert != "" && t.Key != ""
-}
-
-// ReadCertificate returns the certificate described by this configuration (nil if it does not allow
-// TLS to be enabled).
-func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
-	if !t.Enabled() {
-		return nil, nil
-	}
-	cert, err := tls.LoadX509KeyPair(t.Cert, t.Key)
-	return &cert, err
-}
-
-// TelemetryConfig is the configuration for telemetry.
-type TelemetryConfig struct {
-	Enabled          bool   `json:"enabled"`
-	SegmentMasterKey string `json:"segment_master_key"`
-	SegmentWebUIKey  string `json:"segment_webui_key"`
 }

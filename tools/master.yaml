@@ -1,3 +1,5 @@
+hyperparameter_importance:
+  workers_limit: 4
 task_container_defaults:
   network_mode: host
 
