@@ -200,7 +200,6 @@ def validation_workload(
     step_id: int = 1,
     exp_id: int = 1,
     trial_id: int = 1,
-    num_batches: int = 0, # keep as a special case for backward compat?
     total_batches_processed: int = 0,
 ) -> Workload:
     return Workload(
@@ -208,7 +207,7 @@ def validation_workload(
         ExperimentID(exp_id),
         TrialID(trial_id),
         StepID(step_id),
-        num_batches,
+        0,
         total_batches_processed,
     )
 

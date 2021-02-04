@@ -91,14 +91,14 @@ def _make_test_workloads(
     interceptor = workload.WorkloadResponseInterceptor()
 
     logging.info("Training one batch")
-    yield from interceptor.send(workload.train_workload(1, num_batches=config.scheduling_unit()), [])
+    yield from interceptor.send(workload.train_workload(1), [])
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
     check.eq(len(batch_metrics), config.scheduling_unit())
     logging.debug(f"Finished training, metrics: {batch_metrics}")
 
     logging.info("Validating one batch")
-    yield from interceptor.send(workload.validation_workload(1, num_batches=config.scheduling_unit()), [])
+    yield from interceptor.send(workload.validation_workload(1), [])
     validation = interceptor.metrics_result()
     v_metrics = validation["metrics"]["validation_metrics"]
     logging.debug(f"Finished validating, validation metrics: {v_metrics}")
@@ -270,7 +270,6 @@ def init_native(
     if local:
         if not test:
             logging.warning("local training is not supported, testing instead")
-
 
         with det._local_execution_manager(pathlib.Path(context_dir).resolve()):
             return test_one_batch(

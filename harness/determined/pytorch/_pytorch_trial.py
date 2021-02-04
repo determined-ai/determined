@@ -3,12 +3,10 @@ import pathlib
 import random
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
-from determined.workload import Workload
 
 import cloudpickle
 import numpy as np
 import torch
-import torch.nn as nn
 from itertools import islice
 
 import determined as det
@@ -312,7 +310,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 metrics[metric_name] = metric_val.cpu().numpy()
         return metrics
 
-    @torch.no_grad()
+    @torch.no_grad()  # type: ignore
     def _compute_validation_metrics(self) -> workload.Response:
         self.context.experimental.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
