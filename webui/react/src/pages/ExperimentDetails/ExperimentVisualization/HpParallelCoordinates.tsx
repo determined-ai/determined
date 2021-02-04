@@ -96,7 +96,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
         if (hp.vals) dimension.categories = hp.vals;
         if (hp.minval != null && hp.maxval != null) {
-          dimension.range = [ hp.minval, hp.maxval ] as Range<number>;
+          const isLogarithmic = hp.type === ExperimentHyperParamType.Log;
+          dimension.range = isLogarithmic ?
+            [ 10 ** hp.minval, 10 ** hp.maxval ] : [ hp.minval, hp.maxval ];
         }
 
         return dimension;
