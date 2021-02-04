@@ -126,18 +126,18 @@ export interface TaskLogsParams extends LogsParams {
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 export type EmptyParams = {}
 
-export interface GetCommandsParams extends PaginationParams {
+export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 
-export interface GetNotebooksParams extends PaginationParams {
+export interface GetNotebooksParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 
-export interface GetShellsParams extends PaginationParams {
+export interface GetShellsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 
-export interface GetTensorboardsParams extends PaginationParams {
+export interface GetTensorboardsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
