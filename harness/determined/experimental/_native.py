@@ -95,13 +95,13 @@ def _make_test_workloads(
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
     check.eq(len(batch_metrics), config.scheduling_unit())
-    logging.debug(f"Finished training, metrics: {batch_metrics}")
+    logging.info(f"Finished training, metrics: {batch_metrics}")
 
     logging.info("Validating one batch")
     yield from interceptor.send(workload.validation_workload(1), [])
     validation = interceptor.metrics_result()
     v_metrics = validation["metrics"]["validation_metrics"]
-    logging.debug(f"Finished validating, validation metrics: {v_metrics}")
+    logging.info(f"Finished validating, validation metrics: {v_metrics}")
 
     logging.info(f"Saving a checkpoint to {checkpoint_dir}.")
     yield workload.checkpoint_workload(), [checkpoint_dir], workload.ignore_workload_response
@@ -192,7 +192,6 @@ def test_one_batch(
     trial_class: Optional[Type[det.Trial]] = None,
     config: Optional[Dict[str, Any]] = None,
 ) -> Any:
-
     # Override the scheduling_unit value to 1.
     config = {**(config or {}), "scheduling_unit": 1}
 
