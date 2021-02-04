@@ -26,7 +26,6 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 class MNistTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
-        self.c = 0
 
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
@@ -73,7 +72,6 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         validation_data = data.get_dataset(self.download_directory, train=False)
-        print(len(validation_data))
         return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
 
     def train_batch(
@@ -91,8 +89,6 @@ class MNistTrial(PyTorchTrial):
         return {"loss": loss}
 
     def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
-        self.c = self.c + 1
-        print('bl', len(batch[0]), self.c, end='; ')
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
@@ -103,4 +99,3 @@ class MNistTrial(PyTorchTrial):
         accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(data)
 
         return {"validation_loss": validation_loss, "accuracy": accuracy}
-

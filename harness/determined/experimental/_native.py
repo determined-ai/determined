@@ -97,7 +97,7 @@ def _make_test_workloads(
     check.eq(len(batch_metrics), config.scheduling_unit())
     logging.debug(f"Finished training, metrics: {batch_metrics}")
 
-    logging.info("Validating one step")
+    logging.info("Validating one batch")
     yield from interceptor.send(workload.validation_workload(1, num_batches=config.scheduling_unit()), [])
     validation = interceptor.metrics_result()
     v_metrics = validation["metrics"]["validation_metrics"]
@@ -192,7 +192,6 @@ def test_one_batch(
     trial_class: Optional[Type[det.Trial]] = None,
     config: Optional[Dict[str, Any]] = None,
 ) -> Any:
-    print('test_one_batch called')
 
     # Override the scheduling_unit value to 1.
     # TODO(DET-2931): Make the validation step a single batch as well.
