@@ -941,7 +941,7 @@ class TFKerasTrial(det.Trial):
     TensorFlow 2.x, specify a TensorFlow 2.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.1-pytorch-1.7-tf-2.4-gpu-0.9.0``).
+    ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

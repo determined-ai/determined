@@ -30,7 +30,7 @@ check:
 
 .PHONY: test
 test:
-	pytest -v -s --runslow --durations=0 tests
+	pytest -v --runslow --durations=0 tests
 
 .PHONY: test-tf2
 test-tf2:

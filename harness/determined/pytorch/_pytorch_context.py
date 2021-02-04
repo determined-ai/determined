@@ -46,7 +46,7 @@ class PyTorchTrialContext(det.TrialContext):
         # The following attributes are initialized during the lifetime of
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
-        self.optimizers = []  # type: List[torch.optim.Optimizer]
+        self.optimizers = []  # type: List[torch.optim.Optimizer] #  type: ignore
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
 
@@ -56,7 +56,7 @@ class PyTorchTrialContext(det.TrialContext):
         # different names using __setattr__ and use the state_dict of the main model
         # for broadcasting. Note that broadcast_parameters only accepts state_dict()
         # although its doc says it also accepts named_parameters()
-        self._main_model = nn.Module()  # type: ignore
+        self._main_model = nn.Module()  # type: nn.Module
         self._use_amp = False
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
         self._last_backward_batch_idx = None  # type: Optional[int]
@@ -90,9 +90,9 @@ class PyTorchTrialContext(det.TrialContext):
 
     def wrap_optimizer(
         self,
-        optimizer: torch.optim.Optimizer,
+        optimizer: torch.optim.Optimizer,  # type: ignore
         backward_passes_per_step: int = 1,
-    ) -> torch.optim.Optimizer:
+    ) -> torch.optim.Optimizer:  # type: ignore
         """Returns a wrapped optimizer.
 
         The optimizer must use the models wrapped by :meth:`wrap_model`. This function
@@ -186,7 +186,7 @@ class PyTorchTrialContext(det.TrialContext):
         # don't care about.
         return lr_scheduler
 
-    def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:
+    def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:  # type: ignore
         """_filter_named_parameters filters the named parameters of a specified optimizer out
         of all the named parameters from a specified model. We need this function because
         a ``torch.optim.Optimizer`` doesn't store parameter names and we need the names of
@@ -221,7 +221,7 @@ class PyTorchTrialContext(det.TrialContext):
     def configure_apex_amp(
         self,
         models: Union[torch.nn.Module, List[torch.nn.Module]],
-        optimizers: Union[torch.optim.Optimizer, List[torch.optim.Optimizer]],
+        optimizers: Union[torch.optim.Optimizer, List[torch.optim.Optimizer]],  # type: ignore
         enabled: Optional[bool] = True,
         opt_level: Optional[str] = "O1",
         cast_model_type: Optional[torch.dtype] = None,
@@ -418,7 +418,7 @@ class PyTorchTrialContext(det.TrialContext):
                     # to integrate torch native AMP (https://pytorch.org/docs/stable/amp.html),
                     # which will come out soon.
                     for optimizer in self.optimizers:
-                        optimizer.synchronize()  # type: ignore
+                        optimizer.synchronize()
         else:
             loss.backward(  # type: ignore
                 gradient=gradient,
@@ -437,7 +437,7 @@ class PyTorchTrialContext(det.TrialContext):
 
     def step_optimizer(
         self,
-        optimizer: torch.optim.Optimizer,
+        optimizer: torch.optim.Optimizer,  # type: ignore
         clip_grads: Optional[Callable[[Iterator], None]] = None,
         auto_zero_grads: bool = True,
     ) -> None:
@@ -478,7 +478,7 @@ class PyTorchTrialContext(det.TrialContext):
             # Communication needs to be synchronized so that is completed
             # before we apply gradient clipping and `step()`.
             if self.hvd_config.use and not self._use_amp:
-                optimizer.synchronize()  # type: ignore
+                optimizer.synchronize()
 
             parameters = (
                 [p for group in optimizer.param_groups for p in group.get("params", [])]
@@ -495,7 +495,7 @@ class PyTorchTrialContext(det.TrialContext):
                 clip_grads(parameters)
 
             if self.hvd_config.use:
-                with optimizer.skip_synchronize():  # type: ignore
+                with optimizer.skip_synchronize():
                     optimizer.step()
             else:
                 optimizer.step()

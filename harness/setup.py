@@ -27,14 +27,10 @@ setup(
         "yogadl==0.1.3",
     ],
     extras_require={
-        "tf-115-cuda101": ["tensorflow-gpu==1.15.5"],
-        "tf-1115-cpu": ["tensorflow==1.15.5"],
-        "tf-240-cuda101": ["tensorflow-gpu==2.4.0"],
-        "tf-240-cpu": ["tensorflow==2.4.0"],
-        "tf-240-cuda110": ["tensorflow-gpu==2.4.0"],
-        "pytorch-17-cuda101": ["torch==1.7.1+cu101", "torchvision==0.8.2+cu101"],
-        "pytorch-17-cuda110": ["torch==1.7.1+cu110", "torchvision==0.8.2+cu110"],
-        "pytorch-17-cpu": ["torch==1.7.0", "torchvision==0.8.2"],
+        "tf-114-cuda100": ["tensorflow-gpu==1.14.0"],
+        "tf-114-cpu": ["tensorflow==1.14.0"],
+        "pytorch-14-cuda100": ["torch==1.4.0+cu100", "torchvision==0.5.0+cu100"],
+        "pytorch-14-cpu": ["torch==1.4.0", "torchvision==0.5.0"],
     },
     zip_safe=False,
 )

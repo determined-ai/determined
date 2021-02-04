@@ -42,4 +42,4 @@ searcher:
 entrypoint: model_def:BoostedTreesTrial
 scheduling_unit: 1
 environment:
-  image: "determinedai/environments:py-3.6.9-pytorch-1.7-tf-1.15-cpu-0.9.0"
+  image: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.8.0"

@@ -100,11 +100,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.7-tf-1.15-cpu-5f6f6e1
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.7-tf-2.4-cpu-5f6f6e1
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b
 
   login-docker:
     steps:
@@ -199,7 +199,7 @@ commands:
       - run:
           name: Setup venv
           command: |
-            python3 -m venv /tmp/venv
+            python3.6 -m venv /tmp/venv
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
 
@@ -752,7 +752,7 @@ jobs:
           determined-common: true
           determined-cli: true
           determined: true
-          extras-requires: "tensorflow==2.4 torch==1.7"
+          extras-requires: "tensorflow==1.14 torch==1.4"
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C examples build
@@ -1110,7 +1110,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extras-requires: "torch==1.7.0"
+          extras-requires: "torch==1.4.0"
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C cli check
@@ -1129,7 +1129,7 @@ jobs:
       - setup-python-venv:
           determined-common: true
           determined: true
-          extras-requires: "tensorflow==2.4.0 torch==1.7.0 torchvision==0.8.1"
+          extras-requires: "tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test
@@ -1207,9 +1207,6 @@ jobs:
       - attach_workspace:
           at: .
 
-      - run: pyenv uninstall -f 3.6.10
-      - run: sudo apt install -y liblzma-dev lzma
-      - run: PYTHON_BUILD_MIRROR_URL=https://detpyenv.s3.amazonaws.com pyenv install 3.6.10
       - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
