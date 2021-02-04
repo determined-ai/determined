@@ -2,7 +2,6 @@ import logging
 import pathlib
 import random
 from abc import abstractmethod
-from itertools import islice
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import cloudpickle
@@ -335,10 +334,8 @@ class PyTorchTrialController(det.LoopTrialController):
             batch_metrics = []
 
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
-            val_loader_len = len(self.validation_loader)
-            check.gt(val_loader_len, 0)
-            batch_stop_idx = val_loader_len if not self.context.env.test_mode else 1
-            for batch in islice(self.validation_loader, 0, batch_stop_idx):
+            check.gt(len(self.validation_loader), 0)
+            for batch in self.validation_loader:
                 batch = self.context.to_device(batch)
                 num_inputs += pytorch.data_length(batch)
 
