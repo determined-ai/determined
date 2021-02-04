@@ -212,7 +212,9 @@ commands:
       - run:
           name: Setup venv
           command: |
-            python3 -m venv /tmp/venv
+            sudo apt-get update
+            sudo apt-get install -y python3-venv
+            /usr/bin/python3 -m venv /tmp/venv
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
 
@@ -978,7 +980,7 @@ jobs:
 
   test-debian-packaging:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     steps:
       - checkout
       - attach_workspace:
@@ -996,7 +998,7 @@ jobs:
 
   test-e2e-webui:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     steps:
       - checkout
@@ -1006,13 +1008,12 @@ jobs:
       - run: docker load --input build/agent.image
 
       - install-webui-test-deps
-      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           determined-deploy: true
           extra-requirements-file: "webui/tests/requirements.txt"
-          executor: ubuntu-1604:202004-01
+          executor: ubuntu-2004:202101-01
       - setup-local-cluster:
           det-version: ${CIRCLE_SHA1}
       - run-e2e-webui-tests
@@ -1142,7 +1143,7 @@ jobs:
 
   test-intg-master:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     steps:
       - checkout
@@ -1153,7 +1154,7 @@ jobs:
 
   test-intg-agent:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     steps:
       - checkout
@@ -1272,22 +1273,20 @@ jobs:
       parallelism:
         type: integer
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
       - attach_workspace:
           at: .
-
-      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-1604:202004-01
+          executor: ubuntu-2004:202101-01
 
       - run:
           name: Start database
@@ -1584,7 +1583,7 @@ jobs:
       det-version:
         type: string
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1594,14 +1593,13 @@ jobs:
       - run: docker load --input build/master.image
       - run: docker load --input build/agent.image
 
-      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-1604:202004-01
+          executor: ubuntu-2004:202101-01
 
       - pull-task-images:
           tf1: True

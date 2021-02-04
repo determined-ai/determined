@@ -16,7 +16,7 @@ searcher:
   name: single
   metric: val_categorical_error
   max_length:
-    epochs: 32
+    epochs: 8
 min_validation_period:
   epochs: 1
 entrypoint: model_def:CIFARTrial
