@@ -516,7 +516,7 @@ If the problem persists please contact support.',
                 spinning: trialDetails.isLoading,
               }}
               pagination={getPaginationConfig(workloadSteps.length, pageSize)}
-              rowClassName={defaultRowClassName({ clickable: true })}
+              rowClassName={defaultRowClassName({ clickable: false })}
               rowKey="batchNum"
               scroll={{ x: 1000 }}
               showSorterTooltip={false}
