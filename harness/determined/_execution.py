@@ -62,10 +62,10 @@ def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> 
 
 def _make_local_execution_env(
     managed_training: bool,
+    test_mode: bool,
     config: Optional[Dict[str, Any]],
     hparams: Optional[Dict[str, Any]] = None,
     limit_gpus: Optional[int] = None,
-    test_mode: bool = False,
 ) -> Tuple[det.EnvContext, det.RendezvousInfo, horovod.HorovodContext]:
     config = det.ExperimentConfig(_make_local_execution_exp_config(config))
     hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))
