@@ -19,7 +19,7 @@ export const Default = (): React.ReactNode => {
     resourcePool={resourcePools[number(
       'ResourcePool Index',
       0,
-      { max: resourcePools.length-1, min: 0, step: 1 },
+      { max: resourcePools.length - 1, min: 0, step: 1 },
     )]}
     visible={true}
   />;

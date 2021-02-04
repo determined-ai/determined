@@ -145,7 +145,7 @@ const LogViewer: React.FC<Props> = forwardRef((
    * Calculate all the sizes of the log pieces such as the individual character size,
    * line numbers, datetime and message whenever new logs are added.
    */
-  const measureLogs = useCallback((logs): LogConfig => {
+  const measureLogs = useCallback((logs: ViewerLog[]): LogConfig => {
     // Check to make sure all the necessary elements are available.
     if (!measure.current || !spacer.current) throw new Error('Missing log measuring elements.');
 
@@ -166,7 +166,7 @@ const LogViewer: React.FC<Props> = forwardRef((
      */
     let lineNumberWidth = 0;
     if (!props.disableLineNumber) {
-      const maxLineNumber = logs.length === 0 ? 1000 : logs[logs.length - 1].id + 1;
+      const maxLineNumber = logs.length === 0 ? 1000 : logs.last().id + 1;
       const lineDigits = Math.ceil(Math.log(maxLineNumber) / Math.log(10)) + 1;
       lineNumberWidth = charRect.width * lineDigits;
     }
@@ -237,7 +237,7 @@ const LogViewer: React.FC<Props> = forwardRef((
     setScrollToInfo({ isPrepend: prepend, logId: logs[0]?.id });
     setLogs(updatedLogs);
     setLogIdRange(prevLogIdRange => ({
-      max: Math.max(prevLogIdRange.max, newLogs[newLogs.length - 1].id),
+      max: Math.max(prevLogIdRange.max, newLogs.last().id),
       min: Math.min(prevLogIdRange.min, newLogs[0].id),
     }));
   }, [ logs, logIdRange, measureLogs ]);
