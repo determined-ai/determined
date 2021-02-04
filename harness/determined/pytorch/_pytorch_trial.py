@@ -2,12 +2,12 @@ import logging
 import pathlib
 import random
 from abc import abstractmethod
+from itertools import islice
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import cloudpickle
 import numpy as np
 import torch
-from itertools import islice
 
 import determined as det
 from determined import horovod, ipc, pytorch, util, workload

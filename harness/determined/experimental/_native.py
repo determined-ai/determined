@@ -199,7 +199,9 @@ def test_one_batch(
 
     logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
-    env, rendezvous_info, hvd_config = det._make_local_execution_env(True, config, limit_gpus=1, test_mode=True)
+    env, rendezvous_info, hvd_config = det._make_local_execution_env(
+        True, config, limit_gpus=1, test_mode=True
+    )
     workloads = _make_test_workloads(
         pathlib.Path(checkpoint_dir.name).joinpath("checkpoint"), env.experiment_config
     )
