@@ -154,7 +154,9 @@ class PyTorchTrialController(det.LoopTrialController):
                         )
                     )
                 except det.InvalidHP as e:
-                    logging.info("Invalid hyperparameter exception in trial __init__: {}".format(e))
+                    logging.info(
+                        "Invalid hyperparameter exception in trial train step: {}".format(e)
+                    )
                     response_func(
                         util.wrap_metrics(
                             self._train_for_step(
@@ -175,7 +177,9 @@ class PyTorchTrialController(det.LoopTrialController):
                         )
                     )
                 except det.InvalidHP as e:
-                    logging.info("Invalid hyperparameter exception in trial __init__: {}".format(e))
+                    logging.info(
+                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
+                    )
                     response_func(
                         util.wrap_metrics(
                             self._compute_validation_metrics(),

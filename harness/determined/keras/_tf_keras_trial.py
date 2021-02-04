@@ -776,21 +776,41 @@ class TFKerasTrialController(det.LoopTrialController):
         for wkld, args, response_func in self.workloads:
             logging.debug(f"Received wkld {wkld.kind} with args {args}.")
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                # Configure the state for a training step.
-                self.train_response_func = response_func
-                self.train_workload_batches = 0
-                self.train_workload_metrics = []
-                self.train_workload_len = wkld.num_batches
-                self.multiplexer.set_batches_requested(wkld.num_batches)
-                break
-            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(
-                    det.util.wrap_metrics(
-                        self._compute_validation_metrics(),
-                        self.context.get_stop_requested(),
-                        self.context.get_invalid_hp(),
+                try:
+                    # Configure the state for a training step.
+                    self.train_response_func = response_func
+                    self.train_workload_batches = 0
+                    self.train_workload_metrics = []
+                    self.train_workload_len = wkld.num_batches
+                    self.multiplexer.set_batches_requested(wkld.num_batches)
+                    break
+                except det.InvalidHP as e:
+                    logging.info(
+                        "Invalid hyperparameter exception in trial train step: {}".format(e)
                     )
-                )
+                    response_func(util.wrap_metrics({}, False, True))
+                    raise
+            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                try:
+                    response_func(
+                        util.wrap_metrics(
+                            self._compute_validation_metrics(),
+                            self.context.get_stop_requested(),
+                            self.context.get_invalid_hp(),
+                        )
+                    )
+                except det.InvalidHP as e:
+                    logging.info(
+                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
+                    )
+                    response_func(
+                        util.wrap_metrics(
+                            self._compute_validation_metrics(),
+                            self.context.get_stop_requested(),
+                            self.context.set_invalid_hp(True),
+                        )
+                    )
+                    raise
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)
