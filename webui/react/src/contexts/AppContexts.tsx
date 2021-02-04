@@ -54,12 +54,23 @@ const AppContexts: React.FC = () => {
     triggerUsersRequest({ url: '/users' });
   }, [ triggerUsersRequest ]);
 
-  usePolling(fetchActiveExperiments);
-  usePolling(fetchAgents);
-  usePolling(fetchCommands);
-  usePolling(fetchNotebooks);
-  usePolling(fetchShells);
-  usePolling(fetchTensorboards);
+  const fetchAll = useCallback((): void => {
+    fetchActiveExperiments();
+    fetchAgents();
+    fetchCommands();
+    fetchNotebooks();
+    fetchShells();
+    fetchTensorboards();
+  }, [
+    fetchActiveExperiments,
+    fetchAgents,
+    fetchCommands,
+    fetchNotebooks,
+    fetchShells,
+    fetchTensorboards,
+  ]);
+
+  usePolling(fetchAll);
   usePolling(fetchUsers, { delay: 60000 });
 
   useEffect(() => {
