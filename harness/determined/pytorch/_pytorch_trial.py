@@ -313,7 +313,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return metrics
 
     @torch.no_grad()
-    def _compute_validation_metrics(self, wl: Workload) -> workload.Response:
+    def _compute_validation_metrics(self) -> workload.Response:
         self.context.experimental.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
         # different between training and inference.
@@ -339,7 +339,7 @@ class PyTorchTrialController(det.LoopTrialController):
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
             val_loader_len = len(self.validation_loader)
             check.gt(val_loader_len, 0)
-            batch_stop_idx = wl.num_batches if wl.num_batches > 0 else val_loader_len
+            batch_stop_idx = val_loader_len if not self.context.env.test_mode else 1
             for batch in islice(self.validation_loader, 0, batch_stop_idx):
                 batch = self.context.to_device(batch)
                 num_inputs += pytorch.data_length(batch)

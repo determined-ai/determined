@@ -192,13 +192,15 @@ def test_one_batch(
     trial_class: Optional[Type[det.Trial]] = None,
     config: Optional[Dict[str, Any]] = None,
 ) -> Any:
+    print('test_one_batch called')
+
     # Override the scheduling_unit value to 1.
     # TODO(DET-2931): Make the validation step a single batch as well.
     config = {**(config or {}), "scheduling_unit": 1}
 
     logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
-    env, rendezvous_info, hvd_config = det._make_local_execution_env(True, config, limit_gpus=1)
+    env, rendezvous_info, hvd_config = det._make_local_execution_env(True, config, limit_gpus=1, test_mode=True)
     workloads = _make_test_workloads(
         pathlib.Path(checkpoint_dir.name).joinpath("checkpoint"), env.experiment_config
     )
@@ -269,6 +271,7 @@ def init_native(
     if local:
         if not test:
             logging.warning("local training is not supported, testing instead")
+
 
         with det._local_execution_manager(pathlib.Path(context_dir).resolve()):
             return test_one_batch(
