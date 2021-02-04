@@ -5,6 +5,7 @@ import logging
 import time
 import os
 import pathlib
+import requests
 import subprocess
 import sys
 from typing import List
@@ -34,7 +35,7 @@ def run(cmd: List[str], config) -> None:
     return subprocess.check_call(cmd, env=config["env"])
 
 
-def run_forget(cmd: List[str], logfile, config) -> None:
+def run_forget(cmd: List[str], logfile, config) -> subprocess.Popen:
     return subprocess.Popen(cmd, stdout=logfile)
 
 
@@ -51,11 +52,30 @@ def setup_reports_dir(config):
     run(["mkdir", "-p", str(videos_dir)], config)
 
 
+def is_cluster_up(config):
+    try:
+        r = requests.get(config['DET_MASTER'] + '/api/v1/master')
+        return r.status_code < 300 and r.status_code >= 200
+    except:
+        return False
+
+
+def wait_until(condition, timeout=1, *args):
+    interval = 0.5
+    start = time.time()
+    while time.time() - start < timeout:
+        if condition(*args):
+            return True
+        time.sleep(interval)
+    return False
+
+
 def setup_cluster(logfile, config):
     logger.info("setting up the cluster..")
     run(CLUSTER_CMD_PREFIX + ["start-db"], config)
     cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], logfile, config)
-    time.sleep(5)  # FIXME add a ready check for master
+    if not wait_until(is_cluster_up, 10, config):
+        raise Exception(f"cluster {config['DET_MASTER']} is unreachable")
     logger.info(f"cluster pid: {cluster_process.pid}")
     return cluster_process
 
@@ -81,7 +101,8 @@ def det_cluster(config):
 
 
 def pre_e2e_tests(config):
-    # TODO add a check for cluster condition
+    if not is_cluster_up(config):
+        raise Exception(f"cluster {config['DET_MASTER']} is unreachable")
     setup_reports_dir(config)
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
@@ -167,7 +188,7 @@ def main():
     parser.add_argument("--det-port", default="8081", help="det master port")
     parser.add_argument(
         "--det-host",
-        default="localhost",
+        default="http://localhost",
         help="det master address eg localhost or 192.168.1.2",
     )
     parser.add_argument("--log-level")
