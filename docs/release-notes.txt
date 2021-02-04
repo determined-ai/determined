@@ -41,6 +41,11 @@ Version 0.14.0
 
 **Improvements**
 
+-  **Breaking Change** REST API: The trial and checkpoint API endpoints
+   can now return non-scalar metric values, which are represented as
+   JSON objects or `protobuf structs
+   <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct>`__.
+
 -  Documentation: Add a topic guide on :ref:`debugging models
    <model-debug>`. The new guide will walk you step-by-step through
    solving problems with a model in Determined, with a focus on testing
@@ -51,11 +56,6 @@ Version 0.14.0
    <commands-and-shells>`. It describes how to use Determined's support
    for managing GPU-powered batch commands and interactive shells.
 
--  **Breaking Change** Metrics: The trial and checkpoint API endpoints
-   can now return non-scalar metric values, which are represented as
-   JSON objects or `protobuf structs
-   <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct>`__.
-
 -  PyTorch: Upgrade the default PyTorch version to 1.7.0.
 
 -  TensorFlow: Upgrade the default TensorFlow versions to 1.15.5 and
@@ -65,15 +65,15 @@ Version 0.14.0
 
 **Bug Fixes**
 
--  API: Fix an issue where requesting checkpoint or trial details of a
-   trial that had non-scalar metric values associated with it would
-   fail.
-
 -  Database: Migrate ``public.trial_logs.id`` to be an ``int8`` in
    Postgres, instead of an ``int4``. This avoids issues for customers
    with extremely large amounts of trial logs. **Note**: This migration
-   may be more time-consuming than usual for deployments with large
+   will be more time-consuming than usual for deployments with large
    amounts of trial logs.
+
+-  REST API: Fix an issue where requesting checkpoint or trial details
+   of a trial that had non-scalar metric values associated with it would
+   fail.
 
 -  Trial: Fix an issue where the trial was not deallocating resources
    when it failed to write to the DB.
