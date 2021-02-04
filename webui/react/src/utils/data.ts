@@ -119,9 +119,14 @@ export const metricNameSorter = (a: MetricName, b: MetricName): number => {
 };
 
 export const numericSorter = (a?: number, b?: number, reverseOrder = false): number => {
-  if (a != null && b != null) return reverseOrder ? b - a : a - b;
+  if (a != null && b != null) {
+    const diff = reverseOrder ? b - a : a - b;
+    if (diff < 0) return -1;
+    if (diff > 0) return 1;
+    return 0;
+  }
   if (a != null && b == null) return reverseOrder ? -1 : 1;
-  if (b == null && b != null) return reverseOrder ? 1 : -1;
+  if (a == null && b != null) return reverseOrder ? 1 : -1;
   return 0;
 };
 
