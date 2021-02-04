@@ -747,6 +747,9 @@ class TFKerasTrialController(det.LoopTrialController):
         use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
         evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
 
+        if self.context.env.test_mode:
+            steps = 1
+
         metrics_values = self.model.evaluate(
             validation_data,
             callbacks=self.callback_list,

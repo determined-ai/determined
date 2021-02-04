@@ -155,7 +155,7 @@ class PyTorchTrialController(det.LoopTrialController):
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response_func(
                     util.wrap_metrics(
-                        self._compute_validation_metrics(w), self.context.get_stop_requested()
+                        self._compute_validation_metrics(), self.context.get_stop_requested()
                     )
                 )
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
