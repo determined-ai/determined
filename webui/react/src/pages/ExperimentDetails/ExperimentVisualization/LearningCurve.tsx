@@ -121,12 +121,19 @@ const LearningCurve: React.FC<Props> = ({
         return primitiveSorter(a, b);
       };
     };
-    const hpColumns = Object.keys(experiment.config.hyperparameters || {}).map(key => ({
-      key,
-      render: hpRenderer(key),
-      sorter: hpColumnSorter(key),
-      title: key,
-    }));
+    const hpColumns = Object
+      .keys(experiment.config.hyperparameters || {})
+      .filter(key => {
+        return experiment.config.hyperparameters[key].type !== ExperimentHyperParamType.Constant;
+      })
+      .map(key => {
+        return {
+          key,
+          render: hpRenderer(key),
+          sorter: hpColumnSorter(key),
+          title: key,
+        };
+      });
 
     return [ idColumn, metricColumn, ...hpColumns ];
   }, [ experiment.config.hyperparameters, selectedMetric, trialIds ]);
