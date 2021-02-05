@@ -95,13 +95,13 @@ def _make_test_workloads(
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
     check.eq(len(batch_metrics), config.scheduling_unit())
-    logging.debug(f"Finished training, metrics: {batch_metrics}")
+    logging.info(f"Finished training, metrics: {batch_metrics}")
 
-    logging.info("Validating one step")
+    logging.info("Validating one batch")
     yield from interceptor.send(workload.validation_workload(1), [])
     validation = interceptor.metrics_result()
     v_metrics = validation["metrics"]["validation_metrics"]
-    logging.debug(f"Finished validating, validation metrics: {v_metrics}")
+    logging.info(f"Finished validating, validation metrics: {v_metrics}")
 
     logging.info(f"Saving a checkpoint to {checkpoint_dir}.")
     yield workload.checkpoint_workload(), [checkpoint_dir], workload.ignore_workload_response
@@ -180,7 +180,7 @@ def _load_trial_on_local(
     with det._local_execution_manager(context_dir):
         trial_class = load.load_trial_implementation(config["entrypoint"])
         env, rendezvous_info, hvd_config = det._make_local_execution_env(
-            managed_training, config, hparams
+            managed_training=managed_training, test_mode=False, config=config, hparams=hparams
         )
         trial_context = trial_class.trial_context_class(env, hvd_config)
     return trial_class, trial_context
@@ -193,12 +193,13 @@ def test_one_batch(
     config: Optional[Dict[str, Any]] = None,
 ) -> Any:
     # Override the scheduling_unit value to 1.
-    # TODO(DET-2931): Make the validation step a single batch as well.
     config = {**(config or {}), "scheduling_unit": 1}
 
     logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
-    env, rendezvous_info, hvd_config = det._make_local_execution_env(True, config, limit_gpus=1)
+    env, rendezvous_info, hvd_config = det._make_local_execution_env(
+        managed_training=True, test_mode=True, config=config, limit_gpus=1
+    )
     workloads = _make_test_workloads(
         pathlib.Path(checkpoint_dir.name).joinpath("checkpoint"), env.experiment_config
     )
@@ -394,6 +395,8 @@ def create_trial_instance(
     determined_common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
-    env, rendezvous_info, hvd_config = det._make_local_execution_env(False, config, hparams)
+    env, rendezvous_info, hvd_config = det._make_local_execution_env(
+        managed_training=False, test_mode=False, config=config, hparams=hparams
+    )
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)

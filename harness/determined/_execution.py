@@ -62,6 +62,7 @@ def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> 
 
 def _make_local_execution_env(
     managed_training: bool,
+    test_mode: bool,
     config: Optional[Dict[str, Any]],
     hparams: Optional[Dict[str, Any]] = None,
     limit_gpus: Optional[int] = None,
@@ -97,6 +98,7 @@ def _make_local_execution_env(
         det_cluster_id="",
         trial_seed=config.experiment_seed(),
         managed_training=managed_training,
+        test_mode=test_mode,
     )
     rendezvous_ports = env.rendezvous_ports()
     rendezvous_info = det.RendezvousInfo(
