@@ -358,7 +358,8 @@ class PyTorchTrialController(det.LoopTrialController):
                 )
                 # TODO: For performance perform -> cpu() only at the end of validation.
                 batch_metrics.append(self._convert_metrics_to_numpy(vld_metrics))
-                if self.env.test_mode: break
+                if self.env.test_mode:
+                    break
 
             metrics = self._reduce_metrics(
                 batch_metrics=batch_metrics,
