@@ -1,12 +1,12 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 
-import { CommandType, RunState, TBSource } from 'types';
+import { CommandType, RunState } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
 }
 
-export interface FetchOptionParams {
+export interface FetchOptions {
   signal?: AbortSignal;
 }
 
@@ -27,7 +27,7 @@ interface ApiBase {
 // Designed for use with Swagger generated api bindings.
 export interface DetApi<Input, DetOutput, Output> extends ApiBase {
   postProcess: (response: DetOutput) => Output;
-  request: (params: Input) => Promise<DetOutput>;
+  request: (params: Input, options?: FetchOptions) => Promise<DetOutput>;
   stubbedResponse?: DetOutput;
 }
 export interface HttpApi<Input, Output> extends ApiBase {
@@ -108,7 +108,10 @@ export interface CreateNotebookParams {
   slots: number;
 }
 
-export type CreateTensorboardParams = TBSource;
+export interface LaunchTensorboardParams {
+  experimentIds?: Array<number>;
+  trialIds?: Array<number>;
+}
 
 export interface LogsParams {
   greaterThanId?: number;
@@ -122,3 +125,19 @@ export interface TaskLogsParams extends LogsParams {
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 export type EmptyParams = {}
+
+export interface GetCommandsParams extends FetchOptions, PaginationParams {
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+}
+
+export interface GetNotebooksParams extends FetchOptions, PaginationParams {
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+}
+
+export interface GetShellsParams extends FetchOptions, PaginationParams {
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+}
+
+export interface GetTensorboardsParams extends FetchOptions, PaginationParams {
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+}

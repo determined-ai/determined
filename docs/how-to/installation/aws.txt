@@ -545,7 +545,7 @@ Running Determined
    -  ``image_id`` should be the latest Determined agent AMI.
    -  ``instance_type`` should be any p2 or p3 EC2 instance type.
    -  For more information about resource pools, see
-      :ref:`resource-pool`
+      :ref:`resource-pools`
 
    .. warning::
 

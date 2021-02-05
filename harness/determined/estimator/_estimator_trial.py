@@ -748,8 +748,9 @@ class EstimatorTrialController(det.LoopTrialController):
         logging.debug(f"Load path set to {self.estimator_dir}.")
 
     def compute_validation_metrics(self) -> workload.Response:
+        steps = self.eval_spec.steps if not self.env.test_mode else 1
         metrics = self.estimator.evaluate(
-            input_fn=self.eval_spec.input_fn, steps=self.eval_spec.steps, hooks=self.eval_spec.hooks
+            input_fn=self.eval_spec.input_fn, steps=steps, hooks=self.eval_spec.hooks
         )
 
         if self.hvd_config.use:
@@ -805,7 +806,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.7-tf-2.4-gpu-0.9.0``).
+    (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

@@ -12,11 +12,10 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
-import { getExperimentDetails, getExpTrials, getExpValidationHistory,
-  isNotFound } from 'services/api';
+import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { ExperimentBase, TrialItem, ValidationHistory } from 'types';
+import { ExperimentBase, ValidationHistory } from 'types';
 import { clone } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
@@ -56,7 +55,6 @@ const ExperimentDetails: React.FC = () => {
     source: axios.CancelToken.source(),
   });
   const [ experimentCanceler ] = useState(new AbortController());
-  const [ trials, setTrials ] = useState<TrialItem[]>([]);
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
 
   const id = parseInt(experimentId);
@@ -65,11 +63,9 @@ const ExperimentDetails: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const experiment = await getExperimentDetails({ id, signal: experimentCanceler.signal });
-      const trials = await getExpTrials({ id });
+      const experiment = await getExperimentDetails({ id }, { signal: experimentCanceler.signal });
       const validationHistory = await getExpValidationHistory({ id });
       setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
-      setTrials(trials);
       setValHistory(validationHistory);
     } catch (e) {
       if (!experimentDetails.error && !isAborted(e)) {
@@ -155,7 +151,6 @@ const ExperimentDetails: React.FC = () => {
       ]}
       options={<ExperimentActions
         experiment={experiment}
-        trials={trials}
         onClick={{ Fork: showForkModal }}
         onSettled={fetchExperimentDetails} />}
       stickHeader
@@ -169,7 +164,6 @@ const ExperimentDetails: React.FC = () => {
         <TabPane key="overview" tab="Overview">
           <ExperimentOverview
             experiment={experiment}
-            trials={trials}
             validationHistory={valHistory}
             onTagsChange={fetchExperimentDetails} />
         </TabPane>

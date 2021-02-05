@@ -3,7 +3,7 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointState, CheckpointStorageType, CommandState, ExperimentSearcherName, LogLevel, RunState,
+  CheckpointStorageType, CommandState, ExperimentSearcherName, LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -142,10 +142,6 @@ const runStatesIoType = io.keyof(runStates);
 
 /* Trials */
 
-const checkpointStates: Record<string, null> = Object.values(CheckpointState)
-  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
-const checkpointStatesIoType = io.keyof(checkpointStates);
-
 const ioMetricValue = io.any;
 const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
@@ -161,18 +157,6 @@ const startEndTimeDef = {
   start_time: io.string,
 };
 
-export const ioCheckpoint = io.type({
-  ...startEndTimeDef,
-  id: io.number,
-  resources: optional(io.record(io.string, io.number)),
-  state: checkpointStatesIoType,
-  step_id: io.number,
-  trial_id: io.number,
-  uuid: optional(io.string),
-  validation_metric: ioMetricValue,
-});
-export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
-
 export const ioValidation = io.type({
   ...startEndTimeDef,
   id: io.number,
@@ -180,48 +164,6 @@ export const ioValidation = io.type({
   state: runStatesIoType,
 });
 export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
-
-export const ioStep = io.type({
-  ...startEndTimeDef,
-  avg_metrics: optional(ioMetric),
-  checkpoint: optional(ioCheckpoint),
-  id: io.number,
-  num_batches: optional(io.number),
-  prior_batches_processed: optional(io.number),
-  state: runStatesIoType,
-  validation: optional(ioValidation),
-});
-export type ioTypeStep = io.TypeOf<typeof ioStep>;
-
-export const ioTrialDetails = io.type({
-  end_time: optional(io.string),
-  experiment_id: io.number,
-  hparams: io.record(io.string, io.any),
-  id: io.number,
-  seed: io.number,
-  start_time: io.string,
-  state: runStatesIoType,
-  steps: io.array(ioStep),
-  warm_start_checkpoint_id: optional(io.number),
-});
-export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
-
-export const ioTrial = io.type({
-  best_available_checkpoint: optional(ioCheckpoint),
-  best_validation_metric: ioMetricValue,
-  end_time: optional(io.string),
-  experiment_id: io.number,
-  hparams: io.record(io.string, io.any),
-  id: io.number,
-  latest_validation_metrics: optional(ioValidationMetrics),
-  num_completed_checkpoints: io.number,
-  num_steps: io.number,
-  seed: io.number,
-  start_time: io.string,
-  state: runStatesIoType,
-  total_batches_processed: optional(io.number),
-});
-export type ioTypeTrial = io.TypeOf<typeof ioTrial>;
 
 /* Experiments */
 
@@ -293,27 +235,6 @@ export const ioExperiments = io.array(ioExperiment);
 
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
-
-const ioValidationHistory = io.type({
-  end_time: io.string,
-  trial_id: io.number,
-  validation_error: optional(io.number),
-});
-
-export const ioExperimentDetails = io.type({
-  archived: io.boolean,
-  config: ioExperimentConfig,
-  end_time: optional(io.string),
-  id: io.number,
-  owner: ioUser,
-  progress: optional(io.number),
-  start_time: io.string,
-  state: runStatesIoType,
-  trials: io.array(ioTrial),
-  validation_history: io.array(ioValidationHistory),
-});
-
-export type ioTypeExperimentDetails = io.TypeOf<typeof ioExperimentDetails>;
 
 /* Logs */
 

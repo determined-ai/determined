@@ -1,0 +1,197 @@
+{
+  "resourcePools": [
+    {
+      "name": "default-cpu-pool",
+      "description": "",
+      "type": "RESOURCE_POOL_TYPE_GCP",
+      "numAgents": 1,
+      "slotsAvailable": 0,
+      "slotsUsed": 0,
+      "cpuContainerCapacity": 100,
+      "cpuContainersRunning": 1,
+      "defaultGpuPool": false,
+      "defaultCpuPool": true,
+      "preemptible": false,
+      "minAgents": 0,
+      "maxAgents": 8,
+      "cpuContainerCapacityPerAgent": 100,
+      "schedulerType": "SCHEDULER_TYPE_PRIORITY",
+      "schedulerFittingPolicy": "FITTING_POLICY_BEST",
+      "location": "us-west1-b",
+      "imageId": "projects/determined-ai/global/images/det-environments-4a93d25",
+      "instanceType": "n1-standard-32, 0xnvidia-tesla-v100",
+      "masterUrl": "https://10.138.15.193:443",
+      "masterCertName": "gcloud.determined.ai",
+      "startupScript": "abc",
+      "containerStartupScript": "xyz",
+      "agentDockerNetwork": "host",
+      "agentDockerRuntime": "runc",
+      "agentDockerImage": "determinedai/determined-ee-agent:0.14.0rc1",
+      "agentFluentImage": "fluent/fluent-bit:1.6",
+      "maxIdleAgentPeriod": 1800,
+      "maxAgentStartingPeriod": 1200,
+      "details": {
+        "aws": null,
+        "gcp": {
+          "project": "determined-ai",
+          "zone": "us-west1-b",
+          "bootDiskSize": 200,
+          "bootDiskSourceImage": "projects/determined-ai/global/images/det-environments-4a93d25",
+          "labelKey": "managed-by",
+          "labelValue": "det-master-release-party-0-14",
+          "namePrefix": "det-agent-release-party-",
+          "network": "projects/dai-public/global/networks/restricted-shared-network",
+          "subnetwork": "projects/dai-public/regions/us-west1/subnetworks/restricted-shared-network",
+          "externalIp": false,
+          "networkTags": [
+            "https-server"
+          ],
+          "serviceAccountEmail": "x-determined-ai-vm-agent@determined-ai.iam.gserviceaccount.com",
+          "serviceAccountScopes": [
+            "https://www.googleapis.com/auth/cloud-platform"
+          ],
+          "machineType": "n1-standard-32",
+          "gpuType": "nvidia-tesla-v100",
+          "gpuNum": 0,
+          "preemptible": false,
+          "operationTimeoutPeriod": 300
+        },
+        "priorityScheduler": {
+          "preemption": false,
+          "defaultPriority": 42
+        }
+      }
+    },
+    {
+      "name": "default-gpu-pool",
+      "description": "",
+      "type": "RESOURCE_POOL_TYPE_GCP",
+      "numAgents": 8,
+      "slotsAvailable": 64,
+      "slotsUsed": 44,
+      "cpuContainerCapacity": 0,
+      "cpuContainersRunning": 0,
+      "defaultGpuPool": true,
+      "defaultCpuPool": false,
+      "preemptible": false,
+      "minAgents": 0,
+      "maxAgents": 8,
+      "cpuContainerCapacityPerAgent": 0,
+      "schedulerType": "SCHEDULER_TYPE_PRIORITY",
+      "schedulerFittingPolicy": "FITTING_POLICY_BEST",
+      "location": "us-west1-b",
+      "imageId": "projects/determined-ai/global/images/det-environments-4a93d25",
+      "instanceType": "n1-standard-32, 8xnvidia-tesla-v100",
+      "masterUrl": "https://10.138.15.193:443",
+      "masterCertName": "gcloud.determined.ai",
+      "startupScript": "abc",
+      "containerStartupScript": "xyz",
+      "agentDockerNetwork": "host",
+      "agentDockerRuntime": "runc",
+      "agentDockerImage": "determinedai/determined-ee-agent:0.14.0rc1",
+      "agentFluentImage": "fluent/fluent-bit:1.6",
+      "maxIdleAgentPeriod": 1800,
+      "maxAgentStartingPeriod": 1200,
+      "details": {
+        "aws": null,
+        "gcp": {
+          "project": "determined-ai",
+          "zone": "us-west1-b",
+          "bootDiskSize": 200,
+          "bootDiskSourceImage": "projects/determined-ai/global/images/det-environments-4a93d25",
+          "labelKey": "managed-by",
+          "labelValue": "det-master-release-party-0-14",
+          "namePrefix": "det-agent-release-party-",
+          "network": "projects/dai-public/global/networks/restricted-shared-network",
+          "subnetwork": "projects/dai-public/regions/us-west1/subnetworks/restricted-shared-network",
+          "externalIp": false,
+          "networkTags": [
+            "https-server"
+          ],
+          "serviceAccountEmail": "x-determined-ai-vm-agent@determined-ai.iam.gserviceaccount.com",
+          "serviceAccountScopes": [
+            "https://www.googleapis.com/auth/cloud-platform"
+          ],
+          "machineType": "n1-standard-32",
+          "gpuType": "nvidia-tesla-v100",
+          "gpuNum": 8,
+          "preemptible": false,
+          "operationTimeoutPeriod": 300
+        },
+        "priorityScheduler": {
+          "preemption": false,
+          "defaultPriority": 42
+        }
+      }
+    },
+    {
+      "name": "preemptible-gpu-pool",
+      "description": "",
+      "type": "RESOURCE_POOL_TYPE_GCP",
+      "numAgents": 0,
+      "slotsAvailable": 0,
+      "slotsUsed": 0,
+      "cpuContainerCapacity": 0,
+      "cpuContainersRunning": 0,
+      "defaultGpuPool": false,
+      "defaultCpuPool": false,
+      "preemptible": true,
+      "minAgents": 0,
+      "maxAgents": 8,
+      "cpuContainerCapacityPerAgent": 0,
+      "schedulerType": "SCHEDULER_TYPE_PRIORITY",
+      "schedulerFittingPolicy": "FITTING_POLICY_BEST",
+      "location": "us-west1-b",
+      "imageId": "projects/determined-ai/global/images/det-environments-4a93d25",
+      "instanceType": "n1-standard-32, 8xnvidia-tesla-v100",
+      "masterUrl": "https://10.138.15.193:443",
+      "masterCertName": "gcloud.determined.ai",
+      "startupScript": "xyz",
+      "containerStartupScript": "xyz",
+      "agentDockerNetwork": "host",
+      "agentDockerRuntime": "runc",
+      "agentDockerImage": "determinedai/determined-ee-agent:0.14.0rc1",
+      "agentFluentImage": "fluent/fluent-bit:1.6",
+      "maxIdleAgentPeriod": 1800,
+      "maxAgentStartingPeriod": 1200,
+      "details": {
+        "aws": null,
+        "gcp": {
+          "project": "determined-ai",
+          "zone": "us-west1-b",
+          "bootDiskSize": 200,
+          "bootDiskSourceImage": "projects/determined-ai/global/images/det-environments-4a93d25",
+          "labelKey": "managed-by",
+          "labelValue": "det-master-release-party-0-14",
+          "namePrefix": "det-agent-release-party-",
+          "network": "projects/dai-public/global/networks/restricted-shared-network",
+          "subnetwork": "projects/dai-public/regions/us-west1/subnetworks/restricted-shared-network",
+          "externalIp": false,
+          "networkTags": [
+            "https-server"
+          ],
+          "serviceAccountEmail": "x-determined-ai-vm-agent@determined-ai.iam.gserviceaccount.com",
+          "serviceAccountScopes": [
+            "https://www.googleapis.com/auth/cloud-platform"
+          ],
+          "machineType": "n1-standard-32",
+          "gpuType": "nvidia-tesla-v100",
+          "gpuNum": 8,
+          "preemptible": true,
+          "operationTimeoutPeriod": 300
+        },
+        "priorityScheduler": {
+          "preemption": false,
+          "defaultPriority": 42
+        }
+      }
+    }
+  ],
+  "pagination": {
+    "offset": 0,
+    "limit": 0,
+    "startIndex": 0,
+    "endIndex": 3,
+    "total": 3
+  }
+}

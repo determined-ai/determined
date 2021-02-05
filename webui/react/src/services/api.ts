@@ -1,17 +1,17 @@
-import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
-  ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams,
-  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
-  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
-  TrialDetailsParams,
+  ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentIdParams, GetCommandsParams, GetExperimentsParams,
+  GetNotebooksParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams,
+  LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams,
+  TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
-import { generateApi, generateDetApi, processApiError } from 'services/utils';
+import { generateApi, generateDetApi, processApiError, validateDetApiEnum } from 'services/utils';
 import {
   Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentFilters, ExperimentItem, Log, Pagination, ResourcePool, RunState,
-  Telemetry, TrialDetails, ValidationHistory,
+  ExperimentBase, ExperimentFilters, ExperimentItem, ExperimentPagination, Log, Pagination,
+  ResourcePool, RunState, Telemetry, TrialDetails, TrialPagination, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -38,41 +38,37 @@ export const login = generateApi<Credentials, LoginResponse>(Config.login);
 
 export const logout = generateDetApi<EmptyParams, Api.V1LogoutResponse, void>(Config.logout);
 
-export const getCurrentUser =
-  generateDetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser>(Config.getCurrentUser);
+export const getCurrentUser = generateDetApi<
+  EmptyParams, Api.V1CurrentUserResponse, DetailedUser
+>(Config.getCurrentUser);
 
 export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
 
 /* Info */
 
-export const getInfo =
-  generateDetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo>(Config.getInfo);
+export const getInfo = generateDetApi<
+  EmptyParams, Api.V1GetMasterResponse, DeterminedInfo
+>(Config.getInfo);
 
-export const getTelemetry =
-  generateDetApi<EmptyParams, Api.V1GetTelemetryResponse, Telemetry>(Config.getTelemetry);
+export const getTelemetry = generateDetApi<
+  EmptyParams, Api.V1GetTelemetryResponse, Telemetry
+>(Config.getTelemetry);
 
 /* Cluster */
 
-export const getAgents =
-  generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]>(Config.getAgents);
+export const getAgents = generateDetApi<
+  EmptyParams, Api.V1GetAgentsResponse, Agent[]
+>(Config.getAgents);
 
 export const getResourcePools = generateDetApi<
-EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]
+  EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]
 >(Config.getResourcePools);
-
-// Placeholder for getResourcePools API.
-/* eslint-disable */
-export const getResourcePoolSamples = (): ResourcePool[] => {
-  return resourcePools as unknown as ResourcePool[];
-};
-/* eslint-enable */
 
 /* Experiments */
 
-export const getExperiments =
-  generateDetApi<GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentBase[]> (
-    Config.getExperiments,
-  );
+export const getExperiments = generateDetApi<
+  GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentPagination
+>(Config.getExperiments);
 
 export const getExperimentList = async (
   sorter: ApiSorter<Api.V1GetExperimentsRequestSortBy>,
@@ -81,12 +77,8 @@ export const getExperimentList = async (
   search?: string,
 ): Promise<{ experiments: ExperimentItem[], pagination?: Api.V1Pagination }> => {
   try {
-    const sortBy = Object.values(Api.V1GetExperimentsRequestSortBy).includes(sorter.key) ?
-      sorter.key : Api.V1GetExperimentsRequestSortBy.UNSPECIFIED;
-
     const response = await Config.detApi.Experiments.determinedGetExperiments(
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      sortBy as any,
+      validateDetApiEnum(Api.V1GetExperimentsRequestSortBy, sorter.key),
       sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
       pagination.offset,
       pagination.limit,
@@ -108,23 +100,25 @@ export const getExperimentList = async (
   }
 };
 
-export const getExperimentDetails = generateDetApi<ExperimentDetailsParams,
-Api.V1GetExperimentResponse, ExperimentBase>(Config.getExperimentDetails);
+export const getExperimentDetails = generateDetApi<
+  ExperimentDetailsParams, Api.V1GetExperimentResponse, ExperimentBase
+>(Config.getExperimentDetails);
 
-export const getExpTrials = generateDetApi<GetTrialsParams, Api.V1GetExperimentTrialsResponse,
-TrialDetails[]>(Config.getExpTrials);
+export const getExpTrials = generateDetApi<
+  GetTrialsParams, Api.V1GetExperimentTrialsResponse, TrialPagination
+>(Config.getExpTrials);
 
 export const getExpValidationHistory = generateDetApi<
-SingleEntityParams, Api.V1GetExperimentValidationHistoryResponse, ValidationHistory[]>
-(Config.getExpValidationHistory);
+  SingleEntityParams, Api.V1GetExperimentValidationHistoryResponse, ValidationHistory[]
+>(Config.getExpValidationHistory);
 
-export const getTrialDetails =
-  generateDetApi<TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails>(Config.getTrialDetails);
+export const getTrialDetails = generateDetApi<
+  TrialDetailsParams, Api.V1GetTrialResponse, TrialDetails
+>(Config.getTrialDetails);
 
 export const createExperiment = generateDetApi<
-CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase>(
-  Config.createExperiment,
-);
+  CreateExperimentParams, Api.V1CreateExperimentResponse, ExperimentBase
+>(Config.createExperiment);
 
 export const archiveExperiment = generateDetApi<
   ExperimentIdParams, Api.V1ArchiveExperimentResponse, void
@@ -146,8 +140,8 @@ export const cancelExperiment = generateDetApi<
   ExperimentIdParams, Api.V1CancelExperimentResponse, void
 >(Config.cancelExperiment);
 
-export const killExperiment =
-  generateDetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void
+export const killExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1KillExperimentResponse, void
 >(Config.killExperiment);
 
 export const patchExperiment = generateDetApi<
@@ -160,37 +154,53 @@ export const getExperimentLabels = generateDetApi<
 
 /* Tasks */
 
-export const getCommands = generateApi<EmptyParams, Command[]>(Config.getCommands);
-export const getNotebooks = generateApi<EmptyParams, Command[]>(Config.getNotebooks);
-export const getShells = generateApi<EmptyParams, Command[]>(Config.getShells);
-export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTensorboards);
+export const getCommands = generateDetApi<
+  GetCommandsParams, Api.V1GetCommandsResponse, CommandTask[]
+>(Config.getCommands);
 
-export const killCommand =
-  generateDetApi<CommandIdParams, Api.V1KillCommandResponse, void>(Config.killCommand);
+export const getNotebooks = generateDetApi<
+  GetNotebooksParams, Api.V1GetNotebooksResponse, CommandTask[]
+>(Config.getNotebooks);
 
-export const killNotebook =
-  generateDetApi<CommandIdParams, Api.V1KillNotebookResponse, void>(Config.killNotebook);
+export const getShells = generateDetApi<
+  GetShellsParams, Api.V1GetShellsResponse, CommandTask[]
+>(Config.getShells);
 
-export const killShell =
-  generateDetApi<CommandIdParams, Api.V1KillShellResponse, void>(Config.killShell);
+export const getTensorboards = generateDetApi<
+  GetTensorboardsParams, Api.V1GetTensorboardsResponse, CommandTask[]
+>(Config.getTensorboards);
 
-export const killTensorboard =
-  generateDetApi<CommandIdParams, Api.V1KillTensorboardResponse, void>(Config.killTensorboard);
+export const killCommand = generateDetApi<
+  CommandIdParams, Api.V1KillCommandResponse, void
+>(Config.killCommand);
+
+export const killNotebook = generateDetApi<
+  CommandIdParams, Api.V1KillNotebookResponse, void
+>(Config.killNotebook);
+
+export const killShell = generateDetApi<
+  CommandIdParams, Api.V1KillShellResponse, void
+>(Config.killShell);
+
+export const killTensorboard = generateDetApi<
+  CommandIdParams, Api.V1KillTensorboardResponse, void
+>(Config.killTensorboard);
 
 export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
 
-export const createTensorboard =
-  generateApi<CreateTensorboardParams, Command>(Config.createTensorboard);
+export const launchTensorboard = generateDetApi<
+  LaunchTensorboardParams, Api.V1LaunchTensorboardResponse, CommandTask
+>(Config.launchTensorboard);
 
 export const openOrCreateTensorboard = async (
-  params: CreateTensorboardParams,
-): Promise<Command> => {
+  params: LaunchTensorboardParams,
+): Promise<CommandTask> => {
   const tensorboards = await getTensorboards({});
   const match = tensorboards.find(tensorboard =>
     !terminalCommandStates.has(tensorboard.state)
     && tsbMatchesSource(tensorboard, params));
   if (match) return match;
-  return createTensorboard(params);
+  return launchTensorboard(params);
 };
 
 export const killTask = async (task: CommandTask): Promise<void> => {

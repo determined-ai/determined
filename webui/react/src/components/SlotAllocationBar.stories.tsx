@@ -32,3 +32,15 @@ export const NoLegends = (): React.ReactNode => <Wrapper
   ]}
   size={ShirtSize.big}
   totalSlots={4} />;
+
+export const ZeroTotalSlots = (): React.ReactNode => <Wrapper
+  resourceStates={[]}
+  showLegends
+  size={ShirtSize.big}
+  totalSlots={0} />;
+
+export const ZeroTotalSlotsWithMismatchingProps = (): React.ReactNode => <Wrapper
+  resourceStates={[ ResourceState.Running ]}
+  showLegends
+  size={ShirtSize.big}
+  totalSlots={0} />;

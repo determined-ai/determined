@@ -320,14 +320,15 @@ func (a *apiServer) GetExperimentTrials(
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentTrialsRequest_SortBy]string{
-		apiv1.GetExperimentTrialsRequest_SORT_BY_UNSPECIFIED:         "id",
-		apiv1.GetExperimentTrialsRequest_SORT_BY_ID:                  "id",
-		apiv1.GetExperimentTrialsRequest_SORT_BY_START_TIME:          "start_time",
-		apiv1.GetExperimentTrialsRequest_SORT_BY_END_TIME:            "end_time",
-		apiv1.GetExperimentTrialsRequest_SORT_BY_VALIDATION_METRIC:   "best_signed_search_metric",
-		apiv1.GetExperimentTrialsRequest_SORT_BY_VALIDATION_END_TIME: "validation_end_time",
-		apiv1.GetExperimentTrialsRequest_SORT_BY_BATCHES_PROCESSED:   "total_batches_processed",
-		apiv1.GetExperimentTrialsRequest_SORT_BY_DURATION:            "duration",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_UNSPECIFIED:              "id",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_ID:                       "id",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_START_TIME:               "start_time",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_END_TIME:                 "end_time",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_STATE:                    "state",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_BEST_VALIDATION_METRIC:   "best_signed_search_metric",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_LATEST_VALIDATION_METRIC: "latest_signed_search_metric",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_BATCHES_PROCESSED:        "total_batches_processed",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_DURATION:                 "duration",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -335,12 +336,15 @@ func (a *apiServer) GetExperimentTrials(
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
 	}
 	orderExpr := ""
-	if orderColMap[req.SortBy] != "id" {
+	switch _, ok := orderColMap[req.SortBy]; {
+	case !ok:
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
+	case orderColMap[req.SortBy] != "id":
 		orderExpr = fmt.Sprintf(
 			"%s %s, id %s",
 			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
 		)
-	} else {
+	default:
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
 

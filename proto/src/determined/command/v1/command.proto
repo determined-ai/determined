@@ -4,11 +4,23 @@ package determined.command.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/commandv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
 
 // Command is a single container running the configured command.
 message Command {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "id",
+        "description",
+        "start_time",
+        "username",
+        "resource_pool"
+      ]
+    }
+  };
   // The id of the command.
   string id = 1;
   // The description of the command.

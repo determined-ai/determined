@@ -1,20 +1,20 @@
-import { Agent, ResourceState } from 'types';
+import { Agent, ResourceState, ResourceType } from 'types';
 
-export const getSlotContainerStates = (agents: Agent[], resourcePoolName?: string)
+export const getSlotContainerStates = (
+  agents: Agent[],
+  resourceType: ResourceType,
+  resourcePoolName?: string,
+)
 : ResourceState[] => {
-  const targetAgents = agents;
-  if (resourcePoolName) {
-    // FIXME we turn this off so that the sample resource pool can match whatever
-    // name resource pool agents are attached too.
-    // targetAgents = targetAgents.filter(agent => agent.resourcePool);
-  }
-  const slotContainerStates = targetAgents.map(agent => agent.resources)
+  const targetAgents = agents.filter(agent =>
+    resourcePoolName ? agent.resourcePool === resourcePoolName : true);
+  const slotContainerStates = targetAgents
+    .map(agent => agent.resources.filter(res => res.type === resourceType))
     .reduce((acc, cur) => {
       acc.push(...cur);
       return acc;
     }, [])
     .filter(res => res.enabled && res.container)
     .map(res => res.container?.state) as ResourceState[];
-
   return slotContainerStates;
 };

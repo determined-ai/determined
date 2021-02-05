@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  Improve local test mode for experiment creation, `det experiment
+   create`, to test with only a single batch.

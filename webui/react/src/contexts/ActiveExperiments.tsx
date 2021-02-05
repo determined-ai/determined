@@ -1,8 +1,8 @@
 import { generateContext } from 'contexts';
 import { RestApiState } from 'hooks/useRestApi';
-import { ExperimentBase } from 'types';
+import { ExperimentPagination } from 'types';
 
-const contextProvider = generateContext<RestApiState<ExperimentBase[]>>({
+const contextProvider = generateContext<RestApiState<ExperimentPagination>>({
   initialState: {
     errorCount: 0,
     hasLoaded: false,

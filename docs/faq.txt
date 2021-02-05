@@ -176,16 +176,9 @@ explicitly in the :ref:`cluster-configuration`.
 How can I control which agents a task is scheduled on?
 ======================================================
 
-This can be done by assigning a label to certain agents in the cluster,
-and then using the :ref:`resources.agent_label <exp-config-agent_label>`
-setting in experiment, notebook, or command configurations. Each agent
-can have at most one label, which can be set via the :ref:`agent
-configuration <agent-configuration>`. Similarly, each task can have at
-most one ``agent_label``. If a task is configured with an
-``agent_label``, it will *only* be launched on agents that have that
-label. Similarly, if an agent has a label, it will never be assigned
-tasks that do not have an ``agent_label`` or that specify a different
-``agent_label``.
+Agents can now be grouped into multiple resource pools and tasks can be
+assigned to specific resource pools. For more information, please see
+:ref:`resource-pools`.
 
 ********************
  TensorFlow Support
@@ -210,9 +203,9 @@ container image that has been configured for that experiment. Determined
 provides prebuilt Docker images that include TensorFlow 1 and 2,
 respectively:
 
--  ``determinedai/environments:cuda-10.1-pytorch-1.7-tf-1.15-gpu-0.9.0``
+-  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.8.0``
    (default)
--  ``determinedai/environments:cuda-10.1-pytorch-1.7-tf-2.4-gpu-0.9.0``
+-  ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0``
 
 To change the container image used for an experiment, specify
 :ref:`environment.image <exp-environment-image>` in the experiment

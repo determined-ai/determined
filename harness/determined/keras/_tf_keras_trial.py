@@ -678,7 +678,7 @@ class TFKerasTrialController(det.LoopTrialController):
                 repeat=True,
                 shuffle=self.context._fit_shuffle,
                 shuffle_seed=self.context.get_trial_seed(),
-                prior_batches_trained=self.context.env.initial_workload.total_batches_processed,
+                prior_batches_trained=self.env.initial_workload.total_batches_processed,
             )
             enqueuer.start()
             self.enqueuers.append(enqueuer)
@@ -746,6 +746,9 @@ class TFKerasTrialController(det.LoopTrialController):
         # not use the model metrics.
         use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
         evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
+
+        if self.env.test_mode:
+            steps = 1
 
         metrics_values = self.model.evaluate(
             validation_data,
@@ -941,13 +944,15 @@ class TFKerasTrial(det.Trial):
     TensorFlow 2.x, specify a TensorFlow 2.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-10.1-pytorch-1.7-tf-2.4-gpu-0.9.0``).
+    ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate
-    function in your ``__init__`` method. For example, if you want to disable
+    function at the top of your code. For example, if you want to disable
     eager execution while using TensorFlow 2.x, call
-    ``tf.compat.v1.disable_eager_execution`` at the top of your ``__init__`` method.
+    ``tf.compat.v1.disable_eager_execution`` after your import statements.
+    If you are using TensorFlow 1.x in eager mode, please add
+    ``experimental_run_tf_function=False`` to your model compile function.
 
     For more information on writing ``tf.keras`` trial classes, refer to the
     :ref:`tutorial <tf-mnist-tutorial>`.

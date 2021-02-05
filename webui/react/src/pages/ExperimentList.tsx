@@ -33,7 +33,7 @@ import {
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ApiSorter } from 'services/types';
 import {
-  ALL_VALUE, Command, ExperimentFilters, ExperimentItem, Pagination, RunState, TBSourceType,
+  ALL_VALUE, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
 import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
@@ -53,6 +53,11 @@ enum Action {
   Unarchive = 'Unarchive',
 }
 
+const STORAGE_PATH = 'experiment-list';
+const STORAGE_FILTERS_KEY = 'filters';
+const STORAGE_LIMIT_KEY = 'limit';
+const STORAGE_SORTER_KEY = 'sorter';
+
 const defaultFilters: ExperimentFilters = {
   showArchived: false,
   states: [ ALL_VALUE ],
@@ -63,11 +68,6 @@ const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
   descend: true,
   key: V1GetExperimentsRequestSortBy.STARTTIME,
 };
-
-const STORAGE_PATH = 'experiment-list';
-const STORAGE_FILTERS_KEY = 'filters';
-const STORAGE_LIMIT_KEY = 'limit';
-const STORAGE_SORTER_KEY = 'sorter';
 
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
@@ -218,12 +218,11 @@ const ExperimentList: React.FC = () => {
     });
   }, [ filters, handleFilterChange ]);
 
-  const sendBatchActions = useCallback((action: Action): Promise<void[] | Command> => {
+  const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
-      return openOrCreateTensorboard({
-        ids: selectedExperiments.map(experiment => experiment.id),
-        type: TBSourceType.Experiment,
-      });
+      return openOrCreateTensorboard(
+        { experimentIds: selectedExperiments.map(experiment => experiment.id) },
+      );
     }
     return Promise.all(selectedExperiments
       .map(experiment => {
@@ -250,7 +249,7 @@ const ExperimentList: React.FC = () => {
     try {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard && result) {
-        openCommand(result as Command);
+        openCommand(result as CommandTask);
       }
 
       /*
@@ -284,7 +283,7 @@ const ExperimentList: React.FC = () => {
         all the eligible selected experiments?
       `,
       icon: <ExclamationCircleOutlined />,
-      okText: action,
+      okText: /cancel/i.test(action) ? 'Confirm' : action,
       onOk: () => handleBatchAction(action),
       title: 'Confirm Batch Action',
     });

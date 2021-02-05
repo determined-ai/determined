@@ -179,7 +179,7 @@ const TrialDetailsComp: React.FC = () => {
     const metricRenderer = (metricName: MetricName) => {
       const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
-        return value ? <HumanReadableFloat num={value} /> : undefined;
+        return value != null ? <HumanReadableFloat num={value} /> : undefined;
       };
       return metricCol;
     };
@@ -227,10 +227,7 @@ const TrialDetailsComp: React.FC = () => {
 
   const fetchTrialDetails = useCallback(async () => {
     try {
-      const response = await getTrialDetails({
-        id: trialId,
-        signal: trialCanceler.signal,
-      });
+      const response = await getTrialDetails({ id: trialId }, { signal: trialCanceler.signal });
       setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
     } catch (e) {
       if (!trialDetails.error && !isAborted(e)) {
@@ -396,10 +393,10 @@ If the problem persists please contact support.',
 
     const fetchExperimentDetails = async () => {
       try {
-        const response = await getExperimentDetails({
-          id: experimentId,
-          signal: trialCanceler.signal,
-        });
+        const response = await getExperimentDetails(
+          { id: experimentId },
+          { signal: trialCanceler.signal },
+        );
         setExperiment(response);
 
         // Experiment id does not exist in route, reroute to the one with it
@@ -516,7 +513,7 @@ If the problem persists please contact support.',
                 spinning: trialDetails.isLoading,
               }}
               pagination={getPaginationConfig(workloadSteps.length, pageSize)}
-              rowClassName={defaultRowClassName({ clickable: true })}
+              rowClassName={defaultRowClassName({ clickable: false })}
               rowKey="batchNum"
               scroll={{ x: 1000 }}
               showSorterTooltip={false}

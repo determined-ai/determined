@@ -135,7 +135,9 @@ const Navigation: React.FC = () => {
                 placement={isCollapsed ? Placement.RightTop : Placement.BottomRight}
                 onVisibleChange={handleVisibleChange}>
                 <Button className={css.launchIcon}>
-                  <Icon name={isShowingCpu ? 'arrow-up': 'arrow-down'} size="tiny" />
+                  <Icon
+                    name={isCollapsed ? 'add-small' : (isShowingCpu ? 'arrow-up': 'arrow-down')}
+                    size="tiny" />
                 </Button>
               </Dropdown>
             </div>

@@ -1,0 +1,13 @@
+:orphan:
+
+**Bug Fixes**
+
+-  API: Fix an issue where requesting checkpoint or trial details of a
+   trial that had non-scalar metric values associated with it would
+   fail.
+
+**Breaking Change**
+
+-  Metric values returned by the trial and checkpoint APIs can now
+   return non-float values and are defined using
+   https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct

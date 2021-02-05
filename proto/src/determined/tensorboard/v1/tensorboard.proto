@@ -4,11 +4,23 @@ package determined.tensorboard.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/tensorboardv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
 
 // Tensorboard is a tensorboard instance in a containerized environment.
 message Tensorboard {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "id",
+        "description",
+        "start_time",
+        "username",
+        "resource_pool"
+      ]
+    }
+  };
   // The id of the tensorboard.
   string id = 1;
   // The description of the tensorboard.

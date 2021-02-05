@@ -267,9 +267,9 @@ The master supports the following configuration settings:
       specifying a dict with two keys, ``cpu`` and ``gpu``. Default
       values:
 
-      -  ``determinedai/environments:py-3.6.9-pytorch-1.7-tf-1.15-cpu-0.9.0``
+      -  ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.8.0``
          for CPU agents
-      -  ``determinedai/environments:cuda-10.1-pytorch-1.7-tf-1.15-gpu-0.9.0``
+      -  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.8.0``
          for GPU agents.
 
    -  ``force_pull_image``: Defines the default policy for forcibly
@@ -324,9 +324,8 @@ The master supports the following configuration settings:
                the available resources depending on the resource they
                require and their weight.
 
-            -  ``round_robin``: Tasks are scheduled in the order of the
-               order which they arrive at the cluster. in which they
-               arrive at the cluster.
+            -  ``round_robin``: Tasks are scheduled in the order which
+               they arrive at the cluster.
 
             -  ``priority``: Tasks are scheduled based on their
                priority, which can range from the values 1 to 99
@@ -415,21 +414,19 @@ The master supports the following configuration settings:
             available resources depending on the resource they require
             and their weight.
 
-         -  ``round_robin``: Tasks are scheduled in the order of the
-               order which they arrive at the cluster. in which they
-               arrive at the cluster.
+         -  ``round_robin``: Tasks are scheduled in the order which they
+            arrive at the cluster.
 
-         -  ``priority``: Tasks are scheduled based on their
-               priority, which can range from the values 1 to 99
-               inclusive. Lower priority numbers indicate higher
-               priority tasks. A lower priority task will never be
-               scheduled while a higher priority task is pending.
-               Zero-slot tasks (e.g., cpu-only notebooks, tensorboards)
-               are prioritized separately from tasks requiring slots
-               (e.g., experiments running on GPUs). Task priority can be
-               assigned using the the ``resources.priority`` field. If a
-               task does not specify a priority it is assigned the
-               ``default_priority``.
+         -  ``priority``: Tasks are scheduled based on their priority,
+            which can range from the values 1 to 99 inclusive. Lower
+            priority numbers indicate higher priority tasks. A lower
+            priority task will never be scheduled while a higher
+            priority task is pending. Zero-slot tasks (e.g., cpu-only
+            notebooks, tensorboards) are prioritized separately from
+            tasks requiring slots (e.g., experiments running on GPUs).
+            Task priority can be assigned using the the
+            ``resources.priority`` field. If a task does not specify a
+            priority it is assigned the ``default_priority``.
 
                -  ``preemption``: Specifies whether lower priority tasks
                   should be preempted to schedule higher priority tasks.
@@ -869,6 +866,16 @@ The master supports the following configuration settings:
 
 -  ``container-master-port``: Master port that containers started by
    this agent will connect to. Defaults to the value of ``master_port``.
+
+-  ``resource_pool``: Which resource pool the agent should join.
+   Defaults to the value of ``default``, which will work if and only if
+   there is a resource pool named ``default``. If you are using the old
+   version of the master configuration (which predates resource pools) a
+   resource pool named ``default`` is automatically created. If you are
+   using the new version of the master configuration and have specified
+   resource pools, this field will need to be set correctly for the
+   agent to join successfully. For more information please see
+   :ref:`resource-pools`.
 
 -  ``label``: The label to assign to this agent. An agent with a label
    will only be assigned workloads that have been assigned the same

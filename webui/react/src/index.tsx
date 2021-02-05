@@ -10,6 +10,7 @@ import 'uplot/dist/uPlot.min.css';
 
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import 'prototypes';
 import 'dev';
 
 ReactDOM.render(<Router history={history}><App /></Router>, document.getElementById('root'));
