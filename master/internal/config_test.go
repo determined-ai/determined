@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/version"
 )
 
 func TestUnmarshalConfigWithAgentResourceManager(t *testing.T) {
@@ -65,6 +67,7 @@ resource_pools:
 					Provider: &provisioner.Config{
 						AgentDockerRuntime:     "runc",
 						AgentDockerNetwork:     "default",
+						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
 						AgentFluentImage:       "fluent/fluent-bit:1.6",
 						MaxIdleAgentPeriod:     provisioner.Duration(30 * time.Second),
 						MaxAgentStartingPeriod: provisioner.Duration(30 * time.Second),

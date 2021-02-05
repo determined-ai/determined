@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/union"
+	"github.com/determined-ai/determined/master/version"
 )
 
 // Duration is a JSON (un)marshallable version of time.Duration.
@@ -65,6 +66,7 @@ func DefaultConfig() *Config {
 	return &Config{
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
+		AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
 		AgentFluentImage:       "fluent/fluent-bit:1.6",
 		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: Duration(20 * time.Minute),
