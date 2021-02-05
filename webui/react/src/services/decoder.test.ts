@@ -15,7 +15,7 @@ const tryOnSamples=
     }
   });
   if (fails.length > 0) {
-    const { sample, error } = fails[fails.length-1];
+    const { sample, error } = fails.last();
     /* eslint-disable no-console */
     console.error(error);
     console.log('Sample:', sample);

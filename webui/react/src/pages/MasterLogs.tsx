@@ -38,8 +38,8 @@ const MasterLogs: React.FC = () => {
   useEffect(() => {
     if (!logsResponse.data || logsResponse.data.length === 0) return;
 
-    const minLogId = logsResponse.data[0].id;
-    const maxLogId = logsResponse.data[logsResponse.data.length - 1].id;
+    const minLogId = logsResponse.data.first().id;
+    const maxLogId = logsResponse.data.last().id;
     if (minLogId >= logIdRange.min) return;
 
     setLogIdRange({
@@ -54,8 +54,8 @@ const MasterLogs: React.FC = () => {
   useEffect(() => {
     if (!pollingLogsResponse.data || pollingLogsResponse.data.length === 0) return;
 
-    const minLogId = pollingLogsResponse.data[0].id;
-    const maxLogId = pollingLogsResponse.data[pollingLogsResponse.data.length - 1].id;
+    const minLogId: number = pollingLogsResponse.data[0].id;
+    const maxLogId: number = pollingLogsResponse.data.last().id;
     if (maxLogId <= logIdRange.max) return;
 
     setLogIdRange({

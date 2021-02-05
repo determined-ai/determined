@@ -476,7 +476,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     }
 
     if (direction === DIRECTIONS.OLDEST && isScrollOn.bottom) {
-      const lastLogTime = logTimes[logTimes.length - 1];
+      const lastLogTime = logTimes.last();
       fetchArgs = onFetchLogAfter({
         ...filter,
         timestampAfter: (

@@ -28,8 +28,7 @@ export const launchNotebook = async (slots: number): Promise<void> => {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
   const keys = Object.keys(e);
-  const index: number = Math.floor(Math.random() * keys.length);
-  return e[keys[index]];
+  return e[keys.random()];
 }
 
 export const sampleUsers = [
@@ -59,7 +58,7 @@ export function generateExperimentTask(idx: number): RecentExperimentTask {
   const state = getRandomElementOfEnum(RunState);
   const task = generateTask(idx);
   const progress = Math.random();
-  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+  const user = sampleUsers.random();
   return {
     ...task,
     archived: false,
@@ -73,7 +72,7 @@ export function generateExperimentTask(idx: number): RecentExperimentTask {
 export function generateCommandTask(idx: number): RecentCommandTask {
   const state = getRandomElementOfEnum(CommandState);
   const task = generateTask(idx);
-  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+  const user = sampleUsers.random();
   return {
     ...task,
     state: state as CommandState,
@@ -125,7 +124,7 @@ export const generateExperiments = (count = 30): ExperimentItem[] => {
     .fill(null)
     .map((_, idx) => {
       const experimentTask = generateExperimentTask(idx);
-      const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+      const user = sampleUsers.random();
       return {
         ...experimentTask,
         id: idx,
