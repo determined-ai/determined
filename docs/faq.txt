@@ -203,9 +203,9 @@ container image that has been configured for that experiment. Determined
 provides prebuilt Docker images that include TensorFlow 1 and 2,
 respectively:
 
--  ``determinedai/environments:cuda-10.1-pytorch-1.7-tf-1.15-gpu-0.9.0``
+-  ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.8.0``
    (default)
--  ``determinedai/environments:cuda-10.1-pytorch-1.7-tf-2.4-gpu-0.9.0``
+-  ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0``
 
 To change the container image used for an experiment, specify
 :ref:`environment.image <exp-environment-image>` in the experiment

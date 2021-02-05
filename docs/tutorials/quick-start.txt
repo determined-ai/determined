@@ -43,10 +43,10 @@ cluster without writing a model, see :ref:`commands-and-shells`.
 .. code::
 
    # For CPU computations
-   docker pull determinedai/environments:py-3.6.9-pytorch-1.7-tf-1.15-cpu-0.9.0
+   docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.8.0
 
    # For GPU computations
-   docker pull determinedai/environments:cuda-10.1-pytorch-1.7-tf-1.15-gpu-0.9.0
+   docker pull determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.8.0
 
 .. _quick-start-first-job:
 

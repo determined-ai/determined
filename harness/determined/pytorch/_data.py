@@ -158,9 +158,9 @@ class DataLoader:
             #    else:
             #        sampler = SequentialSampler(dataset)
             if shuffle:
-                sampler = RandomSampler(dataset)  # type: ignore
+                sampler = RandomSampler(dataset)
             else:
-                sampler = SequentialSampler(dataset)  # type: ignore
+                sampler = SequentialSampler(dataset)
 
         if batch_size is not None and batch_sampler is None:
             # auto_collation without custom batch_sampler
