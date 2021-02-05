@@ -19,6 +19,7 @@ import { terminalRunStates } from 'utils/types';
 import css from './ExperimentVisualization.module.scss';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
+import ScatterPlots from './ExperimentVisualization/ScatterPlots';
 
 const { Option } = Select;
 
@@ -46,7 +47,7 @@ const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
   { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
-  { disabled: true, label: 'HP Scatter Plots', type: VisualizationType.HpScatterPlots },
+  { label: 'HP Scatter Plots', type: VisualizationType.HpScatterPlots },
   { disabled: true, label: 'HP Heat Map', type: VisualizationType.HpHeatMap },
 ];
 const PAGE_ERROR_MESSAGES = {
@@ -244,6 +245,9 @@ const ExperimentVisualization: React.FC<Props> = ({
               selectedMetric={selectedMetric}
               onBatchChange={handleBatchChange}
               onMetricChange={handleMetricChange} />
+          )}
+          {typeKey === VisualizationType.ScatterPlots && (
+            <ScatterPlots />
           )}
         </Col>
         <Col
