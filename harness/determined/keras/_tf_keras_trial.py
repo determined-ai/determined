@@ -678,7 +678,7 @@ class TFKerasTrialController(det.LoopTrialController):
                 repeat=True,
                 shuffle=self.context._fit_shuffle,
                 shuffle_seed=self.context.get_trial_seed(),
-                prior_batches_trained=self.context.env.initial_workload.total_batches_processed,
+                prior_batches_trained=self.env.initial_workload.total_batches_processed,
             )
             enqueuer.start()
             self.enqueuers.append(enqueuer)
@@ -747,7 +747,7 @@ class TFKerasTrialController(det.LoopTrialController):
         use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
         evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
 
-        if self.context.env.test_mode:
+        if self.env.test_mode:
             steps = 1
 
         metrics_values = self.model.evaluate(

@@ -748,7 +748,7 @@ class EstimatorTrialController(det.LoopTrialController):
         logging.debug(f"Load path set to {self.estimator_dir}.")
 
     def compute_validation_metrics(self) -> workload.Response:
-        steps = self.eval_spec.steps if not self.context.env.test_mode else 1
+        steps = self.eval_spec.steps if not self.env.test_mode else 1
         metrics = self.estimator.evaluate(
             input_fn=self.eval_spec.input_fn, steps=steps, hooks=self.eval_spec.hooks
         )
