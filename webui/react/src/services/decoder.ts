@@ -6,7 +6,6 @@ import { isNumber, isObject } from 'utils/data';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
-import { V1GetExperimentResponse } from './api-ts-sdk';
 import { LoginResponse } from './types';
 
 export const user = (data: Sdk.V1User): types.DetailedUser => {
@@ -118,35 +117,80 @@ export const jsonToGenericCommand = (data: unknown, type: types.CommandType): ty
   return command as types.Command;
 };
 
-const jsonToGenericCommands = (data: unknown, type: types.CommandType): types.Command[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeGenericCommands>(ioTypes.ioGenericCommands, data);
-  return Object.keys(io).map(genericCommandId => {
-    return jsonToGenericCommand(io[genericCommandId], type);
-  });
+const mapV1ContainerStateToCommandState =
+  (containerState: Sdk.Determinedcontainerv1State|null): types.CommandState => {
+    switch (containerState) {
+      case Sdk.Determinedcontainerv1State.ASSIGNED:
+        return types.CommandState.Assigned;
+      case Sdk.Determinedcontainerv1State.PULLING:
+        return types.CommandState.Pulling;
+      case Sdk.Determinedcontainerv1State.STARTING:
+        return types.CommandState.Starting;
+      case Sdk.Determinedcontainerv1State.RUNNING:
+        return types.CommandState.Running;
+      case Sdk.Determinedcontainerv1State.TERMINATED:
+        return types.CommandState.Terminated;
+      default:
+        return types.CommandState.Pending;
+    }
+  };
+
+export const mapV1CommandToCommandTask = (command: Sdk.V1Command): types.CommandTask => {
+  return {
+    id: command.id,
+    name: command.description,
+    resourcePool: command.resourcePool,
+    startTime: command.startTime as unknown as string,
+    state: mapV1ContainerStateToCommandState(command.container?.state || null),
+    type: types.CommandType.Command,
+    username: command.username,
+  };
 };
 
-export const jsonToCommands = (data: unknown): types.Command[] => {
-  return jsonToGenericCommands(data, types.CommandType.Command);
+export const mapV1NotebookToCommandTask = (notebook: Sdk.V1Notebook): types.CommandTask => {
+  return {
+    id: notebook.id,
+    name: notebook.description,
+    resourcePool: notebook.resourcePool,
+    startTime: notebook.startTime as unknown as string,
+    state: mapV1ContainerStateToCommandState(notebook.container?.state || null),
+    type: types.CommandType.Notebook,
+    username: notebook.username,
+  };
 };
+
+export const mapV1ShellToCommandTask = (shell: Sdk.V1Shell): types.CommandTask => {
+  return {
+    id: shell.id,
+    name: shell.description,
+    resourcePool: shell.resourcePool,
+    startTime: shell.startTime as unknown as string,
+    state: mapV1ContainerStateToCommandState(shell.container?.state || null),
+    type: types.CommandType.Shell,
+    username: shell.username,
+  };
+};
+
+export const mapV1TensorboardToCommandTask =
+  (tensorboard: Sdk.V1Tensorboard): types.CommandTask => {
+    return {
+      id: tensorboard.id,
+      misc: {
+        experimentIds: tensorboard.experimentIds || [],
+        trialIds: tensorboard.trialIds || [],
+      },
+      name: tensorboard.description,
+      resourcePool: tensorboard.resourcePool,
+      serviceAddress: tensorboard.serviceAddress,
+      startTime: tensorboard.startTime as unknown as string,
+      state: mapV1ContainerStateToCommandState(tensorboard.container?.state || null),
+      type: types.CommandType.Tensorboard,
+      username: tensorboard.username,
+    };
+  };
 
 export const jsonToNotebook = (data: unknown): types.Command => {
   return jsonToGenericCommand(data, types.CommandType.Notebook);
-};
-
-export const jsonToNotebooks = (data: unknown): types.Command[] => {
-  return jsonToGenericCommands(data, types.CommandType.Notebook);
-};
-
-export const jsonToShells = (data: unknown): types.Command[] => {
-  return jsonToGenericCommands(data, types.CommandType.Shell);
-};
-
-export const jsonToTensorboard = (data: unknown): types.Command => {
-  return jsonToGenericCommand(data, types.CommandType.Tensorboard);
-};
-
-export const jsonToTensorboards = (data: unknown): types.Command[] => {
-  return jsonToGenericCommands(data, types.CommandType.Tensorboard);
 };
 
 export const ioToExperimentConfig =
@@ -220,7 +264,7 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
 };
 
 export const decodeGetV1ExperimentRespToExperimentBase = (
-  { experiment: exp, config }: V1GetExperimentResponse,
+  { experiment: exp, config }: Sdk.V1GetExperimentResponse,
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);

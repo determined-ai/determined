@@ -10,7 +10,7 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment, killTask,
   openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { AnyTask, CommandTask, ExperimentTask, RunState, TBSourceType } from 'types';
+import { AnyTask, CommandTask, ExperimentTask, RunState } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
@@ -74,10 +74,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           if (onComplete) onComplete(action);
           break;
         case Action.Tensorboard: {
-          const tensorboard = await openOrCreateTensorboard({
-            ids: [ id ],
-            type: TBSourceType.Experiment,
-          });
+          const tensorboard = await openOrCreateTensorboard({ experimentIds: [ id ] });
           openCommand(tensorboard);
           break;
         }

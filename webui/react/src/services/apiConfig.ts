@@ -4,21 +4,17 @@ import queryString from 'query-string';
 import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
-import {
-  jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
-  jsonToLogin, jsonToLogs, jsonToNotebook, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
-  jsonToTensorboard, jsonToTensorboards, jsonToUsers,
-} from 'services/decoder';
 import * as decoder from 'services/decoder';
 import {
-  CommandIdParams, CreateExperimentParams, CreateNotebookParams, CreateTensorboardParams, DetApi,
-  EmptyParams, ExperimentDetailsParams, ExperimentIdParams, GetExperimentsParams, GetTrialsParams,
-  HttpApi, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
-  TrialDetailsParams,
+  CommandIdParams, CreateExperimentParams, CreateNotebookParams, DetApi, EmptyParams,
+  ExperimentDetailsParams, ExperimentIdParams, GetCommandsParams, GetExperimentsParams,
+  GetNotebooksParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams, HttpApi,
+  LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams,
+  TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import {
-  Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentPagination, Log, ResourcePool, TBSourceType, Telemetry, TrialDetails,
+  Agent, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
+  ExperimentBase, ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails,
   TrialPagination, ValidationHistory,
 } from 'types';
 
@@ -93,7 +89,7 @@ export const login: HttpApi<Credentials, LoginResponse> = {
     };
   },
   name: 'login',
-  postProcess: (response) => jsonToLogin(response.data),
+  postProcess: (response) => decoder.jsonToLogin(response.data),
   unAuthenticated: true,
 };
 
@@ -113,14 +109,14 @@ export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse, Deta
 export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
   httpOptions: () => ({ url: '/users' }),
   name: 'getUsers',
-  postProcess: (response) => jsonToUsers(response.data),
+  postProcess: (response) => decoder.jsonToUsers(response.data),
 };
 
 /* Info */
 
 export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo> = {
   name: 'getInfo',
-  postProcess: (response) => jsonToDeterminedInfo(response),
+  postProcess: (response) => decoder.jsonToDeterminedInfo(response),
   request: () => detApi.Cluster.determinedGetMaster(),
 };
 
@@ -134,7 +130,7 @@ export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telem
 
 export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Agent[]> = {
   name: 'getAgents',
-  postProcess: (response) => jsonToAgents(response.agents || []),
+  postProcess: (response) => decoder.jsonToAgents(response.agents || []),
   request: () => detApi.Cluster.determinedGetAgents(),
 };
 
@@ -331,28 +327,54 @@ export const getTrialDetails: DetApi<
 
 /* Tasks */
 
-export const getCommands: HttpApi<EmptyParams, Command[]> = {
-  httpOptions: () => ({ url: '/commands' }),
+export const getCommands: DetApi<GetCommandsParams, Api.V1GetCommandsResponse, CommandTask[]> = {
   name: 'getCommands',
-  postProcess: (response) => jsonToCommands(response.data),
+  postProcess: (response) => (response.commands || [])
+    .map(command => decoder.mapV1CommandToCommandTask(command)) ,
+  request: (params: GetCommandsParams) => detApi.Commands.determinedGetCommands(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+  ),
 };
 
-export const getNotebooks: HttpApi<EmptyParams, Command[]> = {
-  httpOptions: () => ({ url: '/notebooks' }),
+export const getNotebooks: DetApi<GetNotebooksParams, Api.V1GetNotebooksResponse, CommandTask[]> = {
   name: 'getNotebooks',
-  postProcess: (response) => jsonToNotebooks(response.data),
+  postProcess: (response) => (response.notebooks || [])
+    .map(notebook => decoder.mapV1NotebookToCommandTask(notebook)) ,
+  request: (params: GetNotebooksParams) => detApi.Notebooks.determinedGetNotebooks(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+  ),
 };
 
-export const getShells: HttpApi<EmptyParams, Command[]> = {
-  httpOptions: () => ({ url: '/shells' }),
+export const getShells: DetApi<GetShellsParams, Api.V1GetShellsResponse, CommandTask[]> = {
   name: 'getShells',
-  postProcess: (response) => jsonToShells(response.data),
+  postProcess: (response) => (response.shells || [])
+    .map(shell => decoder.mapV1ShellToCommandTask(shell)) ,
+  request: (params: GetShellsParams) => detApi.Shells.determinedGetShells(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+  ),
 };
 
-export const getTensorboards: HttpApi<EmptyParams, Command[]> = {
-  httpOptions: () => ({ url: '/tensorboard' }),
+export const getTensorboards: DetApi<
+  GetTensorboardsParams, Api.V1GetTensorboardsResponse, CommandTask[]
+> = {
   name: 'getTensorboards',
-  postProcess: (response) => jsonToTensorboards(response.data),
+  postProcess: (response) => (response.tensorboards || [])
+    .map(tensorboard => decoder.mapV1TensorboardToCommandTask(tensorboard)) ,
+  request: (params: GetTensorboardsParams) => detApi.Tensorboards.determinedGetTensorboards(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+  ),
 };
 
 export const killCommand: DetApi<CommandIdParams, Api.V1KillCommandResponse, void> = {
@@ -395,20 +417,16 @@ export const createNotebook: HttpApi<CreateNotebookParams, Command> = {
     };
   },
   name: 'createNotebook',
-  postProcess: (response) => jsonToNotebook(response.data),
+  postProcess: (response) => decoder.jsonToNotebook(response.data),
 };
 
-export const createTensorboard: HttpApi<CreateTensorboardParams, Command> = {
-  httpOptions: (params) => {
-    const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
-    return {
-      body: { [attrName]: params.ids },
-      method: 'POST',
-      url: `${commandToEndpoint[CommandType.Tensorboard]}`,
-    };
-  },
-  name: 'createTensorboard',
-  postProcess: (response) => jsonToTensorboard(response.data),
+export const launchTensorboard: DetApi<
+  LaunchTensorboardParams, Api.V1LaunchTensorboardResponse, CommandTask
+> = {
+  name: 'launchTensorboard',
+  postProcess: (response) => decoder.mapV1TensorboardToCommandTask(response.tensorboard),
+  request: (params: LaunchTensorboardParams) => detApi.Tensorboards
+    .determinedLaunchTensorboard(params),
 };
 
 /* Logs */
@@ -423,7 +441,7 @@ const buildQuery = (params: LogsParams): string => {
 export const getMasterLogs: HttpApi<LogsParams, Log[]> = {
   httpOptions: (params: LogsParams) => ({ url: [ '/logs', buildQuery(params) ].join('?') }),
   name: 'getMasterLogs',
-  postProcess: response => jsonToLogs(response.data),
+  postProcess: response => decoder.jsonToLogs(response.data),
 };
 
 export const getTaskLogs: HttpApi<TaskLogsParams, Log[]> = {
@@ -434,5 +452,5 @@ export const getTaskLogs: HttpApi<TaskLogsParams, Log[]> = {
     ].join('?'),
   }),
   name: 'getTaskLogs',
-  postProcess: response => jsonToTaskLogs(response.data),
+  postProcess: response => decoder.jsonToTaskLogs(response.data),
 };
