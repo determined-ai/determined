@@ -64,13 +64,6 @@ export const getResourcePools = generateDetApi<
   EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]
 >(Config.getResourcePools);
 
-// Placeholder for getResourcePools API.
-/* eslint-disable */
-export const getResourcePoolSamples = (): ResourcePool[] => {
-  return resourcePools as unknown as ResourcePool[];
-};
-/* eslint-enable */
-
 /* Experiments */
 
 export const getExperiments = generateDetApi<
