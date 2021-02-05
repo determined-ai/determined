@@ -6,6 +6,7 @@ interface WithPagination {
   pagination: V1Pagination;
 }
 
+export type RecordKey = string | number | symbol;
 export type Primitive = boolean | number | string;
 export type Point = { x: number; y: number };
 export type Range<T = Primitive> = [ T, T ];

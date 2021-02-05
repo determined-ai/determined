@@ -56,7 +56,7 @@ export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> =
   [ExperimentHyperParamType.Log]: DimensionType.Scalar,
 };
 
-const CONSTRAINT_REMOVE_THRESHOLD = 0.000000001;
+const CONSTRAINT_REMOVE_THRESHOLD = 1e-9;
 const COLOR_SCALE = [
   [ 0.0, 'rgba(238, 0, 0, 1.0)' ],
   [ 0.5, 'rgba(238, 238, 0, 1.0)' ],

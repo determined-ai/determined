@@ -92,9 +92,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
       })
       .map(key => {
         const hp = experiment.config.hyperparameters[key];
-        const dimension: Dimension = { label: key, type: dimensionTypeMap[hp.type] };
+        const dimension: Dimension = {
+          categories: hp.vals,
+          label: key,
+          type: dimensionTypeMap[hp.type],
+        };
 
-        if (hp.vals) dimension.categories = hp.vals;
         if (hp.minval != null && hp.maxval != null) {
           const isLogarithmic = hp.type === ExperimentHyperParamType.Log;
           dimension.range = isLogarithmic ?

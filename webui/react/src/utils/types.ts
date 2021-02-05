@@ -2,7 +2,7 @@ import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
   CommandType, ExperimentHyperParams, ExperimentHyperParamType, ExperimentItem, MetricsWorkload,
-  RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, ResourceState, RunState,
+  RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RecordKey, ResourceState, RunState,
   SlotState, Workload,
 } from 'types';
 
@@ -166,13 +166,7 @@ export const commandTypeToLabel: {[key in CommandType]: string} = {
   [CommandType.Tensorboard]: 'Tensorboard',
 };
 
-/*
- * `keyof any` is short for "string | number | symbol"
- * since an object key can be any of those types, our key can too
- * in TS 3.0+, putting just "string" raises an error
- */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
+export function hasKey<O>(obj: O, key: RecordKey): key is keyof O {
   return key in obj;
 }
 

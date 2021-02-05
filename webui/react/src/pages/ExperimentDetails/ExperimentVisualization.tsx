@@ -11,7 +11,7 @@ import useStorage from 'hooks/useStorage';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType, RunState } from 'types';
+import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType } from 'types';
 import { alphanumericSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
@@ -81,7 +81,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
   ]), [ trainingMetrics, validationMetrics ]);
 
-  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
+  const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const hasBatches = batches.length !== 0;
   const hasMetrics = metrics.length !== 0;
 

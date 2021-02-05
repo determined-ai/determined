@@ -3,7 +3,8 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointStorageType, CommandState, ExperimentSearcherName, LogLevel, RunState,
+  CheckpointStorageType, CommandState, ExperimentHyperParamType, ExperimentSearcherName,
+  LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -188,15 +189,19 @@ const ioDataLayer = io.type({
 
 const ioExpResources = io.type({ max_slots: optional(io.number) });
 
+const hParamTypes: Record<string, null> = Object
+  .values(ExperimentHyperParamType)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const ioHParamTypes = io.keyof(hParamTypes);
 const ioExpHParamVal = optional(io.union([ io.boolean, io.number, io.string ]));
 const ioExpHParam = io.type({
   base: optional(io.number),
   count: optional(io.number),
   maxval: optional(io.number),
   minval: optional(io.number),
-  type: io.keyof({ categorical: null, const: null, double: null, int: null, log: null }),
+  type: ioHParamTypes,
   val: ioExpHParamVal,
-  vals: optional(io.array(ioExpHParamVal)),
+  vals: optional(io.array(io.union([ ioExpHParamVal, io.UnknownRecord ]))),
 });
 
 export type ioTypeHyperparameter = io.TypeOf<typeof ioExpHParam>;

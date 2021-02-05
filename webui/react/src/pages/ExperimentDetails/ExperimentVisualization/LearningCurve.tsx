@@ -21,7 +21,7 @@ import {
   ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, RunState,
 } from 'types';
 import { glasbeyColor } from 'utils/color';
-import { alphanumericSorter, numericSorter, primitiveSorter } from 'utils/data';
+import { alphanumericSorter, isNumber, numericSorter, primitiveSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './LearningCurve.module.scss';
@@ -108,7 +108,7 @@ const LearningCurve: React.FC<Props> = ({
           ExperimentHyperParamType.Int,
           ExperimentHyperParamType.Log,
         ].includes(type);
-        if (typeof value === 'number' && isValidType) {
+        if (isNumber(value) && isValidType) {
           return <HumanReadableFloat num={value} />;
         }
         return record.hparams[key];
