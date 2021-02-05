@@ -14,14 +14,21 @@ const defaultProps: Props = {
 };
 
 const HumanReadableFloat: React.FC<Props> = ({ num, precision }: Props) => {
-  let numToString: string = num.toFixed(precision);
-  if (num < 0.01 || num > 999) {
-    numToString = num.toExponential(precision);
+  const isInteger = Number.isInteger(num);
+  const absoluteNum = Math.abs(num);
+  const stringNum = num.toString();
+  let label: string = stringNum;
+
+  if (!isInteger) {
+    label = num.toFixed(precision);
+    if (absoluteNum < 0.01 || absoluteNum > 999) {
+      label = num.toExponential(precision);
+    }
   }
 
   return (
-    <Tooltip title={num.toString()}>
-      <span>{numToString}</span>
+    <Tooltip title={stringNum}>
+      <span>{label}</span>
     </Tooltip>
   );
 };
