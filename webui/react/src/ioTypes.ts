@@ -3,7 +3,7 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointState, CheckpointStorageType, CommandState, ExperimentSearcherName, LogLevel, RunState,
+  CheckpointStorageType, CommandState, ExperimentSearcherName, LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -141,10 +141,6 @@ const runStates: Record<string, null> = Object.values(RunState)
 const runStatesIoType = io.keyof(runStates);
 
 /* Trials */
-
-const checkpointStates: Record<string, null> = Object.values(CheckpointState)
-  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
-const checkpointStatesIoType = io.keyof(checkpointStates);
 
 const ioMetricValue = io.any;
 const ioMetric = io.record(io.string, ioMetricValue);
