@@ -1,4 +1,3 @@
-import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
@@ -64,13 +63,6 @@ export const getAgents = generateDetApi<
 export const getResourcePools = generateDetApi<
   EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]
 >(Config.getResourcePools);
-
-// Placeholder for getResourcePools API.
-/* eslint-disable */
-export const getResourcePoolSamples = (): ResourcePool[] => {
-  return resourcePools as unknown as ResourcePool[];
-};
-/* eslint-enable */
 
 /* Experiments */
 
