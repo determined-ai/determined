@@ -43,7 +43,7 @@ model = dict(
     ),
 )
 # training and testing settings
-train_cfg = dict()
+train_cfg = {}
 test_cfg = dict(
     nms_pre=1000,
     score_thr=0.05,
