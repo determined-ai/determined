@@ -6,7 +6,6 @@ import pytorch_lightning as ptl
 import torch
 
 from determined import monkey_patch
-from determined.experimental.pytorch_lightning.data_module import DETLightningDataModule
 from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
