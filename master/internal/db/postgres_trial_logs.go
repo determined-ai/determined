@@ -36,7 +36,7 @@ SELECT
     END AS message,
     l.agent_id,
     l.container_id,
-	CASE
+    CASE
       WHEN l.timestamp is NOT NULL THEN l.timestamp
       ELSE to_timestamp(
         substring(convert_from(message, 'UTF-8') from '\[([0-9]{4}-[0-9]{2}-[0-9]{2}T.*)\]'),
