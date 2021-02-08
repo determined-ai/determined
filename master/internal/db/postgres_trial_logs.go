@@ -36,14 +36,13 @@ SELECT
     END AS message,
     l.agent_id,
     l.container_id,
-    CASE
-      WHEN l.timestamp is NOT NULL THEN l.timestamp
-      ELSE to_timestamp(
+    coalesce(l.timestamp,
+      to_timestamp(
         substring(convert_from(message, 'UTF-8') from
           '\[([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)\]'),
         'YYYY-MM-DD hh24:mi:ss'
       )
-    END as timestamp,
+    ) AS timestamp,
     l.level,
     l.stdtype,
     l.source
