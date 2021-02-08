@@ -39,7 +39,8 @@ SELECT
     CASE
       WHEN l.timestamp is NOT NULL THEN l.timestamp
       ELSE to_timestamp(
-        substring(convert_from(message, 'UTF-8') from '\[([0-9]{4}-[0-9]{2}-[0-9]{2}T.*)\]'),
+        substring(convert_from(message, 'UTF-8') from
+          '\[([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)\]'),
         'YYYY-MM-DD hh24:mi:ss'
       )
     END as timestamp,
