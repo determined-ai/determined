@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: fix the sorting behavior for numberic table columns.
