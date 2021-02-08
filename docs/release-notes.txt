@@ -15,7 +15,7 @@ Version 0.14.0
 
 **New Features**
 
--  Added resource pools, which allows for different types of tasks to be
+-  Add resource pools, which allows for different types of tasks to be
    scheduled onto different types of agents. For more information see
    :ref:`resource-pools`.
 
@@ -86,13 +86,13 @@ Version 0.14.0
 -  WebUI: Fix sorting on the experiment trials table within the
    experiment detail page.
 
--  WebUI: fix issue of incorrect trial log order when viewing oldest
+-  WebUI: Fix issue of incorrect trial log order when viewing oldest
    logs first.
 
 -  WebUI: Update Cancel confirm button label to show `Confirm` to avoid
    double `Cancel` buttons.
 
--  WebUI: fix the sorting behavior for numberic table columns.
+-  WebUI: Improve the sorting behavior for numeric table columns.
 
 **************
  Version 0.13
