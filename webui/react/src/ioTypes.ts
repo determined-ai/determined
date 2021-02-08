@@ -193,7 +193,7 @@ const hParamTypes: Record<string, null> = Object
   .values(ExperimentHyperParamType)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const ioHParamTypes = io.keyof(hParamTypes);
-const ioExpHParamVal = optional(io.union([ io.boolean, io.number, io.string ]));
+const ioExpHParamVal = optional(io.unknown);
 const ioExpHParam = io.type({
   base: optional(io.number),
   count: optional(io.number),
@@ -201,7 +201,7 @@ const ioExpHParam = io.type({
   minval: optional(io.number),
   type: ioHParamTypes,
   val: ioExpHParamVal,
-  vals: optional(io.array(io.union([ ioExpHParamVal, io.UnknownRecord ]))),
+  vals: optional(io.array(io.unknown)),
 });
 
 export type ioTypeHyperparameter = io.TypeOf<typeof ioExpHParam>;
