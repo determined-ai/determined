@@ -9,6 +9,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
+const (
+	rprivate = "rprivate"
+)
+
 // Re-implement a simple expconf object to avoid circular references.
 type BindMountV1 struct {
 	HostPath      string  `json:"host_path"`
@@ -39,7 +43,7 @@ func TestFillEmptyDefaults(t *testing.T) {
 		assert.Assert(t, obj.ReadOnly != nil)
 		assert.Assert(t, *obj.ReadOnly == false)
 		assert.Assert(t, obj.Propagation != nil)
-		assert.Assert(t, *obj.Propagation == "rprivate")
+		assert.Assert(t, *obj.Propagation == rprivate)
 	}
 
 	FillDefaults(&obj)
@@ -61,4 +65,20 @@ func TestNonEmptyDefaults(t *testing.T) {
 	FillDefaults(&obj)
 	assert.Assert(t, *obj.ReadOnly == true)
 	assert.Assert(t, *obj.Propagation == "asdf")
+}
+
+func TestArrayOfDefautables(t *testing.T) {
+	var obj []BindMountV1
+	obj = append(obj, BindMountV1{})
+	obj = append(obj, BindMountV1{})
+	obj = append(obj, BindMountV1{})
+
+	FillDefaults(&obj)
+
+	for _, b := range obj {
+		assert.Assert(t, b.ReadOnly != nil)
+		assert.Assert(t, *b.ReadOnly == false)
+		assert.Assert(t, b.Propagation != nil)
+		assert.Assert(t, *b.Propagation == rprivate)
+	}
 }

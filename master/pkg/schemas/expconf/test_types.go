@@ -75,6 +75,7 @@ type TestRootV1 struct {
 	RuntimeDefaultable *int         `json:"runtime_defaultable"`
 }
 
+// RuntimeDefaults implements the RuntimeDefaultable interface.
 func (t *TestRootV1) RuntimeDefaults() {
 	if t.RuntimeDefaultable == nil {
 		t.RuntimeDefaultable = ptrs.IntPtr(10)

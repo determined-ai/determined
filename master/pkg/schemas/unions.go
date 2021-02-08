@@ -4,7 +4,9 @@ import (
 	"reflect"
 )
 
-func derefInput(val reflect.Value) (reflect.Value, bool) {
+// recursiveElem calls Elem() recursively until a non-pointer, non-interface object is reached.
+// If any layer is nil, it returns (nil, false).
+func recursiveElem(val reflect.Value) (reflect.Value, bool) {
 	for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
 		if val.IsZero() {
 			return val, false
@@ -44,7 +46,7 @@ func derefInput(val reflect.Value) (reflect.Value, bool) {
 func UnionDefaultSchema(in interface{}) interface{} {
 	v := reflect.ValueOf(in)
 	var ok bool
-	if v, ok = derefInput(v); !ok {
+	if v, ok = recursiveElem(v); !ok {
 		return nil
 	}
 	// Iterate through all the fields of the struct.
@@ -57,7 +59,7 @@ func UnionDefaultSchema(in interface{}) interface{} {
 
 		field := v.Field(i)
 
-		if _, ok := derefInput(field); !ok {
+		if _, ok := recursiveElem(field); !ok {
 			// nil pointers cannot provide defaults.
 			continue
 		}

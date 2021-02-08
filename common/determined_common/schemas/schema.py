@@ -224,7 +224,7 @@ class SchemaBase(metaclass=AutoInit):
 
         # For every key in the dictionary, get the type from the class annotations.  If it is a
         # sublcass of SchemaBase, call from_dict() or from_none() on it based on the value in the
-        # input.  Otherwise, make sure a primitive type and pass the value to __init__ directly.
+        # input.  Otherwise, make sure it is a primitive type and pass the value to __init__.
         for name, value in d.items():
             anno = cls.__annotations__.get(name, additional_properties_anno)
             if anno is None:
