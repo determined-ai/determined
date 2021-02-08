@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
 import * as types from 'types';
-import { isNumber, isObject } from 'utils/data';
+import { isNumber, isObject, isPrimitive } from 'utils/data';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -193,6 +193,43 @@ export const jsonToNotebook = (data: unknown): types.Command => {
   return jsonToGenericCommand(data, types.CommandType.Notebook);
 };
 
+const ioToExperimentHyperparameter = (
+  io: ioTypes.ioTypeHyperparameter,
+): types.ExperimentHyperParam => {
+  return {
+    base: io.base != null ? io.base : undefined,
+    count: io.count != null ? io.count : undefined,
+    maxval: io.maxval != null ? io.maxval : undefined,
+    minval: io.minval != null ? io.minval : undefined,
+    type: io.type as types.ExperimentHyperParamType,
+    val: io.val != null ? io.val : undefined,
+    vals: io.vals != null ? io.vals : undefined,
+  };
+};
+
+const ioToExperimentHyperparameters = (
+  io: ioTypes.ioTypeHyperparameters,
+): types.ExperimentHyperParams => {
+  const hparams: Record<string, types.ExperimentHyperParam> = {};
+  Object.keys(io).forEach(key => {
+    /*
+     * Keep only the hyperparameters which have a primitive `val` value or
+     * where `vals` is a list of primitive values. It is possible for `val`
+     * to be anything (map, list, etc). `vals` will either be undefined or
+     * a list of anything (same value types as `val`).
+     */
+    const ioHp = io[key];
+    const valIsNotPrimitive = ioHp.val != null && !isPrimitive(ioHp.val);
+    const valListIsNotPrimitive = Array.isArray(ioHp.vals) && ioHp.vals.reduce((acc, val) => {
+      return acc && (val != null && isPrimitive(val));
+    }, true);
+    if (!valIsNotPrimitive && !valListIsNotPrimitive) {
+      hparams[key] = ioToExperimentHyperparameter(ioHp);
+    }
+  });
+  return hparams;
+};
+
 export const ioToExperimentConfig =
 (io: ioTypes.ioTypeExperimentConfig): types.ExperimentConfig => {
   const config: types.ExperimentConfig = {
@@ -211,7 +248,7 @@ export const ioToExperimentConfig =
       type: io.data_layer.type,
     } : undefined,
     description: io.description,
-    hyperparameters: io.hyperparameters,
+    hyperparameters: ioToExperimentHyperparameters(io.hyperparameters),
     labels: io.labels || undefined,
     resources: {},
     searcher: {

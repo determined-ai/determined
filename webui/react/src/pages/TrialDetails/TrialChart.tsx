@@ -1,9 +1,9 @@
-import { PlotData } from 'plotly.js/lib/core';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import MetricChart from 'components/MetricChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import useStorage from 'hooks/useStorage';
+import { PlotData } from 'Plotly';
 import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
 
 interface Props {

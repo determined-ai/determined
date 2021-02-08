@@ -1,7 +1,7 @@
-import { PlotData } from 'plotly.js/lib/core';
 import React, { useMemo } from 'react';
 
 import MetricChart from 'components/MetricChart';
+import { PlotData } from 'Plotly';
 import { ValidationHistory } from 'types';
 
 interface Props {

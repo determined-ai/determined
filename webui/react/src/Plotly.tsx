@@ -3,10 +3,11 @@
 const Plotly = require('plotly.js/lib/core');
 
 Plotly.register([
+  require('plotly.js/lib/parcoords'),
   require('plotly.js/lib/pie'),
   require('plotly.js/lib/scatter'),
 ]);
 
-export type { Data, Layout } from 'plotly.js/lib/core';
+export * from 'plotly.js/lib/core';
 
 export default Plotly;

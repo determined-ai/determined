@@ -1,11 +1,11 @@
 import hparams from 'fixtures/hyperparameter-configs.json';
 import experimentResps from 'fixtures/responses/experiment-details/set-a.json';
 import * as ioTypes from 'ioTypes';
+import 'prototypes';
 
 type FailReport<T = unknown> = {error: Error; sample: T;}
 
-const tryOnSamples=
-<T=unknown>(samples: T[], fn: (sample: T) => void): FailReport[] => {
+const tryOnSamples = <T = unknown>(samples: T[], fn: (sample: T) => void): FailReport[] => {
   const fails: FailReport[] = [];
   samples.forEach(sample => {
     try {

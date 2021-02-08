@@ -16,7 +16,7 @@ import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'servi
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentBase, ValidationHistory } from 'types';
-import { clone } from 'utils/data';
+import { clone, isEqual } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
@@ -65,14 +65,16 @@ const ExperimentDetails: React.FC = () => {
     try {
       const experiment = await getExperimentDetails({ id }, { signal: experimentCanceler.signal });
       const validationHistory = await getExpValidationHistory({ id });
-      setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
+      if (!isEqual(experiment, experimentDetails.data)) {
+        setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
+      }
       setValHistory(validationHistory);
     } catch (e) {
       if (!experimentDetails.error && !isAborted(e)) {
         setExperimentDetails(prev => ({ ...prev, error: e }));
       }
     }
-  }, [ id, experimentDetails.error, experimentCanceler.signal ]);
+  }, [ id, experimentDetails.data, experimentDetails.error, experimentCanceler.signal ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;

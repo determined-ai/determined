@@ -353,8 +353,14 @@ message TrialsSnapshotRequest {
 
 // Response to TrialSnapshotResponse
 message TrialsSnapshotResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trials" ] }
+  };
   // Metric value and metadata for a trial that has progress this far.
   message Trial {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: { required: [ "trial_id", "hparams", "metric" ] }
+    };
     // The id of the trial.
     int32 trial_id = 1;
     // A dictionary of hyperparameter values for this trial.

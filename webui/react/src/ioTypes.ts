@@ -3,7 +3,8 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointStorageType, CommandState, ExperimentSearcherName, LogLevel, RunState,
+  CheckpointStorageType, CommandState, ExperimentHyperParamType, ExperimentSearcherName,
+  LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -23,8 +24,7 @@ export const decode = <T>(type: io.Mixed, data: any): T => {
   }
 };
 
-const ioNullOrUndefined = io.union([ io.null, io.undefined ]);
-const optional = (x: io.Mixed) => io.union([ x, ioNullOrUndefined ]);
+const optional = (x: io.Mixed) => io.union([ x, io.null, io.undefined ]);
 
 /* User */
 
@@ -189,14 +189,22 @@ const ioDataLayer = io.type({
 
 const ioExpResources = io.type({ max_slots: optional(io.number) });
 
+const hParamTypes: Record<string, null> = Object
+  .values(ExperimentHyperParamType)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const ioHParamTypes = io.keyof(hParamTypes);
+const ioExpHParamVal = optional(io.unknown);
 const ioExpHParam = io.type({
   base: optional(io.number),
   count: optional(io.number),
   maxval: optional(io.number),
   minval: optional(io.number),
-  type: io.keyof({ categorical: null, const: null, double: null, int: null, log: null }),
-  val: optional(io.unknown),
+  type: ioHParamTypes,
+  val: ioExpHParamVal,
+  vals: optional(io.array(io.unknown)),
 });
+
+export type ioTypeHyperparameter = io.TypeOf<typeof ioExpHParam>;
 
 export const ioHyperparameters = io.record(io.string, ioExpHParam);
 export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;

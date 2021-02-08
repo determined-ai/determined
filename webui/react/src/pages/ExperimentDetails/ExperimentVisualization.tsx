@@ -13,14 +13,16 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType } from 'types';
 import { alphanumericSorter } from 'utils/data';
+import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
+import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
 
 const { Option } = Select;
 
 export enum VisualizationType {
-  HpParallelCoord = 'hp-parallel-coord',
+  HpParallelCoordinates = 'hp-parallel-coordinates',
   HpImportance = 'hp-importance',
   LearningCurve = 'learning-curve',
   ScatterPlots = 'scatter-plots',
@@ -42,7 +44,7 @@ const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
-  { disabled: true, label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoord },
+  { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
   { disabled: true, label: 'HP Importance', type: VisualizationType.HpImportance },
   { disabled: true, label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
 ];
@@ -58,7 +60,9 @@ const ExperimentVisualization: React.FC<Props> = ({
 }: Props) => {
   const history = useHistory();
   const storage = useStorage(STORAGE_PATH);
+  const STORAGE_BATCH_KEY = `${experiment.id}/batch`;
   const STORAGE_METRIC_KEY = `${experiment.id}/metric`;
+  const defaultUserBatch = storage.get(STORAGE_BATCH_KEY) as number || 0;
   const defaultUserMetric = storage.get(STORAGE_METRIC_KEY) as MetricName || undefined;
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
@@ -68,6 +72,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
+  const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultUserBatch);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
 
@@ -76,6 +81,15 @@ const ExperimentVisualization: React.FC<Props> = ({
     ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
   ]), [ trainingMetrics, validationMetrics ]);
 
+  const isExperimentTerminal = terminalRunStates.has(experiment.state);
+  const hasBatches = batches.length !== 0;
+  const hasMetrics = metrics.length !== 0;
+
+  const handleBatchChange = useCallback((batch: number) => {
+    storage.set(STORAGE_BATCH_KEY, batch);
+    setSelectedBatch(batch);
+  }, [ storage, STORAGE_BATCH_KEY ]);
+
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
     setSelectedMetric(metric);
@@ -83,7 +97,8 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
     setTypeKey(type as VisualizationType);
-  }, []);
+    history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
+  }, [ basePath, history ]);
 
   // Sets the default sub route
   useEffect(() => {
@@ -150,6 +165,9 @@ const ExperimentVisualization: React.FC<Props> = ({
         (event.batches || []).forEach(batch => batchesMap[batch] = batch);
         const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
         setBatches(newBatches);
+        if (selectedBatch === 0 && newBatches.length !== 0) {
+          setSelectedBatch(newBatches[newBatches.length - 1]);
+        }
       },
     ).catch(() => {
       setHasLoaded(true);
@@ -157,7 +175,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedMetric ]);
+  }, [ experiment.id, selectedBatch, selectedMetric ]);
 
   // Set the default metric of interest
   useEffect(() => {
@@ -186,6 +204,17 @@ const ExperimentVisualization: React.FC<Props> = ({
       </>}
       message={alertMessage}
       type="warning" />;
+  } else if (!hasMetrics || !hasBatches) {
+    return isExperimentTerminal ? (
+      <Message title="No data to plot." type={MessageType.Empty} />
+    ) : (
+      <div className={css.waiting}>
+        <Alert
+          description="Please wait until the experiment is further along."
+          message="Not enough data points to plot." />
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -197,11 +226,21 @@ const ExperimentVisualization: React.FC<Props> = ({
           sm={{ order: 2, span: 24 }}
           span={24}
           xs={{ order: 2, span: 24 }}>
-          {selectedMetric && typeKey === VisualizationType.LearningCurve && (
+          {typeKey === VisualizationType.LearningCurve && (
             <LearningCurve
               experiment={experiment}
               metrics={metrics}
               selectedMetric={selectedMetric}
+              onMetricChange={handleMetricChange} />
+          )}
+          {typeKey === VisualizationType.HpParallelCoordinates && (
+            <HpParallelCoordinates
+              batches={batches}
+              experiment={experiment}
+              metrics={metrics}
+              selectedBatch={selectedBatch}
+              selectedMetric={selectedMetric}
+              onBatchChange={handleBatchChange}
               onMetricChange={handleMetricChange} />
           )}
         </Col>
@@ -215,6 +254,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             <div className={css.menu}>
               {MENU.map(item => {
                 const linkClasses = [ css.link ];
+                if (item.disabled) linkClasses.push(css.disabled);
                 if (typeKey === item.type) linkClasses.push(css.active);
 
                 const link = (
@@ -223,7 +263,7 @@ const ExperimentVisualization: React.FC<Props> = ({
                     disabled={item.disabled}
                     key={item.type}
                     path={`${basePath}/${item.type}`}
-                    onClick={() => setTypeKey(item.type)}>{item.label}</Link>
+                    onClick={() => handleChartTypeChange(item.type)}>{item.label}</Link>
                 );
 
                 return item.disabled ? (

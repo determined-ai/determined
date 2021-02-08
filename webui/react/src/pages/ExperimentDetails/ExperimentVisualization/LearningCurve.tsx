@@ -17,9 +17,11 @@ import { handlePath } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, MetricName, metricTypeParamMap, RunState } from 'types';
+import {
+  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, RunState,
+} from 'types';
 import { glasbeyColor } from 'utils/color';
-import { alphanumericSorter, hpSorter, numericSorter } from 'utils/data';
+import { alphanumericSorter, isNumber, numericSorter, primitiveSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './LearningCurve.module.scss';
@@ -100,7 +102,13 @@ const LearningCurve: React.FC<Props> = ({
       return (_: string, record: TrialHParams) => {
         const value = record.hparams[key];
         const type = experiment.config.hyperparameters[key].type;
-        if (typeof value === 'number' && [ 'const', 'double', 'float', 'log' ].includes(type)) {
+        const isValidType = [
+          ExperimentHyperParamType.Constant,
+          ExperimentHyperParamType.Double,
+          ExperimentHyperParamType.Int,
+          ExperimentHyperParamType.Log,
+        ].includes(type);
+        if (isNumber(value) && isValidType) {
           return <HumanReadableFloat num={value} />;
         }
         return record.hparams[key];
@@ -110,15 +118,22 @@ const LearningCurve: React.FC<Props> = ({
       return (recordA: TrialHParams, recordB: TrialHParams): number => {
         const a = recordA.hparams[key];
         const b = recordB.hparams[key];
-        return hpSorter(a, b);
+        return primitiveSorter(a, b);
       };
     };
-    const hpColumns = Object.keys(experiment.config.hyperparameters || {}).map(key => ({
-      key,
-      render: hpRenderer(key),
-      sorter: hpColumnSorter(key),
-      title: key,
-    }));
+    const hpColumns = Object
+      .keys(experiment.config.hyperparameters || {})
+      .filter(key => {
+        return experiment.config.hyperparameters[key].type !== ExperimentHyperParamType.Constant;
+      })
+      .map(key => {
+        return {
+          key,
+          render: hpRenderer(key),
+          sorter: hpColumnSorter(key),
+          title: key,
+        };
+      });
 
     return [ idColumn, metricColumn, ...hpColumns ];
   }, [ experiment.config.hyperparameters, selectedMetric, trialIds ]);
@@ -255,7 +270,7 @@ const LearningCurve: React.FC<Props> = ({
       <div className={css.waiting}>
         <Alert
           description="Please wait until the experiment is further along."
-          message="Not enough data points to show yet." />
+          message="Not enough data points to plot." />
         <Spinner />
       </div>
     );
