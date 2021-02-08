@@ -1,6 +1,8 @@
 import pytorch_lightning as ptl
-from determined.pytorch import DataLoader as DetDataLoader
 from torch.utils.data import DataLoader
+
+from determined.pytorch import DataLoader as DetDataLoader
+
 
 class DETLightningDataModule(ptl.LightningDataModule):
     """
@@ -22,9 +24,9 @@ class DETLightningDataModule(ptl.LightningDataModule):
     def val_dataloader
     def test_dataloader
     """
+
     def __init__(self, *args, **kwargs):
         return super().__init__(*args, **kwargs)
-
 
     def train_det_dataloader(self) -> DetDataLoader:
         raise NotImplementedError

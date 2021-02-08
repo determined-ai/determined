@@ -1,19 +1,20 @@
-from typing import Callable, NewType, Any
-import pytorch_lightning as ptl
-from determined.pytorch import PyTorchTrial, PyTorchTrialContext
-from determined.experimental.pytorch_lightning.data_module import DETLightningDataModule
-from determined import monkey_patch
-from typing import Any, Dict, Sequence, Union
-from inspect import signature
-import torch
 import sys
+from inspect import signature
+from typing import Any, Callable, Dict, NewType, Sequence, Union
+
+import pytorch_lightning as ptl
+import torch
+
+from determined import monkey_patch
+from determined.experimental.pytorch_lightning.data_module import DETLightningDataModule
+from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 HyperparamsProvider = Callable[[str], Any]
 
 
-def bail(msg: str = '', fail: bool = True):
-    msg = f'NotSupported: {msg}'
+def bail(msg: str = "", fail: bool = True):
+    msg = f"NotSupported: {msg}"
     if fail:
         raise TypeError(msg)
     else:
@@ -34,9 +35,9 @@ def bail(msg: str = '', fail: bool = True):
 
 def check_compat(lm: ptl.LightningModule):
     if len(signature(lm.training_step).parameters) > 2:
-        bail('`optimizer_idx` and `hiddens` are not supported.')
+        bail("`optimizer_idx` and `hiddens` are not supported.")
     if len(signature(lm.validation_step).parameters) > 2:
-        bail('`dataloader_idx` is not supported.')
+        bail("`dataloader_idx` is not supported.")
 
 
 class PTLAdapter(PyTorchTrial):
@@ -64,7 +65,7 @@ class PTLAdapter(PyTorchTrial):
         - None - Fit will run without any optimizer.
         """
         if not isinstance(optimizer, torch.optim.Optimizer):
-            bail('currently only returning a single optimizer is supported')
+            bail("currently only returning a single optimizer is supported")
         # TODO look at how we wrap/create learning scheduler
         # currently this is only supporting a single optimizer
         self.optimizer = self.context.wrap_optimizer(optimizer)
@@ -75,11 +76,12 @@ class PTLAdapter(PyTorchTrial):
         # no optimizer index to pass down
         # TODO step through all the optimizers freeze other models? check trainer source code
         rv = self.lm.training_step(batch, batch_idx)
-        if rv is None:  return {} # skip to next batch
+        if rv is None:
+            return {}  # skip to next batch
         if type(rv) != dict:
-            rv = {'loss': rv}
+            rv = {"loss": rv}
 
-        self.context.backward(rv['loss'])
+        self.context.backward(rv["loss"])
         self.context.step_optimizer(self.optimizer)
         return rv
 
