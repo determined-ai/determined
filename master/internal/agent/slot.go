@@ -65,11 +65,6 @@ func (s *slot) Receive(ctx *actor.Context) error {
 		s.container = &msg.Container
 		if msg.Container.State == container.Terminated {
 			s.container = nil
-			if s.enabled.Enabled() {
-				ctx.Tell(s.resourcePool, sproto.FreeDevice{
-					DeviceID: s.deviceID(ctx), ContainerID: &msg.Container.ID,
-				})
-			}
 		}
 	case *proto.GetSlotRequest:
 		ctx.Respond(&proto.GetSlotResponse{Slot: toProtoSlot(s.summarize(ctx))})

@@ -28,11 +28,6 @@ type (
 		DeviceID
 		ContainerID *cproto.ID
 	}
-	// FreeDevice notifies the cluster that the device's container is no longer running.
-	FreeDevice struct {
-		DeviceID
-		ContainerID *cproto.ID
-	}
 	// RemoveDevice removes the device from scheduling.
 	RemoveDevice struct {
 		DeviceID

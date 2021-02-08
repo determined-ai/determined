@@ -146,6 +146,12 @@ func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) 
 
 func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
+	if allocated := rp.taskList.GetAllocations(handler); allocated != nil {
+		for _, allocation := range allocated.Allocations {
+			typed := allocation.(*containerAllocation)
+			typed.agent.deallocateContainer(typed.container.id)
+		}
+	}
 	rp.taskList.RemoveTaskByHandler(handler)
 }
 
@@ -219,7 +225,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 	case
 		sproto.AddAgent,
 		sproto.AddDevice,
-		sproto.FreeDevice,
 		sproto.RemoveDevice,
 		sproto.RemoveAgent:
 		return rp.receiveAgentMsg(ctx)
@@ -282,13 +287,6 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		state, ok := rp.agents[msg.Agent]
 		check.Panic(check.True(ok, "error adding device, agent not found: %s", msg.Agent.Address()))
 		state.devices[msg.Device] = msg.ContainerID
-
-	case sproto.FreeDevice:
-		ctx.Log().Infof("freeing device from container %s: %s on %s",
-			msg.ContainerID, msg.Device.String(), msg.Agent.Address().Local())
-		state, ok := rp.agents[msg.Agent]
-		check.Panic(check.True(ok, "error freeing device, agent not found: %s", msg.Agent.Address()))
-		state.deallocateDevice(msg.Device.Type, *msg.ContainerID, msg.Device)
 
 	case sproto.RemoveDevice:
 		ctx.Log().Infof("removing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
