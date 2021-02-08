@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Trial: Fix a bug that prevented trial logs created before 0.13.8 from
+   loading correctly.
