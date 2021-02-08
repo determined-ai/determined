@@ -21,18 +21,18 @@ def bail(msg: str = '', fail: bool = True):
         print(msg, file=sys.stderr)
 
 
-class DETLightningModule(ptl.LightningModule):
-    """
-    DETLightningModule helps us dictate what extra inputs the user's lightning module should expect.
-    Aleternatively we can avoid this and have the user take care of it.
-    """
-    def __init__(self, *args, get_hparam: HyperparamsProvider = None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.get_hparam = get_hparam
-        check_compat(self)
+# class DETLightningModule(ptl.LightningModule):
+#     """
+#     DETLightningModule helps us dictate what extra inputs the user's lightning module should expect.
+#     Aleternatively we can avoid this and have the user take care of it.
+#     """
+#     def __init__(self, *args, get_hparam: HyperparamsProvider = None, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.get_hparam = get_hparam
+#         check_compat(self)
 
 
-def check_compat(lm: DETLightningModule):
+def check_compat(lm: ptl.LightningModule):
     if len(signature(lm.training_step).parameters) > 2:
         bail('`optimizer_idx` and `hiddens` are not supported.')
     if len(signature(lm.validation_step).parameters) > 2:
@@ -40,8 +40,10 @@ def check_compat(lm: DETLightningModule):
 
 
 class PTLAdapter(PyTorchTrial):
+    context: PyTorchTrialContext
+
     # QUESTION: take uninstantiated lightning and datamodule so we isntatiate it instead? less code for the user but might be better if the user sees this?
-    def __init__(self, context: PyTorchTrialContext, lightning_module: DETLightningModule):
+    def __init__(self, context: PyTorchTrialContext, lightning_module: ptl.LightningModule):
         super().__init__(context)
         check_compat(lightning_module)
         self.lm = lightning_module

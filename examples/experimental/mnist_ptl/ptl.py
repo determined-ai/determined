@@ -4,17 +4,18 @@ from torch.utils.data import DataLoader
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torchvision.datasets import MNIST
-from determined.experimental.pytorch_lightning import DETLightningDataModule, DETLightningModule
+from determined.experimental.pytorch_lightning import HyperparamsProvider
 from typing import Optional
 import os
 
 
 # CHANGE exnted DETLightningModule
-class LightningMNISTClassifier(DETLightningModule):
+class LightningMNISTClassifier(ptl.LightningModule):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, get_hparam: HyperparamsProvider, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.get_hparam = get_hparam
         # mnist images are (1, 28, 28) (channels, width, height)
         self.layer_1 = torch.nn.Linear(28 * 28, 128)
         self.layer_2 = torch.nn.Linear(128, 256)
