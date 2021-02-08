@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torchvision.datasets import MNIST
+from pathlib import Path
 from determined.experimental.pytorch_lightning import HyperparamsProvider
 from typing import Optional
 import os
@@ -80,8 +81,8 @@ class MNISTDataModule(ptl.LightningDataModule):
                                         transforms.Normalize((0.1307,), (0.3081,))])
 
         # prepare transforms standard to MNIST
-        self.mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
-        self.mnist_val = MNIST(os.getcwd(), train=False, download=True, transform=transform)
+        self.mnist_train = MNIST(str(Path('/tmp/MNIST')), train=True, download=True, transform=transform)
+        self.mnist_val = MNIST(str(Path('/tmp/MNIST')), train=False, download=True, transform=transform)
 
     def train_dataloader(self):
         return DataLoader(self.mnist_train, batch_size=64, num_workers=12)
