@@ -17,19 +17,8 @@ def bail(msg: str = "", fail: bool = True):
     if fail:
         raise TypeError(msg)
     else:
-        # TODO use a logger
+        # QUESTION: do we have/want logger support.
         print(msg, file=sys.stderr)
-
-
-# class DETLightningModule(ptl.LightningModule):
-#     """
-#     DETLightningModule helps us dictate what extra inputs the user's lightning module should expect.
-#     Aleternatively we can avoid this and have the user take care of it.
-#     """
-#     def __init__(self, *args, get_hparam: HyperparamsProvider = None, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.get_hparam = get_hparam
-#         check_compat(self)
 
 
 def check_compat(lm: ptl.LightningModule):
