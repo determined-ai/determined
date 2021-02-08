@@ -740,9 +740,10 @@ commands:
           when: always
           command: |
             LOG_GROUP=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> LogGroup)
-            echo "Cluster logs can be found in Cloudwatch under the log group $LOG_GROUP, or the URL below:"
+            echo "Cluster logs can be found in Cloudwatch under the log group $LOG_GROUP"
+            echo "or the URL below (if the log group is in your default region):"
             ENC_LOG_GROUP=$(echo $LOG_GROUP | sed "s/\//\$252F/g")
-            echo "https://<<parameters.region>>.console.aws.amazon.com/cloudwatch/home?region=<<parameters.region>>#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
+            echo "https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
 
 
 jobs:
