@@ -15,6 +15,14 @@ Version 0.14.0
 
 **New Features**
 
+-  Added resource pools, which allows for different types of tasks to be
+   scheduled onto different types of agents. For more information see
+   :ref:`resource-pools`.
+
+-  ``det-deploy`` will now create clusters with two resource pools, one
+   that uses GPU instances and one that uses CPU instances for tasks
+   that only require CPUs.
+
 -  WebUI: Revamp cluster page with information about configured resource
    pools.
 
@@ -56,11 +64,6 @@ Version 0.14.0
    <commands-and-shells>`. It describes how to use Determined's support
    for managing GPU-powered batch commands and interactive shells.
 
--  PyTorch: Upgrade the default PyTorch version to 1.7.0.
-
--  TensorFlow: Upgrade the default TensorFlow versions to 1.15.5 and
-   2.4.1.
-
 -  REST API: Improve the performance of the experiments API.
 
 **Bug Fixes**
@@ -79,6 +82,17 @@ Version 0.14.0
    when it failed to write to the DB.
 
 -  WebUI: Show better messaging for different learning curve edge cases.
+
+-  WebUI: Fix sorting on the experiment trials table within the
+   experiment detail page.
+
+-  WebUI: fix issue of incorrect trial log order when viewing oldest
+   logs first.
+
+-  WebUI: Update Cancel confirm button label to show `Confirm` to avoid
+   double `Cancel` buttons.
+
+-  WebUI: fix the sorting behavior for numberic table columns.
 
 **************
  Version 0.13
