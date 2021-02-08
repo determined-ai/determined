@@ -36,14 +36,20 @@ SELECT
     END AS message,
     l.agent_id,
     l.container_id,
-    l.timestamp,
+	CASE
+      WHEN l.timestamp is NOT NULL THEN l.timestamp
+      ELSE to_timestamp(
+        substring(convert_from(message, 'UTF-8') from '\[([0-9]{4}-[0-9]{2}-[0-9]{2}T.*)\]'),
+        'YYYY-MM-DD hh24:mi:ss'
+      )
+    END as timestamp,
     l.level,
     l.stdtype,
     l.source
 FROM trial_logs l
 WHERE l.trial_id = $1
 %s
-ORDER BY l.timestamp %s OFFSET $2 LIMIT $3
+ORDER BY timestamp %s OFFSET $2 LIMIT $3
 `, fragment, orderByToSQL(order))
 
 	var b []*model.TrialLog
