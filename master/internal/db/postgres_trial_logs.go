@@ -13,12 +13,23 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+var trialLogsFieldMap = map[string]string{
+	// Map timestamp to an expression that provides backwards compatibility when timestamp is missing.
+	"timestamp": `coalesce(timestamp,
+       to_timestamp(
+         substring(convert_from(message, 'UTF-8') from
+           '\[([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)\]'),
+         'YYYY-MM-DD hh24:mi:ss'
+       )
+     )`,
+}
+
 // TrialLogs takes a trial ID and log offset, limit and filters and returns matching trial logs.
 func (db *PgDB) TrialLogs(
 	trialID, offset, limit int, fs []api.Filter, order apiv1.OrderBy, _ interface{},
 ) ([]*model.TrialLog, interface{}, error) {
 	params := []interface{}{trialID, offset, limit}
-	fragment, params := filtersToSQL(fs, params)
+	fragment, params := filtersToSQL(fs, params, trialLogsFieldMap)
 	query := fmt.Sprintf(`
 SELECT
     l.id,
@@ -98,7 +109,7 @@ INSERT INTO trial_logs
 // TrialLogCount returns the number of logs in postgres for the given trial.
 func (db *PgDB) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 	params := []interface{}{trialID}
-	fragment, params := filtersToSQL(fs, params)
+	fragment, params := filtersToSQL(fs, params, trialLogsFieldMap)
 	query := fmt.Sprintf(`
 SELECT count(*)
 FROM trial_logs
