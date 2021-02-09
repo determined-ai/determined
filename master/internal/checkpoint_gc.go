@@ -48,12 +48,12 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		for _, a := range msg.Allocations {
 			taskSpec := *t.taskSpec
-			taskSpec.GCCheckpoints = &tasks.GCCheckpoints{
-				AgentUserGroup:   t.agentUserGroup,
+			taskSpec.AgentUserGroup = t.agentUserGroup
+			taskSpec.SetInner(&tasks.GCCheckpoints{
 				ExperimentID:     t.experiment.ID,
 				ExperimentConfig: t.experiment.Config,
 				ToDelete:         checkpoints,
-			}
+			})
 			a.Start(ctx, taskSpec)
 		}
 	case sproto.ReleaseResources:

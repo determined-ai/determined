@@ -20,16 +20,17 @@ const (
 	hostMode container.NetworkMode = "host"
 )
 
-func rendezvousPorts(offset int) []nat.Port {
-	return []nat.Port{
-		nat.Port(fmt.Sprintf("%d/tcp", LocalRendezvousPort+offset)),
-		nat.Port(fmt.Sprintf("%d/tcp", LocalRendezvousPort+offset+LocalRendezvousPortOffset)),
-	}
+func rendezvousPorts(offset int) []int {
+	base := LocalRendezvousPort + offset
+	return []int{base, base + LocalRendezvousPortOffset}
 }
 
 // trialUniquePortOffset determines a deterministic, unique offset for ports that would otherwise
 // collide when using host networking.
 func trialUniquePortOffset(devices []device.Device) int {
+	if len(devices) == 0 {
+		return 0
+	}
 	min := devices[0].ID
 	for _, d := range devices {
 		if d.ID < min {

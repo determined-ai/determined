@@ -155,7 +155,11 @@ func (p *pod) configureVolumes(
 	volumeMounts = append(volumeMounts, hostVolumeMounts...)
 	volumes = append(volumes, hostVolumes...)
 
-	shmVolumeMount, shmVolume := configureShmVolume(p.taskSpec.TaskContainerDefaults.ShmSizeBytes)
+	shmSize := p.taskSpec.ShmSize()
+	if shmSize == 0 {
+		shmSize = p.taskSpec.TaskContainerDefaults.ShmSizeBytes
+	}
+	shmVolumeMount, shmVolume := configureShmVolume(shmSize)
 	volumeMounts = append(volumeMounts, shmVolumeMount)
 	volumes = append(volumes, shmVolume)
 
@@ -226,36 +230,27 @@ func (p *pod) configurePodSpec(
 	return podSpec
 }
 
-func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
-	p.containerNames[model.DeterminedK8FluentContainerName] = true
-
-	exp := *p.taskSpec.StartContainer
-
+func (p *pod) createPodSpec(ctx *actor.Context) error {
 	deviceType := device.CPU
 	if p.gpus > 0 {
 		deviceType = device.GPU
 	}
 
-	runArchives := tasks.TrialArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
-		ctx, tasks.TrialDockerMounts(exp), runArchives)
-	loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)
-	volumes = append(volumes, loggingVolumes...)
-	volumeMounts = append(volumeMounts, loggingMounts...)
+	spec := p.taskSpec
 
-	p.ports = []int{
-		tasks.LocalRendezvousPort, tasks.LocalRendezvousPort + tasks.LocalRendezvousPortOffset}
-	rendezvousPorts := []string{
-		fmt.Sprintf("%d", p.ports[0]), fmt.Sprintf("%d", p.ports[1]),
+	runArchives := spec.Archives()
+
+	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
+		ctx, spec.Mounts(), runArchives,
+	)
+
+	env := spec.Environment()
+
+	for _, port := range env.Ports {
+		p.ports = append(p.ports, port)
 	}
 
-	envVarsMap := tasks.TrialEnvVars(p.taskSpec, rendezvousPorts, 0)
-	envVarsMap["DET_K8S_LOG_TO_FILE"] = "true"
-	envVars, err := p.configureEnvVars(
-		envVarsMap,
-		p.taskSpec.StartContainer.ExperimentConfig.Environment,
-		deviceType,
-	)
+	envVars, err := p.configureEnvVars(spec.EnvVars(), env, deviceType)
 	if err != nil {
 		return err
 	}
@@ -263,220 +258,110 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 	initContainer := configureInitContainer(
 		len(runArchives),
 		initContainerVolumeMounts,
-		exp.ExperimentConfig.Environment.Image.For(deviceType),
-		configureImagePullPolicy(exp.ExperimentConfig.Environment),
+		env.Image.For(deviceType),
+		configureImagePullPolicy(env),
 	)
 
-	mainContainer := k8sV1.Container{
+	var sidecars []k8sV1.Container
+	var fluentFiles map[string][]byte
+
+	if spec.UseFluentLogging() {
+		p.containerNames[model.DeterminedK8FluentContainerName] = true
+		envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
+
+		loggingMounts, loggingVolumes := p.configureLoggingVolumes(ctx)
+
+		volumes = append(volumes, loggingVolumes...)
+		volumeMounts = append(volumeMounts, loggingMounts...)
+
+		//nolint:govet // Allow unkeyed struct fields -- it really looks much better like this.
+		modifyConfig := fluent.ConfigSection{
+			{"Name", "modify"},
+			{"Match", "*"},
+			{"Add", "agent_id k8agent"},
+			{"Add", "container_id " + string(p.container.ID)},
+		}
+		for k, v := range spec.LoggingFields() {
+			modifyConfig = append(modifyConfig, fluent.ConfigItem{Name: "Add", Value: k + " " + v})
+		}
+
+		var fluentArgs []string
+		//nolint:govet // Same as above.
+		fluentArgs, fluentFiles = fluent.ContainerConfig(
+			p.masterIP,
+			int(p.masterPort),
+			[]fluent.ConfigSection{
+				{
+					{"Name", "tail"},
+					{"Path", "/run/determined/train/logs/stdout.log-rotate/current"},
+					{"Refresh_Interval", "3"},
+					{"Read_From_Head", "true"},
+					{"Buffer_Max_Size", "1M"},
+					{"Skip_Long_Lines", "On"},
+					{"Tag", "stdout"},
+				},
+				{
+					{"Name", "tail"},
+					{"Path", "/run/determined/train/logs/stderr.log-rotate/current"},
+					{"Refresh_Interval", "3"},
+					{"Read_From_Head", "true"},
+					{"Buffer_Max_Size", "1M"},
+					{"Skip_Long_Lines", "On"},
+					{"Tag", "stderr"},
+				},
+			},
+			[]fluent.ConfigSection{
+				modifyConfig,
+				{
+					{"Name", "modify"},
+					{"Match", "stdout"},
+					{"Add", "stdtype stdout"},
+				},
+				{
+					{"Name", "modify"},
+					{"Match", "stderr"},
+					{"Add", "stdtype stderr"},
+				},
+			},
+			p.loggingConfig,
+			p.loggingTLSConfig,
+		)
+
+		sidecars = append(sidecars, k8sV1.Container{
+			Name:            model.DeterminedK8FluentContainerName,
+			Command:         fluentArgs,
+			Image:           "fluent/fluent-bit:1.6",
+			ImagePullPolicy: configureImagePullPolicy(spec.Environment()),
+			SecurityContext: configureSecurityContext(spec.AgentUserGroup),
+			VolumeMounts:    loggingMounts,
+			WorkingDir:      fluentBaseDir,
+		})
+	}
+
+	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
-		Command:         []string{"/run/determined/train/entrypoint.sh"},
-		Image:           exp.ExperimentConfig.Environment.Image.For(deviceType),
-		ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
-		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
+		Command:         spec.Entrypoint(),
+		Env:             envVars,
+		Image:           env.Image.For(deviceType),
+		ImagePullPolicy: configureImagePullPolicy(env),
+		SecurityContext: configureSecurityContext(spec.AgentUserGroup),
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    volumeMounts,
-		Env:             envVars,
 		WorkingDir:      tasks.ContainerWorkDir,
 	}
 
-	//nolint:govet // Allow unkeyed struct fields -- it really looks much better like this.
-	fluentArgs, fluentFiles := fluent.ContainerConfig(
-		p.masterIP,
-		int(p.masterPort),
-		[]fluent.ConfigSection{
-			{
-				{"Name", "tail"},
-				{"Path", "/run/determined/train/logs/stdout.log-rotate/current"},
-				{"Refresh_Interval", "3"},
-				{"Read_From_Head", "true"},
-				{"Buffer_Max_Size", "1M"},
-				{"Skip_Long_Lines", "On"},
-				{"Tag", "stdout"},
-			},
-			{
-				{"Name", "tail"},
-				{"Path", "/run/determined/train/logs/stderr.log-rotate/current"},
-				{"Refresh_Interval", "3"},
-				{"Read_From_Head", "true"},
-				{"Buffer_Max_Size", "1M"},
-				{"Skip_Long_Lines", "On"},
-				{"Tag", "stderr"},
-			},
-		},
-		[]fluent.ConfigSection{
-			{
-				{"Name", "modify"},
-				{"Match", "*"},
-				{"Add", "agent_id k8agent"},
-				{"Add", "container_id " + string(p.container.ID)},
-				{"Add", "trial_id " + strconv.Itoa(exp.InitialWorkload.TrialID)},
-			},
-			{
-				{"Name", "modify"},
-				{"Match", "stdout"},
-				{"Add", "stdtype stdout"},
-			},
-			{
-				{"Name", "modify"},
-				{"Match", "stderr"},
-				{"Add", "stdtype stderr"},
-			},
-		},
-		p.loggingConfig,
-		p.loggingTLSConfig,
-	)
-
-	fluentContainer := k8sV1.Container{
-		Name:            model.DeterminedK8FluentContainerName,
-		Command:         fluentArgs,
-		Image:           "fluent/fluent-bit:1.6",
-		ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
-		SecurityContext: configureSecurityContext(exp.AgentUserGroup),
-		VolumeMounts:    loggingMounts,
-		WorkingDir:      fluentBaseDir,
-	}
-
 	p.pod = p.configurePodSpec(
-		ctx,
-		volumes,
-		initContainer,
-		mainContainer,
-		[]k8sV1.Container{fluentContainer},
-		exp.ExperimentConfig.Environment.PodSpec,
-	)
+		ctx, volumes, initContainer, container, sidecars, env.PodSpec)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
 	if err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func (p *pod) createPodSpecForCommand(ctx *actor.Context) error {
-	cmd := *p.taskSpec.StartCommand
-
-	deviceType := device.CPU
-	if p.gpus > 0 {
-		deviceType = device.GPU
-	}
-
-	runArchives := tasks.CommandArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
-		ctx, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
-
-	for _, port := range cmd.Config.Environment.Ports {
-		p.ports = append(p.ports, port)
-	}
-
-	envVars, err := p.configureEnvVars(
-		tasks.CommandEnvVars(p.taskSpec),
-		p.taskSpec.StartCommand.Config.Environment,
-		deviceType,
-	)
-	if err != nil {
-		return err
-	}
-
-	initContainer := configureInitContainer(
-		len(runArchives),
-		initContainerVolumeMounts,
-		cmd.Config.Environment.Image.For(deviceType),
-		configureImagePullPolicy(cmd.Config.Environment),
-	)
-
-	container := k8sV1.Container{
-		Name:            model.DeterminedK8ContainerName,
-		Command:         cmd.Config.Entrypoint,
-		Env:             envVars,
-		Image:           cmd.Config.Environment.Image.For(deviceType),
-		ImagePullPolicy: configureImagePullPolicy(cmd.Config.Environment),
-		SecurityContext: configureSecurityContext(cmd.AgentUserGroup),
-		Resources:       p.configureResourcesRequirements(),
-		VolumeMounts:    volumeMounts,
-		WorkingDir:      tasks.ContainerWorkDir,
-	}
-
-	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, nil, cmd.Config.Environment.PodSpec)
-
-	p.configMap, err = p.configureConfigMapSpec(runArchives, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
-	gcc := *p.taskSpec.GCCheckpoints
-
-	deviceType := device.CPU
-	if p.gpus > 0 {
-		deviceType = device.GPU
-	}
-
-	runArchives := tasks.GCArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
-		ctx, tasks.GCDockerMounts(gcc), runArchives)
-
-	envVars, err := p.configureEnvVars(
-		tasks.GCEnvVars(),
-		p.taskSpec.GCCheckpoints.ExperimentConfig.Environment,
-		deviceType,
-	)
-	if err != nil {
-		return err
-	}
-
-	initContainer := configureInitContainer(
-		len(runArchives),
-		initContainerVolumeMounts,
-		gcc.ExperimentConfig.Environment.Image.For(deviceType),
-		configureImagePullPolicy(gcc.ExperimentConfig.Environment),
-	)
-
-	container := k8sV1.Container{
-		Name:            model.DeterminedK8ContainerName,
-		Command:         tasks.GCCmd(),
-		Env:             envVars,
-		Image:           gcc.ExperimentConfig.Environment.Image.For(deviceType),
-		ImagePullPolicy: configureImagePullPolicy(gcc.ExperimentConfig.Environment),
-		SecurityContext: configureSecurityContext(gcc.AgentUserGroup),
-		Resources:       p.configureResourcesRequirements(),
-		VolumeMounts:    volumeMounts,
-		WorkingDir:      tasks.ContainerWorkDir,
-	}
-
-	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, nil, gcc.ExperimentConfig.Environment.PodSpec)
-
-	p.configMap, err = p.configureConfigMapSpec(runArchives, nil)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func configureUniqueName(t tasks.TaskSpec) string {
-	uniqueName := petName.Generate(2, "-")
-	switch {
-	case t.StartCommand != nil:
-		return fmt.Sprintf("cmd-%s-%s", t.TaskID, uniqueName)
-	case t.StartContainer != nil:
-		return fmt.Sprintf(
-			"exp-%d-trial-%d-rank-%d-%s",
-			t.StartContainer.InitialWorkload.ExperimentID,
-			t.StartContainer.InitialWorkload.TrialID,
-			t.StartContainer.Rank,
-			uniqueName,
-		)
-	case t.GCCheckpoints != nil:
-		return fmt.Sprintf("gc-%s-%s", t.TaskID, uniqueName)
-	default:
-		return ""
-	}
+	return fmt.Sprintf("%s-%s-%s", t.Description(), t.TaskID, petName.Generate(2, "-"))
 }
 
 func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.SecurityContext {
