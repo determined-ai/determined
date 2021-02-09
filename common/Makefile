@@ -1,4 +1,4 @@
-GENERATED := determined_common/schemas/expconf/_v1_gen.py
+GENERATED := determined_common/schemas/expconf/_gen.py
 
 .PHONY: clean
 clean:
@@ -16,11 +16,11 @@ ungen:
 
 gen: $(GENERATED)
 
-determined_common/schemas/expconf/_v1_gen.py: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
+determined_common/schemas/expconf/_gen.py: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
 	../schemas/gen.py \
 		--output $@ \
 		python \
-		$(shell find ../schemas/expconf/v1 -name "*.json")
+		$(shell find ../schemas/expconf -name "*.json")
 
 .PHONY: build
 build:

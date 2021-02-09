@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/test-union-b.json",
+    "title": "TestUnionB",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type",
+        "val_b"
+    ],
+    "properties": {
+        "type": {
+            "const": "b"
+        },
+        "val_b": {
+            "type": "integer"
+        },
+        "common_val": {
+            "type": ["string", "null"],
+            "default": "default-common-val"
+        }
+    }
+}

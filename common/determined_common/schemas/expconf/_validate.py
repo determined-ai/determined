@@ -3,9 +3,9 @@ from typing import Any, Dict, List, Optional
 import jsonschema
 
 from determined_common.schemas import extensions, util
-from determined_common.schemas.expconf import _v1_gen
+from determined_common.schemas.expconf import _gen
 
-_v1_validators = {}  # type: Dict[str, Any]
+_validators = {}  # type: Dict[str, Any]
 
 
 def v1_validator(url: Optional[str] = None) -> Any:
@@ -13,16 +13,16 @@ def v1_validator(url: Optional[str] = None) -> Any:
     if url is None:
         url = "http://determined.ai/schemas/expconf/v1/experiment.json"
 
-    global _v1_validators
-    if url in _v1_validators:
-        return _v1_validators[url]
+    global _validators
+    if url in _validators:
+        return _validators[url]
 
-    schema = _v1_gen.schemas[url]
+    schema = _gen.schemas[url]
 
     resolver = jsonschema.RefResolver(
         base_uri=url,
         referrer=schema,
-        handlers={"http": lambda url: _v1_gen.schemas[url]},
+        handlers={"http": lambda url: _gen.schemas[url]},
     )
 
     validator = jsonschema.Draft7Validator(schema=schema, resolver=resolver)
@@ -33,11 +33,12 @@ def v1_validator(url: Optional[str] = None) -> Any:
         "compareProperties": extensions.compareProperties,
         "conditional": extensions.conditional,
         "eventuallyRequired": extensions.eventuallyRequired,
+        "optionalRef": extensions.optionalRef,
     }
     cls = jsonschema.validators.extend(validator, ext)
-    _v1_validators[url] = cls(schema=schema, resolver=resolver)
+    _validators[url] = cls(schema=schema, resolver=resolver)
 
-    return _v1_validators[url]
+    return _validators[url]
 
 
 def validation_errors(instance: Any, url: Optional[str] = None) -> List[str]:

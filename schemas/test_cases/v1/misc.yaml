@@ -10,7 +10,7 @@
 - name: epoch length in use (invalid)
   errors:
     http://determined.ai/schemas/expconf/v1/check-epoch-not-used.json:
-      - "<config>.a[0].b.c: must specify the top-level records_per_epoch"
+      - "<config>.a\\[0\\].b.c: must specify the top-level records_per_epoch"
   case:
     a:
       - b:
@@ -55,7 +55,7 @@
     http://determined.ai/schemas/expconf/v1/check-grid-hyperparameter.json:
       - "<config>.dict_hparam.double_hparam: grid search is in use but count was not provided"
       - "<config>.dict_hparam.log_hparam: grid search is in use but count was not provided"
-      - "<config>.list_hparam[2]: grid search is in use but count was not provided"
+      - "<config>.list_hparam\\[2\\]: grid search is in use but count was not provided"
   case:
     global_batch_size:
       type: const

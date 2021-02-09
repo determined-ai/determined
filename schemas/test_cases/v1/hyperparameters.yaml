@@ -74,11 +74,11 @@
 - name: nested hyperparameters (invalid, to show paths in errors)
   errors:
     http://determined.ai/schemas/expconf/v1/hyperparameter.json:
-      - "<config>[0][0]:"
-      - "<config>[0][1]:"
-      - "<config>[1].one.a:"
-      - "<config>[1].one.b[0]:"
-      - "<config>[1].one.b[1]:"
+      - "<config>\\[0\\]\\[0\\]:"
+      - "<config>\\[0\\]\\[1\\]:"
+      - "<config>\\[1\\].one.a:"
+      - "<config>\\[1\\].one.b\\[0\\]:"
+      - "<config>\\[1\\].one.b\\[1\\]:"
   case:
     - - type: categorical
       - type: categorical

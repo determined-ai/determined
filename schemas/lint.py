@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import re
 import sys
 from typing import Callable, List, Optional, Tuple, TypeVar, Union
 
@@ -65,11 +66,13 @@ SUPPORTED_KEYWORDS_BY_TYPE = {
         "checks",
         "compareProperties",
         "allOf",
+        "optionalRef",
+        "$comment",
     },
-    "array": {"items", "default", "unionKey", "minLength", "checks"},
-    "string": {"pattern", "default", "unionKey", "checks"},
-    "boolean": {"default", "unionKey", "checks"},
-    "null": {"default", "unionKey", "checks"},
+    "array": {"items", "default", "unionKey", "minLength", "checks", "$comment"},
+    "string": {"pattern", "default", "unionKey", "checks", "$comment"},
+    "boolean": {"default", "unionKey", "checks", "$comment"},
+    "null": {"default", "unionKey", "checks", "$comment"},
 }
 
 TOPLEVEL_KEYWORDS = {"$schema", "$id", "title"}
@@ -77,12 +80,13 @@ TOPLEVEL_KEYWORDS = {"$schema", "$id", "title"}
 
 class LintContext:
     def __init__(
-        self, schema: Schema, path: str, toplevel: bool, in_checks: bool
+        self, schema: Schema, path: str, toplevel: bool, in_checks: bool, filepath: str
     ) -> None:
         self._schema = schema
         self._path = path
         self.toplevel = toplevel
         self.in_checks = in_checks
+        self.filepath = filepath
 
 
 @register_linter
@@ -109,21 +113,13 @@ def check_id(schema: dict, path: str, ctx: LintContext) -> Errors:
     if "$id" not in schema:
         return [(path, "$id is missing")]
 
-    errors = []
     subpath = path + ".$id"
-    id = os.path.split(schema["$id"])
 
-    base, name = id
+    exp = "http://determined.ai/schemas/" + ctx.filepath
+    if schema["$id"] != exp:
+        return [(subpath, f"$id ({schema['$id']}) is not correct for filename")]
 
-    exp_base = "http://determined.ai/schemas/expconf/v1"
-
-    if base != exp_base:
-        errors.append((subpath, f'$id ({id}) must start with "{exp_base}"'))
-
-    if path != f"<{name}>":
-        errors.append((subpath, f"$id ({id}) is not correct for filename {path}"))
-
-    return errors
+    return []
 
 
 def is_required(object_schema: dict, key: str) -> bool:
@@ -147,7 +143,7 @@ def is_nullable(object_schema: dict, key: str) -> bool:
 
 
 @register_linter
-def check_defaults(schema: dict, path: str, ctx: LintContext) -> Errors:
+def check_default_typing(schema: dict, path: str, ctx: LintContext) -> Errors:
     if ctx.in_checks:
         return []
     if not isinstance(schema, dict) or "properties" not in schema:
@@ -167,6 +163,42 @@ def check_defaults(schema: dict, path: str, ctx: LintContext) -> Errors:
 
 
 @register_linter
+def check_default_locations(schema: dict, path: str, ctx: LintContext) -> Errors:
+    """
+    This is a bit artificial, but it's much easier to write the defaulting logic if all default
+    values are placed in a consistent location.
+
+    They should only ever be found at:  <root>.properties.<key>.default
+    """
+    if not isinstance(schema, dict) or "properties" not in schema:
+        return []
+
+    errors = []
+
+    for key, sub in schema["properties"].items():
+        subpath = path + f".{key}"
+        if isinstance(sub, dict) and "default" in sub:
+            if sub["default"] == "null":
+                errors.append(
+                    (
+                        subpath + ".default",
+                        "default is the literal 'null' string, probable typo",
+                    )
+                )
+            elif (
+                not re.match("^<[^>]*>\\.[^.]*$", subpath)
+                and sub["default"] is not None
+            ):
+                # This is pretty valid in json-schema normally, but it makes reading defaults
+                # out of json-schema (which we need in multiple languages) much harder.
+                errors.append(
+                    (subpath + ".default", "non-null default is defined on a subobject")
+                )
+
+    return errors
+
+
+@register_linter
 def check_nullable(schema: dict, path: str, ctx: LintContext) -> Errors:
     """Non-Required fields must be nullable; required fields must be non-Nullable."""
     if ctx.in_checks:
@@ -181,35 +213,42 @@ def check_nullable(schema: dict, path: str, ctx: LintContext) -> Errors:
             # Don't complain about the universal match (true).
             continue
         subpath = path + f".{key}"
+        # Make sure that nullability matches the requiredness.
         if is_required(schema, key) and is_nullable(schema, key):
             errors.append((subpath, "required property is nullable"))
         if not is_required(schema, key) and not is_nullable(schema, key):
             errors.append((subpath, "non-required property is not nullable"))
+        # Make sure that $refs are optional on nullable objects.
+        if is_nullable(schema, key) and "$ref" in sub:
+            errors.append((subpath, "nullable $ref should be an optionalRef"))
+        if not is_nullable(schema, key) and "optionalRef" in sub:
+            errors.append((subpath, "non-nullable optionalRef should be a plain $ref"))
 
     return errors
 
 
 @register_linter
-def check_types(schema: dict, path: str, ctx: LintContext) -> Errors:
+def check_types_and_keywords(schema: dict, path: str, ctx: LintContext) -> Errors:
     if "type" not in schema:
         return []
 
-    typ = schema["type"]
-    if not isinstance(typ, str):
-        if frozenset(typ) not in COMPOUND_TYPES:
-            return [(path, f"unsupported compound type: {typ}")]
-        typ = COMPOUND_TYPES[frozenset(typ)]
+    types = schema["type"]
+    if not isinstance(types, list):
+        types = [types]
 
-    if typ not in SUPPORTED_KEYWORDS_BY_TYPE:
-        return [(path, f"unsupported type: {typ}")]
+    for typ in types:
+        if typ not in SUPPORTED_KEYWORDS_BY_TYPE:
+            return [(path, f"unsupported type: {typ}")]
 
     keys = set(schema.keys()).difference(TOPLEVEL_KEYWORDS)
     keys.remove("type")
 
+    for typ in types:
+        keys = keys.difference(SUPPORTED_KEYWORDS_BY_TYPE[typ])
+
     errors = []
 
-    extra_keys = keys.difference(SUPPORTED_KEYWORDS_BY_TYPE[typ])
-    for kw in extra_keys:
+    for kw in keys:
         errors.append((path, f"{kw} not allowed in schema of type {typ}"))
 
     return errors
@@ -352,7 +391,11 @@ def iter_union(schema: dict, path: str, ctx: LintContext) -> Errors:
 
 
 def iter_schema(
-    schema: dict, path: str, ctx: Optional[LintContext] = None, in_checks: bool = False
+    schema: dict,
+    path: str,
+    ctx: Optional[LintContext] = None,
+    in_checks: bool = False,
+    filepath: Optional[str] = None,
 ) -> Errors:
     """
     Iterate through structural elements of a schema.  In the following example:
@@ -382,9 +425,12 @@ def iter_schema(
 
     # Apply linters to this structural element.
     if ctx is None:
-        ctx = LintContext(schema, path, toplevel=True, in_checks=in_checks)
+        assert filepath, "filepath must be provided when ctx is None"
+        ctx = LintContext(
+            schema, path, toplevel=True, in_checks=in_checks, filepath=filepath
+        )
     else:
-        ctx = LintContext(schema, path, False, ctx.in_checks)
+        ctx = LintContext(schema, path, False, ctx.in_checks, ctx.filepath)
     for linter in linters:
         try:
             errors += linter(schema, path, ctx)
@@ -429,7 +475,7 @@ def fmt(files: List[str], reformat: bool) -> Errors:
                 with open(file, "w") as f:
                     f.write(fixed)
             else:
-                doc = os.path.basename(file)
+                doc = os.path.relpath(file, os.path.dirname(__file__))
                 errors.append((f"<{doc}>", "would reformat"))
 
     return errors
@@ -449,11 +495,11 @@ def lint(files: List[str], reformat: bool) -> List[str]:
                 invalids.append(f"{file} not valid: {e}")
                 continue
 
-        doc = os.path.basename(file)
+        doc = os.path.relpath(file, os.path.dirname(__file__))
 
         try:
             errors += iter_schema(
-                schema, f"<{doc}>", in_checks=doc.startswith("check-")
+                schema, f"<{doc}>", in_checks=doc.startswith("check-"), filepath=doc
             )
         except Exception as e:
             raise ValueError(f"failure processing {file}") from e
