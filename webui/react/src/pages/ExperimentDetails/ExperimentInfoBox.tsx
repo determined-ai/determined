@@ -1,5 +1,5 @@
 import { Button, Tooltip } from 'antd';
-import Modal from 'antd/lib/modal/Modal';
+import Modal from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';

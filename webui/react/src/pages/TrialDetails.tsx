@@ -1,5 +1,5 @@
 import { Button, Col, Form, Input, Modal, Row, Select, Tooltip } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import { SelectValue } from 'antd/es/select';
 import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
