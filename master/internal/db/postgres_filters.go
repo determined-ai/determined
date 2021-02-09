@@ -19,7 +19,9 @@ var validField = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 //
 // The user input to the filters should always be contained in api.Filter.Values and
 // never the field. If the field is taken from user input, SQL injection is possible.
-func filtersToSQL(fs []api.Filter, params []interface{}) (string, []interface{}) {
+func filtersToSQL(
+	fs []api.Filter, params []interface{}, fieldMap map[string]string,
+) (string, []interface{}) {
 	paramID := len(params) + 1
 	var fragments []string
 	for _, f := range fs {
@@ -27,14 +29,22 @@ func filtersToSQL(fs []api.Filter, params []interface{}) (string, []interface{})
 			panic(fmt.Sprintf("field in filter %s contains possible SQL injection", f.Field))
 		}
 		filterParams := filterToParams(f)
-		fragments = append(fragments, filterToSQL(f, filterParams, paramID))
+		fragments = append(fragments, filterToSQL(f, filterParams, paramID, fieldMap))
 		params = append(params, filterParams...)
 		paramID += len(filterParams)
 	}
 	return strings.Join(fragments, "\n"), params
 }
 
-func filterToSQL(f api.Filter, values []interface{}, paramID int) string {
+func filterToSQL(
+	f api.Filter, values []interface{}, paramID int, fieldMap map[string]string,
+) string {
+	var field string
+	if fm, ok := fieldMap[f.Field]; ok {
+		field = fm
+	} else {
+		field = f.Field
+	}
 	switch f.Operation {
 	case api.FilterOperationIn:
 		var fragment strings.Builder
@@ -45,11 +55,11 @@ func filterToSQL(f api.Filter, values []interface{}, paramID int) string {
 		}
 		_, _ = fragment.WriteString(strings.Join(paramFragments, ","))
 		_, _ = fragment.WriteString(")")
-		return fmt.Sprintf(fragment.String(), f.Field)
+		return fmt.Sprintf(fragment.String(), field)
 	case api.FilterOperationGreaterThan:
-		return fmt.Sprintf("AND %s > $%d", f.Field, paramID)
+		return fmt.Sprintf("AND %s > $%d", field, paramID)
 	case api.FilterOperationLessThanEqual:
-		return fmt.Sprintf("AND %s <= $%d", f.Field, paramID)
+		return fmt.Sprintf("AND %s <= $%d", field, paramID)
 	default:
 		panic(fmt.Sprintf("cannot convert operation %d to SQL", f.Operation))
 	}
