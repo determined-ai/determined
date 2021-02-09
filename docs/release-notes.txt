@@ -8,6 +8,16 @@
  Version 0.14
 **************
 
+Version 0.14.1
+==============
+
+**Release Date:** February 9, 2021
+
+**Bug Fixes**
+
+-  Trial: Fix a bug that prevented trial logs created before 0.13.8 from
+   loading correctly.
+
 Version 0.14.0
 ==============
 
