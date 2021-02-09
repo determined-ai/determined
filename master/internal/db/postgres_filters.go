@@ -40,8 +40,8 @@ func filterToSQL(
 	f api.Filter, values []interface{}, paramID int, fieldMap map[string]string,
 ) string {
 	var field string
-	if m, ok := fieldMap[f.Field]; ok {
-		f.Field = m
+	if fm, ok := fieldMap[f.Field]; ok {
+		field = fm
 	} else {
 		field = f.Field
 	}
