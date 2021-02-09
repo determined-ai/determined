@@ -209,7 +209,7 @@
   errors:
     http://determined.ai/schemas/expconf/v1/experiment.json:
       - "<config>.hyperparameters.dict_hparam.log_hparam: grid search is in use but count was not provided"
-      - "<config>.hyperparameters.list_hparam[2]: grid search is in use but count was not provided"
+      - "<config>.hyperparameters.list_hparam\\[2\\]: grid search is in use but count was not provided"
   case:
     hyperparameters:
       global_batch_size:

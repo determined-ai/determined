@@ -1,0 +1,39 @@
+package expconf
+
+// These dummy types let us compile the generated code without the real struct definitions present.
+type (
+	BindMountV1                    struct{}
+	CheckpointStorageConfigV1      struct{}
+	DataLayerGCSConfigV1           struct{}
+	DataLayerS3ConfigV1            struct{}
+	DataLayerSharedFSConfigV1      struct{}
+	DataLayerConfigV1              struct{}
+	EnvironmentImageV1             struct{}
+	EnvironmentVariablesV1         struct{}
+	EnvironmentConfigV1            struct{}
+	ExperimentConfigV1             struct{}
+	GCSConfigV1                    struct{}
+	HDFSConfigV1                   struct{}
+	CategoricalHyperparameterV1    struct{}
+	ConstHyperparameterV1          struct{}
+	DoubleHyperparameterV1         struct{}
+	IntHyperparameterV1            struct{}
+	LogHyperparameterV1            struct{}
+	HyperparameterV1               struct{}
+	InternalConfigV1               struct{}
+	LengthV1                       struct{}
+	OptimizationsConfigV1          struct{}
+	ResourcesConfigV1              struct{}
+	S3ConfigV1                     struct{}
+	AdaptiveASHASearcherConfigV1   struct{}
+	AdaptiveSimpleSearcherConfigV1 struct{}
+	AdaptiveSearcherConfigV1       struct{}
+	AsyncHalvingSearcherConfigV1   struct{}
+	GridSearcherConfigV1           struct{}
+	PBTSearcherConfigV1            struct{}
+	RandomSearcherConfigV1         struct{}
+	SingleSearcherConfigV1         struct{}
+	SyncHalvingSearcherConfigV1    struct{}
+	SearcherConfigV1               struct{}
+	SharedFSConfigV1               struct{}
+)

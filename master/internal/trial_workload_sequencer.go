@@ -366,10 +366,14 @@ func (s *trialWorkloadSequencer) snapshotState() {
 
 // RollBackSequencer rolls back the sequencer to the latest checkpoint and sets the latest
 // checkpoint back to the one we just rolled back to.
-func (s *trialWorkloadSequencer) RollBackSequencer() int {
+func (s *trialWorkloadSequencer) RollBackSequencer() (int, error) {
 	s.trialWorkloadSequencerState = *s.LatestSnapshot
 	s.LatestSnapshot = s.trialWorkloadSequencerState.deepCopy()
-	return s.CurStepID
+	wkld, err := s.Workload()
+	if err != nil {
+		return 0, errors.Wrap(err, "cannot roll back sequencer")
+	}
+	return wkld.PriorBatchesProcessed, nil
 }
 
 // UpToDate returns if the sequencer has completed all searcher requested operations.
@@ -387,7 +391,7 @@ func (s trialWorkloadSequencer) train(numBatches int) workload.Workload {
 		TrialID:               s.trialID,
 		StepID:                s.CurStepID + 1,
 		NumBatches:            numBatches,
-		TotalBatchesProcessed: s.TotalBatchesProcessed,
+		PriorBatchesProcessed: s.TotalBatchesProcessed,
 	}
 }
 
@@ -397,7 +401,7 @@ func (s trialWorkloadSequencer) validate() workload.Workload {
 		ExperimentID:          s.experiment.ID,
 		TrialID:               s.trialID,
 		StepID:                s.CurStepID,
-		TotalBatchesProcessed: s.TotalBatchesProcessed,
+		PriorBatchesProcessed: s.TotalBatchesProcessed,
 	}
 }
 
@@ -407,7 +411,7 @@ func (s trialWorkloadSequencer) checkpoint() workload.Workload {
 		ExperimentID:          s.experiment.ID,
 		TrialID:               s.trialID,
 		StepID:                s.CurStepID,
-		TotalBatchesProcessed: s.TotalBatchesProcessed,
+		PriorBatchesProcessed: s.TotalBatchesProcessed,
 	}
 }
 

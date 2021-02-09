@@ -27,7 +27,12 @@ type Workload struct {
 	TrialID               int  `json:"trial_id"`
 	StepID                int  `json:"step_id"`
 	NumBatches            int  `json:"num_batches"`
-	TotalBatchesProcessed int  `json:"total_batches_processed"`
+	PriorBatchesProcessed int  `json:"total_batches_processed"`
+}
+
+// TotalBatches returns the total batch number after the workload is processed.
+func (w Workload) TotalBatches() int {
+	return w.NumBatches + w.PriorBatchesProcessed
 }
 
 func (w Workload) String() string {
@@ -35,6 +40,6 @@ func (w Workload) String() string {
 	if w.Kind == RunStep {
 		extra += fmt.Sprintf(" (%d Batches)", w.NumBatches)
 	}
-	extra += fmt.Sprintf(" (%d Prior Batches)", w.TotalBatchesProcessed)
+	extra += fmt.Sprintf(" (%d Prior Batches)", w.PriorBatchesProcessed)
 	return fmt.Sprintf("<%s%s: (%d,%d,%d)>", w.Kind, extra, w.ExperimentID, w.TrialID, w.StepID)
 }

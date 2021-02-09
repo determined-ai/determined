@@ -1,8 +1,10 @@
 // This is a generated file.  Editing it will make you sad.
 
-package expconf
+package schemas
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 var (
 	textBindMountV1 = []byte(`{
@@ -2349,6 +2351,127 @@ var (
     }
 }
 `)
+	textTestRootV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/test-root.json",
+    "title": "TestRoot",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["val_x"],
+    "properties": {
+        "val_x": {
+            "type": "integer"
+        },
+        "sub_obj": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v1/test-sub.json"
+        },
+        "sub_union": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v1/test-union.json"
+        },
+        "runtime_defaultable": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+
+`)
+	textTestSubV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/test-sub.json",
+    "title": "TestSub",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "val_y": {
+            "type": ["string", "null"],
+            "default": "default_y"
+        }
+    }
+}
+
+`)
+	textTestUnionAV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/test-union-a.json",
+    "title": "TestUnionA",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type",
+        "val_a"
+    ],
+    "properties": {
+        "type": {
+            "const": "a"
+        },
+        "val_a": {
+            "type": "integer"
+        },
+        "common_val": {
+            "type": ["string", "null"],
+            "default": "default-common-val"
+        }
+    }
+}
+`)
+	textTestUnionBV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/test-union-b.json",
+    "title": "TestUnionB",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type",
+        "val_b"
+    ],
+    "properties": {
+        "type": {
+            "const": "b"
+        },
+        "val_b": {
+            "type": "integer"
+        },
+        "common_val": {
+            "type": ["string", "null"],
+            "default": "default-common-val"
+        }
+    }
+}
+`)
+	textTestUnionV1 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/test-union.json",
+    "title": "TestUnion",
+    "union": {
+        "defaultMessage": "bad test union",
+        "items": [
+            {
+                "unionKey": "const:type=a",
+                "$ref": "http://determined.ai/schemas/expconf/v1/test-union-a.json"
+            },
+            {
+                "unionKey": "const:type=b",
+                "$ref": "http://determined.ai/schemas/expconf/v1/test-union-b.json"
+            }
+        ]
+    }
+}
+`)
 	schemaBindMountV1                    interface{}
 	schemaCheckDataLayerCacheV1          interface{}
 	schemaCheckEpochNotUsedV1            interface{}
@@ -2388,11 +2511,16 @@ var (
 	schemaSyncHalvingSearcherConfigV1    interface{}
 	schemaSearcherConfigV1               interface{}
 	schemaSharedFSConfigV1               interface{}
+	schemaTestRootV1                     interface{}
+	schemaTestSubV1                      interface{}
+	schemaTestUnionAV1                   interface{}
+	schemaTestUnionBV1                   interface{}
+	schemaTestUnionV1                    interface{}
 	cachedSchemaMap                      map[string]interface{}
 	cachedSchemaBytesMap                 map[string][]byte
 )
 
-func parsedBindMountV1() interface{} {
+func ParsedBindMountV1() interface{} {
 	if schemaBindMountV1 != nil {
 		return schemaBindMountV1
 	}
@@ -2403,7 +2531,7 @@ func parsedBindMountV1() interface{} {
 	return schemaBindMountV1
 }
 
-func parsedCheckDataLayerCacheV1() interface{} {
+func ParsedCheckDataLayerCacheV1() interface{} {
 	if schemaCheckDataLayerCacheV1 != nil {
 		return schemaCheckDataLayerCacheV1
 	}
@@ -2414,7 +2542,7 @@ func parsedCheckDataLayerCacheV1() interface{} {
 	return schemaCheckDataLayerCacheV1
 }
 
-func parsedCheckEpochNotUsedV1() interface{} {
+func ParsedCheckEpochNotUsedV1() interface{} {
 	if schemaCheckEpochNotUsedV1 != nil {
 		return schemaCheckEpochNotUsedV1
 	}
@@ -2425,7 +2553,7 @@ func parsedCheckEpochNotUsedV1() interface{} {
 	return schemaCheckEpochNotUsedV1
 }
 
-func parsedCheckGlobalBatchSizeV1() interface{} {
+func ParsedCheckGlobalBatchSizeV1() interface{} {
 	if schemaCheckGlobalBatchSizeV1 != nil {
 		return schemaCheckGlobalBatchSizeV1
 	}
@@ -2436,7 +2564,7 @@ func parsedCheckGlobalBatchSizeV1() interface{} {
 	return schemaCheckGlobalBatchSizeV1
 }
 
-func parsedCheckGridHyperparameterV1() interface{} {
+func ParsedCheckGridHyperparameterV1() interface{} {
 	if schemaCheckGridHyperparameterV1 != nil {
 		return schemaCheckGridHyperparameterV1
 	}
@@ -2447,7 +2575,7 @@ func parsedCheckGridHyperparameterV1() interface{} {
 	return schemaCheckGridHyperparameterV1
 }
 
-func parsedCheckPositiveLengthV1() interface{} {
+func ParsedCheckPositiveLengthV1() interface{} {
 	if schemaCheckPositiveLengthV1 != nil {
 		return schemaCheckPositiveLengthV1
 	}
@@ -2458,7 +2586,7 @@ func parsedCheckPositiveLengthV1() interface{} {
 	return schemaCheckPositiveLengthV1
 }
 
-func parsedCheckpointStorageConfigV1() interface{} {
+func ParsedCheckpointStorageConfigV1() interface{} {
 	if schemaCheckpointStorageConfigV1 != nil {
 		return schemaCheckpointStorageConfigV1
 	}
@@ -2469,7 +2597,7 @@ func parsedCheckpointStorageConfigV1() interface{} {
 	return schemaCheckpointStorageConfigV1
 }
 
-func parsedDataLayerGCSConfigV1() interface{} {
+func ParsedDataLayerGCSConfigV1() interface{} {
 	if schemaDataLayerGCSConfigV1 != nil {
 		return schemaDataLayerGCSConfigV1
 	}
@@ -2480,7 +2608,7 @@ func parsedDataLayerGCSConfigV1() interface{} {
 	return schemaDataLayerGCSConfigV1
 }
 
-func parsedDataLayerS3ConfigV1() interface{} {
+func ParsedDataLayerS3ConfigV1() interface{} {
 	if schemaDataLayerS3ConfigV1 != nil {
 		return schemaDataLayerS3ConfigV1
 	}
@@ -2491,7 +2619,7 @@ func parsedDataLayerS3ConfigV1() interface{} {
 	return schemaDataLayerS3ConfigV1
 }
 
-func parsedDataLayerSharedFSConfigV1() interface{} {
+func ParsedDataLayerSharedFSConfigV1() interface{} {
 	if schemaDataLayerSharedFSConfigV1 != nil {
 		return schemaDataLayerSharedFSConfigV1
 	}
@@ -2502,7 +2630,7 @@ func parsedDataLayerSharedFSConfigV1() interface{} {
 	return schemaDataLayerSharedFSConfigV1
 }
 
-func parsedDataLayerConfigV1() interface{} {
+func ParsedDataLayerConfigV1() interface{} {
 	if schemaDataLayerConfigV1 != nil {
 		return schemaDataLayerConfigV1
 	}
@@ -2513,7 +2641,7 @@ func parsedDataLayerConfigV1() interface{} {
 	return schemaDataLayerConfigV1
 }
 
-func parsedEnvironmentImageV1() interface{} {
+func ParsedEnvironmentImageV1() interface{} {
 	if schemaEnvironmentImageV1 != nil {
 		return schemaEnvironmentImageV1
 	}
@@ -2524,7 +2652,7 @@ func parsedEnvironmentImageV1() interface{} {
 	return schemaEnvironmentImageV1
 }
 
-func parsedEnvironmentVariablesV1() interface{} {
+func ParsedEnvironmentVariablesV1() interface{} {
 	if schemaEnvironmentVariablesV1 != nil {
 		return schemaEnvironmentVariablesV1
 	}
@@ -2535,7 +2663,7 @@ func parsedEnvironmentVariablesV1() interface{} {
 	return schemaEnvironmentVariablesV1
 }
 
-func parsedEnvironmentConfigV1() interface{} {
+func ParsedEnvironmentConfigV1() interface{} {
 	if schemaEnvironmentConfigV1 != nil {
 		return schemaEnvironmentConfigV1
 	}
@@ -2546,7 +2674,7 @@ func parsedEnvironmentConfigV1() interface{} {
 	return schemaEnvironmentConfigV1
 }
 
-func parsedExperimentConfigV1() interface{} {
+func ParsedExperimentConfigV1() interface{} {
 	if schemaExperimentConfigV1 != nil {
 		return schemaExperimentConfigV1
 	}
@@ -2557,7 +2685,7 @@ func parsedExperimentConfigV1() interface{} {
 	return schemaExperimentConfigV1
 }
 
-func parsedGCSConfigV1() interface{} {
+func ParsedGCSConfigV1() interface{} {
 	if schemaGCSConfigV1 != nil {
 		return schemaGCSConfigV1
 	}
@@ -2568,7 +2696,7 @@ func parsedGCSConfigV1() interface{} {
 	return schemaGCSConfigV1
 }
 
-func parsedHDFSConfigV1() interface{} {
+func ParsedHDFSConfigV1() interface{} {
 	if schemaHDFSConfigV1 != nil {
 		return schemaHDFSConfigV1
 	}
@@ -2579,7 +2707,7 @@ func parsedHDFSConfigV1() interface{} {
 	return schemaHDFSConfigV1
 }
 
-func parsedCategoricalHyperparameterV1() interface{} {
+func ParsedCategoricalHyperparameterV1() interface{} {
 	if schemaCategoricalHyperparameterV1 != nil {
 		return schemaCategoricalHyperparameterV1
 	}
@@ -2590,7 +2718,7 @@ func parsedCategoricalHyperparameterV1() interface{} {
 	return schemaCategoricalHyperparameterV1
 }
 
-func parsedConstHyperparameterV1() interface{} {
+func ParsedConstHyperparameterV1() interface{} {
 	if schemaConstHyperparameterV1 != nil {
 		return schemaConstHyperparameterV1
 	}
@@ -2601,7 +2729,7 @@ func parsedConstHyperparameterV1() interface{} {
 	return schemaConstHyperparameterV1
 }
 
-func parsedDoubleHyperparameterV1() interface{} {
+func ParsedDoubleHyperparameterV1() interface{} {
 	if schemaDoubleHyperparameterV1 != nil {
 		return schemaDoubleHyperparameterV1
 	}
@@ -2612,7 +2740,7 @@ func parsedDoubleHyperparameterV1() interface{} {
 	return schemaDoubleHyperparameterV1
 }
 
-func parsedIntHyperparameterV1() interface{} {
+func ParsedIntHyperparameterV1() interface{} {
 	if schemaIntHyperparameterV1 != nil {
 		return schemaIntHyperparameterV1
 	}
@@ -2623,7 +2751,7 @@ func parsedIntHyperparameterV1() interface{} {
 	return schemaIntHyperparameterV1
 }
 
-func parsedLogHyperparameterV1() interface{} {
+func ParsedLogHyperparameterV1() interface{} {
 	if schemaLogHyperparameterV1 != nil {
 		return schemaLogHyperparameterV1
 	}
@@ -2634,7 +2762,7 @@ func parsedLogHyperparameterV1() interface{} {
 	return schemaLogHyperparameterV1
 }
 
-func parsedHyperparameterV1() interface{} {
+func ParsedHyperparameterV1() interface{} {
 	if schemaHyperparameterV1 != nil {
 		return schemaHyperparameterV1
 	}
@@ -2645,7 +2773,7 @@ func parsedHyperparameterV1() interface{} {
 	return schemaHyperparameterV1
 }
 
-func parsedInternalConfigV1() interface{} {
+func ParsedInternalConfigV1() interface{} {
 	if schemaInternalConfigV1 != nil {
 		return schemaInternalConfigV1
 	}
@@ -2656,7 +2784,7 @@ func parsedInternalConfigV1() interface{} {
 	return schemaInternalConfigV1
 }
 
-func parsedLengthV1() interface{} {
+func ParsedLengthV1() interface{} {
 	if schemaLengthV1 != nil {
 		return schemaLengthV1
 	}
@@ -2667,7 +2795,7 @@ func parsedLengthV1() interface{} {
 	return schemaLengthV1
 }
 
-func parsedOptimizationsConfigV1() interface{} {
+func ParsedOptimizationsConfigV1() interface{} {
 	if schemaOptimizationsConfigV1 != nil {
 		return schemaOptimizationsConfigV1
 	}
@@ -2678,7 +2806,7 @@ func parsedOptimizationsConfigV1() interface{} {
 	return schemaOptimizationsConfigV1
 }
 
-func parsedResourcesConfigV1() interface{} {
+func ParsedResourcesConfigV1() interface{} {
 	if schemaResourcesConfigV1 != nil {
 		return schemaResourcesConfigV1
 	}
@@ -2689,7 +2817,7 @@ func parsedResourcesConfigV1() interface{} {
 	return schemaResourcesConfigV1
 }
 
-func parsedS3ConfigV1() interface{} {
+func ParsedS3ConfigV1() interface{} {
 	if schemaS3ConfigV1 != nil {
 		return schemaS3ConfigV1
 	}
@@ -2700,7 +2828,7 @@ func parsedS3ConfigV1() interface{} {
 	return schemaS3ConfigV1
 }
 
-func parsedAdaptiveASHASearcherConfigV1() interface{} {
+func ParsedAdaptiveASHASearcherConfigV1() interface{} {
 	if schemaAdaptiveASHASearcherConfigV1 != nil {
 		return schemaAdaptiveASHASearcherConfigV1
 	}
@@ -2711,7 +2839,7 @@ func parsedAdaptiveASHASearcherConfigV1() interface{} {
 	return schemaAdaptiveASHASearcherConfigV1
 }
 
-func parsedAdaptiveSimpleSearcherConfigV1() interface{} {
+func ParsedAdaptiveSimpleSearcherConfigV1() interface{} {
 	if schemaAdaptiveSimpleSearcherConfigV1 != nil {
 		return schemaAdaptiveSimpleSearcherConfigV1
 	}
@@ -2722,7 +2850,7 @@ func parsedAdaptiveSimpleSearcherConfigV1() interface{} {
 	return schemaAdaptiveSimpleSearcherConfigV1
 }
 
-func parsedAdaptiveSearcherConfigV1() interface{} {
+func ParsedAdaptiveSearcherConfigV1() interface{} {
 	if schemaAdaptiveSearcherConfigV1 != nil {
 		return schemaAdaptiveSearcherConfigV1
 	}
@@ -2733,7 +2861,7 @@ func parsedAdaptiveSearcherConfigV1() interface{} {
 	return schemaAdaptiveSearcherConfigV1
 }
 
-func parsedAsyncHalvingSearcherConfigV1() interface{} {
+func ParsedAsyncHalvingSearcherConfigV1() interface{} {
 	if schemaAsyncHalvingSearcherConfigV1 != nil {
 		return schemaAsyncHalvingSearcherConfigV1
 	}
@@ -2744,7 +2872,7 @@ func parsedAsyncHalvingSearcherConfigV1() interface{} {
 	return schemaAsyncHalvingSearcherConfigV1
 }
 
-func parsedGridSearcherConfigV1() interface{} {
+func ParsedGridSearcherConfigV1() interface{} {
 	if schemaGridSearcherConfigV1 != nil {
 		return schemaGridSearcherConfigV1
 	}
@@ -2755,7 +2883,7 @@ func parsedGridSearcherConfigV1() interface{} {
 	return schemaGridSearcherConfigV1
 }
 
-func parsedPBTSearcherConfigV1() interface{} {
+func ParsedPBTSearcherConfigV1() interface{} {
 	if schemaPBTSearcherConfigV1 != nil {
 		return schemaPBTSearcherConfigV1
 	}
@@ -2766,7 +2894,7 @@ func parsedPBTSearcherConfigV1() interface{} {
 	return schemaPBTSearcherConfigV1
 }
 
-func parsedRandomSearcherConfigV1() interface{} {
+func ParsedRandomSearcherConfigV1() interface{} {
 	if schemaRandomSearcherConfigV1 != nil {
 		return schemaRandomSearcherConfigV1
 	}
@@ -2777,7 +2905,7 @@ func parsedRandomSearcherConfigV1() interface{} {
 	return schemaRandomSearcherConfigV1
 }
 
-func parsedSingleSearcherConfigV1() interface{} {
+func ParsedSingleSearcherConfigV1() interface{} {
 	if schemaSingleSearcherConfigV1 != nil {
 		return schemaSingleSearcherConfigV1
 	}
@@ -2788,7 +2916,7 @@ func parsedSingleSearcherConfigV1() interface{} {
 	return schemaSingleSearcherConfigV1
 }
 
-func parsedSyncHalvingSearcherConfigV1() interface{} {
+func ParsedSyncHalvingSearcherConfigV1() interface{} {
 	if schemaSyncHalvingSearcherConfigV1 != nil {
 		return schemaSyncHalvingSearcherConfigV1
 	}
@@ -2799,7 +2927,7 @@ func parsedSyncHalvingSearcherConfigV1() interface{} {
 	return schemaSyncHalvingSearcherConfigV1
 }
 
-func parsedSearcherConfigV1() interface{} {
+func ParsedSearcherConfigV1() interface{} {
 	if schemaSearcherConfigV1 != nil {
 		return schemaSearcherConfigV1
 	}
@@ -2810,7 +2938,7 @@ func parsedSearcherConfigV1() interface{} {
 	return schemaSearcherConfigV1
 }
 
-func parsedSharedFSConfigV1() interface{} {
+func ParsedSharedFSConfigV1() interface{} {
 	if schemaSharedFSConfigV1 != nil {
 		return schemaSharedFSConfigV1
 	}
@@ -2819,6 +2947,61 @@ func parsedSharedFSConfigV1() interface{} {
 		panic("invalid embedded json for SharedFSConfigV1")
 	}
 	return schemaSharedFSConfigV1
+}
+
+func ParsedTestRootV1() interface{} {
+	if schemaTestRootV1 != nil {
+		return schemaTestRootV1
+	}
+	err := json.Unmarshal(textTestRootV1, &schemaTestRootV1)
+	if err != nil {
+		panic("invalid embedded json for TestRootV1")
+	}
+	return schemaTestRootV1
+}
+
+func ParsedTestSubV1() interface{} {
+	if schemaTestSubV1 != nil {
+		return schemaTestSubV1
+	}
+	err := json.Unmarshal(textTestSubV1, &schemaTestSubV1)
+	if err != nil {
+		panic("invalid embedded json for TestSubV1")
+	}
+	return schemaTestSubV1
+}
+
+func ParsedTestUnionAV1() interface{} {
+	if schemaTestUnionAV1 != nil {
+		return schemaTestUnionAV1
+	}
+	err := json.Unmarshal(textTestUnionAV1, &schemaTestUnionAV1)
+	if err != nil {
+		panic("invalid embedded json for TestUnionAV1")
+	}
+	return schemaTestUnionAV1
+}
+
+func ParsedTestUnionBV1() interface{} {
+	if schemaTestUnionBV1 != nil {
+		return schemaTestUnionBV1
+	}
+	err := json.Unmarshal(textTestUnionBV1, &schemaTestUnionBV1)
+	if err != nil {
+		panic("invalid embedded json for TestUnionBV1")
+	}
+	return schemaTestUnionBV1
+}
+
+func ParsedTestUnionV1() interface{} {
+	if schemaTestUnionV1 != nil {
+		return schemaTestUnionV1
+	}
+	err := json.Unmarshal(textTestUnionV1, &schemaTestUnionV1)
+	if err != nil {
+		panic("invalid embedded json for TestUnionV1")
+	}
+	return schemaTestUnionV1
 }
 
 func schemaBytesMap() map[string][]byte {
@@ -2905,91 +3088,15 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textSearcherConfigV1
 	url = "http://determined.ai/schemas/expconf/v1/shared-fs.json"
 	cachedSchemaBytesMap[url] = textSharedFSConfigV1
+	url = "http://determined.ai/schemas/expconf/v1/test-root.json"
+	cachedSchemaBytesMap[url] = textTestRootV1
+	url = "http://determined.ai/schemas/expconf/v1/test-sub.json"
+	cachedSchemaBytesMap[url] = textTestSubV1
+	url = "http://determined.ai/schemas/expconf/v1/test-union-a.json"
+	cachedSchemaBytesMap[url] = textTestUnionAV1
+	url = "http://determined.ai/schemas/expconf/v1/test-union-b.json"
+	cachedSchemaBytesMap[url] = textTestUnionBV1
+	url = "http://determined.ai/schemas/expconf/v1/test-union.json"
+	cachedSchemaBytesMap[url] = textTestUnionV1
 	return cachedSchemaBytesMap
-}
-func schemaMap() map[string]interface{} {
-	if cachedSchemaMap != nil {
-		return cachedSchemaMap
-	}
-	var url string
-	cachedSchemaMap = map[string]interface{}{}
-	url = "http://determined.ai/schemas/expconf/v1/bind-mount.json"
-	cachedSchemaMap[url] = parsedBindMountV1()
-	url = "http://determined.ai/schemas/expconf/v1/check-data-layer-cache.json"
-	cachedSchemaMap[url] = parsedCheckDataLayerCacheV1()
-	url = "http://determined.ai/schemas/expconf/v1/check-epoch-not-used.json"
-	cachedSchemaMap[url] = parsedCheckEpochNotUsedV1()
-	url = "http://determined.ai/schemas/expconf/v1/check-global-batch-size.json"
-	cachedSchemaMap[url] = parsedCheckGlobalBatchSizeV1()
-	url = "http://determined.ai/schemas/expconf/v1/check-grid-hyperparameter.json"
-	cachedSchemaMap[url] = parsedCheckGridHyperparameterV1()
-	url = "http://determined.ai/schemas/expconf/v1/check-positive-length.json"
-	cachedSchemaMap[url] = parsedCheckPositiveLengthV1()
-	url = "http://determined.ai/schemas/expconf/v1/checkpoint-storage.json"
-	cachedSchemaMap[url] = parsedCheckpointStorageConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/data-layer-gcs.json"
-	cachedSchemaMap[url] = parsedDataLayerGCSConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/data-layer-s3.json"
-	cachedSchemaMap[url] = parsedDataLayerS3ConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/data-layer-shared-fs.json"
-	cachedSchemaMap[url] = parsedDataLayerSharedFSConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/data-layer.json"
-	cachedSchemaMap[url] = parsedDataLayerConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/environment-image.json"
-	cachedSchemaMap[url] = parsedEnvironmentImageV1()
-	url = "http://determined.ai/schemas/expconf/v1/environment-variables.json"
-	cachedSchemaMap[url] = parsedEnvironmentVariablesV1()
-	url = "http://determined.ai/schemas/expconf/v1/environment.json"
-	cachedSchemaMap[url] = parsedEnvironmentConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/experiment.json"
-	cachedSchemaMap[url] = parsedExperimentConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/gcs.json"
-	cachedSchemaMap[url] = parsedGCSConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/hdfs.json"
-	cachedSchemaMap[url] = parsedHDFSConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/hyperparameter-categorical.json"
-	cachedSchemaMap[url] = parsedCategoricalHyperparameterV1()
-	url = "http://determined.ai/schemas/expconf/v1/hyperparameter-const.json"
-	cachedSchemaMap[url] = parsedConstHyperparameterV1()
-	url = "http://determined.ai/schemas/expconf/v1/hyperparameter-double.json"
-	cachedSchemaMap[url] = parsedDoubleHyperparameterV1()
-	url = "http://determined.ai/schemas/expconf/v1/hyperparameter-int.json"
-	cachedSchemaMap[url] = parsedIntHyperparameterV1()
-	url = "http://determined.ai/schemas/expconf/v1/hyperparameter-log.json"
-	cachedSchemaMap[url] = parsedLogHyperparameterV1()
-	url = "http://determined.ai/schemas/expconf/v1/hyperparameter.json"
-	cachedSchemaMap[url] = parsedHyperparameterV1()
-	url = "http://determined.ai/schemas/expconf/v1/internal.json"
-	cachedSchemaMap[url] = parsedInternalConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/length.json"
-	cachedSchemaMap[url] = parsedLengthV1()
-	url = "http://determined.ai/schemas/expconf/v1/optimizations.json"
-	cachedSchemaMap[url] = parsedOptimizationsConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/resources.json"
-	cachedSchemaMap[url] = parsedResourcesConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/s3.json"
-	cachedSchemaMap[url] = parsedS3ConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-adaptive-asha.json"
-	cachedSchemaMap[url] = parsedAdaptiveASHASearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-adaptive-simple.json"
-	cachedSchemaMap[url] = parsedAdaptiveSimpleSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-adaptive.json"
-	cachedSchemaMap[url] = parsedAdaptiveSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-async-halving.json"
-	cachedSchemaMap[url] = parsedAsyncHalvingSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-grid.json"
-	cachedSchemaMap[url] = parsedGridSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-pbt.json"
-	cachedSchemaMap[url] = parsedPBTSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-random.json"
-	cachedSchemaMap[url] = parsedRandomSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-single.json"
-	cachedSchemaMap[url] = parsedSingleSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher-sync-halving.json"
-	cachedSchemaMap[url] = parsedSyncHalvingSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/searcher.json"
-	cachedSchemaMap[url] = parsedSearcherConfigV1()
-	url = "http://determined.ai/schemas/expconf/v1/shared-fs.json"
-	cachedSchemaMap[url] = parsedSharedFSConfigV1()
-	return cachedSchemaMap
 }

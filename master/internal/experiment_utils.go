@@ -61,11 +61,11 @@ func checkpointFromCheckpointMetrics(metrics workload.CheckpointMetrics) model.C
 func saveWorkload(db *db.PgDB, w workload.Workload) error {
 	switch w.Kind {
 	case workload.RunStep:
-		return db.AddStep(model.NewStep(w.TrialID, w.StepID, w.NumBatches, w.TotalBatchesProcessed))
+		return db.AddStep(model.NewStep(w.TrialID, w.StepID, w.NumBatches, w.PriorBatchesProcessed))
 	case workload.CheckpointModel:
-		return db.AddCheckpoint(model.NewCheckpoint(w.TrialID, w.StepID))
+		return db.AddCheckpoint(model.NewCheckpoint(w.TrialID, w.TotalBatches()))
 	case workload.ComputeValidationMetrics:
-		return db.AddValidation(model.NewValidation(w.TrialID, w.StepID))
+		return db.AddValidation(model.NewValidation(w.TrialID, w.TotalBatches()))
 	default:
 		return errors.Errorf("unexpected workload in saveWorkload: %v", w)
 	}
@@ -74,11 +74,11 @@ func saveWorkload(db *db.PgDB, w workload.Workload) error {
 func markWorkloadErrored(db *db.PgDB, w workload.Workload) error {
 	switch w.Kind {
 	case workload.RunStep:
-		return db.UpdateStep(w.TrialID, w.StepID, model.ErrorState, nil)
+		return db.UpdateStep(w.TrialID, w.TotalBatches(), model.ErrorState, nil)
 	case workload.CheckpointModel:
-		return db.UpdateCheckpoint(w.TrialID, w.StepID, model.Checkpoint{State: model.ErrorState})
+		return db.UpdateCheckpoint(w.TrialID, w.TotalBatches(), model.Checkpoint{State: model.ErrorState})
 	case workload.ComputeValidationMetrics:
-		return db.UpdateValidation(w.TrialID, w.StepID, model.ErrorState, nil)
+		return db.UpdateValidation(w.TrialID, w.TotalBatches(), model.ErrorState, nil)
 	default:
 		return errors.Errorf("unexpected workload in markWorkloadErrored: %v", w)
 	}
@@ -88,18 +88,18 @@ func markWorkloadCompleted(db *db.PgDB, msg workload.CompletedMessage) error {
 	switch msg.Workload.Kind {
 	case workload.RunStep:
 		return db.UpdateStep(
-			msg.Workload.TrialID, msg.Workload.StepID, model.CompletedState, msg.RunMetrics)
+			msg.Workload.TrialID, msg.Workload.TotalBatches(), model.CompletedState, msg.RunMetrics)
 	case workload.CheckpointModel:
 		checkpoint := checkpointFromCheckpointMetrics(*msg.CheckpointMetrics)
 		checkpoint.State = model.CompletedState
 		return db.UpdateCheckpoint(
-			msg.Workload.TrialID, msg.Workload.StepID, checkpoint)
+			msg.Workload.TrialID, msg.Workload.TotalBatches(), checkpoint)
 	case workload.ComputeValidationMetrics:
 		metrics := make(model.JSONObj)
 		metrics["num_inputs"] = msg.ValidationMetrics.NumInputs
 		metrics["validation_metrics"] = msg.ValidationMetrics.Metrics
 		return db.UpdateValidation(
-			msg.Workload.TrialID, msg.Workload.StepID, model.CompletedState, metrics)
+			msg.Workload.TrialID, msg.Workload.TotalBatches(), model.CompletedState, metrics)
 	default:
 		return errors.Errorf("unexpected workload in markWorkloadCompleted: %v", msg.Workload)
 	}

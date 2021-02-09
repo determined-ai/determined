@@ -98,7 +98,7 @@ SELECT
   max(v.end_time) AS end_time
 FROM trials t
 INNER JOIN steps s ON t.id=s.trial_id
-LEFT OUTER JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+LEFT OUTER JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
 WHERE t.experiment_id=$1
   AND v.end_time > $2
 GROUP BY name;`, &rows, experimentID, vStartTime)
@@ -127,7 +127,7 @@ func (db *PgDB) TrainingMetricBatches(experimentID int, metricName string, start
 	batches []int32, endTime time.Time, err error) {
 	var rows []*batchesWrapper
 	err = db.queryRows(`
-SELECT (s.prior_batches_processed + num_batches) AS batches_processed,
+SELECT s.total_batches AS batches_processed,
   max(s.end_time) as end_time
 FROM trials t INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.experiment_id=$1
@@ -154,10 +154,10 @@ func (db *PgDB) ValidationMetricBatches(experimentID int, metricName string, sta
 	batches []int32, endTime time.Time, err error) {
 	var rows []*batchesWrapper
 	err = db.queryRows(`
-SELECT (s.prior_batches_processed + num_batches) AS batches_processed,
+SELECT s.total_batches AS batches_processed,
   max(v.end_time) as end_time
 FROM trials t INNER JOIN steps s ON t.id=s.trial_id
-  LEFT OUTER JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+  LEFT OUTER JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
 WHERE t.experiment_id=$1
   AND v.state = 'COMPLETED'
   AND v.metrics->'validation_metrics' ? $2
@@ -212,7 +212,7 @@ SELECT
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.experiment_id=$2
-  AND (s.prior_batches_processed + num_batches)=$3
+  AND s.total_batches=$3
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
   AND s.end_time > $4
 ORDER BY s.end_time;`, &rows, metricName, experimentID, batchesProcessed, startTime)
@@ -249,9 +249,9 @@ SELECT
   v.end_time AS end_time
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
-  LEFT OUTER JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+  LEFT OUTER JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
 WHERE t.experiment_id=$2
-  AND (s.prior_batches_processed + num_batches)=$3
+  AND s.total_batches=$3
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
   AND v.end_time > $4
 ORDER BY v.end_time;`, &rows, metricName, experimentID, batchesProcessed, startTime)
@@ -291,7 +291,7 @@ SELECT t.id FROM (
     %s((v.metrics->'validation_metrics'->$1)::text::numeric) as best_metric
   FROM trials t
     INNER JOIN steps s ON t.id=s.trial_id
-    RIGHT JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+    RIGHT JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
   WHERE t.experiment_id=$2
     AND v.state = 'COMPLETED'
   GROUP BY t.id
@@ -319,7 +319,7 @@ SELECT t.id FROM (
     %s((v.metrics->'validation_metrics'->$1)::text::numeric) as best_metric
   FROM trials t
     INNER JOIN steps s ON t.id=s.trial_id
-    RIGHT JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+    RIGHT JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
   WHERE t.experiment_id=$2
     AND v.state = 'COMPLETED'
   GROUP BY t.id
@@ -387,7 +387,7 @@ SELECT
   v.end_time as end_time
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
-  LEFT OUTER JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+  LEFT OUTER JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
 WHERE t.id=$2
   AND v.state = 'COMPLETED'
   AND (prior_batches_processed + num_batches) >= $3
@@ -431,22 +431,22 @@ func (db *PgDB) FetchHPImportanceTrainingData(experimentID int, metric string) (
 SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
-  (s.prior_batches_processed + s.num_batches) AS batches,
+  s.total_batches AS batches,
   s.metrics->'avg_metrics'->$1 AS metric
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
   INNER JOIN (
     SELECT
       t.id as trial_id,
-	  s.id AS step_id,
-	  max(s.prior_batches_processed + s.num_batches) AS batches
+	  s.total_batches AS total_batches,
+	  max(s.total_batches) AS batches
     FROM trials t
   	INNER JOIN steps s ON t.id=s.trial_id
     WHERE t.experiment_id=$2
 	  AND s.state = 'COMPLETED'
     GROUP BY t.id, s.id
   ) filter
-	ON s.id = filter.step_id
+	ON s.total_batches = filter.total_batches
 	AND t.id = filter.trial_id`, &rows, metric, experimentID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get training metrics for hyperparameter importance")
@@ -473,24 +473,24 @@ func (db *PgDB) FetchHPImportanceValidationData(experimentID int, metric string)
 SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
-  (s.prior_batches_processed + s.num_batches) AS batches,
+  s.total_batches AS batches,
   v.metrics->'validation_metrics'->$1 as metric
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
-  RIGHT JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+  RIGHT JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
   INNER JOIN (
     SELECT
       t.id as trial_id,
-      s.id AS step_id,
-      max(s.prior_batches_processed + s.num_batches) AS batches
+      s.total_batches AS total_batches,
+      max(s.total_batches) AS batches
     FROM trials t
       INNER JOIN steps s ON t.id=s.trial_id
-      RIGHT JOIN validations v ON s.id=v.step_id AND s.trial_id=v.trial_id
+      RIGHT JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
     WHERE t.experiment_id=$2
       AND v.state = 'COMPLETED'
     GROUP BY t.id, s.id
   ) filter
-	ON s.id = filter.step_id
+	ON s.total_batches = filter.total_batches
 	AND t.id = filter.trial_id`, &rows, metric, experimentID)
 	if err != nil {
 		return nil, errors.Wrapf(err,
