@@ -1,0 +1,92 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/environment.json",
+    "title": "EnvironmentConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "image": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v0/environment-image.json",
+            "default": null
+        },
+        "environment_variables": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v0/environment-variables.json",
+            "default": []
+        },
+        "ports": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "additionalProperties": {
+                "type": "integer"
+            },
+            "default": {}
+        },
+        "force_pull_image": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "pod_spec": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "disallowProperties": {
+                "name": "pod Name is not a configurable option",
+                "name_space": "pod NameSpace is not a configurable option"
+            },
+            "properties": {
+                "spec": {
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "default": null,
+                    "properties": {
+                        "containers": {
+                            "type": [
+                                "array",
+                                "null"
+                            ],
+                            "default": null,
+                            "items": {
+                                "type": "object",
+                                "disallowProperties": {
+                                    "image": "container Image is not configurable, set it in the experiment config",
+                                    "command": "container Command is not configurable",
+                                    "args": "container Args are not configurable",
+                                    "working_dir": "container WorkingDir is not configurable",
+                                    "ports": "container Ports are not configurable",
+                                    "env_from": "container EnvFrom is not configurable",
+                                    "env": "container Env is not configurable, set it in the experiment config",
+                                    "liveness_probe": "container LivenessProbe is not configurable",
+                                    "readiness_probe": "container ReadinessProbe is not configurable",
+                                    "startup_probe": "container StartupProbe is not configurable",
+                                    "lifecycle": "container Lifecycle is not configurable",
+                                    "termination_message_path": "container TerminationMessagePath is not configurable",
+                                    "termination_message_policy": "container TerminationMessagePolicy is not configurable",
+                                    "image_pull_policy": "container ImagePullPolicy is not configurable, set it in the experiment config",
+                                    "security_context": "container SecurityContext is not configurable, set it in the experiment config"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

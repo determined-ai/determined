@@ -1,0 +1,57 @@
+- name: root minimal (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/test-root.json
+  case:
+    val_x: 1
+  defaulted:
+    val_x: 1
+    sub_obj:
+      val_y: default_y
+    sub_union: null
+    runtime_defaultable: "*"
+
+- name: root full (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/test-root.json
+  case:
+    val_x: 1
+    sub_obj:
+      val_y: val_y
+    sub_union:
+      type: a
+      val_a: 1
+      common_val: common_val
+    runtime_defaultable: 777
+  defaulted:
+    val_x: 1
+    sub_obj:
+      val_y: val_y
+    sub_union:
+      type: a
+      val_a: 1
+      common_val: common_val
+    runtime_defaultable: 777
+
+- name: union unmarshal (valid, type=a)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/test-union.json
+    - http://determined.ai/schemas/expconf/v0/test-union-a.json
+  case:
+    type: a
+    val_a: 1
+  defaulted:
+    type: a
+    val_a: 1
+    common_val: default-common-val
+
+- name: union unmarshal (valid, type=b)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/test-union.json
+    - http://determined.ai/schemas/expconf/v0/test-union-b.json
+  case:
+    type: b
+    val_b: 2
+  defaulted:
+    type: b
+    val_b: 2
+    common_val: default-common-val
