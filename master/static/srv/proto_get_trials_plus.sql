@@ -20,7 +20,7 @@ WITH searcher_info AS (
 ),
 trial_validations AS (
   SELECT v.trial_id,
-    v.step_id,
+    v.total_batches,
     v.start_time,
     v.end_time,
     v.state,
@@ -54,7 +54,7 @@ best_validation AS (
         ) AS rank
       FROM trial_validations v
     ) v
-    JOIN steps s ON v.step_id = s.id
+    JOIN steps s ON v.total_batches = s.total_batches
     AND v.trial_id = s.trial_id
     JOIN searcher_info ON searcher_info.trial_id = v.trial_id
   WHERE v.rank = 1
@@ -76,7 +76,7 @@ latest_validation AS (
         ) AS rank
       FROM trial_validations v
     ) v
-    JOIN steps s ON v.step_id = s.id
+    JOIN steps s ON v.total_batches = s.total_batches
     AND v.trial_id = s.trial_id
     JOIN searcher_info ON searcher_info.trial_id = v.trial_id
   WHERE v.rank = 1
@@ -98,12 +98,12 @@ best_checkpoint AS (
         ) AS rank
       FROM trial_validations v
         INNER JOIN checkpoints c ON (
-          c.step_id = v.step_id
+          c.total_batches = v.total_batches
           AND c.trial_id = v.trial_id
         )
       WHERE c.state = 'COMPLETED'
     ) c
-    JOIN steps s ON c.step_id = s.id
+    JOIN steps s ON c.total_batches = s.total_batches
     AND c.trial_id = s.trial_id
   WHERE c.rank = 1
 )
@@ -117,11 +117,11 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
   t.end_time,
   t.hparams,
   (
-    SELECT s.prior_batches_processed + s.num_batches
+    SELECT s.total_batches
     FROM steps s
     WHERE s.trial_id = t.id
       AND s.state = 'COMPLETED'
-    ORDER BY s.id DESC
+    ORDER BY s.total_batches DESC
     LIMIT 1
   ) AS total_batches_processed
 FROM searcher_info

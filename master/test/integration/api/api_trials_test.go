@@ -107,13 +107,16 @@ func trialDetailAPITests(
 
 			step := testutils.StepModel(trial.ID)
 			step.ID = id
+			step.NumBatches = experiment.Config.SchedulingUnit
+			step.PriorBatchesProcessed = (id - 1) * experiment.Config.SchedulingUnit
+			step.TotalBatches = id * experiment.Config.SchedulingUnit
 			err = db.AddStep(step)
 			assert.NilError(t, err, "failed to insert step")
 
 			metrics := map[string]interface{}{
 				"avg_metrics": tc.metrics,
 			}
-			err = db.UpdateStep(trial.ID, step.ID, model.CompletedState, metrics)
+			err = db.UpdateStep(trial.ID, step.TotalBatches, model.CompletedState, metrics)
 			assert.NilError(t, err, "failed to update step")
 
 			ctx, _ := context.WithTimeout(creds, 10*time.Second)

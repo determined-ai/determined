@@ -222,7 +222,7 @@ FROM (
                        (SELECT v.metrics
                         FROM validations v
                         WHERE v.trial_id = t.id AND v.state = 'COMPLETED'
-                        ORDER BY v.step_id DESC
+                        ORDER BY v.total_batches DESC
                         LIMIT 1
                        ) AS latest_validation_metrics,
                        (SELECT count(*)
@@ -239,12 +239,12 @@ FROM (
                        ) AS best_validation_metric,
                        (SELECT row_to_json(bc)
                         FROM (
-                            SELECT c.id, c.uuid, c.trial_id, c.step_id, c.state,
+                            SELECT c.id, c.uuid, c.trial_id, c.total_batches, c.state,
                                    c.start_time, c.end_time, c.resources, c.metadata,
                                    (v.metrics->'validation_metrics'
                                              ->>const.metric_name)::float8 AS validation_metric
                             FROM checkpoints c LEFT JOIN validations v
-                            ON c.trial_id = v.trial_id AND c.step_id = v.step_id, const
+                            ON c.trial_id = v.trial_id AND c.total_batches = v.total_batches, const
                             WHERE c.trial_id = t.id
                               AND c.state = 'COMPLETED'
                               AND v.state = 'COMPLETED'
@@ -363,16 +363,16 @@ FROM (
                      (SELECT row_to_json(c)
                       FROM (
                           SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
-                                 c.step_id, c.trial_id, c.uuid
+                                 c.total_batches, c.trial_id, c.uuid
                           FROM checkpoints c
-                          WHERE c.trial_id = t.id AND c.step_id = s.id
+                          WHERE c.trial_id = t.id AND c.total_batches = s.total_batches
                       ) c) AS checkpoint,
                      (SELECT row_to_json(v)
                       FROM (
-                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state, v.step_id,
-                                 v.trial_id
+                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state, 
+                                 v.total_batches, v.trial_id
                           FROM validations v
-                          WHERE v.trial_id = t.id AND v.step_id = s.id
+                          WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
                       ) v) AS validation
                      FROM steps s
                      WHERE s.trial_id = t.id
@@ -437,8 +437,8 @@ FROM (
                 -- We can't use a computed column in a WHERE clause for the same query, which we
                 -- would like to do here with the "steps" column, so do this subquery.
                 SELECT * FROM (
-                    SELECT c.id, c.trial_id, c.step_id, c.state, c.start_time, c.end_time, c.uuid,
-                           c.resources, c.metadata,
+                    SELECT c.id, c.trial_id, c.total_batches, c.state, c.start_time, c.end_time,
+                           c.uuid, c.resources, c.metadata,
                            (SELECT row_to_json(s)
                             FROM (
                                 SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
@@ -446,13 +446,14 @@ FROM (
                                     (SELECT row_to_json(v)
                                     FROM (
                                         SELECT v.end_time, v.id, v.metrics, v.start_time,
-                                            v.state, v.step_id, v.trial_id
+                                            v.state, v.total_batches, v.trial_id
                                         FROM validations v
-                                        WHERE v.trial_id = s.trial_id AND v.step_id = s.id
+                                        WHERE v.trial_id = s.trial_id
+                                              AND v.total_batches = s.total_batches
                                     ) v
                                     ) AS validation
                                 FROM steps s
-                                WHERE s.id = c.step_id AND s.trial_id = c.trial_id
+                                WHERE s.total_batches = c.total_batches AND s.trial_id = c.trial_id
                             ) s
                            ) AS step
                     FROM checkpoints c, trials t, const
@@ -536,20 +537,20 @@ FROM (
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
                      SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
-                     s.prior_batches_processed,
+                     s.prior_batches_processed, s.total_batches,
                      (SELECT row_to_json(c)
                       FROM (
                           SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
-                                 c.step_id, c.trial_id, c.uuid
+                                 c.total_batches, c.trial_id, c.uuid
                           FROM checkpoints c
-                          WHERE c.trial_id = t.id AND c.step_id = s.id
+                          WHERE c.trial_id = t.id AND c.total_batches = s.total_batches
                       ) c) AS checkpoint,
                      (SELECT row_to_json(v)
                       FROM (
-                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state, v.step_id,
-                                 v.trial_id
+                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state, 
+                                 v.total_batches, v.trial_id
                           FROM validations v
-                          WHERE v.trial_id = t.id AND v.step_id = s.id
+                          WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
                       ) v) AS validation
                      FROM steps s
                      WHERE s.trial_id = t.id
@@ -1055,10 +1056,10 @@ WITH const AS (
                ) AS trial_rank,
                rank() OVER (
                    PARTITION BY trial_id
-                   ORDER BY step_id DESC
+                   ORDER BY total_batches DESC
                ) AS trial_order_rank
         FROM (
-            SELECT c.id, c.trial_id, c.step_id, c.state, c.start_time, c.end_time, c.uuid,
+            SELECT c.id, c.trial_id, c.total_batches, c.state, c.start_time, c.end_time, c.uuid,
                    c.resources, c.metadata,
                    (SELECT row_to_json(s)
                     FROM (
@@ -1067,13 +1068,13 @@ WITH const AS (
                             (SELECT row_to_json(v)
                             FROM (
                                 SELECT v.end_time, v.id, v.metrics, v.start_time,
-                                    v.state, v.step_id, v.trial_id
+                                    v.state, v.total_batches, v.trial_id
                                     FROM validations v
-                                    WHERE v.trial_id = t.id AND v.step_id = s.id
+                                    WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
                                 ) v
                                ) AS validation
                         FROM steps s
-                        WHERE s.id = c.step_id AND s.trial_id = c.trial_id
+                        WHERE s.total_batches = c.total_batches AND s.trial_id = c.trial_id
                     ) s
                    ) AS step,
                    -- We later filter out any checkpoints with any corresponding warm start
@@ -1196,30 +1197,30 @@ WHERE id = :id`, setClause(toUpdate)), trial)
 }
 
 // RollBackTrial deletes from the database all steps, checkpoints, and validations for the trial
-// that correspond to steps past lastStep.
-func (db *PgDB) RollBackTrial(id int, lastStep int) error {
+// that happened after the batch provided.
+func (db *PgDB) RollBackTrial(id, totalBatches int) error {
 	// This delete cascades to checkpoints and validations.
 	_, err := db.sql.Exec(`
 DELETE FROM steps
-WHERE trial_id = $1 AND id > $2
-`, id, lastStep)
+WHERE trial_id = $1 AND total_batches > $2
+`, id, totalBatches)
 	if err != nil {
-		return errors.Wrapf(err, "error rolling back trial %v to step %v", id, lastStep)
+		return errors.Wrapf(err, "error rolling back trial %v to batch %v", id, totalBatches)
 	}
 
 	// This explicitly deletes any unfinished validations for the current step. These can occur
 	// any time we checkpoint before we validate.
 	_, err = db.sql.Exec(`
 DELETE FROM validations
-WHERE trial_id = $1 AND step_id = $2 AND state != 'COMPLETED'
-`, id, lastStep)
+WHERE trial_id = $1 AND total_batches = $2 AND state != 'COMPLETED'
+`, id, totalBatches)
 	if err != nil {
-		return errors.Wrapf(err, "error rolling back vals for trial %v on step %v", id, lastStep)
+		return errors.Wrapf(err, "error rolling back vals for trial %v on batch %v", id, totalBatches)
 	}
 
 	err = db.SetTrialBestValidation(id)
 	if err != nil {
-		return errors.Wrapf(err, "error rolling back best val for trial %v on step %v", id, lastStep)
+		return errors.Wrapf(err, "error rolling back best val for trial %v on batch %v", id, totalBatches)
 	}
 	return nil
 }
@@ -1294,18 +1295,19 @@ FROM (
                         FROM (
                             SELECT v.end_time, v.id, v.metrics, v.state, v.start_time
                             FROM validations v
-                            WHERE v.trial_id = t.id AND v.step_id = s.id AND v.metrics IS NOT NULL
+                            WHERE v.trial_id = t.id AND v.total_batches = s.total_batches 
+                                  AND v.metrics IS NOT NULL
                         ) r4
                        ) AS validation,
                        (SELECT row_to_json(r5)
                         FROM (
-                            SELECT c.id, c.trial_id, c.step_id, c.state, c.start_time,
+                            SELECT c.id, c.trial_id, c.total_batches, c.state, c.start_time,
                                    c.end_time, c.uuid, c.resources, c.metadata,
                                    (v.metrics->'validation_metrics'
                                              ->>const.metric_name)::float8 AS validation_metric
                             FROM checkpoints c LEFT JOIN validations v
-                            ON c.trial_id = v.trial_id AND c.step_id = v.step_id, const
-                            WHERE c.trial_id = t.id AND c.step_id = s.id
+                            ON c.trial_id = v.trial_id AND c.total_batches = v.total_batches, const
+                            WHERE c.trial_id = t.id AND c.total_batches = s.total_batches
                        ) r5) AS checkpoint
                 FROM steps s
                 WHERE s.trial_id = t.id
@@ -1379,9 +1381,11 @@ func (db *PgDB) AddStep(step *model.Step) error {
 	}
 	err = db.namedExecOne(`
 INSERT INTO steps
-(trial_id, id, state, start_time, end_time, num_batches, prior_batches_processed)
-VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches, :prior_batches_processed)`,
-		step)
+(trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
+VALUES (
+	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
+	:num_batches, :prior_batches_processed
+)`, step)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting step %v", *step)
 	}
@@ -1403,8 +1407,11 @@ func (db *PgDB) AddNoOpStep(step *model.Step) error {
 	}
 	err = db.namedExecOne(`
 INSERT INTO steps
-(trial_id, id, state, start_time, end_time, num_batches, prior_batches_processed)
-VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches, :prior_batches_processed)`,
+(trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
+VALUES (
+	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
+	:num_batches, :prior_batches_processed
+)`,
 		step)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting step %v", *step)
@@ -1412,14 +1419,17 @@ VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches, :prior_bat
 	return nil
 }
 
-// StepByID looks up a step by (TrialID, StepID) pair, returning an error if none exists.
-func (db *PgDB) StepByID(trialID, stepID int) (*model.Step, error) {
+// StepByTotalBatches looks up a step by (TrialID, TotalBatches) pair,
+// returning an error if none exists.
+func (db *PgDB) StepByTotalBatches(trialID, totalBatches int) (*model.Step, error) {
 	var step model.Step
 	if err := db.query(`
-SELECT trial_id, id, state, start_time, end_time, metrics, num_batches, prior_batches_processed
+SELECT 
+	trial_id, id, total_batches, state, start_time, end_time, metrics, 
+	num_batches, prior_batches_processed
 FROM steps
-WHERE trial_id = $1 AND id = $2`, &step, trialID, stepID); err != nil {
-		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, stepID)
+WHERE trial_id = $1 AND total_batches = $2`, &step, trialID, totalBatches); err != nil {
+		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, totalBatches)
 	}
 	return &step, nil
 }
@@ -1427,19 +1437,19 @@ WHERE trial_id = $1 AND id = $2`, &step, trialID, stepID); err != nil {
 // UpdateStep updates an existing step. Fields that are nil or zero are not
 // updated.  end_time is set if the step moves to a terminal state.
 func (db *PgDB) UpdateStep(
-	trialID, stepID int, newState model.State, metrics model.JSONObj) error {
+	trialID, totalBatches int, newState model.State, metrics model.JSONObj) error {
 	if len(newState) == 0 && len(metrics) == 0 {
 		return nil
 	}
-	step, err := db.StepByID(trialID, stepID)
+	step, err := db.StepByTotalBatches(trialID, totalBatches)
 	if err != nil {
-		return errors.Wrapf(err, "error finding step (%v, %v) to update", trialID, stepID)
+		return errors.Wrapf(err, "error finding step (%v, %v) to update", trialID, totalBatches)
 	}
 	toUpdate := []string{}
 	if len(newState) != 0 {
 		if !model.StepTransitions[step.State][newState] {
 			return errors.Errorf("illegal transition %v -> %v for step (%v, %v)",
-				step.State, newState, step.TrialID, step.ID)
+				step.State, newState, step.TrialID, step.TotalBatches)
 		}
 		step.State = newState
 		toUpdate = append(toUpdate, "state")
@@ -1451,7 +1461,7 @@ func (db *PgDB) UpdateStep(
 	}
 	if len(metrics) != 0 {
 		if len(step.Metrics) != 0 {
-			return errors.Errorf("step (%v, %v) already has metrics", trialID, stepID)
+			return errors.Errorf("step (%v, %v) already has metrics", trialID, totalBatches)
 		}
 		step.Metrics = metrics
 		toUpdate = append(toUpdate, "metrics")
@@ -1463,7 +1473,7 @@ WHERE trial_id = :trial_id
 AND id = :id`, setClause(toUpdate)), step)
 	if err != nil {
 		return errors.Wrapf(err, "error updating (%v) in step (%v, %v)",
-			strings.Join(toUpdate, ", "), step.TrialID, step.ID)
+			strings.Join(toUpdate, ", "), step.TrialID, step.TotalBatches)
 	}
 	return nil
 }
@@ -1480,32 +1490,23 @@ func (db *PgDB) AddValidation(validation *model.Validation) error {
 	if trial.State != model.ActiveState {
 		return errors.Errorf("can't add validation to trial %v with state %v", trial.ID, trial.State)
 	}
-	step, err := db.StepByID(validation.TrialID, validation.StepID)
-	if err != nil {
-		return errors.Wrapf(err,
-			"error finding step (%v, %v) to add validation", validation.TrialID, validation.StepID)
-	}
-	if step.State != model.CompletedState {
-		return errors.Errorf("unexpected state %v for trial %v step %v",
-			step.State, validation.TrialID, validation.StepID)
-	}
 	var count int
 	err = db.namedGet(&count, `
 SELECT COUNT(*)
 FROM validations
 WHERE trial_id = :trial_id
-AND step_id = :step_id`, validation)
+AND total_batches = :total_batches`, validation)
 	if err != nil {
 		return errors.Wrapf(err, "error checking at-most-one validation %v", *validation)
 	}
 	if count > 0 {
-		return errors.Errorf("duplicate validation for trial %v step %v",
-			validation.TrialID, validation.StepID)
+		return errors.Errorf("duplicate validation for trial %v total batch %v",
+			validation.TrialID, validation.TotalBatches)
 	}
 	err = db.namedGet(&validation.ID, `
 INSERT INTO validations
-(trial_id, step_id, state, start_time, end_time)
-VALUES (:trial_id, :step_id, :state, :start_time, :end_time)
+(trial_id, total_batches, state, start_time, end_time)
+VALUES (:trial_id, :total_batches, :state, :start_time, :end_time)
 RETURNING id`, validation)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting validation %v", *validation)
@@ -1513,18 +1514,19 @@ RETURNING id`, validation)
 	return nil
 }
 
-// ValidationByStep looks up a validation by trial and step ID, returning nil if none exists.
-func (db *PgDB) ValidationByStep(trialID, stepID int) (*model.Validation, error) {
+// ValidationByTotalBatches looks up a validation by trial and step ID,
+// returning nil if none exists.
+func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.Validation, error) {
 	var validation model.Validation
 	if err := db.query(`
-SELECT id, trial_id, step_id, state, start_time, end_time, metrics
+SELECT id, trial_id, total_batches, state, start_time, end_time, metrics
 FROM validations
 WHERE trial_id = $1
-AND step_id = $2`, &validation, trialID, stepID); errors.Cause(err) == ErrNotFound {
+AND total_batches = $2`, &validation, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error querying for validation (%v, %v)",
-			trialID, stepID)
+			trialID, totalBatches)
 	}
 	return &validation, nil
 }
@@ -1532,19 +1534,20 @@ AND step_id = $2`, &validation, trialID, stepID); errors.Cause(err) == ErrNotFou
 // UpdateValidation updates an existing validation. Fields that are nil or zero
 // are not updated. end_time is set if the validation moves to a terminal
 // state.
-func (db *PgDB) UpdateValidation(trialID, stepID int, newState model.State, metrics model.JSONObj,
+func (db *PgDB) UpdateValidation(
+	trialID, totalBatches int, newState model.State, metrics model.JSONObj,
 ) error {
 	if len(newState) == 0 && len(metrics) == 0 {
 		return nil
 	}
-	validation, err := db.ValidationByStep(trialID, stepID)
+	validation, err := db.ValidationByTotalBatches(trialID, totalBatches)
 	if err != nil {
 		return errors.Wrapf(err, "error querying for validation (%v, %v) to update",
-			trialID, stepID)
+			trialID, totalBatches)
 	}
 	if validation == nil {
 		return errors.Wrapf(err, "can't update missing validation (%v, %v)",
-			trialID, stepID)
+			trialID, totalBatches)
 	}
 	toUpdate := []string{}
 	if len(newState) != 0 {
@@ -1563,7 +1566,7 @@ func (db *PgDB) UpdateValidation(trialID, stepID int, newState model.State, metr
 	if len(metrics) != 0 {
 		if len(validation.Metrics) != 0 {
 			return errors.Errorf("validation (%v, %v) already has metrics",
-				trialID, stepID)
+				trialID, totalBatches)
 		}
 		validation.Metrics = metrics
 		toUpdate = append(toUpdate, "metrics")
@@ -1574,11 +1577,11 @@ UPDATE validations
 WHERE id = :id`, setClause(toUpdate)), validation)
 	if err != nil {
 		return errors.Wrapf(err, "error updating (%v) in validation (%v, %v)",
-			strings.Join(toUpdate, ", "), trialID, stepID)
+			strings.Join(toUpdate, ", "), trialID, totalBatches)
 	}
 
 	if err := db.SetTrialBestValidation(trialID); err != nil {
-		return errors.Wrapf(err, "error setting best validation for (%v, %v)", trialID, stepID)
+		return errors.Wrapf(err, "error setting best validation for (%v, %v)", trialID, totalBatches)
 	}
 
 	return nil
@@ -1589,32 +1592,23 @@ func (db *PgDB) AddCheckpoint(checkpoint *model.Checkpoint) error {
 	if !checkpoint.IsNew() {
 		return errors.Errorf("unexpected state for new checkpoint: %v", checkpoint)
 	}
-	step, err := db.StepByID(checkpoint.TrialID, checkpoint.StepID)
-	if err != nil {
-		return errors.Wrapf(err,
-			"error finding step (%v, %v) for new checkpoint", checkpoint.TrialID, checkpoint.StepID)
-	}
-	if step.State != model.CompletedState {
-		return errors.Errorf("unexpected state %v for trial %v step %v",
-			step.State, checkpoint.TrialID, checkpoint.StepID)
-	}
 	var count int
-	err = db.namedGet(&count, `
+	err := db.namedGet(&count, `
 SELECT COUNT(*)
 FROM checkpoints
 WHERE trial_id = :trial_id
-AND step_id = :step_id`, checkpoint)
+AND total_batches = :total_batches`, checkpoint)
 	if err != nil {
 		return errors.Wrapf(err, "error checking at-most-one checkpoint %v", *checkpoint)
 	}
 	if count > 0 {
-		return errors.Errorf("duplicate checkpoint for trial %v step %v",
-			checkpoint.TrialID, checkpoint.StepID)
+		return errors.Errorf("duplicate checkpoint for trial %v total batch %v",
+			checkpoint.TrialID, checkpoint.TotalBatches)
 	}
 	err = db.namedGet(&checkpoint.ID, `
 INSERT INTO checkpoints
-(trial_id, step_id, state, start_time, metadata, determined_version)
-VALUES (:trial_id, :step_id, :state, :start_time, :metadata, :determined_version)
+(trial_id, total_batches, state, start_time, metadata, determined_version)
+VALUES (:trial_id, :total_batches, :state, :start_time, :metadata, :determined_version)
 RETURNING id`, checkpoint)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting checkpoint %v", *checkpoint)
@@ -1622,18 +1616,19 @@ RETURNING id`, checkpoint)
 	return nil
 }
 
-// CheckpointByStep looks up a checkpoint by trial and step ID, returning nil if none exists.
-func (db *PgDB) CheckpointByStep(trialID, stepID int) (*model.Checkpoint, error) {
+// CheckpointByTotalBatches looks up a checkpoint by trial and total batch,
+// returning nil if none exists.
+func (db *PgDB) CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, metadata
+SELECT id, trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata
 FROM checkpoints
 WHERE trial_id = $1
-AND step_id = $2`, &checkpoint, trialID, stepID); errors.Cause(err) == ErrNotFound {
+AND total_batches = $2`, &checkpoint, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error querying for checkpoint (%v, %v)",
-			trialID, stepID)
+			trialID, totalBatches)
 	}
 	return &checkpoint, nil
 }
@@ -1642,7 +1637,7 @@ AND step_id = $2`, &checkpoint, trialID, stepID); errors.Cause(err) == ErrNotFou
 func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, metadata
+SELECT id, trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata
 FROM checkpoints
 WHERE uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 		return nil, nil
@@ -1657,10 +1652,10 @@ WHERE uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 func (db *PgDB) LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, metadata
+SELECT id, trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata
 FROM checkpoints
 WHERE trial_id = $1 AND state = 'COMPLETED'
-ORDER BY step_id DESC
+ORDER BY total_batches DESC
 LIMIT 1`, &checkpoint, trialID); errors.Cause(err) == ErrNotFound {
 		return nil, nil
 	} else if err != nil {
@@ -1673,7 +1668,7 @@ LIMIT 1`, &checkpoint, trialID); errors.Cause(err) == ErrNotFound {
 // are not updated. end_time is set if the checkpoint moves to a terminal
 // state.
 func (db *PgDB) UpdateCheckpoint(
-	trialID, stepID int,
+	trialID, totalBatches int,
 	newCheckpoint model.Checkpoint,
 ) error {
 	if len(newCheckpoint.State) == 0 && len(*newCheckpoint.UUID) == 0 &&
@@ -1681,14 +1676,14 @@ func (db *PgDB) UpdateCheckpoint(
 		return nil
 	}
 
-	checkpoint, err := db.CheckpointByStep(trialID, stepID)
+	checkpoint, err := db.CheckpointByTotalBatches(trialID, totalBatches)
 	if err != nil {
 		return errors.Wrapf(err, "error querying for checkpoint (%v, %v) to update",
-			trialID, stepID)
+			trialID, totalBatches)
 	}
 	if checkpoint == nil {
 		return errors.Wrapf(err, "can't update missing checkpoint (%v, %v)",
-			trialID, stepID)
+			trialID, totalBatches)
 	}
 
 	toUpdate := []string{}
@@ -1708,7 +1703,7 @@ func (db *PgDB) UpdateCheckpoint(
 	if newCheckpoint.UUID != nil && len(*newCheckpoint.UUID) != 0 {
 		if checkpoint.UUID != nil && len(*checkpoint.UUID) != 0 {
 			return errors.Errorf("checkpoint (%v, %v) already has UUID",
-				trialID, stepID)
+				trialID, totalBatches)
 		}
 		checkpoint.UUID = newCheckpoint.UUID
 		toUpdate = append(toUpdate, "uuid")
@@ -1716,7 +1711,7 @@ func (db *PgDB) UpdateCheckpoint(
 	if len(newCheckpoint.Resources) != 0 {
 		if len(checkpoint.Resources) != 0 {
 			return errors.Errorf("checkpoint (%v, %v) already has resources",
-				trialID, stepID)
+				trialID, totalBatches)
 		}
 		checkpoint.Resources = newCheckpoint.Resources
 		toUpdate = append(toUpdate, "resources")
@@ -1735,7 +1730,7 @@ func (db *PgDB) UpdateCheckpoint(
 
 	if len(newCheckpoint.Framework) != 0 {
 		if len(checkpoint.Framework) != 0 {
-			return errors.Errorf("checkpoint (%v, %v) already has a framework", trialID, stepID)
+			return errors.Errorf("checkpoint (%v, %v) already has a framework", trialID, totalBatches)
 		}
 
 		checkpoint.Framework = newCheckpoint.Framework
@@ -1744,7 +1739,7 @@ func (db *PgDB) UpdateCheckpoint(
 
 	if len(newCheckpoint.Format) != 0 {
 		if len(checkpoint.Format) != 0 {
-			return errors.Errorf("checkpoint (%v, %v) already has a format", trialID, stepID)
+			return errors.Errorf("checkpoint (%v, %v) already has a format", trialID, totalBatches)
 		}
 
 		checkpoint.Format = newCheckpoint.Format
@@ -1757,7 +1752,7 @@ UPDATE checkpoints
 WHERE id = :id`, setClause(toUpdate)), checkpoint)
 	if err != nil {
 		return errors.Wrapf(err, "error updating (%v) in checkpoint (%v, %v)",
-			strings.Join(toUpdate, ", "), trialID, stepID)
+			strings.Join(toUpdate, ", "), trialID, totalBatches)
 	}
 	return nil
 }
