@@ -29,7 +29,7 @@ type Defaultable interface {
 // the RuntimeDefaultable interface for that object.  See ExperimentConfig for an example.
 //
 // There are some objects which get their defaults from other objects' defaults.  This an
-// unforutnate detail of our union types which have common members that appear on the root union
+// unfortunate detail of our union types which have common members that appear on the root union
 // object.  That's hard to reason about, and we should avoid doing that in new config objects.  But
 // those objects implement DefaultSource() to customize that behavior.
 //
@@ -68,7 +68,7 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 			// This doesn't make any sense; we need a type.
 			panic("got a nil interface as the obj to FillDefaults into")
 		}
-		obj.Elem().Set(fillDefaults(obj.Elem(), defaultBytes, name))
+		obj.Set(fillDefaults(obj.Elem(), defaultBytes, name))
 
 	case reflect.Ptr:
 		if obj.IsZero() {

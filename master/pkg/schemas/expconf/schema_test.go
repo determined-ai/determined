@@ -222,11 +222,11 @@ func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 	assert.DeepEqual(t, obj, cpy)
 
 	// Round-trip again after defaults.
-	schemas.FillDefaults(obj)
+	schemas.FillDefaults(&obj)
 	jByts, err = json.Marshal(obj)
 	assert.NilError(t, err)
 	cpy = objectForURL(url)
-	schemas.FillDefaults(cpy)
+	schemas.FillDefaults(&cpy)
 	err = json.Unmarshal(jByts, &cpy)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, obj, cpy)
