@@ -18,8 +18,8 @@ import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
+import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
-import ScatterPlots from './ExperimentVisualization/ScatterPlots';
 
 const { Option } = Select;
 
@@ -44,6 +44,7 @@ enum PageError {
 const STORAGE_PATH = 'experiment-visualization';
 const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
+const MAX_HPARAM_COUNT = 20;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
   { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
@@ -64,6 +65,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const storage = useStorage(STORAGE_PATH);
   const STORAGE_BATCH_KEY = `${experiment.id}/batch`;
   const STORAGE_METRIC_KEY = `${experiment.id}/metric`;
+  const STORAGE_HPARAMS_KEY = `${experiment.id}/hyperparameters`;
   const defaultUserBatch = storage.get(STORAGE_BATCH_KEY) as number || 0;
   const defaultUserMetric = storage.get(STORAGE_METRIC_KEY) as MetricName || undefined;
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
@@ -75,6 +77,11 @@ const ExperimentVisualization: React.FC<Props> = ({
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultUserBatch);
+  const fullHParams = Object.keys(experiment.config.hyperparameters) || [];
+  const limitedHParams = fullHParams.slice(0, MAX_HPARAM_COUNT);
+  const defaultHParams = storage.get<string[]>(STORAGE_HPARAMS_KEY);
+  const [ hParams, setHParams ] = useState<string[]>(defaultHParams || limitedHParams);
+
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
 
@@ -91,6 +98,16 @@ const ExperimentVisualization: React.FC<Props> = ({
     storage.set(STORAGE_BATCH_KEY, batch);
     setSelectedBatch(batch);
   }, [ storage, STORAGE_BATCH_KEY ]);
+
+  const handleHParamChange = useCallback((hParams?: string[]) => {
+    if (!hParams) {
+      storage.remove(STORAGE_HPARAMS_KEY);
+      setHParams(limitedHParams);
+    } else {
+      storage.set(STORAGE_HPARAMS_KEY, hParams);
+      setHParams(hParams);
+    }
+  }, [ limitedHParams, storage, STORAGE_HPARAMS_KEY ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
@@ -234,20 +251,36 @@ const ExperimentVisualization: React.FC<Props> = ({
               experiment={experiment}
               metrics={metrics}
               selectedMetric={selectedMetric}
-              onMetricChange={handleMetricChange} />
+              onMetricChange={handleMetricChange}
+            />
           )}
           {typeKey === VisualizationType.HpParallelCoordinates && (
             <HpParallelCoordinates
               batches={batches}
               experiment={experiment}
+              hParams={fullHParams}
               metrics={metrics}
               selectedBatch={selectedBatch}
+              selectedHParams={hParams}
               selectedMetric={selectedMetric}
               onBatchChange={handleBatchChange}
-              onMetricChange={handleMetricChange} />
+              onHParamChange={handleHParamChange}
+              onMetricChange={handleMetricChange}
+            />
           )}
-          {typeKey === VisualizationType.ScatterPlots && (
-            <ScatterPlots />
+          {typeKey === VisualizationType.HpScatterPlots && (
+            <HpScatterPlots
+              batches={batches}
+              experiment={experiment}
+              hParams={fullHParams}
+              metrics={metrics}
+              selectedBatch={selectedBatch}
+              selectedHParams={hParams}
+              selectedMetric={selectedMetric}
+              onBatchChange={handleBatchChange}
+              onHParamChange={handleHParamChange}
+              onMetricChange={handleMetricChange}
+            />
           )}
         </Col>
         <Col
