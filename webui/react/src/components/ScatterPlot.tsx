@@ -1,123 +1,82 @@
-import React, { useEffect, useRef, useState } from 'react';
-import uPlot, { Options } from 'uplot';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { throttle } from 'throttle-debounce';
 
-import useResize from 'hooks/useResize';
-
-import css from './ScatterPlot.module.scss';
+import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
+import Plotly, { Layout, PlotData } from 'Plotly';
+import { clone } from 'utils/data';
+import { generateAlphaNumeric } from 'utils/string';
 
 interface Props {
+  data: Record<'x' | 'y' | 'values', number[]>;
   height?: number;
+  id?: string;
+  padding?: number;
   title?: string;
-  values: number[];
-  x: number[];
-  xLabel?: string;
-  y: number[];
-  yLabel?: string;
+  width?: number;
 }
 
-const CHART_HEIGHT = 200;
-const UPLOT_OPTIONS = {
-  axes: [
-    {
-      grid: { width: 1 },
-      scale: 'x',
-      side: 2,
-    },
-    {
-      grid: { width: 1 },
-      scale: 'y',
-      side: 3,
-    },
-  ],
-  cursor: {
-    points: {
-      fill: 'transparent',
-      size: 10,
-      stroke: 'var(--theme-colors-action-normal)',
-      width: 2,
-    },
-    x: false,
-    y: false,
-  },
-  legend: { show: false },
-  scales: {
-    x: { auto: true, time: false },
-    y: { auto: true, time: false },
-  },
-  series: [
-    { label: 'x' },
-    {
-      label: 'scatter',
-      points: {
-        fill: 'blue',
-        size: 4,
-        space: 0,
-        width: 0,
-      },
-      scale: 'y',
-      width: 1 / window.devicePixelRatio,
-    },
-  ],
+const plotlyLayout: Partial<Layout> = {
+  autosize: false,
+  height: 250,
+  margin: { b: 0, l: 0, r: 0, t: 0 },
+  paper_bgcolor: 'transparent',
+  width: 300,
+  yaxis: { automargin: true },
+};
+const plotlyConfig: Partial<Plotly.Config> = {
+  displayModeBar: false,
+  responsive: true,
 };
 
 const ScatterPlot: React.FC<Props> = ({
-  height = CHART_HEIGHT,
   title,
-  values,
-  x,
-  xLabel,
-  y,
-  yLabel,
+  data,
+  padding = 10,
+  ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
-  const [ chart, setChart ] = useState<uPlot>();
+  const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
+
+  const chartData: Partial<PlotData> = useMemo(() => {
+    return {
+      mode: 'markers',
+      x: data.x,
+      y: data.y,
+    };
+  }, [ data ]);
 
   useEffect(() => {
-    if (!chartRef.current) return;
+    const ref = chartRef.current;
+    if (!ref) return;
 
-    const options = uPlot.assign({}, UPLOT_OPTIONS, {
-      height,
-      series: [
-        { label: 'x' },
-        {
-          label: 'scatter',
-          points: {
-            fill: 'blue',
-            size: 4,
-            space: 0,
-            width: 0,
-          },
-          scale: 'y',
-          width: 1 / window.devicePixelRatio,
-        },
-      ],
-      width: chartRef.current.offsetWidth,
-    }) as Options;
+    const layout = clone(plotlyLayout);
 
-    if (title) options.title = title;
-    if (xLabel) (options.axes || [])[0].label = xLabel;
-    if (yLabel) (options.axes || [])[1].label = yLabel;
+    if (title) layout.title = title;
+    if (padding) layout.margin = { b: padding, l: padding, r: padding, t: padding };
 
-    const plotChart = new uPlot(options, [ x, y ], chartRef.current);
-    setChart(plotChart);
+    console.log('layout', layout);
+    Plotly.react(ref, [ chartData ], layout, plotlyConfig);
 
     return () => {
-      setChart(undefined);
-      plotChart.destroy();
+      if (ref) Plotly.purge(ref);
     };
-  }, [ height, title, values, x, xLabel, y, yLabel ]);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [ chartData ]);
 
   // Resize the chart when resize events happen.
   useEffect(() => {
-    if (chart) chart.setSize({ height, width: resize.width });
-  }, [ chart, height, resize ]);
+    const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
+      if (!chartRef.current) return;
+      const rect = chartRef.current.getBoundingClientRect();
+      const layout = { ...plotlyLayout, width: rect.width };
+      Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);
+    });
 
-  return (
-    <div className={css.base}>
-      <div ref={chartRef} />
-    </div>
-  );
+    throttleResize();
+  }, [ chartData, resize ]);
+
+  return <div id={id} ref={chartRef} />;
 };
 
 export default ScatterPlot;
