@@ -43,7 +43,7 @@
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
     "timeago-react": "^3.0.1",
-    "uplot": "^1.5.0",
+    "uplot": "^1.6.4",
     "websocket": "^1.0.32"
   },
   "browserslist": {
