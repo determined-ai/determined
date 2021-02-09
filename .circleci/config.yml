@@ -727,7 +727,7 @@ commands:
     steps:
       - run: python .circleci/scripts/wait_for_master.py <<parameters.scheme>>://<<parameters.host>>:<<parameters.port>>
 
-  locate-cloud-watch-logs:
+  locate-cloudwatch-logs:
     parameters:
       cluster-id:
         type: string
@@ -736,13 +736,13 @@ commands:
         default: us-west-2
     steps:
       - run:
-          name: Locate cloud watch logs
+          name: Locate CloudWatch logs
           when: always
           command: |
             LOG_GROUP=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> LogGroup)
-            echo "Cluster logs can be found in Cloudwatch under the log group $LOG_GROUP"
+            echo "Cluster logs can be found in CloudWatch under the log group $LOG_GROUP"
             echo "or the URL below (if the log group is in your default region):"
-            ENC_LOG_GROUP=$(echo $LOG_GROUP | sed "s/\//\$252F/g")
+            ENC_LOG_GROUP=$(echo "$LOG_GROUP" | sed 's|/|$252F|g')
             echo "https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
 
 
@@ -1335,7 +1335,7 @@ jobs:
           master-port: ${MASTER_PORT:-8080}
           master-cert: ${MASTER_TLS_CERT}
           master-cert-name: ${MASTER_CERT_NAME}
-      - locate-cloud-watch-logs:
+      - locate-cloudwatch-logs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
