@@ -104,13 +104,13 @@ export interface PatchExperimentParams extends ExperimentIdParams {
   }>
 }
 
-export interface CreateNotebookParams {
-  slots: number;
-}
-
 export interface LaunchTensorboardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
+}
+
+export interface LaunchNotebookParams {
+  config?: { resources?: { slots?: number } };
 }
 
 export interface LogsParams {

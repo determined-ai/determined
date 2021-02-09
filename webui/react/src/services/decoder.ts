@@ -97,26 +97,6 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
   });
 };
 
-export const jsonToGenericCommand = (data: unknown, type: types.CommandType): types.Command => {
-  const io = ioTypes.decode<ioTypes.ioTypeGenericCommand>(ioTypes.ioGenericCommand, data);
-  const command: types.Command = {
-    config: { ...io.config },
-    exitStatus: io.exit_status || undefined,
-    id: io.id,
-    kind: type,
-    misc: io.misc ? {
-      experimentIds: io.misc.experiment_ids || [],
-      trialIds: io.misc.trial_ids || [],
-    } : undefined,
-    registeredTime: io.registered_time,
-    resourcePool: io.resource_pool || '',
-    serviceAddress: io.service_address || undefined,
-    state: io.state as types.CommandState,
-    user: { username: io.owner.username },
-  };
-  return command as types.Command;
-};
-
 const mapV1ContainerStateToCommandState =
   (containerState: Sdk.Determinedcontainerv1State|null): types.CommandState => {
     switch (containerState) {
@@ -152,6 +132,7 @@ export const mapV1NotebookToCommandTask = (notebook: Sdk.V1Notebook): types.Comm
     id: notebook.id,
     name: notebook.description,
     resourcePool: notebook.resourcePool,
+    serviceAddress: notebook.serviceAddress,
     startTime: notebook.startTime as unknown as string,
     state: mapV1ContainerStateToCommandState(notebook.container?.state || null),
     type: types.CommandType.Notebook,
@@ -188,10 +169,6 @@ export const mapV1TensorboardToCommandTask =
       username: tensorboard.username,
     };
   };
-
-export const jsonToNotebook = (data: unknown): types.Command => {
-  return jsonToGenericCommand(data, types.CommandType.Notebook);
-};
 
 const ioToExperimentHyperparameter = (
   io: ioTypes.ioTypeHyperparameter,

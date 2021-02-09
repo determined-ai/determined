@@ -1,15 +1,15 @@
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
-  ApiSorter, CommandIdParams, CreateExperimentParams, CreateNotebookParams, EmptyParams,
-  ExperimentDetailsParams, ExperimentIdParams, GetCommandsParams, GetExperimentsParams,
-  GetNotebooksParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams,
-  LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams,
-  TaskLogsParams, TrialDetailsParams,
+  ApiSorter, CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams,
+  ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams, GetShellsParams,
+  GetTensorboardsParams, GetTrialsParams, LaunchNotebookParams, LaunchTensorboardParams,
+  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
+  TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi, processApiError, validateDetApiEnum } from 'services/utils';
 import {
-  Agent, ALL_VALUE, Command, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
+  Agent, ALL_VALUE, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
   ExperimentBase, ExperimentFilters, ExperimentItem, ExperimentPagination, Log, Pagination,
   ResourcePool, RunState, Telemetry, TrialDetails, TrialPagination, ValidationHistory,
 } from 'types';
@@ -186,7 +186,9 @@ export const killTensorboard = generateDetApi<
   CommandIdParams, Api.V1KillTensorboardResponse, void
 >(Config.killTensorboard);
 
-export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
+export const launchNotebook = generateDetApi<
+  LaunchNotebookParams, Api.V1LaunchNotebookResponse, CommandTask
+>(Config.launchNotebook);
 
 export const launchTensorboard = generateDetApi<
   LaunchTensorboardParams, Api.V1LaunchTensorboardResponse, CommandTask
