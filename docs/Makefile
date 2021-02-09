@@ -29,9 +29,12 @@ build: build-examples build-helm reference/attributions.txt
 clean:
 	rm -rf site
 
-.PHONY: publish
-publish:
+.PHONY: pre-publish
+pre-publish:
 	cp ./swagger-ui/swagger-ui-main-deploy.js ./site/html/rest-api/swagger-ui-main.js
+
+.PHONY: publish
+publish: pre-publish
 	$(MAKE) -C deploy publish
 
 live:
