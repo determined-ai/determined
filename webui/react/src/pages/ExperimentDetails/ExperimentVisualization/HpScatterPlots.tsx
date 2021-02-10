@@ -16,7 +16,7 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ShirtSize } from 'themes';
 import { ExperimentBase, MetricName, metricTypeParamMap } from 'types';
-import { isObject } from 'utils/data';
+import { hasObjectKeys, isObject } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpScatterPlots.module.scss';
@@ -95,8 +95,7 @@ const ScatterPlots: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        if (!event || !event.trials || !isObject(event.trials) ||
-          Object.keys(event.trials).length === 0) return;
+        if (!event || !event.trials || !hasObjectKeys(event.trials)) return;
 
         console.log('event', event);
         setHasLoaded(true);
@@ -150,9 +149,9 @@ const ScatterPlots: React.FC<Props> = ({
         </ResponsiveFilters>}
         title="Scatter Plots">
         <Grid gap={ShirtSize.big} mode={GridMode.AutoFill}>
-          {new Array(100).fill(null).map((_, index) => (
-            <ScatterPlot key={index} values={y} x={x} y={y} />
-          ))}
+          {/* {new Array(100).fill(null).map((_, index) => (
+            <ScatterPlot key={index} data={{ x, y, values: y }} />
+          ))} */}
         </Grid>
       </Section>
     </div>

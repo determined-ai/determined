@@ -19,6 +19,10 @@ export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
 };
 
+export const hasObjectKeys = (data: unknown): boolean => {
+  return isObject(data) && Object.keys(data as Record<RecordKey, unknown>).length !== 0;
+};
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const clone = (data: any, deep = true): any => {
   if (isPrimitive(data)) return data;
