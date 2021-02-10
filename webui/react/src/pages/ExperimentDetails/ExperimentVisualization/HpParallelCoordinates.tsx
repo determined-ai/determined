@@ -219,6 +219,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
     const trialHpTableMap: Record<number, TrialHParams> = {};
     const trialHpMap: Record<string, Record<number, Primitive>> = {};
 
+    const trialIds: number[] = [];
+    const trialMetrics: number[] = [];
+    const trialHpMap: Record<string, Record<number, Primitive>> = {};
+    const trialHpRanges: Record<string, Range> = {};
+    const data: Record<string, Primitive[]> = {};
+    const trialMetricRange: Range<number> = defaultNumericRange();
+
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(
         experiment.id,
