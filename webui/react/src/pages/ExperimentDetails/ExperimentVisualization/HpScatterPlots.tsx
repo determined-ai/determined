@@ -95,7 +95,7 @@ const ScatterPlots: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        if (!event || !event.trials || !hasObjectKeys(event.trials)) return;
+        if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         console.log('event', event);
         setHasLoaded(true);
@@ -149,6 +149,10 @@ const ScatterPlots: React.FC<Props> = ({
         </ResponsiveFilters>}
         title="Scatter Plots">
         <Grid gap={ShirtSize.big} mode={GridMode.AutoFill}>
+          {hParams.map(hParam => (
+            // <ScatterPlot data={} key={hParam} />
+            hParam
+          ))}
           {/* {new Array(100).fill(null).map((_, index) => (
             <ScatterPlot key={index} data={{ x, y, values: y }} />
           ))} */}

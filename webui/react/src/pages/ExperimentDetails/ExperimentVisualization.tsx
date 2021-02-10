@@ -79,7 +79,11 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultUserBatch);
 
   const { fullHParams, limitedHParams } = useMemo(() => {
-    const fullHParams = Object.keys(experiment.config.hyperparameters) || [];
+    // Constant hyperparameters are not useful for visualizations
+    const fullHParams = (Object.keys(experiment.config.hyperparameters) || []).filter(key => {
+      const hp = experiment.config.hyperparameters[key];
+      return hp.type !== ExperimentHyperParamType.Constant;
+    });
     const limitedHParams = fullHParams.slice(0, MAX_HPARAM_COUNT);
     return { fullHParams, limitedHParams };
   }, [ experiment ]);
@@ -253,6 +257,7 @@ const ExperimentVisualization: React.FC<Props> = ({
           {typeKey === VisualizationType.LearningCurve && (
             <LearningCurve
               experiment={experiment}
+              hParams={fullHParams}
               metrics={metrics}
               selectedMetric={selectedMetric}
               onMetricChange={handleMetricChange}

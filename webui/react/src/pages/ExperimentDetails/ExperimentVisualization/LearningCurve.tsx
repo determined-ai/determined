@@ -23,6 +23,7 @@ const { Option } = Select;
 
 interface Props {
   experiment: ExperimentBase;
+  hParams: string[];
   metrics: MetricName[];
   onMetricChange?: (metric: MetricName) => void;
   selectedMetric: MetricName
@@ -34,6 +35,7 @@ const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
+  hParams,
   metrics,
   onMetricChange,
   selectedMetric,
