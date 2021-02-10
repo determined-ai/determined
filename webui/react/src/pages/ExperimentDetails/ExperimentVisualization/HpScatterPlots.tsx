@@ -1,7 +1,8 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import BadgeTag from 'components/BadgeTag';
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -11,6 +12,7 @@ import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
+import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -54,9 +56,11 @@ const ScatterPlots: React.FC<Props> = ({
   selectedHParams,
   selectedMetric,
 }: Props) => {
+  const baseRef = useRef<HTMLDivElement>(null);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpMetricData>();
   const [ pageError, setPageError ] = useState<Error>();
+  const resize = useResize(baseRef);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
@@ -168,8 +172,23 @@ const ScatterPlots: React.FC<Props> = ({
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {
       content = (
-        <div className={css.gridBox}>
-          <Grid minItemWidth={35} mode={GridMode.AutoFill}>
+        <>
+          <div className={css.legend}>
+            <div className={css.legendItem}>
+              <b>x-axis</b> = hyperparameters
+            </div>
+            <div className={css.legendItem}>
+              <b>y-axis</b> =&nbsp;
+              <BadgeTag
+                label={selectedMetric.name}
+                tooltip={selectedMetric.type}>{selectedMetric.type.substr(0, 1).toUpperCase()}
+              </BadgeTag>
+            </div>
+          </div>
+          <Grid
+            border={true}
+            minItemWidth={resize.width > 320 ? 35 : 27}
+            mode={GridMode.AutoFill}>
             {selectedHParams.map(hParam => (
               <ScatterPlot
                 key={hParam}
@@ -179,13 +198,13 @@ const ScatterPlots: React.FC<Props> = ({
                 y={chartData.metricValues[hParam]} />
             ))}
           </Grid>
-        </div>
+        </>
       );
     }
   }
 
   return (
-    <div className={css.base}>
+    <div className={css.base} ref={baseRef}>
       <Section
         options={<ResponsiveFilters>
           <SelectFilter

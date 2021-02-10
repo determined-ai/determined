@@ -10,6 +10,7 @@ export enum GridMode {
 }
 
 interface Props {
+  border?: boolean;
   gap?: ShirtSize;
   minItemWidth?: number;
   mode?: GridMode;
@@ -21,15 +22,18 @@ const defaultProps = {
 };
 
 const Grid: React.FC<Props> = (props: PropsWithChildren<Props>) => {
+  const classes = [ css.base ];
   const mode = props.mode || defaultProps.mode;
   const itemWidth = props.minItemWidth || defaultProps.minItemWidth;
   const style = {
-    gridGap: props.gap ? `var(--theme-sizes-layout-${props.gap}) ` : '',
+    gridGap: props.gap ? `var(--theme-sizes-layout-${props.gap})` : '',
     gridTemplateColumns: `repeat(${mode}, minmax(${itemWidth}rem, 1fr))`,
   };
 
+  if (props.border) classes.push(css.border);
+
   return (
-    <div className={css.base} style={style}>
+    <div className={classes.join(' ')} style={style}>
       {props.children}</div>
   );
 };

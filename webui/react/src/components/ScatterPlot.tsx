@@ -23,8 +23,9 @@ interface Props {
 const plotlyLayout: Partial<Layout> = {
   autosize: false,
   height: 350,
-  margin: { t: 60 },
+  margin: { b: 32, l: 32, r: 32, t: 48 },
   paper_bgcolor: 'transparent',
+  plot_bgcolor: themes[defaultThemeId].colors.monochrome[17],
   xaxis: { automargin: true },
   yaxis: { automargin: true },
 };
@@ -57,7 +58,12 @@ const ScatterPlot: React.FC<Props> = ({
 
   const chartLayout: Partial<Layout> = useMemo(() => {
     const layout = clone(plotlyLayout);
-    if (title) layout.title = { font: { size: 12 }, text: title };
+    if (title) {
+      layout.title = {
+        font: { family: themes[defaultThemeId].font.family, size: 13 },
+        text: title,
+      };
+    }
     if (xLogScale) layout.xaxis.type = 'log';
     if (yLogScale) layout.yaxis.type = 'log';
     return layout;
