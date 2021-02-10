@@ -1,0 +1,140 @@
+# One instance of each type in all the smaller union types.
+# (Other types like hyperparameters or searchers have their own files)
+
+- name: s3 checkpoint storage (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/s3.json
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: s3
+    bucket: determined-cp
+    access_key: minio
+    secret_key: "12341234"
+    endpoint_url: "http://192.168.0.4:9000"
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: gcs checkpoint storage (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/gcs.json
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: gcs
+    bucket: determined-cp
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: shared_fs checkpoint storage (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/shared-fs.json
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: determined-cp
+    propagation: rprivate
+    container_path: /asdf
+    checkpoint_path: /qwer
+    tensorboard_path: /zxcv
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+- name: hdfs checkpoint storage (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hdfs.json
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: hdfs
+    hdfs_url: hfds://hdfs.hdfs
+    hdfs_path: /a/b/c/d
+    user: user
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+
+- name: shared_fs data layer (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json
+    - http://determined.ai/schemas/expconf/v0/data-layer.json
+  case:
+    type: shared_fs
+    host_storage_path: /asdf/asdf
+    container_storage_path: /asdf/asdf
+
+- name: s3 data layer (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/data-layer-s3.json
+    - http://determined.ai/schemas/expconf/v0/data-layer.json
+  case:
+    type: s3
+    bucket: asdf
+    bucket_directory_path: /asdf/asdf
+    local_cache_container_path: /asdf/asdf
+    local_cache_host_path: /asdf/asdf
+    access_key: "samIAM"
+    secret_key: gr33n3ggsNham
+    endpoint_url: "https://asdf.com:9000"
+
+- name: gcs data layer (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/data-layer-gcs.json
+    - http://determined.ai/schemas/expconf/v0/data-layer.json
+  case:
+    type: gcs
+    bucket: asdf
+    bucket_directory_path: /asdf/asdf
+    local_cache_container_path: /asdf/asdf
+    local_cache_host_path: /asdf/asdf
+
+- name: records length (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/length.json
+  case:
+    records:
+      1
+
+- name: batches length (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/length.json
+  case:
+    batches:
+      1
+
+- name: epochs length (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/length.json
+  case:
+    epochs:
+      1
+
+- name: environment image string (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/environment-image.json
+  case:
+    "alpine"
+
+- name: environment image map of string (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/environment-image.json
+  case:
+    cpu: "alpine"
+    gpu: "alpine"
+
+- name: environment variables list of strings (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/environment-variables.json
+  case:
+    - "ABCD=1234"
+
+- name: environment variables map of lists of strings (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/environment-variables.json
+  case:
+    cpu:
+      - "ABCD=1234"
+    gpu:
+      - "ABCD=1234"

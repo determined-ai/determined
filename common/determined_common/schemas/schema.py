@@ -306,7 +306,7 @@ class SchemaBase(metaclass=AutoInit):
 
 
 class TestSub(SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v1/test-sub.json"
+    _id = "http://determined.ai/schemas/expconf/v0/test-sub.json"
 
     val_y: Optional[str] = None
 
@@ -318,7 +318,7 @@ class TestSub(SchemaBase):
 
 
 class TestUnion(SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v1/test-union.json"
+    _id = "http://determined.ai/schemas/expconf/v0/test-union.json"
 
     @classmethod
     def from_dict(cls: Type[T], d: dict, prevalidated: bool = False) -> T:
@@ -338,7 +338,7 @@ class TestUnion(SchemaBase):
 
 
 class TestUnionA(TestUnion):
-    _id = "http://determined.ai/schemas/expconf/v1/test-union-a.json"
+    _id = "http://determined.ai/schemas/expconf/v0/test-union-a.json"
 
     type: str
     val_a: int
@@ -353,7 +353,7 @@ class TestUnionA(TestUnion):
 
 
 class TestUnionB(TestUnion):
-    _id = "http://determined.ai/schemas/expconf/v1/test-union-b.json"
+    _id = "http://determined.ai/schemas/expconf/v0/test-union-b.json"
 
     type: str
     val_b: int
@@ -368,7 +368,7 @@ class TestUnionB(TestUnion):
 
 
 class TestRoot(SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v1/test-root.json"
+    _id = "http://determined.ai/schemas/expconf/v0/test-root.json"
 
     val_x: int
     sub_obj: Optional[TestSub] = None

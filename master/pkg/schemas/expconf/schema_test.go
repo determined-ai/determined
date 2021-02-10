@@ -108,12 +108,12 @@ func objectForURL(url string) interface{} {
 	//	case "http://determined.ai/schemas/expconf/v0/hyperparameter.json",
 	//		"http://determined.ai/schemas/expconf/v0/hyperparameter-int.json":
 	//		return &Hyperparameter{}
-	case "http://determined.ai/schemas/expconf/v1/test-root.json":
-		return &TestRootV1{}
-	case "http://determined.ai/schemas/expconf/v1/test-union.json",
-		"http://determined.ai/schemas/expconf/v1/test-union-a.json",
-		"http://determined.ai/schemas/expconf/v1/test-union-b.json":
-		return &TestUnionV1{}
+	case "http://determined.ai/schemas/expconf/v0/test-root.json":
+		return &TestRootV0{}
+	case "http://determined.ai/schemas/expconf/v0/test-union.json",
+		"http://determined.ai/schemas/expconf/v0/test-union-a.json",
+		"http://determined.ai/schemas/expconf/v0/test-union-b.json":
+		return &TestUnionV0{}
 	default:
 		panic(fmt.Sprintf("No object to match %v, maybe you need to add one?", url))
 	}
