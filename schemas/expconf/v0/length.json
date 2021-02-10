@@ -6,7 +6,7 @@
         "defaultMessage": "a length object must have one attribute named \"batches\", \"records\", or \"epochs\"",
         "items": [
             {
-                "unionKey": "hasattr:batches",
+                "unionKey": "singleproperty:batches",
                 "type": "object",
                 "additionalProperties": false,
                 "required": [
@@ -20,7 +20,7 @@
                 }
             },
             {
-                "unionKey": "hasattr:records",
+                "unionKey": "singleproperty:records",
                 "type": "object",
                 "additionalProperties": false,
                 "required": [
@@ -34,7 +34,7 @@
                 }
             },
             {
-                "unionKey": "hasattr:epochs",
+                "unionKey": "singleproperty:epochs",
                 "type": "object",
                 "additionalProperties": false,
                 "required": [

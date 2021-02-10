@@ -11,26 +11,27 @@
                 "object",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/environment-image.json",
-            "default": null
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/environment-image.json"
         },
         "environment_variables": {
             "type": [
                 "object",
+                "array",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/environment-variables.json",
-            "default": []
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/environment-variables.json"
         },
         "ports": {
             "type": [
                 "object",
                 "null"
             ],
+            "default": {},
             "additionalProperties": {
                 "type": "integer"
-            },
-            "default": {}
+            }
         },
         "force_pull_image": {
             "type": [

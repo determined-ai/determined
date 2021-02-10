@@ -1,0 +1,39 @@
+- name: positive Length
+  matches:
+    - http://determined.ai/schemas/expconf/v0/length.json
+    - http://determined.ai/schemas/expconf/v0/check-positive-length.json
+  case:
+    batches: 1
+
+- name: negative Length
+  errors:
+    http://determined.ai/schemas/expconf/v0/length.json:
+      - "<config>.batches: .*"
+    http://determined.ai/schemas/expconf/v0/check-positive-length.json:
+      - "<config>.batches: .*"
+  case:
+    batches: -1
+
+- name: zero Length
+  matches:
+    - http://determined.ai/schemas/expconf/v0/length.json
+  errors:
+    http://determined.ai/schemas/expconf/v0/check-positive-length.json:
+      - "<config>.batches: .*"
+  case:
+    batches: 0
+
+- name: empty length (invalid)
+  errors:
+    http://determined.ai/schemas/expconf/v0/length.json:
+      - "a length object must have one attribute named \"batches\", \"records\", or \"epochs\""
+  case: {}
+
+- name: double length (invalid)
+  errors:
+    http://determined.ai/schemas/expconf/v0/length.json:
+      - "a length object must have one attribute named \"batches\", \"records\", or \"epochs\""
+  case:
+    batches: 10
+    records: 10
+

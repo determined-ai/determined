@@ -1,4 +1,18 @@
-- name: single searcher (valid)
+# Lots of test cases focused on checking defaults.
+
+- name: bind_mount defaults
+  matches:
+    - http://determined.ai/schemas/expconf/v0/bind-mount.json
+  case:
+    host_path: /asdf
+    container_path: /zxcv
+  defaulted:
+    host_path: /asdf
+    container_path: /zxcv
+    propagation: rprivate
+    read_only: false
+
+- name: single searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-single.json
@@ -7,11 +21,16 @@
     max_length:
       batches: 1000
     metric: loss
+  defaulted:
+    name: single
+    max_length:
+      batches: 1000
+    metric: loss
     smaller_is_better: true
-    source_checkpoint_uuid: null
     source_trial_id: null
+    source_checkpoint_uuid: null
 
-- name: random searcher (valid)
+- name: random searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-random.json
@@ -21,11 +40,18 @@
       batches: 1000
     max_trials: 1000
     metric: loss
-    smaller_is_better: true
     source_checkpoint_uuid: "asdf"
+  defaulted:
+    name: random
+    max_length:
+      batches: 1000
+    max_trials: 1000
+    metric: loss
+    smaller_is_better: true
     source_trial_id: null
+    source_checkpoint_uuid: "asdf"
 
-- name: grid searcher (valid)
+- name: grid searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-grid.json
@@ -34,11 +60,17 @@
     max_length:
       batches: 1000
     metric: loss
+    source_trial_id: 15
+  defaulted:
+    name: grid
+    max_length:
+      batches: 1000
+    metric: loss
     smaller_is_better: true
-    source_checkpoint_uuid: "asdf"
-    source_trial_id: null
+    source_trial_id: 15
+    source_checkpoint_uuid: null
 
-- name: sync_halving searcher (valid)
+- name: sync_halving searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json
@@ -49,14 +81,23 @@
     num_rungs: 5
     budget:
       epochs: 1
-    divisor: 1.5
-    train_stragglers: true
     metric: loss
     smaller_is_better: true
+  defaulted:
+    name: sync_halving
+    max_length:
+      batches: 1000
+    num_rungs: 5
+    budget:
+      epochs: 1
+    metric: loss
+    smaller_is_better: true
+    divisor: 4
+    train_stragglers: true
+    source_trial_id: null
     source_checkpoint_uuid: null
-    source_trial_id: 15
 
-- name: async_halving searcher (valid)
+- name: async_halving searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-async-halving.json
@@ -66,14 +107,21 @@
     max_length:
       batches: 1000
     max_trials: 100
-    divisor: 1.5
-    max_concurrent_trials: 2
+    metric: loss
+  defaulted:
+    name: async_halving
+    num_rungs: 5
+    max_length:
+      batches: 1000
+    max_trials: 100
+    divisor: 4
+    max_concurrent_trials: 0
     metric: loss
     smaller_is_better: true
+    source_trial_id: null
     source_checkpoint_uuid: null
-    source_trial_id: 15
 
-- name: adaptive searcher (valid)
+- name: adaptive searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-adaptive.json
@@ -83,17 +131,24 @@
       batches: 1000
     budget:
       batches: 10000
-    bracket_rungs: [1, 2, 3, 4, 5]
-    divisor: 1.5
+    metric: loss
+  defaulted:
+    name: adaptive
+    max_length:
+      batches: 1000
+    budget:
+      batches: 10000
+    bracket_rungs: []
+    divisor: 4
     train_stragglers: true
     max_rungs: 5
     mode: standard
     metric: loss
     smaller_is_better: true
+    source_trial_id: null
     source_checkpoint_uuid: null
-    source_trial_id: 15
 
-- name: adaptive_simple searcher (valid)
+- name: adaptive_simple searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json
@@ -103,14 +158,21 @@
       batches: 1000
     max_trials: 100
     max_rungs: 5
+    metric: loss
+  defaulted:
+    name: adaptive_simple
+    max_length:
+      batches: 1000
+    max_trials: 100
+    max_rungs: 5
+    divisor: 4
     mode: standard
-    divisor: 1.5
     metric: loss
     smaller_is_better: true
+    source_trial_id: null
     source_checkpoint_uuid: null
-    source_trial_id: 15
 
-- name: adaptive_asha searcher (valid)
+- name: adaptive_asha searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json
@@ -119,17 +181,23 @@
     max_length:
       batches: 1000
     max_trials: 100
-    bracket_rungs: [1, 2, 3, 4, 5]
-    divisor: 5
+    metric: loss
+  defaulted:
+    name: adaptive_asha
+    max_length:
+      batches: 1000
+    max_trials: 100
+    bracket_rungs: []
+    divisor: 4
     mode: standard
     max_rungs: 5
-    max_concurrent_trials: 5
+    max_concurrent_trials: 0
     metric: loss
     smaller_is_better: true
+    source_trial_id: null
     source_checkpoint_uuid: null
-    source_trial_id: 15
 
-- name: pbt searcher (valid)
+- name: pbt searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-pbt.json
@@ -145,6 +213,18 @@
       resample_probability: 0.5
       perturb_factor: 0.5
     metric: loss
+  defaulted:
+    name: pbt
+    population_size: 25
+    num_rounds: 25
+    length_per_round:
+      batches: 1000
+    replace_function:
+      truncate_fraction: 0.5
+    explore_function:
+      resample_probability: 0.5
+      perturb_factor: 0.5
+    metric: loss
     smaller_is_better: true
+    source_trial_id: null
     source_checkpoint_uuid: null
-    source_trial_id: 15

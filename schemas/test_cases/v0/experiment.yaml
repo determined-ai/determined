@@ -59,8 +59,8 @@
       categorical_hparam:
         type: categorical
         vals: [1, 2, 3, 4]
-    internal: null
-    max_restarts: 0
+    labels: []
+    max_restarts: 5
     min_validation_period:
       batches: 0
     optimizations:
@@ -77,10 +77,13 @@
     reproducibility:
       experiment_seed: 1606239866
     resources:
-      agent_label: ''
+      agent_label: 'big_al'
+      slots_per_trial: 15
+      weight: 1000
+      max_slots: 900
+      priority: 55
+      resource_pool: 'asdf'
       native_parallel: false
-      slots_per_trial: 1
-      weight: 1
     scheduling_unit: 100
     searcher:
       max_length:
@@ -90,6 +93,15 @@
       smaller_is_better: true
       source_checkpoint_uuid: null
       source_trial_id: null
+    security:
+      kerberos:
+        config_file: xyz
+    tensorboard_storage:
+      type: shared_fs
+      host_path: /tmp
+      container_path: /asdf
+      checkpoint_path: /qwer
+      tensorboard_path: /zxcv
 
 - name: minimal valid experiment
   matches:
@@ -106,6 +118,78 @@
       max_length:
         batches: 1000
     entrypoint: model_def:MyTrial
+  #####
+  defaulted:
+    bind_mounts: []
+    checkpoint_policy: best
+    checkpoint_storage:
+      type: shared_fs
+      host_path: /tmp
+      storage_path: null
+      propagation: rprivate
+      save_experiment_best: 0
+      save_trial_best: 1
+      save_trial_latest: 1
+    data: {}
+    data_layer:
+      type: shared_fs
+      container_storage_path: null
+      host_storage_path: null
+    debug: false
+    description: '*'
+    entrypoint: model_def:MyTrial
+    environment:
+      environment_variables:
+        cpu: []
+        gpu: []
+      force_pull_image: false
+      image:
+        cpu: '*'
+        gpu: '*'
+      pod_spec:
+      ports: {}
+      registry_auth: null
+    hyperparameters:
+      global_batch_size:
+        type: const
+        val: 32
+    labels: []
+    max_restarts: 5
+    min_checkpoint_period:
+      batches: 0
+    min_validation_period:
+      batches: 0
+    optimizations:
+      aggregation_frequency: 1
+      auto_tune_tensor_fusion: false
+      average_aggregated_gradients: true
+      average_training_metrics: false
+      gradient_compression: false
+      grad_updates_size_file: null
+      mixed_precision: O0
+      tensor_fusion_cycle_time: 5
+      tensor_fusion_threshold: 64
+    perform_initial_validation: false
+    records_per_epoch: 0
+    reproducibility:
+      experiment_seed: "*"
+    resources:
+      agent_label: ''
+      native_parallel: false
+      slots_per_trial: 1
+      weight: 1
+      max_slots: null
+      priority: null
+      resource_pool: null
+    scheduling_unit: 100
+    searcher:
+      max_length:
+        batches: 1000
+      metric: loss
+      name: single
+      smaller_is_better: true
+      source_checkpoint_uuid: null
+      source_trial_id: null
 
 - name: records_per_epoch conditional (valid)
   matches:

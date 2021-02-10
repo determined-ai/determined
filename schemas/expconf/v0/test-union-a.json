@@ -16,7 +16,10 @@
             "type": "integer"
         },
         "common_val": {
-            "type": ["string", "null"],
+            "type": [
+                "string",
+                "null"
+            ],
             "default": "default-common-val"
         }
     }

@@ -7,20 +7,7 @@
         "items": [
             {
                 "unionKey": "never",
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                    "cpu",
-                    "gpu"
-                ],
-                "properties": {
-                    "cpu": {
-                        "type": "string"
-                    },
-                    "gpu": {
-                        "type": "string"
-                    }
-                }
+                "$ref": "http://determined.ai/schemas/expconf/v0/environment-image-map.json"
             },
             {
                 "unionKey": "never",

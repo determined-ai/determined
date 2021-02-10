@@ -191,6 +191,7 @@ def main(
     schemas = read_schemas(files)
 
     if language == "go":
+        assert package is not None
         if package == "schemas":
             lines = gen_go_schemas_package(schemas)
         else:

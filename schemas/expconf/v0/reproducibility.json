@@ -1,17 +1,16 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/test-sub.json",
-    "title": "TestSub",
+    "$id": "http://determined.ai/schemas/expconf/v0/reproducibility.json",
+    "title": "ReproducibilityConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
     "properties": {
-        "val_y": {
+        "experiment_seed": {
             "type": [
-                "string",
+                "integer",
                 "null"
             ],
-            "default": "default_y"
+            "default": null
         }
     }
 }
