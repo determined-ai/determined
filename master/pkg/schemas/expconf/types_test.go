@@ -1,11 +1,10 @@
 package expconf
 
+// Define types that are only used in testing.
+
 import (
 	"encoding/json"
-	// "fmt"
-	// "time"
 
-	// petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
