@@ -141,19 +141,19 @@ def gen_go_package(schemas: List[Schema], package: str) -> List[str]:
             x = schema.golang_title[0].lower()
             lines.append("")
             lines.append(
-                f"func ({x} *{schema.golang_title}) ParsedSchema() interface{{}} {{"
+                f"func ({x} {schema.golang_title}) ParsedSchema() interface{{}} {{"
             )
             lines.append(f"\treturn schemas.Parsed{schema.golang_title}()")
             lines.append("}")
             lines.append("")
             lines.append(
-                f"func ({x} *{schema.golang_title}) SanityValidator() *jsonschema.Schema {{"
+                f"func ({x} {schema.golang_title}) SanityValidator() *jsonschema.Schema {{"
             )
             lines.append(f'\treturn schemas.GetSanityValidator("{schema.url}")')
             lines.append("}")
             lines.append("")
             lines.append(
-                f"func ({x} *{schema.golang_title}) CompletenessValidator() *jsonschema.Schema {{"
+                f"func ({x} {schema.golang_title}) CompletenessValidator() *jsonschema.Schema {{"
             )
             lines.append(f'\treturn schemas.GetCompletenessValidator("{schema.url}")')
             lines.append("}")

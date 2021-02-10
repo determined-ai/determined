@@ -17,19 +17,16 @@ import (
 //
 // LintStructDefaults does not recurse; you should call for each generated struct.
 //
-// LintStructDefaults can accept a typed nil-pointer without issue.
+// Since Defaultable and Schema are both defined on raw structs, you must call this on a struct, not
+// a struct pointer.
 func LintStructDefaults(x interface{}) []error {
 	t := reflect.TypeOf(x)
-	for t.Kind() == reflect.Ptr || t.Kind() == reflect.Interface {
-		t = t.Elem()
-	}
 	if t.Kind() != reflect.Struct {
 		return []error{errors.Errorf(
 			"LintStructDefaults can only be called on a struct-like input, not %v", t.Name(),
 		)}
 	}
-	// Allocate some memory to call getDefaultSource on.
-	defaultSource := getDefaultSource(reflect.New(t).Elem())
+	defaultSource := getDefaultSource(reflect.ValueOf(x))
 	if defaultSource == nil {
 		return []error{errors.Errorf(
 			"LintStructDefaults called on %v which has no default source", t.Name(),

@@ -62,6 +62,7 @@ func FillDefaults(obj interface{}) {
 // fillDefaults is the recursive layer under FillDefaults.  fillDefaults will return the original
 // input value (not a copy of the original value).
 func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.Value {
+	// fmt.Printf("fillDefaults on %v (%T)\n", name, obj.Interface())
 	switch obj.Kind() {
 	case reflect.Interface:
 		if obj.IsZero() {
@@ -98,6 +99,10 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 
 	case reflect.Struct:
 		defaultSource := getDefaultSource(obj)
+		// Create a clean copy of the object which is settable.  This is necessary because if you
+		// have a required struct (i.e. it appears as a struct rather than a struct pointer on its
+		// parent object), then obj.Field(i) will not be settable.
+		newObj := reflect.New(obj.Type()).Elem()
 		// Iterate through all the fields of the struct once, applying defaults.
 		for i := 0; i < obj.NumField(); i++ {
 			var fieldDefaultBytes []byte
@@ -107,8 +112,10 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 			}
 			fieldName := fmt.Sprintf("%v.%v", name, obj.Type().Field(i).Name)
 			// Recurse into the field.
-			obj.Field(i).Set(fillDefaults(obj.Field(i), fieldDefaultBytes, fieldName))
+			newObj.Field(i).Set(fillDefaults(obj.Field(i), fieldDefaultBytes, fieldName))
 		}
+		// Use the new copy instead of the old one.
+		obj = newObj
 
 	case reflect.Slice:
 		for i := 0; i < obj.Len(); i++ {
@@ -143,16 +150,17 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 		runtimeDefaultable.RuntimeDefaults()
 	}
 
+	// fmt.Printf("fillDefaults on %v (%T) returning %v\n", name, obj.Interface(), obj.Interface())
+
 	return obj
 }
 
 // getDefaultSource gets a source of defaults from a Defaultable or Schema interface.
 func getDefaultSource(v reflect.Value) interface{} {
-	// Use Addr so that if the DefaultSource is defined on a struct pointer, it still works.
-	if defaultable, ok := v.Addr().Interface().(Defaultable); ok {
+	if defaultable, ok := v.Interface().(Defaultable); ok {
 		return defaultable.DefaultSource()
 	}
-	if schema, ok := v.Addr().Interface().(Schema); ok {
+	if schema, ok := v.Interface().(Schema); ok {
 		return schema.ParsedSchema()
 	}
 	return nil
