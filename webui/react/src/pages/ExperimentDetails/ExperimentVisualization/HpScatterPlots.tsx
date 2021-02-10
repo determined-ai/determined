@@ -1,6 +1,6 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
@@ -14,9 +14,8 @@ import Spinner from 'components/Spinner';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ShirtSize } from 'themes';
 import { ExperimentBase, MetricName, metricTypeParamMap } from 'types';
-import { hasObjectKeys, isObject } from 'utils/data';
+import { isNumber } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpScatterPlots.module.scss';
@@ -36,6 +35,12 @@ interface Props {
   selectedMetric: MetricName;
 }
 
+interface HpMetricData {
+  hpValues: Record<string, number[]>;
+  metricValues: Record<string, number[]>;
+  trialIds: number[];
+}
+
 const ScatterPlots: React.FC<Props> = ({
   batches,
   experiment,
@@ -49,14 +54,10 @@ const ScatterPlots: React.FC<Props> = ({
   selectedMetric,
 }: Props) => {
   const [ hasLoaded, setHasLoaded ] = useState(false);
-  const [ chartData, setChartData ] = useState<number[]>();
+  const [ chartData, setChartData ] = useState<HpMetricData>();
   const [ pageError, setPageError ] = useState<Error>();
-  const fullHpList = Object.keys(experiment.config.hyperparameters) || [];
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
-
-  const x = useMemo(() => ([ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]), []);
-  const y = useMemo(() => new Array(10).fill(null).map(() => Math.random()), []);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -85,6 +86,9 @@ const ScatterPlots: React.FC<Props> = ({
   useEffect(() => {
     const canceler = new AbortController();
 
+    const trialIds: number[] = [];
+    const hpTrialMap: Record<string, Record<number, { hp: number, metric: number }>> = {};
+
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(
         experiment.id,
@@ -97,13 +101,45 @@ const ScatterPlots: React.FC<Props> = ({
       event => {
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
-        console.log('event', event);
+        const hpMetricMap: Record<string, number[]> = {};
+        const hpValueMap: Record<string, number[]> = {};
+
+        event.trials.forEach(trial => {
+          const trialId = trial.trialId;
+          trialIds.push(trialId);
+
+          hParams.forEach(hParam => {
+            if (!isNumber(trial.hparams[hParam])) return;
+
+            hpTrialMap[hParam] = hpTrialMap[hParam] || {};
+            hpTrialMap[hParam][trialId] = hpTrialMap[hParam][trialId] || {};
+            hpTrialMap[hParam][trialId] = {
+              hp: trial.hparams[hParam],
+              metric: trial.metric,
+            };
+          });
+        });
+
+        hParams.forEach(hParam => {
+          hpMetricMap[hParam] = [];
+          hpValueMap[hParam] = [];
+          trialIds.forEach(trialId => {
+            hpMetricMap[hParam].push(hpTrialMap[hParam][trialId].metric);
+            hpValueMap[hParam].push(hpTrialMap[hParam][trialId].hp);
+          });
+        });
+
+        setChartData({
+          hpValues: hpValueMap,
+          metricValues: hpMetricMap,
+          trialIds,
+        });
         setHasLoaded(true);
       },
     ).catch(e => setPageError(e));
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedBatch, selectedMetric ]);
+  }, [ experiment.id, hParams, selectedBatch, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
@@ -142,21 +178,25 @@ const ScatterPlots: React.FC<Props> = ({
             onChange={handleMetricChange} />
           <MultiSelect
             label="HP"
-            value={hParams}
+            value={selectedHParams}
             onChange={handleHParamChange}>
-            {fullHpList.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
+            {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
         title="Scatter Plots">
-        <Grid gap={ShirtSize.big} mode={GridMode.AutoFill}>
-          {hParams.map(hParam => (
-            // <ScatterPlot data={} key={hParam} />
-            hParam
-          ))}
-          {/* {new Array(100).fill(null).map((_, index) => (
-            <ScatterPlot key={index} data={{ x, y, values: y }} />
-          ))} */}
-        </Grid>
+        <div className={css.container}>
+          {!hasLoaded || !chartData ? <Spinner /> : (
+            <Grid minItemWidth={35} mode={GridMode.AutoFill}>
+              {selectedHParams.map(hParam => (
+                <ScatterPlot
+                  key={hParam}
+                  title={hParam}
+                  x={chartData.hpValues[hParam]}
+                  y={chartData.metricValues[hParam]} />
+              ))}
+            </Grid>
+          )}
+        </div>
       </Section>
     </div>
   );

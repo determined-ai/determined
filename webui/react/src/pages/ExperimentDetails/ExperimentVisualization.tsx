@@ -12,8 +12,10 @@ import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType } from 'types';
-import { alphanumericSorter } from 'utils/sort';
+import {
+  ExperimentBase, ExperimentHyperParamType, ExperimentSearcherName, MetricName, MetricType,
+} from 'types';
+import { alphanumericSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';

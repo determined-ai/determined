@@ -7,20 +7,22 @@ import { clone } from 'utils/data';
 import { generateAlphaNumeric } from 'utils/string';
 
 interface Props {
-  data: Record<'x' | 'y' | 'values', number[]>;
   height?: number;
   id?: string;
   padding?: number;
   title?: string;
+  values?: number[];
   width?: number;
+  x: number[];
+  y: number[];
 }
 
 const plotlyLayout: Partial<Layout> = {
   autosize: false,
-  height: 250,
-  margin: { b: 0, l: 0, r: 0, t: 0 },
+  height: 350,
+  margin: { t: 60 },
   paper_bgcolor: 'transparent',
-  width: 300,
+  xaxis: { automargin: true },
   yaxis: { automargin: true },
 };
 const plotlyConfig: Partial<Plotly.Config> = {
@@ -30,8 +32,9 @@ const plotlyConfig: Partial<Plotly.Config> = {
 
 const ScatterPlot: React.FC<Props> = ({
   title,
-  data,
-  padding = 10,
+  padding = 0,
+  x,
+  y,
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -41,40 +44,39 @@ const ScatterPlot: React.FC<Props> = ({
   const chartData: Partial<PlotData> = useMemo(() => {
     return {
       mode: 'markers',
-      x: data.x,
-      y: data.y,
+      x,
+      y,
     };
-  }, [ data ]);
+  }, [ x, y ]);
+
+  const chartLayout: Partial<Layout> = useMemo(() => {
+    const layout = clone(plotlyLayout);
+    if (title) layout.title = { font: { size: 12 }, text: title };
+    return layout;
+  }, [ title ]);
 
   useEffect(() => {
     const ref = chartRef.current;
     if (!ref) return;
 
-    const layout = clone(plotlyLayout);
-
-    if (title) layout.title = title;
-    if (padding) layout.margin = { b: padding, l: padding, r: padding, t: padding };
-
-    console.log('layout', layout);
-    Plotly.react(ref, [ chartData ], layout, plotlyConfig);
+    Plotly.react(ref, [ chartData ], chartLayout, plotlyConfig);
 
     return () => {
       if (ref) Plotly.purge(ref);
     };
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [ chartData ]);
+  }, [ chartData, chartLayout, padding, title ]);
 
   // Resize the chart when resize events happen.
   useEffect(() => {
     const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
       if (!chartRef.current) return;
       const rect = chartRef.current.getBoundingClientRect();
-      const layout = { ...plotlyLayout, width: rect.width };
+      const layout = { ...chartLayout, height: rect.height, width: rect.width };
       Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);
     });
 
     throttleResize();
-  }, [ chartData, resize ]);
+  }, [ chartData, chartLayout, resize ]);
 
   return <div id={id} ref={chartRef} />;
 };
