@@ -77,8 +77,12 @@ const ExperimentVisualization: React.FC<Props> = ({
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultUserBatch);
-  const fullHParams = Object.keys(experiment.config.hyperparameters) || [];
-  const limitedHParams = fullHParams.slice(0, MAX_HPARAM_COUNT);
+
+  const { fullHParams, limitedHParams } = useMemo(() => {
+    const fullHParams = Object.keys(experiment.config.hyperparameters) || [];
+    const limitedHParams = fullHParams.slice(0, MAX_HPARAM_COUNT);
+    return { fullHParams, limitedHParams };
+  }, [ experiment ]);
   const defaultHParams = storage.get<string[]>(STORAGE_HPARAMS_KEY);
   const [ hParams, setHParams ] = useState<string[]>(defaultHParams || limitedHParams);
 
