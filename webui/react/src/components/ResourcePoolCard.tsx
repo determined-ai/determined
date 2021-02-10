@@ -61,7 +61,7 @@ const agentStatusText = (numAgents: number, maxAgents: number): string => {
   } else if (maxAgents === 0) {
     prefix = numAgents + '';
   } else {
-    prefix = `${numAgents}/${maxAgents}`;
+    prefix = `${numAgents}`;
   }
   return prefix + ' Connected Agent' + (numAgents > 1 ? 's' : '');
 };
