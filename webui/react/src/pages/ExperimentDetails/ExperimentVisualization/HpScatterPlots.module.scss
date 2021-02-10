@@ -6,6 +6,9 @@
     min-height: 40rem;
     position: relative;
   }
+  .container > [class*=Message_base] {
+    height: 40rem;
+  }
   .gridBox {
     padding-top: 5rem;
   }

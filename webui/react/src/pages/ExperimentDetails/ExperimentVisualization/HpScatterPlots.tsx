@@ -1,6 +1,6 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
@@ -162,6 +162,28 @@ const ScatterPlots: React.FC<Props> = ({
     );
   }
 
+  let content = <Spinner />;
+  if (hasLoaded && chartData) {
+    if (chartData.trialIds.length === 0) {
+      content = <Message title="No data to plot." type={MessageType.Empty} />;
+    } else {
+      content = (
+        <div className={css.gridBox}>
+          <Grid minItemWidth={35} mode={GridMode.AutoFill}>
+            {selectedHParams.map(hParam => (
+              <ScatterPlot
+                key={hParam}
+                title={hParam}
+                x={chartData.hpValues[hParam]}
+                xLogScale={chartData.hpLogScales[hParam]}
+                y={chartData.metricValues[hParam]} />
+            ))}
+          </Grid>
+        </div>
+      );
+    }
+  }
+
   return (
     <div className={css.base}>
       <Section
@@ -190,22 +212,7 @@ const ScatterPlots: React.FC<Props> = ({
           </MultiSelect>
         </ResponsiveFilters>}
         title="HP Scatter Plots">
-        <div className={css.container}>
-          {!hasLoaded || !chartData ? <Spinner /> : (
-            <div className={css.gridBox}>
-              <Grid minItemWidth={35} mode={GridMode.AutoFill}>
-                {selectedHParams.map(hParam => (
-                  <ScatterPlot
-                    key={hParam}
-                    title={hParam}
-                    x={chartData.hpValues[hParam]}
-                    xLogScale={chartData.hpLogScales[hParam]}
-                    y={chartData.metricValues[hParam]} />
-                ))}
-              </Grid>
-            </div>
-          )}
-        </div>
+        <div className={css.container}>{content}</div>
       </Section>
     </div>
   );
