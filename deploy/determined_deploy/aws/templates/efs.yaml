@@ -150,7 +150,7 @@ Parameters:
     Type: String
     Description: Whether preemption is enabled (only supported for priority scheduler).
     Default: false
-  
+
   CpuEnvImage:
     Type: String
     Description: Docker image for CPU tasks
@@ -160,6 +160,11 @@ Parameters:
     Type: String
     Description: Docker image for GPU tasks
     Default: ""
+
+  LogGroupPrefix:
+    Type: String
+    Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
+    Default: determined
 
 Resources:
   VPC:
@@ -459,7 +464,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /determined/${AWS::StackName}
+      LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
 
   LogPolicy:
     Type: AWS::IAM::Policy
