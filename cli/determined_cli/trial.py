@@ -117,7 +117,7 @@ def follow_trial_logs(args: Namespace) -> None:
         rank_ids=getattr(args, "rank_ids", None),
         sources=getattr(args, "sources", None),
         stdtypes=getattr(args, "stdtypes", None),
-        level_above=getattr(args, "level_above", None),
+        level_above=getattr(args, "level", None),
         timestamp_before=getattr(args, "timestamp_before", None),
         timestamp_after=getattr(args, "timestamp_after", None),
     )
