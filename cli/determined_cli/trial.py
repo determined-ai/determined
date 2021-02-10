@@ -112,14 +112,14 @@ def follow_trial_logs(args: Namespace) -> None:
         head=args.head,
         tail=args.tail,
         follow=args.follow,
-        agent_ids=getattr(args, "agent_ids", None),
-        container_ids=getattr(args, "container_ids", None),
-        rank_ids=getattr(args, "rank_ids", None),
-        sources=getattr(args, "sources", None),
-        stdtypes=getattr(args, "stdtypes", None),
-        level_above=getattr(args, "level", None),
-        timestamp_before=getattr(args, "timestamp_before", None),
-        timestamp_after=getattr(args, "timestamp_after", None),
+        agent_ids=args.agent_ids,
+        container_ids=args.container_ids,
+        rank_ids=args.rank_ids,
+        sources=args.sources,
+        stdtypes=args.stdtypes,
+        level_above=args.level,
+        timestamp_before=args.timestamp_before,
+        timestamp_after=args.timestamp_after,
     )
 
 
