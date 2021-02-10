@@ -1,32 +1,67 @@
-- name: implicit const hyperparameter (valid, implicit)
+- name: implicit const hyperparameter (valid, empty, implicit)
   matches:
     - http://determined.ai/schemas/expconf/v0/hyperparameter.json
   case:
-    nest:
-      const_implicit_empty:
-      const_implicit_null: null
-      const_implicit_bool: true
-      const_implicit_int: 1234
-      const_implicit_float: 1234.5678
-      const_implicit_list:
-        - 1
-        - fish
-        - 2
-        - fish
-      const_implicit_dict:
-        red: fish
-        blue: fish
 
-- name: list, const hyperparameter (valid, explicit)
+- name: implicit const hyperparameter (valid, null, implicit)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter.json
+  case: null
+
+- name: implicit const hyperparameter (valid, bool, implicit)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter.json
+  case: true
+
+- name: implicit const hyperparameter (valid, int, implicit)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter.json
+  case: 1
+
+- name: implicit const hyperparameter (valid, float, implicit)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter.json
+  case: 1.0
+
+- name: implicit const hyperparameter (valid, list, implicit)
   matches:
     - http://determined.ai/schemas/expconf/v0/hyperparameter.json
   case:
-    - type: const
-      val: asdf
-    - type: const
-      val: [1, "fish", 2, "fish"]
-    - type: const
-      val: {"red": "fish", "blue": "fish"}
+    - 1
+    - fish
+    - 2
+    - fish
+
+- name: implicit const hyperparameter (valid, dict, implicit)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter.json
+  case:
+    red: fish
+    blue: fish
+
+- name: explicit const hyperparameter (valid, str, explicit)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter.json
+    - http://determined.ai/schemas/expconf/v0/hyperparameter-const.json
+  case:
+    type: const
+    val: asdf
+
+- name: explicit const hyperparameter (valid, list, explicit)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter.json
+    - http://determined.ai/schemas/expconf/v0/hyperparameter-const.json
+  case:
+    type: const
+    val: [1, "fish", 2, "fish"]
+
+- name: explicit const hyperparameter (valid, dict, explicit)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/hyperparameter.json
+    - http://determined.ai/schemas/expconf/v0/hyperparameter-const.json
+  case:
+    type: const
+    val: {"red": "fish", "blue": "fish"}
 
 - name: int hyperparameter (valid)
   matches:
@@ -70,21 +105,3 @@
       - asdf
       - [1, "fish", 2, "fish"]
       - {"red": "fish", "blue": "fish"}
-
-- name: nested hyperparameters (invalid, to show paths in errors)
-  errors:
-    http://determined.ai/schemas/expconf/v0/hyperparameter.json:
-      - "<config>\\[0\\]\\[0\\]:"
-      - "<config>\\[0\\]\\[1\\]:"
-      - "<config>\\[1\\].one.a:"
-      - "<config>\\[1\\].one.b\\[0\\]:"
-      - "<config>\\[1\\].one.b\\[1\\]:"
-  case:
-    - - type: categorical
-      - type: categorical
-    - one:
-        a:
-          type: categorical
-        b:
-          - type: categorical
-          - type: categorical

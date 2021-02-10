@@ -36,8 +36,8 @@
                 "object",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/checkpoint-storage.json",
-            "default": "null"
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/checkpoint-storage.json"
         },
         "data": {
             "type": [
@@ -51,10 +51,10 @@
                 "object",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/data-layer.json",
             "default": {
                 "type": "shared_fs"
-            }
+            },
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/data-layer.json"
         },
         "debug": {
             "type": [
@@ -68,7 +68,7 @@
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "entrypoint": {
             "type": [
@@ -87,39 +87,29 @@
                 "object",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/environment.json",
-            "default": null
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/environment.json"
         },
         "hyperparameters": {
-            "type": "object",
-            "required": [
-                "global_batch_size"
-            ],
-            "properties": {
-                "global_batch_size": {
-                    "$ref": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json"
-                }
-            },
-            "additionalProperties": {
-                "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter.json"
-            }
+            "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
         },
         "internal": {
             "type": [
                 "object",
                 "null"
             ],
-            "default": null
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/internal.json"
         },
         "labels": {
             "type": [
                 "array",
                 "null"
             ],
+            "default": [],
             "items": {
                 "type": "string"
-            },
-            "default": null
+            }
         },
         "max_restarts": {
             "type": [
@@ -134,35 +124,35 @@
                 "object",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/length.json",
             "default": {
                 "batches": 0
-            }
+            },
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/length.json"
         },
         "min_validation_period": {
             "type": [
                 "object",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/length.json",
             "default": {
                 "batches": 0
-            }
+            },
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/length.json"
         },
         "optimizations": {
             "type": [
                 "object",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/optimizations.json",
-            "default": {}
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/optimizations.json"
         },
         "perform_initial_validation": {
             "type": [
                 "boolean",
                 "null"
             ],
-            "default": true
+            "default": false
         },
         "records_per_epoch": {
             "type": [
@@ -176,25 +166,16 @@
                 "object",
                 "null"
             ],
-            "additionalProperties": false,
-            "properties": {
-                "experiment_seed": {
-                    "type": [
-                        "integer",
-                        "null"
-                    ],
-                    "default": null
-                }
-            },
-            "default": {}
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/reproducibility.json"
         },
         "resources": {
             "type": [
                 "object",
                 "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/resources.json",
-            "default": {}
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/resources.json"
         },
         "scheduling_unit": {
             "type": [
@@ -208,12 +189,20 @@
             "$ref": "http://determined.ai/schemas/expconf/v0/searcher.json"
         },
         "security": {
-            "type": "null",
-            "default": "null"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/security.json"
         },
         "tensorboard_storage": {
-            "type": "null",
-            "default": "null"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/tensorboard-storage.json"
         }
     },
     "allOf": [

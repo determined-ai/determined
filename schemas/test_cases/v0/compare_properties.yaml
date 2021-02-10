@@ -39,6 +39,14 @@
     max_length:
       records: 10
 
+- name: a_is_subdir_of_b (valid, no storage path)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+    - http://determined.ai/schemas/expconf/v0/shared-fs.json
+  case:
+    type: shared_fs
+    host_path: /tmp
+
 - name: a_is_subdir_of_b (valid, absolute)
   matches:
     - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
@@ -89,3 +97,14 @@
     type: shared_fs
     host_path: /tmp
     storage_path: anywhere/../../storage_path
+
+- name: a_is_subdir_of_b (invalid, absolute, unnormalized)
+  errors:
+    http://determined.ai/schemas/expconf/v0/checkpoint-storage.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+    http://determined.ai/schemas/expconf/v0/shared-fs.json:
+      - storage_path must either be a relative directory or a subdirectory of host_path
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: /tmp/anywhere/../../storage_path

@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/security.json",
+    "title": "SecurityConfig",
+    "$comment": "SecurityConfig has not been used in a very long time",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "kerberos": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/kerberos.json"
+        }
+    }
+}

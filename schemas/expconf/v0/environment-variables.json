@@ -7,30 +7,7 @@
         "items": [
             {
                 "unionKey": "never",
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                    "cpu": {
-                        "type": [
-                            "array",
-                            "null"
-                        ],
-                        "items": {
-                            "type": "string"
-                        },
-                        "default": []
-                    },
-                    "gpu": {
-                        "type": [
-                            "array",
-                            "null"
-                        ],
-                        "items": {
-                            "type": "string"
-                        },
-                        "default": []
-                    }
-                }
+                "$ref": "http://determined.ai/schemas/expconf/v0/environment-variables-map.json"
             },
             {
                 "unionKey": "never",

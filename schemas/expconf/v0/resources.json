@@ -18,7 +18,7 @@
                 "integer",
                 "null"
             ],
-            "default": "null"
+            "default": null
         },
         "native_parallel": {
             "type": [
@@ -48,7 +48,7 @@
                 "integer",
                 "null"
             ],
-            "default": "null"
+            "default": null
         },
         "slots_per_trial": {
             "type": [
