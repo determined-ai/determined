@@ -1,9 +1,9 @@
+import collections
 import math
 import random
 import sys
 import time
 import uuid
-from argparse import Namespace
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
 
@@ -12,7 +12,6 @@ from termcolor import colored
 
 from determined_common import api, constants, context, yaml
 from determined_common.api import request as req
-from determined_common.api.authentication import authentication_required
 
 
 def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
@@ -25,8 +24,21 @@ def activate_experiment(master_url: str, exp_id: int) -> None:
     patch_experiment(master_url, exp_id, {"state": "ACTIVE"})
 
 
-@authentication_required
-def logs(args: Namespace) -> None:
+def trial_logs(
+    master_url: str,
+    trial_id: int,
+    head: Optional[int] = None,
+    tail: Optional[int] = None,
+    follow: bool = False,
+    agent_ids: Optional[List[str]] = None,
+    container_ids: Optional[List[str]] = None,
+    rank_ids: Optional[List[str]] = None,
+    sources: Optional[List[str]] = None,
+    stdtypes: Optional[List[str]] = None,
+    level_above: Optional[str] = None,
+    timestamp_before: Optional[str] = None,
+    timestamp_after: Optional[str] = None,
+) -> collections.Iterable:
     def to_levels_above(level: str) -> List[str]:
         # We should just be using the generated client instead and this is why.
         levels = [
@@ -42,48 +54,54 @@ def logs(args: Namespace) -> None:
         except ValueError:
             raise Exception("invalid log level: {}".format(level))
 
+    reverse = False
+    query = {}  # type: Dict[str, Any]
+    if head is not None:
+        query["limit"] = head
+    elif tail is not None:
+        query["limit"] = tail
+        query["order_by"] = "ORDER_BY_DESC"
+        reverse = True
+    elif follow:
+        query["follow"] = "true"
+
+    if agent_ids is not None:
+        query["agent_ids"] = agent_ids
+    if container_ids is not None:
+        query["container_ids"] = container_ids
+    if rank_ids is not None:
+        query["rank_ids"] = rank_ids
+    if sources is not None:
+        query["sources"] = sources
+    if stdtypes is not None:
+        query["stdtypes"] = stdtypes
+    if timestamp_before is not None:
+        query["timestamp_before"] = timestamp_before
+    if timestamp_after is not None:
+        query["timestamp_after"] = timestamp_after
+    if level_above is not None:
+        query["levels"] = to_levels_above(level_above)
+
+    path = "/api/v1/trials/{}/logs?{}".format(trial_id, urlencode(query, doseq=True))
+    with api.get(master_url, path, stream=True) as r:
+        line_iter = r.iter_lines()
+        if reverse:
+            line_iter = reversed(list(line_iter))
+        for line in line_iter:
+            yield simplejson.loads(line)["result"]
+
+
+def print_trial_logs(master_url: str, trial_id: int, **kwargs: Any) -> None:
     try:
-        reverse = False
-        query = {}  # type: Dict[str, Any]
-        if args.head is not None:
-            query["limit"] = args.head
-        elif args.tail is not None:
-            query["limit"] = args.tail
-            query["order_by"] = "ORDER_BY_DESC"
-            reverse = True
-        elif args.follow:
-            query["follow"] = "true"
-
-        for f in [
-            "agent_ids",
-            "container_ids",
-            "rank_ids",
-            "sources",
-            "stdtypes",
-            "timestamp_before",
-            "timestamp_after",
-        ]:
-            if getattr(args, f, None) is not None:
-                query[f] = getattr(args, f)
-
-        if getattr(args, "level", None) is not None:
-            query["levels"] = to_levels_above(args.level)
-
-        path = "/api/v1/trials/{}/logs?{}".format(args.trial_id, urlencode(query, doseq=True))
-        with api.get(args.master, path, stream=True) as r:
-            line_iter = r.iter_lines()
-            if reverse:
-                line_iter = reversed(list(line_iter))
-            for line in line_iter:
-                log = simplejson.loads(line)["result"]
-                print(log["message"], end="")
+        for log in trial_logs(master_url, trial_id, **kwargs):
+            print(log["message"], end="")
     except KeyboardInterrupt:
         pass
     finally:
         print(
             colored(
                 "Trial log stream ended. To reopen log stream, run: "
-                "det trial logs -f {}".format(args.trial_id),
+                "det trial logs -f {}".format(trial_id),
                 "green",
             )
         )
@@ -103,10 +121,7 @@ def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     print("Following first trial with ID {}".format(first_trial_id))
 
     # Call `logs --follow` on the new trial.
-    logs_args = Namespace(
-        trial_id=first_trial_id, master=master_url, head=None, tail=None, follow=True
-    )
-    logs(logs_args)
+    print_trial_logs(master_url, first_trial_id, follow=True)
 
 
 def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
@@ -180,10 +195,7 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
         elif r["state"] == constants.ERROR:
             print_progress(active_stage, ended=True)
             trial_id = r["trials"][0]["id"]
-            logs_args = Namespace(
-                trial_id=trial_id, master=master_url, head=None, tail=None, follow=False
-            )
-            logs(logs_args)
+            print_trial_logs(master_url, trial_id)
             sys.exit(1)
         else:
             print_progress(active_stage, ended=False)

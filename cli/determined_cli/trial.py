@@ -104,6 +104,25 @@ def kill_trial(args: Namespace) -> None:
     print("Killed trial {}".format(args.trial_id))
 
 
+@authentication_required
+def follow_trial_logs(args: Namespace) -> None:
+    api.experiment.print_trial_logs(
+        args.master,
+        args.trial_id,
+        head=args.head,
+        tail=args.tail,
+        follow=args.follow,
+        agent_ids=getattr(args, "agent_ids", None),
+        container_ids=getattr(args, "container_ids", None),
+        rank_ids=getattr(args, "rank_ids", None),
+        sources=getattr(args, "sources", None),
+        stdtypes=getattr(args, "stdtypes", None),
+        level_above=getattr(args, "level_above", None),
+        timestamp_before=getattr(args, "timestamp_before", None),
+        timestamp_after=getattr(args, "timestamp_after", None),
+    )
+
+
 args_description = [
     Cmd(
         "t|rial",
@@ -181,7 +200,7 @@ args_description = [
             ),
             Cmd(
                 "logs",
-                api.experiment.logs,
+                follow_trial_logs,
                 "fetch trial logs",
                 [
                     Arg("trial_id", type=int, help="trial ID"),
