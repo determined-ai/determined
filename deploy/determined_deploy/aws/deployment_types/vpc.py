@@ -34,6 +34,7 @@ class VPC(base.DeterminedDeployment):
         constants.cloudformation.SPOT_MAX_PRICE,
         constants.cloudformation.CPU_ENV_IMAGE,
         constants.cloudformation.GPU_ENV_IMAGE,
+        constants.cloudformation.LOG_GROUP_PREFIX,
     ]
 
     def deploy(self) -> None:

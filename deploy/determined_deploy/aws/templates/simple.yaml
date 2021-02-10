@@ -141,7 +141,7 @@ Parameters:
     Type: String
     Description: Whether preemption is enabled (only supported for priority scheduler).
     Default: false
-  
+
   CpuEnvImage:
     Type: String
     Description: Docker image for CPU tasks
@@ -151,6 +151,20 @@ Parameters:
     Type: String
     Description: Docker image for GPU tasks
     Default: ""
+
+  LogGroupPrefix:
+    Type: String
+    Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
+    Default: determined
+
+  RetainLogGroup:
+    Type: String
+    Description: Whether to retain CloudWatch log group after the stack is deleted
+    Default: false
+
+Conditions:
+  RetainLogGroup: !Equals [!Ref RetainLogGroup, true]
+  DeleteLogGroup: !Not [!Equals [!Ref RetainLogGroup, true]]
 
 Resources:
   CheckpointBucket:
@@ -320,10 +334,19 @@ Resources:
         MinCapacity: 2
         MaxCapacity: 8
 
-  LogGroup:
+  RetainedLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: RetainLogGroup
+    DeletionPolicy: Retain
     Properties:
-      LogGroupName: !Sub /determined/${AWS::StackName}
+      LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
+
+  DeletedLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: DeleteLogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
 
   LogPolicy:
     Type: AWS::IAM::Policy
@@ -341,8 +364,8 @@ Resources:
               - logs:PutLogEvents
               - logs:DescribeLogStreams
             Resource:
-              - !Sub arn:aws:logs:*:*:log-group:${LogGroup},
-              - !Sub arn:aws:logs:*:*:log-group:${LogGroup}:log-stream:*
+              - !Sub arn:aws:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName},
+              - !Sub arn:aws:logs:*:*:log-group:/${LogGroupPrefix}/${AWS::StackName}:log-stream:*
 
   MetricPolicy:
     Type: AWS::IAM::Policy
@@ -534,7 +557,7 @@ Resources:
                   agent_docker_image: determinedai/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
                   instance_type: ${CPUAgentInstanceType}
-                  log_group: ${LogGroup}
+                  log_group: /${LogGroupPrefix}/${AWS::StackName}
                   log_stream: determined-agent
                   master_url: $scheme://local-ipv4:$port
                   max_idle_agent_period: ${MaxIdleAgentPeriod}
@@ -562,7 +585,7 @@ Resources:
                   agent_docker_image: determinedai/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
                   instance_type: ${GPUAgentInstanceType}
-                  log_group: ${LogGroup}
+                  log_group: /${LogGroupPrefix}/${AWS::StackName}
                   log_stream: determined-agent
                   master_url: $scheme://local-ipv4:$port
                   max_idle_agent_period: ${MaxIdleAgentPeriod}
@@ -638,7 +661,7 @@ Resources:
                 --network determined \
                 --restart unless-stopped \
                 --log-driver=awslogs \
-                --log-opt awslogs-group=${LogGroup} \
+                --log-opt awslogs-group=/${LogGroupPrefix}/${AWS::StackName} \
                 --log-opt awslogs-stream=determined-master \
                 -p "$port":"$port" \
                 -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
@@ -698,7 +721,7 @@ Outputs:
 
   LogGroup:
     Description: The Log Group for Determined Logs
-    Value: !Ref LogGroup
+    Value: !Sub /${LogGroupPrefix}/${AWS::StackName}
 
   Region:
     Description: The AWS Region the stack is deployed in

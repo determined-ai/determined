@@ -55,6 +55,8 @@ class cloudformation:
     PREEMPTION_ENABLED = "PreemptionEnabled"
     CPU_ENV_IMAGE = "CpuEnvImage"
     GPU_ENV_IMAGE = "GpuEnvImage"
+    LOG_GROUP_PREFIX = "LogGroupPrefix"
+    RETAIN_LOG_GROUP = "RetainLogGroup"
 
 
 class misc:

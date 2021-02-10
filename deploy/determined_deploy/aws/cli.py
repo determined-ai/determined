@@ -198,6 +198,18 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         type=str,
         help="Docker image for GPU tasks",
     )
+    subparser.add_argument(
+        "--log-group-prefix",
+        type=str,
+        help="prefix for output CloudWatch log group",
+    )
+    subparser.add_argument(
+        "--retain-log-group",
+        action="store_const",
+        const="true",
+        help="whether to retain CloudWatch log group after the stack is deleted"
+        " (only available for the simple template)",
+    )
 
 
 def make_aws_parser(subparsers: argparse._SubParsersAction) -> None:
@@ -314,6 +326,8 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.PREEMPTION_ENABLED: args.preemption_enabled,
         constants.cloudformation.CPU_ENV_IMAGE: args.cpu_env_image,
         constants.cloudformation.GPU_ENV_IMAGE: args.gpu_env_image,
+        constants.cloudformation.LOG_GROUP_PREFIX: args.log_group_prefix,
+        constants.cloudformation.RETAIN_LOG_GROUP: args.retain_log_group,
     }
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)

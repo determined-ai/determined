@@ -38,6 +38,8 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.PREEMPTION_ENABLED,
         constants.cloudformation.CPU_ENV_IMAGE,
         constants.cloudformation.GPU_ENV_IMAGE,
+        constants.cloudformation.LOG_GROUP_PREFIX,
+        constants.cloudformation.RETAIN_LOG_GROUP,
     ]
 
     def deploy(self) -> None:
