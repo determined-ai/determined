@@ -3,6 +3,7 @@ import { throttle } from 'throttle-debounce';
 
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData } from 'Plotly';
+import themes, { defaultThemeId } from 'themes';
 import { clone } from 'utils/data';
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -47,6 +48,7 @@ const ScatterPlot: React.FC<Props> = ({
 
   const chartData: Partial<PlotData> = useMemo(() => {
     return {
+      marker: { color: themes[defaultThemeId].colors.action.normal },
       mode: 'markers',
       x,
       y,

@@ -192,16 +192,18 @@ const ScatterPlots: React.FC<Props> = ({
         title="HP Scatter Plots">
         <div className={css.container}>
           {!hasLoaded || !chartData ? <Spinner /> : (
-            <Grid minItemWidth={35} mode={GridMode.AutoFill}>
-              {selectedHParams.map(hParam => (
-                <ScatterPlot
-                  key={hParam}
-                  title={hParam}
-                  x={chartData.hpValues[hParam]}
-                  xLogScale={chartData.hpLogScales[hParam]}
-                  y={chartData.metricValues[hParam]} />
-              ))}
-            </Grid>
+            <div className={css.gridBox}>
+              <Grid minItemWidth={35} mode={GridMode.AutoFill}>
+                {selectedHParams.map(hParam => (
+                  <ScatterPlot
+                    key={hParam}
+                    title={hParam}
+                    x={chartData.hpValues[hParam]}
+                    xLogScale={chartData.hpLogScales[hParam]}
+                    y={chartData.metricValues[hParam]} />
+                ))}
+              </Grid>
+            </div>
           )}
         </div>
       </Section>
