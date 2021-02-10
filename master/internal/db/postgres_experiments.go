@@ -213,6 +213,7 @@ FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.experiment_id=$2
   AND s.total_batches=$3
+  AND s.metrics->'avg_metrics'->$1 IS NOT NULL
   AND s.end_time > $4
 ORDER BY s.end_time;`, &rows, metricName, experimentID, batchesProcessed, startTime)
 	if err != nil {
@@ -251,6 +252,7 @@ FROM trials t
   LEFT OUTER JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
 WHERE t.experiment_id=$2
   AND s.total_batches=$3
+  AND v.metrics->'validation_metrics'->$1 IS NOT NULL
   AND v.end_time > $4
 ORDER BY v.end_time;`, &rows, metricName, experimentID, batchesProcessed, startTime)
 	if err != nil {
