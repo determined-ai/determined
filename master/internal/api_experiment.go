@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	grpcroot "google.golang.org/grpc"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -18,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/grpc"
+	internalGrpc "github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -515,7 +515,7 @@ func (a *apiServer) CreateExperiment(
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
 
-	user, _, err := grpc.GetUser(ctx, a.m.db)
+	user, _, err := internalGrpc.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -538,7 +538,7 @@ func (a *apiServer) CreateExperiment(
 
 var defaultMetricsStreamPeriod = 30 * time.Second
 
-func connectionIsClosed(resp grpcroot.Stream) bool {
+func connectionIsClosed(resp grpc.ServerStream) bool {
 	err := resp.Context().Err()
 	return err != nil
 }
