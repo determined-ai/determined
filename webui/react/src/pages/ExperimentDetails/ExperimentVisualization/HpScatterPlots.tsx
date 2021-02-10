@@ -14,7 +14,7 @@ import Spinner from 'components/Spinner';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, MetricName, metricTypeParamMap } from 'types';
+import { ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap } from 'types';
 import { isNumber } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
@@ -36,6 +36,7 @@ interface Props {
 }
 
 interface HpMetricData {
+  hpLogScales: Record<string, boolean>;
   hpValues: Record<string, number[]>;
   metricValues: Record<string, number[]>;
   trialIds: number[];
@@ -103,6 +104,7 @@ const ScatterPlots: React.FC<Props> = ({
 
         const hpMetricMap: Record<string, number[]> = {};
         const hpValueMap: Record<string, number[]> = {};
+        const hpLogScaleMap: Record<string, boolean> = {};
 
         event.trials.forEach(trial => {
           const trialId = trial.trialId;
@@ -121,6 +123,9 @@ const ScatterPlots: React.FC<Props> = ({
         });
 
         hParams.forEach(hParam => {
+          const hp = (experiment.config.hyperparameters || {})[hParam];
+          if (hp.type === ExperimentHyperParamType.Log) hpLogScaleMap[hParam] = true;
+
           hpMetricMap[hParam] = [];
           hpValueMap[hParam] = [];
           trialIds.forEach(trialId => {
@@ -130,6 +135,7 @@ const ScatterPlots: React.FC<Props> = ({
         });
 
         setChartData({
+          hpLogScales: hpLogScaleMap,
           hpValues: hpValueMap,
           metricValues: hpMetricMap,
           trialIds,
@@ -139,7 +145,7 @@ const ScatterPlots: React.FC<Props> = ({
     ).catch(e => setPageError(e));
 
     return () => canceler.abort();
-  }, [ experiment.id, hParams, selectedBatch, selectedMetric ]);
+  }, [ experiment, hParams, selectedBatch, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
@@ -183,7 +189,7 @@ const ScatterPlots: React.FC<Props> = ({
             {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
-        title="Scatter Plots">
+        title="HP Scatter Plots">
         <div className={css.container}>
           {!hasLoaded || !chartData ? <Spinner /> : (
             <Grid minItemWidth={35} mode={GridMode.AutoFill}>
@@ -192,6 +198,7 @@ const ScatterPlots: React.FC<Props> = ({
                   key={hParam}
                   title={hParam}
                   x={chartData.hpValues[hParam]}
+                  xLogScale={chartData.hpLogScales[hParam]}
                   y={chartData.metricValues[hParam]} />
               ))}
             </Grid>

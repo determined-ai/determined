@@ -14,7 +14,9 @@ interface Props {
   values?: number[];
   width?: number;
   x: number[];
+  xLogScale?: boolean;
   y: number[];
+  yLogScale?: boolean;
 }
 
 const plotlyLayout: Partial<Layout> = {
@@ -34,7 +36,9 @@ const ScatterPlot: React.FC<Props> = ({
   title,
   padding = 0,
   x,
+  xLogScale,
   y,
+  yLogScale,
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -52,8 +56,10 @@ const ScatterPlot: React.FC<Props> = ({
   const chartLayout: Partial<Layout> = useMemo(() => {
     const layout = clone(plotlyLayout);
     if (title) layout.title = { font: { size: 12 }, text: title };
+    if (xLogScale) layout.xaxis.type = 'log';
+    if (yLogScale) layout.yaxis.type = 'log';
     return layout;
-  }, [ title ]);
+  }, [ title, xLogScale, yLogScale ]);
 
   useEffect(() => {
     const ref = chartRef.current;
