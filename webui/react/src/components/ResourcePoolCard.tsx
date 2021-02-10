@@ -54,14 +54,12 @@ const rpAttrs = [
 
 type SafeRawJson = Record<string, unknown>;
 
-const agentStatusText = (numAgents: number, maxAgents: number): string => {
+const agentStatusText = (numAgents: number): string => {
   let prefix = '';
   if (numAgents === 0) {
     prefix = 'No';
-  } else if (maxAgents === 0) {
-    prefix = numAgents + '';
   } else {
-    prefix = `${numAgents}`;
+    prefix = numAgents + '';
   }
   return prefix + ' Connected Agent' + (numAgents > 1 ? 's' : '');
 };
@@ -120,7 +118,7 @@ const ResourcePoolCard: React.FC<Props> = (
             'var(--theme-colors-states-active)' : 'var(--theme-colors-states-inactive)',
         }}>
         <p>
-          {agentStatusText(numAgents, rp.maxAgents)}
+          {agentStatusText(numAgents)}
         </p>
       </div>
       <div className={css.body}>
