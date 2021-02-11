@@ -407,7 +407,7 @@ commands:
       - run:
           name: Configure log group arguments
           command: |
-            if [ <<parameters.retain-log-group>> ]; then echo "--retain-log-group" >> /tmp/det-deploy-extra-args; fi
+            if <<parameters.retain-log-group>>; then echo "--retain-log-group" >> /tmp/det-deploy-extra-args; fi
             if [ -n "<<parameters.log-group-prefix>>" ]; then echo "--log-group-prefix <<parameters.log-group-prefix>>" >> /tmp/det-deploy-extra-args; fi
       - run:
           name: Deploy AWS cluster
