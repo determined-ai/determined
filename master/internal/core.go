@@ -31,7 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
@@ -163,7 +163,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	}
 
 	// Initialize listeners and multiplexing.
-	err = grpc.RegisterHTTPProxy(ctx, m.echo, m.config.Port, cert)
+	err = grpcutil.RegisterHTTPProxy(ctx, m.echo, m.config.Port, cert)
 	if err != nil {
 		return errors.Wrap(err, "failed to register gRPC gateway")
 	}
@@ -188,7 +188,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		}()
 	}
 	start("gRPC server", func() error {
-		srv := grpc.NewGRPCServer(m.db, &apiServer{m: m})
+		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m})
 		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
 		// indefinitely when using cmux.

@@ -1,4 +1,4 @@
-package grpc
+package grpcutil
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -54,4 +55,8 @@ func errorHandler(
 			log.WithError(err).Error("error writing fallback error")
 		}
 	}
+}
+
+func ConnectionIsClosed(stream grpc.ServerStream) bool {
+	return stream.Context().Err() != nil
 }

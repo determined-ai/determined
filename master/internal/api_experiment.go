@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -514,7 +514,7 @@ func (a *apiServer) CreateExperiment(
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
 
-	user, _, err := grpc.GetUser(ctx, a.m.db)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -585,6 +585,9 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 			}
 		}
 
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
 		if err = resp.Send(&response); err != nil {
 			return err
 		}
@@ -598,8 +601,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 		}
 
 		time.Sleep(period)
-		if err := resp.Context().Err(); err != nil {
-			// connection is closed
+		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
 	}
@@ -654,6 +656,9 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 			}
 		}
 
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
 		if err = resp.Send(&response); err != nil {
 			return errors.Wrapf(err, "error sending batches recorded for metric")
 		}
@@ -667,8 +672,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 		}
 
 		time.Sleep(period)
-		if err := resp.Context().Err(); err != nil {
-			// connection is closed
+		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
 	}
@@ -720,6 +724,9 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 
 		response.Trials = newTrials
 
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
 		if err = resp.Send(&response); err != nil {
 			return errors.Wrapf(err, "error sending batches recorded for metrics")
 		}
@@ -733,8 +740,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		}
 
 		time.Sleep(period)
-		if err := resp.Context().Err(); err != nil {
-			// connection is closed
+		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
 	}
@@ -919,6 +925,9 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		response.PromotedTrials = promotedTrials
 		response.DemotedTrials = demotedTrials
 
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
 		if err = resp.Send(&response); err != nil {
 			return errors.Wrap(err, "error sending sample of trial metric streams")
 		}
@@ -932,8 +941,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 		}
 
 		time.Sleep(period)
-		if err := resp.Context().Err(); err != nil {
-			// connection is closed
+		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
 	}
@@ -1011,6 +1019,9 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 			response.ValidationMetrics[metric] = protoMetricHPI(metricHpi)
 		}
 
+		if grpcutil.ConnectionIsClosed(resp) {
+			return nil
+		}
 		if err := resp.Send(&response); err != nil {
 			return errors.Wrap(err, "error sending hyperparameter importance response")
 		}
@@ -1040,8 +1051,7 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 		}
 
 		time.Sleep(period)
-		if err := resp.Context().Err(); err != nil {
-			// connection is closed
+		if grpcutil.ConnectionIsClosed(resp) {
 			return nil
 		}
 	}

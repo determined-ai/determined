@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -30,17 +30,17 @@ func (a *apiServer) Login(
 	switch err {
 	case nil:
 	case db.ErrNotFound:
-		return nil, grpc.ErrInvalidCredentials
+		return nil, grpcutil.ErrInvalidCredentials
 	default:
 		return nil, err
 	}
 
 	if !user.ValidatePassword(replicateClientSideSaltAndHash(req.Password)) {
-		return nil, grpc.ErrInvalidCredentials
+		return nil, grpcutil.ErrInvalidCredentials
 	}
 
 	if !user.Active {
-		return nil, grpc.ErrPermissionDenied
+		return nil, grpcutil.ErrPermissionDenied
 	}
 
 	token, err := a.m.db.StartUserSession(user)
@@ -53,7 +53,7 @@ func (a *apiServer) Login(
 
 func (a *apiServer) CurrentUser(
 	ctx context.Context, _ *apiv1.CurrentUserRequest) (*apiv1.CurrentUserResponse, error) {
-	user, _, err := grpc.GetUser(ctx, a.m.db)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (a *apiServer) CurrentUser(
 
 func (a *apiServer) Logout(
 	ctx context.Context, _ *apiv1.LogoutRequest) (*apiv1.LogoutResponse, error) {
-	_, userSession, err := grpc.GetUser(ctx, a.m.db)
+	_, userSession, err := grpcutil.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, err
 	}

@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -80,14 +80,14 @@ func (a *apiServer) GetUser(
 
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest) (*apiv1.PostUserResponse, error) {
-	curUser, _, err := grpc.GetUser(ctx, a.m.db)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, err
 	}
 	if !curUser.Admin {
-		return nil, grpc.ErrPermissionDenied
+		return nil, grpcutil.ErrPermissionDenied
 	}
-	if err = grpc.ValidateRequest(
+	if err = grpcutil.ValidateRequest(
 		func() (bool, string) { return req.User != nil, "no user specified" },
 		func() (bool, string) { return req.User.Username != "", "no username specified" },
 	); err != nil {
@@ -121,12 +121,12 @@ func (a *apiServer) PostUser(
 
 func (a *apiServer) SetUserPassword(
 	ctx context.Context, req *apiv1.SetUserPasswordRequest) (*apiv1.SetUserPasswordResponse, error) {
-	curUser, _, err := grpc.GetUser(ctx, a.m.db)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, err
 	}
 	if !curUser.Admin && curUser.Username != req.Username {
-		return nil, grpc.ErrPermissionDenied
+		return nil, grpcutil.ErrPermissionDenied
 	}
 	user := &model.User{Username: req.Username}
 	if err = user.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {

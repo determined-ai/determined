@@ -13,7 +13,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -35,7 +35,7 @@ type protoCommandParams struct {
 func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandParams) (
 	*command.CommandParams, *model.User, error,
 ) {
-	user, _, err := grpc.GetUser(ctx, a.m.db)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
