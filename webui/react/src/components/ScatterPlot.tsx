@@ -4,6 +4,8 @@ import { throttle } from 'throttle-debounce';
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData } from 'Plotly';
 import themes, { defaultThemeId } from 'themes';
+import { getNumericRange } from 'utils/chart';
+import { hex2rgb, rgba2str, rgbaFromGradient } from 'utils/color';
 import { clone } from 'utils/data';
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -37,6 +39,7 @@ const plotlyConfig: Partial<Plotly.Config> = {
 const ScatterPlot: React.FC<Props> = ({
   title,
   padding = 0,
+  values,
   x,
   xLogScale,
   y,
@@ -47,14 +50,27 @@ const ScatterPlot: React.FC<Props> = ({
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
 
+  const valueRange = useMemo(() => getNumericRange(values || [], false), [ values ]);
+
   const chartData: Partial<PlotData> = useMemo(() => {
-    return {
-      marker: { color: themes[defaultThemeId].colors.action.normal },
-      mode: 'markers',
-      x,
-      y,
-    };
-  }, [ x, y ]);
+    const marker = { color: themes[defaultThemeId].colors.action.normal };
+    if (values && valueRange) {
+      const rgb0 = hex2rgb(themes[defaultThemeId].colors.danger.normal);
+      const rgb1 = hex2rgb(themes[defaultThemeId].colors.action.normal);
+
+      /*
+       * There is an issue with plotly's typing for `marker.color`.
+       * It also takes in type of `string[]` but currently it's typed as `string` only.
+       * So we cast it to `unknown` then to a `string` as a workaround.
+       */
+      marker.color = values.map(value => {
+        const distance = (value - valueRange[0]) / (valueRange[1] - valueRange[0]);
+        const rgb = rgbaFromGradient(rgb0, rgb1, distance);
+        return rgba2str(rgb);
+      }) as unknown as string;
+    }
+    return { marker, mode: 'markers', x, y };
+  }, [ values, valueRange, x, y ]);
 
   const chartLayout: Partial<Layout> = useMemo(() => {
     const layout = clone(plotlyLayout);
