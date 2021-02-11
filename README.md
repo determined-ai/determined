@@ -23,31 +23,25 @@ To use Determined, you can continue using popular DL frameworks such as
 TensorFlow and PyTorch; you just need to update your model code to integrate
 with the Determined API.
 
----
-
-:collision: :collision: :collision: _Want to learn more? Join us on the 26th at 2pm PT for our [Lunch & Learn](https://www.eventbrite.com/e/lunch-learn-scalable-object-detection-with-determined-tickets-133386266915) where we'll walk through how to train Facebook's DEtection TRansformers ([DETR](https://github.com/facebookresearch/detr)) model with Determined!_ :collision: :collision: :collision:
-
----
-
 ## Try out Determined Locally
  
 Follow [these instructions](https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker) to install and set up docker.
 
  ```bash
 
-# Start a Determined cluster locally
+# Start a Determined cluster locally.
 python3.7 -m venv ~/.virtualenvs/test
 . ~/.virtualenvs/test/bin/activate
 pip install determined-cli determined-deploy
+# To start a cluster with GPUs, remove `no-gpu` flag.
 det-deploy local cluster-up --no-gpu
-## To start a cluster with GPUs, remove no-gpu flag
-## Access web UI at localhost:8080. By default, "determined" user accepts a blank password.
+# Access web UI at localhost:8080. By default, "determined" user accepts a blank password.
  
-# Navigate to a Determined example
+# Navigate to a Determined example.
 git clone https://github.com/determined-ai/determined
 cd determined/examples/computer_vision/cifar10_pytorch
 
-# Submit job to train a single model on a single node
+# Submit job to train a single model on a single node.
 det experiment create const.yaml . 
  ```
 
