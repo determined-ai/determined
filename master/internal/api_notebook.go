@@ -8,7 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -42,8 +42,8 @@ func (a *apiServer) KillNotebook(
 
 func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
-	if err := grpc.ValidateRequest(
-		grpc.ValidateLimit(req.Limit),
+	if err := grpcutil.ValidateRequest(
+		grpcutil.ValidateLimit(req.Limit),
 	); err != nil {
 		return err
 	}

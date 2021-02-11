@@ -33,7 +33,7 @@
 # API
 /proto/                        @hamidzr
 /master/internal/api           @hamidzr
-/master/internal/grpc          @hamidzr
+/master/internal/grpcutil      @hamidzr
 /master/internal/api*.go       @hamidzr
 
 # Kubernetes

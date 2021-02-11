@@ -92,6 +92,10 @@ func NewLogStoreProcessor(
 	}
 }
 
+func connectionIsClosed(ctx context.Context) bool {
+	return ctx.Err() != nil
+}
+
 // Receive implements the actor.Actor interface.
 func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 	type tick struct{}
@@ -100,7 +104,7 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Self(), tick{})
 
 	case tick:
-		if l.ctx.Err() != nil {
+		if connectionIsClosed(l.ctx) {
 			ctx.Self().Stop()
 			return nil
 		}
@@ -131,7 +135,7 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 		default:
 			// Check the ctx again before we process, since fetch takes most of the time and
 			// a send on a closed ctx will print errors in the master log that can be misleading.
-			if l.ctx.Err() != nil {
+			if connectionIsClosed(l.ctx) {
 				ctx.Self().Stop()
 				return nil
 			}
@@ -194,7 +198,7 @@ func (l *LogStreamProcessor) Receive(ctx *actor.Context) error {
 		}
 
 	case LogBatch:
-		if l.ctx.Err() != nil {
+		if connectionIsClosed(l.ctx) {
 			ctx.Self().Stop()
 			break
 		}

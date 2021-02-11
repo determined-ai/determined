@@ -15,7 +15,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -55,9 +55,9 @@ func (a *apiServer) GetMasterConfig(
 
 func (a *apiServer) MasterLogs(
 	req *apiv1.MasterLogsRequest, resp apiv1.Determined_MasterLogsServer) error {
-	if err := grpc.ValidateRequest(
-		grpc.ValidateLimit(req.Limit),
-		grpc.ValidateFollow(req.Limit, req.Follow),
+	if err := grpcutil.ValidateRequest(
+		grpcutil.ValidateLimit(req.Limit),
+		grpcutil.ValidateFollow(req.Limit, req.Follow),
 	); err != nil {
 		return err
 	}
