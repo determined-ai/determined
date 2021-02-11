@@ -352,13 +352,37 @@ func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLo
 	return len(c.readinessChecks) == 0
 }
 
+func (c *command) getState() State {
+	state := Pending
+	switch {
+	case c.container != nil:
+		switch c.container.State {
+		case container.Assigned:
+			state = Assigned
+		case container.Pulling:
+			state = Pulling
+		case container.Starting:
+			state = Starting
+		case container.Running:
+			state = Running
+		case container.Terminated:
+			state = Terminated
+		}
+	case c.exitStatus != nil:
+		state = Terminated
+	}
+	return state
+}
+
 func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 	serviceAddress, err := generateServiceAddress(string(c.taskID))
 	if err != nil {
 		return nil, errors.Wrapf(err, "generating service address for %s", c.taskID)
 	}
+
 	return &notebookv1.Notebook{
 		Id:             ctx.Self().Address().Local(),
+		State:          c.getState().Proto(),
 		Description:    c.config.Description,
 		Container:      c.container.Proto(),
 		ServiceAddress: serviceAddress,
