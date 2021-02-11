@@ -56,6 +56,7 @@ type TaskSpec struct {
 	inner
 
 	TaskID         string
+	TaskToken      string
 	ContainerID    string
 	Devices        []device.Device
 	AgentUserGroup *model.AgentUserGroup
@@ -86,6 +87,7 @@ func (t *TaskSpec) baseEnvVars() map[string]string {
 		// the user inside the container.
 		"PYTHONUSERBASE": userPythonBaseDir,
 		"DET_TASK_ID":    t.TaskID,
+		"DET_TASK_TOKEN": t.TaskToken,
 	}
 	if t.TaskContainerDefaults.NCCLPortRange != "" {
 		e["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange

@@ -377,6 +377,8 @@ func (t *tensorboardManager) newTensorBoard(
 		owner:          commandReq.Owner,
 		agentUserGroup: commandReq.AgentUserGroup,
 		taskSpec:       t.taskSpec,
+
+		db: t.db,
 	}, nil
 }
 

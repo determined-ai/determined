@@ -67,6 +67,6 @@ func (a *apiServer) Logout(
 	if err != nil {
 		return nil, err
 	}
-	err = a.m.db.DeleteSessionByID(userSession.ID)
+	err = a.m.db.DeleteUserSessionByID(userSession.ID)
 	return &apiv1.LogoutResponse{}, err
 }

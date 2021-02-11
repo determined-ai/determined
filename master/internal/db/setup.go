@@ -31,5 +31,11 @@ func Setup(opts *Config) (*PgDB, error) {
 	if err = db.Migrate(opts.Migrations); err != nil {
 		return nil, errors.Wrap(err, "running migrations")
 	}
-	return db, db.initAuthKeys()
+	if err = db.initAuthKeys(); err != nil {
+		return nil, err
+	}
+	if err = db.initTaskSessions(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }

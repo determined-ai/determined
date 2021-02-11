@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -86,6 +87,7 @@ type command struct {
 	exitStatus     *string
 	addresses      []container.Address
 
+	db          *db.PgDB
 	proxy       *actor.Ref
 	eventStream *actor.Ref
 
@@ -286,10 +288,17 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 
 		check.Panic(check.Equal(len(msg.Allocations), 1,
 			"Command should only receive an allocation of one container"))
+
+		taskToken, err := c.db.StartTaskSession(string(c.task.ID))
+		if err != nil {
+			return errors.Wrap(err, "cannot start a new task session")
+		}
+
 		c.allocation = msg.Allocations[0]
 
 		taskSpec := *c.taskSpec
 		taskSpec.AgentUserGroup = c.agentUserGroup
+		taskSpec.TaskToken = taskToken
 		taskSpec.SetInner(&tasks.StartCommand{
 			Config:          c.config,
 			UserFiles:       c.userFiles,
@@ -340,6 +349,12 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 		sproto.ResourcesReleased{TaskActor: ctx.Self()},
 	)
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
+
+	if c.task != nil {
+		if err := c.db.DeleteTaskSessionByTaskID(string(c.task.ID)); err != nil {
+			ctx.Log().WithError(err).Error("cannot delete task session for a command")
+		}
+	}
 }
 
 func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLog) bool {

@@ -222,5 +222,7 @@ func (s *shellManager) newShell(
 		taskSpec:       s.taskSpec,
 
 		proxyTCP: true,
+
+		db: s.db,
 	}
 }
