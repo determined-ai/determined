@@ -17,6 +17,12 @@ instructions for both scenarios.
  Preliminary Setup
 *******************
 
+.. note::
+
+   Docker must be installed to use ``det-deploy`` for local
+   installations. Please refer to our :ref:`installation
+   <install-docker>` steps for Docker.
+
 Install ``det-deploy`` by running
 
 .. code::
