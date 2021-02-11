@@ -272,8 +272,8 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 		s.InvalidTrials++
 		// Remove metrics associated with InvalidHP trial across all rungs
 		highestRungIndex := s.TrialRungs[requestID]
-        rung := s.Rungs[highestRungIndex]
-        rung.OutstandingTrials--
+		rung := s.Rungs[highestRungIndex]
+		rung.OutstandingTrials--
 		for rungIndex := 0; rungIndex <= highestRungIndex; rungIndex++ {
 			rung := s.Rungs[rungIndex]
 			for i, trialMetric := range rung.Metrics {
@@ -291,9 +291,8 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
 		ops = append(ops, NewValidate(create.RequestID))
 		return ops, nil
-    } else {
-        s.EarlyExitTrials[requestID] = true
-        s.ClosedTrials[requestID] = true
-        return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil
-    } 
+	}
+	s.EarlyExitTrials[requestID] = true
+	s.ClosedTrials[requestID] = true
+	return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil
 }

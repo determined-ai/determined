@@ -652,9 +652,7 @@ class TFKerasTrialController(det.LoopTrialController):
             pass
         except det.InvalidHP as e:
             for _, _, response_func in self.workloads:
-                logging.info(
-                    "Invalid hyperparameter exception in trial: {}".format(e)
-                )
+                logging.info("Invalid hyperparameter exception in trial: {}".format(e))
                 response_func(
                     det.util.wrap_metrics(
                         {},

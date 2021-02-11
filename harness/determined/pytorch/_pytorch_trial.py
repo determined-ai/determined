@@ -147,7 +147,9 @@ class PyTorchTrialController(det.LoopTrialController):
                     response_func(
                         util.wrap_metrics(
                             self._train_for_step(
-                                w.step_id, w.num_batches, w.total_batches_processed,
+                                w.step_id,
+                                w.num_batches,
+                                w.total_batches_processed,
                             ),
                             self.context.get_stop_requested(),
                             False,
