@@ -4,7 +4,9 @@
     "title": "TestRoot",
     "type": "object",
     "additionalProperties": false,
-    "required": ["val_x"],
+    "required": [
+        "val_x"
+    ],
     "properties": {
         "val_x": {
             "type": "integer"
@@ -34,4 +36,3 @@
         }
     }
 }
-

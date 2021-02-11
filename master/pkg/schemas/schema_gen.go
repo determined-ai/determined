@@ -2357,7 +2357,9 @@ var (
     "title": "TestRoot",
     "type": "object",
     "additionalProperties": false,
-    "required": ["val_x"],
+    "required": [
+        "val_x"
+    ],
     "properties": {
         "val_x": {
             "type": "integer"
@@ -2387,7 +2389,6 @@ var (
         }
     }
 }
-
 `)
 	textTestSubV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2398,12 +2399,14 @@ var (
     "required": [],
     "properties": {
         "val_y": {
-            "type": ["string", "null"],
+            "type": [
+                "string",
+                "null"
+            ],
             "default": "default_y"
         }
     }
 }
-
 `)
 	textTestUnionAV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2423,7 +2426,10 @@ var (
             "type": "integer"
         },
         "common_val": {
-            "type": ["string", "null"],
+            "type": [
+                "string",
+                "null"
+            ],
             "default": "default-common-val"
         }
     }
@@ -2447,7 +2453,10 @@ var (
             "type": "integer"
         },
         "common_val": {
-            "type": ["string", "null"],
+            "type": [
+                "string",
+                "null"
+            ],
             "default": "default-common-val"
         }
     }
