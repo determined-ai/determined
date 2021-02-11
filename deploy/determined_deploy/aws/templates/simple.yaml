@@ -341,7 +341,7 @@ Resources:
     Properties:
       LogGroupName: !Sub /${LogGroupPrefix}/${AWS::StackName}
 
-  DeletedLogGroup:
+  LogGroup:
     Type: AWS::Logs::LogGroup
     Condition: DeleteLogGroup
     DeletionPolicy: Delete

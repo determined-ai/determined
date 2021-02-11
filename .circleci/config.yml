@@ -379,6 +379,12 @@ commands:
       max-dynamic-agents:
         type: integer
         default: 1
+      retain-log-group:
+        type: boolean
+        default: false
+      log-group-prefix:
+        type: string
+        default: ""
     steps:
       - run:
           name: Initialize extra arguments
@@ -398,6 +404,11 @@ commands:
             if [ -n "<<parameters.master-tls-cert>>" ]; then echo "--master-tls-cert <<parameters.master-tls-cert>>" >> /tmp/det-deploy-extra-args; fi
             if [ -n "<<parameters.master-tls-key>>" ]; then echo "--master-tls-key <<parameters.master-tls-key>>" >> /tmp/det-deploy-extra-args; fi
             if [ -n "<<parameters.master-cert-name>>" ]; then echo "--master-cert-name <<parameters.master-cert-name>>" >> /tmp/det-deploy-extra-args; fi
+      - run:
+          name: Configure log group arguments
+          command: |
+            if [ <<parameters.retain-log-group>> ]; then echo "--retain-log-group" >> /tmp/det-deploy-extra-args; fi
+            if [ -n "<<parameters.log-group-prefix>>" ]; then echo "--log-group-prefix <<parameters.log-group-prefix>>" >> /tmp/det-deploy-extra-args; fi
       - run:
           name: Deploy AWS cluster
           command: |
@@ -457,6 +468,8 @@ commands:
           master-tls-cert: <<parameters.master-tls-cert>>
           master-tls-key: <<parameters.master-tls-key>>
           master-cert-name: <<parameters.master-cert-name>>
+          log-group-prefix: determined-ci
+          retain-log-group: true
       - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
           master-tls-cert: <<parameters.master-tls-cert>>
