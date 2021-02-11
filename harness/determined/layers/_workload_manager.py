@@ -132,7 +132,6 @@ class _TrialWorkloadManager(WorkloadManager):
             )
 
         def _respond(in_response: workload.Response) -> None:
-            # raise ValueError(in_response)
             # Only the chief container should actually respond to TRAIN_FOR_STEP.
             if self.rendezvous_info.get_rank() != 0:
                 respond(workload.Skipped())
@@ -144,34 +143,42 @@ class _TrialWorkloadManager(WorkloadManager):
             metrics = in_response["metrics"]
             metrics = cast(workload.Metrics, metrics)
 
-            batch_metrics = metrics["batch_metrics"]
-
-            # Sanity-check training metrics.
-            det.util.validate_batch_metrics(batch_metrics)
-            check_len(batch_metrics, wkld.num_batches)
-
-            for callback in self.callbacks:
-                callback.on_train_step_end(
-                    wkld.step_id, wkld.num_batches, wkld.total_batches_processed, metrics
-                )
-
-            self.tensorboard_mgr.sync()
-
-            out_response = {
-                "type": "WORKLOAD_COMPLETED",
-                "workload": wkld,
-                "start_time": start_time,
-                "end_time": _current_timestamp(),
-                "metrics": metrics,
-            }
-
-            if in_response.get("stop_requested", False):
-                out_response["exited_reason"] = "USER_CANCELED"
             if in_response.get("invalid_hp", False):
+                out_response = {
+                    "type": "WORKLOAD_COMPLETED",
+                    "workload": wkld,
+                    "start_time": start_time,
+                    "end_time": _current_timestamp(),
+                    "metrics": metrics,
+                }
                 out_response["exited_reason"] = "INVALID_HP"
+                respond(out_response)
+            else:
+                batch_metrics = metrics["batch_metrics"]
+                # Sanity-check training metrics.
+                det.util.validate_batch_metrics(batch_metrics)
+                check_len(batch_metrics, wkld.num_batches)
 
-            # Send the response up.
-            respond(out_response)
+                for callback in self.callbacks:
+                    callback.on_train_step_end(
+                        wkld.step_id, wkld.num_batches, wkld.total_batches_processed, metrics
+                    )
+
+                self.tensorboard_mgr.sync()
+
+                out_response = {
+                    "type": "WORKLOAD_COMPLETED",
+                    "workload": wkld,
+                    "start_time": start_time,
+                    "end_time": _current_timestamp(),
+                    "metrics": metrics,
+                }
+
+                if in_response.get("stop_requested", False):
+                    out_response["exited_reason"] = "USER_CANCELED"
+
+                # Send the response up.
+                respond(out_response)
 
         yield wkld, [], _respond
 

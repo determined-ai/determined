@@ -147,10 +147,10 @@ class PyTorchTrialController(det.LoopTrialController):
                     response_func(
                         util.wrap_metrics(
                             self._train_for_step(
-                                w.step_id, w.num_batches, w.total_batches_processed
+                                w.step_id, w.num_batches, w.total_batches_processed,
                             ),
                             self.context.get_stop_requested(),
-                            self.context.get_invalid_hp(),
+                            False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -159,21 +159,18 @@ class PyTorchTrialController(det.LoopTrialController):
                     )
                     response_func(
                         util.wrap_metrics(
-                            self._train_for_step(
-                                w.step_id, w.num_batches, w.total_batches_processed
-                            ),
+                            {},
                             self.context.get_stop_requested(),
-                            self.context.set_invalid_hp(True),
+                            True,
                         )
                     )
-                    raise
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 try:
                     response_func(
                         util.wrap_metrics(
                             self._compute_validation_metrics(),
                             self.context.get_stop_requested(),
-                            self.context.get_invalid_hp(),
+                            False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -182,12 +179,11 @@ class PyTorchTrialController(det.LoopTrialController):
                     )
                     response_func(
                         util.wrap_metrics(
-                            self._compute_validation_metrics(),
+                            {},
                             self.context.get_stop_requested(),
-                            self.context.set_invalid_hp(True),
+                            True,
                         )
                     )
-                    raise
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.eq(len(args), 1)
                 check.is_instance(args[0], pathlib.Path)

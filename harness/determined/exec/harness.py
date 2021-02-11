@@ -226,8 +226,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except det.InvalidHP as e:
-        logging.info("InvalidHP Exception Encountered: {}".format(e))
-        pass
+    main()

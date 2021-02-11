@@ -149,7 +149,7 @@ class DeterminedControlHook(estimator.RunHook):
             response = {
                 "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
-                "invalid_hp": self.estimator_trial_controller.context.get_invalid_hp(),
+                "invalid_hp": False,
             }
             self.train_response_func(response)
         else:
@@ -282,7 +282,7 @@ class DeterminedControlHook(estimator.RunHook):
                     det.util.wrap_metrics(
                         self._compute_validation_metrics(),
                         self.estimator_trial_controller.context.get_stop_requested(),
-                        self.estimator_trial_controller.context.get_invalid_hp(),
+                        False,
                     )
                 )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
@@ -704,6 +704,18 @@ class EstimatorTrialController(det.LoopTrialController):
             tf.estimator.train_and_evaluate(self.estimator, self.train_spec, self.eval_spec)
         except det.errors.WorkerFinishedGracefully:
             pass
+        except det.InvalidHP as e:
+            for _, _, response_func in self.workloads:
+                logging.info(
+                    "Invalid hyperparameter exception in trial: {}".format(e)
+                )
+                response_func(
+                    det.util.wrap_metrics(
+                        {},
+                        self.context.get_stop_requested(),
+                        True,
+                    )
+                )
         else:
             raise AssertionError(
                 "Training loop exited unexpectedly but without throwing any errors. This is "
