@@ -1,4 +1,4 @@
-import { Alert, Col, Row, Select, Tooltip } from 'antd';
+import { Alert, Col, Row, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -21,6 +21,7 @@ import { terminalRunStates } from 'utils/types';
 import css from './ExperimentVisualization.module.scss';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
+import HpVsHpHeatMap from './ExperimentVisualization/HpVsHpHeatMap';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
 
 const { Option } = Select;
@@ -51,7 +52,7 @@ const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
   { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
   { label: 'HP Scatter Plots', type: VisualizationType.HpScatterPlots },
-  { disabled: true, label: 'HP Heat Map', type: VisualizationType.HpHeatMap },
+  { label: 'HP Heat Map', type: VisualizationType.HpHeatMap },
 ];
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
@@ -293,6 +294,18 @@ const ExperimentVisualization: React.FC<Props> = ({
               onMetricChange={handleMetricChange}
             />
           )}
+          {typeKey === VisualizationType.HpVsHpHeatMap && (
+            <HpVsHpHeatMap
+              batches={batches}
+              experiment={experiment}
+              hParams={fullHParams}
+              metrics={metrics}
+              selectedBatch={selectedBatch}
+              selectedMetric={selectedMetric}
+              onBatchChange={handleBatchChange}
+              onMetricChange={handleMetricChange}
+            />
+          )}
         </Col>
         <Col
           lg={{ order: 2, span: 4 }}
@@ -304,23 +317,14 @@ const ExperimentVisualization: React.FC<Props> = ({
             <div className={css.menu}>
               {MENU.map(item => {
                 const linkClasses = [ css.link ];
-                if (item.disabled) linkClasses.push(css.disabled);
                 if (typeKey === item.type) linkClasses.push(css.active);
-
-                const link = (
+                return (
                   <Link
                     className={linkClasses.join(' ')}
-                    disabled={item.disabled}
                     key={item.type}
                     path={`${basePath}/${item.type}`}
                     onClick={() => handleChartTypeChange(item.type)}>{item.label}</Link>
                 );
-
-                return item.disabled ? (
-                  <Tooltip key={item.type} placement="left" title="Coming soon!">
-                    <div>{link}</div>
-                  </Tooltip>
-                ) : link;
               })}
             </div>
             <div className={css.mobileMenu}>
