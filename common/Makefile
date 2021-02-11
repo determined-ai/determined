@@ -38,7 +38,7 @@ fmt:
 .PHONY: check
 check: gen
 	isort --check-only
-	black .
+	black . --check
 	flake8 --exclude '*_gen.py'
 	mypy .
 
