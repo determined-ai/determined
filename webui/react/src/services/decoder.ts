@@ -97,27 +97,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
   });
 };
 
-export const jsonToGenericCommand = (data: unknown, type: types.CommandType): types.Command => {
-  const io = ioTypes.decode<ioTypes.ioTypeGenericCommand>(ioTypes.ioGenericCommand, data);
-  const command: types.Command = {
-    config: { ...io.config },
-    exitStatus: io.exit_status || undefined,
-    id: io.id,
-    kind: type,
-    misc: io.misc ? {
-      experimentIds: io.misc.experiment_ids || [],
-      trialIds: io.misc.trial_ids || [],
-    } : undefined,
-    registeredTime: io.registered_time,
-    resourcePool: io.resource_pool || '',
-    serviceAddress: io.service_address || undefined,
-    state: io.state as types.CommandState,
-    user: { username: io.owner.username },
-  };
-  return command as types.Command;
-};
-
-const mapV1ContainerStateToCommandState =
+const mapV1ContainerState =
   (containerState: Sdk.Determinedcontainerv1State|null): types.CommandState => {
     switch (containerState) {
       case Sdk.Determinedcontainerv1State.ASSIGNED:
@@ -135,63 +115,47 @@ const mapV1ContainerStateToCommandState =
     }
   };
 
-export const mapV1CommandToCommandTask = (command: Sdk.V1Command): types.CommandTask => {
+const mapCommonV1Task = (
+  task: Sdk.V1Command|Sdk.V1Notebook|Sdk.V1Shell|Sdk.V1Tensorboard,
+  type: types.CommandType,
+): types.CommandTask => {
   return {
-    id: command.id,
-    name: command.description,
-    resourcePool: command.resourcePool,
-    startTime: command.startTime as unknown as string,
-    state: mapV1ContainerStateToCommandState(command.container?.state || null),
-    type: types.CommandType.Command,
-    username: command.username,
+    id: task.id,
+    name: task.description,
+    resourcePool: task.resourcePool,
+    startTime: task.startTime as unknown as string,
+    state: mapV1ContainerState(task.container?.state || null),
+    type,
+    username: task.username,
   };
 };
 
-export const mapV1NotebookToCommandTask = (notebook: Sdk.V1Notebook): types.CommandTask => {
+export const mapV1Command = (command: Sdk.V1Command): types.CommandTask => {
+  return { ...mapCommonV1Task(command, types.CommandType.Command) };
+};
+
+export const mapV1Notebook = (notebook: Sdk.V1Notebook): types.CommandTask => {
   return {
-    id: notebook.id,
-    name: notebook.description,
-    resourcePool: notebook.resourcePool,
-    startTime: notebook.startTime as unknown as string,
-    state: mapV1ContainerStateToCommandState(notebook.container?.state || null),
-    type: types.CommandType.Notebook,
-    username: notebook.username,
+    ...mapCommonV1Task(notebook, types.CommandType.Notebook),
+    serviceAddress: notebook.serviceAddress,
   };
 };
 
-export const mapV1ShellToCommandTask = (shell: Sdk.V1Shell): types.CommandTask => {
-  return {
-    id: shell.id,
-    name: shell.description,
-    resourcePool: shell.resourcePool,
-    startTime: shell.startTime as unknown as string,
-    state: mapV1ContainerStateToCommandState(shell.container?.state || null),
-    type: types.CommandType.Shell,
-    username: shell.username,
-  };
+export const mapV1Shell = (shell: Sdk.V1Shell): types.CommandTask => {
+  return { ...mapCommonV1Task(shell, types.CommandType.Shell) };
 };
 
-export const mapV1TensorboardToCommandTask =
+export const mapV1Tensorboard =
   (tensorboard: Sdk.V1Tensorboard): types.CommandTask => {
     return {
-      id: tensorboard.id,
+      ...mapCommonV1Task(tensorboard, types.CommandType.Tensorboard),
       misc: {
         experimentIds: tensorboard.experimentIds || [],
         trialIds: tensorboard.trialIds || [],
       },
-      name: tensorboard.description,
-      resourcePool: tensorboard.resourcePool,
       serviceAddress: tensorboard.serviceAddress,
-      startTime: tensorboard.startTime as unknown as string,
-      state: mapV1ContainerStateToCommandState(tensorboard.container?.state || null),
-      type: types.CommandType.Tensorboard,
-      username: tensorboard.username,
     };
   };
-
-export const jsonToNotebook = (data: unknown): types.Command => {
-  return jsonToGenericCommand(data, types.CommandType.Notebook);
-};
 
 const ioToExperimentHyperparameter = (
   io: ioTypes.ioTypeHyperparameter,

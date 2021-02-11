@@ -9,6 +9,7 @@ import "determined/api/v1/pagination.proto";
 import "determined/notebook/v1/notebook.proto";
 import "determined/log/v1/log.proto";
 import "determined/util/v1/util.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get a list of notebooks.
 message GetNotebooksRequest {
@@ -95,6 +96,9 @@ message LaunchNotebookRequest {
 }
 // Response to LaunchNotebookRequest.
 message LaunchNotebookResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "notebook" ] }
+  };
   // The requested notebook.
   determined.notebook.v1.Notebook notebook = 1;
 }

@@ -3,8 +3,7 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointStorageType, CommandState, ExperimentHyperParamType, ExperimentSearcherName,
-  LogLevel, RunState,
+  CheckpointStorageType, ExperimentHyperParamType, ExperimentSearcherName, LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -93,48 +92,6 @@ export type ioTypeAgent = io.TypeOf<typeof ioAgent>;
 export type ioTypeAgents = io.TypeOf<typeof ioAgents>;
 
 /* Generic Command */
-
-const ioUser = io.type({
-  id: io.number,
-  username: io.string,
-});
-
-const ioCommandAddress = io.type({
-  container_ip: io.string,
-  container_port: io.number,
-  host_ip: io.string,
-  host_port: io.number,
-  protocol: optional(io.string),
-});
-
-const ioCommandMisc = io.partial({
-  experiment_ids: optional(io.array(io.number)),
-  trial_ids: optional(io.array(io.number)),
-});
-
-const ioCommandConfig = io.exact(io.type({ description: io.string }));
-
-const commandStates: Record<string, null> = Object.values(CommandState)
-  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
-const commandStatesIoType = io.keyof(commandStates);
-
-export const ioGenericCommand = io.type({
-  config: ioCommandConfig,
-  exit_status: optional(io.string),
-  id: io.string,
-  misc: optional(ioCommandMisc),
-  owner: ioUser,
-  registered_time: io.string,
-  resource_pool: io.string,
-  service_address: optional(io.string),
-  state: commandStatesIoType,
-});
-
-export const ioGenericCommands = io.record(io.string, ioGenericCommand);
-
-export type ioTypeCommandAddress = io.TypeOf<typeof ioCommandAddress>;
-export type ioTypeGenericCommand = io.TypeOf<typeof ioGenericCommand>;
-export type ioTypeGenericCommands = io.TypeOf<typeof ioGenericCommands>;
 
 const runStates: Record<string, null> = Object.values(RunState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});

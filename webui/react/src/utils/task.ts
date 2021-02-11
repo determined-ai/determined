@@ -1,5 +1,5 @@
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { createNotebook } from 'services/api';
+import { launchNotebook as apiLaunchNotebook } from 'services/api';
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
   ExperimentItem, ExperimentOld, ExperimentTask, RecentCommandTask, RecentEvent,
@@ -10,7 +10,7 @@ import { openCommand } from 'wait';
 
 export const launchNotebook = async (slots: number): Promise<void> => {
   try {
-    const notebook = await createNotebook({ slots });
+    const notebook = await apiLaunchNotebook({ config: { resources: { slots } } });
     openCommand(notebook);
   } catch (e) {
     handleError({
