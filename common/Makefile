@@ -1,4 +1,4 @@
-GENERATED := determined_common/schemas/expconf/_gen.py
+GENERATED_COMMITTED := determined_common/schemas/expconf/_gen.py
 
 .PHONY: clean
 clean:
@@ -12,9 +12,20 @@ clean:
 
 .PHONY: ungen
 ungen:
-	rm -f $(GENERATED)
+	git checkout -- $(GENERATED_COMMITTED)
 
-gen: $(GENERATED)
+.PHONY: gen
+gen: $(GENERATED_COMMITTED)
+
+.PHONY: force-gen
+force-gen:
+	touch ../schemas/gen.py
+
+.PHONY: check-gen
+check-gen: force-gen $(GENERATED_COMMITTED)
+	# Checking that committed, generated code is up-to-date by ensuring that
+	# git reports the files as unchanged after forcibly regenerating the files:
+	test -z "$(shell git status --porcelain $(GENERATED_COMMITTED))"
 
 determined_common/schemas/expconf/_gen.py: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
 	../schemas/gen.py \
@@ -33,13 +44,13 @@ publish:
 .PHONY: fmt
 fmt:
 	isort -y
-	black .
+	black . --exclude '_gen.py'
 
 .PHONY: check
 check: gen
 	isort --check-only
-	black .
-	flake8 --exclude '*_gen.py'
+	black . --check --exclude '_gen.py'
+	flake8 --exclude '_gen.py'
 	mypy .
 
 .PHONY: test
