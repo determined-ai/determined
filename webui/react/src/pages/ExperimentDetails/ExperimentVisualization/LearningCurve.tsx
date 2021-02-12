@@ -1,29 +1,23 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import BadgeTag from 'components/BadgeTag';
-import HumanReadableFloat from 'components/HumanReadableFloat';
 import LearningCurveChart from 'components/LearningCurveChart';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
-import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { handlePath } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import {
-  ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap, RunState,
-} from 'types';
-import { glasbeyColor } from 'utils/color';
-import { alphanumericSorter, isNumber, numericSorter, primitiveSorter } from 'utils/data';
+import { ExperimentBase, MetricName, metricTypeParamMap, RunState } from 'types';
+import { alphanumericSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
+import HpTrialTable, { TrialHParams } from './HpTrialTable';
 import css from './LearningCurve.module.scss';
 
 const { Option } = Select;
@@ -33,15 +27,6 @@ interface Props {
   metrics: MetricName[];
   onMetricChange?: (metric: MetricName) => void;
   selectedMetric: MetricName
-}
-
-type HParams = Record<string, boolean | number | string>;
-
-interface TrialHParams {
-  hparams: HParams;
-  id: number;
-  metric: number | null;
-  url: string;
 }
 
 const DEFAULT_MAX_TRIALS = 100;
@@ -58,7 +43,6 @@ const LearningCurve: React.FC<Props> = ({
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
-  const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
   const [ chartTrialId, setChartTrialId ] = useState<number>();
   const [ tableTrialId, setTableTrialId ] = useState<number>();
   const [ maxTrials, setMaxTrials ] = useState(DEFAULT_MAX_TRIALS);
@@ -67,76 +51,6 @@ const LearningCurve: React.FC<Props> = ({
 
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
-
-  const columns = useMemo(() => {
-    const idRenderer = (_: string, record: TrialHParams) => {
-      const index = trialIds.findIndex(trialId => trialId === record.id);
-      const color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
-      return (
-        <div className={css.idLayout}>
-          <div className={css.colorLegend} style={{ backgroundColor: color }} />
-          <div>{record.id}</div>
-        </div>
-      );
-    };
-    const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
-    const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
-
-    const metricRenderer = (_: string, record: TrialHParams) => {
-      return record.metric ? <HumanReadableFloat num={record.metric} /> : null;
-    };
-    const metricSorter = (recordA: TrialHParams, recordB: TrialHParams): number => {
-      return numericSorter(recordA.metric || undefined, recordB.metric || undefined);
-    };
-    const metricColumn = {
-      dataIndex: 'metric',
-      key: 'metric',
-      render: metricRenderer,
-      sorter: metricSorter,
-      title: <BadgeTag
-        label={selectedMetric.name}
-        tooltip={selectedMetric.type}>{selectedMetric.type.substr(0, 1).toUpperCase()}</BadgeTag>,
-    };
-
-    const hpRenderer = (key: string) => {
-      return (_: string, record: TrialHParams) => {
-        const value = record.hparams[key];
-        const type = experiment.config.hyperparameters[key].type;
-        const isValidType = [
-          ExperimentHyperParamType.Constant,
-          ExperimentHyperParamType.Double,
-          ExperimentHyperParamType.Int,
-          ExperimentHyperParamType.Log,
-        ].includes(type);
-        if (isNumber(value) && isValidType) {
-          return <HumanReadableFloat num={value} />;
-        }
-        return record.hparams[key];
-      };
-    };
-    const hpColumnSorter = (key: string) => {
-      return (recordA: TrialHParams, recordB: TrialHParams): number => {
-        const a = recordA.hparams[key];
-        const b = recordB.hparams[key];
-        return primitiveSorter(a, b);
-      };
-    };
-    const hpColumns = Object
-      .keys(experiment.config.hyperparameters || {})
-      .filter(key => {
-        return experiment.config.hyperparameters[key].type !== ExperimentHyperParamType.Constant;
-      })
-      .map(key => {
-        return {
-          key,
-          render: hpRenderer(key),
-          sorter: hpColumnSorter(key),
-          title: key,
-        };
-      });
-
-    return [ idColumn, metricColumn, ...hpColumns ];
-  }, [ experiment.config.hyperparameters, selectedMetric, trialIds ]);
 
   const resetData = useCallback(() => {
     setChartData([]);
@@ -164,22 +78,17 @@ const LearningCurve: React.FC<Props> = ({
     setChartTrialId(trialId != null ? trialId : undefined);
   }, []);
 
-  const handleTableChange = useCallback((tablePagination) => {
-    setPageSize(tablePagination.pageSize);
+  const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
+    if (record.url) handlePath(event, { path: record.url });
   }, []);
 
-  const handleTableRow = useCallback((record: TrialHParams) => ({
-    onClick: (event: React.MouseEvent) => handlePath(event, { path: record.url }),
-    onMouseEnter: () => setTableTrialId(record.id),
-    onMouseLeave: () => setTableTrialId(undefined),
-  }), []);
+  const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
+    if (record.id) setTableTrialId(record.id);
+  }, []);
 
-  const rowClassName = useCallback((record: TrialHParams) => {
-    return defaultRowClassName({
-      clickable: true,
-      highlighted: record.id === chartTrialId,
-    });
-  }, [ chartTrialId ]);
+  const handleTableMouseLeave = useCallback(() => {
+    setTableTrialId(undefined);
+  }, []);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -315,17 +224,16 @@ const LearningCurve: React.FC<Props> = ({
                   onTrialFocus={handleTrialFocus} />
               </div>
               <div className={css.table}>
-                <ResponsiveTable<TrialHParams>
-                  columns={columns}
-                  dataSource={trialHps}
-                  pagination={getPaginationConfig(trialHps.length, pageSize)}
-                  rowClassName={rowClassName}
-                  rowKey="id"
-                  scroll={{ x: 1000 }}
-                  showSorterTooltip={false}
-                  size="small"
-                  onChange={handleTableChange}
-                  onRow={handleTableRow} />
+                <HpTrialTable
+                  highlightedTrialId={chartTrialId}
+                  hyperparameters={experiment.config.hyperparameters || {}}
+                  metric={selectedMetric}
+                  trialHps={trialHps}
+                  trialIds={trialIds}
+                  onClick={handleTableClick}
+                  onMouseEnter={handleTableMouseEnter}
+                  onMouseLeave={handleTableMouseLeave}
+                />
               </div>
             </>
           )}

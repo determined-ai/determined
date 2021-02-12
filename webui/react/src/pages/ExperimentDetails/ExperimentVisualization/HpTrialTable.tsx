@@ -1,0 +1,154 @@
+import React, { useCallback, useMemo, useState } from 'react';
+
+import BadgeTag from 'components/BadgeTag';
+import HumanReadableFloat from 'components/HumanReadableFloat';
+import ResponsiveTable from 'components/ResponsiveTable';
+import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { ExperimentHyperParams, ExperimentHyperParamType, MetricName, Primitive } from 'types';
+import { glasbeyColor } from 'utils/color';
+import { alphanumericSorter, isNumber, numericSorter, primitiveSorter } from 'utils/data';
+
+import css from './HpTrialTable.module.scss';
+
+type HParams = Record<string, Primitive>;
+
+interface Props {
+  highlightedTrialId?: number;
+  hyperparameters: ExperimentHyperParams;
+  metric: MetricName;
+  onClick?: (event: React.MouseEvent, record: TrialHParams) => void;
+  onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
+  onMouseLeave?: (event: React.MouseEvent, record: TrialHParams) => void;
+  trialHps: TrialHParams[];
+  trialIds: number[];
+}
+
+export interface TrialHParams {
+  hparams: HParams;
+  id: number;
+  metric: number | null;
+  url: string;
+}
+
+const HpTrialTable: React.FC<Props> = ({
+  hyperparameters,
+  highlightedTrialId,
+  metric,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+  trialHps,
+  trialIds,
+}: Props) => {
+  const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
+
+  const columns = useMemo(() => {
+    const idRenderer = (_: string, record: TrialHParams) => {
+      const index = trialIds.findIndex(trialId => trialId === record.id);
+      const color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
+      return (
+        <div className={css.idLayout}>
+          <div className={css.colorLegend} style={{ backgroundColor: color }} />
+          <div>{record.id}</div>
+        </div>
+      );
+    };
+    const idSorter = (a: TrialHParams, b: TrialHParams): number => alphanumericSorter(a.id, b.id);
+    const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
+
+    const metricRenderer = (_: string, record: TrialHParams) => {
+      return record.metric ? <HumanReadableFloat num={record.metric} /> : null;
+    };
+    const metricSorter = (recordA: TrialHParams, recordB: TrialHParams): number => {
+      return numericSorter(recordA.metric || undefined, recordB.metric || undefined);
+    };
+    const metricColumn = {
+      dataIndex: 'metric',
+      key: 'metric',
+      render: metricRenderer,
+      sorter: metricSorter,
+      title: <BadgeTag
+        label={metric.name}
+        tooltip={metric.type}>{metric.type.substr(0, 1).toUpperCase()}</BadgeTag>,
+    };
+
+    const hpRenderer = (key: string) => {
+      return (_: string, record: TrialHParams) => {
+        const value = record.hparams[key];
+        const type = hyperparameters[key].type;
+        const isValidType = [
+          ExperimentHyperParamType.Constant,
+          ExperimentHyperParamType.Double,
+          ExperimentHyperParamType.Int,
+          ExperimentHyperParamType.Log,
+        ].includes(type);
+        if (isNumber(value) && isValidType) {
+          return <HumanReadableFloat num={value} />;
+        }
+        return record.hparams[key];
+      };
+    };
+    const hpColumnSorter = (key: string) => {
+      return (recordA: TrialHParams, recordB: TrialHParams): number => {
+        const a = recordA.hparams[key];
+        const b = recordB.hparams[key];
+        return primitiveSorter(a, b);
+      };
+    };
+    const hpColumns = Object
+      .keys(hyperparameters || {})
+      .filter(key => {
+        return hyperparameters[key].type !== ExperimentHyperParamType.Constant;
+      })
+      .map(key => {
+        return {
+          key,
+          render: hpRenderer(key),
+          sorter: hpColumnSorter(key),
+          title: key,
+        };
+      });
+
+    return [ idColumn, metricColumn, ...hpColumns ];
+  }, [ hyperparameters, metric, trialIds ]);
+
+  const handleTableChange = useCallback((tablePagination) => {
+    setPageSize(tablePagination.pageSize);
+  }, []);
+
+  const handleTableRow = useCallback((record: TrialHParams) => ({
+    onClick: (event: React.MouseEvent) => {
+      if (onClick) onClick(event, record);
+    },
+    onMouseEnter: (event: React.MouseEvent) => {
+      if (onMouseEnter) onMouseEnter(event, record);
+    },
+    onMouseLeave: (event: React.MouseEvent) => {
+      if (onMouseLeave) onMouseLeave(event, record);
+    },
+  }), [ onClick, onMouseEnter, onMouseLeave ]);
+
+  const rowClassName = useCallback((record: TrialHParams) => {
+    return defaultRowClassName({
+      clickable: true,
+      highlighted: record.id === highlightedTrialId,
+    });
+  }, [ highlightedTrialId ]);
+
+  return (
+    <ResponsiveTable<TrialHParams>
+      columns={columns}
+      dataSource={trialHps}
+      pagination={getPaginationConfig(trialHps.length, pageSize)}
+      rowClassName={rowClassName}
+      rowKey="id"
+      scroll={{ x: 1000 }}
+      showSorterTooltip={false}
+      size="small"
+      onChange={handleTableChange}
+      onRow={handleTableRow} />
+
+  );
+};
+
+export default HpTrialTable;

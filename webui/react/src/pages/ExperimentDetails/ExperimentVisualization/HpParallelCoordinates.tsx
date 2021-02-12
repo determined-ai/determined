@@ -279,13 +279,33 @@ const HpParallelCoordinates: React.FC<Props> = ({
         title="HP Parallel Coordinates">
         <div className={css.container} onClick={handleChartClick}>
           {!hasLoaded || !chartData ? <Spinner /> : (
-            <ParallelCoordinates
-              colors={chartData.colors}
-              data={chartData.data}
-              dimensions={dimensions}
-              smallerIsBetter={smallerIsBetter}
-              onHover={handleChartHover}
-              onUnhover={handleChartUnhover} />
+            <>
+              <div className={css.chart}>
+                <ParallelCoordinates
+                  colors={chartData.colors}
+                  data={chartData.data}
+                  dimensions={dimensions}
+                  smallerIsBetter={smallerIsBetter}
+                  onHover={handleChartHover}
+                  onUnhover={handleChartUnhover} />
+              </div>
+              <div className={css.table}>
+                {/* <HpTrialTable
+                  metric={selectedMetric}
+                />
+                <ResponsiveTable<TrialHParams>
+                  columns={columns}
+                  dataSource={trialHps}
+                  pagination={getPaginationConfig(trialHps.length, pageSize)}
+                  rowClassName={defaultRowClassName({ clickable: true })}
+                  rowKey="id"
+                  scroll={{ x: 1000 }}
+                  showSorterTooltip={false}
+                  size="small"
+                  onChange={handleTableChange}
+                  onRow={handleTableRow} /> */}
+              </div>
+            </>
           )}
           <div className={css.tooltip} ref={tooltipRef}>
             <div className={css.box}>
