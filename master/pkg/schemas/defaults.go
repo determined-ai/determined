@@ -62,7 +62,6 @@ func FillDefaults(obj interface{}) {
 // fillDefaults is the recursive layer under FillDefaults.  fillDefaults will return the original
 // input value (not a copy of the original value).
 func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.Value {
-	// fmt.Printf("fillDefaults on %v (%T)\n", name, obj.Interface())
 	switch obj.Kind() {
 	case reflect.Interface:
 		if obj.IsZero() {
@@ -149,8 +148,6 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 	if runtimeDefaultable, ok := obj.Interface().(RuntimeDefaultable); ok {
 		runtimeDefaultable.RuntimeDefaults()
 	}
-
-	// fmt.Printf("fillDefaults on %v (%T) returning %v\n", name, obj.Interface(), obj.Interface())
 
 	return obj
 }
