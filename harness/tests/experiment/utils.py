@@ -180,7 +180,7 @@ def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, An
     """
     assert set(metrics_A.keys()) == set(metrics_B.keys())
     for key in metrics_A.keys():
-        if isinstance(metrics_A[key], float) or isinstance(metrics_A[key], np.float):
+        if isinstance(metrics_A[key], (float, np.float)):
             assert metrics_A[key] == pytest.approx(metrics_B[key])
         elif isinstance(metrics_A[key], np.ndarray):
             assert np.array_equal(metrics_A[key], metrics_B[key])

@@ -255,15 +255,12 @@ class WebSocket:
             if isinstance(event, lomond.events.Connected):
                 # Ignore the initial connection event.
                 pass
-            elif isinstance(event, lomond.events.Closing) or isinstance(
-                event, lomond.events.Disconnected
-            ):
+            elif isinstance(event, (lomond.events.Closing, lomond.events.Disconnected)):
                 # The socket was successfully closed so we just return.
                 return
-            elif (
-                isinstance(event, lomond.events.ConnectFail)
-                or isinstance(event, lomond.events.Rejected)
-                or isinstance(event, lomond.events.ProtocolError)
+            elif isinstance(
+                event,
+                (lomond.events.ConnectFail, lomond.events.Rejected, lomond.events.ProtocolError),
             ):
                 # Any unexpected failures raise the standard API exception.
                 raise errors.BadRequestException(message="WebSocket failure: {}".format(event))

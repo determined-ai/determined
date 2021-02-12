@@ -171,7 +171,7 @@ def _reconstruct_metric(args: Sequence, reconstruct_info: Any) -> Any:
     if metric_type == list:
         return args
     if metric_type == dict:
-        return {k: v for k, v in zip(update_keys, args)}
+        return dict(zip(update_keys, args))
     raise AssertionError(f"invalid metric_type: {metric_type}")
 
 
