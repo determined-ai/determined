@@ -27,7 +27,6 @@ export interface TrialHParams {
   hparams: HParams;
   id: number;
   metric: number | null;
-  url: string;
 }
 
 const HpTrialTable: React.FC<Props> = ({

@@ -9,12 +9,11 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import { handlePath } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, MetricName, metricTypeParamMap, RunState } from 'types';
-import { alphanumericSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
@@ -71,7 +70,7 @@ const LearningCurve: React.FC<Props> = ({
   }, [ onMetricChange, resetData ]);
 
   const handleTrialClick = useCallback((event: React.MouseEvent, trialId: number) => {
-    handlePath(event, { path: `/experiments/${experiment.id}/trials/${trialId}` });
+    handlePath(event, { path: paths.trialDetails(trialId, experiment.id) });
   }, [ experiment.id ]);
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
@@ -79,8 +78,8 @@ const LearningCurve: React.FC<Props> = ({
   }, []);
 
   const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
-    if (record.url) handlePath(event, { path: record.url });
-  }, []);
+    if (record.id) handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
+  }, [ experiment.id ]);
 
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) setTableTrialId(record.id);
@@ -129,12 +128,7 @@ const LearningCurve: React.FC<Props> = ({
           const hasHParams = Object.keys(trial.hparams || {}).length !== 0;
 
           if (hasHParams && !trialHpMap[id]) {
-            trialHpMap[id] = {
-              hparams: trial.hparams,
-              id,
-              metric: null,
-              url: `/experiments/${experiment.id}/trials/${id}`,
-            };
+            trialHpMap[id] = { hparams: trial.hparams, id, metric: null };
           }
 
           trialDataMap[id] = trialDataMap[id] || [];
@@ -147,10 +141,7 @@ const LearningCurve: React.FC<Props> = ({
           });
         });
 
-        const newTrialHps = Object.values(trialHpMap)
-          .map(trialHp => trialHp.id)
-          .sort(alphanumericSorter)
-          .map(id => trialHpMap[id]);
+        const newTrialHps = newTrialIds.map(id => trialHpMap[id]);
         setTrialHps(newTrialHps);
 
         const newBatches = Object.values(batchesMap);

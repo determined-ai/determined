@@ -68,7 +68,10 @@ const COLOR_SCALE_INVERSE = [
   [ 1.0, 'rgba(238, 0, 0, 1.0)' ],
 ];
 
-const plotlyLayout: Partial<Layout> = { paper_bgcolor: 'transparent' };
+const plotlyLayout: Partial<Layout> = {
+  height: 450,
+  paper_bgcolor: 'transparent',
+};
 const plotlyConfig: Partial<Plotly.Config> = {
   displayModeBar: false,
   responsive: true,

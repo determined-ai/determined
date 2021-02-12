@@ -23,10 +23,11 @@ import {
   Primitive, Range, RunState,
 } from 'types';
 import { defaultNumericRange, getNumericRange, normalizeRange, updateRange } from 'utils/chart';
-import { isObject } from 'utils/data';
+import { clone } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpParallelCoordinates.module.scss';
+import HpTrialTable, { TrialHParams } from './HpTrialTable';
 
 const { Option } = Select;
 
@@ -67,6 +68,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}/parcoords`);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpTrialData>();
+  const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
   const fullHpList = Object.keys(experiment.config.hyperparameters) || [];
   const limitedHpList = fullHpList.slice(0, MAX_HP_COUNT);
@@ -121,6 +123,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   const resetData = useCallback(() => {
     setChartData(undefined);
+    setTrialHps([]);
     setHasLoaded(false);
   }, []);
 
@@ -173,8 +176,16 @@ const HpParallelCoordinates: React.FC<Props> = ({
     tooltipRef.current.style.display = 'none';
   }, []);
 
+  const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
+    if (record.id) handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
+  }, [ experiment.id ]);
+
   useEffect(() => {
     const canceler = new AbortController();
+    const trialIds: number[] = [];
+    const trialMetricsMap: Record<number, number> = {};
+    const trialHpTableMap: Record<number, TrialHParams> = {};
+    const trialHpMap: Record<string, Record<number, Primitive>> = {};
 
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(
@@ -186,27 +197,28 @@ const HpParallelCoordinates: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        if (!event || !event.trials || !isObject(event.trials) ||
-          Object.keys(event.trials).length === 0) return;
+        if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
-        const trialIds: number[] = [];
-        const trialMetrics: number[] = [];
-        const trialHpMap: Record<string, Record<number, Primitive>> = {};
-        const trialHpRanges: Record<string, Range> = {};
         const data: Record<string, Primitive[]> = {};
         let trialMetricRange: Range<number> = defaultNumericRange();
 
         event.trials.forEach(trial => {
-          trialIds.push(trial.trialId);
-          trialMetrics.push(trial.metric);
+          const id = trial.trialId;
+          trialIds.push(id);
+          trialMetricsMap[id] = trial.metric;
           trialMetricRange = updateRange<number>(trialMetricRange, trial.metric);
 
           Object.keys(trial.hparams || {}).forEach(hpKey => {
             const hpValue = trial.hparams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
-            trialHpMap[hpKey][trial.trialId] = hpValue;
-            trialHpRanges[hpKey] = updateRange(trialHpRanges[hpKey], hpValue);
+            trialHpMap[hpKey][id] = hpValue;
           });
+
+          trialHpTableMap[id] = {
+            hparams: clone(trial.hparams),
+            id,
+            metric: trial.metric,
+          };
         });
 
         Object.keys(trialHpMap).forEach(hpKey => {
@@ -214,19 +226,24 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
 
         // Add metric of interest
-        data[selectedMetric.name] = trialMetrics;
+        const metricValues = trialIds.map(id => trialMetricsMap[id]);
+        data[selectedMetric.name] = metricValues;
 
         // Normalize metrics values for parallel coordinates colors.
-        const colors = normalizeRange(trialMetrics, trialMetricRange);
-        const metricRange = getNumericRange(trialMetrics);
+        const colors = normalizeRange(metricValues, trialMetricRange);
+        const metricRange = getNumericRange(metricValues);
 
-        setChartData(() => ({
+        // Gather hparams for trial table
+        const newTrialHps = trialIds.map(id => trialHpTableMap[id]);
+        setTrialHps(newTrialHps);
+
+        setChartData({
           colors,
           data,
           metricRange,
-          metricValues: trialMetrics,
+          metricValues,
           trialIds,
-        }));
+        });
         setHasLoaded(true);
       },
     ).catch(e => setPageError(e));
@@ -290,20 +307,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
                   onUnhover={handleChartUnhover} />
               </div>
               <div className={css.table}>
-                {/* <HpTrialTable
+                <HpTrialTable
+                  hyperparameters={experiment.config.hyperparameters || {}}
                   metric={selectedMetric}
+                  trialHps={trialHps}
+                  trialIds={chartData.trialIds}
+                  onClick={handleTableClick}
                 />
-                <ResponsiveTable<TrialHParams>
-                  columns={columns}
-                  dataSource={trialHps}
-                  pagination={getPaginationConfig(trialHps.length, pageSize)}
-                  rowClassName={defaultRowClassName({ clickable: true })}
-                  rowKey="id"
-                  scroll={{ x: 1000 }}
-                  showSorterTooltip={false}
-                  size="small"
-                  onChange={handleTableChange}
-                  onRow={handleTableRow} /> */}
               </div>
             </>
           )}
