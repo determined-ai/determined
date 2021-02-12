@@ -65,20 +65,18 @@ def trial_logs(
     elif follow:
         query["follow"] = "true"
 
-    if agent_ids is not None:
-        query["agent_ids"] = agent_ids
-    if container_ids is not None:
-        query["container_ids"] = container_ids
-    if rank_ids is not None:
-        query["rank_ids"] = rank_ids
-    if sources is not None:
-        query["sources"] = sources
-    if stdtypes is not None:
-        query["stdtypes"] = stdtypes
-    if timestamp_before is not None:
-        query["timestamp_before"] = timestamp_before
-    if timestamp_after is not None:
-        query["timestamp_after"] = timestamp_after
+    for key, val in [
+        ("agent_ids", agent_ids),
+        ("container_ids", container_ids),
+        ("rank_ids", rank_ids),
+        ("sources", sources),
+        ("stdtypes", stdtypes),
+        ("timestamp_before", timestamp_before),
+        ("timestamp_after", timestamp_after),
+    ]:
+        if val is not None:
+            query[key] = val
+
     if level_above is not None:
         query["levels"] = to_levels_above(level_above)
 
@@ -119,8 +117,6 @@ def follow_experiment_logs(master_url: str, exp_id: int) -> None:
 
     first_trial_id = sorted(t_id["id"] for t_id in r.json()["trials"])[0]
     print("Following first trial with ID {}".format(first_trial_id))
-
-    # Call `logs --follow` on the new trial.
     print_trial_logs(master_url, first_trial_id, follow=True)
 
 

@@ -105,7 +105,7 @@ def kill_trial(args: Namespace) -> None:
 
 
 @authentication_required
-def follow_trial_logs(args: Namespace) -> None:
+def trial_logs(args: Namespace) -> None:
     api.experiment.print_trial_logs(
         args.master,
         args.trial_id,
@@ -200,7 +200,7 @@ args_description = [
             ),
             Cmd(
                 "logs",
-                follow_trial_logs,
+                trial_logs,
                 "fetch trial logs",
                 [
                     Arg("trial_id", type=int, help="trial ID"),
