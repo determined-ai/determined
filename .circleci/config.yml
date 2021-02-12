@@ -1138,6 +1138,7 @@ jobs:
       - run: make -C e2e_tests check
       - run: make -C examples check
       - run: make -C tools check
+      - run: make -C schemas check
 
   test-unit-harness:
     docker:
