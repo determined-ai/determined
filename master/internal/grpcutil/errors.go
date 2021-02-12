@@ -57,6 +57,7 @@ func errorHandler(
 	}
 }
 
+// ConnectionIsClosed returns whether the connection has been closed from the client's side.
 func ConnectionIsClosed(stream grpc.ServerStream) bool {
 	return stream.Context().Err() != nil
 }
