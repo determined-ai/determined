@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/reproducibility.json",
+    "title": "ReproducibilityConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "experiment_seed": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}

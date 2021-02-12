@@ -54,7 +54,7 @@ func (t TestUnionV0) MarshalJSON() ([]byte, error) {
 }
 
 // DefaultSource implements the Defaultable interface.
-func (t *TestUnionV0) DefaultSource() interface{} {
+func (t TestUnionV0) DefaultSource() interface{} {
 	return schemas.UnionDefaultSchema(t)
 }
 

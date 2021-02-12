@@ -1,0 +1,23 @@
+# Test that the optionalRef extension works by ensuring kerberos can be valid
+# or null, but nothing else.
+
+- name: optionalRef extension (valid)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/security.json
+  case:
+    kerberos:
+      config_file: asdf
+
+- name: optionalRef extension (invalid)
+  errors:
+    http://determined.ai/schemas/expconf/v0/security.json:
+      - "<config>.kerberos.config_file: "
+  case:
+    kerberos:
+      config_file: 123
+
+- name: optionalRef extension (null)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/security.json
+  case:
+    kerberos: null

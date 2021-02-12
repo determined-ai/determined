@@ -20,7 +20,7 @@ func recursiveElem(val reflect.Value) (reflect.Value, bool) {
 // It searches for the non-nil union member and uses that member to define defaults for the common
 // fields.  In short it turns this:
 //
-//     func (c *CheckpointStorageConfigV0) DefaultSource {
+//     func (c CheckpointStorageConfigV0) DefaultSource {
 //         if c != nil {
 //             if c.SharedFSConfig != nil {
 //                 return c.SharedFSConfig.DefaultSource
@@ -40,7 +40,7 @@ func recursiveElem(val reflect.Value) (reflect.Value, bool) {
 //
 // Into this:
 //
-//     func (c *CheckpointStorageConfigV0) DefaultSource() interface{} {
+//     func (c CheckpointStorageConfigV0) DefaultSource() interface{} {
 //         return schemas.UnionDefaultSchema(c)
 //     }
 func UnionDefaultSchema(in interface{}) interface{} {

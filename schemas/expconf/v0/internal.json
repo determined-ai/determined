@@ -4,17 +4,15 @@
     "title": "InternalConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
+    "required": [
+        "native"
+    ],
     "properties": {
         "native": {
-            "type": [
-                "array",
-                "null"
-            ],
+            "type": "array",
             "items": {
                 "type": "string"
-            },
-            "default": null
+            }
         }
     }
 }

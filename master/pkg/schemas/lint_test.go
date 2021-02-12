@@ -12,7 +12,7 @@ type BadDefaultStruct struct {
 	Val string `json:"val"`
 }
 
-func (b *BadDefaultStruct) DefaultSource() interface{} {
+func (b BadDefaultStruct) DefaultSource() interface{} {
 	raw := `{
 		"properties": {
 			"val": {
@@ -29,7 +29,7 @@ func (b *BadDefaultStruct) DefaultSource() interface{} {
 }
 
 func TestLintStructDefaults(t *testing.T) {
-	var b *BadDefaultStruct
+	var b BadDefaultStruct
 	errs := LintStructDefaults(b)
 	assert.Assert(t, len(errs) == 1)
 	assert.Assert(t, strings.Contains(errs[0].Error(), "non-pointer type"))

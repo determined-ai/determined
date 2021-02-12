@@ -68,6 +68,7 @@
     http://determined.ai/schemas/expconf/v0/check-global-batch-size.json:
       - "<config>.vals\\[0\\]:"
       - "<config>.vals\\[1\\]:"
+      - "<config>.vals\\[2\\]:"
   case:
     type: categorical
-    vals: [0, -1]
+    vals: [0, -1, "hello"]

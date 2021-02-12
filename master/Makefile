@@ -12,6 +12,7 @@ clean: ungen
 .PHONY: ungen
 ungen:
 	rm -f $(GENERATED)
+	git checkout -- $(GENERATED_COMMITTED)
 
 .PHONY: gen
 gen: $(GENERATED)

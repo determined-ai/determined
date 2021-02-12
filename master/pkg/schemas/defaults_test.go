@@ -21,17 +21,17 @@ type BindMountV0 struct {
 	Propagation   *string `json:"propagation"`
 }
 
-func (b *BindMountV0) ParsedSchema() interface{} {
+func (b BindMountV0) ParsedSchema() interface{} {
 	return ParsedBindMountV0()
 }
 
-func (b *BindMountV0) SanityValidator() *jsonschema.Schema {
+func (b BindMountV0) SanityValidator() *jsonschema.Schema {
 	return GetSanityValidator(
 		"http://determined.ai/schemas/expconf/v0/bind-mount.json",
 	)
 }
 
-func (b *BindMountV0) CompletenessValidator() *jsonschema.Schema {
+func (b BindMountV0) CompletenessValidator() *jsonschema.Schema {
 	return GetCompletenessValidator(
 		"http://determined.ai/schemas/expconf/v0/bind-mount.json",
 	)
