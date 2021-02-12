@@ -2,7 +2,6 @@ import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
@@ -11,13 +10,13 @@ import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import useResize from 'hooks/useResize';
 import useStorage from 'hooks/useStorage';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap } from 'types';
 import { isNumber, isObject } from 'utils/data';
+import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpVsHpHeatMap.module.scss';
@@ -61,7 +60,6 @@ const HpVsHpHeatMap: React.FC<Props> = ({
   selectedMetric,
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
-  const resize = useResize(baseRef);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpData>();
   const [ pageError, setPageError ] = useState<Error>();
@@ -191,28 +189,32 @@ const HpVsHpHeatMap: React.FC<Props> = ({
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {
       content = (
-        <Grid
-          border={true}
-          minItemWidth={resize.width > 320 ? 35 : 27}
-          mode={GridMode.AutoFill}>
-          {selectedHParams.map(hParam1 => {
-            return selectedHParams.map(hParam2 => {
-              const key = generateHpKey(hParam1, hParam2);
-              const title = `${hParam1} vs ${hParam2}`;
-              return (
-                <ScatterPlot
-                  key={key}
-                  title={title}
-                  values={chartData.hpMetrics[key]}
-                  x={chartData.hpValues[hParam1]}
-                  xLogScale={chartData.hpLogScales[hParam1]}
-                  y={chartData.hpValues[hParam2]}
-                  yLogScale={chartData.hpLogScales[hParam2]}
-                />
-              );
-            });
-          })}
-        </Grid>
+        <div className={css.grid}>
+          {selectedHParams.map(hParam1 => (
+            <div className={css.row} key={hParam1}>
+              {selectedHParams.map(hParam2 => {
+                const key = generateHpKey(hParam1, hParam2);
+                return (
+                  <div className={css.item} key={hParam2}>
+                    <ScatterPlot
+                      height={350}
+                      key={key}
+                      valueLabel={metricNameToStr(selectedMetric)}
+                      values={chartData.hpMetrics[key]}
+                      width={350}
+                      x={chartData.hpValues[hParam1]}
+                      xLabel={hParam1}
+                      xLogScale={chartData.hpLogScales[hParam1]}
+                      y={chartData.hpValues[hParam2]}
+                      yLabel={hParam2}
+                      yLogScale={chartData.hpLogScales[hParam2]}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       );
     }
   }
@@ -244,7 +246,7 @@ const HpVsHpHeatMap: React.FC<Props> = ({
             {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
-        title="HP vs HP">
+        title="HP vs HP Heat Map">
         <div className={css.container}>{content}</div>
       </Section>
     </div>

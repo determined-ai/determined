@@ -18,6 +18,7 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap } from 'types';
 import { isNumber } from 'utils/data';
+import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpScatterPlots.module.scss';
@@ -194,8 +195,10 @@ const ScatterPlots: React.FC<Props> = ({
                 key={hParam}
                 title={hParam}
                 x={chartData.hpValues[hParam]}
+                xLabel={hParam}
                 xLogScale={chartData.hpLogScales[hParam]}
-                y={chartData.metricValues[hParam]} />
+                y={chartData.metricValues[hParam]}
+                yLabel={metricNameToStr(selectedMetric)} />
             ))}
           </Grid>
         </>
