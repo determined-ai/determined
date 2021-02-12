@@ -352,7 +352,8 @@ func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLo
 	return len(c.readinessChecks) == 0
 }
 
-// State returns the command's state. This mirros the container state if available.
+// State returns the command's state. This mirros the associated container's state
+// if available.
 func (c *command) State() State {
 	state := Pending
 	switch {
@@ -396,6 +397,7 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 	return &commandv1.Command{
 		Id:           ctx.Self().Address().Local(),
+		State:        c.State().Proto(),
 		Description:  c.config.Description,
 		Container:    c.container.Proto(),
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
@@ -407,6 +409,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 	return &shellv1.Shell{
 		Id:           ctx.Self().Address().Local(),
+		State:        c.State().Proto(),
 		Description:  c.config.Description,
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:    c.container.Proto(),
@@ -428,6 +431,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 	}
 	return &tensorboardv1.Tensorboard{
 		Id:             ctx.Self().Address().Local(),
+		State:          c.State().Proto(),
 		Description:    c.config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      c.container.Proto(),

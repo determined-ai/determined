@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
+import "determined/task/v1/task.proto";
 
 // Shell is an ssh server in a containerized environment.
 message Shell {
@@ -25,6 +26,8 @@ message Shell {
   string id = 1;
   // The description of the shell.
   string description = 2;
+  // The state of the shell.
+  determined.task.v1.State state = 3;
   // The time the shell was started.
   google.protobuf.Timestamp start_time = 4;
   // The container running the shell.
