@@ -352,7 +352,8 @@ func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLo
 	return len(c.readinessChecks) == 0
 }
 
-func (c *command) getState() State {
+// State returns the command's state. This mirros the container state if available.
+func (c *command) State() State {
 	state := Pending
 	switch {
 	case c.container != nil:
@@ -382,7 +383,7 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 
 	return &notebookv1.Notebook{
 		Id:             ctx.Self().Address().Local(),
-		State:          c.getState().Proto(),
+		State:          c.State().Proto(),
 		Description:    c.config.Description,
 		Container:      c.container.Proto(),
 		ServiceAddress: serviceAddress,

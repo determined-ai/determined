@@ -40,7 +40,7 @@ func newSummary(c *command) summary {
 		Owner:          c.owner,
 		ID:             c.taskID,
 		Config:         c.config,
-		State:          c.getState().String(),
+		State:          c.State().String(),
 		ServiceAddress: c.serviceAddress,
 		Addresses:      c.addresses,
 		ExitStatus:     c.exitStatus,
