@@ -11,7 +11,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func (m *Master) postTrialKill(c echo.Context) (interface{}, error) {
@@ -63,50 +62,6 @@ func (m *Master) getTrialDetails(c echo.Context) (interface{}, error) {
 
 func (m *Master) getTrialMetrics(c echo.Context) (interface{}, error) {
 	return m.db.RawQuery("get_trial_metrics", c.Param("trial_id"))
-}
-
-func (m *Master) getTrialLogs(c echo.Context) error {
-	args := struct {
-		TrialID       int  `path:"trial_id"`
-		GreaterThanID *int `query:"greater_than_id"`
-		LessThanID    *int `query:"less_than_id"`
-		Limit         *int `query:"tail"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return err
-	}
-
-	logs, err := m.db.TrialLogsRaw(args.TrialID, args.GreaterThanID, args.LessThanID, args.Limit)
-	if err != nil {
-		return err
-	}
-
-	if len(logs) == 0 {
-		// Return a zero-length slice to ensure JSON serialization as `[]`
-		// rather than null.
-		return c.JSON(http.StatusOK, make([]*model.LogMessage, 0))
-	}
-
-	return c.JSON(http.StatusOK, logs)
-}
-
-func (m *Master) getTrialLogsV2(c echo.Context) (interface{}, error) {
-	type Log struct {
-		ID      int    `db:"id" json:"id"`
-		State   string `db:"state" json:"state"`
-		Message string `db:"message" json:"message"`
-	}
-	var logs []Log
-	offset := c.QueryParam("offset")
-	if limit := c.QueryParam("limit"); limit != "" && offset != "" {
-		err := m.db.Query("get_logs_offset_limit", &logs, c.Param("trial_id"), offset, limit)
-		return logs, err
-	} else if limit != "" {
-		err := m.db.Query("get_logs_limit", &logs, c.Param("trial_id"), limit)
-		return logs, err
-	}
-	err := m.db.Query("get_logs", &logs, c.Param("trial_id"), offset)
-	return logs, err
 }
 
 func (m *Master) trialWebSocket(socket *websocket.Conn, c echo.Context) error {

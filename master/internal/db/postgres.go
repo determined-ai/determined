@@ -1320,53 +1320,6 @@ FROM (
 	return db.rawQuery(fmt.Sprintf(queryTemplate, strings.Join(averageMetrics, ",")), id)
 }
 
-// TrialLogsRaw returns the logs for a trial as a JSON string.
-func (db *PgDB) TrialLogsRaw(
-	id int,
-	greaterThan, lessThan *int,
-	limit *int,
-) ([]*model.LogMessage, error) {
-	innerQuery := `
-SELECT id, message
-FROM trial_logs
-WHERE trial_id = $1 AND (id > $2 OR $2 IS NULL) AND (id < $3 OR $3 IS NULL)
-`
-	var rows *sqlx.Rows
-	var err error
-
-	if limit != nil {
-		rows, err = db.sql.Queryx(fmt.Sprintf(`
-SELECT * FROM (
-	%s
-	ORDER BY id DESC LIMIT $4
-) r2
-ORDER BY id ASC`, innerQuery), id, greaterThan, lessThan, *limit)
-	} else {
-		rows, err = db.sql.Queryx(fmt.Sprintf(`
-%s
-ORDER BY id ASC
-`, innerQuery), id, greaterThan, lessThan)
-	}
-
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
-		return nil, errors.Wrap(err, "querying trial logs")
-	}
-	defer rows.Close()
-
-	var logs []*model.LogMessage
-	for rows.Next() {
-		var msg model.LogMessage
-		if err = rows.StructScan(&msg); err != nil {
-			return nil, errors.Wrap(err, "scanning row")
-		}
-		logs = append(logs, &msg)
-	}
-
-	return logs, nil
-}
-
 // AddStep adds the step to the database.
 func (db *PgDB) AddStep(step *model.Step) error {
 	if !step.IsNew() {

@@ -10,6 +10,7 @@ from determined_common.api.experiment import (
     patch_experiment,
     follow_experiment_logs,
     follow_test_experiment_logs,
+    trial_logs,
 )
 from determined_common.api.request import (
     WebSocket,
