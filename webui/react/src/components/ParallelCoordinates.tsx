@@ -3,6 +3,7 @@ import { throttle } from 'throttle-debounce';
 
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData } from 'Plotly';
+import themes, { defaultThemeId } from 'themes';
 import { ExperimentHyperParamType, Point, Primitive, Range } from 'types';
 import { clone, isNumber } from 'utils/data';
 import { generateAlphaNumeric } from 'utils/string';
@@ -58,14 +59,12 @@ export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> =
 
 const CONSTRAINT_REMOVE_THRESHOLD = 1e-9;
 const COLOR_SCALE = [
-  [ 0.0, 'rgba(238, 0, 0, 1.0)' ],
-  [ 0.5, 'rgba(238, 238, 0, 1.0)' ],
-  [ 1.0, 'rgba(0, 238, 0, 1.0)' ],
+  [ 0.0, themes[defaultThemeId].colors.danger.light ],
+  [ 1.0, themes[defaultThemeId].colors.action.normal ],
 ];
-const COLOR_SCALE_INVERSE = [
-  [ 0.0, 'rgba(0, 238, 0, 1.0)' ],
-  [ 0.5, 'rgba(238, 238, 0, 1.0)' ],
-  [ 1.0, 'rgba(238, 0, 0, 1.0)' ],
+const COLOR_SCALE_NEUTRAL = [
+  [ 0.0, themes[defaultThemeId].colors.action.normal ],
+  [ 1.0, 'rgb(255, 207, 0)' ],
 ];
 
 const plotlyLayout: Partial<Layout> = {
@@ -150,10 +149,11 @@ const ParallelCoordinates: React.FC<Props> = ({
 
     return {
       dimensions: chartDimensions,
+      labelangle: -45,
       line: {
         color: colors,
-        colorbar: {},
-        colorscale: smallerIsBetter ? COLOR_SCALE_INVERSE : COLOR_SCALE,
+        colorscale: smallerIsBetter != null ? COLOR_SCALE : COLOR_SCALE_NEUTRAL,
+        reversescale: smallerIsBetter,
       },
       type: 'parcoords',
     };
