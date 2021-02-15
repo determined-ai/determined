@@ -22,7 +22,7 @@ import {
   Point,
   Primitive, Range, RunState,
 } from 'types';
-import { defaultNumericRange, getNumericRange, normalizeRange, updateRange } from 'utils/chart';
+import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { clone } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
@@ -42,7 +42,6 @@ interface Props {
 }
 
 interface HpTrialData {
-  colors: number[];
   data: Record<string, Primitive[]>;
   metricRange?: Range<number>;
   metricValues: number[];
@@ -200,7 +199,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         const data: Record<string, Primitive[]> = {};
-        let trialMetricRange: Range<number> = defaultNumericRange();
+        let trialMetricRange: Range<number> = defaultNumericRange(true);
 
         event.trials.forEach(trial => {
           const id = trial.trialId;
@@ -230,7 +229,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
         data[selectedMetric.name] = metricValues;
 
         // Normalize metrics values for parallel coordinates colors.
-        const colors = normalizeRange(metricValues, trialMetricRange);
         const metricRange = getNumericRange(metricValues);
 
         // Gather hparams for trial table
@@ -238,7 +236,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
         setTrialHps(newTrialHps);
 
         setChartData({
-          colors,
           data,
           metricRange,
           metricValues,
@@ -299,7 +296,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
             <>
               <div className={css.chart}>
                 <ParallelCoordinates
-                  colors={chartData.colors}
+                  colorScaleKey={selectedMetric.name}
                   data={chartData.data}
                   dimensions={dimensions}
                   smallerIsBetter={smallerIsBetter}

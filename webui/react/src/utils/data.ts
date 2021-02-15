@@ -1,6 +1,7 @@
 import { CommandState, MetricName, MetricType, Primitive, RawJson, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
+export const isBoolean = (data: unknown): boolean => typeof data === 'boolean';
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
@@ -98,7 +99,7 @@ export const primitiveSorter = (a: Primitive, b: Primitive): number => {
   if (typeof a === 'boolean' && typeof b === 'boolean') {
     return booleanSorter(a, b);
   } else if (typeof a === 'number' && typeof b === 'number') {
-    return alphanumericSorter(a, b);
+    return numericSorter(a, b);
   } else if (typeof a === 'string' && typeof b === 'string') {
     return alphanumericSorter(a, b);
   }

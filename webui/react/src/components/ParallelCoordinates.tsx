@@ -5,8 +5,8 @@ import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData } from 'Plotly';
 import themes, { defaultThemeId } from 'themes';
 import { ExperimentHyperParamType, Point, Primitive, Range } from 'types';
-import { clone, isNumber } from 'utils/data';
-import { generateAlphaNumeric } from 'utils/string';
+import { clone, isBoolean, isNumber } from 'utils/data';
+import { generateAlphaNumeric, truncate } from 'utils/string';
 
 export type NumRange = [ number, number ];
 
@@ -19,7 +19,7 @@ export enum DimensionType {
  * `colors` - list of numbers between 0.0 and 1.0
  */
 interface Props {
-  colors: number[];
+  colorScaleKey?: string;
   data: Record<string, Primitive[]>;
   dimensions: Dimension[];
   id?: string;
@@ -57,18 +57,20 @@ export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> =
   [ExperimentHyperParamType.Log]: DimensionType.Scalar,
 };
 
+const MAX_LABEL_LENGTH = 20;
 const CONSTRAINT_REMOVE_THRESHOLD = 1e-9;
 const COLOR_SCALE = [
   [ 0.0, themes[defaultThemeId].colors.danger.light ],
   [ 1.0, themes[defaultThemeId].colors.action.normal ],
 ];
 const COLOR_SCALE_NEUTRAL = [
-  [ 0.0, themes[defaultThemeId].colors.action.normal ],
-  [ 1.0, 'rgb(255, 207, 0)' ],
+  [ 0.0, 'rgb(255, 207, 0)' ],
+  [ 1.0, themes[defaultThemeId].colors.action.normal ],
 ];
 
 const plotlyLayout: Partial<Layout> = {
   height: 450,
+  margin: { b: 32, t: 120 },
   paper_bgcolor: 'transparent',
 };
 const plotlyConfig: Partial<Plotly.Config> = {
@@ -77,7 +79,7 @@ const plotlyConfig: Partial<Plotly.Config> = {
 };
 
 const ParallelCoordinates: React.FC<Props> = ({
-  colors,
+  colorScaleKey,
   data,
   dimensions,
   onHover,
@@ -86,9 +88,20 @@ const ParallelCoordinates: React.FC<Props> = ({
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
+  const colorBarRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ chartState, setChartState ] = useState<ChartState>({});
+
+  const colorScale = useMemo(() => {
+    return smallerIsBetter != null ? COLOR_SCALE : COLOR_SCALE_NEUTRAL;
+  }, [ smallerIsBetter ]);
+
+  const colorValues = useMemo(() => {
+    if (!colorScaleKey || !Array.isArray(data[colorScaleKey])) return undefined;
+    return data[colorScaleKey]
+      .map(value => isBoolean(value) ? value.toString() : value) as (number | string)[];
+  }, [ colorScaleKey, data ]);
 
   const sortedDimensions: Dimension[] = useMemo(() => {
     const dimensionOrder = chartState.dimensionOrder;
@@ -113,8 +126,9 @@ const ParallelCoordinates: React.FC<Props> = ({
         if (!dimension) return;
 
         const key = dimension.label;
+        const label = truncate(key, MAX_LABEL_LENGTH);
         const hpDimension: Record<string, unknown> = {
-          label: key,
+          label,
           range: dimension.range,
           values: data[key],
         };
@@ -151,13 +165,22 @@ const ParallelCoordinates: React.FC<Props> = ({
       dimensions: chartDimensions,
       labelangle: -45,
       line: {
-        color: colors,
-        colorscale: smallerIsBetter != null ? COLOR_SCALE : COLOR_SCALE_NEUTRAL,
-        reversescale: smallerIsBetter,
+        color: colorValues,
+        colorbar: { title: colorScaleKey, titleside: 'right' },
+        colorscale: colorScale,
+        reversescale: smallerIsBetter != null ? smallerIsBetter : undefined,
       },
       type: 'parcoords',
     };
-  }, [ chartState, colors, data, smallerIsBetter, sortedDimensions ]);
+  }, [
+    chartState,
+    colorScale,
+    colorScaleKey,
+    colorValues,
+    data,
+    smallerIsBetter,
+    sortedDimensions,
+  ]);
 
   useEffect(() => {
     const ref = chartRef.current;
@@ -241,6 +264,18 @@ const ParallelCoordinates: React.FC<Props> = ({
 
     throttleResize();
   }, [ chartData, resize ]);
+
+  // General color scale legend
+  useEffect(() => {
+    const ref = colorBarRef.current;
+    if (!ref) return;
+
+    const scales = colorScale.map(scale => scale[1]);
+    if (smallerIsBetter) scales.reverse();
+
+    const gradient = scales.join(', ');
+    ref.style.backgroundImage = `linear-gradient(90deg, ${gradient})`;
+  }, [ colorScale, smallerIsBetter ]);
 
   return <div id={id} ref={chartRef} />;
 };
