@@ -23,7 +23,7 @@ import {
   Primitive, Range, RunState,
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
-import { clone } from 'utils/data';
+import { clone, numericSorter } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpParallelCoordinates.module.scss';
@@ -181,7 +181,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   useEffect(() => {
     const canceler = new AbortController();
-    const trialIds: number[] = [];
     const trialMetricsMap: Record<number, number> = {};
     const trialHpTableMap: Record<number, TrialHParams> = {};
     const trialHpMap: Record<string, Record<number, Primitive>> = {};
@@ -203,7 +202,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
         event.trials.forEach(trial => {
           const id = trial.trialId;
-          trialIds.push(id);
           trialMetricsMap[id] = trial.metric;
           trialMetricRange = updateRange<number>(trialMetricRange, trial.metric);
 
@@ -219,6 +217,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
             metric: trial.metric,
           };
         });
+
+        const trialIds = Object.keys(trialMetricsMap)
+          .map(id => parseInt(id))
+          .sort(numericSorter);
 
         Object.keys(trialHpMap).forEach(hpKey => {
           data[hpKey] = trialIds.map(trialId => trialHpMap[hpKey][trialId]);
