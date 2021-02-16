@@ -8,6 +8,8 @@ import { ColorScale } from 'utils/color';
 import { clone, isBoolean, isNumber } from 'utils/data';
 import { generateAlphaNumeric, truncate } from 'utils/string';
 
+import css from './ParallelCoordinates.module.scss';
+
 export type NumRange = [ number, number ];
 
 export enum DimensionType {
@@ -202,7 +204,15 @@ const ParallelCoordinates: React.FC<Props> = ({
     if (onFilter) onFilter(constraints);
   }, [ constraints, onFilter ]);
 
-  return <div id={id} ref={chartRef} />;
+  return (
+    <div className={css.base}>
+      <div className={css.note}>
+        Click and drag along the axes to create filters.
+        Click on existing filters to remove them.
+      </div>
+      <div id={id} ref={chartRef} />
+    </div>
+  );
 };
 
 export default ParallelCoordinates;
