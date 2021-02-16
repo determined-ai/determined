@@ -4,6 +4,7 @@ import { throttle } from 'throttle-debounce';
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData } from 'Plotly';
 import { ExperimentHyperParamType, Point, Primitive, Range } from 'types';
+import { ColorScale } from 'utils/color';
 import { clone, isBoolean, isNumber } from 'utils/data';
 import { generateAlphaNumeric, truncate } from 'utils/string';
 
@@ -46,11 +47,6 @@ export interface Dimension {
   label: string;
   range?: Range;
   type: DimensionType,
-}
-
-export interface ColorScale {
-  color: string;    // rgb(a) or hex color
-  scale: number;    // scale between 0.0 and 1.0
 }
 
 export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> = {

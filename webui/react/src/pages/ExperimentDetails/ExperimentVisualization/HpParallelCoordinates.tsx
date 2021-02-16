@@ -6,7 +6,6 @@ import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import ParallelCoordinates, {
-  ColorScale,
   Dimension, DimensionType, dimensionTypeMap,
 } from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -24,6 +23,7 @@ import {
   Primitive, Range, RunState,
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
+import { ColorScale } from 'utils/color';
 import { clone, numericSorter } from 'utils/data';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
@@ -290,7 +290,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
             {fullHpList.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
-        title="HP Parallel Coordinates">
+        title="Parallel Coordinates">
         <div className={css.container}>
           {!hasLoaded || !chartData ? <Spinner /> : (
             <>
@@ -304,6 +304,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
               </div>
               <div className={css.table}>
                 <HpTrialTable
+                  colorScale={colorScale}
                   hyperparameters={experiment.config.hyperparameters || {}}
                   metric={selectedMetric}
                   trialHps={trialHps}

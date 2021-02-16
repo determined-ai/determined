@@ -5,7 +5,7 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { ExperimentHyperParams, ExperimentHyperParamType, MetricName, Primitive } from 'types';
-import { glasbeyColor } from 'utils/color';
+import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { alphanumericSorter, isNumber, numericSorter, primitiveSorter } from 'utils/data';
 
 import css from './HpTrialTable.module.scss';
@@ -13,6 +13,7 @@ import css from './HpTrialTable.module.scss';
 type HParams = Record<string, Primitive>;
 
 interface Props {
+  colorScale?: ColorScale[];
   highlightedTrialId?: number;
   hyperparameters: ExperimentHyperParams;
   metric: MetricName;
@@ -30,6 +31,7 @@ export interface TrialHParams {
 }
 
 const HpTrialTable: React.FC<Props> = ({
+  colorScale,
   hyperparameters,
   highlightedTrialId,
   metric,
@@ -44,7 +46,14 @@ const HpTrialTable: React.FC<Props> = ({
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
       const index = trialIds.findIndex(trialId => trialId === record.id);
-      const color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
+      let color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
+      if (record.metric != null && colorScale) {
+        const scaleRange = colorScale[1].scale - colorScale[0].scale;
+        const distance = (record.metric - colorScale[0].scale) / scaleRange;
+        const rgbaMin = str2rgba(colorScale[0].color);
+        const rgbaMax = str2rgba(colorScale[1].color);
+        color = rgba2str(rgbaFromGradient(rgbaMin, rgbaMax, distance));
+      }
       return (
         <div className={css.idLayout}>
           <div className={css.colorLegend} style={{ backgroundColor: color }} />
@@ -109,7 +118,7 @@ const HpTrialTable: React.FC<Props> = ({
       });
 
     return [ idColumn, metricColumn, ...hpColumns ];
-  }, [ hyperparameters, metric, trialIds ]);
+  }, [ colorScale, hyperparameters, metric, trialIds ]);
 
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);
