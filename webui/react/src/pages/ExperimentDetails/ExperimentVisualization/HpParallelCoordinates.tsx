@@ -52,7 +52,7 @@ interface HpTrialData {
 
 const STORAGE_PATH = 'experiment-visualization';
 const STORAGE_HP_KEY = 'hps';
-const MAX_HP_COUNT = 20;
+const MAX_HP_COUNT = 10;
 const DEFAULT_SCALE_COLORS: Range<string> = [
   themes[defaultThemeId].colors.danger.light,
   themes[defaultThemeId].colors.action.normal,
