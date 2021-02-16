@@ -518,6 +518,9 @@ class PyTorchTrialContext(det.TrialContext):
                 stepping the optimizer. If false, you need to call ``optimizer.zero_grad()``
                 manually. Note that if :ref:`optimizations.aggregation_frequency
                 <config-aggregation-frequency>` is greater than 1, ``auto_zero_grads`` must be true.
+            scaler(``torch.cuda.amp.GradScaler``, optional): The scale to use for stepping the
+                optimizer. This should be unset if not using AMP, and is unnecessary if
+                ``PyTorchContext.wrap_scaler`` was called with ``automatic = True``.
         """
 
         check.true(
@@ -528,7 +531,7 @@ class PyTorchTrialContext(det.TrialContext):
         if self._should_communicate_and_update():
             # Communication needs to be synchronized so that is completed
             # before we apply gradient clipping and `step()`.
-            if self.hvd_config.use and not self._use_apex and not self._scaler:
+            if self.hvd_config.use and not self._use_apex:
                 optimizer.synchronize()  # type: ignore
 
             parameters = (
@@ -553,21 +556,16 @@ class PyTorchTrialContext(det.TrialContext):
                 scaler = self._scaler
             if scaler:
                 if self.hvd_config.use:
-                    # TODO can we do a type assertion for horovod.torch._DistributedOptimizer
                     with optimizer.skip_synchronize():  # type: ignore
                         scaler.step(optimizer)
                 else:
                     scaler.step(optimizer)
             else:
                 if self.hvd_config.use:
-                    # TODO can we do a type assertion for horovod.torch._DistributedOptimizer
                     with optimizer.skip_synchronize():  # type: ignore
                         optimizer.step()
                 else:
                     optimizer.step()
-
-            if self._scaler and self._auto_amp:
-                self._scaler.update()
 
             if auto_zero_grads:
                 optimizer.zero_grad()
