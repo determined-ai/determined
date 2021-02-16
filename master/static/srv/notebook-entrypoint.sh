@@ -27,5 +27,5 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
-(cd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}")
+pushd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}" && popd
 exec jupyter lab --config /run/determined/workdir/jupyter-conf.py --port=${NOTEBOOK_PORT}

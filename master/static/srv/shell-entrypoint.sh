@@ -20,7 +20,7 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
-(cd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}")
+pushd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}" && popd
 
 # Prepend each key in authorized_keys with a set of environment="KEY=VALUE"
 # options to inject the entire docker environment into the eventual ssh

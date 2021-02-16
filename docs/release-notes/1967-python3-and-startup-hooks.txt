@@ -9,10 +9,10 @@
 **Improvements**
 
 -  Invoke ``python`` as ``python3`` rather than as ``python3.6``. This
-   makes it possible to use custom images with Determined with higher
-   versions of python (3.6 is still the minimum required version).
+   makes it possible to use custom images containing higher versions of
+   Python with Determined (3.6 is still the minimum required version).
 
    If the desired ``python`` cannot be found as ``python3``, it is now
-   possible customize this invocation by setting the environment
+   possible to customize this invocation by setting the environment
    variable ``DET_PYTHON_EXECUTABLE=/path/to/python3``, for experiments,
    notebooks, and shells.
