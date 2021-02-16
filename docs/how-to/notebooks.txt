@@ -139,6 +139,16 @@ via a YAML file (``--config-file``):
 See :ref:`command-notebook-configuration` for details on the supported
 configuration options.
 
+Finally, to configure notebooks to run a predefined set of commands at
+startup (as with :ref:`experiments <startup-hooks>`), you can include a
+`--context-dir` option:
+
+.. code::
+
+   $ mkdir my_context_dir
+   $ echo "pip3 install pandas" > my_context_dir/startup-hook.sh
+   $ det notebook start --context-dir my_context_dir
+
 .. _cpu-only-notebooks:
 
 Example: CPU-Only Notebooks
