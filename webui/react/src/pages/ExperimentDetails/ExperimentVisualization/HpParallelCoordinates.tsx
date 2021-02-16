@@ -53,13 +53,14 @@ interface HpTrialData {
 const STORAGE_PATH = 'experiment-visualization';
 const STORAGE_HP_KEY = 'hps';
 const MAX_HP_COUNT = 20;
-const COLOR_SCALE: ColorScale = [
-  [ 0.0, themes[defaultThemeId].colors.danger.light ],
-  [ 1.0, themes[defaultThemeId].colors.action.normal ],
+const DEFAULT_SCALE_COLORS: Range<string> = [
+  themes[defaultThemeId].colors.danger.light,
+  themes[defaultThemeId].colors.action.normal,
 ];
-const COLOR_SCALE_NEUTRAL: ColorScale = [
-  [ 0.0, 'rgb(255, 207, 0)' ],
-  [ 1.0, themes[defaultThemeId].colors.action.normal ],
+const REVERSE_SCALE_COLORS = clone(DEFAULT_SCALE_COLORS).reverse();
+const NEUTRAL_SCALE_COLORS: Range<string> = [
+  'rgb(255, 207, 0)',
+  themes[defaultThemeId].colors.action.normal,
 ];
 
 const HpParallelCoordinates: React.FC<Props> = ({
@@ -94,9 +95,19 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [ experiment.config.searcher, selectedMetric ]);
 
-  const colorScale = useMemo(() => {
-    return smallerIsBetter != null ? COLOR_SCALE : COLOR_SCALE_NEUTRAL;
-  }, [ smallerIsBetter ]);
+  const colorScale: ColorScale[] = useMemo(() => {
+    let colors = NEUTRAL_SCALE_COLORS;
+    if (smallerIsBetter != null) {
+      colors = smallerIsBetter ? REVERSE_SCALE_COLORS : DEFAULT_SCALE_COLORS;
+    }
+    return colors.map((color, index) => {
+      if (chartData?.metricRange) {
+        const scale = chartData?.metricRange ? chartData?.metricRange[index] : index;
+        return { color, scale };
+      }
+      return { color, scale: index };
+    });
+  }, [ chartData?.metricRange, smallerIsBetter ]);
 
   const dimensions = useMemo(() => {
     const newDimensions = hpList

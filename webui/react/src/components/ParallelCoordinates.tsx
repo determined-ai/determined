@@ -18,7 +18,7 @@ export enum DimensionType {
  * `colors` - list of numbers between 0.0 and 1.0
  */
 interface Props {
-  colorScale: ColorScale
+  colorScale: ColorScale[];
   colorScaleKey?: string;
   data: Record<string, Primitive[]>;
   dimensions: Dimension[];
@@ -48,7 +48,10 @@ export interface Dimension {
   type: DimensionType,
 }
 
-export type ColorScale = [ number, string ][];
+export interface ColorScale {
+  color: string;    // rgb(a) or hex color
+  scale: number;    // scale between 0.0 and 1.0
+}
 
 export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> = {
   [ExperimentHyperParamType.Categorical]: DimensionType.Categorical,
