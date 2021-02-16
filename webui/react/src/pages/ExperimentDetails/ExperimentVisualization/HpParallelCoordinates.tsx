@@ -19,7 +19,6 @@ import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
   ExperimentBase, ExperimentHyperParamType, MetricName, MetricType, metricTypeParamMap,
-  Point,
   Primitive, Range, RunState,
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
@@ -73,7 +72,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const limitedHpList = fullHpList.slice(0, MAX_HP_COUNT);
   const defaultHpList = storage.get<string[]>(STORAGE_HP_KEY);
   const [ hpList, setHpList ] = useState<string[]>(defaultHpList || limitedHpList);
-  const [ hoverTrialId, setHoverTrialId ] = useState<number>();
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
@@ -147,33 +145,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
       setHpList(hps as string[]);
     }
   }, [ limitedHpList, storage ]);
-
-  const handleChartClick = useCallback((event: React.MouseEvent) => {
-    if (!hoverTrialId) return;
-    handlePath(event, { path: paths.trialDetails(hoverTrialId, experiment.id) });
-  }, [ experiment.id, hoverTrialId ]);
-
-  const handleChartHover = useCallback((lineIndex: number, point: Point) => {
-    if (!tooltipRef.current || !trialIdRef.current || !metricValueRef.current) return;
-
-    const trialId = chartData?.trialIds[lineIndex];
-    const metricValue = chartData?.metricValues[lineIndex];
-    if (!trialId || !metricValue) return;
-
-    setHoverTrialId(trialId);
-    trialIdRef.current.innerText = trialId.toString();
-    metricValueRef.current.innerText = metricValue.toString();
-    tooltipRef.current.style.display = 'block';
-    tooltipRef.current.style.left = `${point.x}px`;
-    tooltipRef.current.style.top = `${point.y}px`;
-  }, [ chartData ]);
-
-  const handleChartUnhover = useCallback(() => {
-    if (!tooltipRef.current) return;
-
-    setHoverTrialId(undefined);
-    tooltipRef.current.style.display = 'none';
-  }, []);
 
   const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
@@ -293,7 +264,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </MultiSelect>
         </ResponsiveFilters>}
         title="HP Parallel Coordinates">
-        <div className={css.container} onClick={handleChartClick}>
+        <div className={css.container}>
           {!hasLoaded || !chartData ? <Spinner /> : (
             <>
               <div className={css.chart}>
@@ -301,9 +272,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
                   colorScaleKey={selectedMetric.name}
                   data={chartData.data}
                   dimensions={dimensions}
-                  smallerIsBetter={smallerIsBetter}
-                  onHover={handleChartHover}
-                  onUnhover={handleChartUnhover} />
+                  smallerIsBetter={smallerIsBetter} />
               </div>
               <div className={css.table}>
                 <HpTrialTable
