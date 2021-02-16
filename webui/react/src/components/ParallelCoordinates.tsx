@@ -25,7 +25,6 @@ interface Props {
   id?: string;
   onHover?: (lineIndex: number, point: Point) => void;
   onUnhover?: () => void;
-  smallerIsBetter?: boolean;
 }
 
 interface ChartState {
@@ -84,7 +83,6 @@ const ParallelCoordinates: React.FC<Props> = ({
   dimensions,
   onHover,
   onUnhover,
-  smallerIsBetter,
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -165,10 +163,11 @@ const ParallelCoordinates: React.FC<Props> = ({
       dimensions: chartDimensions,
       labelangle: -45,
       line: {
+        cmax: colorScale.last().scale,
+        cmin: colorScale.first().scale,
         color: colorValues,
         colorbar: { title: colorScaleKey, titleside: 'right' },
-        colorscale: colorScale,
-        reversescale: smallerIsBetter != null ? smallerIsBetter : undefined,
+        colorscale: colorScale.map((cs, index) => ([ index, cs.color ])),
       },
       type: 'parcoords',
     };
@@ -178,7 +177,6 @@ const ParallelCoordinates: React.FC<Props> = ({
     colorScaleKey,
     colorValues,
     data,
-    smallerIsBetter,
     sortedDimensions,
   ]);
 

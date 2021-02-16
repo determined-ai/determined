@@ -1,5 +1,7 @@
 import prettyBytes from 'pretty-bytes';
 
+import { MetricName, MetricType } from 'types';
+
 export const capitalize = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
@@ -53,4 +55,12 @@ export const camelCaseToSentence = (text: string): string => {
   const result = text.replace( /([A-Z])/g, ' $1' );
   const finalResult = result.charAt(0).toUpperCase() + result.slice(1);
   return finalResult;
+};
+
+export const metricNameToStr = (metricName: MetricName): string => {
+  const MAX_METRIC_LABEL_SIZE = 30;
+  const type = metricName.type === MetricType.Training ? 'T' : 'V';
+  const name = metricName.name.length > MAX_METRIC_LABEL_SIZE ?
+    metricName.name.substr(0, MAX_METRIC_LABEL_SIZE) + '...' : metricName.name;
+  return `[${type}] ${name}`;
 };

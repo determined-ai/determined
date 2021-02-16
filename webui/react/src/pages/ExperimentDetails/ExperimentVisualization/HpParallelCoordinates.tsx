@@ -272,7 +272,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
                   colorScaleKey={selectedMetric.name}
                   data={chartData.data}
                   dimensions={dimensions}
-                  smallerIsBetter={smallerIsBetter} />
+                />
               </div>
               <div className={css.table}>
                 <HpTrialTable
