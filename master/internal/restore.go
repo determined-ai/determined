@@ -119,6 +119,7 @@ func (e *experiment) restoreTrial(
 	if trialID != nil {
 		t.processID(*trialID)
 	}
+	t.processOperations(ops)
 	if snapshot != nil {
 		if err := t.Restore(snapshot); err != nil {
 			l.WithError(err).Warn("failed to restore trial, restarting fresh")
@@ -130,7 +131,6 @@ func (e *experiment) restoreTrial(
 		}
 	}
 	t.replayCreate = trialID != nil && snapshot == nil
-	t.processOperations(ops)
 	ctx.ActorOf(op.RequestID, t)
 	l.Infof("restored trial to the beginning of step %d", t.sequencer.CurStepID)
 	return false

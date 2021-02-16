@@ -3,7 +3,6 @@ package searcher
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"sort"
 	"strings"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/workload"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -48,8 +46,6 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 				}
 			case Validate:
 				keyParts = append(keyParts, "V")
-			case Checkpoint:
-				keyParts = append(keyParts, "C")
 			default:
 				return nil, errors.Errorf("unexpected operation: %v", op)
 			}
@@ -243,16 +239,6 @@ func generateMetrics(
 	switch operation.(type) {
 	case Train:
 		return make(map[string]interface{}), nil
-	case Checkpoint:
-		var requestID uuid.UUID
-		_, err := io.ReadFull(random, requestID[:])
-		if err != nil {
-			return nil, err
-		}
-		return &workload.CheckpointMetrics{
-			UUID:      requestID,
-			Resources: map[string]int{},
-		}, nil
 	case Validate:
 		return &workload.ValidationMetrics{
 			NumInputs: 1,

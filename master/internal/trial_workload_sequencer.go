@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"math"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/pkg/errors"
@@ -33,14 +31,6 @@ type (
 
 		LatestCheckpoint *model.Checkpoint            `json:"latest_checkpoint"`
 		LatestSnapshot   *trialWorkloadSequencerState `json:"latest_snapshot"`
-
-		// A trial may receive checkpoint completed messages before it requests them in the event that a
-		// trial is descheduled or paused. For example, a trial that plans to do:
-		//     RUN_STEP, COMPUTE_VALIDATION_METRICS, CHECKPOINT_MODEL.
-		// that is paused during the run step, receives its checkpoint completed message out of order.
-		// We only need to keep one because we only expect them out of order within a step; once we
-		// move on to the next step, we can be sure we don't need to cache it for later.
-		CachedCheckpoint *workload.CompletedMessage `json:"cached_checkpoint"`
 	}
 
 	// trialWorkloadSequencer manages transforming the work requested by the searcher into Workloads
@@ -81,11 +71,9 @@ func newTrialWorkloadSequencer(
 		trialWorkloadSequencerState: trialWorkloadSequencerState{
 			NeedInitialValidation: exp.Config.PerformInitialValidation,
 			LatestCheckpoint:      firstCheckpoint,
-			CachedCheckpoint:      nil,
 			LatestSnapshot: &trialWorkloadSequencerState{
 				NeedInitialValidation: exp.Config.PerformInitialValidation,
 				LatestCheckpoint:      firstCheckpoint,
-				CachedCheckpoint:      nil,
 			},
 		},
 		checkpointPolicy:    exp.Config.CheckpointPolicy,
@@ -114,29 +102,6 @@ func (s *trialWorkloadSequencer) WorkloadManagerType() model.WorkloadManagerType
 // OperationRequested records an operation requested by the searcher.
 func (s *trialWorkloadSequencer) OperationRequested(op searcher.Runnable) {
 	s.ops = append(s.ops, op)
-}
-
-// CompleteCachedCheckpoints attempts to complete cached checkpoints that we received previously
-// but did not need yet.
-func (s *trialWorkloadSequencer) CompleteCachedCheckpoints() (
-	searcher.Runnable, interface{}, error,
-) {
-	if s.UpToDate() {
-		return nil, nil, nil
-	}
-
-	w, err := s.Workload()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "error getting workload from sequencer")
-	}
-
-	if s.CachedCheckpoint != nil && s.CachedCheckpoint.Workload.StepID == w.StepID {
-		logrus.Infof("trial completed workload: %v", s.CachedCheckpoint.Workload)
-		op, metrics, err := s.WorkloadCompleted(*s.CachedCheckpoint, nil)
-		s.CachedCheckpoint = nil
-		return op, metrics, errors.Wrap(err, "failed to complete cached checkpoint")
-	}
-	return nil, nil, nil
 }
 
 func (s *trialWorkloadSequencer) SetTrialID(trialID int) {
@@ -256,15 +221,6 @@ func (s *trialWorkloadSequencer) checkpointModelCompleted(
 	s.BatchesSinceLastCkpt = 0
 	s.NeedPostValidationCkpt = false
 	s.LatestCheckpoint = &checkpoint
-	if !s.UpToDate() {
-		if tOp, ok := s.ops[s.CurOpIdx].(searcher.Checkpoint); ok {
-			s.CurOpIdx++
-			return tOp, msg.CheckpointMetrics
-		}
-		s.CachedCheckpoint = &msg
-	} else {
-		s.CachedCheckpoint = &msg
-	}
 	return nil, nil
 }
 
@@ -309,8 +265,6 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 			return s.checkpoint(), nil
 		}
 		return s.validate(), nil
-	case searcher.Checkpoint:
-		return s.checkpoint(), nil
 	case searcher.Train:
 		batchesLeft := tOp.Length.ToNearestBatch(s.unitContext) - s.BatchesTowardsCurrentOp
 		batchesTilVal := s.batchesUntilValNeeded()

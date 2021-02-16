@@ -35,9 +35,6 @@ enum RunnableType {
   RUNNABLE_TYPE_TRAIN = 1;
   // Signals to a trial runner it should compute validation metrics.
   RUNNABLE_TYPE_VALIDATE = 2;
-  // Signals to the trial runner that the current model state should be
-  // checkpointed.
-  RUNNABLE_TYPE_CHECKPOINT = 3;
 }
 
 // RunnableOperation represents a single runnable operation emitted by a

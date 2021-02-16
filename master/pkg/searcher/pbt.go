@@ -16,11 +16,10 @@ import (
 // details.
 type (
 	pbtSearchState struct {
-		RoundsCompleted      int                               `json:"rounds_completed"`
-		Metrics              map[model.RequestID]float64       `json:"metrics"`
-		TrialRoundsCompleted map[model.RequestID]int           `json:"trial_rounds_completed"`
-		TrialParams          map[model.RequestID]hparamSample  `json:"trial_params"`
-		WaitingCheckpoints   map[model.RequestID]OperationList `json:"waiting_checkpoints"`
+		RoundsCompleted      int                              `json:"rounds_completed"`
+		Metrics              map[model.RequestID]float64      `json:"metrics"`
+		TrialRoundsCompleted map[model.RequestID]int          `json:"trial_rounds_completed"`
+		TrialParams          map[model.RequestID]hparamSample `json:"trial_params"`
 
 		// EarlyExitTrials contains trials that exited early that are still considered in the search.
 		EarlyExitTrials map[model.RequestID]bool `json:"early_exit_trials"`
@@ -42,7 +41,6 @@ func newPBTSearch(config model.PBTConfig) SearchMethod {
 			Metrics:              make(map[model.RequestID]float64),
 			TrialRoundsCompleted: make(map[model.RequestID]int),
 			TrialParams:          make(map[model.RequestID]hparamSample),
-			WaitingCheckpoints:   make(map[model.RequestID]OperationList),
 			EarlyExitTrials:      make(map[model.RequestID]bool),
 		},
 	}
@@ -145,20 +143,16 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 	// Checkpoint and copy the best trials.
 	for _, requestID := range trialIDs[:numTruncate] {
 		if !s.EarlyExitTrials[requestID] {
-			checkpoint := NewCheckpoint(requestID)
-			ops = append(ops, checkpoint)
-
 			origParams := s.TrialParams[requestID]
 			newParams := s.exploreParams(ctx, origParams)
 
-			create := NewCreateFromCheckpoint(
-				ctx.rand, newParams, checkpoint, model.TrialWorkloadSequencerType)
+			create := NewCreateFromParent(ctx.rand, newParams, requestID, model.TrialWorkloadSequencerType)
 			s.TrialParams[create.RequestID] = newParams
 
-			// The new trial cannot begin until the checkpoint has been completed.
-			s.WaitingCheckpoints[checkpoint.RequestID] = []Operation{create}
-			s.WaitingCheckpoints[checkpoint.RequestID] = append(s.WaitingCheckpoints[checkpoint.RequestID],
-				NewTrain(create.RequestID, s.LengthPerRound), NewValidate(create.RequestID))
+			ops = append(ops,
+				create,
+				NewTrain(create.RequestID, s.LengthPerRound),
+				NewValidate(create.RequestID))
 		}
 	}
 
@@ -212,14 +206,6 @@ func (s *pbtSearch) exploreParams(ctx context, old hparamSample) hparamSample {
 		}
 	})
 	return params
-}
-
-func (s *pbtSearch) checkpointCompleted(
-	ctx context, requestID model.RequestID, checkpoint Checkpoint, metrics workload.CheckpointMetrics,
-) ([]Operation, error) {
-	ops := s.WaitingCheckpoints[checkpoint.RequestID]
-	delete(s.WaitingCheckpoints, checkpoint.RequestID)
-	return ops, nil
 }
 
 func (s *pbtSearch) progress(unitsCompleted float64) float64 {

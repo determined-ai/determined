@@ -26,12 +26,6 @@ type SearchMethod interface {
 	// trainCompleted informs the searcher that the training workload initiated by the same searcher
 	// has completed. It returns any new operations as a result of this workload completing.
 	trainCompleted(ctx context, requestID model.RequestID, train Train) ([]Operation, error)
-	// checkpointCompleted informs the searcher that the checkpoint workload initiated by the same
-	// searcher has completed. It returns any new operations as a result of this workload
-	// completing.
-	checkpointCompleted(
-		ctx context, requestID model.RequestID, checkpoint Checkpoint, metrics workload.CheckpointMetrics,
-	) ([]Operation, error)
 	// validationCompleted informs the searcher that the validation workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
@@ -88,16 +82,12 @@ func (defaultSearchMethod) trainCompleted(context, model.RequestID, Train) ([]Op
 	return nil, nil
 }
 
-func (defaultSearchMethod) checkpointCompleted(
-	context, model.RequestID, Checkpoint, workload.CheckpointMetrics,
-) ([]Operation, error) {
-	return nil, nil
-}
 func (defaultSearchMethod) validationCompleted(
 	context, model.RequestID, Validate, workload.ValidationMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
+
 func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, error) {
 	return nil, nil
 }

@@ -34,11 +34,6 @@ func isExpected(actual, expected []Runnable) bool {
 			if !ok {
 				return false
 			}
-		case Checkpoint:
-			_, ok := expected[i].(Checkpoint)
-			if !ok {
-				return false
-			}
 		default:
 			panic("trial had unexpected operation type")
 		}
@@ -105,11 +100,6 @@ func checkReproducibility(
 func toOps(types string) (ops []Runnable) {
 	for _, unparsed := range strings.Fields(types) {
 		switch char := string(unparsed[0]); char {
-		case "C":
-			if len(unparsed) > 1 {
-				panic("invalid short-form op")
-			}
-			ops = append(ops, Checkpoint{})
 		case "V":
 			if len(unparsed) > 1 {
 				panic("invalid short-form op")
@@ -201,16 +191,6 @@ func (t *predefinedTrial) Validate(opIndex int) (float64, error) {
 	return 0, errors.New("ran out of metrics to return for validations")
 }
 
-func (t *predefinedTrial) Checkpoint(opIndex int) error {
-	if opIndex >= len(t.Ops) {
-		return errors.Errorf("ran out of expected ops trying to checkpoint")
-	}
-	if _, ok := t.Ops[opIndex].(Checkpoint); !ok {
-		return errors.Errorf("wanted %v", t.Ops[0])
-	}
-	return nil
-}
-
 func (t *predefinedTrial) CheckComplete(opIndex int) error {
 	return check.Equal(len(t.Ops), opIndex, "had ops %s left", t.Ops[opIndex:])
 }
@@ -274,6 +254,9 @@ func checkValueSimulation(
 				return errors.Wrapf(err, "simulateOperationComplete for trial %v", trialID+1)
 			}
 			trialOpIdx[requestID]++
+			if err = saveAndReload(method); err != nil {
+				return errors.Wrap(err, "snapshot failed")
+			}
 
 		case Close:
 			requestID = operation.RequestID
@@ -375,19 +358,6 @@ func simulateOperationComplete(
 		ops, err = method.validationCompleted(ctx, operation.RequestID, operation, metrics)
 		if err != nil {
 			return nil, errors.Wrap(err, "validationCompleted")
-		}
-
-	case Checkpoint:
-		if err = trial.Checkpoint(opIndex); err != nil {
-			return nil, errors.Wrap(err, "error checking Checkpoint with predefinedTrial")
-		}
-		metrics := workload.CheckpointMetrics{}
-		ops, err = method.checkpointCompleted(ctx, operation.RequestID, operation, metrics)
-		if err != nil {
-			return nil, errors.Wrap(err, "checkpointCompleted")
-		}
-		if err = saveAndReload(method); err != nil {
-			return nil, errors.Wrap(err, "error saving searcher state after checkpoint")
 		}
 
 	default:

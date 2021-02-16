@@ -571,19 +571,6 @@ func (t *trial) processAllocated(
 		}
 	}
 
-	// We need to complete cached checkpoints here in the event that between when we last shutdown
-	// and now the searcher asked for a checkpoint we already created (this happens in PBT).
-	switch op, metrics, err := t.sequencer.CompleteCachedCheckpoints(); {
-	case err != nil:
-		return errors.Wrap(err, "failed to complete cached checkpoints")
-	case op != nil:
-		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-			return trialCompletedOperation{op: op, metrics: metrics, trialSnapshot: s}
-		}); err != nil {
-			return errors.Wrap(err, "failed to send cached checkpoint operation with snapshot")
-		}
-	}
-
 	w, err := t.sequencer.Workload()
 	if err != nil {
 		return errors.Wrap(err, "failed to get workload from sequencer after allocation")
@@ -672,13 +659,6 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	switch {
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
-	case op != nil:
-		out.completedOps = append(out.completedOps, trialCompletedOperation{op: op, metrics: metrics})
-	}
-
-	switch op, metrics, err := t.sequencer.CompleteCachedCheckpoints(); {
-	case err != nil:
-		return errors.Wrap(err, "failed to complete cached checkpoints")
 	case op != nil:
 		out.completedOps = append(out.completedOps, trialCompletedOperation{op: op, metrics: metrics})
 	}
