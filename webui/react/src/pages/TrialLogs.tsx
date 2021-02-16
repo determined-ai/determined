@@ -149,19 +149,18 @@ const TrialLogs: React.FC = () => {
     return <Message title={`Unable to find Trial ${trialId}`} type={MessageType.Warning} />;
   }
 
-  const experimentDetailPath = `/experiments/${trial.data?.experimentId}`;
+  const experimentDetailPath = `/experiments/${experimentId}`;
   const trialDetailPath = `${experimentDetailPath}/trials/${trialId}`;
 
   return (
     <LogViewerTimestamp
       fetchToLogConverter={jsonToTrialLog}
       FilterComponent={TrialLogFilters}
-      noWrap
       pageProps={{
         breadcrumb: [
           { breadcrumbName: 'Experiments', path: '/experiments' },
           {
-            breadcrumbName: `Experiment ${trial.data?.experimentId}`,
+            breadcrumbName: `Experiment ${experimentId}`,
             path: experimentDetailPath,
           },
           {
