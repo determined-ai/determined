@@ -222,7 +222,10 @@ def main() -> None:
         logging.error("Checkpoint storage validation failed: {}".format(e))
         sys.exit(1)
 
-    build_and_run_training_pipeline(env)
+    try:
+        build_and_run_training_pipeline(env)
+    except det.InvalidHP:
+        pass
 
 
 if __name__ == "__main__":
