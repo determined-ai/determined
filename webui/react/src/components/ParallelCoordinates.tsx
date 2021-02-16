@@ -81,7 +81,6 @@ const ParallelCoordinates: React.FC<Props> = ({
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
-  const colorBarRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ chartState, setChartState ] = useState<ChartState>({});
@@ -253,18 +252,6 @@ const ParallelCoordinates: React.FC<Props> = ({
 
     throttleResize();
   }, [ chartData, resize ]);
-
-  // General color scale legend
-  useEffect(() => {
-    const ref = colorBarRef.current;
-    if (!ref) return;
-
-    const scales = colorScale.map(scale => scale[1]);
-    if (smallerIsBetter) scales.reverse();
-
-    const gradient = scales.join(', ');
-    ref.style.backgroundImage = `linear-gradient(90deg, ${gradient})`;
-  }, [ colorScale, smallerIsBetter ]);
 
   return <div id={id} ref={chartRef} />;
 };
