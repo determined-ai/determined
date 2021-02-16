@@ -60,7 +60,7 @@ git clone git@github.com:determined-ai/determined.git
 ### Building Determined
 
 ```sh
-python3.6 -m venv ~/.virtualenvs/determined
+python3 -m venv ~/.virtualenvs/determined
 . ~/.virtualenvs/determined/bin/activate
 make all
 ```
