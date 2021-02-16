@@ -373,7 +373,7 @@ func (s *trialWorkloadSequencer) RollBackSequencer() (int, error) {
 	if err != nil {
 		return 0, errors.Wrap(err, "cannot roll back sequencer")
 	}
-	return wkld.PriorBatchesProcessed, nil
+	return wkld.TotalBatches(), nil
 }
 
 // UpToDate returns if the sequencer has completed all searcher requested operations.
