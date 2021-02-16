@@ -287,16 +287,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case model.State:
 		t.experimentState = msg
 	case []searcher.Operation:
-		for _, operation := range msg {
-			switch op := operation.(type) {
-			case searcher.Runnable:
-				if err := t.sequencer.OperationRequested(op); err != nil {
-					return errors.Wrap(err, "error passing runnable to sequencer")
-				}
-			case searcher.Close:
-				t.close = &op
-			}
-		}
+		t.processOperations(msg)
 
 	case sproto.ContainerLog:
 		t.insertLog(ctx, msg.Container, msg.Message())
@@ -370,6 +361,17 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	}
 
 	return nil
+}
+
+func (t *trial) processOperations(ops []searcher.Operation) {
+	for _, op := range ops {
+		switch op := op.(type) {
+		case searcher.Runnable:
+			t.sequencer.OperationRequested(op)
+		case searcher.Close:
+			t.close = &op
+		}
+	}
 }
 
 func (t *trial) runningReceive(ctx *actor.Context) error {
