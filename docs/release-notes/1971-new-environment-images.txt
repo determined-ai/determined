@@ -2,9 +2,9 @@
 
 **New Features**
 
--  New Docker images are available for experiments and commands to support
-   CUDA 11, as well as some updated versions of frameworks on CUDA 10.1.
-   It is recommended to validate the performance of models when changing CUDA
-   versions as some models can experience significant changes in training time,
-   etc. Consult the "Environment Configuration" section in the documentation for
-   details.
+-  New Docker images are available for experiments and commands to
+   support CUDA 11, as well as some updated versions of frameworks on
+   CUDA 10.1. It is recommended to validate the performance of models
+   when changing CUDA versions as some models can experience significant
+   changes in training time, etc. Consult the "Environment
+   Configuration" section in the documentation for details.

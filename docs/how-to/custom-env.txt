@@ -117,9 +117,9 @@ and values of the hyperparameters for the current trial.
 CUDA 11 Images
 ==============
 
-Determined also supports running CUDA 11-enabled versions of the frameworks,
-and has a Docker image you can use for experiments and commands containing the
-following:
+Determined also supports running CUDA 11-enabled versions of the
+frameworks, and has a Docker image you can use for experiments and
+commands containing the following:
 
 -  Ubuntu 18.04
 -  CUDA 11.0
@@ -137,8 +137,8 @@ This can be configured in your experiment configuration like below:
 Other Images
 ============
 
-Other images are available to run other recent versions of the frameworks
-without requiring CUDA 11-enabled hardware.
+Other images are available to run other recent versions of the
+frameworks without requiring CUDA 11-enabled hardware.
 
 The CUDA version (where applicable), PyTorch and TensorFlow versions are
 included in the image name:
