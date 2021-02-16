@@ -23,6 +23,7 @@ import {
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { clone, numericSorter } from 'utils/data';
+import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpParallelCoordinates.module.scss';
@@ -109,14 +110,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
       newDimensions.push({
-        label: selectedMetric.name,
+        label: metricNameToStr(selectedMetric),
         range: chartData.metricRange,
         type: DimensionType.Scalar,
       });
     }
 
     return newDimensions;
-  }, [ chartData, experiment.config.hyperparameters, hpList, selectedMetric.name ]);
+  }, [ chartData, experiment.config.hyperparameters, hpList, selectedMetric ]);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -198,8 +199,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
 
         // Add metric of interest
+        const metricKey = metricNameToStr(selectedMetric);
         const metricValues = trialIds.map(id => trialMetricsMap[id]);
-        data[selectedMetric.name] = metricValues;
+        data[metricKey] = metricValues;
 
         // Normalize metrics values for parallel coordinates colors.
         const metricRange = getNumericRange(metricValues);
@@ -269,7 +271,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
             <>
               <div className={css.chart}>
                 <ParallelCoordinates
-                  colorScaleKey={selectedMetric.name}
+                  colorScaleKey={metricNameToStr(selectedMetric)}
                   data={chartData.data}
                   dimensions={dimensions}
                 />
