@@ -13,8 +13,10 @@ from determined_common import api
 class InvalidHP(Exception):
     def __init__(self, msg: str = "...") -> None:
         if not isinstance(msg, str):
-            raise TypeError("InvalidHP exceptions can be initialized with a custom message, "
-                            f"but it must be a string, not {type(msg).__name__}")
+            raise TypeError(
+                "InvalidHP exceptions can be initialized with a custom message, "
+                f"but it must be a string, not {type(msg).__name__}"
+            )
         self.msg = msg
 
 
