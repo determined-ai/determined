@@ -3,7 +3,6 @@ import { throttle } from 'throttle-debounce';
 
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData } from 'Plotly';
-import themes, { defaultThemeId } from 'themes';
 import { ExperimentHyperParamType, Point, Primitive, Range } from 'types';
 import { clone, isBoolean, isNumber } from 'utils/data';
 import { generateAlphaNumeric, truncate } from 'utils/string';
@@ -19,6 +18,7 @@ export enum DimensionType {
  * `colors` - list of numbers between 0.0 and 1.0
  */
 interface Props {
+  colorScale: ColorScale
   colorScaleKey?: string;
   data: Record<string, Primitive[]>;
   dimensions: Dimension[];
@@ -48,6 +48,8 @@ export interface Dimension {
   type: DimensionType,
 }
 
+export type ColorScale = [ number, string ][];
+
 export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> = {
   [ExperimentHyperParamType.Categorical]: DimensionType.Categorical,
   [ExperimentHyperParamType.Constant]: DimensionType.Scalar,
@@ -58,14 +60,6 @@ export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> =
 
 const MAX_LABEL_LENGTH = 20;
 const CONSTRAINT_REMOVE_THRESHOLD = 1e-9;
-const COLOR_SCALE = [
-  [ 0.0, themes[defaultThemeId].colors.danger.light ],
-  [ 1.0, themes[defaultThemeId].colors.action.normal ],
-];
-const COLOR_SCALE_NEUTRAL = [
-  [ 0.0, 'rgb(255, 207, 0)' ],
-  [ 1.0, themes[defaultThemeId].colors.action.normal ],
-];
 
 const plotlyLayout: Partial<Layout> = {
   height: 450,
@@ -78,6 +72,7 @@ const plotlyConfig: Partial<Plotly.Config> = {
 };
 
 const ParallelCoordinates: React.FC<Props> = ({
+  colorScale,
   colorScaleKey,
   data,
   dimensions,
@@ -90,10 +85,6 @@ const ParallelCoordinates: React.FC<Props> = ({
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ chartState, setChartState ] = useState<ChartState>({});
-
-  const colorScale = useMemo(() => {
-    return smallerIsBetter != null ? COLOR_SCALE : COLOR_SCALE_NEUTRAL;
-  }, [ smallerIsBetter ]);
 
   const colorValues = useMemo(() => {
     if (!colorScaleKey || !Array.isArray(data[colorScaleKey])) return undefined;

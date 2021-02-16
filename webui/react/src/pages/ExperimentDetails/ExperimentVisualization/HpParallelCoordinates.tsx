@@ -6,6 +6,7 @@ import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import ParallelCoordinates, {
+  ColorScale,
   Dimension, DimensionType, dimensionTypeMap,
 } from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -17,6 +18,7 @@ import { handlePath, paths } from 'routes/utils';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
+import themes, { defaultThemeId } from 'themes';
 import {
   ExperimentBase, ExperimentHyperParamType, MetricName, MetricType, metricTypeParamMap,
   Primitive, Range, RunState,
@@ -51,6 +53,14 @@ interface HpTrialData {
 const STORAGE_PATH = 'experiment-visualization';
 const STORAGE_HP_KEY = 'hps';
 const MAX_HP_COUNT = 20;
+const COLOR_SCALE: ColorScale = [
+  [ 0.0, themes[defaultThemeId].colors.danger.light ],
+  [ 1.0, themes[defaultThemeId].colors.action.normal ],
+];
+const COLOR_SCALE_NEUTRAL: ColorScale = [
+  [ 0.0, 'rgb(255, 207, 0)' ],
+  [ 1.0, themes[defaultThemeId].colors.action.normal ],
+];
 
 const HpParallelCoordinates: React.FC<Props> = ({
   batches,
@@ -83,6 +93,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
     return undefined;
   }, [ experiment.config.searcher, selectedMetric ]);
+
+  const colorScale = useMemo(() => {
+    return smallerIsBetter != null ? COLOR_SCALE : COLOR_SCALE_NEUTRAL;
+  }, [ smallerIsBetter ]);
 
   const dimensions = useMemo(() => {
     const newDimensions = hpList
@@ -271,6 +285,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
             <>
               <div className={css.chart}>
                 <ParallelCoordinates
+                  colorScale={colorScale}
                   colorScaleKey={metricNameToStr(selectedMetric)}
                   data={chartData.data}
                   dimensions={dimensions}
