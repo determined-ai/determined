@@ -11,18 +11,11 @@ from determined_common import api
 
 
 class InvalidHP(Exception):
-    """Raised by user when InvalidHP exception is encountered
-
-    Attributes:
-        message -- explanation of the error
-    """
-
-    def __init__(self, message: str = "Invalid hyperparameter exception encountered") -> None:
-        self.message = message
-        super().__init__(self.message)
-
-    def __str__(self) -> str:
-        return repr(self.message)
+    def __init__(self, msg: str = "...") -> None:
+        if not isinstance(msg, str):
+            raise TypeError("InvalidHP exceptions can be initialized with a custom message, "
+                            f"but it must be a string, not {type(msg).__name__}")
+        self.msg = msg
 
 
 def _get_gpus(limit_gpus: Optional[int]) -> Tuple[bool, List[str], List[int]]:

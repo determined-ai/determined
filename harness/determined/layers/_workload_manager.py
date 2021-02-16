@@ -153,32 +153,33 @@ class _TrialWorkloadManager(WorkloadManager):
                 }
                 out_response["exited_reason"] = "INVALID_HP"
                 respond(out_response)
-            else:
-                batch_metrics = metrics["batch_metrics"]
-                # Sanity-check training metrics.
-                det.util.validate_batch_metrics(batch_metrics)
-                check_len(batch_metrics, wkld.num_batches)
+                return
 
-                for callback in self.callbacks:
-                    callback.on_train_step_end(
-                        wkld.step_id, wkld.num_batches, wkld.total_batches_processed, metrics
-                    )
+            batch_metrics = metrics["batch_metrics"]
+            # Sanity-check training metrics.
+            det.util.validate_batch_metrics(batch_metrics)
+            check_len(batch_metrics, wkld.num_batches)
 
-                self.tensorboard_mgr.sync()
+            for callback in self.callbacks:
+                callback.on_train_step_end(
+                    wkld.step_id, wkld.num_batches, wkld.total_batches_processed, metrics
+                )
 
-                out_response = {
-                    "type": "WORKLOAD_COMPLETED",
-                    "workload": wkld,
-                    "start_time": start_time,
-                    "end_time": _current_timestamp(),
-                    "metrics": metrics,
-                }
+            self.tensorboard_mgr.sync()
 
-                if in_response.get("stop_requested", False):
-                    out_response["exited_reason"] = "USER_CANCELED"
+            out_response = {
+                "type": "WORKLOAD_COMPLETED",
+                "workload": wkld,
+                "start_time": start_time,
+                "end_time": _current_timestamp(),
+                "metrics": metrics,
+            }
 
-                # Send the response up.
-                respond(out_response)
+            if in_response.get("stop_requested", False):
+                out_response["exited_reason"] = "USER_CANCELED"
+
+            # Send the response up.
+            respond(out_response)
 
         yield wkld, [], _respond
 
@@ -198,6 +199,18 @@ class _TrialWorkloadManager(WorkloadManager):
             in_response = cast(Dict[str, Any], in_response)
             metrics = in_response["metrics"]
             metrics = cast(workload.Metrics, metrics)
+
+            if in_response.get("invalid_hp", False):
+                out_response = {
+                    "type": "WORKLOAD_COMPLETED",
+                    "workload": wkld,
+                    "start_time": start_time,
+                    "end_time": _current_timestamp(),
+                    "metrics": metrics,
+                }
+                out_response["exited_reason"] = "INVALID_HP"
+                respond(out_response)
+                return
 
             v_metrics = metrics["validation_metrics"]
             for callback in self.callbacks:
@@ -271,8 +284,6 @@ class _TrialWorkloadManager(WorkloadManager):
 
             if in_response.get("stop_requested", False):
                 out_response["exited_reason"] = "USER_CANCELED"
-            if in_response.get("invalid_hp", False):
-                out_response["exited_reason"] = "INVALID_HP"
 
             respond(out_response)
 

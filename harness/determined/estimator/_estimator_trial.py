@@ -271,20 +271,44 @@ class DeterminedControlHook(estimator.RunHook):
             logging.debug(f"Received wkld {wkld.kind} with args {args}.")
 
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                # Store values for the training loop.
-                self.num_batches = wkld.num_batches
-                self.train_response_func = response_func
-                # Break out of the control loop so that the train process
-                # re-enters the train_and_evaluate() loop.
-                break
-            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(
-                    det.util.wrap_metrics(
-                        self._compute_validation_metrics(),
-                        self.estimator_trial_controller.context.get_stop_requested(),
-                        False,
+                try:
+                    # Store values for the training loop.
+                    self.num_batches = wkld.num_batches
+                    self.train_response_func = response_func
+                    # Break out of the control loop so that the train process
+                    # re-enters the train_and_evaluate() loop.
+                    break
+                except det.InvalidHP as e:
+                    logging.info(
+                        "Invalid hyperparameter exception in trial train step: {}".format(e)
                     )
-                )
+                    response_func(
+                        det.util.wrap_metrics(
+                            {},
+                            self.estimator_trial_controller.context.get_stop_requested(),
+                            True,
+                        )
+                    )
+            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                try:
+                    response_func(
+                        det.util.wrap_metrics(
+                            self._compute_validation_metrics(),
+                            self.estimator_trial_controller.context.get_stop_requested(),
+                            False,
+                        )
+                    )
+                except det.InvalidHP as e:
+                    logging.info(
+                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
+                    )
+                    response_func(
+                        det.util.wrap_metrics(
+                            {},
+                            self.estimator_trial_controller.context.get_stop_requested(),
+                            True,
+                        )
+                    )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)
@@ -704,16 +728,6 @@ class EstimatorTrialController(det.LoopTrialController):
             tf.estimator.train_and_evaluate(self.estimator, self.train_spec, self.eval_spec)
         except det.errors.WorkerFinishedGracefully:
             pass
-        except det.InvalidHP as e:
-            for _, _, response_func in self.workloads:
-                logging.info("Invalid hyperparameter exception in trial: {}".format(e))
-                response_func(
-                    det.util.wrap_metrics(
-                        {},
-                        self.context.get_stop_requested(),
-                        True,
-                    )
-                )
         else:
             raise AssertionError(
                 "Training loop exited unexpectedly but without throwing any errors. This is "
