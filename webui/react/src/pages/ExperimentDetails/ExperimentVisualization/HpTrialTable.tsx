@@ -14,6 +14,7 @@ type HParams = Record<string, Primitive>;
 
 interface Props {
   colorScale?: ColorScale[];
+  filteredTrialIdMap?: Record<number, boolean>;
   highlightedTrialId?: number;
   hyperparameters: ExperimentHyperParams;
   metric: MetricName;
@@ -32,6 +33,7 @@ export interface TrialHParams {
 
 const HpTrialTable: React.FC<Props> = ({
   colorScale,
+  filteredTrialIdMap,
   hyperparameters,
   highlightedTrialId,
   metric,
@@ -42,6 +44,11 @@ const HpTrialTable: React.FC<Props> = ({
   trialIds,
 }: Props) => {
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
+
+  const dataSource = useMemo(() => {
+    if (!filteredTrialIdMap) return trialHps;
+    return trialHps.filter(trial => filteredTrialIdMap[trial.id]);
+  }, [ filteredTrialIdMap, trialHps ]);
 
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
@@ -146,8 +153,8 @@ const HpTrialTable: React.FC<Props> = ({
   return (
     <ResponsiveTable<TrialHParams>
       columns={columns}
-      dataSource={trialHps}
-      pagination={getPaginationConfig(trialHps.length, pageSize)}
+      dataSource={dataSource}
+      pagination={getPaginationConfig(dataSource.length, pageSize)}
       rowClassName={rowClassName}
       rowKey="id"
       scroll={{ x: 1000 }}

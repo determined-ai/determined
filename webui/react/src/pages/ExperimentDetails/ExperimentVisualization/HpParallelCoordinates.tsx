@@ -24,7 +24,7 @@ import {
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { ColorScale } from 'utils/color';
-import { clone, numericSorter } from 'utils/data';
+import { clone, isNumber, numericSorter } from 'utils/data';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
@@ -84,6 +84,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const limitedHpList = fullHpList.slice(0, MAX_HP_COUNT);
   const defaultHpList = storage.get<string[]>(STORAGE_HP_KEY);
   const [ hpList, setHpList ] = useState<string[]>(defaultHpList || limitedHpList);
+  const [ filteredTrialIdMap, setFilteredTrialIdMap ] = useState<Record<number, boolean>>();
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
@@ -171,6 +172,30 @@ const HpParallelCoordinates: React.FC<Props> = ({
       setHpList(hps as string[]);
     }
   }, [ limitedHpList, storage ]);
+
+  const handleChartFilter = useCallback((constraints: Record<string, Range>) => {
+    if (!chartData) return;
+
+    // Figure out which trials fit within the user provided constraints.
+    const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
+      acc[trialId] = true;
+      return acc;
+    }, {} as Record<number, boolean>);
+
+    Object.entries(constraints).forEach(([ key, range ]) => {
+      if (!isNumber(range[0]) || !isNumber(range[1])) return;
+      if (!chartData.data[key]) return;
+
+      const values = chartData.data[key];
+      values.forEach((value, index) => {
+        if (value >= range[0] && value <= range[1]) return;
+        const trialId = chartData.trialIds[index];
+        newFilteredTrialIdMap[trialId] = false;
+      });
+    });
+
+    setFilteredTrialIdMap(newFilteredTrialIdMap);
+  }, [ chartData ]);
 
   const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
@@ -290,7 +315,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
             {fullHpList.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
-        title="Parallel Coordinates">
+        title="HP Parallel Coordinates">
         <div className={css.container}>
           {!hasLoaded || !chartData ? <Spinner /> : (
             <>
@@ -300,11 +325,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
                   colorScaleKey={metricNameToStr(selectedMetric)}
                   data={chartData.data}
                   dimensions={dimensions}
+                  onFilter={handleChartFilter}
                 />
               </div>
               <div className={css.table}>
                 <HpTrialTable
                   colorScale={colorScale}
+                  filteredTrialIdMap={filteredTrialIdMap}
                   hyperparameters={experiment.config.hyperparameters || {}}
                   metric={selectedMetric}
                   trialHps={trialHps}
