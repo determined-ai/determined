@@ -91,11 +91,11 @@ Default Images
 In the current version of Determined, the experiments and commands are
 executed in containers with the following:
 
--  Ubuntu 20.04
--  CUDA 10.1
+-  Ubuntu 18.04
+-  CUDA 10.0
 -  Python 3.6.9
 -  TensorFlow 1.15.4
--  PyTorch 1.7.0
+-  PyTorch 1.4.0
 
 Determined will automatically select GPU-specific versions of each
 library when running on agents with GPUs.
@@ -114,14 +114,15 @@ and values of the hyperparameters for the current trial.
    ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.8.0``
    for GPU and CPU respectively.
 
-TensorFlow 2 Images
-===================
+CUDA 11 Images
+==============
 
-Determined also supports TensorFlow 2.2 and has a Docker image you can
-use for experiments and commands containing the following:
+Determined also supports running CUDA 11-enabled versions of the frameworks,
+and has a Docker image you can use for experiments and commands containing the
+following:
 
--  Ubuntu 20.04
--  CUDA 10.1
+-  Ubuntu 18.04
+-  CUDA 11.0
 -  Python 3.6.9
 -  TensorFlow 2.4.1
 -  PyTorch 1.7.0
@@ -131,9 +132,23 @@ This can be configured in your experiment configuration like below:
 .. code:: yaml
 
    environment:
-     image:
-       gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0"
-       cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.8.0"
+     image: "determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-0.8.0"
+
+Other Images
+============
+
+Other images are available to run other recent versions of the frameworks
+without requiring CUDA 11-enabled hardware.
+
+The CUDA version (where applicable), PyTorch and TensorFlow versions are
+included in the image name:
+
+-  determinedai/environments:cuda-10.1-pytorch-1.7-tf-2.4-gpu-0.9.0
+-  determinedai/environments:cuda-10.1-pytorch-1.7-tf-1.15-gpu-0.9.0
+-  determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.8.0
+-  determinedai/environments:py-3.6.9-pytorch-1.7-tf-2.4-cpu-0.9.0
+-  determinedai/environments:py-3.6.9-pytorch-1.7-tf-1.15-cpu-0.9.0
+-  determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.8.0
 
 .. _custom-docker-images:
 
