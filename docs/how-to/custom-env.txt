@@ -67,7 +67,7 @@ and the Python package ``pandas``:
 .. code:: bash
 
    apt-get update && apt-get install -y wget
-   python3.6 -m pip install pandas
+   python3 -m pip install pandas
 
 The :download:`Iris example </examples/iris_tf_keras.tgz>` contains a
 TensorFlow Keras model that uses a startup hook to install an additional
