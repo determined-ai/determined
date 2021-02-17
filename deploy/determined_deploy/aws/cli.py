@@ -285,7 +285,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
     }  # type: Dict[str, Union[Type[base.DeterminedDeployment]]]
 
     if args.deployment_type != constants.deployment_types.SIMPLE:
-        if args.agent_subnet_id != "":
+        if args.agent_subnet_id is not None:
             raise ValueError(
                 f"The agent-subnet-id can only be set if the deployment-type=simple. "
                 f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
