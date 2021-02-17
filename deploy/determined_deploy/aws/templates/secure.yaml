@@ -149,12 +149,12 @@ Parameters:
   MasterTLSCert:
     Type: String
     Description: Base64-encoded TLS certificate for the master
-    Default: false
+    Default: ""
 
   MasterTLSKey:
     Type: String
     Description: Base64-encoded TLS key for the master
-    Default: false
+    Default: ""
 
   MasterCertName:
     Type: String
@@ -697,8 +697,8 @@ Resources:
             if [ -n "${MasterTLSCert}" ] && [ -n "${MasterTLSKey}" ]; then
               scheme=https
               port=8443
-              base64 -d <<<${MasterTLSCert} | tee /usr/local/determined/etc/master.crt
-              base64 -d <<<${MasterTLSKey} | tee /usr/local/determined/etc/master.key
+              base64 -d <<<"${MasterTLSCert}" | tee /usr/local/determined/etc/master.crt
+              base64 -d <<<"${MasterTLSKey}" | tee /usr/local/determined/etc/master.key
             fi
 
             cat << EOF > /usr/local/determined/etc/master.yaml
