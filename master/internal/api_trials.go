@@ -311,6 +311,14 @@ func (a *apiServer) KillTrial(
 func (a *apiServer) GetExperimentTrials(
 	_ context.Context, req *apiv1.GetExperimentTrialsRequest,
 ) (*apiv1.GetExperimentTrialsResponse, error) {
+	ok, err := a.m.db.CheckExperimentExists(int(req.ExperimentId))
+	switch {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
+	case !ok:
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.ExperimentId)
+	}
+
 	// Construct the trial filtering expression.
 	var allStates []string
 	for _, state := range req.States {
