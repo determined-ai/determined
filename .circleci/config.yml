@@ -6,7 +6,7 @@ orbs:
   slack: circleci/slack@3.4.2
   gke: circleci/gcp-gke@1.1.0
   kubernetes: circleci/kubernetes@0.11.0
-  helm: circleci/helm@1.1.2
+  helm: circleci/helm@1.2.0
   gcloud: circleci/gcp-cli@2.1.0
   queue: eddiewebb/queue@volatile
 
@@ -108,8 +108,20 @@ commands:
             - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b
 
   login-docker:
+    parameters:
+      repository:
+        type: string
+        default: ""
+      username:
+        type: string
+      password:
+        type: string
     steps:
-      - run: echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
+      - run: echo "<<parameters.password>>" | docker login <<parameters.repository>> -u "<<parameters.username>>" --password-stdin
+
+  login-helm:
+    steps:
+      - run: helm repo add determined https://helm.ngc.nvidia.com/isv-ngc-partner/determined --username=$NGC_API_USERNAME --password=$NGC_API_KEY
 
   install-protoc:
     steps:
@@ -761,11 +773,28 @@ commands:
 
 
 jobs:
+  build-helm:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - helm/install-helm-client
+      - attach_workspace:
+          at: .
+      - run: make -C helm build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - helm/build
+      - store_artifacts:
+          path: helm/build
+
   build-docs:
     docker:
       - image: determinedai/cimg-base:stable
     steps:
       - checkout
+      - helm/install-helm-client
       - setup-python-venv:
           determined-common: true
           determined-cli: true
@@ -782,7 +811,6 @@ jobs:
           root: .
           paths:
             - examples/build
-            - helm/build
             - cli/dist
             - common/dist
             - harness/dist
@@ -838,12 +866,14 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - go-get-deps
       - setup_remote_docker:
           version: 19.03.12
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - go-get-deps
       - run: make -C proto build
       - run: make package
-      - login-docker
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
 
@@ -857,12 +887,18 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - go-get-deps
       - setup_remote_docker:
           version: 19.03.12
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - login-docker:
+          repository: nvcr.io
+          username: ${NGC_API_USERNAME}
+          password: ${NGC_API_KEY}
+      - go-get-deps
       - run: make -C proto build
       - run: make package
-      - login-docker
       - run: make -C master publish
       - run: make -C agent publish
 
@@ -876,13 +912,31 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - go-get-deps
       - setup_remote_docker:
           version: 19.03.12
-      - login-docker
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - login-docker:
+          repository: nvcr.io
+          username: ${NGC_API_USERNAME}
+          password: ${NGC_API_KEY}
+      - go-get-deps
       - run: make -C proto build
       - run: make -C master release
       - run: make -C agent release
+
+  publish-helm:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - helm/install-helm-client
+      - run: helm plugin install https://github.com/chartmuseum/helm-push.git
+      - login-helm
+      - run: make -C helm release
 
   publish-python-package:
     parameters:
@@ -1606,6 +1660,7 @@ workflows:
   test-e2e:
     jobs:
       - build-proto
+      - build-helm
       - build-and-package-ts-sdk:
           requires:
             - build-proto
@@ -1621,6 +1676,7 @@ workflows:
             - build-and-package-ts-sdk
       - build-docs:
           requires:
+            - build-helm
             - build-proto
       - build-go
       - package-and-push-system-local:
@@ -1959,6 +2015,8 @@ workflows:
 
   release:
     jobs:
+      - build-helm:
+          filters: *release-and-rc-filters
       - build-proto:
           filters: *release-and-rc-filters
       - build-and-package-ts-sdk:
@@ -1974,6 +2032,7 @@ workflows:
           context: determined-production
           filters: *release-and-rc-filters
           requires:
+            - build-helm
             - build-proto
 
       - publish-python-package:
@@ -2002,6 +2061,12 @@ workflows:
             - build-docs
           context: determined-production
           filters: *release-filters
+
+      - publish-helm:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-and-rc-filters
 
       - upload-try-now-template:
           context: determined-production

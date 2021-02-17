@@ -51,6 +51,9 @@ dockers:
       - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
       - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
       - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
+      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.Env.VERSION}}"
+      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.ShortCommit}}"
+      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.FullCommit}}"
     extra_files:
       - packaging/entrypoint.sh
       - packaging/LICENSE

@@ -23,16 +23,16 @@ spec:
       serviceAccount: determined-master-{{ .Release.Name }}
       containers:
       - name: determined-master-{{ .Release.Name }}
-        {{ $image := "determinedai/determined-master" }}
+        {{ $image := "determined-master" }}
         {{- if .Values.enterpriseEdition -}}
-          {{ $image = "determinedai/determined-ee-master" }}
+          {{- $image = "determined-ee-master" -}}
         {{- end -}}
         {{ $tag := (required "A valid Chart.AppVersion entry required!" .Chart.AppVersion) }}
         {{- /* detVersion is used for CI to override the appVersion. */ -}}
         {{- if .Values.detVersion -}}
           {{ $tag = .Values.detVersion }}
         {{- end -}}
-        image: {{ $image }}:{{ $tag }}
+        image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
         imagePullPolicy: "Always"
         volumeMounts:
           - name: master-config
@@ -51,10 +51,10 @@ spec:
             {{- if .Values.masterMemRequest }}
             memory: {{ .Values.masterMemRequest  | quote }}
             {{- end}}
-      {{- if .Values.enterpriseEdition }}
+      {{- if .Values.imagePullSecretName}}
       imagePullSecrets:
-      - name: {{ required "A valid Values.imagePullSecretName entry is required!" .Values.imagePullSecretName | quote}}
-      {{- end }}
+        - name: {{ .Values.imagePullSecretName }}
+      {{- end}}
       volumes:
         - name: master-config
           configMap:
