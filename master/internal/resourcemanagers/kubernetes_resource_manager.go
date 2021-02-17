@@ -140,7 +140,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		Location:                     "kubernetes",
 		ImageId:                      "",
 		InstanceType:                 "kubernetes",
-		Details:                      nil,
+		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 	}
 }
 
