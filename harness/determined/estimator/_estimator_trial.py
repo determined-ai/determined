@@ -271,24 +271,12 @@ class DeterminedControlHook(estimator.RunHook):
             logging.debug(f"Received wkld {wkld.kind} with args {args}.")
 
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                try:
-                    # Store values for the training loop.
-                    self.num_batches = wkld.num_batches
-                    self.train_response_func = response_func
-                    # Break out of the control loop so that the train process
-                    # re-enters the train_and_evaluate() loop.
-                    break
-                except det.InvalidHP as e:
-                    logging.info(
-                        "Invalid hyperparameter exception in trial train step: {}".format(e)
-                    )
-                    response_func(
-                        det.util.wrap_metrics(
-                            {},
-                            self.estimator_trial_controller.context.get_stop_requested(),
-                            True,
-                        )
-                    )
+                # Store values for the training loop.
+                self.num_batches = wkld.num_batches
+                self.train_response_func = response_func
+                # Break out of the control loop so that the train process
+                # re-enters the train_and_evaluate() loop.
+                break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 try:
                     response_func(
