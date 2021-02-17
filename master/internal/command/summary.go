@@ -35,19 +35,12 @@ type (
 
 // newSummary returns a new summary of the command.
 func newSummary(c *command) summary {
-	state := "PENDING"
-	switch {
-	case c.container != nil:
-		state = c.container.State.String()
-	case c.exitStatus != nil:
-		state = container.Terminated.String()
-	}
 	return summary{
 		RegisteredTime: c.registeredTime,
 		Owner:          c.owner,
 		ID:             c.taskID,
 		Config:         c.config,
-		State:          state,
+		State:          c.State().String(),
 		ServiceAddress: c.serviceAddress,
 		Addresses:      c.addresses,
 		ExitStatus:     c.exitStatus,

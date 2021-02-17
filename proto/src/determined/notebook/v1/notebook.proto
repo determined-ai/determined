@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
+import "determined/task/v1/task.proto";
 
 // Notebook is a Jupyter notebook in a containerized environment.
 message Notebook {
@@ -25,6 +26,8 @@ message Notebook {
   string id = 1;
   // The description of the notebook.
   string description = 2;
+  // The state of the notebook.
+  determined.task.v1.State state = 3;
   // The time the notebook was started.
   google.protobuf.Timestamp start_time = 4;
   // The container running the notebook.

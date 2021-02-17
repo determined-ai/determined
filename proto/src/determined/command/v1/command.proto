@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
+import "determined/task/v1/task.proto";
 
 // Command is a single container running the configured command.
 message Command {
@@ -25,6 +26,8 @@ message Command {
   string id = 1;
   // The description of the command.
   string description = 2;
+  // The state of the command.
+  determined.task.v1.State state = 3;
   // The time the command was started.
   google.protobuf.Timestamp start_time = 4;
   // The container running the command.

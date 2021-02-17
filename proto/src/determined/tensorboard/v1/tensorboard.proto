@@ -7,6 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
+import "determined/task/v1/task.proto";
 
 // Tensorboard is a tensorboard instance in a containerized environment.
 message Tensorboard {
@@ -25,6 +26,8 @@ message Tensorboard {
   string id = 1;
   // The description of the tensorboard.
   string description = 2;
+  // The state of the tensorboard.
+  determined.task.v1.State state = 3;
   // The time the tensorboard was started.
   google.protobuf.Timestamp start_time = 4;
   // The container running the tensorboard.
