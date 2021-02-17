@@ -19,13 +19,12 @@ const (
 	Assigned State = "ASSIGNED"
 	// Pulling state denotes that the command's base image is being pulled from the Docker registry.
 	Pulling State = "PULLING"
-	// Starting state denotes that the image has been built and the command is being started, but the
-	// service in the command is not ready yet.
+	// Starting state denotes that the image has been pulled and the task is being started, but the
+	// task is not ready yet.
 	Starting State = "STARTING"
-	// Running state denotes that the service in the command is able to accept requests.
+	// Running state denotes that the service in the command is running.
 	Running State = "RUNNING"
-	// Terminated state denotes that the command has completely exited or the command has been
-	// aborted prior to getting assigned.
+	// Terminated state denotes that the command has exited or has been aborted
 	Terminated State = "TERMINATED"
 )
 

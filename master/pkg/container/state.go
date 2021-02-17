@@ -20,13 +20,12 @@ const (
 	Assigned State = "ASSIGNED"
 	// Pulling state denotes that the container's base image is being pulled from the Docker registry.
 	Pulling State = "PULLING"
-	// Starting state denotes that the image has been built and the container is being started, but the
-	// service in the container is not ready yet.
+	// Starting state denotes that the image has been pulled and the container is being started, but
+	// the container is not ready yet.
 	Starting State = "STARTING"
-	// Running state denotes that the service in the container is able to accept requests.
+	// Running state denotes that the service in the container is running.
 	Running State = "RUNNING"
-	// Terminated state denotes that the container has completely exited or the container has been
-	// aborted prior to getting assigned.
+	// Terminated state denotes that the container has exited or has been aborted
 	Terminated State = "TERMINATED"
 )
 
