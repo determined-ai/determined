@@ -25,7 +25,7 @@ spec:
       - name: determined-master-{{ .Release.Name }}
         {{ $image := "determined-master" }}
         {{- if .Values.enterpriseEdition -}}
-          {{- $image = "determined-ee-master" -}}
+          {{ $image = "determined-ee-master" }}
         {{- end -}}
         {{ $tag := (required "A valid Chart.AppVersion entry required!" .Chart.AppVersion) }}
         {{- /* detVersion is used for CI to override the appVersion. */ -}}
