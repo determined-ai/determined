@@ -112,9 +112,6 @@ const HpTrialTable: React.FC<Props> = ({
     };
     const hpColumns = Object
       .keys(hyperparameters || {})
-      .filter(key => {
-        return hyperparameters[key].type !== ExperimentHyperParamType.Constant;
-      })
       .map(key => {
         return {
           key,
