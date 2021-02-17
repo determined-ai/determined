@@ -2,7 +2,7 @@
 
 This example shows how to fine-tune BERT on the SQuAD question-answering dataset using
 Determined's PyTorch API. This example is adapted from [Huggingface's SQuAD
-example](https://github.com/huggingface/transformers/blob/master/examples/question-answering/run_squad.py).
+example](https://github.com/huggingface/transformers/tree/master/examples/legacy/question-answering).
 
 ## Files
 * **model_def.py**: The core code for the model. This includes building and compiling the model.
