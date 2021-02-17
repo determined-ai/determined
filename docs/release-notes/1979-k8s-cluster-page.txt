@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Kubernetes: Fix a bug that caused the Cluster page to not render when using a Kubernetes cluster.
