@@ -112,14 +112,8 @@ func (s *trialWorkloadSequencer) WorkloadManagerType() model.WorkloadManagerType
 }
 
 // OperationRequested records an operation requested by the searcher.
-func (s *trialWorkloadSequencer) OperationRequested(op searcher.Runnable) error {
-	switch op := op.(type) {
-	case searcher.Runnable:
-		s.ops = append(s.ops, op)
-	default:
-		return errors.Errorf("illegal workload for trialWorkloadSequencer: %v", op)
-	}
-	return nil
+func (s *trialWorkloadSequencer) OperationRequested(op searcher.Runnable) {
+	s.ops = append(s.ops, op)
 }
 
 // CompleteCachedCheckpoints attempts to complete cached checkpoints that we received previously
@@ -369,11 +363,7 @@ func (s *trialWorkloadSequencer) snapshotState() {
 func (s *trialWorkloadSequencer) RollBackSequencer() (int, error) {
 	s.trialWorkloadSequencerState = *s.LatestSnapshot
 	s.LatestSnapshot = s.trialWorkloadSequencerState.deepCopy()
-	wkld, err := s.Workload()
-	if err != nil {
-		return 0, errors.Wrap(err, "cannot roll back sequencer")
-	}
-	return wkld.PriorBatchesProcessed, nil
+	return s.TotalBatchesProcessed, nil
 }
 
 // UpToDate returns if the sequencer has completed all searcher requested operations.

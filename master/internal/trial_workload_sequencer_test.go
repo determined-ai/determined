@@ -148,10 +148,10 @@ checkpoint_policy: none
 	assert.Assert(t, s.UpToDate())
 
 	// Request a few operations so the sequencer builds its internal desired state.
-	assert.NilError(t, s.OperationRequested(train))
+	s.OperationRequested(train)
 	assert.Assert(t, !s.UpToDate())
-	assert.NilError(t, s.OperationRequested(validate))
-	assert.NilError(t, s.OperationRequested(checkpoint))
+	s.OperationRequested(validate)
+	s.OperationRequested(checkpoint)
 
 	// Check that workload() returns an error before setTrialID is set
 	_, err := s.Workload()
@@ -299,9 +299,9 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
-	assert.NilError(t, s.OperationRequested(
+	s.OperationRequested(
 		searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500)),
-	))
+	)
 
 	op, _, err := s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: workload.Workload{
@@ -348,9 +348,9 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 	s.SetTrialID(1)
 
 	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Records, 24))
-	assert.NilError(t, s.OperationRequested(
+	s.OperationRequested(
 		train,
-	))
+	)
 
 	op, _, err := s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: workload.Workload{

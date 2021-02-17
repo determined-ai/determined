@@ -187,7 +187,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			Handler:  ctx.Self(),
 		})
 
-		e.processOperations(ctx, e.searcher.TrialOperations, nil)
+		if e.restored {
+			e.restoreTrialsFromPriorOperations(ctx, e.searcher.TrialOperations)
+		} else {
+			e.processOperations(ctx, e.searcher.TrialOperations, nil)
+		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
 		// Since e.searcher.TrialOperations should have all trials that were previously
 		// allocated, we can stop trying to restore new trials after processing these.
@@ -360,6 +364,47 @@ func (e *experiment) trialClosed(ctx *actor.Context, requestID model.RequestID) 
 	}
 }
 
+// restoreTrialsFromPriorOperations from the operations that were snapshotted with the
+// last experiment checkpoint.
+func (e *experiment) restoreTrialsFromPriorOperations(
+	ctx *actor.Context, ops []searcher.Operation,
+) {
+	// Previous implementations had a nice property that: since trials were restored in the order
+	// they were requested, the trial running on failure was the first restarted. Using this ordered
+	// list keeps that property.
+	var requestIDs []model.RequestID
+	trialOpsByRequestID := make(map[model.RequestID][]searcher.Operation)
+	for _, op := range ops {
+		ctx.Log().Debugf("restoring searcher op: %v", op)
+		switch op := op.(type) {
+		case searcher.Create:
+			requestIDs = append(requestIDs, op.RequestID)
+			trialOpsByRequestID[op.RequestID] = append(trialOpsByRequestID[op.RequestID], op)
+		case searcher.Requested:
+			trialOpsByRequestID[op.GetRequestID()] = append(trialOpsByRequestID[op.GetRequestID()], op)
+		}
+	}
+
+	for _, requestID := range requestIDs {
+		ops := trialOpsByRequestID[requestID]
+		op, ok := ops[0].(searcher.Create)
+		if !ok {
+			panic(fmt.Sprintf("encountered trial without a create: %s", requestID))
+		}
+		checkpoint, err := e.checkpointForCreate(op)
+		if err != nil {
+			e.updateState(ctx, model.StoppingErrorState)
+			ctx.Log().Error(err)
+			return
+		}
+		terminal := e.restoreTrial(ctx, op, checkpoint, ops[1:])
+		// In the event a trial is terminal and is not recorded in the searcher, replay the close.
+		if terminal && !e.searcher.TrialsClosed[op.RequestID] {
+			ctx.Tell(ctx.Self(), trialClosed{requestID: op.RequestID})
+		}
+	}
+}
+
 func (e *experiment) processOperations(
 	ctx *actor.Context, ops []searcher.Operation, err error) {
 	if _, ok := model.StoppingStates[e.State]; ok {
@@ -372,43 +417,19 @@ func (e *experiment) processOperations(
 	}
 
 	trialOperations := make(map[model.RequestID][]searcher.Operation)
-	terminalTrials := make(map[model.RequestID]bool)
 	for _, operation := range ops {
 		ctx.Log().Debugf("handling searcher op: %v", operation)
 		switch op := operation.(type) {
 		case searcher.Create:
-			checkpoint := e.warmStartCheckpoint
-			// If the Create specifies a checkpoint, ignore the experiment-wide one.
-			if op.Checkpoint != nil {
-				trialID, ok := e.searcher.TrialID(op.Checkpoint.RequestID)
-				if !ok {
-					ctx.Log().Error(errors.Errorf(
-						"invalid request ID in Create operation: %d", op.Checkpoint.RequestID))
-					e.updateState(ctx, model.StoppingErrorState)
-					return
-				}
-				checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trialID, nil)
-				if err != nil {
-					ctx.Log().Error(errors.Wrap(err, "checkpoint not found"))
-					e.updateState(ctx, model.StoppingErrorState)
-					return
-				}
-				checkpoint = checkpointModel
-			}
-			if e.restored {
-				terminal := e.restoreTrial(ctx, op, checkpoint)
-				terminalTrials[op.RequestID] = terminal
-				// In the event a trial is terminal and is not recorded in the searcher, replay the close.
-				if terminal && !e.searcher.TrialsClosed[op.RequestID] {
-					ctx.Tell(ctx.Self(), trialClosed{requestID: op.RequestID})
-				}
-				continue
+			checkpoint, err := e.checkpointForCreate(op)
+			if err != nil {
+				e.updateState(ctx, model.StoppingErrorState)
+				ctx.Log().Error(err)
+				return
 			}
 			ctx.ActorOf(op.RequestID, newTrial(e, op, checkpoint))
 		case searcher.Requested:
-			if !terminalTrials[op.GetRequestID()] {
-				trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
-			}
+			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
 		case searcher.Shutdown:
 			if op.Failure {
 				e.updateState(ctx, model.StoppingErrorState)
@@ -422,6 +443,24 @@ func (e *experiment) processOperations(
 	for requestID, ops := range trialOperations {
 		ctx.Tell(ctx.Child(requestID), ops)
 	}
+}
+
+func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {
+	checkpoint := e.warmStartCheckpoint
+	// If the Create specifies a checkpoint, ignore the experiment-wide one.
+	if op.Checkpoint != nil {
+		trialID, ok := e.searcher.TrialID(op.Checkpoint.RequestID)
+		if !ok {
+			return nil, errors.Errorf(
+				"invalid request ID in Create operation: %d", op.Checkpoint.RequestID)
+		}
+		checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trialID, nil)
+		if err != nil {
+			return nil, errors.Wrap(err, "checkpoint not found")
+		}
+		checkpoint = checkpointModel
+	}
+	return checkpoint, nil
 }
 
 func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
