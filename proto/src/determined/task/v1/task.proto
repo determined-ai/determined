@@ -13,12 +13,10 @@ enum State {
   STATE_ASSIGNED = 2;
   // The task's base image is being pulled from the Docker registry.
   STATE_PULLING = 3;
-  // The image has been built and the task is being started, but the
-  // service in the task is not ready yet.
+  // The image has been pulled and the task is being started, but the task is not ready yet.
   STATE_STARTING = 4;
-  // The service in the task is able to accept requests.
+  // The service in the task is running.
   STATE_RUNNING = 5;
-  // The task has completely exited or the task has been aborted prior
-  // to getting assigned.
+  // The task has exited or has been aborted.
   STATE_TERMINATED = 6;
 }
