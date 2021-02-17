@@ -29,8 +29,7 @@ type (
 		CurOpIdx  int `json:"cur_op_idx"`
 		CurStepID int `json:"cur_step_id"`
 
-		LatestCheckpoint *model.Checkpoint            `json:"latest_checkpoint"`
-		LatestSnapshot   *trialWorkloadSequencerState `json:"latest_snapshot"`
+		LatestSnapshot *trialWorkloadSequencerState `json:"latest_snapshot"`
 	}
 
 	// trialWorkloadSequencer manages transforming the work requested by the searcher into Workloads
@@ -70,10 +69,8 @@ func newTrialWorkloadSequencer(
 	return &trialWorkloadSequencer{
 		trialWorkloadSequencerState: trialWorkloadSequencerState{
 			NeedInitialValidation: exp.Config.PerformInitialValidation,
-			LatestCheckpoint:      firstCheckpoint,
 			LatestSnapshot: &trialWorkloadSequencerState{
 				NeedInitialValidation: exp.Config.PerformInitialValidation,
-				LatestCheckpoint:      firstCheckpoint,
 			},
 		},
 		checkpointPolicy:    exp.Config.CheckpointPolicy,
@@ -217,10 +214,8 @@ func (s *trialWorkloadSequencer) checkpointModelCompleted(
 	msg workload.CompletedMessage,
 ) (searcher.Runnable, interface{}) {
 	defer s.snapshotState()
-	checkpoint := checkpointFromCheckpointMetrics(*msg.CheckpointMetrics)
 	s.BatchesSinceLastCkpt = 0
 	s.NeedPostValidationCkpt = false
-	s.LatestCheckpoint = &checkpoint
 	return nil, nil
 }
 

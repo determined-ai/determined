@@ -16,7 +16,7 @@ import (
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
 // shimmed. Experiment and trial snapshots share a version currently.
-const experimentSnapshotVersion = 1
+const experimentSnapshotVersion = 2
 
 // Restore works by restoring from distributed consistent snapshots taken through the course
 // of an experiment. Snapshots within the system flow from the bottom up, starting with the
@@ -193,11 +193,13 @@ func (e *experiment) snapshotAndSave(ctx *actor.Context, ts trialSnapshot) {
 // experimentSnapshotShims maps a version to the shim that bumps that version.
 var experimentSnapshotShims = map[int]snapshotShimFunc{
 	0: shimExperimentSnapshotV0,
+	1: noopShim,
 }
 
 // trialSnapshotShims maps a version to the shim that bumps that version.
 var trialSnapshotShims = map[int]snapshotShimFunc{
 	0: shimTrialSnapshotV0,
+	1: shimTrialSnapshotV1,
 }
 
 // shimExperimentSnapshot shims a trial snapshot to the version required by the master,
@@ -233,6 +235,11 @@ func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) 
 
 // snapshotShimFunc is a shimming function.
 type snapshotShimFunc func([]byte) ([]byte, error)
+
+// noopShim is a shimming function that does nothing to a snapshot.
+func noopShim(snapshot []byte) ([]byte, error) {
+	return snapshot, nil
+}
 
 // Version 0 => 1 shims
 
@@ -294,6 +301,25 @@ func shimTrialSnapshotV0(snapshot []byte) ([]byte, error) {
 	if sequencerState["latest_snapshot"] != nil {
 		latestSnapshot := sequencerState["latest_snapshot"].(map[string]interface{})
 		delete(latestSnapshot, "cached_checkpoint")
+	}
+
+	return json.Marshal(trialSnapshotV0)
+}
+
+// shimTrialSnapshotV1 shims a v1 trial snapshot to a v2 trial snapshot.
+// From v1 to v2, the latest checkpoints were removed.
+func shimTrialSnapshotV1(snapshot []byte) ([]byte, error) {
+	var trialSnapshotV0 map[string]interface{}
+	if err := json.Unmarshal(snapshot, &trialSnapshotV0); err != nil {
+		return nil, err
+	}
+
+	// Remove instances of `latest_checkpoint`.
+	sequencerState := trialSnapshotV0["trial_workload_sequencer_state"].(map[string]interface{})
+	delete(sequencerState, "latest_checkpoint")
+	if sequencerState["latest_snapshot"] != nil {
+		latestSnapshot := sequencerState["latest_snapshot"].(map[string]interface{})
+		delete(latestSnapshot, "latest_checkpoint")
 	}
 
 	return json.Marshal(trialSnapshotV0)

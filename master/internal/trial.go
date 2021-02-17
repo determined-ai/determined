@@ -571,6 +571,11 @@ func (t *trial) processAllocated(
 		}
 	}
 
+	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
+	if err != nil {
+		return errors.Wrap(err, "failed to get latest checkpoint for a trial")
+	}
+
 	w, err := t.sequencer.Workload()
 	if err != nil {
 		return errors.Wrap(err, "failed to get workload from sequencer after allocation")
@@ -629,7 +634,7 @@ func (t *trial) processAllocated(
 			ModelDefinition:     t.modelDefinition,
 			HParams:             t.create.Hparams,
 			TrialSeed:           t.create.TrialSeed,
-			LatestCheckpoint:    t.sequencer.LatestCheckpoint,
+			LatestCheckpoint:    latestCheckpoint,
 			InitialWorkload:     w,
 			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
 			AdditionalFiles:     additionalFiles,
