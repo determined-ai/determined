@@ -97,18 +97,20 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
   });
 };
 
-const mapV1ContainerState =
-  (containerState: Sdk.Determinedcontainerv1State|null): types.CommandState => {
+const mapV1TaskState =
+  (containerState: Sdk.Determinedtaskv1State): types.CommandState => {
     switch (containerState) {
-      case Sdk.Determinedcontainerv1State.ASSIGNED:
+      case Sdk.Determinedtaskv1State.PENDING:
+        return types.CommandState.Pending;
+      case Sdk.Determinedtaskv1State.ASSIGNED:
         return types.CommandState.Assigned;
-      case Sdk.Determinedcontainerv1State.PULLING:
+      case Sdk.Determinedtaskv1State.PULLING:
         return types.CommandState.Pulling;
-      case Sdk.Determinedcontainerv1State.STARTING:
+      case Sdk.Determinedtaskv1State.STARTING:
         return types.CommandState.Starting;
-      case Sdk.Determinedcontainerv1State.RUNNING:
+      case Sdk.Determinedtaskv1State.RUNNING:
         return types.CommandState.Running;
-      case Sdk.Determinedcontainerv1State.TERMINATED:
+      case Sdk.Determinedtaskv1State.TERMINATED:
         return types.CommandState.Terminated;
       default:
         return types.CommandState.Pending;
@@ -124,7 +126,7 @@ const mapCommonV1Task = (
     name: task.description,
     resourcePool: task.resourcePool,
     startTime: task.startTime as unknown as string,
-    state: mapV1ContainerState(task.container?.state || null),
+    state: mapV1TaskState(task.state),
     type,
     username: task.username,
   };
