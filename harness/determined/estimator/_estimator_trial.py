@@ -283,7 +283,7 @@ class DeterminedControlHook(estimator.RunHook):
                         det.util.wrap_metrics(
                             self._compute_validation_metrics(),
                             self.estimator_trial_controller.context.get_stop_requested(),
-                            False,
+                            invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -294,7 +294,7 @@ class DeterminedControlHook(estimator.RunHook):
                         det.util.wrap_metrics(
                             {},
                             self.estimator_trial_controller.context.get_stop_requested(),
-                            True,
+                            invalid_hp=True,
                         )
                     )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:

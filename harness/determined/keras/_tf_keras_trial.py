@@ -789,7 +789,7 @@ class TFKerasTrialController(det.LoopTrialController):
                         det.util.wrap_metrics(
                             self._compute_validation_metrics(),
                             self.context.get_stop_requested(),
-                            False,
+                            invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -800,7 +800,7 @@ class TFKerasTrialController(det.LoopTrialController):
                         util.wrap_metrics(
                             {},
                             self.context.get_stop_requested(),
-                            True,
+                            invalid_hp=True,
                         )
                     )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:

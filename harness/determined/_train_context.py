@@ -17,7 +17,6 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
         self.distributed = DistributedContext(env, hvd_config)
         self._stop_requested = False
-        self._invalid_hp = False
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> "_TrainContext":

@@ -152,7 +152,7 @@ class PyTorchTrialController(det.LoopTrialController):
                                 w.total_batches_processed,
                             ),
                             self.context.get_stop_requested(),
-                            False,
+                            invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -163,7 +163,7 @@ class PyTorchTrialController(det.LoopTrialController):
                         util.wrap_metrics(
                             {},
                             self.context.get_stop_requested(),
-                            True,
+                            invalid_hp=True,
                         )
                     )
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
@@ -172,7 +172,7 @@ class PyTorchTrialController(det.LoopTrialController):
                         util.wrap_metrics(
                             self._compute_validation_metrics(),
                             self.context.get_stop_requested(),
-                            False,
+                            invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -183,7 +183,7 @@ class PyTorchTrialController(det.LoopTrialController):
                         util.wrap_metrics(
                             {},
                             self.context.get_stop_requested(),
-                            True,
+                            invalid_hp=True,
                         )
                     )
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
