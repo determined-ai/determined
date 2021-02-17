@@ -17,6 +17,7 @@ message Notebook {
         "id",
         "description",
         "start_time",
+        "state",
         "username",
         "resource_pool"
       ]

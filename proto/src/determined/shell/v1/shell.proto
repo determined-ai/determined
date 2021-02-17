@@ -17,6 +17,7 @@ message Shell {
         "id",
         "description",
         "start_time",
+        "state",
         "username",
         "resource_pool"
       ]
