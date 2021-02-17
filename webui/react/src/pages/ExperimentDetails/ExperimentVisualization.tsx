@@ -44,7 +44,11 @@ const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
-  { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
+  {
+    disabled: true,
+    label: 'HP Parallel Coordinates',
+    type: VisualizationType.HpParallelCoordinates,
+  },
   { disabled: true, label: 'HP Importance', type: VisualizationType.HpImportance },
   { disabled: true, label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
 ];
