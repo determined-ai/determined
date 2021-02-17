@@ -59,7 +59,7 @@ const DEFAULT_SCALE_COLORS: Range<string> = [
 ];
 const REVERSE_SCALE_COLORS = clone(DEFAULT_SCALE_COLORS).reverse();
 const NEUTRAL_SCALE_COLORS: Range<string> = [
-  'rgb(255, 207, 0)',
+  'rgb(255, 184, 0)',
   themes[defaultThemeId].colors.action.normal,
 ];
 
