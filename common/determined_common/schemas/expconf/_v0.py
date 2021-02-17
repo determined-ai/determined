@@ -2,6 +2,8 @@ import enum
 import time
 from typing import Any, Dict, List, Optional, TypeVar, Union
 
+import petname
+
 from determined_common import schemas
 
 
@@ -93,9 +95,6 @@ class ReproducibilityConfigV0(schemas.SchemaBase):
             self.experiment_seed = int(time.time())
 
 
-############
-
-
 class LengthV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/length.json"
     batches: Optional[int] = None
@@ -118,9 +117,6 @@ class LengthV0(schemas.SchemaBase):
             return super().to_dict(explicit_nones=False)
         # explicit_nones means we pick any value... never show all three; that's nonsensical.
         return {"batches": None}
-
-
-############
 
 
 class DataLayerConfigV0(schemas.UnionBase):
@@ -189,9 +185,6 @@ class GCSDataLayerConfigV0(schemas.SchemaBase):
 
 DataLayerConfigV0_Type = Union[SharedFSDataLayerConfigV0, S3DataLayerConfigV0, GCSDataLayerConfigV0]
 DataLayerConfigV0.finalize(DataLayerConfigV0_Type)
-
-
-###########
 
 
 class EnvironmentImageV0(schemas.SchemaBase):
@@ -265,8 +258,6 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     ) -> None:
         pass
 
-
-############
 
 H = TypeVar("H", bound="HyperparameterV0")
 
@@ -371,9 +362,6 @@ HyperparameterV0_Type = Union[
     CategoricalHyperparameterV0,
 ]
 HyperparameterV0.finalize(HyperparameterV0_Type)
-
-
-########
 
 
 class AdaptiveMode(enum.Enum):
@@ -672,20 +660,11 @@ SearcherConfigV0_Type = Union[
 SearcherConfigV0.finalize(SearcherConfigV0_Type)
 
 
-################
-
-
 class CheckpointStorageConfigV0(schemas.UnionBase):
     _id = "http://determined.ai/schemas/expconf/v0/checkpoint-storage.json"
     _union_key = "type"
 
 
-class TensorboardStorageConfigV0(schemas.UnionBase):
-    _id = "http://determined.ai/schemas/expconf/v0/tensorboard-storage.json"
-    _union_key = "type"
-
-
-@TensorboardStorageConfigV0.member("shared_fs")
 @CheckpointStorageConfigV0.member("shared_fs")
 class SharedFSConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/shared-fs.json"
@@ -715,7 +694,6 @@ class SharedFSConfigV0(schemas.SchemaBase):
         pass
 
 
-@TensorboardStorageConfigV0.member("hdfs")
 @CheckpointStorageConfigV0.member("hdfs")
 class HDFSConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/hdfs.json"
@@ -739,7 +717,6 @@ class HDFSConfigV0(schemas.SchemaBase):
         pass
 
 
-@TensorboardStorageConfigV0.member("s3")
 @CheckpointStorageConfigV0.member("s3")
 class S3ConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/s3.json"
@@ -765,7 +742,6 @@ class S3ConfigV0(schemas.SchemaBase):
         pass
 
 
-@TensorboardStorageConfigV0.member("gcs")
 @CheckpointStorageConfigV0.member("gcs")
 class GCSConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/gcs.json"
@@ -788,17 +764,14 @@ class GCSConfigV0(schemas.SchemaBase):
 CheckpointStorageConfigV0_Type = Union[SharedFSConfigV0, HDFSConfigV0, S3ConfigV0, GCSConfigV0]
 CheckpointStorageConfigV0.finalize(CheckpointStorageConfigV0_Type)
 
-TensorboardStorageConfigV0_Type = Union[SharedFSConfigV0, HDFSConfigV0, S3ConfigV0, GCSConfigV0]
-# We actually don't finalize the TensorboardStorageConfigV0; its typing.Union would be an identical
-# type alias to the checkpoint storage's typing.Union and finalize would throw an error.  That's ok
-# because TensorboardStorageConfigV0 is ancient and totally unused.
-
-
-###############
-
 
 class ExperimentConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/experiment.json"
+
+    # Note that the fields internal, security, and tensorboard_storage are omitted entirely
+    # as internal is totally non-user-facing and security and tensorboard_storage are completely
+    # ignored byt the system.  These fields are allowed during validation but will be ignored by
+    # .from_dict().
 
     # Fields which must be defined by the user.
     hyperparameters: Dict[str, HyperparameterV0_Type]
@@ -826,7 +799,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     resources: Optional[ResourcesConfigV0] = None
     scheduling_unit: Optional[int] = None
     # security: Optional[SecurityConfigV0] = None
-    tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None
+    # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None
 
     @schemas.auto_init
     def __init__(
@@ -854,17 +827,16 @@ class ExperimentConfigV0(schemas.SchemaBase):
         resources: Optional[ResourcesConfigV0] = None,
         scheduling_unit: Optional[int] = None,
         # security: Optional[SecurityConfigV0] = None,
-        tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None,
+        # tensorboard_storage: Optional[TensorboardStorageConfigV0_Type] = None,
     ) -> None:
         pass
 
     def runtime_defaults(self) -> None:
         if self.description is None:
-            # XXX: use petname generator?
-            self.description = "hi"
+            self.description = f"Experiment ({petname.Generate(3)})"
 
 
-################
+# Test Structs Below:
 
 
 class TestSubV0(schemas.SchemaBase):
@@ -944,30 +916,3 @@ class TestRootV0(schemas.SchemaBase):
     def runtime_defaults(self) -> None:
         if self.runtime_defaultable is None:
             self.runtime_defaultable = 10
-
-
-if __name__ == "__main__":
-    import yaml
-    import json
-
-    y = yaml.safe_load(
-        """
-    bind_mounts:
-      - host_path: /asdf
-        container_path: /asdf
-      - host_path: /zxcv
-        container_path: /zxcv
-    entrypoint: model_def:TrialClass
-    searcher:
-      name: single
-      metric: loss
-      max_length:
-        batches: 1
-    hyperparameters:
-      global_batch_size: 64
-    """
-    )
-
-    config = ExperimentConfigV0.from_dict(y)
-    config.fill_defaults()
-    print(json.dumps(config.to_dict(), indent=4))

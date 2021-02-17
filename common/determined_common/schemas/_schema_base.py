@@ -1,5 +1,4 @@
 import enum
-import json
 import numbers
 import typing
 from typing import Any, List, Mapping, Optional, Sequence, Type, TypeVar, cast
@@ -112,39 +111,39 @@ def _handle_unions(anno: type) -> type:
     return args[0]
 
 
-def _instance_from_annotation(anno: type, dict_value: Any, prevalidated: bool = False) -> Any:
+def _instance_from_annotation(anno: type, value: Any, prevalidated: bool = False) -> Any:
     """
-    During calls to .from_dict(), use the type annotation to create a new object from dict_value.
+    During calls to .from_dict(), use the type annotation to create a new object from value.
     """
 
     # All Union types reduce to some other type.  In the case of our union schemas, like
-    # hyperparameters, that other type may be partially determined by dict_value.
+    # hyperparameters, that other type may be partially determined by value.
     typ = _handle_unions(anno)
 
     if typ == typing.Any:
-        # In the special case of typing.Any, we just return the dict_value directly.
-        return dict_value
+        # In the special case of typing.Any, we just return the value directly.
+        return value
     if issubclass(typ, enum.Enum):
-        return typ(dict_value)
+        return typ(value)
     if issubclass(typ, SchemaBase):
         # For subclasses of SchemaBase we just call either from_dict() or from_none().
-        if dict_value is None:
+        if value is None:
             return typ.from_none()
-        return typ.from_dict(dict_value, prevalidated)
+        return typ.from_dict(value, prevalidated)
     if issubclass(typ, PRIMITIVE_JSON_TYPES):
         # For json literal types, we just include them directly.
-        return dict_value
+        return value
     if issubclass(typ, typing.List):
         # List[thing] annotations; create a list of things.
         args = typ.__args__  # type: ignore
         args = cast(List[type], args)
         if len(args) != 1:
             raise TypeError("got typing.List[] without any element type")
-        if dict_value is None:
+        if value is None:
             return None
-        if not isinstance(dict_value, typing.Sequence):
-            raise TypeError(f"unable to create instance of {typ} from {dict_value}")
-        return [_instance_from_annotation(args[0], dv, prevalidated) for dv in dict_value]
+        if not isinstance(value, typing.Sequence):
+            raise TypeError(f"unable to create instance of {typ} from {value}")
+        return [_instance_from_annotation(args[0], v, prevalidated) for v in value]
     if issubclass(typ, typing.Dict):
         # Dict[str, thing] annotations; create a dict of strings to things.
         args = typ.__args__  # type: ignore
@@ -153,13 +152,11 @@ def _instance_from_annotation(anno: type, dict_value: Any, prevalidated: bool = 
             raise TypeError("got typing.Dict[] without any element type")
         if args[0] != str:
             raise TypeError("got typing.Dict[] without a string as the first type")
-        if dict_value is None:
+        if value is None:
             return None
-        if not isinstance(dict_value, typing.Mapping):
-            raise TypeError(f"unable to create instance of {typ} from {dict_value}")
-        return {
-            k: _instance_from_annotation(args[1], v, prevalidated) for k, v in dict_value.items()
-        }
+        if not isinstance(value, typing.Mapping):
+            raise TypeError(f"unable to create instance of {typ} from {value}")
+        return {k: _instance_from_annotation(args[1], v, prevalidated) for k, v in value.items()}
     raise TypeError(f"invalid type annotation on SchemaBase object: {anno}")
 
 
@@ -301,52 +298,3 @@ class SchemaBase:
             if getattr(self, name) != getattr(other, name):
                 return False
         return True
-
-
-if __name__ == "__main__":
-    from determined_common.schemas.expconf import _v0
-
-    root = _v0.TestRootV0.from_dict({"val_x": 1, "sub_union": {"type": "a", "val_a": 1}})
-    root.assert_complete()
-
-    print(json.dumps(root.to_dict(), indent=4))
-    print("---------")
-    filled = root.copy()
-    filled.fill_defaults()
-    print(json.dumps(filled.to_dict(), indent=4))
-    print("---------")
-    root.sub_obj = _v0.TestSubV0(val_y="pre-merged y")
-    root.merge(filled)
-    print(json.dumps(root.to_dict(), indent=4))
-
-    # output:
-    #
-    #     {
-    #         "val_x": 1,
-    #         "sub_union": {
-    #             "type": "a",
-    #             "val_a": 1
-    #         }
-    #     }
-    #     ---------
-    #     {
-    #         "val_x": 1,
-    #         "sub_union": {
-    #             "type": "a",
-    #             "val_a": 1
-    #         },
-    #         "sub_obj": {
-    #             "val_y": "default_y"
-    #         }
-    #     }
-    #     ---------
-    #     {
-    #         "val_x": 1,
-    #         "sub_union": {
-    #             "type": "a",
-    #             "val_a": 1
-    #         },
-    #         "sub_obj": {
-    #             "val_y": "pre-merged y"
-    #         }
-    #     }
