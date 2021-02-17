@@ -67,16 +67,16 @@ export const hex2hsl = (hex: string): HslColor => {
 };
 
 export const hex2rgb = (hex: string): RgbaColor => {
-  const rgba = { b: 0, g: 0, r: 0 };
+  const rgb = { b: 0, g: 0, r: 0 };
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 
   if (result && result.length > 3) {
-    rgba.r = parseInt(result[1], 16);
-    rgba.g = parseInt(result[2], 16);
-    rgba.b = parseInt(result[3], 16);
+    rgb.r = parseInt(result[1], 16);
+    rgb.g = parseInt(result[2], 16);
+    rgb.b = parseInt(result[3], 16);
   }
 
-  return rgba;
+  return rgb;
 };
 
 export const hsl2str = (hsl: HslColor): string => {
@@ -117,7 +117,7 @@ export const str2rgba = (str: string): RgbaColor => {
     rgba.r = parseInt(result[1]);
     rgba.g = parseInt(result[2]);
     rgba.b = parseInt(result[3]);
-    if (result.length > 5) rgba.a = parseInt(result[5]);
+    if (result.length > 5) rgba.a = parseFloat(result[5]);
     return rgba;
   }
 
