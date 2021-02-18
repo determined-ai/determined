@@ -6,12 +6,13 @@ import {
   experimentArchivedRenderer, experimentProgressRenderer,
   expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
+import { paths } from 'routes/utils';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ExperimentItem } from 'types';
 
 const idRenderer = (_: number, record: ExperimentItem): React.ReactNode => {
   return (
-    <Link path={`/experiments/${record.id}`}>{record.id}</Link>
+    <Link path={paths.experimentDetails(record.id)}>{record.id}</Link>
   );
 };
 
