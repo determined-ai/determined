@@ -65,6 +65,6 @@ func (e *Elastic) AddDateNanosTemplate() error {
 }
 
 func CurrentLogstashIndex() string {
-	t := time.Now()
+	t := time.Now().UTC()
 	return logstashIndexFromTimestamp(&t)
 }

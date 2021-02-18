@@ -259,7 +259,7 @@ func sendErr(ctx *actor.Context, err error) {
 
 func (d *dockerActor) sendAuxLog(ctx *actor.Context, msg string) {
 	ctx.Tell(ctx.Sender(), aproto.ContainerLog{
-		Timestamp:  time.Now(),
+		Timestamp:  time.Now().UTC(),
 		AuxMessage: &msg,
 	})
 }
@@ -272,7 +272,7 @@ func (d *dockerActor) sendPullLogs(ctx *actor.Context, r io.Reader) error {
 			return errors.Wrapf(err, "error parsing log message: %#v", log)
 		}
 		ctx.Tell(ctx.Sender(), aproto.ContainerLog{
-			Timestamp:   time.Now(),
+			Timestamp:   time.Now().UTC(),
 			PullMessage: &log,
 		})
 	}
@@ -287,7 +287,7 @@ type demultiplexer struct {
 
 func (d demultiplexer) Write(p []byte) (n int, err error) {
 	d.ctx.Tell(d.recipient, aproto.ContainerLog{
-		Timestamp: time.Now(),
+		Timestamp: time.Now().UTC(),
 		RunMessage: &aproto.RunMessage{
 			Value:   string(p),
 			StdType: d.stdType,

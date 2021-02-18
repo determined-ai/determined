@@ -168,7 +168,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 
 func (c *containerActor) makeTrialLog(log aproto.ContainerLog) model.TrialLog {
 	l := c.baseTrialLog
-	timestamp := time.Now()
+	timestamp := time.Now().UTC()
 	l.Timestamp = &timestamp
 
 	var source string

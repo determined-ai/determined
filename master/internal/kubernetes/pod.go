@@ -187,7 +187,7 @@ func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
 
 func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, msg resourceCreationFailed) {
 	ctx.Log().WithError(msg.err).Error("pod actor notified that resource creation failed")
-	p.insertLog(ctx, time.Now(), msg.err.Error())
+	p.insertLog(ctx, time.Now().UTC(), msg.err.Error())
 
 	// If a subset of resources were created (e.g., configMap but podCreation failed) they will
 	// be deleted during actor.PostStop.
