@@ -8,6 +8,41 @@
  Version 0.14
 **************
 
+Version 0.14.2
+==============
+
+**New Features**
+
+-  Support CUDA 11. New Docker images are available for experiments and
+   commands to support CUDA 11, as well as some updated versions of
+   frameworks on CUDA 10.1. It is recommended to validate the
+   performance of models when changing CUDA versions as some models can
+   experience significant changes in training time, etc. See
+   :ref:`custom-env` for more details.
+
+-  Support ``startup-hook.sh`` for notebooks and shells. This is the
+   same mechanism supported by experiments. See
+   :ref:`notebook-configuration` for more details.
+
+**Improvements**
+
+-  Improve local test mode for experiment creation, `det experiment
+   create`, to test with only a single batch.
+
+-  Invoke ``python`` as ``python3`` rather than as ``python3.6``. This
+   makes it possible to use custom images containing higher versions of
+   Python with Determined (3.6 is still the minimum required version).
+
+   If the desired ``python`` cannot be found as ``python3``, it is now
+   possible to customize this invocation by setting the environment
+   variable ``DET_PYTHON_EXECUTABLE=/path/to/python3``, for experiments,
+   notebooks, and shells.
+
+**Bug Fixes**
+
+-  Kubernetes: Fix a bug that caused the Cluster page to not render when
+   using a Kubernetes cluster.
+
 Version 0.14.1
 ==============
 
