@@ -28,8 +28,8 @@ Version 0.14.2
 
 **Improvements**
 
--  Improve local test mode for experiment creation, `det experiment
-   create`, to test with only a single batch.
+-  Improve local test mode for experiment creation, ``det experiment
+   create``, to test with only a single batch.
 
 -  Invoke ``python`` as ``python3`` rather than as ``python3.6``. This
    makes it possible to use custom images containing higher versions of
