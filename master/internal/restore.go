@@ -241,6 +241,11 @@ func identidyShim(snapshot []byte) ([]byte, error) {
 
 // Version 0 => 1 shims
 
+// shimExperimentSnapshotV0 shims a v0 experiment snapshot to a v1 experiment snapshot.
+// From v0 to v1, the searcher checkpoint operations were removed. Because of this, all checkpoint
+// operations are removed from the operations requested of trials and any PBT operations
+// which are awaiting a particular checkpoint to finish added to the queue of trial operations,
+// since by other invariants in the system we can guarantee this checkpoint exists.
 func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV0 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV0); err != nil {
@@ -250,9 +255,6 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 	if searcherState, ok := experimentSnapshotV0["searcher_state"]; ok {
 		if searchMethodState, ok := searcherState.(map[string]interface{})["search_method_state"]; ok {
 			wc := searchMethodState.(map[string]interface{})["waiting_checkpoints"].(map[string]interface{})
-			// waiting_checkpoints contains a map of a parent whose checkpoint we're waiting on to
-			// operations to send out as a result of that checkpoint. Since we know by other invariants
-			// in the system that this checkpoint already exists, this shim just sends those ops out.
 			for _, ops := range wc {
 				for _, op := range ops.([]interface{}) {
 					waitingCheckpointOps = append(waitingCheckpointOps, op.(map[string]interface{}))
