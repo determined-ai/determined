@@ -123,7 +123,7 @@ class PyTorchTrialContext(det.TrialContext):
             check.gt_eq(
                 backward_passes_per_step,
                 1,
-                "backwar_passes_per_step for local gradient aggregation must be >= 1",
+                "backward_passes_per_step for local gradient aggregation must be >= 1",
             )
 
             if self.hvd_config.use:
