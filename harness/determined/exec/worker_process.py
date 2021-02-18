@@ -37,15 +37,17 @@ def main() -> None:
 
         # Wrap the communication layer in a workload.Stream.
         subrec = layers.SubprocessReceiver(broadcast_client)
+        workloads = iter(subrec)
 
         with det._catch_sys_exit():
-            controller = load.prepare_controller(
-                worker_process_env.env,
-                iter(subrec),
-                worker_process_env.load_path,
-                worker_process_env.rendezvous_info,
-                worker_process_env.hvd_config,
-            )
+            with det._catch_init_invalid_hp(workloads):
+                controller = load.prepare_controller(
+                    worker_process_env.env,
+                    workloads,
+                    worker_process_env.load_path,
+                    worker_process_env.rendezvous_info,
+                    worker_process_env.hvd_config,
+                )
 
             try:
                 controller.run()

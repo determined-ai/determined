@@ -272,6 +272,8 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 		s.InvalidTrials++
 		// Remove metrics associated with InvalidHP trial across all rungs
 		highestRungIndex := s.TrialRungs[requestID]
+		rung := s.Rungs[highestRungIndex]
+		rung.OutstandingTrials--
 		for rungIndex := 0; rungIndex <= highestRungIndex; rungIndex++ {
 			rung := s.Rungs[rungIndex]
 			for i, trialMetric := range rung.Metrics {

@@ -149,6 +149,7 @@ class DeterminedControlHook(estimator.RunHook):
             response = {
                 "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
+                "invalid_hp": False,
             }
             self.train_response_func(response)
         else:
@@ -277,12 +278,25 @@ class DeterminedControlHook(estimator.RunHook):
                 # re-enters the train_and_evaluate() loop.
                 break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(
-                    det.util.wrap_metrics(
-                        self._compute_validation_metrics(),
-                        self.estimator_trial_controller.context.get_stop_requested(),
+                try:
+                    response_func(
+                        det.util.wrap_metrics(
+                            self._compute_validation_metrics(),
+                            self.estimator_trial_controller.context.get_stop_requested(),
+                            invalid_hp=False,
+                        )
                     )
-                )
+                except det.InvalidHP as e:
+                    logging.info(
+                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
+                    )
+                    response_func(
+                        det.util.wrap_metrics(
+                            {},
+                            self.estimator_trial_controller.context.get_stop_requested(),
+                            invalid_hp=True,
+                        )
+                    )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)

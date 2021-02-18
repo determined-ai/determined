@@ -6,8 +6,18 @@ import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import determined as det
-from determined import constants, gpu, horovod, workload
+from determined import constants, gpu, horovod, util, workload
 from determined_common import api
+
+
+class InvalidHP(Exception):
+    def __init__(self, msg: str = "...") -> None:
+        if not isinstance(msg, str):
+            raise TypeError(
+                "InvalidHP exceptions can be initialized with a custom message, "
+                f"but it must be a string, not {type(msg).__name__}"
+            )
+        self.msg = msg
 
 
 def _get_gpus(limit_gpus: Optional[int]) -> Tuple[bool, List[str], List[int]]:
@@ -29,6 +39,17 @@ def _catch_sys_exit() -> Any:
             "This might be raised by directly calling or using a library calling sys.exit(). "
             "Please remove any calls to sys.exit() from your model code."
         ) from e
+
+
+@contextlib.contextmanager
+def _catch_init_invalid_hp(workloads: Iterator[Any]) -> Any:
+    try:
+        yield
+    except InvalidHP as e:
+        logging.info("Invalid hyperparameter exception in trial __init__: {}".format(e))
+        wkld, args, response_func = next(workloads)
+        response_func(util.wrap_metrics({}, False, True))
+        raise
 
 
 def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:

@@ -784,11 +784,25 @@ class TFKerasTrialController(det.LoopTrialController):
                 self.multiplexer.set_batches_requested(wkld.num_batches)
                 break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(
-                    det.util.wrap_metrics(
-                        self._compute_validation_metrics(), self.context.get_stop_requested()
+                try:
+                    response_func(
+                        det.util.wrap_metrics(
+                            self._compute_validation_metrics(),
+                            self.context.get_stop_requested(),
+                            invalid_hp=False,
+                        )
                     )
-                )
+                except det.InvalidHP as e:
+                    logging.info(
+                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
+                    )
+                    response_func(
+                        util.wrap_metrics(
+                            {},
+                            self.context.get_stop_requested(),
+                            invalid_hp=True,
+                        )
+                    )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)
@@ -881,6 +895,7 @@ class TFKerasTrialController(det.LoopTrialController):
                     "avg_metrics": final_metrics,
                 },
                 "stop_requested": self.context.get_stop_requested(),
+                "invalid_hp": False,
             }
             self.train_response_func(response)
         else:
