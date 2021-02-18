@@ -11,6 +11,8 @@
 Version 0.14.2
 ==============
 
+**Release Date:** February 17, 2021
+
 **New Features**
 
 -  Support CUDA 11. New Docker images are available for experiments and
