@@ -63,8 +63,6 @@ WHERE l.trial_id = $1
 ORDER BY timestamp %s OFFSET $2 LIMIT $3
 `, fragment, orderByToSQL(order))
 
-	fmt.Println(query, params)
-
 	var b []*model.TrialLog
 	return b, nil, db.queryRows(query, &b, params...)
 }

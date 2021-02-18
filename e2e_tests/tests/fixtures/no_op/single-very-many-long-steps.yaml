@@ -12,7 +12,7 @@ searcher:
   metric: validation_error
   smaller_is_better: true
   max_length:
-    batches: 100000
+    batches: 10000
 min_validation_period:
   batches: 100
 min_checkpoint_period:
