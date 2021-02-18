@@ -1,8 +1,8 @@
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
 tensorflow==2.2.1
-torch==1.4.0
-torchvision==0.5.0
+torch==1.7.0
+torchvision==0.8.1
 pandas==1.0.3
 tensorflow_datasets
 scipy
