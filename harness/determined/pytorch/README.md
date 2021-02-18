@@ -14,7 +14,7 @@ through.
 
 ### The backward pass
 
-Once you have arrived at the loss you want to minimize, follow the the magic
+Once you have arrived at the loss you want to minimize, follow the magic
 traceable autodiff path backward to calculate the gradient.  The gradients are
 left in-place on the tensors to which they apply.
 
@@ -43,7 +43,7 @@ this API-transparent to users.
 Gather the results of the asynchronous allreduce of gradient updates between
 workers (don't apply any gradient updates).  This is useful if you need to
 process the gradients before applying them to the model weights, such as for
-gradient cliping or gradient scaling.
+gradient clipping or gradient scaling.
 
 ### `hvd_optimizer.step()`
 
@@ -61,7 +61,7 @@ Any call to `hvd_optimizer.step()` within this context manager will skip the
 
 Modifies the backward hooks to only start the asynchronous allreduce every
 `backward_passes_per_step` steps.  This value is useful for either gradient
-aggregation (mutliple batches per optimizer.step()) or if you plan on calling
+aggregation (multiple batches per optimizer.step()) or if you plan on calling
 loss.backward() multiple times.
 
 Note that in Determined, the option named `backward_passes_per_step` is only
@@ -78,12 +78,12 @@ casts them back to fp32 afterwards.
 
 ## Gradient Aggregation:
 
-Gradient aggregation by a factor of N is just like mulitplying the batch size
-by N, except it saves on gpu memory because you process two batches and average
+Gradient aggregation by a factor of N is just like multiplying the batch size
+by N, except it saves on GPU memory because you process two batches and average
 their gradients before you apply the gradients.  This makes sense in
 distributed training because of the high communication cost of the allreduce.
 (There are some cases where it's not "just like multiplying batch size by N",
-such as with batch norm or if you are TODO:finish)
+such as with batch norm).
 
 The only operation required for gradient aggregation are:
 
@@ -98,7 +98,7 @@ The only operation required for gradient aggregation are:
    gradients.
 
 
-## Pytorch-Native AMP:
+## PyTorch-Native AMP:
 
 "AMP" stands for "automatic mixed precision", where certain calculations happen
 in half-precision math (fp16).  This is normally only meaningful with GPUs
@@ -132,7 +132,7 @@ Call the dumb control loop: if there was an overflow, decrease the scale
 factor.  If there was an underflow, increase it.
 
 
-## Nvidia apex amp
+## Nvidia apex AMP
 
 ### `model, optimizer = amp.initialize(model, optimizer)`
 
@@ -142,13 +142,45 @@ the calls to optimizer.step() with underflown/overflown gradients can be safely
 skipped, and at some point they must also trigger the scale factor control
 loop.
 
-### `with amp.scale_loss(loss, optimizer) as scaled_loss:`
-       scaled_loss.backward()
+### `with amp.scale_loss(loss, optimizer):`
+
+Example:
+
+```python
+with amp.scale_loss(loss, optimizer) as scaled_loss:
+    scaled_loss.backward()
+```
 
 This context manager is going to scale the loss by the current scale factor,
 then unscale after the context manager exits.  Gradients are only accumulated
 into tensors that this optimizer is responsible for.
 
+Normally, apex.amp is fully capable of both gradient aggregation and dtrain.
+That might look like this:
+
+```python
+# N-1 passes: don't unscale yet
+with amp.scale_loss(loss, optimizer, defer_unscale=True) as scaled_loss:
+    scaled_loss.backward()
+
+# Nth pass: unscale now
+with amp.scale_loss(loss, optimizer, defer_unscale=False) as scaled_loss:
+    scaled_loss.backward()
+    # synchronize before unscaling
+    optimizer.synchronize()
+```
+
+However, our PyTorchTrial API doesn't allow that, because when
+`context.backward(loss)` is called, we don't actually know what optimizer the
+user intends to associate with that loss.
+
+We definitely want to support apex.amp with dtrain, so we actually just "guess"
+the optimizer by synchronizing all of the optimizers.  To ensure this "guess"
+is correct, we only allow one optimizer with apex.amp.
+
+This decision was made since long-term we expect the PyTorch-native API to
+dominate and it is a much more flexible API which does not have the same API
+limitations (needing to know the optimizer when calling `scale_loss`).
 
 ## The Laws of PyTorchTrial
 
@@ -161,7 +193,6 @@ into tensors that this optimizer is responsible for.
     steps differently
   * you could scaler.scale(loss) before or after optimizer.synchronize(), that
     doesn't matter
-     * what about apex amp though?
 
 * Gradient aggregation (by a factor of N):
   * do a forward and backward pass on each batch
@@ -173,8 +204,18 @@ into tensors that this optimizer is responsible for.
     a grouping of N batches (only call scaler.update() every N batches); this
     ensures that the gradient aggregation is valid.
 
-* pytorch-native amp:
- * (repeated from above) always call scaler.step(optimizer) AFTER
-   optimzer.synchronize()
- * (repeated from above) only call scaler.update() after each grouping of N
-   batches.
+* PyTorch-native AMP:
+  * (repeated from above) always call scaler.step(optimizer) *after*
+    optimzer.synchronize()
+  * (repeated from above) only call scaler.update() after each grouping of N
+    batches.
+
+* Nvidia apex AMP:
+  * with horovod, you must call optimizer.synchronize() *before* the
+    `amp.scale_loss()` context manager exits, because the underflow/overflow
+    checks happen in that context manager's exit; otherwise each worker would
+    step differently.
+  * since the `context.backward(loss)` API does not specify an optimizer, and
+    because `amp.scale_loss()` requires us to take actions on the correct
+    optimizer, we do not allow multiple optimizers; we have to know that the
+    our one optimizer is the correct optimizer to pass to scale_loss().
