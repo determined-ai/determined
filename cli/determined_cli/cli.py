@@ -98,8 +98,6 @@ def preview_search(args: Namespace) -> None:
             return "train {} epoch(s)".format(kind[:-1])
         elif kind == "V":
             return "validation"
-        elif kind == "C":
-            return "checkpoint"
         else:
             raise ValueError("unexpected kind: {}".format(kind))
 

@@ -9,25 +9,44 @@ import (
 )
 
 // ExperimentSnapshot returns the snapshot for the specified experiment.
-func (db *PgDB) ExperimentSnapshot(experimentID int) ([]byte, error) {
-	return db.rawQuery(`
+func (db *PgDB) ExperimentSnapshot(experimentID int) ([]byte, int, error) {
+	ret := struct {
+		Version int    `db:"version"`
+		Content []byte `db:"content"`
+	}{}
+	if err := db.query(`
 SELECT content
 FROM experiment_snapshots
 WHERE experiment_id = $1
 ORDER BY id DESC
-LIMIT 1`, experimentID)
+LIMIT 1`, &ret, experimentID); errors.Cause(err) == ErrNotFound {
+		return nil, 0, nil
+	} else if err != nil {
+		return nil, 0, errors.Wrapf(err, "error querying for experiment snapshot (%d)", experimentID)
+	}
+	return ret.Content, ret.Version, nil
 }
 
 // TrialSnapshot returns the snapshot for the specified trial.
 func (db *PgDB) TrialSnapshot(
 	experimentID int, requestID model.RequestID,
-) ([]byte, error) {
-	return db.rawQuery(`
+) ([]byte, int, error) {
+	ret := struct {
+		Version int    `db:"version"`
+		Content []byte `db:"content"`
+	}{}
+	if err := db.query(`
 SELECT content
 FROM trial_snapshots
 WHERE experiment_id = $1 AND request_id = $2
 ORDER BY id DESC
-LIMIT 1`, experimentID, requestID)
+LIMIT 1`, &ret, experimentID, requestID); errors.Cause(err) == ErrNotFound {
+		return nil, 0, nil
+	} else if err != nil {
+		return nil, 0, errors.Wrapf(
+			err, "error querying for trial snapshot (%d, %d)", experimentID, requestID)
+	}
+	return ret.Content, ret.Version, nil
 }
 
 // SaveSnapshot saves a searcher and trial snapshot together.

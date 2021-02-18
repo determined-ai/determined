@@ -28,10 +28,10 @@ type (
 
 // All the operation types that support serialization.
 const (
-	CreateOperation OperationType = iota
-	TrainOperation
-	ValidateOperation
-	CloseOperation
+	CreateOperation   OperationType = 0
+	TrainOperation    OperationType = 1
+	ValidateOperation OperationType = 2
+	CloseOperation    OperationType = 4
 )
 
 // MarshalJSON implements json.Marshaler.
@@ -135,9 +135,9 @@ func NewCreate(
 	}
 }
 
-// NewCreateFromParent initializes a new Create operation with a new request ID and the given
+// NewCreateFromCheckpoint initializes a new Create operation with a new request ID and the given
 // hyperparameters and checkpoint to initially load from.
-func NewCreateFromParent(
+func NewCreateFromCheckpoint(
 	rand *nprand.State, s hparamSample, parentID model.RequestID,
 	sequencerType model.WorkloadSequencerType,
 ) Create {

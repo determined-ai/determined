@@ -146,7 +146,8 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 			origParams := s.TrialParams[requestID]
 			newParams := s.exploreParams(ctx, origParams)
 
-			create := NewCreateFromParent(ctx.rand, newParams, requestID, model.TrialWorkloadSequencerType)
+			create := NewCreateFromCheckpoint(
+				ctx.rand, newParams, requestID, model.TrialWorkloadSequencerType)
 			s.TrialParams[create.RequestID] = newParams
 
 			ops = append(ops,
