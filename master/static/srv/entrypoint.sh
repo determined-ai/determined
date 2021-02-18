@@ -41,7 +41,7 @@ fi
 
 # If HOME is not explicitly set for a container, libcontainer (Docker) will
 # try to guess it by reading /etc/password directly, which will not work with
-# our linss_determined plugin (or any user-defined NSS plugin in a container).
+# our libnss_determined plugin (or any user-defined NSS plugin in a container).
 # The default is "/", but HOME must be a writable location for distributed
 # training, so we try to query the user system for a valid HOME, or default to
 # the working directory otherwise.
