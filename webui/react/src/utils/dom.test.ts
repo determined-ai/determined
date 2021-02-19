@@ -1,4 +1,4 @@
-import { ansiToHtml, toRem } from './dom';
+import { ansiToHtml, toPixel, toRem } from './dom';
 
 describe('ansiToHtml', () => {
   it('should convert ANSI colors', () => {
@@ -29,5 +29,28 @@ describe('toRem', () => {
     expect(toRem('0.5rem')).toBe('0.5rem');
     expect(toRem('10 rem')).toBe('10rem');
     expect(toRem('123.45 rem')).toBe('123.45rem');
+  });
+});
+
+describe('toPixel', () => {
+  it('should convert number to pixel value', () => {
+    expect(toPixel(0)).toBe('0px');
+    expect(toPixel(5)).toBe('50px');
+    expect(toPixel(5.5)).toBe('55px');
+    expect(toPixel(123)).toBe('1230px');
+  });
+
+  it('should convert rem value to pixel value', () => {
+    expect(toPixel('.5rem')).toBe('5px');
+    expect(toPixel('0.5rem')).toBe('5px');
+    expect(toPixel('5rem')).toBe('50px');
+    expect(toPixel('12 rem')).toBe('120px');
+    expect(toPixel('50.7rem')).toBe('507px');
+  });
+
+  it('should leave px values alone', () => {
+    expect(toPixel('0.5px')).toBe('0.5px');
+    expect(toPixel('10 px')).toBe('10px');
+    expect(toPixel('123.45 px')).toBe('123.45px');
   });
 });

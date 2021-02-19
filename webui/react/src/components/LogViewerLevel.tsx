@@ -11,7 +11,7 @@ import css from './LogViewer.module.scss';
 export const ICON_WIDTH = 26;
 
 interface Props {
-  logLevel: LogLevel;
+  logLevel: LogLevel|undefined;
 }
 
 const LogViewerLevel: React.FC<Props> = ({ logLevel }) => {

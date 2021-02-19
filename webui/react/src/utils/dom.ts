@@ -27,7 +27,7 @@ export const toPixel = (rem?: number | string): string => {
   if (rem == null) return 'auto';
   if (typeof rem === 'number') return `${rem * 10}px`;
 
-  const matches = rem.match(/(\d+\.?\d*)\s*(px|rem)/i);
+  const matches = rem.match(/(\d+\.?\d*|\.\d+)\s*(px|rem)/i);
   if (matches?.length === 3) {
     const type = matches[2];
     const value = parseFloat(matches[1]);
