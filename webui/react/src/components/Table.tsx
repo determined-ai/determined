@@ -90,8 +90,8 @@ export const userRenderer: Renderer<{ username: string }> = (_, record) => (
 
 /* Command Task Table Column Renderers */
 
-export const taskIdRenderer: TaskRenderer = (id, record) => (
-  <Tooltip placement="topLeft" title={id}>
+export const taskIdRenderer: TaskRenderer = (_, record) => (
+  <Tooltip placement="topLeft" title={record.id}>
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
@@ -100,7 +100,7 @@ export const taskIdRenderer: TaskRenderer = (id, record) => (
             {ch}
           </Link>
         )}>
-        <Badge type={BadgeType.Id}>{id.split('-')[0]}</Badge>
+        <Badge type={BadgeType.Id}>{record.id.split('-')[0]}</Badge>
       </ConditionalWrapper>
     </div>
   </Tooltip>

@@ -29,7 +29,7 @@ import { ApiSorter } from 'services/types';
 import { ShirtSize } from 'themes';
 import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
 import { alphanumericSorter, numericSorter } from 'utils/data';
-import { canBeOpened, filterTasks } from 'utils/task';
+import { filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
 import css from './TaskList.module.scss';
@@ -303,7 +303,7 @@ const TaskList: React.FC = () => {
             spinning: !hasLoaded,
           }}
           pagination={getPaginationConfig(filteredTasks.length, filters.limit)}
-          rowClassName={_ => defaultRowClassName({ clickable: false })}
+          rowClassName={() => defaultRowClassName({ clickable: false })}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}

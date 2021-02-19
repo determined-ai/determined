@@ -13,7 +13,7 @@ import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
   defaultRowClassName, ExperimentRenderer,
-  getFullPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+  getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
@@ -25,7 +25,6 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import { handlePath } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, getExperimentList,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,

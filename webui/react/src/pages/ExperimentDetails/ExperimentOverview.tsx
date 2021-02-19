@@ -5,18 +5,20 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
+import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import { Indicator } from 'components/Spinner';
 import {
   defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
+import { Renderer } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
-import { handlePath, paths } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { getExpTrials } from 'services/api';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { ApiSorter } from 'services/types';
@@ -63,6 +65,12 @@ const ExperimentOverview: React.FC<Props> = ({
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
 
+    const idRenderer: Renderer<TrialItem> = (_, record) => (
+      <Link path={paths.trialDetails(record.id, experiment.id)}>
+        <span>{record.id}</span>
+      </Link>
+    );
+
     const validationRenderer = (key: string) => {
       return function renderer (_: string, record: TrialItem): React.ReactNode {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -92,6 +100,8 @@ const ExperimentOverview: React.FC<Props> = ({
       column.sortOrder = null;
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.ID) {
+        column.render = idRenderer;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC) {
         column.render = validationRenderer('bestValidationMetric');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC) {
@@ -125,12 +135,6 @@ const ExperimentOverview: React.FC<Props> = ({
       offset: (tablePagination.current - 1) * tablePagination.pageSize,
     }));
   }, [ columns, setSorter, storage ]);
-
-  const handleTableRow = useCallback((record: TrialItem) => {
-    const handleClick = (event: React.MouseEvent) =>
-      handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
-    return { onAuxClick: handleClick, onClick: handleClick };
-  }, [ experiment.id ]);
 
   const handleCheckpointShow = (
     event: React.MouseEvent,
@@ -200,12 +204,11 @@ const ExperimentOverview: React.FC<Props> = ({
                 spinning: !trials,
               }}
               pagination={getFullPaginationConfig(pagination, total)}
-              rowClassName={defaultRowClassName({ clickable: true })}
+              rowClassName={defaultRowClassName({ clickable: false })}
               rowKey="id"
               showSorterTooltip={false}
               size="small"
-              onChange={handleTableChange}
-              onRow={handleTableRow} />
+              onChange={handleTableChange} />
           </Section>
         </Col>
       </Row>

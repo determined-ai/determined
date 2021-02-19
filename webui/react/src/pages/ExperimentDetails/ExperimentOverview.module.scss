@@ -1,4 +1,11 @@
 .base {
+  tr a[class*='Link_'] {
+    color: inherit;
+
+    &:hover {
+      color: inherit;
+    }
+  }
   .topRow {
     height: 40rem;
   }
