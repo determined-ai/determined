@@ -10,6 +10,7 @@ import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
+import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useScroll from 'hooks/useScroll';
 import { LogViewerTimestampFilterComponentProp } from 'pages/TrialLogs/TrialLogFilters';
 import { FetchArgs } from 'services/api-ts-sdk';
@@ -18,11 +19,9 @@ import { LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
 import { ansiToHtml, copyToClipboard, toPixel, toRem } from 'utils/dom';
 
-import useGetCharMeasureInContainer from '../hooks/useGetCharMeasureInContainer';
-
 import css from './LogViewer.module.scss';
+import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
 import LogViewerLevel, { ICON_WIDTH } from './LogViewerLevel';
-import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewerStore';
 import Page, { Props as PageProps } from './Page';
 
 export interface LogViewerTimestampFilter {

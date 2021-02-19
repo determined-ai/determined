@@ -1,4 +1,4 @@
-import { TrialLog } from '../types';
+import { TrialLog } from 'types';
 
 export interface ViewerLog extends TrialLog {
   formattedTime: string;
