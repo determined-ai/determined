@@ -50,7 +50,6 @@ checkpoint_policy: none
 	schedulingUnit := model.DefaultExperimentConfig(nil).SchedulingUnit
 	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500))
 	validate := searcher.NewValidate(create.RequestID)
-	checkpoint := searcher.NewCheckpoint(create.RequestID)
 
 	trainWorkload1 := workload.Workload{
 		Kind:                  workload.RunStep,
@@ -151,7 +150,6 @@ checkpoint_policy: none
 	s.OperationRequested(train)
 	assert.Assert(t, !s.UpToDate())
 	s.OperationRequested(validate)
-	s.OperationRequested(checkpoint)
 
 	// Check that workload() returns an error before setTrialID is set
 	_, err := s.Workload()
@@ -272,11 +270,6 @@ checkpoint_policy: none
 	assert.NilError(t, err)
 	assert.Equal(t, op, validate, "expected searcher op to be returned")
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
-
-	// Complete cached CHECKPOINT_MODEL.
-	op, _, err = s.CompleteCachedCheckpoints()
-	assert.NilError(t, err)
-	assert.Equal(t, op, checkpoint, "expected searcher op to be returned")
 
 	// Check that we are up to date now.
 	assert.Assert(t, s.UpToDate())

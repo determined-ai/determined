@@ -133,9 +133,6 @@ func (s *Searcher) OperationCompleted(
 	switch tOp := op.(type) {
 	case Train:
 		operations, err = s.method.trainCompleted(s.context(), requestID, tOp)
-	case Checkpoint:
-		operations, err = s.method.checkpointCompleted(
-			s.context(), requestID, tOp, *metrics.(*workload.CheckpointMetrics))
 	case Validate:
 		operations, err = s.method.validationCompleted(
 			s.context(), requestID, tOp, *metrics.(*workload.ValidationMetrics))

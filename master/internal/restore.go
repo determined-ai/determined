@@ -1,6 +1,9 @@
 package internal
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -12,8 +15,8 @@ import (
 )
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
-// shimmed.
-const experimentSnapshotVersion = 0
+// shimmed. Experiment and trial snapshots share a version currently.
+const experimentSnapshotVersion = 1
 
 // Restore works by restoring from distributed consistent snapshots taken through the course
 // of an experiment. Snapshots within the system flow from the bottom up, starting with the
@@ -119,6 +122,7 @@ func (e *experiment) restoreTrial(
 	if trialID != nil {
 		t.processID(*trialID)
 	}
+	t.processOperations(ops)
 	if snapshot != nil {
 		if err := t.Restore(snapshot); err != nil {
 			l.WithError(err).Warn("failed to restore trial, restarting fresh")
@@ -130,7 +134,6 @@ func (e *experiment) restoreTrial(
 		}
 	}
 	t.replayCreate = trialID != nil && snapshot == nil
-	t.processOperations(ops)
 	ctx.ActorOf(op.RequestID, t)
 	l.Infof("restored trial to the beginning of step %d", t.sequencer.CurStepID)
 	return false
@@ -138,22 +141,25 @@ func (e *experiment) restoreTrial(
 
 // retrieveExperimentSnapshot retrieves a snapshot in from database if it exists.
 func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte, error) {
-	switch b, err := m.db.ExperimentSnapshot(expModel.ID); {
-	case errors.Cause(err) == db.ErrNotFound:
+	switch snapshot, version, err := m.db.ExperimentSnapshot(expModel.ID); {
+	case snapshot == nil:
 		log.WithField("experiment-id", expModel.ID).Info("no snapshot found")
 		return nil, nil
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve experiment snapshot")
 	default:
-		return b, nil
+		if snapshot, err = shimExperimentSnapshot(snapshot, version); err != nil {
+			return nil, errors.Wrap(err, "failed to shim trial snapshot")
+		}
+		return snapshot, nil
 	}
 }
 
 func (e *experiment) retrieveTrialSnapshot(
 	l *log.Entry, create searcher.Create,
 ) (snapshot []byte, err error) {
-	switch snapshot, err := e.db.TrialSnapshot(e.ID, create.RequestID); {
-	case errors.Cause(err) == db.ErrNotFound:
+	switch snapshot, version, err := e.db.TrialSnapshot(e.ID, create.RequestID); {
+	case snapshot == nil:
 		// This can only happen if the master dies between when the trial saves itself
 		// to the database and the trialCreated message is received and handled. If we're here, the
 		// easiest fix is to just replay the trial created message.
@@ -162,6 +168,9 @@ func (e *experiment) retrieveTrialSnapshot(
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve trial snapshot")
 	default:
+		if snapshot, err = shimTrialSnapshot(snapshot, version); err != nil {
+			return nil, errors.Wrap(err, "failed to shim trial snapshot")
+		}
 		return snapshot, nil
 	}
 }
@@ -179,4 +188,96 @@ func (e *experiment) snapshotAndSave(ctx *actor.Context, ts trialSnapshot) {
 		ctx.Log().WithError(err).Errorf("failed to persist experiment snapshot, fault tolerance is lost")
 		return
 	}
+}
+
+// experimentSnapshotShims maps a version to the shim that bumps that version.
+var experimentSnapshotShims = map[int]snapshotShimFunc{
+	0: shimExperimentSnapshotV0,
+}
+
+// shimExperimentSnapshot shims a trial snapshot to the version required by the master,
+// returning an error in the event the shim fails or the snapshot version is greater
+// than the current version (which could happen in a downgrade).
+func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
+	return shimSnapshot(experimentSnapshotShims, snapshot, version)
+}
+
+// trialSnapshotShims maps a version to the shim that bumps that version.
+var trialSnapshotShims = map[int]snapshotShimFunc{
+	0: identidyShim,
+}
+
+// shimTrialSnapshot shims a trial snapshot to the version required by the master,
+// returning an error in the same cases as shimExperimentSnapshot.
+func shimTrialSnapshot(snapshot []byte, version int) ([]byte, error) {
+	return shimSnapshot(trialSnapshotShims, snapshot, version)
+}
+
+func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
+	if version > experimentSnapshotVersion {
+		return nil, fmt.Errorf("cannot shim from %d to %d", experimentSnapshotVersion, version)
+	}
+	var err error
+	for version < experimentSnapshotVersion {
+		shim, ok := shims[version]
+		if !ok {
+			return nil, fmt.Errorf("missing shim from %d to %d", experimentSnapshotVersion, version)
+		}
+		if snapshot, err = shim(snapshot); err != nil {
+			return nil, errors.Wrapf(err, "failed to shim snapshot")
+		}
+		version++
+	}
+	return snapshot, nil
+}
+
+// snapshotShimFunc is a shimming function.
+type snapshotShimFunc func([]byte) ([]byte, error)
+
+// identidyShim is a shim that does nothing.
+func identidyShim(snapshot []byte) ([]byte, error) {
+	return snapshot, nil
+}
+
+// Version 0 => 1 shims
+
+// shimExperimentSnapshotV0 shims a v0 experiment snapshot to a v1 experiment snapshot.
+// From v0 to v1, the searcher checkpoint operations were removed. Because of this, all checkpoint
+// operations are removed from the operations requested of trials and any PBT operations
+// which are awaiting a particular checkpoint to finish added to the queue of trial operations,
+// since by other invariants in the system we can guarantee this checkpoint exists.
+func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
+	var experimentSnapshotV0 map[string]interface{}
+	if err := json.Unmarshal(snapshot, &experimentSnapshotV0); err != nil {
+		return nil, err
+	}
+	var waitingCheckpointOps []map[string]interface{}
+	if searcherState, ok := experimentSnapshotV0["searcher_state"]; ok {
+		if searchMethodState, ok := searcherState.(map[string]interface{})["search_method_state"]; ok {
+			wc := searchMethodState.(map[string]interface{})["waiting_checkpoints"].(map[string]interface{})
+			for _, ops := range wc {
+				for _, op := range ops.([]interface{}) {
+					waitingCheckpointOps = append(waitingCheckpointOps, op.(map[string]interface{}))
+				}
+			}
+			delete(searchMethodState.(map[string]interface{}), "waiting_checkpoints")
+		}
+	}
+	var trialOperations []map[string]interface{}
+	if searcherState, ok := experimentSnapshotV0["searcher_state"]; ok {
+		if oldTrialOperations, ok := searcherState.(map[string]interface{})["trial_operations"]; ok {
+			for _, op := range oldTrialOperations.([]interface{}) {
+				// Remove checkpoints, that used to be OperationType = 3.
+				op := op.(map[string]interface{})
+				// Any numeric types parsed from JSON into an interface{} will be a float64.
+				if op["OperationType"].(float64) == 3 {
+					continue
+				}
+				trialOperations = append(trialOperations, op)
+			}
+			searcherState.(map[string]interface{})["trial_operations"] = append(
+				trialOperations, waitingCheckpointOps...)
+		}
+	}
+	return json.Marshal(experimentSnapshotV0)
 }

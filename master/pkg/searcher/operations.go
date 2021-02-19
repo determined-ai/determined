@@ -28,11 +28,10 @@ type (
 
 // All the operation types that support serialization.
 const (
-	CreateOperation OperationType = iota
-	TrainOperation
-	ValidateOperation
-	CheckpointOperation
-	CloseOperation
+	CreateOperation   OperationType = 0
+	TrainOperation    OperationType = 1
+	ValidateOperation OperationType = 2
+	CloseOperation    OperationType = 4
 )
 
 // MarshalJSON implements json.Marshaler.
@@ -47,8 +46,6 @@ func (l OperationList) MarshalJSON() ([]byte, error) {
 			typedOp.OperationType = TrainOperation
 		case Validate:
 			typedOp.OperationType = ValidateOperation
-		case Checkpoint:
-			typedOp.OperationType = CheckpointOperation
 		case Close:
 			typedOp.OperationType = CloseOperation
 		default:
@@ -86,12 +83,6 @@ func (l *OperationList) UnmarshalJSON(b []byte) error {
 			ops = append(ops, op)
 		case ValidateOperation:
 			var op Validate
-			if err := json.Unmarshal(b, &op); err != nil {
-				return err
-			}
-			ops = append(ops, op)
-		case CheckpointOperation:
-			var op Checkpoint
 			if err := json.Unmarshal(b, &op); err != nil {
 				return err
 			}
@@ -147,11 +138,11 @@ func NewCreate(
 // NewCreateFromCheckpoint initializes a new Create operation with a new request ID and the given
 // hyperparameters and checkpoint to initially load from.
 func NewCreateFromCheckpoint(
-	rand *nprand.State, s hparamSample, checkpoint Checkpoint,
+	rand *nprand.State, s hparamSample, parentID model.RequestID,
 	sequencerType model.WorkloadSequencerType,
 ) Create {
 	create := NewCreate(rand, s, sequencerType)
-	create.Checkpoint = &checkpoint
+	create.Checkpoint = &Checkpoint{parentID}
 	return create
 }
 
@@ -160,12 +151,22 @@ func (create Create) String() string {
 		return fmt.Sprintf("{Create %s, seed %d}", create.RequestID, create.TrialSeed)
 	}
 	return fmt.Sprintf(
-		"{Create %s, seed %d, checkpoint %v}", create.RequestID, create.TrialSeed, create.Checkpoint,
+		"{Create %s, seed %d, parent %v}", create.RequestID, create.TrialSeed,
+		create.Checkpoint.RequestID,
 	)
 }
 
 // GetRequestID implemented Requested.
 func (create Create) GetRequestID() model.RequestID { return create.RequestID }
+
+// Checkpoint indicates which trial the trial created by a Create should inherit from.
+type Checkpoint struct {
+	RequestID model.RequestID
+}
+
+func (c Checkpoint) String() string {
+	return fmt.Sprintf("{Checkpoint %s}", c.RequestID)
+}
 
 // Train is an operation emitted by search methods to signal the trial train for a specified length.
 type Train struct {
@@ -207,26 +208,6 @@ func (v Validate) Runnable() {}
 
 // GetRequestID implemented Requested.
 func (v Validate) GetRequestID() model.RequestID { return v.RequestID }
-
-// Checkpoint is an operation emitted by search methods to signal the trial to checkpoint.
-type Checkpoint struct {
-	RequestID model.RequestID
-}
-
-// NewCheckpoint returns a new checkpoint operation.
-func NewCheckpoint(requestID model.RequestID) Checkpoint {
-	return Checkpoint{requestID}
-}
-
-func (c Checkpoint) String() string {
-	return fmt.Sprintf("{Checkpoint %s}", c.RequestID)
-}
-
-// Runnable implements Runnable.
-func (c Checkpoint) Runnable() {}
-
-// GetRequestID implemented Requested.
-func (c Checkpoint) GetRequestID() model.RequestID { return c.RequestID }
 
 // Close the trial with the given trial id.
 type Close struct {

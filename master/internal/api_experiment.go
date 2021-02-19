@@ -236,10 +236,6 @@ func (a *apiServer) PreviewHPSearch(
 			return experimentv1.RunnableOperation{
 				Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
 			}, nil
-		case searcher.Checkpoint:
-			return experimentv1.RunnableOperation{
-				Type: experimentv1.RunnableType_RUNNABLE_TYPE_CHECKPOINT,
-			}, nil
 		default:
 			return experimentv1.RunnableOperation{},
 				fmt.Errorf("unrecognized searcher.Runnable %s", op)

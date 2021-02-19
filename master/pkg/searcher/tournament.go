@@ -90,15 +90,6 @@ func (s *tournamentSearch) trainCompleted(
 	return s.markCreates(subSearchID, ops), err
 }
 
-func (s *tournamentSearch) checkpointCompleted(
-	ctx context, requestID model.RequestID, checkpoint Checkpoint, metrics workload.CheckpointMetrics,
-) ([]Operation, error) {
-	subSearchID := s.TrialTable[requestID]
-	subSearch := s.subSearches[subSearchID]
-	ops, err := subSearch.checkpointCompleted(ctx, requestID, checkpoint, metrics)
-	return s.markCreates(subSearchID, ops), err
-}
-
 func (s *tournamentSearch) validationCompleted(
 	ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
