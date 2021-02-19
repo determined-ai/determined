@@ -32,19 +32,19 @@ const commandToEventUrl = (command: Command | CommandTask): string => {
   return path;
 };
 
-const waitPageUrl = (command: Command | CommandTask): string => {
+export const waitPageUrl = (command: Command | CommandTask): string => {
   const url = commandToEventUrl(command);
   if (!url || !command.serviceAddress)
     throw new Error('command cannot be opened');
   const kind = isCommandTask(command) ? command.type : command.kind;
 
-  const waitPath = `${process.env.PUBLIC_URL}/wait/${kind.toLowerCase()}/${command.id}`;
+  const waitPath = `/wait/${kind.toLowerCase()}/${command.id}`;
   const waitParams = `?eventUrl=${url}&serviceAddr=${command.serviceAddress}`;
   return waitPath + waitParams;
 };
 
 export const openCommand = (command: Command | CommandTask): void => {
-  openBlank(waitPageUrl(command));
+  openBlank(process.env.PUBLIC_URL + waitPageUrl(command));
 };
 
 export interface WaitStatus {

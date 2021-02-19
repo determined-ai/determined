@@ -10,7 +10,7 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { Indicator } from 'components/Spinner';
 import {
-  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+  defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE, taskNameRenderer,
 } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
@@ -31,7 +31,6 @@ import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
 import { alphanumericSorter, numericSorter } from 'utils/data';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
-import { openCommand } from 'wait';
 
 import css from './TaskList.module.scss';
 import { columns as defaultColumns } from './TaskList.table';
@@ -152,8 +151,12 @@ const TaskList: React.FC = () => {
   const handleActionComplete = useCallback(() => fetchTasks(), [ fetchTasks ]);
 
   const columns = useMemo(() => {
-    const nameRenderer: TaskRenderer = (_, record) => {
-      if (record.type !== CommandType.Tensorboard || !record.misc) return record.name;
+
+    const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
+      if (record.type !== CommandType.Tensorboard || !record.misc) {
+        return taskNameRenderer(_, record, index);
+
+      }
 
       const info = {
         path: '',
@@ -181,7 +184,7 @@ const TaskList: React.FC = () => {
       });
 
       return <div className={css.sourceName}>
-        <span>{record.name}</span>
+        {taskNameRenderer(_, record, index)}
         <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
           Show {info.sources.length} Source{info.plural}
         </button>
@@ -195,7 +198,7 @@ const TaskList: React.FC = () => {
     return [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      if (column.key === 'name') column.render = nameRenderer;
+      if (column.key === 'name') column.render = nameNSourceRenderer;
       if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
@@ -265,13 +268,6 @@ const TaskList: React.FC = () => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  const handleTableRow = useCallback((record: CommandTask) => ({
-    onClick: (event: React.MouseEvent) => {
-      if (isAlternativeAction(event) || !canBeOpened(record)) return;
-      openCommand(record);
-    },
-  }), []);
-
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
@@ -312,8 +308,7 @@ const TaskList: React.FC = () => {
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}
           size="small"
-          onChange={handleTableChange}
-          onRow={handleTableRow} />
+          onChange={handleTableChange} />
       </div>
       <Modal
         footer={null}

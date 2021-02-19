@@ -12,9 +12,13 @@ import {
   CommandState, CommandTask, CommandType, ExperimentItem,
   Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
+import { ConditionalWrapper } from 'utils/react';
+import { canBeOpened } from 'utils/task';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { commandTypeToLabel } from 'utils/types';
+import { waitPageUrl } from 'wait';
 
+import Link from './Link';
 import css from './Table.module.scss';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem;
@@ -86,10 +90,18 @@ export const userRenderer: Renderer<{ username: string }> = (_, record) => (
 
 /* Command Task Table Column Renderers */
 
-export const taskIdRenderer: TaskRenderer = id => (
+export const taskIdRenderer: TaskRenderer = (id, record) => (
   <Tooltip placement="topLeft" title={id}>
     <div className={css.centerVertically}>
-      <Badge type={BadgeType.Id}>{id.split('-')[0]}</Badge>
+      <ConditionalWrapper
+        condition={canBeOpened(record)}
+        wrapper={ch => (
+          <Link path={waitPageUrl(record)}>
+            {ch}
+          </Link>
+        )}>
+        <Badge type={BadgeType.Id}>{id.split('-')[0]}</Badge>
+      </ConditionalWrapper>
     </div>
   </Tooltip>
 );
@@ -100,6 +112,20 @@ export const taskTypeRenderer: TaskRenderer = (_, record) => (
       <Icon name={record.type.toLowerCase()} />
     </div>
   </Tooltip>
+);
+
+export const taskNameRenderer: TaskRenderer = (id, record) => (
+  <div>
+    <ConditionalWrapper
+      condition={canBeOpened(record)}
+      wrapper={ch => (
+        <Link path={waitPageUrl(record)}>
+          {ch}
+        </Link>
+      )}>
+      <span>{record.name}</span>
+    </ConditionalWrapper>
+  </div>
 );
 
 /* Experiment Table Column Renderers */

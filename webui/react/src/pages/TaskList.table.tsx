@@ -24,6 +24,7 @@ export const columns: ColumnType<CommandTask>[] = [
   },
   {
     key: 'name',
+    // render: added in TaskList.tsx
     sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.name, b.name),
     title: 'Name',
   },
