@@ -1,0 +1,10 @@
+.idLayout {
+  align-items: center;
+  display: flex;
+}
+.colorLegend {
+  border-radius: var(--theme-sizes-border-radius);
+  height: 2rem;
+  margin-right: var(--theme-sizes-layout-medium);
+  width: 2rem;
+}

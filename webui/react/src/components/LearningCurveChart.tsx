@@ -3,9 +3,10 @@ import { throttle } from 'throttle-debounce';
 import uPlot, { Cursor, Options } from 'uplot';
 
 import useResize from 'hooks/useResize';
-import { MetricName, MetricType } from 'types';
+import { MetricName } from 'types';
 import { distance } from 'utils/chart';
 import { glasbeyColor } from 'utils/color';
+import { metricNameToStr } from 'utils/string';
 
 import css from './LearningCurveChart.module.scss';
 
@@ -39,7 +40,6 @@ const SERIES_UNFOCUSED_ALPHA = 0.2;
 const FOCUS_MIN_DISTANCE = 30;
 const MOUSE_CLICK_THRESHOLD = 5;
 const SCROLL_THROTTLE_TIME = 500;
-const MAX_METRIC_LABEL_SIZE = 30;
 const UPLOT_OPTIONS = {
   axes: [
     {
@@ -312,10 +312,7 @@ const LearningCurveChart: React.FC<Props> = ({
     }) as Options;
 
     if (options.axes && options.axes?.length >= 2) {
-      const metricTypeLabel = selectedMetric.type === MetricType.Training ? 'T' : 'V';
-      const metricNameLabel = selectedMetric.name.length > MAX_METRIC_LABEL_SIZE ?
-        selectedMetric.name.substr(0, MAX_METRIC_LABEL_SIZE) + '...' : selectedMetric.name;
-      options.axes[1].label = `[${metricTypeLabel}] ${metricNameLabel}`;
+      options.axes[1].label = metricNameToStr(selectedMetric);
       options.axes[1].size = calculateAxesLabelSize;
     }
 

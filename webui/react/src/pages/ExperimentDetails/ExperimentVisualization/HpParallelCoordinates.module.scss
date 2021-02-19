@@ -8,6 +8,12 @@ $tooltip-offset: 0.5rem;
     min-height: 40rem;
     position: relative;
   }
+  .chart {
+    height: 50rem;
+  }
+  .table {
+    padding: var(--theme-sizes-layout-big);
+  }
   .tooltip {
     display: none;
     margin-left: $tooltip-offset;

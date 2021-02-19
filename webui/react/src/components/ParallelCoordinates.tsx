@@ -3,9 +3,12 @@ import { throttle } from 'throttle-debounce';
 
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData } from 'Plotly';
-import { ExperimentHyperParamType, Point, Primitive, Range } from 'types';
-import { clone, isNumber } from 'utils/data';
-import { generateAlphaNumeric } from 'utils/string';
+import { ExperimentHyperParamType, Primitive, Range } from 'types';
+import { ColorScale } from 'utils/color';
+import { clone, isBoolean, isNumber } from 'utils/data';
+import { generateAlphaNumeric, truncate } from 'utils/string';
+
+import css from './ParallelCoordinates.module.scss';
 
 export type NumRange = [ number, number ];
 
@@ -18,27 +21,12 @@ export enum DimensionType {
  * `colors` - list of numbers between 0.0 and 1.0
  */
 interface Props {
-  colors: number[];
+  colorScale: ColorScale[];
+  colorScaleKey?: string;
   data: Record<string, Primitive[]>;
   dimensions: Dimension[];
   id?: string;
-  onHover?: (lineIndex: number, point: Point) => void;
-  onUnhover?: () => void;
-  smallerIsBetter?: boolean;
-}
-
-interface ChartState {
-  constraintRanges?: Range[];
-  dimensionOrder?: string[];
-}
-
-interface HoverEvent {
-  clientX: number;
-  clientY: number;
-  curveNumber: number;
-  dataIndex: number;
-  x: number;
-  y: number;
+  onFilter?: (constraints: Record<string, Range>) => void;
 }
 
 export interface Dimension {
@@ -56,63 +44,47 @@ export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> =
   [ExperimentHyperParamType.Log]: DimensionType.Scalar,
 };
 
+const MAX_LABEL_LENGTH = 20;
 const CONSTRAINT_REMOVE_THRESHOLD = 1e-9;
-const COLOR_SCALE = [
-  [ 0.0, 'rgba(238, 0, 0, 1.0)' ],
-  [ 0.5, 'rgba(238, 238, 0, 1.0)' ],
-  [ 1.0, 'rgba(0, 238, 0, 1.0)' ],
-];
-const COLOR_SCALE_INVERSE = [
-  [ 0.0, 'rgba(0, 238, 0, 1.0)' ],
-  [ 0.5, 'rgba(238, 238, 0, 1.0)' ],
-  [ 1.0, 'rgba(238, 0, 0, 1.0)' ],
-];
 
-const plotlyLayout: Partial<Layout> = { paper_bgcolor: 'transparent' };
+const plotlyLayout: Partial<Layout> = {
+  height: 450,
+  margin: { b: 32, t: 120 },
+  paper_bgcolor: 'transparent',
+};
 const plotlyConfig: Partial<Plotly.Config> = {
   displayModeBar: false,
   responsive: true,
 };
 
 const ParallelCoordinates: React.FC<Props> = ({
-  colors,
+  colorScale,
+  colorScaleKey,
   data,
   dimensions,
-  onHover,
-  onUnhover,
-  smallerIsBetter,
+  onFilter,
   ...props
 }: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
-  const [ chartState, setChartState ] = useState<ChartState>({});
+  const [ constraints, setConstraints ] = useState<Record<string, Range>>({});
 
-  const sortedDimensions: Dimension[] = useMemo(() => {
-    const dimensionOrder = chartState.dimensionOrder;
-    if (!dimensionOrder) return dimensions;
-
-    const unorderedDimensionKeys: string[] = [];
-    dimensions.forEach(dimension => {
-      if (!dimensionOrder.includes(dimension.label)) unorderedDimensionKeys.push(dimension.label);
-    });
-
-    const dimensionMap = dimensions.reduce((acc, dimension) => {
-      acc[dimension.label] = dimension;
-      return acc;
-    }, {} as Record<string, Dimension>);
-
-    return [ ...dimensionOrder, ...unorderedDimensionKeys ].map(key => dimensionMap[key]);
-  }, [ chartState, dimensions ]);
+  const colorValues = useMemo(() => {
+    if (!colorScaleKey || !Array.isArray(data[colorScaleKey])) return undefined;
+    return data[colorScaleKey]
+      .map(value => isBoolean(value) ? value.toString() : value) as (number | string)[];
+  }, [ colorScaleKey, data ]);
 
   const chartData: Partial<PlotData> = useMemo(() => {
-    const chartDimensions = sortedDimensions
-      .map((dimension, index) => {
+    const chartDimensions = dimensions
+      .map(dimension => {
         if (!dimension) return;
 
         const key = dimension.label;
+        const label = truncate(key, MAX_LABEL_LENGTH);
         const hpDimension: Record<string, unknown> = {
-          label: key,
+          label,
           range: dimension.range,
           values: data[key],
         };
@@ -137,8 +109,8 @@ const ParallelCoordinates: React.FC<Props> = ({
           hpDimension.values = data[key].map(value => map[value.toString()]);
         }
 
-        if (chartState.constraintRanges && chartState.constraintRanges[index] != null) {
-          hpDimension.constraintrange = clone(chartState?.constraintRanges[index]);
+        if (constraints[dimension.label] != null) {
+          hpDimension.constraintrange = clone(constraints[dimension.label]);
         }
 
         return hpDimension;
@@ -147,14 +119,24 @@ const ParallelCoordinates: React.FC<Props> = ({
 
     return {
       dimensions: chartDimensions,
+      labelangle: -45,
       line: {
-        color: colors,
-        colorbar: {},
-        colorscale: smallerIsBetter ? COLOR_SCALE_INVERSE : COLOR_SCALE,
+        cmax: colorScale.last().scale,
+        cmin: colorScale.first().scale,
+        color: colorValues,
+        colorbar: { title: colorScaleKey, titleside: 'right' },
+        colorscale: colorScale.map((cs, index) => ([ index, cs.color ])),
       },
       type: 'parcoords',
     };
-  }, [ chartState, colors, data, smallerIsBetter, sortedDimensions ]);
+  }, [
+    colorScale,
+    colorScaleKey,
+    colorValues,
+    constraints,
+    data,
+    dimensions,
+  ]);
 
   useEffect(() => {
     const ref = chartRef.current;
@@ -174,58 +156,36 @@ const ParallelCoordinates: React.FC<Props> = ({
       const keys = Object.keys(data[0]);
       if (!Array.isArray(keys) || keys.length === 0) return;
 
-      // Check for user applied dimension reorder
-      if (keys[0] === 'dimensions') {
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        const dimensions = data[0][keys[0]][0] || [];
-        const dimensionKeys = dimensions.map((dimension: any) => dimension.label);
-        const constraints = dimensions.map((dimension: any) => dimension.constraintrange);
-        /* eslint-enable @typescript-eslint/no-explicit-any */
-
-        setChartState({ constraintRanges: constraints, dimensionOrder: dimensionKeys });
-      }
-
       // Check for user applied filter on a dimension
       const regex = /^dimensions\[(\d+)\]\.constraintrange/i;
       const matches = keys[0].match(regex);
       if (Array.isArray(matches) && matches.length === 2) {
         const constraint: Range = data[0][keys[0]] ? data[0][keys[0]][0] : undefined;
         const hpIndex = parseInt(matches[1]);
+        const hpKey = dimensions[hpIndex].label;
 
-        setChartState(prev => {
-          const newChartState = clone(prev);
-          newChartState.constraintRanges = newChartState.constraintRanges || [];
-          newChartState.constraintRanges[hpIndex] = undefined;
-          if (constraint) {
+        if (constraint) {
+          setConstraints(prev => {
+            const newConstraints = clone(prev);
+
             if (isNumber(constraint[0]) && isNumber(constraint[1]) &&
-              Math.abs(constraint[0] - constraint[1]) > CONSTRAINT_REMOVE_THRESHOLD) {
-              newChartState.constraintRanges[hpIndex] = constraint;
+                Math.abs(constraint[0] - constraint[1]) > CONSTRAINT_REMOVE_THRESHOLD) {
+              newConstraints[hpKey] = constraint;
             } else if (constraint[0] !== constraint[1]) {
-              newChartState.constraintRanges[hpIndex] = constraint;
+              newConstraints[hpKey] = constraint;
             }
-          }
-          return newChartState;
-        });
+
+            return newConstraints;
+          });
+        }
       }
-    });
-
-    plotly.on('plotly_hover', data => {
-      if (!onHover) return;
-
-      const event = data as unknown as HoverEvent;
-      const lineIndex = event.curveNumber;
-      onHover(lineIndex, { x: event.x, y: event.y });
-    });
-
-    plotly.on('plotly_unhover', () => {
-      if (onUnhover) onUnhover();
     });
 
     return () => {
       if (ref) Plotly.purge(ref);
     };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [ chartData ]);
+  }, [ chartData, onFilter ]);
 
   // Resize the chart when resize events happen.
   useEffect(() => {
@@ -239,7 +199,20 @@ const ParallelCoordinates: React.FC<Props> = ({
     throttleResize();
   }, [ chartData, resize ]);
 
-  return <div id={id} ref={chartRef} />;
+  // Send back user created filters
+  useEffect(() => {
+    if (onFilter) onFilter(constraints);
+  }, [ constraints, onFilter ]);
+
+  return (
+    <div className={css.base}>
+      <div className={css.note}>
+        Click and drag along the axes to create filters.
+        Click on existing filters to remove them.
+      </div>
+      <div id={id} ref={chartRef} />
+    </div>
+  );
 };
 
 export default ParallelCoordinates;

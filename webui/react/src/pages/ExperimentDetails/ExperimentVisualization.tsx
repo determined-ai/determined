@@ -97,7 +97,8 @@ const ExperimentVisualization: React.FC<Props> = ({
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
     setSelectedMetric(metric);
-  }, [ storage, STORAGE_METRIC_KEY ]);
+    setSelectedBatch(batches.first());
+  }, [ batches, storage, STORAGE_METRIC_KEY ]);
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
     setTypeKey(type as VisualizationType);
@@ -170,7 +171,7 @@ const ExperimentVisualization: React.FC<Props> = ({
         const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
         setBatches(newBatches);
         if (selectedBatch === 0 && newBatches.length !== 0) {
-          setSelectedBatch(newBatches[newBatches.length - 1]);
+          setSelectedBatch(newBatches.first());
         }
       },
     ).catch(() => {

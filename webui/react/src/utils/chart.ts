@@ -3,8 +3,10 @@ import { primitiveSorter } from 'utils/data';
 
 /* Ranges */
 
-export const defaultNumericRange = (): Range<number> => {
-  return [ Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY ];
+export const defaultNumericRange = (reverse = false): Range<number> => {
+  const range: Range<number> = [ Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY ];
+  if (reverse) range.reverse();
+  return range;
 };
 
 export const getNumericRange = (values: number[], forceRange = true): Range<number> | undefined => {
@@ -29,8 +31,8 @@ export const updateRange = <T extends Primitive>(
 ): Range<T> => {
   if (!range) return [ value, value ];
   return [
-    primitiveSorter(range[0], value) === -1 ? value : range[0],
-    primitiveSorter(range[1], value) === 1 ? value : range[1],
+    primitiveSorter(range[0], value) === -1 ? range[0] : value,
+    primitiveSorter(range[1], value) === 1 ? range[1] : value,
   ];
 };
 

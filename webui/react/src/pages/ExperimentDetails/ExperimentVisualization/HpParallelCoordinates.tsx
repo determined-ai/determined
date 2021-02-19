@@ -17,16 +17,19 @@ import { handlePath, paths } from 'routes/utils';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
+import themes, { defaultThemeId } from 'themes';
 import {
-  ExperimentBase, ExperimentHyperParamType, MetricName, MetricType, metricTypeParamMap,
-  Point,
-  Primitive, Range, RunState,
+  ExperimentBase, ExperimentHyperParam, ExperimentHyperParamType, MetricName, MetricType,
+  metricTypeParamMap, Primitive, Range, RunState,
 } from 'types';
-import { defaultNumericRange, getNumericRange, normalizeRange, updateRange } from 'utils/chart';
-import { isObject } from 'utils/data';
+import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
+import { ColorScale } from 'utils/color';
+import { clone, isNumber, numericSorter } from 'utils/data';
+import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpParallelCoordinates.module.scss';
+import HpTrialTable, { TrialHParams } from './HpTrialTable';
 
 const { Option } = Select;
 
@@ -41,7 +44,6 @@ interface Props {
 }
 
 interface HpTrialData {
-  colors: number[];
   data: Record<string, Primitive[]>;
   metricRange?: Range<number>;
   metricValues: number[];
@@ -50,7 +52,16 @@ interface HpTrialData {
 
 const STORAGE_PATH = 'experiment-visualization';
 const STORAGE_HP_KEY = 'hps';
-const MAX_HP_COUNT = 20;
+const MAX_HP_COUNT = 10;
+const DEFAULT_SCALE_COLORS: Range<string> = [
+  themes[defaultThemeId].colors.danger.light,
+  themes[defaultThemeId].colors.action.normal,
+];
+const REVERSE_SCALE_COLORS = clone(DEFAULT_SCALE_COLORS).reverse();
+const NEUTRAL_SCALE_COLORS: Range<string> = [
+  'rgb(255, 184, 0)',
+  themes[defaultThemeId].colors.action.normal,
+];
 
 const HpParallelCoordinates: React.FC<Props> = ({
   batches,
@@ -67,12 +78,22 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}/parcoords`);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpTrialData>();
+  const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
-  const fullHpList = Object.keys(experiment.config.hyperparameters) || [];
+  const [ filteredTrialIdMap, setFilteredTrialIdMap ] = useState<Record<number, boolean>>();
+
+  // Filter out constant hyperparameters.
+  const fullHpList = Object.keys(experiment.config.hyperparameters).filter(key => {
+    const hp = experiment.config.hyperparameters[key];
+    return hp.type !== ExperimentHyperParamType.Constant;
+  });
+  const hyperparameters = fullHpList.reduce((acc, key) => {
+    acc[key] = experiment.config.hyperparameters[key];
+    return acc;
+  }, {} as Record<string, ExperimentHyperParam>);
   const limitedHpList = fullHpList.slice(0, MAX_HP_COUNT);
   const defaultHpList = storage.get<string[]>(STORAGE_HP_KEY);
   const [ hpList, setHpList ] = useState<string[]>(defaultHpList || limitedHpList);
-  const [ hoverTrialId, setHoverTrialId ] = useState<number>();
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
@@ -84,43 +105,53 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [ experiment.config.searcher, selectedMetric ]);
 
+  const colorScale: ColorScale[] = useMemo(() => {
+    let colors = NEUTRAL_SCALE_COLORS;
+    if (smallerIsBetter != null) {
+      colors = smallerIsBetter ? REVERSE_SCALE_COLORS : DEFAULT_SCALE_COLORS;
+    }
+    return colors.map((color, index) => {
+      if (chartData?.metricRange) {
+        const scale = chartData?.metricRange ? chartData?.metricRange[index] : index;
+        return { color, scale };
+      }
+      return { color, scale: index };
+    });
+  }, [ chartData?.metricRange, smallerIsBetter ]);
+
   const dimensions = useMemo(() => {
-    const newDimensions = hpList
-      .filter(key => {
-        const hp = experiment.config.hyperparameters[key];
-        return hp.type !== ExperimentHyperParamType.Constant;
-      })
-      .map(key => {
-        const hp = experiment.config.hyperparameters[key];
-        const dimension: Dimension = {
-          categories: hp.vals,
-          label: key,
-          type: dimensionTypeMap[hp.type],
-        };
+    const newDimensions = hpList.map(key => {
+      const hp = hyperparameters[key] || {};
+      const dimension: Dimension = {
+        label: key,
+        type: dimensionTypeMap[hp.type],
+      };
 
-        if (hp.minval != null && hp.maxval != null) {
-          const isLogarithmic = hp.type === ExperimentHyperParamType.Log;
-          dimension.range = isLogarithmic ?
-            [ 10 ** hp.minval, 10 ** hp.maxval ] : [ hp.minval, hp.maxval ];
-        }
+      if (hp.vals) dimension.categories = hp.vals;
+      if (hp.minval != null && hp.maxval != null) {
+        const isLogarithmic = hp.type === ExperimentHyperParamType.Log;
+        dimension.range = isLogarithmic ?
+          [ 10 ** hp.minval, 10 ** hp.maxval ] : [ hp.minval, hp.maxval ];
+      }
 
-        return dimension;
-      });
+      return dimension;
+    });
 
     // Add metric as column to parcoords dimension list
     if (chartData?.metricRange) {
       newDimensions.push({
-        label: selectedMetric.name,
+        label: metricNameToStr(selectedMetric),
         range: chartData.metricRange,
         type: DimensionType.Scalar,
       });
     }
 
     return newDimensions;
-  }, [ chartData, experiment.config.hyperparameters, hpList, selectedMetric.name ]);
+  }, [ chartData, hyperparameters, hpList, selectedMetric ]);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
+    setTrialHps([]);
     setHasLoaded(false);
   }, []);
 
@@ -146,35 +177,39 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
   }, [ limitedHpList, storage ]);
 
-  const handleChartClick = useCallback((event: React.MouseEvent) => {
-    if (!hoverTrialId) return;
-    handlePath(event, { path: paths.trialDetails(hoverTrialId, experiment.id) });
-  }, [ experiment.id, hoverTrialId ]);
+  const handleChartFilter = useCallback((constraints: Record<string, Range>) => {
+    if (!chartData) return;
 
-  const handleChartHover = useCallback((lineIndex: number, point: Point) => {
-    if (!tooltipRef.current || !trialIdRef.current || !metricValueRef.current) return;
+    // Figure out which trials fit within the user provided constraints.
+    const newFilteredTrialIdMap = chartData.trialIds.reduce((acc, trialId) => {
+      acc[trialId] = true;
+      return acc;
+    }, {} as Record<number, boolean>);
 
-    const trialId = chartData?.trialIds[lineIndex];
-    const metricValue = chartData?.metricValues[lineIndex];
-    if (!trialId || !metricValue) return;
+    Object.entries(constraints).forEach(([ key, range ]) => {
+      if (!isNumber(range[0]) || !isNumber(range[1])) return;
+      if (!chartData.data[key]) return;
 
-    setHoverTrialId(trialId);
-    trialIdRef.current.innerText = trialId.toString();
-    metricValueRef.current.innerText = metricValue.toString();
-    tooltipRef.current.style.display = 'block';
-    tooltipRef.current.style.left = `${point.x}px`;
-    tooltipRef.current.style.top = `${point.y}px`;
+      const values = chartData.data[key];
+      values.forEach((value, index) => {
+        if (value >= range[0] && value <= range[1]) return;
+        const trialId = chartData.trialIds[index];
+        newFilteredTrialIdMap[trialId] = false;
+      });
+    });
+
+    setFilteredTrialIdMap(newFilteredTrialIdMap);
   }, [ chartData ]);
 
-  const handleChartUnhover = useCallback(() => {
-    if (!tooltipRef.current) return;
-
-    setHoverTrialId(undefined);
-    tooltipRef.current.style.display = 'none';
-  }, []);
+  const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
+    if (record.id) handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
+  }, [ experiment.id ]);
 
   useEffect(() => {
     const canceler = new AbortController();
+    const trialMetricsMap: Record<number, number> = {};
+    const trialHpTableMap: Record<number, TrialHParams> = {};
+    const trialHpMap: Record<string, Record<number, Primitive>> = {};
 
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(
@@ -186,47 +221,55 @@ const HpParallelCoordinates: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        if (!event || !event.trials || !isObject(event.trials) ||
-          Object.keys(event.trials).length === 0) return;
+        if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
-        const trialIds: number[] = [];
-        const trialMetrics: number[] = [];
-        const trialHpMap: Record<string, Record<number, Primitive>> = {};
-        const trialHpRanges: Record<string, Range> = {};
         const data: Record<string, Primitive[]> = {};
-        let trialMetricRange: Range<number> = defaultNumericRange();
+        let trialMetricRange: Range<number> = defaultNumericRange(true);
 
         event.trials.forEach(trial => {
-          trialIds.push(trial.trialId);
-          trialMetrics.push(trial.metric);
+          const id = trial.trialId;
+          trialMetricsMap[id] = trial.metric;
           trialMetricRange = updateRange<number>(trialMetricRange, trial.metric);
 
           Object.keys(trial.hparams || {}).forEach(hpKey => {
             const hpValue = trial.hparams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
-            trialHpMap[hpKey][trial.trialId] = hpValue;
-            trialHpRanges[hpKey] = updateRange(trialHpRanges[hpKey], hpValue);
+            trialHpMap[hpKey][id] = hpValue;
           });
+
+          trialHpTableMap[id] = {
+            hparams: clone(trial.hparams),
+            id,
+            metric: trial.metric,
+          };
         });
+
+        const trialIds = Object.keys(trialMetricsMap)
+          .map(id => parseInt(id))
+          .sort(numericSorter);
 
         Object.keys(trialHpMap).forEach(hpKey => {
           data[hpKey] = trialIds.map(trialId => trialHpMap[hpKey][trialId]);
         });
 
-        // Add metric of interest
-        data[selectedMetric.name] = trialMetrics;
+        // Add metric of interest.
+        const metricKey = metricNameToStr(selectedMetric);
+        const metricValues = trialIds.map(id => trialMetricsMap[id]);
+        data[metricKey] = metricValues;
 
         // Normalize metrics values for parallel coordinates colors.
-        const colors = normalizeRange(trialMetrics, trialMetricRange);
-        const metricRange = getNumericRange(trialMetrics);
+        const metricRange = getNumericRange(metricValues);
 
-        setChartData(() => ({
-          colors,
+        // Gather hparams for trial table.
+        const newTrialHps = trialIds.map(id => trialHpTableMap[id]);
+        setTrialHps(newTrialHps);
+
+        setChartData({
           data,
           metricRange,
-          metricValues: trialMetrics,
+          metricValues,
           trialIds,
-        }));
+        });
         setHasLoaded(true);
       },
     ).catch(e => setPageError(e));
@@ -277,15 +320,30 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </MultiSelect>
         </ResponsiveFilters>}
         title="HP Parallel Coordinates">
-        <div className={css.container} onClick={handleChartClick}>
+        <div className={css.container}>
           {!hasLoaded || !chartData ? <Spinner /> : (
-            <ParallelCoordinates
-              colors={chartData.colors}
-              data={chartData.data}
-              dimensions={dimensions}
-              smallerIsBetter={smallerIsBetter}
-              onHover={handleChartHover}
-              onUnhover={handleChartUnhover} />
+            <>
+              <div className={css.chart}>
+                <ParallelCoordinates
+                  colorScale={colorScale}
+                  colorScaleKey={metricNameToStr(selectedMetric)}
+                  data={chartData.data}
+                  dimensions={dimensions}
+                  onFilter={handleChartFilter}
+                />
+              </div>
+              <div className={css.table}>
+                <HpTrialTable
+                  colorScale={colorScale}
+                  filteredTrialIdMap={filteredTrialIdMap}
+                  hyperparameters={hyperparameters}
+                  metric={selectedMetric}
+                  trialHps={trialHps}
+                  trialIds={chartData.trialIds}
+                  onClick={handleTableClick}
+                />
+              </div>
+            </>
           )}
           <div className={css.tooltip} ref={tooltipRef}>
             <div className={css.box}>
