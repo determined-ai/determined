@@ -350,6 +350,19 @@ class TFKerasTrialController(det.LoopTrialController):
         self.training_data = train_config.training_data
         self.validation_data = train_config.validation_data
 
+        # Support the deprecated SequenceAdapter API.
+        if isinstance(self.training_data, keras.SequenceAdapter):
+            self.context._configure_fit(
+                workers=self.training_data.workers,
+                use_multiprocessing=self.training_data.use_multiprocessing,
+                max_queue_size=self.training_data.max_queue_size,
+            )
+            # Use the provided Sequence directly.
+            self.training_data = self.training_data.sequence
+        if isinstance(self.validation_data, keras.SequenceAdapter):
+            # Ignore these settings and use the same settings as for the fit call.
+            self.validation_data = self.validation_data.sequence
+
         self._check_training_data()
         self._check_validation_data()
 
@@ -420,7 +433,7 @@ class TFKerasTrialController(det.LoopTrialController):
         if not cacheable_used and not wrap_used:
             raise det.errors.InvalidExperimentException(
                 "Please use either context.wrap_dataset(dataset) or "
-                "context.experimental.cache_train_dataset() for tf.data.dataset inputs"
+                "context.experimental.cache_validation_dataset() for tf.data.dataset inputs"
             )
 
     def _configure_callbacks(self, user_callbacks: Optional[List]) -> None:
@@ -656,16 +669,6 @@ class TFKerasTrialController(det.LoopTrialController):
     def _launch_fit(self) -> None:
         training_data = self.training_data
 
-        # Support the deprecated SequenceAdapter API.
-        if isinstance(training_data, keras.SequenceAdapter):
-            self.context._configure_fit(
-                workers=training_data.workers,
-                use_multiprocessing=training_data.use_multiprocessing,
-                max_queue_size=training_data.max_queue_size,
-            )
-            # Use the provided Sequence directly.
-            training_data = training_data.sequence
-
         if isinstance(training_data, tf.keras.utils.Sequence):
             # Handle args from fit(): shuffle, workers, use_multiprocessing, and max_queue_size.
             enqueuer = keras._build_enqueuer(
@@ -707,11 +710,6 @@ class TFKerasTrialController(det.LoopTrialController):
     def _launch_evaluate(self) -> Any:
         validation_data = self.validation_data
         steps = None
-
-        # Support the deprecated SequenceAdapter API.
-        if isinstance(validation_data, keras.SequenceAdapter):
-            # Ignore these settings and use the same settings as for the fit call.
-            validation_data = validation_data.sequence
 
         if isinstance(validation_data, tf.keras.utils.Sequence):
             # Calculate the length of our validation shard.
@@ -759,6 +757,18 @@ class TFKerasTrialController(det.LoopTrialController):
             **evaluate_kwargs,
         )
         logging.debug(f"Worker finished model.evaluate() with metrics: {metrics_values}.")
+
+        # Clean up the enqueuer if we started one.
+        if isinstance(self.validation_data, tf.keras.utils.Sequence):
+            enqueuer.stop()
+            self.enqueuers.remove(enqueuer)
+
+            # A special side-effect of converting the keras sequence to a generator and passing
+            # steps explicitly is that keras will exit our generator after N steps and the
+            # Sequence.on_epoch_end() that normally runs after the last yield won't run at all
+            # because the fit loop will call next() exactly `steps` times.  So we try to match the
+            # exact keras behavior by manually calling on_epoch_end() here.
+            self.validation_data.on_epoch_end()
 
         # If the model was compiled with metrics=None, metrics_value will be a single value.
         if not isinstance(metrics_values, (tuple, list, dict)):
