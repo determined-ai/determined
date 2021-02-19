@@ -22,6 +22,7 @@ import (
 const (
 	// nolint:gosec // These are not potential hardcoded credentials.
 	gatewayTokenHeader = "grpcgateway-authorization"
+	taskTokenHeader    = "x-task-token"
 	userTokenHeader    = "x-user-token"
 	cookieName         = "auth"
 )
@@ -40,6 +41,33 @@ var (
 	// ErrPermissionDenied notifies that the user does not have permission to access the method.
 	ErrPermissionDenied = status.Error(codes.PermissionDenied, "user does not have permission")
 )
+
+// GetTaskSession returns the currently running task.
+func GetTaskSession(ctx context.Context, d *db.PgDB) (*model.TaskSession, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, ErrTokenMissing
+	}
+	tokens := md[taskTokenHeader]
+	if len(tokens) == 0 {
+		return nil, ErrTokenMissing
+	}
+
+	token := tokens[0]
+	if !strings.HasPrefix(token, "Bearer ") {
+		return nil, ErrInvalidCredentials
+	}
+	token = strings.TrimPrefix(token, "Bearer ")
+
+	switch session, err := d.TaskSessionByToken(token); err {
+	case nil:
+		return session, nil
+	case db.ErrNotFound:
+		return nil, ErrInvalidCredentials
+	default:
+		return nil, err
+	}
+}
 
 // GetUser returns the currently logged in user.
 func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, error) {
@@ -90,7 +118,11 @@ func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
 		if !unauthenticatedMethods[info.FullMethod] {
-			if _, _, err := GetUser(ctx, db); err != nil {
+			if _, err = GetTaskSession(ctx, db); err == ErrTokenMissing {
+				if _, _, err = GetUser(ctx, db); err != nil {
+					return nil, err
+				}
+			} else if err != nil && err != ErrTokenMissing {
 				return nil, err
 			}
 		}

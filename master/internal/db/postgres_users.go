@@ -33,7 +33,7 @@ func (db *PgDB) StartUserSession(user *model.User) (string, error) {
 	v2 := paseto.NewV2()
 	token, err := v2.Sign(db.tokenKeys.PrivateKey, userSession, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to generate authentication token")
+		return "", errors.Wrap(err, "failed to generate user authentication token")
 	}
 	return token, nil
 }
@@ -72,8 +72,8 @@ WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound
 	return &user, &session, nil
 }
 
-// DeleteSessionByID deletes the session with the given ID.
-func (db *PgDB) DeleteSessionByID(sessionID model.SessionID) error {
+// DeleteUserSessionByID deletes the user session with the given ID.
+func (db *PgDB) DeleteUserSessionByID(sessionID model.SessionID) error {
 	_, err := db.sql.Exec("DELETE FROM user_sessions WHERE id=$1", sessionID)
 	return err
 }

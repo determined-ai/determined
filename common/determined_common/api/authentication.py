@@ -16,6 +16,8 @@ Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
 
+cur_task_token = os.environ.get("DET_TASK_TOKEN", "")
+
 
 def authentication_required(func: Callable[[Namespace], Any]) -> Callable[..., Any]:
     @wraps(func)
@@ -77,6 +79,9 @@ class Authentication:
 
     def reset_session(self) -> None:
         self.session = None
+
+    def get_task_token(self) -> str:
+        return cur_task_token
 
 
 class TokenStore:

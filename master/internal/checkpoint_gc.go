@@ -3,6 +3,8 @@ package internal
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -19,6 +21,7 @@ type checkpointGCTask struct {
 	agentUserGroup *model.AgentUserGroup
 	taskSpec       *tasks.TaskSpec
 
+	task *sproto.AllocateRequest
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
 	logs []sproto.ContainerLog
 }
@@ -26,16 +29,23 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(t.rm, sproto.AllocateRequest{
+		t.task = &sproto.AllocateRequest{
+			ID:   sproto.NewTaskID(),
 			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
 			TaskActor:      ctx.Self(),
 			NonPreemptible: true,
-		})
+		}
+		ctx.Tell(t.rm, *t.task)
 
 	case sproto.ResourcesAllocated:
+		taskToken, err := t.db.StartTaskSession(string(msg.ID))
+		if err != nil {
+			return errors.Wrap(err, "cannot start a new task session for a GC task")
+		}
+
 		config := t.experiment.Config.CheckpointStorage
 
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(t.experiment.ID,
@@ -49,6 +59,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		for _, a := range msg.Allocations {
 			taskSpec := *t.taskSpec
 			taskSpec.AgentUserGroup = t.agentUserGroup
+			taskSpec.TaskToken = taskToken
 			taskSpec.SetInner(&tasks.GCCheckpoints{
 				ExperimentID:     t.experiment.ID,
 				ExperimentConfig: t.experiment.Config,
@@ -79,6 +90,11 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		t.logs = append(t.logs, msg)
 
 	case actor.PostStop:
+		if t.task != nil {
+			if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
+				ctx.Log().WithError(err).Error("cannot delete task session for a GC task")
+			}
+		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

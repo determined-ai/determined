@@ -111,7 +111,7 @@ func (s *Service) postLogout(c echo.Context) (interface{}, error) {
 	// Delete the user session information from the database.
 	sess := c.(*context.DetContext).MustGetUserSession()
 
-	if err := s.db.DeleteSessionByID(sess.ID); err != nil {
+	if err := s.db.DeleteUserSessionByID(sess.ID); err != nil {
 		return nil, err
 	}
 

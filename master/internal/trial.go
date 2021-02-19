@@ -615,11 +615,15 @@ func (t *trial) processAllocated(
 			tar.TypeReg,
 		),
 	}
-
+	taskToken, err := t.db.StartTaskSession(string(t.task.ID))
+	if err != nil {
+		return errors.Wrap(err, "cannot start a new task session for a trial")
+	}
 	for rank, a := range msg.Allocations {
 		t.containerRanks[a.Summary().ID] = rank
 		taskSpec := *t.taskSpec
 		taskSpec.AgentUserGroup = t.agentUserGroup
+		taskSpec.TaskToken = taskToken
 		taskSpec.SetInner(&tasks.StartTrial{
 			ExperimentConfig:    t.experiment.Config,
 			ModelDefinition:     t.modelDefinition,
@@ -1073,6 +1077,11 @@ func (t *trial) terminated(ctx *actor.Context) {
 
 	t.RunID++
 
+	if t.task != nil {
+		if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
+			ctx.Log().WithError(err).Error("error delete task session for a trial")
+		}
+	}
 	t.task = nil
 	t.allocations = nil
 	t.containerRanks = make(map[cproto.ID]int)

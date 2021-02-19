@@ -282,5 +282,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
 		taskSpec:       n.taskSpec,
+
+		db: n.db,
 	}, nil
 }

@@ -150,5 +150,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
 		taskSpec:       c.taskSpec,
+
+		db: c.db,
 	}
 }
