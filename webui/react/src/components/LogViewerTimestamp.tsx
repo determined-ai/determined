@@ -204,10 +204,16 @@ const LogViewerTimestamp: React.FC<Props> = ({
       return charMeasures.height;
     }
 
-    const columnWidth = listMeasure.width - ICON_WIDTH - dateTimeWidth;
-    const messageWidth = log.message.length * charMeasures.width;
+    const maxCharPerLine = Math.floor(
+      (listMeasure.width - ICON_WIDTH - dateTimeWidth) / charMeasures.width,
+    );
 
-    return Math.ceil(messageWidth / columnWidth) * charMeasures.height;
+    const lineCount = log.message
+      .split('\n')
+      .map(line => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
+      .reduce((acc, count) => acc + count, 0);
+
+    return lineCount * charMeasures.height;
   };
 
   const handleCopyToClipboard = useCallback(async () => {

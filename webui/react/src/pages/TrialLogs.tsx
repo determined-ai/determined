@@ -5,8 +5,10 @@ import { useHistory, useParams } from 'react-router';
 
 import LogViewerTimestamp, { TAIL_SIZE } from 'components/LogViewerTimestamp';
 import Message, { MessageType } from 'components/Message';
+import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
+import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
@@ -145,12 +147,13 @@ const TrialLogs: React.FC = () => {
     }
   }, [ experimentId, experimentIdParam, history, trialId ]);
 
+  if (!experimentId || !trialId) {
+    return <Spinner spinning={true} />;
+  }
+
   if (trial.errorCount > 0 && !trial.isLoading) {
     return <Message title={`Unable to find Trial ${trialId}`} type={MessageType.Warning} />;
   }
-
-  const experimentDetailPath = `/experiments/${experimentId}`;
-  const trialDetailPath = `${experimentDetailPath}/trials/${trialId}`;
 
   return (
     <LogViewerTimestamp
@@ -161,11 +164,11 @@ const TrialLogs: React.FC = () => {
           { breadcrumbName: 'Experiments', path: '/experiments' },
           {
             breadcrumbName: `Experiment ${experimentId}`,
-            path: experimentDetailPath,
+            path: paths.experimentDetails(experimentId),
           },
           {
             breadcrumbName: `Trial ${trialId}`,
-            path: trialDetailPath,
+            path: paths.trialDetails(trialId, experimentId),
           },
           { breadcrumbName: 'Logs', path: '#' },
         ],
