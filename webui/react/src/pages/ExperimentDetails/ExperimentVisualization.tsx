@@ -23,9 +23,9 @@ const { Option } = Select;
 
 export enum VisualizationType {
   HpParallelCoordinates = 'hp-parallel-coordinates',
-  HpImportance = 'hp-importance',
+  HpHeatMap = 'hp-heat-map',
+  HpScatterPlots = 'hp-scatter-plots',
   LearningCurve = 'learning-curve',
-  ScatterPlots = 'scatter-plots',
 }
 
 interface Props {
@@ -44,13 +44,9 @@ const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
-  {
-    disabled: true,
-    label: 'HP Parallel Coordinates',
-    type: VisualizationType.HpParallelCoordinates,
-  },
-  { disabled: true, label: 'HP Importance', type: VisualizationType.HpImportance },
-  { disabled: true, label: 'Scatter Plots', type: VisualizationType.ScatterPlots },
+  { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
+  { disabled: true, label: 'HP Scatter Plots', type: VisualizationType.HpScatterPlots },
+  { disabled: true, label: 'HP Heat Map', type: VisualizationType.HpHeatMap },
 ];
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
