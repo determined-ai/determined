@@ -20,6 +20,7 @@ setup(
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
+        "petname",
         "ruamel.yaml>=0.15.78",
         "simplejson",
         "termcolor>=1.1.0",
