@@ -309,14 +309,6 @@ const ExperimentList: React.FC = () => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  const handleTableRow = useCallback((record: ExperimentItem) => {
-    const handleClick = (event: React.MouseEvent) => {
-      if (isAlternativeAction(event)) return;
-      handlePath(event, { path: record.url });
-    };
-    return { onAuxClick: handleClick, onClick: handleClick };
-  }, []);
-
   return (
     <Page id="experiments" title="Experiments">
       <div className={css.base}>
@@ -376,13 +368,12 @@ const ExperimentList: React.FC = () => {
             spinning: !experiments,
           }}
           pagination={getFullPaginationConfig(pagination, total)}
-          rowClassName={defaultRowClassName({ clickable: true })}
+          rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}
           size="small"
           onChange={handleTableChange}
-          onRow={handleTableRow}
         />
       </div>
     </Page>
