@@ -35,6 +35,8 @@ var (
 	ErrPermissionDenied = status.Error(codes.PermissionDenied, "user does not have permission")
 )
 
+
+
 // GetUser returns the currently logged in user.
 func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -83,7 +85,7 @@ func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		if info.FullMethod != "/determined.api.v1.Determined/Login" {
+		if info.FullMethod != "/determined.api.v1.Determined/Login" && info.FullMethod != "/determined.api.v1.Determined/PostTelemetryTrialInfo" {
 			if _, _, err := GetUser(ctx, db); err != nil {
 				return nil, err
 			}

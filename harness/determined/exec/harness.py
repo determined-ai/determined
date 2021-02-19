@@ -38,8 +38,11 @@ import simplejson
 import determined as det
 import determined_common
 from determined import gpu, horovod, layers, load, workload
-from determined.event_trail import TypeEventTrailThread, create_event_trail_thread
+from determined.event_trail import create_event_trail_thread, TrialInfoEventV1
 from determined_common import constants, storage
+from determined.pytorch import PyTorchTrialController
+from determined.estimator import EstimatorTrialController
+from determined.keras import TFKerasTrialController
 
 ENVIRONMENT_VARIABLE_KEYS = {
     "DET_MASTER_ADDR",
@@ -83,75 +86,87 @@ def maybe_load_checkpoint(
 
 def build_and_run_training_pipeline(env: det.EnvContext) -> None:
 
-    # Create a background thread that can be used to send events such as telemetry or
-    # profiling metrics to the master (asynchronously).
-    with create_event_trail_thread(noop=False) as event_trail:
-        print("EventSender is ", type(event_trail))
 
-        # Create the socket manager. The socket manager will connect to the master and read messages
-        # until it receives the rendezvous_info.
+
+    # Create the socket manager. The socket manager will connect to the master and read messages
+    # until it receives the rendezvous_info.
+    #
+    # TODO(ryan): Pull profiler hooks out of SocketManager and into their own layer.
+    with layers.SocketManager(env) as socket_mgr:
+
+        # Create the storage manager. This is used to download the initial checkpoint here in
+        # build_training_pipeline and also used by the workload manager to create and store
+        # checkpoints during training.
+        storage_mgr = storage.build(
+            env.experiment_config["checkpoint_storage"],
+            container_path=constants.SHARED_FS_CONTAINER_PATH,
+        )
+
+        [tensorboard_mgr, tensorboard_writer] = load.prepare_tensorboard(
+            env, constants.SHARED_FS_CONTAINER_PATH
+        )
+
+        # Create the workload manager. The workload manager will receive workloads from the
+        # socket_mgr, and augment them with some additional arguments. Additionally, the
+        # workload manager is responsible for some generic workload hooks for things like timing
+        # workloads, preparing checkpoints, and uploading completed checkpoints.  Finally, the
+        # workload manager does some sanity checks on response messages that originate from the
+        # trial.
         #
-        # TODO(ryan): Pull profiler hooks out of SocketManager and into their own layer.
-        with layers.SocketManager(env) as socket_mgr:
+        # TODO(ryan): Refactor WorkloadManager into separate layers that do each separate task.
+        workload_mgr = layers.build_workload_manager(
+            env,
+            iter(socket_mgr),
+            socket_mgr.get_rendezvous_info(),
+            storage_mgr,
+            tensorboard_mgr,
+            tensorboard_writer,
+        )
 
-            # Create the storage manager. This is used to download the initial checkpoint here in
-            # build_training_pipeline and also used by the workload manager to create and store
-            # checkpoints during training.
-            storage_mgr = storage.build(
-                env.experiment_config["checkpoint_storage"],
-                container_path=constants.SHARED_FS_CONTAINER_PATH,
-            )
+        hvd_config = horovod.HorovodContext.from_configs(
+            env.experiment_config, socket_mgr.get_rendezvous_info(), env.hparams
+        )
+        logging.info(f"Horovod config: {hvd_config.__dict__}.")
 
-            [tensorboard_mgr, tensorboard_writer] = load.prepare_tensorboard(
-                env, constants.SHARED_FS_CONTAINER_PATH
-            )
+        # Load the checkpoint, if necessary. Any possible sinks to this pipeline will need access
+        # to this checkpoint.
+        with maybe_load_checkpoint(storage_mgr, env.latest_checkpoint) as load_path:
 
-            # Create the workload manager. The workload manager will receive workloads from the
-            # socket_mgr, and augment them with some additional arguments. Additionally, the
-            # workload manager is responsible for some generic workload hooks for things like timing
-            # workloads, preparing checkpoints, and uploading completed checkpoints.  Finally, the
-            # workload manager does some sanity checks on response messages that originate from the
-            # trial.
-            #
-            # TODO(ryan): Refactor WorkloadManager into separate layers that do each separate task.
-            workload_mgr = layers.build_workload_manager(
-                env,
-                iter(socket_mgr),
-                socket_mgr.get_rendezvous_info(),
-                storage_mgr,
-                tensorboard_mgr,
-                tensorboard_writer,
-            )
+            # Horovod distributed training is done inside subprocesses.
+            if hvd_config.use:
+                subproc = layers.SubprocessLauncher(
+                    env, iter(workload_mgr), load_path, socket_mgr.get_rendezvous_info(), hvd_config
+                )
+                subproc.run()
+            else:
+                if env.experiment_config.debug_enabled():
+                    faulthandler.dump_traceback_later(30, repeat=True)
 
-            hvd_config = horovod.HorovodContext.from_configs(
-                env.experiment_config, socket_mgr.get_rendezvous_info(), env.hparams
-            )
-            logging.info(f"Horovod config: {hvd_config.__dict__}.")
-
-            # Load the checkpoint, if necessary. Any possible sinks to this pipeline will need access
-            # to this checkpoint.
-            with maybe_load_checkpoint(storage_mgr, env.latest_checkpoint) as load_path:
-
-                # Horovod distributed training is done inside subprocesses.
-                if hvd_config.use:
-                    subproc = layers.SubprocessLauncher(
-                        env, iter(workload_mgr), load_path, socket_mgr.get_rendezvous_info(), hvd_config
+                with det._catch_sys_exit():
+                    controller = load.prepare_controller(
+                        env,
+                        iter(workload_mgr),
+                        load_path,
+                        socket_mgr.get_rendezvous_info(),
+                        hvd_config,
                     )
-                    subproc.run()
-                else:
-                    if env.experiment_config.debug_enabled():
-                        faulthandler.dump_traceback_later(30, repeat=True)
 
-                    with det._catch_sys_exit():
-                        controller = load.prepare_controller(
-                            env,
-                            iter(workload_mgr),
-                            load_path,
-                            socket_mgr.get_rendezvous_info(),
-                            hvd_config,
-                            event_trail,
-                        )
-                        controller.run()
+                    experiment_id = env.det_experiment_id
+                    trial_id = env.det_trial_id
+                    if isinstance(controller, TFKerasTrialController):
+                        trial_info_event = TrialInfoEventV1(experiment_id, trial_id,
+                                                            TrialInfoEventV1.TrialFramework.KERAS)
+                    elif isinstance(controller, PyTorchTrialController):
+                        trial_info_event = TrialInfoEventV1(experiment_id, trial_id,
+                                                            TrialInfoEventV1.TrialFramework.PYTORCH)
+                    elif isinstance(controller, EstimatorTrialController):
+                        trial_info_event = TrialInfoEventV1(experiment_id, trial_id,
+                                                            TrialInfoEventV1.TrialFramework.ESTIMATOR)
+                    else:
+                        raise RuntimeError
+                    env.event_trail.enqueue_for_async_send(trial_info_event)
+
+                    controller.run()
 
 
 def main() -> None:
@@ -225,7 +240,12 @@ def main() -> None:
         logging.error("Checkpoint storage validation failed: {}".format(e))
         sys.exit(1)
 
-    build_and_run_training_pipeline(env)
+    # Create a background thread that can be used to send events such as telemetry or
+    # profiling metrics to the master (asynchronously).
+    with create_event_trail_thread(env.master_addr, env.master_port, env.use_tls, noop=False) as event_trail:
+        print("EventSender is ", type(event_trail))
+        env.set_event_trail_background_thread(event_trail)
+        build_and_run_training_pipeline(env)
 
 
 if __name__ == "__main__":

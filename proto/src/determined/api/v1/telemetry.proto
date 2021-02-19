@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/telemetry/v1/trialInfo.proto";
+
+// Request for sending a trialInfo telemetry event to the master
+message PostTelemetryTrialInfoRequest {
+  // Information about the trial.
+  determined.telemetry.v1.TrialInfo trialInfo = 1;
+}
+
+// Response to PostTelemetryTrialInfoRequest.
+message PostTelemetryTrialInfoResponse {
+}

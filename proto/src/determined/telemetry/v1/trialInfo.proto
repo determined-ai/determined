@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package determined.telemetry.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/telemetryv1";
+
+// The framework the trial uses.
+enum TrialFramework {
+  // A PyTorch trial
+  PYTORCH = 0;
+  // A TensorFlow Estimator Trial
+  ESTIMATOR = 1;
+  // A TensorFlow Keras Trial
+  KERAS = 2;
+}
+
+// TrialInfo represents information about the trial recorded in the harness
+message TrialInfo {
+  // The id of experiment that the trial belongs to
+  int32 experimentId = 1;
+  // The id of the trial
+  int32 trialId = 2;
+  // The type of the trial.
+  TrialFramework trialFramework = 4;
+}

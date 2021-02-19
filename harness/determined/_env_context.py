@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import determined as det
 from determined import constants, workload
 from determined_common import check, types
+from determined.event_trail import TypeEventTrailThread
 
 
 class EnvContext:
@@ -56,6 +57,11 @@ class EnvContext:
         self.managed_training = managed_training
 
         self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
+
+        self.event_trail = None  # type: Optional[TypeEventTrailThread]
+
+    def set_event_trail_background_thread(self, event_trail: TypeEventTrailThread):
+        self.event_trail = event_trail
 
     def first_step(self) -> types.StepID:
         return self.initial_workload.step_id

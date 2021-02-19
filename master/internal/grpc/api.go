@@ -84,14 +84,18 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 	}
 	handler := func(c echo.Context) error {
 		request := c.Request()
+		logrus.Infof("New req %s", request.URL)
 		if origin := request.Header.Get("Origin"); enableCORS && origin != "" {
 			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
 			c.Response().Header().Set("Access-Control-Allow-Credentials", "true")
 		}
+		logrus.Infof("Handling request %s", request.URL)
 		if c.Request().Header.Get("Authorization") == "" {
+			logrus.Infof("Authorization header is blank, so setting auth header from cookie. %s", request.URL)
 			if cookie, err := c.Cookie(cookieName); err == nil {
 				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
 			}
+			logrus.Infof("Authorization header is blank, done setting auth header. %s", request.URL)
 		}
 		if _, ok := request.URL.Query()["pretty"]; ok {
 			request.Header.Set("Accept", jsonPretty)

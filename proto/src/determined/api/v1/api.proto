@@ -14,6 +14,7 @@ import "determined/api/v1/experiment.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
+import "determined/api/v1/telemetry.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
 import "determined/api/v1/trial.proto";
@@ -673,6 +674,20 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Checkpoints"
+    };
+  }
+
+
+  // Create
+  rpc PostTelemetryTrialInfo(PostTelemetryTrialInfoRequest) returns (PostTelemetryTrialInfoResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/telemetry/trial-info"
+//      body: "trialInfo"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Telemetry"
+      security: {}
     };
   }
 }
