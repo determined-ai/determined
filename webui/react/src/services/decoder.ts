@@ -8,12 +8,16 @@ import { capitalize } from 'utils/string';
 import * as Sdk from './api-ts-sdk'; // API Bindings
 import { LoginResponse } from './types';
 
-export const user = (data: Sdk.V1User): types.DetailedUser => {
+export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {
     isActive: data.active,
     isAdmin: data.admin,
     username: data.username,
   };
+};
+
+export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[] => {
+  return (data.users || []).map(user => mapV1User(user));
 };
 
 export const jsonToUsers = (data: unknown): types.DetailedUser[] => {

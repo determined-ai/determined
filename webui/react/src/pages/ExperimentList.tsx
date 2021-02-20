@@ -21,6 +21,7 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
 import Auth from 'contexts/Auth';
+import { useFetchUsers } from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePolling from 'hooks/usePolling';
@@ -90,6 +91,8 @@ const ExperimentList: React.FC = () => {
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
   const [ canceler ] = useState(new AbortController());
+
+  const fetchUsers = useFetchUsers(canceler);
 
   const hasFiltersApplied = useMemo(() => {
     return filters.showArchived || !filters.states.includes(ALL_VALUE) || !!filters.username;
@@ -166,7 +169,12 @@ const ExperimentList: React.FC = () => {
     }
   }, [ canceler, filters, pagination, search, sorter ]);
 
-  usePolling(fetchExperiments);
+  const fetchAll = useCallback(() => {
+    fetchExperiments();
+    fetchUsers();
+  }, [ fetchExperiments, fetchUsers ]);
+
+  usePolling(fetchAll);
 
   const experimentTags = useExperimentTags(fetchExperiments);
 

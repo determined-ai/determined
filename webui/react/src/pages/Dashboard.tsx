@@ -14,7 +14,7 @@ import {
   Commands, Notebooks, Shells, Tensorboards,
   useFetchCommands, useFetchNotebooks, useFetchShells, useFetchTensorboards,
 } from 'contexts/Commands';
-import Users from 'contexts/Users';
+import Users, { useFetchUsers } from 'contexts/Users';
 import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -66,6 +66,7 @@ const Dashboard: React.FC = () => {
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ activeExperimentCount, setActiveExperimentCount ] = useState<number>();
 
+  const fetchUsers = useFetchUsers(canceler);
   const fetchCommands = useFetchCommands(canceler);
   const fetchNotebooks = useFetchNotebooks(canceler);
   const fetchShells = useFetchShells(canceler);
@@ -112,6 +113,7 @@ const Dashboard: React.FC = () => {
   }, [ canceler, setActiveExperimentCount ]);
 
   const fetchAll = useCallback(() => {
+    fetchUsers();
     fetchExperiments();
     fetchActiveExperiments();
     fetchCommands();
@@ -119,6 +121,7 @@ const Dashboard: React.FC = () => {
     fetchShells();
     fetchTensorboards();
   }, [
+    fetchUsers,
     fetchExperiments,
     fetchActiveExperiments,
     fetchCommands,

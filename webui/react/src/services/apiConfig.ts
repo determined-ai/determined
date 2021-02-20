@@ -36,6 +36,7 @@ export const detApi = {
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
   Tensorboards: new Api.TensorboardsApi(ApiConfig),
+  Users: new Api.UsersApi(ApiConfig),
 };
 
 const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
@@ -58,8 +59,9 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
-  detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config),
+  detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
   detApi.Tensorboards = new Api.TensorboardsApi(config);
+  detApi.Users = new Api.UsersApi(config);
 };
 
 /* Helpers */
@@ -101,15 +103,15 @@ export const logout: DetApi<EmptyParams, Api.V1LogoutResponse, void> = {
 
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser> = {
   name: 'getCurrentUser',
-  postProcess: (response) => decoder.user(response.user),
+  postProcess: (response) => decoder.mapV1User(response.user),
   // We make sure to request using the latest API configuraitonp parameters.
   request: (params) => detApi.Auth.determinedCurrentUser(params),
 };
 
-export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
-  httpOptions: () => ({ url: '/users' }),
+export const getUsers: DetApi<EmptyParams, Api.V1GetUsersResponse, DetailedUser[]> = {
   name: 'getUsers',
-  postProcess: (response) => decoder.jsonToUsers(response.data),
+  postProcess: (response) => decoder.mapV1UserList(response),
+  request: (options) => detApi.Users.determinedGetUsers(options),
 };
 
 /* Info */

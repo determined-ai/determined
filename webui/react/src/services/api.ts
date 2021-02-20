@@ -40,7 +40,9 @@ export const getCurrentUser = generateDetApi<
   EmptyParams, Api.V1CurrentUserResponse, DetailedUser
 >(Config.getCurrentUser);
 
-export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
+export const getUsers = generateDetApi<
+  EmptyParams, Api.V1GetUsersResponse, DetailedUser[]
+>(Config.getUsers);
 
 /* Info */
 

@@ -21,7 +21,7 @@ import {
   Commands, Notebooks, Shells, Tensorboards, useFetchCommands, useFetchNotebooks, useFetchShells,
   useFetchTensorboards,
 } from 'contexts/Commands';
-import Users from 'contexts/Users';
+import Users, { useFetchUsers } from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
@@ -97,6 +97,7 @@ const TaskList: React.FC = () => {
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
+  const fetchUsers = useFetchUsers(canceler);
   const fetchCommands = useFetchCommands(canceler);
   const fetchNotebooks = useFetchNotebooks(canceler);
   const fetchShells = useFetchShells(canceler);
@@ -135,11 +136,13 @@ const TaskList: React.FC = () => {
   }, [ selectedTasks ]);
 
   const fetchTasks = useCallback((): void => {
+    fetchUsers();
     fetchCommands();
     fetchNotebooks();
     fetchShells();
     fetchTensorboards();
   }, [
+    fetchUsers,
     fetchCommands,
     fetchNotebooks,
     fetchShells,
