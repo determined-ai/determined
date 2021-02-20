@@ -11,19 +11,22 @@ import css from './LogViewer.module.scss';
 export const ICON_WIDTH = 26;
 
 interface Props {
-  logLevel: LogLevel|undefined;
+  logLevel?: LogLevel;
 }
 
 const LogViewerLevel: React.FC<Props> = ({ logLevel }) => {
   const levelStyle = { width: toRem(ICON_WIDTH) };
 
-  const classes = [ css.level ];
-  if (logLevel) classes.push(css[logLevel]);
+  if (!logLevel) {
+    logLevel = LogLevel.Info;
+  }
+
+  const classes = [ css.level, logLevel ];
 
   return (
-    <Tooltip placement="top" title={`Level: ${capitalize(logLevel || '')}`}>
+    <Tooltip placement="top" title={`Level: ${capitalize(logLevel)}`}>
       <div className={classes.join(' ')} style={levelStyle}>
-        <div className={css.levelLabel}>&lt;[{logLevel || ''}]&gt;</div>
+        <div className={css.levelLabel}>&lt;[{logLevel}]&gt;</div>
         <Icon name={logLevel} size="small" />
       </div>
     </Tooltip>
