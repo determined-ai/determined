@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import {
@@ -9,25 +8,17 @@ import {
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
-import { getAgents, getExperiments, getUsers } from 'services/api';
-import { EmptyParams, GetExperimentsParams } from 'services/types';
-import { DetailedUser, ExperimentPagination } from 'types';
-import { activeRunStates } from 'utils/types';
+import { getAgents, getUsers } from 'services/api';
+import { EmptyParams } from 'services/types';
+import { DetailedUser } from 'types';
 
 const AppContexts: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const setUsers = Users.useActionContext();
   const setAgents = Agents.useActionContext();
-  const setActiveExperiments = ActiveExperiments.useActionContext();
   const setOverview = ClusterOverview.useActionContext();
   const [ usersResponse, triggerUsersRequest ] =
     useRestApi<EmptyParams, DetailedUser[]>(getUsers, {});
-  const [ activeExperimentsResponse, triggerActiveExperimentsRequest ] =
-    useRestApi<GetExperimentsParams, ExperimentPagination>(getExperiments, {});
-
-  const fetchActiveExperiments = useCallback((): void => {
-    triggerActiveExperimentsRequest({ states: activeRunStates });
-  }, [ triggerActiveExperimentsRequest ]);
 
   const fetchAgents = useCallback(async (): Promise<void> => {
     try {
@@ -55,14 +46,12 @@ const AppContexts: React.FC = () => {
   }, [ triggerUsersRequest ]);
 
   const fetchAll = useCallback((): void => {
-    fetchActiveExperiments();
     fetchAgents();
     fetchCommands();
     fetchNotebooks();
     fetchShells();
     fetchTensorboards();
   }, [
-    fetchActiveExperiments,
     fetchAgents,
     fetchCommands,
     fetchNotebooks,
@@ -76,12 +65,6 @@ const AppContexts: React.FC = () => {
   useEffect(() => {
     setUsers({ type: Users.ActionType.Set, value: usersResponse });
   }, [ usersResponse, setUsers ]);
-  useEffect(() => {
-    setActiveExperiments({
-      type: ActiveExperiments.ActionType.Set,
-      value: activeExperimentsResponse,
-    });
-  }, [ activeExperimentsResponse, setActiveExperiments ]);
 
   useEffect(() => {
     return () => canceler.abort();

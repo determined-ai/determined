@@ -9,7 +9,6 @@ import NavigationTopbar from 'components/NavigationTopbar';
 import Router from 'components/Router';
 import Spinner from 'components/Spinner';
 import Compose from 'Compose';
-import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
 import AppContexts from 'contexts/AppContexts';
 import Auth from 'contexts/Auth';
@@ -113,7 +112,6 @@ const App: React.FC = () => {
       Users.Provider,
       Agents.Provider,
       ClusterOverview.Provider,
-      ActiveExperiments.Provider,
       Commands.Provider,
       Notebooks.Provider,
       Shells.Provider,
