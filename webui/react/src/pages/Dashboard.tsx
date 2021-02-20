@@ -8,7 +8,6 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
-import ActiveExperiments from 'contexts/ActiveExperiments';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
@@ -17,7 +16,7 @@ import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import { getExperimentList } from 'services/api';
+import { getExperimentList, getExperiments } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import {
@@ -25,7 +24,7 @@ import {
   ResourceType, TaskFilters, TaskType,
 } from 'types';
 import { filterTasks } from 'utils/task';
-import { activeCommandStates, commandToTask, experimentToTask } from 'utils/types';
+import { activeCommandStates, activeRunStates, commandToTask, experimentToTask } from 'utils/types';
 
 const defaultFilters: TaskFilters = {
   limit: 25,
@@ -56,12 +55,13 @@ const Dashboard: React.FC = () => {
   );
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
   const overview = ClusterOverview.useStateContext();
-  const activeExperiments = ActiveExperiments.useStateContext();
   const commands = Commands.useStateContext();
   const notebooks = Notebooks.useStateContext();
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
+  const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
+  const [ activeExperimentCount, setActiveExperimentCount ] = useState<number>();
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -76,7 +76,31 @@ const Dashboard: React.FC = () => {
     }
   }, [ filters, setExperiments ]);
 
-  usePolling(fetchExperiments);
+  const fetchActiveExperiments = useCallback(async () => {
+    try {
+      const response = await getExperiments(
+        { limit: -2, states: activeRunStates },
+        { signal: canceler.signal },
+      );
+      setActiveExperimentCount(response.pagination.total);
+    } catch (e) {
+      handleError({
+        message: 'Unable to fetch active experiments.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ canceler, setActiveExperimentCount ]);
+
+  const fetchAll = useCallback(() => {
+    fetchExperiments();
+    fetchActiveExperiments();
+  }, [
+    fetchExperiments,
+    fetchActiveExperiments,
+  ]);
+
+  usePolling(fetchAll);
 
   /* Overview */
 
@@ -89,7 +113,7 @@ const Dashboard: React.FC = () => {
     [CommandType.Notebook]: countActiveCommand(notebooks.data || []),
     [CommandType.Shell]: countActiveCommand(shells.data || []),
     [CommandType.Tensorboard]: countActiveCommand(tensorboards.data || []),
-    Experiment: activeExperiments.data?.pagination.total,
+    Experiment: activeExperimentCount,
   };
 
   /* Recent Tasks */
