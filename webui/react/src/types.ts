@@ -247,7 +247,7 @@ export interface ExperimentConfig {
 /* Experiment */
 
 export interface ExperimentPagination extends WithPagination {
-  experiments: ExperimentBase[];
+  experiments: ExperimentItem[];
 }
 
 export enum RunState {
@@ -380,7 +380,6 @@ export interface ExperimentItem {
   resourcePool: string
   startTime: string;
   state: RunState;
-  url: string;
   username: string;
 }
 

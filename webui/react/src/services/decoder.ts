@@ -301,7 +301,6 @@ const decodeV1ExperimentToExperimentItem = (
     resourcePool: data.resourcePool || '',
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
-    url: `/experiments/${data.id}`,
     username: data.username,
   };
 };

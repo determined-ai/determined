@@ -14,6 +14,7 @@ import {
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
+  ExperimentItem,
   ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails, TrialPagination,
   ValidationHistory,
 } from 'types';
@@ -148,12 +149,10 @@ export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsRespons
 export const getExperiments: DetApi<
   GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentPagination
 > = {
-  name: 'activateExperiment',
+  name: 'getExperiments',
   postProcess: (response: Api.V1GetExperimentsResponse) => {
     return {
-      experiments: response.experiments.map(
-        (experiment: Api.V1Experiment) => experiment as unknown as ExperimentBase,
-      ),
+      experiments: decoder.decodeExperimentList(response.experiments),
       pagination: response.pagination,
     };
   },

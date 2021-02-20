@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
@@ -16,12 +16,12 @@ import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import { getExperimentList, getExperiments } from 'services/api';
-import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { getExperiments } from 'services/api';
+import { encodeExperimentState } from 'services/decoder';
 import { ShirtSize } from 'themes';
 import {
   ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,
-  ResourceType, TaskFilters, TaskType,
+  ResourceType, RunState, TaskFilters, TaskType,
 } from 'types';
 import { filterTasks } from 'utils/task';
 import { activeCommandStates, activeRunStates, commandToTask, experimentToTask } from 'utils/types';
@@ -65,16 +65,27 @@ const Dashboard: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const response = await getExperimentList(
-        { descend: true, key: V1GetExperimentsRequestSortBy.STARTTIME },
-        { limit: 100, offset: 0 },
-        { showArchived: false, states: filters.states, username: filters.username },
+      const states = filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        return encodeExperimentState(state as RunState) as any;
+      });
+      const users = filters.username ? [ filters.username ] : undefined;
+      const response = await getExperiments(
+        {
+          archived: false,
+          limit: 50,
+          orderBy: 'ORDER_BY_DESC',
+          sortBy: 'SORT_BY_START_TIME',
+          states,
+          users,
+        },
+        { signal: canceler.signal },
       );
       setExperiments(response.experiments);
     } catch (e) {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
     }
-  }, [ filters, setExperiments ]);
+  }, [ canceler, filters, setExperiments ]);
 
   const fetchActiveExperiments = useCallback(async () => {
     try {
@@ -101,6 +112,10 @@ const Dashboard: React.FC = () => {
   ]);
 
   usePolling(fetchAll);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   /* Overview */
 

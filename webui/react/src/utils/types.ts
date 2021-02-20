@@ -36,7 +36,7 @@ export const experimentToTask = (experiment: ExperimentItem): RecentExperimentTa
     resourcePool: experiment.resourcePool,
     startTime: experiment.startTime,
     state: experiment.state,
-    url: experiment.url,
+    url: `/experiments/${experiment.id}`,
     username: experiment.username,
   };
   return task;
