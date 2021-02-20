@@ -61,7 +61,10 @@ message GetExperimentsRequest {
   // Skip the number of experiments before returning results. Negative values
   // denote number of experiments to skip from the end before returning results.
   int32 offset = 3;
-  // Limit the number of experiments. A value of 0 denotes no limit.
+  // Limit the number of experiments.
+  // 0 or Unspecified - returns a default of 100.
+  // -1               - returns everything.
+  // -2               - returns pagination info but no experiments.
   int32 limit = 4;
   // Limit experiments to those that match the description.
   string description = 5;
