@@ -10,7 +10,10 @@ import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
-import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
+import {
+  Commands, Notebooks, Shells, Tensorboards,
+  useFetchCommands, useFetchNotebooks, useFetchShells, useFetchTensorboards,
+} from 'contexts/Commands';
 import Users from 'contexts/Users';
 import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
@@ -63,6 +66,11 @@ const Dashboard: React.FC = () => {
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ activeExperimentCount, setActiveExperimentCount ] = useState<number>();
 
+  const fetchCommands = useFetchCommands(canceler);
+  const fetchNotebooks = useFetchNotebooks(canceler);
+  const fetchShells = useFetchShells(canceler);
+  const fetchTensorboards = useFetchTensorboards(canceler);
+
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const states = filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
@@ -106,9 +114,17 @@ const Dashboard: React.FC = () => {
   const fetchAll = useCallback(() => {
     fetchExperiments();
     fetchActiveExperiments();
+    fetchCommands();
+    fetchNotebooks();
+    fetchShells();
+    fetchTensorboards();
   }, [
     fetchExperiments,
     fetchActiveExperiments,
+    fetchCommands,
+    fetchNotebooks,
+    fetchShells,
+    fetchTensorboards,
   ]);
 
   usePolling(fetchAll);

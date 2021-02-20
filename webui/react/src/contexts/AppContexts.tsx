@@ -2,9 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
-import {
-  useFetchCommands, useFetchNotebooks, useFetchShells, useFetchTensorboards,
-} from 'contexts/Commands';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -36,27 +33,14 @@ const AppContexts: React.FC = () => {
     } catch (e) {}
   }, [ canceler, setAgents, setOverview ]);
 
-  const fetchCommands = useFetchCommands(canceler);
-  const fetchNotebooks = useFetchNotebooks(canceler);
-  const fetchShells = useFetchShells(canceler);
-  const fetchTensorboards = useFetchTensorboards(canceler);
-
   const fetchUsers = useCallback((): void => {
     triggerUsersRequest({ url: '/users' });
   }, [ triggerUsersRequest ]);
 
   const fetchAll = useCallback((): void => {
     fetchAgents();
-    fetchCommands();
-    fetchNotebooks();
-    fetchShells();
-    fetchTensorboards();
   }, [
     fetchAgents,
-    fetchCommands,
-    fetchNotebooks,
-    fetchShells,
-    fetchTensorboards,
   ]);
 
   usePolling(fetchAll);

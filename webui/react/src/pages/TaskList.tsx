@@ -23,6 +23,7 @@ import {
 } from 'contexts/Commands';
 import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { killTask } from 'services/api';
 import { ApiSorter } from 'services/types';
@@ -266,6 +267,8 @@ const TaskList: React.FC = () => {
   }, [ columns, filters, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
+  usePolling(fetchTasks);
 
   useEffect(() => {
     return () => canceler.abort();
