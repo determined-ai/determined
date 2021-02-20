@@ -287,7 +287,7 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
   };
 };
 
-const decodeV1ExperimentToExperimentItem = (
+const mapV1Experiment = (
   data: Sdk.V1Experiment,
 ): types.ExperimentItem => {
   return {
@@ -305,8 +305,8 @@ const decodeV1ExperimentToExperimentItem = (
   };
 };
 
-export const decodeExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
-  return data.map(decodeV1ExperimentToExperimentItem);
+export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
+  return data.map(mapV1Experiment);
 };
 
 const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefined => {

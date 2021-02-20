@@ -15,7 +15,7 @@ import {
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
-import { decodeExperimentList, encodeExperimentState } from './decoder';
+import { encodeExperimentState, mapV1ExperimentList } from './decoder';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
@@ -92,7 +92,7 @@ export const getExperimentList = async (
       filters.username ? [ filters.username ] : undefined,
     );
 
-    const experiments = decodeExperimentList(response.experiments || []);
+    const experiments = mapV1ExperimentList(response.experiments || []);
     return { experiments, pagination: response.pagination };
   } catch (e) {
     processApiError('getExperimentList', e);

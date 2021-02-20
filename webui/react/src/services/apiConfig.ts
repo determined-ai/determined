@@ -14,7 +14,6 @@ import {
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentItem,
   ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails, TrialPagination,
   ValidationHistory,
 } from 'types';
@@ -152,7 +151,7 @@ export const getExperiments: DetApi<
   name: 'getExperiments',
   postProcess: (response: Api.V1GetExperimentsResponse) => {
     return {
-      experiments: decoder.decodeExperimentList(response.experiments),
+      experiments: decoder.mapV1ExperimentList(response.experiments),
       pagination: response.pagination,
     };
   },

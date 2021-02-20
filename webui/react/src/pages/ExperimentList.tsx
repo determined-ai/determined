@@ -2,7 +2,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import LabelSelectFilter from 'components/LabelSelectFilter';
@@ -26,11 +26,13 @@ import useExperimentTags from 'hooks/useExperimentTags';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, getExperimentList,
+  activateExperiment, archiveExperiment, cancelExperiment, getExperiments,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
+import { validateDetApiEnum } from 'services/utils';
 import {
   ALL_VALUE, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
@@ -87,6 +89,7 @@ const ExperimentList: React.FC = () => {
   const [ search, setSearch ] = useState('');
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+  const [ canceler ] = useState(new AbortController());
 
   const hasFiltersApplied = useMemo(() => {
     return filters.showArchived || !filters.states.includes(ALL_VALUE) || !!filters.username;
@@ -138,16 +141,30 @@ const ExperimentList: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const {
-        experiments,
-        pagination: responsePagination,
-      } = await getExperimentList(sorter, pagination, filters, search);
-      setTotal(responsePagination?.total || 0);
-      setExperiments(experiments);
+      const states = filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        return encodeExperimentState(state as RunState) as any;
+      });
+      const response = await getExperiments(
+        {
+          archived: filters.showArchived ? undefined : false,
+          description: search,
+          labels: filters.labels?.length === 0 ? undefined : filters.labels,
+          limit: pagination.limit,
+          offset: pagination.offset,
+          orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, sorter.key),
+          states,
+          users: filters.username ? [ filters.username ] : undefined,
+        },
+        { signal: canceler.signal },
+      );
+      setTotal(response.pagination.total || 0);
+      setExperiments(response.experiments);
     } catch (e) {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
     }
-  }, [ filters, pagination, search, sorter ]);
+  }, [ canceler, filters, pagination, search, sorter ]);
 
   usePolling(fetchExperiments);
 
@@ -307,6 +324,10 @@ const ExperimentList: React.FC = () => {
   }, [ columns, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   return (
     <Page id="experiments" title="Experiments">
