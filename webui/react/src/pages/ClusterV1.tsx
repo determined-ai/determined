@@ -1,16 +1,18 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import Grid from 'components/Grid';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import ResourceChart from 'components/ResourceChart';
 import Spinner from 'components/Spinner';
-import Agents from 'contexts/Agents';
+import Agents, { useFetchAgents } from 'contexts/Agents';
+import usePolling from 'hooks/usePolling';
 import { Resource, ResourceType } from 'types';
 import { categorize } from 'utils/data';
 
 const Cluster: React.FC = () => {
   const agents = Agents.useStateContext();
+  const [ canceler ] = useState(new AbortController());
 
   const availableResources = useMemo(() => {
     if (!agents.data) return {};
@@ -22,6 +24,14 @@ const Cluster: React.FC = () => {
   }, [ agents ]);
 
   const availableResourceTypes = Object.keys(availableResources);
+
+  const fetchAgents = useFetchAgents(canceler);
+
+  usePolling(fetchAgents, { delay: 10000 });
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   if (!agents.data) {
     return <Spinner />;
