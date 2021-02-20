@@ -18,6 +18,26 @@ export const toRem = (px?: number | string): string => {
   return px;
 };
 
+/*
+ * Calculates Pixel from Rem based on base font size of 62.5%.
+ * This causes the ratio between REM to px to be 1 to 10.
+ * So 1rem becomes 10px.
+ */
+export const toPixel = (rem?: number | string): string => {
+  if (rem == null) return 'auto';
+  if (typeof rem === 'number') return `${rem * 10}px`;
+
+  const matches = rem.match(/(\d+\.?\d*|\.\d+)\s*(px|rem)/i);
+  if (matches?.length === 3) {
+    const type = matches[2];
+    const value = parseFloat(matches[1]);
+    if (type === 'rem') return `${value * 10}px`;
+    if (type === 'px') return `${value}px`;
+  }
+
+  return rem;
+};
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ansiConverter = require('ansi-to-html');
 const converter = new ansiConverter({ newline: true });

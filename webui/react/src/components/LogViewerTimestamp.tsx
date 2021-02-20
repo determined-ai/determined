@@ -1,27 +1,27 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, {
-  useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState,
+  Reducer, RefObject,
+  useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState,
 } from 'react';
+import { ListChildComponentProps, ListOnItemsRenderedProps, VariableSizeList } from 'react-window';
 import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
-import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
+import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useScroll from 'hooks/useScroll';
-import {
-  LogViewerTimestampFilterComponentProp,
-  TrialLogFiltersInterface,
-} from 'pages/TrialLogs/TrialLogFilters';
+import { LogViewerTimestampFilterComponentProp } from 'pages/TrialLogs/TrialLogFilters';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
-import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
-import { capitalize } from 'utils/string';
+import { ansiToHtml, copyToClipboard, toPixel, toRem } from 'utils/dom';
 
 import css from './LogViewer.module.scss';
+import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
+import LogViewerLevel, { ICON_WIDTH } from './LogViewerLevel';
 import Page, { Props as PageProps } from './Page';
 
 export interface LogViewerTimestampFilter {
@@ -31,10 +31,7 @@ export interface LogViewerTimestampFilter {
 
 interface Props {
   FilterComponent?: React.ComponentType<LogViewerTimestampFilterComponentProp>,
-  debugMode?: boolean;
-  disableLevel?: boolean;
   fetchToLogConverter: (data: unknown) => TrialLog,
-  noWrap?: boolean;
   onDownloadClick?: () => void;
   onFetchLogAfter: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
   onFetchLogBefore: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
@@ -43,28 +40,12 @@ interface Props {
   pageProps: Partial<PageProps>;
 }
 
-interface ViewerLog extends TrialLog {
-  formattedTime: string;
-}
-
-interface LogConfig {
-  charHeight: number;
-  charWidth: number;
-  dateTimeWidth: number;
-  messageSizes: Record<string, MessageSize>;
-  messageWidth: number;
-  totalContentHeight: number;
-}
-
-interface MessageSize {
+export interface ListMeasure {
   height: number;
-  top: number;
+  width: number;
 }
 
-export const TAIL_SIZE = 200;
-
-// What factor to multiply against the displayable lines in the visible view.
-const BUFFER_FACTOR = 1;
+export const TAIL_SIZE = 100;
 
 // Format the datetime to...
 const DATETIME_PREFIX = '[';
@@ -74,27 +55,39 @@ const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD HH:mm:ss${DATETIME_SUFFI
 // Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
 const MAX_DATETIME_LENGTH = 23;
 
-// Number of pixels from the top of the scroll to trigger the `onScrollToTop` callback.
-const SCROLL_TOP_THRESHOLD = 36;
-
-const SCROLL_BOTTOM_THRESHOLD = 36;
-
-const ICON_WIDTH = 26;
-
 const THROTTLE_TIME = 500;
 
-const defaultLogConfig = {
-  charHeight: 0,
-  charWidth: 0,
-  dateTimeWidth: 0,
-  messageSizes: {},
-  messageWidth: 0,
-  totalContentHeight: 0,
+enum DIRECTIONS {
+  OLDEST, // show oldest logs and infinite-scroll newest ones at the bottom
+  TAILING, // show newest logs and infinite-scroll oldest ones at the top
+}
+
+const formatClipboardHeader = (log: TrialLog): string => {
+  const format = `%${MAX_DATETIME_LENGTH - 1}s `;
+  const level = `<${log.level || ''}>`;
+  const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+  return sprintf(`%-9s ${format}`, level, datetime);
 };
 
-const DIRECTIONS = {
-  OLDEST: 'OLDEST', // show oldest logs and infinite-scroll newest ones at the bottom
-  TAILING: 'TAILING', // show newest logs and infinite-scroll oldest ones at the top
+const useGetListMeasure = (container: RefObject<HTMLDivElement>): ListMeasure => {
+  const containerPaddingInPixel = useMemo(() => {
+    return toPixel(
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--theme-sizes-layout-medium'),
+    );
+  }, []);
+  const scroll = useScroll(container);
+
+  return {
+    height: Math.max(
+      0,
+      (scroll?.viewHeight || 0) - (parseInt(containerPaddingInPixel) * 2),
+    ),
+    width: Math.max(
+      0,
+      (scroll?.viewWidth || 0) - (parseInt(containerPaddingInPixel) * 2),
+    ),
+  };
 };
 
 const LogViewerTimestamp: React.FC<Props> = ({
@@ -109,167 +102,161 @@ const LogViewerTimestamp: React.FC<Props> = ({
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
-  const spacer = useRef<HTMLDivElement>(null);
-  const measure = useRef<HTMLDivElement>(null);
+  const listRef = useRef<VariableSizeList>(null);
 
-  const resize = useResize(container);
-  const scroll = useScroll(container);
+  const charMeasures = useGetCharMeasureInContainer(container);
+  const listMeasure = useGetListMeasure(container);
 
-  const [ config, setConfig ] = useState<LogConfig>(defaultLogConfig);
+  const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
+
   const [ direction, setDirection ] = useState(DIRECTIONS.TAILING);
   const [ filter, setFilter ] = useState<LogViewerTimestampFilter>({});
   const [ filterOptions, setFilterOptions ] = useState<LogViewerTimestampFilter>({});
-  const [ isFirstLogBatchLoaded, setIsFirstLogBatchLoaded ] = useState<boolean>(false);
-  const [ isLastReached, setIsLastReached ] = useState(false);
-  const [ isScrollOn, setIsScrollOn ] = useState<{bottom: boolean, top: boolean}>({
-    bottom: true,
-    top: true,
-  });
-  const [ logs, setLogs ] = useState<ViewerLog[]>([]);
+  const [ isLastReached, setIsLastReached ] = useState<boolean>(false);
+  const [ isLoadingFirstBatch, setIsLoadingFirstBatch ] = useState<boolean>(false);
+  const [ isOnBottom, setIsOnBottom ] = useState<boolean>(false);
+  const [ isOnTop, setIsOnTop ] = useState<boolean>(false);
+  const [ logs, logsDispatch ] = useReducer<Reducer<ViewerLog[], LogStoreAction>>(
+    logStoreReducer,
+    [],
+  );
 
-  const classes = [ css.base ];
-  if (props.noWrap) classes.push(css.noWrap);
-  const scrollToTopClasses = [ css.scrollToTop, css.show ];
-  if (direction === DIRECTIONS.OLDEST) scrollToTopClasses.push(css.enabled);
-  const enableTailingClasses = [ css.enableTailing ];
-  if (direction === DIRECTIONS.TAILING) enableTailingClasses.push(css.enabled);
+  const addLogs = useCallback((addedLogs: TrialLog[], isPrepend = false): void => {
+    const newLogs = addedLogs
+      .map(log => {
+        const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+        return { ...log, formattedTime };
+      })
+      .sort((logA, logB) => {
+        const logATime = logA.time || '';
+        const logBTime = logB.time || '';
+        return logATime.localeCompare(logBTime);
+      });
+    if (newLogs.length === 0) return;
 
-  const spacerStyle = { height: toRem(config.totalContentHeight) };
-  const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
-  const messageStyle = { width: toRem(config.messageWidth) };
-  const levelStyle = { width: toRem(ICON_WIDTH) };
-
-  /*
-   * Calculate all the sizes of the log pieces such as the individual character size,
-   * line numbers, datetime and message whenever new logs are added.
-   */
-  const measureLogs = useCallback((logs): LogConfig => {
-    // Check to make sure all the necessary elements are available.
-    if (!measure.current || !spacer.current) throw new Error('Missing log measuring elements.');
-
-    // Fetch container sizes for upcoming calculations.
-    const spacerRect = spacer.current.getBoundingClientRect();
-
-    // Show the measure element to support measuring text.
-    measure.current.style.display = 'inline';
-
-    // Get the width for a single character of the monospace font.
-    measure.current.textContent = 'W';
-    measure.current.style.width = 'auto';
-    const charRect = measure.current.getBoundingClientRect();
-
-    /*
-     * Set the datetime column width based on the character width.
-     * Largest possible datetime string is 34 characters:
-     * eg. [YYYY-MM-DDTHH:mm:ss.ssssss-HH:MM]
-     * Add one to account for the trailing space character.
-     */
-    const dateTimeWidth = charRect.width * MAX_DATETIME_LENGTH;
-
-    /*
-     * Calculate the width of message based on how much space is left
-     * after rendering line and timestamp.
-     */
-    const iconWidth = props.disableLevel ? 0 : ICON_WIDTH;
-    const messageWidth = Math.floor(spacerRect.width - iconWidth - dateTimeWidth);
-    const messageCharCount = Math.floor(messageWidth / charRect.width);
-
-    /*
-      * Calculate the dimensions of every message in the available data.
-      * Add up all the height to figure out what the scroll height is.
-      */
-    let totalContentHeight = 0;
-    const messageSizes: Record<string, MessageSize> = {};
-    measure.current.style.width = toRem(messageWidth);
-    logs.forEach((log: ViewerLog) => {
-      const lineCount = log.message
-        .split('\n')
-        .map(line => line.length > messageCharCount ? Math.ceil(line.length / messageCharCount) : 1)
-        .reduce((acc, count) => acc + count, 0);
-      const height = lineCount * charRect.height;
-      messageSizes[log.id] = { height, top: totalContentHeight };
-      totalContentHeight += height;
+    logsDispatch({
+      type: isPrepend ? LogStoreActionType.Prepend : LogStoreActionType.Append,
+      value: newLogs,
     });
 
-    // Hide the measure element
-    measure.current.style.display = 'none';
+    // Restore the previous scroll position when prepending log entries.
+    if (isPrepend) {
+      listRef.current?.resetAfterIndex(0);
+      listRef.current?.scrollToItem(newLogs.length + 1);
+    }
+  }, [ listRef, logsDispatch ]);
 
-    // Return all the calculated sizes for log view configuartion.
-    return {
-      charHeight: charRect.height,
-      charWidth: charRect.width,
-      dateTimeWidth,
-      messageSizes,
-      messageWidth,
-      totalContentHeight,
-    };
-  }, [ props.disableLevel ]);
+  const clearLogs = useCallback(() => {
+    logsDispatch({ type: LogStoreActionType.Clear });
+    listRef.current?.resetAfterIndex(0);
+    setIsLastReached(false);
+    setIsLoadingFirstBatch(true);
+  }, [ logsDispatch ]);
 
-  /*
-   * Figure out which logs lines to actually render based on whether it
-   * is visible in the scroll view window or not.
-   */
-  const visibleLogs = useMemo(() => {
-    if (config.totalContentHeight === 0) return logs;
+  const fetchAndAppendLogs =
+    useCallback((direction: DIRECTIONS, filters: LogViewerTimestampFilter): AbortController => {
+      const canceler = new AbortController();
+      let fetchArgs = null;
+      let isPrepend = false;
 
-    const viewTop = scroll.scrollTop - scroll.viewHeight * BUFFER_FACTOR;
-    const viewBottom = scroll.scrollTop + scroll.viewHeight * (1 + BUFFER_FACTOR);
+      if (direction === DIRECTIONS.TAILING) {
+        fetchArgs = onFetchLogBefore(filters, canceler);
+        isPrepend = true;
+      }
 
-    return logs.filter(log => {
-      const size = config.messageSizes[log.id];
-      if (!size) return false;
-      const top = size.top;
-      const bottom = size.top + size.height;
-      return (top > viewTop && top < viewBottom) || (bottom > viewTop && bottom < viewBottom);
-    });
-  }, [ config, logs, scroll ]);
+      if (direction === DIRECTIONS.OLDEST) {
+        fetchArgs = onFetchLogAfter({
+          ...filters,
+          timestampAfter: filters.timestampAfter?.subtract(1, 'millisecond'),
+        }, canceler);
+        isPrepend = false;
+      }
 
-  /*
-   * Detect log viewer resize events to trigger
-   * recalculation of measured log entries.
-   */
-  useLayoutEffect(() => {
-    const throttleFunc = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
-      if (!container.current) return;
-      setConfig(measureLogs(logs));
-    });
+      if (fetchArgs) {
+        let buffer: TrialLog[] = [];
+        consumeStream(
+          fetchArgs,
+          event => {
+            const logEntry = fetchToLogConverter(event);
+            direction === DIRECTIONS.OLDEST ? buffer.unshift(logEntry) : buffer.push(logEntry);
+          },
+        ).then(() => {
+          if (buffer.length < TAIL_SIZE) setIsLastReached(true);
 
-    throttleFunc();
-  }, [ logs, measureLogs, resize ]);
+          // prevent loading other logs after adding the loaded ones
+          setIsOnBottom(direction === DIRECTIONS.TAILING);
+          setIsOnTop(direction === DIRECTIONS.OLDEST);
 
-  /*
-   * Check if user scroll is on top/bottom.
-   */
-  useLayoutEffect(() => {
-    setIsScrollOn({
-      bottom: (
-        scroll.scrollHeight
-        - scroll.viewHeight
-        - scroll.scrollTop
-        < SCROLL_BOTTOM_THRESHOLD
-      ),
-      top: (
-        scroll.scrollTop < SCROLL_TOP_THRESHOLD
-      ),
-    });
-  }, [ scroll ]);
+          addLogs(buffer, isPrepend);
 
-  /*
-   * Automatically scroll to log tail (if tailing).
-   */
-  useLayoutEffect(() => {
-    const element = container.current;
+          setIsLoadingFirstBatch(false);
 
-    if (
-      !element
-      || !isScrollOn.bottom
-      || direction !== DIRECTIONS.TAILING
-    ) return;
+          buffer = [];
+        });
+      }
 
-    setTimeout(() => {
-      element.scrollTo({ top: element.scrollHeight });
-    });
-  }, [ container, direction, isScrollOn.bottom, logs ]);
+      return canceler;
+    }, [ addLogs, fetchToLogConverter, onFetchLogAfter, onFetchLogBefore ]);
+
+  const getItemHeight = (index: number): number => {
+    const log = logs[index];
+    if (!log) {
+      return charMeasures.height;
+    }
+
+    const maxCharPerLine = Math.floor(
+      (listMeasure.width - ICON_WIDTH - dateTimeWidth) / charMeasures.width,
+    );
+
+    const lineCount = log.message
+      .split('\n')
+      .map(line => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
+      .reduce((acc, count) => acc + count, 0);
+
+    return lineCount * charMeasures.height;
+  };
+
+  const handleCopyToClipboard = useCallback(async () => {
+    const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
+
+    try {
+      await copyToClipboard(content);
+      const linesLabel = logs.length === 1 ? 'entry' : 'entries';
+      notification.open({
+        description: `${logs.length} ${linesLabel} copied to the clipboard.`,
+        message: `Available ${props.pageProps.title} Copied`,
+      });
+    } catch (e) {
+      notification.warn({
+        description: e.message,
+        message: 'Unable to Copy to Clipboard',
+      });
+    }
+  }, [ logs, props.pageProps.title ]);
+
+  const handleDownload = useCallback(() => {
+    if (onDownloadClick) onDownloadClick();
+  }, [ onDownloadClick ]);
+
+  const handleEnableTailing = useCallback(() => {
+    clearLogs();
+    setDirection(DIRECTIONS.TAILING);
+  }, [ clearLogs ]);
+
+  const handleFullScreen = useCallback(() => {
+    if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
+  }, []);
+
+  const handleScrollToTop = useCallback(() => {
+    clearLogs();
+    setDirection(DIRECTIONS.OLDEST);
+  }, [ clearLogs ]);
+
+  const onItemsRendered =
+    useCallback(({ visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps) => {
+      setIsOnTop(visibleStartIndex === 0);
+      setIsOnBottom(visibleStopIndex === (logs.length - 1));
+    }, [ logs ]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -312,97 +299,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
     return (): void => target?.removeEventListener('copy', handleCopy);
   }, []);
 
-  const formatClipboardHeader = useCallback((log: TrialLog): string => {
-    const format = `%${MAX_DATETIME_LENGTH - 1}s `;
-    const level = `<${log.level || ''}>`;
-    const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
-    return props.disableLevel ?
-      sprintf(format, datetime) :
-      sprintf(`%-9s ${format}`, level, datetime);
-  }, [ props.disableLevel ]);
-
-  const handleCopyToClipboard = useCallback(async () => {
-    const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
-
-    try {
-      await copyToClipboard(content);
-      const linesLabel = logs.length === 1 ? 'entry' : 'entries';
-      notification.open({
-        description: `${logs.length} ${linesLabel} copied to the clipboard.`,
-        message: `Available ${props.pageProps.title} Copied`,
-      });
-    } catch (e) {
-      notification.warn({
-        description: e.message,
-        message: 'Unable to Copy to Clipboard',
-      });
-    }
-  }, [ formatClipboardHeader, logs, props.pageProps.title ]);
-
-  const handleFullScreen = useCallback(() => {
-    if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
-  }, []);
-
-  const addLogs = useCallback((addedLogs: TrialLog[], isPrepend = false): void => {
-    const newLogs = addedLogs
-      .map(log => {
-        const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
-        return { ...log, formattedTime };
-      })
-      .sort((logA, logB) => {
-        const logATime = logA.time || '';
-        const logBTime = logB.time || '';
-        return logATime.localeCompare(logBTime);
-      });
-    if (newLogs.length === 0) return;
-
-    const prevScrollHeight = container?.current?.scrollHeight;
-
-    setLogs(prevLogs => {
-      const logs = isPrepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ];
-      return logs.filter((log, index, self) => {
-        return self.map(mapObj => mapObj.id).indexOf(log.id) === index;
-      });
-    });
-
-    // Restore the previous scroll position when prepending log entries.
-    if (isPrepend && container?.current && prevScrollHeight) {
-      container.current.scrollTo({
-        top: (
-          container.current.scrollHeight
-          + container.current.scrollTop
-          - prevScrollHeight
-        ),
-      });
-    }
-  }, [ container ]);
-
-  const clearLogs = useCallback(() => {
-    setIsFirstLogBatchLoaded(false);
-    setIsScrollOn({ bottom: true, top: true });
-    setIsLastReached(false);
-    setLogs([]);
-  }, []);
-
-  const handleFilterChange = useCallback((newFilters: TrialLogFiltersInterface) => {
-    clearLogs();
-    setFilter(newFilters);
-  }, [ clearLogs ]);
-
-  const handleScrollToTop = useCallback(() => {
-    clearLogs();
-    setDirection(DIRECTIONS.OLDEST);
-  }, [ clearLogs ]);
-
-  const handleEnableTailing = useCallback(() => {
-    clearLogs();
-    setDirection(DIRECTIONS.TAILING);
-  }, [ clearLogs ]);
-
-  const handleDownload = useCallback(() => {
-    if (onDownloadClick) onDownloadClick();
-  }, [ onDownloadClick ]);
-
   /*
    * Fetch filters data.
    */
@@ -418,10 +314,77 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ onFetchLogFilter ]);
 
   /*
-   * Watch Log tail (api follow).
+   * Fetch first batch of log (on direction change, on filters change, on page load).
    */
   useEffect(() => {
-    if (!isFirstLogBatchLoaded) return;
+    clearLogs();
+    const canceler = fetchAndAppendLogs(direction, filter);
+
+    return () => canceler.abort();
+  }, [ clearLogs, direction, fetchAndAppendLogs, filter ]);
+
+  /*
+   * Fetch older log when direction=tailing and scroll is on top.
+   */
+  useLayoutEffect(() => {
+    if (!isOnTop) return;
+    if (!listRef?.current) return;
+    if (direction !== DIRECTIONS.TAILING) return;
+    if (isLastReached) return;
+    if (isLoadingFirstBatch) return;
+
+    const logTimes = logs.map(log => log.time).sort();
+
+    const canceler = fetchAndAppendLogs(direction, {
+      ...filter,
+      timestampBefore: dayjs(logTimes.first()),
+    });
+
+    return () => canceler.abort();
+  }, [
+    direction,
+    fetchAndAppendLogs,
+    filter,
+    isLastReached,
+    isLoadingFirstBatch,
+    isOnTop,
+    listRef,
+    logs,
+  ]);
+
+  /*
+   * Fetch newer log when direction=oldest and scroll is on botton.
+   */
+  useLayoutEffect(() => {
+    if (!isOnBottom) return;
+    if (!listRef?.current) return;
+    if (direction !== DIRECTIONS.OLDEST) return;
+    if (isLastReached) return;
+    if (isLoadingFirstBatch) return;
+
+    const logTimes = logs.map(log => log.time).sort();
+
+    const canceler = fetchAndAppendLogs(direction, {
+      ...filter,
+      timestampAfter: dayjs(logTimes.last()),
+    });
+
+    return () => canceler.abort();
+  }, [
+    direction,
+    fetchAndAppendLogs,
+    filter,
+    isLastReached,
+    isLoadingFirstBatch,
+    isOnBottom,
+    listRef,
+    logs,
+  ]);
+
+  /*
+   * Fetch Log tail (api follow).
+   */
+  useEffect(() => {
     if (direction !== DIRECTIONS.TAILING) return;
 
     const canceler = new AbortController();
@@ -444,89 +407,25 @@ const LogViewerTimestamp: React.FC<Props> = ({
       canceler.abort();
       throttleFunc.cancel();
     };
-  }, [
-    addLogs,
-    direction,
-    fetchToLogConverter,
-    filter,
-    isFirstLogBatchLoaded,
-    onFetchLogTail,
-  ]);
+  }, [ addLogs, direction, fetchToLogConverter, filter, onFetchLogTail ]);
 
   /*
-   * Load old Log entries (api no-follow) when container scroll is at the top or bottom.
+   * Automatically scroll to log tail (if tailing).
    */
-  useEffect(() => {
-    if (isLastReached) return;
+  useLayoutEffect(() => {
+    if (!isOnBottom) return;
+    if (!listRef?.current) return;
+    if (direction !== DIRECTIONS.TAILING) return;
 
-    const canceler = new AbortController();
-    const logTimes = logs.map(log => log.time).sort();
-    let fetchArgs = null;
-    let isPrepend = false;
+    listRef.current.scrollToItem(logs.length);
+  }, [ direction, isOnBottom, listRef, logs ]);
 
-    if (direction === DIRECTIONS.TAILING && isScrollOn.top) {
-      const firstLogTime = logTimes[0];
-      fetchArgs = onFetchLogBefore({
-        ...filter,
-        timestampBefore: (
-          firstLogTime ? dayjs(firstLogTime) : filter.timestampBefore
-        ),
-      }, canceler);
-      isPrepend = true;
-    }
-
-    if (direction === DIRECTIONS.OLDEST && isScrollOn.bottom) {
-      const lastLogTime = logTimes.last();
-      fetchArgs = onFetchLogAfter({
-        ...filter,
-        timestampAfter: (
-          lastLogTime ? dayjs(lastLogTime).subtract(1, 'millisecond') : filter.timestampAfter
-        ),
-      }, canceler);
-      isPrepend = false;
-    }
-
-    if (fetchArgs) {
-      let buffer: TrialLog[] = [];
-      consumeStream(
-        fetchArgs,
-        event => {
-          const logEntry = fetchToLogConverter(event);
-          direction === DIRECTIONS.OLDEST ? buffer.unshift(logEntry) : buffer.push(logEntry);
-        },
-      ).then(() => {
-        if (buffer.length < TAIL_SIZE) setIsLastReached(true);
-
-        /*
-         * Forcing both to false to prevent a race condition: when "logs" (useState) changes,
-         * it triggers loading other logs via useEffect, which watches "isScrollOn", which
-         * is not already updated (will refresh in another useEffect but only after the re-render
-         * will trigger a "scroll" (useState) update, which happens only after logs are appended).
-         */
-        setIsScrollOn({ bottom: false, top: false });
-
-        addLogs(buffer, isPrepend);
-        buffer = [];
-
-        setIsFirstLogBatchLoaded(true);
-      });
-
-      return () => {
-        canceler.abort();
-      };
-    }
-  }, [
-    addLogs,
-    direction,
-    logs,
-    fetchToLogConverter,
-    filter,
-    isLastReached,
-    isScrollOn.bottom,
-    isScrollOn.top,
-    onFetchLogAfter,
-    onFetchLogBefore,
-  ]);
+  /*
+   * Force recomputing messages height when width changes
+   */
+  useLayoutEffect(() => {
+    listRef.current?.resetAfterIndex(0);
+  }, [ listMeasure.width, listRef ]);
 
   const logOptions = (
     <Space>
@@ -534,15 +433,9 @@ const LogViewerTimestamp: React.FC<Props> = ({
         <FilterComponent
           filter={filter}
           filterOptions={filterOptions}
-          onChange={handleFilterChange}
+          onChange={setFilter}
         />
       )}
-      {props.debugMode && <div className={css.debugger}>
-        <span data-label="ScrollLeft:">{scroll.scrollLeft}</span>
-        <span data-label="ScrollTop:">{scroll.scrollTop}</span>
-        <span data-label="ScrollWidth:">{scroll.scrollWidth}</span>
-        <span data-label="ScrollHeight:">{scroll.scrollHeight}</span>
-      </div>}
       <Tooltip placement="bottomRight" title="Copy to Clipboard">
         <Button
           aria-label="Copy to Clipboard"
@@ -565,43 +458,48 @@ const LogViewerTimestamp: React.FC<Props> = ({
     </Space>
   );
 
-  const levelCss = (defaultCss: string, level?: string): string => {
-    const classes = [ defaultCss ];
-    if (level) classes.push(css[level]);
-    return classes.join(' ');
+  const scrollToTopClasses = [ css.scrollToTop, css.show ];
+  if (direction === DIRECTIONS.OLDEST) scrollToTopClasses.push(css.enabled);
+  const enableTailingClasses = [ css.enableTailing ];
+  if (direction === DIRECTIONS.TAILING) enableTailingClasses.push(css.enabled);
+
+  const dateTimeStyle = { width: toRem(dateTimeWidth) };
+
+  const LogViewerRow: React.FC<ListChildComponentProps> = ({ data, index, style }) => {
+    const log = data[index];
+
+    const messageClasses = [ css.message ];
+    if (log.level) messageClasses.push(css[log.level]);
+
+    return (
+      <div className={css.line} style={style}>
+        <LogViewerLevel logLevel={log.level} />
+        <div className={css.time} style={dateTimeStyle}>
+          {log.formattedTime}
+        </div>
+        <div
+          className={messageClasses.join(' ')}
+          dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
+        />
+      </div>
+    );
   };
 
   return (
     <Page {...props.pageProps} options={logOptions}>
       <div className={css.base} ref={baseRef}>
         <div className={css.container} ref={container}>
-          <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
-            {visibleLogs.map(log => (
-              <div
-                className={css.line}
-                id={`log-${log.id}`}
-                key={log.id}
-                style={{
-                  height: toRem(config.messageSizes[log.id]?.height),
-                  top: toRem(config.messageSizes[log.id]?.top),
-                }}>
-                {!props.disableLevel ? (
-                  <Tooltip placement="top" title={`Level: ${capitalize(log.level || '')}`}>
-                    <div className={levelCss(css.level, log.level)} style={levelStyle}>
-                      <div className={css.levelLabel}>&lt;[{log.level || ''}]&gt;</div>
-                      <Icon name={log.level} size="small" />
-                    </div>
-                  </Tooltip>
-                ) : null}
-                <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
-                <div
-                  className={levelCss(css.message, log.level)}
-                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
-                  style={messageStyle} />
-              </div>
-            ))}
-          </div>
-          <div className={css.measure} ref={measure} />
+          <VariableSizeList
+            height={listMeasure.height}
+            itemCount={logs.length}
+            itemData={logs}
+            itemSize={getItemHeight}
+            ref={listRef}
+            width='100%'
+            onItemsRendered={onItemsRendered}
+          >
+            {LogViewerRow}
+          </VariableSizeList>
         </div>
         <div className={css.scrollTo}>
           <Tooltip placement="left" title="Scroll to Top">

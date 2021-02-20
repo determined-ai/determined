@@ -16,6 +16,7 @@
     "build-storybook": "NODE_PATH=src build-storybook -s public -o build-storybook"
   },
   "dependencies": {
+    "@types/react-window": "^1.8.2",
     "ansi-to-html": "^0.6.14",
     "antd": "^4.6.6",
     "axios": "^0.21.1",
@@ -37,6 +38,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "^3.4.4",
     "react-transition-group": "^4.4.1",
+    "react-window": "^1.8.6",
     "screenfull": "^5.0.2",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
