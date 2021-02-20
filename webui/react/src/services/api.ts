@@ -1,21 +1,19 @@
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
-  ApiSorter, CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams,
-  ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams, GetShellsParams,
-  GetTensorboardsParams, GetTrialsParams, LaunchNotebookParams, LaunchTensorboardParams,
-  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
-  TrialDetailsParams,
+  CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams,
+  ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
+  GetShellsParams, GetTensorboardsParams, GetTrialsParams, LaunchNotebookParams,
+  LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams,
+  SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
-import { generateApi, generateDetApi, processApiError, validateDetApiEnum } from 'services/utils';
+import { generateApi, generateDetApi } from 'services/utils';
 import {
-  Agent, ALL_VALUE, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentFilters, ExperimentItem, ExperimentPagination, Log, Pagination,
-  ResourcePool, RunState, Telemetry, TrialDetails, TrialPagination, ValidationHistory,
+  Agent, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
+  ExperimentBase, ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails,
+  TrialPagination, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
-
-import { encodeExperimentState, mapV1ExperimentList } from './decoder';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
@@ -69,36 +67,6 @@ export const getResourcePools = generateDetApi<
 export const getExperiments = generateDetApi<
   GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentPagination
 >(Config.getExperiments);
-
-export const getExperimentList = async (
-  sorter: ApiSorter<Api.V1GetExperimentsRequestSortBy>,
-  pagination: Pagination,
-  filters: ExperimentFilters,
-  search?: string,
-): Promise<{ experiments: ExperimentItem[], pagination?: Api.V1Pagination }> => {
-  try {
-    const response = await Config.detApi.Experiments.determinedGetExperiments(
-      validateDetApiEnum(Api.V1GetExperimentsRequestSortBy, sorter.key),
-      sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-      pagination.offset,
-      pagination.limit,
-      search,
-      (filters.labels && filters.labels.length === 0) ? undefined : filters.labels,
-      filters.showArchived ? undefined : false,
-      filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        return encodeExperimentState(state as RunState) as any;
-      }),
-      filters.username ? [ filters.username ] : undefined,
-    );
-
-    const experiments = mapV1ExperimentList(response.experiments || []);
-    return { experiments, pagination: response.pagination };
-  } catch (e) {
-    processApiError('getExperimentList', e);
-    throw e;
-  }
-};
 
 export const getExperimentDetails = generateDetApi<
   ExperimentDetailsParams, Api.V1GetExperimentResponse, ExperimentBase
