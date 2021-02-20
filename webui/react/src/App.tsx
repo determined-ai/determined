@@ -10,7 +10,6 @@ import Router from 'components/Router';
 import Spinner from 'components/Spinner';
 import Compose from 'Compose';
 import Agents from 'contexts/Agents';
-import AppContexts from 'contexts/AppContexts';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
@@ -92,7 +91,6 @@ const AppView: React.FC = () => {
   return (
     <div className={classes.join(' ')}>
       <Spinner spinning={ui.showSpinner}>
-        {isAuthenticated && <AppContexts />}
         <div className={css.body}>
           <Navigation />
           <NavigationTopbar />
