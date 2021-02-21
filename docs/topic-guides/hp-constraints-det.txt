@@ -4,43 +4,47 @@
  Hyperparameter Search Constraints
 ###################################
 
-Determined's Hyperparameter Search Constraints API enables users
-to specify their hyperparameter searches in a more granular way
-beyond the experiment configuration. There are many instances
-where a user may wish to avoid searching over specific combinations
-of hyperparameters entirely or constrain their hyperparameter searches
-based on training and/or validation metrics (i.e. model deployment in
-constrained settings, implicit knowledge about the types of models
-most likely to achieve the desired metrics on a given dataset).
+Determined's Hyperparameter Search Constraints API enables users to
+specify their hyperparameter searches in a more granular way beyond the
+experiment configuration. There are many instances where a user may wish
+to avoid searching over specific combinations of hyperparameters
+entirely or constrain their hyperparameter searches based on training
+and/or validation metrics (i.e. model deployment in constrained
+settings, implicit knowledge about the types of models most likely to
+achieve the desired metrics on a given dataset).
 
 Using Determined's HP Search Constraints requires no changes to the
-configuration files. Rather, users can simply raise a `determined.InvalidHP`
-exception in their model code when the trial is first created
-in the `__init__` or at any subsequent point during training. This user-raised
-exception is then handled by Determined's system internally – resulting in
-the graceful stop of the current trial being trained, logging the InvalidHP in
-the trial logs, and propagating that information to the search method.
+configuration files. Rather, users can simply raise a
+`determined.InvalidHP` exception in their model code when the trial is
+first created in the `__init__` or at any subsequent point during
+training. This user-raised exception is then handled by Determined's
+system internally – resulting in the graceful stop of the current trial
+being trained, logging the InvalidHP in the trial logs, and propagating
+that information to the search method.
 
 .. warning::
 
-    It is important to note that each search method has different behavior
-    when a `determined.InvalidHP` is raised by the user in accordance with
-    the internal dynamics of each searcher, as detailed below.
+   It is important to note that each search method has different
+   behavior when a `determined.InvalidHP` is raised by the user in
+   accordance with the internal dynamics of each searcher, as detailed
+   below.
 
 ***************************************************************
  HP Search Constraints usage in PyTorch vs. TF Keras/Estimator
 ***************************************************************
 
-Since the PyTorch and TF Keras/Estimator APIs have different behavior, it follows
-that the timing/placement of user-raised InvalidHP exceptions would be different.
+Since the PyTorch and TF Keras/Estimator APIs have different behavior,
+it follows that the timing/placement of user-raised InvalidHP exceptions
+would be different.
 
-In the case of PyTorch, this exception can be raised in either the trial `__init__`,
-`train_batch`, or `evaluate_batch`. In the case of either TF Keras and TF Estimator, it is
-valid for the user to raise this exception in either the `__init__` or in an
-`on_checkpoint_end` callback.
+In the case of PyTorch, this exception can be raised in either the trial
+`__init__`, `train_batch`, or `evaluate_batch`. In the case of either TF
+Keras and TF Estimator, it is valid for the user to raise this exception
+in either the `__init__` or in an `on_checkpoint_end` callback.
 
-See this https://github.com/determined-ai/determined/tree/master/examples for an example
-on HP Search Constraints usage.
+See this
+https://github.com/determined-ai/determined/tree/master/examples for an
+example on HP Search Constraints usage.
 
 ******************************************************
  Searcher-Specific Behavior for HP Search Constraints
@@ -53,19 +57,26 @@ on HP Search Constraints usage.
       -  HP Search Constraints Behavior
 
    -  -  Single
-      -  Not applicable to HP Search Constraints as only a single hyperparameter configuration will be trained.
+      -  Not applicable to HP Search Constraints as only a single
+         hyperparameter configuration will be trained.
 
    -  -  Grid
-      -  Does nothing since grid does not take actions based on search status or progress.
+      -  Does nothing since grid does not take actions based on search
+         status or progress.
 
    -  -  Random
-      -  Gracefully terminates current trial, creates a new trial according to search parameters and adds it to the trial queue.
+      -  Gracefully terminates current trial, creates a new trial
+         according to search parameters and adds it to the trial queue.
 
    -  -  PBT
-      -  Does not have any specific InvalidHP handling logic – either terminates training or runs around round accordingly.
+      -  Does not have any specific InvalidHP handling logic – either
+         terminates training or runs around round accordingly.
 
    -  -  Adaptive (ASHA)
-      -  Gracefully terminates and removes associated metrics with the current trial, creates a new trial according to search parameters and adds it to the trial queue.
+
+      -  Gracefully terminates and removes associated metrics with the
+         current trial, creates a new trial according to search
+         parameters and adds it to the trial queue.
 
 ************
  Next Steps
