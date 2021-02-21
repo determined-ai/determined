@@ -237,3 +237,19 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  MNIST
       -  :download:`custom_reducers_mnist_pytorch.tgz
          </examples/custom_reducers_mnist_pytorch.tgz>`
+
+*********************************
+ Features: HP Search Constraints
+*********************************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  MNIST
+      -  :download:`hp_constraints_mnist_pytorch.tgz
+         </examples/hp_constraints_mnist_pytorch.tgz>`

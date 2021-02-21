@@ -31,6 +31,7 @@ explanation. Below you will find some suggested starting guides.
 
 -  :ref:`topic-guides_hp-tuning-basics`
 -  :ref:`topic-guides_hp-tuning-det`
+-  :ref:`topic-guides_hp-constraints-det`
 
 **Distributed Training**
 
