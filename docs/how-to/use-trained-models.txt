@@ -75,7 +75,7 @@ of a specified experiment.
 
    from determined.experimental import Determined
 
-   checkpoints = Determined.get_experiment(id).top_n_checkpoints(5)
+   checkpoints = Determined().get_experiment(id).top_n_checkpoints(5)
 
 This method also accepts ``sort_by`` and ``smaller_is_better``
 arguments.
@@ -105,7 +105,7 @@ selecting checkpoints.
 
    from determined.experimental import Determined
 
-   trial = Determined.get_trial(id)
+   trial = Determined().get_trial(id)
 
    best_checkpoint = trial.top_checkpoint()
 
@@ -150,7 +150,7 @@ into memory in a Python process, as shown in the following snippet.
 
    from determined.experimental import Determined
 
-   checkpoint = Determined.get_experiment(id).top_checkpoint()
+   checkpoint = Determined().get_experiment(id).top_checkpoint()
    model = checkpoint.load()
 
 TensorFlow checkpoints are saved in either the ``saved_model`` or ``h5``
