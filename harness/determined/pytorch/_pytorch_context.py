@@ -96,6 +96,7 @@ class PyTorchTrialContext(det.TrialContext):
             # Eliminate any need for the loss functions to be in that context:
             def hook(module, input, output):
                 return output.float32() if output.dtype == torch.float16 else output
+
             model.register_forward_hook(hook)
 
         self.models.append(model)
@@ -232,8 +233,8 @@ class PyTorchTrialContext(det.TrialContext):
         return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
     def use_amp(self) -> None:
-        self.wrap_scaler(torch.cuda.amp.GradScaler(), automatic = True)
-    
+        self.wrap_scaler(torch.cuda.amp.GradScaler(), automatic=True)
+
     def wrap_scaler(self, scaler: Any, automatic: bool = False) -> Any:
         """
         Prepares to use automatic mixed precision through PyTorch’s native AMP API.
@@ -573,11 +574,13 @@ class PyTorchTrialContext(det.TrialContext):
         if scaler is None and self._auto_amp:
             scaler = self._scaler
         if scaler:
+
             def step_fn():
                 scaler.step(optimizer)
+
         else:
             step_fn = optimizer.step
-        
+
         if self.hvd_config.use:
             with optimizer.skip_synchronize():  # type: ignore
                 step_fn()

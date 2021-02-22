@@ -11,5 +11,6 @@ from determined.pytorch import PyTorchTrialContext
 class MNistApexAMPTrial(MNistTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         super().__init__(context)
-        self.model, self.optimizer = self.context.configure_apex_amp(models=self.model, optimizers=self.optimizer)
-
+        self.model, self.optimizer = self.context.configure_apex_amp(
+            models=self.model, optimizers=self.optimizer
+        )
