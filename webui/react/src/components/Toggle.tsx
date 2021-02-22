@@ -1,5 +1,5 @@
 import { Switch } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
 import Label from './Label';
 import css from './Toggle.module.scss';
@@ -11,11 +11,8 @@ interface Props {
   suffixLabel?: string;
 }
 
-const Toggle: React.FC<Props> = ({ onChange, ...props }: Props) => {
-  const [ checked, setChecked ] = useState(props.checked || false);
-
+const Toggle: React.FC<Props> = ({ checked = false, onChange, ...props }: Props) => {
   const handleClick = useCallback(() => {
-    setChecked(!checked);
     if (onChange) onChange(!checked);
   }, [ checked, onChange ]);
 
