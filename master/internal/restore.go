@@ -261,7 +261,7 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 		return snapshot, nil
 	}
 
-	// And queue them to be sent to trials immediately (also filter out checkpoints).
+	// And queue them to be sent to trials immediately.
 	for _, ops := range waitingCheckpoints.(map[string]interface{}) {
 		searcherState["trial_operations"] = append(searcherState["trial_operations"].([]interface{}),
 			ops.([]interface{})...)
