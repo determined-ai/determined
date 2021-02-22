@@ -48,10 +48,11 @@ locally to lower build time.
 
 ## Developing Against a Remote Cluster
 
-If the remote cluster has `enable_cors` set or allows CORS requests set `SERVER_ADDRESS` to point
-to the cluster address. If that's not he case use the bundled `local-cors-proxy` package to run a 
-proxy pointing to the target server with `npx lcp --proxyUrl <REMOTE_SERVER_URL>` and then build the
-webui or the dev server with `SERVER_ADDRESS` pointing to this local proxy.
+If the remote cluster has `enable_cors` set to any value or allows CORS requests, set
+`SERVER_ADDRESS` to point to the cluster address. If that's not the case use the bundled
+`local-cors-proxy` package to run a proxy pointing to the target server with
+`npx lcp --proxyUrl <REMOTE_SERVER_URL>` and then build the webui or the dev server with
+`SERVER_ADDRESS` pointing to this local proxy.
 
 ## Testing
 
