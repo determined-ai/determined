@@ -222,7 +222,10 @@ class PyTorchTrialContext(det.TrialContext):
         """
         return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
-    def wrap_scaler(self, scaler: Any, automatic: bool = True) -> Any:
+    def use_amp(self) -> None:
+        self.wrap_scaler(torch.cuda.amp.GradScaler(), automatic = True)
+    
+    def wrap_scaler(self, scaler: Any, automatic: bool = False) -> Any:
         """
         Prepares to use automatic mixed precision through PyTorch’s native AMP API.
 
@@ -528,47 +531,51 @@ class PyTorchTrialContext(det.TrialContext):
             "if optimizations.aggregation_frequency is larger than 1, "
             "you can only set auto_zero_grads to be true. ",
         )
-        if self._should_communicate_and_update():
-            # Communication needs to be synchronized so that is completed
-            # before we apply gradient clipping and `step()`.
-            if self.hvd_config.use and not self._use_apex:
-                optimizer.synchronize()  # type: ignore
 
-            parameters = (
-                [p for group in optimizer.param_groups for p in group.get("params", [])]
-                if not self._use_apex
-                else apex.amp.master_params(optimizer)
+        if not self._should_communicate_and_update():
+            return
+
+        # Communication needs to be synchronized so that is completed
+        # before we apply gradient clipping and `step()`. In the case of APEX
+        # this is called in backward() instead, so that it's inside the context
+        # manager and before unscaling.
+        if self.hvd_config.use and not self._use_apex:
+            optimizer.synchronize()  # type: ignore
+
+        parameters = (
+            [p for group in optimizer.param_groups for p in group.get("params", [])]
+            if not self._use_apex
+            else apex.amp.master_params(optimizer)
+        )
+
+        if self.hvd_config.average_aggregated_gradients:
+            self._average_gradients(
+                parameters=parameters, divisor=self.hvd_config.aggregation_frequency
             )
 
-            if self.hvd_config.average_aggregated_gradients:
-                self._average_gradients(
-                    parameters=parameters, divisor=self.hvd_config.aggregation_frequency
-                )
+        if clip_grads is not None:
+            if self._scaler and self._auto_amp:
+                self._scaler.unscale()
+            clip_grads(parameters)
 
-            if clip_grads is not None:
-                if self._scaler and self._auto_amp:
-                    self._scaler.unscale()
-                clip_grads(parameters)
+        # For stepping the optimizer we will operate on the scaler passed
+        # in, or fall back to the wrapped scaler (if any).
+        if scaler is None and self._auto_amp:
+            scaler = self._scaler
+        if scaler:
+            def step_fn():
+                scaler.step(optimizer)
+        else:
+            step_fn = optimizer.step
+        
+        if self.hvd_config.use:
+            with optimizer.skip_synchronize():  # type: ignore
+                step_fn()
+        else:
+            step_fn()
 
-            # For stepping the optimizer we will operate on the scaler passed
-            # in, or fall back to the wrapped scaler (if any).
-            if scaler is None:
-                scaler = self._scaler
-            if scaler:
-                if self.hvd_config.use:
-                    with optimizer.skip_synchronize():  # type: ignore
-                        scaler.step(optimizer)
-                else:
-                    scaler.step(optimizer)
-            else:
-                if self.hvd_config.use:
-                    with optimizer.skip_synchronize():  # type: ignore
-                        optimizer.step()
-                else:
-                    optimizer.step()
-
-            if auto_zero_grads:
-                optimizer.zero_grad()
+        if auto_zero_grads:
+            optimizer.zero_grad()
 
     def is_epoch_start(self) -> bool:
         """

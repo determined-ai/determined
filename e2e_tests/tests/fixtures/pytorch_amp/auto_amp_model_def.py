@@ -9,12 +9,11 @@ The methods `train_batch` and `evaluate_batch` are modified to use an autocast
 context during the forward pass.
 """
 
-from model_def import MNistTrial
-
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
 import torch
-from torch.cuda.amp import autocast, GradScaler
+from model_def import MNistTrial
+from torch.cuda.amp import autocast
 
 from determined.pytorch import PyTorchTrialContext
 
@@ -24,7 +23,7 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 class MNistAutoAMPTrial(MNistTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         super().__init__(context)
-        self.scaler = self.context.wrap_scaler(GradScaler(), automatic=True)
+        self.scaler = self.context.use_amp()
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -33,8 +32,8 @@ class MNistAutoAMPTrial(MNistTrial):
         data, labels = batch
 
         with autocast():
-          output = self.model(data)
-          loss = torch.nn.functional.nll_loss(output, labels)
+            output = self.model(data)
+            loss = torch.nn.functional.nll_loss(output, labels)
 
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
@@ -46,8 +45,8 @@ class MNistAutoAMPTrial(MNistTrial):
         data, labels = batch
 
         with autocast():
-          output = self.model(data)
-          validation_loss = torch.nn.functional.nll_loss(output, labels).item()
+            output = self.model(data)
+            validation_loss = torch.nn.functional.nll_loss(output, labels).item()
 
         pred = output.argmax(dim=1, keepdim=True)
         accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(data)
