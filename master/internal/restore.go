@@ -254,8 +254,13 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 	var waitingCheckpointOps []map[string]interface{}
 	if searcherState, ok := experimentSnapshotV0["searcher_state"]; ok {
 		if searchMethodState, ok := searcherState.(map[string]interface{})["search_method_state"]; ok {
-			wc := searchMethodState.(map[string]interface{})["waiting_checkpoints"].(map[string]interface{})
-			for _, ops := range wc {
+			wc, ok := searchMethodState.(map[string]interface{})["waiting_checkpoints"]
+			if !ok {
+				// It wasn't PBT.
+				return snapshot, nil
+			}
+			wcM := wc.(map[string]interface{})
+			for _, ops := range wcM {
 				for _, op := range ops.([]interface{}) {
 					waitingCheckpointOps = append(waitingCheckpointOps, op.(map[string]interface{}))
 				}
