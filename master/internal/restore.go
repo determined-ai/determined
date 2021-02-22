@@ -251,33 +251,33 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV0); err != nil {
 		return nil, err
 	}
-	var waitingCheckpointOps []map[string]interface{}
-	if searcherState, ok := experimentSnapshotV0["searcher_state"]; ok {
-		if searchMethodState, ok := searcherState.(map[string]interface{})["search_method_state"]; ok {
-			wc := searchMethodState.(map[string]interface{})["waiting_checkpoints"].(map[string]interface{})
-			for _, ops := range wc {
-				for _, op := range ops.([]interface{}) {
-					waitingCheckpointOps = append(waitingCheckpointOps, op.(map[string]interface{}))
-				}
-			}
-			delete(searchMethodState.(map[string]interface{}), "waiting_checkpoints")
-		}
+
+	// Get the waiting operations from PBT.
+	searcherState := experimentSnapshotV0["searcher_state"].(map[string]interface{})
+	searchMethodState := searcherState["search_method_state"].(map[string]interface{})
+	waitingCheckpoints, ok := searchMethodState["waiting_checkpoints"]
+	if !ok {
+		// If `waiting_checkpoints` is missing, this isn't PBT and this shim is only to shim PBT.
+		return snapshot, nil
 	}
-	var trialOperations []map[string]interface{}
-	if searcherState, ok := experimentSnapshotV0["searcher_state"]; ok {
-		if oldTrialOperations, ok := searcherState.(map[string]interface{})["trial_operations"]; ok {
-			for _, op := range oldTrialOperations.([]interface{}) {
-				// Remove checkpoints, that used to be OperationType = 3.
-				op := op.(map[string]interface{})
-				// Any numeric types parsed from JSON into an interface{} will be a float64.
-				if op["OperationType"].(float64) == 3 {
-					continue
-				}
-				trialOperations = append(trialOperations, op)
-			}
-			searcherState.(map[string]interface{})["trial_operations"] = append(
-				trialOperations, waitingCheckpointOps...)
-		}
+
+	// And queue them to be sent to trials immediately.
+	for _, ops := range waitingCheckpoints.(map[string]interface{}) {
+		searcherState["trial_operations"] = append(searcherState["trial_operations"].([]interface{}),
+			ops.([]interface{})...)
 	}
+	delete(searchMethodState, "waiting_checkpoints")
+
+	// Then filter out any checkpoints PBT instructed the trial to run.
+	var filteredOps []interface{}
+	for _, op := range searcherState["trial_operations"].([]interface{}) {
+		// Remove checkpoints, that used to be OperationType = 3.
+		// Any numeric types parsed from JSON into an interface{} will be a float64.
+		if op.(map[string]interface{})["OperationType"].(float64) == 3 {
+			continue
+		}
+		filteredOps = append(filteredOps, op)
+	}
+	searcherState["trial_operations"] = filteredOps
 	return json.Marshal(experimentSnapshotV0)
 }
