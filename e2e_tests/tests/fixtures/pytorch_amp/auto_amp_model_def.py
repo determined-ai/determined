@@ -9,11 +9,11 @@ The methods `train_batch` and `evaluate_batch` are modified to use an autocast
 context during the forward pass.
 """
 
+from model_def import MNistTrial
+
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
 import torch
-from model_def import MNistTrial
-from torch.cuda.amp import autocast
 
 from determined.pytorch import PyTorchTrialContext
 
