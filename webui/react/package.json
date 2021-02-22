@@ -106,6 +106,7 @@
     "ify-loader": "^1.1.0",
     "less": "^3.12.2",
     "less-loader": "^7.0.2",
+    "local-cors-proxy": "^1.1.0",
     "monaco-editor-webpack-plugin": "^1.9.0",
     "node-sass": "^4.14.1",
     "npm-force-resolutions": "^0.0.3",
