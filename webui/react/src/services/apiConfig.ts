@@ -105,7 +105,7 @@ export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse, Deta
   name: 'getCurrentUser',
   postProcess: (response) => decoder.mapV1User(response.user),
   // We make sure to request using the latest API configuraitonp parameters.
-  request: (params) => detApi.Auth.determinedCurrentUser(params),
+  request: (options) => detApi.Auth.determinedCurrentUser(options),
 };
 
 export const getUsers: DetApi<EmptyParams, Api.V1GetUsersResponse, DetailedUser[]> = {

@@ -48,11 +48,12 @@ const ExperimentDetails: React.FC = () => {
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
   const [ forkModalVisible, setForkModalVisible ] = useState(false);
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
+  const [ source ] = useState(axios.CancelToken.source());
   const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentBase>>({
     data: undefined,
     error: undefined,
     isLoading: true,
-    source: axios.CancelToken.source(),
+    source,
   });
   const [ experimentCanceler ] = useState(new AbortController());
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
@@ -115,8 +116,8 @@ const ExperimentDetails: React.FC = () => {
   }, [ experimentDetails.data, stopPolling ]);
 
   useEffect(() => {
-    return () => experimentDetails.source?.cancel();
-  }, [ experimentDetails.source ]);
+    return () => source.cancel();
+  }, [ source ]);
 
   useEffect(() => {
     try {
