@@ -22,8 +22,8 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 class MNistManualAMPTrial(MNistTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
+        self.scaler = context.wrap_scaler(GradScaler(), automatic=False)
         super().__init__(context)
-        self.scaler = self.context.wrap_scaler(GradScaler(), automatic=False)
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int

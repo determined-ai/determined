@@ -89,6 +89,15 @@ class PyTorchTrialContext(det.TrialContext):
         model_id = len(self.models)
         self._main_model.__setattr__(f"model_{model_id}", model)
 
+        if self._auto_amp:
+            # Ensure the forward pass is wrapped in an autocast context:
+            model.forward = torch.cuda.amp.autocast()(model.forward)
+
+            # Eliminate any need for the loss functions to be in that context:
+            def hook(module, input, output):
+                return output.float32() if output.dtype == torch.float16 else output
+            model.register_forward_hook(hook)
+
         self.models.append(model)
         return model
 
@@ -236,29 +245,30 @@ class PyTorchTrialContext(det.TrialContext):
         Arguments:
             models (``torch.cuda.amp.GradScaler``):  Scaler to wrap and track.
             automatic (``bool``, optional, default=False):  If True, handles all operations for the
-                most simple cases automatically (scales loss before ``backward()``, unscales before
-                clipping gradients, uses scaler when stepping optimizer(s), and updates scaler
-                afterwards). Forward passes must still be wrapped by the output of
-                ``torch.cuda.amp.autocast()``. If False, no operations are handled by
-                ``determined.pytorch.PyTorchContext``. The only difference from normal PyTorch AMP
-                API usage would be that the scaler is passed to ``step_optimizer()`` instead of calling
-                ``step()`` on it directly.
+                most simple cases automatically (wraps forward pass in an autocast context, scales
+                loss before ``backward()``, unscales before clipping gradients, uses scaler when
+                stepping optimizer(s), and updates scaler afterwards). If False, no operations are
+                handled by ``determined.pytorch.PyTorchContext``. The only difference from normal
+                PyTorch AMP API usage would be that the scaler is passed to ``step_optimizer()``
+                instead of calling ``step()`` on it directly.
 
         Returns:
             The scaler. It may be wrapped to add additional functionality for use in Determined.
         """
 
-        check.false(self._use_apex, "Do not mix APEX with PyTorch AMP")
+        check.false(self._use_apex, "Do not mix APEX with PyTorch AMP.")
 
         check.is_none(self._scaler, "Please only call wrap_scaler once.")
 
-        self._scaler = scaler
-        self._auto_amp = automatic
+        check.true(len(self.models) is 0, "Please call wrap_scaler before wrap_model.")
 
         check.true(
             torch.cuda.is_available(),
             "Mixed precision training (AMP) is supported only on GPU slots.",
         )
+
+        self._scaler = scaler
+        self._auto_amp = automatic
 
         return scaler
 

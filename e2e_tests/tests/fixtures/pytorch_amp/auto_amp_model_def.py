@@ -22,33 +22,5 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 class MNistAutoAMPTrial(MNistTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
+        self.scaler = context.use_amp()
         super().__init__(context)
-        self.scaler = self.context.use_amp()
-
-    def train_batch(
-        self, batch: TorchData, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
-        batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
-        data, labels = batch
-
-        with autocast():
-            output = self.model(data)
-            loss = torch.nn.functional.nll_loss(output, labels)
-
-        self.context.backward(loss)
-        self.context.step_optimizer(self.optimizer)
-
-        return {"loss": loss}
-
-    def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
-        batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
-        data, labels = batch
-
-        with autocast():
-            output = self.model(data)
-            validation_loss = torch.nn.functional.nll_loss(output, labels).item()
-
-        pred = output.argmax(dim=1, keepdim=True)
-        accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(data)
-
-        return {"validation_loss": validation_loss, "accuracy": accuracy}
