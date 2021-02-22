@@ -1,17 +1,29 @@
 import { ColumnType } from 'antd/es/table';
 import React from 'react';
 
+import Link from 'components/Link';
 import {
   experimentArchivedRenderer, experimentProgressRenderer,
   expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
+import { paths } from 'routes/utils';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ExperimentItem } from 'types';
+
+export const idRenderer = (
+  value: string | number| undefined,
+  record: ExperimentItem,
+): React.ReactNode => {
+  return (
+    <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+  );
+};
 
 export const columns: ColumnType<ExperimentItem>[] = [
   {
     dataIndex: 'id',
     key: V1GetExperimentsRequestSortBy.ID,
+    render: idRenderer,
     sorter: true,
     title: 'ID',
   },

@@ -1,0 +1,7 @@
+:orphan:
+
+**Improvement**
+
+-  WebUI: Restructure links in table rows across WebUI to use anchors
+   tags instead of click event listenrs. This change increases
+   accessibility and improves keyboard navigation support.

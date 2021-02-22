@@ -13,7 +13,6 @@ import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
-import { handlePath, paths } from 'routes/utils';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -201,10 +200,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
     setFilteredTrialIdMap(newFilteredTrialIdMap);
   }, [ chartData ]);
 
-  const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
-    if (record.id) handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
-  }, [ experiment.id ]);
-
   useEffect(() => {
     const canceler = new AbortController();
     const trialMetricsMap: Record<number, number> = {};
@@ -335,12 +330,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
               <div className={css.table}>
                 <HpTrialTable
                   colorScale={colorScale}
+                  experimentId={experiment.id}
                   filteredTrialIdMap={filteredTrialIdMap}
                   hyperparameters={hyperparameters}
                   metric={selectedMetric}
                   trialHps={trialHps}
                   trialIds={chartData.trialIds}
-                  onClick={handleTableClick}
                 />
               </div>
             </>

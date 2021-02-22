@@ -77,10 +77,6 @@ const LearningCurve: React.FC<Props> = ({
     setChartTrialId(trialId != null ? trialId : undefined);
   }, []);
 
-  const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
-    if (record.id) handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
-  }, [ experiment.id ]);
-
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) setTableTrialId(record.id);
   }, []);
@@ -216,12 +212,12 @@ const LearningCurve: React.FC<Props> = ({
               </div>
               <div className={css.table}>
                 <HpTrialTable
+                  experimentId={experiment.id}
                   highlightedTrialId={chartTrialId}
                   hyperparameters={experiment.config.hyperparameters || {}}
                   metric={selectedMetric}
                   trialHps={trialHps}
                   trialIds={trialIds}
-                  onClick={handleTableClick}
                   onMouseEnter={handleTableMouseEnter}
                   onMouseLeave={handleTableMouseLeave}
                 />

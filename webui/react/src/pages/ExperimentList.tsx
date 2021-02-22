@@ -13,7 +13,7 @@ import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
   defaultRowClassName, ExperimentRenderer,
-  getFullPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+  getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
@@ -25,7 +25,6 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import { handlePath } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, getExperimentList,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
@@ -41,7 +40,7 @@ import {
 import { openCommand } from 'wait';
 
 import css from './ExperimentList.module.scss';
-import { columns as defaultColumns } from './ExperimentList.table';
+import { columns as defaultColumns, idRenderer } from './ExperimentList.table';
 
 enum Action {
   Activate = 'Activate',
@@ -157,9 +156,9 @@ const ExperimentList: React.FC = () => {
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
   const columns = useMemo(() => {
-    const nameRenderer = (_: string, record: ExperimentItem) => (
+    const nameRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.nameColumn}>
-        {record.name || ''}
+        {idRenderer(value, record)}
         <TagList
           tags={record.labels || []}
           onChange={experimentTags.handleTagListChange(record.id)}
@@ -309,14 +308,6 @@ const ExperimentList: React.FC = () => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  const handleTableRow = useCallback((record: ExperimentItem) => {
-    const handleClick = (event: React.MouseEvent) => {
-      if (isAlternativeAction(event)) return;
-      handlePath(event, { path: record.url });
-    };
-    return { onAuxClick: handleClick, onClick: handleClick };
-  }, []);
-
   return (
     <Page id="experiments" title="Experiments">
       <div className={css.base}>
@@ -376,13 +367,12 @@ const ExperimentList: React.FC = () => {
             spinning: !experiments,
           }}
           pagination={getFullPaginationConfig(pagination, total)}
-          rowClassName={defaultRowClassName({ clickable: true })}
+          rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}
           size="small"
           onChange={handleTableChange}
-          onRow={handleTableRow}
         />
       </div>
     </Page>
