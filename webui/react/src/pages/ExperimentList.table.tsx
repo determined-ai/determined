@@ -10,9 +10,12 @@ import { paths } from 'routes/utils';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ExperimentItem } from 'types';
 
-const idRenderer = (_: number, record: ExperimentItem): React.ReactNode => {
+export const idRenderer = (
+  value: string | number| undefined,
+  record: ExperimentItem,
+): React.ReactNode => {
   return (
-    <Link path={paths.experimentDetails(record.id)}>{record.id}</Link>
+    <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
   );
 };
 

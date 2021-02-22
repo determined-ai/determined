@@ -40,7 +40,7 @@ import {
 import { openCommand } from 'wait';
 
 import css from './ExperimentList.module.scss';
-import { columns as defaultColumns } from './ExperimentList.table';
+import { columns as defaultColumns, idRenderer } from './ExperimentList.table';
 
 enum Action {
   Activate = 'Activate',
@@ -156,9 +156,9 @@ const ExperimentList: React.FC = () => {
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
   const columns = useMemo(() => {
-    const nameRenderer = (_: string, record: ExperimentItem) => (
+    const nameRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.nameColumn}>
-        {record.name || ''}
+        {idRenderer(value, record)}
         <TagList
           tags={record.labels || []}
           onChange={experimentTags.handleTagListChange(record.id)}
