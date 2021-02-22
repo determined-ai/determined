@@ -8,6 +8,7 @@ good architecture in this search space for CIFAR-10.
 
 from collections import namedtuple
 from typing import Any, Dict
+from attrdict import AttrDict
 
 import torch
 import torchvision.datasets as dset
@@ -19,16 +20,42 @@ from determined.pytorch import (
     PyTorchTrialContext,
 )
 
+import determined as det
+
 from model import NetworkCIFAR as Network
 import utils
+
 
 Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
 
 
-class AttrDict(dict):
-    def __init__(self, *args, **kwargs):
-        super(AttrDict, self).__init__(*args, **kwargs)
-        self.__dict__ = self
+def apply_constraints(hparams, num_params):
+    normal_skip_count = 0
+    reduce_skip_count = 0
+    normal_conv_count = 0
+    for hp, val in hparams.items():
+        if val == "skip_connect":
+            if "normal" in hp:
+                normal_skip_count += 1
+            elif "reduce" in hp:
+                reduce_skip_count += 1
+        if val == "sep_conv_3x3":
+            if "normal" in hp:
+                normal_conv_count += 1
+
+    # Reject if num skip_connect >= 3 or <1 in either normal or reduce cell.
+    if normal_skip_count >= 3 or reduce_skip_count >= 3:
+        raise det.InvalidHP("too many skip_connect operations")
+    if normal_skip_count == 0 or reduce_skip_count == 0:
+        raise det.InvalidHP("too few skip_connect operations")
+    # Reject if fewer than 3 sep_conv_3x3 in normal cell.
+    if normal_conv_count < 3:
+        raise det.InvalidHP("fewer than 3 sep_conv_3x3 operations in normal cell")
+    # Reject if num_params > 4.5 million or < 2.5 million.
+    if num_params < 2.5e6 or num_params > 4.5e6:
+        raise det.InvalidHP(
+            "number of parameters in architecture is not between 2.5 and 4.5 million"
+        )
 
 
 class DARTSCNNTrial(PyTorchTrial):
@@ -43,34 +70,44 @@ class DARTSCNNTrial(PyTorchTrial):
 
         # Define the model
         genotype = self.get_genotype_from_hps()
-        self.model = self.context.wrap_model(Network(
-            self.hparams["init_channels"],
-            10,  # num_classes
-            self.hparams["layers"],
-            self.hparams["auxiliary"],
-            genotype,
-        ))
+        self.model = self.context.wrap_model(
+            Network(
+                self.hparams["init_channels"],
+                10,  # num_classes
+                self.hparams["layers"],
+                self.hparams["auxiliary"],
+                genotype,
+            )
+        )
         print("param size = {} MB".format(utils.count_parameters_in_MB(self.model)))
         size = 0
         for p in self.model.parameters():
             size += p.nelement()
         print("param count: {}".format(size))
 
+        # Apply constraints if desired
+        if "use_constraints" in self.hparams and self.hparams["use_constraints"]:
+            apply_constraints(self.hparams, size)
+
         # Define the optimizer
-        self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
-            self.model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            momentum=self.context.get_hparam("momentum"),
-            weight_decay=self.context.get_hparam("weight_decay"),
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            torch.optim.SGD(
+                self.model.parameters(),
+                lr=self.context.get_hparam("learning_rate"),
+                momentum=self.context.get_hparam("momentum"),
+                weight_decay=self.context.get_hparam("weight_decay"),
+            )
+        )
 
         # Define the LR scheduler
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            self.optimizer, self.context.get_hparam("train_epochs"),
+            self.optimizer,
+            self.context.get_hparam("train_epochs"),
         )
         step_mode = LRScheduler.StepMode.STEP_EVERY_EPOCH
-        self.wrapped_scheduler = self.context.wrap_lr_scheduler(self.scheduler, step_mode=step_mode)
-
+        self.wrapped_scheduler = self.context.wrap_lr_scheduler(
+            self.scheduler, step_mode=step_mode
+        )
 
     def build_training_data_loader(self) -> DataLoader:
         train_transform, valid_transform = utils._data_transforms_cifar10(
@@ -143,7 +180,9 @@ class DARTSCNNTrial(PyTorchTrial):
             reduce_concat=range(2, 6),
         )
 
-    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
+    def train_batch(
+        self, batch: Any, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
         input, target = batch
         self.model.drop_path_prob = (
             self.hparams["drop_path_prob"]
@@ -168,13 +207,16 @@ class DARTSCNNTrial(PyTorchTrial):
         self.context.step_optimizer(
             optimizer=self.optimizer,
             clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
-                params, self.context.get_hparam("clip_gradients_l2_norm"),
+                params,
+                self.context.get_hparam("clip_gradients_l2_norm"),
             ),
         )
 
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
 
-    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
+    def evaluate_full_dataset(
+        self, data_loader: torch.utils.data.DataLoader
+    ) -> Dict[str, Any]:
         acc_top1 = 0
         acc_top5 = 0
         loss_avg = 0
