@@ -2,8 +2,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import BadgeTag from 'components/BadgeTag';
 import HumanReadableFloat from 'components/HumanReadableFloat';
+import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { paths } from 'routes/utils';
 import { ExperimentHyperParams, ExperimentHyperParamType, MetricName, Primitive } from 'types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { alphanumericSorter, isNumber, numericSorter, primitiveSorter } from 'utils/data';
@@ -14,11 +16,11 @@ type HParams = Record<string, Primitive>;
 
 interface Props {
   colorScale?: ColorScale[];
+  experimentId: number;
   filteredTrialIdMap?: Record<number, boolean>;
   highlightedTrialId?: number;
   hyperparameters: ExperimentHyperParams;
   metric: MetricName;
-  onClick?: (event: React.MouseEvent, record: TrialHParams) => void;
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
   onMouseLeave?: (event: React.MouseEvent, record: TrialHParams) => void;
   trialHps: TrialHParams[];
@@ -37,11 +39,11 @@ const HpTrialTable: React.FC<Props> = ({
   hyperparameters,
   highlightedTrialId,
   metric,
-  onClick,
   onMouseEnter,
   onMouseLeave,
   trialHps,
   trialIds,
+  experimentId,
 }: Props) => {
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
 
@@ -64,7 +66,9 @@ const HpTrialTable: React.FC<Props> = ({
       return (
         <div className={css.idLayout}>
           <div className={css.colorLegend} style={{ backgroundColor: color }} />
-          <div>{record.id}</div>
+          <Link path={paths.trialDetails(record.id, experimentId)}>
+            <div>{record.id}</div>
+          </Link>
         </div>
       );
     };
@@ -129,20 +133,17 @@ const HpTrialTable: React.FC<Props> = ({
   }, []);
 
   const handleTableRow = useCallback((record: TrialHParams) => ({
-    onClick: (event: React.MouseEvent) => {
-      if (onClick) onClick(event, record);
-    },
     onMouseEnter: (event: React.MouseEvent) => {
       if (onMouseEnter) onMouseEnter(event, record);
     },
     onMouseLeave: (event: React.MouseEvent) => {
       if (onMouseLeave) onMouseLeave(event, record);
     },
-  }), [ onClick, onMouseEnter, onMouseLeave ]);
+  }), [ onMouseEnter, onMouseLeave ]);
 
   const rowClassName = useCallback((record: TrialHParams) => {
     return defaultRowClassName({
-      clickable: true,
+      clickable: false,
       highlighted: record.id === highlightedTrialId,
     });
   }, [ highlightedTrialId ]);

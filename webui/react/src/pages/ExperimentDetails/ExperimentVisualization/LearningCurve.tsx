@@ -216,12 +216,12 @@ const LearningCurve: React.FC<Props> = ({
               </div>
               <div className={css.table}>
                 <HpTrialTable
+                  experimentId={experiment.id}
                   highlightedTrialId={chartTrialId}
                   hyperparameters={experiment.config.hyperparameters || {}}
                   metric={selectedMetric}
                   trialHps={trialHps}
                   trialIds={trialIds}
-                  onClick={handleTableClick}
                   onMouseEnter={handleTableMouseEnter}
                   onMouseLeave={handleTableMouseLeave}
                 />
