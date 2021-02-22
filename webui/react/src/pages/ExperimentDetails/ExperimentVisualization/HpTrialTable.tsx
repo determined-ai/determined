@@ -126,7 +126,7 @@ const HpTrialTable: React.FC<Props> = ({
       });
 
     return [ idColumn, metricColumn, ...hpColumns ];
-  }, [ colorScale, hyperparameters, metric, trialIds ]);
+  }, [ colorScale, hyperparameters, metric, trialIds, experimentId ]);
 
   const handleTableChange = useCallback((tablePagination) => {
     setPageSize(tablePagination.pageSize);

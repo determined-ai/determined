@@ -77,10 +77,6 @@ const LearningCurve: React.FC<Props> = ({
     setChartTrialId(trialId != null ? trialId : undefined);
   }, []);
 
-  const handleTableClick = useCallback((event: React.MouseEvent, record: TrialHParams) => {
-    if (record.id) handlePath(event, { path: paths.trialDetails(record.id, experiment.id) });
-  }, [ experiment.id ]);
-
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) setTableTrialId(record.id);
   }, []);
