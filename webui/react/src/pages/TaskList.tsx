@@ -155,7 +155,6 @@ const TaskList: React.FC = () => {
     const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
       if (record.type !== CommandType.Tensorboard || !record.misc) {
         return taskNameRenderer(_, record, index);
-
       }
 
       const info = {

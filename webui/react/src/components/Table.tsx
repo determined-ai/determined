@@ -95,9 +95,9 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
-        wrapper={ch => (
+        wrapper={children => (
           <Link path={waitPageUrl(record)}>
-            {ch}
+            {children}
           </Link>
         )}>
         <Badge type={BadgeType.Id}>{record.id.split('-')[0]}</Badge>
