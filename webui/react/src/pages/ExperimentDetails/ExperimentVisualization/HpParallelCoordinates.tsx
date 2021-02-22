@@ -12,14 +12,13 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import { handlePath, paths } from 'routes/utils';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import themes, { defaultThemeId } from 'themes';
 import {
   ExperimentBase, ExperimentHyperParam, ExperimentHyperParamType, MetricName, MetricType,
-  metricTypeParamMap, Primitive, Range, RunState,
+  metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { ColorScale } from 'utils/color';
@@ -53,9 +52,6 @@ interface HpTrialData {
   trialIds: number[];
 }
 
-const STORAGE_PATH = 'experiment-visualization';
-const STORAGE_HP_KEY = 'hps';
-const MAX_HP_COUNT = 10;
 const DEFAULT_SCALE_COLORS: Range<string> = [
   themes[defaultThemeId].colors.danger.light,
   themes[defaultThemeId].colors.action.normal,
@@ -87,18 +83,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ pageError, setPageError ] = useState<Error>();
   const [ filteredTrialIdMap, setFilteredTrialIdMap ] = useState<Record<number, boolean>>();
 
-  // Filter out constant hyperparameters.
-  const fullHpList = Object.keys(experiment.config.hyperparameters).filter(key => {
-    const hp = experiment.config.hyperparameters[key];
-    return hp.type !== ExperimentHyperParamType.Constant;
-  });
-  const hyperparameters = fullHpList.reduce((acc, key) => {
-    acc[key] = experiment.config.hyperparameters[key];
-    return acc;
-  }, {} as Record<string, ExperimentHyperParam>);
-  const limitedHpList = fullHpList.slice(0, MAX_HP_COUNT);
-  const defaultHpList = storage.get<string[]>(STORAGE_HP_KEY);
-  const [ hpList, setHpList ] = useState<string[]>(defaultHpList || limitedHpList);
+  const hyperparameters = useMemo(() => {
+    return hParams.reduce((acc, key) => {
+      acc[key] = experiment.config.hyperparameters[key];
+      return acc;
+    }, {} as Record<string, ExperimentHyperParam>);
+  }, [ experiment.config.hyperparameters, hParams ]);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
@@ -125,7 +115,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   }, [ chartData?.metricRange, smallerIsBetter ]);
 
   const dimensions = useMemo(() => {
-    const newDimensions = hpList.map(key => {
+    const newDimensions = selectedHParams.map(key => {
       const hp = hyperparameters[key] || {};
       const dimension: Dimension = {
         label: key,
@@ -152,7 +142,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
 
     return newDimensions;
-  }, [ chartData, hyperparameters, hpList, selectedMetric ]);
+  }, [ chartData, hyperparameters, selectedMetric, selectedHParams ]);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -178,16 +168,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
     resetData();
     onMetricChange(metric);
   }, [ onMetricChange, resetData ]);
-
-  const handleHpChange = useCallback((hps: SelectValue) => {
-    if (Array.isArray(hps) && hps.length === 0) {
-      storage.remove(STORAGE_HP_KEY);
-      setHpList(limitedHpList);
-    } else {
-      storage.set(STORAGE_HP_KEY, hps);
-      setHpList(hps as string[]);
-    }
-  }, [ limitedHpList, storage ]);
 
   const handleChartFilter = useCallback((constraints: Record<string, Range>) => {
     if (!chartData) return;
@@ -218,13 +198,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
     const trialMetricsMap: Record<number, number> = {};
     const trialHpTableMap: Record<number, TrialHParams> = {};
     const trialHpMap: Record<string, Record<number, Primitive>> = {};
-
-    const trialIds: number[] = [];
-    const trialMetrics: number[] = [];
-    const trialHpMap: Record<string, Record<number, Primitive>> = {};
-    const trialHpRanges: Record<string, Range> = {};
-    const data: Record<string, Primitive[]> = {};
-    const trialMetricRange: Range<number> = defaultNumericRange();
 
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(

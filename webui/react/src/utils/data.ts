@@ -1,4 +1,4 @@
-import { RawJson } from 'types';
+import { RawJson, RecordKey } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isBoolean = (data: unknown): boolean => typeof data === 'boolean';

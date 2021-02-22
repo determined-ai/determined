@@ -15,7 +15,7 @@ import { consumeStream } from 'services/utils';
 import {
   ExperimentBase, ExperimentHyperParamType, ExperimentSearcherName, MetricName, MetricType,
 } from 'types';
-import { alphanumericSorter } from 'utils/data';
+import { alphanumericSorter } from 'utils/sort';
 import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
@@ -47,7 +47,7 @@ enum PageError {
 const STORAGE_PATH = 'experiment-visualization';
 const TYPE_KEYS = Object.values(VisualizationType);
 const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
-const MAX_HPARAM_COUNT = 20;
+const MAX_HPARAM_COUNT = 10;
 const MENU = [
   { label: 'Learning Curve', type: VisualizationType.LearningCurve },
   { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
@@ -294,7 +294,7 @@ const ExperimentVisualization: React.FC<Props> = ({
               onMetricChange={handleMetricChange}
             />
           )}
-          {typeKey === VisualizationType.HpVsHpHeatMap && (
+          {typeKey === VisualizationType.HpHeatMap && (
             <HpVsHpHeatMap
               batches={batches}
               experiment={experiment}
