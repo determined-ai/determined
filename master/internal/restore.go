@@ -252,9 +252,12 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	// Get the waiting operations from PBT.
 	searcherState := experimentSnapshotV0["searcher_state"].(map[string]interface{})
+	if searcherState["search_method_state"] == nil {
+		return snapshot, nil
+	}
 	searchMethodState := searcherState["search_method_state"].(map[string]interface{})
+	// Get the waiting operations from PBT.
 	waitingCheckpoints, ok := searchMethodState["waiting_checkpoints"]
 	if !ok {
 		// If `waiting_checkpoints` is missing, this isn't PBT and this shim is only to shim PBT.
