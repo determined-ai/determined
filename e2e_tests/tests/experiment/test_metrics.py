@@ -61,7 +61,7 @@ def test_streaming_metrics_api() -> None:
     if valid_trials_sample_results is not None:
         pytest.fail("trials-sample (validation): %s. Results: %s" % valid_trials_sample_results)
     if hp_importance_results is not None:
-       pytest.fail("hyperparameter-importance: %s. Results: %s" % hp_importance_results)
+        pytest.fail("hyperparameter-importance: %s. Results: %s" % hp_importance_results)
 
 
 def request_metric_names(experiment_id):  # type: ignore

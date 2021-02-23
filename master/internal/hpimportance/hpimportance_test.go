@@ -1,9 +1,10 @@
 package hpimportance
 
 import (
-	"fmt"
 	"testing"
+
 	"gotest.tools/assert"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -64,113 +65,110 @@ func TestComputeHPImportance(t *testing.T) {
 			model.HPImportanceTrialData{
 				TrialID: 1,
 				Hparams: map[string]interface{}{
-					"dropout1":					0.57,
-					"dropout2":					0.45,
+					"dropout1":          0.57,
+					"dropout2":          0.45,
 					"global_batch_size": 64,
-					"learning_rate":		 0.5070331869253129,
-					"n_filters1":				23,
-					"n_filters2":				51,
-					"n_filters3":				"val1",
+					"learning_rate":     0.5070331869253129,
+					"n_filters1":        23,
+					"n_filters2":        51,
+					"n_filters3":        "val1",
 				},
-				Metric:	2.2962841987609863,
+				Metric: 2.2962841987609863,
 			},
 			model.HPImportanceTrialData{
 				TrialID: 2,
 				Hparams: map[string]interface{}{
-					"dropout1":					0.87,
-					"dropout2":					0.23,
+					"dropout1":          0.87,
+					"dropout2":          0.23,
 					"global_batch_size": 64,
-					"learning_rate":		 0.7506644734524253,
-					"n_filters1":				34,
-					"n_filters2":				45,
-					"n_filters3":				"val1",
+					"learning_rate":     0.7506644734524253,
+					"n_filters1":        34,
+					"n_filters2":        45,
+					"n_filters3":        "val1",
 				},
-				Metric:	2.2999706268310547,
+				Metric: 2.2999706268310547,
 			},
 			model.HPImportanceTrialData{
 				TrialID: 3,
 				Hparams: map[string]interface{}{
-					"dropout1":					0.87,
-					"dropout2":					0.23,
+					"dropout1":          0.87,
+					"dropout2":          0.23,
 					"global_batch_size": 64,
-					"learning_rate":		 0.3823986411952302,
-					"n_filters1":				8,
-					"n_filters2":				28,
-					"n_filters3":				"val1",
+					"learning_rate":     0.3823986411952302,
+					"n_filters1":        8,
+					"n_filters2":        28,
+					"n_filters3":        "val1",
 				},
-				Metric:	2.313760995864868,
+				Metric: 2.313760995864868,
 			},
 			model.HPImportanceTrialData{
 				TrialID: 4,
 				Hparams: map[string]interface{}{
-					"dropout1":					0.87,
-					"dropout2":					0.23,
+					"dropout1":          0.87,
+					"dropout2":          0.23,
 					"global_batch_size": 64,
-					"learning_rate":		 0.9338878822452688,
-					"n_filters1":				33,
-					"n_filters2":				51,
-					"n_filters3":				"val2",
+					"learning_rate":     0.9338878822452688,
+					"n_filters1":        33,
+					"n_filters2":        51,
+					"n_filters3":        "val2",
 				},
-				Metric:	2.2808141708374023,
+				Metric: 2.2808141708374023,
 			},
 			model.HPImportanceTrialData{
 				TrialID: 5,
 				Hparams: map[string]interface{}{
-					"dropout1":					0.87,
-					"dropout2":					0.23,
+					"dropout1":          0.87,
+					"dropout2":          0.23,
 					"global_batch_size": 64,
-					"learning_rate":		 0.4746417441198819,
-					"n_filters1":				39,
-					"n_filters2":				13,
-					"n_filters3":				"val2",
+					"learning_rate":     0.4746417441198819,
+					"n_filters1":        39,
+					"n_filters2":        13,
+					"n_filters3":        "val2",
 				},
-				Metric:	2.2757034301757812,
+				Metric: 2.2757034301757812,
 			},
 		},
 		8: []model.HPImportanceTrialData{
 			model.HPImportanceTrialData{
 				TrialID: 1,
 				Hparams: map[string]interface{}{
-					"dropout1":					0.87,
-					"dropout2":					0.23,
+					"dropout1":          0.87,
+					"dropout2":          0.23,
 					"global_batch_size": 64,
-					"learning_rate":		 0.34,
-					"n_filters1":				23,
-					"n_filters2":				51,
-					"n_filters3":				"val1",
+					"learning_rate":     0.34,
+					"n_filters1":        23,
+					"n_filters2":        51,
+					"n_filters3":        "val1",
 				},
-				Metric:	2.2962841987609863,
+				Metric: 2.2962841987609863,
 			},
 			model.HPImportanceTrialData{
 				TrialID: 2,
 				Hparams: map[string]interface{}{
-					"dropout1":					0.87,
-					"dropout2":					0.23,
+					"dropout1":          0.87,
+					"dropout2":          0.23,
 					"global_batch_size": 64,
-					"learning_rate":		 0.089,
-					"n_filters1":				19,
-					"n_filters2":				30,
-					"n_filters3":				"val1",
+					"learning_rate":     0.089,
+					"n_filters1":        19,
+					"n_filters2":        30,
+					"n_filters3":        "val1",
 				},
-				Metric:	2.2999706268310547,
+				Metric: 2.2999706268310547,
 			},
 			model.HPImportanceTrialData{
 				TrialID: 2,
 				Hparams: map[string]interface{}{
-					"dropout1":					0.87,
-					"dropout2":					0.23,
+					"dropout1":          0.87,
+					"dropout2":          0.23,
 					"global_batch_size": 64,
-					"learning_rate":		 0.089,
-					"n_filters1":				19,
-					"n_filters2":				30,
-					"n_filters3":				"val1",
+					"learning_rate":     0.089,
+					"n_filters1":        19,
+					"n_filters2":        30,
+					"n_filters3":        "val1",
 				},
-				Metric:	2.2999706268310547,
+				Metric: 2.2999706268310547,
 			},
 		},
-
-		
-		
 	}
 	nTreesResults := createDataFile(data, expConfig, ".")
 	assert.Equal(t, nTreesResults, 8)
@@ -179,41 +177,41 @@ func TestComputeHPImportance(t *testing.T) {
 		model.HPImportanceTrialData{
 			TrialID: 1,
 			Hparams: map[string]interface{}{
-				"dropout1":					0.1873934729034619,
-				"dropout2":					0.3482374932749237,
+				"dropout1":          0.1873934729034619,
+				"dropout2":          0.3482374932749237,
 				"global_batch_size": 64,
-				"learning_rate":		 0.3434324334322343,
-				"n_filters1":				23,
-				"n_filters2":				51,
-				"n_filters3":				"val1",
+				"learning_rate":     0.3434324334322343,
+				"n_filters1":        23,
+				"n_filters2":        51,
+				"n_filters3":        "val1",
 			},
-			Metric:	2.2962841987609863,
+			Metric: 2.2962841987609863,
 		},
 		model.HPImportanceTrialData{
 			TrialID: 2,
 			Hparams: map[string]interface{}{
-				"dropout1":					0.8742901348905638,
-				"dropout2":					0.2348551036407937,
+				"dropout1":          0.8742901348905638,
+				"dropout2":          0.2348551036407937,
 				"global_batch_size": 64,
-				"learning_rate":		 0.0893743468710934,
-				"n_filters1":				19,
-				"n_filters2":				30,
-				"n_filters3":				"val1",
+				"learning_rate":     0.0893743468710934,
+				"n_filters1":        19,
+				"n_filters2":        30,
+				"n_filters3":        "val1",
 			},
-			Metric:	2.2999706268310547,
+			Metric: 2.2999706268310547,
 		},
 		model.HPImportanceTrialData{
 			TrialID: 2,
 			Hparams: map[string]interface{}{
-				"dropout1":					0.8742901348905638,
-				"dropout2":					0.2348551036407937,
+				"dropout1":          0.8742901348905638,
+				"dropout2":          0.2348551036407937,
 				"global_batch_size": 64,
-				"learning_rate":		 0.0893743468710934,
-				"n_filters1":				19,
-				"n_filters2":				30,
-				"n_filters3":				"val1",
+				"learning_rate":     0.0893743468710934,
+				"n_filters1":        19,
+				"n_filters2":        30,
+				"n_filters3":        "val1",
 			},
-			Metric:	2.2999706268310547,
+			Metric: 2.2999706268310547,
 		},
 	}
 
@@ -221,36 +219,34 @@ func TestComputeHPImportance(t *testing.T) {
 		model.HPImportanceTrialData{
 			TrialID: 1,
 			Hparams: map[string]interface{}{
-				"dropout1":					0.18,
-				"dropout2":					0.34,
+				"dropout1":          0.18,
+				"dropout2":          0.34,
 				"global_batch_size": 64,
-				"learning_rate":		 0.34,
-				"n_filters1":				23,
-				"n_filters2":				51,
-				"n_filters3":				"val1",
+				"learning_rate":     0.34,
+				"n_filters1":        23,
+				"n_filters2":        51,
+				"n_filters3":        "val1",
 			},
-			Metric:	2.2962841987609863,
+			Metric: 2.2962841987609863,
 		},
 		model.HPImportanceTrialData{
 			TrialID: 2,
 			Hparams: map[string]interface{}{
-				"dropout1":					0.87,
-				"dropout2":					0.23,
+				"dropout1":          0.87,
+				"dropout2":          0.23,
 				"global_batch_size": 64,
-				"learning_rate":		 0.089,
-				"n_filters1":				19,
-				"n_filters2":				30,
-				"n_filters3":				"val1",
+				"learning_rate":     0.089,
+				"n_filters1":        19,
+				"n_filters2":        30,
+				"n_filters3":        "val1",
 			},
-			Metric:	2.2999706268310547,
+			Metric: 2.2999706268310547,
 		},
 	}
 	nTreesResults = createDataFile(data, expConfig, ".")
 	assert.Equal(t, nTreesResults, 10)
 
-	
 	results := computeHPImportance(data, expConfig, masterConfig, "growforest", ".")
 	// assert.error(t, results) // assert to make sure this does not run
-
 
 }
