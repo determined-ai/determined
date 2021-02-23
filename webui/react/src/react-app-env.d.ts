@@ -19,5 +19,6 @@ export declare global {
     first(): T;
     last(): T;
     random(): T;
+    sortAll(compareFn: (a: T, b: T) => number): Array<T>;
   }
 }
