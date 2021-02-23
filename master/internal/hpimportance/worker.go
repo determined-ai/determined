@@ -118,14 +118,17 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, wo
 			return nil
 		}
 		taskDir := path.Join(workingDir, fmt.Sprint(actorId))
-		err = os.Mkdir(taskDir, 0066)
+		err = os.Mkdir(taskDir, 0700)
 		if err != nil {
 			sendWorkFailed(system, work, err.Error())
 		}
-		results := computeHPImportance(trials, experimentConfig, masterConfig, growforest, taskDir)
+		results, err := computeHPImportance(trials, experimentConfig, masterConfig, growforest, taskDir)
+		if err != nil {
+			sendWorkFailed(system, work, err.Error())
+		}
 		err = os.RemoveAll(taskDir)
 		if err != nil {
-			ctx.Log().Errorf("Failed to clean up temporary directory %s", taskDir)
+			ctx.Log().WithError(err).Errorf("Failed to clean up temporary directory %s", taskDir)
 		}
 		sendWorkCompleted(system, work, progress, results)
 		return nil

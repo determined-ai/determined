@@ -457,11 +457,7 @@ FROM trials t
 			return nil, errors.Wrap(err,
 				"failed to process training metrics for hyperparameter importance")
 		}
-		if previous, exists := results[batches]; exists {
-			results[batches] = append(previous, result)
-		} else {
-			results[batches] = []model.HPImportanceTrialData{result}
-		}
+		results[batches] = append(results[batches], result)
 	}
 	return results, nil
 }
@@ -506,11 +502,7 @@ FROM trials t
 			return nil, errors.Wrap(err,
 				"Failed to process validation metrics for hyperparameter importance")
 		}
-		if previous, exists := results[batches]; exists {
-			results[batches] = append(previous, result)
-		} else {
-			results[batches] = []model.HPImportanceTrialData{result}
-		}
+		results[batches] = append(results[batches], result)
 	}
 	return results, nil
 }

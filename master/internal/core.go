@@ -580,17 +580,16 @@ func (m *Master) Run(ctx context.Context) error {
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
-		var telemetryActor actor.Actor
-		if telemetryActor, err = telemetry.NewActor(
+		if telemetryActor, tErr := telemetry.NewActor(
 			m.db,
 			m.ClusterID,
 			m.MasterID,
 			m.Version,
 			resourcemanagers.GetResourceManagerType(m.config.ResourceManager),
 			m.config.Telemetry.SegmentMasterKey,
-		); err != nil {
+		); tErr != nil {
 			// We wouldn't want to totally fail just because telemetry failed; just note the error.
-			log.WithError(err).Errorf("failed to initialize telemetry")
+			log.WithError(tErr).Errorf("failed to initialize telemetry")
 		} else {
 			log.Info("telemetry reporting is enabled; run with `--telemetry-enabled=false` to disable")
 			m.system.ActorOf(actor.Addr("telemetry"), telemetryActor)

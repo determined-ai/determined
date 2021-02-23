@@ -1,0 +1,39 @@
+description: mnist_pytorch_adaptive_long
+data:
+  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
+entrypoint: model_def:MNistTrial
+hyperparameters:
+  global_batch_size: 64
+  learning_rate:
+    type: double
+    minval: .0001
+    maxval: 1.0
+  n_filters1:
+    type: int
+    minval: 8
+    maxval: 64
+  n_filters2:
+    type: int
+    minval: 8
+    maxval: 72
+  dropout1:
+    type: double
+    minval: .2
+    maxval: .8
+  dropout2:
+    type: double
+    minval: .2
+    maxval: .8
+searcher:
+  name: random
+  metric: validation_loss
+  smaller_is_better: true
+  max_length:
+    batches: 10
+  max_trials: 50
+max_restarts: 0
+# bind-mounting the /tmp/work_dir directory for the mnist_pytorch experiment
+# enables the reuse of the downloaded dataset.
+bind_mounts:
+  - host_path: /tmp
+    container_path: /tmp/work_dir

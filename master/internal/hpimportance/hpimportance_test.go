@@ -61,8 +61,8 @@ func TestComputeHPImportance(t *testing.T) {
 	}
 
 	data := map[int][]model.HPImportanceTrialData{
-		10: []model.HPImportanceTrialData{
-			model.HPImportanceTrialData{
+		10: {
+			{
 				TrialID: 1,
 				Hparams: map[string]interface{}{
 					"dropout1":          0.57,
@@ -75,7 +75,7 @@ func TestComputeHPImportance(t *testing.T) {
 				},
 				Metric: 2.2962841987609863,
 			},
-			model.HPImportanceTrialData{
+			{
 				TrialID: 2,
 				Hparams: map[string]interface{}{
 					"dropout1":          0.87,
@@ -88,7 +88,7 @@ func TestComputeHPImportance(t *testing.T) {
 				},
 				Metric: 2.2999706268310547,
 			},
-			model.HPImportanceTrialData{
+			{
 				TrialID: 3,
 				Hparams: map[string]interface{}{
 					"dropout1":          0.87,
@@ -101,7 +101,7 @@ func TestComputeHPImportance(t *testing.T) {
 				},
 				Metric: 2.313760995864868,
 			},
-			model.HPImportanceTrialData{
+			{
 				TrialID: 4,
 				Hparams: map[string]interface{}{
 					"dropout1":          0.87,
@@ -114,7 +114,7 @@ func TestComputeHPImportance(t *testing.T) {
 				},
 				Metric: 2.2808141708374023,
 			},
-			model.HPImportanceTrialData{
+			{
 				TrialID: 5,
 				Hparams: map[string]interface{}{
 					"dropout1":          0.87,
@@ -128,9 +128,9 @@ func TestComputeHPImportance(t *testing.T) {
 				Metric: 2.2757034301757812,
 			},
 		},
-		8: []model.HPImportanceTrialData{
-			model.HPImportanceTrialData{
-				TrialID: 1,
+		8: {
+			{
+				TrialID: 6,
 				Hparams: map[string]interface{}{
 					"dropout1":          0.87,
 					"dropout2":          0.23,
@@ -142,8 +142,8 @@ func TestComputeHPImportance(t *testing.T) {
 				},
 				Metric: 2.2962841987609863,
 			},
-			model.HPImportanceTrialData{
-				TrialID: 2,
+			{
+				TrialID: 7,
 				Hparams: map[string]interface{}{
 					"dropout1":          0.87,
 					"dropout2":          0.23,
@@ -155,8 +155,8 @@ func TestComputeHPImportance(t *testing.T) {
 				},
 				Metric: 2.2999706268310547,
 			},
-			model.HPImportanceTrialData{
-				TrialID: 2,
+			{
+				TrialID: 8,
 				Hparams: map[string]interface{}{
 					"dropout1":          0.87,
 					"dropout2":          0.23,
@@ -170,12 +170,13 @@ func TestComputeHPImportance(t *testing.T) {
 			},
 		},
 	}
-	nTreesResults := createDataFile(data, expConfig, ".")
+	nTreesResults, err := createDataFile(data, expConfig, ".")
+	assert.NilError(t, err)
 	assert.Equal(t, nTreesResults, 8)
 
 	data[5] = []model.HPImportanceTrialData{
-		model.HPImportanceTrialData{
-			TrialID: 1,
+		{
+			TrialID: 9,
 			Hparams: map[string]interface{}{
 				"dropout1":          0.1873934729034619,
 				"dropout2":          0.3482374932749237,
@@ -187,8 +188,8 @@ func TestComputeHPImportance(t *testing.T) {
 			},
 			Metric: 2.2962841987609863,
 		},
-		model.HPImportanceTrialData{
-			TrialID: 2,
+		{
+			TrialID: 10,
 			Hparams: map[string]interface{}{
 				"dropout1":          0.8742901348905638,
 				"dropout2":          0.2348551036407937,
@@ -200,8 +201,8 @@ func TestComputeHPImportance(t *testing.T) {
 			},
 			Metric: 2.2999706268310547,
 		},
-		model.HPImportanceTrialData{
-			TrialID: 2,
+		{
+			TrialID: 11,
 			Hparams: map[string]interface{}{
 				"dropout1":          0.8742901348905638,
 				"dropout2":          0.2348551036407937,
@@ -216,8 +217,8 @@ func TestComputeHPImportance(t *testing.T) {
 	}
 
 	data[20] = []model.HPImportanceTrialData{
-		model.HPImportanceTrialData{
-			TrialID: 1,
+		{
+			TrialID: 12,
 			Hparams: map[string]interface{}{
 				"dropout1":          0.18,
 				"dropout2":          0.34,
@@ -229,8 +230,8 @@ func TestComputeHPImportance(t *testing.T) {
 			},
 			Metric: 2.2962841987609863,
 		},
-		model.HPImportanceTrialData{
-			TrialID: 2,
+		{
+			TrialID: 13,
 			Hparams: map[string]interface{}{
 				"dropout1":          0.87,
 				"dropout2":          0.23,
@@ -243,10 +244,10 @@ func TestComputeHPImportance(t *testing.T) {
 			Metric: 2.2999706268310547,
 		},
 	}
-	nTreesResults = createDataFile(data, expConfig, ".")
+	nTreesResults, err = createDataFile(data, expConfig, ".")
+	assert.NilError(t, err)
 	assert.Equal(t, nTreesResults, 10)
 
-	results := computeHPImportance(data, expConfig, masterConfig, "growforest", ".")
-	// assert.error(t, results) // assert to make sure this does not run
-
+	_, err = computeHPImportance(data, expConfig, masterConfig, "growforest", ".")
+	assert.Assert(t, err != nil)
 }

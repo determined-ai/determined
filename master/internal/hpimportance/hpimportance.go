@@ -1,15 +1,23 @@
 package hpimportance
 
+/**
+This file computes the HP importance for the HP visualizations.
+It uses the CloudForest utility (github.com/ryanbressler/CloudForest).
+
+The core steps are create the data file, run growforest which outputs
+the importance, read and return the values.
+**/
+
 import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
+	"path"
 	"sort"
 	"strconv"
-	"error"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -18,46 +26,63 @@ const (
 	minNumberTrials  = 50
 	idealBatchDiff   = 2
 	nReplications    = 2
+
+	arffFile       = "data.arff"
+	importanceFile = "importance.txt"
 )
 
-func createDataFile(data map[int][]model.HPImportanceTrialData, experimentConfig *model.ExperimentConfig, workingDir string) int {
-	f, _ := os.Create(workingDir + "/data.arff")
+// The data needs to be put into an arff format.
+// Arff files require variable declaration at the top,
+// where order does matter. We need to keep define the Hps and
+// keep track of the order so the data columns will match.
+func createDataFile(data map[int][]model.HPImportanceTrialData,
+	experimentConfig *model.ExperimentConfig, workingDir string) (int, error) {
+	f, err := os.Create(path.Join(workingDir, arffFile))
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
 
 	// create top of file based on exp config
-	f.WriteString("@relation data\n\n")
-	f.WriteString("@attribute metric numeric\n")
+	_, err = f.WriteString("@relation data\n\n@attribute metric numeric\n")
+	if err != nil {
+		return 0, err
+	}
 	var hpsOrder []string // HPs must be in the same order for the arff file
 	hps := experimentConfig.Hyperparameters
 
 	for key, element := range hps {
-
-		if element.ConstHyperparameter != nil {
+		var st string
+		switch {
+		case element.ConstHyperparameter != nil:
 			continue
-
-		} else if element.CategoricalHyperparameter != nil {
+		case element.CategoricalHyperparameter != nil:
 			hpsOrder = append(hpsOrder, key)
 
-			st := "@attribute " + key + " {"
-			f.WriteString(st)
-
-			vals := element.CategoricalHyperparameter.Vals
-			for _, cat_val := range vals {
-				s := fmt.Sprintf("%v", cat_val)
-				f.WriteString(s + ",")
+			var values string
+			for _, catVal := range element.CategoricalHyperparameter.Vals {
+				values += fmt.Sprintf("%v,", catVal)
 			}
-			f.WriteString("}\n")
-
-		} else {
+			st = fmt.Sprintf("@attribute %s {%s}\n", key, values)
+		default:
 			hpsOrder = append(hpsOrder, key)
-			st := "@attribute " + key + " numeric\n"
-			f.WriteString(st)
+			st = fmt.Sprintf("@attribute %s numeric\n", key)
+		}
+		_, err = f.WriteString(st)
+		if err != nil {
+			return 0, err
 		}
 	}
-	st := "@attribute numBatches numeric\n"
-	f.WriteString(st)
+	_, err = f.WriteString("@attribute numBatches numeric\n\n")
+	if err != nil {
+		return 0, err
+	}
 
 	// Now we have to add the data to the file
-	f.WriteString("\n\n@data\n")
+	_, err = f.WriteString("\n@data\n")
+	if err != nil {
+		return 0, err
+	}
 
 	// First, get batch ids unless better way to get them in go?
 	var batches []int
@@ -68,39 +93,79 @@ func createDataFile(data map[int][]model.HPImportanceTrialData, experimentConfig
 
 	totalNumTrials := 0
 	maxNumBatches := batches[0]
-	for _, batchId := range batches {
-		if batchId <= maxNumBatches/maxDiffCompBatch {
+	for _, batchID := range batches {
+		if batchID < maxNumBatches/maxDiffCompBatch {
 			break
 		}
-		if totalNumTrials > minNumberTrials && batchId <= maxNumBatches/idealBatchDiff {
+		if totalNumTrials > minNumberTrials && batchID <= maxNumBatches/idealBatchDiff {
 			break
 		}
-		batchIdStr := fmt.Sprintf("%v", batchId)
-		for _, trial := range data[batchId] {
-			st := ""
-			metric := fmt.Sprintf("%v", trial.Metric)
-			st = st + metric
+		batchIDStr := fmt.Sprintf("%v", batchID)
+		for _, trial := range data[batchID] {
+			var st string
+			st += fmt.Sprintf("%v", trial.Metric)
 			hparamsVals := trial.Hparams
 			for _, hp := range hpsOrder {
-				s := fmt.Sprintf("%v", hparamsVals[hp])
-				st = st + "," + s
+				st += fmt.Sprintf(",%v", hparamsVals[hp])
+			}
+			st += fmt.Sprintf(",%s\n", batchIDStr)
+			_, err = f.WriteString(st)
+			if err != nil {
+				return 0, err
 			}
 
-			st = st + "," + batchIdStr + "\n"
-			f.WriteString(st)
-
-			totalNumTrials = totalNumTrials + 1
+			totalNumTrials++
 		}
-
 	}
-
-	f.Close()
-	return totalNumTrials
+	return totalNumTrials, nil
 }
 
-func computeHPImportance(data map[int][]model.HPImportanceTrialData, experimentConfig *model.ExperimentConfig, masterConfig HPImportanceConfig, growforest string, workingDir string) (map[string]float64, error) {
+// Read the data from the output importance file and return as a json
+func parseImportanceOutput(filename string) (map[string]float64, error) {
+	// Ignore security warning because none of this is user-provided input
+	// #nosec G304
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open HP importance file: %s", err.Error())
+	}
+	defer file.Close()
 
-	totalNumTrials := createDataFile(data, experimentConfig, workingDir)
+	hpi := make(map[string]float64)
+	r := csv.NewReader(file)
+	r.Comma = '\t'
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read HP importance file: %s", err.Error())
+		}
+
+		if record[1] == "metric" || record[1] == "numBatches" {
+			continue
+		}
+		hpi[record[1]], err = strconv.ParseFloat(record[2], 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse HP importance value: %s", err.Error())
+		}
+	}
+	return hpi, nil
+}
+
+// For the implementation, since we need to account for adaptive search
+// but we don't want to compare trials that have trained for 10,000 vs 100 batches
+// therefore, we continue to add trials till one of 2 conditions are met.
+// 1. There are at least 50 trials to train with and the ideal number of trial difference is met
+// 2. The difference between the most(aka max) trained trial and the lowest batch
+// are within a defined range (maxDiffCompBatches)
+func computeHPImportance(data map[int][]model.HPImportanceTrialData,
+	experimentConfig *model.ExperimentConfig, masterConfig HPImportanceConfig,
+	growforest string, workingDir string) (map[string]float64, error) {
+	totalNumTrials, err := createDataFile(data, experimentConfig, workingDir)
+	if err != nil {
+		return nil, fmt.Errorf("error writing ARFF file: %s", err.Error())
+	}
 
 	nCores := strconv.FormatInt(int64(masterConfig.CoresPerWorker), 10)
 	maxNumTrees := int64(masterConfig.MaxTrees)
@@ -108,8 +173,8 @@ func computeHPImportance(data map[int][]model.HPImportanceTrialData, experimentC
 	// random may be smaller because only 50 trials are ran
 	// where I'm not gonna calculate the random forest
 	// TODO: Determine best way to handle small amount of trials
-	if totalNumTrials < minNumberTrials{
-		return errors.New("Not enough trials for HP importance.")
+	if totalNumTrials < minNumberTrials {
+		return nil, fmt.Errorf("not enough trials for HP importance: " + fmt.Sprint(totalNumTrials))
 	}
 
 	// For version one, we do half the number of trials up to 300
@@ -125,30 +190,28 @@ func computeHPImportance(data map[int][]model.HPImportanceTrialData, experimentC
 	strNumTrees := strconv.FormatInt(numTrees, 10)
 
 	// Call Random Forest
-	_, err := exec.Command(growforest, "-train", workingDir+"/data.arff", "-target=metric", "-nCores", nCores, "-ace", strNumTrees, "-importance", workingDir+"/importance.txt", "-rfpred", workingDir+"rface.sf").Output()
+	// Ignore security warning because none of this is user-provided input
+	// #nosec G204
+	output, err := exec.Command(growforest,
+		// the data file created above
+		"-train", path.Join(workingDir, arffFile),
+		// the y value used to predict. We use a generic metric so we don't have to keep track
+		// of current metric since name doesn't matter
+		"-target", "metric",
+		// number of CPUs to use
+		"-nCores", nCores,
+		// number of replications/permutations
+		"-ace", strNumTrees,
+		// output file
+		"-importance", path.Join(workingDir, importanceFile),
+		// file name to output predictor forest in sf format.
+		"-rfpred", path.Join(workingDir, "rface.sf"),
+	).CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("growforest failed:\n" + string(output))
+		return nil, fmt.Errorf("random forest failed: %s", err.Error())
 	}
 
-	// Read and Return Output
-	file, err := os.Open(workingDir + "/importance.txt")
-
-	output := make(map[string]float64)
-	r := csv.NewReader(file)
-	r.Comma = '\t'
-	for {
-		record, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if record[1] == "metric" {
-			continue
-		}
-		output[record[1]], _ = strconv.ParseFloat(record[2], 32) // 32 or 64 bit?
-	}
-	return output, nil
+	hpi, err := parseImportanceOutput(path.Join(workingDir, importanceFile))
+	return hpi, err
 }

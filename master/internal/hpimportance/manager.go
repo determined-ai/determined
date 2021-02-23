@@ -20,6 +20,12 @@ const (
 	// Evaluate after every 10%, but no more than every 10 minutes
 	minPause   = 10 * time.Minute
 	minPercent = 0.1
+
+	// Each worker will create a subdirectory of this for CloudForest's input & output
+	workingDir = "/tmp/determined/growforest"
+
+	// The name of the CloudForest executable to look for
+	growforestBin = "growforest"
 )
 
 // HPImportanceConfig is the configuration in the master for hyperparameter importance.
@@ -65,6 +71,7 @@ type stateRecord struct {
 }
 
 type manager struct {
+	config   HPImportanceConfig
 	db       *db.PgDB
 	state    map[int]stateRecord
 	pool     pool.ActorPool
@@ -76,19 +83,19 @@ func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig, ma
 ) (actor.Actor, error) {
 	// growforest should either be installed in PATH (when running from source) or package with the
 	// master (when running from binary packages).
-	growforest := path.Join(masterRoot, "growforest")
+	growforest := path.Join(masterRoot, growforestBin)
 	_, err := os.Stat(growforest)
 	if os.IsNotExist(err) {
-		growforest = "growforest"
+		growforest = growforestBin
 	}
 
-	workingDir := "/tmp/determined/growforest"
 	err = os.MkdirAll(workingDir, 0700)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create scratch space for HP importance computation")
 	}
 
 	return &manager{
+		config:   config,
 		db:       db,
 		disabled: config.WorkersLimit == 0,
 		state:    make(map[int]stateRecord),
@@ -141,19 +148,21 @@ func (m *manager) triggerPartialWork(ctx *actor.Context) {
 	for i := 0; i < len(ids) && i < len(hpis); i++ {
 		for metric, metricHpi := range hpis[i].TrainingMetrics {
 			if metricHpi.Pending || metricHpi.InProgress {
-				ctx.Tell(ctx.Self(), WorkRequest{
-					ExperimentID: ids[i],
-					MetricName:   metric,
-					MetricType:   model.TrainingMetric,
+				ctx.Tell(ctx.Self(), startWork{
+					experimentID: ids[i],
+					metricName:   metric,
+					metricType:   model.TrainingMetric,
+					config:       m.config,
 				})
 			}
 		}
 		for metric, metricHpi := range hpis[i].ValidationMetrics {
 			if metricHpi.Pending || metricHpi.InProgress {
-				ctx.Tell(ctx.Self(), WorkRequest{
-					ExperimentID: ids[i],
-					MetricName:   metric,
-					MetricType:   model.ValidationMetric,
+				ctx.Tell(ctx.Self(), startWork{
+					experimentID: ids[i],
+					metricName:   metric,
+					metricType:   model.ValidationMetric,
+					config:       m.config,
 				})
 			}
 		}
@@ -255,6 +264,7 @@ func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 		experimentID: msg.ExperimentID,
 		metricName:   msg.MetricName,
 		metricType:   msg.MetricType,
+		config:       m.config,
 	})
 	if err != nil {
 		metricHpi.Pending = false
@@ -306,6 +316,7 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 				experimentID: experimentID,
 				metricName:   loss,
 				metricType:   model.TrainingMetric,
+				config:       m.config,
 			})
 			if err != nil {
 				lossHpi.Pending = false
@@ -318,6 +329,7 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 				experimentID: experimentID,
 				metricName:   searcherMetric,
 				metricType:   model.ValidationMetric,
+				config:       m.config,
 			})
 			if err != nil {
 				searcherMetricHpi.Pending = false
