@@ -1,4 +1,3 @@
-import 'prototypes';
 import { RecordKey } from 'types';
 
 describe('Array.prototype utility', () => {

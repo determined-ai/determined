@@ -1,7 +1,6 @@
 import hparams from 'fixtures/hyperparameter-configs.json';
 import experimentResps from 'fixtures/responses/experiment-details/set-a.json';
 import * as ioTypes from 'ioTypes';
-import 'prototypes';
 
 type FailReport<T = unknown> = {error: Error; sample: T;}
 
