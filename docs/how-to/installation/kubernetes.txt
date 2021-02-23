@@ -17,8 +17,11 @@ general information about using Determined with Kubernetes, refer the
 Before installing Determined on a Kubernetes cluster, please ensure that
 the following prerequisites are satisfied:
 
--  The Kubernetes cluster should be running Kubernetes >= 1.15, with GPU
-   support enabled.
+-  The Kubernetes cluster should be running Kubernetes >= 1.15
+
+-  The Kubernetes cluster should have `GPU support
+   <https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/>`_
+   enabled.
 
 -  You should have access to the cluster via `kubectl
    <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
