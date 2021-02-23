@@ -1,5 +1,7 @@
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import torch
+
 from determined import pytorch
 
 
@@ -63,9 +65,21 @@ class _WrappedReducer:
 
 
 class PyTorchExperimentalContext:
-    def __init__(self) -> None:
+    def __init__(self, parent: Any) -> None:
         self._wrapped_reducers = []  # type: List[_WrappedReducer]
         self._allgather_fn = default_allgather_fn
+        self._parent = parent
+        self._auto_amp = False
+
+    def use_amp(self) -> None:
+        """
+        Handles all operations for the most simple cases automatically with a default gradient
+        scaler. Specifically, wraps forward pass in an autocast context, scales loss before
+        backward pass, unscales before clipping gradients, uses scaler when stepping
+        optimizer(s), and updates scaler afterwards).
+        """
+        self._parent.wrap_scaler(torch.cuda.amp.GradScaler())
+        self._auto_amp = True
 
     def _set_allgather_fn(self, fn: Callable) -> None:
         self._allgather_fn = fn

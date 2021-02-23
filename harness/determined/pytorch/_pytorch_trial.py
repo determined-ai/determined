@@ -287,7 +287,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 epoch_idx=self.get_epoch_idx(batch_idx),
                 batch_idx=batch_idx,
             )
-            if self.context._scaler and self.context._auto_amp:
+            if self.context._scaler and self.context.experimental._auto_amp:
                 self.context._scaler.update()
             if isinstance(tr_metrics, torch.Tensor):
                 tr_metrics = {"loss": tr_metrics}
