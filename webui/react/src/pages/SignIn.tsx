@@ -1,6 +1,7 @@
 import { notification } from 'antd';
+import axios from 'axios';
 import queryString from 'query-string';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'react-router-dom';
 
@@ -29,6 +30,8 @@ const SignIn: React.FC = () => {
   const ui = UI.useStateContext();
   const setUI = UI.useActionContext();
   const queries: Queries = queryString.parse(location.search);
+  const [ canceler ] = useState(new AbortController());
+  const [ source ] = useState(axios.CancelToken.source());
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -36,7 +39,7 @@ const SignIn: React.FC = () => {
    * and this will pick up that auth and automatically redirect them into
    * their previous app.
    */
-  const checkAuth = useAuthCheck();
+  const checkAuth = useAuthCheck(canceler);
   const stopPolling = usePolling(checkAuth, { delay: 1000 });
 
   /*
@@ -68,7 +71,12 @@ const SignIn: React.FC = () => {
   ]);
 
   // Stop the polling upon a dismount of this page.
-  useEffect(() => stopPolling, [ stopPolling ]);
+  useEffect(() => {
+    return () => {
+      canceler.abort();
+      stopPolling();
+    };
+  }, [ canceler, stopPolling ]);
 
   /*
    * Before showing the sign in form, make sure one auth check is done.
@@ -83,7 +91,7 @@ const SignIn: React.FC = () => {
         </Helmet>
         <div className={css.content}>
           <Logo type={LogoTypes.OnLightVertical} />
-          <DeterminedAuth />
+          <DeterminedAuth canceler={canceler} source={source} />
         </div>
       </div>
     </Page>

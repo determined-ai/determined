@@ -1,4 +1,5 @@
 import { Button, Form, Input } from 'antd';
+import { CancelTokenSource } from 'axios';
 import React, { useCallback, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -13,6 +14,11 @@ import { Storage } from 'utils/storage';
 
 import css from './DeterminedAuth.module.scss';
 
+interface Props {
+  canceler: AbortController;
+  source: CancelTokenSource;
+}
+
 interface FromValues {
   password?: string;
   username?: string;
@@ -21,7 +27,7 @@ interface FromValues {
 const storage = new Storage({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
-const DeterminedAuth: React.FC = () => {
+const DeterminedAuth: React.FC<Props> = ({ canceler, source }: Props) => {
   const setAuth = Auth.useActionContext();
   const setUI = UI.useActionContext();
   const [ isBadCredentials, setIsBadCredentials ] = useState(false);
@@ -31,9 +37,10 @@ const DeterminedAuth: React.FC = () => {
     setUI({ type: UI.ActionType.ShowSpinner });
     setCanSubmit(false);
     try {
-      const { token } = await login(creds as Credentials);
+      const options = { signal: canceler.signal };
+      const { token } = await login({ ...creds as Credentials, cancelToken: source.token });
       updateDetApi({ apiKey: 'Bearer ' + token });
-      const user = await getCurrentUser({});
+      const user = await getCurrentUser(options);
       setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, token, user } });
       storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
     } catch (e) {
@@ -54,7 +61,7 @@ const DeterminedAuth: React.FC = () => {
     } finally {
       setCanSubmit(true);
     }
-  }, [ setAuth, setUI ]);
+  }, [ canceler, setAuth, setUI, source ]);
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;
