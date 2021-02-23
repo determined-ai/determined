@@ -4,9 +4,7 @@ import {
   relativeTimeRenderer, stateRenderer, taskIdRenderer, taskTypeRenderer, userRenderer,
 } from 'components/Table';
 import { CommandTask } from 'types';
-import {
-  alphanumericSorter, commandStateSorter, stringTimeSorter,
-} from 'utils/data';
+import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/sort';
 
 export const columns: ColumnType<CommandTask>[] = [
   {

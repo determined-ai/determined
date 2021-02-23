@@ -12,7 +12,7 @@ import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, ExperimentSearcherName, MetricName, MetricType } from 'types';
-import { alphanumericSorter } from 'utils/data';
+import { alphanumericSorter } from 'utils/sort';
 import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';

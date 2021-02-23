@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Renderer, stateRenderer } from 'components/Table';
 import { Step } from 'types';
-import { numericSorter, runStateSorter } from 'utils/data';
+import { numericSorter, runStateSorter } from 'utils/sort';
 
 const batchRender: Renderer<Step> = (_, record) => {
   return <>{record.batchNum}</>;

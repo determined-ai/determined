@@ -23,7 +23,8 @@ import {
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { ColorScale } from 'utils/color';
-import { clone, isNumber, numericSorter } from 'utils/data';
+import { clone, isNumber } from 'utils/data';
+import { numericSorter } from 'utils/sort';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
