@@ -1,6 +1,38 @@
-import { numericSorter } from './sort';
+import { alphanumericSorter, booleanSorter, numericSorter } from './sort';
 
 describe('sort utility', () => {
+  it('alphanumericSorter', () => {
+    const tests = [
+      { input: [ 'ABC', 'abc' ], output: 1 },
+      { input: [ 'abc', 'ABC' ], output: -1 },
+      { input: [ 'Jumping', 'elephant' ], output: 1 },
+      { input: [ 52, 'elephant' ], output: -1 },
+      { input: [ 'elephant', -12 ], output: 1 },
+      { input: [ 52, -12 ], output: 1 },
+      { input: [ -12, 52 ], output: -1 },
+      { input: [ 'abc', 'abc' ], output: 0 },
+      { input: [ -12, -12 ], output: 0 },
+      { input: [ 52, 52 ], output: 0 },
+    ];
+    tests.forEach(test => {
+      const result = alphanumericSorter(test.input[0], test.input[1]);
+      expect(result).toStrictEqual(test.output);
+    });
+  });
+
+  it('booleanSorter', () => {
+    const tests = [
+      { input: [ true, true ], output: 0 },
+      { input: [ false, false ], output: 0 },
+      { input: [ true, false ], output: -1 },
+      { input: [ false, true ], output: 1 },
+    ];
+    tests.forEach(test => {
+      const result = booleanSorter(test.input[0], test.input[1]);
+      expect(result).toStrictEqual(test.output);
+    });
+  });
+
   it('numericSorter', () => {
     const tests = [
       { input: [ 0, 1 ], output: -1 },
