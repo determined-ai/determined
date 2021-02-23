@@ -5,8 +5,8 @@ Determined's tf.keras API. This example is adapted from this [Keras CNN
  example](https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py).
 
 ## Files
-* **model_def.py**: The core code for the model. This includes building and compiling the model.
-* **data.py**: The data loading and preparation code for the model.
+* **model_def.py**: Organizes the model and data-loaders into the Determined TFKerasTrial API.
+* **cifar_model.py**: The core code for the model. This includes building and compiling the model.
 
 ### Configuration Files
 * **const.yaml**: Train the model with constant hyperparameter values. 
