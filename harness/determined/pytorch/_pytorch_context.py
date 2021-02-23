@@ -261,7 +261,7 @@ class PyTorchTrialContext(det.TrialContext):
 
         check.is_none(self._scaler, "Please only call wrap_scaler once.")
 
-        check.true(len(self.models) is 0, "Please call wrap_scaler before wrap_model.")
+        check.true(len(self.models) == 0, "Please call wrap_scaler before wrap_model.")
 
         check.true(
             torch.cuda.is_available(),
