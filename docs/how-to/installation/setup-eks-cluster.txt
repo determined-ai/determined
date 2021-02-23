@@ -374,3 +374,4 @@ tolerations to the experiment spec to ensure they will get scheduled.
 ************
 
 -  :ref:`install-on-kubernetes`
+-  :ref:`k8s-dev-guide`
