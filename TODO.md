@@ -1,0 +1,4 @@
+- separate endpoint?
+- hide endpoitn from advertising in docs
+  - hide all internals?
+- host and use bindings
