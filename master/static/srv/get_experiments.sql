@@ -23,7 +23,7 @@ WITH filtered_exps AS (
                     -- In the event labels were removed, if all were removed we insert null,
                     -- which previously broke this query.
                     CASE WHEN e.config->'labels'::text = 'null'
-                    THEN '[]'::jsonb
+                    THEN NULL
                     ELSE e.config->'labels' END
                 ))
             )
