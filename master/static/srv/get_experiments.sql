@@ -7,6 +7,7 @@ WITH filtered_exps AS (
         e.start_time AS start_time,
         e.end_time AS end_time,
         'STATE_' || e.state AS state,
+        'FRAMEWORK_' || e.framework AS framework,
         (SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) AS num_trials,
         e.archived AS archived,
         COALESCE(e.progress, 0) AS progress,

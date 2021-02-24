@@ -30,6 +30,16 @@ enum State {
   STATE_DELETED = 9;
 }
 
+// The training framework experiment is using.
+enum Framework {
+  // TODO.
+  FRAMEWORK_UNSPECIFIED = 0;
+  // a.
+  FRAMEWORK_PYTORCH = 1;
+  // a.
+  FRAMEWORK_PYTORCH_LIGHTNING_ADAPTER = 2;
+}
+
 // Experiment is a collection of one or more trials that are exploring a
 // user-defined hyperparameter space.
 message Experiment {
@@ -69,6 +79,8 @@ message Experiment {
   string username = 10;
   // The resource pool the experiment was created in
   string resource_pool = 11;
+  // The framework this experiment is running.
+  Framework framework = 12;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an
