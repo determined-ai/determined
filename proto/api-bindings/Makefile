@@ -1,12 +1,13 @@
+PROJECT_ROOT := "../.."
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
 
 .PHONY: all
-all: get-deps
+all: get-deps get-swagger-spec
 	$(MAKE) build
 
 .PHONY: get-swagger-sepc
 get-swagger-spec:
-	cat $(DET_ROOT)/proto/build/swagger/determined/api/v1/api.swagger.json | jq > api.swagger.json
+	cp ${PROJECT_ROOT}/proto/build/swagger/determined/api/v1/api.swagger.json .
 
 .PHONY: get-deps
 get-deps: deps/${CODEGEN_BIN}
