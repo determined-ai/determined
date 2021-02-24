@@ -12,9 +12,11 @@ default: get-deps
 build-bindings:
 	$(MAKE) -C ../../bindings build
 .PHONY: get-deps-api
-get-deps-api: build-bindings
+get-deps-api:
+	# WARN this has a dependency on build-bindings which we isn't link through make
+	# here
 	rm -rf src/services/api-ts-sdk
-	cp -r ../../bindings/typescript-fetch-bindings src/services/api-ts-sdk
+	cp -r ${PROJECT_ROOT}/bindings/typescript-fetch-bindings src/services/api-ts-sdk
 
 .PHONY: get-deps-npm
 get-deps-npm:

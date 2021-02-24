@@ -27,7 +27,8 @@ build-docs: build-common build-harness build-cli build-deploy build-examples bui
 build-master: build-webui build-docs
 	$(MAKE) -C master build
 .PHONY: build-webui
-build-webui: build-proto build-bindings
+build-webui: build-proto
+	$(MAKE) build-bindings
 	$(MAKE) -C webui build
 .PHONY: build
 build: build-master build-agent
