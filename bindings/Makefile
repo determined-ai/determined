@@ -3,8 +3,7 @@ SWAGGER_SPEC := ${PROJECT_ROOT}/proto/build/swagger/determined/api/v1/api.swagge
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
 
 .PHONY: all
-all: get-deps build-proto
-	$(MAKE) get-swagger-spec
+all: get-deps
 	$(MAKE) build
 
 .PHONY: get-deps
