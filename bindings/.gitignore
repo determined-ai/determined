@@ -1,3 +1,2 @@
 deps/
-api.swagger.json
-*-bindings/
+build/

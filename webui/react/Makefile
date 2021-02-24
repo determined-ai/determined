@@ -16,7 +16,7 @@ get-deps-api:
 	# WARN this has a dependency on build-bindings which we isn't link through make
 	# here
 	rm -rf src/services/api-ts-sdk
-	cp -r ${PROJECT_ROOT}/bindings/typescript-fetch-bindings src/services/api-ts-sdk
+	cp -r ${PROJECT_ROOT}/bindings/build/typescript-fetch src/services/api-ts-sdk
 
 .PHONY: get-deps-npm
 get-deps-npm:

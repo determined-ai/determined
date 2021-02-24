@@ -1,4 +1,4 @@
-PROJECT_ROOT := ".."
+PROJECT_ROOT := ..
 SWAGGER_SPEC := ${PROJECT_ROOT}/proto/build/swagger/determined/api/v1/api.swagger.json
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
 
@@ -6,13 +6,6 @@ CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
 all: get-deps build-proto
 	$(MAKE) get-swagger-spec
 	$(MAKE) build
-
-.PHONY: build-proto
-build-proto:
-	$(MAKE) -C ${PROJECT_ROOT}/proto build
-.PHONY: get-swagger-sepc
-get-swagger-spec:
-	cp ${PROJECT_ROOT}/proto/build/swagger/determined/api/v1/api.swagger.json .
 
 .PHONY: get-deps
 get-deps: deps/${CODEGEN_BIN}
@@ -22,24 +15,23 @@ deps/${CODEGEN_BIN}:
 	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/${CODEGEN_BIN} \
 		-o deps/${CODEGEN_BIN}
 
-.PHONY: build-%
-build-%:
-	[ -f ./api.swagger.json ] || exit 1
-	mkdir -p $*-bindings
-	java -jar deps/$(CODEGEN_BIN) generate -i ./api.swagger.json \
-		-l $* -o $*-bindings
-
+build/%: ${SWAGGER_SPEC}
+	[ -f ./${SWAGGER_SPEC} ] || exit 1
+	mkdir -p build/$*
+	java -jar deps/$(CODEGEN_BIN) generate -i ${SWAGGER_SPEC} \
+		-l $* -o build/$*
+	touch build/$*
 
 .PHONY: build-default
-build-default: build-typescript-fetch build-python
+build-default: build/typescript-fetch build/python
 
 .PHONY: build
-build: get-swagger-spec
+build: ${SWAGGER_SPEC}
 	$(MAKE)	build-default
 
 .PHONY: setup-example-%
 setup-example-%:
-	cp -r examples/$*/* $*-bindings/
+	cp -r examples/$*/* build/$*/
 
 .PHONY: clean-deps
 clean-deps:
@@ -47,7 +39,7 @@ clean-deps:
 
 .PHONY: clean
 clean:
-	rm -rf *-bindings
+	rm -rf build/
 
 .PHONY: clean-all
 clean-all: clean clean-deps
