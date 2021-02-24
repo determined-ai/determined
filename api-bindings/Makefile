@@ -1,4 +1,4 @@
-PROJECT_ROOT := "../.."
+PROJECT_ROOT := ".."
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
 
 .PHONY: all

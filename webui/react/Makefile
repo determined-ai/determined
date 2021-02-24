@@ -10,7 +10,7 @@ default: get-deps
 .PHONY: get-deps-api
 get-deps-api:
 	rm -rf src/services/api-ts-sdk
-	cp -r ../../proto/api-bindings/typescript-fetch-bindings src/services/api-ts-sdk
+	cp -r ../../api-bindings/typescript-fetch-bindings src/services/api-ts-sdk
 
 .PHONY: get-deps-npm
 get-deps-npm:
