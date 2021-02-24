@@ -1,4 +1,4 @@
-codegen_cli = swagger-codegen-cli-2.4.14.jar
+CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
 
 .PHONY: all
 all: get-deps
@@ -9,18 +9,18 @@ get-swagger-spec:
 	cat $(DET_ROOT)/proto/build/swagger/determined/api/v1/api.swagger.json | jq > api.swagger.json
 
 .PHONY: get-deps
-get-deps:
-	mkdir -p deps
-	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/$(codegen_cli) \
-		-o deps/$(codegen_cli)
+get-deps: deps/${CODEGEN_BIN}
 
-deps/codegen.stamp: deps/$(codegen_cli)
+deps/${CODEGEN_BIN}:
+	mkdir -p deps
+	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/${CODEGEN_BIN} \
+		-o deps/${CODEGEN_BIN}
 
 .PHONY: build-%
 build-%:
 	[ -f ./api.swagger.json ] || exit 1
 	mkdir -p $*-bindings
-	java -jar deps/$(codegen_cli) generate -i ./api.swagger.json \
+	java -jar deps/$(CODEGEN_BIN) generate -i ./api.swagger.json \
 		-l $* -o $*-bindings
 
 .PHONY: build
