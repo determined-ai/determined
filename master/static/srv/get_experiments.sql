@@ -19,7 +19,13 @@ WITH filtered_exps AS (
         AND ($3 = '' OR (u.username IN (SELECT unnest(string_to_array($3, ',')))))
         AND (
                 $4 = ''
-                OR string_to_array($4, ',') <@ ARRAY(SELECT jsonb_array_elements_text(e.config->'labels'))
+                OR string_to_array($4, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
+                    -- In the event labels were removed, if all were removed we insert null,
+                    -- which previously broke this query.
+                    CASE WHEN e.config->'labels'::text = 'null'
+                    THEN '[]'::jsonb
+                    ELSE e.config->'labels' END
+                ))
             )
         AND ($5 = '' OR POSITION($5 IN (e.config->>'description')) > 0)
 ), page_info AS (
