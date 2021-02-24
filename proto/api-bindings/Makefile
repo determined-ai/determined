@@ -24,7 +24,7 @@ build-%:
 		-l $* -o $*-bindings
 
 .PHONY: build
-build: build-typescript-fetch build-python build-go
+build: build-typescript-fetch build-python
 
 .PHONY: setup-example-%
 setup-example-%:
