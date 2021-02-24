@@ -4,7 +4,7 @@ all:
 	$(MAKE) build
 
 .PHONY: clean
-clean: clean-react clean-tests clean-api-bindings
+clean: clean-react clean-tests
 .PHONY: clean-%
 clean-%:
 	$(MAKE) -C $* clean
@@ -22,22 +22,16 @@ check-%:
 	$(MAKE) -C $* check
 
 .PHONY: get-deps
-get-deps: build-api-bindings
+get-deps:
 	$(MAKE) -C react $@
 	$(MAKE) -C tests $@
 
+# depends on proto/api-bindings
 .PHONY: build
 build: build-react
 .PHONY: build-proto
 build-proto:
 	$(MAKE) -C ../proto build
-
-.PHONY: build-api-bindings
-build-api-bindings: build-proto
-	$(MAKE) -C ../proto/api-bindings all
-.PHONY: build-%
-build-%:
-	$(MAKE) -C $* build
 
 .PHONY: test
 test: test-react test-tests
