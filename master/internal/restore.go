@@ -195,16 +195,16 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 	0: shimExperimentSnapshotV0,
 }
 
+// trialSnapshotShims maps a version to the shim that bumps that version.
+var trialSnapshotShims = map[int]snapshotShimFunc{
+	0: shimTrialSnapshotV0,
+}
+
 // shimExperimentSnapshot shims a trial snapshot to the version required by the master,
 // returning an error in the event the shim fails or the snapshot version is greater
 // than the current version (which could happen in a downgrade).
 func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
 	return shimSnapshot(experimentSnapshotShims, snapshot, version)
-}
-
-// trialSnapshotShims maps a version to the shim that bumps that version.
-var trialSnapshotShims = map[int]snapshotShimFunc{
-	0: identidyShim,
 }
 
 // shimTrialSnapshot shims a trial snapshot to the version required by the master,
@@ -233,11 +233,6 @@ func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) 
 
 // snapshotShimFunc is a shimming function.
 type snapshotShimFunc func([]byte) ([]byte, error)
-
-// identidyShim is a shim that does nothing.
-func identidyShim(snapshot []byte) ([]byte, error) {
-	return snapshot, nil
-}
 
 // Version 0 => 1 shims
 
@@ -283,4 +278,23 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 	}
 	searcherState["trial_operations"] = filteredOps
 	return json.Marshal(experimentSnapshotV0)
+}
+
+// shimTrialSnapshotV0 shims a v0 trial snapshot to a v1 trial snapshot.
+// From v0 to v1, the cached checkpoints were removed.
+func shimTrialSnapshotV0(snapshot []byte) ([]byte, error) {
+	var trialSnapshotV0 map[string]interface{}
+	if err := json.Unmarshal(snapshot, &trialSnapshotV0); err != nil {
+		return nil, err
+	}
+
+	// Remove instances of `cached_checkpoint`.
+	sequencerState := trialSnapshotV0["trial_workload_sequencer_state"].(map[string]interface{})
+	delete(sequencerState, "cached_checkpoint")
+	if sequencerState["latest_snapshot"] != nil {
+		latestSnapshot := sequencerState["latest_snapshot"].(map[string]interface{})
+		delete(latestSnapshot, "cached_checkpoint")
+	}
+
+	return json.Marshal(trialSnapshotV0)
 }
