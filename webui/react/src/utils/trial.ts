@@ -1,5 +1,6 @@
 import { MetricName, MetricType, WorkloadWrapper } from 'types';
-import { isNumber, metricNameSorter } from 'utils/data';
+import { isNumber } from 'utils/data';
+import { metricNameSorter } from 'utils/sort';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
 

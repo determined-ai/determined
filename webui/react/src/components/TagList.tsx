@@ -2,8 +2,8 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { alphanumericSorter } from 'utils/data';
 import { toRem } from 'utils/dom';
+import { alphanumericSorter } from 'utils/sort';
 import { toHtmlId, truncate } from 'utils/string';
 
 import css from './TagList.module.scss';

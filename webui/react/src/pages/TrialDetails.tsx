@@ -34,7 +34,8 @@ import {
   CheckpointDetail, ExperimentBase, MetricName, MetricType, RawJson, Step, TrialDetails,
   TrialHyperParameters,
 } from 'types';
-import { clone, isEqual, numericSorter } from 'utils/data';
+import { clone, isEqual } from 'utils/data';
+import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/step';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';

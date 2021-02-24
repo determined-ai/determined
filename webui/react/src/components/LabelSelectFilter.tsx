@@ -3,7 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import React, { useEffect, useState } from 'react';
 
 import { getExperimentLabels } from 'services/api';
-import { alphanumericSorter } from 'utils/data';
+import { alphanumericSorter } from 'utils/sort';
 
 import MultiSelect from './MultiSelect';
 

@@ -1,5 +1,5 @@
 import { Primitive, Range } from 'types';
-import { primitiveSorter } from 'utils/data';
+import { primitiveSorter } from 'utils/sort';
 
 /* Ranges */
 

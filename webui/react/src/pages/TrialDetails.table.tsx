@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Renderer, stateRenderer } from 'components/Table';
 import { Step } from 'types';
-import { alphanumericSorter, runStateSorter } from 'utils/data';
+import { numericSorter, runStateSorter } from 'utils/sort';
 
 const batchRender: Renderer<Step> = (_, record) => {
   return <>{record.batchNum}</>;
@@ -14,7 +14,7 @@ export const columns: ColumnType<Step>[] = [
     key: 'batches',
     render: batchRender,
     sorter: (a: Step, b: Step): number => {
-      return alphanumericSorter(a.batchNum, b.batchNum);
+      return numericSorter(a.batchNum, b.batchNum);
     },
     title: 'Batches',
   },

@@ -28,7 +28,7 @@ import { killTask } from 'services/api';
 import { ApiSorter } from 'services/types';
 import { ShirtSize } from 'themes';
 import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
-import { alphanumericSorter, numericSorter } from 'utils/data';
+import { alphanumericSorter, numericSorter } from 'utils/sort';
 import { filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
