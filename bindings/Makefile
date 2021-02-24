@@ -7,6 +7,7 @@ all: get-deps get-swagger-spec
 
 .PHONY: get-swagger-sepc
 get-swagger-spec:
+	$(MAKE) -C ${PROJECT_ROOT}/proto build
 	cp ${PROJECT_ROOT}/proto/build/swagger/determined/api/v1/api.swagger.json .
 
 .PHONY: get-deps
@@ -24,8 +25,13 @@ build-%:
 	java -jar deps/$(CODEGEN_BIN) generate -i ./api.swagger.json \
 		-l $* -o $*-bindings
 
+
+.PHONY: build-default
+build-default: build-typescript-fetch build-python
+
 .PHONY: build
-build: build-typescript-fetch build-python
+build: get-swagger-spec
+	$(MAKE)	build-default
 
 .PHONY: setup-example-%
 setup-example-%:

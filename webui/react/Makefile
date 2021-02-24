@@ -7,8 +7,12 @@ export PUBLIC_URL ?= /det
 default: get-deps
 	$(MAKE) build
 
+
+.PHONY: build-bindings
+build-bindings:
+	$(MAKE) -C ../../bindings build
 .PHONY: get-deps-api
-get-deps-api:
+get-deps-api: build-bindings
 	rm -rf src/services/api-ts-sdk
 	cp -r ../../bindings/typescript-fetch-bindings src/services/api-ts-sdk
 
@@ -19,13 +23,10 @@ get-deps-npm:
 	done
 
 .PHONY: get-deps
-get-deps: get-deps-api get-deps-npm
-	# WARN this module also depends on the swagger generated api client
-	# which is not built or updated here. To set up this dependency checkout
-	# the swagger generated api client module at ../api-ts-sdk
+get-deps: get-deps-npm
 
 .PHONY: build
-build:
+build: get-deps-api
 	npm run build
 
 .PHONY: build-storybook

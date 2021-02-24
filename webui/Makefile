@@ -26,12 +26,9 @@ get-deps:
 	$(MAKE) -C react $@
 	$(MAKE) -C tests $@
 
-# depends on proto/bindings
 .PHONY: build
-build: build-react
-.PHONY: build-proto
-build-proto:
-	$(MAKE) -C ../proto build
+build:
+	$(MAKE) -C react build
 
 .PHONY: test
 test: test-react test-tests
