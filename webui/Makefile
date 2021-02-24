@@ -26,7 +26,7 @@ get-deps:
 	$(MAKE) -C react $@
 	$(MAKE) -C tests $@
 
-# depends on proto/api-bindings
+# depends on proto/bindings
 .PHONY: build
 build: build-react
 .PHONY: build-proto

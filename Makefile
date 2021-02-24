@@ -9,7 +9,7 @@ get-deps:
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) -C proto $@
-	$(MAKE) -C api-bindings $@
+	$(MAKE) -C bindings $@
 	$(MAKE) -C webui $@
 
 .PHONY: package
@@ -27,7 +27,7 @@ build-docs: build-common build-harness build-cli build-deploy build-examples bui
 build-master: build-webui build-docs
 	$(MAKE) -C master build
 .PHONY: build-webui
-build-webui: build-proto build-api-bindings
+build-webui: build-proto build-bindings
 	$(MAKE) -C webui build
 .PHONY: build
 build: build-master build-agent
@@ -36,7 +36,7 @@ build: build-master build-agent
 clean-%:
 	$(MAKE) -C $(subst -,/,$*) clean
 .PHONY: clean
-clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy clean-examples clean-docs clean-webui clean-master clean-agent clean-api-bindings
+clean: clean-tools clean-proto clean-common clean-harness clean-cli clean-deploy clean-examples clean-docs clean-webui clean-master clean-agent clean-bindings
 
 .PHONY: check-%
 check-%:
