@@ -1,3 +1,4 @@
+import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
@@ -36,7 +37,7 @@ export const experimentToTask = (experiment: ExperimentItem): RecentExperimentTa
     resourcePool: experiment.resourcePool,
     startTime: experiment.startTime,
     state: experiment.state,
-    url: `/experiments/${experiment.id}`,
+    url: paths.experimentDetails(experiment.id),
     username: experiment.username,
   };
   return task;

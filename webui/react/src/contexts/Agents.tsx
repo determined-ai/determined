@@ -13,7 +13,7 @@ const initialState = {
   isLoading: false,
 };
 
-export const Agents = generateContext<RestApiState<Agent[]>>({
+const Agents = generateContext<RestApiState<Agent[]>>({
   initialState: initialState,
   name: 'Agents',
 });

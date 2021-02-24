@@ -135,7 +135,7 @@ const TaskList: React.FC = () => {
     return false;
   }, [ selectedTasks ]);
 
-  const fetchTasks = useCallback((): void => {
+  const fetchAll = useCallback((): void => {
     fetchUsers();
     fetchCommands();
     fetchNotebooks();
@@ -152,7 +152,7 @@ const TaskList: React.FC = () => {
   const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
   const handleSourceDismiss = useCallback(() => setSourcesModal(undefined), []);
 
-  const handleActionComplete = useCallback(() => fetchTasks(), [ fetchTasks ]);
+  const handleActionComplete = useCallback(() => fetchAll(), [ fetchAll ]);
 
   const columns = useMemo(() => {
 
@@ -230,7 +230,7 @@ const TaskList: React.FC = () => {
       setSelectedRowKeys([]);
 
       // Refetch task list to get updates based on batch action.
-      fetchTasks();
+      fetchAll();
     } catch (e) {
       handleError({
         error: e,
@@ -242,7 +242,7 @@ const TaskList: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ fetchTasks, selectedTasks ]);
+  }, [ fetchAll, selectedTasks ]);
 
   const handleConfirmation = useCallback(() => {
     Modal.confirm({
@@ -271,7 +271,7 @@ const TaskList: React.FC = () => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  usePolling(fetchTasks);
+  usePolling(fetchAll);
 
   useEffect(() => {
     return () => canceler.abort();
