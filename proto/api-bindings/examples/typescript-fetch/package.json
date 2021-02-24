@@ -1,0 +1,15 @@
+{
+  "name": "typescript-fetch-bindings",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx ts-node main.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "portable-fetch": "^3.0.0",
+    "ts-node": "^9.0.0"
+  }
+}
