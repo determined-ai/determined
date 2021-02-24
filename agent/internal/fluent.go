@@ -306,7 +306,7 @@ func (f *fluentActor) trackLogs(ctx *actor.Context) {
 	}
 	// This message also allows us to synchronize with the buffer before dumping logs.
 	ctx.Ask(ctx.Self(), aproto.ContainerLog{
-		Timestamp: time.Now(),
+		Timestamp: time.Now().UTC(),
 		RunMessage: &aproto.RunMessage{
 			Value: "detected Fluent Bit exit",
 		},

@@ -107,7 +107,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		msg.ParentID = ctx.Self().Address().Parent().Local()
 		msg.ID = uuid.New().String()
 		msg.Seq = e.seq
-		msg.Time = time.Now()
+		msg.Time = time.Now().UTC()
 		e.seq++
 
 		// Add the event to the event buffer.
