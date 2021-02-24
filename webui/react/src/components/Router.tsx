@@ -5,6 +5,7 @@ import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { RouteConfig } from 'routes/types';
+import { paths } from 'routes/utils';
 import { clone } from 'utils/data';
 
 interface Props {
@@ -43,7 +44,7 @@ const Router: React.FC<Props> = (props: Props) => {
             key={route.id}
             {...route}
             render={({ location }): ReactNode => <Redirect to={{
-              pathname: '/login',
+              pathname: paths.login(),
               state: { loginRedirect: clone(location) },
             }} />}
           />;

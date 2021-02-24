@@ -28,6 +28,7 @@ import { DeterminedInfo, ResourceType } from 'types';
 import { correctViewportHeight, refreshPage, updateFaviconType } from 'utils/browser';
 
 import css from './App.module.scss';
+import { paths } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -66,7 +67,7 @@ const AppView: React.FC = () => {
       const message = 'New WebUI Version';
       const description = <div>
         WebUI version <b>v{info.version}</b> is available.
-        Check out what&apos;s new in our <Link external path="/docs/release-notes.html">
+        Check out what&apos;s new in our <Link external path={paths.docs('/release-notes.html')}>
           release notes
         </Link>.
       </div>;

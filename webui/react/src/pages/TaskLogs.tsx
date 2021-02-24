@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
+import { paths } from 'routes/utils';
 import { getTaskLogs } from 'services/api';
 import { TaskLogsParams } from 'services/types';
 import { CommandType, Log } from 'types';
@@ -93,7 +94,7 @@ const TaskLogs: React.FC = () => {
       noWrap
       pageProps={{
         breadcrumb: [
-          { breadcrumbName: 'Tasks', path: '/tasks' },
+          { breadcrumbName: 'Tasks', path: paths.taskList() },
           { breadcrumbName: `${capitalize(taskType)} ${taskId.substr(0, 4)}`, path: '#' },
         ],
         title,

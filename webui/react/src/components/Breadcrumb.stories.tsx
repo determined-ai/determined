@@ -3,6 +3,7 @@ import React from 'react';
 
 import Icon from 'components/Icon';
 import Link from 'components/Link';
+import { paths } from 'routes/utils';
 
 export default {
   component: Breadcrumb,
@@ -14,11 +15,11 @@ export const Default = (): React.ReactNode => (
     <Breadcrumb.Item>
       <Space align="center" size="small">
         <Icon name="experiment" size="small" />
-        <Link path="/experiments">Experiments</Link>
+        <Link path={paths.experimentList()}>Experiments</Link>
       </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/experiments/3">Experiment 3</Link>
+      <Link path={paths.experimentDetails(3)}>Experiment 3</Link>
     </Breadcrumb.Item>
   </Breadcrumb>
 );
@@ -27,14 +28,14 @@ export const TrialDetail = (): React.ReactNode => (
     <Breadcrumb.Item>
       <Space align="center" size="small">
         <Icon name="experiment" size="small" />
-        <Link path="/experiments">Experiments</Link>
+        <Link path={paths.experimentList()}>Experiments</Link>
       </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/experiments/3"> Experiment 3</Link>
+      <Link path={paths.experimentDetails(3)}> Experiment 3</Link>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/experiments/3/trials/34">Trial 34</Link>
+      <Link path={paths.trialDetails(34, 3)}>Trial 34</Link>
     </Breadcrumb.Item>
   </Breadcrumb>
 );

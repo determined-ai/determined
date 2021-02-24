@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
+import { paths } from 'routes/utils';
 import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
   ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/date';
@@ -89,6 +90,10 @@ const CheckpointModal: React.FC<Props> = (
     props.searcherValidation :
     ('validationMetric' in checkpoint ? checkpoint.validationMetric : undefined);
 
+  if (!checkpoint.experimentId || !checkpoint.trialId) {
+    return null;
+  }
+
   return (
     <Modal
       footer={null}
@@ -100,11 +105,11 @@ const CheckpointModal: React.FC<Props> = (
         {renderRow(
           'Source', (
             <div className={css.source}>
-              <Link path={`/experiments/${checkpoint.experimentId}`}>
+              <Link path={paths.experimentDetails(checkpoint.experimentId)}>
                 Experiment {checkpoint.experimentId}
               </Link>
               <span className={css.sourceDivider} />
-              <Link path={`/experiments/${checkpoint.experimentId}/trials/${checkpoint.trialId}`}>
+              <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
                 Trial {checkpoint.trialId}
               </Link>
               <span className={css.sourceDivider} />

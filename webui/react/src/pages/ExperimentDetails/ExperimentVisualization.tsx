@@ -8,6 +8,7 @@ import Message, { MessageType } from 'components/Message';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
+import { paths } from 'routes/utils';
 import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -200,7 +201,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       Learn about &nbsp;
         <Link
           external
-          path="/docs/reference/experiment-config.html#searcher"
+          path={paths.docs('/reference/experiment-config.html#searcher')}
           popout>how to run a hyperparameter search</Link>.
       </>}
       message={alertMessage}

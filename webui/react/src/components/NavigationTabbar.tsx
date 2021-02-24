@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
-import { handlePath } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { launchNotebook } from 'utils/task';
 
@@ -64,10 +64,10 @@ const NavigationTabbar: React.FC = () => {
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
-        <ToolbarItem icon="dashboard" label="Dashboard" path="/dashboard" />
-        <ToolbarItem icon="experiment" label="Experiments" path="/experiments" />
-        <ToolbarItem icon="tasks" label="Tasks" path="/tasks" />
-        <ToolbarItem icon="cluster" label="Cluster" path="/cluster" status={cluster} />
+        <ToolbarItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
+        <ToolbarItem icon="experiment" label="Experiments" path={paths.experimentList()} />
+        <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
+        <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={cluster} />
         <ToolbarItem icon="overflow-vertical" label="Overflow Menu" onClick={handleOverflowOpen} />
       </div>
       <ActionSheet
@@ -85,20 +85,20 @@ const NavigationTabbar: React.FC = () => {
           {
             icon: 'logs',
             label: 'Master Logs',
-            onClick: e => handlePathUpdate(e, '/logs'),
+            onClick: e => handlePathUpdate(e, paths.masterLogs()),
           },
           {
             external: true,
             icon: 'docs',
             label: 'Docs',
-            path: '/docs',
+            path: paths.docs(),
             popout: true,
           },
           {
             external: true,
             icon: 'cloud',
             label: 'API (Beta)',
-            path: '/docs/rest-api/',
+            path: paths.docs('/rest-api/'),
             popout: true,
           },
         ]}

@@ -3,6 +3,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 
 import Auth from 'contexts/Auth';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { paths } from 'routes/utils';
 import { logout } from 'services/api';
 
 const SignOut: React.FC = () => {
@@ -28,7 +29,7 @@ const SignOut: React.FC = () => {
         });
       }
       setAuth({ type: Auth.ActionType.Reset });
-      history.push('/login', location.state);
+      history.push(paths.login(), location.state);
     };
 
     if (!isSigningOut) signOut();

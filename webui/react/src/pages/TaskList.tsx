@@ -25,6 +25,7 @@ import Users, { useFetchUsers } from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
+import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import { ApiSorter } from 'services/types';
 import { ShirtSize } from 'themes';
@@ -168,14 +169,14 @@ const TaskList: React.FC = () => {
       record.misc.experimentIds.forEach(id => {
         info.sources.push({
           id,
-          path: `/experiments/${id}`,
+          path: paths.experimentDetails(id),
           type: TensorBoardSourceType.Experiment,
         });
       });
       record.misc.trialIds.forEach(id => {
         info.sources.push({
           id,
-          path: `/trials/${id}`,
+          path: paths.trialDetails(id),
           type: TensorBoardSourceType.Trial,
         });
       });
