@@ -1,3 +1,8 @@
+"""
+Original CIFAR-10 CNN Keras model code from:
+https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py.
+"""
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import (
