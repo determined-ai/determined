@@ -38,7 +38,7 @@ def trial_logs(
     level_above: Optional[str] = None,
     timestamp_before: Optional[str] = None,
     timestamp_after: Optional[str] = None,
-) -> collections.Iterable:
+) -> collections.abc.Iterable:
     def to_levels_above(level: str) -> List[str]:
         # We should just be using the generated client instead and this is why.
         levels = [

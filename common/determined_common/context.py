@@ -85,7 +85,7 @@ class Context:
         return self._size
 
     @property
-    def entries(self) -> collections.ValuesView:
+    def entries(self) -> collections.abc.ValuesView:
         return self._items.values()
 
     def add_item(self, entry: ContextItem) -> None:
