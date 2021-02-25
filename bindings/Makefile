@@ -14,7 +14,6 @@ deps/${CODEGEN_BIN}:
 		-o deps/${CODEGEN_BIN}
 
 build/%: ${SWAGGER_SPEC} deps/${CODEGEN_BIN}
-	[ -f ./${SWAGGER_SPEC} ] || exit 1
 	mkdir -p build/$*
 	java -jar deps/$(CODEGEN_BIN) generate -i ${SWAGGER_SPEC} \
 		-l $* -o build/$*
@@ -25,10 +24,6 @@ build-default: build/typescript-fetch build/python
 
 .PHONY: build
 build: ${SWAGGER_SPEC} build-default
-
-.PHONY: setup-example-%
-setup-example-%:
-	cp -r examples/$*/* build/$*/
 
 .PHONY: clean-deps
 clean-deps:
