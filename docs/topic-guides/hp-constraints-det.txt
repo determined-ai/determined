@@ -4,14 +4,12 @@
  Hyperparameter Search Constraints
 ###################################
 
-Determined's Hyperparameter Search Constraints API enables users to
-specify their hyperparameter searches in a more granular way beyond the
-experiment configuration. There are many instances where a user may wish
-to avoid searching over specific combinations of hyperparameters
-entirely or constrain their hyperparameter searches based on training
-and/or validation metrics (i.e. model deployment in constrained
-settings, implicit knowledge about the types of models most likely to
-achieve the desired metrics on a given dataset).
+Determined's Hyperparameter Search Constraints API enables finer-grained
+control over the hyperparameter search space through the specification
+of additional constraints. Among other things, this functionality is
+particularly useful for incorporating prior knowledge/domain expertise
+into a hyperparameter search and constraining the search to models that
+fit a particular deployment environment.
 
 Using Determined's HP Search Constraints requires no changes to the
 configuration files. Rather, users can simply raise a
@@ -43,8 +41,8 @@ Keras and TF Estimator, it is valid for the user to raise this exception
 in either the `__init__` or in an `on_checkpoint_end` callback.
 
 See this
-https://github.com/determined-ai/determined/tree/master/examples for an
-example on HP Search Constraints usage.
+https://github.com/determined-ai/determined/tree/master/examples/features/hp_constraints_mnist_pytorch
+for an example on HP Search Constraints usage.
 
 ******************************************************
  Searcher-Specific Behavior for HP Search Constraints
@@ -65,18 +63,23 @@ example on HP Search Constraints usage.
          status or progress.
 
    -  -  Random
-      -  Gracefully terminates current trial, creates a new trial
-         according to search parameters and adds it to the trial queue.
+
+      -  Gracefully terminates current trial, creates a new trial with a
+         randomly sampled set of hyperparameters and adds it to the
+         trial queue.
 
    -  -  PBT
-      -  Does not have any specific InvalidHP handling logic – either
-         terminates training or runs around round accordingly.
+
+      -  Does not have specific InvalidHP handling and will treat as a
+         poor performing trial that will be replaced with either a new
+         hyperparameter setting or a perturbation of a high performing
+         hyperparameter setting.
 
    -  -  Adaptive (ASHA)
 
       -  Gracefully terminates and removes associated metrics with the
-         current trial, creates a new trial according to search
-         parameters and adds it to the trial queue.
+         current trial and creates a new trial with a randomly sampled
+         set of hyperparameters.
 
 ************
  Next Steps

@@ -2,5 +2,5 @@
 
 **Feature**
 
--  HP Search Contraints: Allow users to programatically detail
+-  HP Search Contraints: Allow users to programatically constrain
    hyperparameter searches in a more granular fashion.
