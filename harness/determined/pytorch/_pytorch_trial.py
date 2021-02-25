@@ -21,20 +21,6 @@ except ImportError:
     pass
 
 
-def iterate_batches(dataset_len: int, start: int, end: int) -> Iterable[Tuple[int, range]]:
-    """
-    A helper to iterate over a dataset using start and end indices.
-    """
-
-    def get_epoch_idx(batch_id: int) -> int:
-        return batch_id // dataset_len
-
-    for epoch_idx in range(get_epoch_idx(start), get_epoch_idx(end) + 1):
-        l_start = max(start, (dataset_len * epoch_idx))
-        l_end = min((epoch_idx + 1) * dataset_len, end)
-        yield epoch_idx, range(l_start, l_end)
-
-
 class PyTorchTrialController(det.LoopTrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
