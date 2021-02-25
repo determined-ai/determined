@@ -54,12 +54,11 @@ def clean(path: str, patch: str) -> None:
         if "required" in value:
             value["required"] = [to_lower_camel_case(attr) for attr in value["required"]]
 
-    # Remove unpublished operations.
-    unpublished_operation_ids = {'Determined_CreateExperiment'}
-    for route, route_value in spec["paths"].items():
-        for method in list(route_value):
-            if route_value[method]['operationId'] in unpublished_operation_ids:
-                del spec['paths'][route][method]
+    unpublished_ops = [
+        ('/api/v1/experiments', 'post'),
+    ]
+    for route, method in unpublished_ops:
+        del spec['paths'][route][method]
 
     with open(patch, "r") as f:
         merge_dict(spec, json.load(f))
