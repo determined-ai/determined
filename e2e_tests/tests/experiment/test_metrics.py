@@ -68,7 +68,7 @@ def test_hp_importance_api() -> None:
     pool = mp.pool.ThreadPool(processes=1)
 
     experiment_id = exp.create_experiment(
-        conf.fixtures_path("mnist_pytorch/adaptive_long.yaml"),
+        conf.fixtures_path("mnist_pytorch/random.yaml"),
         conf.tutorials_path("mnist_pytorch"),
     )
 

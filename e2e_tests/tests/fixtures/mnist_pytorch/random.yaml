@@ -1,4 +1,4 @@
-description: mnist_pytorch_adaptive_long
+description: mnist_pytorch_adaptive_random
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 entrypoint: model_def:MNistTrial

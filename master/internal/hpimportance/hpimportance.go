@@ -41,7 +41,12 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 	if err != nil {
 		return 0, err
 	}
-	defer f.Close()
+	defer func() {
+		err = f.Close()
+		if err != nil {
+			fmt.Printf("failed to close arff file: %s", err.Error())
+		}
+	}()
 
 	// create top of file based on exp config
 	_, err = f.WriteString("@relation data\n\n@attribute metric numeric\n")
@@ -120,7 +125,7 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 	return totalNumTrials, nil
 }
 
-// Read the data from the output importance file and return as a json
+// Read the data from the output importance file and return as a json.
 func parseImportanceOutput(filename string) (map[string]float64, error) {
 	// Ignore security warning because none of this is user-provided input
 	// #nosec G304
@@ -128,7 +133,12 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open HP importance file: %s", err.Error())
 	}
-	defer file.Close()
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			fmt.Printf("failed to close HP importance file: %s", err.Error())
+		}
+	}()
 
 	hpi := make(map[string]float64)
 	r := csv.NewReader(file)
@@ -156,9 +166,9 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 // For the implementation, since we need to account for adaptive search
 // but we don't want to compare trials that have trained for 10,000 vs 100 batches
 // therefore, we continue to add trials till one of 2 conditions are met.
-// 1. There are at least 50 trials to train with and the ideal number of trial difference is met
-// 2. The difference between the most(aka max) trained trial and the lowest batch
-// are within a defined range (maxDiffCompBatches)
+// 1. There are at least 50 trials to train with and the ideal number of trial difference is met.
+// 2. The difference between the most(aka max) trained trial and the lowest batch are within a
+// defined range (maxDiffCompBatches).
 func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	experimentConfig *model.ExperimentConfig, masterConfig HPImportanceConfig,
 	growforest string, workingDir string) (map[string]float64, error) {

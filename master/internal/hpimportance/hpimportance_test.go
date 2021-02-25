@@ -174,7 +174,7 @@ func TestComputeHPImportance(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, nTreesResults, 8)
 
-	data[5] = []model.HPImportanceTrialData{
+	data[4] = []model.HPImportanceTrialData{
 		{
 			TrialID: 9,
 			Hparams: map[string]interface{}{
