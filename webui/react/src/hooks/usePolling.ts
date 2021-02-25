@@ -9,27 +9,32 @@ interface PollingOptions {
 }
 
 const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() => void) => {
-  const timerId = useRef<NodeJS.Timeout>();
+  const func = useRef<PollingFn>(pollingFn);
+  const timer = useRef<NodeJS.Timeout>();
+  const active = useRef(true);
 
-  const stopPolling = useCallback((): void => {
-    if (timerId.current) {
-      clearTimeout(timerId.current);
-      timerId.current = undefined;
+  const stopPolling = useCallback(() => {
+    active.current = false;
+
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = undefined;
     }
   }, []);
 
-  const pollingRoutine = useCallback(async (): Promise<void> => {
-    await pollingFn();
+  const runPolling = useCallback(async (): Promise<void> => {
+    await func.current();
 
-    if (timerId.current) clearTimeout(timerId.current);
-
-    timerId.current = setTimeout(() => pollingRoutine(), delay || DEFAULT_DELAY);
-  }, [ pollingFn, delay ]);
+    if (active.current) {
+      timer.current = setTimeout(() => runPolling(), delay || DEFAULT_DELAY);
+    }
+  }, [ delay, func ]);
 
   useEffect(() => {
-    pollingRoutine();
-    return stopPolling;
-  }, [ pollingRoutine, stopPolling ]);
+    runPolling();
+    return () => stopPolling();
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, []);
 
   return stopPolling;
 };
