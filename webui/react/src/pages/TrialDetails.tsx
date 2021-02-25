@@ -367,6 +367,7 @@ If the problem persists please contact support.',
   }, [ storage ]);
 
   const stopPolling = usePolling(fetchTrialDetails);
+
   useEffect(() => {
     if (trialDetails.data && terminalRunStates.has(trialDetails.data.state)) {
       stopPolling();

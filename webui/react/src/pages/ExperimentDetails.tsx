@@ -102,13 +102,14 @@ const ExperimentDetails: React.FC = () => {
     setForkModalVisible(true);
   }, [ setForkModalVisible ]);
 
+  const stopPolling = usePolling(fetchExperimentDetails);
+
   useEffect(() => {
     if (tab && (!TAB_KEYS.includes(tab) || tab === DEFAULT_TAB_KEY)) {
       history.replace(basePath);
     }
   }, [ basePath, history, tab ]);
 
-  const stopPolling = usePolling(fetchExperimentDetails);
   useEffect(() => {
     if (experimentDetails.data && terminalRunStates.has(experimentDetails.data.state)) {
       stopPolling();

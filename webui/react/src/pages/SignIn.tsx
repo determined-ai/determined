@@ -39,8 +39,7 @@ const SignIn: React.FC = () => {
    * and this will pick up that auth and automatically redirect them into
    * their previous app.
    */
-  const checkAuth = useAuthCheck(canceler);
-  const stopPolling = usePolling(checkAuth, { delay: 1000 });
+  usePolling(useAuthCheck(canceler), { delay: 1000 });
 
   /*
    * Check for when `isAuthenticated` becomes true and redirect
@@ -72,11 +71,8 @@ const SignIn: React.FC = () => {
 
   // Stop the polling upon a dismount of this page.
   useEffect(() => {
-    return () => {
-      canceler.abort();
-      stopPolling();
-    };
-  }, [ canceler, stopPolling ]);
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   /*
    * Before showing the sign in form, make sure one auth check is done.
