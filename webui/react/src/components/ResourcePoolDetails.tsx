@@ -1,5 +1,5 @@
 import { Divider, Modal } from 'antd';
-import React from 'react';
+import React, { Fragment } from 'react';
 
 import Json from 'components/Json';
 import { ResourcePool } from 'types';
@@ -48,11 +48,11 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Pr
       <Json json={mainSection} translateLabel={camelCaseToSentence} />
       {Object.keys(details).map(key => {
         const title = camelCaseToSentence(key);
-        return <>
+        return <Fragment key={key}>
           <Divider />
           <div className={css.subTitle}>{title}</div>
           <Json json={details[key]} translateLabel={camelCaseToSentence} />
-        </>;
+        </Fragment>;
       })
       }
     </Modal>

@@ -1,20 +1,13 @@
 import { useCallback } from 'react';
 
 import { generateContext } from 'contexts';
-import { RestApiState } from 'hooks/useRestApi';
 import { getAgents } from 'services/api';
 import { Agent } from 'types';
 
 import ClusterOverview from './ClusterOverview';
 
-const initialState = {
-  errorCount: 0,
-  hasLoaded: false,
-  isLoading: false,
-};
-
-const Agents = generateContext<RestApiState<Agent[]>>({
-  initialState: initialState,
+const Agents = generateContext<Agent[] | undefined>({
+  initialState: undefined,
   name: 'Agents',
 });
 
@@ -25,15 +18,7 @@ export const useFetchAgents = (canceler: AbortController): () => Promise<void> =
   return useCallback(async (): Promise<void> => {
     try {
       const agentsResponse = await getAgents({ signal: canceler.signal });
-      setAgents({
-        type: Agents.ActionType.Set,
-        value: {
-          data: agentsResponse,
-          errorCount: 0,
-          hasLoaded: true,
-          isLoading: false,
-        },
-      });
+      setAgents({ type: Agents.ActionType.Set, value: agentsResponse });
       setOverview({ type: ClusterOverview.ActionType.SetAgents, value: agentsResponse });
     } catch (e) {}
   }, [ canceler, setAgents, setOverview ]);

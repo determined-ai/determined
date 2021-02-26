@@ -15,8 +15,8 @@ const Cluster: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
 
   const availableResources = useMemo(() => {
-    if (!agents.data) return {};
-    const resourceList = agents.data
+    if (!agents) return {};
+    const resourceList = agents
       .map(agent => agent.resources)
       .flat()
       .filter(resource => resource.enabled);
@@ -33,9 +33,9 @@ const Cluster: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  if (!agents.data) {
+  if (!agents) {
     return <Spinner />;
-  } else if (agents.data.length === 0) {
+  } else if (agents.length === 0) {
     return <Message title="No Agents connected" />;
   } else if (availableResourceTypes.length === 0) {
     return <Message title="No Slots available" />;
