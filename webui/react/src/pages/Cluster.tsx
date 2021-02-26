@@ -13,7 +13,7 @@ import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
-import Agents, { useFetchAgents } from 'contexts/Agents';
+import Agents from 'contexts/Agents';
 import ClusterOverview, { agentsToOverview } from 'contexts/ClusterOverview';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
@@ -43,19 +43,12 @@ const Cluster: React.FC = () => {
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ canceler ] = useState(new AbortController());
 
-  const fetchAgents = useFetchAgents(canceler);
-
   const fetchResourcePools = useCallback(async () => {
     const resourcePools = await getResourcePools({});
     setResourcePools(resourcePools);
   }, []);
 
-  const fetchAll = useCallback(() => {
-    fetchAgents();
-    fetchResourcePools();
-  }, [ fetchAgents, fetchResourcePools ]);
-
-  usePolling(fetchAll, { delay: 10000 });
+  usePolling(fetchResourcePools, { delay: 10000 });
 
   const cpuContainers = useMemo(() => {
     const tally = {
