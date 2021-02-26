@@ -1,0 +1,148 @@
+description: constrained_adaptive_darts_cnn_nas
+
+data:
+  data_download_dir: /data
+
+min_validation_period:
+  batches: 500
+
+hyperparameters:
+  use_constraints: true
+  learning_rate: 0.025
+  momentum: 0.9
+  weight_decay: 3e-4
+  train_epochs: 300
+  global_batch_size: 96
+  init_channels: 36
+  layers: 20
+  auxiliary: true
+  auxiliary_weight: 0.4
+  cutout: true
+  cutout_length: 16
+  drop_path_prob: 0.2
+  clip_gradients_l2_norm: 5
+
+  # Tunable hyperparameters
+  # Normal cell
+  normal_node1_edge1:
+    type: categorical
+    vals: [0, 1]
+  normal_node1_edge2:
+    type: categorical
+    vals: [0, 1]
+  normal_node2_edge1:
+    type: categorical
+    vals: [0, 1, 2]
+  normal_node2_edge2:
+    type: categorical
+    vals: [0, 1, 2]
+  normal_node3_edge1:
+    type: categorical
+    vals: [0, 1, 2, 3]
+  normal_node3_edge2:
+    type: categorical
+    vals: [0, 1, 2, 3]
+  normal_node4_edge1:
+    type: categorical
+    vals: [0, 1, 2, 3, 4]
+  normal_node4_edge2:
+    type: categorical
+    vals: [0, 1, 2, 3, 4]
+  normal_node1_edge1_op: sep_conv_3x3
+  normal_node1_edge2_op: sep_conv_3x3
+  normal_node2_edge1_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  normal_node2_edge2_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  normal_node3_edge1_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  normal_node3_edge2_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  normal_node4_edge1_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  normal_node4_edge2_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  # Reduce cell
+  reduce_node1_edge1:
+    type: categorical
+    vals: [0, 1]
+  reduce_node1_edge2:
+    type: categorical
+    vals: [0, 1]
+  reduce_node2_edge1:
+    type: categorical
+    vals: [0, 1, 2]
+  reduce_node2_edge2:
+    type: categorical
+    vals: [0, 1, 2]
+  reduce_node3_edge1:
+    type: categorical
+    vals: [0, 1, 2, 3]
+  reduce_node3_edge2:
+    type: categorical
+    vals: [0, 1, 2, 3]
+  reduce_node4_edge1:
+    type: categorical
+    vals: [0, 1, 2, 3, 4]
+  reduce_node4_edge2:
+    type: categorical
+    vals: [0, 1, 2, 3, 4]
+  reduce_node1_edge1_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  reduce_node1_edge2_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  reduce_node2_edge1_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  reduce_node2_edge2_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  reduce_node3_edge1_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  reduce_node3_edge2_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  reduce_node4_edge1_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+  reduce_node4_edge2_op:
+    type: categorical
+    vals: [max_pool_3x3, skip_connect, sep_conv_3x3, dil_conv_3x3]
+
+resources:
+  slots_per_trial: 1
+  max_slots: 16
+
+scheduling_unit: 100
+
+bind_mounts:
+    - host_path: /tmp
+      container_path: /data
+      read_only: false
+
+
+searcher:
+  name: adaptive_asha
+  metric: top1_accuracy
+  smaller_is_better: false
+  # 50k examples in train, 96 examples per batch, 100 batches per step -> 300 epochs ~ 1562 steps
+  max_length:
+    batches: 156200
+  max_trials: 10000
+  mode: aggressive
+  # A maximum of 4 rungs corresponds to a minimum training length of 1/divisor^(max_rungs - 1) = 1/64 * max_length 
+  # per trial.  Trials with higher validation accuracy will be trained for longer than this minimum will poor
+  # trials will be stopped early.
+  max_rungs: 4
+  max_concurrent_trials: 16
+
+entrypoint: model_def:DARTSCNNTrial
