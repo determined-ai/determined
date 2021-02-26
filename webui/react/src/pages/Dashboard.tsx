@@ -176,7 +176,7 @@ const Dashboard: React.FC = () => {
     (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,
   );
 
-  const filteredTasks = filterTasks<TaskType, RecentTask>(sortedTasks, filters, users.data || [])
+  const filteredTasks = filterTasks<TaskType, RecentTask>(sortedTasks, filters, users || [])
     .slice(0, filters.limit);
 
   const tasks = filteredTasks.map((props: RecentTask) => {

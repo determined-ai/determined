@@ -22,16 +22,11 @@ const UserSelectFilterWithUsers: React.FC<Props> = ({ value }: Props) => {
   useEffect(() => {
     setUsers({
       type: Users.ActionType.Set,
-      value: {
-        data: [
-          { isActive: true, isAdmin: true, username: 'admin' },
-          { isActive: true, isAdmin: false, username: 'user' },
-          { isActive: false, isAdmin: false, username: 'inactive' },
-        ],
-        errorCount: 0,
-        hasLoaded: true,
-        isLoading: false,
-      },
+      value: [
+        { isActive: true, isAdmin: true, username: 'admin' },
+        { isActive: true, isAdmin: false, username: 'user' },
+        { isActive: false, isAdmin: false, username: 'inactive' },
+      ],
     });
   }, [ setUsers ]);
 

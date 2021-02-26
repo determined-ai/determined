@@ -38,8 +38,8 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
       </Option>);
     }
 
-    if (users.data) {
-      const allOtherUsers = users.data
+    if (users) {
+      const allOtherUsers = users
         .filter(user => (!authUser || user.username !== authUser.username))
         .sort((a, b) => a.username.localeCompare(b.username, 'en'))
         .map(userToSelectOption);
@@ -47,7 +47,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     }
 
     return list;
-  }, [ auth.user, users.data ]);
+  }, [ auth.user, users ]);
 
   return (
     <SelectFilter

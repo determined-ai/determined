@@ -113,8 +113,8 @@ const TaskList: React.FC = () => {
   const hasLoaded = tasks.reduce((acc, src) => acc && !!src, true);
 
   const filteredTasks = useMemo(() => {
-    return filterTasks(loadedTasks, filters, users.data || [], search);
-  }, [ filters, loadedTasks, search, users.data ]);
+    return filterTasks(loadedTasks, filters, users || [], search);
+  }, [ filters, loadedTasks, search, users ]);
 
   const taskMap = useMemo(() => {
     return (loadedTasks || []).reduce((acc, task) => {
