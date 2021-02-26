@@ -54,12 +54,6 @@ def clean(path: str, patch: str) -> None:
         if "required" in value:
             value["required"] = [to_lower_camel_case(attr) for attr in value["required"]]
 
-    unpublished_ops = [
-        ('/api/v1/experiments', 'post'),
-    ]
-    for route, method in unpublished_ops:
-        del spec['paths'][route][method]
-
     with open(patch, "r") as f:
         merge_dict(spec, json.load(f))
 
