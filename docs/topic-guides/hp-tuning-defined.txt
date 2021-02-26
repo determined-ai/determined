@@ -86,3 +86,4 @@ the machine learning engineer can leverage to find an effective model.
 ************
 
 -  :ref:`topic-guides_hp-tuning-det`
+-  :ref:`topic-guides_hp-constraints-det`

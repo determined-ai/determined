@@ -117,6 +117,7 @@ considered to be "completed", whereas trials that fail are marked as
  Next Steps
 ************
 
+-  :ref:`topic-guides_hp-constraints-det`
 -  :ref:`Experiment Configuration <experiment-configuration_searcher>`
 
 .. toctree::

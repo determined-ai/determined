@@ -1,0 +1,88 @@
+.. _topic-guides_hp-constraints-det:
+
+###################################
+ Hyperparameter Search Constraints
+###################################
+
+Determined's Hyperparameter Search Constraints API enables finer-grained
+control over the hyperparameter search space through the specification
+of additional constraints. Among other things, this functionality is
+particularly useful for incorporating prior knowledge/domain expertise
+into a hyperparameter search and constraining the search to models that
+fit a particular deployment environment.
+
+Using Determined's HP Search Constraints requires no changes to the
+configuration files. Rather, users can simply raise a
+`determined.InvalidHP` exception in their model code when the trial is
+first created in the `__init__` or at any subsequent point during
+training. This user-raised exception is then handled by Determined's
+system internally – resulting in the graceful stop of the current trial
+being trained, logging the InvalidHP in the trial logs, and propagating
+that information to the search method.
+
+.. warning::
+
+   It is important to note that each search method has different
+   behavior when a `determined.InvalidHP` is raised by the user in
+   accordance with the internal dynamics of each searcher, as detailed
+   below.
+
+***************************************************************
+ HP Search Constraints usage in PyTorch vs. TF Keras/Estimator
+***************************************************************
+
+Since the PyTorch and TF Keras/Estimator APIs have different behavior,
+it follows that the timing/placement of user-raised InvalidHP exceptions
+would be different.
+
+In the case of PyTorch, this exception can be raised in either the trial
+`__init__`, `train_batch`, or `evaluate_batch`. In the case of either TF
+Keras and TF Estimator, it is valid for the user to raise this exception
+in either the `__init__` or in an `on_checkpoint_end` callback.
+
+See this
+https://github.com/determined-ai/determined/tree/master/examples/features/hp_constraints_mnist_pytorch
+for an example on HP Search Constraints usage.
+
+******************************************************
+ Searcher-Specific Behavior for HP Search Constraints
+******************************************************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Search Algorithm
+      -  HP Search Constraints Behavior
+
+   -  -  Single
+      -  Not applicable to HP Search Constraints as only a single
+         hyperparameter configuration will be trained.
+
+   -  -  Grid
+      -  Does nothing since grid does not take actions based on search
+         status or progress.
+
+   -  -  Random
+
+      -  Gracefully terminates current trial, creates a new trial with a
+         randomly sampled set of hyperparameters and adds it to the
+         trial queue.
+
+   -  -  PBT
+
+      -  Does not have specific InvalidHP handling and will treat as a
+         poor performing trial that will be replaced with either a new
+         hyperparameter setting or a perturbation of a high performing
+         hyperparameter setting.
+
+   -  -  Adaptive (ASHA)
+
+      -  Gracefully terminates and removes associated metrics with the
+         current trial and creates a new trial with a randomly sampled
+         set of hyperparameters.
+
+************
+ Next Steps
+************
+
+-  :ref:`Experiment Configuration <experiment-configuration_searcher>`
