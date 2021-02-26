@@ -143,10 +143,10 @@ const Dashboard: React.FC = () => {
   };
 
   const activeTaskTally = {
-    [CommandType.Command]: countActiveCommand(commands.data || []),
-    [CommandType.Notebook]: countActiveCommand(notebooks.data || []),
-    [CommandType.Shell]: countActiveCommand(shells.data || []),
-    [CommandType.Tensorboard]: countActiveCommand(tensorboards.data || []),
+    [CommandType.Command]: countActiveCommand(commands || []),
+    [CommandType.Notebook]: countActiveCommand(notebooks || []),
+    [CommandType.Shell]: countActiveCommand(shells || []),
+    [CommandType.Tensorboard]: countActiveCommand(tensorboards || []),
     Experiment: activeExperimentCount,
   };
 
@@ -154,17 +154,17 @@ const Dashboard: React.FC = () => {
 
   const showTasksSpinner = (
     !experiments ||
-    !commands.hasLoaded ||
-    !notebooks.hasLoaded ||
-    !shells.hasLoaded ||
-    !tensorboards.hasLoaded
+    !commands ||
+    !notebooks ||
+    !shells ||
+    !tensorboards
   );
 
   const genericCommands = [
-    ...(commands.data || []),
-    ...(notebooks.data || []),
-    ...(shells.data || []),
-    ...(tensorboards.data || []),
+    ...(commands || []),
+    ...(notebooks || []),
+    ...(shells || []),
+    ...(tensorboards || []),
   ];
 
   const loadedTasks = [

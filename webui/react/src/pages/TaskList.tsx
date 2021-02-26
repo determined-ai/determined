@@ -103,15 +103,14 @@ const TaskList: React.FC = () => {
   const fetchShells = useFetchShells(canceler);
   const fetchTensorboards = useFetchTensorboards(canceler);
 
-  const sources = [ commands, notebooks, shells, tensorboards ];
+  const tasks = [ commands, notebooks, shells, tensorboards ];
 
-  const loadedTasks = sources
-    .filter(src => src.data !== undefined)
-    .map(src => src.data || [])
-    .reduce((acc, cur) => [ ...acc, ...cur ], [])
+  const loadedTasks = tasks
+    .map(src => src || [])
+    .reduce((acc, src) => [ ...acc, ...src ], [])
     .map(commandToTask);
 
-  const hasLoaded = sources.find(src => src.hasLoaded);
+  const hasLoaded = tasks.reduce((acc, src) => acc && !!src, true);
 
   const filteredTasks = useMemo(() => {
     return filterTasks(loadedTasks, filters, users.data || [], search);
