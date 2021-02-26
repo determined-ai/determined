@@ -23,7 +23,7 @@ get-deps-npm:
 		npm ci --no-audit && break ; \
 	done
 
-node_modules/done.stamp: node_modules package-lock.json
+node_modules/done.stamp: package-lock.json
 	$(MAKE) get-deps-npm
 	touch node_modules/done.stamp
 
