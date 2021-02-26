@@ -1,7 +1,7 @@
 """
 This example shows how to interact with the Determined PyTorch Lightning Adapter
 interface to build a basic MNIST network. The PLAdapter utilizes the provided
-LightningModule with Determined's trainer.
+LightningModule with Determined's PyTorch control loop.
 """
 
 from determined.pytorch import PyTorchTrial, PyTorchTrialContext, DataLoader
