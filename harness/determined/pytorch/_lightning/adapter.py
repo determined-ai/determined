@@ -76,21 +76,22 @@ class PLAdapter(PyTorchTrial):
         context = self.context
         lm = self.lm
         class PLAdapterCallback(PyTorchCallback):
-            def on_train_epoch_end(self, output: List[Any]) -> None:
-                lm.on_train_epoch_end(output)
-                lm.training_epoch_end(output)
-
-            def on_validation_epoch_end(self, outputs: List[Any]) -> None:
-                lm.on_validation_epoch_end()
-                lm.validation_epoch_end(outputs)
-
             def on_train_epoch_start(self) -> None:
                 if context._current_batch_idx is not None:
                     type(lm).current_epoch = context.current_train_epoch() # type: ignore
                 lm.on_train_epoch_start()
 
+            def on_train_epoch_end(self, output: List[Any]) -> None:
+                lm.on_train_epoch_end(output)
+                lm.training_epoch_end(output)
+
             def on_validation_epoch_start(self) -> None:
                 lm.on_validation_epoch_start()
+
+            def on_validation_epoch_end(self, outputs: List[Any]) -> None:
+                lm.on_validation_epoch_end()
+                lm.validation_epoch_end(outputs)
+
 
         return {"_lightning_module": PLAdapterCallback()}
 
