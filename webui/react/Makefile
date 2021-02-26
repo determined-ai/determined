@@ -1,5 +1,5 @@
-swagger_client = "src/services/swagger"
-export PROJECT_ROOT := "../../"
+swagger_client := src/services/swagger
+export PROJECT_ROOT := ../..
 # Set the path React is going to be served from eg ./ for serving from root.
 export PUBLIC_URL ?= /det
 
@@ -7,10 +7,15 @@ export PUBLIC_URL ?= /det
 default: get-deps
 	$(MAKE) build
 
+
+.PHONY: build-bindings
+build-bindings:
+	$(MAKE) -C ../../bindings build
 .PHONY: get-deps-api
 get-deps-api:
+	# WARN this has a dependency on build-bindings which isn't link through make here
 	rm -rf src/services/api-ts-sdk
-	cp -r ../api-ts-sdk/src src/services/api-ts-sdk
+	cp -r ${PROJECT_ROOT}/bindings/build/typescript-fetch src/services/api-ts-sdk
 
 .PHONY: get-deps-npm
 get-deps-npm:
@@ -18,14 +23,15 @@ get-deps-npm:
 		npm ci --no-audit && break ; \
 	done
 
+node_modules/done.stamp: node_modules package-lock.json
+	$(MAKE) get-deps-npm
+	touch node_modules/done.stamp
+
 .PHONY: get-deps
-get-deps: get-deps-api get-deps-npm
-	# WARN this module also depends on the swagger generated api client
-	# which is not built or updated here. To set up this dependency checkout
-	# the swagger generated api client module at ../api-ts-sdk
+get-deps: node_modules/done.stamp
 
 .PHONY: build
-build:
+build: get-deps-api
 	npm run build
 
 .PHONY: build-storybook

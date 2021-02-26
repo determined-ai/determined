@@ -181,7 +181,7 @@ export const createExperiment: DetApi<
     return decoder.decodeGetV1ExperimentRespToExperimentBase(resp);
   },
   request: (params: CreateExperimentParams, options) => {
-    return detApi.Experiments.determinedCreateExperiment(
+    return detApi.Internal.determinedCreateExperiment(
       {
         config: params.experimentConfig,
         parentId: params.parentId,

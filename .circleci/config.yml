@@ -154,8 +154,6 @@ commands:
     steps:
       - attach_workspace:
           at: .
-      - run: make -C webui/api-ts-sdk get-deps-package
-      - run: make -C webui/api-ts-sdk build-package
       - restore_cache:
           keys:
             - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
@@ -952,19 +950,19 @@ jobs:
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
 
-  build-and-package-ts-sdk:
+  build-bindings:
     docker:
       - image: cimg/openjdk:14.0.1
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - run: make -C webui/api-ts-sdk get-deps-swagger
-      - run: make -C webui/api-ts-sdk build-swagger
+      - run: make -C bindings get-deps
+      - run: make -C bindings build
       - persist_to_workspace:
           root: .
           paths:
-            - webui/api-ts-sdk/src
+            - bindings
 
   upload-try-now-template:
     docker:
@@ -1614,7 +1612,7 @@ workflows:
   lint:
     jobs:
       - build-proto
-      - build-and-package-ts-sdk:
+      - build-bindings:
           requires:
             - build-proto
       - lint-docs
@@ -1622,7 +1620,7 @@ workflows:
       - lint-go
       - lint-react:
           requires:
-            - build-and-package-ts-sdk
+            - build-bindings
 
   test-cli:
     jobs:
@@ -1642,12 +1640,12 @@ workflows:
     jobs:
       - test-unit-go
       - build-proto
-      - build-and-package-ts-sdk:
+      - build-bindings:
           requires:
             - build-proto
       - test-unit-react:
           requires:
-            - build-and-package-ts-sdk
+            - build-bindings
       - test-unit-harness
       - test-unit-harness-tf2
       - test-examples
@@ -1661,19 +1659,19 @@ workflows:
     jobs:
       - build-proto
       - build-helm
-      - build-and-package-ts-sdk:
+      - build-bindings:
           requires:
             - build-proto
       - build-react-preview:
           requires:
-            - build-and-package-ts-sdk
+            - build-bindings
       - build-react:
           dev-mode: true
           requires:
-            - build-and-package-ts-sdk
+            - build-bindings
       - build-storybook:
           requires:
-            - build-and-package-ts-sdk
+            - build-bindings
       - build-docs:
           requires:
             - build-helm
@@ -1729,7 +1727,7 @@ workflows:
 
       - test-e2e-webui:
           requires:
-            - build-and-package-ts-sdk
+            - build-bindings
             - package-and-push-system-local
 
       - deploy:
@@ -2019,13 +2017,13 @@ workflows:
           filters: *release-and-rc-filters
       - build-proto:
           filters: *release-and-rc-filters
-      - build-and-package-ts-sdk:
+      - build-bindings:
           requires:
             - build-proto
           filters: *release-and-rc-filters
       - build-react:
           requires:
-            - build-and-package-ts-sdk
+            - build-bindings
           context: determined-production
           filters: *release-and-rc-filters
       - build-docs:

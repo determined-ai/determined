@@ -4,7 +4,7 @@ all:
 	$(MAKE) build
 
 .PHONY: clean
-clean: clean-react clean-tests clean-api-ts-sdk
+clean: clean-react clean-tests
 .PHONY: clean-%
 clean-%:
 	$(MAKE) -C $* clean
@@ -22,22 +22,13 @@ check-%:
 	$(MAKE) -C $* check
 
 .PHONY: get-deps
-get-deps: build-api-ts-sdk
+get-deps:
 	$(MAKE) -C react $@
 	$(MAKE) -C tests $@
 
 .PHONY: build
-build: build-react
-.PHONY: build-proto
-build-proto:
-	$(MAKE) -C ../proto build
-.PHONY: build-api-ts-sdk
-build-api-ts-sdk: build-proto
-	$(MAKE) -C api-ts-sdk get-deps
-	$(MAKE) -C api-ts-sdk build
-.PHONY: build-%
-build-%:
-	$(MAKE) -C $* build
+build:
+	$(MAKE) -C react build
 
 .PHONY: test
 test: test-react test-tests
