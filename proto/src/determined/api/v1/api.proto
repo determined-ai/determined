@@ -260,7 +260,7 @@ service Determined {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
   // Get the requested experiment.
