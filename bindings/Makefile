@@ -19,12 +19,8 @@ build/%: ${SWAGGER_SPEC} deps/${CODEGEN_BIN}
 		-l $* -o build/$*
 	touch build/$*
 
-.PHONY: build-default
-build-default: build/typescript-fetch build/python
-
 .PHONY: build
-build: ${SWAGGER_SPEC}
-	$(MAKE) build-default
+build: build/typescript-fetch build/python
 
 .PHONY: clean-deps
 clean-deps:
