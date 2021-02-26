@@ -1,6 +1,6 @@
 import contextlib
 import functools
-from typing import Any, Callable, Iterator, Optional
+from typing import Any, Callable, Iterator
 
 
 @contextlib.contextmanager

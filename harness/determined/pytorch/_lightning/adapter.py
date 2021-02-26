@@ -58,12 +58,12 @@ class PLAdapter(PyTorchTrial):
         self.optimizers = optimizers
 
         # set lightning_module properties
-        self.lm.use_ddp = False
-        self.lm.use_ddp2 = False
-        self.lm.use_dp = False
-        self.lm.use_tpu = False
-        type(self.lm).local_rank = self.context.distributed.get_local_rank() # type: ignore
-        type(self.lm).global_rank = self.context.distributed.get_rank() # type: ignore
+        self.lm.use_ddp = False  # type: ignore
+        self.lm.use_ddp2 = False  # type: ignore
+        self.lm.use_dp = False  # type: ignore
+        self.lm.use_tpu = False  # type: ignore
+        type(self.lm).local_rank = self.context.distributed.get_local_rank()  # type: ignore
+        type(self.lm).global_rank = self.context.distributed.get_rank()  # type: ignore
         self.lm.use_amp = self.context._use_amp
         self.lm.to(self.context.device)
 
@@ -75,13 +75,14 @@ class PLAdapter(PyTorchTrial):
         """
         context = self.context
         lm = self.lm
+
         class PLAdapterCallback(PyTorchCallback):
-            def on_train_epoch_start(self) -> None:
+            def on_training_epoch_start(self) -> None:
                 if context._current_batch_idx is not None:
-                    type(lm).current_epoch = context.current_train_epoch() # type: ignore
+                    type(lm).current_epoch = context.current_train_epoch()  # type: ignore
                 lm.on_train_epoch_start()
 
-            def on_train_epoch_end(self, output: List[Any]) -> None:
+            def on_training_epoch_end(self, output: List[Any]) -> None:
                 lm.on_train_epoch_end(output)
                 lm.training_epoch_end(output)
 
@@ -91,7 +92,6 @@ class PLAdapter(PyTorchTrial):
             def on_validation_epoch_end(self, outputs: List[Any]) -> None:
                 lm.on_validation_epoch_end()
                 lm.validation_epoch_end(outputs)
-
 
         return {"_lightning_module": PLAdapterCallback()}
 
@@ -136,7 +136,7 @@ class PLAdapter(PyTorchTrial):
         lr_schedulers = [lightning_scheduler_dict_to_det(lrs) for lrs in lr_scheduler_dicts]
         return optimizers, lr_schedulers
 
-    def _build_train_args(self, batch, batch_idx, opt_idx) -> List[Any]:
+    def _build_train_args(self, batch: TorchData, batch_idx: int, opt_idx: int) -> List[Any]:
         # taken from pytorch_lightning
         args = [batch, batch_idx]
 
@@ -155,7 +155,7 @@ class PLAdapter(PyTorchTrial):
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Union[torch.Tensor, Dict[str, Any]]:
-        type(self.lm).global_step = batch_idx # type: ignore
+        type(self.lm).global_step = batch_idx  # type: ignore
         self.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
 
         opt_metrics = []
@@ -165,7 +165,7 @@ class PLAdapter(PyTorchTrial):
             with monkey_patch(self.lm, "optimizers", lambda *args, **kwargs: self.optimizers):
                 self.lm.toggle_optimizer(opt, opt_idx)
             train_args = self._build_train_args(batch, batch_idx, opt_idx)
-            metrics = self.lm.training_step(*train_args)
+            metrics = self.lm.training_step(*train_args)  # type: ignore
 
             if metrics is None:
                 continue
@@ -192,7 +192,7 @@ class PLAdapter(PyTorchTrial):
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
         self.lm.on_validation_batch_start(batch, batch_idx, dataloader_idx=0)
-        rv = self.lm.validation_step(batch, batch_idx=batch_idx)
+        rv = self.lm.validation_step(batch, batch_idx=batch_idx)  # type: ignore
         self.lm.on_validation_batch_end(rv, batch, batch_idx, dataloader_idx=0)
 
         metrics = None

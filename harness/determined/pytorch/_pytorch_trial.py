@@ -2,7 +2,7 @@ import logging
 import pathlib
 import random
 from abc import abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import cloudpickle
 import numpy as np
@@ -281,7 +281,7 @@ class PyTorchTrialController(det.LoopTrialController):
         end = start + num_batches
 
         per_batch_metrics = []  # type: List[Dict]
-        epoch_per_batch_metrics = []
+        epoch_per_batch_metrics: List[Dict] = []
         num_inputs = 0
 
         for batch_idx in range(start, end):
@@ -292,7 +292,7 @@ class PyTorchTrialController(det.LoopTrialController):
             self.context._current_batch_idx = batch_idx
             if self.context.is_epoch_start():
                 for callback in self.callbacks.values():
-                    callback.on_train_epoch_start()
+                    callback.on_training_epoch_start()
             self.context._loss_ids = {}
             tr_metrics = self.trial.train_batch(
                 batch=batch,
@@ -324,7 +324,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
             if self.context.is_epoch_end():
                 for callback in self.callbacks.values():
-                    callback.on_train_epoch_end(epoch_per_batch_metrics)
+                    callback.on_training_epoch_end(epoch_per_batch_metrics)
                 per_batch_metrics += epoch_per_batch_metrics
                 epoch_per_batch_metrics = []
             else:
@@ -396,7 +396,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 if has_param(self.trial.evaluate_batch, "batch_idx", 2):
                     vld_metrics = self.trial.evaluate_batch(batch=batch, batch_idx=idx)
                 else:
-                    vld_metrics = self.trial.evaluate_batch(batch=batch)
+                    vld_metrics = self.trial.evaluate_batch(batch=batch, batch_idx=idx)
                 # Verify validation metric names are the same across batches.
                 if keys is None:
                     keys = vld_metrics.keys()
