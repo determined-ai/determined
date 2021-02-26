@@ -23,7 +23,8 @@ build/%: ${SWAGGER_SPEC} deps/${CODEGEN_BIN}
 build-default: build/typescript-fetch build/python
 
 .PHONY: build
-build: ${SWAGGER_SPEC} build-default
+build: ${SWAGGER_SPEC}
+	$(MAKE) build-default
 
 .PHONY: clean-deps
 clean-deps:
