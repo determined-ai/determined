@@ -173,7 +173,9 @@ class PLAdapter(PyTorchTrial):
 
             self.context.backward(metrics["loss"])
             self.lm.on_after_backward()
-            self.context.step_optimizer(opt, on_before_zero_grad=self.lm.on_before_zero_grad)
+            self.context.step_optimizer(opt, auto_zero_grads=False)
+            self.lm.on_before_zero_grad(opt)
+            opt.zero_grad()
 
             opt_metrics.append(metrics)
             with monkey_patch(self.lm, "optimizers", lambda *args, **kwargs: self.optimizers):
