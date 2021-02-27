@@ -30,6 +30,12 @@ const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() =
     }
   }, [ delay, func ]);
 
+  // Update polling function if a new one is passed through.
+  useEffect(() => {
+    if (func.current !== pollingFn) func.current = pollingFn;
+  }, [ pollingFn ]);
+
+  // Start polling upon mounting.
   useEffect(() => {
     runPolling();
     return () => stopPolling();

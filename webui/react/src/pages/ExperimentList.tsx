@@ -333,6 +333,14 @@ const ExperimentList: React.FC = () => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
+  /*
+   * Get new experiments based on changes to the
+   * filters, pagination, search and sorter.
+   */
+  useEffect(() => {
+    fetchExperiments();
+  }, [ fetchExperiments ]);
+
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
