@@ -19,7 +19,7 @@ import { isNumber, isObject } from 'utils/data';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
-import css from './HpVsHpHeatMap.module.scss';
+import css from './HpHeatMaps.module.scss';
 
 const { Option } = Select;
 
@@ -246,7 +246,7 @@ const HpVsHpHeatMap: React.FC<Props> = ({
             {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
-        title="HP vs HP Heat Map">
+        title="HP Heat Map">
         <div className={css.container}>{content}</div>
       </Section>
     </div>

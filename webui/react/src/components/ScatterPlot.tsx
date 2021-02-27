@@ -104,7 +104,7 @@ const ScatterPlot: React.FC<Props> = ({
     if (title) {
       layout.title.text = title;
     } else if (xLabel && yLabel) {
-      layout.title.text = `${xLabel} vs ${yLabel}`;
+      layout.title.text = `${yLabel} (y) vs ${xLabel} (x)`;
     }
     if (xLogScale) layout.xaxis.type = 'log';
     if (yLogScale) layout.yaxis.type = 'log';

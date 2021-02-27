@@ -19,9 +19,9 @@ import { alphanumericSorter } from 'utils/sort';
 import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
+import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
-import HpVsHpHeatMap from './ExperimentVisualization/HpVsHpHeatMap';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
 
 const { Option } = Select;
@@ -295,7 +295,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             />
           )}
           {typeKey === VisualizationType.HpHeatMap && (
-            <HpVsHpHeatMap
+            <HpHeatMaps
               batches={batches}
               experiment={experiment}
               hParams={fullHParams}
