@@ -1,9 +1,10 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
+import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -21,7 +22,6 @@ import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpScatterPlots.module.scss';
-import MetricBadgeTag from 'components/MetricBadgeTag';
 
 const { Option } = Select;
 
@@ -66,13 +66,14 @@ const ScatterPlots: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
   const sectionTitle = useMemo(() => {
+    const defaultTitle = 'HP Scatter Plots';
+    if (!selectedMetric) return defaultTitle;
     return (
       <>
-        HP Scatter Plots
-        {selectedMetric &&}
+        {defaultTitle} (<MetricBadgeTag metric={selectedMetric} />)
       </>
     );
-  }, []);
+  }, [ selectedMetric ]);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -239,7 +240,7 @@ const ScatterPlots: React.FC<Props> = ({
             {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
-        title="HP Scatter Plots">
+        title={sectionTitle}>
         <div className={css.container}>{content}</div>
       </Section>
     </div>

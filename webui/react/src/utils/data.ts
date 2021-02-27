@@ -6,6 +6,7 @@ export const isNumber = (data: unknown): data is number => typeof data === 'numb
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
+export const isString = <T>(data: T): boolean => typeof data === 'string';
 export const isFunction = (fn: unknown): boolean => {
   return typeof fn === 'function';
 };
