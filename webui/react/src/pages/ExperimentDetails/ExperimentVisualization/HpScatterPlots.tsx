@@ -2,7 +2,6 @@ import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import BadgeTag from 'components/BadgeTag';
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -22,6 +21,7 @@ import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpScatterPlots.module.scss';
+import MetricBadgeTag from 'components/MetricBadgeTag';
 
 const { Option } = Select;
 
@@ -64,6 +64,15 @@ const ScatterPlots: React.FC<Props> = ({
   const resize = useResize(baseRef);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
+
+  const sectionTitle = useMemo(() => {
+    return (
+      <>
+        HP Scatter Plots
+        {selectedMetric &&}
+      </>
+    );
+  }, []);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -180,10 +189,7 @@ const ScatterPlots: React.FC<Props> = ({
             </div>
             <div className={css.legendItem}>
               <b>y-axis</b> =&nbsp;
-              <BadgeTag
-                label={selectedMetric.name}
-                tooltip={selectedMetric.type}>{selectedMetric.type.substr(0, 1).toUpperCase()}
-              </BadgeTag>
+              <MetricBadgeTag metric={selectedMetric} />
             </div>
           </div>
           <Grid

@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import BadgeTag from 'components/BadgeTag';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Link from 'components/Link';
+import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { paths } from 'routes/utils';
@@ -87,9 +87,7 @@ const HpTrialTable: React.FC<Props> = ({
       key: 'metric',
       render: metricRenderer,
       sorter: metricSorter,
-      title: <BadgeTag
-        label={metric.name}
-        tooltip={metric.type}>{metric.type.substr(0, 1).toUpperCase()}</BadgeTag>,
+      title: <MetricBadgeTag metric={metric} />,
     };
 
     const hpRenderer = (key: string) => {
