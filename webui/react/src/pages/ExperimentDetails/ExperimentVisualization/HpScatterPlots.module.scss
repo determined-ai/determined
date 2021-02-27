@@ -10,19 +10,4 @@
   .container > [class*=Message_base] {
     height: 40rem;
   }
-  .legend {
-    background-color: var(--theme-colors-monochrome-16);
-    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-    border-radius: var(--theme-sizes-border-radius);
-    display: flex;
-    justify-content: center;
-    margin-bottom: var(--theme-sizes-layout-large);
-    padding: var(--theme-sizes-layout-large);
-    text-align: center;
-
-    [class*=BadgeTag_base] { display: inline; }
-  }
-  .legendItem:not(:first-child) {
-    margin-left: var(--theme-sizes-layout-enormous);
-  }
 }

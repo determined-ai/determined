@@ -183,32 +183,21 @@ const ScatterPlots: React.FC<Props> = ({
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {
       content = (
-        <>
-          <div className={css.legend}>
-            <div className={css.legendItem}>
-              <b>x-axis</b> = hyperparameters
-            </div>
-            <div className={css.legendItem}>
-              <b>y-axis</b> =&nbsp;
-              <MetricBadgeTag metric={selectedMetric} />
-            </div>
-          </div>
-          <Grid
-            border={true}
-            minItemWidth={resize.width > 320 ? 35 : 27}
-            mode={GridMode.AutoFill}>
-            {selectedHParams.map(hParam => (
-              <ScatterPlot
-                key={hParam}
-                title={hParam}
-                x={chartData.hpValues[hParam]}
-                xLabel={hParam}
-                xLogScale={chartData.hpLogScales[hParam]}
-                y={chartData.metricValues[hParam]}
-                yLabel={metricNameToStr(selectedMetric)} />
-            ))}
-          </Grid>
-        </>
+        <Grid
+          border={true}
+          minItemWidth={resize.width > 320 ? 35 : 27}
+          mode={GridMode.AutoFill}>
+          {selectedHParams.map(hParam => (
+            <ScatterPlot
+              key={hParam}
+              title={`${hParam} vs metric`}
+              x={chartData.hpValues[hParam]}
+              xLabel={hParam}
+              xLogScale={chartData.hpLogScales[hParam]}
+              y={chartData.metricValues[hParam]}
+              yLabel={metricNameToStr(selectedMetric)} />
+          ))}
+        </Grid>
       );
     }
   }
