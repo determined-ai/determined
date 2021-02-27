@@ -26,6 +26,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
+import { parseUrl } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, getExperiments,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
@@ -55,6 +56,8 @@ enum Action {
   Unarchive = 'Unarchive',
 }
 
+const URL_ALL = '';
+
 const STORAGE_PATH = 'experiment-list';
 const STORAGE_FILTERS_KEY = 'filters';
 const STORAGE_LIMIT_KEY = 'limit';
@@ -83,16 +86,139 @@ const ExperimentList: React.FC = () => {
     },
   );
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
-  const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
-  const [ total, setTotal ] = useState(0);
-  const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
-  const [ sorter, setSorter ] = useState(initSorter);
-  const [ search, setSearch ] = useState('');
-  const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
-  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
   const [ canceler ] = useState(new AbortController());
+  const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
+  const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
+  const [ isUrlParsed, setIsUrlParsed ] = useState<boolean>(false);
+  const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
+  const [ search, setSearch ] = useState('');
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+  const [ sorter, setSorter ] = useState(initSorter);
+  const [ total, setTotal ] = useState(0);
 
   const fetchUsers = useFetchUsers(canceler);
+
+  /*
+   * When filters changes update the page URL.
+   */
+  useEffect(() => {
+    if (!isUrlParsed) return;
+
+    const searchParams = new URLSearchParams;
+    const url = parseUrl(window.location.href);
+
+    // archived
+    searchParams.append('archived', filters.showArchived ? '1' : '0');
+
+    // labels
+    if (filters.labels && filters.labels.length > 0) {
+      filters.labels.forEach(label => searchParams.append('label', label));
+    } else {
+      searchParams.append('label', URL_ALL);
+    }
+
+    // limit
+    searchParams.append('limit', pagination.limit.toString());
+
+    // offset
+    searchParams.append('offset', pagination.offset.toString());
+
+    // search
+    searchParams.append('search', search);
+
+    // sortDesc
+    searchParams.append('sortDesc', sorter.descend ? '1' : '0');
+
+    // sortKey
+    searchParams.append('sortKey', (sorter.key || '') as string);
+
+    // states
+    if (filters.states && filters.states.length > 0) {
+      filters.states.forEach(state => searchParams.append('state', state));
+    } else {
+      searchParams.append('state', URL_ALL);
+    }
+
+    // username
+    searchParams.append('username', filters.username || URL_ALL);
+
+    window.history.pushState(
+      {},
+      '',
+      url.origin + url.pathname + '?' + searchParams.toString(),
+    );
+  }, [ filters, isUrlParsed, pagination, search, sorter ]);
+
+  /*
+   * On first load: if filters are specified in URL, override default.
+   */
+  useEffect(() => {
+    if (isUrlParsed) return;
+
+    const urlSearchParams = parseUrl(window.location.href).searchParams;
+
+    // archived
+    const archived = urlSearchParams.get('archived');
+    if (archived != null) {
+      filters.showArchived = (archived === '1');
+    }
+
+    // labels
+    if (urlSearchParams.get('label') != null) {
+      const labels = urlSearchParams.getAll('label');
+      filters.labels = (labels.includes(URL_ALL) ? [] : labels);
+    }
+
+    // limit
+    const limit = urlSearchParams.get('limit');
+    if (limit != null && !isNaN(parseInt(limit))) {
+      pagination.limit = parseInt(limit);
+    }
+
+    // offset
+    const offset = urlSearchParams.get('offset');
+    if (offset != null && !isNaN(parseInt(offset))) {
+      pagination.offset = parseInt(offset);
+    }
+
+    // search
+    const search = urlSearchParams.get('search');
+    if (search != null) {
+      setSearch(search);
+    }
+
+    // sortDesc
+    const sortDesc = urlSearchParams.get('sortDesc');
+    if (sortDesc != null) {
+      sorter.descend = (sortDesc === '1');
+    }
+
+    // sortKey
+    const sortKey = urlSearchParams.get('sortKey');
+    if (
+      sortKey != null
+      && Object.values(V1GetExperimentsRequestSortBy).includes(sortKey)
+    ) {
+      sorter.key = sortKey as unknown as V1GetExperimentsRequestSortBy;
+    }
+
+    // states
+    if (urlSearchParams.get('state') != null) {
+      const states = urlSearchParams.getAll('state');
+      filters.states = (states.includes(URL_ALL) ? [ ALL_VALUE ] : states);
+    }
+
+    // username
+    const username = urlSearchParams.get('username');
+    if (username != null) {
+      filters.username = (username === URL_ALL ? '' : username);
+    }
+
+    setFilters(filters);
+    setIsUrlParsed(true);
+    setPagination(pagination);
+    setSorter(sorter);
+  }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
   const hasFiltersApplied = useMemo(() => {
     return filters.showArchived || !filters.states.includes(ALL_VALUE) || !!filters.username;
@@ -354,7 +480,9 @@ const ExperimentList: React.FC = () => {
             className={css.search}
             placeholder="name"
             prefix={<Icon name="search" size="small" />}
-            onChange={handleSearchChange} />
+            value={search}
+            onChange={handleSearchChange}
+          />
           <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
             <Toggle
               checked={filters.showArchived}

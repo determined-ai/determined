@@ -117,7 +117,7 @@
     height: 4.8rem;
     position: relative;
     width: var(--theme-sizes-navigation-maxWidth);
-  
+
     [class*=Icon_base_] {
       left: var(--theme-sizes-layout-big);
       position: absolute;
@@ -149,6 +149,7 @@
   }
   .navItem.active {
     background-color: var(--theme-colors-base-0);
+    cursor: default;
   }
   .navItem:hover {
     background-color: var(--theme-colors-base-3);
@@ -290,7 +291,7 @@
   .navItem {
     transition: height var(--theme-animationCurve), width var(--theme-animationCurve);
     width: var(--theme-sizes-navigation-minWidth);
-    
+
     .label {
       opacity: 0;
       transition: opacity var(--theme-animationCurve);
@@ -431,7 +432,7 @@
   .launchBlock {
     transition: width var(--theme-animationCurve);
     width: 19rem;
-    
+
     .launchButton {
       opacity: 1;
       padding: 0 var(--theme-sizes-layout-big);
