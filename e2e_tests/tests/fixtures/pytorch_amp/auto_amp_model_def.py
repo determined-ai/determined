@@ -9,7 +9,7 @@ The methods `train_batch` and `evaluate_batch` are modified to use an autocast
 context during the forward pass.
 """
 
-from typing import Any, Dict, Sequence, Tuple, Union, cast
+from typing import Dict, Sequence, Union
 
 import torch
 from model_def import MNistTrial

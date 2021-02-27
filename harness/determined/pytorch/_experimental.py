@@ -76,7 +76,8 @@ class PyTorchExperimentalContext:
         Handles all operations for the most simple cases automatically with a default gradient
         scaler. Specifically, wraps forward pass in an autocast context, scales loss before
         backward pass, unscales before clipping gradients, uses scaler when stepping
-        optimizer(s), and updates scaler afterwards).
+        optimizer(s), and updates scaler afterwards. Do not call ``wrap_scaler`` directly when
+        using this method.
         """
         self._parent.wrap_scaler(torch.cuda.amp.GradScaler())
         self._auto_amp = True

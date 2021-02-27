@@ -103,7 +103,7 @@ class PyTorchTrialContext(det.TrialContext):
                 def __delattr__(wrapper, name):  # type: ignore
                     return delattr(saved_model, name)
 
-                def forward(wrapper, *arg, **kwarg):
+                def forward(wrapper, *arg, **kwarg):  # type: ignore
                     with torch.cuda.amp.autocast():
                         return saved_model.forward(*arg, **kwarg)
 
@@ -112,13 +112,13 @@ class PyTorchTrialContext(det.TrialContext):
             # Eliminate any need for the loss functions to be in that context:
             def terminate_fp16(module: torch.nn.Module, input: Any, output: Any) -> Any:
                 if isinstance(output, torch.Tensor):
-                    return output.float32() if output.dtype == torch.float16 else output
+                    return output.float() if output.dtype == torch.float16 else output
                 if isinstance(output, dict):
-                    return {k: terminate_fp16(module, input, v) for k, v in output.items()}  # type: ignore
+                    return {k: terminate_fp16(module, input, v) for k, v in output.items()}
                 if isinstance(output, list):
-                    return [terminate_fp16(module, input, d) for d in data]  # type: ignore
+                    return [terminate_fp16(module, input, d) for d in output]
                 if isinstance(output, tuple):
-                    return tuple(terminate_fp16(module, input, d) for d in data)  # type: ignore
+                    return tuple(terminate_fp16(module, input, d) for d in output)
                 else:
                     # If there are other types that embed Tensors still using fp16 and loss
                     # computation subsequently fails, then experimental.use_amp should not be used
@@ -261,12 +261,13 @@ class PyTorchTrialContext(det.TrialContext):
         """
         return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
-    def wrap_scaler(self, scaler: Any, automatic: bool = False) -> Any:
+    def wrap_scaler(self, scaler: Any) -> Any:
         """
         Prepares to use automatic mixed precision through PyTorch’s native AMP API. The returned
         scaler should be passed to ``step_optimizer``, but usage does not otherwise differ from
-        vanilla PyTorch APIs. Loss should be scaled before calling ``backward()``, ``unscale_``
-        should be called before clipping gradients, etc.
+        vanilla PyTorch APIs. Loss should be scaled before calling ``backward``, ``unscale_`` should
+        be called before clipping gradients, ``update`` should be called after stepping all
+        optimizers, etc.
 
         Arguments:
             scaler (``torch.cuda.amp.GradScaler``):  Scaler to wrap and track.
@@ -549,9 +550,9 @@ class PyTorchTrialContext(det.TrialContext):
                 stepping the optimizer. If false, you need to call ``optimizer.zero_grad()``
                 manually. Note that if :ref:`optimizations.aggregation_frequency
                 <config-aggregation-frequency>` is greater than 1, ``auto_zero_grads`` must be true.
-            scaler(``torch.cuda.amp.GradScaler``, optional): The scale to use for stepping the
-                optimizer. This should be unset if not using AMP, and is unnecessary if
-                ``PyTorchContext.wrap_scaler`` was called with ``automatic = True``.
+            scaler(``torch.cuda.amp.GradScaler``, optional): The scaler to use for stepping the
+                optimizer. This should be unset if not using AMP, and is necessary if
+                ``wrap_scaler()`` was called directly.
         """
 
         check.true(
