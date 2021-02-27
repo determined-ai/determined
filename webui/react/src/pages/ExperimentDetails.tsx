@@ -12,6 +12,7 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
+import { paths } from 'routes/utils';
 import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
@@ -59,7 +60,7 @@ const ExperimentDetails: React.FC = () => {
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
 
   const id = parseInt(experimentId);
-  const basePath = `/experiments/${experimentId}`;
+  const basePath = paths.experimentDetails(experimentId);
   const experiment = experimentDetails.data;
 
   const fetchExperimentDetails = useCallback(async () => {
@@ -147,10 +148,10 @@ const ExperimentDetails: React.FC = () => {
   return (
     <Page
       breadcrumb={[
-        { breadcrumbName: 'Experiments', path: '/experiments' },
+        { breadcrumbName: 'Experiments', path: paths.experimentList() },
         {
           breadcrumbName: `Experiment ${experimentId}`,
-          path: `/experiments/${experimentId}`,
+          path: paths.experimentDetails(experimentId),
         },
       ]}
       options={<ExperimentActions

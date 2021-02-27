@@ -14,6 +14,7 @@ import Section from 'components/Section';
 import TagList from 'components/TagList';
 import tagListCss from 'components/TagList.module.scss';
 import useExperimentTags from 'hooks/useExperimentTags';
+import { paths } from 'routes/utils';
 import { CheckpointDetail, ExperimentBase } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 
@@ -82,7 +83,7 @@ const ExperimentInfoBox: React.FC<Props> = (
       label: 'Duration',
     },
     {
-      content: <Link external isButton path={`/experiments/${experiment.id}/model_def`} rawLink>
+      content: <Link external isButton path={paths.experimentModelDef(experiment.id)} rawLink>
         Download Model
       </Link>,
       label: 'Model Definition',

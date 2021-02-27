@@ -26,7 +26,7 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import { routeAll } from 'routes/utils';
+import { paths, routeAll } from 'routes/utils';
 import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
@@ -313,7 +313,7 @@ If the problem persists please contact support.',
         experimentConfig: JSON.stringify(updatedConfig),
         parentId: experimentId,
       });
-      routeAll(`/experiments/${newExperimentId}`);
+      routeAll(paths.experimentDetails(newExperimentId));
     } catch (e) {
       handleError({
         error: e,
@@ -407,7 +407,7 @@ If the problem persists please contact support.',
 
         // Experiment id does not exist in route, reroute to the one with it
         if (!experimentIdParam) {
-          history.replace(`/experiments/${experimentId}/trials/${trialId}`);
+          history.replace(paths.trialDetails(trialId, experimentId));
         }
 
         // Default to selecting config search metric only.
@@ -480,14 +480,14 @@ If the problem persists please contact support.',
   return (
     <Page
       breadcrumb={[
-        { breadcrumbName: 'Experiments', path: '/experiments' },
+        { breadcrumbName: 'Experiments', path: paths.experimentList() },
         {
-          breadcrumbName: `Experiment ${experimentId}`,
-          path: `/experiments/${experimentId}`,
+          breadcrumbName: `Experiment ${experiment.id}`,
+          path: paths.experimentDetails(experiment.id),
         },
         {
           breadcrumbName: `Trial ${trialId}`,
-          path: `/experiments/${experimentId}/trials/${trialId}`,
+          path: paths.trialDetails(trialId, experiment.id),
         },
       ]}
       options={<TrialActions

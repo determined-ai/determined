@@ -143,7 +143,7 @@ const TrialLogs: React.FC = () => {
   useEffect(() => {
     // Experiment id does not exist in route, reroute to the one with it
     if (!experimentIdParam && experimentId) {
-      history.replace(`/experiments/${experimentId}/trials/${trialId}/logs`);
+      history.replace(paths.trialLogs(trialId, experimentId));
     }
   }, [ experimentId, experimentIdParam, history, trialId ]);
 
@@ -161,7 +161,7 @@ const TrialLogs: React.FC = () => {
       FilterComponent={TrialLogFilters}
       pageProps={{
         breadcrumb: [
-          { breadcrumbName: 'Experiments', path: '/experiments' },
+          { breadcrumbName: 'Experiments', path: paths.experimentList() },
           {
             breadcrumbName: `Experiment ${experimentId}`,
             path: paths.experimentDetails(experimentId),

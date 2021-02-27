@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
+import { paths } from 'routes/utils';
 import { openOrCreateTensorboard } from 'services/api';
 import { RunState, TrialDetails } from 'types';
 import { getWorkload, isMetricsWorkload } from 'utils/step';
@@ -66,7 +67,7 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => 
     },
     {
       button: <Button key={Action.Logs}>
-        <Link path={`/experiments/${trial.experimentId}/trials/${trial.id}/logs`}>Logs</Link>
+        <Link path={paths.trialLogs(trial.id, trial.experimentId)}>Logs</Link>
       </Button>,
     },
   ];

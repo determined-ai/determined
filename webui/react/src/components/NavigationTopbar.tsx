@@ -3,6 +3,7 @@ import React from 'react';
 
 import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
+import { paths } from 'routes/utils';
 
 import Avatar from './Avatar';
 import Dropdown, { Placement } from './Dropdown';
@@ -26,7 +27,7 @@ const NavigationTopbar: React.FC = () => {
         <Dropdown
           content={<Menu>
             <Menu.Item>
-              <Link path={'/logout'}>Sign Out</Link>
+              <Link path={paths.logout()}>Sign Out</Link>
             </Menu.Item>
           </Menu>}
           offset={{ x: 0, y: 8 }}

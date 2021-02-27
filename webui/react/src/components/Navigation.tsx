@@ -9,6 +9,7 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
+import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { launchNotebook } from 'utils/task';
 
@@ -150,19 +151,23 @@ const Navigation: React.FC = () => {
             </div>
           </section>
           <section className={css.top}>
-            <NavigationItem icon="dashboard" label="Dashboard" path="/dashboard" />
-            <NavigationItem icon="experiment" label="Experiments" path="/experiments" />
-            <NavigationItem icon="tasks" label="Tasks" path="/tasks" />
-            <NavigationItem icon="cluster" label="Cluster" path="/cluster" status={cluster} />
-            <NavigationItem icon="logs" label="Master Logs" path="/logs" />
+            <NavigationItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
+            <NavigationItem icon="experiment" label="Experiments" path={paths.experimentList()} />
+            <NavigationItem icon="tasks" label="Tasks" path={paths.taskList()} />
+            <NavigationItem
+              icon="cluster"
+              label="Cluster"
+              path={paths.cluster()}
+              status={cluster} />
+            <NavigationItem icon="logs" label="Master Logs" path={paths.masterLogs()} />
           </section>
           <section className={css.bottom}>
-            <NavigationItem external icon="docs" label="Docs" path="/docs" popout />
+            <NavigationItem external icon="docs" label="Docs" path={paths.docs()} popout />
             <NavigationItem
               external
               icon="cloud"
               label="API (Beta)"
-              path="/docs/rest-api/"
+              path={paths.docs('/rest-api/')}
               popout />
             <NavigationItem
               icon={isCollapsed ? 'expand' : 'collapse'}
@@ -174,7 +179,7 @@ const Navigation: React.FC = () => {
           <Dropdown
             content={<Menu>
               <Menu.Item>
-                <Link path={'/logout'}>Sign Out</Link>
+                <Link path={paths.logout()}>Sign Out</Link>
               </Menu.Item>
             </Menu>}
             offset={isCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}

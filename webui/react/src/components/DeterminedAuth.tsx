@@ -7,6 +7,7 @@ import Link from 'components/Link';
 import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
+import { paths } from 'routes/utils';
 import { getCurrentUser, isLoginFailure, login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { Credentials } from 'types';
@@ -103,7 +104,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler, source }: Props) => {
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;
-        <Link external path={'/docs/topic-guides/users.html'} popout>docs</Link>
+        <Link external path={paths.docs('/topic-guides/users.html')} popout>docs</Link>
       </p>
     </div>
   );

@@ -3,6 +3,7 @@ import { MouseEvent, MouseEventHandler } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
+import { CommandTask } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
@@ -130,10 +131,50 @@ export const linkPath = (aPath: string, external = false): string => {
 };
 
 export const paths = {
+  cluster: (): string => {
+    return '/cluster';
+  },
+  dashboard: (): string => {
+    return '/dashboard';
+  },
+  docs: (suffix?: string): string => {
+    return `/docs${suffix || ''}`;
+  },
   experimentDetails: (experimentId: number | string): string => {
     return `/experiments/${experimentId}`;
   },
-  trialDetails: (trialId: number | string, experimentId: number | string): string => {
+  experimentList: (): string => {
+    return '/experiments';
+  },
+  experimentModelDef: (experimentId: number | string): string => {
+    return `/experiments/${experimentId}/model_def`;
+  },
+  login: (): string => {
+    return '/login';
+  },
+  logout: (): string => {
+    return '/logout';
+  },
+  masterLogs: (): string => {
+    return '/logs';
+  },
+  taskList: (): string => {
+    return '/tasks';
+  },
+  taskLogs: (task: CommandTask): string => {
+    const taskType = task.type.toLocaleLowerCase();
+    return`/${taskType}/${task.id}/logs?id=${task.name}`;
+  },
+  trialDetails: (trialId: number | string, experimentId?: number | string): string => {
+    if (!experimentId) {
+      return `/trials/${trialId}`;
+    }
     return `/experiments/${experimentId}/trials/${trialId}`;
+  },
+  trialLogs: (trialId: number | string, experimentId: number | string): string => {
+    return `/experiments/${experimentId}/trials/${trialId}/logs`;
+  },
+  users: (): string => {
+    return '/users';
   },
 };

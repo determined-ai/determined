@@ -3,7 +3,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
-import { routeAll } from 'routes/utils';
+import { paths, routeAll } from 'routes/utils';
 import { createExperiment } from 'services/api';
 
 import css from './CreateExperimentModal.module.scss';
@@ -36,7 +36,7 @@ const CreateExperimentModal: React.FC<Props> = (
       yaml.safeLoad(config);
       const { id: configId } = await createExperiment({ experimentConfig: config, parentId });
       onVisibleChange(false);
-      routeAll(`/experiments/${configId}`);
+      routeAll(paths.experimentDetails(configId));
     } catch (e) {
       let errorMessage = 'Failed to config using the provided config.';
       if (e.name === 'YAMLException') {

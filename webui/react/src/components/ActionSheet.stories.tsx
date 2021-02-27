@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+import { paths } from 'routes/utils';
+
 import ActionSheet from './ActionSheet';
 
 export default {
@@ -20,19 +22,19 @@ const ActionSheetContainer = () => {
       actions={[
         { icon: 'notebook', label: 'Launch Notebook' },
         { icon: 'notebook', label: 'Launch CPU-only Notebook' },
-        { icon: 'logs', label: 'Master Logs', path: '/logs', popout: true },
+        { icon: 'logs', label: 'Master Logs', path: paths.masterLogs(), popout: true },
         {
           external: true,
           icon: 'docs',
           label: 'Docs',
-          path: '/docs',
+          path: paths.docs(),
           popout: true,
         },
         {
           external: true,
           icon: 'cloud',
           label: 'API (Beta)',
-          path: '/docs/rest-api/',
+          path: paths.docs('/rest-api/'),
           popout: true,
         },
       ]}

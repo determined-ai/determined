@@ -6,6 +6,7 @@ import React from 'react';
 
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, killExperiment, killTask,
   openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
@@ -35,11 +36,6 @@ interface Props {
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
-
-const taskPath = (task: CommandTask): string => {
-  const taskType = task.type.toLocaleLowerCase();
-  return`/${taskType}/${task.id}/logs?id=${task.name}`;
-};
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   const id = isNumber(task.id) ? task.id : parseInt(task.id);
@@ -120,7 +116,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
     menuItems.push(<Menu.Item key={Action.Tensorboard}>View in TensorBoard</Menu.Item>);
   } else {
     menuItems.push(<Menu.Item key="viewLogs">
-      <Link path={taskPath(task as CommandTask)}>View Logs</Link>
+      <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>
     </Menu.Item>);
   }
 
