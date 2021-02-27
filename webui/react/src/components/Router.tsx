@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
 import Auth from 'contexts/Auth';
@@ -13,8 +13,9 @@ interface Props {
 
 const Router: React.FC<Props> = (props: Props) => {
   const auth = Auth.useStateContext();
-  const checkAuth = useAuthCheck();
   const setUI = UI.useActionContext();
+  const [ canceler ] = useState(new AbortController());
+  const checkAuth = useAuthCheck(canceler);
 
   useEffect(() => {
     checkAuth();
@@ -25,6 +26,10 @@ const Router: React.FC<Props> = (props: Props) => {
       setUI({ type: UI.ActionType.HideSpinner });
     }
   }, [ auth.isAuthenticated, setUI ]);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   return (
     <Switch>

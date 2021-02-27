@@ -36,6 +36,7 @@ export const detApi = {
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
   Tensorboards: new Api.TensorboardsApi(ApiConfig),
+  Users: new Api.UsersApi(ApiConfig),
 };
 
 const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
@@ -58,8 +59,9 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
-  detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config),
+  detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
   detApi.Tensorboards = new Api.TensorboardsApi(config);
+  detApi.Users = new Api.UsersApi(config);
 };
 
 /* Helpers */
@@ -101,15 +103,15 @@ export const logout: DetApi<EmptyParams, Api.V1LogoutResponse, void> = {
 
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse, DetailedUser> = {
   name: 'getCurrentUser',
-  postProcess: (response) => decoder.user(response.user),
+  postProcess: (response) => decoder.mapV1User(response.user),
   // We make sure to request using the latest API configuraitonp parameters.
-  request: (params) => detApi.Auth.determinedCurrentUser(params),
+  request: (options) => detApi.Auth.determinedCurrentUser(options),
 };
 
-export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
-  httpOptions: () => ({ url: '/users' }),
+export const getUsers: DetApi<EmptyParams, Api.V1GetUsersResponse, DetailedUser[]> = {
   name: 'getUsers',
-  postProcess: (response) => decoder.jsonToUsers(response.data),
+  postProcess: (response) => decoder.mapV1UserList(response),
+  request: (options) => detApi.Users.determinedGetUsers(options),
 };
 
 /* Info */
@@ -148,12 +150,10 @@ export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsRespons
 export const getExperiments: DetApi<
   GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentPagination
 > = {
-  name: 'activateExperiment',
+  name: 'getExperiments',
   postProcess: (response: Api.V1GetExperimentsResponse) => {
     return {
-      experiments: response.experiments.map(
-        (experiment: Api.V1Experiment) => experiment as unknown as ExperimentBase,
-      ),
+      experiments: decoder.mapV1ExperimentList(response.experiments),
       pagination: response.pagination,
     };
   },

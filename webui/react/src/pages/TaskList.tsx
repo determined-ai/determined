@@ -21,8 +21,9 @@ import {
   Commands, Notebooks, Shells, Tensorboards, useFetchCommands, useFetchNotebooks, useFetchShells,
   useFetchTensorboards,
 } from 'contexts/Commands';
-import Users from 'contexts/Users';
+import Users, { useFetchUsers } from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { killTask } from 'services/api';
 import { ApiSorter } from 'services/types';
@@ -96,24 +97,24 @@ const TaskList: React.FC = () => {
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
+  const fetchUsers = useFetchUsers(canceler);
   const fetchCommands = useFetchCommands(canceler);
   const fetchNotebooks = useFetchNotebooks(canceler);
   const fetchShells = useFetchShells(canceler);
   const fetchTensorboards = useFetchTensorboards(canceler);
 
-  const sources = [ commands, notebooks, shells, tensorboards ];
+  const tasks = [ commands, notebooks, shells, tensorboards ];
 
-  const loadedTasks = sources
-    .filter(src => src.data !== undefined)
-    .map(src => src.data || [])
-    .reduce((acc, cur) => [ ...acc, ...cur ], [])
+  const loadedTasks = tasks
+    .map(src => src || [])
+    .reduce((acc, src) => [ ...acc, ...src ], [])
     .map(commandToTask);
 
-  const hasLoaded = sources.find(src => src.hasLoaded);
+  const hasLoaded = tasks.reduce((acc, src) => acc && !!src, true);
 
   const filteredTasks = useMemo(() => {
-    return filterTasks(loadedTasks, filters, users.data || [], search);
-  }, [ filters, loadedTasks, search, users.data ]);
+    return filterTasks(loadedTasks, filters, users || [], search);
+  }, [ filters, loadedTasks, search, users ]);
 
   const taskMap = useMemo(() => {
     return (loadedTasks || []).reduce((acc, task) => {
@@ -133,12 +134,14 @@ const TaskList: React.FC = () => {
     return false;
   }, [ selectedTasks ]);
 
-  const fetchTasks = useCallback((): void => {
+  const fetchAll = useCallback((): void => {
+    fetchUsers();
     fetchCommands();
     fetchNotebooks();
     fetchShells();
     fetchTensorboards();
   }, [
+    fetchUsers,
     fetchCommands,
     fetchNotebooks,
     fetchShells,
@@ -148,7 +151,7 @@ const TaskList: React.FC = () => {
   const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
   const handleSourceDismiss = useCallback(() => setSourcesModal(undefined), []);
 
-  const handleActionComplete = useCallback(() => fetchTasks(), [ fetchTasks ]);
+  const handleActionComplete = useCallback(() => fetchAll(), [ fetchAll ]);
 
   const columns = useMemo(() => {
 
@@ -226,7 +229,7 @@ const TaskList: React.FC = () => {
       setSelectedRowKeys([]);
 
       // Refetch task list to get updates based on batch action.
-      fetchTasks();
+      fetchAll();
     } catch (e) {
       handleError({
         error: e,
@@ -238,7 +241,7 @@ const TaskList: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ fetchTasks, selectedTasks ]);
+  }, [ fetchAll, selectedTasks ]);
 
   const handleConfirmation = useCallback(() => {
     Modal.confirm({
@@ -266,6 +269,8 @@ const TaskList: React.FC = () => {
   }, [ columns, filters, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
+  usePolling(fetchAll);
 
   useEffect(() => {
     return () => canceler.abort();

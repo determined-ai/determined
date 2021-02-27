@@ -26,7 +26,7 @@ import { validateDetApiEnum } from 'services/utils';
 import {
   CheckpointWorkloadExtended, ExperimentBase, Pagination, TrialItem, ValidationHistory,
 } from 'types';
-import { getMetricValue } from 'utils/types';
+import { getMetricValue, terminalRunStates } from 'utils/types';
 
 import css from './ExperimentOverview.module.scss';
 import { columns as defaultColumns } from './ExperimentOverview.table';
@@ -173,11 +173,12 @@ const ExperimentOverview: React.FC<Props> = ({
   const stopPolling = usePolling(fetchExperimentTrials);
 
   useEffect(() => {
-    return () => {
-      stopPolling();
-      canceler.abort();
-    };
-  }, [ canceler, stopPolling ]);
+    if (terminalRunStates.has(experiment.state)) stopPolling();
+  }, [ experiment.state, stopPolling ]);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   return (
     <div className={css.base}>

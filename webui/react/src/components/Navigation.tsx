@@ -3,9 +3,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
+import { useFetchAgents } from 'contexts/Agents';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
+import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { ResourceType } from 'types';
 import { launchNotebook } from 'utils/task';
@@ -57,6 +59,7 @@ const Navigation: React.FC = () => {
   const storage = useStorage('navigation');
   const [ isCollapsed, setIsCollapsed ] = useState(storage.getWithDefault(STORAGE_KEY, false));
   const [ isShowingCpu, setIsShowingCpu ] = useState(false);
+  const [ canceler ] = useState(new AbortController());
 
   const showNavigation = isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -65,6 +68,8 @@ const Navigation: React.FC = () => {
   const username = user?.username || 'Anonymous';
   const cluster = overview[ResourceType.ALL].allocation === 0 ?
     undefined : `${overview[ResourceType.ALL].allocation}%`;
+
+  const fetchAgents = useFetchAgents(canceler);
 
   const handleNotebookLaunch = useCallback(() => launchNotebook(1), []);
   const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), []);
@@ -75,6 +80,8 @@ const Navigation: React.FC = () => {
     storage.set(STORAGE_KEY, newCollapsed);
     setIsCollapsed(newCollapsed);
   }, [ isCollapsed, storage ]);
+
+  usePolling(fetchAgents);
 
   useEffect(() => {
     setUI({ type: isCollapsed ? UI.ActionType.CollapseChrome : UI.ActionType.ExpandChrome });

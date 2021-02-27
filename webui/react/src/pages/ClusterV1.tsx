@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import Grid from 'components/Grid';
 import Message from 'components/Message';
@@ -11,10 +11,11 @@ import { categorize } from 'utils/data';
 
 const Cluster: React.FC = () => {
   const agents = Agents.useStateContext();
+  const [ canceler ] = useState(new AbortController());
 
   const availableResources = useMemo(() => {
-    if (!agents.data) return {};
-    const resourceList = agents.data
+    if (!agents) return {};
+    const resourceList = agents
       .map(agent => agent.resources)
       .flat()
       .filter(resource => resource.enabled);
@@ -23,9 +24,13 @@ const Cluster: React.FC = () => {
 
   const availableResourceTypes = Object.keys(availableResources);
 
-  if (!agents.data) {
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
+
+  if (!agents) {
     return <Spinner />;
-  } else if (agents.data.length === 0) {
+  } else if (agents.length === 0) {
     return <Message title="No Agents connected" />;
   } else if (availableResourceTypes.length === 0) {
     return <Message title="No Slots available" />;

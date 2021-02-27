@@ -1,6 +1,6 @@
 import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib/radio';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Icon from 'components/Icon';
@@ -41,13 +41,14 @@ const Cluster: React.FC = () => {
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
   const [ selectedView, setSelectedView ] = useState<View>(initView);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [ canceler ] = useState(new AbortController());
 
-  const pollResourcePools = useCallback(async () => {
+  const fetchResourcePools = useCallback(async () => {
     const resourcePools = await getResourcePools({});
     setResourcePools(resourcePools);
   }, []);
 
-  usePolling(pollResourcePools, { delay: 10000 });
+  usePolling(fetchResourcePools, { delay: 10000 });
 
   const cpuContainers = useMemo(() => {
     const tally = {
@@ -62,12 +63,12 @@ const Cluster: React.FC = () => {
   }, [ resourcePools ]);
 
   const gpuSlotStates = useMemo(() => {
-    return getSlotContainerStates(agents.data || [], ResourceType.GPU);
-  }, [ agents.data ]);
+    return getSlotContainerStates(agents || [], ResourceType.GPU);
+  }, [ agents ]);
 
   const getTotalGpuSlots = useCallback((resPoolName: string) => {
-    if (!agents.hasLoaded || !agents.data) return 0;
-    const resPoolAgents = agents.data.filter(agent => agent.resourcePool === resPoolName);
+    if (!agents) return 0;
+    const resPoolAgents = agents.filter(agent => agent.resourcePool === resPoolName);
     const overview = agentsToOverview(resPoolAgents);
     return overview.GPU.total;
   }, [ agents ]);
@@ -79,7 +80,7 @@ const Cluster: React.FC = () => {
 
     const slotsBarRender = (_:unknown, record: ResourcePool): React.ReactNode => {
       const containerStates: ResourceState[] =
-          getSlotContainerStates(agents.data || [], ResourceType.GPU, record.name);
+          getSlotContainerStates(agents || [], ResourceType.GPU, record.name);
 
       const totalGpuSlots = getTotalGpuSlots(record.name);
 
@@ -99,7 +100,7 @@ const Cluster: React.FC = () => {
     });
 
     return newColumns;
-  }, [ agents.data, getTotalGpuSlots ]);
+  }, [ agents, getTotalGpuSlots ]);
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
@@ -117,6 +118,10 @@ const Cluster: React.FC = () => {
     return { onAuxClick: handleClick, onClick: handleClick };
   }, []);
 
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
+
   const viewOptions = (
     <Radio.Group value={selectedView} onChange={onChange}>
       <Radio.Button value={View.Grid}>
@@ -133,7 +138,7 @@ const Cluster: React.FC = () => {
       <Section hideTitle title="Overview Stats">
         <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
           <OverviewStats title="Connected Agents">
-            {agents.data ? agents.data.length : '?'}
+            {agents ? agents.length : '?'}
           </OverviewStats>
           {overview.GPU.total ?
             <OverviewStats title="GPU Slots Allocated">
@@ -166,7 +171,7 @@ const Cluster: React.FC = () => {
             {resourcePools.map((rp, idx) => {
               return <ResourcePoolCard
                 gpuContainerStates={
-                  getSlotContainerStates(agents.data || [], ResourceType.GPU, rp.name)
+                  getSlotContainerStates(agents || [], ResourceType.GPU, rp.name)
                 }
                 key={idx}
                 resourcePool={rp}
@@ -180,7 +185,7 @@ const Cluster: React.FC = () => {
             dataSource={resourcePools}
             loading={{
               indicator: <Indicator />,
-              spinning: agents.isLoading, // TODO replace with resource pools
+              spinning: !agents, // TODO replace with resource pools
             }}
             pagination={getPaginationConfig(resourcePools.length, 10)}
             rowClassName={defaultRowClassName({ clickable: true })}

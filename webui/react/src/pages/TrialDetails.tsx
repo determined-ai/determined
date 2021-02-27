@@ -116,12 +116,13 @@ const TrialDetailsComp: React.FC = () => {
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
-  const [ trialCanceler ] = useState(new AbortController());
+  const [ canceler ] = useState(new AbortController());
+  const [ source ] = useState(axios.CancelToken.source());
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
     isLoading: true,
-    source: axios.CancelToken.source(),
+    source,
   });
 
   const trial = trialDetails.data;
@@ -228,14 +229,14 @@ const TrialDetailsComp: React.FC = () => {
 
   const fetchTrialDetails = useCallback(async () => {
     try {
-      const response = await getTrialDetails({ id: trialId }, { signal: trialCanceler.signal });
+      const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
       setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
     } catch (e) {
       if (!trialDetails.error && !isAborted(e)) {
         setTrialDetails(prev => ({ ...prev, error: e }));
       }
     }
-  }, [ trialDetails.error, trialCanceler, trialId ]);
+  }, [ canceler, trialDetails.error, trialId ]);
 
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
@@ -366,6 +367,7 @@ If the problem persists please contact support.',
   }, [ storage ]);
 
   const stopPolling = usePolling(fetchTrialDetails);
+
   useEffect(() => {
     if (trialDetails.data && terminalRunStates.has(trialDetails.data.state)) {
       stopPolling();
@@ -373,8 +375,11 @@ If the problem persists please contact support.',
   }, [ trialDetails.data, stopPolling ]);
 
   useEffect(() => {
-    return () => trialCanceler.abort();
-  }, [ trialCanceler ]);
+    return () => {
+      source.cancel();
+      canceler.abort();
+    };
+  }, [ canceler, source ]);
 
   useEffect(() => {
     try {
@@ -396,7 +401,7 @@ If the problem persists please contact support.',
       try {
         const response = await getExperimentDetails(
           { id: experimentId },
-          { signal: trialCanceler.signal },
+          { signal: canceler.signal },
         );
         setExperiment(response);
 
@@ -430,8 +435,8 @@ If the problem persists please contact support.',
 
     fetchExperimentDetails();
   }, [
+    canceler,
     experimentId,
-    trialCanceler,
     experimentIdParam,
     history,
     metricNames,

@@ -8,12 +8,16 @@ import { capitalize } from 'utils/string';
 import * as Sdk from './api-ts-sdk'; // API Bindings
 import { LoginResponse } from './types';
 
-export const user = (data: Sdk.V1User): types.DetailedUser => {
+export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {
     isActive: data.active,
     isAdmin: data.admin,
     username: data.username,
   };
+};
+
+export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[] => {
+  return (data.users || []).map(user => mapV1User(user));
 };
 
 export const jsonToUsers = (data: unknown): types.DetailedUser[] => {
@@ -287,7 +291,7 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
   };
 };
 
-const decodeV1ExperimentToExperimentItem = (
+const mapV1Experiment = (
   data: Sdk.V1Experiment,
 ): types.ExperimentItem => {
   return {
@@ -301,13 +305,12 @@ const decodeV1ExperimentToExperimentItem = (
     resourcePool: data.resourcePool || '',
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
-    url: `/experiments/${data.id}`,
     username: data.username,
   };
 };
 
-export const decodeExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
-  return data.map(decodeV1ExperimentToExperimentItem);
+export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
+  return data.map(mapV1Experiment);
 };
 
 const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefined => {

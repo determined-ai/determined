@@ -1,21 +1,28 @@
 import { useCallback } from 'react';
 
 import { generateContext } from 'contexts';
-import { RestApiState } from 'hooks/useRestApi';
 import { CommandTask } from 'types';
-import { clone } from 'utils/data';
 
 import { getCommands, getNotebooks, getShells, getTensorboards } from '../services/api';
 
-const initialState = {
-  errorCount: 0,
-  hasLoaded: false,
-  isLoading: false,
-};
-
-export const Commands = generateContext<RestApiState<CommandTask[]>>({
-  initialState: clone(initialState),
+export const Commands = generateContext<CommandTask[] | undefined>({
+  initialState: undefined,
   name: 'Commands',
+});
+
+export const Notebooks = generateContext<CommandTask[] | undefined>({
+  initialState: undefined,
+  name: 'Notebooks',
+});
+
+export const Shells = generateContext<CommandTask[] | undefined>({
+  initialState: undefined,
+  name: 'Shells',
+});
+
+export const Tensorboards = generateContext<CommandTask[] | undefined>({
+  initialState: undefined,
+  name: 'Tensorboards',
 });
 
 export const useFetchCommands = (canceler: AbortController): () => Promise<void> => {
@@ -23,15 +30,7 @@ export const useFetchCommands = (canceler: AbortController): () => Promise<void>
 
   return useCallback(async (): Promise<void> => {
     const commandsResponse = await getCommands({ signal: canceler.signal });
-    setCommands({
-      type: Commands.ActionType.Set,
-      value: {
-        data: commandsResponse,
-        errorCount: 0,
-        hasLoaded: true,
-        isLoading: false,
-      },
-    });
+    setCommands({ type: Commands.ActionType.Set, value: commandsResponse });
   }, [ canceler, setCommands ]);
 };
 
@@ -40,15 +39,7 @@ export const useFetchNotebooks = (canceler: AbortController): () => Promise<void
 
   return useCallback(async (): Promise<void> => {
     const notebooksResponse = await getNotebooks({ signal: canceler.signal });
-    setNotebooks({
-      type: Commands.ActionType.Set,
-      value: {
-        data: notebooksResponse,
-        errorCount: 0,
-        hasLoaded: true,
-        isLoading: false,
-      },
-    });
+    setNotebooks({ type: Commands.ActionType.Set, value: notebooksResponse });
   }, [ canceler, setNotebooks ]);
 };
 
@@ -57,15 +48,7 @@ export const useFetchShells = (canceler: AbortController): () => Promise<void> =
 
   return useCallback(async (): Promise<void> => {
     const shellsResponse = await getShells({ signal: canceler.signal });
-    setShells({
-      type: Commands.ActionType.Set,
-      value: {
-        data: shellsResponse,
-        errorCount: 0,
-        hasLoaded: true,
-        isLoading: false,
-      },
-    });
+    setShells({ type: Commands.ActionType.Set, value: shellsResponse });
   }, [ canceler, setShells ]);
 };
 
@@ -75,30 +58,7 @@ export const useFetchTensorboards = (canceler: AbortController): () => Promise<v
   return useCallback(async (): Promise<void> => {
     try {
       const tensorboardsResponse = await getTensorboards({ signal: canceler.signal });
-      setTensorboards({
-        type: Commands.ActionType.Set,
-        value: {
-          data: tensorboardsResponse,
-          errorCount: 0,
-          hasLoaded: true,
-          isLoading: false,
-        },
-      });
+      setTensorboards({ type: Commands.ActionType.Set, value: tensorboardsResponse });
     } catch (e) {}
   }, [ canceler, setTensorboards ]);
 };
-
-export const Notebooks = generateContext<RestApiState<CommandTask[]>>({
-  initialState: clone(initialState),
-  name: 'Notebooks',
-});
-
-export const Shells = generateContext<RestApiState<CommandTask[]>>({
-  initialState: clone(initialState),
-  name: 'Shells',
-});
-
-export const Tensorboards = generateContext<RestApiState<CommandTask[]>>({
-  initialState: clone(initialState),
-  name: 'Tensorboards',
-});
