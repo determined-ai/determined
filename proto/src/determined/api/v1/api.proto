@@ -837,4 +837,12 @@ service Determined {
       get: "/api/v1/resources/allocation/raw"
     };
   }
+
+  // Get an aggregated view of resource allocation during the given time period.
+  rpc ResourceAllocationAggregated(ResourceAllocationAggregatedRequest)
+      returns (ResourceAllocationAggregatedResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resources/allocation/aggregated"
+    };
+  }
 }
