@@ -17,6 +17,14 @@ except ImportError:
         logging.warning("Failed to import apex.")
     pass
 
+# AMP is only available in PyTorch 1.6+
+try:
+    import torch.cuda.amp as amp
+except ImportError:
+    if torch.cuda.is_available():
+        logging.warning("PyTorch AMP is unavailable.")
+    pass
+
 
 class PyTorchTrialContext(det.TrialContext):
     """Contains runtime information for any Determined workflow that uses the ``PyTorch`` API.
@@ -104,7 +112,7 @@ class PyTorchTrialContext(det.TrialContext):
                     return delattr(saved_model, name)
 
                 def forward(wrapper, *arg, **kwarg):  # type: ignore
-                    with torch.cuda.amp.autocast():
+                    with amp.autocast():
                         return saved_model.forward(*arg, **kwarg)
 
             model = _WrappedModel()
@@ -268,6 +276,8 @@ class PyTorchTrialContext(det.TrialContext):
         vanilla PyTorch APIs. Loss should be scaled before calling ``backward``, ``unscale_`` should
         be called before clipping gradients, ``update`` should be called after stepping all
         optimizers, etc.
+
+        PyTorch 1.6 or greater is required for this feature.
 
         Arguments:
             scaler (``torch.cuda.amp.GradScaler``):  Scaler to wrap and track.

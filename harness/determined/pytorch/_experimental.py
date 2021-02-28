@@ -1,8 +1,17 @@
+import logging
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
 
 from determined import pytorch
+
+# AMP is only available in PyTorch 1.6+
+try:
+    import torch.cuda.amp as amp
+except ImportError:
+    if torch.cuda.is_available():
+        logging.warning("PyTorch AMP is unavailable.")
+    pass
 
 
 def default_allgather_fn(metrics: Any) -> List:
@@ -78,8 +87,10 @@ class PyTorchExperimentalContext:
         backward pass, unscales before clipping gradients, uses scaler when stepping
         optimizer(s), and updates scaler afterwards. Do not call ``wrap_scaler`` directly when
         using this method.
+
+        PyTorch 1.6 or greater is required for this feature.
         """
-        self._parent.wrap_scaler(torch.cuda.amp.GradScaler())
+        self._parent.wrap_scaler(amp.GradScaler())
         self._auto_amp = True
 
     def _set_allgather_fn(self, fn: Callable) -> None:
