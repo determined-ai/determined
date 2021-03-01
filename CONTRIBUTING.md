@@ -53,6 +53,7 @@ git clone git@github.com:determined-ai/determined.git
 - Node (>= 12)
 - NPM (>= 6.12)
 - Docker (>= 19.03)
+- Helm (>= 3.0.0)
 - Protoc (>= 3.0)
 - Java (>= 7)
 - cURL (>= 7)
