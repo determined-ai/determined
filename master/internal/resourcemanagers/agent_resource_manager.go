@@ -225,11 +225,17 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			location = pool.Provider.GCP.Zone
 			imageID = pool.Provider.GCP.BootDiskSourceImage
 
-			instanceType = fmt.Sprintf("%s, %dx%s",
-				pool.Provider.GCP.InstanceType.MachineType,
-				pool.Provider.GCP.InstanceType.GPUNum,
-				pool.Provider.GCP.InstanceType.GPUType,
-			)
+
+			if pool.Provider.GCP.InstanceType.GPUNum == 0 {
+				instanceType = pool.Provider.GCP.InstanceType.MachineType
+			} else {
+				instanceType = fmt.Sprintf("%s, %d x %s",
+					pool.Provider.GCP.InstanceType.MachineType,
+					pool.Provider.GCP.InstanceType.GPUNum,
+					pool.Provider.GCP.InstanceType.GPUType,
+				)
+			}
+
 		}
 	}
 
