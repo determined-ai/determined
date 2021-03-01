@@ -1,10 +1,21 @@
 import logging
 import pathlib
-from typing import Optional, Tuple, Type, cast
+from typing import List, Optional, Tuple, Type, cast
 
 import determined as det
 from determined import horovod, load, tensorboard, workload
+from determined._trial import TrialCapabilities
+from determined.estimator import EstimatorTrial
+from determined.keras import TFKerasTrial
+from determined.pytorch import PyTorchTrial
 from determined_common import check
+
+
+def trial_framework(trial_class: Type[det.Trial]) -> Optional[Tuple[str, TrialCapabilities]]:
+    classes: List[Type[det.Trial]] = [PyTorchTrial, TFKerasTrial, EstimatorTrial]
+    for cls in classes:
+        if issubclass(trial_class, cls):
+            return cls.name(), cls.capabilities()
 
 
 def load_controller_from_trial(
@@ -37,9 +48,10 @@ def load_controller_from_trial(
     # Step 3: Instantiate the user's Trial.
     trial_inst = trial_class(trial_context)
 
+
     # Step 4: Return the TrialController.
     logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
-    return controller_class.from_trial(
+    controller = controller_class.from_trial(
         trial_inst=trial_inst,
         context=trial_context,
         env=env,
@@ -48,6 +60,8 @@ def load_controller_from_trial(
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
     )
+    print("trial framework is", trial_framework(trial_class))
+    return controller
 
 
 def load_trial_implementation_controller(
@@ -136,7 +150,6 @@ def prepare_controller(
         controller = load_trial_implementation_controller(
             env, workloads, load_path, rendezvous_info, hvd_config
         )
-
     return controller
 
 

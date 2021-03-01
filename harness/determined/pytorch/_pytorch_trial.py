@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 import determined as det
-from determined import horovod, ipc, pytorch, util, workload
+from determined import TrialCapabilities, horovod, ipc, pytorch, util, workload
 from determined.horovod import hvd
 from determined_common import check
 
@@ -929,6 +929,9 @@ class PyTorchTrial(det.Trial):
             data_loader (torch.utils.data.DataLoader): data loader for evaluating.
         """
         pass
+
+    def capabilities():
+        return TrialCapabilities(mid_epoch_preemptible=True)
 
 
 def reset_parameters(model: torch.nn.Module) -> None:

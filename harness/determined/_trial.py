@@ -4,6 +4,11 @@ from typing import Optional, Type
 import determined as det
 
 
+class TrialCapabilities:
+    def __init__(self, mid_epoch_preemptible: bool):
+        self.mid_epoch_preemptible = mid_epoch_preemptible
+
+
 class Trial(metaclass=abc.ABCMeta):
     """
     Abstract base class for trials.
@@ -29,5 +34,21 @@ class Trial(metaclass=abc.ABCMeta):
         by the other methods in the trial class. it is also typically useful
         to store ``context`` as an instance variable so that it can be accessed
         by other methods.
+        """
+        pass
+
+    @classmethod
+    def name(cls) -> str:
+        """
+        Name of the trial class.
+        """
+        return cls.__name__
+
+    # QUESTION @abc.abstractmethod would mean that every subclass would need to implement this.
+    @staticmethod
+    @abc.abstractmethod
+    def capabilities() -> TrialCapabilities:
+        """
+        Report supported capabilities of this trial class.
         """
         pass
