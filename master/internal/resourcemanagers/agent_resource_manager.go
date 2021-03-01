@@ -225,7 +225,6 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			location = pool.Provider.GCP.Zone
 			imageID = pool.Provider.GCP.BootDiskSourceImage
 
-
 			if pool.Provider.GCP.InstanceType.GPUNum == 0 {
 				instanceType = pool.Provider.GCP.InstanceType.MachineType
 			} else {
