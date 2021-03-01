@@ -1,5 +1,35 @@
+import themes, { defaultThemeId } from 'themes';
 import { Primitive, Range } from 'types';
 import { primitiveSorter } from 'utils/sort';
+
+import { ColorScale } from './color';
+import { clone } from './data';
+
+/* Color Scales */
+
+const DEFAULT_SCALE_COLORS: Range<string> = [
+  themes[defaultThemeId].colors.danger.light,
+  themes[defaultThemeId].colors.action.normal,
+];
+const REVERSE_SCALE_COLORS = clone(DEFAULT_SCALE_COLORS).reverse();
+const NEUTRAL_SCALE_COLORS: Range<string> = [
+  'rgb(255, 184, 0)',
+  themes[defaultThemeId].colors.action.normal,
+];
+
+export const getColorScale = (range?: Range<number>, smallerIsBetter?: boolean): ColorScale[] => {
+  let colors = NEUTRAL_SCALE_COLORS;
+  if (smallerIsBetter != null) {
+    colors = smallerIsBetter ? REVERSE_SCALE_COLORS : DEFAULT_SCALE_COLORS;
+  }
+  return colors.map((color, index): ColorScale => {
+    if (range) {
+      const scale = range ? range[index] : index;
+      return { color, scale };
+    }
+    return { color, scale: index };
+  });
+};
 
 /* Ranges */
 

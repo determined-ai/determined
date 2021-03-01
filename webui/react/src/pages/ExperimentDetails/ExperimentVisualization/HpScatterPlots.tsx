@@ -69,9 +69,7 @@ const ScatterPlots: React.FC<Props> = ({
     const defaultTitle = 'HP Scatter Plots';
     if (!selectedMetric) return defaultTitle;
     return (
-      <>
-        {defaultTitle} (<MetricBadgeTag metric={selectedMetric} />)
-      </>
+      <>{defaultTitle} (<MetricBadgeTag metric={selectedMetric} />)</>
     );
   }, [ selectedMetric ]);
 

@@ -1,8 +1,12 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import ColorLegend from 'components/ColorLegend';
+import Grid, { GridMode } from 'components/Grid';
+import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Message, { MessageType } from 'components/Message';
+import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -10,20 +14,21 @@ import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
+import useResize from 'hooks/useResize';
 import useStorage from 'hooks/useStorage';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap } from 'types';
+import {
+  ExperimentBase, ExperimentHyperParamType, MetricName, MetricType, metricTypeParamMap, Range,
+} from 'types';
+import { getColorScale } from 'utils/chart';
 import { isNumber, isObject } from 'utils/data';
+import { ConditionalWrapper } from 'utils/react';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpHeatMaps.module.scss';
-import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import Grid, { GridMode } from 'components/Grid';
-import useResize from 'hooks/useResize';
-import { ConditionalWrapper } from 'utils/react';
 
 const { Option } = Select;
 
@@ -42,6 +47,7 @@ interface HpData {
   hpLogScales: Record<string, boolean>;
   hpMetrics: Record<string, number[]>;
   hpValues: Record<string, number[]>;
+  metricRange: Range<number>;
   trialIds: number[];
 }
 
@@ -84,6 +90,18 @@ const HpVsHpHeatMap: React.FC<Props> = ({
   const isListView = selectedView === GridListView.List;
 
   if (isListView) classes.push(css.list);
+
+  const smallerIsBetter = useMemo(() => {
+    if (selectedMetric.type === MetricType.Validation &&
+        selectedMetric.name === experiment.config.searcher.metric) {
+      return experiment.config.searcher.smallerIsBetter;
+    }
+    return undefined;
+  }, [ experiment.config.searcher, selectedMetric ]);
+
+  const colorScale = useMemo(() => {
+    return getColorScale(chartData?.metricRange, smallerIsBetter);
+  }, [ chartData, smallerIsBetter ]);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -136,6 +154,7 @@ const HpVsHpHeatMap: React.FC<Props> = ({
         const hpLogScaleMap: Record<string, boolean> = {};
         const hpMetrics: Record<string, number[]> = {};
         const hpValues: Record<string, number[]> = {};
+        const metricRange: Range<number> = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
 
         event.trials.forEach(trial => {
           if (!isObject(trial.hparams)) return;
@@ -156,6 +175,9 @@ const HpVsHpHeatMap: React.FC<Props> = ({
               hpMetricMap[trialId][key] = trial.metric;
             });
           });
+
+          if (trial.metric < metricRange[0]) metricRange[0] = trial.metric;
+          if (trial.metric > metricRange[1]) metricRange[1] = trial.metric;
         });
 
         hParams.forEach(hParam1 => {
@@ -173,6 +195,7 @@ const HpVsHpHeatMap: React.FC<Props> = ({
           hpLogScales: hpLogScaleMap,
           hpMetrics,
           hpValues,
+          metricRange,
           trialIds,
         });
         setHasLoaded(true);
@@ -203,48 +226,60 @@ const HpVsHpHeatMap: React.FC<Props> = ({
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {
       content = (
-        <ConditionalWrapper
-          condition={isListView}
-          falseWrapper={children => <div className={css.grid}>{children}</div>}
-          wrapper={children => (
-            <Grid
-              border={true}
-              minItemWidth={resize.width > 320 ? 35 : 27}
-              mode={GridMode.AutoFill}>{children}</Grid>
-          )}>
-          <>{selectedHParams.map(hParam1 => (
+        <>
+          <div className={css.legend}>
+            <ColorLegend
+              colorScale={colorScale}
+              title={<MetricBadgeTag metric={selectedMetric} />} />
+          </div>
+          <div className={css.charts}>
             <ConditionalWrapper
-              condition={!isListView}
+              condition={isListView}
+              falseWrapper={children => <div className={css.grid}>{children}</div>}
               wrapper={children => (
-                <div className={css.row} key={hParam1}>{children}</div>
+                <Grid
+                  border={true}
+                  minItemWidth={resize.width > 320 ? 35 : 27}
+                  mode={GridMode.AutoFill}>{children}</Grid>
               )}>
-              <>{selectedHParams.map(hParam2 => {
-                const key = generateHpKey(hParam1, hParam2);
-                return (
-                  <ConditionalWrapper
-                    condition={!isListView}
-                    wrapper={children => (
-                      <div className={css.item} key={hParam2}>{children}</div>
-                    )}>
-                    <ScatterPlot
-                      height={350}
-                      key={key}
-                      valueLabel={metricNameToStr(selectedMetric)}
-                      values={chartData.hpMetrics[key]}
-                      width={350}
-                      x={chartData.hpValues[hParam1]}
-                      xLabel={hParam1}
-                      xLogScale={chartData.hpLogScales[hParam1]}
-                      y={chartData.hpValues[hParam2]}
-                      yLabel={hParam2}
-                      yLogScale={chartData.hpLogScales[hParam2]}
-                    />
-                  </ConditionalWrapper>
-                );
-              })}</>
+              <>{selectedHParams.map(hParam1 => (
+                <ConditionalWrapper
+                  condition={!isListView}
+                  key={hParam1}
+                  wrapper={children => (
+                    <div className={css.row} key={hParam1}>{children}</div>
+                  )}>
+                  <>{selectedHParams.map(hParam2 => {
+                    const key = generateHpKey(hParam1, hParam2);
+                    return (
+                      <ConditionalWrapper
+                        condition={!isListView}
+                        key={hParam2}
+                        wrapper={children => (
+                          <div className={css.item} key={hParam2}>{children}</div>
+                        )}>
+                        <ScatterPlot
+                          colorScale={colorScale}
+                          height={350}
+                          key={key}
+                          valueLabel={metricNameToStr(selectedMetric)}
+                          values={chartData.hpMetrics[key]}
+                          width={350}
+                          x={chartData.hpValues[hParam1]}
+                          xLabel={hParam1}
+                          xLogScale={chartData.hpLogScales[hParam1]}
+                          y={chartData.hpValues[hParam2]}
+                          yLabel={hParam2}
+                          yLogScale={chartData.hpLogScales[hParam2]}
+                        />
+                      </ConditionalWrapper>
+                    );
+                  })}</>
+                </ConditionalWrapper>
+              ))}</>
             </ConditionalWrapper>
-          ))}</>
-        </ConditionalWrapper>
+          </div>
+        </>
       );
     }
   }

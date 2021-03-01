@@ -15,13 +15,11 @@ import Spinner from 'components/Spinner';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import themes, { defaultThemeId } from 'themes';
 import {
   ExperimentBase, ExperimentHyperParam, ExperimentHyperParamType, MetricName, MetricType,
   metricTypeParamMap, Primitive, Range,
 } from 'types';
-import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
-import { ColorScale } from 'utils/color';
+import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, isNumber } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { metricNameToStr } from 'utils/string';
@@ -51,16 +49,6 @@ interface HpTrialData {
   metricValues: number[];
   trialIds: number[];
 }
-
-const DEFAULT_SCALE_COLORS: Range<string> = [
-  themes[defaultThemeId].colors.danger.light,
-  themes[defaultThemeId].colors.action.normal,
-];
-const REVERSE_SCALE_COLORS = clone(DEFAULT_SCALE_COLORS).reverse();
-const NEUTRAL_SCALE_COLORS: Range<string> = [
-  'rgb(255, 184, 0)',
-  themes[defaultThemeId].colors.action.normal,
-];
 
 const HpParallelCoordinates: React.FC<Props> = ({
   batches,
@@ -100,18 +88,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [ experiment.config.searcher, selectedMetric ]);
 
-  const colorScale: ColorScale[] = useMemo(() => {
-    let colors = NEUTRAL_SCALE_COLORS;
-    if (smallerIsBetter != null) {
-      colors = smallerIsBetter ? REVERSE_SCALE_COLORS : DEFAULT_SCALE_COLORS;
-    }
-    return colors.map((color, index) => {
-      if (chartData?.metricRange) {
-        const scale = chartData?.metricRange ? chartData?.metricRange[index] : index;
-        return { color, scale };
-      }
-      return { color, scale: index };
-    });
+  const colorScale = useMemo(() => {
+    return getColorScale(chartData?.metricRange, smallerIsBetter);
   }, [ chartData?.metricRange, smallerIsBetter ]);
 
   const dimensions = useMemo(() => {

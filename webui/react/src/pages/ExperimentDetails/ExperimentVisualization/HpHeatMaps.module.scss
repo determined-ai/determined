@@ -4,11 +4,17 @@
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
     border-radius: var(--theme-sizes-border-radius);
     min-height: 40rem;
-    overflow: auto;
-    position: relative;
   }
   .container > [class*=Message_base] {
     height: 40rem;
+  }
+  .charts {
+    overflow: auto;
+    position: relative;
+  }
+  .legend {
+    border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    padding: var(--theme-sizes-layout-large);
   }
   .grid {
     border-left: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);

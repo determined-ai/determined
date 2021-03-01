@@ -5,12 +5,13 @@ import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData, PlotMarker } from 'Plotly';
 import themes, { defaultThemeId } from 'themes';
 import { getNumericRange } from 'utils/chart';
-import { hex2rgb, rgba2str, rgbaFromGradient } from 'utils/color';
+import { ColorScale, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { clone } from 'utils/data';
 import { roundToPrecision } from 'utils/number';
 import { generateAlphaNumeric } from 'utils/string';
 
 interface Props {
+  colorScale?: ColorScale[];
   height?: number;
   id?: string;
   padding?: number;
@@ -43,9 +44,10 @@ const plotlyConfig: Partial<Plotly.Config> = {
 };
 
 const ScatterPlot: React.FC<Props> = ({
-  title,
+  colorScale,
   height,
   padding = 0,
+  title,
   valueLabel,
   values,
   width,
@@ -79,9 +81,9 @@ const ScatterPlot: React.FC<Props> = ({
       y,
     };
 
-    if (values && valueRange) {
-      const rgb0 = hex2rgb(themes[defaultThemeId].colors.danger.light);
-      const rgb1 = hex2rgb(themes[defaultThemeId].colors.action.normal);
+    if (values && valueRange && colorScale) {
+      const rgb0 = str2rgba(colorScale[0].color);
+      const rgb1 = str2rgba(colorScale[1].color);
 
       /*
        * There is an issue with plotly's typing for `marker.color`.
@@ -89,7 +91,8 @@ const ScatterPlot: React.FC<Props> = ({
        * So we cast it to `unknown` then to a `string` as a workaround.
        */
       (trace.marker as Partial<PlotMarker>).color = values.map(value => {
-        const distance = (value - valueRange[0]) / (valueRange[1] - valueRange[0]);
+        const distance = valueRange[0] === valueRange[1] ?
+          0.5 : (value - valueRange[0]) / (valueRange[1] - valueRange[0]);
         const rgb = rgbaFromGradient(rgb0, rgb1, distance);
         return rgba2str(rgb);
       }) as unknown as string;
@@ -97,7 +100,7 @@ const ScatterPlot: React.FC<Props> = ({
       trace.text = values.map(value => roundToPrecision(value).toString());
     }
     return trace;
-  }, [ valueLabel, values, valueRange, x, xLabel, y, yLabel ]);
+  }, [ colorScale, valueLabel, values, valueRange, x, xLabel, y, yLabel ]);
 
   const chartLayout: Partial<Layout> = useMemo(() => {
     const layout = clone(plotlyLayout);
