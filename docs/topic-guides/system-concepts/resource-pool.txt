@@ -10,7 +10,7 @@ tasks have different resource requirements and, given the cost of GPU
 resources, it's important to choose the right resources for specific
 goals so that you get the most value out of your money. For example, you
 may want to run your training on beefy V100 GPU machines, while you want
-your Tensorboards to run on cheap CPU machines with minimal resources.
+your TensorBoards to run on cheap CPU machines with minimal resources.
 
 Determined has the concept of *resource pools*, which is a set of
 resources that are identical and located physically close to each other.
@@ -21,8 +21,8 @@ resource pool handles scheduling and instance provisioning
 independently.
 
 When you configure a cluster, you set which pool is the default for CPU
-tasks and which pool is the default for GPU tasks. CPU-only tasks such a
-Tensorboards will run on the default CPU pool unless you specify that it
+tasks and which pool is the default for GPU tasks. CPU-only tasks such as
+TensorBoards will run on the default CPU pool unless you specify that it
 should run in a different pool when launching the task. Tasks which
 require a slot such as Experiments or GPU-notebooks will launch on to
 the default GPU pool unless otherwise specified. For this reason we
@@ -40,12 +40,12 @@ resource pools:
    instances (large V100 EC2 instances) and another pool, ``aws-cpu``
    that provisions ``m5.large`` instances (small and cheap CPU
    instances). You train your experiments using the ``aws-v100`` pool,
-   while you run your Tensorboards in the ``aws-cpu`` pool. When your
+   while you run your TensorBoards in the ``aws-cpu`` pool. When your
    experiments complete, the ``aws-v100 pool`` can scale down to zero to
-   save money, but you can continue to run your Tensorboard. Without
+   save money, but you can continue to run your TensorBoard. Without
    resource pools, you would have needed to keep a ``p3dn.24xlarge``
-   instance running to keep the Tensorboard alive. By default
-   Tensorboard will always run on the default CPU pool.
+   instance running to keep the TensorBoard alive. By default
+   TensorBoard will always run on the default CPU pool.
 
 -  *Use GPUs in different availability zones on AWS*
 
@@ -207,7 +207,7 @@ When creating a task, the configuration file has a section called
 
 If this field is not set, the task will be launched into one of the two
 default pools defined in the :ref:`master-configuration`. Experiments
-will be launched into the default GPU pool. Tensorboards will be
+will be launched into the default GPU pool. TensorBoards will be
 launched into the default CPU pool. Commands, Shells, and Notebooks that
 request a slot (which is the default behavior if the 'slots' field is
 not set) will be launched into the default GPU pool. Commands, Shells,
