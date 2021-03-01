@@ -10,7 +10,7 @@ import (
 
 func TestComputeHPImportance(t *testing.T) {
 	masterConfig := HPImportanceConfig{
-		WorkersLimit:   2,
+		WorkersLimit:   0,
 		QueueLimit:     16,
 		CoresPerWorker: 1,
 		MaxTrees:       100,
