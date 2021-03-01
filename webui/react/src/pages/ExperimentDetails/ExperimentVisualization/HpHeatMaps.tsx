@@ -60,7 +60,7 @@ const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
 };
 
-const HpVsHpHeatMap: React.FC<Props> = ({
+const HpHeatMaps: React.FC<Props> = ({
   batches,
   experiment,
   hParams,
@@ -312,11 +312,11 @@ const HpVsHpHeatMap: React.FC<Props> = ({
           </MultiSelect>
           <GridListRadioGroup value={selectedView} onChange={handleViewChange} />
         </ResponsiveFilters>}
-        title="HP Heat Map">
+        title="HP Heat Maps">
         <div className={css.container}>{content}</div>
       </Section>
     </div>
   );
 };
 
-export default HpVsHpHeatMap;
+export default HpHeatMaps;
