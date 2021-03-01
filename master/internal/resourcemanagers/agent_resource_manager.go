@@ -234,7 +234,6 @@ func (a *agentResourceManager) createResourcePoolSummary(
 					pool.Provider.GCP.InstanceType.GPUType,
 				)
 			}
-
 		}
 	}
 
