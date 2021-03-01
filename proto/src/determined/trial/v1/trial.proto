@@ -103,3 +103,50 @@ message Trial {
   // Best checkpoint.
   CheckpointWorkload best_checkpoint = 10;
 }
+
+// TrialProfilerMetricLabels are the labels for a single series, where a series
+// is a defined as all metrics sharing a distinct set of labels
+message TrialProfilerMetricLabels {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "name" ] }
+  };
+  // To distinguish the 2 different categories of metrics.
+  enum ProfilerMetricType {
+    // Zero-value (not allowed).
+    PROFILER_METRIC_TYPE_UNSPECIFIED = 0;
+    // For systems metrics, like GPU utilization or memory.
+    PROFILER_METRIC_TYPE_SYSTEM = 1;
+    // For timing metrics, like how long a backwards pass or getting a batch
+    // from the dataloader took.
+    PROFILER_METRIC_TYPE_TIMING = 2;
+  }
+  // The ID of the trial.
+  int32 trial_id = 1;
+  // The name of the metric.
+  string name = 2;
+  // The agent ID associated with the metric.
+  string agent_id = 3;
+  // The global rank ID associated with the metric.
+  string rank_id = 4;
+  // The type of the metric.
+  ProfilerMetricType metric_type = 5;
+}
+
+// TrialProfilerMetricsBatch is a batch of trial profiler metrics. A batch will
+// contain metrics pertaining to a single series. The fields values, batches and
+// timestamps will be equal length arrays with each index corresponding to a
+// reading.
+message TrialProfilerMetricsBatch {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "values", "batches", "timestamps", "labels" ] }
+  };
+  // The measurement for a reading, repeated for the batch of metrics.
+  repeated float values = 1;
+  // The batch at which a reading occurred, repeated for the batch of metrics.
+  repeated int32 batches = 2;
+  // The timestamp at which a reading occurred, repeated for the batch of
+  // metrics.
+  repeated google.protobuf.Timestamp timestamps = 3;
+  // The labels for this series.
+  TrialProfilerMetricLabels labels = 4;
+}

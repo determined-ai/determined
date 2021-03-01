@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "determined/experiment/v1/experiment.proto";
@@ -225,3 +226,48 @@ message GetTrialResponse {
   // Trial workloads.
   repeated WorkloadContainer workloads = 2;
 }
+
+// Stream trial profiler metrics.
+message GetTrialProfilerMetricsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "labels" ] }
+  };
+  // The labels for the series requested.
+  determined.trial.v1.TrialProfilerMetricLabels labels = 1;
+}
+// Response to TrialProfilerMetricsResponse
+message GetTrialProfilerMetricsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "batch" ] }
+  };
+  // A batch matching the series requested.
+  determined.trial.v1.TrialProfilerMetricsBatch batch = 1;
+}
+
+// Stream distinct available profiler metric label sets.
+message GetTrialProfilerAvailableSeriesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // The requested trial's id.
+  int32 trial_id = 1;
+}
+// Response to TrialProfilerAvailableSeriesRequest.
+message GetTrialProfilerAvailableSeriesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "labels" ] }
+  };
+  // The labels for the series.
+  determined.trial.v1.TrialProfilerMetricLabels labels = 1;
+}
+
+// Create a batch of trial profiler metrics.
+message PostTrialProfilerMetricsBatchRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "batch" ] }
+  };
+  // The batch to create.
+  determined.trial.v1.TrialProfilerMetricsBatch batch = 1;
+}
+// Response to PostTrialProfilerMetricsBatchRequest
+message PostTrialProfilerMetricsBatchResponse {}
