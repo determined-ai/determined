@@ -29,6 +29,7 @@ type (
 	KerberosConfigV0            struct{}
 	LengthV0                    struct{}
 	LogHyperparameterV0         struct{}
+	NativeConfigV0              struct{}
 	OptimizationsConfigV0       struct{}
 	PBTConfigV0                 struct{}
 	RandomConfigV0              struct{}

@@ -9,10 +9,8 @@
     ],
     "properties": {
         "native": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+            "type": "object",
+            "$ref": "http://determined.ai/schemas/expconf/v0/native.json"
         }
     }
 }

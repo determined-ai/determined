@@ -9,7 +9,9 @@
         "searcher"
     ],
     "eventuallyRequired": [
-        "checkpoint_storage"
+        "checkpoint_storage",
+        "description",
+        "reproducibility"
     ],
     "properties": {
         "bind_mounts": {
