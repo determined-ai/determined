@@ -419,3 +419,24 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 
 	return resp, nil
 }
+
+func (a *apiServer) GetTrialProfilerMetrics(
+	_ *apiv1.GetTrialProfilerMetricsRequest,
+	_ apiv1.Determined_GetTrialProfilerMetricsServer,
+) error {
+	return grpcutil.UnimplementedError
+}
+
+func (a *apiServer) GetTrialProfilerAvailableSeries(
+	_ *apiv1.GetTrialProfilerAvailableSeriesRequest,
+	_ apiv1.Determined_GetTrialProfilerAvailableSeriesServer,
+) error {
+	return grpcutil.UnimplementedError
+}
+
+func (a *apiServer) PostTrialProfilerMetricsBatch(
+	_ context.Context,
+	_ *apiv1.PostTrialProfilerMetricsBatchRequest,
+) (*apiv1.PostTrialProfilerMetricsBatchResponse, error) {
+	return nil, grpcutil.UnimplementedError
+}
