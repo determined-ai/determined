@@ -82,3 +82,4 @@ their local machine.
 ************
 
 -  :ref:`install-on-kubernetes`
+-  :ref:`k8s-dev-guide`
