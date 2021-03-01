@@ -107,9 +107,6 @@
   matches:
     - http://determined.ai/schemas/expconf/v0/experiment.json
   case:
-    checkpoint_storage:
-      type: shared_fs
-      host_path: /tmp
     hyperparameters:
       global_batch_size: 32
     searcher:
@@ -122,14 +119,7 @@
   defaulted:
     bind_mounts: []
     checkpoint_policy: best
-    checkpoint_storage:
-      type: shared_fs
-      host_path: /tmp
-      storage_path: null
-      propagation: rprivate
-      save_experiment_best: 0
-      save_trial_best: 1
-      save_trial_latest: 1
+    checkpoint_storage: null
     data: {}
     data_layer:
       type: shared_fs
@@ -197,9 +187,6 @@
   case:
     hyperparameters:
       global_batch_size: 32
-    checkpoint_storage:
-      type: shared_fs
-      host_path: /tmp
     entrypoint: model_def:MyTrial
     searcher:
       name: single
@@ -279,9 +266,6 @@
       categorical_hparam:
         type: categorical
         vals: [1, 2, 3, 4]
-    checkpoint_storage:
-      type: shared_fs
-      host_path: /tmp
     searcher:
       name: grid
       metric: loss

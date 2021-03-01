@@ -1,5 +1,5 @@
-GENERATED_COMMITTED := pkg/schemas/schema_gen.go pkg/schemas/expconf/schema_gen.go
-GENERATED := $(GENERATED_COMMITTED) packaging/LICENSE
+GENERATED := packaging/LICENSE
+GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name '*.go') $(shell find ../schemas/expconf -name '*.json')
 
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on
@@ -12,20 +12,25 @@ clean: ungen
 .PHONY: ungen
 ungen:
 	rm -f $(GENERATED)
-	git checkout -- $(GENERATED_COMMITTED)
+	rm -f `find ./pkg/schemas/ -name 'zgen_*.go'` build/schema_gen.stamp
 
 .PHONY: gen
-gen: $(GENERATED)
+gen: $(GENERATED) build/schema_gen.stamp
 
 .PHONY: force-gen
 force-gen:
-	touch ../schemas/gen.py
+	rm -f build/schema_gen.stamp
+
+build/schema_gen.stamp: $(GENERATION_INPUTS)
+	go generate ./pkg/schemas/...
+	mkdir -p build
+	touch $@
 
 .PHONY: check-gen
-check-gen: force-gen $(GENERATED_COMMITTED)
+check-gen: force-gen gen
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
-	test -z "$(shell git status --porcelain $(GENERATED_COMMITTED))"
+	test -z "$(shell git status --porcelain ./pkg/schemas)"
 
 .PHONY: get-deps
 get-deps:
@@ -105,21 +110,3 @@ publish-dev:
 
 packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py master $@
-
-# Root schemas generated file; this contains all the schemas we have.
-pkg/schemas/schema_gen.go: ../schemas/gen.py $(shell find ../schemas -regex ".*/v.*/.*\.json")
-	../schemas/gen.py \
-		--output $@ \
-		--package schemas \
-		go \
-		$(shell find ../schemas -regex ".*/v.*/.*\.json")
-	goimports -l -local github.com/determined-ai -w $@
-
-# Package-level generated file; this only generates code related to expconf objects.
-pkg/schemas/expconf/schema_gen.go: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
-	../schemas/gen.py \
-		--output $@ \
-		--package expconf \
-		go \
-		$(shell find ../schemas/expconf -name "*.json")
-	goimports -l -local github.com/determined-ai -w $@

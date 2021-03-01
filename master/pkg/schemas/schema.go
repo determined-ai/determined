@@ -1,5 +1,7 @@
 package schemas
 
+//go:generate ../../../schemas/gen.py go-root --output zgen_schemas.go
+
 import (
 	"bytes"
 	"encoding/json"
