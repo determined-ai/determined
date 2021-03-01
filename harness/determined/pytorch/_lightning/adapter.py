@@ -43,29 +43,33 @@ def check_compatibility(lm: pl.LightningModule) -> None:
         raise InvalidModelException(prefix + "Lightning Trainer")
 
 
-class PLAdapter(PyTorchTrial):
-    context: PyTorchTrialContext
-    lm: pl.LightningModule
+class _PLAdapterState:
+    def __init__(
+        self, context: PyTorchTrialContext, lm: pl.LightningModule, optimizers: List[Optimizer]
+    ):
+        self.context = context
+        self.lm = lm
+        self.optimizers = optimizers
 
+
+class PLAdapter(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext, lightning_module: pl.LightningModule):
         super().__init__(context)
         check_compatibility(lightning_module)
         context.wrap_model(lightning_module)
-        self.lm = lightning_module
-        self.context = context
-
-        optimizers, lr_schedulers = self.setup_optimizers_schedulers(context)
-        self.optimizers = optimizers
+        optimizers, lr_schedulers = self.setup_optimizers_schedulers(context, lightning_module)
+        pls = _PLAdapterState(context, lightning_module, optimizers)
+        self._pls = pls
 
         # set lightning_module properties
-        self.lm.use_ddp = False  # type: ignore
-        self.lm.use_ddp2 = False  # type: ignore
-        self.lm.use_dp = False  # type: ignore
-        self.lm.use_tpu = False  # type: ignore
-        type(self.lm).local_rank = self.context.distributed.get_local_rank()  # type: ignore
-        type(self.lm).global_rank = self.context.distributed.get_rank()  # type: ignore
-        self.lm.use_amp = self.context._use_amp
-        self.lm.to(self.context.device)
+        pls.lm.use_ddp = False  # type: ignore
+        pls.lm.use_ddp2 = False  # type: ignore
+        pls.lm.use_dp = False  # type: ignore
+        pls.lm.use_tpu = False  # type: ignore
+        type(pls.lm).local_rank = context.distributed.get_local_rank()  # type: ignore
+        type(pls.lm).global_rank = context.distributed.get_rank()  # type: ignore
+        pls.lm.use_amp = context._use_amp
+        pls.lm.to(context.device)
 
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         """
@@ -73,8 +77,8 @@ class PLAdapter(PyTorchTrial):
         lightning. Override and merge the output of this build_callbacks with your
         desired callbacks.
         """
-        context = self.context
-        lm = self.lm
+        context = self._pls.context
+        lm = self._pls.lm
 
         class PLAdapterCallback(PyTorchCallback):
             def on_training_epoch_start(self) -> None:
@@ -98,6 +102,7 @@ class PLAdapter(PyTorchTrial):
     def setup_optimizers_schedulers(
         self,
         context: PyTorchTrialContext,
+        lightning_module: pl.LightningModule,
     ) -> Tuple[List[Optimizer], List[_LRScheduler]]:
         """
         Wrap optimizers and lr_schedulers returned by `configure_optimizers` to
@@ -105,7 +110,7 @@ class PLAdapter(PyTorchTrial):
         Return: Wrapped `optimizers`, and `lr_schedulers` in a tuple
         """
         optimizers, lr_scheduler_dicts, opt_frequencies = TrainerOptimizersMixin().init_optimizers(
-            self.lm
+            lightning_module,
         )
         for freq in opt_frequencies:
             check.eq(freq, 1, "custom optimizer frequencies are not supported")
@@ -132,7 +137,7 @@ class PLAdapter(PyTorchTrial):
             )
             return context.wrap_lr_scheduler(lrs["scheduler"], step_mode)
 
-        optimizers = [self.context.wrap_optimizer(opt) for opt in optimizers]
+        optimizers = [context.wrap_optimizer(opt) for opt in optimizers]
         lr_schedulers = [lightning_scheduler_dict_to_det(lrs) for lrs in lr_scheduler_dicts]
         return optimizers, lr_schedulers
 
@@ -140,11 +145,11 @@ class PLAdapter(PyTorchTrial):
         # taken from pytorch_lightning
         args = [batch, batch_idx]
 
-        if len(self.optimizers) > 1:
-            if has_param(self.lm.training_step, "optimizer_idx"):
+        if len(self._pls.optimizers) > 1:
+            if has_param(self._pls.lm.training_step, "optimizer_idx"):
                 args.append(opt_idx)
             else:
-                num_opts = len(self.optimizers)
+                num_opts = len(self._pls.optimizers)
                 raise InvalidModelException(
                     f"Your LightningModule defines {num_opts} optimizers but "
                     f'training_step is missing the "optimizer_idx" argument.'
@@ -155,34 +160,38 @@ class PLAdapter(PyTorchTrial):
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Union[torch.Tensor, Dict[str, Any]]:
-        type(self.lm).global_step = batch_idx  # type: ignore
-        self.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
+        type(self._pls.lm).global_step = batch_idx  # type: ignore
+        self._pls.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
 
         opt_metrics = []
         metrics = None
 
-        for opt_idx, opt in enumerate(self.optimizers):
-            with monkey_patch(self.lm, "optimizers", lambda *args, **kwargs: self.optimizers):
-                self.lm.toggle_optimizer(opt, opt_idx)
+        for opt_idx, opt in enumerate(self._pls.optimizers):
+            with monkey_patch(
+                self._pls.lm, "optimizers", lambda *args, **kwargs: self._pls.optimizers
+            ):
+                self._pls.lm.toggle_optimizer(opt, opt_idx)
             train_args = self._build_train_args(batch, batch_idx, opt_idx)
-            metrics = self.lm.training_step(*train_args)  # type: ignore
+            metrics = self._pls.lm.training_step(*train_args)  # type: ignore
 
             if metrics is None:
                 continue
             elif not isinstance(metrics, dict):
                 metrics = {"loss": metrics}
 
-            self.context.backward(metrics["loss"])
-            self.lm.on_after_backward()
-            self.context.step_optimizer(opt, auto_zero_grads=False)
-            self.lm.on_before_zero_grad(opt)
+            self._pls.context.backward(metrics["loss"])
+            self._pls.lm.on_after_backward()
+            self._pls.context.step_optimizer(opt, auto_zero_grads=False)
+            self._pls.lm.on_before_zero_grad(opt)
             opt.zero_grad()
 
             opt_metrics.append(metrics)
-            with monkey_patch(self.lm, "optimizers", lambda *args, **kwargs: self.optimizers):
-                self.lm.untoggle_optimizer(opt_idx)
+            with monkey_patch(
+                self._pls.lm, "optimizers", lambda *args, **kwargs: self._pls.optimizers
+            ):
+                self._pls.lm.untoggle_optimizer(opt_idx)
 
-        self.lm.on_train_batch_end(metrics, batch, batch_idx, dataloader_idx=0)
+        self._pls.lm.on_train_batch_end(metrics, batch, batch_idx, dataloader_idx=0)
 
         agg_metrics = {}
         for opt_idx, rv in enumerate(opt_metrics):
@@ -191,9 +200,9 @@ class PLAdapter(PyTorchTrial):
         return agg_metrics
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
-        self.lm.on_validation_batch_start(batch, batch_idx, dataloader_idx=0)
-        rv = self.lm.validation_step(batch, batch_idx=batch_idx)  # type: ignore
-        self.lm.on_validation_batch_end(rv, batch, batch_idx, dataloader_idx=0)
+        self._pls.lm.on_validation_batch_start(batch, batch_idx, dataloader_idx=0)
+        rv = self._pls.lm.validation_step(batch, batch_idx=batch_idx)  # type: ignore
+        self._pls.lm.on_validation_batch_end(rv, batch, batch_idx, dataloader_idx=0)
 
         metrics = None
         if rv is None:

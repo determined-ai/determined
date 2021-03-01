@@ -312,7 +312,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
             # Step learning rate of a pytorch.LRScheduler.
             for lr_scheduler in self.context.lr_schedulers:
-                self._auto_step_lr_scheduler_per_batch(self.get_epoch_idx(batch_idx), lr_scheduler)
+                self._auto_step_lr_scheduler_per_batch(batch_idx, lr_scheduler)
 
             for name, metric in tr_metrics.items():
                 # Convert PyTorch metric values to NumPy, so that
@@ -322,13 +322,12 @@ class PyTorchTrialController(det.LoopTrialController):
                     metric = metric.cpu().detach().numpy()
                 tr_metrics[name] = metric
 
+            epoch_per_batch_metrics.append(tr_metrics)
             if self.context.is_epoch_end():
                 for callback in self.callbacks.values():
                     callback.on_training_epoch_end(epoch_per_batch_metrics)
                 per_batch_metrics += epoch_per_batch_metrics
                 epoch_per_batch_metrics = []
-            else:
-                epoch_per_batch_metrics.append(tr_metrics)
 
         per_batch_metrics += epoch_per_batch_metrics
         # Aggregate and reduce training metrics from all the training processes.
@@ -396,7 +395,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 if has_param(self.trial.evaluate_batch, "batch_idx", 2):
                     vld_metrics = self.trial.evaluate_batch(batch=batch, batch_idx=idx)
                 else:
-                    vld_metrics = self.trial.evaluate_batch(batch=batch, batch_idx=idx)
+                    vld_metrics = self.trial.evaluate_batch(batch=batch)  # type: ignore
                 # Verify validation metric names are the same across batches.
                 if keys is None:
                     keys = vld_metrics.keys()
