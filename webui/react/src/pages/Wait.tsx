@@ -36,6 +36,7 @@ const Wait: React.FC = () => {
 
   useEffect(() => {
     setUI({ type: UI.ActionType.HideChrome });
+    return () => setUI({ type: UI.ActionType.ShowChrome });
   }, [ setUI ]);
 
   const handleWsError = (err: Error) => {
