@@ -39,3 +39,14 @@
     z-index: 1;
   }
 }
+.list {
+  .container {
+    overflow: visible;
+    padding: var(--theme-sizes-layout-large);
+  }
+  .grid {
+    border: inherit;
+    display: inherit;
+    margin: auto;
+  }
+}

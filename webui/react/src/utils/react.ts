@@ -1,13 +1,14 @@
 import React, { ReactElement } from 'react';
 
-type RN = ReactElement;
-
 interface Props {
-  children: RN;
+  children: ReactElement;
   condition: boolean;
-  wrapper: (c: RN) => RN;
+  falseWrapper?: (children: ReactElement) => JSX.Element;
+  wrapper: (children: ReactElement) => JSX.Element;
 }
 
-export const ConditionalWrapper: React.FC<Props> = ({ condition, wrapper, children }: Props) => {
-  return condition ? wrapper(children) : children;
+export const ConditionalWrapper: React.FC<Props> = ({ condition, children, ...props }: Props) => {
+  if (condition) return props.wrapper(children);
+  if (!condition && props.falseWrapper) return props.falseWrapper(children);
+  return children;
 };

@@ -20,6 +20,10 @@ import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
 import css from './HpHeatMaps.module.scss';
+import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
+import Grid, { GridMode } from 'components/Grid';
+import useResize from 'hooks/useResize';
+import { ConditionalWrapper } from 'utils/react';
 
 const { Option } = Select;
 
@@ -44,6 +48,7 @@ interface HpData {
 const MAX_HPARAM_COUNT = 5;
 const STORAGE_PATH = 'hp-vs-hp';
 const STORAGE_HPARAMS_KEY = 'hparams';
+const STORAGE_VIEW_KEY = 'grid-list';
 
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
@@ -70,8 +75,15 @@ const HpVsHpHeatMap: React.FC<Props> = ({
     selectedHParams,
     setSelectedHParams,
   ] = useState<string[]>(defaultHParams || limitedHParams);
+  const defaultView = storage.get<GridListView>(STORAGE_VIEW_KEY) || GridListView.Grid;
+  const [ selectedView, setSelectedView ] = useState(defaultView);
+  const resize = useResize(baseRef);
+  const classes = [ css.base ];
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
+  const isListView = selectedView === GridListView.List;
+
+  if (isListView) classes.push(css.list);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -99,6 +111,8 @@ const HpVsHpHeatMap: React.FC<Props> = ({
     resetData();
     onMetricChange(metric);
   }, [ onMetricChange, resetData ]);
+
+  const handleViewChange = useCallback((value: GridListView) => setSelectedView(value), []);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -189,13 +203,29 @@ const HpVsHpHeatMap: React.FC<Props> = ({
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {
       content = (
-        <div className={css.grid}>
-          {selectedHParams.map(hParam1 => (
-            <div className={css.row} key={hParam1}>
-              {selectedHParams.map(hParam2 => {
+        <ConditionalWrapper
+          condition={isListView}
+          falseWrapper={children => <div className={css.grid}>{children}</div>}
+          wrapper={children => (
+            <Grid
+              border={true}
+              minItemWidth={resize.width > 320 ? 35 : 27}
+              mode={GridMode.AutoFill}>{children}</Grid>
+          )}>
+          <>{selectedHParams.map(hParam1 => (
+            <ConditionalWrapper
+              condition={!isListView}
+              wrapper={children => (
+                <div className={css.row} key={hParam1}>{children}</div>
+              )}>
+              <>{selectedHParams.map(hParam2 => {
                 const key = generateHpKey(hParam1, hParam2);
                 return (
-                  <div className={css.item} key={hParam2}>
+                  <ConditionalWrapper
+                    condition={!isListView}
+                    wrapper={children => (
+                      <div className={css.item} key={hParam2}>{children}</div>
+                    )}>
                     <ScatterPlot
                       height={350}
                       key={key}
@@ -209,18 +239,18 @@ const HpVsHpHeatMap: React.FC<Props> = ({
                       yLabel={hParam2}
                       yLogScale={chartData.hpLogScales[hParam2]}
                     />
-                  </div>
+                  </ConditionalWrapper>
                 );
-              })}
-            </div>
-          ))}
-        </div>
+              })}</>
+            </ConditionalWrapper>
+          ))}</>
+        </ConditionalWrapper>
       );
     }
   }
 
   return (
-    <div className={css.base} ref={baseRef}>
+    <div className={classes.join(' ')} ref={baseRef}>
       <Section
         options={<ResponsiveFilters>
           <SelectFilter
@@ -245,6 +275,7 @@ const HpVsHpHeatMap: React.FC<Props> = ({
             onChange={handleHParamChange}>
             {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
+          <GridListRadioGroup value={selectedView} onChange={handleViewChange} />
         </ResponsiveFilters>}
         title="HP Heat Map">
         <div className={css.container}>{content}</div>
