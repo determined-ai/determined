@@ -67,14 +67,6 @@ const ScatterPlots: React.FC<Props> = ({
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
-  const sectionTitle = useMemo(() => {
-    const defaultTitle = 'HP Scatter Plots';
-    if (!selectedMetric) return defaultTitle;
-    return (
-      <>{defaultTitle} (<MetricBadgeTag metric={selectedMetric} />)</>
-    );
-  }, [ selectedMetric ]);
-
   const resetData = useCallback(() => {
     setChartData(undefined);
     setHasLoaded(false);
@@ -190,7 +182,6 @@ const ScatterPlots: React.FC<Props> = ({
           {selectedHParams.map(hParam => (
             <ScatterPlot
               key={hParam}
-              title={`${hParam} vs metric`}
               x={chartData.hpValues[hParam]}
               xLabel={hParam}
               xLogScale={chartData.hpLogScales[hParam]}
@@ -229,7 +220,7 @@ const ScatterPlots: React.FC<Props> = ({
             {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
-        title={sectionTitle}>
+        title="HP Scatter Plots">
         <div className={css.container}>{content}</div>
       </Section>
     </div>

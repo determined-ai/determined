@@ -8,7 +8,7 @@ import { getNumericRange } from 'utils/chart';
 import { ColorScale, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { clone } from 'utils/data';
 import { roundToPrecision } from 'utils/number';
-import { generateAlphaNumeric } from 'utils/string';
+import { generateAlphaNumeric, truncate } from 'utils/string';
 
 interface Props {
   colorScale?: ColorScale[];
@@ -27,6 +27,7 @@ interface Props {
   yLogScale?: boolean;
 }
 
+const MAX_TITLE_LABEL_LENGTH = 20;
 const plotlyLayout: Partial<Layout> = {
   autosize: false,
   height: 350,
@@ -107,7 +108,9 @@ const ScatterPlot: React.FC<Props> = ({
     if (title) {
       layout.title.text = title;
     } else if (xLabel && yLabel) {
-      layout.title.text = `${yLabel} (y) vs ${xLabel} (x)`;
+      const xLabelTitle = truncate(xLabel, MAX_TITLE_LABEL_LENGTH);
+      const yLabelTitle = truncate(yLabel, MAX_TITLE_LABEL_LENGTH);
+      layout.title.text = `${yLabelTitle} (y) vs ${xLabelTitle} (x)`;
     }
     if (xLogScale) layout.xaxis.type = 'log';
     if (yLogScale) layout.yaxis.type = 'log';
