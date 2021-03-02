@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import psutil
 
 import determined as det
-from determined import constants, horovod, ipc, workload
+from determined import constants, horovod, ipc, util, workload
 from determined_common import check
 
 
@@ -311,7 +311,9 @@ class SubprocessLauncher:
                 return {}
             raise
 
-        if exception_received:
+        if isinstance(exception_received, det.InvalidHP):
+            return util.wrap_metrics({}, stop_requested=False, invalid_hp=True)
+        elif exception_received is not None:
             raise det.errors.WorkerError("Training process died.")
 
         # Find the response from the chief worker for the trial (the only non-SkippedWorkload). The

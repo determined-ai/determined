@@ -57,7 +57,8 @@ class _ExceptionMessage:
     _ExceptionMessage is sent by a training subprocess to indicate that an exception has occurred.
     """
 
-    pass
+    def __init__(self, msg: Any) -> None:
+        self.msg = msg
 
 
 class ZMQBroadcastServer:
@@ -137,7 +138,7 @@ class ZMQBroadcastServer:
         self._pub_socket.send_pyobj(_SerialMessage(self._send_serial, obj))
         self._send_serial += 1
 
-    def gather_with_polling(self, health_check: Callable[[], None]) -> Tuple[List[Any], bool]:
+    def gather_with_polling(self, health_check: Callable[[], None]) -> Tuple[List[Any], Any]:
         """
         Gather a response message from each connection, with a health_check callback that can raise
         an error if something goes wrong. Returns list of messages and whether any of the senders
@@ -151,10 +152,11 @@ class ZMQBroadcastServer:
                 continue
 
             message, message_type = self._recv_one()
-            messages.append(message)
-
             if message_type is _ExceptionMessage:
-                return messages, True
+                messages.append(None)
+                return messages, message.msg
+            else:
+                messages.append(message)
 
         self._recv_serial += 1
 
@@ -168,7 +170,7 @@ class ZMQBroadcastServer:
         obj = self._pull_socket.recv_pyobj()
 
         if isinstance(obj, _ExceptionMessage):
-            return None, _ExceptionMessage
+            return obj, _ExceptionMessage
 
         if isinstance(obj, _SerialMessage):
             check.eq(obj.serial, self._recv_serial, "Out-of-order client message detected")
@@ -207,8 +209,8 @@ class ZMQBroadcastClient:
         self._send_serial += 1
         self._push_socket.send_pyobj(message)
 
-    def send_exception_message(self) -> None:
-        message = _ExceptionMessage()
+    def send_exception_message(self, exception: Any) -> None:
+        message = _ExceptionMessage(exception)
         self._push_socket.send_pyobj(message)
 
     def recv(self) -> Any:

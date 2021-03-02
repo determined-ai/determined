@@ -53,7 +53,7 @@ def main() -> None:
                 controller.run()
 
             except Exception as e:
-                broadcast_client.send_exception_message()
+                broadcast_client.send_exception_message(e)
                 raise e
 
 
