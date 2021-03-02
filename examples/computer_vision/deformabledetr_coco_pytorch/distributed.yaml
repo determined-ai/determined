@@ -1,0 +1,89 @@
+description: deformabledetr_coco_distributed
+hyperparameters:
+    # These settings match those used in this experiment from the original repo:
+    #   https://github.com/fundamentalvision/Deformable-DETR/blob/main/configs/r50_deformable_detr.sh
+    lr: 2e-4
+    lr_backbone_names:
+        - backbone.0
+    lr_backbone: 2e-5
+    lr_linear_proj_names:
+        - reference_points
+        - sampling_offsets
+    lr_linear_proj_mult: 0.1
+    global_batch_size: 32
+    weight_decay: 1e-4
+    lr_drop: 40
+    clip_max_norm: 0.1
+
+    # Options
+    sgd: false
+    with_box_refine: false
+    two_stage: false
+
+    # Set to true if you want to warmstart with pretrained weights.
+    # We will set to false since we want to reproduce the results from the original paper.
+    # If set to true, will warmstart with weights provided here by the authors:
+    #   https://drive.google.com/file/d/1WEjQ9_FgfI5sw5OZZ4ix-OKk-IJ_-SDU/view?usp=sharing
+    warmstart: false
+
+    # Backbone
+    backbone: resnet50
+    dilation: false
+    position_embedding: sine
+    num_feature_levels: 4
+
+    # Transformer
+    enc_layers: 6
+    dec_layers: 6
+    dim_feedforward: 1024
+    hidden_dim: 256
+    dropout: 0.1
+    nheads: 8
+    num_queries: 300
+    dec_n_points: 4
+    enc_n_points: 4
+
+    # Loss
+    aux_loss: true
+
+    # Matcher
+    set_cost_class: 2
+    set_cost_bbox: 5
+    set_cost_giou: 2
+
+    # Loss Coefficients
+    mask_loss_coef: 1
+    dice_loss_coef: 1
+    cls_loss_coef: 2
+    bbox_loss_coef: 5
+    giou_loss_coef: 2
+    focal_alpha: 0.25
+
+    # Dataset
+    dataset_file: coco
+    backend: gcs # specifiy the backend you want to use.  one of: gcs, aws, fake, local
+    data_dir: determined-ai-coco-dataset # bucket name if using gcs or aws, otherwise directory to dataset
+
+    masks: false
+    num_workers: 4
+
+bind_mounts:
+    - host_path: /tmp
+      container_path: /data
+      read_only: false
+
+min_validation_period:
+    epochs: 1 
+records_per_epoch: 117264
+searcher:
+  name: single
+  metric: mAP
+  smaller_is_better: false
+  max_length:
+      epochs: 50
+resources:
+    shm_size: 4000000000
+    slots_per_trial: 16
+
+entrypoint: model_def:DeformableDETRTrial
+

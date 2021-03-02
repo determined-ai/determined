@@ -1,0 +1,99 @@
+description: deformabledetr_coco_adaptive
+hyperparameters:
+    lr: 
+        type: double
+        minval: 1e-5
+        maxval: 1e-4
+    lr_backbone_names:
+        - backbone.0
+    lr_backbone: 0
+    lr_linear_proj_names:
+        - reference_points
+        - sampling_offsets
+    lr_linear_proj_mult: 0.1
+    global_batch_size: 4
+    weight_decay: 1e-4
+    lr_drop: 4
+    clip_max_norm: 
+        type: double
+        minval: 0.1
+        maxval: 0.5
+
+    # Options
+    sgd: false
+    with_box_refine: false
+    two_stage: false
+
+    # Set to true if you want to warmstart with pretrained weights.
+    # We set to true since we want to finetune for a subset of
+    # classes from COCO.
+    warmstart: true
+
+    # Backbone
+    backbone: resnet50
+    dilation: false
+    position_embedding: sine
+    num_feature_levels: 4
+
+    # Transformer
+    enc_layers: 6
+    dec_layers: 6
+    dim_feedforward: 1024
+    hidden_dim: 256
+    dropout: 0.1
+    nheads: 8
+    num_queries: 300
+    dec_n_points: 4
+    enc_n_points: 4
+
+    # Loss
+    aux_loss: true
+
+    # Matcher
+    set_cost_class: 2
+    set_cost_bbox: 5
+    set_cost_giou: 2
+
+    # Loss Coefficients
+    mask_loss_coef: 1
+    dice_loss_coef: 1
+    cls_loss_coef: 2
+    bbox_loss_coef: 5
+    giou_loss_coef: 2
+    focal_alpha: 0.25
+
+    # Dataset
+    dataset_file: coco
+    backend: gcs # specifiy the backend you want to use.  one of: gcs, aws, fake, local
+    data_dir: determined-ai-coco-dataset # bucket name if using gcs or aws, otherwise directory to dataset
+    cat_ids: 
+        - 21 # Class id for cows
+    num_classes: 1
+    masks: false
+    num_workers: 4
+
+bind_mounts:
+    - host_path: /tmp
+      container_path: /data
+      read_only: false
+
+min_validation_period:
+    batches: 500
+records_per_epoch: 1968
+searcher:
+  name: adaptive_asha
+  metric: mAP
+  smaller_is_better: false
+  max_length:
+      batches: 3200
+  max_trials: 100
+  mode: aggressive
+  max_rungs: 4
+  #max_concurrent_trials: 2
+
+resources:
+    shm_size: 2000000000
+    slots_per_trial: 2
+
+entrypoint: model_def:DeformableDETRTrial
+
