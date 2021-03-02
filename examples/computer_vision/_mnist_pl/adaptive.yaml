@@ -1,12 +1,10 @@
 description: mnist_pytorch_lightning_adaptive
-max_restarts: 1
 hyperparameters:
   global_batch_size: 64
   learning_rate:
     type: double
     minval: .0001
     maxval: .1
-
 searcher:
   name: adaptive_asha
   metric: val_loss
@@ -15,3 +13,5 @@ searcher:
   max_length:
     batches: 937
 entrypoint: model_def:MNISTTrial
+environment:
+  image: determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.9.0

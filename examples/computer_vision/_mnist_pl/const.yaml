@@ -1,5 +1,4 @@
 description: mnist_pytorch_lightning_const
-max_restarts: 1
 hyperparameters:
   global_batch_size: 64
   learning_rate: 0.001
@@ -10,3 +9,5 @@ searcher:
       batches: 937
   smaller_is_better: true
 entrypoint: model_def:MNISTTrial
+environment:
+  image: determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.9.0
