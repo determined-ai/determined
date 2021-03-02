@@ -126,7 +126,10 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 			totalNumTrials++
 		}
 	}
-	f.WriteString(arff.String())
+	_, err = f.WriteString(arff.String())
+	if err != nil {
+		return 0, err
+	}
 	return totalNumTrials, nil
 }
 
@@ -177,7 +180,6 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	experimentConfig *model.ExperimentConfig, masterConfig HPImportanceConfig,
 	growforest string, workingDir string) (map[string]float64, error) {
-
 	growforestInput := path.Join(workingDir, arffFile)
 	growforestOutput := path.Join(workingDir, importanceFile)
 
