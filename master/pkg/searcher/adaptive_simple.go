@@ -33,7 +33,7 @@ func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
 		methods = append(methods, newSyncHalvingSimpleSearch(c, numTrials))
 	}
 
-	return newTournamentSearch(methods...)
+	return newTournamentSearch(AdaptiveSimpleSearch, methods...)
 }
 
 func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) SearchMethod {
@@ -64,9 +64,10 @@ func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) Sear
 	return &syncHalvingSearch{
 		SyncHalvingConfig: config,
 		syncHalvingSearchState: syncHalvingSearchState{
-			Rungs:           rungs,
-			TrialRungs:      make(map[model.RequestID]int),
-			EarlyExitTrials: make(map[model.RequestID]bool),
+			Rungs:            rungs,
+			TrialRungs:       make(map[model.RequestID]int),
+			EarlyExitTrials:  make(map[model.RequestID]bool),
+			SearchMethodType: SHASearch,
 		},
 		expectedUnits: model.NewLength(config.Unit(), expectedUnits),
 	}

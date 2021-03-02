@@ -1,24 +1,39 @@
 package searcher
 
 import (
+	"encoding/json"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
-// randomSearch corresponds to the standard random search method. Each random trial configuration
-// is trained for the specified number of steps, and then validation metrics are computed.
-type randomSearch struct {
-	defaultSearchMethod
-	model.RandomConfig
-}
+type (
+	// randomSearchState stores the state for grid. Though random is stateless, it is useful
+	// on restart to know the type of searcher during restore, in the event it must be shimmed.
+	// This gives us the ability to differentiate single and random in a shim.
+	randomSearchState struct {
+		SearchMethodType SearchMethodType `json:"search_method_type"`
+	}
+	// randomSearch corresponds to the standard random search method. Each random trial configuration
+	// is trained for the specified number of steps, and then validation metrics are computed.
+	randomSearch struct {
+		defaultSearchMethod
+		model.RandomConfig
+		randomSearchState
+	}
+)
 
 func newRandomSearch(config model.RandomConfig) SearchMethod {
-	return &randomSearch{RandomConfig: config}
+	return &randomSearch{
+		RandomConfig:      config,
+		randomSearchState: randomSearchState{RandomSearch},
+	}
 }
 
 func newSingleSearch(config model.SingleConfig) SearchMethod {
 	return &randomSearch{
-		RandomConfig: model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
+		RandomConfig:      model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
+		randomSearchState: randomSearchState{SingleSearch},
 	}
 }
 
@@ -53,4 +68,15 @@ func (s *randomSearch) trialExitedEarly(
 		return ops, nil
 	}
 	return nil, nil
+}
+
+func (s *randomSearch) Snapshot() (json.RawMessage, error) {
+	return json.Marshal(s.randomSearchState)
+}
+
+func (s *randomSearch) Restore(state json.RawMessage) error {
+	if state == nil {
+		return nil
+	}
+	return json.Unmarshal(state, &s.randomSearchState)
 }

@@ -16,6 +16,7 @@ type (
 		SubSearchUnitsCompleted []float64               `json:"sub_search_units_completed"`
 		TrialTable              map[model.RequestID]int `json:"trial_table"`
 		SubSearchStates         []json.RawMessage       `json:"sub_search_states"`
+		SearchMethodType        SearchMethodType        `json:"search_method_type"`
 	}
 	tournamentSearch struct {
 		subSearches []SearchMethod
@@ -23,13 +24,14 @@ type (
 	}
 )
 
-func newTournamentSearch(subSearches ...SearchMethod) *tournamentSearch {
+func newTournamentSearch(mt SearchMethodType, subSearches ...SearchMethod) *tournamentSearch {
 	return &tournamentSearch{
 		subSearches: subSearches,
 		tournamentSearchState: tournamentSearchState{
 			SubSearchUnitsCompleted: make([]float64, len(subSearches)),
 			TrialTable:              make(map[model.RequestID]int),
 			SubSearchStates:         make([]json.RawMessage, len(subSearches)),
+			SearchMethodType:        mt,
 		},
 	}
 }

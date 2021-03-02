@@ -18,8 +18,9 @@ type (
 		Rungs      []*rung                 `json:"rungs"`
 		TrialRungs map[model.RequestID]int `json:"trial_rungs"`
 		// EarlyExitTrials contains trials that exited early that are still considered in the search.
-		EarlyExitTrials map[model.RequestID]bool `json:"early_exit_trials"`
-		TrialsCompleted int                      `json:"trials_completed"`
+		EarlyExitTrials  map[model.RequestID]bool `json:"early_exit_trials"`
+		TrialsCompleted  int                      `json:"trials_completed"`
+		SearchMethodType SearchMethodType         `json:"search_method_type"`
 	}
 
 	// syncHalvingSearch implements a search using the synchronous successive halving algorithm
@@ -80,9 +81,10 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 	return &syncHalvingSearch{
 		SyncHalvingConfig: config,
 		syncHalvingSearchState: syncHalvingSearchState{
-			Rungs:           rungs,
-			TrialRungs:      make(map[model.RequestID]int),
-			EarlyExitTrials: make(map[model.RequestID]bool),
+			Rungs:            rungs,
+			TrialRungs:       make(map[model.RequestID]int),
+			EarlyExitTrials:  make(map[model.RequestID]bool),
+			SearchMethodType: SHASearch,
 		},
 		expectedUnits: model.NewLength(config.Unit(), expectedUnits),
 	}
