@@ -97,26 +97,20 @@ class PyTorchTrialContext(det.TrialContext):
 
         wrapped = _AutocastForwardPassModel()
 
-        # Second, eliminate any need for the loss functions to be in that context:
-        def end_fp16(
-            module: torch.nn.Module,
-            input: Any,
-            output: Any,
-            warned_types: Optional[Set[Type]] = None,
-        ) -> Any:
+        # To not print errors recursively or every forward pass
+        warned_types = set()
 
-            # Never print errors recursively.
-            if warned_types is None:
-                warned_types = set()
+        # Second, eliminate any need for the loss functions to be in that context:
+        def end_fp16(module: torch.nn.Module, input: Any, output: Any) -> Any:
 
             if isinstance(output, torch.Tensor):
                 return output.float() if output.dtype == torch.float16 else output
             if isinstance(output, dict):
-                return {k: end_fp16(module, input, v, warned_types) for k, v in output.items()}
+                return {k: end_fp16(module, input, v) for k, v in output.items()}
             if isinstance(output, list):
-                return [end_fp16(module, input, d, warned_types) for d in output]
+                return [end_fp16(module, input, d) for d in output]
             if isinstance(output, tuple):
-                return tuple(end_fp16(module, input, d, warned_types) for d in output)
+                return tuple(end_fp16(module, input, d) for d in output)
             # If there are other types that embed Tensors still using fp16 and loss computation
             # subsequently fails, then experimental.use_amp should not be used and the forward pass
             # should be manually wrapped in an autocast context.

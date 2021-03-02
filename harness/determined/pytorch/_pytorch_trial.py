@@ -262,10 +262,7 @@ class PyTorchTrialController(det.LoopTrialController):
         if not self.context._scaler or not self.context.experimental._auto_amp:
             return False
         if self.hvd_config.use:
-            if self.context._should_communicate_and_update():
-                return True
-            else:
-                return False
+            return self.context._should_communicate_and_update()
         return True
 
     def _train_for_step(
