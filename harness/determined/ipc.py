@@ -57,7 +57,7 @@ class _ExceptionMessage:
     _ExceptionMessage is sent by a training subprocess to indicate that an exception has occurred.
     """
 
-    def __init__(self, msg: Any) -> None:
+    def __init__(self, msg: Exception) -> None:
         self.msg = msg
 
 

@@ -313,7 +313,7 @@ class SubprocessLauncher:
 
         if isinstance(exception_received, det.InvalidHP):
             return util.wrap_metrics({}, stop_requested=False, invalid_hp=True)
-        elif exception_received is not None:
+        elif exception_received:
             raise det.errors.WorkerError("Training process died.")
 
         # Find the response from the chief worker for the trial (the only non-SkippedWorkload). The

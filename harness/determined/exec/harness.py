@@ -129,10 +129,9 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
 
             # Horovod distributed training is done inside subprocesses.
             if hvd_config.use:
-                with det._catch_init_invalid_hp(workloads):
-                    subproc = layers.SubprocessLauncher(
-                        env, workloads, load_path, socket_mgr.get_rendezvous_info(), hvd_config
-                    )
+                subproc = layers.SubprocessLauncher(
+                    env, workloads, load_path, socket_mgr.get_rendezvous_info(), hvd_config
+                )
                 subproc.run()
             else:
                 if env.experiment_config.debug_enabled():
