@@ -296,6 +296,18 @@ func (l LengthV0) CompletenessValidator() *jsonschema.Schema {
 	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v0/length.json")
 }
 
+func (n NativeConfigV0) ParsedSchema() interface{} {
+	return schemas.ParsedNativeConfigV0()
+}
+
+func (n NativeConfigV0) SanityValidator() *jsonschema.Schema {
+	return schemas.GetSanityValidator("http://determined.ai/schemas/expconf/v0/native.json")
+}
+
+func (n NativeConfigV0) CompletenessValidator() *jsonschema.Schema {
+	return schemas.GetCompletenessValidator("http://determined.ai/schemas/expconf/v0/native.json")
+}
+
 func (o OptimizationsConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedOptimizationsConfigV0()
 }

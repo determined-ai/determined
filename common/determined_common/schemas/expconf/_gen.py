@@ -541,20 +541,24 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [],
+    "eventuallyRequired": [
+        "cpu",
+        "gpu"
+    ],
     "properties": {
         "cpu": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "gpu": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         }
     }
 }
@@ -653,6 +657,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [],
+    "eventuallyRequired": [
+        "image"
+    ],
     "properties": {
         "image": {
             "type": [
@@ -755,7 +762,9 @@ schemas = {
         "searcher"
     ],
     "eventuallyRequired": [
-        "checkpoint_storage"
+        "checkpoint_storage",
+        "description",
+        "reproducibility"
     ],
     "properties": {
         "bind_mounts": {
@@ -1410,10 +1419,8 @@ schemas = {
     ],
     "properties": {
         "native": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+            "type": "object",
+            "$ref": "http://determined.ai/schemas/expconf/v0/native.json"
         }
     }
 }
@@ -1493,6 +1500,29 @@ schemas = {
                 }
             }
         ]
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/native.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/native.json",
+    "title": "NativeConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "command"
+    ],
+    "properties": {
+        "command": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
     }
 }
 
@@ -1588,6 +1618,9 @@ schemas = {
     "title": "ReproducibilityConfig",
     "type": "object",
     "additionalProperties": false,
+    "eventuallyRequired": [
+        "experiment_seed"
+    ],
     "properties": {
         "experiment_seed": {
             "type": [
@@ -2783,3 +2816,4 @@ schemas = {
 """
     ),
 }
+

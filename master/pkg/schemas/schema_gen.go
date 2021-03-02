@@ -499,20 +499,24 @@ var (
     "type": "object",
     "additionalProperties": false,
     "required": [],
+    "eventuallyRequired": [
+        "cpu",
+        "gpu"
+    ],
     "properties": {
         "cpu": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "gpu": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         }
     }
 }
@@ -595,6 +599,9 @@ var (
     "type": "object",
     "additionalProperties": false,
     "required": [],
+    "eventuallyRequired": [
+        "image"
+    ],
     "properties": {
         "image": {
             "type": [
@@ -693,7 +700,9 @@ var (
         "searcher"
     ],
     "eventuallyRequired": [
-        "checkpoint_storage"
+        "checkpoint_storage",
+        "description",
+        "reproducibility"
     ],
     "properties": {
         "bind_mounts": {
@@ -1308,10 +1317,8 @@ var (
     ],
     "properties": {
         "native": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+            "type": "object",
+            "$ref": "http://determined.ai/schemas/expconf/v0/native.json"
         }
     }
 }
@@ -1383,6 +1390,25 @@ var (
                 }
             }
         ]
+    }
+}
+`)
+	textNativeConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/native.json",
+    "title": "NativeConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "command"
+    ],
+    "properties": {
+        "command": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
     }
 }
 `)
@@ -1470,6 +1496,9 @@ var (
     "title": "ReproducibilityConfig",
     "type": "object",
     "additionalProperties": false,
+    "eventuallyRequired": [
+        "experiment_seed"
+    ],
     "properties": {
         "experiment_seed": {
             "type": [
@@ -2611,6 +2640,7 @@ var (
 	schemaInternalConfigV0            interface{}
 	schemaKerberosConfigV0            interface{}
 	schemaLengthV0                    interface{}
+	schemaNativeConfigV0              interface{}
 	schemaOptimizationsConfigV0       interface{}
 	schemaReproducibilityConfigV0     interface{}
 	schemaResourcesConfigV0           interface{}
@@ -2956,6 +2986,17 @@ func ParsedLengthV0() interface{} {
 	return schemaLengthV0
 }
 
+func ParsedNativeConfigV0() interface{} {
+	if schemaNativeConfigV0 != nil {
+		return schemaNativeConfigV0
+	}
+	err := json.Unmarshal(textNativeConfigV0, &schemaNativeConfigV0)
+	if err != nil {
+		panic("invalid embedded json for NativeConfigV0")
+	}
+	return schemaNativeConfigV0
+}
+
 func ParsedOptimizationsConfigV0() interface{} {
 	if schemaOptimizationsConfigV0 != nil {
 		return schemaOptimizationsConfigV0
@@ -3262,6 +3303,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textKerberosConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/length.json"
 	cachedSchemaBytesMap[url] = textLengthV0
+	url = "http://determined.ai/schemas/expconf/v0/native.json"
+	cachedSchemaBytesMap[url] = textNativeConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/reproducibility.json"
