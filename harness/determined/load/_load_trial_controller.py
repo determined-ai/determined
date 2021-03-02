@@ -9,6 +9,7 @@ from determined.estimator import EstimatorTrial
 from determined.keras import TFKerasTrial
 from determined.pytorch import PyTorchTrial
 from determined_common import check
+from determined_common.api import patch
 
 
 def trial_framework(trial_class: Type[det.Trial]) -> Optional[Tuple[str, TrialCapabilities]]:
@@ -17,6 +18,16 @@ def trial_framework(trial_class: Type[det.Trial]) -> Optional[Tuple[str, TrialCa
         if issubclass(trial_class, cls):
             return cls.name(), cls.capabilities()
 
+def report_framework(name: str, capabilities: TrialCapabilities, env: det.EnvContext) -> None:
+    host = env.master_addr + ":" + str(env.master_port)
+    path = f"/api/v1/experiments/{env.det_experiment_id}"
+
+    name_val = "UNSPECIFIED"
+    if name == "PyTorchTrial":
+        name_val = "PYTORCH_TRIAL"
+    name_val = "FRAMEWORK_" + name_val
+
+    patch(host, path, body={"framework": name_val})
 
 def load_controller_from_trial(
     trial_class: Type[det.Trial],
@@ -60,7 +71,14 @@ def load_controller_from_trial(
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
     )
-    print("trial framework is", trial_framework(trial_class))
+
+    fw = trial_framework(trial_class)
+    if fw is not None:
+        is_lead_trial = trial_context.distributed.get_rank() == 0 and \
+            trial_context.distributed.get_local_rank() == 0
+        if not env.test_mode and is_lead_trial:
+            report_framework(fw[0], fw[1], env)
+
     return controller
 
 
