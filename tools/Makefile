@@ -29,6 +29,7 @@ prep-root:
 	@ln -s $(abspath ../common/dist/*.whl) build/wheels/
 	@ln -s $(abspath ../cli/dist/*.whl) build/wheels/
 	@ln -s $(abspath ../harness/dist/*.whl) build/wheels/
+	go install github.com/ryanbressler/CloudForest/growforest
 
 .PHONY: run
 run: prep-root
