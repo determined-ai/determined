@@ -156,10 +156,10 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 	r.Comma = '\t'
 	for {
 		record, err := r.Read()
-		switch {
-		case err == io.EOF:
+		if err == io.EOF {
 			break
-		case err != nil:
+		}
+		if err != nil {
 			return nil, fmt.Errorf("failed to read HP importance file: %w", err)
 		}
 
