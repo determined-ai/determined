@@ -1,11 +1,16 @@
-description: detr_coco
+description: detr_coco_distributed
 hyperparameters:
+    # These settings match that for the 150 epoch run provided in the original repo:
+    #   https://github.com/facebookresearch/detr
     lr: 1e-4
     lr_backbone: 1e-5
     global_batch_size: 16
     weight_decay: 1e-4
     lr_drop: 100
     clip_max_norm: 0.1
+
+    # Set to true if you want to warmstart using pretrained weights.
+    warmstart: false
 
     # Backbone
     backbone: resnet50
@@ -39,8 +44,8 @@ hyperparameters:
 
     # Dataset
     dataset_file: coco
-    backend: gcs
-    data_dir: determined-ai-coco-dataset
+    backend: gcs # specifiy the backend you want to use.  one of: gcs, aws, fake, local
+    data_dir: determined-ai-coco-dataset # bucket name if using gcs or aws, otherwise directory to dataset
     masks: false
     num_workers: 4
 

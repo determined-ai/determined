@@ -1,11 +1,14 @@
-description: detr_coco
+description: detr_coco_finetune
 hyperparameters:
     lr: 1e-4
-    lr_backbone: 1e-5
-    global_batch_size: 16
+    lr_backbone: 0
+    global_batch_size: 4
     weight_decay: 1e-4
-    lr_drop: 100
+    lr_drop: 4
     clip_max_norm: 0.1
+
+    # Set to true if you want to warmstart using pretrained weights.
+    warmstart: true
 
     # Backbone
     backbone: resnet50
@@ -39,8 +42,11 @@ hyperparameters:
 
     # Dataset
     dataset_file: coco
-    backend: local
-    data_dir: /data
+    backend: gcs # specifiy the backend you want to use.  one of: gcs, aws, fake, local
+    data_dir: determined-ai-coco-dataset # bucket name if using gcs or aws, otherwise directory to dataset
+    cat_ids: # COCO category ids to finetune on.
+        - 21 # Category ID for cows.
+    num_classes: 1
     masks: false
     num_workers: 4
 
@@ -53,15 +59,15 @@ bind_mounts:
 
 min_validation_period:
     epochs: 1
-records_per_epoch: 117264
+records_per_epoch: 1968
 searcher:
   name: single
   metric: mAP
   smaller_is_better: false
   max_length:
-      epochs: 150
+      epochs: 8
 resources:
-    slots_per_trial: 8
+    slots_per_trial: 2
     shm_size: 2000000000
 
 entrypoint: model_def:DETRTrial

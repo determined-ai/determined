@@ -1,4 +1,4 @@
-description: detr_coco
+description: detr_coco_fake_data
 hyperparameters:
     lr: 1e-4
     lr_backbone: 1e-5
@@ -6,6 +6,9 @@ hyperparameters:
     weight_decay: 1e-4
     lr_drop: 100
     clip_max_norm: 0.1
+
+    # Set to true if you want to warmstart with pretrained weights.
+    warmstart: false
 
     # Backbone
     backbone: resnet50
@@ -39,8 +42,8 @@ hyperparameters:
 
     # Dataset
     dataset_file: coco
-    backend: fake
-    data_dir: /data
+    backend: fake # specifiy the backend you want to use.  one of: gcs, aws, fake, local
+    data_dir: /data # bucket name if using gcs or aws, otherwise directory to dataset
     masks: false
     num_workers: 4
 
@@ -52,14 +55,14 @@ bind_mounts:
       read_only: false
 
 min_validation_period:
-    epochs: 1
+    batches: 100
 records_per_epoch: 117264
 searcher:
-  name: single
-  metric: mAP
-  smaller_is_better: false
-  max_length:
-      epochs: 150
+    name: single
+    metric: mAP
+    smaller_is_better: false
+    max_length:
+        batches: 100 
 resources:
     shm_size: 2000000000
 
