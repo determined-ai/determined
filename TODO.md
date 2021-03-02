@@ -1,4 +1,4 @@
 - separate endpoint?
-- hide endpoitn from advertising in docs
-  - hide all internals?
-- host and use bindings
+- shiyuan: capabilities? store them?
+- optional: host and use bindings
+
