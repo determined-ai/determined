@@ -34,7 +34,7 @@ get-deps:
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
 	# For hyperparameter importance computation
-	go install github.com/ryanbressler/CloudForest/growforest
+	GO111MODULE=off go install github.com/ryanbressler/CloudForest/growforest
 
 .PHONY: build
 build: gen
