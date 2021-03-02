@@ -2,8 +2,11 @@ package provisioner
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
+
+	"github.com/determined-ai/determined/master/version"
 
 	"google.golang.org/api/compute/v1"
 
@@ -25,6 +28,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 		MaxInstances:           5,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
+		AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
 		AgentFluentImage:       "fluent/fluent-bit:1.6",
 	}
 	assert.DeepEqual(t, config, expected)

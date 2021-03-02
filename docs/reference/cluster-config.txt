@@ -493,8 +493,8 @@ The master supports the following configuration settings:
          empty string.
 
       -  ``agent_docker_image``: The Docker image to use for the
-         Determined agents. A valid form is
-         ``determinedai/determined-agent:<version>``. (*Required*)
+         Determined agents. A valid form is ``<repository>:<tag>``.
+         Defaults to ``determinedai/determined-agent:<master version>``.
 
       -  ``agent_docker_network``: The Docker network to use for the
          Determined agent and task containers. If this is set to
