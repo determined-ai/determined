@@ -14,6 +14,7 @@ class MNISTTrial(PLAdapter):
         self.dm = mnist.MNISTDataModule()
 
         super().__init__(context, lightning_module=lm)
+        self.dm.prepare_data()
 
     def build_training_data_loader(self) -> DataLoader:
         self.dm.setup()

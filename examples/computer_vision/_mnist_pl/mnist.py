@@ -73,13 +73,18 @@ class MNISTDataModule(pl.LightningDataModule):
     def __init__(self):
         super().__init__()
 
+    def prepare_data(self):
+        # prepare transforms standard to MNIST
+        MNIST(str(Path('/tmp/MNIST')), train=True, download=True)
+        MNIST(str(Path('/tmp/MNIST')), train=False, download=True)
+
     def setup(self, stage: Optional[str] = None):
         transform = transforms.Compose([transforms.ToTensor(), 
                                         transforms.Normalize((0.1307,), (0.3081,))])
 
         # prepare transforms standard to MNIST
-        self.mnist_train = MNIST(str(Path('/tmp/MNIST')), train=True, download=True, transform=transform)
-        self.mnist_val = MNIST(str(Path('/tmp/MNIST')), train=False, download=True, transform=transform)
+        self.mnist_train = MNIST(str(Path('/tmp/MNIST')), train=True, transform=transform)
+        self.mnist_val = MNIST(str(Path('/tmp/MNIST')), train=False, transform=transform)
 
     def train_dataloader(self):
         return DataLoader(self.mnist_train, batch_size=64, num_workers=12)
