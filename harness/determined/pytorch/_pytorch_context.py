@@ -1,11 +1,12 @@
 import logging
+import pathlib
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
 
 import torch
 import torch.nn as nn
 
 import determined as det
-from determined import pytorch
+from determined import horovod, pytorch, workload
 from determined.horovod import hvd
 from determined_common import check
 
@@ -46,8 +47,15 @@ class PyTorchTrialContext(det.TrialContext):
        the runtime information and properly handling training data in distributed training.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
+        super().__init__(env, workloads, load_path, rendezvous_info, hvd_config)
 
         self._init_device()
 

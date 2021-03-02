@@ -1,11 +1,12 @@
 import inspect
 import logging
+import pathlib
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union
 
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, errors, horovod, keras
+from determined import _data_layer, errors, horovod, keras, workload
 from determined.horovod import hvd
 from determined_common import check
 
@@ -380,8 +381,15 @@ class TFKerasContext:
 
 
 class TFKerasTrialContext(det.TrialContext, TFKerasContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        det.TrialContext.__init__(self, env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
+        det.TrialContext.__init__(self, env, workloads, load_path, rendezvous_info, hvd_config)
         TFKerasContext.__init__(self, env, hvd_config)
 
     def wrap_model(self, model: Any) -> Any:
@@ -401,8 +409,15 @@ class TFKerasTrialContext(det.TrialContext, TFKerasContext):
 
 
 class TFKerasNativeContext(det.NativeContext, TFKerasContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
-        det.NativeContext.__init__(self, env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
+        det.NativeContext.__init__(self, env, workloads, load_path, rendezvous_info, hvd_config)
         TFKerasContext.__init__(self, env, hvd_config)
 
     def wrap_model(self, model: Any) -> Any:

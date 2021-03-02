@@ -91,23 +91,25 @@ def _make_test_workloads(
     interceptor = workload.WorkloadResponseInterceptor()
 
     logging.info("Training one batch")
-    yield from interceptor.send(workload.train_workload(1), [])
+    yield from interceptor.send(workload.train_workload(1, 0, 0, config.scheduling_unit(), 0), [])
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
     check.eq(len(batch_metrics), config.scheduling_unit())
     logging.info(f"Finished training, metrics: {batch_metrics}")
 
     logging.info("Validating one batch")
-    yield from interceptor.send(workload.validation_workload(1), [])
+    yield from interceptor.send(workload.validation_workload(2, 0, 0, config.scheduling_unit()), [])
     validation = interceptor.metrics_result()
     v_metrics = validation["metrics"]["validation_metrics"]
     logging.info(f"Finished validating, validation metrics: {v_metrics}")
 
     logging.info(f"Saving a checkpoint to {checkpoint_dir}.")
-    yield workload.checkpoint_workload(), [checkpoint_dir], workload.ignore_workload_response
+    yield workload.checkpoint_workload(3, 0, 0, config.scheduling_unit()), [
+        checkpoint_dir
+    ], workload.ignore_workload_response
     logging.info(f"Finished saving a checkpoint to {checkpoint_dir}.")
 
-    yield workload.terminate_workload(), [], workload.ignore_workload_response
+    yield workload.terminate_workload(4, 0, 0), [], workload.ignore_workload_response
     logging.info("The test experiment passed.")
 
 
@@ -135,6 +137,9 @@ def _init_cluster_mode(
             context = native_context_cls(
                 env=load.RunpyGlobals.get_instance().env,
                 hvd_config=load.RunpyGlobals.get_instance().hvd_config,
+                workloads=load.RunpyGlobals.get_instance().workloads,
+                load_path=load.RunpyGlobals.get_instance().load_path,
+                rendezvous_info=load.RunpyGlobals.get_instance().rendezvous_info,
             )
             load.RunpyGlobals.set_runpy_native_result(context, controller_cls)
             context._set_train_fn(_stop_loading_implementation)
@@ -182,7 +187,13 @@ def _load_trial_on_local(
         env, rendezvous_info, hvd_config = det._make_local_execution_env(
             managed_training=managed_training, test_mode=False, config=config, hparams=hparams
         )
-        trial_context = trial_class.trial_context_class(env, hvd_config)
+        trial_context = trial_class.trial_context_class(
+            env=env,
+            workloads=workload.make_noop_workload_stream(),
+            load_path=None,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+        )
     return trial_class, trial_context
 
 
@@ -209,7 +220,13 @@ def test_one_batch(
     if native_context_cls is not None and controller_cls is not None:
         # Case 1: test one batch for Native implementation.
         controller_cls.pre_execute_hook(env=env, hvd_config=hvd_config)
-        context = native_context_cls(env=env, hvd_config=hvd_config)
+        context = native_context_cls(
+            env=env,
+            workloads=workloads,
+            load_path=None,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+        )
 
         def train_fn() -> None:
             controller = cast(Type[det.TrialController], controller_cls).from_native(
@@ -398,5 +415,11 @@ def create_trial_instance(
     env, rendezvous_info, hvd_config = det._make_local_execution_env(
         managed_training=False, test_mode=False, config=config, hparams=hparams
     )
-    trial_context = trial_def.trial_context_class(env, hvd_config)
+    trial_context = trial_def.trial_context_class(
+        env=env,
+        workloads=workload.make_noop_workload_stream(),
+        load_path=pathlib.Path(checkpoint_dir),
+        rendezvous_info=rendezvous_info,
+        hvd_config=hvd_config,
+    )
     return trial_def(trial_context)

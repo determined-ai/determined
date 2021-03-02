@@ -37,6 +37,10 @@ official_examples = [
         "gan/gan_mnist_pytorch/const.yaml",
     ),
     (
+        "gan/gan_mnist_pytorch_lightning",
+        "gan/gan_mnist_pytorch_lightning/const.yaml",
+    ),
+    (
         "gan/dcgan_tf_keras",
         "gan/dcgan_tf_keras/const.yaml",
     ),

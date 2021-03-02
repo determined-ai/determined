@@ -1,0 +1,20 @@
+description: gan_mnist_pytorch_lightning_const
+data:
+  url: "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+hyperparameters:
+  global_batch_size: 32
+  latent_dim: 100
+  lr: 0.0002
+  b1: 0.5
+  b2: 0.999
+searcher:
+  name: single
+  metric: loss
+  max_length:
+    batches: 40000
+  smaller_is_better: True
+entrypoint: model_def:GANTrial
+environment:
+  image:
+    cpu: determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.9.0
+    gpu: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.9.0

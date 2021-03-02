@@ -27,8 +27,10 @@ class PyTorchTrialController(det.LoopTrialController):
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
         self.context = cast(pytorch.PyTorchTrialContext, self.context)
-        self.context.experimental._set_allgather_fn(self.allgather_metrics)
+        self.reducer = det.MetricsReduceHelper(self.context)
         self.callbacks = self.trial.build_callbacks()
+
+        self.context.experimental._set_allgather_fn(self.reducer.allgather_metrics)
 
         check.gt_eq(
             len(self.context.models),
@@ -483,6 +485,8 @@ class PyTorchTrialController(det.LoopTrialController):
     def _reduce_metrics(
         self, batch_metrics: List, keys: Any, metrics_reducers: Dict[str, pytorch.Reducer]
     ) -> Dict[str, Any]:
+        # Reduce metrics across batches. batch_metrics[batch_idx] is a dict that contains
+        # the metrics of one batch from the current process.
         metrics = {
             name: pytorch._reduce_metrics(
                 reducer=metrics_reducers[name],
@@ -505,6 +509,8 @@ class PyTorchTrialController(det.LoopTrialController):
                 combined_metrics = self._convert_metrics_to_numpy(
                     cast(Dict[str, Any], combined_metrics)
                 )
+                # Reduce metrics across processes. combined_metrics[name] is a list that
+                # contains the batch-reduced metrics of only one name from all processes.
                 metrics = {
                     name: pytorch._reduce_metrics(
                         reducer=metrics_reducers[name],
@@ -527,11 +533,13 @@ class PyTorchTrialController(det.LoopTrialController):
         metrics_lists = {}  # type: Dict[str, Any]
         batches_per_process = []  # type: List[int]
         if self.is_chief:
-            self.train_process_comm_chief = cast(
-                ipc.ZMQBroadcastServer, self.train_process_comm_chief
+            self.reducer.train_process_comm_chief = cast(
+                ipc.ZMQBroadcastServer, self.reducer.train_process_comm_chief
             )
-            worker_metrics, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
-            self.train_process_comm_chief.broadcast(None)
+            worker_metrics, _ = self.reducer.train_process_comm_chief.gather_with_polling(
+                lambda: None
+            )
+            self.reducer.train_process_comm_chief.broadcast(None)
             worker_metrics = cast(List[ipc.MetricsInfo], worker_metrics)
 
             for metric_name in metrics.keys():
@@ -545,15 +553,15 @@ class PyTorchTrialController(det.LoopTrialController):
 
             return metrics_lists, batches_per_process
         else:
-            self.train_process_comm_worker = cast(
-                ipc.ZMQBroadcastClient, self.train_process_comm_worker
+            self.reducer.train_process_comm_worker = cast(
+                ipc.ZMQBroadcastClient, self.reducer.train_process_comm_worker
             )
-            self.train_process_comm_worker.send(
+            self.reducer.train_process_comm_worker.send(
                 ipc.MetricsInfo(metrics=metrics, num_batches=num_batches)
             )
             # Synchronize with the chief so that there is no risk of accidentally calling send()
             # for a future gather before all workers have called send() on this gather.
-            _ = self.train_process_comm_worker.recv()
+            _ = self.reducer.train_process_comm_worker.recv()
             return None, None
 
     def _load(self) -> None:

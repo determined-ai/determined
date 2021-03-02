@@ -48,7 +48,7 @@ def test_tf_keras_const_warm_start(tf2: bool) -> None:
 @pytest.mark.parallel  # type: ignore
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 @pytest.mark.parametrize("tf2", [False, True])  # type: ignore
-def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
+def test_tf_keras_cifar_parallel(aggregation_frequency: int, tf2: bool) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_max_length(config, {"batches": 200})

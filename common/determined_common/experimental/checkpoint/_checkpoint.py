@@ -11,6 +11,7 @@ from determined_common.storage import shared
 class ModelFramework(enum.Enum):
     PYTORCH = 1
     TENSORFLOW = 2
+    PYTORCH_LIGHTNING = 3
 
 
 class CheckpointState(enum.Enum):
@@ -281,6 +282,13 @@ class Checkpoint(object):
                 checkpoint_dir, metadata, tags=tags
             )
 
+        elif checkpoint_type == ModelFramework.PYTORCH_LIGHTNING:
+            import determined_common.experimental.checkpoint._pytorch_lightning
+
+            return determined_common.experimental.checkpoint._pytorch_lightning.load_model(
+                checkpoint_dir, metadata, tags=tags, **kwargs
+            )
+
         raise AssertionError("Unknown checkpoint format at {}".format(checkpoint_dir))
 
     @staticmethod
@@ -300,6 +308,9 @@ class Checkpoint(object):
             if metadata["framework"].startswith("tensorflow"):
                 return ModelFramework.TENSORFLOW
 
+            if metadata["framework"].startswith("pytorch_lightning"):
+                return ModelFramework.PYTORCH_LIGHTNING
+
         # Older metadata layout contained torch_version and tensorflow_version
         # as keys. Eventually, we should drop support for the older format.
         if "torch_version" in metadata:
@@ -307,6 +318,9 @@ class Checkpoint(object):
 
         elif "tensorflow_version" in metadata:
             return ModelFramework.TENSORFLOW
+
+        elif "pytorch_lightning_version" in metadata:
+            return ModelFramework.PYTORCH_LIGHTNING
 
         raise AssertionError("Unknown checkpoint format")
 

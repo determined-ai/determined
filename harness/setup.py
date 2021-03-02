@@ -31,6 +31,8 @@ setup(
         "tf-114-cpu": ["tensorflow==1.14.0"],
         "pytorch-14-cuda100": ["torch==1.4.0+cu100", "torchvision==0.5.0+cu100"],
         "pytorch-14-cpu": ["torch==1.4.0", "torchvision==0.5.0"],
+        "pytorch-lightning-120-cuda100": ["pytorch-lightning==1.2.0"],
+        "pytorch-lightning-120-cpu": ["pytorch-lightning==1.2.0"],
     },
     zip_safe=False,
 )

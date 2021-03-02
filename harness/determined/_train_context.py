@@ -1,9 +1,11 @@
 import abc
 import logging
+import pathlib
 from typing import Any, Callable, Dict, Optional, cast
 
 import determined as det
-from determined import horovod
+from determined import horovod, workload
+from determined.horovod import hvd
 
 
 class _TrainContext(metaclass=abc.ABCMeta):
@@ -12,11 +14,23 @@ class _TrainContext(metaclass=abc.ABCMeta):
     These methods should be made available to both Native and Trial APIs.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
         self.env = env  # type: det.EnvContext
+        self.workloads = workloads
+        self.load_path = load_path
+        self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
         self.distributed = DistributedContext(env, hvd_config)
+
         self._stop_requested = False
+        self._cur_total_batches = env.initial_workload.total_batches_processed
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]) -> "_TrainContext":
@@ -58,7 +72,9 @@ class _TrainContext(metaclass=abc.ABCMeta):
             config=config,
             limit_gpus=1,
         )
-        return cls(env_context, hvd_config)
+        workloads = workload.make_noop_workload_stream()
+        load_path = None
+        return cls(env_context, workloads, load_path, rendezvous_info, hvd_config)
 
     def get_experiment_config(self) -> Dict[str, Any]:
         """
@@ -152,8 +168,15 @@ class TrialContext(_TrainContext):
     The context passed to the User's ``Trial.__init__()`` will inherit from this class.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
-        super().__init__(env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
+        super().__init__(env, workloads, load_path, rendezvous_info, hvd_config)
 
 
 class NativeContext(_TrainContext):
@@ -163,8 +186,15 @@ class NativeContext(_TrainContext):
     The context returned by the ``init()`` function will inherit from this class.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
-        super().__init__(env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
+        super().__init__(env, workloads, load_path, rendezvous_info, hvd_config)
         self._train_fn = None  # type: Optional[Callable[[], None]]
 
     def _set_train_fn(self, train_fn: Callable[[], None]) -> None:
@@ -219,3 +249,9 @@ class DistributedContext:
             return 1
 
         return cast(int, self.get_size() // horovod.hvd.local_size())
+
+    def is_chief(self) -> bool:
+        if self._hvd_config.use:
+            return int(hvd.rank()) == 0
+        else:
+            return True

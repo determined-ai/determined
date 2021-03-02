@@ -41,7 +41,10 @@ class Workload:
 
     def __repr__(self) -> str:
         extra = f" ({self.num_batches} Batches)" if self.kind == self.Kind.RUN_STEP else ""
-        return f"<{self.kind.name}{extra}: ({self.experiment_id},{self.trial_id},{self.step_id})>"
+        return (
+            f"<{self.kind.name}{extra}: trial <{self.experiment_id}, {self.trial_id}>, "
+            f"step {self.step_id}, total batches {self.total_batches()}>"
+        )
 
     def __json__(self) -> Dict[str, Any]:
         return self.__dict__
@@ -57,6 +60,9 @@ class Workload:
             dict["num_batches"],
             dict["total_batches_processed"],
         )
+
+    def total_batches(self) -> int:
+        return self.total_batches_processed + self.num_batches
 
 
 """Metrics is the general structure of metrics used in response messages throughout the harness."""
@@ -234,3 +240,7 @@ def terminate_workload(step_id: int = 1, exp_id: int = 1, trial_id: int = 1) -> 
         0,
         0,
     )
+
+
+def make_noop_workload_stream() -> Stream:
+    yield terminate_workload(0, 0, 0), [], ignore_workload_response

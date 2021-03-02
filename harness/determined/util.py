@@ -87,7 +87,11 @@ def validate_batch_metrics(batch_metrics: List[Dict[str, Any]]) -> None:
         check.eq(metric_dict_keys, keys, "inconsistent training metrics: index: {}".format(idx))
 
 
-def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
+def make_metrics(
+    num_inputs: Optional[int],
+    batch_metrics: List[Dict[str, Any]],
+    train: bool = True,
+) -> Dict[str, Any]:
     """Make metrics dict including aggregates given individual data points."""
 
     metric_dict = _list_to_dict(batch_metrics)
@@ -105,9 +109,14 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
             # We keep the key so consumers can see all the metric names but
             # leave the value as None.
             pass
+        except ZeroDivisionError:
+            pass
         avg_metrics[name] = m
 
-    metrics = {"batch_metrics": batch_metrics, "avg_metrics": avg_metrics}
+    if train:
+        metrics = {"batch_metrics": batch_metrics, "avg_metrics": avg_metrics}
+    else:
+        metrics = {"validation_metrics": avg_metrics}
     if num_inputs is not None:
         metrics["num_inputs"] = num_inputs
 

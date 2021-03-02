@@ -1,11 +1,12 @@
 import inspect
 import logging
-from typing import Any, Callable, Dict, List, Tuple, Union
+import pathlib
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, estimator, horovod
+from determined import _data_layer, estimator, horovod, workload
 from determined.horovod import hvd
 from determined_common import check
 
@@ -120,14 +121,28 @@ class EstimatorContext:
 
 
 class EstimatorTrialContext(det.TrialContext, EstimatorContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        det.TrialContext.__init__(self, env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
+        det.TrialContext.__init__(self, env, workloads, load_path, rendezvous_info, hvd_config)
         EstimatorContext.__init__(self, env, hvd_config)
 
 
 class EstimatorNativeContext(det.NativeContext, EstimatorContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        det.NativeContext.__init__(self, env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
+        det.NativeContext.__init__(self, env, workloads, load_path, rendezvous_info, hvd_config)
         EstimatorContext.__init__(self, env, hvd_config)
 
         # TODO(DET-1931): Figure out the right interface to set it.

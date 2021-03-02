@@ -2,12 +2,13 @@ import contextlib
 import importlib
 import json
 import logging
+import pathlib
 import runpy
 import sys
 from typing import Any, Iterator, List, Optional, Tuple, Type, cast
 
 import determined as det
-from determined import horovod
+from determined import horovod, workload
 from determined_common import check
 
 
@@ -87,9 +88,20 @@ class RunpyGlobals:
 
     _instance = None  # type: Optional[RunpyGlobals]
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
+    def __init__(
+        self,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ):
         self.env = env  # type: det.EnvContext
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
+        self.workloads = workloads
+        self.load_path = load_path
+        self.rendezvous_info = rendezvous_info
+
         self.context = None  # type: Optional[det.NativeContext]
         self.trial_cls = None  # type: Optional[Type[det.Trial]]
         self.controller_cls = None  # type: Optional[Type[det.TrialController]]
@@ -172,7 +184,11 @@ def overwrite_sys_args(new_args: List[str]) -> Iterator:
 
 
 def load_native_implementation(
-    env: det.EnvContext, hvd_config: horovod.HorovodContext
+    env: det.EnvContext,
+    workloads: workload.Stream,
+    load_path: Optional[pathlib.Path],
+    rendezvous_info: det.RendezvousInfo,
+    hvd_config: horovod.HorovodContext,
 ) -> Tuple[Optional[det.NativeContext], Optional[Type[det.Trial]], Type[det.TrialController]]:
     # For now, we assume the entrypoint_cmd is a python invocation like
     # "python <command>"
@@ -184,7 +200,7 @@ def load_native_implementation(
     if command[0].endswith(".ipynb"):
         command[0] = convert_notebook_to_python_script(command[0])
 
-    with RunpyGlobals(env, hvd_config) as loader:
+    with RunpyGlobals(env, workloads, load_path, rendezvous_info, hvd_config) as loader:
         with overwrite_sys_args(command):
             try:
                 runpy.run_path(command[0], run_name="__main__")
