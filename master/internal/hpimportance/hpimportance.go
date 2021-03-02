@@ -139,11 +139,10 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 	// The importance file is the target, hpimportance, p-value, mean difference. We will use the
 	// p-value and ignore the target to target and batch features.
 
-	// Ignore security warning because none of this is user-provided input
-	// #nosec G304
+	// #nosec G304 // Ignore security warning because none of this is user-provided input
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open HP importance file: %s", err.Error())
+		return nil, fmt.Errorf("failed to open HP importance file: %w", err)
 	}
 	defer func() {
 		err := file.Close()
@@ -157,11 +156,11 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 	r.Comma = '\t'
 	for {
 		record, err := r.Read()
-		if err == io.EOF {
+		switch {
+		case err == io.EOF:
 			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("failed to read HP importance file: %s", err.Error())
+		case err != nil:
+			return nil, fmt.Errorf("failed to read HP importance file: %w", err)
 		}
 
 		if record[1] == "metric" || record[1] == "numBatches" {
@@ -169,7 +168,7 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 		}
 		hpi[record[1]], err = strconv.ParseFloat(record[2], 64)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse HP importance value: %s", err.Error())
+			return nil, fmt.Errorf("failed to parse HP importance value: %w", err)
 		}
 	}
 	return hpi, nil
@@ -189,7 +188,7 @@ func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 
 	totalNumTrials, err := createDataFile(data, experimentConfig, growforestInput)
 	if err != nil {
-		return nil, fmt.Errorf("error writing ARFF file: %s", err.Error())
+		return nil, fmt.Errorf("error writing ARFF file: %w", err)
 	}
 
 	nCores := strconv.FormatInt(int64(masterConfig.CoresPerWorker), 10)
@@ -199,7 +198,7 @@ func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	// where I'm not gonna calculate the random forest
 	// TODO: Determine best way to handle small amount of trials
 	if totalNumTrials < minNumberTrials {
-		return nil, fmt.Errorf("not enough trials for HP importance: " + fmt.Sprint(totalNumTrials))
+		return nil, fmt.Errorf("not enough trials for HP importance: %d", totalNumTrials)
 	}
 
 	// For version one, we do half the number of trials up to 300
@@ -234,9 +233,9 @@ func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	).CombinedOutput()
 	if err != nil {
 		log.Error("growforest failed:\n " + string(output))
-		return nil, fmt.Errorf("random forest failed: %s", err.Error())
+		return nil, fmt.Errorf("random forest failed: %w", err)
 	}
 
-	hpi, err := parseImportanceOutput(path.Join(workingDir, importanceFile))
+	hpi, err := parseImportanceOutput(growforestOutput)
 	return hpi, err
 }
