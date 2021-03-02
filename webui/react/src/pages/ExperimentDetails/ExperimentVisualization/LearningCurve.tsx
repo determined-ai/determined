@@ -26,6 +26,7 @@ const { Option } = Select;
 interface Props {
   experiment: ExperimentBase;
   hParams: string[];
+  isLoading?: boolean;
   metrics: MetricName[];
   onMetricChange?: (metric: MetricName) => void;
   selectedMetric: MetricName
@@ -38,6 +39,7 @@ const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
 const LearningCurve: React.FC<Props> = ({
   experiment,
   hParams,
+  isLoading = false,
   metrics,
   onMetricChange,
   selectedMetric,
@@ -209,7 +211,7 @@ const LearningCurve: React.FC<Props> = ({
         </ResponsiveFilters>}
         title="Learning Curve">
         <div className={css.container}>
-          {!hasLoaded ? <Spinner /> : (
+          {!hasLoaded || isLoading ? <Spinner /> : (
             <>
               <div className={css.chart}>
                 <LearningCurveChart

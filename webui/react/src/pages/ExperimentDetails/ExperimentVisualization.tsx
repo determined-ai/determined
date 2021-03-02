@@ -75,11 +75,11 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
   const [ trainingMetrics, setTrainingMetrics ] = useState<string[]>([]);
   const [ validationMetrics, setValidationMetrics ] = useState<string[]>([]);
+  const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultUserBatch);
   const [ selectedMetric, setSelectedMetric ] = useState<MetricName>(defaultUserMetric);
   const [ searcherMetric, setSearcherMetric ] = useState<string>();
   /* eslint-disable-next-line */
   const [ batches, setBatches ] = useState<number[]>([]);
-  const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultUserBatch);
 
   const { fullHParams, limitedHParams } = useMemo(() => {
     // Constant hyperparameters are not useful for visualizations
@@ -94,6 +94,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ hParams, setHParams ] = useState<string[]>(defaultHParams || limitedHParams);
 
   const [ hasLoaded, setHasLoaded ] = useState(false);
+  const [ isContentReady, setIsContentReady ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
 
   const metrics: MetricName[] = useMemo(() => ([
@@ -108,6 +109,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const handleBatchChange = useCallback((batch: number) => {
     storage.set(STORAGE_BATCH_KEY, batch);
     setSelectedBatch(batch);
+    setIsContentReady(false);
   }, [ storage, STORAGE_BATCH_KEY ]);
 
   const handleHParamChange = useCallback((hParams?: string[]) => {
@@ -123,8 +125,8 @@ const ExperimentVisualization: React.FC<Props> = ({
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
     setSelectedMetric(metric);
-    setSelectedBatch(batches.first());
-  }, [ batches, storage, STORAGE_METRIC_KEY ]);
+    setIsContentReady(false);
+  }, [ storage, STORAGE_METRIC_KEY ]);
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
     setTypeKey(type as VisualizationType);
@@ -181,6 +183,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     const metricTypeParam = selectedMetric?.type === MetricType.Training
       ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
+
     consumeStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.determinedMetricBatches(
         experiment.id,
@@ -190,18 +193,19 @@ const ExperimentVisualization: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       event => {
-        setHasLoaded(true);
-
         if (!event) return;
         (event.batches || []).forEach(batch => batchesMap[batch] = batch);
         const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
         setBatches(newBatches);
-        if (selectedBatch === 0 && newBatches.length !== 0) {
+        if (newBatches.length !== 0 && !newBatches.includes(selectedBatch)) {
           setSelectedBatch(newBatches.first());
         }
+        setHasLoaded(true);
+        setIsContentReady(true);
       },
     ).catch(() => {
       setHasLoaded(true);
+      setIsContentReady(true);
       setPageError(PageError.MetricBatches);
     });
 
@@ -261,6 +265,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             <LearningCurve
               experiment={experiment}
               hParams={fullHParams}
+              isLoading={!isContentReady}
               metrics={metrics}
               selectedMetric={selectedMetric}
               onMetricChange={handleMetricChange}
@@ -271,6 +276,7 @@ const ExperimentVisualization: React.FC<Props> = ({
               batches={batches}
               experiment={experiment}
               hParams={fullHParams}
+              isLoading={!isContentReady}
               metrics={metrics}
               selectedBatch={selectedBatch}
               selectedHParams={hParams}
@@ -285,6 +291,7 @@ const ExperimentVisualization: React.FC<Props> = ({
               batches={batches}
               experiment={experiment}
               hParams={fullHParams}
+              isLoading={!isContentReady}
               metrics={metrics}
               selectedBatch={selectedBatch}
               selectedHParams={hParams}
@@ -299,6 +306,7 @@ const ExperimentVisualization: React.FC<Props> = ({
               batches={batches}
               experiment={experiment}
               hParams={fullHParams}
+              isLoading={!isContentReady}
               metrics={metrics}
               selectedBatch={selectedBatch}
               selectedMetric={selectedMetric}

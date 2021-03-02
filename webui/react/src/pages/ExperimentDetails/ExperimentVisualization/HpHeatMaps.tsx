@@ -36,6 +36,7 @@ interface Props {
   batches: number[];
   experiment: ExperimentBase;
   hParams: string[];
+  isLoading?: boolean;
   metrics: MetricName[];
   onBatchChange?: (batch: number) => void;
   onMetricChange?: (metric: MetricName) => void;
@@ -64,6 +65,7 @@ const HpHeatMaps: React.FC<Props> = ({
   batches,
   experiment,
   hParams,
+  isLoading = false,
   metrics,
   onBatchChange,
   onMetricChange,
@@ -221,7 +223,7 @@ const HpHeatMaps: React.FC<Props> = ({
   }
 
   let content = <Spinner />;
-  if (hasLoaded && chartData) {
+  if (hasLoaded && !isLoading && chartData) {
     if (chartData.trialIds.length === 0) {
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {

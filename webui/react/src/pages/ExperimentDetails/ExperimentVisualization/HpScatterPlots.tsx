@@ -29,6 +29,7 @@ interface Props {
   batches: number[];
   experiment: ExperimentBase;
   hParams: string[];
+  isLoading?: boolean;
   metrics: MetricName[];
   onBatchChange?: (batch: number) => void;
   onHParamChange?: (hParams?: string[]) => void;
@@ -49,6 +50,7 @@ const ScatterPlots: React.FC<Props> = ({
   batches,
   experiment,
   hParams,
+  isLoading = false,
   metrics,
   onBatchChange,
   onHParamChange,
@@ -176,7 +178,7 @@ const ScatterPlots: React.FC<Props> = ({
   }
 
   let content = <Spinner />;
-  if (hasLoaded && chartData) {
+  if (hasLoaded && !isLoading && chartData) {
     if (chartData.trialIds.length === 0) {
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {

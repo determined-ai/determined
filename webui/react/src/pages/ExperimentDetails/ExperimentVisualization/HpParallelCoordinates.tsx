@@ -34,6 +34,7 @@ interface Props {
   batches: number[];
   experiment: ExperimentBase;
   hParams: string[];
+  isLoading?: boolean;
   metrics: MetricName[];
   onBatchChange?: (batch: number) => void;
   onHParamChange?: (hParams?: string[]) => void;
@@ -54,6 +55,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   batches,
   experiment,
   hParams,
+  isLoading = false,
   metrics,
   onBatchChange,
   onHParamChange,
@@ -287,7 +289,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         </ResponsiveFilters>}
         title="HP Parallel Coordinates">
         <div className={css.container}>
-          {!hasLoaded || !chartData ? <Spinner /> : (
+          {!hasLoaded || isLoading || !chartData ? <Spinner /> : (
             <>
               <div className={css.chart}>
                 <ParallelCoordinates
