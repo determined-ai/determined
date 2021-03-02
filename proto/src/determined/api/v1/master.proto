@@ -4,9 +4,11 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/log/v1/log.proto";
+import "determined/master/v1/master.proto";
 
 // Get master information.
 message GetMasterRequest {}
@@ -67,4 +69,17 @@ message MasterLogsRequest {
 message MasterLogsResponse {
   // The log entry.
   determined.log.v1.LogEntry log_entry = 1;
+}
+
+// Get a detailed view of resource allocation during the given time period.
+message ResourceAllocationRawRequest {
+  // The start of the period to consider.
+  google.protobuf.Timestamp start_date = 1;
+  // The end of the period to consider.
+  google.protobuf.Timestamp end_date = 2;
+}
+// Response to ResourceAllocationRawRequest.
+message ResourceAllocationRawResponse {
+  // An entry summarizing one workload.
+  repeated determined.master.v1.ResourceAllocationRawEntry resource_entry = 1;
 }

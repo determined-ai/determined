@@ -829,4 +829,12 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Get a detailed view of resource allocation during the given time period.
+  rpc ResourceAllocationRaw(ResourceAllocationRawRequest)
+      returns (ResourceAllocationRawResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/resources/allocation/raw"
+    };
+  }
 }
