@@ -164,20 +164,20 @@ const ParallelCoordinates: React.FC<Props> = ({
         const hpIndex = parseInt(matches[1]);
         const hpKey = dimensions[hpIndex].label;
 
-        if (constraint) {
-          setConstraints(prev => {
-            const newConstraints = clone(prev);
+        setConstraints(prev => {
+          const newConstraints = clone(prev);
 
-            if (isNumber(constraint[0]) && isNumber(constraint[1]) &&
-                Math.abs(constraint[0] - constraint[1]) > CONSTRAINT_REMOVE_THRESHOLD) {
-              newConstraints[hpKey] = constraint;
-            } else if (constraint[0] !== constraint[1]) {
-              newConstraints[hpKey] = constraint;
-            }
+          if (constraint == null) {
+            delete newConstraints[hpKey];
+          } else if (isNumber(constraint[0]) && isNumber(constraint[1]) &&
+              Math.abs(constraint[0] - constraint[1]) > CONSTRAINT_REMOVE_THRESHOLD) {
+            newConstraints[hpKey] = constraint;
+          } else if (constraint[0] !== constraint[1]) {
+            newConstraints[hpKey] = constraint;
+          }
 
-            return newConstraints;
-          });
-        }
+          return newConstraints;
+        });
       }
     });
 
