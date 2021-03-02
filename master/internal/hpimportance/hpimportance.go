@@ -19,8 +19,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -135,6 +136,9 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 
 // Read the data from the output importance file and return as a json.
 func parseImportanceOutput(filename string) (map[string]float64, error) {
+	// The importance file is the target, hpimportance, p-value, mean difference. We will use the
+	// p-value and ignore the target to target and batch features.
+
 	// Ignore security warning because none of this is user-provided input
 	// #nosec G304
 	file, err := os.Open(filename)

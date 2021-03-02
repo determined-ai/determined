@@ -170,7 +170,7 @@ func TestComputeHPImportance(t *testing.T) {
 			},
 		},
 	}
-	nTreesResults, err := createDataFile(data, expConfig, ".")
+	nTreesResults, err := createDataFile(data, expConfig, "data.arff")
 	assert.NilError(t, err)
 	assert.Equal(t, nTreesResults, 8)
 
@@ -244,7 +244,7 @@ func TestComputeHPImportance(t *testing.T) {
 			Metric: 2.2999706268310547,
 		},
 	}
-	nTreesResults, err = createDataFile(data, expConfig, ".")
+	nTreesResults, err = createDataFile(data, expConfig, "data.arff")
 	assert.NilError(t, err)
 	assert.Equal(t, nTreesResults, 10)
 
