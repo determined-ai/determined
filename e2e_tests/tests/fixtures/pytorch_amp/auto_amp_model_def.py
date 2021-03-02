@@ -21,5 +21,5 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 class MNistAutoAMPTrial(MNistTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
-        self.scaler = context.experimental.use_amp()
+        context.experimental.use_amp()
         super().__init__(context)

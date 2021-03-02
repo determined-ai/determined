@@ -258,6 +258,16 @@ class PyTorchTrialController(det.LoopTrialController):
             if mod == 0 or mod < self.hvd_config.aggregation_frequency:
                 lr_scheduler.step()
 
+    def _should_update_scaler(self) -> bool:
+        if not self.context._scaler or not self.context.experimental._auto_amp:
+            return False
+        if self.hvd_config.use:
+            if self.context._should_communicate_and_update():
+                return True
+            else:
+                return False
+        return True
+
     def _train_for_step(
         self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Response:
@@ -287,7 +297,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 epoch_idx=self.get_epoch_idx(batch_idx),
                 batch_idx=batch_idx,
             )
-            if self.context._scaler and self.context.experimental._auto_amp:
+            if self._should_update_scaler():
                 self.context._scaler.update()
             if isinstance(tr_metrics, torch.Tensor):
                 tr_metrics = {"loss": tr_metrics}

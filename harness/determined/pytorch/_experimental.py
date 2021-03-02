@@ -1,7 +1,4 @@
-import logging
 from typing import Any, Callable, Dict, List, Optional, Union
-
-import torch
 
 from determined import pytorch
 
@@ -9,8 +6,7 @@ from determined import pytorch
 try:
     import torch.cuda.amp as amp
 except ImportError:
-    if torch.cuda.is_available():
-        logging.warning("PyTorch AMP is unavailable.")
+    # A warning is logged in _pytorch_context.py
     pass
 
 

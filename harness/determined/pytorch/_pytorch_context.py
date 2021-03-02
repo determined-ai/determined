@@ -20,7 +20,10 @@ except ImportError:
 # AMP is only available in PyTorch 1.6+
 try:
     import torch.cuda.amp as amp
+
+    amp_import_error = False
 except ImportError:
+    amp_import_error = True
     if torch.cuda.is_available():
         logging.warning("PyTorch AMP is unavailable.")
     pass
@@ -73,6 +76,62 @@ class PyTorchTrialContext(det.TrialContext):
 
         self.experimental = pytorch.PyTorchExperimentalContext(self)
 
+    def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
+        # First, ensure the forward pass is wrapped in an autocast context:
+        class _AutocastForwardPassModel(type(to_wrap)):  # type: ignore
+            def __init__(wrapper) -> None:
+                self.model = to_wrap
+
+            def __getattr__(wrapper, name):  # type: ignore
+                return getattr(to_wrap, name)
+
+            def __setattr__(wrapper, name, value):  # type: ignore
+                return setattr(to_wrap, name, value)
+
+            def __delattr__(wrapper, name):  # type: ignore
+                return delattr(to_wrap, name)
+
+            def forward(wrapper, *arg, **kwarg):  # type: ignore
+                with amp.autocast():
+                    return to_wrap.forward(*arg, **kwarg)
+
+        wrapped = _AutocastForwardPassModel()
+
+        # Second, eliminate any need for the loss functions to be in that context:
+        def end_fp16(
+            module: torch.nn.Module,
+            input: Any,
+            output: Any,
+            warned_types: Optional[Set[Type]] = None,
+        ) -> Any:
+
+            # Never print errors recursively.
+            if warned_types is None:
+                warned_types = set()
+
+            if isinstance(output, torch.Tensor):
+                return output.float() if output.dtype == torch.float16 else output
+            if isinstance(output, dict):
+                return {k: end_fp16(module, input, v, warned_types) for k, v in output.items()}
+            if isinstance(output, list):
+                return [end_fp16(module, input, d, warned_types) for d in output]
+            if isinstance(output, tuple):
+                return tuple(end_fp16(module, input, d, warned_types) for d in output)
+            # If there are other types that embed Tensors still using fp16 and loss computation
+            # subsequently fails, then experimental.use_amp should not be used and the forward pass
+            # should be manually wrapped in an autocast context.
+            if type(output) not in warned_types:
+                warned_types.add(type(output))
+                logging.warn(
+                    f"Unexpected type '{type(output).__name__}' outputted by model in experimental "
+                    "AMP mode."
+                )
+            return output
+
+        wrapped.register_forward_hook(end_fp16)
+
+        return wrapped
+
     def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:
         """Returns a wrapped model."""
 
@@ -95,46 +154,7 @@ class PyTorchTrialContext(det.TrialContext):
         self._main_model.__setattr__(f"model_{model_id}", model)
 
         if self.experimental._auto_amp:
-            # Ensure the forward pass is wrapped in an autocast context:
-            saved_model = model
-
-            class _WrappedModel(type(saved_model)):  # type: ignore
-                def __init__(wrapper) -> None:
-                    self.model = saved_model
-
-                def __getattr__(wrapper, name):  # type: ignore
-                    return getattr(saved_model, name)
-
-                def __setattr__(wrapper, name, value):  # type: ignore
-                    return setattr(saved_model, name, value)
-
-                def __delattr__(wrapper, name):  # type: ignore
-                    return delattr(saved_model, name)
-
-                def forward(wrapper, *arg, **kwarg):  # type: ignore
-                    with amp.autocast():
-                        return saved_model.forward(*arg, **kwarg)
-
-            model = _WrappedModel()
-
-            # Eliminate any need for the loss functions to be in that context:
-            def terminate_fp16(module: torch.nn.Module, input: Any, output: Any) -> Any:
-                if isinstance(output, torch.Tensor):
-                    return output.float() if output.dtype == torch.float16 else output
-                if isinstance(output, dict):
-                    return {k: terminate_fp16(module, input, v) for k, v in output.items()}
-                if isinstance(output, list):
-                    return [terminate_fp16(module, input, d) for d in output]
-                if isinstance(output, tuple):
-                    return tuple(terminate_fp16(module, input, d) for d in output)
-                else:
-                    # If there are other types that embed Tensors still using fp16 and loss
-                    # computation subsequently fails, then experimental.use_amp should not be used
-                    # and the forward pass should be manually wrapped in an autocast context.
-                    logging.warn("Unexpected type outputted by model in experimental AMP mode.")
-                    return output
-
-            model.register_forward_hook(terminate_fp16)
+            model = self.autocast_forward_pass(model)
 
         self.models.append(model)
         return model
@@ -285,6 +305,8 @@ class PyTorchTrialContext(det.TrialContext):
         Returns:
             The scaler. It may be wrapped to add additional functionality for use in Determined.
         """
+
+        check.false(amp_import_error, "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.")
 
         check.false(self._use_apex, "Do not mix APEX with PyTorch AMP.")
 
