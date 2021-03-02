@@ -97,5 +97,5 @@ func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
 		methods = append(methods, newAsyncHalvingSearch(c))
 	}
 
-	return newTournamentSearch(methods...)
+	return newTournamentSearch(AdaptiveASHASearch, methods...)
 }

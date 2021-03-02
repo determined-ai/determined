@@ -18,10 +18,11 @@ type (
 		Rungs      []*rung                 `json:"rungs"`
 		TrialRungs map[model.RequestID]int `json:"trial_rungs"`
 		// EarlyExitTrials contains trials that exited early that are still considered in the search.
-		EarlyExitTrials map[model.RequestID]bool `json:"early_exit_trials"`
-		ClosedTrials    map[model.RequestID]bool `json:"closed_trials"`
-		TrialsCompleted int                      `json:"trials_completed"`
-		InvalidTrials   int                      `json:"invalid_trials"`
+		EarlyExitTrials  map[model.RequestID]bool `json:"early_exit_trials"`
+		ClosedTrials     map[model.RequestID]bool `json:"closed_trials"`
+		TrialsCompleted  int                      `json:"trials_completed"`
+		InvalidTrials    int                      `json:"invalid_trials"`
+		SearchMethodType SearchMethodType         `json:"search_method_type"`
 	}
 
 	asyncHalvingSearch struct {
@@ -46,10 +47,11 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	return &asyncHalvingSearch{
 		AsyncHalvingConfig: config,
 		asyncHalvingSearchState: asyncHalvingSearchState{
-			Rungs:           rungs,
-			TrialRungs:      make(map[model.RequestID]int),
-			EarlyExitTrials: make(map[model.RequestID]bool),
-			ClosedTrials:    make(map[model.RequestID]bool),
+			Rungs:            rungs,
+			TrialRungs:       make(map[model.RequestID]int),
+			EarlyExitTrials:  make(map[model.RequestID]bool),
+			ClosedTrials:     make(map[model.RequestID]bool),
+			SearchMethodType: ASHASearch,
 		},
 	}
 }

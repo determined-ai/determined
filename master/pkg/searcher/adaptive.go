@@ -30,7 +30,7 @@ func newAdaptiveSearch(config model.AdaptiveConfig) SearchMethod {
 		methods = append(methods, newSyncHalvingSearch(c))
 	}
 
-	return newTournamentSearch(methods...)
+	return newTournamentSearch(AdaptiveSearch, methods...)
 }
 
 type adaptiveMode func(maxRungs int) []int

@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 
@@ -8,16 +9,27 @@ import (
 	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
-// gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,
-// one trial is generated per point on the grid and trained for the specified number of steps.
-type gridSearch struct {
-	defaultSearchMethod
-	model.GridConfig
-	trials int
-}
+type (
+	// gridSearchState stores the state for grid. Though grid is stateless, it is useful
+	// on restart to know the type of searcher during restore, in the event it must be shimmed.
+	gridSearchState struct {
+		SearchMethodType SearchMethodType `json:"search_method_type"`
+	}
+	// gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,
+	// one trial is generated per point on the grid and trained for the specified number of steps.
+	gridSearch struct {
+		defaultSearchMethod
+		model.GridConfig
+		gridSearchState
+		trials int
+	}
+)
 
 func newGridSearch(config model.GridConfig) SearchMethod {
-	return &gridSearch{GridConfig: config}
+	return &gridSearch{
+		GridConfig:      config,
+		gridSearchState: gridSearchState{GridSearch},
+	}
 }
 
 func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
@@ -141,4 +153,15 @@ func grid(h model.Hyperparameter) []interface{} {
 	default:
 		panic(fmt.Sprintf("unexpected hyperparameter type %+v", h))
 	}
+}
+
+func (s *gridSearch) Snapshot() (json.RawMessage, error) {
+	return json.Marshal(s.gridSearchState)
+}
+
+func (s *gridSearch) Restore(state json.RawMessage) error {
+	if state == nil {
+		return nil
+	}
+	return json.Unmarshal(state, &s.gridSearchState)
 }

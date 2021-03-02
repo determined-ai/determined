@@ -23,6 +23,8 @@ type (
 
 		// EarlyExitTrials contains trials that exited early that are still considered in the search.
 		EarlyExitTrials map[model.RequestID]bool `json:"early_exit_trials"`
+
+		SearchMethodType SearchMethodType `json:"search_method_type"`
 	}
 
 	pbtSearch struct {
@@ -42,6 +44,7 @@ func newPBTSearch(config model.PBTConfig) SearchMethod {
 			TrialRoundsCompleted: make(map[model.RequestID]int),
 			TrialParams:          make(map[model.RequestID]hparamSample),
 			EarlyExitTrials:      make(map[model.RequestID]bool),
+			SearchMethodType:     PBTSearch,
 		},
 	}
 }

@@ -1,8 +1,6 @@
 package searcher
 
 import (
-	"encoding/json"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/workload"
@@ -46,6 +44,31 @@ type SearchMethod interface {
 	model.Snapshotter
 	model.InUnits
 }
+
+// SearchMethodType is the type of a SearchMethod. It is saved in snapshots to be used
+// when shimming json blobs of searcher snapshots.
+type SearchMethodType string
+
+const (
+	// SingleSearch is the SearchMethodType for a single searcher.
+	SingleSearch SearchMethodType = "single"
+	// RandomSearch is the SearchMethodType for a random searcher.
+	RandomSearch SearchMethodType = "random"
+	// GridSearch is the SearchMethodType for a grid searcher.
+	GridSearch SearchMethodType = "grid"
+	// SHASearch is the SearchMethodType for a SHA searcher.
+	SHASearch SearchMethodType = "sha"
+	// AdaptiveSearch is the SearchMethodType for a adaptive searcher.
+	AdaptiveSearch SearchMethodType = "adaptive"
+	// AdaptiveSimpleSearch is the SearchMethodType for a adaptive simple searcher.
+	AdaptiveSimpleSearch SearchMethodType = "adaptive_simple"
+	// ASHASearch is the SearchMethodType for a ASHA searcher.
+	ASHASearch SearchMethodType = "asha"
+	// AdaptiveASHASearch is the SearchMethodType for a adaptive ASHA searcher.
+	AdaptiveASHASearch SearchMethodType = "adaptive_asha"
+	// PBTSearch is the SearchMethodType for a PBT searcher.
+	PBTSearch SearchMethodType = "pbt"
+)
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
 func NewSearchMethod(c model.SearcherConfig) SearchMethod {
@@ -95,14 +118,4 @@ func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, e
 func (defaultSearchMethod) trialExitedEarly( //nolint: unused
 	context, model.RequestID, workload.ExitedReason) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
-}
-
-// save is the default implementation, used by stateless searchers like random and grid.
-func (defaultSearchMethod) Snapshot() (json.RawMessage, error) {
-	return nil, nil
-}
-
-// load is the default implementation, used by stateless searchers like random and grid.
-func (defaultSearchMethod) Restore(json.RawMessage) error {
-	return nil
 }

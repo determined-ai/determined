@@ -8,8 +8,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+const RandomTournamentSearch SearchMethodType = "random_tournament"
+
 func TestRandomTournamentSearcher(t *testing.T) {
 	actual := newTournamentSearch(
+		RandomTournamentSearch,
 		newRandomSearch(model.RandomConfig{
 			MaxTrials: 2,
 			MaxLength: model.NewLengthInBatches(300),
@@ -33,6 +36,7 @@ func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 	conf := model.RandomConfig{MaxTrials: 5, MaxLength: model.NewLengthInBatches(800)}
 	gen := func() SearchMethod {
 		return newTournamentSearch(
+			RandomTournamentSearch,
 			newRandomSearch(conf),
 			newRandomSearch(conf),
 		)
@@ -80,7 +84,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 
 	params := model.Hyperparameters{}
 
-	method := newTournamentSearch(adaptiveMethod1, adaptiveMethod2)
+	method := newTournamentSearch(AdaptiveSearch, adaptiveMethod1, adaptiveMethod2)
 
 	err := checkValueSimulation(t, method, params, expectedTrials)
 	assert.NilError(t, err)
