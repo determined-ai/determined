@@ -23,7 +23,8 @@ const (
 	minPause   = 10 * time.Minute
 	minPercent = 0.1
 
-	// Each worker will create a subdirectory of this for CloudForest's input & output
+	// Each worker will create a subdirectory of this for CloudForest's input & output.
+	// This directory is deleted on startup, so be cautious if it changes.
 	workingDir = "/tmp/determined/growforest"
 
 	// The name of the CloudForest executable to look for
@@ -96,6 +97,10 @@ func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig, ma
 		growforest = resolvedPath
 	}
 
+	err = os.RemoveAll(workingDir)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to clean scratch space for HP importance computation")
+	}
 	err = os.MkdirAll(workingDir, 0700)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create scratch space for HP importance computation")
