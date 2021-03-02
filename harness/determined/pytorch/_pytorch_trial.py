@@ -281,7 +281,6 @@ class PyTorchTrialController(det.LoopTrialController):
         end = start + num_batches
 
         per_batch_metrics = []  # type: List[Dict]
-        epoch_per_batch_metrics: List[Dict] = []
         num_inputs = 0
 
         for batch_idx in range(start, end):
@@ -322,14 +321,8 @@ class PyTorchTrialController(det.LoopTrialController):
                     metric = metric.cpu().detach().numpy()
                 tr_metrics[name] = metric
 
-            epoch_per_batch_metrics.append(tr_metrics)
-            if self.context.is_epoch_end():
-                for callback in self.callbacks.values():
-                    callback.on_training_epoch_end(epoch_per_batch_metrics)
-                per_batch_metrics += epoch_per_batch_metrics
-                epoch_per_batch_metrics = []
+            per_batch_metrics.append(tr_metrics)
 
-        per_batch_metrics += epoch_per_batch_metrics
         # Aggregate and reduce training metrics from all the training processes.
         if self.hvd_config.use and self.hvd_config.average_training_metrics:
             per_batch_metrics = self._average_training_metrics(per_batch_metrics)

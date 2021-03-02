@@ -79,12 +79,6 @@ class PyTorchCallback:
         """
         pass
 
-    def on_training_epoch_end(self, output: List[Any]) -> None:
-        """
-        Run after a new training epoch has finished
-        """
-        pass
-
     def on_validation_epoch_start(self) -> None:
         """
         Run on start of a new validation epoch

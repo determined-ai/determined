@@ -18,7 +18,12 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 def check_compatibility(lm: pl.LightningModule) -> None:
     prefix = "Unsupported usage in PLAdapter: "
-    unsupported_members = {"training_step_end", "validation_step_end", "manual_backward"}
+    unsupported_members = {
+        "training_step_end",
+        "validation_step_end",
+        "manual_backward",
+        "on_train_epoch_end",
+    }
 
     members = inspect.getmembers(lm, predicate=inspect.ismethod)
     overridden_members = set(
@@ -85,10 +90,6 @@ class PLAdapter(PyTorchTrial):
                 if context._current_batch_idx is not None:
                     type(lm).current_epoch = context.current_train_epoch()  # type: ignore
                 lm.on_train_epoch_start()
-
-            def on_training_epoch_end(self, output: List[Any]) -> None:
-                lm.on_train_epoch_end(output)
-                lm.training_epoch_end(output)
 
             def on_validation_epoch_start(self) -> None:
                 lm.on_validation_epoch_start()
