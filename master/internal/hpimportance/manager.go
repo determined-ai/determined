@@ -1,7 +1,9 @@
 package hpimportance
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"time"
 
@@ -86,7 +88,12 @@ func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig, ma
 	growforest := path.Join(masterRoot, growforestBin)
 	_, err := os.Stat(growforest)
 	if os.IsNotExist(err) {
-		growforest = growforestBin
+		resolvedPath, err := exec.LookPath(growforestBin)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to find 'growforest' binary. Install it with " +
+				"'go install github.com/ryanbressler/CloudForest/growforest'")
+		}
+		growforest = resolvedPath
 	}
 
 	err = os.MkdirAll(workingDir, 0700)

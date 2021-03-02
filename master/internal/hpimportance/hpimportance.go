@@ -17,8 +17,10 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -36,20 +38,22 @@ const (
 // where order does matter. We need to keep define the Hps and
 // keep track of the order so the data columns will match.
 func createDataFile(data map[int][]model.HPImportanceTrialData,
-	experimentConfig *model.ExperimentConfig, workingDir string) (int, error) {
-	f, err := os.Create(path.Join(workingDir, arffFile))
+	experimentConfig *model.ExperimentConfig, dataFile string) (int, error) {
+	f, err := os.Create(dataFile)
 	if err != nil {
 		return 0, err
 	}
 	defer func() {
 		err = f.Close()
 		if err != nil {
-			fmt.Printf("failed to close arff file: %s", err.Error())
+			log.WithError(err).Error("failed to close arff file")
 		}
 	}()
 
+	var arff strings.Builder
+
 	// create top of file based on exp config
-	_, err = f.WriteString("@relation data\n\n@attribute metric numeric\n")
+	_, err = arff.WriteString("@relation data\n\n@attribute metric numeric\n")
 	if err != nil {
 		return 0, err
 	}
@@ -73,18 +77,18 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 			hpsOrder = append(hpsOrder, key)
 			st = fmt.Sprintf("@attribute %s numeric\n", key)
 		}
-		_, err = f.WriteString(st)
+		_, err = arff.WriteString(st)
 		if err != nil {
 			return 0, err
 		}
 	}
-	_, err = f.WriteString("@attribute numBatches numeric\n\n")
+	_, err = arff.WriteString("@attribute numBatches numeric\n\n")
 	if err != nil {
 		return 0, err
 	}
 
 	// Now we have to add the data to the file
-	_, err = f.WriteString("\n@data\n")
+	_, err = arff.WriteString("\n@data\n")
 	if err != nil {
 		return 0, err
 	}
@@ -114,7 +118,7 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 				st += fmt.Sprintf(",%v", hparamsVals[hp])
 			}
 			st += fmt.Sprintf(",%s\n", batchIDStr)
-			_, err = f.WriteString(st)
+			_, err = arff.WriteString(st)
 			if err != nil {
 				return 0, err
 			}
@@ -122,6 +126,7 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 			totalNumTrials++
 		}
 	}
+	f.WriteString(arff.String())
 	return totalNumTrials, nil
 }
 
@@ -136,7 +141,7 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 	defer func() {
 		err := file.Close()
 		if err != nil {
-			fmt.Printf("failed to close HP importance file: %s", err.Error())
+			log.WithError(err).Error("failed to close HP importance file")
 		}
 	}()
 
@@ -172,7 +177,11 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	experimentConfig *model.ExperimentConfig, masterConfig HPImportanceConfig,
 	growforest string, workingDir string) (map[string]float64, error) {
-	totalNumTrials, err := createDataFile(data, experimentConfig, workingDir)
+
+	growforestInput := path.Join(workingDir, arffFile)
+	growforestOutput := path.Join(workingDir, importanceFile)
+
+	totalNumTrials, err := createDataFile(data, experimentConfig, growforestInput)
 	if err != nil {
 		return nil, fmt.Errorf("error writing ARFF file: %s", err.Error())
 	}
@@ -204,7 +213,7 @@ func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	// #nosec G204
 	output, err := exec.Command(growforest,
 		// the data file created above
-		"-train", path.Join(workingDir, arffFile),
+		"-train", growforestInput,
 		// the y value used to predict. We use a generic metric so we don't have to keep track
 		// of current metric since name doesn't matter
 		"-target", "metric",
@@ -213,12 +222,12 @@ func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 		// number of replications/permutations
 		"-ace", strNumTrees,
 		// output file
-		"-importance", path.Join(workingDir, importanceFile),
+		"-importance", growforestOutput,
 		// file name to output predictor forest in sf format.
 		"-rfpred", path.Join(workingDir, "rface.sf"),
 	).CombinedOutput()
 	if err != nil {
-		fmt.Printf("growforest failed:\n" + string(output))
+		log.Error("growforest failed:\n " + string(output))
 		return nil, fmt.Errorf("random forest failed: %s", err.Error())
 	}
 

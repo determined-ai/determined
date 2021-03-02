@@ -357,7 +357,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// +- KubernetesResourceManager (scheduler.KubernetesResourceManager: kubernetesRM)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
-	// +- Telemetry (telemetry.telemetryActor: telemetry)
+	// +- Telemetry (telemetry.telemetry: telemetry)
 	// +- TrialLogger (internal.trialLogger: trialLogger)
 	// +- Experiments (actors.Group: experiments)
 	//     +- Experiment (internal.experiment: <experiment-id>)
@@ -580,7 +580,7 @@ func (m *Master) Run(ctx context.Context) error {
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
-		if telemetryActor, tErr := telemetry.NewActor(
+		if telemetry, tErr := telemetry.NewActor(
 			m.db,
 			m.ClusterID,
 			m.MasterID,
@@ -592,7 +592,7 @@ func (m *Master) Run(ctx context.Context) error {
 			log.WithError(tErr).Errorf("failed to initialize telemetry")
 		} else {
 			log.Info("telemetry reporting is enabled; run with `--telemetry-enabled=false` to disable")
-			m.system.ActorOf(actor.Addr("telemetry"), telemetryActor)
+			m.system.ActorOf(actor.Addr("telemetry"), telemetry)
 		}
 	} else {
 		log.Info("telemetry reporting is disabled")
