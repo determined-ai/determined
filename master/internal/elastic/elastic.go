@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/pkg/errors"
@@ -35,7 +35,7 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 		scheme = "http://"
 	}
 	addr := fmt.Sprintf("%s%s:%d", scheme, conf.Host, conf.Port)
-	logrus.Infof("connecting to elasticsearch %s", addr)
+	log.Infof("connecting to elasticsearch %s", addr)
 
 	cfg := elasticsearch.Config{
 		Addresses: []string{addr},
@@ -59,15 +59,17 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	for {
 		i, err := es.Info()
 		if err == nil {
-			logrus.Infof("connected to elasticsearch cluster with info: %s", i.String())
+			log.Infof("connected to elasticsearch cluster with info: %s", i.String())
 			return &Elastic{es}, nil
 		}
 		numTries++
 		// Elastic can take a really long time to come up and we'd rather not fail integrations on this.
-		if numTries >= 300 {
+		if numTries >= 45 {
 			return nil, errors.Wrapf(err, "could not connect to elastic after %v tries", numTries)
 		}
-		time.Sleep(time.Second)
+		toWait := 4 * time.Second
+		time.Sleep(toWait)
+		log.WithError(err).Warnf("failed to connect to elastic, trying again in %s", toWait)
 	}
 }
 

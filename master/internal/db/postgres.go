@@ -39,7 +39,9 @@ func ConnectPostgres(url string) (*PgDB, error) {
 		if numTries >= 15 {
 			return nil, errors.Wrapf(err, "could not connect to database after %v tries", numTries)
 		}
-		time.Sleep(4 * time.Second)
+		toWait := 4 * time.Second
+		time.Sleep(toWait)
+		log.WithError(err).Warnf("failed to connect to postgres, trying again in %s", toWait)
 	}
 }
 
