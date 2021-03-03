@@ -2,36 +2,36 @@ Description:  This template deploys a VPC, with a public and private subnet, and
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-0af17d43b1f4ff4ea
-      Agent: ami-0a01b67743d465a6e
+      Master: ami-093c296276d61b583
+      Agent: ami-066f88f0cdfb7bf85
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-04e6fcf8cfe3b09ea
-    #   Agent: ami-0c74312df78509701
+    #   Master: ami-0632cfe5256e6b811
+    #   Agent: ami-04c714f1265defe52
     # ap-southeast-1:
-    #   Master: ami-0ba45f1ec3dff60f9
-    #   Agent: ami-0eddf3f941d216f11
+    #   Master: ami-010e14b2b7ac1b58f
+    #   Agent: ami-0fe6077a80dfc4da4
     # ap-southeast-2:
-    #   Master: ami-004d0fb87d10716c6
-    #   Agent: ami-0c54777eb400a9e68
+    #   Master: ami-04fad20d313cc0947
+    #   Agent: ami-0613843cdf9e3d534
     eu-central-1:
-      Master: ami-08a1a61694dd1c82f
-      Agent: ami-0474e45bb1a45bbfe
+      Master: ami-0ce70c4057dc39200
+      Agent: ami-0f2ade7a1467fa97b
     eu-west-1:
-      Master: ami-0d67111dcacb4a14a
-      Agent: ami-0036879b70fee3339
+      Master: ami-0d94cb8577ea0e2fd
+      Agent: ami-0beaf86f97a60ae87
     # eu-west-2:
-    #   Master: ami-03441ec6f2faa7ddc
-    #   Agent: ami-05d9b28afa79dbda3
+    #   Master: ami-009725fa4dfe4acb0
+    #   Agent: ami-0b9b7742dfc44a1dd
     us-east-1:
-      Master: ami-099e921e69356cf89
-      Agent: ami-0080b638f1339ccd5
+      Master: ami-09943f9da1f1b7899
+      Agent: ami-0f68afa2f3e50e4ce
     us-east-2:
-      Master: ami-05edbb8e25e281608
-      Agent: ami-07318f0e0b3a02b8e
+      Master: ami-0bcacfac640850227
+      Agent: ami-00b5f1b5f2887ba15
     us-west-2:
-      Master: ami-00f1e37d20049f858
-      Agent: ami-0211fc4b3b0eb5c64
+      Master: ami-076cbb27c223df09a
+      Agent: ami-075e1e82ca19a0433
 
 Parameters:
   VpcCIDR:

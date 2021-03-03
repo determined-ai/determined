@@ -101,11 +101,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.7-tf-1.15-cpu-412f759
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-412f759
 
   login-docker:
     parameters:
