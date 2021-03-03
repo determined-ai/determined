@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"crypto/tls"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,10 +15,14 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -144,6 +149,68 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 		entries = make([]*logger.Entry, 0)
 	}
 	return entries, nil
+}
+
+func (m *Master) getResourceAllocationRaw(c echo.Context) error {
+	args := struct {
+		StartDate string `query:"start_date"`
+		EndDate   string `query:"end_date"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	startDate, err := time.Parse("2006-01-02T15:04:05Z", args.StartDate)
+	if err != nil {
+		return errors.Wrap(err, "invalid start date")
+	}
+	endDate, err := time.Parse("2006-01-02T15:04:05Z", args.EndDate)
+	if err != nil {
+		return errors.Wrap(err, "invalid end date")
+	}
+	if startDate.After(endDate) {
+		return errors.New("start date cannot be after end date")
+	}
+
+	resp := &apiv1.ResourceAllocationRawResponse{}
+	if err := m.db.QueryProto(
+		"allocation_raw", &resp.ResourceEntry, startDate.UTC(), endDate.UTC(),
+	); err != nil {
+		return errors.Wrap(err, "error fetching allocation data")
+	}
+
+	c.Response().Header().Set("Content-Type", "text/csv")
+
+	labelEscaper := strings.NewReplacer("\\", "\\\\", ",", "\\,")
+	csvWriter := csv.NewWriter(c.Response())
+	formatTimestamp := func(ts *timestamppb.Timestamp) string {
+		t := time.Unix(ts.Seconds, int64(ts.Nanos)).UTC()
+		return t.Format(time.RFC3339Nano)
+	}
+
+	header := []string{
+		"experiment_id", "kind", "username", "labels", "slots", "start_time", "end_time", "seconds",
+	}
+	if err := csvWriter.Write(header); err != nil {
+		return err
+	}
+
+	for _, entry := range resp.ResourceEntry {
+		var labels []string
+		for _, label := range entry.Labels {
+			labels = append(labels, labelEscaper.Replace(label))
+		}
+		fields := []string{
+			strconv.Itoa(int(entry.ExperimentId)), entry.Kind, entry.Username, strings.Join(labels, ","),
+			strconv.Itoa(int(entry.Slots)), formatTimestamp(entry.StartTime), formatTimestamp(entry.EndTime),
+			fmt.Sprintf("%f", entry.Seconds),
+		}
+		if err := csvWriter.Write(fields); err != nil {
+			return err
+		}
+	}
+	csvWriter.Flush()
+	return nil
 }
 
 func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error {
@@ -548,6 +615,9 @@ func (m *Master) Run(ctx context.Context) error {
 	checkpointsGroup.GET("/:checkpoint_uuid", api.Route(m.getCheckpoint))
 	checkpointsGroup.POST("/:checkpoint_uuid/metadata", api.Route(m.addCheckpointMetadata))
 	checkpointsGroup.DELETE("/:checkpoint_uuid/metadata", api.Route(m.deleteCheckpointMetadata))
+
+	resourcesGroup := m.echo.Group("/resources", authFuncs...)
+	resourcesGroup.GET("/allocation/raw", m.getResourceAllocationRaw)
 
 	m.echo.POST("/trial_logs", api.Route(m.postTrialLogs))
 

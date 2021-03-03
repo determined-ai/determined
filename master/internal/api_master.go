@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -86,4 +87,31 @@ func (a *apiServer) MasterLogs(
 		actor.Addr("logStore-"+uuid.New().String()),
 		api.NewLogStoreProcessor(resp.Context(), lReq, fetch, onBatch, nil, nil),
 	).AwaitTermination()
+}
+
+func (a *apiServer) ResourceAllocationRaw(
+	_ context.Context,
+	req *apiv1.ResourceAllocationRawRequest,
+) (*apiv1.ResourceAllocationRawResponse, error) {
+	resp := &apiv1.ResourceAllocationRawResponse{}
+
+	if req.StartDate == nil {
+		return nil, errors.New("no start date provided")
+	}
+	if req.EndDate == nil {
+		return nil, errors.New("no end date provided")
+	}
+	startDate := time.Unix(req.StartDate.Seconds, int64(req.StartDate.Nanos)).UTC()
+	endDate := time.Unix(req.EndDate.Seconds, int64(req.EndDate.Nanos)).UTC()
+	if startDate.After(endDate) {
+		return nil, errors.New("start date cannot be after end date")
+	}
+
+	if err := a.m.db.QueryProto(
+		"allocation_raw", &resp.ResourceEntry, startDate.UTC(), endDate.UTC(),
+	); err != nil {
+		return nil, errors.Wrap(err, "error fetching allocation data")
+	}
+
+	return resp, nil
 }
