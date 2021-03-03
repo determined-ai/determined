@@ -136,7 +136,7 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
     ami_lines = [
         a
         for a in artifact_lines
-        if a.builder.startswith("amazon-ebs") and a.msgtype == "id" and a.val
+        if a.builder == "amazon-ebs" and a.msgtype == "id" and a.val
     ]
     assert (
         len(ami_lines) == 1
@@ -155,9 +155,6 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
         for a in artifact_lines
         if a.msgtype == "builder-id" and a.val == "packer.googlecompute"
     ]
-    # aws gov images do not have matching gcp environment images.
-    if len(gcp_builders) == 0:
-        return out
     assert len(gcp_builders) == 1, f"expected one gcp builder but got: {gcp_builders}"
     gcp_builder = gcp_builders[0]
 
