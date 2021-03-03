@@ -1,5 +1,3 @@
-package hpimportance
-
 /**
 This file computes the HP importance for the HP visualizations.
 It uses the CloudForest utility (github.com/ryanbressler/CloudForest).
@@ -7,6 +5,8 @@ It uses the CloudForest utility (github.com/ryanbressler/CloudForest).
 The core steps are create the data file, run growforest which outputs
 the importance, read and return the values.
 **/
+
+package hpimportance
 
 import (
 	"bufio"
