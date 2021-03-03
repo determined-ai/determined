@@ -2,8 +2,6 @@ import enum
 import time
 from typing import Any, Dict, List, Optional, TypeVar, Union
 
-import petname
-
 from determined_common import schemas
 
 
@@ -833,7 +831,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
 
     def runtime_defaults(self) -> None:
         if self.description is None:
-            self.description = f"Experiment ({petname.Generate(3)})"
+            self.description = "Experiment (really-bad-petname)"
 
 
 # Test Structs Below:
