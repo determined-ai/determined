@@ -157,7 +157,6 @@ const TrialDetailsComp: React.FC = () => {
   }, [ upgradedConfig ]);
 
   const columns = useMemo(() => {
-
     const checkpointRenderer = (_: string, record: Step) => {
       if (record.checkpoint && hasCheckpointStep(record)) {
         const checkpoint = {
@@ -224,6 +223,53 @@ const TrialDetailsComp: React.FC = () => {
         return false;
       });
   }, [ showFilter, trial?.workloads ]);
+
+  const fetchExperimentDetails = useCallback(async () => {
+    if (!experimentId) return;
+
+    try {
+      const response = await getExperimentDetails(
+        { id: experimentId },
+        { signal: canceler.signal },
+      );
+      setExperiment(response);
+
+      // Experiment id does not exist in route, reroute to the one with it
+      if (!experimentIdParam) {
+        history.replace(paths.trialDetails(trialId, experimentId));
+      }
+
+      // Default to selecting config search metric only.
+      const searcherName = response.config?.searcher?.metric;
+      const defaultMetric = metricNames.find(metricName => {
+        return metricName.name === searcherName && metricName.type === MetricType.Validation;
+      });
+      const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
+      setDefaultMetrics(defaultMetrics);
+      const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
+      setDefaultMetrics(defaultMetrics);
+      setMetrics(initMetrics);
+    } catch (e) {
+      if (axios.isCancel(e)) return;
+      handleError({
+        error: e,
+        message: 'Failed to load experiment details.',
+        publicMessage: 'Failed to load experiment details.',
+        publicSubject: 'Unable to fetch Trial Experiment Detail',
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
+  }, [
+    canceler,
+    experimentId,
+    experimentIdParam,
+    history,
+    metricNames,
+    storage,
+    storageTableMetricsKey,
+    trialId,
+  ]);
 
   const fetchTrialDetails = useCallback(async () => {
     try {
@@ -367,6 +413,10 @@ If the problem persists please contact support.',
   const stopPolling = usePolling(fetchTrialDetails);
 
   useEffect(() => {
+    fetchExperimentDetails();
+  }, [ fetchExperimentDetails ]);
+
+  useEffect(() => {
     if (trialDetails.data && terminalRunStates.has(trialDetails.data.state)) {
       stopPolling();
     }
@@ -391,58 +441,6 @@ If the problem persists please contact support.',
       setContModalConfig('failed to load experiment config');
     }
   }, [ setFreshContinueConfig ]);
-
-  useEffect(() => {
-    if (experimentId === undefined) return;
-
-    const fetchExperimentDetails = async () => {
-      try {
-        const response = await getExperimentDetails(
-          { id: experimentId },
-          { signal: canceler.signal },
-        );
-        setExperiment(response);
-
-        // Experiment id does not exist in route, reroute to the one with it
-        if (!experimentIdParam) {
-          history.replace(paths.trialDetails(trialId, experimentId));
-        }
-
-        // Default to selecting config search metric only.
-        const searcherName = response.config?.searcher?.metric;
-        const defaultMetric = metricNames.find(metricName => {
-          return metricName.name === searcherName && metricName.type === MetricType.Validation;
-        });
-        const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
-        setDefaultMetrics(defaultMetrics);
-        const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
-        setDefaultMetrics(defaultMetrics);
-        setMetrics(initMetrics);
-      } catch (e) {
-        if (axios.isCancel(e)) return;
-        handleError({
-          error: e,
-          message: 'Failed to load experiment details.',
-          publicMessage: 'Failed to load experiment details.',
-          publicSubject: 'Unable to fetch Trial Experiment Detail',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-    };
-
-    fetchExperimentDetails();
-  }, [
-    canceler,
-    experimentId,
-    experimentIdParam,
-    history,
-    metricNames,
-    trialDetails.source,
-    trialId,
-    storage,
-    storageTableMetricsKey,
-  ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
   if (trialDetails.error !== undefined) {
