@@ -1,9 +1,7 @@
-import { Radio } from 'antd';
-import { RadioChangeEvent } from 'antd/lib/radio';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
-import Icon from 'components/Icon';
+import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import ResourcePoolCard from 'components/ResourcePoolCard';
@@ -25,21 +23,16 @@ import { getSlotContainerStates } from 'utils/cluster';
 
 import css from './Cluster.module.scss';
 
-enum View {
-  List,
-  Grid
-}
-
 const STORAGE_PATH = 'cluster';
 const VIEW_CHOICE_KEY = 'view-choice';
 
 const Cluster: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
-  const initView = storage.getWithDefault(VIEW_CHOICE_KEY, View.Grid);
+  const initView = storage.getWithDefault(VIEW_CHOICE_KEY, GridListView.Grid);
   const agents = Agents.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
-  const [ selectedView, setSelectedView ] = useState<View>(initView);
+  const [ selectedView, setSelectedView ] = useState<GridListView>(initView);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ canceler ] = useState(new AbortController());
 
@@ -104,10 +97,9 @@ const Cluster: React.FC = () => {
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
-  const onChange = useCallback((e: RadioChangeEvent) => {
-    const view = e.target.value as View;
-    storage.set(VIEW_CHOICE_KEY, view);
-    setSelectedView(view);
+  const handleRadioChange = useCallback((value: GridListView) => {
+    storage.set(VIEW_CHOICE_KEY, value);
+    setSelectedView(value);
   }, [ storage ]);
 
   const handleTableRow = useCallback((record: ResourcePool) => {
@@ -121,17 +113,6 @@ const Cluster: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
-
-  const viewOptions = (
-    <Radio.Group value={selectedView} onChange={onChange}>
-      <Radio.Button value={View.Grid}>
-        <Icon name="grid" size="large" title="Card View" />
-      </Radio.Button>
-      <Radio.Button value={View.List}>
-        <Icon name="list" size="large" title="Table View" />
-      </Radio.Button>
-    </Radio.Group>
-  );
 
   return (
     <Page className={css.base} id="cluster" title="Cluster">
@@ -163,10 +144,10 @@ const Cluster: React.FC = () => {
           totalSlots={overview.GPU.total} />
       </Section>
       <Section
-        options={viewOptions}
+        options={<GridListRadioGroup value={selectedView} onChange={handleRadioChange} />}
         title={`${resourcePools.length} Resource Pools`}
       >
-        {selectedView === View.Grid &&
+        {selectedView === GridListView.Grid &&
           <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
             {resourcePools.map((rp, idx) => {
               return <ResourcePoolCard
@@ -179,7 +160,7 @@ const Cluster: React.FC = () => {
             })}
           </Grid>
         }
-        {selectedView === View.List &&
+        {selectedView === GridListView.List &&
           <ResponsiveTable<ResourcePool>
             columns={columns}
             dataSource={resourcePools}

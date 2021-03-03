@@ -1,5 +1,5 @@
 import { Alert, Select } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
@@ -12,17 +12,14 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
-import useStorage from 'hooks/useStorage';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import themes, { defaultThemeId } from 'themes';
 import {
   ExperimentBase, ExperimentHyperParam, ExperimentHyperParamType, MetricName, MetricType,
-  metricTypeParamMap, Primitive, Range, RunState,
+  metricTypeParamMap, Primitive, Range,
 } from 'types';
-import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
-import { ColorScale } from 'utils/color';
+import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, isNumber } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { metricNameToStr } from 'utils/string';
@@ -36,10 +33,14 @@ const { Option } = Select;
 interface Props {
   batches: number[];
   experiment: ExperimentBase;
+  hParams: string[];
+  isLoading?: boolean;
   metrics: MetricName[];
   onBatchChange?: (batch: number) => void;
+  onHParamChange?: (hParams?: string[]) => void;
   onMetricChange?: (metric: MetricName) => void;
   selectedBatch: number;
+  selectedHParams: string[];
   selectedMetric: MetricName;
 }
 
@@ -50,52 +51,36 @@ interface HpTrialData {
   trialIds: number[];
 }
 
-const STORAGE_PATH = 'experiment-visualization';
-const STORAGE_HP_KEY = 'hps';
-const MAX_HP_COUNT = 10;
-const DEFAULT_SCALE_COLORS: Range<string> = [
-  themes[defaultThemeId].colors.danger.light,
-  themes[defaultThemeId].colors.action.normal,
-];
-const REVERSE_SCALE_COLORS = clone(DEFAULT_SCALE_COLORS).reverse();
-const NEUTRAL_SCALE_COLORS: Range<string> = [
-  'rgb(255, 184, 0)',
-  themes[defaultThemeId].colors.action.normal,
-];
-
 const HpParallelCoordinates: React.FC<Props> = ({
   batches,
   experiment,
+  hParams,
+  isLoading = false,
   metrics,
   onBatchChange,
+  onHParamChange,
   onMetricChange,
   selectedBatch,
+  selectedHParams,
   selectedMetric,
 }: Props) => {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const trialIdRef = useRef<HTMLDivElement>(null);
   const metricValueRef = useRef<HTMLDivElement>(null);
-  const storage = useStorage(`${STORAGE_PATH}/${experiment.id}/parcoords`);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpTrialData>();
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
   const [ filteredTrialIdMap, setFilteredTrialIdMap ] = useState<Record<number, boolean>>();
 
-  // Filter out constant hyperparameters.
-  const fullHpList = Object.keys(experiment.config.hyperparameters).filter(key => {
-    const hp = experiment.config.hyperparameters[key];
-    return hp.type !== ExperimentHyperParamType.Constant;
-  });
-  const hyperparameters = fullHpList.reduce((acc, key) => {
-    acc[key] = experiment.config.hyperparameters[key];
-    return acc;
-  }, {} as Record<string, ExperimentHyperParam>);
-  const limitedHpList = fullHpList.slice(0, MAX_HP_COUNT);
-  const defaultHpList = storage.get<string[]>(STORAGE_HP_KEY);
-  const [ hpList, setHpList ] = useState<string[]>(defaultHpList || limitedHpList);
+  const hyperparameters = useMemo(() => {
+    return hParams.reduce((acc, key) => {
+      acc[key] = experiment.config.hyperparameters[key];
+      return acc;
+    }, {} as Record<string, ExperimentHyperParam>);
+  }, [ experiment.config.hyperparameters, hParams ]);
 
-  const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
+  const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric.type === MetricType.Validation &&
@@ -105,22 +90,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return undefined;
   }, [ experiment.config.searcher, selectedMetric ]);
 
-  const colorScale: ColorScale[] = useMemo(() => {
-    let colors = NEUTRAL_SCALE_COLORS;
-    if (smallerIsBetter != null) {
-      colors = smallerIsBetter ? REVERSE_SCALE_COLORS : DEFAULT_SCALE_COLORS;
-    }
-    return colors.map((color, index) => {
-      if (chartData?.metricRange) {
-        const scale = chartData?.metricRange ? chartData?.metricRange[index] : index;
-        return { color, scale };
-      }
-      return { color, scale: index };
-    });
+  const colorScale = useMemo(() => {
+    return getColorScale(chartData?.metricRange, smallerIsBetter);
   }, [ chartData?.metricRange, smallerIsBetter ]);
 
   const dimensions = useMemo(() => {
-    const newDimensions = hpList.map(key => {
+    const newDimensions = selectedHParams.map(key => {
       const hp = hyperparameters[key] || {};
       const dimension: Dimension = {
         label: key,
@@ -147,7 +122,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
 
     return newDimensions;
-  }, [ chartData, hyperparameters, hpList, selectedMetric ]);
+  }, [ chartData, hyperparameters, selectedMetric, selectedHParams ]);
 
   const resetData = useCallback(() => {
     setChartData(undefined);
@@ -161,21 +136,18 @@ const HpParallelCoordinates: React.FC<Props> = ({
     onBatchChange(batch as number);
   }, [ onBatchChange, resetData ]);
 
+  const handleHParamChange = useCallback((hps: SelectValue) => {
+    if (!onHParamChange) return;
+    if (Array.isArray(hps)) {
+      onHParamChange(hps.length === 0 ? undefined : hps as string[]);
+    }
+  }, [ onHParamChange ]);
+
   const handleMetricChange = useCallback((metric: MetricName) => {
     if (!onMetricChange) return;
     resetData();
     onMetricChange(metric);
   }, [ onMetricChange, resetData ]);
-
-  const handleHpChange = useCallback((hps: SelectValue) => {
-    if (Array.isArray(hps) && hps.length === 0) {
-      storage.remove(STORAGE_HP_KEY);
-      setHpList(limitedHpList);
-    } else {
-      storage.set(STORAGE_HP_KEY, hps);
-      setHpList(hps as string[]);
-    }
-  }, [ limitedHpList, storage ]);
 
   const handleChartFilter = useCallback((constraints: Record<string, Range>) => {
     if (!chartData) return;
@@ -310,14 +282,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
             onChange={handleMetricChange} />
           <MultiSelect
             label="HP"
-            value={hpList}
-            onChange={handleHpChange}>
-            {fullHpList.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
+            value={selectedHParams}
+            onChange={handleHParamChange}>
+            {hParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
           </MultiSelect>
         </ResponsiveFilters>}
         title="HP Parallel Coordinates">
         <div className={css.container}>
-          {!hasLoaded || !chartData ? <Spinner /> : (
+          {!hasLoaded || isLoading || !chartData ? <Spinner /> : (
             <>
               <div className={css.chart}>
                 <ParallelCoordinates

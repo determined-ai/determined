@@ -7,6 +7,7 @@ import { metricNameSorter } from 'utils/sort';
 import { metricNameFromValue, metricNameToValue, valueToMetricName } from 'utils/trial';
 
 import BadgeTag from './BadgeTag';
+import MetricBadgeTag from './MetricBadgeTag';
 import SelectFilter from './SelectFilter';
 
 const { OptGroup, Option } = Select;
@@ -200,9 +201,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       {validationMetricNames.map(key => {
         const value = metricNameToValue(key);
         return <Option key={value} value={value}>
-          <BadgeTag
-            label={key.name}
-            tooltip={key.type}>{key.type.substr(0, 1).toUpperCase()}</BadgeTag>
+          <MetricBadgeTag metric={key} />
         </Option>;
       })}
     </OptGroup>}
@@ -210,9 +209,7 @@ const MetricSelectFilter: React.FC<Props> = ({
       {trainingMetricNames.map(key => {
         const value = metricNameToValue(key);
         return <Option key={value} value={value}>
-          <BadgeTag
-            label={key.name}
-            tooltip={key.type}>{key.type.substr(0, 1).toUpperCase()}</BadgeTag>
+          <MetricBadgeTag metric={key} />
         </Option>;
       })}
     </OptGroup>}

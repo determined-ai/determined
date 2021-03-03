@@ -3,3 +3,8 @@ export const percent = (n: number, decimals = 1): number => {
   const factor = Math.pow(10, decimals);
   return Math.round(normalized * 100 * factor) / factor;
 };
+
+export const roundToPrecision = (n: number, precision = 6): number => {
+  const factor = 10 ** precision;
+  return Math.round((n + Number.EPSILON) * factor) / factor;
+};

@@ -11,6 +11,8 @@
     padding-bottom: var(--theme-sizes-layout-medium);
   }
   .title {
+    align-items: center;
+    display: flex;
     height: var(--theme-sizes-layout-giant);
     line-height: var(--theme-sizes-layout-giant);
     margin: 0;

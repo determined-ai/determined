@@ -14,6 +14,9 @@ export type Range<T = Primitive> = [ T, T ];
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
 
+export type PropsWithClassName<T> = T & { className?: string };
+export type PropsWithStoragePath<T> = T & { storagePath?: string };
+
 export interface User {
   username: string;
 }
@@ -440,8 +443,6 @@ export type AnyTask = CommandTask | ExperimentTask;
 export type RecentTask = AnyTask & RecentEvent;
 export type RecentCommandTask = CommandTask & RecentEvent;
 export type RecentExperimentTask = ExperimentTask & RecentEvent;
-
-export type PropsWithClassName<T> = T & {className?: string};
 
 export type TaskType = CommandType | 'Experiment';
 

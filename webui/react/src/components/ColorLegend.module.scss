@@ -1,0 +1,16 @@
+.base {
+  .title {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--theme-sizes-layout-tiny);
+  }
+  .gradient {
+    border-radius: 0.3rem;
+    height: var(--theme-sizes-layout-huge);
+    margin-bottom: var(--theme-sizes-layout-tiny);
+  }
+  .labels {
+    display: flex;
+    justify-content: space-between;
+  }
+}

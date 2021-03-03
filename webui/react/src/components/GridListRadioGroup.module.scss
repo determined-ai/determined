@@ -1,0 +1,11 @@
+.base {
+  display: flex;
+  
+  .option {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    width: var(--theme-sizes-layout-giant);
+  }
+  .option > span:last-child { height: var(--theme-sizes-icon-large); }
+}

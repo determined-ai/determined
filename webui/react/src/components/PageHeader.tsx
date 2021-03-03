@@ -1,5 +1,5 @@
 import { Breadcrumb } from 'antd';
-import { Route } from 'antd/lib/breadcrumb/Breadcrumb';
+import { Route } from 'antd/es/breadcrumb/Breadcrumb';
 import React from 'react';
 
 import { CommonProps } from 'types';

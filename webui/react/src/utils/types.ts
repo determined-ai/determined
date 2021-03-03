@@ -198,8 +198,9 @@ export const checkpointSize = (checkpoint: Checkpoint | CheckpointWorkload): num
 };
 
 /* Experiment Config */
-export const trialHParamsToExperimentHParams = (hParams: Record<string, unknown>)
-: ExperimentHyperParams => {
+export const trialHParamsToExperimentHParams = (
+  hParams: Record<string, unknown>,
+): ExperimentHyperParams => {
   const experimentHParams: ExperimentHyperParams = {};
   Object.entries(hParams).forEach(([ param, value ]) => {
     experimentHParams[param] = {

@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: Featuring two new hyperparameters visualizations! Use HP
+   Scatter Plots to find your most impactful hyperparameters. Use HP
+   Heat Maps to see find significant relationships between your
+   hyperparameters.

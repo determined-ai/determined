@@ -1,5 +1,5 @@
 import { Button, Col, Form, Input, Modal, Row, Select, Tooltip } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import { SelectValue } from 'antd/es/select';
 import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -7,12 +7,12 @@ import { useParams } from 'react-router';
 import { useHistory } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
-import BadgeTag from 'components/BadgeTag';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Message, { MessageType } from 'components/Message';
+import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -202,9 +202,7 @@ const TrialDetailsComp: React.FC = () => {
           extractMetricValue(a, metricName),
           extractMetricValue(b, metricName),
         ),
-        title: <BadgeTag
-          label={metricName.name}
-          tooltip={metricName.type}>{metricName.type.substr(0, 1).toUpperCase()}</BadgeTag>,
+        title: <MetricBadgeTag metric={metricName} />,
       });
     });
 

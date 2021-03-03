@@ -1,6 +1,6 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Message, { MessageType } from 'components/Message';
@@ -13,7 +13,9 @@ import { handlePath, paths } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, MetricName, metricTypeParamMap, RunState } from 'types';
+import {
+  ExperimentBase, ExperimentHyperParam, MetricName, metricTypeParamMap, RunState,
+} from 'types';
 import { terminalRunStates } from 'utils/types';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
@@ -23,6 +25,8 @@ const { Option } = Select;
 
 interface Props {
   experiment: ExperimentBase;
+  hParams: string[];
+  isLoading?: boolean;
   metrics: MetricName[];
   onMetricChange?: (metric: MetricName) => void;
   selectedMetric: MetricName
@@ -34,6 +38,8 @@ const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
+  hParams,
+  isLoading = false,
   metrics,
   onMetricChange,
   selectedMetric,
@@ -50,6 +56,13 @@ const LearningCurve: React.FC<Props> = ({
 
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
+
+  const hyperparameters = useMemo(() => {
+    return hParams.reduce((acc, key) => {
+      acc[key] = experiment.config.hyperparameters[key];
+      return acc;
+    }, {} as Record<string, ExperimentHyperParam>);
+  }, [ experiment.config.hyperparameters, hParams ]);
 
   const resetData = useCallback(() => {
     setChartData([]);
@@ -198,7 +211,7 @@ const LearningCurve: React.FC<Props> = ({
         </ResponsiveFilters>}
         title="Learning Curve">
         <div className={css.container}>
-          {!hasLoaded ? <Spinner /> : (
+          {!hasLoaded || isLoading ? <Spinner /> : (
             <>
               <div className={css.chart}>
                 <LearningCurveChart
@@ -214,7 +227,7 @@ const LearningCurve: React.FC<Props> = ({
                 <HpTrialTable
                   experimentId={experiment.id}
                   highlightedTrialId={chartTrialId}
-                  hyperparameters={experiment.config.hyperparameters || {}}
+                  hyperparameters={hyperparameters}
                   metric={selectedMetric}
                   trialHps={trialHps}
                   trialIds={trialIds}

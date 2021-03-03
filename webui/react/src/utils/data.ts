@@ -1,4 +1,4 @@
-import { RawJson } from 'types';
+import { RawJson, RecordKey } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isBoolean = (data: unknown): boolean => typeof data === 'boolean';
@@ -6,6 +6,7 @@ export const isNumber = (data: unknown): data is number => typeof data === 'numb
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
+export const isString = <T>(data: T): boolean => typeof data === 'string';
 export const isFunction = (fn: unknown): boolean => {
   return typeof fn === 'function';
 };
@@ -17,6 +18,10 @@ export const isAsyncFunction = (fn: unknown): boolean => {
 
 export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
+};
+
+export const hasObjectKeys = (data: unknown): boolean => {
+  return isObject(data) && Object.keys(data as Record<RecordKey, unknown>).length !== 0;
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

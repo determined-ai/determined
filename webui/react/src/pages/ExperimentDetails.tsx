@@ -1,5 +1,4 @@
 import { Space, Tabs } from 'antd';
-import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
@@ -14,7 +13,6 @@ import usePolling from 'hooks/usePolling';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'services/api';
-import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentBase, ValidationHistory } from 'types';
 import { clone, isEqual } from 'utils/data';
@@ -49,34 +47,38 @@ const ExperimentDetails: React.FC = () => {
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
   const [ forkModalVisible, setForkModalVisible ] = useState(false);
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
-  const [ source ] = useState(axios.CancelToken.source());
-  const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentBase>>({
-    data: undefined,
-    error: undefined,
-    isLoading: true,
-    source,
-  });
-  const [ experimentCanceler ] = useState(new AbortController());
+  const [ canceler ] = useState(new AbortController());
+  const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
+  const [ pageError, setPageError ] = useState<Error>();
 
   const id = parseInt(experimentId);
   const basePath = paths.experimentDetails(experimentId);
-  const experiment = experimentDetails.data;
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const experiment = await getExperimentDetails({ id }, { signal: experimentCanceler.signal });
-      const validationHistory = await getExpValidationHistory({ id });
-      if (!isEqual(experiment, experimentDetails.data)) {
-        setExperimentDetails(prev => ({ ...prev, data: experiment, isLoading: false }));
+      const [ experimentData, validationHistory ] = await Promise.all([
+        getExperimentDetails({ id }, { signal: canceler.signal }),
+        getExpValidationHistory({ id }, { signal: canceler.signal }),
+      ]);
+      if (!isEqual(experimentData, experiment)) {
+        setExperiment(experimentData);
       }
-      setValHistory(validationHistory);
+      if (!isEqual(validationHistory, valHistory)) {
+        setValHistory(validationHistory);
+      }
     } catch (e) {
-      if (!experimentDetails.error && !isAborted(e)) {
-        setExperimentDetails(prev => ({ ...prev, error: e }));
+      if (!pageError && !isAborted(e)) {
+        setPageError(e);
       }
     }
-  }, [ id, experimentDetails.data, experimentDetails.error, experimentCanceler.signal ]);
+  }, [
+    experiment,
+    id,
+    canceler.signal,
+    pageError,
+    valHistory,
+  ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
@@ -112,14 +114,14 @@ const ExperimentDetails: React.FC = () => {
   }, [ basePath, history, tab ]);
 
   useEffect(() => {
-    if (experimentDetails.data && terminalRunStates.has(experimentDetails.data.state)) {
+    if (experiment && terminalRunStates.has(experiment.state)) {
       stopPolling();
     }
-  }, [ experimentDetails.data, stopPolling ]);
+  }, [ experiment, stopPolling ]);
 
   useEffect(() => {
-    return () => source.cancel();
-  }, [ source ]);
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   useEffect(() => {
     try {
@@ -136,8 +138,8 @@ const ExperimentDetails: React.FC = () => {
 
   if (isNaN(id)) {
     return <Message title={`Invalid Experiment ID ${experimentId}`} />;
-  } else if (experimentDetails.error) {
-    const message = isNotFound(experimentDetails.error) ?
+  } else if (pageError) {
+    const message = isNotFound(pageError) ?
       `Unable to find Experiment ${experimentId}` :
       `Unable to fetch Experiment ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
