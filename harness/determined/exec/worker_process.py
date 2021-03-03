@@ -58,4 +58,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except det.InvalidHP:
+        logging.info("InvalidHP detected, gracefully exiting trial")
+        pass
