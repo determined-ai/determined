@@ -1,4 +1,5 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
+import { Dayjs } from 'dayjs';
 
 import { CommandType, RunState } from 'types';
 
@@ -140,4 +141,11 @@ export interface GetShellsParams extends FetchOptions, PaginationParams {
 
 export interface GetTensorboardsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
+}
+
+export interface GetResourceAllocationAggregatedParams {
+  endDate: Dayjs,
+  period: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'
+  | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY',
+  startDate: Dayjs,
 }

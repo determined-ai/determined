@@ -68,7 +68,7 @@ const routes: RouteConfig[] = [
     icon: 'cluster',
     id: 'cluster',
     needAuth: true,
-    path: '/cluster',
+    path: '/cluster/:tab?',
     title: 'Cluster',
   },
   {

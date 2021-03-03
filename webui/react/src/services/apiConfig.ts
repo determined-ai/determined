@@ -6,11 +6,28 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import {
-  CommandIdParams, CreateExperimentParams, DetApi, EmptyParams, ExperimentDetailsParams,
-  ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
-  GetShellsParams, GetTensorboardsParams, GetTrialsParams, HttpApi, LaunchNotebookParams,
-  LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams,
-  TaskLogsParams, TrialDetailsParams,
+  CommandIdParams,
+  CreateExperimentParams,
+  DetApi,
+  EmptyParams,
+  ExperimentDetailsParams,
+  ExperimentIdParams,
+  GetCommandsParams,
+  GetExperimentsParams,
+  GetNotebooksParams,
+  GetResourceAllocationAggregatedParams,
+  GetShellsParams,
+  GetTensorboardsParams,
+  GetTrialsParams,
+  HttpApi,
+  LaunchNotebookParams,
+  LaunchTensorboardParams,
+  LoginResponse,
+  LogsParams,
+  PatchExperimentParams,
+  SingleEntityParams,
+  TaskLogsParams,
+  TrialDetailsParams,
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
@@ -29,6 +46,7 @@ export const detApi = {
   Auth: new Api.AuthenticationApi(ApiConfig),
   Cluster: new Api.ClusterApi(ApiConfig),
   Commands: new Api.CommandsApi(ApiConfig),
+  Determined: new Api.DeterminedApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   Internal: new Api.InternalApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
@@ -54,6 +72,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Auth = new Api.AuthenticationApi(config);
   detApi.Cluster = new Api.ClusterApi(config);
   detApi.Commands = new Api.CommandsApi(config);
+  detApi.Determined = new Api.DeterminedApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
   detApi.Internal = new Api.InternalApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
@@ -143,6 +162,22 @@ export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsRespons
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
   request: () => detApi.Internal.determinedGetResourcePools(),
+};
+
+export const getResourceAllocationAggregated: DetApi<
+  GetResourceAllocationAggregatedParams, Api.V1ResourceAllocationAggregatedResponse,
+  Api.V1ResourceAllocationAggregatedResponse
+> = {
+  name: 'getResourceAllocationAggregated',
+  postProcess: (response) => response,
+  request: (params: GetResourceAllocationAggregatedParams, options) => {
+    return detApi.Determined.determinedResourceAllocationAggregated(
+      params.startDate.format('YYYY-MM-DD'),
+      params.endDate.format('YYYY-MM-DD'),
+      params.period,
+      options,
+    );
+  },
 };
 
 /* Experiment */

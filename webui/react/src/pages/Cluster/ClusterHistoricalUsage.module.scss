@@ -1,0 +1,12 @@
+.filter {
+  border-bottom: 1px solid var(--theme-colors-monochrome-12);
+  margin-bottom: var(--theme-sizes-layout-big);
+  margin-top: calc(var(--theme-sizes-layout-medium) * -1);
+  padding-bottom: var(--theme-sizes-layout-medium);
+
+  :global(.ant-col:not(:last-child)) {
+    border-right: 1px solid var(--theme-colors-monochrome-12);
+    margin-right: var(--theme-sizes-layout-big);
+    padding-right: var(--theme-sizes-layout-big);
+  }
+}

@@ -384,6 +384,12 @@ export default class StepImplementation {
     assert.strictEqual(parseInt(numAgents), parseInt(count));
   }
 
+  @Step('Should have <count> sections')
+  public async checkSectionsCount(count: string) {
+    const sections = await t.$('div[class^="Section_body"]').elements();
+    assert.strictEqual(sections.length, parseInt(count));
+  }
+
   /* Logs */
   @Step('Should have some log entries')
   public async checkSomeLogLines() {

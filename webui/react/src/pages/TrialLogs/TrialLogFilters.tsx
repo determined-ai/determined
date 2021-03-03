@@ -142,11 +142,15 @@ const TrialLogFilters: React.FC<LogViewerTimestampFilterComponentProp> =
         </MultiSelect>
         <DatePickerFilter
           label="Start"
+          showNow={false}
+          showTime
           value={filter.timestampAfter}
           onChange={onAfterDateChange}
         />
         <DatePickerFilter
           label="End"
+          showNow={false}
+          showTime
           value={filter.timestampBefore}
           onChange={onBeforeDateChange}
         />

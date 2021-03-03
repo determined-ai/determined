@@ -1,11 +1,26 @@
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
-  CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams,
-  ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
-  GetShellsParams, GetTensorboardsParams, GetTrialsParams, LaunchNotebookParams,
-  LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams,
-  SingleEntityParams, TaskLogsParams, TrialDetailsParams,
+  CommandIdParams,
+  CreateExperimentParams,
+  EmptyParams,
+  ExperimentDetailsParams,
+  ExperimentIdParams,
+  GetCommandsParams,
+  GetExperimentsParams,
+  GetNotebooksParams,
+  GetResourceAllocationAggregatedParams,
+  GetShellsParams,
+  GetTensorboardsParams,
+  GetTrialsParams,
+  LaunchNotebookParams,
+  LaunchTensorboardParams,
+  LoginResponse,
+  LogsParams,
+  PatchExperimentParams,
+  SingleEntityParams,
+  TaskLogsParams,
+  TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import {
@@ -63,6 +78,11 @@ export const getAgents = generateDetApi<
 export const getResourcePools = generateDetApi<
   EmptyParams, Api.V1GetResourcePoolsResponse, ResourcePool[]
 >(Config.getResourcePools);
+
+export const getResourceAllocationAggregated = generateDetApi<
+  GetResourceAllocationAggregatedParams, Api.V1ResourceAllocationAggregatedResponse,
+  Api.V1ResourceAllocationAggregatedResponse
+>(Config.getResourceAllocationAggregated);
 
 /* Experiments */
 

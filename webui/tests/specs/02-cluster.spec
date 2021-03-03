@@ -16,6 +16,12 @@ Specification to test the responsive design elements.
 
 * Should show "1" agents in stats
 
+## Check Cluster Historical Usage elements
+
+* Navigate to React page at "/cluster/historical-usage"
+
+* Should have "5" sections
+
 ## Sign out
 
 * Sign out
