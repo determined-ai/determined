@@ -352,6 +352,8 @@ message TrialsSnapshotRequest {
       }];
   // Seconds to wait when polling for updates.
   int32 period_seconds = 5;
+  // A range either side of batches_processed to include near-misses.
+  int32 batches_margin = 6;
 }
 
 // Response to TrialSnapshotResponse
@@ -362,7 +364,9 @@ message TrialsSnapshotResponse {
   // Metric value and metadata for a trial that has progress this far.
   message Trial {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: { required: [ "trial_id", "hparams", "metric" ] }
+      json_schema: {
+        required: [ "trial_id", "hparams", "metric", "batches_processed" ]
+      }
     };
     // The id of the trial.
     int32 trial_id = 1;
@@ -370,6 +374,8 @@ message TrialsSnapshotResponse {
     google.protobuf.Struct hparams = 2;
     // The value of the metric in this trial at this point.
     double metric = 3;
+    // The number of batches processed for this particular datapoint.
+    int32 batches_processed = 4;
   }
   // A list of trials.
   repeated Trial trials = 1;

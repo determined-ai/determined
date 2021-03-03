@@ -148,6 +148,7 @@ const HpHeatMaps: React.FC<Props> = ({
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
         undefined,
+        undefined,
         { signal: canceler.signal },
       ),
       event => {
