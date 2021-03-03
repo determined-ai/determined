@@ -18,6 +18,10 @@ searcher:
   max_trials: 16
   max_length:
     epochs: 5
+resources:
+  slots_per_trial: 1
 entrypoint: model_def:GANTrial
 environment:
-  image: determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.9.0
+  image:
+    gpu: determinedai/environments:cuda-10.1-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.9.0
+    cpu: determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.9.0

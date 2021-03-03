@@ -5,6 +5,8 @@ hyperparameters:
     type: double
     minval: .0001
     maxval: .1
+resources:
+  slots_per_trial: 1
 searcher:
   name: adaptive_asha
   metric: val_loss
@@ -14,4 +16,6 @@ searcher:
     batches: 937
 entrypoint: model_def:MNISTTrial
 environment:
-  image: determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.9.0
+  image:
+    gpu: determinedai/environments:cuda-10.1-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.9.0
+    cpu: determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.9.0
