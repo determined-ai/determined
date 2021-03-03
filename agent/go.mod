@@ -1,6 +1,6 @@
 module github.com/determined-ai/determined/agent
 
-go 1.15
+go 1.16
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
@@ -16,6 +16,7 @@ require (
 	github.com/golangci/golangci-lint v1.28.3
 	github.com/google/uuid v1.1.1
 	github.com/goreleaser/goreleaser v0.140.0
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/pkg/errors v0.9.1

@@ -1,6 +1,6 @@
 module github.com/determined-ai/determined/proto
 
-go 1.15
+go 1.16
 
 require (
 	github.com/bufbuild/buf v0.12.1
