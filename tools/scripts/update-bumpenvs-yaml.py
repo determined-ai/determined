@@ -39,6 +39,7 @@ EXPECT_JOBS = {
     "build-and-publish-docker-tf1-cpu",
     "build-and-publish-docker-tf1-gpu",
     "build-and-publish-docker-tf2-gpu",
+    "build-and-publish-docker-cuda-11",
 }
 
 EXPECT_ARTIFACTS = {
@@ -47,6 +48,7 @@ EXPECT_ARTIFACTS = {
     "publish-tf1-cpu",
     "publish-tf1-gpu",
     "publish-tf2-gpu",
+    "publish-cuda-11",
 }
 
 
@@ -134,7 +136,7 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
     ami_lines = [
         a
         for a in artifact_lines
-        if a.builder == "amazon-ebs" and a.msgtype == "id" and a.val
+        if a.builder.startswith("amazon-ebs") and a.msgtype == "id" and a.val
     ]
     assert (
         len(ami_lines) == 1
@@ -153,6 +155,9 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
         for a in artifact_lines
         if a.msgtype == "builder-id" and a.val == "packer.googlecompute"
     ]
+    # aws gov images do not have matching gcp environment images.
+    if len(gcp_builders) == 0:
+        return out
     assert len(gcp_builders) == 1, f"expected one gcp builder but got: {gcp_builders}"
     gcp_builder = gcp_builders[0]
 
@@ -197,12 +202,17 @@ if __name__ == "__main__":
         **yaml.safe_load(artifacts["publish-tf1-gpu"]),
         **yaml.safe_load(artifacts["publish-tf2-cpu"]),
         **yaml.safe_load(artifacts["publish-tf2-gpu"]),
+        **yaml.safe_load(artifacts["publish-cuda-11"]),
         **parse_packer_log(artifacts["packer-log"]),
     }
 
     saw_change = False
     for image_type, new_tag in new_tags.items():
-        saw_change |= update_tag_for_image_type(conf[image_type], new_tag)
+        if image_type not in conf:
+            conf[image_type] = {"new": new_tag}
+            saw_change = True
+        else:
+            saw_change |= update_tag_for_image_type(conf[image_type], new_tag)
 
     if not saw_change:
         print(
