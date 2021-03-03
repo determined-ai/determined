@@ -11,7 +11,8 @@ import mnist
 class MNISTTrial(PLAdapter):
     def __init__(self, context: PyTorchTrialContext) -> None:
         lm = mnist.LightningMNISTClassifier(lr=context.get_hparam('learning_rate'))
-        self.dm = mnist.MNISTDataModule()
+        data_dir = f"/tmp/data-rank{context.distributed.get_rank()}"
+        self.dm = mnist.MNISTDataModule(data_dir)
 
         super().__init__(context, lightning_module=lm)
         self.dm.prepare_data()
