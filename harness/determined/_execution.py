@@ -52,7 +52,9 @@ def _catch_init_invalid_hp(workloads: Iterator[Any]) -> Any:
         raise
 
 
-def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _make_local_execution_exp_config(
+    input_config: Optional[Dict[str, Any]], managed_training: bool, test_mode: bool
+) -> Dict[str, Any]:
     """
     Create a local experiment configuration based on an input configuration and
     defaults. Use a shallow merging policy to overwrite our default
@@ -71,12 +73,17 @@ def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> 
         "resources",
         "optimizations",
     }
+
     for key in config_keys_to_ignore:
-        if key in input_config:
+        if key not in input_config:
+            continue
+        # This codepath is used by checkpoint loading, where we do not want to emit any warnings,
+        # so only warn if we are explicitly in --local --test mode.
+        if test_mode and not managed_training:
             logging.info(
                 f"'{key}' configuration key is not supported by local test mode and will be ignored"
             )
-            del input_config[key]
+        del input_config[key]
 
     return {**constants.DEFAULT_EXP_CFG, **input_config}
 
@@ -88,7 +95,11 @@ def _make_local_execution_env(
     hparams: Optional[Dict[str, Any]] = None,
     limit_gpus: Optional[int] = None,
 ) -> Tuple[det.EnvContext, det.RendezvousInfo, horovod.HorovodContext]:
-    config = det.ExperimentConfig(_make_local_execution_exp_config(config))
+    config = det.ExperimentConfig(
+        _make_local_execution_exp_config(
+            config, managed_training=managed_training, test_mode=test_mode
+        )
+    )
     hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))
     use_gpu, container_gpus, slot_ids = _get_gpus(limit_gpus)
     local_rendezvous_ports = (
