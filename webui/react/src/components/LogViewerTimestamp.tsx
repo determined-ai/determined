@@ -239,18 +239,20 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ onDownloadClick ]);
 
   const handleEnableTailing = useCallback(() => {
+    if (direction === DIRECTIONS.TAILING) return;
     clearLogs();
     setDirection(DIRECTIONS.TAILING);
-  }, [ clearLogs ]);
+  }, [ clearLogs, direction ]);
 
   const handleFullScreen = useCallback(() => {
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
   const handleScrollToTop = useCallback(() => {
+    if (direction === DIRECTIONS.OLDEST) return;
     clearLogs();
     setDirection(DIRECTIONS.OLDEST);
-  }, [ clearLogs ]);
+  }, [ clearLogs, direction ]);
 
   const onItemsRendered =
     useCallback(({ visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps) => {
