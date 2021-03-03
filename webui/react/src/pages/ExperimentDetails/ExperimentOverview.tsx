@@ -59,6 +59,7 @@ const ExperimentOverview: React.FC<Props> = ({
   const [ sorter, setSorter ] = useState(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
+  const [ isLoading, setIsLoading ] = useState(true);
   const [ trials, setTrials ] = useState<TrialItem[]>();
   const [ canceler ] = useState(new AbortController());
 
@@ -161,12 +162,14 @@ const ExperimentOverview: React.FC<Props> = ({
       );
       setTotal(responsePagination?.total || 0);
       setTrials(experimentTrials);
+      setIsLoading(false);
     } catch (e) {
       handleError({
         message: `Unable to fetch experiments ${experiment.id} trials.`,
         silent: true,
         type: ErrorType.Api,
       });
+      setIsLoading(false);
     }
   }, [ experiment.id, canceler, pagination, sorter ]);
 
@@ -175,6 +178,7 @@ const ExperimentOverview: React.FC<Props> = ({
   // Get new trials based on changes to the pagination and sorter.
   useEffect(() => {
     fetchExperimentTrials();
+    setIsLoading(true);
   }, [ fetchExperimentTrials ]);
 
   useEffect(() => {
@@ -207,7 +211,7 @@ const ExperimentOverview: React.FC<Props> = ({
               dataSource={trials}
               loading={{
                 indicator: <Indicator />,
-                spinning: !trials,
+                spinning: isLoading,
               }}
               pagination={getFullPaginationConfig(pagination, total)}
               rowClassName={defaultRowClassName({ clickable: false })}
