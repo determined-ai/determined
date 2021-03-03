@@ -1,0 +1,7 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: In trial logs, fixed the issue of clicking on `Scroll-to-End`
+   button while already on tailing mode causing the logs to clear and
+   remain cleared.
