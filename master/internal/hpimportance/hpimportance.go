@@ -9,6 +9,7 @@ the importance, read and return the values.
 **/
 
 import (
+	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -17,7 +18,6 @@ import (
 	"path"
 	"sort"
 	"strconv"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -51,7 +51,7 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 		}
 	}()
 
-	var arff strings.Builder
+	arff := bufio.NewWriter(f)
 
 	// create top of file based on exp config
 	_, err = arff.WriteString("@relation data\n\n@attribute metric numeric\n")
@@ -127,7 +127,7 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 			totalNumTrials++
 		}
 	}
-	_, err = f.WriteString(arff.String())
+	err = arff.Flush()
 	if err != nil {
 		return 0, err
 	}
