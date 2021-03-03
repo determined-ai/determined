@@ -15,7 +15,7 @@ from tests import experiment as exp
 def test_streaming_metrics_api() -> None:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
 
-    pool = mp.pool.ThreadPool(processes=8)
+    pool = mp.pool.ThreadPool(processes=7)
 
     experiment_id = exp.create_experiment(
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
@@ -35,7 +35,6 @@ def test_streaming_metrics_api() -> None:
     valid_trials_snapshot_thread = pool.apply_async(request_valid_trials_snapshot, (experiment_id,))
     train_trials_sample_thread = pool.apply_async(request_train_trials_sample, (experiment_id,))
     valid_trials_sample_thread = pool.apply_async(request_valid_trials_sample, (experiment_id,))
-    # hp_importance_thread = pool.apply_async(request_hp_importance, (experiment_id,))
 
     metric_names_results = metric_names_thread.get()
     train_metric_batches_results = train_metric_batches_thread.get()
@@ -44,7 +43,6 @@ def test_streaming_metrics_api() -> None:
     valid_trials_snapshot_results = valid_trials_snapshot_thread.get()
     train_trials_sample_results = train_trials_sample_thread.get()
     valid_trials_sample_results = valid_trials_sample_thread.get()
-    # hp_importance_results = hp_importance_thread.get()
 
     if metric_names_results is not None:
         pytest.fail("metric-names: %s. Results: %s" % metric_names_results)
@@ -60,8 +58,27 @@ def test_streaming_metrics_api() -> None:
         pytest.fail("trials-sample (training): %s. Results: %s" % train_trials_sample_results)
     if valid_trials_sample_results is not None:
         pytest.fail("trials-sample (validation): %s. Results: %s" % valid_trials_sample_results)
-    # if hp_importance_results is not None:
-    #    pytest.fail("hyperparameter-importance: %s. Results: %s" % hp_importance_results)
+
+
+@pytest.mark.nightly  # type: ignore
+@pytest.mark.timeout(1200)  # type: ignore
+@pytest.mark.skip(reason="HP importance is currently disabled by default")  # type: ignore
+def test_hp_importance_api() -> None:
+    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+
+    pool = mp.pool.ThreadPool(processes=1)
+
+    experiment_id = exp.create_experiment(
+        conf.fixtures_path("mnist_pytorch/random.yaml"),
+        conf.tutorials_path("mnist_pytorch"),
+    )
+
+    hp_importance_thread = pool.apply_async(request_hp_importance, (experiment_id,))
+
+    hp_importance_results = hp_importance_thread.get()
+
+    if hp_importance_results is not None:
+        pytest.fail("hyperparameter-importance: %s. Results: %s" % hp_importance_results)
 
 
 def request_metric_names(experiment_id):  # type: ignore
@@ -306,20 +323,21 @@ def request_hp_importance(experiment_id):  # type: ignore
     searcherMetric = lastResult["validationMetrics"]["validation_loss"]
 
     for metric in [loss, searcherMetric]:
+        if not metric["error"] == "":
+            return ("Unexpected error in HP importance", lastResult)
+        if metric["pending"] or metric["inProgress"]:
+            return ("Unexpected incomplete status in HP importance", lastResult)
+        if not metric["experimentProgress"] == 1:
+            return ("HP importance from unfinished experiment included!", lastResult)
         for hparam in [
             "dropout1",
             "dropout2",
-            "global_batch_size",
             "learning_rate",
             "n_filters1",
             "n_filters2",
         ]:
-            if not valid_importance(loss["hpImportance"][hparam]):
+            if hparam not in metric["hpImportance"]:
+                return ("Missing hparams %s" % hparam, lastResult)
+            if not valid_importance(metric["hpImportance"][hparam]):
                 return ("Unexpected importance for hparam %s" % hparam, lastResult)
-        if not metric["experimentProgress"] == 1:
-            return ("HP importance from unfinished experiment included!", lastResult)
-        if metric["pending"] or metric["inProgress"]:
-            return ("Unexpected incomplete status in HP importance", lastResult)
-        if not metric["error"] == "":
-            return ("Unexpected error in HP importance", lastResult)
     return None

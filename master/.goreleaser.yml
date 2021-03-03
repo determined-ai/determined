@@ -18,6 +18,8 @@ builds:
       - darwin
     goarch:
       - amd64
+      # Before supporting more architectures than amd64, the inclusion of the
+      # growforest binary would need to be refactored to support the new arch.
 
 archives:
   - wrap_in_directory: true

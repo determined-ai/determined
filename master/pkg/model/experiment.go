@@ -531,7 +531,6 @@ const (
 type HPImportanceTrialData struct {
 	TrialID int                    `db:"trial_id"`
 	Hparams map[string]interface{} `db:"hparams"`
-	Batches int                    `db:"batches"`
 	Metric  float64                `db:"metric"`
 }
 

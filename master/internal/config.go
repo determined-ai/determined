@@ -64,8 +64,10 @@ func DefaultConfig() *Config {
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
 		},
 		HPImportance: hpimportance.HPImportanceConfig{
-			WorkersLimit: 0,
-			QueueLimit:   1,
+			WorkersLimit:   0,
+			QueueLimit:     16,
+			CoresPerWorker: 1,
+			MaxTrees:       100,
 		},
 		ResourceConfig: resourcemanagers.DefaultResourceConfig(),
 	}

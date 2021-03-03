@@ -9,6 +9,7 @@ import (
 	_ "github.com/goreleaser/goreleaser"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger"
+	_ "github.com/ryanbressler/CloudForest/growforest"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "google.golang.org/grpc"
 )

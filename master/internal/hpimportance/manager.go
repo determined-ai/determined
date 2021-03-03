@@ -1,7 +1,13 @@
 package hpimportance
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -16,12 +22,21 @@ const (
 	// Evaluate after every 10%, but no more than every 10 minutes
 	minPause   = 10 * time.Minute
 	minPercent = 0.1
+
+	// Each worker will create a subdirectory of this for CloudForest's input & output.
+	// This directory is deleted on startup, so be cautious if it changes.
+	workingDir = "/tmp/determined/growforest"
+
+	// The name of the CloudForest executable to look for
+	growforestBin = "growforest"
 )
 
 // HPImportanceConfig is the configuration in the master for hyperparameter importance.
 type HPImportanceConfig struct {
-	WorkersLimit uint `json:"workers_limit"`
-	QueueLimit   uint `json:"queue_limit"`
+	WorkersLimit   uint `json:"workers_limit"`
+	QueueLimit     uint `json:"queue_limit"`
+	CoresPerWorker uint `json:"cores_per_worker"`
+	MaxTrees       uint `json:"max_trees"`
 }
 
 // Messages handled by the HP importance manager.
@@ -59,6 +74,7 @@ type stateRecord struct {
 }
 
 type manager struct {
+	config   HPImportanceConfig
 	db       *db.PgDB
 	state    map[int]stateRecord
 	pool     pool.ActorPool
@@ -66,16 +82,40 @@ type manager struct {
 }
 
 // NewManager initializes the master actor (of which there should only be one instance running).
-func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig) actor.Actor {
+func NewManager(db *db.PgDB, system *actor.System, config HPImportanceConfig, masterRoot string,
+) (actor.Actor, error) {
+	// growforest should either be installed in PATH (when running from source) or package with the
+	// master (when running from binary packages).
+	growforest := path.Join(masterRoot, growforestBin)
+	_, err := os.Stat(growforest)
+	if os.IsNotExist(err) {
+		resolvedPath, pathErr := exec.LookPath(growforestBin)
+		if pathErr != nil {
+			return nil, fmt.Errorf("failed to find 'growforest' binary. Install it with " +
+				"'go install github.com/ryanbressler/CloudForest/growforest'")
+		}
+		growforest = resolvedPath
+	}
+
+	err = os.RemoveAll(workingDir)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to clean scratch space for HP importance computation")
+	}
+	err = os.MkdirAll(workingDir, 0700)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create scratch space for HP importance computation")
+	}
+
 	return &manager{
+		config:   config,
 		db:       db,
 		disabled: config.WorkersLimit == 0,
 		state:    make(map[int]stateRecord),
 		pool: pool.NewActorPool(
 			system, config.QueueLimit, config.WorkersLimit, "hp-importance-pool",
-			taskHandlerFactory(db, system), nil,
+			taskHandlerFactory(db, system, growforest, workingDir), nil,
 		),
-	}
+	}, nil
 }
 
 func (m *manager) Receive(ctx *actor.Context) error {
@@ -120,19 +160,21 @@ func (m *manager) triggerPartialWork(ctx *actor.Context) {
 	for i := 0; i < len(ids) && i < len(hpis); i++ {
 		for metric, metricHpi := range hpis[i].TrainingMetrics {
 			if metricHpi.Pending || metricHpi.InProgress {
-				ctx.Tell(ctx.Self(), WorkRequest{
-					ExperimentID: ids[i],
-					MetricName:   metric,
-					MetricType:   model.TrainingMetric,
+				ctx.Tell(ctx.Self(), startWork{
+					experimentID: ids[i],
+					metricName:   metric,
+					metricType:   model.TrainingMetric,
+					config:       m.config,
 				})
 			}
 		}
 		for metric, metricHpi := range hpis[i].ValidationMetrics {
 			if metricHpi.Pending || metricHpi.InProgress {
-				ctx.Tell(ctx.Self(), WorkRequest{
-					ExperimentID: ids[i],
-					MetricName:   metric,
-					MetricType:   model.ValidationMetric,
+				ctx.Tell(ctx.Self(), startWork{
+					experimentID: ids[i],
+					metricName:   metric,
+					metricType:   model.ValidationMetric,
+					config:       m.config,
 				})
 			}
 		}
@@ -234,6 +276,7 @@ func (m *manager) workRequest(ctx *actor.Context, msg WorkRequest) {
 		experimentID: msg.ExperimentID,
 		metricName:   msg.MetricName,
 		metricType:   msg.MetricType,
+		config:       m.config,
 	})
 	if err != nil {
 		metricHpi.Pending = false
@@ -285,6 +328,7 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 				experimentID: experimentID,
 				metricName:   loss,
 				metricType:   model.TrainingMetric,
+				config:       m.config,
 			})
 			if err != nil {
 				lossHpi.Pending = false
@@ -297,6 +341,7 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 				experimentID: experimentID,
 				metricName:   searcherMetric,
 				metricType:   model.ValidationMetric,
+				config:       m.config,
 			})
 			if err != nil {
 				searcherMetricHpi.Pending = false

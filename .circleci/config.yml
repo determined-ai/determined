@@ -1288,6 +1288,9 @@ jobs:
           executor: ubuntu-1604:202004-01
 
       - run:
+          name: Get master dependencies
+          command: make -C master get-deps
+      - run:
           name: Start database
           command: make -C tools start-db
       - run:

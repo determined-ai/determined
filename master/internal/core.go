@@ -357,7 +357,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// +- KubernetesResourceManager (scheduler.KubernetesResourceManager: kubernetesRM)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
-	// +- Telemetry (telemetry.telemetryActor: telemetry)
+	// +- Telemetry (telemetry.telemetry: telemetry)
 	// +- TrialLogger (internal.trialLogger: trialLogger)
 	// +- Experiments (actors.Group: experiments)
 	//     +- Experiment (internal.experiment: <experiment-id>)
@@ -580,16 +580,16 @@ func (m *Master) Run(ctx context.Context) error {
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
-		if telemetry, err := telemetry.NewActor(
+		if telemetry, tErr := telemetry.NewActor(
 			m.db,
 			m.ClusterID,
 			m.MasterID,
 			m.Version,
 			resourcemanagers.GetResourceManagerType(m.config.ResourceManager),
 			m.config.Telemetry.SegmentMasterKey,
-		); err != nil {
+		); tErr != nil {
 			// We wouldn't want to totally fail just because telemetry failed; just note the error.
-			log.WithError(err).Errorf("failed to initialize telemetry")
+			log.WithError(tErr).Errorf("failed to initialize telemetry")
 		} else {
 			log.Info("telemetry reporting is enabled; run with `--telemetry-enabled=false` to disable")
 			m.system.ActorOf(actor.Addr("telemetry"), telemetry)
@@ -598,7 +598,10 @@ func (m *Master) Run(ctx context.Context) error {
 		log.Info("telemetry reporting is disabled")
 	}
 
-	hpi := hpimportance.NewManager(m.db, m.system, m.config.HPImportance)
+	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
+	if err != nil {
+		return err
+	}
 	m.hpImportance, _ = m.system.ActorOf(actor.Addr(hpimportance.RootAddr), hpi)
 
 	return m.startServers(ctx, cert)
