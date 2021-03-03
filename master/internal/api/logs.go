@@ -110,7 +110,7 @@ func (l *LogStoreProcessor) Receive(ctx *actor.Context) error {
 		}
 		switch batch, err := l.fetcher(l.req); {
 		case err != nil:
-			return errors.Wrapf(err, "failed to fetch logs")
+			return errors.Wrapf(err, "failed to fetch batch")
 		case batch == nil, batch.Size() == 0:
 			if !l.req.Follow {
 				ctx.Self().Stop()

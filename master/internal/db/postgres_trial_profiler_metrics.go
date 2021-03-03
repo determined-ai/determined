@@ -1,11 +1,15 @@
 package db
 
-import "github.com/determined-ai/determined/proto/pkg/trialv1"
+import (
+	"time"
+)
 
-func (db *PgDB) InsertTrialProfilerMetrics(b *trialv1.TrialProfilerMetricsBatch) error {
+func (db *PgDB) InsertTrialProfilerMetricsBatch(
+	values []float32, batches []int32, timestamps []time.Time, labels []byte,
+) error {
 	_, err := db.sql.Exec(`
-INSERT INTO trial_profiler_metrics (values, batches, timestamps, labels)
+INSERT INTO trial_profiler_metrics (values, batches, ts, labels)
 VALUES ($1, $2, $3, $4)
-`, b.Values, b.Batches, b.Timestamps, b.Labels)
+`, values, batches, timestamps, labels)
 	return err
 }

@@ -49,7 +49,8 @@ root: ../../..
 `
 )
 
-// ResolvePostgres resolves a connection to a postgres database.
+// ResolvePostgres resolves a connection to a postgres database. To debug tests that use this
+// (or otherwise run the tests outside of the Makefile), make sure to set DET_INTEGRATION_POSTGRES_URL.
 func ResolvePostgres() (*db.PgDB, error) {
 	pgDB, err := db.ConnectPostgres(os.Getenv("DET_INTEGRATION_POSTGRES_URL"))
 	if err != nil {
@@ -58,7 +59,9 @@ func ResolvePostgres() (*db.PgDB, error) {
 	return pgDB, nil
 }
 
-// ResolveElastic resolves a connection to an elasticsearch database.
+// ResolveElastic resolves a connection to an elasticsearch database. To debug tests that use this
+// (or otherwise run the tests outside of the Makefile), make sure to set DET_INTEGRATION_ES_HOST and
+// DET_INTEGRATION_ES_PORT.
 func ResolveElastic() (*elastic.Elastic, error) {
 	es, err := elastic.Setup(*DefaultElasticConfig().ElasticLoggingConfig)
 	if err != nil {

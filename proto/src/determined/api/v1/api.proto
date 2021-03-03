@@ -469,6 +469,7 @@ service Determined {
       returns (PostTrialProfilerMetricsBatchResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/profiler/metrics"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Unimplemented" ]

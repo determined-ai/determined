@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 	"strconv"
 	"time"
 
@@ -505,6 +506,24 @@ func (t TrialLogBatch) Size() int {
 
 // ForEach implements logs.Batch.
 func (t TrialLogBatch) ForEach(f func(interface{}) error) error {
+	for _, tl := range t {
+		if err := f(tl); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// TrialProfilerMetricBatch represents a batch of trialv1.TrialProfilerMetricsBatch.
+type TrialProfilerMetricBatch []*trialv1.TrialProfilerMetricsBatch
+
+// Size implements logs.Batch.
+func (t TrialProfilerMetricBatch) Size() int {
+	return len(t)
+}
+
+// ForEach implements logs.Batch.
+func (t TrialProfilerMetricBatch) ForEach(f func(interface{}) error) error {
 	for _, tl := range t {
 		if err := f(tl); err != nil {
 			return err

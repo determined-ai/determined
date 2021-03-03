@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/protoutil"
+
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/golang/protobuf/ptypes"
@@ -32,6 +34,7 @@ import (
 
 const (
 	batchSize = 1000
+	trialProfilerMetricsBatchSize = 100
 )
 
 var (
@@ -421,10 +424,17 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	}
 
 	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
-		b := &trialv1.TrialProfilerMetricsBatch{}
-		return api.ToLogBatchOfOne(b), a.m.db.QueryProto(
+		switch {
+		case lr.Follow, lr.Limit > trialProfilerMetricsBatchSize:
+			lr.Limit = trialProfilerMetricsBatchSize
+		case lr.Limit <= 0:
+			return nil, nil
+		}
+
+		var batchOfBatches []*trialv1.TrialProfilerMetricsBatch
+		return model.TrialProfilerMetricBatch(batchOfBatches), a.m.db.QueryProto(
 			"get_trial_profiler_metrics",
-			b, labelsParam, lr.Offset, lr.Limit,
+			&batchOfBatches, labelsParam, lr.Offset, lr.Limit,
 		)
 	}
 
@@ -500,10 +510,20 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 		return nil, status.Error(codes.NotFound, "trial not found")
 	}
 
-	if err := a.m.db.InsertTrialProfilerMetrics(req.Batch); err != nil {
-		return nil, err
+	labels, err := protojson.Marshal(req.Batch.Labels)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal labels: %w", err)
 	}
 
+	timestamps, err := protoutil.TimeSliceFromProto(req.Batch.Timestamps)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert proto timestamps: %w", err)
+	}
+
+	if err := a.m.db.InsertTrialProfilerMetricsBatch(
+		req.Batch.Values, req.Batch.Batches, timestamps, labels); err != nil {
+		return nil, err
+	}
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, nil
 }
 

@@ -3,15 +3,19 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/encoding/protojson"
 	"io"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -156,19 +160,56 @@ func trialProfilerMetricsTests(
 	err = db.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
-	err = db.InsertTrialProfilerMetrics(&trialv1.TrialProfilerMetricsBatch{
-		Values:     []float32{0.01},
-		Batches:    []int32{0},
-		Timestamps: []*timestamppb.Timestamp{ptypes.TimestampNow()},
-		Labels:     &trialv1.TrialProfilerMetricLabels{
-			TrialId:    1,
+	ctx, _ := context.WithTimeout(creds, time.Minute)
+	tlCl, err := cl.GetTrialProfilerMetrics(ctx, &apiv1.GetTrialProfilerMetricsRequest{
+		Labels: &trialv1.TrialProfilerMetricLabels{
+			TrialId:    int32(trial.ID),
 			Name:       "gpu_util",
 			AgentId:    "brad's agent",
-			RankId:     "1",
 			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
 		},
 	})
-	assert.NilError(t, err, "failed to insert metrics")
+	assert.NilError(t, err, "failed to initiate trial profiler metrics stream")
+
+	// Write logs and turn around and make sure following receives them.
+	for i := 0; i < 10; i++ {
+		metricsBatch := &trialv1.TrialProfilerMetricsBatch{
+			Values:     []float32{0.01},
+			Batches:    []int32{0},
+			Timestamps: []*timestamppb.Timestamp{ptypes.TimestampNow()},
+			Labels: &trialv1.TrialProfilerMetricLabels{
+				TrialId:    int32(trial.ID),
+				Name:       "gpu_util",
+				AgentId:    "brad's agent",
+				RankId:     "1",
+				MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
+			},
+		}
+		_, err := cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
+			Batch: metricsBatch,
+		})
+		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
+
+		recvMetricsBatch, err := tlCl.Recv()
+		assert.NilError(t, err, "failed to stream metrics")
+
+		time.Sleep(time.Second)
+
+		bOrig, err:= protojson.Marshal(metricsBatch)
+		assert.NilError(t, err, "failed marshal original metrics")
+
+		bRecv, err:= protojson.Marshal(recvMetricsBatch.Batch)
+		assert.NilError(t, err, "failed marshal received metrics")
+
+		origEqRecv := bytes.Equal(bOrig, bRecv)
+		assert.Assert(t, origEqRecv, "received:\nt\t%s\noriginal:\n\t%s", bRecv, bOrig)
+	}
+
+	//err = pgDB.UpdateTrial(trial.ID, model.CompletedState)
+	//assert.NilError(t, err, "failed to update trial state")
+	//
+	//_, err = tlCl.Recv()
+	//assert.Equal(t, err, io.EOF, "log stream didn't terminate with trial")
 }
 
 func trialLogAPITests(
