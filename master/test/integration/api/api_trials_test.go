@@ -5,6 +5,8 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
 	"strconv"
 	"strings"
@@ -132,6 +134,41 @@ func trialDetailAPITests(
 		runTestCase(t, tc, idx)
 	}
 
+}
+
+func TestTrialProfilerMetrics(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	defer cancel()
+	assert.NilError(t, err, "failed to start master")
+
+	trialProfilerMetricsTests(t, creds, cl, pgDB)
+}
+
+func trialProfilerMetricsTests(
+	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+) {
+	experiment := testutils.ExperimentModel()
+	err := db.AddExperiment(experiment)
+	assert.NilError(t, err, "failed to insert experiment")
+
+	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
+	err = db.AddTrial(trial)
+	assert.NilError(t, err, "failed to insert trial")
+
+	err = db.InsertTrialProfilerMetrics(&trialv1.TrialProfilerMetricsBatch{
+		Values:     []float32{0.01},
+		Batches:    []int32{0},
+		Timestamps: []*timestamppb.Timestamp{ptypes.TimestampNow()},
+		Labels:     &trialv1.TrialProfilerMetricLabels{
+			TrialId:    1,
+			Name:       "gpu_util",
+			AgentId:    "brad's agent",
+			RankId:     "1",
+			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
+		},
+	})
+	assert.NilError(t, err, "failed to insert metrics")
 }
 
 func trialLogAPITests(

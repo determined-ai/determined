@@ -7,6 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
+	"github.com/golang/protobuf/ptypes"
+
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 
 	"github.com/google/uuid"
@@ -31,8 +35,9 @@ const (
 )
 
 var (
-	batchWaitTime              = 100 * time.Millisecond
-	distinctFieldBatchWaitTime = 5 * time.Second
+	batchWaitTime                            = 100 * time.Millisecond
+	distinctFieldBatchWaitTime               = 5 * time.Second
+	defaultTrialProfilerMetricsBatchWaitTime = 10 * time.Millisecond
 )
 
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
@@ -103,16 +108,6 @@ func (a *apiServer) TrialLogs(
 		return model.TrialLogBatch(b), err
 	}
 
-	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, endTime, err := a.m.db.TrialStatus(int(req.TrialId))
-		if err != nil ||
-			// Give trials a bit to finish sending logs after termination.
-			(model.TerminalStates[state] && endTime.Before(time.Now().Add(-20*time.Second))) {
-			return true, err
-		}
-		return false, nil
-	})
-
 	lReq := api.LogsRequest{Offset: offset, Limit: limit, Follow: req.Follow, Filters: filters}
 	return a.m.system.MustActorOf(
 		actor.Addr("logStore-"+uuid.New().String()),
@@ -121,7 +116,7 @@ func (a *apiServer) TrialLogs(
 			lReq,
 			fetch,
 			onBatch,
-			terminateCheck,
+			a.isTrialTerminalFunc(int(req.TrialId)),
 			&batchWaitTime,
 		),
 	).AwaitTermination()
@@ -206,14 +201,6 @@ func (a *apiServer) TrialLogsFields(
 		})
 	}
 
-	terminateCheck := api.TerminationCheckFn(func() (bool, error) {
-		state, err := a.m.db.TrialState(int(req.TrialId))
-		if err != nil || model.TerminalStates[state] {
-			return true, err
-		}
-		return false, nil
-	})
-
 	return a.m.system.MustActorOf(
 		actor.Addr("logStore-"+uuid.New().String()),
 		api.NewLogStoreProcessor(
@@ -221,7 +208,7 @@ func (a *apiServer) TrialLogsFields(
 			api.LogsRequest{Follow: req.Follow},
 			fetch,
 			onBatch,
-			terminateCheck,
+			a.isTrialTerminalFunc(int(req.TrialId)),
 			&distinctFieldBatchWaitTime,
 		),
 	).AwaitTermination()
@@ -418,22 +405,115 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 }
 
 func (a *apiServer) GetTrialProfilerMetrics(
-	_ *apiv1.GetTrialProfilerMetricsRequest,
-	_ apiv1.Determined_GetTrialProfilerMetricsServer,
+	req *apiv1.GetTrialProfilerMetricsRequest,
+	resp apiv1.Determined_GetTrialProfilerMetricsServer,
 ) error {
-	return grpcutil.UnimplementedError
+	switch exists, err := a.m.db.CheckTrialExists(int(req.Labels.TrialId)); {
+	case err != nil:
+		return err
+	case !exists:
+		return status.Error(codes.NotFound, "trial not found")
+	}
+
+	labelsParam, err := protojson.Marshal(req.Labels)
+	if err != nil {
+		return fmt.Errorf("failed to marshal labels: %w", err)
+	}
+
+	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+		b := &trialv1.TrialProfilerMetricsBatch{}
+		return api.ToLogBatchOfOne(b), a.m.db.QueryProto(
+			"get_trial_profiler_metrics",
+			b, labelsParam, lr.Offset, lr.Limit,
+		)
+	}
+
+	onBatch := func(b api.LogBatch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(&apiv1.GetTrialProfilerMetricsResponse{
+				Batch: r.(*trialv1.TrialProfilerMetricsBatch),
+			})
+		})
+	}
+
+	return a.m.system.MustActorOf(
+		actor.Addr("trialMetricsStream-"+uuid.New().String()),
+		api.NewLogStoreProcessor(
+			resp.Context(),
+			api.LogsRequest{Follow: true},
+			fetch,
+			onBatch,
+			a.isTrialTerminalFunc(int(req.Labels.TrialId)),
+			&defaultTrialProfilerMetricsBatchWaitTime,
+		),
+	).AwaitTermination()
 }
 
 func (a *apiServer) GetTrialProfilerAvailableSeries(
-	_ *apiv1.GetTrialProfilerAvailableSeriesRequest,
-	_ apiv1.Determined_GetTrialProfilerAvailableSeriesServer,
+	req *apiv1.GetTrialProfilerAvailableSeriesRequest,
+	resp apiv1.Determined_GetTrialProfilerAvailableSeriesServer,
 ) error {
-	return grpcutil.UnimplementedError
+	switch exists, err := a.m.db.CheckTrialExists(int(req.TrialId)); {
+	case err != nil:
+		return err
+	case !exists:
+		return status.Error(codes.NotFound, "trial not found")
+	}
+
+	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+		l := &trialv1.TrialProfilerMetricLabels{}
+		return api.ToLogBatchOfOne(l), a.m.db.QueryProto(
+			"get_trial_available_series",
+			l, lr.Offset, lr.Limit,
+		)
+	}
+
+	onBatch := func(b api.LogBatch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(&apiv1.GetTrialProfilerAvailableSeriesResponse{
+				Labels: r.(*trialv1.TrialProfilerMetricLabels),
+			})
+		})
+	}
+
+	return a.m.system.MustActorOf(
+		actor.Addr("trialMetricsStream-"+uuid.New().String()),
+		api.NewLogStoreProcessor(
+			resp.Context(),
+			api.LogsRequest{Follow: true},
+			fetch,
+			onBatch,
+			a.isTrialTerminalFunc(int(req.TrialId)),
+			&defaultTrialProfilerMetricsBatchWaitTime,
+		),
+	).AwaitTermination()
 }
 
 func (a *apiServer) PostTrialProfilerMetricsBatch(
-	_ context.Context,
-	_ *apiv1.PostTrialProfilerMetricsBatchRequest,
+	ctx context.Context,
+	req *apiv1.PostTrialProfilerMetricsBatchRequest,
 ) (*apiv1.PostTrialProfilerMetricsBatchResponse, error) {
-	return nil, grpcutil.UnimplementedError
+	switch exists, err := a.m.db.CheckTrialExists(int(req.Batch.Labels.TrialId)); {
+	case err != nil:
+		return nil, err
+	case !exists:
+		return nil, status.Error(codes.NotFound, "trial not found")
+	}
+
+	if err := a.m.db.InsertTrialProfilerMetrics(req.Batch); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, nil
+}
+
+func (a *apiServer) isTrialTerminalFunc(trialID int) api.TerminationCheckFn {
+	return func() (bool, error) {
+		if state, endTime, err := a.m.db.TrialStatus(trialID); err != nil ||
+			// Give trials a bit to finish sending logs after termination.
+			(model.TerminalStates[state] && endTime.Before(time.Now().Add(-20*time.Second))) {
+			return true, err
+		}
+		return false, nil
+	}
 }
