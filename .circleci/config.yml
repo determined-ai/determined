@@ -1180,7 +1180,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extras-requires: "torch==1.4.0"
+          extras-requires: "torch==1.4.0 pytorch_lightning==1.2.0"
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C cli check
