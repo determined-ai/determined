@@ -73,7 +73,7 @@ class PLAdapter(PyTorchTrial):
         pls.lm.use_tpu = False  # type: ignore
         type(pls.lm).local_rank = context.distributed.get_local_rank()  # type: ignore
         type(pls.lm).global_rank = context.distributed.get_rank()  # type: ignore
-        pls.lm.use_amp = context._use_amp
+        pls.lm.use_amp = context.experimental._auto_amp or context._use_apex
         pls.lm.to(context.device)
 
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
