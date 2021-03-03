@@ -104,6 +104,7 @@ const ScatterPlots: React.FC<Props> = ({
         selectedBatch,
         undefined,
         undefined,
+        undefined,
         { signal: canceler.signal },
       ),
       event => {

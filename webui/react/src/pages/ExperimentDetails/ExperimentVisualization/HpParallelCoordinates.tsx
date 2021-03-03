@@ -189,6 +189,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         selectedBatch,
         undefined,
         undefined,
+        undefined,
         { signal: canceler.signal },
       ),
       event => {
