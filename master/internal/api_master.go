@@ -95,20 +95,20 @@ func (a *apiServer) ResourceAllocationRaw(
 ) (*apiv1.ResourceAllocationRawResponse, error) {
 	resp := &apiv1.ResourceAllocationRawResponse{}
 
-	if req.StartDate == nil {
-		return nil, errors.New("no start date provided")
+	if req.TimestampAfter == nil {
+		return nil, errors.New("no start time provided")
 	}
-	if req.EndDate == nil {
-		return nil, errors.New("no end date provided")
+	if req.TimestampBefore == nil {
+		return nil, errors.New("no end time provided")
 	}
-	startDate := time.Unix(req.StartDate.Seconds, int64(req.StartDate.Nanos)).UTC()
-	endDate := time.Unix(req.EndDate.Seconds, int64(req.EndDate.Nanos)).UTC()
-	if startDate.After(endDate) {
-		return nil, errors.New("start date cannot be after end date")
+	start := time.Unix(req.TimestampAfter.Seconds, int64(req.TimestampAfter.Nanos)).UTC()
+	end := time.Unix(req.TimestampBefore.Seconds, int64(req.TimestampBefore.Nanos)).UTC()
+	if start.After(end) {
+		return nil, errors.New("start time cannot be after end time")
 	}
 
 	if err := a.m.db.QueryProto(
-		"allocation_raw", &resp.ResourceEntry, startDate.UTC(), endDate.UTC(),
+		"allocation_raw", &resp.ResourceEntries, start.UTC(), end.UTC(),
 	); err != nil {
 		return nil, errors.Wrap(err, "error fetching allocation data")
 	}

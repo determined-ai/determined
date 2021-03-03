@@ -1,27 +1,20 @@
 WITH const AS (
     SELECT
-        $1 :: timestamp AS day_start,
-        $2 :: timestamp AS day_end
+        tstzrange($1 :: timestamptz, $2 :: timestamptz) AS period
 ),
--- Workloads that had any overlap with the target interval, with their start and end times bounded
--- to the interval.
+-- Workloads that had any overlap with the target interval, along with the length of the overlap of
+-- their time with the requested period.
 workloads AS (
     SELECT
         all_workloads.trial_id,
         all_workloads.kind,
-        all_workloads.start_time,
-        all_workloads.end_time,
+        lower(all_workloads.range) AS start_time,
+        upper(all_workloads.range) AS end_time,
         extract(
             epoch
             FROM
-                CASE
-                    WHEN all_workloads.end_time IS NULL THEN const.day_end
-                    WHEN all_workloads.end_time > const.day_end THEN const.day_end
-                    ELSE all_workloads.end_time
-                END - CASE
-                    WHEN all_workloads.start_time < const.day_start THEN const.day_start
-                    ELSE all_workloads.start_time
-                END
+                -- `*` computes the intersection of the two ranges.
+                upper(const.period * range) - lower(const.period * range)
         ) AS seconds
     FROM
         (
@@ -29,33 +22,30 @@ workloads AS (
             -- be a CTE, but I think that would cause PostgreSQL <12 to insert an optimization fence
             -- and have to fully scan all three tables, which could be bad.
             SELECT
-                'step' AS kind,
+                'training' AS kind,
                 trial_id,
-                start_time,
-                end_time
+                tstzrange(start_time, end_time) AS range
             FROM
                 steps
             UNION ALL
             SELECT
                 'validation' AS kind,
                 trial_id,
-                start_time,
-                end_time
+                tstzrange(start_time, end_time) AS range
             FROM
                 validations
             UNION ALL
             SELECT
                 'checkpoint' AS kind,
                 trial_id,
-                start_time,
-                end_time
+                tstzrange(start_time, end_time) AS range
             FROM
                 checkpoints
         ) AS all_workloads,
         const
     WHERE
-        all_workloads.start_time <= const.day_end
-        AND coalesce(all_workloads.end_time, const.day_end) >= const.day_start
+        -- `&&` determines whether the ranges overlap.
+        const.period && all_workloads.range
 )
 SELECT
     trials.experiment_id,

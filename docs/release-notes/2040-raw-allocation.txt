@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  API: Add a new endpoint exposing information about cluster resource
+   allocation. Currently, information about experiment workloads
+   (training, checkpoints, and validations) is included.
