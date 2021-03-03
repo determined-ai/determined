@@ -2,6 +2,13 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from determined import pytorch
 
+# AMP is only available in PyTorch 1.6+
+try:
+    import torch.cuda.amp as amp
+except ImportError:
+    # A warning is logged in _pytorch_context.py
+    pass
+
 
 def default_allgather_fn(metrics: Any) -> List:
     """
@@ -63,9 +70,24 @@ class _WrappedReducer:
 
 
 class PyTorchExperimentalContext:
-    def __init__(self) -> None:
+    def __init__(self, parent: Any) -> None:
         self._wrapped_reducers = []  # type: List[_WrappedReducer]
         self._allgather_fn = default_allgather_fn
+        self._parent = parent
+        self._auto_amp = False
+
+    def use_amp(self) -> None:
+        """
+        Handles all operations for the most simple cases automatically with a default gradient
+        scaler. Specifically, wraps forward pass in an autocast context, scales loss before
+        backward pass, unscales before clipping gradients, uses scaler when stepping
+        optimizer(s), and updates scaler afterwards. Do not call ``wrap_scaler`` directly when
+        using this method.
+
+        PyTorch 1.6 or greater is required for this feature.
+        """
+        self._parent.wrap_scaler(amp.GradScaler())
+        self._auto_amp = True
 
     def _set_allgather_fn(self, fn: Callable) -> None:
         self._allgather_fn = fn

@@ -86,30 +86,13 @@ def test_pytorch_const_warm_start() -> None:
         assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
 
 
-@pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
-@pytest.mark.parametrize("use_amp", [True, False])  # type: ignore
-def test_pytorch_const_parallel(aggregation_frequency: int, use_amp: bool) -> None:
-    if use_amp and aggregation_frequency > 1:
-        pytest.skip("Mixed precision is not support with aggregation frequency > 1.")
-
-    config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_aggregation_frequency(config, aggregation_frequency)
-    if use_amp:
-        config = conf.set_amp_level(config, "O1")
-
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
-
-
 @pytest.mark.e2e_gpu  # type: ignore
-def test_pytorch_const_with_amp() -> None:
-    config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
+@pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])  # type: ignore
+def test_pytorch_const_with_amp(api_style: str) -> None:
+    config = conf.load_config(conf.fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_amp_level(config, "O1")
 
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_amp"), 1)
 
 
 @pytest.mark.parallel  # type: ignore

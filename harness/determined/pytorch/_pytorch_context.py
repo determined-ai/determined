@@ -17,6 +17,17 @@ except ImportError:
         logging.warning("Failed to import apex.")
     pass
 
+# AMP is only available in PyTorch 1.6+
+try:
+    import torch.cuda.amp as amp
+
+    amp_import_error = False
+except ImportError:
+    amp_import_error = True
+    if torch.cuda.is_available():
+        logging.warning("PyTorch AMP is unavailable.")
+    pass
+
 
 class PyTorchTrialContext(det.TrialContext):
     """Contains runtime information for any Determined workflow that uses the ``PyTorch`` API.
@@ -57,18 +68,69 @@ class PyTorchTrialContext(det.TrialContext):
         # for broadcasting. Note that broadcast_parameters only accepts state_dict()
         # although its doc says it also accepts named_parameters()
         self._main_model = nn.Module()  # type: nn.Module
-        self._use_amp = False
+        self._scaler = None
+        self._use_apex = False
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
         self._last_backward_batch_idx = None  # type: Optional[int]
         self._current_batch_idx = None  # type: Optional[int]
 
-        self.experimental = pytorch.PyTorchExperimentalContext()
+        self.experimental = pytorch.PyTorchExperimentalContext(self)
+
+    def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
+        # First, ensure the forward pass is wrapped in an autocast context:
+        class _AutocastForwardPassModel(type(to_wrap)):  # type: ignore
+            def __init__(wrapper) -> None:
+                self.model = to_wrap
+
+            def __getattr__(wrapper, name):  # type: ignore
+                return getattr(to_wrap, name)
+
+            def __setattr__(wrapper, name, value):  # type: ignore
+                return setattr(to_wrap, name, value)
+
+            def __delattr__(wrapper, name):  # type: ignore
+                return delattr(to_wrap, name)
+
+            def forward(wrapper, *arg, **kwarg):  # type: ignore
+                with amp.autocast():
+                    return to_wrap.forward(*arg, **kwarg)
+
+        wrapped = _AutocastForwardPassModel()
+
+        # To not print errors recursively or every forward pass
+        warned_types = set()
+
+        # Second, eliminate any need for the loss functions to be in that context:
+        def end_fp16(module: torch.nn.Module, input: Any, output: Any) -> Any:
+
+            if isinstance(output, torch.Tensor):
+                return output.float() if output.dtype == torch.float16 else output
+            if isinstance(output, dict):
+                return {k: end_fp16(module, input, v) for k, v in output.items()}
+            if isinstance(output, list):
+                return [end_fp16(module, input, d) for d in output]
+            if isinstance(output, tuple):
+                return tuple(end_fp16(module, input, d) for d in output)
+            # If there are other types that embed Tensors still using fp16 and loss computation
+            # subsequently fails, then experimental.use_amp should not be used and the forward pass
+            # should be manually wrapped in an autocast context.
+            if type(output) not in warned_types:
+                warned_types.add(type(output))
+                logging.warn(
+                    f"Unexpected type '{type(output).__name__}' outputted by model in experimental "
+                    "AMP mode."
+                )
+            return output
+
+        wrapped.register_forward_hook(end_fp16)
+
+        return wrapped
 
     def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:
         """Returns a wrapped model."""
 
         if self.env.managed_training:
-            check.false(self._use_amp, "Must call wrap_model() before configure_apex_amp.")
+            check.false(self._use_apex, "Must call wrap_model() before configure_apex_amp.")
 
             model = model.to(self.device)
             if not self.hvd_config.use and self.n_gpus > 1:
@@ -84,6 +146,9 @@ class PyTorchTrialContext(det.TrialContext):
 
         model_id = len(self.models)
         self._main_model.__setattr__(f"model_{model_id}", model)
+
+        if self.experimental._auto_amp:
+            model = self.autocast_forward_pass(model)
 
         self.models.append(model)
         return model
@@ -119,7 +184,7 @@ class PyTorchTrialContext(det.TrialContext):
 
         """
         if self.env.managed_training:
-            check.false(self._use_amp, "Must call wrap_optimizer() before configure_apex_amp.")
+            check.false(self._use_apex, "Must call wrap_optimizer() before configure_apex_amp.")
             check.gt_eq(
                 backward_passes_per_step,
                 1,
@@ -218,6 +283,40 @@ class PyTorchTrialContext(det.TrialContext):
         """
         return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
+    def wrap_scaler(self, scaler: Any) -> Any:
+        """
+        Prepares to use automatic mixed precision through PyTorch’s native AMP API. The returned
+        scaler should be passed to ``step_optimizer``, but usage does not otherwise differ from
+        vanilla PyTorch APIs. Loss should be scaled before calling ``backward``, ``unscale_`` should
+        be called before clipping gradients, ``update`` should be called after stepping all
+        optimizers, etc.
+
+        PyTorch 1.6 or greater is required for this feature.
+
+        Arguments:
+            scaler (``torch.cuda.amp.GradScaler``):  Scaler to wrap and track.
+
+        Returns:
+            The scaler. It may be wrapped to add additional functionality for use in Determined.
+        """
+
+        check.false(amp_import_error, "Failed to import torch.cuda.amp. PyTorch >= 1.6 required.")
+
+        check.false(self._use_apex, "Do not mix APEX with PyTorch AMP.")
+
+        check.is_none(self._scaler, "Please only call wrap_scaler or use_amp once.")
+
+        check.true(len(self.models) == 0, "Please call wrap_scaler before wrap_model.")
+
+        check.true(
+            torch.cuda.is_available(),
+            "Mixed precision training (AMP) is supported only on GPU slots.",
+        )
+
+        self._scaler = scaler
+
+        return scaler
+
     def configure_apex_amp(
         self,
         models: Union[torch.nn.Module, List[torch.nn.Module]],
@@ -236,8 +335,9 @@ class PyTorchTrialContext(det.TrialContext):
         max_loss_scale: Optional[float] = 2.0 ** 24,
     ) -> Tuple:
         """
-        Configure automatic mixed precision for your models and optimizers. Note that details
-        for apex.amp are handled automatically within Determined after this call.
+        Configure automatic mixed precision for your models and optimizers using NVIDIA's Apex
+        PyTorch extension. Note that details for apex.amp are handled automatically within
+        Determined after this call.
 
         This function must be called **after** you have finished constructing your models and
         optimizers with :meth:`wrap_model` and :meth:`wrap_optimizer`.
@@ -291,7 +391,9 @@ class PyTorchTrialContext(det.TrialContext):
         if not self.env.managed_training:
             return models, optimizers
 
-        check.false(self._use_amp, "Please only call configure_apex_amp once.")
+        check.is_none(self._scaler, "Do not mix APEX with PyTorch AMP")
+
+        check.false(self._use_apex, "Please only call configure_apex_amp once.")
         if self.hvd_config.use:
             check.eq(
                 num_losses,
@@ -300,7 +402,7 @@ class PyTorchTrialContext(det.TrialContext):
                 "Determined only supports configure_apex_amp with num_losses = 1",
             )
 
-        self._use_amp = True
+        self._use_apex = True
 
         if self.hvd_config.use:
             check.eq(
@@ -385,7 +487,7 @@ class PyTorchTrialContext(det.TrialContext):
                 be constructed, allowing to compute higher order derivative
                 products. Defaults to ``False``.
         """
-        if self._use_amp:
+        if self._use_apex:
             if (
                 self._last_backward_batch_idx is None
                 or self._current_batch_idx is None
@@ -420,6 +522,9 @@ class PyTorchTrialContext(det.TrialContext):
                     for optimizer in self.optimizers:
                         optimizer.synchronize()
         else:
+            if self._scaler and self.experimental._auto_amp:
+                loss = self._scaler.scale(loss)
+
             loss.backward(  # type: ignore
                 gradient=gradient,
                 retain_graph=retain_graph,
@@ -440,6 +545,10 @@ class PyTorchTrialContext(det.TrialContext):
         optimizer: torch.optim.Optimizer,  # type: ignore
         clip_grads: Optional[Callable[[Iterator], None]] = None,
         auto_zero_grads: bool = True,
+        scaler: Optional[Any] = None,
+        # Should be torch.cuda.amp.GradScaler, but:
+        #   * other implementations might be possible
+        #   * requiring this type forces upgrades to PyTorch 1.6+
     ) -> None:
         """
         Perform a single optimization step.
@@ -467,6 +576,9 @@ class PyTorchTrialContext(det.TrialContext):
                 stepping the optimizer. If false, you need to call ``optimizer.zero_grad()``
                 manually. Note that if :ref:`optimizations.aggregation_frequency
                 <config-aggregation-frequency>` is greater than 1, ``auto_zero_grads`` must be true.
+            scaler(``torch.cuda.amp.GradScaler``, optional): The scaler to use for stepping the
+                optimizer. This should be unset if not using AMP, and is necessary if
+                ``wrap_scaler()`` was called directly.
         """
 
         check.true(
@@ -474,34 +586,53 @@ class PyTorchTrialContext(det.TrialContext):
             "if optimizations.aggregation_frequency is larger than 1, "
             "you can only set auto_zero_grads to be true. ",
         )
-        if self._should_communicate_and_update():
-            # Communication needs to be synchronized so that is completed
-            # before we apply gradient clipping and `step()`.
-            if self.hvd_config.use and not self._use_amp:
-                optimizer.synchronize()
 
-            parameters = (
-                [p for group in optimizer.param_groups for p in group.get("params", [])]
-                if not self._use_amp
-                else apex.amp.master_params(optimizer)
+        if not self._should_communicate_and_update():
+            return
+
+        # Communication needs to be synchronized so that is completed
+        # before we apply gradient clipping and `step()`. In the case of APEX
+        # this is called in backward() instead, so that it's inside the context
+        # manager and before unscaling.
+        if self.hvd_config.use and not self._use_apex:
+            optimizer.synchronize()
+
+        parameters = (
+            [p for group in optimizer.param_groups for p in group.get("params", [])]
+            if not self._use_apex
+            else apex.amp.master_params(optimizer)
+        )
+
+        if self.hvd_config.average_aggregated_gradients:
+            self._average_gradients(
+                parameters=parameters, divisor=self.hvd_config.aggregation_frequency
             )
 
-            if self.hvd_config.average_aggregated_gradients:
-                self._average_gradients(
-                    parameters=parameters, divisor=self.hvd_config.aggregation_frequency
-                )
+        if clip_grads is not None:
+            if self._scaler and self.experimental._auto_amp:
+                self._scaler.unscale_(optimizer)
+            clip_grads(parameters)
 
-            if clip_grads is not None:
-                clip_grads(parameters)
+        # For stepping the optimizer we will operate on the scaler passed
+        # in, or fall back to the wrapped scaler (if any).
+        if scaler is None and self.experimental._auto_amp:
+            scaler = self._scaler
+        if scaler:
 
-            if self.hvd_config.use:
-                with optimizer.skip_synchronize():
-                    optimizer.step()
-            else:
-                optimizer.step()
+            def step_fn() -> None:
+                scaler.step(optimizer)  # type: ignore
 
-            if auto_zero_grads:
-                optimizer.zero_grad()
+        else:
+            step_fn = optimizer.step
+
+        if self.hvd_config.use:
+            with optimizer.skip_synchronize():
+                step_fn()
+        else:
+            step_fn()
+
+        if auto_zero_grads:
+            optimizer.zero_grad()
 
     def is_epoch_start(self) -> bool:
         """

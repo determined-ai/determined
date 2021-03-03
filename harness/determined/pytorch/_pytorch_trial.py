@@ -258,6 +258,13 @@ class PyTorchTrialController(det.LoopTrialController):
             if mod == 0 or mod < self.hvd_config.aggregation_frequency:
                 lr_scheduler.step()
 
+    def _should_update_scaler(self) -> bool:
+        if not self.context._scaler or not self.context.experimental._auto_amp:
+            return False
+        if self.hvd_config.use:
+            return self.context._should_communicate_and_update()  # type: ignore
+        return True
+
     def _train_for_step(
         self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Response:
@@ -287,6 +294,8 @@ class PyTorchTrialController(det.LoopTrialController):
                 epoch_idx=self.get_epoch_idx(batch_idx),
                 batch_idx=batch_idx,
             )
+            if self._should_update_scaler():
+                self.context._scaler.update()
             if isinstance(tr_metrics, torch.Tensor):
                 tr_metrics = {"loss": tr_metrics}
             check.is_instance(
@@ -593,17 +602,32 @@ class PyTorchTrialController(det.LoopTrialController):
             for idx, lr_scheduler in enumerate(self.context.lr_schedulers):
                 lr_scheduler.load_state_dict(checkpoint["lr_schedulers_state_dict"][idx])
 
+        if "scaler_state_dict":
+            if self.context._scaler:
+                self.context._scaler.load_state_dict(checkpoint["scaler_state_dict"])
+            else:
+                logging.warning(
+                    "There exists scaler_state_dict in checkpoint but the experiment is not using "
+                    "AMP."
+                )
+        else:
+            if self.context._scaler:
+                logging.warning(
+                    "The experiment is using AMP but scaler_state_dict does not exist in the "
+                    "checkpoint."
+                )
+
         if "amp_state" in checkpoint:
-            if self.context._use_amp:
+            if self.context._use_apex:
                 apex.amp.load_state_dict(checkpoint["amp_state"])
             else:
                 logging.warning(
-                    "There exists amp_state in checkpoint but the experiment is not using AMP."
+                    "There exists amp_state in checkpoint but the experiment is not using Apex."
                 )
         else:
-            if self.context._use_amp:
+            if self.context._use_apex:
                 logging.warning(
-                    "The experiment is using AMP but amp_state does not exist in the checkpoint."
+                    "The experiment is using Apex but amp_state does not exist in the checkpoint."
                 )
 
         if "rng_state" in checkpoint:
@@ -677,7 +701,10 @@ class PyTorchTrialController(det.LoopTrialController):
             "rng_state": rng_state,
         }
 
-        if self.context._use_amp:
+        if self.context._scaler:
+            checkpoint["scaler_state_dict"] = self.context._scaler.state_dict()
+
+        if self.context._use_apex:
             checkpoint["amp_state"] = apex.amp.state_dict()
 
         torch.save(  # type: ignore
