@@ -72,6 +72,8 @@ hyperparameters:
     masks: false
     num_workers: 4
 
+    device: cuda
+
 bind_mounts:
     - host_path: /tmp
       container_path: /data
