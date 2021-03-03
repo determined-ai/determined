@@ -47,9 +47,15 @@
       justify-content: flex-start;
       margin-left: 0;
     }
-    & > * > [class^=Label_base_] {
+    & > *:not(:first-child) {
+      margin-top: var(--theme-sizes-layout-big);
+    }
+    & > [class*=GridListRadioGroup_base_] {
+      flex-direction: row;
+    }
+    & > * > [class*=Label_base_] {
       margin-left: 0;
-      padding: var(--theme-sizes-layout-big) 0 var(--theme-sizes-layout-medium) 0;
+      padding-bottom: var(--theme-sizes-layout-medium);
       text-align: left;
     }
     & > *:first-child > [class^=Label_base_] {

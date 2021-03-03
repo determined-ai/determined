@@ -1,10 +1,9 @@
 import { Alert, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
-import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -63,8 +62,8 @@ const ScatterPlots: React.FC<Props> = ({
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpMetricData>();
   const [ pageError, setPageError ] = useState<Error>();
-  const resize = useResize(baseRef);
 
+  const resize = useResize(baseRef);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
   const resetData = useCallback(() => {
