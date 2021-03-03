@@ -88,8 +88,9 @@ const ExperimentList: React.FC = () => {
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
+  const [ isLoading, setIsLoading ] = useState(true);
+  const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
-  const [ isUrlParsed, setIsUrlParsed ] = useState<boolean>(false);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
@@ -290,8 +291,10 @@ const ExperimentList: React.FC = () => {
       );
       setTotal(response.pagination.total || 0);
       setExperiments(response.experiments);
+      setIsLoading(false);
     } catch (e) {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
+      setIsLoading(false);
     }
   }, [ canceler, filters, pagination, search, sorter ]);
 
@@ -465,6 +468,7 @@ const ExperimentList: React.FC = () => {
    */
   useEffect(() => {
     fetchExperiments();
+    setIsLoading(true);
   }, [ fetchExperiments ]);
 
   useEffect(() => {
@@ -529,7 +533,7 @@ const ExperimentList: React.FC = () => {
           dataSource={experiments}
           loading={{
             indicator: <Indicator />,
-            spinning: !experiments,
+            spinning: isLoading,
           }}
           pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName({ clickable: false })}
