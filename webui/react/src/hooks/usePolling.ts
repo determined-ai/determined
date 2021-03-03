@@ -3,41 +3,55 @@ import { useCallback, useEffect, useRef } from 'react';
 const DEFAULT_DELAY = 5000;
 
 type PollingFn = (() => Promise<void>) | (() => void);
+type StopFn = () => void;
 
 interface PollingOptions {
   delay?: number;
 }
 
-const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() => void) => {
-  const func = useRef<PollingFn>(pollingFn);
+const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): StopFn => {
+  const savedPollingFn = useRef<PollingFn>(pollingFn);
   const timer = useRef<NodeJS.Timeout>();
-  const active = useRef(true);
+  const active = useRef(false);
 
-  const stopPolling = useCallback(() => {
-    active.current = false;
-
+  const clearTimer = useCallback(() => {
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = undefined;
     }
   }, []);
 
-  const runPolling = useCallback(async (): Promise<void> => {
-    await func.current();
+  const poll = useCallback(async (): Promise<void> => {
+    await savedPollingFn.current();
 
     if (active.current) {
-      timer.current = setTimeout(() => runPolling(), delay || DEFAULT_DELAY);
+      timer.current = setTimeout(() => {
+        timer.current = undefined;
+        poll();
+      }, delay || DEFAULT_DELAY);
     }
-  }, [ delay, func ]);
+  }, [ delay ]);
 
-  // Update polling function if a new one is passed through.
-  useEffect(() => {
-    if (func.current !== pollingFn) func.current = pollingFn;
-  }, [ pollingFn ]);
+  const startPolling = useCallback(() => {
+    clearTimer();
+    active.current = true;
+    poll();
+  }, [ clearTimer, poll ]);
 
-  // Start polling upon mounting.
+  const stopPolling = useCallback(() => {
+    active.current = false;
+    clearTimer();
+  }, [ clearTimer ]);
+
+  // Update polling function if a new one is passed in.
   useEffect(() => {
-    runPolling();
+    savedPollingFn.current = pollingFn;
+    if (!active.current) startPolling();
+  }, [ pollingFn, startPolling ]);
+
+  // Start polling when mounted and stop polling when umounted.
+  useEffect(() => {
+    startPolling();
     return () => stopPolling();
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
