@@ -1165,6 +1165,15 @@
         false
       ]
     },
+    "n_filter": {
+      "type": "categorical",
+      "vals": [
+        8,
+        16,
+        32,
+        64
+      ]
+    },
     "layer1_dropout": {
       "count": null,
       "maxval": 1.1,

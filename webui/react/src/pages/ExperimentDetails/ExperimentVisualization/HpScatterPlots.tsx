@@ -135,8 +135,9 @@ const ScatterPlots: React.FC<Props> = ({
           hpMetricMap[hParam] = [];
           hpValueMap[hParam] = [];
           trialIds.forEach(trialId => {
-            hpMetricMap[hParam].push(hpTrialMap[hParam][trialId].metric);
-            hpValueMap[hParam].push(hpTrialMap[hParam][trialId].hp);
+            const map = (hpTrialMap[hParam] || {})[trialId] || {};
+            hpMetricMap[hParam].push(map.metric);
+            hpValueMap[hParam].push(map.hp);
           });
         });
 
