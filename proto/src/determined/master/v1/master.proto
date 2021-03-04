@@ -5,10 +5,10 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/masterv1";
 
 import "google/protobuf/timestamp.proto";
 
-// One instance of slots in the cluster being allocated.
+// One instance of slots in the cluster being allocated to a task.
 message ResourceAllocationRawEntry {
-  // The kind of workload being run during this allocation (step, checkpoint, or
-  // validation).
+  // The kind of workload being run during this allocation (training,
+  // checkpoint, or validation).
   string kind = 1;
   // The time at which the allocation began.
   google.protobuf.Timestamp start_time = 2;
@@ -20,7 +20,8 @@ message ResourceAllocationRawEntry {
   string username = 5;
   // The labels assigned to the experiment.
   repeated string labels = 6;
-  // The length in time of the allocation.
+  // The number of seconds for which the allocation was active during the
+  // requested period.
   float seconds = 7;
   // The number of slots used by the allocation.
   int32 slots = 8;
