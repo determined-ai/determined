@@ -4,13 +4,14 @@ from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
+from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import LRScheduler, PyTorchCallback, PyTorchTrial, PyTorchTrialContext
-from determined.util import has_param, is_overridden
+from determined.util import has_param
 from determined_common import check
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
