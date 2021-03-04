@@ -12,7 +12,6 @@ import { Indicator } from 'components/Spinner';
 import {
   defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
-import { Renderer } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
@@ -66,11 +65,14 @@ const ExperimentOverview: React.FC<Props> = ({
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
 
-    const idRenderer: Renderer<TrialItem> = (_, record) => (
-      <Link path={paths.trialDetails(record.id, experiment.id)}>
-        <span>{record.id}</span>
-      </Link>
-    );
+    const linkRenderer = (key: 'id' | 'totalBatchesProcessed') => {
+      const renderer = (_: unknown, record: TrialItem) => (
+        <Link path={paths.trialDetails(record.id, experiment.id)}>
+          <span>{record[key]}</span>
+        </Link>
+      );
+      return renderer;
+    };
 
     const validationRenderer = (key: string) => {
       return function renderer (_: string, record: TrialItem): React.ReactNode {
@@ -102,7 +104,9 @@ const ExperimentOverview: React.FC<Props> = ({
       if (column.key === 'checkpoint') {
         column.render = checkpointRenderer;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.ID) {
-        column.render = idRenderer;
+        column.render = linkRenderer('id');
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.BATCHESPROCESSED) {
+        column.render = linkRenderer('totalBatchesProcessed');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC) {
         column.render = validationRenderer('bestValidationMetric');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC) {

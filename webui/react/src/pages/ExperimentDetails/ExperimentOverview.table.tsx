@@ -15,15 +15,15 @@ export const columns: ColumnType<TrialItem>[] = [
     title: 'ID',
   },
   {
-    key: V1GetExperimentTrialsRequestSortBy.STATE,
-    render: stateRenderer,
-    title: 'State',
-  },
-  {
     dataIndex: 'totalBatchesProcessed',
     key: V1GetExperimentTrialsRequestSortBy.BATCHESPROCESSED,
     sorter: true,
     title: 'Batches',
+  },
+  {
+    key: V1GetExperimentTrialsRequestSortBy.STATE,
+    render: stateRenderer,
+    title: 'State',
   },
   {
     key: V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC,
