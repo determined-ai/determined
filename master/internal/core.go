@@ -153,28 +153,28 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 
 func (m *Master) getResourceAllocationRaw(c echo.Context) error {
 	args := struct {
-		StartDate string `query:"start_date"`
-		EndDate   string `query:"end_date"`
+		Start string `query:"timestamp_before"`
+		End   string `query:"timestamp_after"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
 
-	startDate, err := time.Parse("2006-01-02T15:04:05Z", args.StartDate)
+	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
 	if err != nil {
 		return errors.Wrap(err, "invalid start date")
 	}
-	endDate, err := time.Parse("2006-01-02T15:04:05Z", args.EndDate)
+	end, err := time.Parse("2006-01-02T15:04:05Z", args.End)
 	if err != nil {
 		return errors.Wrap(err, "invalid end date")
 	}
-	if startDate.After(endDate) {
-		return errors.New("start date cannot be after end date")
+	if start.After(end) {
+		return errors.New("start time cannot be after end time")
 	}
 
 	resp := &apiv1.ResourceAllocationRawResponse{}
 	if err := m.db.QueryProto(
-		"allocation_raw", &resp.ResourceEntry, startDate.UTC(), endDate.UTC(),
+		"allocation_raw", &resp.ResourceEntries, start.UTC(), end.UTC(),
 	); err != nil {
 		return errors.Wrap(err, "error fetching allocation data")
 	}
@@ -195,7 +195,7 @@ func (m *Master) getResourceAllocationRaw(c echo.Context) error {
 		return err
 	}
 
-	for _, entry := range resp.ResourceEntry {
+	for _, entry := range resp.ResourceEntries {
 		var labels []string
 		for _, label := range entry.Labels {
 			labels = append(labels, labelEscaper.Replace(label))
