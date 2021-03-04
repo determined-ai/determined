@@ -190,10 +190,10 @@ const ioToExperimentHyperparameters = (
      */
     const ioHp = io[key];
     const valIsNotPrimitive = ioHp.val != null && !isPrimitive(ioHp.val);
-    const valListIsNotPrimitive = Array.isArray(ioHp.vals) && ioHp.vals.reduce((acc, val) => {
+    const valListIsPrimitive = Array.isArray(ioHp.vals) && ioHp.vals.reduce((acc, val) => {
       return acc && (val != null && isPrimitive(val));
     }, true);
-    if (!valIsNotPrimitive && !valListIsNotPrimitive) {
+    if (!valIsNotPrimitive || valListIsPrimitive) {
       hparams[key] = ioToExperimentHyperparameter(ioHp);
     }
   });
