@@ -6,6 +6,7 @@ import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import ParallelCoordinates, {
+  Constraint,
   Dimension, DimensionType, dimensionTypeMap,
 } from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -149,7 +150,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     onMetricChange(metric);
   }, [ onMetricChange, resetData ]);
 
-  const handleChartFilter = useCallback((constraints: Record<string, Range>) => {
+  const handleChartFilter = useCallback((constraints: Record<string, Constraint>) => {
     if (!chartData) return;
 
     // Figure out which trials fit within the user provided constraints.
@@ -158,7 +159,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
       return acc;
     }, {} as Record<number, boolean>);
 
-    Object.entries(constraints).forEach(([ key, range ]) => {
+    Object.entries(constraints).forEach(([ key, constraint ]) => {
+      const range = constraint.valueRange;
+      if (!range) return;
       if (!isNumber(range[0]) || !isNumber(range[1])) return;
       if (!chartData.data[key]) return;
 
