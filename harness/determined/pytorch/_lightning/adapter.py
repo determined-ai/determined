@@ -19,10 +19,32 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 def check_compatibility(lm: pl.LightningModule) -> None:
     prefix = "Unsupported usage in PLAdapter: "
     unsupported_members = {
-        "training_step_end",
-        "validation_step_end",
+        "backward",
+        "get_progress_bar_dict",
         "manual_backward",
+        "on_fit_end",
+        "on_fit_start",
+        "on_load_checkpoint",
+        "on_pretrain_routine_end",
+        "on_pretrain_routine_start",
+        "on_save_checkpoint",
+        "on_test_batch_end",
+        "on_test_batch_start",
+        "on_test_epoch_end",
+        "on_test_epoch_start",
         "on_train_epoch_end",
+        "optimizer_step",
+        "optimizer_zero_grad",
+        "setup",
+        "tbptt_split_batch",
+        "teardown",
+        "test_dataloader",
+        "test_epoch_end",
+        "test_step",
+        "test_step_end",
+        "training_step_end",
+        "transfer_batch_to_device",
+        "validation_step_end",
     }
 
     members = inspect.getmembers(lm, predicate=inspect.ismethod)
