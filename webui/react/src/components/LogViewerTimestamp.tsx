@@ -113,9 +113,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const [ filter, setFilter ] = useState<LogViewerTimestampFilter>({});
   const [ filterOptions, setFilterOptions ] = useState<LogViewerTimestampFilter>({});
   const [ isLastReached, setIsLastReached ] = useState<boolean>(false);
-  const [ isLoadingFirstBatch, setIsLoadingFirstBatch ] = useState<boolean>(false);
+  const [ isLoading, setIsLoading ] = useState<boolean>(false);
   const [ isOnBottom, setIsOnBottom ] = useState<boolean>(false);
-  const [ isOnTop, setIsOnTop ] = useState<boolean>(false);
   const [ logs, logsDispatch ] = useReducer<Reducer<ViewerLog[], LogStoreAction>>(
     logStoreReducer,
     [],
@@ -142,7 +141,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     // Restore the previous scroll position when prepending log entries.
     if (isPrepend) {
       listRef.current?.resetAfterIndex(0);
-      listRef.current?.scrollToItem(newLogs.length + 1);
+      listRef.current?.scrollToItem(newLogs.length + 1, 'start');
     }
   }, [ listRef, logsDispatch ]);
 
@@ -150,7 +149,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     logsDispatch({ type: LogStoreActionType.Clear });
     listRef.current?.resetAfterIndex(0);
     setIsLastReached(false);
-    setIsLoadingFirstBatch(true);
+    setIsLoading(true);
   }, [ logsDispatch ]);
 
   const fetchAndAppendLogs =
@@ -186,13 +185,9 @@ const LogViewerTimestamp: React.FC<Props> = ({
             setIsLastReached(true);
           }
 
-          // prevent loading other logs after adding the loaded ones
-          setIsOnBottom(direction === DIRECTIONS.BOTTOM_TO_TOP);
-          setIsOnTop(direction === DIRECTIONS.TOP_TO_BOTTOM);
-
           addLogs(buffer, isPrepend);
 
-          setIsLoadingFirstBatch(false);
+          setIsLoading(false);
 
           buffer = [];
         });
@@ -254,9 +249,39 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   const onItemsRendered =
     useCallback(({ visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps) => {
-      setIsOnTop(visibleStartIndex === 0);
       setIsOnBottom(visibleStopIndex === (logs.length - 1));
-    }, [ logs ]);
+
+      if (isLoading) return;
+      if (isLastReached) return;
+      if (!listRef?.current) return;
+
+      const logTimes = logs.map(log => log.time).sort();
+
+      // Fetch older log when direction=bottom_to_top and scroll is on top.
+      if (direction === DIRECTIONS.BOTTOM_TO_TOP && visibleStartIndex === 0) {
+        const canceler = fetchAndAppendLogs(direction, {
+          ...filter,
+          timestampBefore: dayjs(logTimes.first()),
+        });
+        return () => canceler.abort();
+      }
+
+      // Fetch newer log when direction=top_to_bottom and scroll is on bottom.
+      if (direction === DIRECTIONS.TOP_TO_BOTTOM && visibleStopIndex === (logs.length - 1)) {
+        const canceler = fetchAndAppendLogs(direction, {
+          ...filter,
+          timestampAfter: dayjs(logTimes.last()),
+        });
+        return () => canceler.abort();
+      }
+    }, [
+      direction,
+      fetchAndAppendLogs,
+      filter,
+      isLastReached,
+      isLoading,
+      logs,
+    ]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -322,64 +347,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
     return () => canceler.abort();
   }, [ clearLogs, direction, fetchAndAppendLogs, filter ]);
-
-  /*
-   * Fetch older log when direction=tailing and scroll is on top.
-   */
-  useLayoutEffect(() => {
-    if (!isOnTop) return;
-    if (!listRef?.current) return;
-    if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
-    if (isLastReached) return;
-    if (isLoadingFirstBatch) return;
-
-    const logTimes = logs.map(log => log.time).sort();
-
-    const canceler = fetchAndAppendLogs(direction, {
-      ...filter,
-      timestampBefore: dayjs(logTimes.first()),
-    });
-
-    return () => canceler.abort();
-  }, [
-    direction,
-    fetchAndAppendLogs,
-    filter,
-    isLastReached,
-    isLoadingFirstBatch,
-    isOnTop,
-    listRef,
-    logs,
-  ]);
-
-  /*
-   * Fetch newer log when direction=top_to_bottom and scroll is on bottom.
-   */
-  useLayoutEffect(() => {
-    if (!isOnBottom) return;
-    if (!listRef?.current) return;
-    if (direction !== DIRECTIONS.TOP_TO_BOTTOM) return;
-    if (isLastReached) return;
-    if (isLoadingFirstBatch) return;
-
-    const logTimes = logs.map(log => log.time).sort();
-
-    const canceler = fetchAndAppendLogs(direction, {
-      ...filter,
-      timestampAfter: dayjs(logTimes.last()),
-    });
-
-    return () => canceler.abort();
-  }, [
-    direction,
-    fetchAndAppendLogs,
-    filter,
-    isLastReached,
-    isLoadingFirstBatch,
-    isOnBottom,
-    listRef,
-    logs,
-  ]);
 
   /*
    * Fetch Log tail (api follow).
