@@ -182,7 +182,9 @@ const LogViewerTimestamp: React.FC<Props> = ({
               ? buffer.unshift(logEntry) : buffer.push(logEntry);
           },
         ).then(() => {
-          if (buffer.length < TAIL_SIZE) setIsLastReached(true);
+          if (!canceler.signal.aborted && buffer.length < TAIL_SIZE) {
+            setIsLastReached(true);
+          }
 
           // prevent loading other logs after adding the loaded ones
           setIsOnBottom(direction === DIRECTIONS.BOTTOM_TO_TOP);
@@ -239,7 +241,10 @@ const LogViewerTimestamp: React.FC<Props> = ({
     if (onDownloadClick) onDownloadClick();
   }, [ onDownloadClick ]);
 
-  const handleEnableTailing = () => setDirection(DIRECTIONS.BOTTOM_TO_TOP);
+  const handleEnableTailing = () => {
+    setDirection(DIRECTIONS.BOTTOM_TO_TOP);
+    listRef.current?.scrollToItem(logs.length);
+  };
 
   const handleFullScreen = useCallback(() => {
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
@@ -348,7 +353,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   ]);
 
   /*
-   * Fetch newer log when direction=oldest and scroll is on botton.
+   * Fetch newer log when direction=top_to_bottom and scroll is on bottom.
    */
   useLayoutEffect(() => {
     if (!isOnBottom) return;
@@ -453,10 +458,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
     </Space>
   );
 
-  const scrollToTopClasses = [ css.scrollToTop, css.show ];
-  if (direction === DIRECTIONS.TOP_TO_BOTTOM) scrollToTopClasses.push(css.enabled);
   const enableTailingClasses = [ css.enableTailing ];
-  if (direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
+  if (isOnBottom && direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
 
   const dateTimeStyle = { width: toRem(dateTimeWidth) };
 
@@ -500,7 +503,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
           <Tooltip placement="left" title="Scroll to Top">
             <Button
               aria-label="Scroll to Top"
-              className={scrollToTopClasses.join(' ')}
+              className={[ css.scrollToTop, css.show ].join(' ')}
               icon={<Icon name="arrow-up" />}
               onClick={handleScrollToTop} />
           </Tooltip>
