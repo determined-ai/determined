@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Fix the order of batches to be numeric instead of
-   alpha-numeric.

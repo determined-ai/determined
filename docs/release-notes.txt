@@ -8,6 +8,45 @@
  Version 0.14
 **************
 
+Version 0.14.3
+==============
+
+**Release Date:** March 4, 2021
+
+**New Features**
+
+-  Examples: Easily train the `Deformable DETR
+   <https://openreview.net/forum?id=gZ9hCDWe6ke>`__ model for object
+   detection in Determined.
+
+-  HP search Constraints: Allow users to programatically constrain
+   hyperparameter searches in a more granular fashion.
+
+-  WebUI: Hyperparameter visualization support has been added:
+
+   -  Use HP parallel coordinates charts to visually see the most
+      impactful hyperparameters in a multi trial experiment.
+   -  Use HP Scatter Plots to find your most impactful hyperparameters.
+   -  Use HP Heat Maps to visualize significant relationships between
+      your hyperparameters.
+
+**Improvements**
+
+-  WebUI: Restructure links in table rows to use anchor tags instead of
+   click event listeners. This change increases accessibility and
+   improves keyboard navigation support.
+
+**Bug Fixes**
+
+-  Keras: Ensure that ``keras.utils.Sequence`` objects receive their
+   ``on_epoch_end()`` calls after validation is completed.
+-  Kubernetes: Fix a bug that caused the Cluster page to not render when
+   using a Kubernetes cluster.
+-  WebUI: Fix the order of batches to be numeric instead of
+   alpha-numeric.
+-  WebUI: Fix an issue where removed parallel coordinates filters would
+   reappear during a re-render.
+
 Version 0.14.2
 ==============
 
