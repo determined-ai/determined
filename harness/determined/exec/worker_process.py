@@ -61,5 +61,5 @@ if __name__ == "__main__":
     try:
         main()
     except det.InvalidHP:
-        logging.info("InvalidHP detected, gracefully exiting trial")
+        logging.info("InvalidHP detected, worker is exiting")
         pass
