@@ -58,8 +58,8 @@ const MAX_DATETIME_LENGTH = 23;
 const THROTTLE_TIME = 500;
 
 enum DIRECTIONS {
-  OLDEST, // show oldest logs and infinite-scroll newest ones at the bottom
-  TAILING, // show newest logs and infinite-scroll oldest ones at the top
+  TOP_TO_BOTTOM, // show oldest logs and infinite-scroll newest ones at the bottom
+  BOTTOM_TO_TOP, // show newest logs and infinite-scroll oldest ones at the top
 }
 
 const formatClipboardHeader = (log: TrialLog): string => {
@@ -109,7 +109,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
 
-  const [ direction, setDirection ] = useState(DIRECTIONS.TAILING);
+  const [ direction, setDirection ] = useState(DIRECTIONS.BOTTOM_TO_TOP);
   const [ filter, setFilter ] = useState<LogViewerTimestampFilter>({});
   const [ filterOptions, setFilterOptions ] = useState<LogViewerTimestampFilter>({});
   const [ isLastReached, setIsLastReached ] = useState<boolean>(false);
@@ -159,12 +159,12 @@ const LogViewerTimestamp: React.FC<Props> = ({
       let fetchArgs = null;
       let isPrepend = false;
 
-      if (direction === DIRECTIONS.TAILING) {
+      if (direction === DIRECTIONS.BOTTOM_TO_TOP) {
         fetchArgs = onFetchLogBefore(filters, canceler);
         isPrepend = true;
       }
 
-      if (direction === DIRECTIONS.OLDEST) {
+      if (direction === DIRECTIONS.TOP_TO_BOTTOM) {
         fetchArgs = onFetchLogAfter({
           ...filters,
           timestampAfter: filters.timestampAfter?.subtract(1, 'millisecond'),
@@ -178,14 +178,15 @@ const LogViewerTimestamp: React.FC<Props> = ({
           fetchArgs,
           event => {
             const logEntry = fetchToLogConverter(event);
-            direction === DIRECTIONS.OLDEST ? buffer.unshift(logEntry) : buffer.push(logEntry);
+            direction === DIRECTIONS.TOP_TO_BOTTOM
+              ? buffer.unshift(logEntry) : buffer.push(logEntry);
           },
         ).then(() => {
           if (buffer.length < TAIL_SIZE) setIsLastReached(true);
 
           // prevent loading other logs after adding the loaded ones
-          setIsOnBottom(direction === DIRECTIONS.TAILING);
-          setIsOnTop(direction === DIRECTIONS.OLDEST);
+          setIsOnBottom(direction === DIRECTIONS.BOTTOM_TO_TOP);
+          setIsOnTop(direction === DIRECTIONS.TOP_TO_BOTTOM);
 
           addLogs(buffer, isPrepend);
 
@@ -238,19 +239,13 @@ const LogViewerTimestamp: React.FC<Props> = ({
     if (onDownloadClick) onDownloadClick();
   }, [ onDownloadClick ]);
 
-  const handleEnableTailing = useCallback(() => {
-    clearLogs();
-    setDirection(DIRECTIONS.TAILING);
-  }, [ clearLogs ]);
+  const handleEnableTailing = () => setDirection(DIRECTIONS.BOTTOM_TO_TOP);
 
   const handleFullScreen = useCallback(() => {
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
-  const handleScrollToTop = useCallback(() => {
-    clearLogs();
-    setDirection(DIRECTIONS.OLDEST);
-  }, [ clearLogs ]);
+  const handleScrollToTop = () => setDirection(DIRECTIONS.TOP_TO_BOTTOM);
 
   const onItemsRendered =
     useCallback(({ visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps) => {
@@ -329,7 +324,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   useLayoutEffect(() => {
     if (!isOnTop) return;
     if (!listRef?.current) return;
-    if (direction !== DIRECTIONS.TAILING) return;
+    if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
     if (isLastReached) return;
     if (isLoadingFirstBatch) return;
 
@@ -358,7 +353,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   useLayoutEffect(() => {
     if (!isOnBottom) return;
     if (!listRef?.current) return;
-    if (direction !== DIRECTIONS.OLDEST) return;
+    if (direction !== DIRECTIONS.TOP_TO_BOTTOM) return;
     if (isLastReached) return;
     if (isLoadingFirstBatch) return;
 
@@ -385,7 +380,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * Fetch Log tail (api follow).
    */
   useEffect(() => {
-    if (direction !== DIRECTIONS.TAILING) return;
+    if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
 
     const canceler = new AbortController();
 
@@ -415,7 +410,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   useLayoutEffect(() => {
     if (!isOnBottom) return;
     if (!listRef?.current) return;
-    if (direction !== DIRECTIONS.TAILING) return;
+    if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
 
     listRef.current.scrollToItem(logs.length);
   }, [ direction, isOnBottom, listRef, logs ]);
@@ -459,9 +454,9 @@ const LogViewerTimestamp: React.FC<Props> = ({
   );
 
   const scrollToTopClasses = [ css.scrollToTop, css.show ];
-  if (direction === DIRECTIONS.OLDEST) scrollToTopClasses.push(css.enabled);
+  if (direction === DIRECTIONS.TOP_TO_BOTTOM) scrollToTopClasses.push(css.enabled);
   const enableTailingClasses = [ css.enableTailing ];
-  if (direction === DIRECTIONS.TAILING) enableTailingClasses.push(css.enabled);
+  if (direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
 
   const dateTimeStyle = { width: toRem(dateTimeWidth) };
 
@@ -511,7 +506,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
           </Tooltip>
           <Tooltip
             placement="left"
-            title={direction === DIRECTIONS.TAILING ? 'Tailing Enabled' : 'Enable Tailing'}
+            title={direction === DIRECTIONS.BOTTOM_TO_TOP ? 'Tailing Enabled' : 'Enable Tailing'}
           >
             <Button
               aria-label="Enable Tailing"
