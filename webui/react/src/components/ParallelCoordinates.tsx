@@ -174,12 +174,10 @@ const ParallelCoordinates: React.FC<Props> = ({
 
         // Translate constraints back to categorical values.
         if (dim.categories && range && isNumber(range[0]) && isNumber(range[1])) {
+          // Create a list of acceptable categorical values.
           const minIndex = Math.round((Math.ceil(range[0]) - 1) / 2);
           const maxIndex = Math.round((Math.floor(range[1]) - 1) / 2);
-          const values = [];
-
-          // Create a list of acceptable categorical values.
-          for (let i = minIndex; i <= maxIndex; i++) values.push(dim.categories[i]);
+          const values = dim.categories.slice(minIndex, maxIndex + 1);
           constraint.values = values;
         }
 

@@ -6,8 +6,7 @@ import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import ParallelCoordinates, {
-  Constraint,
-  Dimension, DimensionType, dimensionTypeMap,
+  Constraint, Dimension, DimensionType, dimensionTypeMap,
 } from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
