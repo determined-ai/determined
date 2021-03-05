@@ -26,7 +26,7 @@ interface Props {
   data: Record<string, Primitive[]>;
   dimensions: Dimension[];
   id?: string;
-  onFilter?: (constraints: Record<string, Range>) => void;
+  onFilter?: (constraints: Record<string, Constraint>) => void;
 }
 
 export interface Dimension {
@@ -34,6 +34,11 @@ export interface Dimension {
   label: string;
   range?: Range;
   type: DimensionType,
+}
+
+export interface Constraint {
+  range: Range;
+  values?: Primitive[];
 }
 
 export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> = {
@@ -68,7 +73,7 @@ const ParallelCoordinates: React.FC<Props> = ({
   const chartRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
-  const [ constraints, setConstraints ] = useState<Record<string, Range>>({});
+  const [ constraints, setConstraints ] = useState<Record<string, Constraint>>({});
 
   const colorValues = useMemo(() => {
     if (!colorScaleKey || !Array.isArray(data[colorScaleKey])) return undefined;
@@ -85,6 +90,7 @@ const ParallelCoordinates: React.FC<Props> = ({
         const label = truncate(key, MAX_LABEL_LENGTH);
         const hpDimension: Record<string, unknown> = {
           label,
+          multiselect: false,
           range: dimension.range,
           values: data[key],
         };
@@ -110,7 +116,7 @@ const ParallelCoordinates: React.FC<Props> = ({
         }
 
         if (constraints[dimension.label] != null) {
-          hpDimension.constraintrange = clone(constraints[dimension.label]);
+          hpDimension.constraintrange = clone(constraints[dimension.label].range);
         }
 
         return hpDimension;
@@ -160,20 +166,31 @@ const ParallelCoordinates: React.FC<Props> = ({
       const regex = /^dimensions\[(\d+)\]\.constraintrange/i;
       const matches = keys[0].match(regex);
       if (Array.isArray(matches) && matches.length === 2) {
-        const constraint: Range = data[0][keys[0]] ? data[0][keys[0]][0] : undefined;
-        const hpIndex = parseInt(matches[1]);
-        const hpKey = dimensions[hpIndex].label;
+        const range: Range = data[0][keys[0]] ? data[0][keys[0]][0] : undefined;
+        const dimIndex = parseInt(matches[1]);
+        const dim = dimensions[dimIndex];
+        const dimKey = dim.label;
+        const constraint: Constraint = { range };
+
+        // Translate constraints back to categorical values.
+        if (dim.categories && range && isNumber(range[0]) && isNumber(range[1])) {
+          // Create a list of acceptable categorical values.
+          const minIndex = Math.round((Math.ceil(range[0]) - 1) / 2);
+          const maxIndex = Math.round((Math.floor(range[1]) - 1) / 2);
+          const values = dim.categories.slice(minIndex, maxIndex + 1);
+          constraint.values = values;
+        }
 
         setConstraints(prev => {
           const newConstraints = clone(prev);
 
-          if (constraint == null) {
-            delete newConstraints[hpKey];
-          } else if (isNumber(constraint[0]) && isNumber(constraint[1]) &&
-              Math.abs(constraint[0] - constraint[1]) > CONSTRAINT_REMOVE_THRESHOLD) {
-            newConstraints[hpKey] = constraint;
-          } else if (constraint[0] !== constraint[1]) {
-            newConstraints[hpKey] = constraint;
+          if (range == null) {
+            delete newConstraints[dimKey];
+          } else if (isNumber(range[0]) && isNumber(range[1]) &&
+              Math.abs(range[0] - range[1]) > CONSTRAINT_REMOVE_THRESHOLD) {
+            newConstraints[dimKey] = constraint;
+          } else if (range[0] !== range[1]) {
+            newConstraints[dimKey] = constraint;
           }
 
           return newConstraints;

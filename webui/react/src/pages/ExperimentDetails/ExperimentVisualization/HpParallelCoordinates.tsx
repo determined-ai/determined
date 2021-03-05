@@ -6,7 +6,7 @@ import Message, { MessageType } from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import ParallelCoordinates, {
-  Dimension, DimensionType, dimensionTypeMap,
+  Constraint, Dimension, DimensionType, dimensionTypeMap,
 } from 'components/ParallelCoordinates';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
@@ -20,7 +20,7 @@ import {
   metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
-import { clone, isNumber } from 'utils/data';
+import { clone } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
@@ -149,7 +149,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     onMetricChange(metric);
   }, [ onMetricChange, resetData ]);
 
-  const handleChartFilter = useCallback((constraints: Record<string, Range>) => {
+  const handleChartFilter = useCallback((constraints: Record<string, Constraint>) => {
     if (!chartData) return;
 
     // Figure out which trials fit within the user provided constraints.
@@ -158,13 +158,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
       return acc;
     }, {} as Record<number, boolean>);
 
-    Object.entries(constraints).forEach(([ key, range ]) => {
-      if (!isNumber(range[0]) || !isNumber(range[1])) return;
+    Object.entries(constraints).forEach(([ key, constraint ]) => {
+      if (!constraint) return;
       if (!chartData.data[key]) return;
 
+      const range = constraint.range;
       const values = chartData.data[key];
       values.forEach((value, index) => {
-        if (value >= range[0] && value <= range[1]) return;
+        if (constraint.values && constraint.values.includes(value)) return;
+        if (!constraint.values && value >= range[0] && value <= range[1]) return;
         const trialId = chartData.trialIds[index];
         newFilteredTrialIdMap[trialId] = false;
       });
