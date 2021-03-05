@@ -109,6 +109,7 @@ def test_detr_coco_pytorch_distributed() -> None:
 def test_deformabledetr_coco_pytorch_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("deformabledetr_coco_pytorch/const_fake.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_global_batch_size(config, 2)
     config = conf.set_slots_per_trial(config, 2)
 
     exp.run_basic_test_with_temp_config(

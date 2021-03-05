@@ -69,6 +69,12 @@ def make_master_url(suffix: str = "") -> str:
     return "{}://{}:{}/{}".format(MASTER_SCHEME, MASTER_IP, MASTER_PORT, suffix)
 
 
+def set_global_batch_size(config: Dict[Any, Any], batch_size: int) -> Dict[Any, Any]:
+    config = config.copy()
+    config["hyperparameters"]["global_batch_size"] = batch_size
+    return config
+
+
 def set_slots_per_trial(config: Dict[Any, Any], slots: int) -> Dict[Any, Any]:
     config = config.copy()
     config.setdefault("resources", {})
