@@ -45,4 +45,4 @@ app.use('/dynamic/:protocol/:target', function(req, res) {
 app.use('/fixed', proxyTo(process.argv[2]));
 
 app.listen(PORT);
-console.log(`listening on localhost:${PORT}`);
+console.log(`listening on http://localhost:${PORT}`);
