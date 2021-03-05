@@ -5,6 +5,7 @@ from typing import Any, Dict, Sequence, Union
 from attrdict import AttrDict
 import numpy as np
 import sys
+import copy
 import os
 import time
 
@@ -64,9 +65,9 @@ class COCOReducer(MetricReducer):
             coco_evaluator.eval_imgs[iou_type] = np.concatenate(
                 coco_evaluator.eval_imgs[iou_type], 2
             )
-            create_common_coco_eval(
-                coco_eval, coco_evaluator.img_ids, coco_evaluator.eval_imgs[iou_type]
-            )
+            coco_eval.evalImgs = list(coco_evaluator.eval_imgs[iou_type].flatten())
+            coco_eval.params.imgIds = list(coco_evaluator.img_ids)
+            coco_eval._paramsEval = copy.deepcopy(coco_eval.params)
         coco_evaluator.accumulate()
         coco_evaluator.summarize()
 
