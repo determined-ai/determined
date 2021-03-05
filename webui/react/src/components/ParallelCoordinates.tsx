@@ -90,6 +90,7 @@ const ParallelCoordinates: React.FC<Props> = ({
         const label = truncate(key, MAX_LABEL_LENGTH);
         const hpDimension: Record<string, unknown> = {
           label,
+          multiselect: false,
           range: dimension.range,
           values: data[key],
         };
