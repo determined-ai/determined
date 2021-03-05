@@ -17,21 +17,31 @@ Version 0.14.3
 
 -  Examples: Add the `Deformable DETR
    <https://openreview.net/forum?id=gZ9hCDWe6ke>`__ model for object
-   detection in Determined.
+   detection in Determined. Check out `our example
+   <https://github.com/determined-ai/determined/tree/master/examples/computer_vision/deformabledetr_coco_pytorch>`__
+   in the Determined repository.
 
--  Searcher: Support programmatic rejection of certain hyperparameters to further optimize your hyperparameter search. See :ref:`topic-guides_hp-constraints-det` for more details.
+-  Searcher: Support programmatic rejection of certain hyperparameters
+   to further optimize your hyperparameter search. See
+   :ref:`topic-guides_hp-constraints-det` for more details.
 
--  WebUI: Add additional hyperparameter visualizations to multi-trial experiments. The new parallel coordinate, scatter plot, and heat map visualizations will allow you to better explore relationships between hyperparameters and model performance.
+-  WebUI: Add additional hyperparameter visualizations to multi-trial
+   experiments. The new parallel coordinate, scatter plot, and heat map
+   visualizations will allow you to better explore relationships between
+   hyperparameters and model performance.
 
 **Improvements**
 
--  WebUI: Use anchor tags instead of click event listeners across all table rows. This increases accessibility and improves keyboard navigation support.
+-  WebUI: Use anchor tags instead of click event listeners across all
+   table rows. This increases accessibility and improves keyboard
+   navigation support.
 
 **Bug Fixes**
 
--  Keras: Ensure that ``keras.utils.Sequence`` objects receive their ``on_epoch_end()`` calls after validation is completed.
-
--  WebUI: Fix the order of batches to be numeric instead of alphanumeric.
+-  Keras: Ensure that ``keras.utils.Sequence`` objects receive their
+   ``on_epoch_end()`` calls after validation is completed.
+-  WebUI: Fix the order of batches to be numeric instead of
+   alphanumeric.
 
 Version 0.14.2
 ==============
