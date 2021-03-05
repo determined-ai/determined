@@ -4,7 +4,8 @@ class deployment_types:
     VPC = "vpc"
     EFS = "efs"
     FSX = "fsx"
-    DEPLOYMENT_TYPES = [SIMPLE, SECURE, VPC, EFS, FSX]
+    GOVCLOUD = "govcloud"
+    DEPLOYMENT_TYPES = [SIMPLE, SECURE, VPC, EFS, FSX, GOVCLOUD]
 
 
 class defaults:
@@ -74,4 +75,6 @@ class misc:
         "us-east-1",
         "us-east-2",
         "us-west-2",
+        "us-gov-east-1",
+        "us-gov-west-1",
     ]
