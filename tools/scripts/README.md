@@ -34,7 +34,10 @@ be registered in the determined repo. Here is the process:
 5. (optional) Run `./refresh-ubuntu-amis.py bumpenvs.yaml`.  This will fetch
    the up-to-date Ubuntu AMIs for each region for each of the `*_master_ami`
    and `*_bastion_ami` image tags in bumpenvs.yaml.  This isn't strictly
-   necessary; we just need to run it periodically, and now is a fine time.
+   necessary; we just need to run it periodically, and now is a fine time. To 
+   update the Ubuntu AMIs for AWS Gov Cloud regions, find the appropriate 
+   [public AMI](https://cloud-images.ubuntu.com/locator/ec2/) and manually 
+   replace the values.
 
 6. Run `./bumpenvs.py bumpenvs.yaml`.  This will do a simple string replacement
    in the repository, replacing the `old` values with the `new` values for

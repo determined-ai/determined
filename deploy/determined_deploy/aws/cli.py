@@ -7,7 +7,7 @@ from typing import Callable, Dict, Type, Union
 import boto3
 
 from determined_deploy.aws import aws, constants
-from determined_deploy.aws.deployment_types import base, secure, simple, vpc
+from determined_deploy.aws.deployment_types import base, govcloud, secure, simple, vpc
 
 
 def validate_spot_max_price() -> Callable:
@@ -282,6 +282,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.deployment_types.VPC: vpc.VPC,
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
+        constants.deployment_types.GOVCLOUD: govcloud.Govcloud,
     }  # type: Dict[str, Union[Type[base.DeterminedDeployment]]]
 
     if args.deployment_type != constants.deployment_types.SIMPLE:
@@ -290,6 +291,13 @@ def deploy_aws(args: argparse.Namespace) -> None:
                 f"The agent-subnet-id can only be set if the deployment-type=simple. "
                 f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
                 f"deployment-type={args.deployment_type}."
+            )
+
+    if args.deployment_type == constants.deployment_types.GOVCLOUD:
+        if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
+            raise ValueError(
+                "When deploying to GovCloud, set the region to either us-gov-east-1 "
+                "or us-gov-west-1."
             )
 
     master_tls_cert = master_tls_key = ""
