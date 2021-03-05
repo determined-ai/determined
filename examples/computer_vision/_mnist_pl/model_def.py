@@ -4,7 +4,7 @@ interface to build a basic MNIST network. The PLAdapter utilizes the provided
 LightningModule with Determined's PyTorch control loop.
 """
 
-from determined.pytorch import PyTorchTrial, PyTorchTrialContext, DataLoader
+from determined.pytorch import PyTorchTrialContext, DataLoader
 from determined.pytorch._lightning import PLAdapter
 import mnist
 
