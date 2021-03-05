@@ -10,9 +10,10 @@ from typing import Optional
 from torchvision.datasets import MNIST
 
 class MNISTDataModule(pl.LightningDataModule):
-    def __init__(self, data_url: str, data_dir: str = '/tmp/det'):
+    def __init__(self, data_url: str, data_dir: str = '/tmp/det', batch_size=64):
         super().__init__()
         self.data_dir = data_dir
+        self.batch_size = batch_size
         self.data_url = data_url
         # self.dims is returned when you call dm.size()
         # Setting default dims here because we know them.
@@ -56,6 +57,6 @@ class MNISTDataModule(pl.LightningDataModule):
 
 
     def train_dataloader(self):
-        return DataLoader(self.mnist_train, batch_size=64, num_workers=12)
+        return DataLoader(self.mnist_train, batch_size=self.batch_size, num_workers=12)
     def val_dataloader(self):
-        return DataLoader(self.mnist_val, batch_size=64)
+        return DataLoader(self.mnist_val, batch_size=self.batch_size)
