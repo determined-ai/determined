@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  WebUI: New hyperparameter visualization! With hp parallel coordinates
-   chart, the user can visually see the most impactful hyperparameters
-   in a multi trial experiment.

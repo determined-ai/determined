@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Examples: Easily train the `Deformable DETR
-   <https://openreview.net/forum?id=gZ9hCDWe6ke>` model for object
-   detection in Determined.

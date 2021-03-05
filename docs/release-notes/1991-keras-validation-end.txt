@@ -1,6 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Ensure that ``keras.utils.Sequence`` objects receive their
-   ``on_epoch_end()`` calls after validation is completed.
