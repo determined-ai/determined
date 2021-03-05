@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Fix the issue of removed parallel coordinates filters from
-   coming back during a re-render.
