@@ -21,7 +21,7 @@ import {
   metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
-import { clone, isNumber } from 'utils/data';
+import { clone } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
@@ -160,14 +160,14 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }, {} as Record<number, boolean>);
 
     Object.entries(constraints).forEach(([ key, constraint ]) => {
-      const range = constraint.valueRange;
-      if (!range) return;
-      if (!isNumber(range[0]) || !isNumber(range[1])) return;
+      if (!constraint) return;
       if (!chartData.data[key]) return;
 
+      const range = constraint.range;
       const values = chartData.data[key];
       values.forEach((value, index) => {
-        if (value >= range[0] && value <= range[1]) return;
+        if (constraint.values && constraint.values.includes(value)) return;
+        if (!constraint.values && value >= range[0] && value <= range[1]) return;
         const trialId = chartData.trialIds[index];
         newFilteredTrialIdMap[trialId] = false;
       });

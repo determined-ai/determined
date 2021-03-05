@@ -38,7 +38,7 @@ export interface Dimension {
 
 export interface Constraint {
   range: Range;
-  valueRange: Range<number>;
+  values?: Primitive[];
 }
 
 export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> = {
@@ -169,15 +169,17 @@ const ParallelCoordinates: React.FC<Props> = ({
         const dimIndex = parseInt(matches[1]);
         const dim = dimensions[dimIndex];
         const dimKey = dim.label;
-        const constraint = { range, valueRange: range };
+        const constraint: Constraint = { range };
 
         // Translate constraints back to categorical values.
         if (dim.categories && range && isNumber(range[0]) && isNumber(range[1])) {
           const minIndex = Math.round((Math.ceil(range[0]) - 1) / 2);
           const maxIndex = Math.round((Math.floor(range[1]) - 1) / 2);
-          const minValue = dim.categories[minIndex];
-          const maxValue = dim.categories[maxIndex];
-          constraint.valueRange = [ minValue, maxValue ];
+          const values = [];
+
+          // Create a list of acceptable categorical values.
+          for (let i = minIndex; i <= maxIndex; i++) values.push(dim.categories[i]);
+          constraint.values = values;
         }
 
         setConstraints(prev => {
