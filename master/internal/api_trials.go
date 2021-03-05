@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	batchSize = 1000
+	batchSize                     = 1000
 	trialProfilerMetricsBatchSize = 100
 )
 
@@ -41,6 +41,8 @@ var (
 	batchWaitTime                            = 100 * time.Millisecond
 	distinctFieldBatchWaitTime               = 5 * time.Second
 	defaultTrialProfilerMetricsBatchWaitTime = 10 * time.Millisecond
+	// DefaultTrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
+	DefaultTrialAvailableSeriesBatchWaitTime = 15 * time.Second
 )
 
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
@@ -119,7 +121,7 @@ func (a *apiServer) TrialLogs(
 			lReq,
 			fetch,
 			onBatch,
-			a.isTrialTerminalFunc(int(req.TrialId)),
+			a.isTrialTerminalFunc(int(req.TrialId), 20*time.Second),
 			&batchWaitTime,
 		),
 	).AwaitTermination()
@@ -211,7 +213,7 @@ func (a *apiServer) TrialLogsFields(
 			api.LogsRequest{Follow: req.Follow},
 			fetch,
 			onBatch,
-			a.isTrialTerminalFunc(int(req.TrialId)),
+			nil,
 			&distinctFieldBatchWaitTime,
 		),
 	).AwaitTermination()
@@ -432,7 +434,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		}
 
 		var batchOfBatches []*trialv1.TrialProfilerMetricsBatch
-		return model.TrialProfilerMetricBatch(batchOfBatches), a.m.db.QueryProto(
+		return model.TrialProfilerMetricsBatchBatch(batchOfBatches), a.m.db.QueryProto(
 			"get_trial_profiler_metrics",
 			&batchOfBatches, labelsParam, lr.Offset, lr.Limit,
 		)
@@ -453,7 +455,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 			api.LogsRequest{Follow: true},
 			fetch,
 			onBatch,
-			a.isTrialTerminalFunc(int(req.Labels.TrialId)),
+			a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
 			&defaultTrialProfilerMetricsBatchWaitTime,
 		),
 	).AwaitTermination()
@@ -470,37 +472,35 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		return status.Error(codes.NotFound, "trial not found")
 	}
 
-	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
-		l := &trialv1.TrialProfilerMetricLabels{}
-		return api.ToLogBatchOfOne(l), a.m.db.QueryProto(
+	fetch := func(_ api.LogsRequest) (api.LogBatch, error) {
+		var labels apiv1.GetTrialProfilerAvailableSeriesResponse
+		return api.ToLogBatchOfOne(&labels), a.m.db.QueryProto(
 			"get_trial_available_series",
-			l, lr.Offset, lr.Limit,
+			&labels, fmt.Sprintf(`{"trialId": %d}`, req.TrialId),
 		)
 	}
 
 	onBatch := func(b api.LogBatch) error {
 		return b.ForEach(func(r interface{}) error {
-			return resp.Send(&apiv1.GetTrialProfilerAvailableSeriesResponse{
-				Labels: r.(*trialv1.TrialProfilerMetricLabels),
-			})
+			return resp.Send(r.(*apiv1.GetTrialProfilerAvailableSeriesResponse))
 		})
 	}
 
 	return a.m.system.MustActorOf(
-		actor.Addr("trialMetricsStream-"+uuid.New().String()),
+		actor.Addr("trialSeriesStream-"+uuid.New().String()),
 		api.NewLogStoreProcessor(
 			resp.Context(),
 			api.LogsRequest{Follow: true},
 			fetch,
 			onBatch,
-			a.isTrialTerminalFunc(int(req.TrialId)),
-			&defaultTrialProfilerMetricsBatchWaitTime,
+			nil,
+			&DefaultTrialAvailableSeriesBatchWaitTime,
 		),
 	).AwaitTermination()
 }
 
 func (a *apiServer) PostTrialProfilerMetricsBatch(
-	ctx context.Context,
+	_ context.Context,
 	req *apiv1.PostTrialProfilerMetricsBatchRequest,
 ) (*apiv1.PostTrialProfilerMetricsBatchResponse, error) {
 	switch exists, err := a.m.db.CheckTrialExists(int(req.Batch.Labels.TrialId)); {
@@ -508,6 +508,12 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 		return nil, err
 	case !exists:
 		return nil, status.Error(codes.NotFound, "trial not found")
+	}
+
+	if len(req.Batch.Values) != len(req.Batch.Batches) &&
+		len(req.Batch.Batches) != len(req.Batch.Timestamps) {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"values, batches and timestamps should be equal sized arrays")
 	}
 
 	labels, err := protojson.Marshal(req.Batch.Labels)
@@ -527,11 +533,14 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, nil
 }
 
-func (a *apiServer) isTrialTerminalFunc(trialID int) api.TerminationCheckFn {
+// isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and
+// optionally, additionally, waits some buffer duration to give trials a bit to finish sending
+// stuff after termination.
+func (a *apiServer) isTrialTerminalFunc(trialID int, buffer time.Duration) api.TerminationCheckFn {
 	return func() (bool, error) {
-		if state, endTime, err := a.m.db.TrialStatus(trialID); err != nil ||
-			// Give trials a bit to finish sending logs after termination.
-			(model.TerminalStates[state] && endTime.Before(time.Now().Add(-20*time.Second))) {
+		state, endTime, err := a.m.db.TrialStatus(trialID)
+		if err != nil ||
+			(model.TerminalStates[state] && endTime.Before(time.Now().Add(-buffer))) {
 			return true, err
 		}
 		return false, nil

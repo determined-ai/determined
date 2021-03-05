@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// InsertTrialProfilerMetricsBatch inserts a batch of metrics into the database.
 func (db *PgDB) InsertTrialProfilerMetricsBatch(
 	values []float32, batches []int32, timestamps []time.Time, labels []byte,
 ) error {

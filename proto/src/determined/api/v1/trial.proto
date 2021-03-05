@@ -258,7 +258,7 @@ message GetTrialProfilerAvailableSeriesResponse {
     json_schema: { required: [ "labels" ] }
   };
   // The labels for the series.
-  determined.trial.v1.TrialProfilerMetricLabels labels = 1;
+  repeated determined.trial.v1.TrialProfilerMetricLabels labels = 1;
 }
 
 // Create a batch of trial profiler metrics.

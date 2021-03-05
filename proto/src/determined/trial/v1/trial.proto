@@ -126,8 +126,8 @@ message TrialProfilerMetricLabels {
   string name = 2;
   // The agent ID associated with the metric.
   string agent_id = 3;
-  // The global rank ID associated with the metric.
-  string rank_id = 4;
+  // The GPU UUID associated with the metric.
+  string gpu_uuid = 4;
   // The type of the metric.
   ProfilerMetricType metric_type = 5;
 }

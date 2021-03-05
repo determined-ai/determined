@@ -2,10 +2,12 @@ package model
 
 import (
 	"fmt"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
 	"strconv"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
+
+	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -514,16 +516,16 @@ func (t TrialLogBatch) ForEach(f func(interface{}) error) error {
 	return nil
 }
 
-// TrialProfilerMetricBatch represents a batch of trialv1.TrialProfilerMetricsBatch.
-type TrialProfilerMetricBatch []*trialv1.TrialProfilerMetricsBatch
+// TrialProfilerMetricsBatchBatch represents a batch of trialv1.TrialProfilerMetricsBatch.
+type TrialProfilerMetricsBatchBatch []*trialv1.TrialProfilerMetricsBatch
 
 // Size implements logs.Batch.
-func (t TrialProfilerMetricBatch) Size() int {
+func (t TrialProfilerMetricsBatchBatch) Size() int {
 	return len(t)
 }
 
 // ForEach implements logs.Batch.
-func (t TrialProfilerMetricBatch) ForEach(f func(interface{}) error) error {
+func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error {
 	for _, tl := range t {
 		if err := f(tl); err != nil {
 			return err
