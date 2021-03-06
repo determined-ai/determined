@@ -39,7 +39,8 @@ func GenerateKey(passphrase *string) (PrivateAndPublicKeys, error) {
 	}
 
 	if passphrase != nil {
-		block, err = x509.EncryptPEMBlock(
+		// TODO: Replace usage of deprecated x509.EncryptPEMBlock.
+		block, err = x509.EncryptPEMBlock( //nolint:staticcheck
 			rand.Reader, block.Type, block.Bytes, []byte(*passphrase), x509.PEMCipherAES256)
 		if err != nil {
 			return generatedKeys, errors.Wrap(err, "unable to encrypt private key")
