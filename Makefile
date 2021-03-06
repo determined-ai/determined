@@ -1,16 +1,21 @@
+# THOUGHT: assume this makefile is for local builds and ci would go directly into modules if we want to separate image dependecies
+# eg has Java but no Go?
+
 .PHONY: all
 all:
 	$(MAKE) get-deps
 	$(MAKE) build
 
 .PHONY: get-deps
-get-deps:
-	pip install -r requirements.txt
-	$(MAKE) -C master $@
+get-deps: get-deps-pip get-deps-master get-deps-bindings get-deps-webui
 	$(MAKE) -C agent $@
 	$(MAKE) -C proto $@
-	$(MAKE) -C bindings $@
-	$(MAKE) -C webui $@
+.PHONY: get-deps-%
+get-deps-%:
+	$(MAKE) -C $(subst -,/,$*) get-deps
+.PHONY: get-deps-pip
+get-deps-pip:
+	pip install -r requirements.txt
 
 .PHONY: package
 package:
@@ -20,16 +25,23 @@ package:
 .PHONY: build-%
 build-%:
 	$(MAKE) -C $(subst -,/,$*) build
+
 .PHONY: build-docs
 build-docs: build-common build-harness build-cli build-deploy build-examples build-helm build-proto
 	$(MAKE) -C docs build
+
 .PHONY: build-master
-build-master: build-webui build-docs
+build-master: build-proto build-webui build-docs
 	$(MAKE) -C master build
+
+.PHONY: build-bindings
+build-bindings: build-proto
+	$(MAKE) -C bindings build
+
 .PHONY: build-webui
-build-webui: build-proto
-	$(MAKE) build-bindings
+build-webui: build-bindings
 	$(MAKE) -C webui build
+
 .PHONY: build
 build: build-master build-agent
 
