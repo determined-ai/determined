@@ -24,7 +24,6 @@ check-%:
 .PHONY: get-deps
 get-deps:
 	$(MAKE) -C react $@
-	$(MAKE) -C tests $@
 
 .PHONY: build
 build:
