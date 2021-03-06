@@ -79,5 +79,3 @@ class InvalidModelException(InvalidExperimentException):
     InvalidModelException indicates that the model is inavlid or is (partially)
     unsupported
     """
-
-    pass

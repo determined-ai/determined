@@ -1,4 +1,5 @@
 import inspect
+import logging
 from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
 import pytorch_lightning as pl
@@ -71,6 +72,25 @@ def check_compatibility(lm: pl.LightningModule) -> None:
         raise InvalidModelException(prefix + "Lightning Trainer")
 
 
+def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContext) -> None:
+    def lm_print(*args: Any, **kwargs: Any) -> None:
+        if context.distributed.get_rank() == 0:
+            print(*args, **kwargs)
+
+    def lm_log_dict(a_dict: Dict, *args: Any, **kwargs: Any) -> None:
+        if len(args) != 0 or len(kwargs) != 0:
+            # raise Exception('unsupported arguments') # TODO rename
+            logging.warning("unsupported arguments to LightningModule.log", args, kwargs)
+        logging.info(a_dict)  # TODO write to tensorboard
+
+    def lm_log(name: str, value: Any, *args: Any, **kwargs: Any) -> None:
+        lm_log_dict({name: value}, *args, **kwargs)
+
+    lm.print = lm_print  # type: ignore
+    lm.log = lm_log  # type: ignore
+    lm.log_dict = lm_log_dict
+
+
 class _PLAdapterState:
     def __init__(
         self, context: PyTorchTrialContext, lm: pl.LightningModule, optimizers: List[Optimizer]
@@ -84,6 +104,7 @@ class PLAdapter(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext, lightning_module: pl.LightningModule):
         super().__init__(context)
         check_compatibility(lightning_module)
+        override_unsupported_nud(lightning_module, context)
         context.wrap_model(lightning_module)
         optimizers, lr_schedulers = self.setup_optimizers_schedulers(context, lightning_module)
         pls = _PLAdapterState(context, lightning_module, optimizers)
