@@ -10,6 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -76,6 +79,74 @@ func (a *apiServer) GetExperiment(
 			"error unmarshalling experiment config: %d", req.ExperimentId)
 	}
 	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
+}
+
+func (a *apiServer) DeleteExperiment(
+	_ context.Context, req *apiv1.DeleteExperimentRequest,
+) (*apiv1.DeleteExperimentResponse, error) {
+	id := int(req.ExperimentId)
+	exp, err := a.m.db.ExperimentByID(id)
+	switch {
+	case errors.Cause(err) == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", id)
+	case err != nil:
+		return nil, fmt.Errorf("failed to retrieve experiment: %w", err)
+	}
+
+	if !model.TerminalStates[exp.State] {
+		return nil, fmt.Errorf("cannot delete experiment in %s state", exp.State)
+	}
+
+	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(int(req.ExperimentId)); {
+	case eErr != nil:
+		return nil, eErr
+	case exists:
+		return nil, status.Errorf(codes.InvalidArgument, "checkpoints are registered as model versions")
+	}
+
+	agentUserGroup, err := a.m.db.AgentUserGroup(*exp.OwnerID)
+	if err != nil {
+		return nil, errors.Errorf("cannot find user and group for experiment %v", id)
+	}
+	if agentUserGroup == nil {
+		agentUserGroup = &a.m.config.Security.DefaultTask
+	}
+
+	// Change the GC policy to remove all checkpoints. This will trigger a checkpoint GC task,
+	// if needed, to remove the checkpoint files.
+	exp.Config.CheckpointStorage.SaveExperimentBest = 0
+	exp.Config.CheckpointStorage.SaveTrialBest = 0
+	exp.Config.CheckpointStorage.SaveTrialLatest = 0
+	if sErr := a.m.db.SaveExperimentConfig(exp); sErr != nil {
+		return nil, errors.Wrapf(sErr, "failed to patch experiment checkpoint storage %d", exp.ID)
+	}
+	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
+	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
+		agentUserGroup: agentUserGroup,
+		taskSpec:       a.m.taskSpec,
+		rm:             a.m.rm,
+		db:             a.m.db,
+		experiment:     exp,
+	}).AwaitTermination(); gcErr != nil {
+		return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment: %d", exp.ID)
+	}
+
+	trialIds, err := a.m.db.ExperimentTrialIDs(exp.ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment: %d", exp.ID)
+	}
+
+	logrus.Infof("deleting experiment %v logs from backend", req.ExperimentId)
+	if err = a.m.trialLogBackend.DeleteTrialLogs(trialIds); err != nil {
+		return nil, errors.Wrapf(err, "failed to delete trial logs from backend")
+	}
+
+	logrus.Infof("deleting experiment %v from database", req.ExperimentId)
+	if err = a.m.db.DeleteExperiment(id); err != nil {
+		return nil, errors.Wrapf(err, "deleting experiment %v from database", id)
+	}
+
+	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
 func (a *apiServer) GetExperiments(

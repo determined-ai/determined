@@ -33,6 +33,10 @@ var unauthenticatedMethods = map[string]bool{
 	"/determined.api.v1.Determined/GetTelemetry": true,
 }
 
+var adminMethods = map[string]bool{
+	"/determined.api.v1.Determined/DeleteExperiment": true,
+}
+
 var (
 	// ErrInvalidCredentials notifies that the provided credentials are invalid or missing.
 	ErrInvalidCredentials = status.Error(codes.Unauthenticated, "invalid credentials")
@@ -119,8 +123,12 @@ func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 	) (resp interface{}, err error) {
 		if !unauthenticatedMethods[info.FullMethod] {
 			if _, err = GetTaskSession(ctx, db); err == ErrTokenMissing {
-				if _, _, err = GetUser(ctx, db); err != nil {
-					return nil, err
+				u, _, uErr := GetUser(ctx, db)
+				if uErr != nil {
+					return nil, uErr
+				}
+				if !u.Admin && adminMethods[info.FullMethod] {
+					return nil, ErrPermissionDenied
 				}
 			} else if err != nil && err != ErrTokenMissing {
 				return nil, err

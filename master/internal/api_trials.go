@@ -46,6 +46,7 @@ type TrialLogBackend interface {
 	AddTrialLogs([]*model.TrialLog) error
 	TrialLogCount(trialID int, filters []api.Filter) (int, error)
 	TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
+	DeleteTrialLogs(trialIDs []int) error
 }
 
 func (a *apiServer) TrialLogs(

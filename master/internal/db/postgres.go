@@ -889,13 +889,6 @@ WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 		return errors.Wrapf(err, "error deleting steps for experiment %v", id)
 	}
 	_, err = tx.Exec(`
-DELETE FROM trial_logs
-WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1);
-`, id)
-	if err != nil {
-		return errors.Wrapf(err, "error deleting trial logs for experiment %v", id)
-	}
-	_, err = tx.Exec(`
 DELETE FROM trials
 WHERE experiment_id = $1;
 `, id)
@@ -905,6 +898,13 @@ WHERE experiment_id = $1;
 	err = db.deleteSnapshotsForExperiment(id)(tx)
 	if err != nil {
 		return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
+	}
+	_, err = tx.Exec(`
+DELETE FROM trials
+WHERE experiment_id = $1;
+`, id)
+	if err != nil {
+		return errors.Wrapf(err, "error deleting trials for experiment %v", id)
 	}
 	result, err := tx.Exec(`
 DELETE FROM experiments
@@ -928,6 +928,23 @@ WHERE id = $1
 	tx = nil
 
 	return nil
+}
+
+// ExperimentHasCheckpointsInRegistry checks if the experiment has an checkpoints in the registry.
+func (db *PgDB) ExperimentHasCheckpointsInRegistry(id int) (bool, error) {
+	var exists bool
+	err := db.sql.QueryRow(`
+SELECT
+EXISTS(
+   SELECT 1
+   FROM experiments e
+   JOIN trials t ON e.id = t.experiment_id
+   JOIN checkpoints c ON c.trial_id = t.id
+   JOIN model_versions mv ON mv.checkpoint_uuid = c.uuid
+   JOIN models m ON mv.model_name = m.name
+   WHERE e.id = $1
+)`, id).Scan(&exists)
+	return exists, err
 }
 
 // SaveExperimentProgress stores the progress for an experiment in the database.
@@ -986,6 +1003,25 @@ WHERE trials.experiment_id = $1
 		return 0, errors.Wrapf(err, "querying for number of trials of experiment %v", id)
 	}
 	return numTrials, nil
+}
+
+// ExperimentTrialIDs returns the trial IDs for the experiment.
+func (db *PgDB) ExperimentTrialIDs(expID int) ([]int, error) {
+	var trialIDRows []struct {
+		ID int
+	}
+	if err := db.queryRows(`
+SELECT id
+FROM trials
+WHERE trials.experiment_id = $1
+`, &trialIDRows, expID); err != nil {
+		return nil, errors.Wrapf(err, "querying for trial IDs of experiment %v", expID)
+	}
+	var trialIDs []int
+	for _, r := range trialIDRows {
+		trialIDs = append(trialIDs, r.ID)
+	}
+	return trialIDs, nil
 }
 
 // ExperimentNumSteps returns the total number of steps for all trials of the experiment.

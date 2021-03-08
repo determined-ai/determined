@@ -106,6 +106,17 @@ INSERT INTO trial_logs
 	return nil
 }
 
+// DeleteTrialLogs deletes the logs for the given trial IDs.
+func (db *PgDB) DeleteTrialLogs(ids []int) error {
+	if _, err := db.sql.Exec(`
+DELETE FROM trial_logs
+WHERE trial_id IN (SELECT unnest($1::int [])::int);
+`, ids); err != nil {
+		return errors.Wrapf(err, "error deleting trial logs for trials %v", ids)
+	}
+	return nil
+}
+
 // TrialLogCount returns the number of logs in postgres for the given trial.
 func (db *PgDB) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 	params := []interface{}{trialID}

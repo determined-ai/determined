@@ -182,6 +182,50 @@ func (e *Elastic) TrialLogs(
 	return logs, sortValues, nil
 }
 
+// DeleteTrialLogs deletes the logs for the given trial IDs.
+func (e *Elastic) DeleteTrialLogs(ids []int) error {
+	trialIDterms := make([]jsonObj, len(ids))
+	for i, id := range ids {
+		trialIDterms[i] = jsonObj{
+			"term": jsonObj{
+				"trial_id": id,
+			},
+		}
+	}
+
+	query := jsonObj{
+		"query": jsonObj{
+			"bool": jsonObj{
+				"filter": []jsonObj{
+					{
+						"bool": jsonObj{
+							"should": trialIDterms,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return errors.Wrap(err, "failed to encoding query")
+	}
+
+	// TODO(brad): Here and elsewhere, we really should just hit indices that could possibly have
+	// logs for a given trial.
+	res, err := e.client.DeleteByQuery([]string{"*"}, &buf)
+	if err != nil {
+		return errors.Wrap(err, "failed to perform delete")
+	}
+	defer closeWithErrCheck(res.Body)
+	if err = checkResponse(res); err != nil {
+		return errors.Wrap(err, "failed to perform delete")
+	}
+
+	return nil
+}
+
 // TrialLogFields returns the unique fields that can be filtered on for the given trial.
 func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
 	query := jsonObj{
