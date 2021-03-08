@@ -457,54 +457,6 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	return c.JSON(http.StatusCreated, response), nil
 }
 
-func (m *Master) deleteExperiment(c echo.Context) (interface{}, error) {
-	args := struct {
-		ExperimentID int `path:"experiment_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	expID := args.ExperimentID
-	dbExp, err := m.db.ExperimentByID(expID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v to delete", expID)
-	}
-	if _, ok := model.TerminalStates[dbExp.State]; !ok {
-		return nil, errors.Errorf("cannot delete experiment %v in state %v", expID, dbExp.State)
-	}
-
-	agentUserGroup, err := m.db.AgentUserGroup(*dbExp.OwnerID)
-	if err != nil {
-		return nil, errors.Errorf("cannot find user and group for experiment %v", expID)
-	}
-	if agentUserGroup == nil {
-		agentUserGroup = &m.config.Security.DefaultTask
-	}
-
-	// Change the GC policy to remove all checkpoints. This will trigger a checkpoint GC task,
-	// if needed, to remove the checkpoint files.
-	dbExp.Config.CheckpointStorage.SaveExperimentBest = 0
-	dbExp.Config.CheckpointStorage.SaveTrialBest = 0
-	dbExp.Config.CheckpointStorage.SaveTrialLatest = 0
-	if serr := m.db.SaveExperimentConfig(dbExp); serr != nil {
-		return nil, errors.Wrapf(serr, "patching experiment %d", dbExp.ID)
-	}
-	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-	m.system.ActorOf(addr, &checkpointGCTask{
-		agentUserGroup: agentUserGroup,
-		taskSpec:       m.taskSpec,
-		rm:             m.rm,
-		db:             m.db,
-		experiment:     dbExp,
-	})
-
-	c.Logger().Infof("deleting experiment %v from database", expID)
-	if err = m.db.DeleteExperiment(expID); err != nil {
-		return nil, errors.Wrapf(err, "deleting experiment %v from database", expID)
-	}
-	return nil, nil
-}
-
 func (m *Master) postExperimentKill(c echo.Context) (interface{}, error) {
 	args := struct {
 		ExperimentID int `path:"experiment_id"`

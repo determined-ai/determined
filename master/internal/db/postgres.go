@@ -941,7 +941,6 @@ EXISTS(
    JOIN trials t ON e.id = t.experiment_id
    JOIN checkpoints c ON c.trial_id = t.id
    JOIN model_versions mv ON mv.checkpoint_uuid = c.uuid
-   JOIN models m ON mv.model_name = m.name
    WHERE e.id = $1
 )`, id).Scan(&exists)
 	return exists, err

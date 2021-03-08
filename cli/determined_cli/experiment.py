@@ -194,7 +194,7 @@ def delete_experiment(args: Namespace) -> None:
         "alternative, see the 'det archive' command. Do you still \n"
         "wish to proceed?"
     ):
-        api.delete(args.master, "experiments/{}".format(args.experiment_id))
+        api.delete(args.master, "/api/v1/experiments/{}".format(args.experiment_id))
         print("Successfully deleted experiment {}".format(args.experiment_id))
     else:
         print("Aborting experiment deletion.")

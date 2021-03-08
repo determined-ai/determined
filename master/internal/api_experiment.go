@@ -84,11 +84,11 @@ func (a *apiServer) GetExperiment(
 func (a *apiServer) DeleteExperiment(
 	_ context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
-	id := int(req.ExperimentId)
-	exp, err := a.m.db.ExperimentByID(id)
+	expID := int(req.ExperimentId)
+	exp, err := a.m.db.ExperimentByID(expID)
 	switch {
 	case errors.Cause(err) == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", id)
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", expID)
 	case err != nil:
 		return nil, fmt.Errorf("failed to retrieve experiment: %w", err)
 	}
@@ -97,23 +97,21 @@ func (a *apiServer) DeleteExperiment(
 		return nil, fmt.Errorf("cannot delete experiment in %s state", exp.State)
 	}
 
-	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(int(req.ExperimentId)); {
+	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(expID); {
 	case eErr != nil:
-		return nil, eErr
+		return nil, fmt.Errorf("failed to check model registry for references to %d", expID)
 	case exists:
 		return nil, status.Errorf(codes.InvalidArgument, "checkpoints are registered as model versions")
 	}
 
 	agentUserGroup, err := a.m.db.AgentUserGroup(*exp.OwnerID)
-	if err != nil {
-		return nil, errors.Errorf("cannot find user and group for experiment %v", id)
-	}
-	if agentUserGroup == nil {
+	switch {
+	case err != nil:
+		return nil, errors.Errorf("cannot find user and group for experiment %v", expID)
+	case agentUserGroup == nil:
 		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
 
-	// Change the GC policy to remove all checkpoints. This will trigger a checkpoint GC task,
-	// if needed, to remove the checkpoint files.
 	exp.Config.CheckpointStorage.SaveExperimentBest = 0
 	exp.Config.CheckpointStorage.SaveTrialBest = 0
 	exp.Config.CheckpointStorage.SaveTrialLatest = 0
@@ -142,8 +140,8 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	logrus.Infof("deleting experiment %v from database", req.ExperimentId)
-	if err = a.m.db.DeleteExperiment(id); err != nil {
-		return nil, errors.Wrapf(err, "deleting experiment %v from database", id)
+	if err = a.m.db.DeleteExperiment(expID); err != nil {
+		return nil, errors.Wrapf(err, "deleting experiment %v from database", expID)
 	}
 
 	return &apiv1.DeleteExperimentResponse{}, nil
