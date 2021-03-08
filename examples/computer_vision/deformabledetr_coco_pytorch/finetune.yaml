@@ -74,7 +74,7 @@ bind_mounts:
       read_only: false
 
 min_validation_period:
-    batches: 100
+    epochs: 1
 records_per_epoch: 1968
 searcher:
   name: single

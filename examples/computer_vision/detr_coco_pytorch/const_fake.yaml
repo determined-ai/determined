@@ -54,8 +54,6 @@ bind_mounts:
       container_path: /data
       read_only: false
 
-min_validation_period:
-    batches: 100
 records_per_epoch: 117264
 searcher:
     name: single
