@@ -888,13 +888,6 @@ WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
 	if err != nil {
 		return errors.Wrapf(err, "error deleting steps for experiment %v", id)
 	}
-	_, err = tx.Exec(`
-DELETE FROM trials
-WHERE experiment_id = $1;
-`, id)
-	if err != nil {
-		return errors.Wrapf(err, "error deleting trials for experiment %v", id)
-	}
 	err = db.deleteSnapshotsForExperiment(id)(tx)
 	if err != nil {
 		return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
