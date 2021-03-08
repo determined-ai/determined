@@ -104,9 +104,9 @@ is currently running, run
 Deploying a Standalone Master
 =============================
 
-In many cases, your Determined cluster will be split across multiple
-nodes. In this case you will need to start a master and agents
-separately. In order to start a standalone master, run:
+In many cases, your Determined cluster will consist of multiple nodes.
+In this case you will need to start a master and agents separately. In
+order to start a standalone master, run:
 
 .. code::
 

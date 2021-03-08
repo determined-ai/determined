@@ -897,6 +897,8 @@ allowed to use.
 
 **Optional Fields**
 
+.. _exp-config-resources-slots-per-trial:
+
 ``slots_per_trial``
    The number of slots to use for each trial of this experiment. The
    default value is ``1``; specifying a value greater than 1 means that
@@ -941,8 +943,6 @@ allowed to use.
    assigned to each experiment will be approximately proportional to its
    weight. The weight of an active experiment can be changed using ``det
    experiment set weight <id> <weight>``. The default weight is ``1``.
-
-.. _exp-config-resources-slots-per-trial:
 
 ``shm_size``
    The size in bytes of ``/dev/shm`` for trial containers. Defaults to

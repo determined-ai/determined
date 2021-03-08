@@ -306,57 +306,61 @@ The master supports the following configuration settings:
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
 
 -  ``resource_manager``: The resource manager to use to acquire
-   resources. Defaults to the agent resource provider.
+   resources. Defaults to ``agent``.
 
    -  ``type: agent``: The agent resource manager includes static and
       dynamic agents.
 
       -  ``scheduler``: Specifies how Determined schedules tasks to
-         agents on resource pools. If a resource pool is specified with
-         an individual scheduler configuration, it will not use this
-         scheduler.
+            agents on resource pools. If a resource pool is specified
+            with an individual scheduler configuration, that will
+            override the default scheduling behavior specified here. For
+            more on scheduling behavior in Determined, see
+            :ref:`scheduling`.
 
-         -  ``type``: The scheduling policy to use when allocating
-            resources between different tasks (experiments, notebooks,
-            etc.). Defaults to ``fair_share``.
+            -  ``type``: The scheduling policy to use when allocating
+               resources between different tasks (experiments,
+               notebooks, etc.). Defaults to ``fair_share``.
 
-            -  ``fair_share``: Tasks receive a proportional amount of
-               the available resources depending on the resource they
-               require and their weight.
+               -  ``fair_share``: Tasks receive a proportional amount of
+                  the available resources depending on the resource they
+                  require and their weight.
 
-            -  ``round_robin``: Tasks are scheduled in the order which
-               they arrive at the cluster.
+               -  ``round_robin``: Tasks are scheduled in the order
+                  which they arrive at the cluster.
 
-            -  ``priority``: Tasks are scheduled based on their
-               priority, which can range from the values 1 to 99
-               inclusive. Lower priority numbers indicate higher
-               priority tasks. A lower priority task will never be
-               scheduled while a higher priority task is pending.
-               Zero-slot tasks (e.g., cpu-only notebooks, tensorboards)
-               are prioritized separately from tasks requiring slots
-               (e.g., experiments running on GPUs). Task priority can be
-               assigned using the the ``resources.priority`` field. If a
-               task does not specify a priority it is assigned the
-               ``default_priority``.
+               -  ``priority``: Tasks are scheduled based on their
+                  priority, which can range from the values 1 to 99
+                  inclusive. Lower priority numbers indicate higher
+                  priority tasks. A lower priority task will never be
+                  scheduled while a higher priority task is pending.
+                  Zero-slot tasks (e.g., CPU-only notebooks,
+                  tensorboards) are prioritized separately from tasks
+                  requiring slots (e.g., experiments running on GPUs).
+                  Task priority can be assigned using the the
+                  ``resources.priority`` field. If a task does not
+                  specify a priority it is assigned the
+                  ``default_priority``.
 
-               -  ``preemption``: Specifies whether lower priority tasks
-                  should be preempted to schedule higher priority tasks.
-                  Tasks are preempted in order of lowest priority first.
+                  -  ``preemption``: Specifies whether lower priority
+                     tasks should be preempted to schedule higher
+                     priority tasks. Tasks are preempted in order of
+                     lowest priority first.
 
-               -  ``default_priority``: The priority that is assigned to
-                  tasks that do not specify a priority. Can be
-                  configured to 1 to 99 inclusively. Defaults to 42.
+                  -  ``default_priority``: The priority that is assigned
+                     to tasks that do not specify a priority. Can be
+                     configured to 1 to 99 inclusively. Defaults to 42.
 
-         -  ``fitting_policy``: The scheduling policy to use when
-            assigning tasks to agents in the cluster. Defaults to
-            ``best``.
+            -  ``fitting_policy``: The scheduling policy to use when
+               assigning tasks to agents in the cluster. Defaults to
+               ``best``.
 
-            -  ``best``: The best-fit policy ensures that tasks will be
-               preferentially "packed" together on the smallest number
-               of agents.
+               -  ``best``: The best-fit policy ensures that tasks will
+                  be preferentially "packed" together on the smallest
+                  number of agents.
 
-            -  ``worst``: The worst-fit policy ensures that tasks will
-               be placed on under-utilized agents.
+               -  ``worst``: The worst-fit policy ensures that tasks
+                  will be placed on under-utilized agents.
 
       -  ``default_cpu_resource_pool``: The default resource pool to use
          for tasks that do not need GPUs. Defaults to ``default`` if no
@@ -404,7 +408,8 @@ The master supports the following configuration settings:
 
    -  ``scheduler``: Specifies how Determined schedules tasks to agents.
       The scheduler configuration on each resource pool will override
-      the global one.
+      the global one. For more on scheduling behavior in Determined, see
+      :ref:`scheduling`.
 
       -  ``type``: The scheduling policy to use when allocating
          resources between different tasks (experiments, notebooks,
@@ -421,7 +426,7 @@ The master supports the following configuration settings:
             which can range from the values 1 to 99 inclusive. Lower
             priority numbers indicate higher priority tasks. A lower
             priority task will never be scheduled while a higher
-            priority task is pending. Zero-slot tasks (e.g., cpu-only
+            priority task is pending. Zero-slot tasks (e.g., CPU-only
             notebooks, tensorboards) are prioritized separately from
             tasks requiring slots (e.g., experiments running on GPUs).
             Task priority can be assigned using the the
