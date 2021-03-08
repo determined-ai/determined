@@ -1,5 +1,6 @@
 # THOUGHT: assume this makefile is for local builds and ci would go directly into modules if we want to separate image dependecies
-# eg has Java but no Go?
+# eg has Java but no Go? I think this + avoiding unnecessary rebuilds at module levels could allow us to simplify our make structure
+# and speed up builds too
 
 .PHONY: all
 all:
