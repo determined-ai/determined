@@ -51,9 +51,10 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return {
       ...cp,
       batch: cp.numBatches + cp.priorBatchesProcessed,
+      experimentId: trial.experimentId,
       trialId: trial.id,
     };
-  }, [ trial.id, trial.bestAvailableCheckpoint ]);
+  }, [ trial.bestAvailableCheckpoint, trial.experimentId, trial.id ]);
 
   const totalCheckpointsSize = useMemo(() => {
     const totalBytes = trial.workloads
