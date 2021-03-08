@@ -31,10 +31,6 @@ build-%:
 build-docs: build-common build-harness build-cli build-deploy build-examples build-helm build-proto
 	$(MAKE) -C docs build
 
-.PHONY: build-master
-build-master: build-proto build-webui build-docs
-	$(MAKE) -C master build
-
 .PHONY: build-bindings
 build-bindings: build-proto
 	$(MAKE) -C bindings build
@@ -42,6 +38,14 @@ build-bindings: build-proto
 .PHONY: build-webui
 build-webui: build-bindings
 	$(MAKE) -C webui build
+
+.PHONY: build-agent
+build-agent: build-proto
+	$(MAKE) -C agent build
+
+.PHONY: build-master
+build-master: build-proto build-webui build-docs
+	$(MAKE) -C master build
 
 .PHONY: build
 build: build-master build-agent
