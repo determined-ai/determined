@@ -8,7 +8,7 @@ import random
 import shutil
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, Set, cast
 
 import numpy as np
 import simplejson
@@ -188,3 +188,17 @@ def write_user_code(path: pathlib.Path) -> None:
     # directory. Therefore we save the current directory with the checkpoint.
     shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
     os.chmod(code_path, 0o755)
+
+
+def filter_duplicates(in_list: List[Any], sorter=sorted) -> Set[Any]:
+    """
+    Find and return a set of duplicates from the list.
+    """
+    in_list = sorter(in_list)
+    last_item = None
+    duplicates = set()
+    for item in in_list:
+        if last_item == item:
+            duplicates.add(item)
+        last_item = item
+    return duplicates

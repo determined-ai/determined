@@ -12,7 +12,7 @@ from torch.optim.optimizer import Optimizer
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import LRScheduler, PyTorchCallback, PyTorchTrial, PyTorchTrialContext
-from determined.util import has_param
+from determined.util import filter_duplicates, has_param
 from determined_common import check
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
@@ -208,8 +208,10 @@ class PLAdapter(PyTorchTrial):
         type(self._pls.lm).global_step = batch_idx  # type: ignore
         self._pls.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
 
-        opt_metrics = []
-        metrics = None
+        Metric = Dict[str, Any]
+
+        opt_metrics: List[Metric] = []
+        metrics: Metric = {}
 
         for opt_idx, opt in enumerate(self._pls.optimizers):
             with monkey_patch(
@@ -238,10 +240,19 @@ class PLAdapter(PyTorchTrial):
 
         self._pls.lm.on_train_batch_end(metrics, batch, batch_idx, dataloader_idx=0)
 
+        # report metrics accounting for duplicate metric names
+        # across multiple optimizers
+        metric_names: List[str] = []
+        for opt_metric_dict in opt_metrics:
+            metric_names += opt_metric_dict.keys()
+        duplicate_metrics = filter_duplicates(metric_names)
+
         agg_metrics = {}
-        for opt_idx, rv in enumerate(opt_metrics):
-            for k, v in rv.items():
-                agg_metrics[f"opt{opt_idx}_{k}"] = v
+        for opt_idx, opt_metric_dict in enumerate(opt_metrics):
+            for m_name, m_value in opt_metric_dict.items():
+                if m_name in duplicate_metrics:
+                    m_name = f"opt{opt_idx}_{m_name}"
+                agg_metrics[m_name] = m_value
         return agg_metrics
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
