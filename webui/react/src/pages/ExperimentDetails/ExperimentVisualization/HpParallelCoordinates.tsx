@@ -149,9 +149,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
         selectedBatch,
-        undefined,
-        undefined,
         selectedBatchMargin,
+        undefined,
         { signal: canceler.signal },
       ),
       event => {
