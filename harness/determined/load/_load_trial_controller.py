@@ -13,12 +13,20 @@ from determined_common.api import patch
 
 
 def trial_framework(trial_class: Type[det.Trial]) -> Optional[Tuple[str, TrialCapabilities]]:
-    classes: List[Type[det.Trial]] = [PyTorchTrial, TFKerasTrial, EstimatorTrial]
+    """
+    Detect the framework of a trial.
+    """
+    classes: List[Type[det.Trial]] = [PyTorchTrial, TFKerasTrial, EstimatorTrial]  # type: ignore
     for cls in classes:
         if issubclass(trial_class, cls):
             return cls.name(), cls.capabilities()
+    return None
+
 
 def report_framework(name: str, capabilities: TrialCapabilities, env: det.EnvContext) -> None:
+    """
+    Report information about an experiment's framework to the cluster.
+    """
     host = env.master_addr + ":" + str(env.master_port)
     path = f"/api/v1/experiments/{env.det_experiment_id}"
 
@@ -33,6 +41,7 @@ def report_framework(name: str, capabilities: TrialCapabilities, env: det.EnvCon
     name_val = "FRAMEWORK_" + name_val
 
     patch(host, path, body={"framework": name_val})
+
 
 def load_controller_from_trial(
     trial_class: Type[det.Trial],
@@ -64,7 +73,6 @@ def load_controller_from_trial(
     # Step 3: Instantiate the user's Trial.
     trial_inst = trial_class(trial_context)
 
-
     # Step 4: Return the TrialController.
     logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
     controller = controller_class.from_trial(
@@ -79,8 +87,10 @@ def load_controller_from_trial(
 
     fw = trial_framework(trial_class)
     if fw is not None:
-        is_lead_trial = trial_context.distributed.get_rank() == 0 and \
-            trial_context.distributed.get_local_rank() == 0
+        is_lead_trial = (
+            trial_context.distributed.get_rank() == 0
+            and trial_context.distributed.get_local_rank() == 0
+        )
         if not env.test_mode and is_lead_trial:
             report_framework(fw[0], fw[1], env)
 

@@ -930,7 +930,8 @@ class PyTorchTrial(det.Trial):
         """
         pass
 
-    def capabilities():
+    @staticmethod
+    def capabilities() -> TrialCapabilities:
         return TrialCapabilities(mid_epoch_preemptible=True)
 
 
