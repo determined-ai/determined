@@ -88,7 +88,7 @@ def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContex
 
     lm.print = lm_print  # type: ignore
     lm.log = lm_log  # type: ignore
-    lm.log_dict = lm_log_dict
+    lm.log_dict = lm_log_dict # type: ignore
 
 
 class _PLAdapterState:

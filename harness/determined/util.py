@@ -190,7 +190,9 @@ def write_user_code(path: pathlib.Path) -> None:
     os.chmod(code_path, 0o755)
 
 
-def filter_duplicates(in_list: List[Any], sorter=sorted) -> Set[Any]:
+def filter_duplicates(
+    in_list: List[Any], sorter: Callable[[List[Any]], List[Any]] = sorted
+) -> Set[Any]:
     """
     Find and return a set of duplicates from the list.
     """
