@@ -144,9 +144,9 @@ const HpHeatMaps: React.FC<Props> = ({
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(
         experiment.id,
-        selectedBatch,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
+        selectedBatch,
         undefined,
         undefined,
         { signal: canceler.signal },

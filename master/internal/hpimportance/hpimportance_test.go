@@ -1,6 +1,7 @@
 package hpimportance
 
 import (
+	"os"
 	"testing"
 
 	"gotest.tools/assert"
@@ -250,4 +251,7 @@ func TestComputeHPImportance(t *testing.T) {
 
 	_, err = computeHPImportance(data, expConfig, masterConfig, "growforest", ".")
 	assert.Assert(t, err != nil)
+
+	err = os.Remove("data.arff")
+	assert.Assert(t, err == nil)
 }

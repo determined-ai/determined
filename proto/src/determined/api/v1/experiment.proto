@@ -332,28 +332,28 @@ message TrialsSnapshotRequest {
         required:
           ["experiment_id"];
       }];
-  // The point of progress at which to query metrics.
-  int32 batches_processed = 2
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["batches_processed"];
-      }];
   // A metric name.
-  string metric_name = 3
+  string metric_name = 2
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 4
+  MetricType metric_type = 3
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_type"];
       }];
-  // Seconds to wait when polling for updates.
-  int32 period_seconds = 5;
+  // The point of progress at which to query metrics.
+  int32 batches_processed = 4
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["batches_processed"];
+      }];
   // A range either side of batches_processed to include near-misses.
-  int32 batches_margin = 6;
+   int32 batches_margin = 5;
+  // Seconds to wait when polling for updates.
+  int32 period_seconds = 6;
 }
 
 // Response to TrialSnapshotResponse

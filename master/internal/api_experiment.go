@@ -695,6 +695,9 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 
 	batchesProcessed := int(req.BatchesProcessed)
 	batchesMargin := int(req.BatchesMargin)
+	if batchesMargin > 100 {
+		return status.Error(codes.InvalidArgument, "margin must be <= 100")
+	}
 	minBatches := batchesProcessed - batchesMargin
 	if minBatches < 0 {
 		minBatches = 0
