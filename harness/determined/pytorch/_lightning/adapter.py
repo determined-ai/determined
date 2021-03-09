@@ -1,5 +1,4 @@
 import inspect
-import logging
 from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
 import pytorch_lightning as pl
@@ -82,8 +81,9 @@ def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContex
 
     def lm_log_dict(a_dict: Dict, *args: Any, **kwargs: Any) -> None:
         if len(args) != 0 or len(kwargs) != 0:
-            # QUESTION or raise an exception?
-            logging.warning("unsupported arguments to LightningModule.log", args, kwargs)
+            raise InvalidModelException(
+                f"unsupported arguments to LightningModule.log {args} {kwargs}"
+            )
         for metric, value in a_dict.items():
             if type(value) == int or type(value) == float:
                 writer.add_scalar(metric, value, context.current_train_batch())
