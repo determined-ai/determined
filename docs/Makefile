@@ -1,5 +1,4 @@
 export VERSION := $(shell cat ../VERSION)
-src_files := $(shell find . -path ./site -prune -false -o -type f | grep -v '^./_')
 
 SPHINXOPTS    = -W
 SPHINXBUILD   = sphinx-build
@@ -17,9 +16,6 @@ reference/attributions.txt: $(shell find ../tools/scripts/licenses -type f)
 
 .PHONY: build
 build: build-examples build-helm reference/attributions.txt
-	$(MAKE) site/done.stamp
-
-site/done.stamp: $(src_files) # FIXME depends on helm and examples..
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
 	mkdir -p site/downloads/helm
@@ -28,7 +24,6 @@ site/done.stamp: $(src_files) # FIXME depends on helm and examples..
 	# pull in swagger-ui
 	cp -r ./swagger-ui site/html/rest-api
 	cp ../proto/build/swagger/determined/api/v1/api.swagger.json  site/html/rest-api/
-	touch $@
 
 .PHONY: clean
 clean:
