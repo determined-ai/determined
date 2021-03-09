@@ -14,15 +14,13 @@ import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'services/api';
 import { isAborted } from 'services/utils';
-import { ExperimentBase, ValidationHistory } from 'types';
+import { ExperimentBase, ExperimentVisualizationType, ValidationHistory } from 'types';
 import { clone, isEqual } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
 import ExperimentOverview from './ExperimentDetails/ExperimentOverview';
-import ExperimentVisualization, {
-  VisualizationType,
-} from './ExperimentDetails/ExperimentVisualization';
+import ExperimentVisualization from './ExperimentDetails/ExperimentVisualization';
 
 const { TabPane } = Tabs;
 
@@ -34,7 +32,7 @@ enum TabType {
 interface Params {
   experimentId: string;
   tab?: TabType;
-  viz?: VisualizationType;
+  viz?: ExperimentVisualizationType;
 }
 
 const TAB_KEYS = Object.values(TabType);
