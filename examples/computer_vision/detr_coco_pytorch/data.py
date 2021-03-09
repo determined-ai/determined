@@ -145,6 +145,12 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
         return img, target
 
+    def __len__(self):
+        # If using fake data, we'll limit the dataset to 1000 examples.
+        if isinstance(self.backend, FakeBackend):
+            return 1000
+        return len(self.ids)
+
 
 def build_dataset(image_set, args):
     root = args.data_dir
