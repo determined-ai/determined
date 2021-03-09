@@ -109,7 +109,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return newDimensions;
   }, [ chartData, hyperparameters, selectedMetric, selectedHParams ]);
 
-  const handleChartFilter = useCallback((constraints: Record<string, Range>) => {
+  const handleChartFilter = useCallback((constraints: Record<string, Constraint>) => {
     if (!chartData) return;
 
     // Figure out which trials fit within the user provided constraints.
