@@ -4,6 +4,9 @@
     "title": "ReproducibilityConfig",
     "type": "object",
     "additionalProperties": false,
+    "eventuallyRequired": [
+        "experiment_seed"
+    ],
     "properties": {
         "experiment_seed": {
             "type": [

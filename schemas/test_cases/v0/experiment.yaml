@@ -332,16 +332,14 @@
   case:
     hyperparameters:
       global_batch_size: 32
-    checkpoint_storage:
-      type: shared_fs
-      host_path: /tmp
     searcher:
       name: single
       metric: loss
       max_length:
         batches: 1000
     internal:
-      native: ["script.py"]
+      native:
+        command: ["script.py"]
 
 - name: check entrypoint conditional (invalid)
   errors:

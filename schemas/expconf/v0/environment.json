@@ -5,6 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [],
+    "eventuallyRequired": [
+        "image"
+    ],
     "properties": {
         "image": {
             "type": [
