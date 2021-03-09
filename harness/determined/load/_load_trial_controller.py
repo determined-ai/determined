@@ -25,6 +25,11 @@ def report_framework(name: str, capabilities: TrialCapabilities, env: det.EnvCon
     name_val = "UNSPECIFIED"
     if name == "PyTorchTrial":
         name_val = "PYTORCH_TRIAL"
+    elif name == "EstimatorTrial":
+        name_val = "Estimator_TRIAL"
+    elif name == "TF_KERAS_TRIAL":
+        name_val = "TF_KERAS_TRIAL"
+
     name_val = "FRAMEWORK_" + name_val
 
     patch(host, path, body={"framework": name_val})

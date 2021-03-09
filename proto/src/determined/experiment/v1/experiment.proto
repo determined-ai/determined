@@ -32,12 +32,14 @@ enum State {
 
 // The training framework experiment is using.
 enum Framework {
-  // TODO.
+  // The framework is unknown.
   FRAMEWORK_UNSPECIFIED = 0;
-  // a.
+  // The framework is PyTorchTrial
   FRAMEWORK_PYTORCH_TRIAL = 1;
-  // a.
-  FRAMEWORK_PYTORCH_LIGHTNING_ADAPTER = 2;
+  // The framework is EstimatorTrial.
+  FRAMEWORK_ESTIMATOR_TRIAL = 2;
+  // The framework is TFKerasTrial.
+  FRAMEWORK_TF_KERAS_TRIAL = 3;
 }
 
 // Experiment is a collection of one or more trials that are exploring a
