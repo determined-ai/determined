@@ -582,7 +582,7 @@ class PyTorchTrialContext(det.TrialContext):
         """
 
         check.true(
-            auto_zero_grads or self.hvd_config.aggregation_frequency > 1,
+            auto_zero_grads or self.hvd_config.aggregation_frequency == 1,
             "if optimizations.aggregation_frequency is larger than 1, "
             "you can only set auto_zero_grads to be true. ",
         )
