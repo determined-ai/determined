@@ -24,7 +24,7 @@ from determined.pytorch import (
 # DETR imports
 import detr.util.misc as utils
 from detr.datasets import get_coco_api_from_dataset
-from detr.datasets.coco_eval import CocoEvaluator, create_common_coco_eval
+from detr.datasets.coco_eval import CocoEvaluator
 from model import build_model
 
 # Experiment dir imports
@@ -67,6 +67,9 @@ class COCOReducer(MetricReducer):
             )
             coco_eval.evalImgs = list(coco_evaluator.eval_imgs[iou_type].flatten())
             coco_eval.params.imgIds = list(coco_evaluator.img_ids)
+            # We need to perform a deepcopy here since this dictionary can be modified in a
+            # custom accumulate call and we don't want that to change coco_eval.params.
+            # See https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/cocoeval.py#L315.
             coco_eval._paramsEval = copy.deepcopy(coco_eval.params)
         coco_evaluator.accumulate()
         coco_evaluator.summarize()

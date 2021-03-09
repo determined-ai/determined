@@ -70,15 +70,13 @@ bind_mounts:
       container_path: /data
       read_only: false
 
-min_validation_period:
-    batches: 10
 records_per_epoch: 117264
 searcher:
   name: single
   metric: mAP
   smaller_is_better: false
   max_length:
-      batches: 20
+      batches: 100
 resources:
     shm_size: 2000000000
 
