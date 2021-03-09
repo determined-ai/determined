@@ -12,6 +12,7 @@ from torch.optim.optimizer import Optimizer
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import LRScheduler, PyTorchCallback, PyTorchTrial, PyTorchTrialContext
+from determined.tensorboard.metric_writers import pytorch
 from determined.util import filter_duplicates, has_param
 from determined_common import check
 
@@ -73,22 +74,26 @@ def check_compatibility(lm: pl.LightningModule) -> None:
 
 
 def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContext) -> None:
+    writer = pytorch.TorchWriter()
+
     def lm_print(*args: Any, **kwargs: Any) -> None:
         if context.distributed.get_rank() == 0:
             print(*args, **kwargs)
 
     def lm_log_dict(a_dict: Dict, *args: Any, **kwargs: Any) -> None:
         if len(args) != 0 or len(kwargs) != 0:
-            # raise Exception('unsupported arguments') # TODO rename
+            # QUESTION or raise an exception?
             logging.warning("unsupported arguments to LightningModule.log", args, kwargs)
-        logging.info(a_dict)  # TODO write to tensorboard
+        for metric, value in a_dict.items():
+            if type(value) == int or type(value) == float:
+                writer.add_scalar(metric, value, context.current_train_batch())
 
     def lm_log(name: str, value: Any, *args: Any, **kwargs: Any) -> None:
         lm_log_dict({name: value}, *args, **kwargs)
 
     lm.print = lm_print  # type: ignore
     lm.log = lm_log  # type: ignore
-    lm.log_dict = lm_log_dict # type: ignore
+    lm.log_dict = lm_log_dict  # type: ignore
 
 
 class _PLAdapterState:
