@@ -332,26 +332,28 @@ message TrialsSnapshotRequest {
         required:
           ["experiment_id"];
       }];
-  // The point of progress at which to query metrics.
-  int32 batches_processed = 2
-      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
-        required:
-          ["batches_processed"];
-      }];
   // A metric name.
-  string metric_name = 3
+  string metric_name = 2
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_name"];
       }];
   // The type of metric.
-  MetricType metric_type = 4
+  MetricType metric_type = 3
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         required:
           ["metric_type"];
       }];
+  // The point of progress at which to query metrics.
+  int32 batches_processed = 4
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        required:
+          ["batches_processed"];
+      }];
+  // A range either side of batches_processed to include near-misses.
+  int32 batches_margin = 5;
   // Seconds to wait when polling for updates.
-  int32 period_seconds = 5;
+  int32 period_seconds = 6;
 }
 
 // Response to TrialSnapshotResponse
@@ -362,7 +364,9 @@ message TrialsSnapshotResponse {
   // Metric value and metadata for a trial that has progress this far.
   message Trial {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-      json_schema: { required: [ "trial_id", "hparams", "metric" ] }
+      json_schema: {
+        required: [ "trial_id", "hparams", "metric", "batches_processed" ]
+      }
     };
     // The id of the trial.
     int32 trial_id = 1;
@@ -370,6 +374,8 @@ message TrialsSnapshotResponse {
     google.protobuf.Struct hparams = 2;
     // The value of the metric in this trial at this point.
     double metric = 3;
+    // The number of batches processed for this particular datapoint.
+    int32 batches_processed = 4;
   }
   // A list of trials.
   repeated Trial trials = 1;

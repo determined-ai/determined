@@ -181,6 +181,7 @@ type snapshotWrapper struct {
 	Hparams []byte    `db:"hparams"`
 	Metric  float64   `db:"metric"`
 	EndTime time.Time `db:"end_time"`
+	Batches int32     `db:"batches"`
 }
 
 func snapshotWrapperToTrial(r snapshotWrapper) (*apiv1.TrialsSnapshotResponse_Trial, error) {
@@ -194,28 +195,31 @@ func snapshotWrapperToTrial(r snapshotWrapper) (*apiv1.TrialsSnapshotResponse_Tr
 	}
 	trial.Hparams = protoutils.ToStruct(inter)
 	trial.Metric = r.Metric
+	trial.BatchesProcessed = r.Batches
 	return &trial, nil
 }
 
 // TrainingTrialsSnapshot returns a training metric across each trial in an experiment at a
 // specific point of progress.
-func (db *PgDB) TrainingTrialsSnapshot(experimentID int, batchesProcessed int, metricName string,
-	startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time,
-	err error) {
+func (db *PgDB) TrainingTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
+	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
+	endTime time.Time, err error) {
 	var rows []snapshotWrapper
 	err = db.queryRows(`
 SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
   s.metrics->'avg_metrics'->$1 AS metric,
-  s.end_time AS end_time
+  s.end_time AS end_time,
+  s.total_batches as batches
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.experiment_id=$2
-  AND s.total_batches=$3
+  AND s.total_batches>=$3
+  AND s.total_batches<=$4
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
-  AND s.end_time > $4
-ORDER BY s.end_time;`, &rows, metricName, experimentID, batchesProcessed, startTime)
+  AND s.end_time > $5
+ORDER BY s.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
 	if err != nil {
 		return nil, endTime, errors.Wrapf(err,
 			"failed to get snapshot for experiment %d and training metric %s",
@@ -237,24 +241,26 @@ ORDER BY s.end_time;`, &rows, metricName, experimentID, batchesProcessed, startT
 
 // ValidationTrialsSnapshot returns a training metric across each trial in an experiment at a
 // specific point of progress.
-func (db *PgDB) ValidationTrialsSnapshot(experimentID int, batchesProcessed int, metricName string,
-	startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time,
-	err error) {
+func (db *PgDB) ValidationTrialsSnapshot(experimentID int, minBatches int, maxBatches int,
+	metricName string, startTime time.Time) (trials []*apiv1.TrialsSnapshotResponse_Trial,
+	endTime time.Time, err error) {
 	var rows []snapshotWrapper
 	err = db.queryRows(`
 SELECT
   t.id AS trial_id,
   t.hparams AS hparams,
   v.metrics->'validation_metrics'->$1 AS metric,
-  v.end_time AS end_time
+  v.end_time AS end_time,
+  s.total_batches as batches
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
   LEFT OUTER JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
 WHERE t.experiment_id=$2
-  AND s.total_batches=$3
+  AND s.total_batches>=$3
+  AND s.total_batches<=$4
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
-  AND v.end_time > $4
-ORDER BY v.end_time;`, &rows, metricName, experimentID, batchesProcessed, startTime)
+  AND v.end_time > $5
+ORDER BY v.end_time;`, &rows, metricName, experimentID, minBatches, maxBatches, startTime)
 	if err != nil {
 		return nil, endTime, errors.Wrapf(err,
 			"failed to get snapshot for experiment %d and validation metric %s",

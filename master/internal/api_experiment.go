@@ -680,7 +680,6 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	if err := a.checkExperimentExists(experimentID); err != nil {
 		return err
 	}
-	batchesProcessed := int(req.BatchesProcessed)
 	metricName := req.MetricName
 	if metricName == "" {
 		return status.Error(codes.InvalidArgument, "must specify a metric name")
@@ -694,6 +693,20 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		period = defaultMetricsStreamPeriod
 	}
 
+	batchesProcessed := int(req.BatchesProcessed)
+	batchesMargin := int(req.BatchesMargin)
+	if batchesMargin > 100 {
+		return status.Error(codes.InvalidArgument, "margin must be <= 100")
+	}
+	minBatches := batchesProcessed - batchesMargin
+	if minBatches < 0 {
+		minBatches = 0
+	}
+	maxBatches := batchesProcessed + batchesMargin
+	if maxBatches < 0 {
+		maxBatches = math.MaxInt32
+	}
+
 	var startTime time.Time
 	for {
 		var response apiv1.TrialsSnapshotResponse
@@ -704,10 +717,10 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 		switch metricType {
 		case apiv1.MetricType_METRIC_TYPE_TRAINING:
 			newTrials, endTime, err = a.m.db.TrainingTrialsSnapshot(experimentID,
-				batchesProcessed, metricName, startTime)
+				minBatches, maxBatches, metricName, startTime)
 		case apiv1.MetricType_METRIC_TYPE_VALIDATION:
 			newTrials, endTime, err = a.m.db.ValidationTrialsSnapshot(experimentID,
-				batchesProcessed, metricName, startTime)
+				minBatches, maxBatches, metricName, startTime)
 		default:
 			panic("Invalid metric type")
 		}
