@@ -22,6 +22,7 @@ interface Props {
   hParams: string[];
   options?: React.ReactNode;
   selectedBatch: number;
+  selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
 }
@@ -38,6 +39,7 @@ const ScatterPlots: React.FC<Props> = ({
   hParams,
   options,
   selectedBatch,
+  selectedBatchMargin,
   selectedHParams,
   selectedMetric,
 }: Props) => {
@@ -64,7 +66,7 @@ const ScatterPlots: React.FC<Props> = ({
         selectedBatch,
         undefined,
         undefined,
-        undefined,
+        selectedBatchMargin,
         { signal: canceler.signal },
       ),
       event => {
@@ -117,7 +119,7 @@ const ScatterPlots: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment, hParams, selectedBatch, selectedMetric ]);
+  }, [ experiment, hParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;

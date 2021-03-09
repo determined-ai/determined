@@ -28,6 +28,7 @@ interface Props {
   hParams: string[];
   options?: React.ReactNode;
   selectedBatch: number;
+  selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
 }
@@ -44,6 +45,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   hParams,
   options,
   selectedBatch,
+  selectedBatchMargin,
   selectedHParams,
   selectedMetric,
 }: Props) => {
@@ -149,7 +151,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         selectedBatch,
         undefined,
         undefined,
-        undefined,
+        selectedBatchMargin,
         { signal: canceler.signal },
       ),
       event => {
@@ -210,7 +212,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedBatch, selectedMetric ]);
+  }, [ experiment.id, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;

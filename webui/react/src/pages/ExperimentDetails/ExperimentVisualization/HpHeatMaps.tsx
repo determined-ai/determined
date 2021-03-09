@@ -29,6 +29,7 @@ interface Props {
   hParams: string[];
   options?: React.ReactNode;
   selectedBatch: number;
+  selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
   selectedView: GridListView;
@@ -51,6 +52,7 @@ const HpHeatMaps: React.FC<Props> = ({
   hParams,
   options,
   selectedBatch,
+  selectedBatchMargin,
   selectedHParams,
   selectedMetric,
   selectedView,
@@ -95,7 +97,7 @@ const HpHeatMaps: React.FC<Props> = ({
         selectedBatch,
         undefined,
         undefined,
-        undefined,
+        selectedBatchMargin,
         { signal: canceler.signal },
       ),
       event => {
@@ -156,7 +158,7 @@ const HpHeatMaps: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment, hParams, selectedBatch, selectedMetric ]);
+  }, [ experiment, hParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;

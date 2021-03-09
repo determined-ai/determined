@@ -310,6 +310,7 @@ const ExperimentVisualization: React.FC<Props> = ({
               hParams={fullHParams}
               options={filters}
               selectedBatch={selectedBatch}
+              selectedBatchMargin={selectedBatchMargin}
               selectedHParams={selectedHParams}
               selectedMetric={selectedMetric}
             />
@@ -320,6 +321,7 @@ const ExperimentVisualization: React.FC<Props> = ({
               hParams={fullHParams}
               options={filters}
               selectedBatch={selectedBatch}
+              selectedBatchMargin={selectedBatchMargin}
               selectedHParams={selectedHParams}
               selectedMetric={selectedMetric}
             />
@@ -330,6 +332,7 @@ const ExperimentVisualization: React.FC<Props> = ({
               hParams={fullHParams}
               options={filters}
               selectedBatch={selectedBatch}
+              selectedBatchMargin={selectedBatchMargin}
               selectedHParams={selectedHParams}
               selectedMetric={selectedMetric}
               selectedView={selectedView}
