@@ -44,11 +44,9 @@ class Trial(metaclass=abc.ABCMeta):
         """
         return cls.__name__
 
-    # QUESTION @abc.abstractmethod would mean that every subclass would need to implement this.
     @staticmethod
-    @abc.abstractmethod
     def capabilities() -> TrialCapabilities:
         """
         Report supported capabilities of this trial class.
         """
-        pass
+        return TrialCapabilities(mid_epoch_preemptible=False)
