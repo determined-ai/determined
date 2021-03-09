@@ -3,6 +3,7 @@ import React from 'react';
 import Bar from 'components/Bar';
 import { getStateColorCssVar } from 'themes';
 import { CommandState, RunState } from 'types';
+import { floatToPercent } from 'utils/string';
 
 export interface Props {
   barOnly?: boolean;
@@ -16,7 +17,7 @@ const ProgressBar: React.FC<Props> = ({ barOnly, percent, state }: Props) => {
       barOnly={barOnly}
       parts={[ {
         color: getStateColorCssVar(state),
-        label: `${percent}%`,
+        label: floatToPercent(percent/100, 0),
         percent: percent / 100,
       } ]} />
   );
