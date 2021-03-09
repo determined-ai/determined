@@ -1,2 +1,2 @@
 ALTER TABLE experiments 
-ADD COLUMN framework VARCHAR;
+ADD COLUMN framework text;

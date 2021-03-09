@@ -412,17 +412,15 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	type experimentPatch struct {
+	type configPatch struct {
 		Labels      []string `json:"labels"`
 		Description string   `json:"description"`
-		Framework   string   `json:"framework"`
 	}
-	patches := experimentPatch{
+	configPatches := configPatch{
 		Description: exp.Description,
 		Labels:      exp.Labels,
-		Framework:   exp.Framework.String(),
 	}
-	marshalledPatches, err := json.Marshal(patches)
+	marshalledConfigPatches, err := json.Marshal(configPatches)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal experiment patches")
 	}
@@ -430,7 +428,8 @@ func (a *apiServer) PatchExperiment(
 	if _, err := a.m.db.RawQuery(
 		"patch_experiment",
 		req.Experiment.Id,
-		marshalledPatches,
+		marshalledConfigPatches,
+		exp.Framework.String(),
 	); err != nil {
 		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 	}
