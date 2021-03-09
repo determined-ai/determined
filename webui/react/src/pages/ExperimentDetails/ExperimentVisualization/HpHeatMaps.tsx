@@ -18,7 +18,6 @@ import {
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { isNumber, isObject } from 'utils/data';
-import { ConditionalWrapper } from 'utils/react';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
@@ -62,12 +61,9 @@ const HpHeatMaps: React.FC<Props> = ({
   const [ chartData, setChartData ] = useState<HpData>();
   const [ pageError, setPageError ] = useState<Error>();
   const resize = useResize(baseRef);
-  const classes = [ css.base ];
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === GridListView.List;
-
-  if (isListView) classes.push(css.list);
 
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric.type === MetricType.Validation &&
@@ -188,51 +184,31 @@ const HpHeatMaps: React.FC<Props> = ({
               title={<MetricBadgeTag metric={selectedMetric} />} />
           </div>
           <div className={css.charts}>
-            <ConditionalWrapper
-              condition={isListView}
-              falseWrapper={children => <div className={css.grid}>{children}</div>}
-              wrapper={children => (
-                <Grid
-                  border={true}
-                  minItemWidth={resize.width > 320 ? 35 : 27}
-                  mode={GridMode.AutoFill}>{children}</Grid>
-              )}>
-              <>{selectedHParams.map(hParam1 => (
-                <ConditionalWrapper
-                  condition={!isListView}
-                  key={hParam1}
-                  wrapper={children => (
-                    <div className={css.row} key={hParam1}>{children}</div>
-                  )}>
-                  <>{selectedHParams.map(hParam2 => {
-                    const key = generateHpKey(hParam1, hParam2);
-                    return (
-                      <ConditionalWrapper
-                        condition={!isListView}
-                        key={hParam2}
-                        wrapper={children => (
-                          <div className={css.item} key={hParam2}>{children}</div>
-                        )}>
-                        <ScatterPlot
-                          colorScale={colorScale}
-                          height={350}
-                          key={key}
-                          valueLabel={metricNameToStr(selectedMetric)}
-                          values={chartData.hpMetrics[key]}
-                          width={350}
-                          x={chartData.hpValues[hParam1]}
-                          xLabel={hParam1}
-                          xLogScale={chartData.hpLogScales[hParam1]}
-                          y={chartData.hpValues[hParam2]}
-                          yLabel={hParam2}
-                          yLogScale={chartData.hpLogScales[hParam2]}
-                        />
-                      </ConditionalWrapper>
-                    );
-                  })}</>
-                </ConditionalWrapper>
-              ))}</>
-            </ConditionalWrapper>
+            <Grid
+              border={true}
+              length={!isListView ? selectedHParams.length : undefined}
+              minItemWidth={resize.width > 320 ? 35 : 27}
+              mode={GridMode.AutoFill}>
+              {selectedHParams.map(hParam1 => (
+                <>{selectedHParams.map(hParam2 => {
+                  const key = generateHpKey(hParam1, hParam2);
+                  return <ScatterPlot
+                    colorScale={colorScale}
+                    height={350}
+                    key={key}
+                    valueLabel={metricNameToStr(selectedMetric)}
+                    values={chartData.hpMetrics[key]}
+                    width={350}
+                    x={chartData.hpValues[hParam1]}
+                    xLabel={hParam1}
+                    xLogScale={chartData.hpLogScales[hParam1]}
+                    y={chartData.hpValues[hParam2]}
+                    yLabel={hParam2}
+                    yLogScale={chartData.hpLogScales[hParam2]}
+                  />;
+                })}</>
+              ))}
+            </Grid>
           </div>
         </>
       );
@@ -240,7 +216,7 @@ const HpHeatMaps: React.FC<Props> = ({
   }
 
   return (
-    <div className={classes.join(' ')} ref={baseRef}>
+    <div className={css.base} ref={baseRef}>
       <Section options={options} title="HP Heat Maps">
         <div className={css.container}>{content}</div>
       </Section>

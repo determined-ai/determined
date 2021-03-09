@@ -12,6 +12,7 @@ export enum GridMode {
 interface Props {
   border?: boolean;
   gap?: ShirtSize;
+  length?: number;
   minItemWidth?: number;
   mode?: GridMode;
 }
@@ -25,9 +26,10 @@ const Grid: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const mode = props.mode || defaultProps.mode;
   const itemWidth = props.minItemWidth || defaultProps.minItemWidth;
+  const length = props.length ? props.length : mode;
   const style = {
     gridGap: props.gap ? `var(--theme-sizes-layout-${props.gap})` : '',
-    gridTemplateColumns: `repeat(${mode}, minmax(${itemWidth}rem, 1fr))`,
+    gridTemplateColumns: `repeat(${length}, minmax(${itemWidth}rem, 1fr))`,
   };
 
   if (props.border) classes.push(css.border);
