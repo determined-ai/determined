@@ -14,7 +14,6 @@ interface Props {
   colorScale?: ColorScale[];
   height?: number;
   id?: string;
-  padding?: number;
   title?: string;
   valueLabel?: string;
   values?: number[];
@@ -47,7 +46,6 @@ const plotlyConfig: Partial<Plotly.Config> = {
 const ScatterPlot: React.FC<Props> = ({
   colorScale,
   height,
-  padding = 0,
   title,
   valueLabel,
   values,
@@ -128,7 +126,7 @@ const ScatterPlot: React.FC<Props> = ({
     return () => {
       if (ref) Plotly.purge(ref);
     };
-  }, [ chartData, chartLayout, padding, title ]);
+  }, [ chartData, chartLayout, title ]);
 
   // Resize the chart when resize events happen.
   useEffect(() => {
