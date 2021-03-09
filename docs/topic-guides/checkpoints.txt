@@ -24,9 +24,9 @@ used:
 
 TensorFlow Estimator
    Trials are checkpointed using the `SavedModel
-   <https://www.tensorflow.org/programmers_guide/saved_model#structure_of_a_savedmodel_directory>`__
-   format. Please consult the TensorFlow documentation to restore models
-   from the SavedModel format.
+   <https://www.tensorflow.org/guide/saved_model>`__ format. Please
+   consult the TensorFlow documentation for details on how to restore
+   models from the SavedModel format.
 
 TensorFlow Keras
    Trials are checkpointed to a file named ``determined-keras-model.h5``

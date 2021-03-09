@@ -6,88 +6,115 @@
 
 This topic guide covers the two different scheduling policies that are
 supported in Determined. Administrators can configure the desired
-scheduler in :ref:`master-configuration`. Given a scheduling algorithm
-configured at the cluster level, task scheduling is further dictated by
-task configuration values:
+scheduler in :ref:`master-configuration`. It is also possible to
+configure different scheduling behavior for different :ref:`resource
+pools <resource-pools>`.
 
--  For the fair-share scheduler, ``resources.weight`` lets users inflate
-   the resource demand of a task relative to others.
+Once the scheduling policy has been defined for the current master
+and/or resource pool, the scheduling behavior of an individual task is
+influenced by several task configuration values:
+
+-  For the fair-share scheduler, ``resources.weight`` lets users set the
+   resource demand of a task relative to other tasks.
 
 -  For the priority scheduler, ``resources.priority`` lets users assign
    a priority order to tasks.
 
 -  Regardless of the scheduler, ``searcher.max_concurrent_trials`` lets
    users cap the number of slots that an ``adaptive_asha``
-   hyperparameter search experiment can utilize concurrently.
+   hyperparameter search experiment will request at any given time.
 
 .. note::
 
-   Zero-slot tasks (e.g., cpu notebooks, tensorboards) are scheduled
-   independenty of tasks that require slots (e.g., experiments, gpu
-   notebooks). The fair-share scheduler schedules zero-slot tasks on a
-   FIFO basis. The priority scheduler schedules zero-slot tasks based on
-   priority.
+   Zero-slot tasks (e.g., CPU-only notebooks, tensorboards) are
+   scheduled independently of tasks that require slots (e.g.,
+   experiments, GPU notebooks). The fair-share scheduler schedules
+   zero-slot tasks on a FIFO basis. The priority scheduler schedules
+   zero-slot tasks based on priority.
 
 ************
  Fair-Share
 ************
 
-The master allocates cluster resources (slots) among the active
-experiments using a fair-share scheduling policy. In other words, slots
-are divided among the active experiments according to the *demand*
-(number of desired concurrent tasks) of each experiment. For instance,
-in an eight-GPU cluster running two experiments with demands of ten and
+The master allocates cluster resources (*slots*) among the active
+experiments using a weighted fair-share scheduling policy. Slots are
+divided among the active experiments according to the *demand* (number
+of desired concurrent tasks) of each experiment. For instance, in an
+eight-GPU cluster running two experiments with demands of ten and
 thirty, the scheduler assigns two slots and six slots respectively. As
 new experiments become active or the resource demand of an active
 experiment changes, the scheduler will adjust how slots are allocated to
 experiments as appropriate.
 
+The behavior of the fair-share scheduler can be modified by setting the
+*weight* of a workload. A workload's demand for slots is multiplied by
+the workload's weight for scheduling purposes; hence, a workload with a
+higher weight will be assigned proportionally more resources than a
+workload with lower weight. The default weight is ``1``. For example, in
+the scenario above, if the weight of the first experiment is set to 3
+and the weight of the second experiment is set to 1, each experiment
+will be assigned four slots.
+
 **********
  Priority
 **********
 
-The master allocates cluster resources (slots) to active tasks based on
-their priority. While tasks of higher priority (lower priority number)
-are pending, no lower priority tasks will be scheduled. For instance, if
-tasks with priorities of five and forty-two are pending, the latter will
-not be scheduled until the former has been. Tasks of equal priority are
-scheduled in the order in which they were created.
+The master allocates cluster resources (*slots*) to active tasks based
+on their *priority*. While tasks of higher priority (lower priority
+number) are pending, no lower priority tasks will be scheduled. For
+instance, if tasks with priorities of five and forty-two are pending,
+the latter will not be scheduled until the former has been. Tasks of
+equal priority are scheduled in the order in which they were created.
 
-By default the priority scheduler will not perform any preemption. If
-preemption is enabled (:ref:`master-configuration`), in scenarios where
-a higher priority task is pending and cannot be scheduled, the scheduler
-will attempt to schedule it by preempting lower priority tasks, starting
-with the lowest priorities.
-
-An example of the priority scheduler:
-
-#. User submits priority 2 adaptive_asha experiment with max_trials 20
-   and slots_per_trial 1. 8 trials run and utilize all 8 GPUs.
-
-#. User submits priority 1 distributed training experiment with
-   slots_per_trial 4. 4 asha trials are preempted so it can run. Note
-   that if preemption were disabled, this would not get scheduled until
-   the ASHA experiment's GPU demand becomes <= 4.
-
-#. User starts priority 3 notebook with resources.slots 1. Will run as
-   soon as adaptive_asha plus distributed training experiments
-   collectively need <= 7 GPUs.
-
-#. Asha and the distributed training expriment both complete.
-
-#. User submits priority 1 distributed training experiment with
-   slots_per_trial 8. It will not be scheduled because notebooks are not
-   preemptible and only 7 slots available.
-
-#. User submits priority 2 distributed training experiment with
-   slots_per_trial 4. It will not be scheduled even though 7 slots
-   available, because it is behind a higher priority task.
-
-#. Notebook killed. P1 distributed training experiment runs. Once
-   complete, P2 distributed training experiment runs.
+By default, the priority scheduler does not use preemption. If
+preemption is enabled (:ref:`master-configuration`), when a higher
+priority task is pending and cannot be scheduled because no idle
+resources are available, the scheduler will attempt to schedule it by
+preempting lower priority tasks, starting with the task with the lowest
+priority. When a trial is preempted, its state is checkpointed so that
+the progress of the trial is not lost. Enabling preemption ensures that
+cluster resources can be reallocated to high priority tasks more
+promptly; however, preemption can also result in additional overhead due
+to checkpointing low priority tasks, which might be expensive for some
+models.
 
 .. note::
 
-   Notebooks, tensorboards, shells, and commands are non-preemptible.
+   Notebooks, tensorboards, shells, and commands are not preemptible.
    These tasks will continue to occupy cluster resources until they
    complete or are terminated.
+
+Here is an example of how the priority scheduler behaves with preemption
+enabled:
+
+#. User submits a priority 2 adaptive_asha experiment with
+   max_concurrent_trials 20 and slots_per_trial 1. 8 trials run and
+   utilize all 8 GPUs.
+
+#. User submits a priority 1 distributed training experiment with
+   slots_per_trial 4. 4 ASHA trials are preempted so the new distributed
+   training experiment can run. Note that if preemption was not enabled,
+   the new experiment would not get scheduled until the ASHA
+   experiment's GPU demand becomes <= 4.
+
+#. User starts a priority 3 notebook with resources.slots 1. The
+   notebook has a lower priority than the two active experiments, so it
+   will run as soon as the two active experiments collectively need <= 7
+   GPUs.
+
+#. ASHA and the distributed training experiment both complete, and the
+   notebook task with priority 3 will run.
+
+#. User submits a priority 1 distributed training experiment with
+   slots_per_trial 8. Although this workload has a higher priority than
+   the active notebook task, it cannot be scheduled because it requires
+   8 slots, notebooks are not preemptible, and therefore only 7 slots
+   are available.
+
+#. User submits a priority 2 distributed training experiment with
+   slots_per_trial 4. It will not be scheduled even though 7 slots are
+   available, because it is behind a higher priority pending task.
+
+#. The notebook is killed. The distributed training job that has
+   priority 1 then starts running. Once that experiment is complete,
+   distributed training experiment with priority 2 runs.

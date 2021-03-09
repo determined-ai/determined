@@ -4,11 +4,12 @@
  How to Install Determined
 ###########################
 
-Two main components are required to use Determined: :ref:`Determined CLI
-<install-cli>` and a :ref:`Determined cluster <install-cluster>`. All
-users should install the Determined CLI on their local development
+Two main components are required to use Determined: the :ref:`Determined
+CLI <install-cli>` and a :ref:`Determined cluster <install-cluster>`.
+All users should install the Determined CLI on their local development
 machine. The Determined cluster should be installed in your training
-environment.
+environment, which might be your local development machine, an
+on-premise GPU cluster, or resources in the cloud.
 
 ****************************
  Install the Determined CLI
@@ -34,7 +35,7 @@ On-premise Deployments
 
 On-premise deployments are useful if you already have access to the
 machines that you would like to install Determined on, whether that
-means a single laptop for experimentation or a fleet of multi-GPU
+means a single laptop for local development or a fleet of multi-GPU
 servers.
 
 ``det-deploy`` is the most convenient on-premise option; once installed,
@@ -91,6 +92,10 @@ Kubernetes, please follow the :ref:`Determined on Kubernetes
 Notes
 =====
 
+You can control the behavior of the Determined master and agent by
+editing configuration files. See :ref:`cluster-configuration` for
+details.
+
 Each Determined cluster requires access to a `PostgreSQL
 <https://www.postgresql.org/>`_ database. In addition, Determined can
 use `Docker <https://www.docker.com/>`_ to run the master and agents.
@@ -106,9 +111,9 @@ installed for you:
 More information on a Determined cluster can be found:
 
 -  :ref:`requirements`
+-  :ref:`network-requirements`
 -  :ref:`upgrades`
 -  :ref:`troubleshoot`
--  :ref:`network-requirements`
 
 .. toctree::
    :titlesonly:
