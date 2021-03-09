@@ -1,21 +1,15 @@
-import { Alert, Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert } from 'antd';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
 import Grid, { GridMode } from 'components/Grid';
-import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
+import { GridListView } from 'components/GridListRadioGroup';
 import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import MetricSelectFilter from 'components/MetricSelectFilter';
-import MultiSelect from 'components/MultiSelect';
-import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
-import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
-import useStorage from 'hooks/useStorage';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -30,18 +24,14 @@ import { terminalRunStates } from 'utils/types';
 
 import css from './HpHeatMaps.module.scss';
 
-const { Option } = Select;
-
 interface Props {
-  batches: number[];
   experiment: ExperimentBase;
   hParams: string[];
-  isLoading?: boolean;
-  metrics: MetricName[];
-  onBatchChange?: (batch: number) => void;
-  onMetricChange?: (metric: MetricName) => void;
+  options?: React.ReactNode;
   selectedBatch: number;
+  selectedHParams: string[];
   selectedMetric: MetricName;
+  selectedView: GridListView;
 }
 
 interface HpData {
@@ -52,39 +42,23 @@ interface HpData {
   trialIds: number[];
 }
 
-const MAX_HPARAM_COUNT = 5;
-const STORAGE_PATH = 'hp-vs-hp';
-const STORAGE_HPARAMS_KEY = 'hparams';
-const STORAGE_VIEW_KEY = 'grid-list';
-
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
 };
 
 const HpHeatMaps: React.FC<Props> = ({
-  batches,
   experiment,
   hParams,
-  isLoading = false,
-  metrics,
-  onBatchChange,
-  onMetricChange,
+  options,
   selectedBatch,
+  selectedHParams,
   selectedMetric,
+  selectedView,
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpData>();
   const [ pageError, setPageError ] = useState<Error>();
-  const storage = useStorage(STORAGE_PATH);
-  const defaultHParams = storage.get<string[]>(STORAGE_HPARAMS_KEY);
-  const limitedHParams = hParams.slice(0, MAX_HPARAM_COUNT);
-  const [
-    selectedHParams,
-    setSelectedHParams,
-  ] = useState<string[]>(defaultHParams || limitedHParams);
-  const defaultView = storage.get<GridListView>(STORAGE_VIEW_KEY) || GridListView.Grid;
-  const [ selectedView, setSelectedView ] = useState(defaultView);
   const resize = useResize(baseRef);
   const classes = [ css.base ];
 
@@ -105,41 +79,13 @@ const HpHeatMaps: React.FC<Props> = ({
     return getColorScale(chartData?.metricRange, smallerIsBetter);
   }, [ chartData, smallerIsBetter ]);
 
-  const resetData = useCallback(() => {
-    setChartData(undefined);
-    setHasLoaded(false);
-  }, []);
-
-  const handleBatchChange = useCallback((batch: SelectValue) => {
-    if (!onBatchChange) return;
-    resetData();
-    onBatchChange(batch as number);
-  }, [ onBatchChange, resetData ]);
-
-  const handleHParamChange = useCallback((hps: SelectValue) => {
-    if (Array.isArray(hps) && hps.length !== 0) {
-      storage.set(STORAGE_HPARAMS_KEY, hps);
-      setSelectedHParams(hps as string[]);
-    } else {
-      storage.remove(STORAGE_HPARAMS_KEY);
-      setSelectedHParams(limitedHParams);
-    }
-  }, [ limitedHParams, storage ]);
-
-  const handleMetricChange = useCallback((metric: MetricName) => {
-    if (!onMetricChange) return;
-    resetData();
-    onMetricChange(metric);
-  }, [ onMetricChange, resetData ]);
-
-  const handleViewChange = useCallback((value: GridListView) => setSelectedView(value), []);
-
   useEffect(() => {
     const canceler = new AbortController();
-
     const trialIds: number[] = [];
     const hpMetricMap: Record<number, Record<string, number>> = {};
     const hpValueMap: Record<number, Record<string, number>> = {};
+
+    setHasLoaded(false);
 
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(
@@ -204,7 +150,10 @@ const HpHeatMaps: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch(e => setPageError(e));
+    ).catch(e => {
+      setPageError(e);
+      setHasLoaded(true);
+    });
 
     return () => canceler.abort();
   }, [ experiment, hParams, selectedBatch, selectedMetric ]);
@@ -225,7 +174,7 @@ const HpHeatMaps: React.FC<Props> = ({
   }
 
   let content = <Spinner />;
-  if (hasLoaded && !isLoading && chartData) {
+  if (hasLoaded && chartData) {
     if (chartData.trialIds.length === 0) {
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {
@@ -290,33 +239,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} ref={baseRef}>
-      <Section
-        options={<ResponsiveFilters>
-          <SelectFilter
-            enableSearchFilter={false}
-            label="Batches Processed"
-            showSearch={false}
-            value={selectedBatch}
-            onChange={handleBatchChange}>
-            {batches.map(batch => <Option key={batch} value={batch}>{batch}</Option>)}
-          </SelectFilter>
-          <MetricSelectFilter
-            defaultMetricNames={metrics}
-            label="Metric"
-            metricNames={metrics}
-            multiple={false}
-            value={selectedMetric}
-            width={'100%'}
-            onChange={handleMetricChange} />
-          <MultiSelect
-            label="HP"
-            value={selectedHParams}
-            onChange={handleHParamChange}>
-            {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
-          </MultiSelect>
-          <GridListRadioGroup value={selectedView} onChange={handleViewChange} />
-        </ResponsiveFilters>}
-        title="HP Heat Maps">
+      <Section options={options} title="HP Heat Maps">
         <div className={css.container}>{content}</div>
       </Section>
     </div>

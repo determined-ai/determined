@@ -1,16 +1,11 @@
-import { Alert, Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
+import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
-import MetricSelectFilter from 'components/MetricSelectFilter';
-import MultiSelect from 'components/MultiSelect';
 import ParallelCoordinates, {
   Constraint, Dimension, DimensionType, dimensionTypeMap,
 } from 'components/ParallelCoordinates';
-import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
-import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -28,17 +23,10 @@ import { terminalRunStates } from 'utils/types';
 import css from './HpParallelCoordinates.module.scss';
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
 
-const { Option } = Select;
-
 interface Props {
-  batches: number[];
   experiment: ExperimentBase;
   hParams: string[];
-  isLoading?: boolean;
-  metrics: MetricName[];
-  onBatchChange?: (batch: number) => void;
-  onHParamChange?: (hParams?: string[]) => void;
-  onMetricChange?: (metric: MetricName) => void;
+  options?: React.ReactNode;
   selectedBatch: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
@@ -52,14 +40,9 @@ interface HpTrialData {
 }
 
 const HpParallelCoordinates: React.FC<Props> = ({
-  batches,
   experiment,
   hParams,
-  isLoading = false,
-  metrics,
-  onBatchChange,
-  onHParamChange,
-  onMetricChange,
+  options,
   selectedBatch,
   selectedHParams,
   selectedMetric,
@@ -124,32 +107,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return newDimensions;
   }, [ chartData, hyperparameters, selectedMetric, selectedHParams ]);
 
-  const resetData = useCallback(() => {
-    setChartData(undefined);
-    setTrialHps([]);
-    setHasLoaded(false);
-  }, []);
-
-  const handleBatchChange = useCallback((batch: SelectValue) => {
-    if (!onBatchChange) return;
-    resetData();
-    onBatchChange(batch as number);
-  }, [ onBatchChange, resetData ]);
-
-  const handleHParamChange = useCallback((hps: SelectValue) => {
-    if (!onHParamChange) return;
-    if (Array.isArray(hps)) {
-      onHParamChange(hps.length === 0 ? undefined : hps as string[]);
-    }
-  }, [ onHParamChange ]);
-
-  const handleMetricChange = useCallback((metric: MetricName) => {
-    if (!onMetricChange) return;
-    resetData();
-    onMetricChange(metric);
-  }, [ onMetricChange, resetData ]);
-
-  const handleChartFilter = useCallback((constraints: Record<string, Constraint>) => {
+  const handleChartFilter = useCallback((constraints: Record<string, Range>) => {
     if (!chartData) return;
 
     // Figure out which trials fit within the user provided constraints.
@@ -180,6 +138,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
     const trialMetricsMap: Record<number, number> = {};
     const trialHpTableMap: Record<number, TrialHParams> = {};
     const trialHpMap: Record<string, Record<number, Primitive>> = {};
+
+    setHasLoaded(false);
 
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(
@@ -244,7 +204,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch(e => setPageError(e));
+    ).catch(e => {
+      setPageError(e);
+      setHasLoaded(true);
+    });
 
     return () => canceler.abort();
   }, [ experiment.id, selectedBatch, selectedMetric ]);
@@ -266,34 +229,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section
-        options={<ResponsiveFilters>
-          <SelectFilter
-            enableSearchFilter={false}
-            label="Batches Processed"
-            showSearch={false}
-            value={selectedBatch}
-            onChange={handleBatchChange}>
-            {batches.map(batch => <Option key={batch} value={batch}>{batch}</Option>)}
-          </SelectFilter>
-          <MetricSelectFilter
-            defaultMetricNames={metrics}
-            label="Metric"
-            metricNames={metrics}
-            multiple={false}
-            value={selectedMetric}
-            width={'100%'}
-            onChange={handleMetricChange} />
-          <MultiSelect
-            label="HP"
-            value={selectedHParams}
-            onChange={handleHParamChange}>
-            {hParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
-          </MultiSelect>
-        </ResponsiveFilters>}
-        title="HP Parallel Coordinates">
+      <Section options={options} title="HP Parallel Coordinates">
         <div className={css.container}>
-          {!hasLoaded || isLoading || !chartData ? <Spinner /> : (
+          {!hasLoaded || !chartData ? <Spinner /> : (
             <>
               <div className={css.chart}>
                 <ParallelCoordinates
