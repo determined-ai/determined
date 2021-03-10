@@ -38,33 +38,33 @@ func (b BindMountV0) CompletenessValidator() *jsonschema.Schema {
 }
 
 func TestFillEmptyDefaults(t *testing.T) {
-	obj := BindMountV0{}
-	assertDefaults := func() {
-		assert.Assert(t, obj.ReadOnly != nil)
-		assert.Assert(t, *obj.ReadOnly == false)
-		assert.Assert(t, obj.Propagation != nil)
-		assert.Assert(t, *obj.Propagation == rprivate)
+	assertDefaults := func(b BindMountV0) {
+		assert.Assert(t, b.ReadOnly != nil)
+		assert.Assert(t, *b.ReadOnly == false)
+		assert.Assert(t, b.Propagation != nil)
+		assert.Assert(t, *b.Propagation == rprivate)
 	}
 
-	FillDefaults(&obj)
-	assertDefaults()
+	obj := BindMountV0{}
+	out := WithDefaults(obj).(BindMountV0)
+	assertDefaults(out)
 
 	// Make sure pointers on the input are ok.
 	objRef := &BindMountV0{}
-	FillDefaults(&objRef)
-	assertDefaults()
+	objRef = WithDefaults(objRef).(*BindMountV0)
+	assertDefaults(*objRef)
 
 	// Make sure input interfaces are ok.
 	var iObj interface{} = &BindMountV0{}
-	FillDefaults(iObj)
-	assertDefaults()
+	iObj = WithDefaults(iObj)
+	assertDefaults(*(iObj.(*BindMountV0)))
 }
 
 func TestNonEmptyDefaults(t *testing.T) {
 	obj := BindMountV0{ReadOnly: ptrs.BoolPtr(true), Propagation: ptrs.StringPtr("asdf")}
-	FillDefaults(&obj)
-	assert.Assert(t, *obj.ReadOnly == true)
-	assert.Assert(t, *obj.Propagation == "asdf")
+	out := WithDefaults(obj).(BindMountV0)
+	assert.Assert(t, *out.ReadOnly == true)
+	assert.Assert(t, *out.Propagation == "asdf")
 }
 
 func TestArrayOfDefautables(t *testing.T) {
@@ -73,9 +73,9 @@ func TestArrayOfDefautables(t *testing.T) {
 	obj = append(obj, BindMountV0{})
 	obj = append(obj, BindMountV0{})
 
-	FillDefaults(&obj)
+	out := WithDefaults(obj).([]BindMountV0)
 
-	for _, b := range obj {
+	for _, b := range out {
 		assert.Assert(t, b.ReadOnly != nil)
 		assert.Assert(t, *b.ReadOnly == false)
 		assert.Assert(t, b.Propagation != nil)

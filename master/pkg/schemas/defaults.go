@@ -11,27 +11,16 @@ import (
 // random seed based on the wall clock.
 type RuntimeDefaultable interface {
 	// RuntimeDefaults must apply the runtime-defined default values.
-	RuntimeDefaults()
+	RuntimeDefaults() interface{}
 }
 
-// Defaultable means a struct can have its defaults filled in automatically.
-type Defaultable interface {
-	// DefaultSource must return a parsed json-schema object in which to find defaults.
-	DefaultSource() interface{}
-}
-
-// FillDefaults will recurse through structs, maps, and slices, setting default values for any
+// WithDefaults will recurse through structs, maps, and slices, setting default values for any
 // struct fields whose struct implements the Defaultable interface.  This lets us read default
 // values out of json-schema automatically.
 //
 // There are some forms of defaults which must be filled at runtimes, such as giving a default
 // description to experiments with no description.  This can be accomplished by implementing
 // the RuntimeDefaultable interface for that object.  See ExperimentConfig for an example.
-//
-// There are some objects which get their defaults from other objects' defaults.  This an
-// unfortunate detail of our union types which have common members that appear on the root union
-// object.  That's hard to reason about, and we should avoid doing that in new config objects.  But
-// those objects implement DefaultSource() to customize that behavior.
 //
 // Example usage:
 //
@@ -41,67 +30,70 @@ type Defaultable interface {
 //    schemas.Merge(&config.CheckpointStorage, cluster_default_checkpoint_storage)
 //
 //    // Define any remaining undefined values.
-//    schemas.FillDefaults(&config)
+//    config = schemas.WithDefaults(&config).(ExperimentConfig)
 //
-func FillDefaults(obj interface{}) {
+func WithDefaults(obj interface{}) interface{} {
 	vObj := reflect.ValueOf(obj)
-	// obj can't be a non-pointer, because it edits in-place.
-	if vObj.Kind() != reflect.Ptr {
-		panic("FillDefaults must be called on a pointer")
-	}
-	// obj can't be a nil pointer, because FillDefaults(nil) doesn't make any sense.
-	if vObj.IsZero() {
-		panic("FillDefaults must be called on a non-nil pointer")
-	}
-	// Enter the recursive default filling with no default bytes for the root object (which must
-	// already exist), and starting with the name of the object type.
 	name := fmt.Sprintf("%T", obj)
-	vObj.Elem().Set(fillDefaults(vObj.Elem(), nil, name))
+	return withDefaults(vObj, nil, name).Interface()
 }
 
-// fillDefaults is the recursive layer under FillDefaults.  fillDefaults will return the original
-// input value (not a copy of the original value).
-func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.Value {
-	switch obj.Kind() {
-	case reflect.Interface:
-		if obj.IsZero() {
-			// This doesn't make any sense; we need a type.
-			panic("got a nil interface as the obj to FillDefaults into")
-		}
-		obj.Set(fillDefaults(obj.Elem(), defaultBytes, name))
+func getDefaultSource(obj reflect.Value) interface{} {
+	if schema, ok := obj.Interface().(Schema); ok {
+		return schema.ParsedSchema()
+	}
+	return nil
+}
 
-	case reflect.Ptr:
+// withDefaults is the recursive layer under WithDefaults.  withDefaults will return a clean copy
+// of the original value, with defaults set.
+func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.Value {
+	// fmt.Printf("withDefaults on %v (%T)\n", name, obj.Interface())
+
+	// Handle pointers first.
+	if obj.Kind() == reflect.Ptr {
 		if obj.IsZero() {
 			if defaultBytes == nil {
 				// Nil pointer with no defaultBytes means we are done recursing.
 				return obj
 			}
 			// Otherwise, since we have default bytes, allocate the new object.
-			obj = reflect.New(obj.Type().Elem())
+			out := reflect.New(obj.Type().Elem())
 			// Fill the object with default bytes.
-			err := json.Unmarshal(defaultBytes, obj.Interface())
+			err := json.Unmarshal(defaultBytes, out.Interface())
 			if err != nil {
 				panic(
 					fmt.Sprintf(
-						"failed to unmarshal defaultBytes into %T: %v",
+						"failed to unmarshal defaultBytes into %T: %q: %v",
 						obj.Interface(),
 						string(defaultBytes),
+						err.Error(),
 					),
 				)
 			}
 			// We already consumed defaultBytes, so set it to nil when we recurse.
-			obj.Elem().Set(fillDefaults(obj.Elem(), nil, name))
-		} else {
-			// Recurse into the element inside the pointer.
-			obj.Elem().Set(fillDefaults(obj.Elem(), defaultBytes, name))
+			return withDefaults(out, nil, name)
 		}
+		// Allocate a new pointer and set is avlue
+		out := reflect.New(obj.Type().Elem())
+		out.Elem().Set(withDefaults(obj.Elem(), defaultBytes, name))
+		return out
+	}
 
+	// Next handle interfaces.
+	if obj.Kind() == reflect.Interface {
+		if obj.IsZero() {
+			return cpy(obj)
+		}
+		return withDefaults(obj.Elem(), defaultBytes, name)
+	}
+
+	var out reflect.Value
+
+	switch obj.Kind() {
 	case reflect.Struct:
 		defaultSource := getDefaultSource(obj)
-		// Create a clean copy of the object which is settable.  This is necessary because if you
-		// have a required struct (i.e. it appears as a struct rather than a struct pointer on its
-		// parent object), then obj.Field(i) will not be settable.
-		newObj := reflect.New(obj.Type()).Elem()
+		out = reflect.New(obj.Type()).Elem()
 		// Iterate through all the fields of the struct once, applying defaults.
 		for i := 0; i < obj.NumField(); i++ {
 			var fieldDefaultBytes []byte
@@ -111,56 +103,59 @@ func fillDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 			}
 			fieldName := fmt.Sprintf("%v.%v", name, obj.Type().Field(i).Name)
 			// Recurse into the field.
-			newObj.Field(i).Set(fillDefaults(obj.Field(i), fieldDefaultBytes, fieldName))
+			out.Field(i).Set(withDefaults(obj.Field(i), fieldDefaultBytes, fieldName))
 		}
-		// Use the new copy instead of the old one.
-		obj = newObj
 
 	case reflect.Slice:
-		for i := 0; i < obj.Len(); i++ {
-			elemName := fmt.Sprintf("%v.[%v]", name, i)
-			// Recurse into the elem (there's no per-element defaults yet).
-			obj.Index(i).Set(fillDefaults(obj.Index(i), nil, elemName))
+		if obj.IsZero() {
+			out = cpy(obj)
+		} else {
+			typ := reflect.SliceOf(obj.Type().Elem())
+			out = reflect.MakeSlice(typ, 0, obj.Len())
+			for i := 0; i < obj.Len(); i++ {
+				elemName := fmt.Sprintf("%v[%v]", name, i)
+				// Recurse into the elem (there's no per-element defaults yet).
+				out = reflect.Append(out, withDefaults(obj.Index(i), nil, elemName))
+			}
 		}
 
 	case reflect.Map:
-		for _, key := range obj.MapKeys() {
+		typ := reflect.MapOf(obj.Type().Key(), obj.Type().Elem())
+		out = reflect.MakeMap(typ)
+		iter := obj.MapRange()
+		for iter.Next() {
+			key := iter.Key()
+			val := iter.Value()
 			elemName := fmt.Sprintf("%v.[%v]", name, key.Interface())
-			val := obj.MapIndex(key)
 			// Recurse into the elem (there's no per-element defaults yet).
-			tmp := fillDefaults(val, nil, elemName)
-			// Update the original value with the defaulted value.
-			obj.SetMapIndex(key, tmp)
+			out.SetMapIndex(key, withDefaults(val, nil, elemName))
 		}
 
 	// Assert that none of the "complex" kinds are present.
 	case reflect.Array,
 		reflect.Chan,
 		reflect.Func,
-		reflect.UnsafePointer:
+		reflect.UnsafePointer,
+		reflect.Ptr,
+		reflect.Interface:
 		panic(fmt.Sprintf(
-			"unable to fillDefaults at %v of type %T, kind %v", name, obj.Interface(), obj.Kind(),
+			"unable to withDefaults at %v of type %T, kind %v", name, obj.Interface(), obj.Kind(),
 		))
+
+	default:
+		out = cpy(obj)
 	}
 
-	// AFTER the automatic defaults, we apply any runtime defaults.  This way, we've already filled
-	// any nil pointers with valid objects.
-	if runtimeDefaultable, ok := obj.Interface().(RuntimeDefaultable); ok {
-		runtimeDefaultable.RuntimeDefaults()
+	// Any non-pointer, non-interface type may be RuntimeDefaultable.
+	if out.IsValid() {
+		if defaultable, ok := out.Interface().(RuntimeDefaultable); ok {
+			out = reflect.ValueOf(defaultable.RuntimeDefaults())
+		}
 	}
 
-	return obj
-}
+	// fmt.Printf("withDefaults on %v (%T) returning %v\n", name, obj.Interface(), obj.Interface())
 
-// getDefaultSource gets a source of defaults from a Defaultable or Schema interface.
-func getDefaultSource(v reflect.Value) interface{} {
-	if defaultable, ok := v.Interface().(Defaultable); ok {
-		return defaultable.DefaultSource()
-	}
-	if schema, ok := v.Interface().(Schema); ok {
-		return schema.ParsedSchema()
-	}
-	return nil
+	return out
 }
 
 // jsonNameFromJSONTag is based on encoding/json's parseTag().

@@ -1,18 +1,17 @@
 package expconf
 
+// Define types that are only used in testing.
+
 import (
 	"encoding/json"
-	// "fmt"
-	// "time"
 
-	// petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
+//go:generate ../gen.sh
 // TestUnionAV0 is exported.
 type TestUnionAV0 struct {
 	Type string `json:"type"`
@@ -21,6 +20,7 @@ type TestUnionAV0 struct {
 	CommonVal *string `json:"common_val"`
 }
 
+//go:generate ../gen.sh
 // TestUnionBV0 is exported.
 type TestUnionBV0 struct {
 	Type string `json:"type"`
@@ -29,14 +29,11 @@ type TestUnionBV0 struct {
 	CommonVal *string `json:"common_val"`
 }
 
+//go:generate ../gen.sh
 // TestUnionV0 is exported.
 type TestUnionV0 struct {
 	A *TestUnionAV0 `union:"type,a" json:"-"`
 	B *TestUnionBV0 `union:"type,b" json:"-"`
-
-	// I think common memebers should not exist, but for now they do and you can handle them with
-	// the DefaultSource interface.
-	CommonVal *string `json:"common_val"`
 }
 
 // UnmarshalJSON is exported.
@@ -53,17 +50,14 @@ func (t TestUnionV0) MarshalJSON() ([]byte, error) {
 	return union.Marshal(t)
 }
 
-// DefaultSource implements the Defaultable interface.
-func (t TestUnionV0) DefaultSource() interface{} {
-	return schemas.UnionDefaultSchema(t)
-}
-
+//go:generate ../gen.sh
 // TestSubV0 is exported.
 type TestSubV0 struct {
 	// defaultable; pointer.
 	ValY *string `json:"val_y"`
 }
 
+//go:generate ../gen.sh
 // TestRootV0 is exported.
 type TestRootV0 struct {
 	// required; non-pointer.
@@ -76,8 +70,9 @@ type TestRootV0 struct {
 }
 
 // RuntimeDefaults implements the RuntimeDefaultable interface.
-func (t *TestRootV0) RuntimeDefaults() {
+func (t TestRootV0) RuntimeDefaults() interface{} {
 	if t.RuntimeDefaultable == nil {
 		t.RuntimeDefaultable = ptrs.IntPtr(10)
 	}
+	return t
 }

@@ -47,7 +47,7 @@ func (tc SchemaTestCase) CheckMatches(t *testing.T) {
 	byts, err := json.Marshal(tc.Case)
 	assert.NilError(t, err)
 	for _, url := range *tc.Matches {
-		schema := schemas.GetCompletenessValidator(url)
+		schema := schemas.GetSanityValidator(url)
 		err := schema.Validate(bytes.NewReader(byts))
 		if err == nil {
 			continue
@@ -65,7 +65,7 @@ func (tc SchemaTestCase) CheckErrors(t *testing.T) {
 	byts, err := json.Marshal(tc.Case)
 	assert.NilError(t, err)
 	for url, expectedErrors := range *tc.Errors {
-		schema := schemas.GetCompletenessValidator(url)
+		schema := schemas.GetSanityValidator(url)
 		err := schema.Validate(bytes.NewReader(byts))
 		if err == nil {
 			t.Errorf("expected error matching %v but got none", url)
@@ -108,6 +108,8 @@ func objectForURL(url string) interface{} {
 	//	case "http://determined.ai/schemas/expconf/v0/hyperparameter.json",
 	//		"http://determined.ai/schemas/expconf/v0/hyperparameter-int.json":
 	//		return &Hyperparameter{}
+
+	// Test-related structs.
 	case "http://determined.ai/schemas/expconf/v0/test-root.json":
 		return &TestRootV0{}
 	case "http://determined.ai/schemas/expconf/v0/test-union.json",
@@ -126,7 +128,6 @@ func clearRuntimeDefaults(obj *interface{}, defaulted interface{}) {
 	// If defaulted is a "*" and obj is not nil, set obj to be "*" too so they match.
 	if s, ok := defaulted.(string); ok && s == "*" {
 		if *obj != nil {
-			fmt.Fprintf(os.Stderr, "%v matches %v\n", *obj, defaulted)
 			*obj = "*"
 		}
 	}
@@ -180,7 +181,7 @@ func (tc SchemaTestCase) CheckDefaulted(t *testing.T) {
 		err = json.Unmarshal(byts, &obj)
 		assert.NilError(t, err)
 
-		schemas.FillDefaults(&obj)
+		obj = schemas.WithDefaults(obj)
 
 		// Compare json-to-json.
 		defaultedBytes, err := json.Marshal(obj)
@@ -222,13 +223,15 @@ func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 	assert.DeepEqual(t, obj, cpy)
 
 	// Round-trip again after defaults.
-	schemas.FillDefaults(&obj)
+	obj = schemas.WithDefaults(obj)
+
 	jByts, err = json.Marshal(obj)
 	assert.NilError(t, err)
+
 	cpy = objectForURL(url)
-	schemas.FillDefaults(&cpy)
 	err = json.Unmarshal(jByts, &cpy)
 	assert.NilError(t, err)
+
 	assert.DeepEqual(t, obj, cpy)
 }
 

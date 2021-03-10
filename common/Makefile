@@ -1,4 +1,5 @@
 GENERATED_COMMITTED := determined_common/schemas/expconf/_gen.py
+GENERATION_INPUTS = ../schemas/gen.py $(shell find ../schemas/expconf -name '*.json')
 
 .PHONY: clean
 clean:
@@ -27,11 +28,10 @@ check-gen: force-gen $(GENERATED_COMMITTED)
 	# git reports the files as unchanged after forcibly regenerating the files:
 	test -z "$(shell git status --porcelain $(GENERATED_COMMITTED))"
 
-determined_common/schemas/expconf/_gen.py: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
-	../schemas/gen.py \
-		--output $@ \
-		python \
-		$(shell find ../schemas/expconf -name "*.json")
+determined_common/schemas/expconf/_gen.py: $(GENERATION_INPUTS)
+	../schemas/gen.py python\
+		--package expconf \
+		--output $@
 
 .PHONY: build
 build:

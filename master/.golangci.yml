@@ -8,11 +8,10 @@ run:
   # The exit code when at least one issue was found.
   issues-exit-code: 1
 
-  # Exclude generated code.
   skip-files:
-    - pkg/schemas/schema_gen.go
-    - pkg/schemas/expconf/schema_gen.go
     - pkg/schemas/expconf/dummies.go
+    - pkg/schemas/*/zgen*.go
+    - pkg/schemas/zgen*.go
 
 output:
   # Linter output format.
