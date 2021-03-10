@@ -3,8 +3,8 @@ appdirs
 pytest>=6.0.1
 pytest-timeout
 pexpect
-torch==1.4
-torchvision==0.5.0
+torch==1.7.1
+torchvision==0.8.2
 tensorflow==1.15.4
 # TF 1.15.4 has requirement numpy<1.19.0,>=1.16.0
 # and numpy==1.19.2 throws numpy.ufunc has the wrong size error
