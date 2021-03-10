@@ -98,7 +98,7 @@ message GetExperimentLabelsResponse {
 
 // Delete a single experiment.
 message DeleteExperimentRequest {
-  // The id of the experiment.
+  // The ID of the experiment.
   int32 experiment_id = 1;
 }
 // Response to DeleteExperimentRequest.

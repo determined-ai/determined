@@ -923,7 +923,7 @@ WHERE id = $1
 	return nil
 }
 
-// ExperimentHasCheckpointsInRegistry checks if the experiment has an checkpoints in the registry.
+// ExperimentHasCheckpointsInRegistry checks if the experiment has any checkpoints in the registry.
 func (db *PgDB) ExperimentHasCheckpointsInRegistry(id int) (bool, error) {
 	var exists bool
 	err := db.sql.QueryRow(`

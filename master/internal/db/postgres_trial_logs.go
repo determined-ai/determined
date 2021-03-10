@@ -24,8 +24,8 @@ var trialLogsFieldMap = map[string]string{
      )`,
 }
 
-// TrialLogs takes a trial ID and log offset, limit and filters and returns matching trial logs.
-func (db *PgDB) TrialLogs(
+// GetBatch takes a trial ID and log offset, limit and filters and returns matching trial logs.
+func (db *PgDB) GetBatch(
 	trialID, offset, limit int, fs []api.Filter, order apiv1.OrderBy, _ interface{},
 ) ([]*model.TrialLog, interface{}, error) {
 	params := []interface{}{trialID, offset, limit}
@@ -67,8 +67,8 @@ ORDER BY timestamp %s OFFSET $2 LIMIT $3
 	return b, nil, db.queryRows(query, &b, params...)
 }
 
-// AddTrialLogs adds a list of *model.TrialLog objects to the database with automatic IDs.
-func (db *PgDB) AddTrialLogs(logs []*model.TrialLog) error {
+// AddBatch adds a list of *model.TrialLog objects to the database with automatic IDs.
+func (db *PgDB) AddBatch(logs []*model.TrialLog) error {
 	if len(logs) == 0 {
 		return nil
 	}
@@ -106,8 +106,8 @@ INSERT INTO trial_logs
 	return nil
 }
 
-// DeleteTrialLogs deletes the logs for the given trial IDs.
-func (db *PgDB) DeleteTrialLogs(ids []int) error {
+// Delete deletes the logs for the given trial IDs.
+func (db *PgDB) Delete(ids []int) error {
 	if _, err := db.sql.Exec(`
 DELETE FROM trial_logs
 WHERE trial_id IN (SELECT unnest($1::int [])::int);
@@ -117,8 +117,8 @@ WHERE trial_id IN (SELECT unnest($1::int [])::int);
 	return nil
 }
 
-// TrialLogCount returns the number of logs in postgres for the given trial.
-func (db *PgDB) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
+// Count returns the number of logs in postgres for the given trial.
+func (db *PgDB) Count(trialID int, fs []api.Filter) (int, error) {
 	params := []interface{}{trialID}
 	fragment, params := filtersToSQL(fs, params, trialLogsFieldMap)
 	query := fmt.Sprintf(`
@@ -134,8 +134,8 @@ WHERE trial_id = $1
 	return count, nil
 }
 
-// TrialLogFields returns the unique fields that can be filtered on for the given trial.
-func (db *PgDB) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
+// Fields returns the unique fields that can be filtered on for the given trial.
+func (db *PgDB) Fields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
 	var fields apiv1.TrialLogsFieldsResponse
 	err := db.QueryProto("get_trial_log_fields", &fields, trialID)
 	return &fields, err

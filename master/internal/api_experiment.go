@@ -88,7 +88,7 @@ func (a *apiServer) DeleteExperiment(
 	exp, err := a.m.db.ExperimentByID(expID)
 	switch {
 	case errors.Cause(err) == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", expID)
+		return nil, status.Errorf(codes.NotFound, "experiment not found")
 	case err != nil:
 		return nil, fmt.Errorf("failed to retrieve experiment: %w", err)
 	}
@@ -99,7 +99,7 @@ func (a *apiServer) DeleteExperiment(
 
 	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(expID); {
 	case eErr != nil:
-		return nil, fmt.Errorf("failed to check model registry for references to %d", expID)
+		return nil, fmt.Errorf("failed to check model registry for references")
 	case exists:
 		return nil, status.Errorf(codes.InvalidArgument, "checkpoints are registered as model versions")
 	}
@@ -107,7 +107,7 @@ func (a *apiServer) DeleteExperiment(
 	agentUserGroup, err := a.m.db.AgentUserGroup(*exp.OwnerID)
 	switch {
 	case err != nil:
-		return nil, errors.Errorf("cannot find user and group for experiment %v", expID)
+		return nil, errors.Errorf("cannot find user and group for experiment")
 	case agentUserGroup == nil:
 		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
@@ -116,7 +116,7 @@ func (a *apiServer) DeleteExperiment(
 	exp.Config.CheckpointStorage.SaveTrialBest = 0
 	exp.Config.CheckpointStorage.SaveTrialLatest = 0
 	if sErr := a.m.db.SaveExperimentConfig(exp); sErr != nil {
-		return nil, errors.Wrapf(sErr, "failed to patch experiment checkpoint storage %d", exp.ID)
+		return nil, errors.Wrapf(sErr, "failed to patch experiment checkpoint storage")
 	}
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
@@ -126,22 +126,22 @@ func (a *apiServer) DeleteExperiment(
 		db:             a.m.db,
 		experiment:     exp,
 	}).AwaitTermination(); gcErr != nil {
-		return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment: %d", exp.ID)
+		return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
 
 	trialIds, err := a.m.db.ExperimentTrialIDs(exp.ID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment: %d", exp.ID)
+		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiment")
 	}
 
 	logrus.Infof("deleting experiment %v logs from backend", req.ExperimentId)
-	if err = a.m.trialLogBackend.DeleteTrialLogs(trialIds); err != nil {
+	if err = a.m.trialLogBackend.Delete(trialIds); err != nil {
 		return nil, errors.Wrapf(err, "failed to delete trial logs from backend")
 	}
 
 	logrus.Infof("deleting experiment %v from database", req.ExperimentId)
 	if err = a.m.db.DeleteExperiment(expID); err != nil {
-		return nil, errors.Wrapf(err, "deleting experiment %v from database", expID)
+		return nil, errors.Wrapf(err, "deleting experiment from database")
 	}
 
 	return &apiv1.DeleteExperimentResponse{}, nil

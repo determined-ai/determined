@@ -33,9 +33,9 @@ const (
 
 type jsonObj = map[string]interface{}
 
-// AddTrialLogs indexes a batch of trial logs into the index like triallogs-yyyy-MM-dd based
+// AddBatch indexes a batch of trial logs into the index like triallogs-yyyy-MM-dd based
 // on the UTC value of their timestamp.
-func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
+func (e *Elastic) AddBatch(logs []*model.TrialLog) error {
 	indexToLogs := map[string][]*model.TrialLog{}
 	for _, l := range logs {
 		index := logstashIndexFromTimestamp(l.Timestamp)
@@ -67,8 +67,8 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 	return nil
 }
 
-// TrialLogCount returns the number of trial logs for the given trial.
-func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
+// Count returns the number of trial logs for the given trial.
+func (e *Elastic) Count(trialID int, fs []api.Filter) (int, error) {
 	count, err := e.count(jsonObj{
 		"query": jsonObj{
 			"bool": jsonObj{
@@ -87,12 +87,12 @@ func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
 	return count, nil
 }
 
-// TrialLogs return a set of trial logs within a specified window.
+// GetBatch return a set of trial logs within a specified window.
 // This uses the search after API, since from+size is prohibitively
 // expensive for deep pagination and the scroll api specifically recommends
 // search after over itself.
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-search-after.html
-func (e *Elastic) TrialLogs(
+func (e *Elastic) GetBatch(
 	trialID, offset, limit int, fs []api.Filter, order apiv1.OrderBy, searchAfter interface{},
 ) ([]*model.TrialLog, interface{}, error) {
 	if limit > elasticMaxQuerySize {
@@ -182,8 +182,8 @@ func (e *Elastic) TrialLogs(
 	return logs, sortValues, nil
 }
 
-// DeleteTrialLogs deletes the logs for the given trial IDs.
-func (e *Elastic) DeleteTrialLogs(ids []int) error {
+// Delete deletes the logs for the given trial IDs.
+func (e *Elastic) Delete(ids []int) error {
 	trialIDterms := make([]jsonObj, len(ids))
 	for i, id := range ids {
 		trialIDterms[i] = jsonObj{
@@ -226,8 +226,8 @@ func (e *Elastic) DeleteTrialLogs(ids []int) error {
 	return nil
 }
 
-// TrialLogFields returns the unique fields that can be filtered on for the given trial.
-func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
+// Fields returns the unique fields that can be filtered on for the given trial.
+func (e *Elastic) Fields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
 	query := jsonObj{
 		"size": 0,
 		"query": jsonObj{

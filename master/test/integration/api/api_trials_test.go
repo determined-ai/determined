@@ -320,7 +320,7 @@ func trialLogAPITests(
 			for i := range tc.logs {
 				tc.logs[i].TrialID = trial.ID
 			}
-			err = backend.AddTrialLogs(tc.logs)
+			err = backend.AddBatch(tc.logs)
 			assert.NilError(t, err, "failed to insert mocked trial logs")
 
 			assert.NilError(t, awaitBackend(), "failed to wait for logging backend")
@@ -398,7 +398,7 @@ func trialLogFollowingTests(
 	time0 := time.Now().UTC().Add(-time.Minute)
 	for trialLogID := 0; trialLogID < 5; trialLogID++ {
 		message := fmt.Sprintf("log %d", trialLogID)
-		err = backend.AddTrialLogs([]*model.TrialLog{
+		err = backend.AddBatch([]*model.TrialLog{
 			{
 				TrialID:   trial.ID,
 				Log:       &message,

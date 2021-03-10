@@ -123,11 +123,10 @@ func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 	) (resp interface{}, err error) {
 		if !unauthenticatedMethods[info.FullMethod] {
 			if _, err = GetTaskSession(ctx, db); err == ErrTokenMissing {
-				u, _, uErr := GetUser(ctx, db)
-				if uErr != nil {
+				switch u, _, uErr := GetUser(ctx, db); {
+				case uErr != nil:
 					return nil, uErr
-				}
-				if !u.Admin && adminMethods[info.FullMethod] {
+				case !u.Admin && adminMethods[info.FullMethod]:
 					return nil, ErrPermissionDenied
 				}
 			} else if err != nil && err != ErrTokenMissing {
