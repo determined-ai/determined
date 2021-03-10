@@ -45,6 +45,8 @@ type InnerSpec interface {
 	UseFluentLogging() bool
 	// UseHostMode indicates whether host mode networking would be desirable for this task.
 	UseHostMode() bool
+	//ResourcesConfig returns the resources config of the model
+	ResourcesConfig() model.ResourcesConfig
 }
 
 // This alias allows TaskSpec to privately embed the public InnerSpec so that it can reuse (some of)
@@ -174,6 +176,9 @@ func (s StartCommand) UseFluentLogging() bool { return false }
 // UseHostMode implements InnerSpec.
 func (s StartCommand) UseHostMode() bool { return false }
 
+// ResourcesConfig implements InnerSpec
+func (s StartCommand) ResourcesConfig() model.ResourcesConfig { return s.Config.Resources }
+
 // GCCheckpoints is a description of a task for running checkpoint GC.
 type GCCheckpoints struct {
 	ExperimentID     int
@@ -259,6 +264,9 @@ func (g GCCheckpoints) UseFluentLogging() bool { return false }
 
 // UseHostMode implements InnerSpec.
 func (g GCCheckpoints) UseHostMode() bool { return false }
+
+// ResourcesConfig implements InnerSpec
+func (g GCCheckpoints) ResourcesConfig() model.ResourcesConfig { return g.ExperimentConfig.Resources }
 
 // StartTrial is a description of a task for running a trial container.
 type StartTrial struct {
@@ -409,3 +417,5 @@ func (s StartTrial) ShmSize() int64 {
 	}
 	return 0
 }
+
+func (s StartTrial) ResourcesConfig() model.ResourcesConfig { return s.ExperimentConfig.Resources }

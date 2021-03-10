@@ -81,6 +81,7 @@ type KubernetesResourceManagerConfig struct {
 	MaxSlotsPerPod           int    `json:"max_slots_per_pod"`
 	MasterServiceName        string `json:"master_service_name"`
 	LeaveKubernetesResources bool   `json:"leave_kubernetes_resources"`
+	DefaultScheduler		 string `json:"default_scheduler"`
 }
 
 // Validate implements the check.Validatable interface.

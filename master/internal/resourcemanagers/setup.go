@@ -114,7 +114,7 @@ func setupKubernetesResourceManager(
 	logrus.Infof("initializing endpoints for pods")
 	kubernetes.Initialize(
 		system, echo, ref, config.Namespace, config.MasterServiceName, masterTLSConfig, loggingConfig,
-		config.LeaveKubernetesResources,
+		config.LeaveKubernetesResources, config.DefaultScheduler,
 	)
 	return ref
 }

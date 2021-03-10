@@ -46,6 +46,7 @@ type pod struct {
 	configMapInterface       typedV1.ConfigMapInterface
 	resourceRequestQueue     *actor.Ref
 	leaveKubernetesResources bool
+	scheduler 				 string
 
 	pod              *k8sV1.Pod
 	podName          string
@@ -81,6 +82,7 @@ func newPod(
 	configMapInterface typedV1.ConfigMapInterface,
 	resourceRequestQueue *actor.Ref,
 	leaveKubernetesResources bool,
+	scheduler string,
 ) *pod {
 	podContainer := container.Container{
 		Parent: msg.TaskActor.Address(),
@@ -114,6 +116,7 @@ func newPod(
 		configMapName:            uniqueName,
 		container:                podContainer,
 		containerNames:           containerNames,
+		scheduler:				  scheduler,
 	}
 }
 
@@ -173,7 +176,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 }
 
 func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
-	if err := p.createPodSpec(ctx); err != nil {
+	if err := p.createPodSpec(ctx, p.scheduler); err != nil {
 		return err
 	}
 
