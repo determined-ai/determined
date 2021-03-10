@@ -1,0 +1,35 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: determined-priority
+value: 1000000
+preemptionPolicy: Never
+globalDefault: false
+description: "This priority class should be used for determined system pods only."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 100
+preemptionPolicy: Never
+globalDefault: false
+description: "This priority class should be used for high priority pods."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: medium-priority
+value: 50
+preemptionPolicy: Never
+globalDefault: false
+description: "This priority class should be used for medium priority pods."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: low-priority
+value: 1
+preemptionPolicy: Never
+globalDefault: false
+description: "This priority class should be used for low priority pods."

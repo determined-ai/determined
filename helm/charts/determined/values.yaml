@@ -157,3 +157,6 @@ telemetry:
       ## This value must contain the contents of the certificate file, not a path. It may be set
       ## directly or using `helm install --set-file logging.security.tls.certificate=<path>`.
       # certificate: <certificate contents>
+
+## Configure the default scheduler
+# defaultScheduler: coscheduler

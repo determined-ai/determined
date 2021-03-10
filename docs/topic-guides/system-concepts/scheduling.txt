@@ -4,6 +4,7 @@
  Scheduling
 ############
 
+TODO: ADD STUFF FOR PRIORITY SCHEDULING IN KUBERNETES
 This topic guide covers the two different scheduling policies that are
 supported in Determined. Administrators can configure the desired
 scheduler in :ref:`master-configuration`. It is also possible to
