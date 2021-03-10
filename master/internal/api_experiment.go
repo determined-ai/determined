@@ -135,7 +135,7 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	logrus.Infof("deleting experiment %v logs from backend", req.ExperimentId)
-	if err = a.m.trialLogBackend.Delete(trialIds); err != nil {
+	if err = a.m.trialLogBackend.DeleteTrialLogs(trialIds); err != nil {
 		return nil, errors.Wrapf(err, "failed to delete trial logs from backend")
 	}
 

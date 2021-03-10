@@ -40,13 +40,13 @@ var (
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
 // must support to provide the features surfaced in API.
 type TrialLogBackend interface {
-	GetBatch(
+	TrialLogs(
 		trialID, offset, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
 	) ([]*model.TrialLog, interface{}, error)
-	AddBatch([]*model.TrialLog) error
-	Count(trialID int, filters []api.Filter) (int, error)
-	Fields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
-	Delete(trialIDs []int) error
+	AddTrialLogs([]*model.TrialLog) error
+	TrialLogsCount(trialID int, filters []api.Filter) (int, error)
+	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
+	DeleteTrialLogs(trialIDs []int) error
 }
 
 func (a *apiServer) TrialLogs(
@@ -70,7 +70,7 @@ func (a *apiServer) TrialLogs(
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
 	}
 
-	total, err := a.m.trialLogBackend.Count(int(req.TrialId), filters)
+	total, err := a.m.trialLogBackend.TrialLogsCount(int(req.TrialId), filters)
 	if err != nil {
 		return fmt.Errorf("failed to get trial count from backend: %w", err)
 	}
@@ -95,7 +95,7 @@ func (a *apiServer) TrialLogs(
 			return nil, nil
 		}
 
-		b, state, err := a.m.trialLogBackend.GetBatch(
+		b, state, err := a.m.trialLogBackend.TrialLogs(
 			int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, req.OrderBy, followState)
 		if err != nil {
 			return nil, err
@@ -199,7 +199,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer) error {
 	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
-		fields, err := a.m.trialLogBackend.Fields(int(req.TrialId))
+		fields, err := a.m.trialLogBackend.TrialLogsFields(int(req.TrialId))
 		return api.ToLogBatchOfOne(fields), err
 	}
 

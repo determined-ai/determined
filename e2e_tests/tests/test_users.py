@@ -635,7 +635,7 @@ def test_experiment_delete() -> None:
         # "det experiment delete" call should fail, because the user is not an admin.
         child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
         child.wait()
-        assert child.exitstatus == 1
+        assert child.exitstatus > 0
 
     with logged_in_user(ADMIN_CREDENTIALS):
         child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
@@ -646,4 +646,4 @@ def test_experiment_delete() -> None:
         # experiment is no longer in the database.
         child = det_spawn(["experiment", "describe", str(experiment_id)])
         child.wait()
-        assert child.exitstatus == 1
+        assert child.exitstatus > 0

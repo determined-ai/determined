@@ -66,7 +66,7 @@ func (l *trialLogger) Receive(ctx *actor.Context) error {
 
 func (l *trialLogger) tryFlushLogs(ctx *actor.Context, forceFlush bool) {
 	if forceFlush || len(l.pending) >= logBuffer {
-		if err := l.backend.AddBatch(l.pending); err != nil {
+		if err := l.backend.AddTrialLogs(l.pending); err != nil {
 			ctx.Log().WithError(err).Errorf("failed to save trial logs")
 		}
 		l.pending = l.pending[:0]
