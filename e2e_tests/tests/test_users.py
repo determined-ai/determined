@@ -283,8 +283,9 @@ def test_experiment_creation_and_listing(auth: Authentication) -> None:
         assert (experiment_id1, creds1.username) in output
         assert (experiment_id2, creds2.username) in output
 
-    # Clean up.
-    delete_experiments(experiment_id1, experiment_id2)
+    with logged_in_user(ADMIN_CREDENTIALS):
+        # Clean up.
+        delete_experiments(experiment_id1, experiment_id2)
 
 
 def run_command() -> str:
