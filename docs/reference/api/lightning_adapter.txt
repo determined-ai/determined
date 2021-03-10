@@ -1,0 +1,96 @@
+##############################
+ determined.pytorch.lightning
+##############################
+
+.. _lightning-adapter:
+
+*********************************************
+ ``determined.pytorch._lightning.PLAdapter``
+*********************************************
+
+Pytorch Lightning Adapter, or PLAdapter for short, provides a quick way
+to train your Pytorch Lightning models with all the Determined features,
+such as mid-epoch preemption, simple distributed training interface,
+simple job submission to the Determined cluster, and so on.
+
+PLAdapter is built on top of our :ref:`PyTorchTrial <pytorch-trial>`
+API, which has a built-in training loop that integrates with the
+Determined features. However, it only supports `LightningModule
+<https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html>`_.
+To migrate your code from the `Trainer
+<https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html>`_,
+please read more about :ref:`PyTorchTrial <pytorch-trial>` and
+:ref:`experiment-configuration`.
+
+PLAdapter takes ``LightningModule`` from your Pytorch Lightning code and
+implements most of the methods you need from the :ref:`PyTorchTrial
+<pytorch-trial>` API for you. Since in this approach the
+``LightningModule`` is not paired with the standard trainer that comes
+with Pytorch Lightning some methods and hooks are not supported. Read
+about those here:
+
+-  No separate test-set definition in Determined: ``test_step``,
+   ``test_step_end``, ``test_epoch_end``, ``on_test_batch_start``,
+   ``on_test_batch_end``, ``on_test_epoch_start``,
+   ``on_test_epoch_end``, ``test_dataloader``.
+
+-  No fit or pre-train stage: ``setup``, ``teardown``, ``on_fit_start``,
+   ``on_fit_end``, ``on_pretrain_routine_start``,
+   ``on_pretrain_routine_end``.
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Name
+      -  Comment
+
+   -  -  ``training_step_end`` & ``validation_step_end``
+      -  No DP or DDP2 support
+
+   -  -  ``hiddens`` argument in ``training_step`` &
+         ``tbptt_split_batch``
+      -  No Sequential model support in ``PyTorchTrial``
+
+   -  -  ``transfer_batch_to_device``
+      -  Unsupported
+
+   -  -  ``get_progress_bar_dict``
+      -  Provided through WebUI
+
+   -  -  ``on_train_epoch_end``
+      -  Incompatible with mid-epoch preemtpion
+
+   -  -  ``manual_backward``, ``backward``, ``optimizer_step``,
+         ``optimizer_zero_grad``
+      -  Unsupported
+
+.. autoclass:: determined.pytorch._lightning.PLAdapter
+   :members:
+   :exclude-members: trial_controller_class, trial_context_class, evaluate_full_dataset, train_batch, evaluate_batch, setup_optimizers_schedulers
+   :inherited-members:
+   :member-order: bysource
+   :special-members: __init__
+
+Data Loading
+============
+
+Loading your dataset when using the :ref:`PLAdapter <lightning-adapter>`
+works the same way as it does with :ref:`PyTorch Trial <pytorch-trial>`.
+
+If you already have a ``LightningDataModule`` you can bring it in and
+use it to implement ``build_training_data_loader`` and
+``build_validation_data_loader`` methods easily. For more information
+read PyTorchTrial's section on Data Loading.
+
+***********
+ Debugging
+***********
+
+Please see :ref:`model-debug`.
+
+**********
+ Examples
+**********
+
+-  :download:`gan_mnist_pl.tgz </examples/gan_mnist_pl.tgz>`
+-  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
