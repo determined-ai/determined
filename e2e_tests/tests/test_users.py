@@ -434,7 +434,9 @@ def test_tensorboard_creation_and_listing(auth: Authentication) -> None:
         assert (tensorboard_id2, creds2.username) in output
 
     kill_tensorboards(tensorboard_id1, tensorboard_id2)
-    delete_experiments(experiment_id1, experiment_id2)
+
+    with logged_in_user(ADMIN_CREDENTIALS):
+        delete_experiments(experiment_id1, experiment_id2)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -619,3 +621,29 @@ def test_non_root_shell(auth: Authentication, tmp_path: pathlib.Path) -> None:
                 break
         else:
             raise AssertionError(f"Did not find {expected_output} in output")
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_experiment_delete() -> None:
+    user = create_test_user(ADMIN_CREDENTIALS, False)
+
+    with logged_in_user(user):
+        experiment_id = exp.run_basic_test(
+            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+        )
+
+        # "det experiment delete" call should fail, because the user is not an admin.
+        child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
+        child.wait()
+        assert child.exitstatus == 1
+
+    with logged_in_user(ADMIN_CREDENTIALS):
+        child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
+        child.wait()
+        assert child.exitstatus == 0
+
+        # "det experiment describe" call should fail, because the
+        # experiment is no longer in the database.
+        child = det_spawn(["experiment", "describe", str(experiment_id)])
+        child.wait()
+        assert child.exitstatus == 1
