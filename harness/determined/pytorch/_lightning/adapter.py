@@ -162,6 +162,7 @@ class PLAdapter(PyTorchTrial):
         optimizers, lr_scheduler_dicts, opt_frequencies = TrainerOptimizersMixin().init_optimizers(
             lightning_module,
         )
+        # TODO(DET-5021) support custom frequencies with the manual step.
         for freq in opt_frequencies:
             check.eq(freq, 1, "custom optimizer frequencies are not supported")
         optimizers = cast(List[Optimizer], optimizers)
@@ -179,7 +180,11 @@ class PLAdapter(PyTorchTrial):
                 'strict': True,  # enforce that the monitor exists for ReduceLROnPlateau
             }
             """
-            # TODO(DET-5021) support custom frequencies with the manual step.
+            if lrs['reduce_on_plateau']:
+                raise InvalidModelException('LRScheduler reduce_on_plateaue is not supported')
+            if lrs['monitor'] is not None:
+                raise InvalidModelException('LRScheduler monitor is not supported')
+
             step_mode = (
                 LRScheduler.StepMode.STEP_EVERY_EPOCH
                 if lrs["interval"] == "epoch"
