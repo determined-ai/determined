@@ -1,0 +1,9 @@
+:orphan:
+
+**New Features**
+
+-  API: Add a new endpoint to delete experiments. This endpoint is only
+   enabled for admin users and deletes all resources associated with an
+   experiment. This includes checkpoint storage, Tensorboards, trial
+   logs from all backends and metadata, like history and metrics, stored
+   in PostgreSQL.
