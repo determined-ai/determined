@@ -4,26 +4,19 @@
 
 +   import determined as det
 +   ctx = det.keras.init()  # also initialized random seeds
-+   hparams = ctx.get_hparams()
++   hparams = ctx.training.hparams
 
-    # Model / data parameters
+    # model code is straight from keras mnist example
     num_classes = 10
     input_shape = (28, 28, 1)
 
-    # the data, split between train and test sets
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
-    # Scale images to the [0, 1] range
     x_train = x_train.astype("float32") / 255
     x_test = x_test.astype("float32") / 255
-    # Make sure images have shape (28, 28, 1)
     x_train = np.expand_dims(x_train, -1)
     x_test = np.expand_dims(x_test, -1)
-    print("x_train shape:", x_train.shape)
-    print(x_train.shape[0], "train samples")
-    print(x_test.shape[0], "test samples")
 
-    # convert class vectors to binary class matrices
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
 
@@ -45,29 +38,32 @@
     batch_size = 128
     epochs = 15
 
-+   # TODO: wrap dataset somewhere
-+   optimizer = ctx.keras.wrap_optimizer(...)
++   # these steps only actually required for distributed training:
++   x_train, y_train = ctx.wrap_data(x_train, y_train)
++   x_test, y_test = ctx.wrap_data(x_test, y_test)
++   optimizer = ctx.wrap_optimizer(...)
     model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])
 
     batch_size = 128
-+   batch_size = ctx.distributed.per_slot_batch_size(batch_size)  # rename shard_batch_size()
-+   cb = ctx.make_callback()
++   # this step is actually optional for dtrain, based on the behavior you want
++   batch_size = ctx.distributed.shard_batch_size(batch_size)  # rename shard_batch_size()
 
-    model.fit(
-        x_train,
-        y_train,
++   # our keras support requires that you pass validation data fit() rather than using separate
++   # fit() and evaluate() calls.
++   hist = context.fit(
++       model,
+        x=x_train,
+        y=y_train,
         batch_size=batch_size,
-        epochs=epochs,
-        validation_split=0.1,
-+       initial_epoch=ctx.get_initial_epoch(),
-+       callbacks=[cb],
+
+        epochs=epochs,         # ignored for cluster training
+        initial_epoch=...,     # ignored for cluster training
+
+        validation_split=...,  # during a training job,
+        validation_data=...,   #   some form of validation data
+        x_val=...,             #   must be set
+        y_val=...,             #   for context.fit()
     )
 
-    score = model.evaluate(
-        x_test,
-        y_test,
-        verbose=0,
-+       callbacks=[cb],
-    )
-    print("Test loss:", score[0])
-    print("Test accuracy:", score[1])
+    print("Test loss:", hist.history['val_loss'][-1])
+    print("Test accuracy:", hist.score['val_acc'][-1])
