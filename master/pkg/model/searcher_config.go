@@ -151,6 +151,7 @@ type AsyncHalvingConfig struct {
 	MaxTrials           int     `json:"max_trials"`
 	Divisor             float64 `json:"divisor"`
 	MaxConcurrentTrials int     `json:"max_concurrent_trials"`
+	StopOnce            bool    `json:"stop_once"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -258,6 +259,7 @@ type AdaptiveASHAConfig struct {
 	Mode                AdaptiveMode `json:"mode"`
 	MaxRungs            int          `json:"max_rungs"`
 	MaxConcurrentTrials int          `json:"max_concurrent_trials"`
+	StopOnce            bool         `json:"stop_once"`
 }
 
 // Validate implements the check.Validatable interface.

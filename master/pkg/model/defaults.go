@@ -72,6 +72,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 				SmallerIsBetter:     true,
 				Divisor:             4,
 				MaxConcurrentTrials: 0,
+				StopOnce:            false,
 			},
 			AdaptiveASHAConfig: &AdaptiveASHAConfig{
 				SmallerIsBetter:     true,
@@ -79,6 +80,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 				Mode:                StandardMode,
 				MaxRungs:            5,
 				MaxConcurrentTrials: 0,
+				StopOnce:            false,
 			},
 			PBTConfig: &PBTConfig{
 				SmallerIsBetter: true,

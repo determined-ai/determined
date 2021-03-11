@@ -1,0 +1,10 @@
+:orphan:
+
+**New Features**
+
+-  Stopping-based Adaptive Search: This release introduces a
+   stopping-based variant of `adaptive` hyperparameter search that will
+   continue training trials by default unless stopped by the algorithm.
+   Compared to the default promotions-based algorithm, the stopping
+   variant will promote to higher rungs faster and does not require
+   fault tolerance since it will not resume stopped trials.

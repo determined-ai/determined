@@ -86,6 +86,9 @@ func NewSearchMethod(c model.SearcherConfig) SearchMethod {
 	case c.AdaptiveSimpleConfig != nil:
 		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig)
 	case c.AsyncHalvingConfig != nil:
+		if c.AsyncHalvingConfig.StopOnce {
+			return newAsyncHalvingStoppingSearch(*c.AsyncHalvingConfig)
+		}
 		return newAsyncHalvingSearch(*c.AsyncHalvingConfig)
 	case c.AdaptiveASHAConfig != nil:
 		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig)

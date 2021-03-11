@@ -93,8 +93,13 @@ func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
 			MaxTrials:           bracketMaxTrials[i],
 			Divisor:             config.Divisor,
 			MaxConcurrentTrials: bracketMaxConcurrentTrials[i],
+			StopOnce:            config.StopOnce,
 		}
-		methods = append(methods, newAsyncHalvingSearch(c))
+		if config.StopOnce {
+			methods = append(methods, newAsyncHalvingStoppingSearch(c))
+		} else {
+			methods = append(methods, newAsyncHalvingSearch(c))
+		}
 	}
 
 	return newTournamentSearch(AdaptiveASHASearch, methods...)
