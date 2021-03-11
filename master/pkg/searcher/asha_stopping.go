@@ -2,7 +2,6 @@ package searcher
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"sort"
 
@@ -27,9 +26,6 @@ type asyncHalvingStoppingSearch struct {
 
 func newAsyncHalvingStoppingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
-	if !config.StopOnce {
-		panic(fmt.Sprintf("stop_once is %t, should not be running stopping-based ASHA", config.StopOnce))
-	}
 	for id := 0; id < config.NumRungs; id++ {
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
@@ -174,28 +170,28 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 	} else {
 		// This is not the top rung, so do promotions to the next rung.
 		nextRung := s.Rungs[rungIndex+1]
+		// We need to run continueTraining even if the trial was terminated early so that we
+		// can add the metric to the rung.
 		promoteTrial := rung.continueTraining(
 			requestID,
 			metric,
 			s.Divisor,
 		)
-		if promoteTrial {
-			s.TrialRungs[requestID] = rungIndex + 1
-			nextRung.OutstandingTrials++
-			if !s.EarlyExitTrials[requestID] {
+		// In contrast to promotion-based ASHA, we will not let early-exited trials add
+		// -/+inf metrics to higher rungs even if portion of terminated trials in bottom rung
+		// is greater than 1 - 1 / divisor.
+		if !s.EarlyExitTrials[requestID] {
+			if promoteTrial {
+				s.TrialRungs[requestID] = rungIndex + 1
+				nextRung.OutstandingTrials++
 				unitsNeeded := max(nextRung.UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
 				ops = append(ops, NewTrain(requestID, model.NewLength(s.Unit(), unitsNeeded)))
 				ops = append(ops, NewValidate(requestID))
 				addedTrainWorkload = true
 			} else {
-				// We make a recursive call that will behave the same
-				// as if we'd actually run the promoted job and received
-				// the worse possible result in return.
-				return s.promoteAsync(ctx, requestID, ashaExitedMetricValue)
+				ops = append(ops, NewClose(requestID))
+				s.ClosedTrials[requestID] = true
 			}
-		} else {
-			ops = append(ops, NewClose(requestID))
-			s.ClosedTrials[requestID] = true
 		}
 	}
 
@@ -240,8 +236,8 @@ func (s *asyncHalvingStoppingSearch) trialExitedEarly(
 			for i, trialMetric := range rung.Metrics {
 				if trialMetric.RequestID == requestID {
 					rung.Metrics = append(rung.Metrics[:i], rung.Metrics[i+1:]...)
+					break
 				}
-				break
 			}
 		}
 		// Add new trial to searcher queue
