@@ -185,28 +185,25 @@ const HpHeatMaps: React.FC<Props> = ({
           <div className={css.charts}>
             <Grid
               border={true}
-              length={!isListView ? selectedHParams.length : undefined}
               minItemWidth={resize.width > 320 ? 35 : 27}
-              mode={GridMode.AutoFill}>
-              {selectedHParams.map(hParam1 => (
-                <>{selectedHParams.map(hParam2 => {
-                  const key = generateHpKey(hParam1, hParam2);
-                  return <ScatterPlot
-                    colorScale={colorScale}
-                    height={350}
-                    key={key}
-                    valueLabel={metricNameToStr(selectedMetric)}
-                    values={chartData.hpMetrics[key]}
-                    width={350}
-                    x={chartData.hpValues[hParam1]}
-                    xLabel={hParam1}
-                    xLogScale={chartData.hpLogScales[hParam1]}
-                    y={chartData.hpValues[hParam2]}
-                    yLabel={hParam2}
-                    yLogScale={chartData.hpLogScales[hParam2]}
-                  />;
-                })}</>
-              ))}
+              mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
+              {selectedHParams.map(hParam1 => selectedHParams.map(hParam2 => {
+                const key = generateHpKey(hParam1, hParam2);
+                return <ScatterPlot
+                  colorScale={colorScale}
+                  height={350}
+                  key={key}
+                  valueLabel={metricNameToStr(selectedMetric)}
+                  values={chartData.hpMetrics[key]}
+                  width={350}
+                  x={chartData.hpValues[hParam1]}
+                  xLabel={hParam1}
+                  xLogScale={chartData.hpLogScales[hParam1]}
+                  y={chartData.hpValues[hParam2]}
+                  yLabel={hParam2}
+                  yLogScale={chartData.hpLogScales[hParam2]}
+                />;
+              }))}
             </Grid>
           </div>
         </>
