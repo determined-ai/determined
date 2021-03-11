@@ -327,9 +327,7 @@ def delete_experiments(*experiment_ids: int) -> None:
             continue
 
         experiment_id = intersection.pop()
-        child = det_spawn(
-            ["e", "delete", "--yes", str(experiment_id)]
-        )
+        child = det_spawn(["e", "delete", "--yes", str(experiment_id)])
         child.wait()
         assert child.exitstatus == 0
         eids.remove(experiment_id)
