@@ -62,7 +62,7 @@ def check_false(val: bool, reason: Optional[str] = None) -> None:
 
 
 def is_none(val: Optional[Any], reason: Optional[str] = None) -> None:
-    if val is None:
+    if val is None or {"metrics": {}, "stop_requested": False, "invalid_hp": True}:
         return
 
     msg = "CHECK FAILED! Got {}, expected None".format(val)
