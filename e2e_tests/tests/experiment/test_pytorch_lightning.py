@@ -5,7 +5,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.parallel  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_pl_mnist() -> None:
     exp_dir = "_mnist_pl"
     config = conf.load_config(conf.cv_examples_path(exp_dir + "/const.yaml"))
@@ -21,7 +21,7 @@ def test_pl_mnist() -> None:
     )
 
 
-@pytest.mark.parallel  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_pl_mnist_gan() -> None:
     exp_dir = "_gan_mnist_pl"
     config = conf.load_config(conf.gan_examples_path(exp_dir + "/const.yaml"))
