@@ -18,7 +18,6 @@ import determined_common.api.authentication as auth
 from determined_cli import checkpoint, experiment, render
 from determined_cli.agent import args_description as agent_args_description
 from determined_cli.declarative_argparse import Arg, Cmd, add_args
-from determined_cli.experiment import args_description as experiment_args_description
 from determined_cli.master import args_description as master_args_description
 from determined_cli.model import args_description as model_args_description
 from determined_cli.notebook import args_description as notebook_args_description
@@ -188,25 +187,6 @@ def make_parser() -> ArgumentParser:
 
 
 def main(args: List[str] = sys.argv[1:]) -> None:
-    # TODO(#1690): Refactor admin command(s) to a separate CLI tool.
-    if "DET_ADMIN" in os.environ:
-        experiment_args_description.subs.append(
-            Cmd(
-                "delete",
-                experiment.delete_experiment,
-                "delete experiment",
-                [
-                    Arg("experiment_id", help="delete experiment"),
-                    Arg(
-                        "--yes",
-                        action="store_true",
-                        default=False,
-                        help="automatically answer yes to prompts",
-                    ),
-                ],
-            )
-        )
-
     try:
         parser = make_parser()
         argcomplete.autocomplete(parser)

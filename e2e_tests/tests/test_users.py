@@ -328,7 +328,7 @@ def delete_experiments(*experiment_ids: int) -> None:
 
         experiment_id = intersection.pop()
         child = det_spawn(
-            ["e", "delete", "--yes", str(experiment_id)], env={**os.environ, "DET_ADMIN": "1"}
+            ["e", "delete", "--yes", str(experiment_id)]
         )
         child.wait()
         assert child.exitstatus == 0

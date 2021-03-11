@@ -781,6 +781,20 @@ args_description = Cmd(
             [experiment_id_arg("experiment ID to unarchive")],
         ),
         Cmd(
+            "delete",
+            delete_experiment,
+            "delete experiment",
+            [
+                Arg("experiment_id", help="delete experiment"),
+                Arg(
+                    "--yes",
+                    action="store_true",
+                    default=False,
+                    help="automatically answer yes to prompts",
+                ),
+            ],
+        ),
+        Cmd(
             "download",
             download,
             "download checkpoints for an experiment",
