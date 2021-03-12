@@ -92,10 +92,10 @@ In the current version of Determined, the experiments and commands are
 executed in containers with the following:
 
 -  Ubuntu 18.04
--  CUDA 10.0
--  Python 3.6.9
--  TensorFlow 1.15.4
--  PyTorch 1.4.0
+-  CUDA 10.2
+-  Python 3.7
+-  TensorFlow 1.15.5
+-  PyTorch 1.8.0
 
 Determined will automatically select GPU-specific versions of each
 library when running on agents with GPUs.
@@ -134,21 +134,17 @@ This can be configured in your experiment configuration like below:
    environment:
      image: "determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-0.9.0"
 
-Other Images
+Older Images
 ============
 
-Other images are available to run other recent versions of the
-frameworks without requiring CUDA 11-enabled hardware.
+Images that provide older versions of the frameworks are still available and
+supported. Note that the performance of some models can vary with different
+CUDA versions.
 
-The CUDA version (where applicable), PyTorch and TensorFlow versions are
-included in the image name:
-
--  determinedai/environments:cuda-10.1-pytorch-1.7-tf-2.4-gpu-0.9.0
--  determinedai/environments:cuda-10.1-pytorch-1.7-tf-1.15-gpu-0.9.0
--  determinedai/environments:cuda-10.2-pytorch-1.8-lightning-1.2-tf-2.4-gpu-0.9.0
--  determinedai/environments:py-3.6.9-pytorch-1.7-tf-2.4-cpu-0.9.0
--  determinedai/environments:py-3.6.9-pytorch-1.7-tf-1.15-cpu-0.9.0
--  determinedai/environments:py-3.7-pytorch-1.8-lightning-1.2-tf-2.4-cpu-0.9.0
+- determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
+- determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b
+- determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b
+- determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-067db2b
 
 .. _custom-docker-images:
 
