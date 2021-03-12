@@ -1,13 +1,14 @@
 import collections
 import datetime
 import enum
+import inspect
 import os
 import pathlib
 import random
 import shutil
 import time
 import uuid
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, Set, cast
 
 import numpy as np
 import simplejson
@@ -34,6 +35,18 @@ def is_overridden(full_method: Any, parent_class: Any) -> bool:
     """
     if callable(full_method):
         return cast(bool, full_method.__qualname__.partition(".")[0] != parent_class.__name__)
+    return False
+
+
+def has_param(fn: Callable[..., Any], name: str, pos: Optional[int] = None) -> bool:
+    """
+    Inspects function fn for presence of an argument.
+    """
+    args = inspect.getfullargspec(fn)[0]
+    if name in args:
+        return True
+    if pos is not None:
+        return pos < len(args)
     return False
 
 
@@ -175,3 +188,19 @@ def write_user_code(path: pathlib.Path) -> None:
     # directory. Therefore we save the current directory with the checkpoint.
     shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
     os.chmod(code_path, 0o755)
+
+
+def filter_duplicates(
+    in_list: List[Any], sorter: Callable[[List[Any]], List[Any]] = sorted
+) -> Set[Any]:
+    """
+    Find and return a set of duplicates from the list.
+    """
+    in_list = sorter(in_list)
+    last_item = None
+    duplicates = set()
+    for item in in_list:
+        if last_item == item:
+            duplicates.add(item)
+        last_item = item
+    return duplicates

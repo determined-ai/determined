@@ -659,3 +659,18 @@ class PyTorchTrialContext(det.TrialContext):
         if self._epoch_len is None:
             raise det.errors.InternalException("Training DataLoader uninitialized.")
         return self._current_batch_idx % self._epoch_len == self._epoch_len - 1
+
+    def current_train_epoch(self) -> int:
+        if self._current_batch_idx is None:
+            raise det.errors.InternalException("Training hasn't started.")
+        if self._epoch_len is None:
+            raise det.errors.InternalException("Training DataLoader uninitialized.")
+        return self._current_batch_idx // self._epoch_len
+
+    def current_train_batch(self) -> int:
+        """
+        Current global batch index
+        """
+        if self._current_batch_idx is None:
+            raise det.errors.InternalException("Training hasn't started.")
+        return self._current_batch_idx

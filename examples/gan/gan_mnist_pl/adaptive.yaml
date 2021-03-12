@@ -1,0 +1,29 @@
+description: gan_mnist_pytorch_lightning_adaptive
+data:
+  url: "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+records_per_epoch: 55000
+hyperparameters:
+  global_batch_size: 64
+  lr:
+    type: double
+    minval: .0001
+    maxval: .001
+  b1:
+    type: double
+    minval: .3
+    maxval: .8
+  b2: 0.999
+searcher:
+  name: adaptive_asha
+  metric: loss
+  smaller_is_better: true
+  max_trials: 16
+  max_length:
+    epochs: 5
+resources:
+  slots_per_trial: 1
+entrypoint: model_def:GANTrial
+environment:
+  image:
+    gpu: determinedai/environments:cuda-10.1-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.9.0
+    cpu: determinedai/environments:py-3.6.9-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.9.0
