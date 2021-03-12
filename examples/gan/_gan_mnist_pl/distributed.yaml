@@ -1,4 +1,4 @@
-description: gan_mnist_pytorch_lightning_adaptive
+description: gan_mnist_pytorch_lightning_distributed
 data:
   url: "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
 records_per_epoch: 55000
