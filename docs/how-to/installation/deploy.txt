@@ -148,7 +148,7 @@ To launch the agent into a specific resource pool, use the
 
 .. code::
 
-   det-deploy local agent-up --agent-resource-pool= <resource_pool> <master_hostname>
+   det-deploy local agent-up --agent-resource-pool=<resource_pool> <master_hostname>
 
 For more information about resource pools, see :ref:`resource-pools`.
 

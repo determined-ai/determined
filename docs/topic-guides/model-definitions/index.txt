@@ -9,12 +9,10 @@ application framework (e.g., Keras, TensorFlow), in terms of loading
 training data, describing a model architecture, and specifying the
 underlying iterative optimization training algorithms.
 
-There interface you can use to write model definition is the Trial API.
-With the :ref:`model-definitions_trial-api`, developers expose the
-components of a model definition to Determined’s training loop
-implementation.
-
-The command line interface and Python SDK support the Trial API.
+Model definitions are written using the Trial API, which is an interface
+provided by Determined. With the :ref:`Trial API
+<model-definitions_trial-api>`, developers expose the components of a
+model definition to Determined's training loop implementation.
 
 To read more about the Trial API, see:
 
@@ -22,6 +20,10 @@ To read more about the Trial API, see:
 -  :ref:`pytorch-trial`
 -  :ref:`tf-keras-trial`
 -  :ref:`estimator-trial`
+
+For examples of how to adapt existing model code to use the Trial APIs,
+see the :ref:`tf.keras tutorial <tf-mnist-tutorial>` and the
+:ref:`PyTorch tutorial <pytorch-mnist-tutorial>`, respectively.
 
 ****************
  Best Practices

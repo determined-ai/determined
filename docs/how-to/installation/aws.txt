@@ -99,12 +99,12 @@ using the ``--deployment-type`` argument (e.g., ``det-deploy aws
 -  ``efs``: The EFS deployment creates an `EFS
    <https://aws.amazon.com/efs/>`_ drive and a Determined cluster into a
    separate VPC. The EFS drive attaches to agent instances at
-   `/mnt/efs`.
+   ``/mnt/efs``.
 
 -  ``fsx``: The FSX deployment creates a `Lustre FSx
    <https://aws.amazon.com/fsx/lustre/>`_ drive and a Determined cluster
    into a separate VPC. The FSx drive attaches to agent instances at
-   `/mnt/fsx`.
+   ``/mnt/fsx``.
 
 -  ``secure``: The secure deployment creates resources to lock down the
    Determined cluster. These resources are:
@@ -195,8 +195,8 @@ Spinning up the Cluster
       -  postgres
 
    -  -  ``--max-cpu-containers-per-agent``
-      -  The maximum cpu containers that runs on agents in the CPU
-         resource pool
+      -  The maximum number of CPU-only containers to launch on each
+         agent in the default CPU :ref:`resource pool <resource-pools>`.
       -  100
 
    -  -  ``--max-idle-agent-period``
@@ -205,20 +205,23 @@ Spinning up the Cluster
       -  10m (10 minutes)
 
    -  -  ``--max-dynamic-agents``
-      -  Maximum number of dynamic agent instances at one time.
+      -  Maximum number of dynamic agent instances in the default GPU
+         :ref:`resource pool <resource-pools>`.
       -  5
 
    -  -  ``--spot``
-      -  Use spot instances.
+      -  Use spot instances for the default CPU and GPU resource pools.
       -  False
 
    -  -  ``--spot-max-price``
 
-      -  A maximum price for the spot instances. If the price on the
-         spot market exceeds this value, Determined will not create new
-         instances. Optional
+      -  The maximum price to use when launching spot instances. If the
+         current spot market price exceeds this value, Determined will
+         not create new instances. If no maximum price is configured,
+         the maximum price will be the on-demand price for the
+         configured instance type and region.
 
-      -  The on-demand price for the instance type.
+      -  Not set
 
    -  -  ``--dry-run``
       -  Print the template but do not execute it.
@@ -252,8 +255,8 @@ Tearing Down the Cluster
       -  AWS profile used for deploying cluster resources.
       -  default
 
-Listing the Clusters
---------------------
+Listing Clusters
+----------------
 
 .. code::
 
@@ -311,9 +314,9 @@ Master
 ------
 
 -  Egress on all ports to agent security group
--  Egress outbound to the Internet
--  Ingress on port 8080 to view to the Determined WebUI
--  Ingress on port 22 for SSH (not required but strongly advised)
+-  Egress on all ports to the Internet
+-  Ingress on port 8080 for access the Determined WebUI and REST APIs
+-  Ingress on port 22 for SSH (recommended but not required)
 -  Ingress on all ports from agent security group
 
 Example:
@@ -371,7 +374,7 @@ Agent
 -  Egress on all ports to the Internet
 -  Ingress on all ports from master security group
 -  Ingress on all ports from agent security group
--  Ingress on port 22 for SSH (not required but strongly advised)
+-  Ingress on port 22 for SSH (recommended but not required)
 
 Example:
 
