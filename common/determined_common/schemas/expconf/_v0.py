@@ -207,9 +207,9 @@ class EnvironmentImageV0(schemas.SchemaBase):
 
     def runtime_defaults(self) -> None:
         if self.cpu is None:
-            self.cpu = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b"
+            self.cpu = "determinedai/environments:py-3.7-pytorch-1.8-tf-1.15-cpu-145c0d8"
         if self.gpu is None:
-            self.gpu = "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b"
+            self.gpu = "determinedai/environments:cuda-10.2-pytorch-1.8-tf-1.15-gpu-145c0d8"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):
