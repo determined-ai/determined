@@ -107,7 +107,6 @@ class _PLAdapterState:
 
 class PLAdapter(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext, lightning_module: pl.LightningModule):
-        super().__init__(context)
         check_compatibility(lightning_module)
         override_unsupported_nud(lightning_module, context)
         context.wrap_model(lightning_module)
