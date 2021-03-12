@@ -180,10 +180,10 @@ class PLAdapter(PyTorchTrial):
                 'strict': True,  # enforce that the monitor exists for ReduceLROnPlateau
             }
             """
-            if lrs['reduce_on_plateau']:
-                raise InvalidModelException('LRScheduler reduce_on_plateaue is not supported')
-            if lrs['monitor'] is not None:
-                raise InvalidModelException('LRScheduler monitor is not supported')
+            if lrs["reduce_on_plateau"]:
+                raise InvalidModelException("LRScheduler reduce_on_plateaue is not supported")
+            if lrs["monitor"] is not None:
+                raise InvalidModelException("LRScheduler monitor is not supported")
 
             step_mode = (
                 LRScheduler.StepMode.STEP_EVERY_EPOCH
