@@ -11,14 +11,7 @@ def test_pl_mnist() -> None:
     config = conf.load_config(conf.cv_examples_path(exp_dir + "/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
-    experiment_id = exp.run_basic_test_with_temp_config(config, conf.cv_examples_path(exp_dir), 1)
-    trials = exp.experiment_trials(experiment_id)
-    (
-        Determined(conf.make_master_url())
-        .get_trial(trials[0]["id"])
-        .select_checkpoint(latest=True)
-        .load(map_location="cpu")
-    )
+    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path(exp_dir), 1)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -27,11 +20,4 @@ def test_pl_mnist_gan() -> None:
     config = conf.load_config(conf.gan_examples_path(exp_dir + "/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
-    experiment_id = exp.run_basic_test_with_temp_config(config, conf.gan_examples_path(exp_dir), 1)
-    trials = exp.experiment_trials(experiment_id)
-    (
-        Determined(conf.make_master_url())
-        .get_trial(trials[0]["id"])
-        .select_checkpoint(latest=True)
-        .load(map_location="cpu")
-    )
+    exp.run_basic_test_with_temp_config(config, conf.gan_examples_path(exp_dir), 1)
