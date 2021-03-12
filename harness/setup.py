@@ -29,8 +29,8 @@ setup(
     extras_require={
         "tf-115-cuda100": ["tensorflow-gpu==1.15.5"],
         "tf-115-cpu": ["tensorflow==1.15.5"],
-        "pytorch-14-cuda100": ["torch==1.7.1+cu100", "torchvision==0.8.2+cu100"],
-        "pytorch-14-cpu": ["torch==1.7.1", "torchvision==0.8.2"],
+        "pytorch-17-cuda100": ["torch==1.7.1+cu100", "torchvision==0.8.2+cu100"],
+        "pytorch-17-cpu": ["torch==1.7.1", "torchvision==0.8.2"],
     },
     zip_safe=False,
 )
