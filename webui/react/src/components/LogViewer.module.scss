@@ -64,6 +64,7 @@
   .line > .time::after { content: '\00a0'; }
   .line > .message {
     flex-grow: 1;
+    line-break: anywhere;
     white-space: pre-wrap;
     word-break: break-all;
   }
