@@ -91,9 +91,9 @@ def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContex
     def lm_log(name: str, value: Any, *args: Any, **kwargs: Any) -> None:
         lm_log_dict({name: value}, *args, **kwargs)
 
-    lm.print = lm_print  # type: ignore
-    lm.log = lm_log  # type: ignore
-    lm.log_dict = lm_log_dict  # type: ignore
+    lm.print = lm_print
+    lm.log = lm_log
+    lm.log_dict = lm_log_dict
 
 
 class _PLAdapterState:
@@ -115,12 +115,12 @@ class PLAdapter(PyTorchTrial):
         self._pls = pls
 
         # set lightning_module properties
-        pls.lm.use_ddp = False  # type: ignore
-        pls.lm.use_ddp2 = False  # type: ignore
-        pls.lm.use_dp = False  # type: ignore
-        pls.lm.use_tpu = False  # type: ignore
-        type(pls.lm).local_rank = context.distributed.get_local_rank()  # type: ignore
-        type(pls.lm).global_rank = context.distributed.get_rank()  # type: ignore
+        pls.lm.use_ddp = False
+        pls.lm.use_ddp2 = False
+        pls.lm.use_dp = False
+        pls.lm.use_tpu = False
+        type(pls.lm).local_rank = context.distributed.get_local_rank()
+        type(pls.lm).global_rank = context.distributed.get_rank()
         pls.lm.use_amp = context.experimental._auto_amp or context._use_apex
         pls.lm.to(context.device)
 
@@ -136,7 +136,7 @@ class PLAdapter(PyTorchTrial):
         class PLAdapterCallback(PyTorchCallback):
             def on_training_epoch_start(self) -> None:
                 if context._current_batch_idx is not None:
-                    type(lm).current_epoch = context.current_train_epoch()  # type: ignore
+                    type(lm).current_epoch = context.current_train_epoch()
                 lm.on_train_epoch_start()
 
             def on_validation_epoch_start(self) -> None:
@@ -214,7 +214,7 @@ class PLAdapter(PyTorchTrial):
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Union[torch.Tensor, Dict[str, Any]]:
-        type(self._pls.lm).global_step = batch_idx  # type: ignore
+        type(self._pls.lm).global_step = batch_idx
         self._pls.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
 
         Metric = Dict[str, Any]
@@ -228,7 +228,7 @@ class PLAdapter(PyTorchTrial):
             ):
                 self._pls.lm.toggle_optimizer(opt, opt_idx)
             train_args = self._build_train_args(batch, batch_idx, opt_idx)
-            metrics = self._pls.lm.training_step(*train_args)  # type: ignore
+            metrics = self._pls.lm.training_step(*train_args)
 
             if metrics is None:
                 continue
@@ -266,7 +266,7 @@ class PLAdapter(PyTorchTrial):
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
         self._pls.lm.on_validation_batch_start(batch, batch_idx, dataloader_idx=0)
-        rv = self._pls.lm.validation_step(batch, batch_idx=batch_idx)  # type: ignore
+        rv = self._pls.lm.validation_step(batch, batch_idx=batch_idx)
         self._pls.lm.on_validation_batch_end(rv, batch, batch_idx, dataloader_idx=0)
 
         metrics = None
