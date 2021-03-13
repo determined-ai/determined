@@ -67,7 +67,7 @@ class PyTorchTrialContext(det.TrialContext):
         # different names using __setattr__ and use the state_dict of the main model
         # for broadcasting. Note that broadcast_parameters only accepts state_dict()
         # although its doc says it also accepts named_parameters()
-        self._main_model = nn.Module()  # type: ignore
+        self._main_model = nn.Module()
         self._scaler = None
         self._use_apex = False
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
