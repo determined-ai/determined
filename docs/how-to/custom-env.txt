@@ -137,14 +137,14 @@ This can be configured in your experiment configuration like below:
 Older Images
 ============
 
-Images that provide older versions of the frameworks are still available and
-supported. Note that the performance of some models can vary with different
-CUDA versions.
+Images that provide older versions of the frameworks are still available
+and supported. Note that the performance of some models can vary with
+different CUDA versions.
 
-- determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
-- determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b
-- determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b
-- determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-067db2b
+-  determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
+-  determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b
+-  determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b
+-  determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-067db2b
 
 .. _custom-docker-images:
 
