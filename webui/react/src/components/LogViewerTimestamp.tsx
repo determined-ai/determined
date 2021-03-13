@@ -196,7 +196,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
       return canceler;
     }, [ addLogs, fetchToLogConverter, onFetchLogAfter, onFetchLogBefore ]);
 
-  const getItemHeight = (index: number): number => {
+  const getItemHeight = useCallback((index: number): number => {
     const log = logs[index];
     if (!log) {
       return charMeasures.height;
@@ -212,7 +212,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
       .reduce((acc, count) => acc + count, 0);
 
     return lineCount * charMeasures.height;
-  };
+  }, [ charMeasures, dateTimeWidth, listMeasure, logs ]);
 
   const handleCopyToClipboard = useCallback(async () => {
     const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
@@ -236,16 +236,18 @@ const LogViewerTimestamp: React.FC<Props> = ({
     if (onDownloadClick) onDownloadClick();
   }, [ onDownloadClick ]);
 
-  const handleEnableTailing = () => {
+  const handleEnableTailing = useCallback(() => {
     setDirection(DIRECTIONS.BOTTOM_TO_TOP);
     listRef.current?.scrollToItem(logs.length);
-  };
+  }, [ listRef, logs.length ]);
 
   const handleFullScreen = useCallback(() => {
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
-  const handleScrollToTop = () => setDirection(DIRECTIONS.TOP_TO_BOTTOM);
+  const handleScrollToTop = useCallback(() => {
+    setDirection(DIRECTIONS.TOP_TO_BOTTOM);
+  }, []);
 
   const onItemsRendered =
     useCallback(({ visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps) => {
@@ -428,9 +430,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const enableTailingClasses = [ css.enableTailing ];
   if (isOnBottom && direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
 
-  const dateTimeStyle = { width: toRem(dateTimeWidth) };
-
-  const LogViewerRow: React.FC<ListChildComponentProps> = ({ data, index, style }) => {
+  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
     const log = data[index];
 
     const messageClasses = [ css.message ];
@@ -439,7 +439,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     return (
       <div className={css.line} style={style}>
         <LogViewerLevel logLevel={log.level} />
-        <div className={css.time} style={dateTimeStyle}>
+        <div className={css.time} style={{ width: toRem(dateTimeWidth) }}>
           {log.formattedTime}
         </div>
         <div
@@ -448,7 +448,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
         />
       </div>
     );
-  };
+  }, [ dateTimeWidth ]);
 
   return (
     <Page {...props.pageProps} options={logOptions}>
