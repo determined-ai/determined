@@ -78,7 +78,7 @@ class PyTorchTrialController(det.LoopTrialController):
         # training batch.
         random.seed(seed)
         np.random.seed(seed)
-        torch.random.manual_seed(seed)  # type: ignore
+        torch.random.manual_seed(seed)
         # TODO(Aaron): Add flag to enable determinism.
         # torch.backends.cudnn.deterministic = True
         # torch.backends.cudnn.benchmark = False
@@ -353,7 +353,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 metrics[metric_name] = metric_val.cpu().numpy()
         return metrics
 
-    @torch.no_grad()
+    @torch.no_grad()  # type: ignore
     def _compute_validation_metrics(self) -> workload.Response:
         self.context.experimental.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
@@ -646,11 +646,11 @@ class PyTorchTrialController(det.LoopTrialController):
             rng_state = checkpoint["rng_state"]
             np.random.set_state(rng_state["np_rng_state"])
             random.setstate(rng_state["random_rng_state"])
-            torch.random.set_rng_state(rng_state["cpu_rng_state"])  # type: ignore
+            torch.random.set_rng_state(rng_state["cpu_rng_state"])
 
             if torch.cuda.device_count():
                 if "gpu_rng_state" in rng_state:
-                    torch.cuda.set_rng_state(  # type: ignore
+                    torch.cuda.set_rng_state(
                         rng_state["gpu_rng_state"], device=self.context.distributed.get_local_rank()
                     )
                 else:
@@ -686,13 +686,13 @@ class PyTorchTrialController(det.LoopTrialController):
         util.write_user_code(path)
 
         rng_state = {
-            "cpu_rng_state": torch.random.get_rng_state(),  # type: ignore
+            "cpu_rng_state": torch.random.get_rng_state(),
             "np_rng_state": np.random.get_state(),
             "random_rng_state": random.getstate(),
         }
 
         if torch.cuda.device_count():
-            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(  # type: ignore
+            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(
                 self.context.distributed.get_local_rank()
             )
 
@@ -719,9 +719,7 @@ class PyTorchTrialController(det.LoopTrialController):
         if self.context._use_apex:
             checkpoint["amp_state"] = apex.amp.state_dict()
 
-        torch.save(  # type: ignore
-            checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle
-        )
+        torch.save(checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle)
 
         for callback in self.callbacks.values():
             callback.on_checkpoint_end(str(path))
@@ -729,7 +727,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return cast(
             workload.Response,
             {
-                "framework": f"torch-{torch.__version__}",  # type: ignore
+                "framework": f"torch-{torch.__version__}",
                 "format": "cloudpickle",
             },
         )

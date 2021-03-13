@@ -57,7 +57,7 @@ class PyTorchTrialContext(det.TrialContext):
         # The following attributes are initialized during the lifetime of
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
-        self.optimizers = []  # type: List[torch.optim.Optimizer] #  type: ignore
+        self.optimizers = []  # type: List[torch.optim.Optimizer]
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
 
@@ -67,7 +67,7 @@ class PyTorchTrialContext(det.TrialContext):
         # different names using __setattr__ and use the state_dict of the main model
         # for broadcasting. Note that broadcast_parameters only accepts state_dict()
         # although its doc says it also accepts named_parameters()
-        self._main_model = nn.Module()  # type: nn.Module
+        self._main_model = nn.Module()  # type: ignore
         self._scaler = None
         self._use_apex = False
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
@@ -92,7 +92,7 @@ class PyTorchTrialContext(det.TrialContext):
                 return delattr(to_wrap, name)
 
             def forward(wrapper, *arg, **kwarg):  # type: ignore
-                with amp.autocast():
+                with amp.autocast():  # type: ignore
                     return to_wrap.forward(*arg, **kwarg)
 
         wrapped = _AutocastForwardPassModel()
@@ -155,9 +155,9 @@ class PyTorchTrialContext(det.TrialContext):
 
     def wrap_optimizer(
         self,
-        optimizer: torch.optim.Optimizer,  # type: ignore
+        optimizer: torch.optim.Optimizer,
         backward_passes_per_step: int = 1,
-    ) -> torch.optim.Optimizer:  # type: ignore
+    ) -> torch.optim.Optimizer:
         """Returns a wrapped optimizer.
 
         The optimizer must use the models wrapped by :meth:`wrap_model`. This function
@@ -251,7 +251,7 @@ class PyTorchTrialContext(det.TrialContext):
         # don't care about.
         return lr_scheduler
 
-    def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:  # type: ignore
+    def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:
         """_filter_named_parameters filters the named parameters of a specified optimizer out
         of all the named parameters from a specified model. We need this function because
         a ``torch.optim.Optimizer`` doesn't store parameter names and we need the names of
@@ -320,7 +320,7 @@ class PyTorchTrialContext(det.TrialContext):
     def configure_apex_amp(
         self,
         models: Union[torch.nn.Module, List[torch.nn.Module]],
-        optimizers: Union[torch.optim.Optimizer, List[torch.optim.Optimizer]],  # type: ignore
+        optimizers: Union[torch.optim.Optimizer, List[torch.optim.Optimizer]],
         enabled: Optional[bool] = True,
         opt_level: Optional[str] = "O1",
         cast_model_type: Optional[torch.dtype] = None,
@@ -520,7 +520,7 @@ class PyTorchTrialContext(det.TrialContext):
                     # to integrate torch native AMP (https://pytorch.org/docs/stable/amp.html),
                     # which will come out soon.
                     for optimizer in self.optimizers:
-                        optimizer.synchronize()
+                        optimizer.synchronize()  # type: ignore
         else:
             if self._scaler and self.experimental._auto_amp:
                 loss = self._scaler.scale(loss)
@@ -542,7 +542,7 @@ class PyTorchTrialContext(det.TrialContext):
 
     def step_optimizer(
         self,
-        optimizer: torch.optim.Optimizer,  # type: ignore
+        optimizer: torch.optim.Optimizer,
         clip_grads: Optional[Callable[[Iterator], None]] = None,
         auto_zero_grads: bool = True,
         scaler: Optional[Any] = None,
@@ -595,7 +595,7 @@ class PyTorchTrialContext(det.TrialContext):
         # this is called in backward() instead, so that it's inside the context
         # manager and before unscaling.
         if self.hvd_config.use and not self._use_apex:
-            optimizer.synchronize()
+            optimizer.synchronize()  # type: ignore
 
         parameters = (
             [p for group in optimizer.param_groups for p in group.get("params", [])]
@@ -623,10 +623,10 @@ class PyTorchTrialContext(det.TrialContext):
                 scaler.step(optimizer)  # type: ignore
 
         else:
-            step_fn = optimizer.step
+            step_fn = optimizer.step  # type: ignore
 
         if self.hvd_config.use:
-            with optimizer.skip_synchronize():
+            with optimizer.skip_synchronize():  # type: ignore
                 step_fn()
         else:
             step_fn()
