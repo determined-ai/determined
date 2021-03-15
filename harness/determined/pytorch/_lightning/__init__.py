@@ -1,3 +1,1 @@
-from determined.pytorch._lightning.adapter import (
-    PLAdapter,
-)
+from determined.pytorch._lightning._adapter import LightningAdapter

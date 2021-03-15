@@ -18,7 +18,7 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
 def check_compatibility(lm: pl.LightningModule) -> None:
-    prefix = "Unsupported usage in PLAdapter: "
+    prefix = "Unsupported usage in LightningAdapter: "
     unsupported_members = {
         "backward",
         "get_progress_bar_dict",
@@ -95,7 +95,7 @@ def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContex
     lm.log_dict = lm_log_dict  # type: ignore
 
 
-class _PLAdapterState:
+class _LightningAdapterState:
     def __init__(
         self, context: PyTorchTrialContext, lm: pl.LightningModule, optimizers: List[Optimizer]
     ):
@@ -104,13 +104,13 @@ class _PLAdapterState:
         self.optimizers = optimizers
 
 
-class PLAdapter(PyTorchTrial):
+class LightningAdapter(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext, lightning_module: pl.LightningModule):
         check_compatibility(lightning_module)
         override_unsupported_nud(lightning_module, context)
         context.wrap_model(lightning_module)
         optimizers, lr_schedulers = self.setup_optimizers_schedulers(context, lightning_module)
-        pls = _PLAdapterState(context, lightning_module, optimizers)
+        pls = _LightningAdapterState(context, lightning_module, optimizers)
         self._pls = pls
 
         # set lightning_module properties
@@ -132,7 +132,7 @@ class PLAdapter(PyTorchTrial):
         context = self._pls.context
         lm = self._pls.lm
 
-        class PLAdapterCallback(PyTorchCallback):
+        class LightningAdapterCallback(PyTorchCallback):
             def on_training_epoch_start(self) -> None:
                 if context._current_batch_idx is not None:
                     type(lm).current_epoch = context.current_train_epoch()  # type: ignore
@@ -145,7 +145,7 @@ class PLAdapter(PyTorchTrial):
                 lm.on_validation_epoch_end()
                 lm.validation_epoch_end(outputs)
 
-        return {"_lightning_module": PLAdapterCallback()}
+        return {"_lightning_module": LightningAdapterCallback()}
 
     def setup_optimizers_schedulers(
         self,
