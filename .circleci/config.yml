@@ -850,9 +850,20 @@ jobs:
       - run: make package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
-      - run: make -C model_hub build-docker
-      - run: make -C model_hub publish-docker
-      - run: make -C model_hub update-config-envs
+      - run:
+          name: Build and publish model_hub docker images
+          command: |
+            if [ ${CIRCLE_BRANCH} = 'master' ] || [[ ${CIRCLE_BRANCH} == *"release-"* ]]; then
+                # For master and release branches, we will tag and publish both the environment
+                # with the git hash as well as the version.  This will make that image available
+                # immediately for nightly tests.
+                make -C model_hub build-docker
+                make -C model_hub publish-docker
+            else
+                # Otherwise, only tag and publish the environment with the git hash.
+                make -C model_hub build-docker-dev
+                make -C model_hub publish-docker-dev
+            fi
 
   package-and-push-system-rc:
     docker:
@@ -879,7 +890,6 @@ jobs:
       - run: make -C agent publish
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
-      - run: make -C model_hub update-config-envs
 
   package-and-push-system-release:
     docker:
@@ -905,7 +915,6 @@ jobs:
       - run: make -C agent release
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
-      - run: make -C model_hub update-config-envs
 
   publish-helm:
     docker:
@@ -1209,10 +1218,9 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
-          determined-common: true
           determined: true
           model-hub: true
-          extras-requires: "tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0"
+          extras-requires: "tensorflow==2.4.1 torch==1.7.1 torchvision==0.8.2"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C model_hub test
@@ -1379,6 +1387,7 @@ jobs:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
+      - run: make -C model_hub update-config-envs
       - when:
           condition: <<parameters.enable-tls>>
           steps:
@@ -1819,6 +1828,26 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+
+      - request-model-hub-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-model-hub
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-model-hub-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              parallelism: [2]
+              gpu-agent-instance-type: ["p2.8xlarge"]
+              cpu-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["parallel"]
+              mark: ["model_hub"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
       - test-e2e-gke:

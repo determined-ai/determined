@@ -1,4 +1,6 @@
 import numpy as np
+
+import model_hub.huggingface as hf
 from model_hub import utils
 
 
@@ -17,3 +19,21 @@ def test_reducer() -> None:
     reducer.update([[5, 6], [7, 8]], [3, 5])
     result = reducer.cross_slot_reduce([reducer.per_slot_reduce()])
     assert result == (4.5, 3.5)
+
+
+def test_compute_num_training_steps() -> None:
+    experiment_config = {"searcher": {"max_length": {"epochs": 3}}, "records_per_epoch": 124}
+    num_training_steps = hf.compute_num_training_steps(experiment_config, 16)
+    assert num_training_steps == 21
+
+    experiment_config = {
+        "searcher": {"max_length": {"batches": 300}},
+    }
+    num_training_steps = hf.compute_num_training_steps(experiment_config, 16)
+    assert num_training_steps == 300
+
+    experiment_config = {
+        "searcher": {"max_length": {"records": 3000}},
+    }
+    num_training_steps = hf.compute_num_training_steps(experiment_config, 16)
+    assert num_training_steps == 187

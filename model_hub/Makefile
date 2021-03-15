@@ -1,3 +1,14 @@
+VERSION := $(shell cat ../VERSION)
+SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
+
+ARTIFACTS_DIR := /tmp/artifacts
+
+# Model-hub library environments will be built on top of the default GPU and CPU images in master/pkg/model/defaults.go
+DEFAULT_GPU_IMAGE := determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-1c4ea10
+TRANSFORMERS_VERSION := 4.3.3
+DATASETS_VERSION := 1.3.0
+TRANSFORMERS_ENVIRONMENT_ROOT := determinedai/model-hub-transformers
+
 .PHONY: clean
 clean:
 	rm -rf .pytest_cache/
@@ -7,6 +18,7 @@ clean:
 	rm -rf dist/
 	rm -rf build/
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
+	find . -type d -name .mypy_cache -prune -exec rm -rf {} \;
 
 .PHONY: build
 build:
@@ -32,36 +44,42 @@ check:
 test:
 	pytest -v -s --durations=0 tests
 
+# We will only use HASH for dev environments.
+.PHONY: build-transformers-dev
+build-transformers-dev:
+	docker build -f docker/Dockerfile.transformers \
+		--build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
+		--build-arg TRANSFORMERS_VERSION=$(TRANSFORMERS_VERSION) \
+		--build-arg DATASETS_VERSION=$(DATASETS_VERSION) \
+		-t $(TRANSFORMERS_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
+		.
 
-VERSION := $(shell cat ../VERSION)
-VERSION_DASHES := $(subst .,-,$(VERSION))
-GIT_HASH := $(shell git rev-parse HEAD)
-SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
+.PHONY: publish-transformers-dev
+publish-transformers-dev:
+	./docker/publish-docker.sh transformers-gpu $(TRANSFORMERS_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
 
-ARTIFACTS_DIR := /tmp/artifacts
+.PHONY: build-docker-dev
+build-docker-dev: build-transformers-dev
 
-# Model-hub library environments will be built on top of the default GPU and CPU images in master/pkg/model/defaults.go
-DEFAULT_GPU_TAG := cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b
-TRANSFORMERS_VERSION := 4.2.2
-DATASETS_VERSION := 1.2.1
-export GPU_TRANSFORMERS_ENVIRONMENT_NAME := model-hub-transformers:$(DEFAULT_GPU_TAG)-transformers-$(TRANSFORMERS_VERSION)-datasets-$(DATASETS_VERSION)
+.PHONY: publish-docker-dev
+publish-docker-dev: publish-transformers-dev
 
+# We will use a tag of the format determinedai/model-hub-transformers:VERSION for
+# master and releases.
 .PHONY: build-transformers
 build-transformers:
 	docker build -f docker/Dockerfile.transformers \
-		--build-arg BASE_IMAGE=determinedai/environments:$(DEFAULT_GPU_TAG) \
+		--build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
 		--build-arg TRANSFORMERS_VERSION=$(TRANSFORMERS_VERSION) \
 		--build-arg DATASETS_VERSION=$(DATASETS_VERSION) \
-		--build-arg VERSION=$(VERSION) \
-		-t determinedai/$(GPU_TRANSFORMERS_ENVIRONMENT_NAME)-$(GIT_HASH) \
-		-t determinedai/$(GPU_TRANSFORMERS_ENVIRONMENT_NAME)-$(SHORT_GIT_HASH) \
-		-t determinedai/$(GPU_TRANSFORMERS_ENVIRONMENT_NAME)-$(VERSION) \
+		-t $(TRANSFORMERS_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
+		-t $(TRANSFORMERS_ENVIRONMENT_ROOT):$(VERSION) \
 		.
 
 .PHONY: publish-transformers
 publish-transformers:
-	sh docker/publish-docker.sh transformers-gpu determinedai/$(GPU_TRANSFORMERS_ENVIRONMENT_NAME) $(SHORT_GIT_HASH) $(VERSION) $(ARTIFACTS_DIR)
-
+	./docker/publish-docker.sh transformers-gpu $(TRANSFORMERS_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
+	./docker/publish-docker.sh transformers-gpu $(TRANSFORMERS_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
 
 .PHONY: build-docker
 build-docker: build-transformers
@@ -69,8 +87,8 @@ build-docker: build-transformers
 .PHONY: publish-docker
 publish-docker: publish-transformers
 
-.PHONY: update-config-envs
+# This will replace the environment field in the experiment configs at run time for CI.
+.PHONY: update-config-envs-dev
 update-config-envs:
-	./docker/update-experiment-config-envs.sh $(GPU_TRANSFORMERS_ENVIRONMENT_NAME)-$(SHORT_GIT_HASH)
-
+	./docker/update-experiment-config-envs.sh model-hub-transformers:$(SHORT_GIT_HASH)
 
