@@ -170,19 +170,13 @@ def test_to_device() -> None:
 def test_to_device_warnings(dedup_between_calls) -> None:
     queue = multiprocessing.Queue()
 
-    # Run as a subprocess in order to not disturb any logging setup in the main process.
-    def call_to_device():
-        logger = logging.getLogger()
-        # Capture warning logs as elements in a queue.
-        logger.addHandler(handlers.QueueHandler(queue))
+    logger = logging.getLogger()
+    # Capture warning logs as elements in a queue.
+    logger.addHandler(handlers.QueueHandler(queue))
 
-        warned_types = set() if dedup_between_calls else None
-        to_device(["string_data", "string_data"], "cpu", warned_types)
-        to_device(["string_data", "string_data"], "cpu", warned_types)
-
-    p = multiprocessing.Process(target=call_to_device)
-    p.start()
-    p.join()
+    warned_types = set() if dedup_between_calls else None
+    to_device(["string_data", "string_data"], "cpu", warned_types)
+    to_device(["string_data", "string_data"], "cpu", warned_types)
 
     assert queue.qsize() == 1 if dedup_between_calls else 2
     while queue.qsize():
