@@ -10,18 +10,19 @@ hyperparameters:
   adam_epsilon: 1e-8
   weight_decay: 0
   lr_scheduler_type: linear
-  num_warmup_steps: 750
-  num_training_steps: 1000
+  num_warmup_steps: 0
 environment:
-    image: determinedai/model-hub-transformers:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b-transformers-4.2.2-datasets-1.2.1-0.14.4.dev0
+    image: determinedai/model-hub-transformers:0.14.6.dev0
 resources:
   slots_per_trial: 2
+min_validation_period: 
+  batches: 500
 records_per_epoch: 14041
 searcher:
   name: single
   metric: accuracy_score
   max_length:
-    batches: 100
+    epochs: 3
   smaller_is_better: false
 data:
   dataset_name: conll2003

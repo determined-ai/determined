@@ -64,7 +64,7 @@ def features_examples_path(path: str) -> str:
 
 
 def model_hub_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../model-hub/examples", path)
+    return os.path.join(os.path.dirname(__file__), "../../model_hub/examples", path)
 
 
 def load_config(config_path: str) -> Any:
