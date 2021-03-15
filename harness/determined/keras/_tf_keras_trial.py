@@ -577,7 +577,7 @@ class TFKerasTrialController(det.LoopTrialController):
             pickle.dump(rng_state, f)
 
         # Save user code.
-        det.util.write_user_code(path)
+        det.util.write_user_code(path, self.env.on_cluster)
 
         # Save callback(s) state.
         callbacks_state = self.multiplexer._get_state()

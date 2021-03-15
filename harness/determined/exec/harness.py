@@ -207,6 +207,9 @@ def main() -> None:
         det_experiment_id,
         det_cluster_id,
         trial_seed,
+        managed_training=True,
+        test_mode=False,
+        on_cluster=True,
     )
 
     logging.info(

@@ -58,11 +58,11 @@ the module. It may be a nested object delimited by dots.
 Examples:
 
 #. ``:MNistTrial`` expects an ``MNistTrial`` class that is exposed in a
-   ``__init__.py`` file at the top level of the model definition.
+   ``__init__.py`` file at the top level of the context directory.
 
 #. ``model_def:CIFAR10Trial`` expects a ``CIFAR10Trial`` class that is
-   defined in a file ``model_def.py`` at the top level of the model
-   definition.
+   defined in a file ``model_def.py`` at the top level of the context
+   directory.
 
 #. ``determined_lib.trial:trial_classes.NestedTrial`` expects a
    ``NestedTrial`` class that is an attribute of ``trial_classes``,
@@ -72,9 +72,8 @@ Examples:
 Note that this follows the `Entry points specification defined in the
 Python Packaging User Guide
 <https://packaging.python.org/specifications/entry-points/>`_ with a
-single difference: the directory name of the model definition is
-prefixed to ``<module>``, or used as the module if ``<module>`` is
-empty.
+single difference: the name of the context directory is prefixed to
+``<module>``, or used as the module if ``<module>`` is empty.
 
 Since project directories might include large artifacts that should not
 be packaged as part of the model definition (e.g., data sets or compiled

@@ -145,6 +145,9 @@ def make_default_env_context(
         det_experiment_id="1",
         det_cluster_id="uuid-123",
         trial_seed=trial_seed,
+        managed_training=True,
+        test_mode=False,
+        on_cluster=False,
     )
 
 

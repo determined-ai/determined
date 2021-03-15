@@ -66,3 +66,5 @@ HOROVOD_GLOO_TIMEOUT_SECONDS = 240
 # The well-known locations of the executing container's STDOUT and STDERR.
 CONTAINER_STDOUT = "/run/determined/train/logs/stdout.log"
 CONTAINER_STDERR = "/run/determined/train/logs/stderr.log"
+
+MANAGED_TRAINING_MODEL_COPY = "/run/determined/train/model"

@@ -46,7 +46,7 @@ new experiments become active or the resource demand of an active
 experiment changes, the scheduler will adjust how slots are allocated to
 experiments as appropriate.
 
-The behavior of the fair-share scheduler can be modified by setting the
+The behavior of the fair-share scheduler can be modified by changing the
 *weight* of a workload. A workload's demand for slots is multiplied by
 the workload's weight for scheduling purposes; hence, a workload with a
 higher weight will be assigned proportionally more resources than a

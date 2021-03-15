@@ -14,6 +14,7 @@ import numpy as np
 import simplejson
 
 import determined as det
+from determined import constants
 from determined_common import check, util
 
 
@@ -174,7 +175,7 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
     return s
 
 
-def write_user_code(path: pathlib.Path) -> None:
+def write_user_code(path: pathlib.Path, on_cluster: bool) -> None:
     code_path = path.joinpath("code")
 
     # When restarting from checkpoint, it is possible that the code path is already present
@@ -183,10 +184,15 @@ def write_user_code(path: pathlib.Path) -> None:
     if code_path.exists():
         shutil.rmtree(str(code_path))
 
-    # Pytorch and tf.1 keras models can only be restored from a checkpoint if
-    # the original code is present. The model code is the current working
-    # directory. Therefore we save the current directory with the checkpoint.
-    shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
+    # Most models can only be restored from a checkpoint if the original code is present. However,
+    # since it is rather common that users mount large, non-model files into their working directory
+    # (like data or their entire HOME directory), when we are training on-cluster we use a
+    # specially-prepared clean copy of the model rather than the working directory.
+    if on_cluster:
+        model_dir = constants.MANAGED_TRAINING_MODEL_COPY
+    else:
+        model_dir = "."
+    shutil.copytree(model_dir, code_path, ignore=shutil.ignore_patterns("__pycache__"))
     os.chmod(code_path, 0o755)
 
 
