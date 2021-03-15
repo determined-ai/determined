@@ -1,0 +1,11 @@
+:orphan:
+
+**Improvements**
+
+-  The default environment images have been updated to CUDA 10.2,
+   PyTorch 1.8, and TensorFlow 1.15.5 with Python 3.7. Previous images
+   are still available but must be specified in the experiment or
+   command configuration. It is recommended to validate the performance
+   of models when changing CUDA versions as some models can experience
+   significant changes in training time, etc. Consult the "Environment
+   Configuration" section in the documentation for details.
