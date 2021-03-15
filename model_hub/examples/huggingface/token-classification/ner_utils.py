@@ -1,10 +1,22 @@
-from typing import Any, Dict, List
+"""
+These functions extract parts of the code from the named-entity recognition example
+in huggingface transformers.  The source example code changes rapidly due to frequent refactorings
+but the main structure should be similar.
+See the original example at:
+https://github.com/huggingface/transformers/blob/master/examples/token-classification/run_ner.py
 
-import datasets
+Note this code is separated from ner_trial.py since it is not Determined-specific code and
+is necessary even if implementing outside of Determined.
+"""
+from typing import Any, Dict, List, Union
+
+import attrdict
+import datasets as hf_datasets
 import numpy as np
-from attrdict import AttrDict
+import torch
+from seqeval import metrics as seq_metrics
+
 from model_hub import huggingface as hf
-from seqeval import metrics
 
 
 def compute_metrics(label_list: List[Any], predictions: np.ndarray, labels: np.ndarray) -> Dict:
@@ -21,14 +33,17 @@ def compute_metrics(label_list: List[Any], predictions: np.ndarray, labels: np.n
     ]
 
     return {
-        "accuracy_score": metrics.accuracy_score(true_labels, true_predictions),
-        "precision": metrics.precision_score(true_labels, true_predictions),
-        "recall": metrics.recall_score(true_labels, true_predictions),
-        "f1": metrics.f1_score(true_labels, true_predictions),
+        "accuracy_score": seq_metrics.accuracy_score(true_labels, true_predictions),
+        "precision": seq_metrics.precision_score(true_labels, true_predictions),
+        "recall": seq_metrics.recall_score(true_labels, true_predictions),
+        "f1": seq_metrics.f1_score(true_labels, true_predictions),
     }
 
 
-def get_dataset_metadata(raw_datasets, hparams):
+def get_dataset_metadata(
+    raw_datasets: Union[hf_datasets.Dataset, hf_datasets.DatasetDict],
+    hparams: Union[Dict, attrdict.AttrDict],
+) -> attrdict.AttrDict:
     column_names = raw_datasets["train"].column_names
     features = raw_datasets["train"].features
     text_column_name = "tokens" if "tokens" in column_names else column_names[0]
@@ -39,15 +54,15 @@ def get_dataset_metadata(raw_datasets, hparams):
     )
 
     # Setup labels
-    if isinstance(features[label_column_name].feature, datasets.ClassLabel):
+    if isinstance(features[label_column_name].feature, hf_datasets.ClassLabel):
         label_list = features[label_column_name].feature.names
         # No need to convert the labels since they are already ints.
         label_to_id = {i: i for i in range(len(label_list))}
     else:
-        label_list = hf.get_label_list(raw_datasets["train"][label_column_name])
+        label_list = sorted(set(raw_datasets["train"][label_column_name]))
         label_to_id = {l: i for i, l in enumerate(label_list)}
 
-    return AttrDict(
+    return attrdict.AttrDict(
         {
             "num_labels": len(label_list),
             "label_list": label_list,
@@ -59,14 +74,14 @@ def get_dataset_metadata(raw_datasets, hparams):
 
 
 def build_tokenized_datasets(
-    raw_datasets,
-    model,
-    data_config,
-    tokenizer,
-    text_column_name,
-    label_column_name,
-    label_to_id,
-):
+    raw_datasets: Union[hf_datasets.DatasetDict, hf_datasets.Dataset],
+    model: torch.nn.Module,
+    data_config: Union[Dict, attrdict.AttrDict],
+    tokenizer: Any,
+    text_column_name: str,
+    label_column_name: str,
+    label_to_id: Dict,
+) -> Union[hf_datasets.Dataset, hf_datasets.DatasetDict]:
     padding = "max_length" if data_config.pad_to_max_length else False
 
     def tokenize_and_align_labels(

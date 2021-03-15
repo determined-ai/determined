@@ -1,15 +1,15 @@
+import dataclasses
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import attrdict
 import datasets as hf_datasets
 import torch
 import transformers
 import transformers.optimization as hf_opt
-from attrdict import AttrDict
-from torch.optim import Optimizer  # type: ignore
 
-from determined.pytorch import LRScheduler, PyTorchTrial, PyTorchTrialContext
-
-from . import _arg_parser as hf_parse
+import determined.pytorch as det_torch
+from model_hub.huggingface import _config_parser as hf_parse
+from model_hub.huggingface import _utils as utils
 
 MODEL_MODES = {
     "base": transformers.AutoModel,
@@ -26,10 +26,10 @@ MODEL_MODES = {
 
 
 def build_using_auto(
-    config_args: Union[Dict, AttrDict],
-    tokenizer_args: Union[Dict, AttrDict],
+    config_kwargs: Union[Dict, attrdict.AttrDict],
+    tokenizer_kwargs: Union[Dict, attrdict.AttrDict],
     model_mode: str,
-    model_args: Union[Dict, AttrDict],
+    model_kwargs: Union[Dict, attrdict.AttrDict],
 ) -> Tuple[
     transformers.PretrainedConfig,  # This is how it's named in transformers
     transformers.PreTrainedTokenizer,
@@ -40,20 +40,22 @@ def build_using_auto(
     Auto classes.
 
     Args:
-        config_args: arguments for transformers configuration classes
-        tokenizer_args: arguments for transformers tokenizer classes
+        config_kwargs: arguments for transformers configuration classes
+        tokenizer_kwargs: arguments for transformers tokenizer classes
         model_mode: one of the tasks supported by transformers, see MODEL_MODES for
             the supported options
-        model_args: arguments for transformers model classes
+        model_kwargs: arguments for transformers model classes
 
     Returns:
         transformer config, tokenizer, and model
     """
-    config = transformers.AutoConfig.from_pretrained(**config_args)
-    tokenizer = transformers.AutoTokenizer.from_pretrained(**tokenizer_args)
+    config = transformers.AutoConfig.from_pretrained(**config_kwargs)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(**tokenizer_kwargs)
     model_builder = MODEL_MODES[model_mode]
-    model_args["config"] = config
-    model = model_builder.from_pretrained(**model_args)
+    if isinstance(model_kwargs, hf_parse.ModelKwargs):
+        model_kwargs = dataclasses.asdict(model_kwargs)
+    model_kwargs["config"] = config
+    model = model_builder.from_pretrained(**model_kwargs)
     return config, tokenizer, model
 
 
@@ -87,59 +89,59 @@ def group_parameters_for_optimizer(
 
 
 def build_default_optimizer(
-    model: torch.nn.Module, optimizer_args: hf_parse.OptimizerKwargs
-) -> Optimizer:
+    model: torch.nn.Module, optimizer_kwargs: hf_parse.OptimizerKwargs
+) -> Union[hf_opt.Adafactor, hf_opt.AdamW]:
     """
     This follows the function in transformer's Trainer to construct the optimizer.
 
     Args:
         model: model whose parameters will be updated by the optimizer
         weight_decay: weight_decay factor to apply to weights
-        optimizer_args: see OptimizerKwargs in _arg_parser.py for expected fields
+        optimizer_kwargs: see OptimizerKwargs in _config_parser.py for expected fields
     Returns:
         optimizer configured accordingly
     """
     optimizer_grouped_parameters = group_parameters_for_optimizer(
-        model, optimizer_args.weight_decay
+        model, optimizer_kwargs.weight_decay
     )
-    if optimizer_args.adafactor:
+    if optimizer_kwargs.adafactor:
         return hf_opt.Adafactor(
             optimizer_grouped_parameters,
-            lr=optimizer_args.learning_rate,
-            scale_parameter=optimizer_args.scale_parameter,
-            relative_step=optimizer_args.relative_step,
+            lr=optimizer_kwargs.learning_rate,
+            scale_parameter=optimizer_kwargs.scale_parameter,
+            relative_step=optimizer_kwargs.relative_step,
         )
     return hf_opt.AdamW(
         optimizer_grouped_parameters,
-        lr=optimizer_args.learning_rate,
-        betas=(optimizer_args.adam_beta1, optimizer_args.adam_beta2),
-        eps=optimizer_args.adam_epsilon,
+        lr=optimizer_kwargs.learning_rate,
+        betas=(optimizer_kwargs.adam_beta1, optimizer_kwargs.adam_beta2),
+        eps=optimizer_kwargs.adam_epsilon,
     )
 
 
 def build_default_lr_scheduler(
-    optimizer: Optimizer,
-    scheduler_args: hf_parse.LRSchedulerKwargs,
+    optimizer: torch.optim.Optimizer,
+    scheduler_kwargs: hf_parse.LRSchedulerKwargs,
 ) -> Any:
     """
     This follows the function in transformer's Trainer to construct the lr_scheduler.
 
     Args:
         optimizer: optimizer to apply lr_scheduler to
-        scheduler_args: see LRSchedulerKwargs in _arg_parser.py for expected fields.
+        scheduler_kwargs: see LRSchedulerKwargs in _config_parser.py for expected fields.
     Returns:
         lr_scheduler configured accordingly
     """
     return hf_opt.get_scheduler(
-        scheduler_args.lr_scheduler_type,
+        scheduler_kwargs.lr_scheduler_type,
         optimizer,
-        num_warmup_steps=scheduler_args.num_warmup_steps,
-        num_training_steps=scheduler_args.num_training_steps,
+        num_warmup_steps=scheduler_kwargs.num_warmup_steps,
+        num_training_steps=scheduler_kwargs.num_training_steps,
     )
 
 
 def default_load_dataset(
-    data_config: Union[Dict, AttrDict]
+    data_config: Union[Dict, attrdict.AttrDict]
 ) -> Union[hf_datasets.DatasetDict, hf_datasets.Dataset]:
     """
     Creates the dataset using HuggingFace datasets' load_dataset method.
@@ -186,7 +188,7 @@ def default_load_dataset(
     return datasets
 
 
-class BaseTransformerTrial(PyTorchTrial):
+class BaseTransformerTrial(det_torch.PyTorchTrial):
     """
     This is the base trial class for transformers with a default init and train_batch method.
 
@@ -196,28 +198,35 @@ class BaseTransformerTrial(PyTorchTrial):
     See examples/huggingface/token-classification/ner_trial.py for an example.
     """
 
-    def __init__(self, context: PyTorchTrialContext) -> None:
+    def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
         self.context = context
-        self.hparams = AttrDict(context.get_hparams())
-        self.data_config = AttrDict(context.get_data_config())
+        # A subclass of BaseTransformerTrial may have already set hparams and data_config
+        # attributes so we only reset them if they do not exist.
+        if not hasattr(self, "hparams"):
+            self.hparams = attrdict.AttrDict(context.get_hparams())
+        if not hasattr(self, "data_config"):
+            self.data_config = attrdict.AttrDict(context.get_data_config())
+        # Check to make sure all expected hyperparameters are set.
+        self.check_hparams()
+        print(self.hparams)
 
         # Parse hparams and data_config.
         (
-            config_args,
-            tokenizer_args,
-            model_args,
-        ) = hf_parse.default_parse_config_tokenizer_model_args(self.hparams)
-        optimizer_args, scheduler_args = hf_parse.default_parse_optimizer_lr_scheduler_args(
+            config_kwargs,
+            tokenizer_kwargs,
+            model_kwargs,
+        ) = hf_parse.default_parse_config_tokenizer_model_kwargs(self.hparams)
+        optimizer_kwargs, scheduler_kwargs = hf_parse.default_parse_optimizer_lr_scheduler_kwargs(
             self.hparams
         )
 
         self.config, self.tokenizer, self.model = build_using_auto(
-            config_args, tokenizer_args, self.hparams.model_mode, model_args
+            config_kwargs, tokenizer_kwargs, self.hparams.model_mode, model_kwargs
         )
         self.model = self.context.wrap_model(self.model)
 
         self.optimizer = self.context.wrap_optimizer(
-            build_default_optimizer(self.model, optimizer_args)
+            build_default_optimizer(self.model, optimizer_kwargs)
         )
 
         if self.hparams.use_apex_amp:
@@ -227,19 +236,37 @@ class BaseTransformerTrial(PyTorchTrial):
             )
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
-            build_default_lr_scheduler(self.optimizer, scheduler_args),
-            LRScheduler.StepMode.STEP_EVERY_BATCH,
+            build_default_lr_scheduler(self.optimizer, scheduler_kwargs),
+            det_torch.LRScheduler.StepMode.STEP_EVERY_BATCH,
         )
         self.grad_clip_fn = (
-            lambda x: torch.nn.utils.clip_grad_norm_(x, optimizer_args.max_grad_norm)
-            if optimizer_args.max_grad_norm > 0
+            lambda x: torch.nn.utils.clip_grad_norm_(x, optimizer_kwargs.max_grad_norm)
+            if optimizer_kwargs.max_grad_norm > 0  # type: ignore
             else None
         )
 
+    def check_hparams(self) -> None:
+        if "num_training_steps" not in self.hparams:
+            # Compute the total number of training iterations used to configure the
+            # learning rate scheduler.
+            self.hparams["num_training_steps"] = utils.compute_num_training_steps(
+                self.context.get_experiment_config(), self.context.get_global_batch_size()
+            )
+
+        required_hps = ("use_apex_amp", "model_mode", "num_training_steps")
+        for hp in required_hps:
+            assert (
+                hp in self.hparams
+            ), "{} is a required hyperparameter for BaseTransformerTrial".format(hp)
+
     def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Any:
         # By default, all HF models return the loss in the first element.
+        # We do not automatically apply a label smoother for the user.
+        # If this is something you want to use, please see how it's
+        # applied by transformers.Trainer:
+        # https://github.com/huggingface/transformers/blob/v4.3.3/src/transformers/trainer.py#L1324
         outputs = self.model(**batch)
-        loss = outputs[0]
+        loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer, self.grad_clip_fn)
         return loss

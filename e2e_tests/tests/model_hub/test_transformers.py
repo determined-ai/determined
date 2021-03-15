@@ -6,6 +6,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 
+@pytest.mark.model_hub  # type: ignore
 @pytest.mark.distributed  # type: ignore
 def test_token_classification_ner() -> None:
     example_path = conf.model_hub_examples_path("huggingface/token-classification")

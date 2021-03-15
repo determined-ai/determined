@@ -1,18 +1,14 @@
 ARG BASE_IMAGE
 # This will be an image from determinedai/environments
-FROM ${BASE_IMAGE} 
-
-# Requirements for transformers
-RUN conda install -y pandas
+FROM ${BASE_IMAGE}
 
 ARG TRANSFORMERS_VERSION
 ARG DATASETS_VERSION
 RUN pip install transformers==${TRANSFORMERS_VERSION} datasets==${DATASETS_VERSION} attrdict
-RUN pip install sentencepiece!=0.1.92 protobuf sklearn
+RUN pip install sentencepiece!=0.1.92 protobuf sklearn conllu seqeval
 
 RUN mkdir -p /tmp/model-hub-wheel
 ADD dist /tmp/model-hub-wheel
 
-# For local dev, wheel must be built before building the docker image
-ARG VERSION
-RUN if echo ${VERSION} | grep -q ".*dev.*" ; then python -m pip install --find-links=/tmp/model-hub-wheel model-hub ; else pip install model-hub==${VERSION} ; fi
+# Wheel must be built before building the docker image
+RUN python -m pip install --find-links=/tmp/model-hub-wheel model-hub
