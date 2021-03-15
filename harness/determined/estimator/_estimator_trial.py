@@ -207,7 +207,7 @@ class DeterminedControlHook(estimator.RunHook):
         self._copy_latest_checkpoint(checkpoint_path=checkpoint_path)
         self._save_serving_input_receiver_fns(checkpoint_path=str(checkpoint_path))
 
-        det.util.write_user_code(checkpoint_path)
+        det.util.write_user_code(checkpoint_path, self.estimator_trial_controller.env.on_cluster)
 
         for callback in self.estimator_trial_controller.train_hooks:
             if isinstance(callback, estimator.RunHook):

@@ -1,0 +1,9 @@
+:orphan:
+
+**Fixes**
+
+-  Model code uploaded to checkpoints will now match the model code
+   provided during experiment creation. Previously, it may have included
+   additional files that had been bind-mounted in with a
+   ``container_path`` that was either relative or was a subdirectory of
+   ``/run/determined/workdir``.

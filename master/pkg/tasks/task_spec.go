@@ -280,7 +280,15 @@ type StartTrial struct {
 
 // Archives implements InnerSpec.
 func (s StartTrial) Archives(u *model.AgentUserGroup) []container.RunArchive {
-	return []container.RunArchive{wrapArchive(s.AdditionalFiles, rootDir),
+	return []container.RunArchive{
+		wrapArchive(
+			archive.Archive{
+				u.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
+				u.OwnedArchiveItem(modelCopy, nil, 0700, tar.TypeDir),
+			},
+			rootDir,
+		),
+		wrapArchive(s.AdditionalFiles, rootDir),
 		wrapArchive(
 			archive.Archive{
 				u.OwnedArchiveItem(
@@ -292,6 +300,7 @@ func (s StartTrial) Archives(u *model.AgentUserGroup) []container.RunArchive {
 			},
 			trainDir,
 		),
+		wrapArchive(u.OwnArchive(s.ModelDefinition), modelCopy),
 		wrapArchive(u.OwnArchive(s.ModelDefinition), ContainerWorkDir),
 	}
 }

@@ -131,6 +131,7 @@ def _make_local_execution_env(
         trial_seed=config.experiment_seed(),
         managed_training=managed_training,
         test_mode=test_mode,
+        on_cluster=False,
     )
     rendezvous_ports = env.rendezvous_ports()
     rendezvous_info = det.RendezvousInfo(
