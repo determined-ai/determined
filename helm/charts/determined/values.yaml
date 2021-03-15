@@ -158,5 +158,7 @@ telemetry:
       ## directly or using `helm install --set-file logging.security.tls.certificate=<path>`.
       # certificate: <certificate contents>
 
-## Configure the default scheduler
+## Configure the default Determined scheduler 
+## Currently supports the coscheduler for gang scheduling.
+## If unspecified, uses the Kubernetes default scheduler
 # defaultScheduler: coscheduler

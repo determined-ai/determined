@@ -4,7 +4,6 @@
  Scheduling
 ############
 
-TODO: ADD STUFF FOR PRIORITY SCHEDULING IN KUBERNETES
 This topic guide covers the two different scheduling policies that are
 supported in Determined. Administrators can configure the desired
 scheduler in :ref:`master-configuration`. It is also possible to
@@ -119,3 +118,17 @@ enabled:
 #. The notebook is killed. The distributed training job that has
    priority 1 then starts running. Once that experiment is complete,
    distributed training experiment with priority 2 runs.
+
+*******************************
+ Gang-scheduling on Kubernetes
+*******************************
+
+The master allocates cluster resources (slots) to active tasks based on
+their priority, but does not support preemption of Determined tasks. Tasks
+of lower priority will not be scheduled when those of higher priority are
+queued, but lower priority tasks that are currently running will be allowed
+to finish.
+
+Kubernetes itself does not support gang-scheduling, so this capability is
+achieved by using the lightweight coscheduling plugin to extend the
+Kubernetes scheduler.

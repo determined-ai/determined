@@ -1,3 +1,4 @@
+{{- if eq .Values.defaultScheduler "coscheduler"}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -53,3 +54,4 @@ spec:
         - name: scheduler-config-volume
           configMap:
             name: scheduler-config
+{{- end }}

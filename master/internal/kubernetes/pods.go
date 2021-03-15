@@ -48,7 +48,7 @@ type pods struct {
 	namespace                string
 	masterServiceName        string
 	leaveKubernetesResources bool
-	scheduler 				 string
+	scheduler                string
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -93,7 +93,7 @@ func Initialize(
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
 		masterTLSConfig:          masterTLSConfig,
-		scheduler: 				  scheduler,
+		scheduler:                scheduler,
 		loggingTLSConfig:         loggingTLSConfig,
 		loggingConfig:            loggingConfig,
 		podNameToPodHandler:      make(map[string]*actor.Ref),

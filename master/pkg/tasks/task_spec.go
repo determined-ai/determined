@@ -176,7 +176,7 @@ func (s StartCommand) UseFluentLogging() bool { return false }
 // UseHostMode implements InnerSpec.
 func (s StartCommand) UseHostMode() bool { return false }
 
-// ResourcesConfig implements InnerSpec
+// ResourcesConfig implements InnerSpec.
 func (s StartCommand) ResourcesConfig() model.ResourcesConfig { return s.Config.Resources }
 
 // GCCheckpoints is a description of a task for running checkpoint GC.
@@ -265,7 +265,7 @@ func (g GCCheckpoints) UseFluentLogging() bool { return false }
 // UseHostMode implements InnerSpec.
 func (g GCCheckpoints) UseHostMode() bool { return false }
 
-// ResourcesConfig implements InnerSpec
+// ResourcesConfig implements InnerSpec.
 func (g GCCheckpoints) ResourcesConfig() model.ResourcesConfig { return g.ExperimentConfig.Resources }
 
 // StartTrial is a description of a task for running a trial container.
@@ -418,4 +418,5 @@ func (s StartTrial) ShmSize() int64 {
 	return 0
 }
 
+// ResourcesConfig implements InnerSpec.
 func (s StartTrial) ResourcesConfig() model.ResourcesConfig { return s.ExperimentConfig.Resources }

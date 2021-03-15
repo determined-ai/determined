@@ -46,7 +46,7 @@ type pod struct {
 	configMapInterface       typedV1.ConfigMapInterface
 	resourceRequestQueue     *actor.Ref
 	leaveKubernetesResources bool
-	scheduler 				 string
+	scheduler                string
 
 	pod              *k8sV1.Pod
 	podName          string
@@ -116,7 +116,7 @@ func newPod(
 		configMapName:            uniqueName,
 		container:                podContainer,
 		containerNames:           containerNames,
-		scheduler:				  scheduler,
+		scheduler:                scheduler,
 	}
 }
 
