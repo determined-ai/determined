@@ -12,3 +12,4 @@ numpy==1.18.5
 pandas
 pyyaml
 docker
+pytorch_lightning==1.2.0
