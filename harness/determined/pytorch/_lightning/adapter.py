@@ -5,7 +5,6 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
 from pytorch_lightning.utilities.model_helpers import is_overridden
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 
 from determined.errors import InvalidModelException
@@ -152,7 +151,7 @@ class PLAdapter(PyTorchTrial):
         self,
         context: PyTorchTrialContext,
         lightning_module: pl.LightningModule,
-    ) -> Tuple[List[Optimizer], List[_LRScheduler]]:
+    ) -> Tuple[List[Optimizer], List[LRScheduler]]:
         """
         Wrap optimizers and lr_schedulers returned by `configure_optimizers` to
         work with Determined.
@@ -161,13 +160,10 @@ class PLAdapter(PyTorchTrial):
         optimizers, lr_scheduler_dicts, opt_frequencies = TrainerOptimizersMixin().init_optimizers(
             lightning_module,
         )
-        # TODO(DET-5021) support custom frequencies with the manual step.
-        for freq in opt_frequencies:
-            check.eq(freq, 1, "custom optimizer frequencies are not supported")
         optimizers = cast(List[Optimizer], optimizers)
         lr_scheduler_dicts = cast(List[dict], lr_scheduler_dicts)
 
-        def lightning_scheduler_dict_to_det(lrs: dict) -> _LRScheduler:
+        def lightning_scheduler_dict_to_det(lrs: dict) -> LRScheduler:
             """
             input_dict = {
                 'scheduler': None,
@@ -189,7 +185,14 @@ class PLAdapter(PyTorchTrial):
                 if lrs["interval"] == "epoch"
                 else LRScheduler.StepMode.STEP_EVERY_BATCH
             )
-            return context.wrap_lr_scheduler(lrs["scheduler"], step_mode)
+            opt = getattr(lrs["scheduler"], "optimizer", None)
+            if opt is not None:
+                check.is_in(
+                    opt,
+                    self._pls.optimizers,
+                    "Must use an optimizer that is returned by wrap_optimizer()",
+                )
+            return LRScheduler(lrs["scheduler"], step_mode, frequency=lrs["frequency"])
 
         optimizers = [context.wrap_optimizer(opt) for opt in optimizers]
         lr_schedulers = [lightning_scheduler_dict_to_det(lrs) for lrs in lr_scheduler_dicts]

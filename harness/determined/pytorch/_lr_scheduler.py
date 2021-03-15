@@ -33,6 +33,7 @@ class LRScheduler:
         self,
         scheduler: torch.optim.lr_scheduler._LRScheduler,
         step_mode: StepMode,
+        frequency: int = 1,
     ):
         """LRScheduler constructor
 
@@ -43,10 +44,10 @@ class LRScheduler:
                 The strategy Determined will use to call (or not call) scheduler.step().
 
                 1. ``STEP_EVERY_EPOCH``: Determined will call scheduler.step() after
-                   every training epoch. No arguments will be passed to step().
+                   every ``frequency`` training epoch(s). No arguments will be passed to step().
 
                 2. ``STEP_EVERY_BATCH``: Determined will call scheduler.step() after every
-                   training batch. No arguments will be passed to step().
+                   ``frequency`` training batch(es). No arguments will be passed to step().
 
                 3. ``MANUAL_STEP``: Determined will not call scheduler.step() at all.
                    It is up to the user to decide when to call scheduler.step(),
@@ -57,6 +58,7 @@ class LRScheduler:
 
         self._scheduler = scheduler
         self._step_mode = step_mode
+        self._frequency = frequency
 
     def step(self, *args: Any, **kwargs: Any) -> None:
         self._scheduler.step(*args, **kwargs)
