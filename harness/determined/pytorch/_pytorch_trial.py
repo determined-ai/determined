@@ -682,8 +682,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         path.mkdir(parents=True, exist_ok=True)
 
-        # The model code is the current working directory.
-        util.write_user_code(path)
+        util.write_user_code(path, self.env.on_cluster)
 
         rng_state = {
             "cpu_rng_state": torch.random.get_rng_state(),  # type: ignore

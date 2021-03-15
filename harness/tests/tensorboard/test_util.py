@@ -37,6 +37,9 @@ def get_dummy_env() -> det.EnvContext:
         det_experiment_id="1",
         det_cluster_id="uuid-123",
         trial_seed=0,
+        managed_training=True,
+        test_mode=False,
+        on_cluster=False,
     )
 
 

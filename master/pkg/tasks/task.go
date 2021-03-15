@@ -18,6 +18,7 @@ const (
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
 	trainDir          = "/run/determined/train"
+	modelCopy         = "/run/determined/train/model"
 	rootDir           = "/"
 	passwdPath        = "/run/determined/etc/passwd"
 	shadowPath        = "/run/determined/etc/shadow"
@@ -31,7 +32,6 @@ func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
 		archive.Archive{
 			aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(ContainerWorkDir, nil, 0700, tar.TypeDir),
-			aug.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
 		},
 		rootDir,

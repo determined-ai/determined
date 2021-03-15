@@ -40,6 +40,9 @@ def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvCont
         det_experiment_id="1",
         det_cluster_id="uuid-123",
         trial_seed=0,
+        managed_training=True,
+        test_mode=False,
+        on_cluster=False,
     )
 
 

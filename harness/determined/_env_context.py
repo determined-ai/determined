@@ -31,8 +31,9 @@ class EnvContext:
         det_experiment_id: str,
         det_cluster_id: str,
         trial_seed: int,
-        managed_training: bool = True,
-        test_mode: bool = False,
+        managed_training: bool,
+        test_mode: bool,
+        on_cluster: bool,
     ):
         self.master_addr = master_addr
         self.master_port = master_port
@@ -58,6 +59,7 @@ class EnvContext:
         self.trial_seed = trial_seed
         self.managed_training = managed_training
         self.test_mode = test_mode
+        self.on_cluster = on_cluster
 
         self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
 
