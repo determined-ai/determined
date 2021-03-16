@@ -4,30 +4,31 @@
 
 .. _lightning-adapter:
 
-*********************************************
- ``determined.pytorch._lightning.PLAdapter``
-*********************************************
+***************************************************
+ ``determined.pytorch.lightning.LightningAdapter``
+***************************************************
 
-Pytorch Lightning Adapter, or PLAdapter for short, provides a quick way
-to train your Pytorch Lightning models with all the Determined features,
-such as mid-epoch preemption, simple distributed training interface,
-simple job submission to the Determined cluster, and so on.
+Pytorch Lightning Adapter, defined here as ``LightningAdapter``,
+provides a quick way to train your Pytorch Lightning models with all the
+Determined features, such as mid-epoch preemption, simple distributed
+training interface, simple job submission to the Determined cluster, and
+so on.
 
-PLAdapter is built on top of our :ref:`PyTorchTrial <pytorch-trial>`
-API, which has a built-in training loop that integrates with the
-Determined features. However, it only supports `LightningModule
+LightningAdapter is built on top of our :ref:`PyTorchTrial
+<pytorch-trial>` API, which has a built-in training loop that integrates
+with the Determined features. However, it only supports `LightningModule
 <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html>`_.
 To migrate your code from the `Trainer
 <https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html>`_,
 please read more about :ref:`PyTorchTrial <pytorch-trial>` and
 :ref:`experiment-configuration`.
 
-PLAdapter takes ``LightningModule`` from your Pytorch Lightning code and
-implements most of the methods you need from the :ref:`PyTorchTrial
-<pytorch-trial>` API for you. Since in this approach the
-``LightningModule`` is not paired with the standard trainer that comes
-with Pytorch Lightning some methods and hooks are not supported. Read
-about those here:
+LightningAdapter takes ``LightningModule`` from your Pytorch Lightning
+code and implements most of the methods you need from the
+:ref:`PyTorchTrial <pytorch-trial>` API for you. Since in this approach
+the ``LightningModule`` is not paired with the standard trainer that
+comes with Pytorch Lightning some methods and hooks are not supported.
+Read about those here:
 
 -  No separate test-set definition in Determined: ``test_step``,
    ``test_step_end``, ``test_epoch_end``, ``on_test_batch_start``,
@@ -64,7 +65,7 @@ about those here:
          ``optimizer_zero_grad``
       -  Unsupported
 
-.. autoclass:: determined.pytorch._lightning.PLAdapter
+.. autoclass:: determined.pytorch.lightning.LightningAdapter
    :members:
    :exclude-members: trial_controller_class, trial_context_class, evaluate_full_dataset, train_batch, evaluate_batch, setup_optimizers_schedulers
    :inherited-members:
@@ -74,8 +75,9 @@ about those here:
 Data Loading
 ============
 
-Loading your dataset when using the :ref:`PLAdapter <lightning-adapter>`
-works the same way as it does with :ref:`PyTorch Trial <pytorch-trial>`.
+Loading your dataset when using the :ref:`LightningAdapter
+<lightning-adapter>` works the same way as it does with :ref:`PyTorch
+Trial <pytorch-trial>`.
 
 If you already have a ``LightningDataModule`` you can bring it in and
 use it to implement ``build_training_data_loader`` and
