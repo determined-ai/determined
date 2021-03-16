@@ -1,4 +1,4 @@
-$filter-bg-color: var(--theme-colors-monochrome-13);
+/* stylelint-disable no-descending-specificity */
 
 .base {
   display: flex;
@@ -53,7 +53,7 @@ $filter-bg-color: var(--theme-colors-monochrome-13);
     position: relative;
   }
   .filterToggle::after {
-    background-color: $filter-bg-color;
+    background-color: var(--theme-colors-monochrome-13);
     content: '';
     display: none;
     height: 0.1rem;
@@ -65,7 +65,7 @@ $filter-bg-color: var(--theme-colors-monochrome-13);
   .filterToggle:hover { border-color: var(--theme-colors-action-normal); }
   .filterToggle:focus { box-shadow: var(--theme-outline); }
   .filterBar {
-    background-color: $filter-bg-color;
+    background-color: var(--theme-colors-monochrome-13);
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
     border-radius: var(--theme-sizes-border-radius) 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius);
     display: none;
@@ -93,6 +93,9 @@ $filter-bg-color: var(--theme-colors-monochrome-13);
   .filterBar + .body {
     border-radius: var(--theme-sizes-border-radius);
   }
+}
+.base.noBodyPadding {
+  .body { padding: 0; }
 }
 .base.showFilters {
   .filterToggle {

@@ -243,7 +243,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
                   onFilter={handleChartFilter}
                 />
               </div>
-              <div className={css.table}>
+              <div>
                 <HpTrialTable
                   colorScale={colorScale}
                   experimentId={experiment.id}

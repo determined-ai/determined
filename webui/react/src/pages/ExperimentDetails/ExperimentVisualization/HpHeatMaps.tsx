@@ -213,7 +213,12 @@ const HpHeatMaps: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section bodyBorder filters={filters} id="hp-visualization" title="HP Heat Maps">
+      <Section
+        bodyBorder
+        filters={filters}
+        id="hp-visualization"
+        noBodyPadding
+        title="HP Heat Maps">
         <div className={css.container}>{content}</div>
       </Section>
     </div>

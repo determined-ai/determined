@@ -1,8 +1,5 @@
 .base {
   .container {
-    background-color: var(--theme-colors-monochrome-17);
-    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-    border-radius: var(--theme-sizes-border-radius);
     min-height: 40rem;
   }
   .container > [class*=Message_base] {

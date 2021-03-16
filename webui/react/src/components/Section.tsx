@@ -15,6 +15,7 @@ interface Props {
   hideTitle?: boolean;
   id?: string;
   maxHeight?: boolean;
+  noBodyPadding?: boolean;
   options?: React.ReactNode;
   title: string | React.ReactElement;
 }
@@ -34,6 +35,7 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   if (props.divider) classes.push(css.divider);
   if (props.filters) classes.push(css.filters);
   if (props.maxHeight) classes.push(css.maxHeight);
+  if (props.noBodyPadding) classes.push(css.noBodyPadding);
   if (showFilters) classes.push(css.showFilters);
 
   const handleFilterToggle = useCallback(() => {
