@@ -1,6 +1,6 @@
-import { Button, Select } from 'antd';
+import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useMemo, useReducer } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -135,6 +135,12 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   const handleReset = useCallback(() => {
     dispatch({ type: ActionType.Set, value: filters });
   }, [ filters ]);
+
+  // Pick the first valid option if the current local batch is invalid.
+  useEffect(() => {
+    if (batches.includes(localFilters.batch)) return;
+    dispatch({ type: ActionType.SetBatch, value: batches.first() });
+  }, [ batches, localFilters.batch ]);
 
   return (
     <div className={css.base}>
