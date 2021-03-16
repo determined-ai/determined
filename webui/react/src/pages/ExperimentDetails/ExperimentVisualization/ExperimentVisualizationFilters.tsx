@@ -5,9 +5,10 @@ import React, { useCallback, useMemo } from 'react';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
-import ResponsiveFilters from 'components/ResponsiveFilters';
 import SelectFilter from 'components/SelectFilter';
 import { ExperimentVisualizationType, MetricName } from 'types';
+
+import css from './ExperimentVisualizationFilters.module.scss';
 
 const { Option } = Select;
 
@@ -100,7 +101,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   }, [ onViewChange ]);
 
   return (
-    <ResponsiveFilters>
+    <div className={css.base}>
       {showMaxTrials && (
         <SelectFilter
           enableSearchFilter={false}
@@ -153,7 +154,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         </MultiSelect>
       )}
       {showLayout && <GridListRadioGroup value={selectedView} onChange={handleViewChange} />}
-    </ResponsiveFilters>
+    </div>
   );
 };
 

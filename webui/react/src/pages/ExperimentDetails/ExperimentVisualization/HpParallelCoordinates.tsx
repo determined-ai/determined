@@ -26,7 +26,7 @@ import HpTrialTable, { TrialHParams } from './HpTrialTable';
 interface Props {
   experiment: ExperimentBase;
   hParams: string[];
-  options?: React.ReactNode;
+  filters?: React.ReactNode;
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
@@ -43,7 +43,7 @@ interface HpTrialData {
 const HpParallelCoordinates: React.FC<Props> = ({
   experiment,
   hParams,
-  options,
+  filters,
   selectedBatch,
   selectedBatchMargin,
   selectedHParams,
@@ -230,7 +230,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section options={options} title="HP Parallel Coordinates">
+      <Section bodyBorder filters={filters} id="hp-visualization" title="HP Parallel Coordinates">
         <div className={css.container}>
           {!hasLoaded || !chartData ? <Spinner /> : (
             <>

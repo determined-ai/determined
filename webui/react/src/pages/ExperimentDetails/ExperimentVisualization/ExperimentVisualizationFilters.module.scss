@@ -1,0 +1,7 @@
+.base {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+
+  & > *:not(:first-child) { margin-left: var(--theme-sizes-layout-great); }
+}

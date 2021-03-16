@@ -298,8 +298,8 @@ const ExperimentVisualization: React.FC<Props> = ({
           {typeKey === ExperimentVisualizationType.LearningCurve && (
             <LearningCurve
               experiment={experiment}
+              filters={filters}
               hParams={fullHParams}
-              options={filters}
               selectedMaxTrial={selectedMaxTrial}
               selectedMetric={selectedMetric}
             />
@@ -307,8 +307,8 @@ const ExperimentVisualization: React.FC<Props> = ({
           {typeKey === ExperimentVisualizationType.HpParallelCoordinates && (
             <HpParallelCoordinates
               experiment={experiment}
+              filters={filters}
               hParams={fullHParams}
-              options={filters}
               selectedBatch={selectedBatch}
               selectedBatchMargin={selectedBatchMargin}
               selectedHParams={selectedHParams}
@@ -318,8 +318,8 @@ const ExperimentVisualization: React.FC<Props> = ({
           {typeKey === ExperimentVisualizationType.HpScatterPlots && (
             <HpScatterPlots
               experiment={experiment}
+              filters={filters}
               hParams={fullHParams}
-              options={filters}
               selectedBatch={selectedBatch}
               selectedBatchMargin={selectedBatchMargin}
               selectedHParams={selectedHParams}
@@ -329,8 +329,8 @@ const ExperimentVisualization: React.FC<Props> = ({
           {typeKey === ExperimentVisualizationType.HpHeatMap && (
             <HpHeatMaps
               experiment={experiment}
+              filters={filters}
               hParams={fullHParams}
-              options={filters}
               selectedBatch={selectedBatch}
               selectedBatchMargin={selectedBatchMargin}
               selectedHParams={selectedHParams}

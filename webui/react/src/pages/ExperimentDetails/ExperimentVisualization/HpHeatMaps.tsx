@@ -26,7 +26,7 @@ import css from './HpHeatMaps.module.scss';
 interface Props {
   experiment: ExperimentBase;
   hParams: string[];
-  options?: React.ReactNode;
+  filters?: React.ReactNode;
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
@@ -49,7 +49,7 @@ const generateHpKey = (hParam1: string, hParam2: string): string => {
 const HpHeatMaps: React.FC<Props> = ({
   experiment,
   hParams,
-  options,
+  filters,
   selectedBatch,
   selectedBatchMargin,
   selectedHParams,
@@ -213,7 +213,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section options={options} title="HP Heat Maps">
+      <Section bodyBorder filters={filters} id="hp-visualization" title="HP Heat Maps">
         <div className={css.container}>{content}</div>
       </Section>
     </div>

@@ -19,8 +19,8 @@ import css from './LearningCurve.module.scss';
 
 interface Props {
   experiment: ExperimentBase;
+  filters?: React.ReactNode;
   hParams: string[];
-  options?: React.ReactNode;
   selectedMaxTrial: number;
   selectedMetric: MetricName
 }
@@ -30,7 +30,7 @@ const MAX_DATAPOINTS = 5000;
 const LearningCurve: React.FC<Props> = ({
   experiment,
   hParams,
-  options,
+  filters,
   selectedMaxTrial,
   selectedMetric,
 }: Props) => {
@@ -163,7 +163,7 @@ const LearningCurve: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section bodyBorder filters={options} title="Learning Curve">
+      <Section bodyBorder filters={filters} id="hp-visualization" title="Learning Curve">
         <div className={css.container}>
           {!hasLoaded ? <Spinner /> : (
             <>

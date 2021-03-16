@@ -20,7 +20,7 @@ import css from './HpScatterPlots.module.scss';
 interface Props {
   experiment: ExperimentBase;
   hParams: string[];
-  options?: React.ReactNode;
+  filters?: React.ReactNode;
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
@@ -37,7 +37,7 @@ interface HpMetricData {
 const ScatterPlots: React.FC<Props> = ({
   experiment,
   hParams,
-  options,
+  filters,
   selectedBatch,
   selectedBatchMargin,
   selectedHParams,
@@ -161,7 +161,7 @@ const ScatterPlots: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section options={options} title="HP Scatter Plots">
+      <Section bodyBorder filters={filters} id="hp-visualization" title="HP Scatter Plots">
         <div className={css.container}>{content}</div>
       </Section>
     </div>
