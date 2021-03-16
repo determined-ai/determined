@@ -1,6 +1,6 @@
-import { Select } from 'antd';
+import { Button, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useReducer } from 'react';
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
@@ -11,42 +11,74 @@ import css from './ExperimentVisualizationFilters.module.scss';
 
 const { Option } = Select;
 
+export interface VisualizationFilters {
+  batch: number;
+  batchMargin: number;
+  hParams: string[];
+  maxTrial: number;
+  metric: MetricName;
+}
+
+export enum FilterError {
+  MetricBatches,
+  MetricNames,
+}
+
 interface Props {
   batches: number[];
-  hParams: string[];
+  filters: VisualizationFilters;
+  fullHParams: string[];
   metrics: MetricName[];
-  onBatchChange?: (batch: number) => void;
-  onBatchMarginChange?: (margin: number) => void;
-  onHParamChange?: (hParams?: string[]) => void;
-  onMaxTrialsChange?: (count: number) => void;
+  onChange?: (filters: VisualizationFilters) => void;
   onMetricChange?: (metric: MetricName) => void;
-  selectedBatch: number;
-  selectedBatchMargin?: number;
-  selectedHParams: string[];
-  selectedMaxTrial: number;
-  selectedMetric: MetricName;
   type: ExperimentVisualizationType,
 }
+
+enum ActionType { Set, SetBatch, SetBatchMargin, SetHParams, SetMaxTrial, SetMetric }
+
+type Action =
+| { type: ActionType.Set; value: VisualizationFilters }
+| { type: ActionType.SetBatch; value: number }
+| { type: ActionType.SetBatchMargin; value: number }
+| { type: ActionType.SetHParams; value: string[] }
+| { type: ActionType.SetMaxTrial; value: number }
+| { type: ActionType.SetMetric; value: MetricName }
 
 const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
 const BATCH_MARGIN_OPTIONS = [ 1, 5, 10, 20, 50 ];
 
+export const MAX_HPARAM_COUNT = 10;
+
+const reducer = (state: VisualizationFilters, action: Action) => {
+  switch (action.type) {
+    case ActionType.Set:
+      return { ...action.value };
+    case ActionType.SetBatch:
+      return { ...state, batch: action.value };
+    case ActionType.SetBatchMargin:
+      return { ...state, batchMargin: action.value };
+    case ActionType.SetHParams:
+      return { ...state, hParams: action.value };
+    case ActionType.SetMaxTrial:
+      return { ...state, maxTrial: action.value };
+    case ActionType.SetMetric:
+      return { ...state, metric: action.value };
+    default:
+      return state;
+  }
+};
+
 const ExperimentVisualizationFilters: React.FC<Props> = ({
   batches,
-  hParams,
+  filters,
+  fullHParams,
   metrics,
-  onBatchChange,
-  onBatchMarginChange,
-  onHParamChange,
-  onMaxTrialsChange,
+  onChange,
   onMetricChange,
-  selectedBatch,
-  selectedBatchMargin,
-  selectedHParams,
-  selectedMaxTrial,
-  selectedMetric,
   type,
 }: Props) => {
+  const [ localFilters, dispatch ] = useReducer(reducer, filters);
+
   const [ showMaxTrials, showBatches, showMetrics, showHParams ] = useMemo(() => {
     return [
       [ ExperimentVisualizationType.LearningCurve ].includes(type),
@@ -70,26 +102,38 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     ];
   }, [ type ]);
 
-  const handleMaxTrialsChange = useCallback((count: SelectValue) => {
-    if (onMaxTrialsChange) onMaxTrialsChange(count as number);
-  }, [ onMaxTrialsChange ]);
-
   const handleBatchChange = useCallback((batch: SelectValue) => {
-    if (onBatchChange) onBatchChange(batch as number);
-  }, [ onBatchChange ]);
+    dispatch({ type: ActionType.SetBatch, value: batch as number });
+  }, []);
 
   const handleBatchMarginChange = useCallback((margin: SelectValue) => {
-    if (onBatchMarginChange) onBatchMarginChange(margin as number);
-  }, [ onBatchMarginChange ]);
+    dispatch({ type: ActionType.SetBatchMargin, value: margin as number });
+  }, []);
 
-  const handleHParamChange = useCallback((hps: SelectValue) => {
-    if (!onHParamChange) return;
-    onHParamChange(Array.isArray(hps) && hps.length !== 0 ? hps as string[] : undefined);
-  }, [ onHParamChange ]);
+  const handleHParamChange = useCallback((hParams?: SelectValue) => {
+    if (!hParams || (Array.isArray(hParams) && hParams.length === 0)) {
+      dispatch({ type: ActionType.SetHParams, value: fullHParams.slice(0, MAX_HPARAM_COUNT) });
+    } else {
+      dispatch({ type: ActionType.SetHParams, value: hParams as string[] });
+    }
+  }, [ fullHParams ]);
+
+  const handleMaxTrialsChange = useCallback((count: SelectValue) => {
+    dispatch({ type: ActionType.SetMaxTrial, value: count as number });
+  }, []);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
+    dispatch({ type: ActionType.SetMetric, value: metric });
     if (onMetricChange) onMetricChange(metric);
   }, [ onMetricChange ]);
+
+  const handleApply = useCallback(() => {
+    if (onChange) onChange(localFilters);
+  }, [ localFilters, onChange ]);
+
+  const handleReset = useCallback(() => {
+    dispatch({ type: ActionType.Set, value: filters });
+  }, [ filters ]);
 
   return (
     <div className={css.base}>
@@ -99,7 +143,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           label="Top Trials"
           showSearch={false}
           style={{ width: 70 }}
-          value={selectedMaxTrial}
+          value={localFilters.maxTrial}
           onChange={handleMaxTrialsChange}>
           {TOP_TRIALS_OPTIONS.map(option => <Option key={option} value={option}>{option}</Option>)}
         </SelectFilter>
@@ -110,7 +154,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
             enableSearchFilter={false}
             label="Batches Processed"
             showSearch={false}
-            value={selectedBatch}
+            value={localFilters.batch}
             onChange={handleBatchChange}>
             {batches.map(batch => <Option key={batch} value={batch}>{batch}</Option>)}
           </SelectFilter>
@@ -118,7 +162,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
             enableSearchFilter={false}
             label="Batch Margin"
             showSearch={false}
-            value={selectedBatchMargin}
+            value={localFilters.batchMargin}
             onChange={handleBatchMarginChange}>
             {BATCH_MARGIN_OPTIONS.map(option => (
               <Option key={option} value={option}>{option}</Option>
@@ -132,18 +176,20 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           label="Metric"
           metricNames={metrics}
           multiple={false}
-          value={selectedMetric}
+          value={localFilters.metric}
           width={'100%'}
           onChange={handleMetricChange} />
       )}
       {showHParams && (
         <MultiSelect
           label="HP"
-          value={selectedHParams}
+          value={localFilters.hParams}
           onChange={handleHParamChange}>
-          {hParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
+          {fullHParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
         </MultiSelect>
       )}
+      <Button type="primary" onClick={handleApply}>Apply</Button>
+      <Button onClick={handleReset}>Reset</Button>
     </div>
   );
 };
