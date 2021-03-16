@@ -1,11 +1,10 @@
-import { Tooltip } from 'antd';
 import React, { PropsWithChildren, useCallback, useState } from 'react';
 
 import useStorage from 'hooks/useStorage';
 import { isString } from 'utils/data';
 import { generateAlphaNumeric, toHtmlId } from 'utils/string';
 
-import Icon from './Icon';
+import IconButton from './IconButton';
 import css from './Section.module.scss';
 
 interface Props {
@@ -50,16 +49,11 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
       <div className={css.header}>
         {!props.hideTitle && <h5 className={css.title}>{props.title}</h5>}
         {props.options && <div className={css.options}>{props.options}</div>}
-        {props.filters && (
-          <Tooltip placement="top" title="Toggle Filter">
-            <button
-              aria-label="Toggle Filter"
-              className={css.filterToggle}
-              onClick={handleFilterToggle}>
-              <Icon name={showFilters ? 'close' : 'filter'} />
-            </button>
-          </Tooltip>
-        )}
+        {props.filters && <IconButton
+          className={css.filterToggle}
+          icon={showFilters ? 'close' : 'filter'}
+          label={showFilters ? 'Close Filter Bar' : 'Open Filter Bar'}
+          onClick={handleFilterToggle} />}
       </div>
       {props.filters && (
         <div className={css.filterBar}>

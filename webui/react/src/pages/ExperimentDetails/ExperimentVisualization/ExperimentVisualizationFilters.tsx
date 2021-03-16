@@ -2,6 +2,7 @@ import { Button, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useReducer } from 'react';
 
+import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import SelectFilter from 'components/SelectFilter';
@@ -188,8 +189,10 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           {fullHParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
         </MultiSelect>
       )}
-      <Button type="primary" onClick={handleApply}>Apply</Button>
-      <Button onClick={handleReset}>Reset</Button>
+      <div className={css.buttons}>
+        <IconButton icon="checkmark" label="Apply Filters" type="primary" onClick={handleApply} />
+        <IconButton icon="close" label="Reset Filters" onClick={handleReset} />
+      </div>
     </div>
   );
 };

@@ -41,7 +41,7 @@
   .filterToggle {
     background-color: var(--theme-colors-monochrome-17);
     border-color: var(--theme-colors-monochrome-12);
-    border-radius: var(--theme-sizes-border-radius);
+    border-radius: 0.3rem;
     border-style: solid;
     border-width: var(--theme-sizes-border-width);
     cursor: pointer;
@@ -69,7 +69,6 @@
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
     border-radius: var(--theme-sizes-border-radius) 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius);
     display: none;
-    padding: var(--theme-sizes-layout-medium);
   }
 }
 .base.maxHeight {
@@ -100,7 +99,7 @@
 .base.showFilters {
   .filterToggle {
     background-color: var(--theme-colors-monochrome-13);
-    border-radius: var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0 0;
+    border-radius: 0.3rem 0.3rem 0 0;
     border-width: var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0 var(--theme-sizes-border-width);
     display: block;
     height: calc(var(--theme-sizes-layout-giant) + var(--theme-sizes-layout-medium));
