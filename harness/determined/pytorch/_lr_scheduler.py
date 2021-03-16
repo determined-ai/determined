@@ -52,6 +52,8 @@ class LRScheduler:
                 3. ``MANUAL_STEP``: Determined will not call scheduler.step() at all.
                    It is up to the user to decide when to call scheduler.step(),
                    and whether to pass any arguments.
+            frequency:
+                Sets the frequency with witch the batch and epoch step modes get triggered.
         """
         check.check_not_none(scheduler)
         check.check_isinstance(step_mode, LRScheduler.StepMode)
