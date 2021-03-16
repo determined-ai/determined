@@ -23,12 +23,9 @@ To migrate your code from the `Trainer
 please read more about :ref:`PyTorchTrial <pytorch-trial>` and
 :ref:`experiment-configuration`.
 
-LightningAdapter takes ``LightningModule`` from your Pytorch Lightning
-code and implements most of the methods you need from the
-:ref:`PyTorchTrial <pytorch-trial>` API for you.
-In this approach, the ``LightningModule`` is not paired with the ``Trainer``
-so that there are some methods and hooks that are not supported.
-Read about those here:
+In this approach, the ``LightningModule`` is not paired with the
+``Trainer`` so that there are some methods and hooks that are not
+supported. Read about those here:
 
 -  No separate test-set definition in Determined: ``test_step``,
    ``test_step_end``, ``test_epoch_end``, ``on_test_batch_start``,
@@ -39,31 +36,11 @@ Read about those here:
    ``on_fit_end``, ``on_pretrain_routine_start``,
    ``on_pretrain_routine_end``.
 
-.. list-table::
-   :header-rows: 1
-
-   -  -  Name
-      -  Comment
-
-   -  -  ``training_step_end`` & ``validation_step_end``
-      -  No DP or DDP2 support
-
-   -  -  ``hiddens`` argument in ``training_step`` &
-         ``tbptt_split_batch``
-      -  No Sequential model support in ``PyTorchTrial``
-
-   -  -  ``transfer_batch_to_device``
-      -  Unsupported
-
-   -  -  ``get_progress_bar_dict``
-      -  Provided through WebUI
-
-   -  -  ``on_train_epoch_end``
-      -  Incompatible with mid-epoch preemtpion
-
-   -  -  ``manual_backward``, ``backward``, ``optimizer_step``,
-         ``optimizer_zero_grad``
-      -  Unsupported
+-  And: ``training_step_end`` & ``validation_step_end``, ``hiddens``
+   parameter in ``training_step`` and ``tbptt_split_batch``,
+   ``transfer_batch_to_device``, ``get_progress_bar_dict``,
+   ``on_train_epoch_end``, ``manual_backward``, ``backward``,
+   ``optimizer_step``, ``optimizer_zero_grad``
 
 .. autoclass:: determined.pytorch.lightning.LightningAdapter
    :members:
