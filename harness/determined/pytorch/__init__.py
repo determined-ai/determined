@@ -15,4 +15,3 @@ from determined.pytorch._reducer import MetricReducer, _SimpleReducer, Reducer, 
 from determined.pytorch._experimental import PyTorchExperimentalContext
 from determined.pytorch._pytorch_context import PyTorchTrialContext
 from determined.pytorch._pytorch_trial import PyTorchTrial, PyTorchTrialController, reset_parameters
-from determined.pytorch._lightning import LightningAdapter
