@@ -1,14 +1,14 @@
 """
 This example shows how to interact with the Determined PyTorch Lightning Adapter
-interface to build a basic MNIST network. The PLAdapter utilizes the provided
+interface to build a basic MNIST network. LightningAdapter utilizes the provided
 LightningModule with Determined's PyTorch control loop.
 """
 
 from determined.pytorch import PyTorchTrialContext, DataLoader
-from determined.pytorch._lightning import PLAdapter
+from determined.pytorch.lightning import LightningAdapter
 import mnist
 
-class MNISTTrial(PLAdapter):
+class MNISTTrial(LightningAdapter):
     def __init__(self, context: PyTorchTrialContext) -> None:
         lm = mnist.LightningMNISTClassifier(lr=context.get_hparam('learning_rate'))
         data_dir = f"/tmp/data-rank{context.distributed.get_rank()}"
