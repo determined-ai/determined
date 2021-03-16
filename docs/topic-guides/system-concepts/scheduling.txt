@@ -123,12 +123,34 @@ enabled:
  Gang-scheduling on Kubernetes
 *******************************
 
-The master allocates cluster resources (slots) to active tasks based on
-their priority, but does not support preemption of Determined tasks. Tasks
-of lower priority will not be scheduled when those of higher priority are
-queued, but lower priority tasks that are currently running will be allowed
-to finish.
+Kubernetes does not natively support gang-scheduling and its default
+scheduler will schedule pods on a first-come-first-serve basis. This
+approach is problematic if a user submits several multi-pod jobs at
+once; first-come-first-serve could result in a cluster deadlock.
+Determined is able to support gang-scheduling by using the lightweight
+coscheduling plugin, which extends the Kubernetes scheduler and blocks
+scheduling of pods unless there are enough resources for all the pods in
+the job. To function, the plugin requires special labels to be set that
+specify the amount of nodes that each job needs for execution.
+Determined is able to automatically calculate and set these labels for
+its experiments.
 
-Kubernetes itself does not support gang-scheduling, so this capability is
-achieved by using the lightweight coscheduling plugin to extend the
-Kubernetes scheduler.
+Currently, the coscheduling plugin allocates resources to jobs based on
+their priority, but does not support preemption. Any low priority task
+will be able to finish before a higher priority task can begin running.
+Additionally, there isn't an implementation of ``max_slots`` or
+``max_concurrent_trials`` that would limit the resources of an
+experiment, i.e. one for hyperparameter search. Lastly, Determined's
+capability to automatically set pod labels is restricted to GPU
+experiments; it is unable to do the same for CPU experiments or user
+commands. If gang-scheduling is desired for these, it must be set
+manually via the environment field in the config. For instance:
+
+.. code::
+
+   environment:
+      pod_spec:
+         metadata:
+            labels:
+               pod-group.scheduling.sigs.k8s.io/name: determined
+               pod-group.scheduling.sigs.k8s.io/min-available: "2"

@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -174,7 +175,7 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if scheduler != "coscheduler" || newPod.Spec.SchedulerName != "" || p.taskSpec.Description() == "cmd"{
+	if scheduler != "coscheduler" || newPod.Spec.SchedulerName != "" || p.taskSpec.Description() == "cmd" {
 		return
 	}
 
@@ -183,6 +184,12 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 
 	newPod.Spec.SchedulerName = scheduler
 	if p.taskSpec.Description() == "gc" {
+		if newPod.Spec.PriorityClassName != "" {
+			log.Warnf(
+				"GC Priority is currently using priority class: %s. It will be reset to determined-system-priority",
+				newPod.Spec.PriorityClassName,
+			)
+		}
 		newPod.Spec.PriorityClassName = "determined-system-priority"
 		minAvailable = 1
 	} else {
@@ -201,7 +208,7 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 
 	_, ok := newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"]
 	if !ok {
-		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = configurePodGroupName(p.podName)
+		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = trialNameFromPod(p.podName)
 	}
 	_, ok = newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"]
 	if !ok {
@@ -404,7 +411,10 @@ func configureUniqueName(t tasks.TaskSpec) string {
 	return fmt.Sprintf("%s-%s-%s", t.Description(), t.TaskID, petName.Generate(2, "-"))
 }
 
-func configurePodGroupName(podName string) string {
+func trialNameFromPod(podName string) string {
+	// Given a pod name of the form exp-#-trial-#-rank-#..., returns a string exp#trial#
+	// e.g. input: exp-1-trial-1-rank-0-71af9..., returns: exp1trial1
+
 	newName := ""
 	for i, v := range strings.Split(podName, "-") {
 		if i > 3 {

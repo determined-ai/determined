@@ -49,7 +49,7 @@ data:
       max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
       master_service_name: determined-master-service-{{ .Release.Name }}
       {{- if eq .Values.defaultScheduler "coscheduler"}}
-      default_scheduler: {{ .Values.defaultScheduler | quote }}
+      default_scheduler: "coscheduler"
       {{- end }}
 
     {{ if .Values.taskContainerDefaults -}}
