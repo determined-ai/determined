@@ -1,8 +1,9 @@
 import { Tooltip } from 'antd';
 import React, { PropsWithChildren, useCallback, useState } from 'react';
 
+import useStorage from 'hooks/useStorage';
 import { isString } from 'utils/data';
-import { toHtmlId } from 'utils/string';
+import { generateAlphaNumeric, toHtmlId } from 'utils/string';
 
 import Icon from './Icon';
 import css from './Section.module.scss';
@@ -19,11 +20,15 @@ interface Props {
 }
 
 const defaultProps = { divider: false };
+const STORAGE_PATH = 'section';
 
 const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
-  const id = props.id || (isString(props.title) ? toHtmlId(props.title as string) : undefined);
+  const defaultId = isString(props.title) ? toHtmlId(props.title) : generateAlphaNumeric();
+  const id = props.id || defaultId;
+  const storage = useStorage(STORAGE_PATH);
+  const defaultShowFilters = storage.getWithDefault(id, true);
+  const [ showFilters, setShowFilters ] = useState(defaultShowFilters);
   const classes = [ css.base ];
-  const [ showFilters, setShowFilters ] = useState(true);
 
   if (props.bodyBorder) classes.push(css.bodyBorder);
   if (props.divider) classes.push(css.divider);
@@ -31,7 +36,12 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   if (props.maxHeight) classes.push(css.maxHeight);
   if (showFilters) classes.push(css.showFilters);
 
-  const handleFilterToggle = useCallback(() => setShowFilters(prev => !prev), []);
+  const handleFilterToggle = useCallback(() => {
+    setShowFilters(prev => {
+      storage.set(id, !prev);
+      return !prev;
+    });
+  }, [ id, storage ]);
 
   return (
     <section className={classes.join(' ')} id={id}>
