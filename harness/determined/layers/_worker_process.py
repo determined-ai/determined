@@ -325,7 +325,15 @@ class SubprocessLauncher:
                 response, dict, f"Received non-metrics object from worker: {response}"
             )
             # There should only be one chief response.
-            check.is_none(chief_worker_response, "Received multiple non-SkippedWorkload messages.")
+            # Special case InvalidHP messages
+            if chief_worker_response != {
+                "metrics": {},
+                "stop_requested": False,
+                "invalid_hp": True,
+            }:
+                check.is_none(
+                    chief_worker_response, "Received multiple non-SkippedWorkload messages."
+                )
             chief_worker_response = cast(Dict[str, Any], response)
 
         # Confirm that if we have did not see a chief response then we are not the chief machine.

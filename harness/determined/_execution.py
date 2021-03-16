@@ -48,7 +48,7 @@ def _catch_init_invalid_hp(workloads: Iterator[Any]) -> Any:
     except InvalidHP as e:
         logging.info("Invalid hyperparameter exception in trial __init__: {}".format(e))
         wkld, args, response_func = next(workloads)
-        response_func(util.wrap_metrics({}, False, True))
+        response_func(util.wrap_metrics({}, stop_requested=False, invalid_hp=True))
         raise
 
 
