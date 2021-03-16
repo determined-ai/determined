@@ -2,7 +2,6 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import SelectFilter from 'components/SelectFilter';
@@ -21,13 +20,11 @@ interface Props {
   onHParamChange?: (hParams?: string[]) => void;
   onMaxTrialsChange?: (count: number) => void;
   onMetricChange?: (metric: MetricName) => void;
-  onViewChange?: (view: GridListView) => void;
   selectedBatch: number;
   selectedBatchMargin?: number;
   selectedHParams: string[];
   selectedMaxTrial: number;
   selectedMetric: MetricName;
-  selectedView: GridListView;
   type: ExperimentVisualizationType,
 }
 
@@ -43,16 +40,14 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   onHParamChange,
   onMaxTrialsChange,
   onMetricChange,
-  onViewChange,
   selectedBatch,
   selectedBatchMargin,
   selectedHParams,
   selectedMaxTrial,
   selectedMetric,
-  selectedView,
   type,
 }: Props) => {
-  const [ showMaxTrials, showBatches, showMetrics, showHParams, showLayout ] = useMemo(() => {
+  const [ showMaxTrials, showBatches, showMetrics, showHParams ] = useMemo(() => {
     return [
       [ ExperimentVisualizationType.LearningCurve ].includes(type),
       [
@@ -95,10 +90,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   const handleMetricChange = useCallback((metric: MetricName) => {
     if (onMetricChange) onMetricChange(metric);
   }, [ onMetricChange ]);
-
-  const handleViewChange = useCallback((view: GridListView) => {
-    if (onViewChange) onViewChange(view);
-  }, [ onViewChange ]);
 
   return (
     <div className={css.base}>
@@ -153,7 +144,6 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           {hParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
         </MultiSelect>
       )}
-      {showLayout && <GridListRadioGroup value={selectedView} onChange={handleViewChange} />}
     </div>
   );
 };

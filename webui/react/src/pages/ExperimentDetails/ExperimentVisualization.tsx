@@ -47,7 +47,6 @@ const STORAGE_BATCH_MARGIN_KEY = 'batch-margin';
 const STORAGE_HPARAMS_KEY = 'hyperparameters';
 const STORAGE_MAX_TRIALS_KEY = 'max-trials';
 const STORAGE_METRIC_KEY = 'metric';
-const STORAGE_VIEW_KEY = 'grid-list-view';
 const TYPE_KEYS = Object.values(ExperimentVisualizationType);
 const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
 const DEFAULT_BATCH_MARGIN = 10;
@@ -76,7 +75,6 @@ const ExperimentVisualization: React.FC<Props> = ({
   const defaultBatchMargin = storage.get<number>(STORAGE_BATCH_MARGIN_KEY) || DEFAULT_BATCH_MARGIN;
   const defaultMaxTrial = storage.get<number>(STORAGE_MAX_TRIALS_KEY) || DEFAULT_MAX_TRIALS;
   const defaultMetric = storage.get<MetricName>(STORAGE_METRIC_KEY) || searcherMetric;
-  const defaultView = storage.get<GridListView>(STORAGE_VIEW_KEY) || GridListView.Grid;
   const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
   const [ trainingMetrics, setTrainingMetrics ] = useState<string[]>([]);
@@ -85,7 +83,6 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultBatch);
   const [ selectedBatchMargin, setSelectedBatchMargin ] = useState<number>(defaultBatchMargin);
   const [ selectedMetric, setSelectedMetric ] = useState<MetricName>(defaultMetric);
-  const [ selectedView, setSelectedView ] = useState(defaultView);
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
@@ -141,11 +138,6 @@ const ExperimentVisualization: React.FC<Props> = ({
   const handleMetricChange = useCallback((metric: MetricName) => {
     storage.set(STORAGE_METRIC_KEY, metric);
     setSelectedMetric(metric);
-  }, [ storage ]);
-
-  const handleViewChange = useCallback((view: GridListView) => {
-    storage.set(STORAGE_VIEW_KEY, view);
-    setSelectedView(view);
   }, [ storage ]);
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
@@ -275,14 +267,12 @@ const ExperimentVisualization: React.FC<Props> = ({
       selectedHParams={selectedHParams}
       selectedMaxTrial={selectedMaxTrial}
       selectedMetric={selectedMetric}
-      selectedView={selectedView}
       type={typeKey}
       onBatchChange={handleBatchChange}
       onBatchMarginChange={handleBatchMarginChange}
       onHParamChange={handleHParamChange}
       onMaxTrialsChange={handleMaxTrialsChange}
       onMetricChange={handleMetricChange}
-      onViewChange={handleViewChange}
     />
   );
 
@@ -335,7 +325,6 @@ const ExperimentVisualization: React.FC<Props> = ({
               selectedBatchMargin={selectedBatchMargin}
               selectedHParams={selectedHParams}
               selectedMetric={selectedMetric}
-              selectedView={selectedView}
             />
           )}
         </Col>
