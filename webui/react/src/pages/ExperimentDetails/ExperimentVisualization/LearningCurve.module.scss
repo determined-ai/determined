@@ -1,15 +1,6 @@
 .base {
-  .container {
-    background-color: var(--theme-colors-monochrome-17);
-    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-    border-radius: var(--theme-sizes-border-radius);
-    min-height: 40rem;
-  }
-  .chart {
-    height: 40rem;
-  }
-  .table {
-    padding: var(--theme-sizes-layout-big);
-  }
+  .container { min-height: 40rem; }
+  .chart { height: 40rem; }
+  .table { padding: var(--theme-sizes-layout-big); }
 }
 .waiting { height: 30rem; }
