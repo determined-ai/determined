@@ -19,6 +19,7 @@ hyperparameters:
                               # to max_length.batches (assuming we step every
                               # batch in the LR scheduler definition)
 searcher:
+    source_trial_id: 1850
     name: single
     metric: f1
     max_length:
@@ -26,7 +27,7 @@ searcher:
                         # 2 epochs as in the huggingface repo.
     smaller_is_better: false
 min_validation_period:
-    records: 12000 # Validation is fairly costly (~10 minutes per), but
+    records: 120 # Validation is fairly costly (~10 minutes per), but
                    # relative to overall runtime it's not that high, so
                    # validate often to give more frequent feedback.
 data:

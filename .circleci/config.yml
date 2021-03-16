@@ -580,6 +580,7 @@ commands:
         type: string
       gke-version:
         type: string
+        default: 1.18.12-gke.1210
       machine-type:
         type: string
       num-machines:
@@ -592,7 +593,7 @@ commands:
         type: string
       release-channel:
         type: string
-        default: rapid
+        default: regular
       gcloud-service-key:
         default: GCLOUD_SERVICE_KEY
         description: The gcloud service key
@@ -616,7 +617,7 @@ commands:
           google-compute-zone: <<parameters.google-compute-zone>>
           google-project-id: <<parameters.google-project-id>>
       - run:
-          command: gcloud beta container clusters create ${CLUSTER_ID} --addons=HorizontalPodAutoscaling,HttpLoadBalancing,Istio,CloudRun,NodeLocalDNS --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --zone=us-central1-c --release-channel rapid --node-locations=us-central1-c --subnetwork=default --enable-stackdriver-kubernetes --scopes storage-rw,cloud-platform --num-nodes 1
+          command: gcloud beta container clusters create ${CLUSTER_ID} --addons=HorizontalPodAutoscaling,HttpLoadBalancing,Istio,CloudRun,NodeLocalDNS --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --zone=us-central1-c --release-channel=<<parameters.release-channel>> --node-locations=us-central1-c --subnetwork=default --enable-stackdriver-kubernetes --scopes storage-rw,cloud-platform --num-nodes 1
           name: Create GKE cluster
       - run:
           command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --zone <<parameters.node-locations>>
@@ -1504,9 +1505,6 @@ jobs:
       parallelism:
         type: integer
         default: 1
-      gke-version:
-        type: string
-        default: "1.18.12-gke.1205"
       machine-type:
         type: string
         default: "a2-highgpu-1g"
@@ -1555,7 +1553,6 @@ jobs:
       - setup-gke-cluster-cuda-11:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
-          gke-version: <<parameters.gke-version>>
           machine-type: <<parameters.machine-type>>
           num-machines: <<parameters.num-machines>>
           gpu-type: <<parameters.gpu-type>>
