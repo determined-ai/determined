@@ -1,2 +1,2 @@
-#!/usr/bin/sh
+#!/bin/sh
 ../../../../schemas/gen.py go-struct "$@"
