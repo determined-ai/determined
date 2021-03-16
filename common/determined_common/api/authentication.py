@@ -67,14 +67,17 @@ class Authentication:
             raise api.errors.UnauthenticatedException(username="")
         return self.session.username
 
-    def get_session_token(self) -> str:
+    def get_session_token(self, must: bool = True) -> str:
         """
         Returns the authentication token for the session user. If there is no
         active session, then an UnauthenticatedException will be raised.
 
         """
         if self.session is None:
-            raise api.errors.UnauthenticatedException(username="")
+            if must:
+                raise api.errors.UnauthenticatedException(username="")
+            else:
+                return ""
         return self.session.token
 
     def reset_session(self) -> None:

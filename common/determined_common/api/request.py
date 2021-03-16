@@ -107,11 +107,17 @@ def maybe_upgrade_ws_scheme(master_address: str) -> str:
 
 
 def add_token_to_headers(headers: Dict[str, str]) -> Dict[str, str]:
+    # Try to get user token first since it will include the user token that is used
+    # for queries in some restful APIs.
+    user_token = authentication.Authentication.instance().get_session_token(must=False)
+    if user_token:
+        return {**headers, "Authorization": "Bearer {}".format(user_token)}
+
     task_token = authentication.Authentication.instance().get_task_token()
     if task_token:
         return {**headers, "Grpc-Metadata-x-task-token": "Bearer {}".format(task_token)}
-    token = authentication.Authentication.instance().get_session_token()
-    return {**headers, "Authorization": "Bearer {}".format(token)}
+
+    return headers
 
 
 def do_request(
