@@ -25,9 +25,9 @@ please read more about :ref:`PyTorchTrial <pytorch-trial>` and
 
 LightningAdapter takes ``LightningModule`` from your Pytorch Lightning
 code and implements most of the methods you need from the
-:ref:`PyTorchTrial <pytorch-trial>` API for you. Since in this approach
-the ``LightningModule`` is not paired with the standard trainer that
-comes with Pytorch Lightning some methods and hooks are not supported.
+:ref:`PyTorchTrial <pytorch-trial>` API for you.
+In this approach, the ``LightningModule`` is not paired with the ``Trainer``
+so that there are some methods and hooks that are not supported.
 Read about those here:
 
 -  No separate test-set definition in Determined: ``test_step``,
