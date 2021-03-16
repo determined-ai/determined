@@ -32,3 +32,6 @@ class GCSTensorboardManager(base.TensorboardManager):
 
             blob.upload_from_filename(str(path))
             self._synced_event_sizes[path] = path.stat().st_size
+
+    def delete(self) -> None:
+        self.bucket.delete_blobs(blobs=self.bucket.list_blobs(prefix=self.experiment_sync_path))

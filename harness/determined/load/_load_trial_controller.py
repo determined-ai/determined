@@ -145,7 +145,11 @@ def prepare_tensorboard(
     container_path: Optional[str] = None,
 ) -> Tuple[tensorboard.TensorboardManager, tensorboard.BatchMetricWriter]:
     tensorboard_mgr = tensorboard.build(
-        env, env.experiment_config["checkpoint_storage"], container_path
+        env.det_cluster_id,
+        env.det_experiment_id,
+        env.det_trial_id,
+        env.experiment_config["checkpoint_storage"],
+        container_path,
     )
     try:
         from determined.tensorboard.metric_writers import tensorflow

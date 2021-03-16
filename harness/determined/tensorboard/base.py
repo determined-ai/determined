@@ -14,9 +14,12 @@ class TensorboardManager:
     implements the sync method.
     """
 
-    def __init__(self, base_path: pathlib.Path, sync_path: pathlib.Path):
+    def __init__(
+        self, base_path: pathlib.Path, sync_path: pathlib.Path, experiment_sync_path: pathlib.Path
+    ):
         self.base_path = base_path
         self.sync_path = sync_path
+        self.experiment_sync_path = experiment_sync_path
         self._synced_event_sizes: Dict[pathlib.Path, int] = {}
 
     def list_tfevents(self) -> List[pathlib.Path]:
@@ -51,5 +54,11 @@ class TensorboardManager:
     def sync(self) -> None:
         """
         Save the object to the backing persistent storage.
+        """
+        pass
+
+    def delete(self) -> None:
+        """
+        Delete all objects from the backing persistent storage.
         """
         pass

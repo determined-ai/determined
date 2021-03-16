@@ -14,9 +14,10 @@ import (
 )
 
 type checkpointGCTask struct {
-	rm         *actor.Ref
-	db         *db.PgDB
-	experiment *model.Experiment
+	rm             *actor.Ref
+	db             *db.PgDB
+	experiment     *model.Experiment
+	gcTensorboards bool
 
 	agentUserGroup *model.AgentUserGroup
 	taskSpec       *tasks.TaskSpec
@@ -61,9 +62,10 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			taskSpec.AgentUserGroup = t.agentUserGroup
 			taskSpec.TaskToken = taskToken
 			taskSpec.SetInner(&tasks.GCCheckpoints{
-				ExperimentID:     t.experiment.ID,
-				ExperimentConfig: t.experiment.Config,
-				ToDelete:         checkpoints,
+				ExperimentID:       t.experiment.ID,
+				ExperimentConfig:   t.experiment.Config,
+				ToDelete:           checkpoints,
+				DeleteTensorboards: t.gcTensorboards,
 			})
 			a.Start(ctx, taskSpec)
 		}
