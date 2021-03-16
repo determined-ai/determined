@@ -11,7 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-//go:generate ../gen.sh
+//go:generate sh ../gen.sh
 // TestUnionAV0 is exported.
 type TestUnionAV0 struct {
 	Type string `json:"type"`
@@ -20,7 +20,7 @@ type TestUnionAV0 struct {
 	CommonVal *string `json:"common_val"`
 }
 
-//go:generate ../gen.sh
+//go:generate sh ../gen.sh
 // TestUnionBV0 is exported.
 type TestUnionBV0 struct {
 	Type string `json:"type"`
@@ -29,7 +29,7 @@ type TestUnionBV0 struct {
 	CommonVal *string `json:"common_val"`
 }
 
-//go:generate ../gen.sh
+//go:generate sh ../gen.sh
 // TestUnionV0 is exported.
 type TestUnionV0 struct {
 	A *TestUnionAV0 `union:"type,a" json:"-"`
@@ -50,14 +50,14 @@ func (t TestUnionV0) MarshalJSON() ([]byte, error) {
 	return union.Marshal(t)
 }
 
-//go:generate ../gen.sh
+//go:generate sh ../gen.sh
 // TestSubV0 is exported.
 type TestSubV0 struct {
 	// defaultable; pointer.
 	ValY *string `json:"val_y"`
 }
 
-//go:generate ../gen.sh
+//go:generate sh ../gen.sh
 // TestRootV0 is exported.
 type TestRootV0 struct {
 	// required; non-pointer.
