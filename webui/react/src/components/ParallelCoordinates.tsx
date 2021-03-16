@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
-import Plotly, { Layout, PlotData } from 'Plotly';
+import Plotly, { Layout, PlotData, PlotlyHTMLElement } from 'Plotly';
 import { ExperimentHyperParamType, Primitive, Range } from 'types';
 import { ColorScale } from 'utils/color';
 import { clone, isBoolean, isNumber } from 'utils/data';
@@ -74,6 +74,7 @@ const ParallelCoordinates: React.FC<Props> = ({
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ constraints, setConstraints ] = useState<Record<string, Constraint>>({});
+  const hasPlotted = useRef(false);
 
   const colorValues = useMemo(() => {
     if (!colorScaleKey || !Array.isArray(data[colorScaleKey])) return undefined;
@@ -112,7 +113,8 @@ const ParallelCoordinates: React.FC<Props> = ({
           hpDimension.range = [ 0, dimension.categories.length * 2 ];
           hpDimension.ticktext = ticktext;
           hpDimension.tickvals = tickvals;
-          hpDimension.values = data[key].map(value => map[value.toString()]);
+          hpDimension.values = data[key] ?
+            data[key].map(value => map[value.toString()]) : undefined;
         }
 
         if (constraints[dimension.label] != null) {
@@ -146,17 +148,20 @@ const ParallelCoordinates: React.FC<Props> = ({
 
   useEffect(() => {
     const ref = chartRef.current;
-    if (!ref) return;
 
-    Plotly.react(ref, [ chartData ], plotlyLayout, plotlyConfig);
+    Plotly.react(ref, [ chartData ], plotlyLayout, plotlyConfig).then(() => {
+      hasPlotted.current = true;
+    });
 
-    const plotly = ref as unknown as Plotly.PlotlyHTMLElement;
+    const plotly = ref as unknown as PlotlyHTMLElement;
 
     /*
      * During filtering or ordering, save all the constraint ranges and column order
      * to reconstruct the chart correctly when re-rendering the chart.
      */
     plotly.on('plotly_restyle', data => {
+      if (!chartRef.current) return;
+
       if (!Array.isArray(data) || data.length < 1) return;
 
       const keys = Object.keys(data[0]);
@@ -199,15 +204,15 @@ const ParallelCoordinates: React.FC<Props> = ({
     });
 
     return () => {
-      if (ref) Plotly.purge(ref);
+      Plotly.purge(ref);
     };
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [ chartData, onFilter ]);
+  }, []);
 
   // Resize the chart when resize events happen.
   useEffect(() => {
     const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
-      if (!chartRef.current) return;
+      if (!chartRef.current || resize.width === 0 || resize.height === 0) return;
       const rect = chartRef.current.getBoundingClientRect();
       const layout = { ...plotlyLayout, width: rect.width };
       Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);

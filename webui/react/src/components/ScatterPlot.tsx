@@ -124,21 +124,23 @@ const ScatterPlot: React.FC<Props> = ({
     Plotly.react(ref, [ chartData ], chartLayout, plotlyConfig);
 
     return () => {
-      if (ref) Plotly.purge(ref);
+      Plotly.purge(ref);
     };
-  }, [ chartData, chartLayout, title ]);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, []);
 
   // Resize the chart when resize events happen.
   useEffect(() => {
     const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
-      if (!chartRef.current) return;
+      if (!chartRef.current || resize.width === 0 || resize.height === 0) return;
       const rect = chartRef.current.getBoundingClientRect();
       const layout = { ...chartLayout, height: rect.height, width: rect.width };
       Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);
     });
 
     throttleResize();
-  }, [ chartData, chartLayout, resize ]);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [ chartData, resize ]);
 
   return <div id={id} ref={chartRef} />;
 };
