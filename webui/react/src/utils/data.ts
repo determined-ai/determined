@@ -1,12 +1,12 @@
 import { RawJson, RecordKey } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
-export const isBoolean = (data: unknown): boolean => typeof data === 'boolean';
+export const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
-export const isString = <T>(data: T): boolean => typeof data === 'string';
+export const isString = (data: unknown): data is string => typeof data === 'string';
 export const isFunction = (fn: unknown): boolean => {
   return typeof fn === 'function';
 };
