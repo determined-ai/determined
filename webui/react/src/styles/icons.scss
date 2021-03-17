@@ -4,10 +4,10 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('fonts/determined-ai.woff2?1okusw') format('woff2'),
-    url('fonts/determined-ai.woff?1okusw') format('woff'),
-    url('fonts/determined-ai.ttf?1okusw') format('truetype'),
-    url('fonts/determined-ai.svg?1okusw#determined-ai') format('svg');
+    url('fonts/determined-ai.woff2?5wpweg') format('woff2'),
+    url('fonts/determined-ai.woff?5wpweg') format('woff'),
+    url('fonts/determined-ai.ttf?5wpweg') format('truetype'),
+    url('fonts/determined-ai.svg?5wpweg#determined-ai') format('svg');
 }
 
 [class^='icon-'],
@@ -52,15 +52,20 @@
 .icon-filter::before { content: '\e92a'; }
 .icon-fullscreen::before { content: '\e91a'; }
 .icon-grid::before { content: '\e904'; }
+.icon-heat::before { content: '\e92d'; }
 .icon-info::before { content: '\e91e'; }
 .icon-jupyter::before { content: '\e915'; }
+.icon-learning::before { content: '\e92c'; }
 .icon-list::before { content: '\e905'; }
 .icon-lock::before { content: '\e911'; }
 .icon-logs::before { content: '\e91b'; }
 .icon-notebook::before { content: '\e906'; }
 .icon-overflow-horizontal::before { content: '\e907'; }
 .icon-overflow-vertical::before { content: '\e908'; }
+.icon-parcoords::before { content: '\e92f'; }
+.icon-pencil::before { content: '\e930'; }
 .icon-popout::before { content: '\e910'; }
+.icon-scatter-plot::before { content: '\e92e'; }
 .icon-search::before { content: '\ea01'; }
 .icon-settings::before { content: '\e929'; }
 .icon-shell::before { content: '\e909'; }
