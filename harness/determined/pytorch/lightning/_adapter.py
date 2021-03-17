@@ -1,4 +1,5 @@
 import inspect
+from abc import abstractmethod
 from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
 import pytorch_lightning as pl
@@ -9,7 +10,13 @@ from torch.optim.optimizer import Optimizer
 
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
-from determined.pytorch import LRScheduler, PyTorchCallback, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchCallback,
+    PyTorchTrial,
+    PyTorchTrialContext,
+)
 from determined.tensorboard.metric_writers import pytorch
 from determined.util import filter_duplicates, has_param
 from determined_common import check
@@ -109,7 +116,7 @@ class _LightningAdapterState:
 
 class LightningAdapter(PyTorchTrial):
     """
-    Pytorch Lightning Adapter, or PLAdapter for short, provides a quick way
+    Pytorch Lightning Adapter provides a quick way
     to train your Pytorch Lightning models with all the Determined features,
     such as mid-epoch preemption, simple distributed training interface,
     simple job submission to the Determined cluster, and so on.
@@ -119,7 +126,7 @@ class LightningAdapter(PyTorchTrial):
         """
         This performs the necessary initialization steps to:
 
-        1. check the compatibility of the provided ``LightningModule`` with ``PLAdapter``.
+        1. check the compatibility of the provided ``LightningModule`` with ``LightningAdapter``.
         2. define a ``PytorchTrial`` with models, optimizers, and LR schedulers that are provided
            by ``LightningModule``.
         3. patch the ``LightningModule`` methods that depend on a ``Trainer``.
@@ -133,13 +140,9 @@ class LightningAdapter(PyTorchTrial):
 
         .. code-block:: python
 
-            lm = gan.GAN(channels, width, height,
-                        batch_size=context.get_global_batch_size(),
-                        lr=context.get_hparam('lr'),
-                        b1=context.get_hparam('b1'),
-            )
-
-            super().__init__(context, lightning_module=lm)
+            def __init__(self, context: PyTorchTrialContext) -> None:
+                lm = mnist.LightningMNISTClassifier(lr=context.get_hparam('learning_rate'))
+                super().__init__(context, lightning_module=lm)
 
 
         """
@@ -325,3 +328,42 @@ class LightningAdapter(PyTorchTrial):
         else:
             metrics = rv
         return metrics
+
+    @abstractmethod
+    def build_training_data_loader(self) -> DataLoader:
+        """
+        Defines the data loader to use during training.
+
+        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
+
+        If you're using ``LightningDataModule`` this could be as simple as:
+
+        .. code-block:: python
+
+            self.dm.setup()
+            dl = self.dm.train_dataloader()
+            return DataLoader(dl.dataset, batch_size=dl.batch_size,
+                             num_workers=dl.num_workers)
+
+
+        """
+        pass
+
+    @abstractmethod
+    def build_validation_data_loader(self) -> DataLoader:
+        """
+        Defines the data loader to use during validation.
+
+        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
+
+        If you're using ``LightningDataModule`` this could be as simple as:
+
+        .. code-block:: python
+
+            self.dm.setup()
+            dl = self.dm.val_dataloader()
+            return DataLoader(dl.dataset, batch_size=dl.batch_size,
+                             num_workers=dl.num_workers)
+
+        """
+        pass
