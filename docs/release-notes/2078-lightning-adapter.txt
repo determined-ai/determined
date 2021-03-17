@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Add an adapter to support ``LightningModule`` from PyTorch Lightning
-   in Determined's PyTorchTrial API. Read more about this in the
-   documentation bundled with this release.
