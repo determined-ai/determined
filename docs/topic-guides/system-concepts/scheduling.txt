@@ -135,9 +135,11 @@ specify the amount of nodes that each job needs for execution.
 Determined is able to automatically calculate and set these labels for
 its experiments.
 
-Currently, the coscheduling plugin allocates resources to jobs based on
-their priority, but does not support preemption. Any low priority task
-will be able to finish before a higher priority task can begin running.
+Importantly, the coscheduling plugin does not work with cluster
+autoscaling. Static node pools must be used to achieve gang-scheduling.
+Also, while the plugin allocates resources to jobs based on their
+priority, it does not support preemption. Any low priority task will be
+able to finish before a higher priority task can begin running.
 Additionally, there isn't an implementation of ``max_slots`` or
 ``max_concurrent_trials`` that would limit the resources of an
 experiment, i.e. one for hyperparameter search. Lastly, Determined's
