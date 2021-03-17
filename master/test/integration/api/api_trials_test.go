@@ -165,14 +165,17 @@ func trialDetailAPITests(
 func trialProfilerMetricsTests(
 	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
+	// Given an experiment.
 	experiment := testutils.ExperimentModel()
 	err := db.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
+	// With a trial.
 	trial := testutils.TrialModel(experiment.ID, testutils.WithTrialState(model.ActiveState))
 	err = db.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
 
+	// If we begin to stream for metrics.
 	ctx, _ := context.WithTimeout(creds, time.Minute)
 	tlCl, err := cl.GetTrialProfilerMetrics(ctx, &apiv1.GetTrialProfilerMetricsRequest{
 		Labels: &trialv1.TrialProfilerMetricLabels{
@@ -185,18 +188,21 @@ func trialProfilerMetricsTests(
 	assert.NilError(t, err, "failed to initiate trial profiler metrics stream")
 
 	for i := 0; i < 10; i++ {
+		// When we add some metrics that match our stream.
 		match := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "brad's agent", "1")
 		_, err := cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
 			Batch: match,
 		})
 		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
 
+		// And some that do not match our stream.
 		notMatch := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "someone else's agent", "1")
 		_, err = cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
 			Batch: notMatch,
 		})
 		assert.NilError(t, err, "failed to insert mocked unmatched trial profiler metrics")
 
+		// Then when we receive the metrics, they should be the metrics we expect.
 		recvMetricsBatch, err := tlCl.Recv()
 		assert.NilError(t, err, "failed to stream metrics")
 
@@ -239,7 +245,7 @@ func trialProfilerMetricsAvailableSeriesTests(
 	tlCl, err := cl.GetTrialProfilerAvailableSeries(ctx, &apiv1.GetTrialProfilerAvailableSeriesRequest{
 		TrialId: int32(trial.ID),
 	})
-	assert.NilError(t, err, "failed to initiate trial profiler metrics stream")
+	assert.NilError(t, err, "failed to initiate trial profiler series stream")
 
 	testBatches := []*trialv1.TrialProfilerMetricsBatch{
 		randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "agent0", "1"),
@@ -262,7 +268,7 @@ func trialProfilerMetricsAvailableSeriesTests(
 		// This may need 2 or more attempts; gRPC streaming does not provide any backpressure mechanism, if the client
 		// is not ready to receive a message when it is sent to the stream server side, the server will buffer it and
 		// any calls to Send will return, allowing the code to chug along merrily and Send more and more data while the
-		// client doesn't consume it. Because of this, we give the test a change to read out stale entries before
+		// client doesn't consume it. Because of this, we give the test a chance to read out stale entries before
 		// marking the attempt as a failure. For more detail, see https://github.com/grpc/grpc-go/issues/2159.
 		shots := 5
 		var resp *apiv1.GetTrialProfilerAvailableSeriesResponse

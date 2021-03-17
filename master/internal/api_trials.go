@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	batchSize                     = 1000
+	trialLogsBatchSize            = 1000
 	trialProfilerMetricsBatchSize = 100
 )
 
@@ -97,8 +97,8 @@ func (a *apiServer) TrialLogs(
 	var followState interface{}
 	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
 		switch {
-		case lr.Follow, lr.Limit > batchSize:
-			lr.Limit = batchSize
+		case lr.Follow, lr.Limit > trialLogsBatchSize:
+			lr.Limit = trialLogsBatchSize
 		case lr.Limit <= 0:
 			return nil, nil
 		}
@@ -510,7 +510,7 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 		return nil, status.Error(codes.NotFound, "trial not found")
 	}
 
-	if len(req.Batch.Values) != len(req.Batch.Batches) &&
+	if len(req.Batch.Values) != len(req.Batch.Batches) ||
 		len(req.Batch.Batches) != len(req.Batch.Timestamps) {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"values, batches and timestamps should be equal sized arrays")
