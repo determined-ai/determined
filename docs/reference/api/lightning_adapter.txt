@@ -101,6 +101,17 @@ porting your code easier:
    ``log``: ``key`` and ``value``, and the first argument in
    ``log_dict`` are supported.
 
+.. note::
+
+   Make sure to return the metric you defined as `searcher.metric`` in
+   your experiment's :ref:`configuration <experiment-configuration>`
+   from your ``validation_step``.
+
+.. note::
+
+   Determined will automatically log the metrics you return from
+   ``training_step`` and ``validation_step`` to Tensorboard.
+
 Data Loading
 ============
 
