@@ -79,7 +79,7 @@ def main(argv: List[str]) -> None:
     parser.add_argument(
         "--delete-tensorboards",
         action="store_true",
-        default=False,
+        default=os.getenv("DET_DELETE_TENSORBOARDS", False),
         help="Delete Tensorboards from storage",
     )
     parser.add_argument(

@@ -19,6 +19,9 @@ class NoopTensorboardManager(tensorboard.TensorboardManager):
     def sync(self) -> None:
         pass
 
+    def delete(self) -> None:
+        pass
+
 
 class NoopBatchMetricWriter(tensorboard.BatchMetricWriter):
     def __init__(self) -> None:

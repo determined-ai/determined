@@ -49,10 +49,3 @@ class S3TensorboardManager(base.TensorboardManager):
 
     def delete(self) -> None:
         self.resource.Bucket(self.bucket).objects.filter(Prefix=str(self.sync_path)).delete()
-
-        # If we're attached to using the low level APIs:
-        #  objects_to_delete = self.client.list_objects(
-        #    Bucket=self.bucket, Prefix=str(self.sync_path))
-        #  delete_keys = {'Objects': [
-        #    {'Key': k} for k in [obj['Key'] for obj in objects_to_delete.get('Contents', [])]]}
-        #  self.client.delete_objects(Bucket=self.bucket, Delete=delete_keys)
