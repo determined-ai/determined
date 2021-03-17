@@ -1033,7 +1033,7 @@ jobs:
       - image: cimg/node:12.16
     environment:
       PUBLIC_URL: /0
-      SERVER_ADDRESS: https://detai.ml/proxy
+      SERVER_ADDRESS: https://detai.ml/fixed
     steps:
       - checkout
       - react-get-deps
