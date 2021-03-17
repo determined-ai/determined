@@ -29,6 +29,12 @@ class S3TensorboardManager(base.TensorboardManager):
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
         )
+        self.resource = boto3.resource(
+            "s3",
+            endpoint_url=endpoint_url,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
 
     @util.preserve_random_state
     def sync(self) -> None:
@@ -42,4 +48,11 @@ class S3TensorboardManager(base.TensorboardManager):
             self._synced_event_sizes[path] = path.stat().st_size
 
     def delete(self) -> None:
-        self.client.delete_object(self.bucket, self.sync_path)
+        self.resource.Bucket(self.bucket).objects.filter(Prefix=str(self.sync_path)).delete()
+
+        # If we're attached to using the low level APIs:
+        #  objects_to_delete = self.client.list_objects(
+        #    Bucket=self.bucket, Prefix=str(self.sync_path))
+        #  delete_keys = {'Objects': [
+        #    {'Key': k} for k in [obj['Key'] for obj in objects_to_delete.get('Contents', [])]]}
+        #  self.client.delete_objects(Bucket=self.bucket, Delete=delete_keys)
