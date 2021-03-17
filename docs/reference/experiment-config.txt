@@ -629,6 +629,14 @@ large-scale experiments with hundreds or thousands of trials.
    not explore as many configurations given the same budget. We
    recommend using either ``aggressive`` or ``standard`` mode.
 
+``stop_once``
+   If ``stop_once`` is set to ``true``, we will use a variant of ASHA
+   that will not resume trials once stopped. This variant defaults to
+   continuing training and will only stop trials if there is enough
+   evidence to terminate training. We recommend using this version of
+   ASHA when training a trial for the max length as fast as possible is
+   important or when fault tolerance is too expensive.
+
 ``divisor``
    The fraction of trials to keep at each rung, and also determines the
    training length for each rung. The default setting is ``4``; only
