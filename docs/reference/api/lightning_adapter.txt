@@ -10,9 +10,8 @@
 
 Pytorch Lightning Adapter, defined here as ``LightningAdapter``,
 provides a quick way to train your Pytorch Lightning models with all the
-Determined features, such as mid-epoch preemption, simple distributed
-training interface, simple job submission to the Determined cluster, and
-so on.
+Determined features, such as mid-epoch preemption, easy distributed
+training, simple job submission to the Determined cluster, and so on.
 
 LightningAdapter is built on top of our :ref:`PyTorchTrial
 <pytorch-trial>` API, which has a built-in training loop that integrates
@@ -35,7 +34,7 @@ Here is an example:
    from determined.pytorch import PyTorchTrialContext, DataLoader
    from determined.pytorch.lightning import LightningAdapter
 
-   # bring in your LightningModule and optinally LightningDataModule
+   # bring in your LightningModule and optionally LightningDataModule
    from mnist import LightningMNISTClassifier, MNISTDataModule
 
 
@@ -74,9 +73,9 @@ Here is an example:
    :member-order: bysource
    :special-members: __init__
 
-In this approach, the ``LightningModule`` is not paired with the
-``Trainer`` so that there are some methods and hooks that are not
-supported. Read about those here:
+In this approach, the ``LightningModule`` is not paired with the PyTorch
+Lightning ``Trainer`` so that there are some methods and hooks that are
+not supported. Read about those here:
 
 -  No separate test-set definition in Determined: ``test_step``,
    ``test_step_end``, ``test_epoch_end``, ``on_test_batch_start``,
@@ -87,8 +86,8 @@ supported. Read about those here:
    ``on_fit_end``, ``on_pretrain_routine_start``,
    ``on_pretrain_routine_end``.
 
--  And: ``training_step_end`` & ``validation_step_end``, ``hiddens``
-   parameter in ``training_step`` and ``tbptt_split_batch``,
+-  Additionally, no: ``training_step_end`` & ``validation_step_end``,
+   ``hiddens`` parameter in ``training_step`` and ``tbptt_split_batch``,
    ``transfer_batch_to_device``, ``get_progress_bar_dict``,
    ``on_train_epoch_end``, ``manual_backward``, ``backward``,
    ``optimizer_step``, ``optimizer_zero_grad``
@@ -103,7 +102,7 @@ porting your code easier:
 
 .. note::
 
-   Make sure to return the metric you defined as `searcher.metric`` in
+   Make sure to return the metric you defined as ``searcher.metric`` in
    your experiment's :ref:`configuration <experiment-configuration>`
    from your ``validation_step``.
 
