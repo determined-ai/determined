@@ -19,8 +19,8 @@ import css from './HpScatterPlots.module.scss';
 
 interface Props {
   experiment: ExperimentBase;
-  hParams: string[];
   filters?: React.ReactNode;
+  hParams: string[];
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];

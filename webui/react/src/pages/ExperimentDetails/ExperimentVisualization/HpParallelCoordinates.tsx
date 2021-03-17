@@ -25,8 +25,8 @@ import HpTrialTable, { TrialHParams } from './HpTrialTable';
 
 interface Props {
   experiment: ExperimentBase;
-  hParams: string[];
   filters?: React.ReactNode;
+  hParams: string[];
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
