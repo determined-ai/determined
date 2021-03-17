@@ -150,6 +150,9 @@ def wait_for_experiment_state(
         time.sleep(1)
 
     else:
+        if target_state == "COMPLETED":
+            cancel_experiment(experiment_id)
+            report_failed_experiment(experiment_id, "CANCELED")
         pytest.fail(
             "Experiment did not reach target state {} after {} seconds".format(
                 target_state, max_wait_secs
@@ -367,15 +370,16 @@ def report_failed_experiment(experiment_id: int, state: str) -> None:
     trials = experiment_trials(experiment_id)
     active_trials = [t for t in trials if t["state"] == "ACTIVE"]
     error_trials = [t for t in trials if t["state"] == "ERROR"]
+    canceled_trials = [t for t in trials if t["state"] == "CANCELED"]
 
     print(
-        "Experiment {}: {} trials, {} active trials, {} failed trials".format(
-            experiment_id, len(trials), len(active_trials), len(error_trials)
+        "Experiment {}: {} trials, {} active trials, {} failed trials, {} canceled trials".format(
+            experiment_id, len(trials), len(active_trials), len(error_trials), len(canceled_trials)
         ),
         file=sys.stderr,
     )
 
-    for trial in error_trials:
+    for trial in error_trials + canceled_trials:
         print_trial_logs(trial["id"])
 
 
