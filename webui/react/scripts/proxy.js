@@ -5,12 +5,13 @@ const express = require('express');
 const morgan = require('morgan');
 const request = require('request');
 
-const PORT = process.argv[3] || 8100;
-
 if (process.argv.length < 2) {
   console.error('./proxy.js <target> <port>');
   process.exit(1);
 }
+
+const PORT = process.argv[3] || 8100;
+const fixedProxyTarget = process.argv[2];
 
 const app = express();
 app.use(morgan('dev'));
@@ -42,7 +43,8 @@ app.use('/dynamic/:protocol/:target', function(req, res) {
   return proxyTo(targetServer)(req, res);
 });
 
-app.use('/fixed', proxyTo(process.argv[2]));
+app.use('/fixed', proxyTo(fixedProxyTarget));
 
 app.listen(PORT);
-console.log(`listening on http://localhost:${PORT}`);
+console.log(`Listening on http://localhost:${PORT}`);
+console.log(`Proxying request to http://localhost:${PORT}/fixed to ${fixedProxyTarget}`);
