@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  API: Add a new endpoint to fetch aggregated historical resource
+   allocation information.
+-  CLI: Add new commands ``det resources raw`` and ``det resources
+   aggregated`` to access resource allocation information.
