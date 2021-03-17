@@ -67,8 +67,8 @@ func (e *Elastic) AddTrialLogs(logs []*model.TrialLog) error {
 	return nil
 }
 
-// TrialLogCount returns the number of trial logs for the given trial.
-func (e *Elastic) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
+// TrialLogsCount returns the number of trial logs for the given trial.
+func (e *Elastic) TrialLogsCount(trialID int, fs []api.Filter) (int, error) {
 	count, err := e.count(jsonObj{
 		"query": jsonObj{
 			"bool": jsonObj{
@@ -182,8 +182,52 @@ func (e *Elastic) TrialLogs(
 	return logs, sortValues, nil
 }
 
-// TrialLogFields returns the unique fields that can be filtered on for the given trial.
-func (e *Elastic) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
+// DeleteTrialLogs deletes the logs for the given trial IDs.
+func (e *Elastic) DeleteTrialLogs(ids []int) error {
+	trialIDterms := make([]jsonObj, len(ids))
+	for i, id := range ids {
+		trialIDterms[i] = jsonObj{
+			"term": jsonObj{
+				"trial_id": id,
+			},
+		}
+	}
+
+	query := jsonObj{
+		"query": jsonObj{
+			"bool": jsonObj{
+				"filter": []jsonObj{
+					{
+						"bool": jsonObj{
+							"should": trialIDterms,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+		return errors.Wrap(err, "failed to encoding query")
+	}
+
+	// TODO(brad): Here and elsewhere, we really should just hit indices that could possibly have
+	// logs for a given trial.
+	res, err := e.client.DeleteByQuery([]string{"*"}, &buf)
+	if err != nil {
+		return errors.Wrap(err, "failed to perform delete")
+	}
+	defer closeWithErrCheck(res.Body)
+	if err = checkResponse(res); err != nil {
+		return errors.Wrap(err, "failed to perform delete")
+	}
+
+	return nil
+}
+
+// TrialLogsFields returns the unique fields that can be filtered on for the given trial.
+func (e *Elastic) TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
 	query := jsonObj{
 		"size": 0,
 		"query": jsonObj{

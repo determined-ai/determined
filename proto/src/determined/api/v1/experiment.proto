@@ -96,6 +96,14 @@ message GetExperimentLabelsResponse {
   repeated string labels = 1;
 }
 
+// Delete a single experiment.
+message DeleteExperimentRequest {
+  // The ID of the experiment.
+  int32 experiment_id = 1;
+}
+// Response to DeleteExperimentRequest.
+message DeleteExperimentResponse {}
+
 // Preview hyperparameter search.
 message PreviewHPSearchRequest {
   // The experiment config to simulate.

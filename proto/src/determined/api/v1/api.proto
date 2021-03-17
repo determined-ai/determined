@@ -371,6 +371,16 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Delete the requested experiment.
+  rpc DeleteExperiment(DeleteExperimentRequest)
+      returns (DeleteExperimentResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/experiments/{experiment_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
 
   // Get a list of checkpoints for an experiment.
   rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest)

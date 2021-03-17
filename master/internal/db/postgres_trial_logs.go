@@ -106,8 +106,19 @@ INSERT INTO trial_logs
 	return nil
 }
 
-// TrialLogCount returns the number of logs in postgres for the given trial.
-func (db *PgDB) TrialLogCount(trialID int, fs []api.Filter) (int, error) {
+// DeleteTrialLogs deletes the logs for the given trial IDs.
+func (db *PgDB) DeleteTrialLogs(ids []int) error {
+	if _, err := db.sql.Exec(`
+DELETE FROM trial_logs
+WHERE trial_id IN (SELECT unnest($1::int [])::int);
+`, ids); err != nil {
+		return errors.Wrapf(err, "error deleting trial logs for trials %v", ids)
+	}
+	return nil
+}
+
+// TrialLogsCount returns the number of logs in postgres for the given trial.
+func (db *PgDB) TrialLogsCount(trialID int, fs []api.Filter) (int, error) {
 	params := []interface{}{trialID}
 	fragment, params := filtersToSQL(fs, params, trialLogsFieldMap)
 	query := fmt.Sprintf(`
@@ -123,8 +134,8 @@ WHERE trial_id = $1
 	return count, nil
 }
 
-// TrialLogFields returns the unique fields that can be filtered on for the given trial.
-func (db *PgDB) TrialLogFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
+// TrialLogsFields returns the unique fields that can be filtered on for the given trial.
+func (db *PgDB) TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error) {
 	var fields apiv1.TrialLogsFieldsResponse
 	err := db.QueryProto("get_trial_log_fields", &fields, trialID)
 	return &fields, err

@@ -599,7 +599,6 @@ func (m *Master) Run(ctx context.Context) error {
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 	experimentsGroup.POST("/:experiment_id/kill", api.Route(m.postExperimentKill))
-	experimentsGroup.DELETE("/:experiment_id", api.Route(m.deleteExperiment))
 
 	searcherGroup := m.echo.Group("/searcher", authFuncs...)
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))

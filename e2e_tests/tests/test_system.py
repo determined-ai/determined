@@ -1,6 +1,5 @@
 import json
 import operator
-import os
 import subprocess
 import tempfile
 import time
@@ -178,27 +177,6 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 raise
         else:
             break
-
-
-@pytest.mark.e2e_cpu  # type: ignore
-def test_experiment_delete() -> None:
-    subprocess.check_call(["det", "-m", conf.make_master_url(), "user", "whoami"])
-
-    experiment_id = exp.run_basic_test(
-        conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-    )
-
-    subprocess.check_call(
-        ["det", "-m", conf.make_master_url(), "experiment", "delete", str(experiment_id), "--yes"],
-        env={**os.environ, "DET_ADMIN": "1"},
-    )
-
-    # "det experiment describe" call should fail, because the
-    # experiment is no longer in the database.
-    with pytest.raises(subprocess.CalledProcessError):
-        subprocess.check_call(
-            ["det", "-m", conf.make_master_url(), "experiment", "describe", str(experiment_id)]
-        )
 
 
 @pytest.mark.e2e_cpu  # type: ignore
