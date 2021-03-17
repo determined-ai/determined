@@ -15,7 +15,7 @@ Version 0.14.4
 
 **New Features**
 
--  API: Add a new endpoint exposing historical cluster resource
+-  Add a REST API endpoint exposing historical cluster resource
    allocation. Currently, information about experiment workloads
    (training, checkpoints, and validations) is included. Use the
    :ref:`rest-api` for more information.
