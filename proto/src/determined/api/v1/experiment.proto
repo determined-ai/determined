@@ -489,6 +489,9 @@ message GetHPImportanceRequest {
 
 // Response to GetHPImportanceRequest
 message GetHPImportanceResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "training_metrics", "validation_metrics" ] }
+  };
   // Hyperparameter importance as computed with respect for one specific metric.
   message MetricHPImportance {
     // A map between hyperparameter names and their relative importance.
