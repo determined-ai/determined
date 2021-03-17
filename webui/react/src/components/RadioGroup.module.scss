@@ -8,6 +8,21 @@
     justify-content: center;
     outline: 0;
     padding: 0 var(--theme-sizes-layout-medium);
+    position: relative;
+    transition: all var(--theme-animationCurve);
+  }
+  .option:hover {
+    color: var(--theme-colors-monochrome-0);
+    z-index: 1;
+  }
+  .option:hover::after {
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-action-light);
+    content: '';
+    height: calc(100% + 2 * var(--theme-sizes-border-width));
+    left: -var(--theme-sizes-border-width);
+    position: absolute;
+    top: -var(--theme-sizes-border-width);
+    width: calc(100% + 2 * var(--theme-sizes-border-width));
   }
   .option:focus {
     box-shadow: var(--theme-focus-shadow);

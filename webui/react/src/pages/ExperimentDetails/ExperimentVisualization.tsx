@@ -5,6 +5,7 @@ import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
+import RadioGroup from 'components/RadioGroup';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
@@ -49,10 +50,26 @@ const DEFAULT_BATCH = 0;
 const DEFAULT_BATCH_MARGIN = 10;
 const DEFAULT_MAX_TRIALS = 100;
 const MENU = [
-  { label: 'Learning Curve', type: ExperimentVisualizationType.LearningCurve },
-  { label: 'HP Parallel Coordinates', type: ExperimentVisualizationType.HpParallelCoordinates },
-  { label: 'HP Scatter Plots', type: ExperimentVisualizationType.HpScatterPlots },
-  { label: 'HP Heat Map', type: ExperimentVisualizationType.HpHeatMap },
+  {
+    icon: 'learning',
+    id: VisualizationType.LearningCurve,
+    label: 'Learning Curve',
+  },
+  {
+    icon: 'parcoords',
+    id: VisualizationType.HpParallelCoordinates,
+    label: 'HP Parallel Coordinates',
+  },
+  {
+    icon: 'scatter-plot',
+    id: VisualizationType.HpScatterPlots,
+    label: 'HP Scatter Plots',
+  },
+  {
+    icon: 'heat',
+    id: VisualizationType.HpHeatMap,
+    label: 'HP Heat Map',
+  },
 ];
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
@@ -106,8 +123,8 @@ const ExperimentVisualization: React.FC<Props> = ({
     setActiveMetric(metric);
   }, []);
 
-  const handleChartTypeChange = useCallback((type: SelectValue) => {
-    setTypeKey(type as ExperimentVisualizationType);
+  const handleMenuChange = useCallback((type: string) => {
+    setTypeKey(type as VisualizationType);
     history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
   }, [ basePath, history ]);
 
@@ -248,89 +265,67 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Row>
-        <Col
-          lg={{ order: 1, span: 20 }}
-          md={{ order: 1, span: 18 }}
-          sm={{ order: 2, span: 24 }}
-          span={24}
-          xs={{ order: 2, span: 24 }}>
-          {typeKey === ExperimentVisualizationType.LearningCurve && (
-            <LearningCurve
-              experiment={experiment}
-              filters={visualizationFilters}
-              hParams={fullHParams.current}
-              selectedMaxTrial={filters.maxTrial}
-              selectedMetric={filters.metric}
-            />
-          )}
-          {typeKey === ExperimentVisualizationType.HpParallelCoordinates && (
-            <HpParallelCoordinates
-              experiment={experiment}
-              filters={visualizationFilters}
-              hParams={fullHParams.current}
-              selectedBatch={filters.batch}
-              selectedBatchMargin={filters.batchMargin}
-              selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
-            />
-          )}
-          {typeKey === ExperimentVisualizationType.HpScatterPlots && (
-            <HpScatterPlots
-              experiment={experiment}
-              filters={visualizationFilters}
-              hParams={fullHParams.current}
-              selectedBatch={filters.batch}
-              selectedBatchMargin={filters.batchMargin}
-              selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
-            />
-          )}
-          {typeKey === ExperimentVisualizationType.HpHeatMap && (
-            <HpHeatMaps
-              experiment={experiment}
-              filters={visualizationFilters}
-              hParams={fullHParams.current}
-              selectedBatch={filters.batch}
-              selectedBatchMargin={filters.batchMargin}
-              selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
-            />
-          )}
-        </Col>
-        <Col
-          lg={{ order: 2, span: 4 }}
-          md={{ order: 2, span: 6 }}
-          sm={{ order: 1, span: 24 }}
-          span={24}
-          xs={{ order: 1, span: 24 }}>
-          <div className={css.inspector}>
-            <div className={css.menu}>
-              {MENU.map(item => {
-                const linkClasses = [ css.link ];
-                if (typeKey === item.type) linkClasses.push(css.active);
-                return (
-                  <Link
-                    className={linkClasses.join(' ')}
-                    key={item.type}
-                    path={`${basePath}/${item.type}`}
-                    onClick={() => handleChartTypeChange(item.type)}>{item.label}</Link>
-                );
-              })}
-            </div>
-            <div className={css.mobileMenu}>
-              <SelectFilter
-                label="Chart Type"
-                value={typeKey}
-                onChange={handleChartTypeChange}>
-                {MENU.map(item => (
-                  <Option key={item.type} value={item.type}>{item.label}</Option>
-                ))}
-              </SelectFilter>
-            </div>
-          </div>
-        </Col>
-      </Row>
+      <div className={css.radioGroup}>
+        <RadioGroup
+          defaultOptionId={MENU[0].id}
+          options={MENU}
+          onChange={handleMenuChange} />
+      </div>
+      <div>
+        {typeKey === VisualizationType.LearningCurve && (
+          <LearningCurve
+            experiment={experiment}
+            hParams={fullHParams}
+            isLoading={!isContentReady}
+            metrics={metrics}
+            selectedMetric={selectedMetric}
+            onMetricChange={handleMetricChange}
+          />
+        )}
+        {typeKey === VisualizationType.HpParallelCoordinates && (
+          <HpParallelCoordinates
+            batches={batches}
+            experiment={experiment}
+            hParams={fullHParams}
+            isLoading={!isContentReady}
+            metrics={metrics}
+            selectedBatch={selectedBatch}
+            selectedHParams={hParams}
+            selectedMetric={selectedMetric}
+            onBatchChange={handleBatchChange}
+            onHParamChange={handleHParamChange}
+            onMetricChange={handleMetricChange}
+          />
+        )}
+        {typeKey === VisualizationType.HpScatterPlots && (
+          <HpScatterPlots
+            batches={batches}
+            experiment={experiment}
+            hParams={fullHParams}
+            isLoading={!isContentReady}
+            metrics={metrics}
+            selectedBatch={selectedBatch}
+            selectedHParams={hParams}
+            selectedMetric={selectedMetric}
+            onBatchChange={handleBatchChange}
+            onHParamChange={handleHParamChange}
+            onMetricChange={handleMetricChange}
+          />
+        )}
+        {typeKey === VisualizationType.HpHeatMap && (
+          <HpHeatMaps
+            batches={batches}
+            experiment={experiment}
+            hParams={fullHParams}
+            isLoading={!isContentReady}
+            metrics={metrics}
+            selectedBatch={selectedBatch}
+            selectedMetric={selectedMetric}
+            onBatchChange={handleBatchChange}
+            onMetricChange={handleMetricChange}
+          />
+        )}
+      </div>
     </div>
   );
 };

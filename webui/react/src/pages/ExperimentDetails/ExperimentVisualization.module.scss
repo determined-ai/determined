@@ -1,40 +1,14 @@
 .base {
-  .inspector {
-    border-left: solid 0.1rem var(--theme-colors-monochrome-12);
-    display: flex;
-    flex-direction: column;
-    margin-left: var(--theme-sizes-layout-big);
-  }
-  .menu {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    & > * {
-      padding: var(--theme-sizes-layout-medium) 0 var(--theme-sizes-layout-medium) var(--theme-sizes-layout-big);
-    }
-    .link {
-      color: var(--theme-colors-monochrome-7);
-    }
-    .disabled {
-      color: var(--theme-colors-monochrome-10);
-    }
-    .active {
-      border-left: solid 0.2rem var(--theme-colors-action-normal);
-      color: var(--theme-colors-action-normal);
-    }
-  }
-  .mobileMenu { display: none; }
-
-  @media only screen and (max-width: $breakpoint-tablet) {
-    .inspector {
-      border-bottom: solid 0.1rem var(--theme-colors-monochrome-12);
-      border-left: 0;
-      margin-bottom: var(--theme-sizes-layout-big);
-      margin-left: 0;
-      padding-bottom: var(--theme-sizes-layout-big);
-    }
-    .menu { display: none; }
-    header { display: none; }
-    .mobileMenu { display: inline-block; }
+  .radioGroup {
+    background-color: var(--theme-colors-monochrome-13);
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    border-radius: var(--theme-sizes-border-radius);
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--theme-sizes-layout-big);
+    padding: var(--theme-sizes-layout-medium);
   }
 }
