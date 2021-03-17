@@ -7,7 +7,10 @@ import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
-import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-sdk';
+import {
+  GetHPImportanceResponseMetricHPImportance,
+  V1GetHPImportanceResponse, V1MetricBatchesResponse, V1MetricNamesResponse,
+} from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
@@ -32,8 +35,12 @@ interface Props {
   type?: ExperimentVisualizationType;
 }
 
+type HpImportance = Record<string, number>;
+type HpImportanceMap = Record<string, HpImportance>;
+
 enum PageError {
   MetricBatches,
+  MetricHpImportance,
   MetricNames,
 }
 
@@ -47,7 +54,20 @@ const DEFAULT_MAX_TRIALS = 100;
 const DEFAULT_VIEW = ViewType.Grid;
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
+  [PageError.MetricHpImportance]: 'Unable to retrieve experiment hp importance.',
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
+};
+
+const getHpImportanceMap = (
+  hpImportanceMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance },
+): HpImportanceMap => {
+  const hpImportanceMap: HpImportanceMap = {};
+
+  Object.keys(hpImportanceMetrics).forEach(metricName => {
+    hpImportanceMap[metricName] = hpImportanceMetrics[metricName].hpImportance || {};
+  });
+
+  return hpImportanceMap;
 };
 
 const ExperimentVisualization: React.FC<Props> = ({
@@ -155,6 +175,24 @@ const ExperimentVisualization: React.FC<Props> = ({
     ).catch(() => {
       setHasLoaded(true);
       setPageError(PageError.MetricNames);
+    });
+
+    consumeStream<V1GetHPImportanceResponse>(
+      detApi.StreamingInternal.determinedGetHPImportance(
+        experiment.id,
+        undefined,
+        { signal: canceler.signal },
+      ),
+      event => {
+        if (!event) return;
+        const trainingHpRanks = getHpImportanceMap(event.trainingMetrics);
+        const validationHpRanks = getHpImportanceMap(event.validationMetrics);
+        setTrainingHpImportanceMap(trainingHpRanks);
+        setValidationHpImportanceMap(validationHpRanks);
+      },
+    ).catch(() => {
+      setHasLoaded(true);
+      setPageError(PageError.MetricHpImportance);
     });
 
     return () => canceler.abort();
