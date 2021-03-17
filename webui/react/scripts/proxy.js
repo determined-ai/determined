@@ -5,7 +5,7 @@ const express = require('express');
 const morgan = require('morgan');
 const request = require('request');
 
-if (process.argv.length < 2) {
+if (process.argv.length < 3) {
   console.error('./proxy.js <target> <port>');
   process.exit(1);
 }
@@ -19,7 +19,6 @@ app.use(morgan('dev'));
 const proxyTo = (targetServer) => {
   return (req, res) => {
     const url = targetServer + req.url;
-    console.log(req.method, targetServer);
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.setHeader('Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -47,4 +46,4 @@ app.use('/fixed', proxyTo(fixedProxyTarget));
 
 app.listen(PORT);
 console.log(`Listening on http://localhost:${PORT}`);
-console.log(`Proxying request to http://localhost:${PORT}/fixed to ${fixedProxyTarget}`);
+console.log(`Proxying requests to http://localhost:${PORT}/fixed to ${fixedProxyTarget}`);
