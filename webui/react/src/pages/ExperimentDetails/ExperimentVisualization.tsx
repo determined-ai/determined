@@ -104,11 +104,26 @@ const ExperimentVisualization: React.FC<Props> = ({
       view: storedFilters?.view || DEFAULT_VIEW,
     };
   });
+  const [ trainingHpImportanceMap, setTrainingHpImportanceMap ] = useState<HpImportanceMap>({});
+  const [ validationHpImportanceMap, setValidationHpImportanceMap ] = useState<HpImportanceMap>({});
   const [ activeMetric, setActiveMetric ] = useState<MetricName>(filters.metric);
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
+
+  const sortedFullHParams = useMemo(() => {
+    const hpImportanceMetric = filters.metric.type === MetricType.Training ?
+      trainingHpImportanceMap : validationHpImportanceMap;
+    const hpImportanceMap = hpImportanceMetric[filters.metric.name] || {};
+    return fullHParams.current.sortAll((a, b) => {
+      const aValue = hpImportanceMap[a];
+      const bValue = hpImportanceMap[b];
+      if (aValue < bValue) return 1;
+      if (aValue > bValue) return -1;
+      return 0;
+    });
+  }, [ filters.metric, trainingHpImportanceMap, validationHpImportanceMap ]);
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
@@ -269,7 +284,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     <ExperimentVisualizationFilters
       batches={batches}
       filters={filters}
-      fullHParams={fullHParams.current}
+      fullHParams={sortedFullHParams}
       metrics={metrics}
       type={typeKey}
       onChange={handleFiltersChange}
