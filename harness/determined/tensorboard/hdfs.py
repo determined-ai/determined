@@ -40,4 +40,4 @@ class HDFSTensorboardManager(base.TensorboardManager):
             self._synced_event_sizes[path] = path.stat().st_size
 
     def delete(self) -> None:
-        self.client.delete(self.experiment_sync_path, recursive=True)
+        self.client.delete(self.sync_path, recursive=True)

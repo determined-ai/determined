@@ -44,7 +44,7 @@ def get_base_path(checkpoint_config: Dict[str, Any], manager: bool = False) -> p
 def build(
     cluster_id: str,
     experiment_id: str,
-    trial_id: str,
+    trial_id: Optional[str],
     checkpoint_config: Dict[str, Any],
     container_path: Optional[str] = None,
 ) -> base.TensorboardManager:
@@ -65,8 +65,11 @@ def build(
         raise TypeError("`type` parameter of storage configuration must be a string")
 
     base_path = get_base_path(checkpoint_config, manager=True)
-    experiment_sync_path = get_experiment_sync_path(cluster_id, experiment_id)
-    sync_path = get_sync_path(cluster_id, experiment_id, trial_id)
+
+    if trial_id:
+        sync_path = get_sync_path(cluster_id, experiment_id, trial_id)
+    else:
+        sync_path = get_experiment_sync_path(cluster_id, experiment_id)
 
     if type_name == "shared_fs":
         host_path = checkpoint_config["host_path"]
@@ -75,7 +78,6 @@ def build(
             _full_storage_path(host_path, storage_path, container_path),
             base_path,
             sync_path,
-            experiment_sync_path,
         )
 
     elif type_name == "gcs":
@@ -89,7 +91,6 @@ def build(
             checkpoint_config.get("endpoint_url", None),
             base_path,
             sync_path,
-            experiment_sync_path,
         )
 
     # Return the base_path.TensorboardManager for known but unsupported storage
@@ -102,7 +103,6 @@ def build(
             checkpoint_config.get("user"),
             base_path,
             sync_path,
-            experiment_sync_path,
         )
 
     else:

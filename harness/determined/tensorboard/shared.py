@@ -16,7 +16,6 @@ class SharedFSTensorboardManager(base.TensorboardManager):
         super().__init__(*args, **kwargs)
         self.storage_path = pathlib.Path(storage_path)
         self.shared_fs_base = self.storage_path.joinpath(self.sync_path)
-        self.shared_fs_experiment_base = self.storage_path.joinpath(self.experiment_sync_path)
 
         # Set umask to 0 in order that the storage dir allows future containers of any owner to
         # create new checkpoints. Administrators wishing to control the permissions more
@@ -35,4 +34,4 @@ class SharedFSTensorboardManager(base.TensorboardManager):
             self._synced_event_sizes[path] = path.stat().st_size
 
     def delete(self) -> None:
-        shutil.rmtree(self.shared_fs_experiment_base, False)
+        shutil.rmtree(self.shared_fs_base, False)

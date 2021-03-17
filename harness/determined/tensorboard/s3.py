@@ -42,4 +42,4 @@ class S3TensorboardManager(base.TensorboardManager):
             self._synced_event_sizes[path] = path.stat().st_size
 
     def delete(self) -> None:
-        self.client.delete_object(self.bucket, self.experiment_sync_path)
+        self.client.delete_object(self.bucket, self.sync_path)

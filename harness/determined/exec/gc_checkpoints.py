@@ -37,11 +37,11 @@ def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool =
     Delete all Tensorboards associated with a single experiment.
     """
     if dry_run:
-        logging.info("Dry run: deleting Tensorboards for {}".format(manager.experiment_sync_path))
+        logging.info("Dry run: deleting Tensorboards for {}".format(manager.sync_path))
         return
 
     manager.delete()
-    logging.info("Finished deleting Tensorboards for {}".format(manager.experiment_sync_path))
+    logging.info("Finished deleting Tensorboards for {}".format(manager.sync_path))
 
 
 def json_file_arg(val: str) -> Any:
@@ -105,15 +105,10 @@ def main(argv: List[str]) -> None:
     delete_checkpoints(manager, args.delete["checkpoints"], dry_run=args.dry_run)
 
     if args.delete_tensorboards:
-        # HACK: Trial ID "1" is passed as a dummy since we never call sync and it is never used.
-        # I can get around this by:
-        #    1. Separating deletes from the TensorboardManager.
-        #    2. Making TensorboardManagers be "unsyncable" or not attached to a particular trial and
-        #       only calls to delete succeed.
         tb_manager = tensorboard.build(
             os.environ["DET_CLUSTER_ID"],
             args.experiment_id,
-            "1",
+            None,
             storage_config,
             container_path=constants.SHARED_FS_CONTAINER_PATH,
         )
