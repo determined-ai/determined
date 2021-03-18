@@ -107,7 +107,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
 
     return newDimensions;
-  }, [ chartData, hyperparameters, selectedMetric, selectedHParams ]);
+  }, [ chartData?.metricRange, hyperparameters, selectedMetric, selectedHParams ]);
 
   const handleChartFilter = useCallback((constraints: Record<string, Constraint>) => {
     if (!chartData) return;

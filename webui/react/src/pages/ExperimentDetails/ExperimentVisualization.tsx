@@ -1,6 +1,6 @@
 import { Alert, Col, Row, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
@@ -21,8 +21,7 @@ import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
-  MAX_HPARAM_COUNT,
-  VisualizationFilters,
+  MAX_HPARAM_COUNT, VisualizationFilters,
 } from './ExperimentVisualization/ExperimentVisualizationFilters';
 import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
@@ -67,20 +66,20 @@ const ExperimentVisualization: React.FC<Props> = ({
 }: Props) => {
   const history = useHistory();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
-
-  const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
-  const searcherMetric = useMemo(() => {
-    return { name: experiment.config.searcher.metric, type: MetricType.Validation };
-  }, [ experiment ]);
-  const fullHParams = useMemo(() => {
-    return (Object.keys(experiment.config.hyperparameters || {}).filter(key => {
-      // Constant hyperparameters are not useful for visualizations
+  const fullHParams = useRef<string[]>(
+    (Object.keys(experiment.config.hyperparameters || {}).filter(key => {
+      // Constant hyperparameters are not useful for visualizations.
       const hp = experiment.config.hyperparameters[key];
       return hp.type !== ExperimentHyperParamType.Constant;
-    }));
-  }, [ experiment ]);
-
-  const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
+    })),
+  );
+  const searcherMetric = useRef<MetricName>({
+    name: experiment.config.searcher.metric,
+    type: MetricType.Validation,
+  });
+  const [ typeKey, setTypeKey ] = useState(() => {
+    return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
+  });
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ filters, setFilters ] = useState<VisualizationFilters>(() => {
@@ -88,9 +87,9 @@ const ExperimentVisualization: React.FC<Props> = ({
     return {
       batch: storedFilters?.batch || DEFAULT_BATCH,
       batchMargin: storedFilters?.batchMargin || DEFAULT_BATCH_MARGIN,
-      hParams: storedFilters?.hParams || fullHParams.slice(0, MAX_HPARAM_COUNT),
+      hParams: storedFilters?.hParams || fullHParams.current.slice(0, MAX_HPARAM_COUNT),
       maxTrial: storedFilters?.maxTrial || DEFAULT_MAX_TRIALS,
-      metric: storedFilters?.metric || searcherMetric,
+      metric: storedFilters?.metric || searcherMetric.current,
     };
   });
   const [ activeMetric, setActiveMetric ] = useState<MetricName>(filters.metric);
@@ -99,7 +98,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
-  const handleChange = useCallback((filters: VisualizationFilters) => {
+  const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
   }, []);
 
@@ -112,14 +111,14 @@ const ExperimentVisualization: React.FC<Props> = ({
     history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
   }, [ basePath, history ]);
 
-  // Sets the default sub route
+  // Sets the default sub route.
   useEffect(() => {
     if (type && (!TYPE_KEYS.includes(type) || type === DEFAULT_TYPE_KEY)) {
       history.replace(basePath);
     }
   }, [ basePath, history, type ]);
 
-  // Stream available metrics
+  // Stream available metrics.
   useEffect(() => {
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
@@ -156,8 +155,8 @@ const ExperimentVisualization: React.FC<Props> = ({
           );
         }, false);
         if (!filterMetricFound) {
-          setFilters(prev => ({ ...prev, metric: searcherMetric }));
-          setActiveMetric(searcherMetric);
+          setFilters(prev => ({ ...prev, metric: searcherMetric.current }));
+          setActiveMetric(searcherMetric.current);
         }
       },
     ).catch(() => {
@@ -166,9 +165,9 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, filters.metric, searcherMetric ]);
+  }, [ experiment.id, filters.metric ]);
 
-  // Stream available batches
+  // Stream available batches.
   useEffect(() => {
     const canceler = new AbortController();
     const metricTypeParam = activeMetric?.type === MetricType.Training
@@ -188,7 +187,7 @@ const ExperimentVisualization: React.FC<Props> = ({
         (event.batches || []).forEach(batch => batchesMap[batch] = batch);
         const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
         setBatches(newBatches);
-        if (newBatches.length !== 0 && !newBatches.includes(filters.batch)) {
+        if (filters.batch === 0) {
           setFilters(prev => ({ ...prev, batch: newBatches.first() }));
         }
         setHasLoaded(true);
@@ -239,10 +238,10 @@ const ExperimentVisualization: React.FC<Props> = ({
     <ExperimentVisualizationFilters
       batches={batches}
       filters={filters}
-      fullHParams={fullHParams}
+      fullHParams={fullHParams.current}
       metrics={metrics}
       type={typeKey}
-      onChange={handleChange}
+      onChange={handleFiltersChange}
       onMetricChange={handleMetricChange}
     />
   );
@@ -260,7 +259,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             <LearningCurve
               experiment={experiment}
               filters={visualizationFilters}
-              hParams={fullHParams}
+              hParams={fullHParams.current}
               selectedMaxTrial={filters.maxTrial}
               selectedMetric={filters.metric}
             />
@@ -269,7 +268,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             <HpParallelCoordinates
               experiment={experiment}
               filters={visualizationFilters}
-              hParams={fullHParams}
+              hParams={fullHParams.current}
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
@@ -280,7 +279,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             <HpScatterPlots
               experiment={experiment}
               filters={visualizationFilters}
-              hParams={fullHParams}
+              hParams={fullHParams.current}
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}
@@ -291,7 +290,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             <HpHeatMaps
               experiment={experiment}
               filters={visualizationFilters}
-              hParams={fullHParams}
+              hParams={fullHParams.current}
               selectedBatch={filters.batch}
               selectedBatchMargin={filters.batchMargin}
               selectedHParams={filters.hParams}

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
-import Plotly, { Layout, PlotData, PlotlyHTMLElement } from 'Plotly';
+import Plotly, { Layout, PlotData, PlotlyHTMLElement, PlotRestyleEvent } from 'Plotly';
 import { ExperimentHyperParamType, Primitive, Range } from 'types';
 import { ColorScale } from 'utils/color';
 import { clone, isBoolean, isNumber } from 'utils/data';
@@ -17,9 +17,6 @@ export enum DimensionType {
   Scalar = 'scalar',
 }
 
-/*
- * `colors` - list of numbers between 0.0 and 1.0
- */
 interface Props {
   colorScale: ColorScale[];
   colorScaleKey?: string;
@@ -70,11 +67,11 @@ const ParallelCoordinates: React.FC<Props> = ({
   onFilter,
   ...props
 }: Props) => {
-  const chartRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<HTMLDivElement | null>(null);
+  const dimensionsRef = useRef<Dimension[]>();
   const resize = useResize(chartRef);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ constraints, setConstraints ] = useState<Record<string, Constraint>>({});
-  const hasPlotted = useRef(false);
 
   const colorValues = useMemo(() => {
     if (!colorScaleKey || !Array.isArray(data[colorScaleKey])) return undefined;
@@ -149,9 +146,7 @@ const ParallelCoordinates: React.FC<Props> = ({
   useEffect(() => {
     const ref = chartRef.current;
 
-    Plotly.react(ref, [ chartData ], plotlyLayout, plotlyConfig).then(() => {
-      hasPlotted.current = true;
-    });
+    Plotly.newPlot(ref, [], plotlyLayout, plotlyConfig);
 
     const plotly = ref as unknown as PlotlyHTMLElement;
 
@@ -159,9 +154,8 @@ const ParallelCoordinates: React.FC<Props> = ({
      * During filtering or ordering, save all the constraint ranges and column order
      * to reconstruct the chart correctly when re-rendering the chart.
      */
-    plotly.on('plotly_restyle', data => {
-      if (!chartRef.current) return;
-
+    plotly.on('plotly_restyle', (data: PlotRestyleEvent) => {
+      if (!chartRef.current || !dimensionsRef.current) return;
       if (!Array.isArray(data) || data.length < 1) return;
 
       const keys = Object.keys(data[0]);
@@ -173,9 +167,10 @@ const ParallelCoordinates: React.FC<Props> = ({
       if (Array.isArray(matches) && matches.length === 2) {
         const range: Range = data[0][keys[0]] ? data[0][keys[0]][0] : undefined;
         const dimIndex = parseInt(matches[1]);
-        const dim = dimensions[dimIndex];
+        const dim = dimensionsRef.current[dimIndex] || {};
         const dimKey = dim.label;
         const constraint: Constraint = { range };
+        if (!dimKey) return;
 
         // Translate constraints back to categorical values.
         if (dim.categories && range && isNumber(range[0]) && isNumber(range[1])) {
@@ -204,12 +199,13 @@ const ParallelCoordinates: React.FC<Props> = ({
     });
 
     return () => {
+      chartRef.current = null;
+      plotly.removeAllListeners('plotly_restyle');
       Plotly.purge(ref);
     };
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, []);
 
-  // Resize the chart when resize events happen.
+  // Redraw the chart when we detect changes in the data or a resize event.
   useEffect(() => {
     const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
       if (!chartRef.current || resize.width === 0 || resize.height === 0) return;
@@ -221,7 +217,12 @@ const ParallelCoordinates: React.FC<Props> = ({
     throttleResize();
   }, [ chartData, resize ]);
 
-  // Send back user created filters
+  // Update the dimensions reference when dimension changes.
+  useEffect(() => {
+    dimensionsRef.current = dimensions;
+  }, [ dimensions ]);
+
+  // Send back user created filters.
   useEffect(() => {
     if (onFilter) onFilter(constraints);
   }, [ constraints, onFilter ]);

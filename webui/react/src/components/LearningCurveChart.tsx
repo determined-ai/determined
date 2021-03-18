@@ -126,11 +126,11 @@ const LearningCurveChart: React.FC<Props> = ({
   const batchesRef = useRef<HTMLDivElement>(null);
   const metricValueRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
+  const xScale = useRef<{ max: number, min: number }>();
   const resize = useResize(chartRef);
   const [ chart, setChart ] = useState<uPlot>();
   const [ focusedPoint, setFocusedPoint ] = useState<ClosestPoint>();
   const [ mouseDownPoint, setMouseDownPoint ] = useState<Point>();
-  const [ xScale, setXScale ] = useState<{ max: number, min: number }>();
   const [ showZoomOutTip, setShowZoomOutTip ] = useState(false);
 
   const focusOnTrial = useCallback(() => {
@@ -291,9 +291,9 @@ const LearningCurveChart: React.FC<Props> = ({
             if (scaleKey !== 'x') return;
             const scale = plot.scales[scaleKey];
             if (scale.max == null || scale.min == null) {
-              setXScale(undefined);
+              xScale.current = undefined;
             } else {
-              setXScale({ max: scale.max, min: scale.min });
+              xScale.current = { max: scale.max, min: scale.min };
             }
           },
         ],
@@ -317,7 +317,7 @@ const LearningCurveChart: React.FC<Props> = ({
     }
 
     // Render the chart with the previous zoom scale
-    if (xScale) (options.scales || {}).x = { time: false, ...xScale };
+    if (xScale.current) (options.scales || {}).x = { time: false, ...xScale.current };
 
     const plotChart = new uPlot(options, [ xValues, ...data ], chartRef.current);
     setChart(plotChart);
@@ -326,7 +326,6 @@ const LearningCurveChart: React.FC<Props> = ({
       setChart(undefined);
       plotChart.destroy();
     };
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [ calculateAxesLabelSize, data, handleCursorMove, selectedMetric, trialIds, xValues ]);
 
   // Focus on a trial series if provided.
