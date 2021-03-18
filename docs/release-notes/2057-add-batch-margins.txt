@@ -1,8 +1,0 @@
-:orphan:
-
-**New Features**
-
--  WebUI: Add batch margin picker to enable grouping of data by a range
-   of batches processed for hyperparameters visualization.
--  WebUI: Moved hyperparameters visualization filter into a filter bar
-   to be responsive design friendly.
