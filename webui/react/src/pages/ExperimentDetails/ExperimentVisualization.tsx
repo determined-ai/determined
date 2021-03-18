@@ -139,6 +139,13 @@ const ExperimentVisualization: React.FC<Props> = ({
     history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
   }, [ basePath, history ]);
 
+  useEffect(() => {
+    searcherMetric.current = {
+      name: experiment.config.searcher.metric,
+      type: MetricType.Validation,
+    };
+  }, [ experiment ]);
+
   // Sets the default sub route.
   useEffect(() => {
     if (type && (!TYPE_KEYS.includes(type) || type === DEFAULT_TYPE_KEY)) {
