@@ -266,7 +266,9 @@ func (g GCCheckpoints) UseFluentLogging() bool { return false }
 func (g GCCheckpoints) UseHostMode() bool { return false }
 
 // ResourcesConfig implements InnerSpec.
-func (g GCCheckpoints) ResourcesConfig() model.ResourcesConfig { return g.ExperimentConfig.Resources }
+func (g GCCheckpoints) ResourcesConfig() model.ResourcesConfig {
+	return g.ExperimentConfig.Resources
+}
 
 // StartTrial is a description of a task for running a trial container.
 type StartTrial struct {

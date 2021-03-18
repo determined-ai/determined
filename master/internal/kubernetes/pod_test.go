@@ -80,6 +80,7 @@ func createPod(
 		model.TLSClientConfig{}, model.TLSClientConfig{},
 		model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		podInterface, configMapInterface, resourceRequestQueue, leaveKubernetesResources,
+		"default-scheduler",
 	)
 
 	return newPodHandler

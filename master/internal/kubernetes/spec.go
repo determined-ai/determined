@@ -175,7 +175,8 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if scheduler != "coscheduler" || newPod.Spec.SchedulerName != "" || p.taskSpec.Description() == "cmd" {
+	if scheduler != "coscheduler" || newPod.Spec.SchedulerName != "" ||
+		p.taskSpec.Description() == "cmd" {
 		return
 	}
 
@@ -186,7 +187,8 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 	if p.taskSpec.Description() == "gc" {
 		if newPod.Spec.PriorityClassName != "" {
 			log.Warnf(
-				"GC Priority is currently using priority class: %s. It will be reset to determined-system-priority",
+				"GC Priority is currently using priority class: %s. "+
+					"It will be reset to determined-system-priority",
 				newPod.Spec.PriorityClassName,
 			)
 		}
@@ -212,7 +214,8 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 	}
 	_, ok = newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"]
 	if !ok {
-		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"] = strconv.Itoa(minAvailable)
+		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"] = strconv.Itoa(
+			minAvailable)
 	}
 }
 
