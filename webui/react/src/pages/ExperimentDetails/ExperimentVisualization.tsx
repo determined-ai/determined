@@ -266,10 +266,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   return (
     <div className={css.base}>
       <div className={css.radioGroup}>
-        <RadioGroup
-          defaultOptionId={MENU[0].id}
-          options={MENU}
-          onChange={handleMenuChange} />
+        <RadioGroup options={MENU} value={typeKey} onChange={handleMenuChange} />
       </div>
       <div>
         {typeKey === VisualizationType.LearningCurve && (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 
 import RadioGroup from './RadioGroup';
 
@@ -17,14 +17,20 @@ const DEFAULT_OPTIONS = [
 const ICON_ONLY_OPTIONS = DEFAULT_OPTIONS.map(option => ({ ...option, label: undefined }));
 const LABELS_ONLY_OPTIONS = DEFAULT_OPTIONS.map(option => ({ ...option, icon: undefined }));
 
-export const Default = (): React.ReactNode => (
-  <RadioGroup defaultOptionId={DEFAULT_OPTIONS[0].id} options={DEFAULT_OPTIONS} />
-);
+export const Default = (): React.ReactNode => {
+  const [ value, setValue ] = useState(DEFAULT_OPTIONS[0].id);
+  const handleChange = useCallback((value: string) => setValue(value), []);
+  return <RadioGroup options={DEFAULT_OPTIONS} value={value} onChange={handleChange} />;
+};
 
-export const IconsOnly = (): React.ReactNode => (
-  <RadioGroup defaultOptionId={ICON_ONLY_OPTIONS[0].id} options={ICON_ONLY_OPTIONS} />
-);
+export const IconsOnly = (): React.ReactNode => {
+  const [ value, setValue ] = useState(ICON_ONLY_OPTIONS[0].id);
+  const handleChange = useCallback((value: string) => setValue(value), []);
+  return <RadioGroup options={ICON_ONLY_OPTIONS} value={value} onChange={handleChange} />;
+};
 
-export const LabelsOnly = (): React.ReactNode => (
-  <RadioGroup defaultOptionId={LABELS_ONLY_OPTIONS[0].id} options={LABELS_ONLY_OPTIONS} />
-);
+export const LabelsOnly = (): React.ReactNode => {
+  const [ value, setValue ] = useState(LABELS_ONLY_OPTIONS[0].id);
+  const handleChange = useCallback((value: string) => setValue(value), []);
+  return <RadioGroup options={LABELS_ONLY_OPTIONS} value={value} onChange={handleChange} />;
+};

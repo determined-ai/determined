@@ -11,9 +11,9 @@ import css from './RadioGroup.module.scss';
 
 interface Props {
   className?: string;
-  defaultOptionId?: string;
   onChange?: (id: string) => void;
   options: RadioGroupOption[];
+  value?: string;
 }
 
 export interface RadioGroupOption {
@@ -33,11 +33,10 @@ const RESIZE_THROTTLE_TIME = 500;
 const PARENT_WIDTH_BUFFER = 16;
 const HEIGHT_LIMIT = 50;
 
-const RadioGroup: React.FC<Props> = ({ className, defaultOptionId, onChange, options }: Props) => {
+const RadioGroup: React.FC<Props> = ({ className, onChange, options, value }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const originalWidth = useRef<number>();
   const resize = useResize();
-  const [ selected, setSelected ] = useState<string | undefined>(() => defaultOptionId);
   const [ showLabels, setShowLabels ] = useState(true);
   const [ sizes, setSizes ] = useState<SizeInfo>({ baseHeight: 0, baseWidth: 0, parentWidth: 0 });
   const classes = [ css.base ];
@@ -50,9 +49,7 @@ const RadioGroup: React.FC<Props> = ({ className, defaultOptionId, onChange, opt
   if (className) classes.push(className);
 
   const handleChange = useCallback((e: RadioChangeEvent) => {
-    const id = e.target.value;
-    setSelected(id);
-    if (onChange) onChange(id);
+    if (onChange) onChange(e.target.value);
   }, [ onChange ]);
 
   /*
@@ -101,7 +98,7 @@ const RadioGroup: React.FC<Props> = ({ className, defaultOptionId, onChange, opt
     <Radio.Group
       className={classes.join(' ')}
       ref={baseRef}
-      value={selected}
+      value={value}
       onChange={handleChange}>
       {options.map(option => (
         <ConditionalWrapper
