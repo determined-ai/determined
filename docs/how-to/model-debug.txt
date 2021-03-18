@@ -41,14 +41,14 @@ The basic steps for debugging are:
 
 **Docker- or cluster-related issues:**
 
-4. Does the original code run in a notebook or shell?
+#. Does the original code run in a notebook or shell?
 #. Does each method of your ``Trial`` subclass work in a notebook or
    shell?
 #. Does local test mode work in a notebook or shell?
 
 **Higher-level issues:**
 
-7. Does cluster test mode work with ``slots_per_trial`` set to ``1``?
+#. Does cluster test mode work with ``slots_per_trial`` set to ``1``?
 #. Does a single-GPU experiment work?
 #. Does a multi-GPU experiment work?
 
