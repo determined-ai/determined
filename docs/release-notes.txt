@@ -25,7 +25,8 @@ Version 0.14.4
    training trials by default unless stopped by the algorithm. Compared
    to the default promotions-based algorithm, the stopping variant will
    promote to higher rungs faster and does not require fault tolerance
-   since it will not resume stopped trials.
+   since it will not resume stopped trials. See the
+   :ref:`experiment-configuration` reference for more information.
 
 -  Add an option to :class:`~determined.pytorch.LRScheduler` to accept a
    frequency option alongside batch and epoch step modes.
