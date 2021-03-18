@@ -76,6 +76,10 @@ const ExperimentVisualization: React.FC<Props> = ({
   type,
 }: Props) => {
   const history = useHistory();
+  const searcherMetric = useRef<MetricName>({
+    name: experiment.config.searcher.metric,
+    type: MetricType.Validation,
+  });
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const fullHParams = useRef<string[]>(
     (Object.keys(experiment.config.hyperparameters || {}).filter(key => {
