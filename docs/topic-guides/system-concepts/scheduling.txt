@@ -125,29 +125,31 @@ enabled:
  Scheduling on Kubernetes
 **************************
 
-By default, Kubernetes schedules pods one at a time, in a
-first-come-first-serve (FCFS) manner. This can result in problematic
-behavior for deep learning workloads, particularly for distributed
-training jobs that use many GPUs. A distributed training job that uses
-multiple pods requires all pods to be scheduled and running in order to
-make progress. Because Kubernetes does not support gang scheduling by
-default, cluster deadlocks can arise. For example, suppose that two
-experiments are launched simultaneously that each require 16 GPUs on a
-cluster with only 16 GPUs. It is possible that Kubernetes will assign
-some GPUs to one experiment and some GPUs to the other. Because neither
-experiment will receive the resources it needs to begin executing, the
-system will wait indefinitely.
+By default, the Kubernetes scheduler does not perform gang scheduling or
+support preemption of pods. While it does take pod priority into
+account, it greedily schedules pods without consideration for the job
+each pod belongs to. This can result in problematic behavior for deep
+learning workloads, particularly for distributed training jobs that use
+many GPUs. A distributed training job that uses multiple pods requires
+all pods to be scheduled and running in order to make progress. Because
+Kubernetes does not support gang scheduling by default, cluster
+deadlocks can arise. For example, suppose that two experiments are
+launched simultaneously that each require 16 GPUs on a cluster with only
+16 GPUs. It is possible that Kubernetes will assign some GPUs to one
+experiment and some GPUs to the other. Because neither experiment will
+receive the resources it needs to begin executing, the system will wait
+indefinitely.
 
 Determined addresses these problems through the use of the `lightweight
 coscheduling plugin
 <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
-which extends the Kubernetes scheduler to support gang scheduling and
-priority-based scheduling. To implement gang scheduling, the
-coscheduling plugin will not schedule a pod if there are not enough
-resources to also schedule the other pods in the same job. To function,
-the plugin requires special labels to be set that specify the number of
-nodes that each job needs for execution. Determined automatically
-calculates and sets these labels for experiments that it launches.
+which extends the Kubernetes scheduler to support priority-based gang
+scheduling. To implement gang scheduling, the coscheduling plugin will
+not schedule a pod unless there are enough available resources to also
+schedule the rest of the pods in the same job. To function, the plugin
+requires special labels to be set that specify the number of nodes that
+each job needs for execution. Determined automatically calculates and
+sets these labels for GPU experiments that it launches.
 
 The coscheduling plugin is in beta and is therefore not enabled by
 default. To enable it, edit ``values.yaml`` in the Determined Helm chart
@@ -155,7 +157,7 @@ to set the ``defaultScheduler`` field to "coscheduler".
 
 Importantly, the coscheduling plugin does not work with Kubernetes'
 cluster autoscaling feature: static node pools must be used to achieve
-gang-scheduling. Also, while the plugin allocates resources to jobs
+gang scheduling. Also, while the plugin allocates resources to jobs
 based on their priority, it does not support preemption. For example, if
 the cluster is full of low priority jobs and a new high priority job is
 submitted, the high priority job will not be scheduled until one of the
@@ -176,5 +178,10 @@ contain the following:
       pod_spec:
          metadata:
             labels:
-               pod-group.scheduling.sigs.k8s.io/name: determined
-               pod-group.scheduling.sigs.k8s.io/min-available: "2"
+               pod-group.scheduling.sigs.k8s.io/name: <unique task name>
+               pod-group.scheduling.sigs.k8s.io/min-available: <# of GPUs required>
+         spec:
+            schedulerName: coscheduler
+
+You can also use ``schedulerName: default-scheduler`` to use the default
+Kubernetes scheduler.

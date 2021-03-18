@@ -270,6 +270,22 @@ perform TLS termination in the load-balancer:
                serviceName: determined-master-service-<name for your deployment>
                servicePort: masterPort configured in values.yaml
 
+Default Scheduler (Optional)
+============================
+
+Determined includes support for the `lightweight coscheduling plugin
+<https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
+which extends the default Kubernetes scheduler to provide gang
+scheduling. This feature is currently in beta and is not enabled by
+default. To activate the plugin, set the ``defaultScheduler`` field to
+``coscheduler``. If the field is empty or doesn't exist, Determined will
+use the default Kubernetes scheduler to schedule all experiments and
+tasks.
+
+.. code:: yaml
+
+   defaultScheduler: coscheduler
+
 ***********************
  Installing Determined
 ***********************
