@@ -1,3 +1,4 @@
+{{- if .Values.defaultScheduler}}
 {{- if eq .Values.defaultScheduler "coscheduler"}}
 apiVersion: v1
 kind: ServiceAccount
@@ -43,4 +44,5 @@ roleRef:
   kind: ClusterRole
   name: system:volume-scheduler
   apiGroup: rbac.authorization.k8s.io
+{{- end }}
 {{- end }}

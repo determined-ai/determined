@@ -1,3 +1,4 @@
+{{- if .Values.defaultScheduler}}
 {{- if eq .Values.defaultScheduler "coscheduler"}}
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
@@ -34,4 +35,5 @@ value: 1
 preemptionPolicy: Never
 globalDefault: false
 description: "This priority class should be used for low priority Determined jobs."
+{{- end }}
 {{- end }}
