@@ -1,15 +1,10 @@
-import { Alert, Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
-import MetricSelectFilter from 'components/MetricSelectFilter';
-import MultiSelect from 'components/MultiSelect';
-import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
-import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
@@ -22,18 +17,12 @@ import { terminalRunStates } from 'utils/types';
 
 import css from './HpScatterPlots.module.scss';
 
-const { Option } = Select;
-
 interface Props {
-  batches: number[];
   experiment: ExperimentBase;
+  filters?: React.ReactNode;
   hParams: string[];
-  isLoading?: boolean;
-  metrics: MetricName[];
-  onBatchChange?: (batch: number) => void;
-  onHParamChange?: (hParams?: string[]) => void;
-  onMetricChange?: (metric: MetricName) => void;
   selectedBatch: number;
+  selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
 }
@@ -46,15 +35,11 @@ interface HpMetricData {
 }
 
 const ScatterPlots: React.FC<Props> = ({
-  batches,
   experiment,
   hParams,
-  isLoading = false,
-  metrics,
-  onBatchChange,
-  onHParamChange,
-  onMetricChange,
+  filters,
   selectedBatch,
+  selectedBatchMargin,
   selectedHParams,
   selectedMetric,
 }: Props) => {
@@ -66,35 +51,12 @@ const ScatterPlots: React.FC<Props> = ({
   const resize = useResize(baseRef);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
-  const resetData = useCallback(() => {
-    setChartData(undefined);
-    setHasLoaded(false);
-  }, []);
-
-  const handleBatchChange = useCallback((batch: SelectValue) => {
-    if (!onBatchChange) return;
-    resetData();
-    onBatchChange(batch as number);
-  }, [ onBatchChange, resetData ]);
-
-  const handleHParamChange = useCallback((hps: SelectValue) => {
-    if (!onHParamChange) return;
-    if (Array.isArray(hps)) {
-      onHParamChange(hps.length === 0 ? undefined : hps as string[]);
-    }
-  }, [ onHParamChange ]);
-
-  const handleMetricChange = useCallback((metric: MetricName) => {
-    if (!onMetricChange) return;
-    resetData();
-    onMetricChange(metric);
-  }, [ onMetricChange, resetData ]);
-
   useEffect(() => {
     const canceler = new AbortController();
-
     const trialIds: number[] = [];
     const hpTrialMap: Record<string, Record<number, { hp: number, metric: number }>> = {};
+
+    setHasLoaded(false);
 
     consumeStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.determinedTrialsSnapshot(
@@ -102,7 +64,7 @@ const ScatterPlots: React.FC<Props> = ({
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
         selectedBatch,
-        undefined,
+        selectedBatchMargin,
         undefined,
         { signal: canceler.signal },
       ),
@@ -150,10 +112,13 @@ const ScatterPlots: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch(e => setPageError(e));
+    ).catch(e => {
+      setPageError(e);
+      setHasLoaded(true);
+    });
 
     return () => canceler.abort();
-  }, [ experiment, hParams, selectedBatch, selectedMetric ]);
+  }, [ experiment, hParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
@@ -171,7 +136,7 @@ const ScatterPlots: React.FC<Props> = ({
   }
 
   let content = <Spinner />;
-  if (hasLoaded && !isLoading && chartData) {
+  if (hasLoaded && chartData) {
     if (chartData.trialIds.length === 0) {
       content = <Message title="No data to plot." type={MessageType.Empty} />;
     } else {
@@ -196,32 +161,7 @@ const ScatterPlots: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section
-        options={<ResponsiveFilters>
-          <SelectFilter
-            enableSearchFilter={false}
-            label="Batches Processed"
-            showSearch={false}
-            value={selectedBatch}
-            onChange={handleBatchChange}>
-            {batches.map(batch => <Option key={batch} value={batch}>{batch}</Option>)}
-          </SelectFilter>
-          <MetricSelectFilter
-            defaultMetricNames={metrics}
-            label="Metric"
-            metricNames={metrics}
-            multiple={false}
-            value={selectedMetric}
-            width={'100%'}
-            onChange={handleMetricChange} />
-          <MultiSelect
-            label="HP"
-            value={selectedHParams}
-            onChange={handleHParamChange}>
-            {hParams.map(hpKey => <Option key={hpKey} value={hpKey}>{hpKey}</Option>)}
-          </MultiSelect>
-        </ResponsiveFilters>}
-        title="HP Scatter Plots">
+      <Section bodyBorder filters={filters} id="hp-visualization" title="HP Scatter Plots">
         <div className={css.container}>{content}</div>
       </Section>
     </div>

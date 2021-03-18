@@ -44,7 +44,11 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
   {
     className = '',
     disableTags = false,
-    dropdownMatchSelectWidth = false,
+    /*
+     * Disabling `dropdownMatchSelectWidth` will disable virtual scroll within the dropdown options.
+     * This should only be done if the option count is fairly low.
+     */
+    dropdownMatchSelectWidth = true,
     enableSearchFilter = true,
     showSearch = true,
     verticalLayout = false,

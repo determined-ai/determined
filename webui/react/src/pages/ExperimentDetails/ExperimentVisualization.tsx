@@ -1,6 +1,6 @@
 import { Alert, Col, Row, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
@@ -13,12 +13,16 @@ import { V1MetricBatchesResponse, V1MetricNamesResponse } from 'services/api-ts-
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParamType, ExperimentSearcherName, MetricName, MetricType,
+  ExperimentBase, ExperimentHyperParamType, ExperimentSearcherName,
+  ExperimentVisualizationType, MetricName, MetricType,
 } from 'types';
 import { alphanumericSorter } from 'utils/sort';
 import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
+import ExperimentVisualizationFilters, {
+  MAX_HPARAM_COUNT, VisualizationFilters,
+} from './ExperimentVisualization/ExperimentVisualizationFilters';
 import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
@@ -26,17 +30,10 @@ import LearningCurve from './ExperimentVisualization/LearningCurve';
 
 const { Option } = Select;
 
-export enum VisualizationType {
-  HpParallelCoordinates = 'hp-parallel-coordinates',
-  HpHeatMap = 'hp-heat-map',
-  HpScatterPlots = 'hp-scatter-plots',
-  LearningCurve = 'learning-curve',
-}
-
 interface Props {
   basePath: string;
   experiment: ExperimentBase;
-  type?: VisualizationType;
+  type?: ExperimentVisualizationType;
 }
 
 enum PageError {
@@ -45,14 +42,17 @@ enum PageError {
 }
 
 const STORAGE_PATH = 'experiment-visualization';
-const TYPE_KEYS = Object.values(VisualizationType);
-const DEFAULT_TYPE_KEY = VisualizationType.LearningCurve;
-const MAX_HPARAM_COUNT = 10;
+const STORAGE_FILTERS_KEY = 'filters';
+const TYPE_KEYS = Object.values(ExperimentVisualizationType);
+const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
+const DEFAULT_BATCH = 0;
+const DEFAULT_BATCH_MARGIN = 10;
+const DEFAULT_MAX_TRIALS = 100;
 const MENU = [
-  { label: 'Learning Curve', type: VisualizationType.LearningCurve },
-  { label: 'HP Parallel Coordinates', type: VisualizationType.HpParallelCoordinates },
-  { label: 'HP Scatter Plots', type: VisualizationType.HpScatterPlots },
-  { label: 'HP Heat Map', type: VisualizationType.HpHeatMap },
+  { label: 'Learning Curve', type: ExperimentVisualizationType.LearningCurve },
+  { label: 'HP Parallel Coordinates', type: ExperimentVisualizationType.HpParallelCoordinates },
+  { label: 'HP Scatter Plots', type: ExperimentVisualizationType.HpScatterPlots },
+  { label: 'HP Heat Map', type: ExperimentVisualizationType.HpHeatMap },
 ];
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
@@ -65,82 +65,60 @@ const ExperimentVisualization: React.FC<Props> = ({
   type,
 }: Props) => {
   const history = useHistory();
-  const storage = useStorage(STORAGE_PATH);
-  const STORAGE_BATCH_KEY = `${experiment.id}/batch`;
-  const STORAGE_METRIC_KEY = `${experiment.id}/metric`;
-  const STORAGE_HPARAMS_KEY = `${experiment.id}/hyperparameters`;
-  const defaultUserBatch = storage.get(STORAGE_BATCH_KEY) as number || 0;
-  const defaultUserMetric = storage.get(STORAGE_METRIC_KEY) as MetricName || undefined;
-  const defaultTypeKey = type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
-  const [ typeKey, setTypeKey ] = useState(defaultTypeKey);
-  const [ trainingMetrics, setTrainingMetrics ] = useState<string[]>([]);
-  const [ validationMetrics, setValidationMetrics ] = useState<string[]>([]);
-  const [ selectedBatch, setSelectedBatch ] = useState<number>(defaultUserBatch);
-  const [ selectedMetric, setSelectedMetric ] = useState<MetricName>(defaultUserMetric);
-  const [ searcherMetric, setSearcherMetric ] = useState<string>();
-  /* eslint-disable-next-line */
-  const [ batches, setBatches ] = useState<number[]>([]);
-
-  const { fullHParams, limitedHParams } = useMemo(() => {
-    // Constant hyperparameters are not useful for visualizations
-    const fullHParams = (Object.keys(experiment.config.hyperparameters) || []).filter(key => {
+  const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
+  const fullHParams = useRef<string[]>(
+    (Object.keys(experiment.config.hyperparameters || {}).filter(key => {
+      // Constant hyperparameters are not useful for visualizations.
       const hp = experiment.config.hyperparameters[key];
       return hp.type !== ExperimentHyperParamType.Constant;
-    });
-    const limitedHParams = fullHParams.slice(0, MAX_HPARAM_COUNT);
-    return { fullHParams, limitedHParams };
-  }, [ experiment ]);
-  const defaultHParams = storage.get<string[]>(STORAGE_HPARAMS_KEY);
-  const [ hParams, setHParams ] = useState<string[]>(defaultHParams || limitedHParams);
-
+    })),
+  );
+  const searcherMetric = useRef<MetricName>({
+    name: experiment.config.searcher.metric,
+    type: MetricType.Validation,
+  });
+  const [ typeKey, setTypeKey ] = useState(() => {
+    return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
+  });
+  const [ batches, setBatches ] = useState<number[]>([]);
+  const [ metrics, setMetrics ] = useState<MetricName[]>([]);
+  const [ filters, setFilters ] = useState<VisualizationFilters>(() => {
+    const storedFilters = storage.get<VisualizationFilters>(STORAGE_FILTERS_KEY);
+    return {
+      batch: storedFilters?.batch || DEFAULT_BATCH,
+      batchMargin: storedFilters?.batchMargin || DEFAULT_BATCH_MARGIN,
+      hParams: storedFilters?.hParams || fullHParams.current.slice(0, MAX_HPARAM_COUNT),
+      maxTrial: storedFilters?.maxTrial || DEFAULT_MAX_TRIALS,
+      metric: storedFilters?.metric || searcherMetric.current,
+    };
+  });
+  const [ activeMetric, setActiveMetric ] = useState<MetricName>(filters.metric);
   const [ hasLoaded, setHasLoaded ] = useState(false);
-  const [ isContentReady, setIsContentReady ] = useState(false);
   const [ pageError, setPageError ] = useState<PageError>();
 
-  const metrics: MetricName[] = useMemo(() => ([
-    ...(validationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
-    ...(trainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
-  ]), [ trainingMetrics, validationMetrics ]);
-
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
-  const hasBatches = batches.length !== 0;
-  const hasMetrics = metrics.length !== 0;
 
-  const handleBatchChange = useCallback((batch: number) => {
-    storage.set(STORAGE_BATCH_KEY, batch);
-    setSelectedBatch(batch);
-    setIsContentReady(false);
-  }, [ storage, STORAGE_BATCH_KEY ]);
-
-  const handleHParamChange = useCallback((hParams?: string[]) => {
-    if (!hParams) {
-      storage.remove(STORAGE_HPARAMS_KEY);
-      setHParams(limitedHParams);
-    } else {
-      storage.set(STORAGE_HPARAMS_KEY, hParams);
-      setHParams(hParams);
-    }
-  }, [ limitedHParams, storage, STORAGE_HPARAMS_KEY ]);
+  const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
+    setFilters(filters);
+  }, []);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
-    storage.set(STORAGE_METRIC_KEY, metric);
-    setSelectedMetric(metric);
-    setIsContentReady(false);
-  }, [ storage, STORAGE_METRIC_KEY ]);
+    setActiveMetric(metric);
+  }, []);
 
   const handleChartTypeChange = useCallback((type: SelectValue) => {
-    setTypeKey(type as VisualizationType);
+    setTypeKey(type as ExperimentVisualizationType);
     history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
   }, [ basePath, history ]);
 
-  // Sets the default sub route
+  // Sets the default sub route.
   useEffect(() => {
     if (type && (!TYPE_KEYS.includes(type) || type === DEFAULT_TYPE_KEY)) {
       history.replace(basePath);
     }
   }, [ basePath, history, type ]);
 
-  // Stream available metrics
+  // Stream available metrics.
   useEffect(() => {
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
@@ -163,9 +141,23 @@ const ExperimentVisualization: React.FC<Props> = ({
         (event.validationMetrics || []).forEach(metric => validationMetricsMap[metric] = true);
         const newTrainingMetrics = Object.keys(trainingMetricsMap).sort(alphanumericSorter);
         const newValidationMetrics = Object.keys(validationMetricsMap).sort(alphanumericSorter);
-        setTrainingMetrics(newTrainingMetrics);
-        setValidationMetrics(newValidationMetrics);
-        if (event.searcherMetric) setSearcherMetric(event.searcherMetric);
+        const newMetrics = [
+          ...(newValidationMetrics || []).map(name => ({ name, type: MetricType.Validation })),
+          ...(newTrainingMetrics || []).map(name => ({ name, type: MetricType.Training })),
+        ];
+        setMetrics(newMetrics);
+
+        // Check to see if filter metric is valid.
+        const filterMetricFound = newMetrics.reduce((acc, metric) => {
+          return acc || (
+            metric.type === filters.metric.type &&
+            metric.name === filters.metric.name
+          );
+        }, false);
+        if (!filterMetricFound) {
+          setFilters(prev => ({ ...prev, metric: searcherMetric.current }));
+          setActiveMetric(searcherMetric.current);
+        }
       },
     ).catch(() => {
       setHasLoaded(true);
@@ -173,21 +165,19 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id ]);
+  }, [ experiment.id, filters.metric ]);
 
-  // Stream available batches
+  // Stream available batches.
   useEffect(() => {
-    if (!selectedMetric) return;
-
     const canceler = new AbortController();
-    const metricTypeParam = selectedMetric?.type === MetricType.Training
+    const metricTypeParam = activeMetric?.type === MetricType.Training
       ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
 
     consumeStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.determinedMetricBatches(
         experiment.id,
-        selectedMetric?.name,
+        activeMetric?.name,
         metricTypeParam,
         undefined,
         { signal: canceler.signal },
@@ -197,26 +187,18 @@ const ExperimentVisualization: React.FC<Props> = ({
         (event.batches || []).forEach(batch => batchesMap[batch] = batch);
         const newBatches = Object.values(batchesMap).sort(alphanumericSorter);
         setBatches(newBatches);
-        if (newBatches.length !== 0 && !newBatches.includes(selectedBatch)) {
-          setSelectedBatch(newBatches.first());
+        if (filters.batch === 0) {
+          setFilters(prev => ({ ...prev, batch: newBatches.first() }));
         }
         setHasLoaded(true);
-        setIsContentReady(true);
       },
     ).catch(() => {
       setHasLoaded(true);
-      setIsContentReady(true);
       setPageError(PageError.MetricBatches);
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedBatch, selectedMetric ]);
-
-  // Set the default metric of interest
-  useEffect(() => {
-    if (selectedMetric) return;
-    if (searcherMetric) setSelectedMetric({ name: searcherMetric, type: MetricType.Validation });
-  }, [ metrics, searcherMetric, selectedMetric ]);
+  }, [ activeMetric, experiment.id, filters.batch ]);
 
   if (!hasLoaded) {
     return <Spinner />;
@@ -239,7 +221,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       </>}
       message={alertMessage}
       type="warning" />;
-  } else if (!hasMetrics || !hasBatches) {
+  } else if (metrics.length === 0 || batches.length === 0) {
     return isExperimentTerminal ? (
       <Message title="No data to plot." type={MessageType.Empty} />
     ) : (
@@ -252,6 +234,18 @@ const ExperimentVisualization: React.FC<Props> = ({
     );
   }
 
+  const visualizationFilters = (
+    <ExperimentVisualizationFilters
+      batches={batches}
+      filters={filters}
+      fullHParams={fullHParams.current}
+      metrics={metrics}
+      type={typeKey}
+      onChange={handleFiltersChange}
+      onMetricChange={handleMetricChange}
+    />
+  );
+
   return (
     <div className={css.base}>
       <Row>
@@ -261,57 +255,46 @@ const ExperimentVisualization: React.FC<Props> = ({
           sm={{ order: 2, span: 24 }}
           span={24}
           xs={{ order: 2, span: 24 }}>
-          {typeKey === VisualizationType.LearningCurve && (
+          {typeKey === ExperimentVisualizationType.LearningCurve && (
             <LearningCurve
               experiment={experiment}
-              hParams={fullHParams}
-              isLoading={!isContentReady}
-              metrics={metrics}
-              selectedMetric={selectedMetric}
-              onMetricChange={handleMetricChange}
+              filters={visualizationFilters}
+              hParams={fullHParams.current}
+              selectedMaxTrial={filters.maxTrial}
+              selectedMetric={filters.metric}
             />
           )}
-          {typeKey === VisualizationType.HpParallelCoordinates && (
+          {typeKey === ExperimentVisualizationType.HpParallelCoordinates && (
             <HpParallelCoordinates
-              batches={batches}
               experiment={experiment}
-              hParams={fullHParams}
-              isLoading={!isContentReady}
-              metrics={metrics}
-              selectedBatch={selectedBatch}
-              selectedHParams={hParams}
-              selectedMetric={selectedMetric}
-              onBatchChange={handleBatchChange}
-              onHParamChange={handleHParamChange}
-              onMetricChange={handleMetricChange}
+              filters={visualizationFilters}
+              hParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
             />
           )}
-          {typeKey === VisualizationType.HpScatterPlots && (
+          {typeKey === ExperimentVisualizationType.HpScatterPlots && (
             <HpScatterPlots
-              batches={batches}
               experiment={experiment}
-              hParams={fullHParams}
-              isLoading={!isContentReady}
-              metrics={metrics}
-              selectedBatch={selectedBatch}
-              selectedHParams={hParams}
-              selectedMetric={selectedMetric}
-              onBatchChange={handleBatchChange}
-              onHParamChange={handleHParamChange}
-              onMetricChange={handleMetricChange}
+              filters={visualizationFilters}
+              hParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
             />
           )}
-          {typeKey === VisualizationType.HpHeatMap && (
+          {typeKey === ExperimentVisualizationType.HpHeatMap && (
             <HpHeatMaps
-              batches={batches}
               experiment={experiment}
-              hParams={fullHParams}
-              isLoading={!isContentReady}
-              metrics={metrics}
-              selectedBatch={selectedBatch}
-              selectedMetric={selectedMetric}
-              onBatchChange={handleBatchChange}
-              onMetricChange={handleMetricChange}
+              filters={visualizationFilters}
+              hParams={fullHParams.current}
+              selectedBatch={filters.batch}
+              selectedBatchMargin={filters.batchMargin}
+              selectedHParams={filters.hParams}
+              selectedMetric={filters.metric}
             />
           )}
         </Col>

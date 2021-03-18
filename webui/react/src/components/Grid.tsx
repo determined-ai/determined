@@ -13,7 +13,7 @@ interface Props {
   border?: boolean;
   gap?: ShirtSize;
   minItemWidth?: number;
-  mode?: GridMode;
+  mode?: GridMode | number;
 }
 
 const defaultProps = {
