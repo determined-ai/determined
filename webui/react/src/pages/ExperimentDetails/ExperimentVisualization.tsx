@@ -76,11 +76,11 @@ const ExperimentVisualization: React.FC<Props> = ({
   type,
 }: Props) => {
   const history = useHistory();
+  const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const searcherMetric = useRef<MetricName>({
     name: experiment.config.searcher.metric,
     type: MetricType.Validation,
   });
-  const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
   const fullHParams = useRef<string[]>(
     (Object.keys(experiment.config.hyperparameters || {}).filter(key => {
       // Constant hyperparameters are not useful for visualizations.
@@ -88,10 +88,6 @@ const ExperimentVisualization: React.FC<Props> = ({
       return hp.type !== ExperimentHyperParamType.Constant;
     })),
   );
-  const searcherMetric = useRef<MetricName>({
-    name: experiment.config.searcher.metric,
-    type: MetricType.Validation,
-  });
   const [ typeKey, setTypeKey ] = useState(() => {
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
