@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  PyTorchTrial: Add an option to LRScheduler to accept a frequency
-   option alongside batch and epoch step modes.
