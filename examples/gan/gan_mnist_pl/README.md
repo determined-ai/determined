@@ -1,12 +1,12 @@
 # PyTorch Lightning MNIST GAN Example
 
-This tutorial shows how to build a simple CNN on the MNIST dataset using
+This tutorial shows how to build a GAN on the MNIST dataset using
 Determined's PyTorch API and the corresponding Lightning Adapter.
 This example is adapted from [PyTorch Lightning GAN
 example](https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pl_examples/domain_templates/generative_adversarial_net.py).
 
 ## Files
-* **model_def.py**: The code for implementing `PyTorchTrial` API.
+* **model_def.py**: The code for implementing `LightningAdapter` API.
 * **mnist.py**: A standalone PyTorch Lightning experiment defining a `LightningModule` implementing the model.
 * **data.py**: The data loading and preparation code for the model implementing `LightningDataModule`.
 

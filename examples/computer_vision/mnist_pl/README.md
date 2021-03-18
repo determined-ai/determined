@@ -4,7 +4,7 @@ Determined's PyTorch API and the corresponding Lightning Adapter.
 This example is adapted from [PyTorch MNIST tutorial](https://github.com/pytorch/examples/tree/master/mnist).
 
 ## Files
-* **model_def.py**: The code for implementing `PyTorchTrial` API.
+* **model_def.py**: The code for implementing `LightningAdapter` API.
 * **mnist.py**: A standalone PyTorch Lightning experiment defining a `LightningModule` implementing the model.
 * **data.py**: The data loading and preparation code for the model implementing `LightningDataModule`.
 
