@@ -14,14 +14,14 @@ TF_VARS_FILE = "terraform.tfvars.json"
 
 
 def deploy(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
-    terraform_init(configs, env)
     validate_gcp_credentials(configs)
+    terraform_init(configs, env)
     terraform_apply(configs, env, variables_to_exclude)
 
 
 def dry_run(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
-    terraform_init(configs, env)
     validate_gcp_credentials(configs)
+    terraform_init(configs, env)
     terraform_plan(configs, env, variables_to_exclude)
 
 
@@ -271,8 +271,10 @@ def run_command(command: str, env: Dict[str, str]) -> None:
 
 def validate_gcp_credentials(configs: Dict) -> None:
     vars_file_path = get_terraform_vars_file_path(configs)
-    tf_vars = terraform_read_variables(vars_file_path)
-    set_gcp_credentials_env(tf_vars)
+    # Try to load google credentials from terraform vars when present.
+    if os.path.exists(vars_file_path):
+        tf_vars = terraform_read_variables(vars_file_path)
+        set_gcp_credentials_env(tf_vars)
 
     try:
         googleapiclient.discovery.build("compute", "v1")
