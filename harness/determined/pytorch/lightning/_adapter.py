@@ -1,4 +1,5 @@
 import inspect
+from abc import abstractmethod
 from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
 import pytorch_lightning as pl
@@ -9,7 +10,13 @@ from torch.optim.optimizer import Optimizer
 
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
-from determined.pytorch import LRScheduler, PyTorchCallback, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchCallback,
+    PyTorchTrial,
+    PyTorchTrialContext,
+)
 from determined.tensorboard.metric_writers import pytorch
 from determined.util import filter_duplicates, has_param
 from determined_common import check
@@ -97,7 +104,10 @@ def override_unsupported_nud(lm: pl.LightningModule, context: PyTorchTrialContex
 
 class _LightningAdapterState:
     def __init__(
-        self, context: PyTorchTrialContext, lm: pl.LightningModule, optimizers: List[Optimizer]
+        self,
+        context: PyTorchTrialContext,
+        lm: pl.LightningModule,
+        optimizers: List[Optimizer],
     ):
         self.context = context
         self.lm = lm
@@ -105,13 +115,44 @@ class _LightningAdapterState:
 
 
 class LightningAdapter(PyTorchTrial):
+    """
+    Pytorch Lightning Adapter provides a quick way
+    to train your Pytorch Lightning models with all the Determined features,
+    such as mid-epoch preemption, simple distributed training interface,
+    simple job submission to the Determined cluster, and so on.
+    """
+
     def __init__(self, context: PyTorchTrialContext, lightning_module: pl.LightningModule):
+        """
+        This performs the necessary initialization steps to:
+
+        1. check the compatibility of the provided ``LightningModule`` with ``LightningAdapter``.
+        2. define a ``PytorchTrial`` with models, optimizers, and LR schedulers that are provided
+           by ``LightningModule``.
+        3. patch the ``LightningModule`` methods that depend on a ``Trainer``.
+
+        After inheriting this class, you need to override this function to initialize the adapted
+        ``PytorchTrial``.
+        Within your ``__init__`` , you should instantiate the ``LightningModule`` and call
+        ``super().__init__``.
+
+        Here is a minimal code example.
+
+        .. code-block:: python
+
+            def __init__(self, context: PyTorchTrialContext) -> None:
+                lm = mnist.LightningMNISTClassifier(lr=context.get_hparam('learning_rate'))
+                super().__init__(context, lightning_module=lm)
+
+
+        """
         check_compatibility(lightning_module)
         override_unsupported_nud(lightning_module, context)
         context.wrap_model(lightning_module)
-        optimizers, lr_schedulers = self.setup_optimizers_schedulers(context, lightning_module)
-        pls = _LightningAdapterState(context, lightning_module, optimizers)
+        pls = _LightningAdapterState(context, lightning_module, [])
         self._pls = pls
+        optimizers, _ = self.setup_optimizers_schedulers()
+        pls.optimizers = optimizers
 
         # set lightning_module properties
         pls.lm.use_ddp = False  # type: ignore
@@ -147,18 +188,14 @@ class LightningAdapter(PyTorchTrial):
 
         return {"_lightning_module": LightningAdapterCallback()}
 
-    def setup_optimizers_schedulers(
-        self,
-        context: PyTorchTrialContext,
-        lightning_module: pl.LightningModule,
-    ) -> Tuple[List[Optimizer], List[LRScheduler]]:
+    def setup_optimizers_schedulers(self) -> Tuple[List[Optimizer], List[LRScheduler]]:
         """
         Wrap optimizers and lr_schedulers returned by `configure_optimizers` to
         work with Determined.
         Return: Wrapped `optimizers`, and `lr_schedulers` in a tuple
         """
-        optimizers, lr_scheduler_dicts, opt_frequencies = TrainerOptimizersMixin().init_optimizers(
-            lightning_module,
+        optimizers, lr_scheduler_dicts, _ = TrainerOptimizersMixin().init_optimizers(
+            self._pls.lm,
         )
         optimizers = cast(List[Optimizer], optimizers)
         lr_scheduler_dicts = cast(List[dict], lr_scheduler_dicts)
@@ -194,7 +231,7 @@ class LightningAdapter(PyTorchTrial):
                 )
             return LRScheduler(lrs["scheduler"], step_mode, frequency=lrs["frequency"])
 
-        optimizers = [context.wrap_optimizer(opt) for opt in optimizers]
+        optimizers = [self._pls.context.wrap_optimizer(opt) for opt in optimizers]
         lr_schedulers = [lightning_scheduler_dict_to_det(lrs) for lrs in lr_scheduler_dicts]
         return optimizers, lr_schedulers
 
@@ -217,6 +254,11 @@ class LightningAdapter(PyTorchTrial):
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Union[torch.Tensor, Dict[str, Any]]:
+        """
+        train_batch implements the train_batch interface from PyTorchTrial using user defined
+        lightning_module.
+
+        """
         type(self._pls.lm).global_step = batch_idx  # type: ignore
         self._pls.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
 
@@ -268,6 +310,12 @@ class LightningAdapter(PyTorchTrial):
         return agg_metrics
 
     def evaluate_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
+        """
+        evaluate_batch implements the evalute_batch interface from PyTorchTrial using user provided
+        lightning_module.
+
+        """
+        type(self._pls.lm).global_step = batch_idx  # type: ignore
         self._pls.lm.on_validation_batch_start(batch, batch_idx, dataloader_idx=0)
         rv = self._pls.lm.validation_step(batch, batch_idx=batch_idx)  # type: ignore
         self._pls.lm.on_validation_batch_end(rv, batch, batch_idx, dataloader_idx=0)
@@ -280,3 +328,42 @@ class LightningAdapter(PyTorchTrial):
         else:
             metrics = rv
         return metrics
+
+    @abstractmethod
+    def build_training_data_loader(self) -> DataLoader:
+        """
+        Defines the data loader to use during training.
+
+        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
+
+        If you're using ``LightningDataModule`` this could be as simple as:
+
+        .. code-block:: python
+
+            self.dm.setup()
+            dl = self.dm.train_dataloader()
+            return DataLoader(dl.dataset, batch_size=dl.batch_size,
+                             num_workers=dl.num_workers)
+
+
+        """
+        pass
+
+    @abstractmethod
+    def build_validation_data_loader(self) -> DataLoader:
+        """
+        Defines the data loader to use during validation.
+
+        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
+
+        If you're using ``LightningDataModule`` this could be as simple as:
+
+        .. code-block:: python
+
+            self.dm.setup()
+            dl = self.dm.val_dataloader()
+            return DataLoader(dl.dataset, batch_size=dl.batch_size,
+                             num_workers=dl.num_workers)
+
+        """
+        pass

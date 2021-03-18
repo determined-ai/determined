@@ -10,4 +10,5 @@
    estimator
    pytorch
    trial_context
+   lightning_adapter
    experimental
