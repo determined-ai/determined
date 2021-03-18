@@ -6,7 +6,7 @@
 
 This document describes how to install Determined on `Kubernetes
 <https://kubernetes.io/>`__. The installation is performed using the
-:download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`. For
+:download:`Determined Helm Chart </helm/determined-0.4.0.tgz>`. For
 general information about using Determined with Kubernetes, refer the
 :ref:`determined-on-kubernetes` guide.
 
@@ -36,7 +36,7 @@ the following prerequisites are satisfied:
    ``fluent/fluent-bit:1.6`` Docker image from Docker Hub.
 
 You should also download a copy of the :download:`Determined Helm Chart
-</helm/determined-helm-chart.tgz>` and extract it on your local machine.
+</helm/determined-0.4.0.tgz>` and extract it on your local machine.
 
 If you do not yet have a Kubernetes cluster deployed and you want to use
 Determined in a public cloud environment, we recommend using a managed
@@ -283,7 +283,7 @@ Determined run:
    helm install <name for your deployment> determined-helm-chart
 
 ``determined-helm-chart`` is a relative path to where the
-:download:`Determined Helm Chart </helm/determined-helm-chart.tgz>` is
+:download:`Determined Helm Chart </helm/determined-0.4.0.tgz>` is
 located. It may take a few minutes for all resources to come up. If you
 encounter issues during installation please follow our list of
 :ref:`useful kubectl commands <useful-kubectl-commands>`. Helm will

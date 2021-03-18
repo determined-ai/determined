@@ -7,7 +7,7 @@
 When installing :ref:`Determined on Kubernetes <install-on-kubernetes>`
 via Helm, the deployment should be configured by editing the
 ``values.yaml`` and ``Chart.yaml`` files in the :download:`Determined
-Helm Chart </helm/determined-helm-chart.tgz>`.
+Helm Chart </helm/determined-0.4.0.tgz>`.
 
 *************************
  ``Chart.yaml`` Settings

@@ -188,7 +188,7 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
 
    -  -  TensorFlow (tf.keras)
       -  MNIST
-      -  :download:`dcgan_tf_keras.tgz </examples/dcgan_tf_kera.tgz>`
+      -  :download:`dcgan_tf_keras.tgz </examples/dcgan_tf_keras.tgz>`
 
 ****************
  Decision Trees
