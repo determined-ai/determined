@@ -15,12 +15,12 @@ Version 0.14.4
 
 **New Features**
 
--  Add a REST API endpoint exposing historical cluster resource
-   allocation. Currently, information about experiment workloads
-   (training, checkpoints, and validations) is included. Use the
-   :ref:`rest-api` for more information.
+-  REST API: Add a REST API endpoint exposing historical cluster
+   resource allocation. Currently, information about experiment
+   workloads (training, checkpoints, and validations) is included. Use
+   the :ref:`rest-api` for more information.
 
--  Introduce a stopping-based variant of
+-  Hyperparameter Search: Introduce a stopping-based variant of
    :ref:`topic-guides_hp-tuning-det_adaptive-asha` that will continue
    training trials by default unless stopped by the algorithm. Compared
    to the default promotions-based algorithm, the stopping variant will
@@ -28,8 +28,8 @@ Version 0.14.4
    since it will not resume stopped trials. See the
    :ref:`experiment-configuration` reference for more information.
 
--  Add an option to :class:`~determined.pytorch.LRScheduler` to accept a
-   frequency option alongside batch and epoch step modes.
+-  PyTorch: Add an option to :class:`~determined.pytorch.LRScheduler` to
+   accept a frequency option alongside batch and epoch step modes.
 
 **Bug Fixes**
 
