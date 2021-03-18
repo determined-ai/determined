@@ -119,36 +119,58 @@ enabled:
    priority 1 then starts running. Once that experiment is complete,
    distributed training experiment with priority 2 runs.
 
-*******************************
- Gang-scheduling on Kubernetes
-*******************************
+.. _scheduling-on-kubernetes:
 
-Kubernetes does not natively support gang-scheduling and its default
-scheduler will schedule pods on a first-come-first-serve basis. This
-approach is problematic if a user submits several multi-pod jobs at
-once; first-come-first-serve could result in a cluster deadlock.
-Determined is able to support gang-scheduling by using the lightweight
-coscheduling plugin, which extends the Kubernetes scheduler and blocks
-scheduling of pods unless there are enough resources for all the pods in
-the job. To function, the plugin requires special labels to be set that
-specify the amount of nodes that each job needs for execution.
-Determined is able to automatically calculate and set these labels for
-its experiments.
+**************************
+ Scheduling on Kubernetes
+**************************
 
-Importantly, the coscheduling plugin does not work with cluster
-autoscaling. Static node pools must be used to achieve gang-scheduling.
-Also, while the plugin allocates resources to jobs based on their
-priority, it does not support preemption. Any low priority task will be
-able to finish before a higher priority task can begin running.
-Additionally, there isn't an implementation of ``max_slots`` or
-``max_concurrent_trials`` that would limit the resources of an
-experiment, i.e. one for hyperparameter search. Lastly, Determined's
-capability to automatically set pod labels is restricted to GPU
-experiments; it is unable to do the same for CPU experiments or user
-commands. If gang-scheduling is desired for these, it must be set
-manually via the environment field in the config. For instance:
+By default, Kubernetes schedules pods one at a time, in a
+first-come-first-serve (FCFS) manner. This can result in problematic
+behavior for deep learning workloads, particularly for distributed
+training jobs that use many GPUs. A distributed training job that uses
+multiple pods requires all pods to be scheduled and running in order to
+make progress. Because Kubernetes does not support gang scheduling by
+default, cluster deadlocks can arise. For example, suppose that two
+experiments are launched simultaneously that each require 16 GPUs on a
+cluster with only 16 GPUs. It is possible that Kubernetes will assign
+some GPUs to one experiment and some GPUs to the other. Because neither
+experiment will receive the resources it needs to begin executing, the
+system will wait indefinitely.
 
-.. code::
+Determined addresses these problems through the use of the `lightweight
+coscheduling plugin
+<https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
+which extends the Kubernetes scheduler to support gang scheduling and
+priority-based scheduling. To implement gang scheduling, the
+coscheduling plugin will not schedule a pod if there are not enough
+resources to also schedule the other pods in the same job. To function,
+the plugin requires special labels to be set that specify the number of
+nodes that each job needs for execution. Determined automatically
+calculates and sets these labels for experiments that it launches.
+
+The coscheduling plugin is in beta and is therefore not enabled by
+default. To enable it, edit ``values.yaml`` in the Determined Helm chart
+to set the ``defaultScheduler`` field to "coscheduler".
+
+Importantly, the coscheduling plugin does not work with Kubernetes'
+cluster autoscaling feature: static node pools must be used to achieve
+gang-scheduling. Also, while the plugin allocates resources to jobs
+based on their priority, it does not support preemption. For example, if
+the cluster is full of low priority jobs and a new high priority job is
+submitted, the high priority job will not be scheduled until one of the
+low priority jobs finishes. Additionally, there isn't an implementation
+of ``max_slots`` or ``max_concurrent_trials`` that would limit the
+resources of an experiment, i.e. one for hyperparameter search. Lastly,
+Determined's capability to automatically set pod labels is restricted to
+GPU experiments; Determined does not currently set labels for CPU
+experiments or user commands.
+
+To enable gang scheduling with commands or CPU experiments, enable the
+coscheduler in ``values.yaml`` and modify the experiment config to
+contain the following:
+
+.. code:: yaml
 
    environment:
       pod_spec:
