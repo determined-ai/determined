@@ -1,9 +1,10 @@
+import abc
 import logging
 import pathlib
 from typing import Dict, List
 
 
-class TensorboardManager:
+class TensorboardManager(metaclass=abc.ABCMeta):
     """
     TensorboardManager stores tfevent logs to a supported storage backend. The
     trial will generate tfevent files during training. The tfevent files must
@@ -14,7 +15,11 @@ class TensorboardManager:
     implements the sync method.
     """
 
-    def __init__(self, base_path: pathlib.Path, sync_path: pathlib.Path):
+    def __init__(
+        self,
+        base_path: pathlib.Path,
+        sync_path: pathlib.Path,
+    ) -> None:
         self.base_path = base_path
         self.sync_path = sync_path
         self._synced_event_sizes: Dict[pathlib.Path, int] = {}
@@ -48,8 +53,16 @@ class TensorboardManager:
 
         return sync_paths
 
+    @abc.abstractmethod
     def sync(self) -> None:
         """
         Save the object to the backing persistent storage.
+        """
+        pass
+
+    @abc.abstractmethod
+    def delete(self) -> None:
+        """
+        Delete all objects from the backing persistent storage.
         """
         pass

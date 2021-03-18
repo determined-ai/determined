@@ -2,19 +2,24 @@ import os
 import pathlib
 from typing import Any, Dict, Optional
 
-import determined as det
 from determined.tensorboard import base, gcs, hdfs, s3, shared
 from determined_common.storage.shared import _full_storage_path
 
 
-def get_sync_path(env: det.EnvContext) -> pathlib.Path:
+def get_sync_path(cluster_id: str, experiment_id: str, trial_id: str) -> pathlib.Path:
     return pathlib.Path(
-        env.det_cluster_id,
+        get_experiment_sync_path(cluster_id, experiment_id),
+        "trial",
+        trial_id,
+    )
+
+
+def get_experiment_sync_path(cluster_id: str, experiment_id: str) -> pathlib.Path:
+    return pathlib.Path(
+        cluster_id,
         "tensorboard",
         "experiment",
-        env.det_experiment_id,
-        "trial",
-        env.det_trial_id,
+        experiment_id,
     )
 
 
@@ -37,7 +42,11 @@ def get_base_path(checkpoint_config: Dict[str, Any], manager: bool = False) -> p
 
 
 def build(
-    env: det.EnvContext, checkpoint_config: Dict[str, Any], container_path: Optional[str] = None
+    cluster_id: str,
+    experiment_id: str,
+    trial_id: Optional[str],
+    checkpoint_config: Dict[str, Any],
+    container_path: Optional[str] = None,
 ) -> base.TensorboardManager:
     """
     Return a tensorboard manager defined by the value of the `type` key in
@@ -56,7 +65,11 @@ def build(
         raise TypeError("`type` parameter of storage configuration must be a string")
 
     base_path = get_base_path(checkpoint_config, manager=True)
-    sync_path = get_sync_path(env)
+
+    if trial_id:
+        sync_path = get_sync_path(cluster_id, experiment_id, trial_id)
+    else:
+        sync_path = get_experiment_sync_path(cluster_id, experiment_id)
 
     if type_name == "shared_fs":
         host_path = checkpoint_config["host_path"]

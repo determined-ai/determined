@@ -9,6 +9,7 @@ import sys
 from typing import Any, Dict, List
 
 import determined as det
+from determined import tensorboard
 from determined_common import constants, storage
 
 
@@ -30,7 +31,17 @@ def delete_checkpoints(
         else:
             logging.info("Dry run: deleting checkpoint {}".format(metadata.storage_id))
 
-    logging.info("Finished deleting {} checkpoints".format(len(to_delete)))
+
+def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool = False) -> None:
+    """
+    Delete all Tensorboards associated with a single experiment.
+    """
+    if dry_run:
+        logging.info("Dry run: deleting Tensorboards for {}".format(manager.sync_path))
+        return
+
+    manager.delete()
+    logging.info("Finished deleting Tensorboards for {}".format(manager.sync_path))
 
 
 def json_file_arg(val: str) -> Any:
@@ -46,6 +57,7 @@ def main(argv: List[str]) -> None:
         action="version",
         version="Determined checkpoint GC, version {}".format(det.__version__),
     )
+    parser.add_argument("--experiment-id", help="The experiment ID to run the GC job for")
     parser.add_argument(
         "--log-level",
         default=os.getenv("DET_LOG_LEVEL", "INFO"),
@@ -63,6 +75,12 @@ def main(argv: List[str]) -> None:
         type=json_file_arg,
         default=os.getenv("DET_DELETE", []),
         help="Checkpoints to delete (JSON-formatted file)",
+    )
+    parser.add_argument(
+        "--delete-tensorboards",
+        action="store_true",
+        default=os.getenv("DET_DELETE_TENSORBOARDS", False),
+        help="Delete Tensorboards from storage",
     )
     parser.add_argument(
         "--dry-run",
@@ -85,6 +103,16 @@ def main(argv: List[str]) -> None:
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
 
     delete_checkpoints(manager, args.delete["checkpoints"], dry_run=args.dry_run)
+
+    if args.delete_tensorboards:
+        tb_manager = tensorboard.build(
+            os.environ["DET_CLUSTER_ID"],
+            args.experiment_id,
+            None,
+            storage_config,
+            container_path=constants.SHARED_FS_CONTAINER_PATH,
+        )
+        delete_tensorboards(tb_manager, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

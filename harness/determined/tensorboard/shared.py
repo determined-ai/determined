@@ -32,3 +32,6 @@ class SharedFSTensorboardManager(base.TensorboardManager):
             shutil.copy(path, shared_fs_path)
 
             self._synced_event_sizes[path] = path.stat().st_size
+
+    def delete(self) -> None:
+        shutil.rmtree(self.shared_fs_base, False)

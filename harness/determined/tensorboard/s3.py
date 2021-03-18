@@ -29,6 +29,12 @@ class S3TensorboardManager(base.TensorboardManager):
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
         )
+        self.resource = boto3.resource(
+            "s3",
+            endpoint_url=endpoint_url,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
+        )
 
     @util.preserve_random_state
     def sync(self) -> None:
@@ -40,3 +46,6 @@ class S3TensorboardManager(base.TensorboardManager):
 
             self.client.upload_file(str(path), self.bucket, key_name)
             self._synced_event_sizes[path] = path.stat().st_size
+
+    def delete(self) -> None:
+        self.resource.Bucket(self.bucket).objects.filter(Prefix=str(self.sync_path)).delete()

@@ -181,9 +181,10 @@ func (s StartCommand) ResourcesConfig() model.ResourcesConfig { return s.Config.
 
 // GCCheckpoints is a description of a task for running checkpoint GC.
 type GCCheckpoints struct {
-	ExperimentID     int
-	ExperimentConfig model.ExperimentConfig
-	ToDelete         json.RawMessage
+	ExperimentID       int
+	ExperimentConfig   model.ExperimentConfig
+	ToDelete           json.RawMessage
+	DeleteTensorboards bool
 }
 
 // Archives implements InnerSpec.
@@ -220,13 +221,19 @@ func (g GCCheckpoints) Description() string { return "gc" }
 
 // Entrypoint implements InnerSpec.
 func (g GCCheckpoints) Entrypoint() []string {
-	return []string{
+	e := []string{
 		filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
+		"--experiment-id",
+		strconv.Itoa(g.ExperimentID),
 		"--experiment-config",
 		"experiment_config.json",
 		"--delete",
 		"checkpoints_to_delete.json",
 	}
+	if g.DeleteTensorboards {
+		e = append(e, "--delete-tensorboards")
+	}
+	return e
 }
 
 // Environment implements InnerSpec.

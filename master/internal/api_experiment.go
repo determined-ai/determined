@@ -125,6 +125,7 @@ func (a *apiServer) DeleteExperiment(
 		rm:             a.m.rm,
 		db:             a.m.db,
 		experiment:     exp,
+		gcTensorboards: true,
 	}).AwaitTermination(); gcErr != nil {
 		return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
