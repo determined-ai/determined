@@ -7,22 +7,30 @@ import time
 from typing import Any, Dict, List, Optional
 
 import googleapiclient.discovery
+from google.auth.exceptions import DefaultCredentialsError
+from termcolor import colored
 
 TF_VARS_FILE = "terraform.tfvars.json"
 
 
 def deploy(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
+    validate_gcp_credentials(configs)
     terraform_init(configs, env)
     terraform_apply(configs, env, variables_to_exclude)
 
 
 def dry_run(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
+    validate_gcp_credentials(configs)
     terraform_init(configs, env)
     terraform_plan(configs, env, variables_to_exclude)
 
 
 def terraform_dir(configs: Dict) -> str:
     return os.path.join(configs["local_state_path"], "terraform")
+
+
+def get_terraform_vars_file_path(configs: Dict) -> str:
+    return os.path.join(configs["local_state_path"], TF_VARS_FILE)
 
 
 def terraform_read_variables(vars_file_path: str) -> Dict:
@@ -237,12 +245,10 @@ def delete(configs: Dict, env: Dict) -> None:
       2. Terminate all dynamic agents (which aren't managed by Terraform).
       3. Destroy all Terraform-managed resources.
     """
-    vars_file_path = os.path.join(configs["local_state_path"], TF_VARS_FILE)
+    vars_file_path = get_terraform_vars_file_path(configs)
     tf_vars = terraform_read_variables(vars_file_path)
 
-    keypath = tf_vars.get("keypath")
-    if keypath:
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keypath
+    set_gcp_credentials_env(tf_vars)
 
     compute = googleapiclient.discovery.build("compute", "v1")
 
@@ -261,3 +267,32 @@ def delete(configs: Dict, env: Dict) -> None:
 
 def run_command(command: str, env: Dict[str, str]) -> None:
     subprocess.check_call(command, env=env, shell=True, stdout=sys.stdout)
+
+
+def validate_gcp_credentials(configs: Dict) -> None:
+    vars_file_path = get_terraform_vars_file_path(configs)
+    # Try to load google credentials from terraform vars when present.
+    if os.path.exists(vars_file_path):
+        tf_vars = terraform_read_variables(vars_file_path)
+        set_gcp_credentials_env(tf_vars)
+
+    try:
+        googleapiclient.discovery.build("compute", "v1")
+    except DefaultCredentialsError:
+        print(
+            colored("Unable to locate GCP credentials.", "red"),
+            "Please set %s or explicitly create credentials"
+            % colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow"),
+            "and re-run the application. ",
+            "For more information, please see",
+            "https://docs.determined.ai/latest/how-to/installation/gcp.html#credentials",
+            "and",
+            "https://cloud.google.com/docs/authentication/getting-started",
+        )
+        sys.exit(1)
+
+
+def set_gcp_credentials_env(tf_vars: Dict) -> None:
+    keypath = tf_vars.get("keypath")
+    if keypath:
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keypath

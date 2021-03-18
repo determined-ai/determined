@@ -24,6 +24,7 @@ setup(
         # botocore>1.19.0 has stricter urllib3 requirements than boto3, and pip will not reliably
         # resolve it until the --use-feature=2020-resolver behavior in pip 20.3, so we list it here.
         "urllib3>=1.25.4,<1.26",
+        "termcolor==1.1.0",
         "tqdm",
     ],
     entry_points={"console_scripts": ["det-deploy = determined_deploy.__main__:main"]},

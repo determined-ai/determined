@@ -90,7 +90,7 @@ def docker_compose(
         for extra_file in extra_files:
             base_command += ["-f", extra_file]
     args = base_command + args
-    subprocess.run(args, env=process_env)
+    subprocess.check_call(args, env=process_env)
 
 
 def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> None:
