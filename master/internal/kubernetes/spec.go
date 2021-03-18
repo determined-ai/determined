@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"math"
 	"path"
 	"strconv"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -172,6 +174,51 @@ func (p *pod) configureVolumes(
 	return initContainerVolumeMounts, volumeMounts, volumes
 }
 
+func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
+	if scheduler != "coscheduler" || newPod.Spec.SchedulerName != "" ||
+		p.taskSpec.Description() == "cmd" {
+		return
+	}
+
+	resources := p.taskSpec.ResourcesConfig()
+	var minAvailable int
+
+	newPod.Spec.SchedulerName = scheduler
+	if p.taskSpec.Description() == "gc" {
+		if newPod.Spec.PriorityClassName != "" {
+			log.Warnf(
+				"GC Priority is currently using priority class: %s. "+
+					"It will be reset to determined-system-priority",
+				newPod.Spec.PriorityClassName,
+			)
+		}
+		newPod.Spec.PriorityClassName = "determined-system-priority"
+		minAvailable = 1
+	} else {
+		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial) / float64(p.gpus)))
+	}
+
+	if newPod.Spec.PriorityClassName == "" {
+		newPod.Spec.PriorityClassName = "determined-medium-priority"
+	}
+	if newPod.APIVersion == "" {
+		newPod.APIVersion = "v1"
+	}
+	if newPod.Kind == "" {
+		newPod.Kind = "Pod"
+	}
+
+	_, ok := newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"]
+	if !ok {
+		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = trialNameFromPod(p.podName)
+	}
+	_, ok = newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"]
+	if !ok {
+		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"] = strconv.Itoa(
+			minAvailable)
+	}
+}
+
 func (p *pod) configurePodSpec(
 	ctx *actor.Context,
 	volumes []k8sV1.Volume,
@@ -179,6 +226,7 @@ func (p *pod) configurePodSpec(
 	determinedContainer k8sV1.Container,
 	sidecarContainers []k8sV1.Container,
 	podSpec *k8sV1.Pod,
+	scheduler string,
 ) *k8sV1.Pod {
 	if podSpec == nil {
 		podSpec = &k8sV1.Pod{}
@@ -192,6 +240,8 @@ func (p *pod) configurePodSpec(
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.TaskID
+
+	p.modifyPodSpec(podSpec, scheduler)
 
 	nonDeterminedContainers := make([]k8sV1.Container, 0)
 	for idx, container := range podSpec.Spec.Containers {
@@ -230,7 +280,7 @@ func (p *pod) configurePodSpec(
 	return podSpec
 }
 
-func (p *pod) createPodSpec(ctx *actor.Context) error {
+func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	deviceType := device.CPU
 	if p.gpus > 0 {
 		deviceType = device.GPU
@@ -351,7 +401,7 @@ func (p *pod) createPodSpec(ctx *actor.Context) error {
 	}
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, sidecars, env.PodSpec)
+		ctx, volumes, initContainer, container, sidecars, env.PodSpec, scheduler)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
 	if err != nil {
@@ -362,6 +412,20 @@ func (p *pod) createPodSpec(ctx *actor.Context) error {
 
 func configureUniqueName(t tasks.TaskSpec) string {
 	return fmt.Sprintf("%s-%s-%s", t.Description(), t.TaskID, petName.Generate(2, "-"))
+}
+
+func trialNameFromPod(podName string) string {
+	// Given a pod name of the form exp-#-trial-#-rank-#..., returns a string exp#trial#
+	// e.g. input: exp-1-trial-1-rank-0-71af9..., returns: exp1trial1
+
+	newName := ""
+	for i, v := range strings.Split(podName, "-") {
+		if i > 3 {
+			break
+		}
+		newName += v
+	}
+	return newName
 }
 
 func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.SecurityContext {

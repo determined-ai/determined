@@ -35,6 +35,13 @@ Please update `appVersion` in Chart.yaml to an official release version in the
 format X.Y.Z (e.g., 0.13.6).
 
 {{ end -}}
+
+{{- if .Values.defaultScheduler }}
+      {{- if not (eq .Values.defaultScheduler "coscheduler")}}
+WARNING: defaultScheduler has been set to an unsupported value. The cluster default scheduler will be set to the Kubernetes scheduler.
+      {{ end }}
+{{ end -}}
+
 Once you have the IP address, configure master address locally by running: `export DET_MASTER=<ip address>:{{ .Values.masterPort }}`.
 To submit experiments please install the Determined CLI locally: `pip install determined-cli`.
 To access the WebUI go to: {{ $httpOrHttps }}://<ip address>:{{ .Values.masterPort }}.
