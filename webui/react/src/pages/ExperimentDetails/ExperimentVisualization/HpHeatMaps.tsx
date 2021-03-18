@@ -25,7 +25,7 @@ import css from './HpHeatMaps.module.scss';
 interface Props {
   experiment: ExperimentBase;
   filters?: React.ReactNode;
-  hParams: string[];
+  fullHParams: string[];
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
@@ -52,8 +52,8 @@ const generateHpKey = (hParam1: string, hParam2: string): string => {
 
 const HpHeatMaps: React.FC<Props> = ({
   experiment,
-  hParams,
   filters,
+  fullHParams,
   selectedBatch,
   selectedBatchMargin,
   selectedHParams,
@@ -113,7 +113,7 @@ const HpHeatMaps: React.FC<Props> = ({
           const trialId = trial.trialId;
           const trialHParams = Object.keys(trial.hparams)
             .filter(hParam => isNumber(trial.hparams[hParam]))
-            .filter(hParam => hParams.includes(hParam))
+            .filter(hParam => fullHParams.includes(hParam))
             .sort((a, b) => a.localeCompare(b, 'en'));
 
           trialIds.push(trialId);
@@ -131,12 +131,12 @@ const HpHeatMaps: React.FC<Props> = ({
           if (trial.metric > metricRange[1]) metricRange[1] = trial.metric;
         });
 
-        hParams.forEach(hParam1 => {
+        fullHParams.forEach(hParam1 => {
           const hp = (experiment.config.hyperparameters || {})[hParam1];
           if (hp.type === ExperimentHyperParamType.Log) hpLogScaleMap[hParam1] = true;
 
           hpValues[hParam1] = trialIds.map(trialId => hpValueMap[trialId][hParam1]);
-          hParams.forEach(hParam2 => {
+          fullHParams.forEach(hParam2 => {
             const key = generateHpKey(hParam1, hParam2);
             hpMetrics[key] = trialIds.map(trialId => hpMetricMap[trialId][key]);
           });
@@ -157,7 +157,7 @@ const HpHeatMaps: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment, hParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
+  }, [ experiment, fullHParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;

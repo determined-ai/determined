@@ -26,7 +26,7 @@ import HpTrialTable, { TrialHParams } from './HpTrialTable';
 interface Props {
   experiment: ExperimentBase;
   filters?: React.ReactNode;
-  hParams: string[];
+  fullHParams: string[];
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
@@ -42,8 +42,8 @@ interface HpTrialData {
 
 const HpParallelCoordinates: React.FC<Props> = ({
   experiment,
-  hParams,
   filters,
+  fullHParams,
   selectedBatch,
   selectedBatchMargin,
   selectedHParams,
@@ -59,11 +59,11 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ filteredTrialIdMap, setFilteredTrialIdMap ] = useState<Record<number, boolean>>();
 
   const hyperparameters = useMemo(() => {
-    return hParams.reduce((acc, key) => {
+    return fullHParams.reduce((acc, key) => {
       acc[key] = experiment.config.hyperparameters[key];
       return acc;
     }, {} as Record<string, ExperimentHyperParam>);
-  }, [ experiment.config.hyperparameters, hParams ]);
+  }, [ experiment.config.hyperparameters, fullHParams ]);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 

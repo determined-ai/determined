@@ -17,6 +17,7 @@ import {
   ExperimentBase, ExperimentHyperParamType, ExperimentSearcherName,
   ExperimentVisualizationType, MetricName, MetricType,
 } from 'types';
+import { clone } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
 import { terminalRunStates } from 'utils/types';
 
@@ -88,6 +89,13 @@ const ExperimentVisualization: React.FC<Props> = ({
       return hp.type !== ExperimentHyperParamType.Constant;
     })),
   );
+  const defaultFilters: VisualizationFilters = {
+    batch: DEFAULT_BATCH,
+    batchMargin: DEFAULT_BATCH_MARGIN,
+    hParams: undefined,
+    maxTrial: DEFAULT_MAX_TRIALS,
+    metric: searcherMetric.current,
+  };
   const [ typeKey, setTypeKey ] = useState(() => {
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
@@ -95,14 +103,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ filters, setFilters ] = useState<VisualizationFilters>(() => {
     const storedFilters = storage.get<VisualizationFilters>(STORAGE_FILTERS_KEY);
-    return {
-      batch: storedFilters?.batch || DEFAULT_BATCH,
-      batchMargin: storedFilters?.batchMargin || DEFAULT_BATCH_MARGIN,
-      hParams: storedFilters?.hParams || fullHParams.current.slice(0, MAX_HPARAM_COUNT),
-      maxTrial: storedFilters?.maxTrial || DEFAULT_MAX_TRIALS,
-      metric: storedFilters?.metric || searcherMetric.current,
-      view: storedFilters?.view || DEFAULT_VIEW,
-    };
+    return storedFilters || defaultFilters;
   });
   const [ trainingHpImportanceMap, setTrainingHpImportanceMap ] = useState<HpImportanceMap>({});
   const [ validationHpImportanceMap, setValidationHpImportanceMap ] = useState<HpImportanceMap>({});
@@ -112,22 +113,36 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
-  const sortedFullHParams = useMemo(() => {
+  const defaultHParams = useMemo(() => {
     const hpImportanceMetric = filters.metric.type === MetricType.Training ?
       trainingHpImportanceMap : validationHpImportanceMap;
     const hpImportanceMap = hpImportanceMetric[filters.metric.name] || {};
-    return fullHParams.current.sortAll((a, b) => {
+    const hasHpImportance = Object.keys(hpImportanceMap).length !== 0;
+
+    // Return the first N available hparams if we don't have hp importance ranking.
+    if (!hasHpImportance) return fullHParams.current.slice(0, MAX_HPARAM_COUNT);
+
+    // Sort the full list of hparams.
+    const hpImportanceSorter = (a: string, b: string) => {
       const aValue = hpImportanceMap[a];
       const bValue = hpImportanceMap[b];
       if (aValue < bValue) return 1;
       if (aValue > bValue) return -1;
       return 0;
-    });
+    };
+    const sortedFullHParams = clone(fullHParams.current).sortAll(hpImportanceSorter);
+
+    // Return N most important hparams.
+    return sortedFullHParams.slice(0, MAX_HPARAM_COUNT);
   }, [ filters.metric, trainingHpImportanceMap, validationHpImportanceMap ]);
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
     storage.set(STORAGE_FILTERS_KEY, filters);
+  }, [ storage ]);
+
+  const handleFiltersReset = useCallback(() => {
+    storage.remove(STORAGE_FILTERS_KEY);
   }, [ storage ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
@@ -291,11 +306,12 @@ const ExperimentVisualization: React.FC<Props> = ({
     <ExperimentVisualizationFilters
       batches={batches}
       filters={filters}
-      fullHParams={sortedFullHParams}
+      fullHParams={fullHParams.current}
       metrics={metrics}
       type={typeKey}
       onChange={handleFiltersChange}
       onMetricChange={handleMetricChange}
+      onReset={handleFiltersReset}
     />
   );
 
@@ -322,7 +338,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             hParams={fullHParams.current}
             selectedBatch={filters.batch}
             selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
+            selectedHParams={filters.hParams || defaultHParams}
             selectedMetric={filters.metric}
           />
         </Tabs.TabPane>
@@ -335,7 +351,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             hParams={fullHParams.current}
             selectedBatch={filters.batch}
             selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
+            selectedHParams={filters.hParams || defaultHParams}
             selectedMetric={filters.metric}
           />
         </Tabs.TabPane>
@@ -348,7 +364,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             hParams={fullHParams.current}
             selectedBatch={filters.batch}
             selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
+            selectedHParams={filters.hParams || defaultHParams}
             selectedMetric={filters.metric}
             selectedView={filters.view}
           />

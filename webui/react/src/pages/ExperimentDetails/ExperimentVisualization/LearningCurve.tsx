@@ -20,7 +20,7 @@ import css from './LearningCurve.module.scss';
 interface Props {
   experiment: ExperimentBase;
   filters?: React.ReactNode;
-  hParams: string[];
+  fullHParams: string[];
   selectedMaxTrial: number;
   selectedMetric: MetricName
 }
@@ -29,8 +29,8 @@ const MAX_DATAPOINTS = 5000;
 
 const LearningCurve: React.FC<Props> = ({
   experiment,
-  hParams,
   filters,
+  fullHParams,
   selectedMaxTrial,
   selectedMetric,
 }: Props) => {
@@ -47,11 +47,11 @@ const LearningCurve: React.FC<Props> = ({
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
 
   const hyperparameters = useMemo(() => {
-    return hParams.reduce((acc, key) => {
+    return fullHParams.reduce((acc, key) => {
       acc[key] = experiment.config.hyperparameters[key];
       return acc;
     }, {} as Record<string, ExperimentHyperParam>);
-  }, [ experiment.config.hyperparameters, hParams ]);
+  }, [ experiment.config.hyperparameters, fullHParams ]);
 
   const handleTrialClick = useCallback((event: React.MouseEvent, trialId: number) => {
     handlePath(event, { path: paths.trialDetails(trialId, experiment.id) });

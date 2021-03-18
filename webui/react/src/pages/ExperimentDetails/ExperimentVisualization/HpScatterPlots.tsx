@@ -20,7 +20,7 @@ import css from './HpScatterPlots.module.scss';
 interface Props {
   experiment: ExperimentBase;
   filters?: React.ReactNode;
-  hParams: string[];
+  fullHParams: string[];
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
@@ -36,8 +36,8 @@ interface HpMetricData {
 
 const ScatterPlots: React.FC<Props> = ({
   experiment,
-  hParams,
   filters,
+  fullHParams,
   selectedBatch,
   selectedBatchMargin,
   selectedHParams,
@@ -79,7 +79,7 @@ const ScatterPlots: React.FC<Props> = ({
           const trialId = trial.trialId;
           trialIds.push(trialId);
 
-          hParams.forEach(hParam => {
+          fullHParams.forEach(hParam => {
             if (!isNumber(trial.hparams[hParam])) return;
 
             hpTrialMap[hParam] = hpTrialMap[hParam] || {};
@@ -91,7 +91,7 @@ const ScatterPlots: React.FC<Props> = ({
           });
         });
 
-        hParams.forEach(hParam => {
+        fullHParams.forEach(hParam => {
           const hp = (experiment.config.hyperparameters || {})[hParam];
           if (hp.type === ExperimentHyperParamType.Log) hpLogScaleMap[hParam] = true;
 
@@ -118,7 +118,7 @@ const ScatterPlots: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment, hParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
+  }, [ experiment, fullHParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;

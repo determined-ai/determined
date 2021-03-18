@@ -16,7 +16,7 @@ const { Option } = Select;
 export interface VisualizationFilters {
   batch: number;
   batchMargin: number;
-  hParams: string[];
+  hParams?: string[];
   maxTrial: number;
   metric: MetricName;
   view: ViewType;
@@ -39,6 +39,7 @@ interface Props {
   metrics: MetricName[];
   onChange?: (filters: VisualizationFilters) => void;
   onMetricChange?: (metric: MetricName) => void;
+  onReset?: () => void;
   type: ExperimentVisualizationType,
 }
 
@@ -86,6 +87,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   metrics,
   onChange,
   onMetricChange,
+  onReset,
   type,
 }: Props) => {
   const [ localFilters, dispatch ] = useReducer(reducer, filters);
@@ -148,7 +150,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   const handleReset = useCallback(() => {
     dispatch({ type: ActionType.Set, value: filters });
-  }, [ filters ]);
+    if (onReset) onReset();
+  }, [ filters, onReset ]);
 
   // Pick the first valid option if the current local batch is invalid.
   useEffect(() => {
