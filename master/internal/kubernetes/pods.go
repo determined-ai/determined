@@ -48,6 +48,7 @@ type pods struct {
 	namespace                string
 	masterServiceName        string
 	leaveKubernetesResources bool
+	scheduler                string
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -80,6 +81,7 @@ func Initialize(
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 	leaveKubernetesResources bool,
+	scheduler string,
 ) *actor.Ref {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
@@ -91,6 +93,7 @@ func Initialize(
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
 		masterTLSConfig:          masterTLSConfig,
+		scheduler:                scheduler,
 		loggingTLSConfig:         loggingTLSConfig,
 		loggingConfig:            loggingConfig,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
@@ -267,7 +270,7 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) 
 	newPodHandler := newPod(
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.masterTLSConfig, p.loggingTLSConfig, p.loggingConfig, p.podInterface, p.configMapInterface,
-		p.resourceRequestQueue, p.leaveKubernetesResources,
+		p.resourceRequestQueue, p.leaveKubernetesResources, p.scheduler,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {

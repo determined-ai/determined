@@ -1,0 +1,37 @@
+{{- if eq .Values.defaultScheduler "coscheduler"}}
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: determined-system-priority
+value: 1000000
+preemptionPolicy: Never
+globalDefault: false
+description: "This priority class should be used for Determined system pods only."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: determined-high-priority
+value: 100
+preemptionPolicy: Never
+globalDefault: false
+description: "This priority class should be used for high priority Determined jobs."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: determined-medium-priority
+value: 50
+preemptionPolicy: Never
+globalDefault: false
+description: "This priority class should be used for medium priority Determined jobs."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: determined-low-priority
+value: 1
+preemptionPolicy: Never
+globalDefault: false
+description: "This priority class should be used for low priority Determined jobs."
+{{- end }}
