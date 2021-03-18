@@ -5,6 +5,8 @@ import sys
 from typing import Callable, Dict, Type, Union
 
 import boto3
+from botocore.exceptions import NoCredentialsError
+from termcolor import colored
 
 from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import base, govcloud, secure, simple, vpc
@@ -222,6 +224,18 @@ def make_aws_parser(subparsers: argparse._SubParsersAction) -> None:
     aws_subparsers.required = True
 
 
+def handle_no_credentials() -> None:
+    print(
+        colored("Unable to locate AWS credentials.", "red"),
+        "Did you run %s?" % colored("aws configure", "yellow"),
+    )
+    print(
+        "See the AWS Documentation for information on how to use AWS credentials:",
+        "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html",
+    )
+    sys.exit(1)
+
+
 def deploy_aws(args: argparse.Namespace) -> None:
     if args.profile:
         boto3_session = boto3.Session(profile_name=args.profile, region_name=args.region)
@@ -239,6 +253,8 @@ def deploy_aws(args: argparse.Namespace) -> None:
     if args.command == "list":
         try:
             output = aws.list_stacks(boto3_session)
+        except NoCredentialsError:
+            handle_no_credentials()
         except Exception as e:
             print(e)
             print("Listing stacks failed. Check the AWS CloudFormation Console for details.")
@@ -262,6 +278,8 @@ def deploy_aws(args: argparse.Namespace) -> None:
     if args.command == "down":
         try:
             aws.delete(args.cluster_id, boto3_session)
+        except NoCredentialsError:
+            handle_no_credentials()
         except Exception as e:
             print(e)
             print("Stack Deletion Failed. Check the AWS CloudFormation Console for details.")
@@ -347,6 +365,8 @@ def deploy_aws(args: argparse.Namespace) -> None:
     print("Starting Determined Deployment")
     try:
         deployment_object.deploy()
+    except NoCredentialsError:
+        handle_no_credentials()
     except Exception as e:
         print(e)
         print("Stack Deployment Failed. Check the AWS CloudFormation Console for details.")
