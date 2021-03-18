@@ -8,10 +8,10 @@
  Version 0.14
 **************
 
-Version 0.14.4
+Version 0.14.5
 ==============
 
-**Release Date:** March 17, 2021
+**Release Date:** March 18, 2021
 
 **New Features**
 
@@ -30,6 +30,16 @@ Version 0.14.4
 
 -  PyTorch: Add an option to :class:`~determined.pytorch.LRScheduler` to
    accept a frequency option alongside batch and epoch step modes.
+
+-  Kubernetes: Add support for priority scheduling, with gang-scheduling
+   for distributed training, on Kubernetes. See :ref:`scheduling` for
+   more information.
+
+**Improvements**
+
+-  WebUI: Add a margin of comparison to hyperparameter visualizations to
+   enable better grouping of trials with a similar but not identical
+   number of batches processed.
 
 **Bug Fixes**
 
