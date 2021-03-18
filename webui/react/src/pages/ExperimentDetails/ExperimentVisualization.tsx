@@ -1,12 +1,10 @@
-import { Alert, Col, Row, Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
 import RadioGroup from 'components/RadioGroup';
-import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
@@ -29,7 +27,12 @@ import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinat
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
 
-const { Option } = Select;
+export enum VisualizationType {
+  HpParallelCoordinates = 'hp-parallel-coordinates',
+  HpHeatMap = 'hp-heat-map',
+  HpScatterPlots = 'hp-scatter-plots',
+  LearningCurve = 'learning-curve',
+}
 
 interface Props {
   basePath: string;
@@ -123,7 +126,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     setActiveMetric(metric);
   }, []);
 
-  const handleMenuChange = useCallback((type: string) => {
+  const handleTypeChange = useCallback((type: string) => {
     setTypeKey(type as VisualizationType);
     history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
   }, [ basePath, history ]);
@@ -266,7 +269,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   return (
     <div className={css.base}>
       <div className={css.radioGroup}>
-        <RadioGroup options={MENU} value={typeKey} onChange={handleMenuChange} />
+        <RadioGroup options={MENU} value={typeKey} onChange={handleTypeChange} />
       </div>
       <div>
         {typeKey === VisualizationType.LearningCurve && (
