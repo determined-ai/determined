@@ -1,3 +1,4 @@
+{{- if .Values.defaultScheduler}}
 {{- if eq .Values.defaultScheduler "coscheduler"}}
 apiVersion: v1
 kind: ConfigMap
@@ -31,4 +32,5 @@ data:
           permitWaitingTimeSeconds: 1
           podGroupGCIntervalSeconds: 10
           podGroupExpirationTimeSeconds: 30
+{{- end }}
 {{- end }}
