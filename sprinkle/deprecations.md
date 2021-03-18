@@ -5,7 +5,7 @@ training loops that we currently own but do not deliver the user-value bang for
 their engineering buck.
 
 * `TFKerasTrial`: deprecate in favor of sprinkle-api keras support.
-* `EstimatorTrial`: in favor of sprinkle-api keras support.
+* `EstimatorTrial`: in favor of sprinkle-api estimator support.
 
 It also makes sense to deprecate our training-loop-related experiment
 configurations, letting them get set via their respective training loop
