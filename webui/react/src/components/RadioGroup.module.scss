@@ -5,11 +5,13 @@
     align-items: center;
     cursor: pointer;
     display: inline-flex;
+    height: auto;
     justify-content: center;
+    min-height: var(--theme-sizes-layout-giant);
     outline: 0;
     padding: 0 var(--theme-sizes-layout-medium);
     position: relative;
-    transition: all var(--theme-animationCurve);
+    transition: all var(--theme-animationCurve)
   }
   .option:hover {
     color: var(--theme-colors-monochrome-0);
@@ -33,5 +35,8 @@
   }
   .option > span > *:nth-child(2) {
     margin-left: var(--theme-sizes-layout-medium);
+  }
+  .label {
+    font-size: var(--theme-sizes-font-medium);
   }
 }
