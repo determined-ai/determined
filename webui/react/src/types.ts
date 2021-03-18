@@ -405,6 +405,13 @@ export interface ExperimentOld extends ExperimentBase {
   username: string;
 }
 
+export enum ExperimentVisualizationType {
+  HpParallelCoordinates = 'hp-parallel-coordinates',
+  HpHeatMap = 'hp-heat-map',
+  HpScatterPlots = 'hp-scatter-plots',
+  LearningCurve = 'learning-curve',
+}
+
 export interface Task {
   id: string;
   name: string;

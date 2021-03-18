@@ -2,17 +2,11 @@ $tooltip-offset: 0.5rem;
 
 .base {
   .container {
-    background-color: var(--theme-colors-monochrome-17);
-    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-    border-radius: var(--theme-sizes-border-radius);
     min-height: 40rem;
     position: relative;
   }
   .chart {
     height: 50rem;
-  }
-  .table {
-    padding: var(--theme-sizes-layout-big);
   }
   .tooltip {
     display: none;

@@ -14,7 +14,6 @@ interface Props {
   colorScale?: ColorScale[];
   height?: number;
   id?: string;
-  padding?: number;
   title?: string;
   valueLabel?: string;
   values?: number[];
@@ -47,7 +46,6 @@ const plotlyConfig: Partial<Plotly.Config> = {
 const ScatterPlot: React.FC<Props> = ({
   colorScale,
   height,
-  padding = 0,
   title,
   valueLabel,
   values,
@@ -123,17 +121,17 @@ const ScatterPlot: React.FC<Props> = ({
     const ref = chartRef.current;
     if (!ref) return;
 
-    Plotly.react(ref, [ chartData ], chartLayout, plotlyConfig);
+    Plotly.react(ref, [], plotlyLayout, plotlyConfig);
 
     return () => {
-      if (ref) Plotly.purge(ref);
+      Plotly.purge(ref);
     };
-  }, [ chartData, chartLayout, padding, title ]);
+  }, []);
 
-  // Resize the chart when resize events happen.
+  // Redraw the chart when we detect changes in the data or a resize event.
   useEffect(() => {
     const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
-      if (!chartRef.current) return;
+      if (!chartRef.current || resize.width === 0 || resize.height === 0) return;
       const rect = chartRef.current.getBoundingClientRect();
       const layout = { ...chartLayout, height: rect.height, width: rect.width };
       Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);

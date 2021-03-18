@@ -1,0 +1,11 @@
+.base {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: var(--theme-sizes-layout-tiny);
+  width: 100%;
+
+  & > * { margin: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium); }
+  .buttons { display: flex; }
+  .buttons > *:not(:first-child) { margin-left: var(--theme-sizes-layout-medium); }
+}
