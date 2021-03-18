@@ -54,9 +54,6 @@ def load_and_cache_examples(base_data_dir: str, config, model_type, max_seq_leng
         label_list=label_list,
         max_length=max_seq_length,
         output_mode=output_mode,
-        pad_on_left=bool(model_type in ["xlnet"]),
-        pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
-        pad_token_segment_id=4 if model_type in ["xlnet"] else 0,
     )
 
     # Convert to Tensors and build dataset
