@@ -40,3 +40,8 @@
     font-size: var(--theme-sizes-font-medium);
   }
 }
+.base.iconOnly {
+  .option {
+    padding: 0 var(--theme-sizes-layout-small);
+  }
+}

@@ -11,6 +11,7 @@ import css from './RadioGroup.module.scss';
 
 interface Props {
   className?: string;
+  iconOnly?: boolean;
   onChange?: (id: string) => void;
   options: RadioGroupOption[];
   value?: string;
@@ -33,7 +34,13 @@ const RESIZE_THROTTLE_TIME = 500;
 const PARENT_WIDTH_BUFFER = 16;
 const HEIGHT_LIMIT = 50;
 
-const RadioGroup: React.FC<Props> = ({ className, onChange, options, value }: Props) => {
+const RadioGroup: React.FC<Props> = ({
+  className,
+  iconOnly = false,
+  onChange,
+  options,
+  value,
+}: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const originalWidth = useRef<number>();
   const resize = useResize();
@@ -46,6 +53,7 @@ const RadioGroup: React.FC<Props> = ({ className, onChange, options, value }: Pr
     return options.reduce((acc, option) => acc || (!!option.icon && !!option.label), false);
   }, [ options ]);
 
+  if (iconOnly) classes.push(css.iconOnly);
   if (className) classes.push(className);
 
   const handleChange = useCallback((e: RadioChangeEvent) => {
@@ -102,14 +110,16 @@ const RadioGroup: React.FC<Props> = ({ className, onChange, options, value }: Pr
       onChange={handleChange}>
       {options.map(option => (
         <ConditionalWrapper
-          condition={!showLabels}
+          condition={!showLabels || iconOnly}
           key={option.id}
           wrapper={children => (
             <Tooltip placement="top" title={option.label}>{children}</Tooltip>
           )}>
           <Radio.Button className={css.option} value={option.id}>
             {option.icon && <Icon name={option.icon} size={option.iconSize} title={option.label} />}
-            {option.label && showLabels && <span className={css.label}>{option.label}</span>}
+            {option.label && showLabels && !iconOnly && (
+              <span className={css.label}>{option.label}</span>
+            )}
           </Radio.Button>
         </ConditionalWrapper>
       ))}
