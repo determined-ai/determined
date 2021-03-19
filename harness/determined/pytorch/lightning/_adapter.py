@@ -259,7 +259,7 @@ class LightningAdapter(PyTorchTrial):
         lightning_module.
 
         """
-        type(self._pls.lm).global_step = batch_idx
+        type(self._pls.lm).global_step = batch_idx  # type: ignore
         self._pls.lm.on_train_batch_start(batch, batch_idx, dataloader_idx=0)
 
         Metric = Dict[str, Any]
