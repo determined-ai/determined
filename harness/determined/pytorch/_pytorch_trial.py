@@ -582,11 +582,15 @@ class PyTorchTrialController(det.LoopTrialController):
             ["checkpoint.pt"],
         ]
 
+        checkpoint: Optional[Dict[str, Any]] = None
         for ckpt_path in potential_paths:
             maybe_ckpt = self.load_path.joinpath(*ckpt_path)
             if maybe_ckpt.exists():
                 checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
                 break
+        if checkpoint is None or not isinstance(checkpoint, dict):
+            # CHECK me
+            return
 
         if "model_state_dict" in checkpoint:
             # Backward compatible with older checkpoint format.
