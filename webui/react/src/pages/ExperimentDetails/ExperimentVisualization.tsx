@@ -19,7 +19,7 @@ import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
-  MAX_HPARAM_COUNT, VisualizationFilters,
+  MAX_HPARAM_COUNT, ViewType, VisualizationFilters,
 } from './ExperimentVisualization/ExperimentVisualizationFilters';
 import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
@@ -44,6 +44,7 @@ const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
 const DEFAULT_BATCH = 0;
 const DEFAULT_BATCH_MARGIN = 10;
 const DEFAULT_MAX_TRIALS = 100;
+const DEFAULT_VIEW = ViewType.Grid;
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
@@ -80,6 +81,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       hParams: storedFilters?.hParams || fullHParams.current.slice(0, MAX_HPARAM_COUNT),
       maxTrial: storedFilters?.maxTrial || DEFAULT_MAX_TRIALS,
       metric: storedFilters?.metric || searcherMetric.current,
+      view: storedFilters?.view || DEFAULT_VIEW,
     };
   });
   const [ activeMetric, setActiveMetric ] = useState<MetricName>(filters.metric);
@@ -90,7 +92,8 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
-  }, []);
+    storage.set(STORAGE_FILTERS_KEY, filters);
+  }, [ storage ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     setActiveMetric(metric);
@@ -238,7 +241,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Tabs className={css.base} type="card" onChange={handleTabChange}>
+      <Tabs activeKey={typeKey} className={css.base} type="card" onChange={handleTabChange}>
         <Tabs.TabPane
           key={ExperimentVisualizationType.LearningCurve}
           tab="Learning Curve">
@@ -287,6 +290,7 @@ const ExperimentVisualization: React.FC<Props> = ({
             selectedBatchMargin={filters.batchMargin}
             selectedHParams={filters.hParams}
             selectedMetric={filters.metric}
+            selectedView={filters.view}
           />
         </Tabs.TabPane>
       </Tabs>

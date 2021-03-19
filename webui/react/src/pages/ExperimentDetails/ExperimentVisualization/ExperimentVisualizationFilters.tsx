@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
+import RadioGroup from 'components/RadioGroup';
 import SelectFilter from 'components/SelectFilter';
 import { ExperimentVisualizationType, MetricName } from 'types';
 
@@ -18,11 +19,17 @@ export interface VisualizationFilters {
   hParams: string[];
   maxTrial: number;
   metric: MetricName;
+  view: ViewType;
 }
 
 export enum FilterError {
   MetricBatches,
   MetricNames,
+}
+
+export enum ViewType {
+  Grid = 'grid',
+  List = 'list',
 }
 
 interface Props {
@@ -35,7 +42,7 @@ interface Props {
   type: ExperimentVisualizationType,
 }
 
-enum ActionType { Set, SetBatch, SetBatchMargin, SetHParams, SetMaxTrial, SetMetric }
+enum ActionType { Set, SetBatch, SetBatchMargin, SetHParams, SetMaxTrial, SetMetric, SetView }
 
 type Action =
 | { type: ActionType.Set; value: VisualizationFilters }
@@ -44,6 +51,7 @@ type Action =
 | { type: ActionType.SetHParams; value: string[] }
 | { type: ActionType.SetMaxTrial; value: number }
 | { type: ActionType.SetMetric; value: MetricName }
+| { type: ActionType.SetView; value: ViewType }
 
 const TOP_TRIALS_OPTIONS = [ 1, 10, 20, 50, 100 ];
 const BATCH_MARGIN_OPTIONS = [ 1, 5, 10, 20, 50 ];
@@ -64,6 +72,8 @@ const reducer = (state: VisualizationFilters, action: Action) => {
       return { ...state, maxTrial: action.value };
     case ActionType.SetMetric:
       return { ...state, metric: action.value };
+    case ActionType.SetView:
+      return { ...state, view: action.value };
     default:
       return state;
   }
@@ -80,7 +90,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 }: Props) => {
   const [ localFilters, dispatch ] = useReducer(reducer, filters);
 
-  const [ showMaxTrials, showBatches, showMetrics, showHParams ] = useMemo(() => {
+  const [ showMaxTrials, showBatches, showMetrics, showHParams, showViews ] = useMemo(() => {
     return [
       [ ExperimentVisualizationType.LearningCurve ].includes(type),
       [
@@ -127,6 +137,10 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     dispatch({ type: ActionType.SetMetric, value: metric });
     if (onMetricChange) onMetricChange(metric);
   }, [ onMetricChange ]);
+
+  const handleViewChange = useCallback((view: SelectValue) => {
+    dispatch({ type: ActionType.SetView, value: view as ViewType });
+  }, []);
 
   const handleApply = useCallback(() => {
     if (onChange) onChange(localFilters);
@@ -197,9 +211,19 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           {fullHParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
         </MultiSelect>
       )}
+      {showViews && (
+        <RadioGroup
+          iconOnly
+          options={[
+            { icon: 'grid', id: ViewType.Grid, label: 'Square View' },
+            { icon: 'list', id: ViewType.List, label: 'Wrapped View' },
+          ]}
+          value={localFilters.view}
+          onChange={handleViewChange} />
+      )}
       <div className={css.buttons}>
-        <IconButton icon="undo" label="Undo Filters" onClick={handleUndo} />
-        <IconButton icon="checkmark" label="Apply Filters" type="primary" onClick={handleApply} />
+        <IconButton icon="undo" label="Undo" onClick={handleUndo} />
+        <IconButton icon="checkmark" label="Apply" type="primary" onClick={handleApply} />
       </div>
     </div>
   );
