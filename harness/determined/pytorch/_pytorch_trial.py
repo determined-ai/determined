@@ -592,6 +592,12 @@ class PyTorchTrialController(det.LoopTrialController):
             # CHECK me
             return
 
+        for callback in self.callbacks.values():
+            # QUESTION: should we encourage users to return new vals instead of
+            # modifying the reference? If so we would need to define the return value oon
+            # callbacks which wouldn't match with `pass` we could mark as abstract but..
+            callback.on_checkpoint_before_load(checkpoint)
+
         if "model_state_dict" in checkpoint:
             # Backward compatible with older checkpoint format.
             check.not_in("models_state_dict", checkpoint)
@@ -722,6 +728,9 @@ class PyTorchTrialController(det.LoopTrialController):
 
         if self.context._use_apex:
             checkpoint["amp_state"] = apex.amp.state_dict()
+
+        for callback in self.callbacks.values():
+            callback.on_checkpoint_before_save(checkpoint)
 
         torch.save(checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle)
 
