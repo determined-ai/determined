@@ -4,10 +4,10 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('fonts/determined-ai.woff2?5wpweg') format('woff2'),
-    url('fonts/determined-ai.woff?5wpweg') format('woff'),
-    url('fonts/determined-ai.ttf?5wpweg') format('truetype'),
-    url('fonts/determined-ai.svg?5wpweg#determined-ai') format('svg');
+    url('fonts/determined-ai.woff2?w8hxoy') format('woff2'),
+    url('fonts/determined-ai.woff?w8hxoy') format('woff'),
+    url('fonts/determined-ai.ttf?w8hxoy') format('truetype'),
+    url('fonts/determined-ai.svg?w8hxoy#determined-ai') format('svg');
 }
 
 [class^='icon-'],
@@ -75,6 +75,7 @@
 .icon-tensorboard::before { content: '\e90c'; }
 .icon-tensorflow::before { content: '\e90b'; }
 .icon-trace::before { content: '\e901'; }
+.icon-undo::before { content: '\e931'; }
 .icon-user::before { content: '\e916'; }
 .icon-user-small::before { content: '\e912'; }
 .icon-warning::before { content: '\e91c'; }
