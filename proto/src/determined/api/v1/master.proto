@@ -83,3 +83,19 @@ message ResourceAllocationRawResponse {
   // An entry summarizing one workload.
   repeated determined.master.v1.ResourceAllocationRawEntry resource_entries = 1;
 }
+
+// Get an aggregated view of resource allocation during the given time period.
+message ResourceAllocationAggregatedRequest {
+  // The first day to consider (the exact time is midnight UTC at the beginning
+  // of the day).
+  string start_date = 1;
+  // The last day to consider (the exact time is midnight UTC at the end of the
+  // day).
+  string end_date = 2;
+}
+// Response to ResourceAllocationAggregatedRequest.
+message ResourceAllocationAggregatedResponse {
+  // An entry summarizing one workload.
+  repeated determined.master.v1.ResourceAllocationAggregatedEntry
+      resource_entries = 1;
+}
