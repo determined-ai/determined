@@ -1,16 +1,15 @@
 import boto3
+from termcolor import colored
 
 from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import base
 
 
 class Govcloud(base.DeterminedDeployment):
-    ssh_command = "SSH to master Instance: ssh -i <pem-file> ubuntu@{master_ip}"
-    det_ui = (
-        "Configure the Determined CLI: export DET_MASTER={master_ip}\n"
-        "View the Determined UI: http://{master_ip}:8080\n"
-        "View Logs at: https://{region}.console.amazonaws-us-gov.com/cloudwatch/home?"
-        "region={region}#logsV2:log-groups/log-group/{log_group}"
+    logs_info = "View Logs at: " + colored(
+        "https://{region}.console.amazonaws-us-gov.com/cloudwatch/home?"
+        "region={region}#logsV2:log-groups/log-group/{log_group}",
+        "blue",
     )
 
     template = "govcloud.yaml"
@@ -65,8 +64,5 @@ class Govcloud(base.DeterminedDeployment):
         master_ip = output[constants.cloudformation.DET_ADDRESS]
         region = output[constants.cloudformation.REGION]
         log_group = output[constants.cloudformation.LOG_GROUP]
-        ui_command = self.det_ui.format(master_ip=master_ip, region=region, log_group=log_group)
-        print(ui_command)
 
-        ssh_command = self.ssh_command.format(master_ip=master_ip)
-        print(ssh_command)
+        self.print_output_info(master_ip=master_ip, region=region, log_group=log_group)

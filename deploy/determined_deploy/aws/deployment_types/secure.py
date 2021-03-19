@@ -1,22 +1,28 @@
+from typing import Iterable
+
 import boto3
+from termcolor import colored
 
 from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import base
 
 
 class Secure(base.DeterminedDeployment):
-    ssh_command = (
-        "SSH to Determined Master: ssh -i  <keypair> ubuntu@{master_ip} -o "
-        '"proxycommand ssh -W %h:%p -i <keypair> ubuntu@{bastion_ip}"'
-    )
-    det_ui = (
+    bastion_info = (
         "To View Determined UI:\n"
-        "Add Keypair: ssh-add <keypair>\n"
-        "Open SSH Tunnel through Bastion:  ssh -N -L 8080:{master_ip}:8080 ubuntu@{bastion_ip}\n"
-        "Configure the Determined CLI: export DET_MASTER=localhost:8080\n"
-        "View the Determined UI: http://localhost:8080\n"
-        "View Logs at: https://{region}.console.aws.amazon.com/cloudwatch/home?"
-        "region={region}#logStream:group={log_group}"
+        "Add Keypair: " + colored("ssh-add <keypair>", "yellow") + "\n"
+        "Open SSH Tunnel through Bastion: "
+        + colored("ssh -N -L 8080:{master_ip}:8080 ubuntu@{bastion_ip}", "yellow")
+    )
+
+    master_info = "Configure the Determined CLI: " + colored(
+        "export DET_MASTER=localhost:8080", "yellow"
+    )
+    ui_info = "View the Determined UI: " + colored("http://localhost:8080", "blue")
+    ssh_info = "SSH to Determined Master: " + colored(
+        "ssh -i  <keypair> ubuntu@{master_ip} -o "
+        '"proxycommand ssh -W %h:%p -i <keypair> ubuntu@{bastion_ip}"',
+        "yellow",
     )
     template = "secure.yaml"
 
@@ -74,14 +80,16 @@ class Secure(base.DeterminedDeployment):
         region = output[constants.cloudformation.REGION]
         log_group = output[constants.cloudformation.LOG_GROUP]
 
-        ui_command = self.det_ui.format(
+        self.print_output_info(
             master_ip=master_ip, bastion_ip=bastion_ip, region=region, log_group=log_group
         )
-        print(ui_command)
-        print()
 
-        ssh_command = self.ssh_command.format(
-            master_ip=master_ip.split(":")[0], bastion_ip=bastion_ip
+    @property
+    def info_partials(self) -> Iterable[str]:
+        return (
+            self.bastion_info,
+            self.master_info,
+            self.ui_info,
+            self.logs_info,
+            self.ssh_info,
         )
-        print(ssh_command)
-        print()

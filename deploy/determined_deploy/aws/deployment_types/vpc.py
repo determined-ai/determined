@@ -5,13 +5,6 @@ from determined_deploy.aws.deployment_types import base
 
 
 class VPC(base.DeterminedDeployment):
-    ssh_command = "SSH to master Instance: ssh -i <pem-file> ubuntu@{master_ip}"
-    det_ui = (
-        "Configure the Determined CLI: export DET_MASTER={master_ip}\n"
-        "View the Determined UI: http://{master_ip}:8080\n"
-        "View Logs at: https://{region}.console.aws.amazon.com/cloudwatch/home?"
-        "region={region}#logStream:group={log_group}"
-    )
     template = "vpc.yaml"
 
     template_parameter_keys = [
@@ -61,11 +54,7 @@ class VPC(base.DeterminedDeployment):
         region = output[constants.cloudformation.REGION]
         log_group = output[constants.cloudformation.LOG_GROUP]
 
-        ui_command = self.det_ui.format(master_ip=master_ip, region=region, log_group=log_group)
-        print(ui_command)
-
-        ssh_command = self.ssh_command.format(master_ip=master_ip)
-        print(ssh_command)
+        self.print_output_info(master_ip=master_ip, region=region, log_group=log_group)
 
 
 class FSx(VPC):
