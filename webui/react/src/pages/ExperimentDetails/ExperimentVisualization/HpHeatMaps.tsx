@@ -6,6 +6,7 @@ import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
+import RadioGroup from 'components/RadioGroup';
 import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
@@ -42,6 +43,11 @@ interface HpData {
   trialIds: number[];
 }
 
+enum ViewType {
+  Grid = 'grid',
+  List = 'list',
+}
+
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
 };
@@ -61,14 +67,14 @@ const HpHeatMaps: React.FC<Props> = ({
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
-  const defaultView = storage.get<GridListView>(STORAGE_VIEW_KEY) || GridListView.Grid;
+  const defaultView = storage.get<string>(STORAGE_VIEW_KEY) || ViewType.Grid;
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpData>();
   const [ pageError, setPageError ] = useState<Error>();
   const [ selectedView, setSelectedView ] = useState(defaultView);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
-  const isListView = selectedView === GridListView.List;
+  const isListView = selectedView === ViewType.List;
 
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric.type === MetricType.Validation &&
@@ -82,7 +88,7 @@ const HpHeatMaps: React.FC<Props> = ({
     return getColorScale(chartData?.metricRange, smallerIsBetter);
   }, [ chartData, smallerIsBetter ]);
 
-  const handleViewChange = useCallback((view: GridListView) => {
+  const handleViewChange = useCallback((view: string) => {
     storage.set(STORAGE_VIEW_KEY, view);
     setSelectedView(view);
   }, [ storage ]);
@@ -227,10 +233,17 @@ const HpHeatMaps: React.FC<Props> = ({
         bodyBorder
         bodyScroll
         filters={filters}
-        id="hp-visualization"
         noBodyPadding
-        options={<GridListRadioGroup value={selectedView} onChange={handleViewChange} />}
-        title="HP Heat Maps">
+        options={(
+          <RadioGroup
+            iconOnly
+            options={[
+              { icon: 'grid', id: ViewType.Grid, label: 'Squared View' },
+              { icon: 'list', id: ViewType.List, label: 'Wrapped View' },
+            ]}
+            value={selectedView}
+            onChange={handleViewChange} />
+        )}>
         <div className={css.container}>{content}</div>
       </Section>
     </div>

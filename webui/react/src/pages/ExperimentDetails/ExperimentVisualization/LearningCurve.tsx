@@ -163,7 +163,7 @@ const LearningCurve: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section bodyBorder bodyScroll filters={filters} id="hp-visualization" title="Learning Curve">
+      <Section bodyBorder bodyScroll filters={filters}>
         <div className={css.container}>
           {!hasLoaded ? <Spinner /> : (
             <>

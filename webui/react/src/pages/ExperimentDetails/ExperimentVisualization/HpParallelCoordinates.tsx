@@ -230,12 +230,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section
-        bodyBorder
-        bodyScroll
-        filters={filters}
-        id="hp-visualization"
-        title="HP Parallel Coordinates">
+      <Section bodyBorder bodyScroll filters={filters}>
         <div className={css.container}>
           {!hasLoaded || !chartData ? <Spinner /> : (
             <>
