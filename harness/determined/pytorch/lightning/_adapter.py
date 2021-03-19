@@ -186,6 +186,12 @@ class LightningAdapter(PyTorchTrial):
                 lm.on_validation_epoch_end()
                 lm.validation_epoch_end(outputs)
 
+            def on_checkpoint_before_load(self, checkpoint: Dict[str, Any]) -> None:
+                lm.on_load_checkpoint(checkpoint)
+
+            def on_checkpoint_before_save(self, checkpoint: Dict[str, Any]) -> None:
+                lm.on_save_checkpoint(checkpoint)
+
         return {"_lightning_module": LightningAdapterCallback()}
 
     def setup_optimizers_schedulers(self) -> Tuple[List[Optimizer], List[LRScheduler]]:
