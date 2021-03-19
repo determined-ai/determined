@@ -6,7 +6,7 @@
 
 This document describes how to install Determined on `Kubernetes
 <https://kubernetes.io/>`__. The installation is performed using the
-:download:`Determined Helm Chart </helm/determined-0.4.0.tgz>`. For
+:download:`Determined Helm Chart </helm/determined-0.5.0.tgz>`. For
 general information about using Determined with Kubernetes, refer the
 :ref:`determined-on-kubernetes` guide.
 
@@ -36,7 +36,7 @@ the following prerequisites are satisfied:
    ``fluent/fluent-bit:1.6`` Docker image from Docker Hub.
 
 You should also download a copy of the :download:`Determined Helm Chart
-</helm/determined-0.4.0.tgz>` and extract it on your local machine.
+</helm/determined-0.5.0.tgz>` and extract it on your local machine.
 
 If you do not yet have a Kubernetes cluster deployed and you want to use
 Determined in a public cloud environment, we recommend using a managed
@@ -270,6 +270,22 @@ perform TLS termination in the load-balancer:
                serviceName: determined-master-service-<name for your deployment>
                servicePort: masterPort configured in values.yaml
 
+Default Scheduler (Optional)
+============================
+
+Determined includes support for the `lightweight coscheduling plugin
+<https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
+which extends the default Kubernetes scheduler to provide gang
+scheduling. This feature is currently in beta and is not enabled by
+default. To activate the plugin, set the ``defaultScheduler`` field to
+``coscheduler``. If the field is empty or doesn't exist, Determined will
+use the default Kubernetes scheduler to schedule all experiments and
+tasks.
+
+.. code:: yaml
+
+   defaultScheduler: coscheduler
+
 ***********************
  Installing Determined
 ***********************
@@ -283,7 +299,7 @@ Determined run:
    helm install <name for your deployment> determined-helm-chart
 
 ``determined-helm-chart`` is a relative path to where the
-:download:`Determined Helm Chart </helm/determined-0.4.0.tgz>` is
+:download:`Determined Helm Chart </helm/determined-0.5.0.tgz>` is
 located. It may take a few minutes for all resources to come up. If you
 encounter issues during installation please follow our list of
 :ref:`useful kubectl commands <useful-kubectl-commands>`. Helm will

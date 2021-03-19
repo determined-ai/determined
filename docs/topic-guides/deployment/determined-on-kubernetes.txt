@@ -43,34 +43,16 @@ Kubernetes.
 Scheduling
 ==========
 
-Determined on Kubernetes does not currently support the scheduling
-policies that are available when deploying Determined on VMs. These
-policies include: priority scheduling, fair sharing resources across
-experiments, and gang-scheduling for distributed training. Determined
-relies on Kubernetes to handle scheduling, which does not natively
-support these scheduling policies.
-
-:ref:`Distributed training <multi-gpu-training>` experiments that use
-multiple pods require all pods to be scheduled and running in order to
-make progress. Due to the lack of gang-scheduling in Kubernetes, when
-running distributed training experiments it is possible to deadlock the
-Kubernetes cluster such that none of the experiments will make any
-progress. For example, if you have a cluster with three 4-GPU nodes,
-scheduling an experiment that requires four such nodes will deadlock the
-cluster. Three pods will start up on the available nodes and occupy all
-of their GPUs while waiting for the fourth pod to launch before training
-can start. Because the fourth pod will never start (due to insufficient
-resources), the job will never make progress. Similarly, if you launch
-two experiments simultaneously that both attempt to use 12 GPUs on a
-cluster with only 12 GPUs, it is likely that Kubernetes will assign some
-of the GPUs to one experiment and some GPUs to the other. Because
-neither experiment will receive the resources it needs to begin
-executing, the system will wait indefinitely.
-
-To avoid deadlocking your cluster, we recommend enabling the cluster
-autoscaler if possible. If a potential deadlock is detected, a warning
-will be displayed in the trial logs. Upon encountering a deadlock, users
-should pause, cancel, or kill one or more of the deadlocked experiments.
+By default, the Kubernetes scheduler does not support gang scheduling or
+preemption. This can be problematic for distributed deep learning
+workloads that require multiple pods to be scheduled before execution
+starts. Determined includes built-in support for the `lightweight
+coscheduling plugin
+<https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
+which extends the default Kubernetes scheduler to support gang
+scheduling. The coscheduling plugin is not enabled by default. For more
+details and instructions on how to enable the coscheduling plugin, refer
+to :ref:`scheduling-on-kubernetes`.
 
 Dynamic Agents
 ==============
