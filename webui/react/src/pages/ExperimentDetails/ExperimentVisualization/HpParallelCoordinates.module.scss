@@ -1,8 +1,10 @@
 $tooltip-offset: 0.5rem;
 
 .base {
+  height: 100%;
+  
   .container {
-    min-height: 40rem;
+    min-height: 20rem;
     position: relative;
   }
   .chart {

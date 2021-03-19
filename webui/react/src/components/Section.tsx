@@ -9,6 +9,7 @@ import css from './Section.module.scss';
 
 interface Props {
   bodyBorder?: boolean;
+  bodyScroll?: boolean;
   divider?: boolean;
   filters?: React.ReactNode;
   hideTitle?: boolean;
@@ -31,6 +32,7 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
 
   if (props.bodyBorder) classes.push(css.bodyBorder);
+  if (props.bodyScroll) classes.push(css.bodyScroll);
   if (props.divider) classes.push(css.divider);
   if (props.filters) classes.push(css.filters);
   if (props.maxHeight) classes.push(css.maxHeight);

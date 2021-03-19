@@ -93,6 +93,14 @@
     border-radius: var(--theme-sizes-border-radius);
   }
 }
+.base.bodyScroll {
+  height: 100%;
+
+  .body {
+    height: 100%;
+    overflow: auto;
+  }
+}
 .base.noBodyPadding {
   .body { padding: 0; }
 }

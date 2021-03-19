@@ -4,7 +4,6 @@ import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
-import RadioGroup from 'components/RadioGroup';
 import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
@@ -291,9 +290,6 @@ const ExperimentVisualization: React.FC<Props> = ({
           />
         </Tabs.TabPane>
       </Tabs>
-      {/* <div className={css.radioGroup}>
-        <RadioGroup options={MENU} value={typeKey} onChange={handleTypeChange} />
-      </div> */}
     </div>
   );
 };

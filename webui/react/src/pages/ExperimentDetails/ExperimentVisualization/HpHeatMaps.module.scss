@@ -1,6 +1,8 @@
 .base {
+  height: 100%;
+  
   .container {
-    min-height: 40rem;
+    min-height: 20rem;
   }
   .container > [class*=Message_base] {
     height: 40rem;

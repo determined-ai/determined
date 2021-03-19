@@ -225,6 +225,7 @@ const HpHeatMaps: React.FC<Props> = ({
     <div className={css.base} ref={baseRef}>
       <Section
         bodyBorder
+        bodyScroll
         filters={filters}
         id="hp-visualization"
         noBodyPadding
