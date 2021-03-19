@@ -153,7 +153,7 @@ sets these labels for GPU experiments that it launches.
 
 The coscheduling plugin is in beta and is therefore not enabled by
 default. To enable it, edit ``values.yaml`` in the Determined Helm chart
-to set the ``defaultScheduler`` field to "coscheduler".
+to set the ``defaultScheduler`` field to ``coscheduler``.
 
 Importantly, the coscheduling plugin does not work with Kubernetes'
 cluster autoscaling feature: static node pools must be used to achieve
