@@ -7,7 +7,7 @@
 When installing :ref:`Determined on Kubernetes <install-on-kubernetes>`
 via Helm, the deployment should be configured by editing the
 ``values.yaml`` and ``Chart.yaml`` files in the :download:`Determined
-Helm Chart </helm/determined-0.4.0.tgz>`.
+Helm Chart </helm/determined-0.5.0.tgz>`.
 
 *************************
  ``Chart.yaml`` Settings
@@ -237,3 +237,10 @@ Helm Chart </helm/determined-0.4.0.tgz>`.
       than a path as it does in the cluster configuration. This can be
       conveniently set at the command line using ``helm install
       --set-file logging.security.tls.certificate=<path>``.
+
+-  ``defaultScheduler``: Configures the default scheduler that
+   Determined will use. Currently only supports the ``coscheduler``
+   option, which enables the `lightweight coscheduling plugin
+   <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__.
+   Unless specified as ``coscheduler``, Determined will use the default
+   Kubernetes scheduler.
