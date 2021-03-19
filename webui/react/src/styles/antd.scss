@@ -219,6 +219,9 @@ html {
   }
   .ant-tabs > .ant-tabs-content-holder {
     height: 100%;
+  }
+  .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content {
+    height: 100%;
     overflow: auto;
     padding: var(--theme-sizes-layout-big) 0;
   }
@@ -227,5 +230,20 @@ html {
   .ant-tabs-top > div > .ant-tabs-nav::before,
   .ant-tabs-bottom > div > .ant-tabs-nav::before {
     border-color: var(--theme-colors-monochrome-12);
+  }
+
+  /* Tabs Cards Style */
+
+  .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+    border-color: var(--theme-colors-monochrome-12);
+  }
+  .ant-tabs-card > .ant-tabs-content-holder {
+    background-color: var(--theme-colors-monochrome-17);
+    border-color: var(--theme-colors-monochrome-12);
+    border-style: solid;
+    border-width: 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width) var(--theme-sizes-border-width);
+  }
+  .ant-tabs-card > .ant-tabs-content-holder > .ant-tabs-content {
+    padding: var(--theme-sizes-layout-big);
   }
 }

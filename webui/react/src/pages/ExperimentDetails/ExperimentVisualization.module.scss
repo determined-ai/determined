@@ -1,6 +1,7 @@
 .base {
   display: flex;
   flex-direction: column;
+  height: 100%;
 
   .radioGroup {
     background-color: var(--theme-colors-monochrome-13);

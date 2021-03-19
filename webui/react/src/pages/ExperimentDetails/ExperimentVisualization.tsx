@@ -1,5 +1,5 @@
-import { Alert } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Tabs } from 'antd';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
@@ -27,13 +27,6 @@ import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinat
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
 
-export enum VisualizationType {
-  HpParallelCoordinates = 'hp-parallel-coordinates',
-  HpHeatMap = 'hp-heat-map',
-  HpScatterPlots = 'hp-scatter-plots',
-  LearningCurve = 'learning-curve',
-}
-
 interface Props {
   basePath: string;
   experiment: ExperimentBase;
@@ -52,28 +45,6 @@ const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
 const DEFAULT_BATCH = 0;
 const DEFAULT_BATCH_MARGIN = 10;
 const DEFAULT_MAX_TRIALS = 100;
-const MENU = [
-  {
-    icon: 'learning',
-    id: VisualizationType.LearningCurve,
-    label: 'Learning Curve',
-  },
-  {
-    icon: 'parcoords',
-    id: VisualizationType.HpParallelCoordinates,
-    label: 'HP Parallel Coordinates',
-  },
-  {
-    icon: 'scatter-plot',
-    id: VisualizationType.HpScatterPlots,
-    label: 'HP Scatter Plots',
-  },
-  {
-    icon: 'heat',
-    id: VisualizationType.HpHeatMap,
-    label: 'HP Heat Map',
-  },
-];
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
@@ -126,8 +97,8 @@ const ExperimentVisualization: React.FC<Props> = ({
     setActiveMetric(metric);
   }, []);
 
-  const handleTypeChange = useCallback((type: string) => {
-    setTypeKey(type as VisualizationType);
+  const handleTabChange = useCallback((type: string) => {
+    setTypeKey(type as ExperimentVisualizationType);
     history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
   }, [ basePath, history ]);
 
@@ -268,64 +239,61 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <div className={css.radioGroup}>
-        <RadioGroup options={MENU} value={typeKey} onChange={handleTypeChange} />
-      </div>
-      <div>
-        {typeKey === VisualizationType.LearningCurve && (
+      <Tabs className={css.base} type="card" onChange={handleTabChange}>
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.LearningCurve}
+          tab="Learning Curve">
           <LearningCurve
             experiment={experiment}
-            hParams={fullHParams}
-            isLoading={!isContentReady}
-            metrics={metrics}
-            selectedMetric={selectedMetric}
-            onMetricChange={handleMetricChange}
+            filters={visualizationFilters}
+            hParams={fullHParams.current}
+            selectedMaxTrial={filters.maxTrial}
+            selectedMetric={filters.metric}
           />
-        )}
-        {typeKey === VisualizationType.HpParallelCoordinates && (
+        </Tabs.TabPane>
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.HpParallelCoordinates}
+          tab="HP Parallel Coordinates">
           <HpParallelCoordinates
-            batches={batches}
             experiment={experiment}
-            hParams={fullHParams}
-            isLoading={!isContentReady}
-            metrics={metrics}
-            selectedBatch={selectedBatch}
-            selectedHParams={hParams}
-            selectedMetric={selectedMetric}
-            onBatchChange={handleBatchChange}
-            onHParamChange={handleHParamChange}
-            onMetricChange={handleMetricChange}
+            filters={visualizationFilters}
+            hParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
           />
-        )}
-        {typeKey === VisualizationType.HpScatterPlots && (
+        </Tabs.TabPane>
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.HpScatterPlots}
+          tab="HP Scatter Plots">
           <HpScatterPlots
-            batches={batches}
             experiment={experiment}
-            hParams={fullHParams}
-            isLoading={!isContentReady}
-            metrics={metrics}
-            selectedBatch={selectedBatch}
-            selectedHParams={hParams}
-            selectedMetric={selectedMetric}
-            onBatchChange={handleBatchChange}
-            onHParamChange={handleHParamChange}
-            onMetricChange={handleMetricChange}
+            filters={visualizationFilters}
+            hParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
           />
-        )}
-        {typeKey === VisualizationType.HpHeatMap && (
+        </Tabs.TabPane>
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.HpHeatMap}
+          tab="HP Heat Map">
           <HpHeatMaps
-            batches={batches}
             experiment={experiment}
-            hParams={fullHParams}
-            isLoading={!isContentReady}
-            metrics={metrics}
-            selectedBatch={selectedBatch}
-            selectedMetric={selectedMetric}
-            onBatchChange={handleBatchChange}
-            onMetricChange={handleMetricChange}
+            filters={visualizationFilters}
+            hParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
           />
-        )}
-      </div>
+        </Tabs.TabPane>
+      </Tabs>
+      {/* <div className={css.radioGroup}>
+        <RadioGroup options={MENU} value={typeKey} onChange={handleTypeChange} />
+      </div> */}
     </div>
   );
 };
