@@ -132,7 +132,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     if (onChange) onChange(localFilters);
   }, [ localFilters, onChange ]);
 
-  const handleReset = useCallback(() => {
+  const handleUndo = useCallback(() => {
     dispatch({ type: ActionType.Set, value: filters });
   }, [ filters ]);
 
@@ -152,7 +152,9 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           style={{ width: 70 }}
           value={localFilters.maxTrial}
           onChange={handleMaxTrialsChange}>
-          {TOP_TRIALS_OPTIONS.map(option => <Option key={option} value={option}>{option}</Option>)}
+          {TOP_TRIALS_OPTIONS.map(option => (
+            <Option key={option} value={option}>{option}</Option>
+          ))}
         </SelectFilter>
       )}
       {showBatches && (
@@ -196,8 +198,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         </MultiSelect>
       )}
       <div className={css.buttons}>
+        <IconButton icon="undo" label="Undo Filters" onClick={handleUndo} />
         <IconButton icon="checkmark" label="Apply Filters" type="primary" onClick={handleApply} />
-        <IconButton icon="close" label="Reset Filters" onClick={handleReset} />
       </div>
     </div>
   );
