@@ -68,6 +68,9 @@
     border-radius: 0 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius);
   }
 }
+.base.bodyNoPadding {
+  .body { padding: 0; }
+}
 .base.bodyScroll {
   height: 100%;
 
@@ -84,7 +87,4 @@
       overflow: inherit;
     }
   }
-}
-.base.noBodyPadding {
-  .body { padding: 0; }
 }

@@ -7,13 +7,13 @@ import css from './Section.module.scss';
 
 interface Props {
   bodyBorder?: boolean;
+  bodyNoPadding?: boolean;
   bodyScroll?: boolean;
   divider?: boolean;
   filters?: React.ReactNode;
   hideTitle?: boolean;
   id?: string;
   maxHeight?: boolean;
-  noBodyPadding?: boolean;
   options?: React.ReactNode;
   title?: string | React.ReactElement;
 }
@@ -26,11 +26,11 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
 
   if (props.bodyBorder) classes.push(css.bodyBorder);
+  if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.bodyScroll) classes.push(css.bodyScroll);
   if (props.divider) classes.push(css.divider);
   if (props.filters) classes.push(css.filters);
   if (props.maxHeight) classes.push(css.maxHeight);
-  if (props.noBodyPadding) classes.push(css.noBodyPadding);
 
   return (
     <section className={classes.join(' ')} id={id}>
