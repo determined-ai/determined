@@ -22,6 +22,7 @@ from determined_cli.master import args_description as master_args_description
 from determined_cli.model import args_description as model_args_description
 from determined_cli.notebook import args_description as notebook_args_description
 from determined_cli.remote import args_description as remote_args_description
+from determined_cli.resources import args_description as resources_args_description
 from determined_cli.shell import args_description as shell_args_description
 from determined_cli.template import args_description as template_args_description
 from determined_cli.tensorboard import args_description as tensorboard_args_description
@@ -168,6 +169,7 @@ all_args_description = (
     + model_args_description
     + agent_args_description
     + notebook_args_description
+    + resources_args_description
     + shell_args_description
     + template_args_description
     + tensorboard_args_description
