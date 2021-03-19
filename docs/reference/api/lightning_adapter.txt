@@ -92,8 +92,7 @@ not supported. Read about those here:
    ``on_train_epoch_end``, ``manual_backward``, ``backward``,
    ``optimizer_step``, ``optimizer_zero_grad``
 
--  Support coming soon: `precision`, `on_load_checkpoint`,
-   `on_save_checkpoint`
+-  Support coming soon: `precision`
 
 In addition, we also patched some ``LightningModule`` methods to make
 porting your code easier:
