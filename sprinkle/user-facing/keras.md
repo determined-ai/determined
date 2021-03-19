@@ -10,6 +10,8 @@ automatic support for:
 * pausing & resuming
 * checkpoint tracking
 * metrics tracking & visualizations
+* advanced hyperparameter search
+* no-effort distributed training
 * reproducibility
 
 The New Keras API is meant to replace `TFKerasTrial` with something more

@@ -36,7 +36,7 @@ context.training.report_validation_metrics(
 context.api._begin_checkpoint()                             # non-user-facing call
 context.api._report_checkpoint(uuid, start_time, end_time)  # non-user-facing call
 # user-facing API, just wraps the StorageManagers:
-with context.checkpoint.save_path as path:
+with context.checkpoint.save_path() as path:
     ... # user saves checkpoint into path
 # TODO: for downloading, checkpoints, do we just stick to some form of Checkpoint Export API?
 
