@@ -5,7 +5,7 @@ import zmq
 from zmq.error import ZMQBindError, ZMQError
 
 import determined as det
-from determined_common import check
+from determined.common import check
 
 
 class _OneSidedBarrier:

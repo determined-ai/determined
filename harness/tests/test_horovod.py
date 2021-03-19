@@ -5,7 +5,7 @@ import pytest
 
 import determined as det
 from determined import constants, horovod, workload
-from determined_common.types import ExperimentID, StepID, TrialID
+from determined.common.types import ExperimentID, StepID, TrialID
 
 
 def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvContext:

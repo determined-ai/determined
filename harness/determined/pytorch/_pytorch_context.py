@@ -6,8 +6,8 @@ import torch.nn as nn
 
 import determined as det
 from determined import pytorch
+from determined.common import check
 from determined.horovod import hvd
-from determined_common import check
 
 # Apex is included only for GPU trials.
 try:

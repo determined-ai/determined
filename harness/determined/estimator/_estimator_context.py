@@ -6,8 +6,8 @@ import tensorflow as tf
 
 import determined as det
 from determined import _data_layer, estimator, horovod
+from determined.common import check
 from determined.horovod import hvd
-from determined_common import check
 
 """
 The normal path to create a model usually needs the use of tensorflow pre-made optimizer and

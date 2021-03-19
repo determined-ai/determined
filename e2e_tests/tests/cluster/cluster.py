@@ -4,8 +4,8 @@ from typing import Any, Dict, List
 
 import requests
 
-import determined_common.api.authentication as auth
-from determined_common import api
+import determined.common.api.authentication as auth
+from determined.common import api
 from tests import config as conf
 
 

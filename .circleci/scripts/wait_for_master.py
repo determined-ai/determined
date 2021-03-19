@@ -3,7 +3,7 @@ import time
 
 import requests
 
-from determined_common import api
+from determined.common import api
 
 
 def _wait_for_master(address: str) -> None:

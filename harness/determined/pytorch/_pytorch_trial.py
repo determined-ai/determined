@@ -10,9 +10,9 @@ import torch
 
 import determined as det
 from determined import horovod, ipc, pytorch, util, workload
+from determined.common import check
 from determined.horovod import hvd
 from determined.util import has_param
-from determined_common import check
 
 # Apex is included only for GPU trials.
 try:

@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import determined as det
 from determined import constants, gpu, horovod, util, workload
-from determined_common import api
+from determined.common import api
 
 
 class InvalidHP(Exception):

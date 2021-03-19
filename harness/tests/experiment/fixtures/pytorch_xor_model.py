@@ -7,7 +7,7 @@ from torch.utils.data import TensorDataset
 
 import determined as det
 from determined import pytorch
-from determined_common import check
+from determined.common import check
 
 
 def error_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:

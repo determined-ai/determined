@@ -11,7 +11,7 @@ import numpy as np
 
 import determined as det
 from determined import horovod
-from determined_common import check
+from determined.common import check
 
 
 class NoOpTrialController(det.CallbackTrialController):

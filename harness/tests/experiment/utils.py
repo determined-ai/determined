@@ -14,8 +14,8 @@ from tensorflow.keras import utils as keras_utils
 
 import determined as det
 from determined import constants, experimental, gpu, horovod, keras, load, workload
-from determined_common import check
-from determined_common.types import ExperimentID, StepID, TrialID
+from determined.common import check
+from determined.common.types import ExperimentID, StepID, TrialID
 
 
 class TrainAndValidate:

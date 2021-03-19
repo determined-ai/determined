@@ -8,7 +8,7 @@ import tensorflow as tf
 from tensorflow.python.training.checkpoint_state_pb2 import CheckpointState
 
 from determined import tensorboard
-from determined_common import check
+from determined.common import check
 
 # TODO: DET-175 direct checkpoint file manipulation is deprecated in TF 1.13.
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from determined_common import check, storage
-from determined_common.storage import shared
+from determined.common import check, storage
+from determined.common.storage import shared
 from tests.storage import util
 
 

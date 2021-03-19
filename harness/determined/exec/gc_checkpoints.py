@@ -10,7 +10,7 @@ from typing import Any, Dict, List
 
 import determined as det
 from determined import tensorboard
-from determined_common import constants, storage
+from determined.common import constants, storage
 
 
 def delete_checkpoints(

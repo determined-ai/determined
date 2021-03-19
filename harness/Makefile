@@ -22,14 +22,14 @@ fmt:
 	black .
 
 .PHONY: check
-check:
+check: gen
 	isort --check-only
 	black . --check
 	flake8
 	mypy .
 
 .PHONY: test
-test:
+test: gen
 	pytest -v --runslow --durations=0 tests
 
 .PHONY: test-tf2
@@ -42,3 +42,35 @@ test-tf2:
 	# anywhere but the "start" of your program. See:
 	# https://github.com/tensorflow/tensorflow/issues/18304#issuecomment-379435515.
 	pytest -v --runslow --durations=0 tests/experiment/keras
+
+.PHONY: upload-try-now-template
+upload-try-now-template: TRY_NOW_TEMPLATE = simple.yaml
+upload-try-now-template: TRY_NOW_URL := s3://determined-ai-public/$(TRY_NOW_TEMPLATE)
+upload-try-now-template: TEMPLATE_PATH := determined/deploy/aws/templates/$(TRY_NOW_TEMPLATE)
+upload-try-now-template:
+	aws s3 cp $(TEMPLATE_PATH) $(TRY_NOW_URL) --acl public-read
+
+GENERATED_COMMITTED := determined/common/schemas/expconf/_gen.py
+GENERATION_INPUTS = ../schemas/gen.py $(shell find ../schemas/expconf -name '*.json')
+
+.PHONY: ungen
+ungen:
+	git checkout -- $(GENERATED_COMMITTED)
+
+.PHONY: gen
+gen: $(GENERATED_COMMITTED)
+
+.PHONY: force-gen
+force-gen:
+	touch ../schemas/gen.py
+
+.PHONY: check-gen
+check-gen: force-gen $(GENERATED_COMMITTED)
+	# Checking that committed, generated code is up-to-date by ensuring that
+	# git reports the files as unchanged after forcibly regenerating the files:
+	test -z "$(shell git status --porcelain $(GENERATED_COMMITTED))"
+
+determined/common/schemas/expconf/_gen.py: $(GENERATION_INPUTS)
+	../schemas/gen.py python\
+		--package expconf \
+		--output $@

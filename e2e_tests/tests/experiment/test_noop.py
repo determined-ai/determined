@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from determined_common import check, yaml
+from determined.common import check, yaml
 from tests import config as conf
 from tests import experiment as exp
 

@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional, cast
 
 import determined as det
 from determined import tensorboard, workload
-from determined_common import storage
-from determined_common.check import (
+from determined.common import storage
+from determined.common.check import (
     check_eq,
     check_len,
     check_not_eq,

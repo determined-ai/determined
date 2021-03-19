@@ -6,7 +6,7 @@ import argparse
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from determined_common.experimental import Determined, Checkpoint
+from determined.common.experimental import Determined, Checkpoint
 
 
 def generate_and_plot_images(generator: tf.keras.Sequential, noise_dim: int) -> None:

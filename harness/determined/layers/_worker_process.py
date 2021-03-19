@@ -11,7 +11,7 @@ import psutil
 
 import determined as det
 from determined import constants, horovod, ipc, workload
-from determined_common import check
+from determined.common import check
 
 
 class WorkerProcessContext:

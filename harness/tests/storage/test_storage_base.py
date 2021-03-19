@@ -2,9 +2,9 @@ import os
 
 import pytest
 
-from determined_common import storage
-from determined_common.check import CheckFailedError
-from determined_common.storage import StorageManager
+from determined.common import storage
+from determined.common.check import CheckFailedError
+from determined.common.storage import StorageManager
 
 
 def test_unknown_type() -> None:

@@ -6,8 +6,8 @@ import tensorflow as tf
 
 import determined as det
 from determined import _data_layer, errors, horovod, keras
+from determined.common import check
 from determined.horovod import hvd
-from determined_common import check
 
 
 class TFKerasTrainConfig(NamedTuple):

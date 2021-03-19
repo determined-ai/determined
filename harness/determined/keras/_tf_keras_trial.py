@@ -22,8 +22,8 @@ from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
 from determined import horovod, keras, util, workload
+from determined.common import check
 from determined.horovod import hvd
-from determined_common import check
 
 IMPOSSIBLY_LARGE_EPOCHS = sys.maxsize
 

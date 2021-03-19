@@ -5,10 +5,10 @@ import tempfile
 from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import determined as det
-import determined_common
-import determined_common.api.authentication as auth
+import determined.common
+import determined.common.api.authentication as auth
 from determined import constants, errors, load, workload
-from determined_common import api, check, context, util
+from determined.common import api, check, context, util
 
 
 def _in_ipython() -> bool:
@@ -263,7 +263,7 @@ def init_native(
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> Any:
-    determined_common.set_logger(
+    determined.common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
 
@@ -392,7 +392,7 @@ def create_trial_instance(
             :class:`determined.TrialContext`. If not specified, a minimal default
             is used.
     """
-    determined_common.set_logger(
+    determined.common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
     env, rendezvous_info, hvd_config = det._make_local_execution_env(

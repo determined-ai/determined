@@ -15,7 +15,7 @@ import simplejson
 
 import determined as det
 from determined import constants
-from determined_common import check, util
+from determined.common import check, util
 
 
 @util.preserve_random_state

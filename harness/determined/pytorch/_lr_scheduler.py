@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 import torch
 
-import determined_common.check as check
+import determined.common.check as check
 
 
 class LRScheduler:

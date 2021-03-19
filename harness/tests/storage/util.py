@@ -1,6 +1,6 @@
 import os
 
-from determined_common import storage
+from determined.common import storage
 
 EXPECTED_FILES = {
     "root.txt": "root file",

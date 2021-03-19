@@ -1,5 +1,5 @@
+from determined.common.util import sizeof_fmt
 from determined.util import _dict_to_list, _list_to_dict
-from determined_common.util import sizeof_fmt
 
 
 def test_list_to_dict() -> None:

@@ -3,8 +3,8 @@ from typing import Any, Optional
 
 import boto3
 
+from determined.common import util
 from determined.tensorboard import base
-from determined_common import util
 
 
 class S3TensorboardManager(base.TensorboardManager):

@@ -8,6 +8,7 @@ from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.optim.optimizer import Optimizer
 
+from determined.common import check
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import (
@@ -19,7 +20,6 @@ from determined.pytorch import (
 )
 from determined.tensorboard.metric_writers import pytorch
 from determined.util import filter_duplicates, has_param
-from determined_common import check
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

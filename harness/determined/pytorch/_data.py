@@ -19,7 +19,7 @@ import numpy as np
 import torch
 
 # from torch.utils.data.dataloader import _InfiniteConstantSampler
-from determined_common.check import check_gt, check_lt
+from determined.common.check import check_gt, check_lt
 
 # TODO(DET-1524): Uncomment inports.
 from torch.utils.data import (  # _DatasetKind,; IterableDataset,

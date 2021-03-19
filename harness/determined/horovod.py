@@ -7,7 +7,7 @@ import determined as det
 from determined import constants
 from determined._experiment_config import ExperimentConfig
 from determined._rendezvous_info import RendezvousInfo
-from determined_common import check
+from determined.common import check
 
 
 class _PolyHorovod:
