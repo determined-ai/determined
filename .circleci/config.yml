@@ -921,6 +921,8 @@ jobs:
           password: ${NGC_API_KEY}
       - go-get-deps
       - run: make -C proto build
+      - run: make -C master check
+      - run: make -C agent check
       - run: make -C master release
       - run: make -C agent release
 
