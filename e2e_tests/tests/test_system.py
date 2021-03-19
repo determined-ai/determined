@@ -1,7 +1,9 @@
 import json
 import operator
+import os
 import subprocess
 import tempfile
+import threading
 import time
 from typing import Dict, Set
 
@@ -570,3 +572,27 @@ def test_disable_and_enable_slots() -> None:
         slots[0]["slot_id"],
     ]
     subprocess.check_call(command)
+
+
+@pytest.mark.parallel  # type: ignore
+@pytest.mark.timeout(300)  # type: ignore
+def test_gang_scheduling() -> None:
+    config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
+    total_slots = os.getenv("TOTAL_SLOTS")
+    if total_slots is None:
+        pytest.fail("test requires TOTAL_SLOTS be set in the environment")
+    config = conf.set_slots_per_trial(config, int(total_slots))
+
+    model = conf.tutorials_path("mnist_pytorch")
+
+    def submit_job() -> None:
+        ret_value = exp.run_basic_test_with_temp_config(config, model, 1)
+        print(ret_value)
+
+    t = []
+    for _i in range(2):
+        t.append(threading.Thread(target=submit_job))
+    for i in range(2):
+        t[i].start()
+    for i in range(2):
+        t[i].join()
