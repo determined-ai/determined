@@ -86,7 +86,7 @@ class PyTorchExperimentalContext:
 
         PyTorch 1.6 or greater is required for this feature.
         """
-        self._parent.wrap_scaler(amp.GradScaler())
+        self._parent.wrap_scaler(amp.GradScaler())  # type: ignore
         self._auto_amp = True
 
     def _set_allgather_fn(self, fn: Callable) -> None:

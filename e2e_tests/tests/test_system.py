@@ -329,7 +329,9 @@ def test_end_to_end_adaptive() -> None:
     exp_ref = d.get_experiment(exp_id)
 
     top_2 = exp_ref.top_n_checkpoints(2)
-    top_k = exp_ref.top_n_checkpoints(len(trials))
+    top_k = exp_ref.top_n_checkpoints(
+        len(trials), sort_by="validation_loss", smaller_is_better=True
+    )
 
     top_2_uuids = [c.uuid for c in top_2]
     top_k_uuids = [c.uuid for c in top_k]

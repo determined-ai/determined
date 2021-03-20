@@ -155,10 +155,10 @@ class LightningAdapter(PyTorchTrial):
         pls.optimizers = optimizers
 
         # set lightning_module properties
-        pls.lm.use_ddp = False  # type: ignore
-        pls.lm.use_ddp2 = False  # type: ignore
-        pls.lm.use_dp = False  # type: ignore
-        pls.lm.use_tpu = False  # type: ignore
+        pls.lm.use_ddp = False
+        pls.lm.use_ddp2 = False
+        pls.lm.use_dp = False
+        pls.lm.use_tpu = False
         type(pls.lm).local_rank = context.distributed.get_local_rank()  # type: ignore
         type(pls.lm).global_rank = context.distributed.get_rank()  # type: ignore
         pls.lm.use_amp = context.experimental._auto_amp or context._use_apex

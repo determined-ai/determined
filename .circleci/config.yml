@@ -101,11 +101,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.8-tf-1.15-cpu-145c0d8
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-067db2b
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.8-lightning-1.2-tf-2.4-cpu-145c0d8
 
   login-docker:
     parameters:
@@ -210,7 +210,9 @@ commands:
       - run:
           name: Setup venv
           command: |
-            python3 -m venv /tmp/venv
+            sudo apt-get update
+            sudo apt-get install -y python3-venv
+            /usr/bin/python3 -m venv /tmp/venv
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
 
@@ -638,8 +640,8 @@ commands:
           values-to-override: |
             detVersion=<<parameters.det-version>>,\
             maxSlotsPerPod=<<parameters.gpus-per-machine>>,\
-            taskContainerDefaults.cpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-0.9.0,\
-            taskContainerDefaults.gpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-0.9.0,\
+            taskContainerDefaults.cpuImage=determinedai/environments:cuda-11.1-pytorch-1.8-lightning-1.2-tf-2.4-gpu-0.9.0,\
+            taskContainerDefaults.gpuImage=determinedai/environments:cuda-11.1-pytorch-1.8-lightning-1.2-tf-2.4-gpu-0.9.0,\
             checkpointStorage.type=gcs,\
             checkpointStorage.bucket=det-ci,\
             defaultScheduler=coscheduler
@@ -799,7 +801,7 @@ jobs:
           determined-common: true
           determined-cli: true
           determined: true
-          extras-requires: "tensorflow==1.14 torch==1.4 pytorch_lightning==1.2.0"
+          extras-requires: "tensorflow==2.4 torch==1.8 pytorch_lightning==1.2.0"
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C examples build
@@ -980,7 +982,7 @@ jobs:
 
   test-debian-packaging:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     steps:
       - checkout
       - attach_workspace:
@@ -998,7 +1000,7 @@ jobs:
 
   test-e2e-webui:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     steps:
       - checkout
@@ -1008,13 +1010,12 @@ jobs:
       - run: docker load --input build/agent.image
 
       - install-webui-test-deps
-      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           determined-deploy: true
           extra-requirements-file: "webui/tests/requirements.txt"
-          executor: ubuntu-1604:202004-01
+          executor: ubuntu-2004:202101-01
       - setup-local-cluster:
           det-version: ${CIRCLE_SHA1}
       - run-e2e-webui-tests
@@ -1144,7 +1145,7 @@ jobs:
 
   test-intg-master:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     steps:
       - checkout
@@ -1155,7 +1156,7 @@ jobs:
 
   test-intg-agent:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     steps:
       - checkout
@@ -1184,7 +1185,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extras-requires: "torch==1.4.0 pytorch_lightning==1.2.0"
+          extras-requires: "torch==1.8.0 pytorch_lightning==1.2.0"
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C cli check
@@ -1204,7 +1205,7 @@ jobs:
       - setup-python-venv:
           determined-common: true
           determined: true
-          extras-requires: "tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0"
+          extras-requires: "tensorflow==2.4.1 torch==1.8.0 torchvision==0.9.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test
@@ -1217,7 +1218,7 @@ jobs:
       - setup-python-venv:
           determined-common: true
           determined: true
-          extras-requires: "tensorflow==2.2.0"
+          extras-requires: "tensorflow==2.4.1"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
@@ -1274,7 +1275,7 @@ jobs:
       parallelism:
         type: integer
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1282,14 +1283,13 @@ jobs:
       - attach_workspace:
           at: .
 
-      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-1604:202004-01
+          executor: ubuntu-2004:202101-01
 
       - run:
           name: Get master dependencies
@@ -1549,8 +1549,8 @@ jobs:
       # "CUDA" environment variable is set to 11.
       # TODO: (DET-4918): we should ensure a consistent way to have tests that can run against
       # both major TensorFlow versions do so regularly (but not others).
-      TF1_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-0.9.0
-      TF2_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-tf-2.4-gpu-0.9.0
+      TF1_GPU_IMAGE: determinedai/environments:cuda-11.1-pytorch-1.8-lightning-1.2-tf-2.4-gpu-0.9.0
+      TF2_GPU_IMAGE: determinedai/environments:cuda-11.1-pytorch-1.8-lightning-1.2-tf-2.4-gpu-0.9.0
       CUDA: 11
     steps:
       - checkout
@@ -1594,7 +1594,7 @@ jobs:
       det-version:
         type: string
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:202101-01
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1604,14 +1604,13 @@ jobs:
       - run: docker load --input build/master.image
       - run: docker load --input build/agent.image
 
-      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-1604:202004-01
+          executor: ubuntu-2004:202101-01
 
       - pull-task-images:
           tf1: True

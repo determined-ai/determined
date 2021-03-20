@@ -139,14 +139,15 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
         if a.builder.startswith("amazon-ebs") and a.msgtype == "id" and a.val
     ]
     assert (
-        len(ami_lines) == 1
-    ), f"expected one matching ami ids line but got: {ami_lines}"
+        len(ami_lines) == 2
+    ), f"expected two matching ami ids line but got: {ami_lines}"
 
-    ami_fields = ami_lines[0].val.split("%!(PACKER_COMMA)")
-    for ami_field in ami_fields:
-        region, ami = ami_field.split(":")
-        name = region.replace("-", "_") + "_agent_ami"
-        out[name] = ami
+    for ami_line in ami_lines:
+        ami_fields = ami_line.val.split("%!(PACKER_COMMA)")
+        for ami_field in ami_fields:
+            region, ami = ami_field.split(":")
+            name = region.replace("-", "_") + "_agent_ami"
+            out[name] = ami
 
     # Get the GCP builder name by matching the build-id from a line like this one:
     #   1598642161,det-environments-06318c7,artifact,0,builder-id,packer.googlecompute

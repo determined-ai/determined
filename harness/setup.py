@@ -14,7 +14,7 @@ setup(
     python_requires=">=3.6",
     package_data={"determined": ["py.typed"]},
     install_requires=[
-        "cloudpickle==0.5.3",
+        "cloudpickle",
         "determined-common==0.14.6.dev0",
         "dill>=0.2.9",
         # TF 2.2 has strict h5py requirements, which we expose here.
@@ -27,10 +27,14 @@ setup(
         "yogadl==0.1.3",
     ],
     extras_require={
-        "tf-114-cuda100": ["tensorflow-gpu==1.14.0"],
-        "tf-114-cpu": ["tensorflow==1.14.0"],
-        "pytorch-14-cuda100": ["torch==1.4.0+cu100", "torchvision==0.5.0+cu100"],
-        "pytorch-14-cpu": ["torch==1.4.0", "torchvision==0.5.0"],
+        "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],
+        "tf-115-cpu": ["tensorflow==1.15.5"],
+        "tf-240-cuda102": ["tensorflow-gpu==2.4.1"],
+        "tf-240-cpu": ["tensorflow==2.4.1"],
+        "tf-241-cuda110": ["tensorflow-gpu==2.4.1"],
+        "pytorch-18-cuda102": ["torch==1.8.0", "torchvision==0.9.0"],
+        "pytorch-18-cuda110": ["torch==1.8.0", "torchvision==0.9.0"],
+        "pytorch-18-cpu": ["torch==1.8.0", "torchvision==0.9.0"],
     },
     zip_safe=False,
 )
