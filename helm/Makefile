@@ -16,4 +16,4 @@ release: export NGC_API_USERNAME ?=
 release: export NGC_API_KEY ?=
 release:
 	helm repo add determined $$NGC_REPO --username $$NGC_API_USERNAME --password $$NGC_API_KEY
-	helm push -f build/determined-0.4.0.tgz determined
+	helm push -f build/determined-0.5.0.tgz determined

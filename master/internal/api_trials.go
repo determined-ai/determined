@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 
 	"github.com/google/uuid"
@@ -171,26 +169,24 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 	}(), len(req.Levels))
 
 	if req.TimestampBefore != nil {
-		t, err := ptypes.Timestamp(req.TimestampBefore)
-		if err != nil {
+		if err := req.TimestampBefore.CheckValid(); err != nil {
 			return nil, err
 		}
 		filters = append(filters, api.Filter{
 			Field:     "timestamp",
 			Operation: api.FilterOperationLessThanEqual,
-			Values:    t,
+			Values:    req.TimestampBefore.AsTime(),
 		})
 	}
 
 	if req.TimestampAfter != nil {
-		t, err := ptypes.Timestamp(req.TimestampAfter)
-		if err != nil {
+		if err := req.TimestampAfter.CheckValid(); err != nil {
 			return nil, err
 		}
 		filters = append(filters, api.Filter{
 			Field:     "timestamp",
 			Operation: api.FilterOperationGreaterThan,
-			Values:    t,
+			Values:    req.TimestampAfter.AsTime(),
 		})
 	}
 	return filters, nil

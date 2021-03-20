@@ -23,6 +23,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -151,10 +152,10 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 	return entries, nil
 }
 
-func (m *Master) getResourceAllocationRaw(c echo.Context) error {
+func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	args := struct {
-		Start string `query:"timestamp_before"`
-		End   string `query:"timestamp_after"`
+		Start string `query:"timestamp_after"`
+		End   string `query:"timestamp_before"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
@@ -162,11 +163,11 @@ func (m *Master) getResourceAllocationRaw(c echo.Context) error {
 
 	start, err := time.Parse("2006-01-02T15:04:05Z", args.Start)
 	if err != nil {
-		return errors.Wrap(err, "invalid start date")
+		return errors.Wrap(err, "invalid start time")
 	}
 	end, err := time.Parse("2006-01-02T15:04:05Z", args.End)
 	if err != nil {
-		return errors.Wrap(err, "invalid end date")
+		return errors.Wrap(err, "invalid end time")
 	}
 	if start.After(end) {
 		return errors.New("start time cannot be after end time")
@@ -174,7 +175,7 @@ func (m *Master) getResourceAllocationRaw(c echo.Context) error {
 
 	resp := &apiv1.ResourceAllocationRawResponse{}
 	if err := m.db.QueryProto(
-		"allocation_raw", &resp.ResourceEntries, start.UTC(), end.UTC(),
+		"get_raw_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
 	); err != nil {
 		return errors.Wrap(err, "error fetching allocation data")
 	}
@@ -184,8 +185,10 @@ func (m *Master) getResourceAllocationRaw(c echo.Context) error {
 	labelEscaper := strings.NewReplacer("\\", "\\\\", ",", "\\,")
 	csvWriter := csv.NewWriter(c.Response())
 	formatTimestamp := func(ts *timestamppb.Timestamp) string {
-		t := time.Unix(ts.Seconds, int64(ts.Nanos)).UTC()
-		return t.Format(time.RFC3339Nano)
+		if ts == nil {
+			return ""
+		}
+		return ts.AsTime().Format(time.RFC3339Nano)
 	}
 
 	header := []string{
@@ -203,6 +206,75 @@ func (m *Master) getResourceAllocationRaw(c echo.Context) error {
 		fields := []string{
 			strconv.Itoa(int(entry.ExperimentId)), entry.Kind, entry.Username, strings.Join(labels, ","),
 			strconv.Itoa(int(entry.Slots)), formatTimestamp(entry.StartTime), formatTimestamp(entry.EndTime),
+			fmt.Sprintf("%f", entry.Seconds),
+		}
+		if err := csvWriter.Write(fields); err != nil {
+			return err
+		}
+	}
+	csvWriter.Flush()
+	return nil
+}
+
+func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
+	args := struct {
+		Start string `query:"start_date"`
+		End   string `query:"end_date"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return err
+	}
+
+	start, err := time.Parse("2006-01-02", args.Start)
+	if err != nil {
+		return errors.Wrap(err, "invalid start date")
+	}
+	end, err := time.Parse("2006-01-02", args.End)
+	if err != nil {
+		return errors.Wrap(err, "invalid end date")
+	}
+	if start.After(end) {
+		return errors.New("start date cannot be after end date")
+	}
+
+	resp := &apiv1.ResourceAllocationAggregatedResponse{}
+	if err := m.db.QueryProto(
+		"get_aggregated_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
+	); err != nil {
+		return errors.Wrap(err, "error fetching allocation data")
+	}
+
+	c.Response().Header().Set("Content-Type", "text/csv")
+
+	csvWriter := csv.NewWriter(c.Response())
+	formatTimestamp := func(ts *timestamppb.Timestamp) string {
+		if ts == nil {
+			return ""
+		}
+		return ts.AsTime().Format("2006-01-02")
+	}
+
+	header := []string{
+		"aggregation_type", "aggregation_key", "date", "seconds",
+	}
+	if err := csvWriter.Write(header); err != nil {
+		return err
+	}
+
+	for _, entry := range resp.ResourceEntries {
+		var aggType string
+		switch entry.AggregationType {
+		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_UNSPECIFIED:
+			return errors.New("got aggregation entry with unspecified type")
+		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_TOTAL:
+			aggType = "total"
+		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_USER:
+			aggType = "user"
+		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_LABEL:
+			aggType = "label"
+		}
+		fields := []string{
+			aggType, entry.AggregationKey, formatTimestamp(entry.Date),
 			fmt.Sprintf("%f", entry.Seconds),
 		}
 		if err := csvWriter.Write(fields); err != nil {
@@ -462,6 +534,8 @@ func (m *Master) Run(ctx context.Context) error {
 		"/docs/rest-api": true,
 	}
 
+	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
+
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
@@ -616,7 +690,8 @@ func (m *Master) Run(ctx context.Context) error {
 	checkpointsGroup.DELETE("/:checkpoint_uuid/metadata", api.Route(m.deleteCheckpointMetadata))
 
 	resourcesGroup := m.echo.Group("/resources", authFuncs...)
-	resourcesGroup.GET("/allocation/raw", m.getResourceAllocationRaw)
+	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
+	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
 	m.echo.POST("/trial_logs", api.Route(m.postTrialLogs))
 

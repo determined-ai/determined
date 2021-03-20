@@ -1872,7 +1872,7 @@ func (db *PgDB) Query(queryName string, v interface{}, params ...interface{}) er
 	return db.queryRowsWithParser(db.queries.getOrLoad(queryName), parser, v, params...)
 }
 
-// QueryF returns the result of the formated query. Any placeholder parameters are replaced
+// QueryF returns the result of the formatted query. Any placeholder parameters are replaced
 // with supplied params.
 func (db *PgDB) QueryF(
 	queryName string, args []interface{}, v interface{}, params ...interface{}) error {
@@ -1946,4 +1946,57 @@ SET best_validation_id = (SELECT bv.id FROM best_validation bv)
 WHERE t.id = $1;
 `, id)
 	return errors.Wrapf(err, "error updating best validation for trial %d", id)
+}
+
+// UpdateResourceAllocationAggregation updates the aggregated resource allocation table.
+func (db *PgDB) UpdateResourceAllocationAggregation() error {
+	var lastDatePtr *time.Time
+	err := db.sql.QueryRow(
+		`SELECT date_trunc('day', max(date)) FROM resource_aggregates`,
+	).Scan(&lastDatePtr)
+	if err != nil {
+		return errors.Wrap(err, "failed to find last aggregate")
+	}
+
+	// The values periodStart takes on are all midnight UTC (because of date_trunc) for each day that
+	// is to be aggregated.
+	var periodStart time.Time
+	if lastDatePtr == nil {
+		var firstDatePtr *time.Time
+		err := db.sql.QueryRow(
+			`SELECT date_trunc('day', min(start_time)) FROM steps`,
+		).Scan(&firstDatePtr)
+		if err != nil {
+			return errors.Wrap(err, "failed to find first step")
+		}
+		if firstDatePtr == nil {
+			// No steps found; nothing to do.
+			return nil
+		}
+
+		periodStart = firstDatePtr.UTC()
+	} else {
+		periodStart = lastDatePtr.UTC().AddDate(0, 0, 1)
+	}
+
+	// targetDate is some time during the day before today, which is the last full day that has ended
+	// and can therefore be aggregated; the Before check means that the last value of periodStart is
+	// midnight at the beginning of that day.
+	targetDate := time.Now().UTC().AddDate(0, 0, -1)
+	for ; periodStart.Before(targetDate); periodStart = periodStart.AddDate(0, 0, 1) {
+		t0 := time.Now()
+
+		if _, err := db.sql.Exec(
+			db.queries.getOrLoad("update_aggregated_allocation"), periodStart,
+		); err != nil {
+			return errors.Wrap(err, "failed to add aggregate")
+		}
+
+		log.Infof(
+			"aggregated resource allocation statistics for %v in %s",
+			periodStart, time.Since(t0),
+		)
+	}
+
+	return nil
 }

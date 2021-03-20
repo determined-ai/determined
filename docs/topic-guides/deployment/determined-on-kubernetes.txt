@@ -43,11 +43,11 @@ Kubernetes.
 Scheduling
 ==========
 
-By default, Kubernetes schedules pods in a first-come-first-serve (FCFS)
-manner, does not support gang scheduling, and does not support
-preemption. This can be problematic for deep learning workloads.
-Determined includes built-in support for the `lightweight coscheduling
-plugin
+By default, the Kubernetes scheduler does not support gang scheduling or
+preemption. This can be problematic for distributed deep learning
+workloads that require multiple pods to be scheduled before execution
+starts. Determined includes built-in support for the `lightweight
+coscheduling plugin
 <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
 which extends the default Kubernetes scheduler to support gang
 scheduling. The coscheduling plugin is not enabled by default. For more

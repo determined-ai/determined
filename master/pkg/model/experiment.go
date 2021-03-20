@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -433,11 +433,7 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 	}
 
 	if t.Timestamp != nil {
-		tsProto, err := ptypes.TimestampProto(*t.Timestamp)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to convert log timestamp to proto")
-		}
-		resp.Timestamp = tsProto
+		resp.Timestamp = timestamppb.New(*t.Timestamp)
 	}
 
 	if t.Level == nil {
