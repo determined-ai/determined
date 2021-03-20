@@ -27,8 +27,8 @@ setup(
         "yogadl==0.1.3",
     ],
     extras_require={
-        "tf-114-cuda100": ["tensorflow-gpu==1.14.0"],
-        "tf-114-cpu": ["tensorflow==1.14.0"],
+        "tf-221-cuda100": ["tensorflow-gpu==2.2.1"],
+        "tf-221-cpu": ["tensorflow==2.2.1"],
         "pytorch-14-cuda100": ["torch==1.4.0+cu100", "torchvision==0.5.0+cu100"],
         "pytorch-14-cpu": ["torch==1.4.0", "torchvision==0.5.0"],
     },

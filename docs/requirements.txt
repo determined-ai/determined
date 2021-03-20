@@ -7,3 +7,4 @@ sphinx-sitemap>=2.2.0
 pillow
 rstfmt==0.0.7
 sphinx-copybutton
+pytorch-lightning==1.2.0
