@@ -567,8 +567,7 @@ commands:
             detVersion=<<parameters.det-version>>,\
             maxSlotsPerPod=<<parameters.gpus-per-machine>>,\
             checkpointStorage.type=gcs,\
-            checkpointStorage.bucket=det-ci,\
-            defaultScheduler=coscheduler
+            checkpointStorage.bucket=det-ci
       - set-master-address-gke:
           release-name: "ci"
           namespace: "default"
@@ -643,8 +642,7 @@ commands:
             taskContainerDefaults.cpuImage=determinedai/environments:cuda-11.1-pytorch-1.8-lightning-1.2-tf-2.4-gpu-0.9.0,\
             taskContainerDefaults.gpuImage=determinedai/environments:cuda-11.1-pytorch-1.8-lightning-1.2-tf-2.4-gpu-0.9.0,\
             checkpointStorage.type=gcs,\
-            checkpointStorage.bucket=det-ci,\
-            defaultScheduler=coscheduler
+            checkpointStorage.bucket=det-ci
       - set-master-address-gke:
           release-name: "ci"
           namespace: "default"
@@ -1486,11 +1484,6 @@ jobs:
           region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
       - set-google-application-credentials
-      - run:
-          name: Set environment variables 
-          command: |
-            echo "export TOTAL_SLOTS="$((<<parameters.num-machines>> * <<parameters.gpus-per-machine>>))"" >> $BASH_ENV
-            source $BASH_ENV
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
