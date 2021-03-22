@@ -9,7 +9,7 @@ run:
   issues-exit-code: 1
 
   skip-files:
-    - pkg/schemas/expconf/dummies.go
+    - pkg/schemas/expconf/latest.go
     - pkg/schemas/*/zgen*.go
     - pkg/schemas/zgen*.go
 

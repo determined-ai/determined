@@ -88,26 +88,25 @@ func (tc SchemaTestCase) CheckErrors(t *testing.T) {
 // Reverse-lookup of which object to umarshal into for a url, needed for default testing.
 func objectForURL(url string) interface{} {
 	switch url {
-	// TODO: uncomment this after landing the PR that defines the actual ExperimentConfig objects.
-	//	case "http://determined.ai/schemas/expconf/v0/experiment.json":
-	//		return &ExperimentConfigV0{}
-	//	case "http://determined.ai/schemas/expconf/v0/bind-mount.json":
-	//		return &BindMountV0{}
-	//	// Many core values are only in the core union type
-	//	case "http://determined.ai/schemas/expconf/v0/searcher.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-adaptive.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-async-halving.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-grid.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-pbt.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-random.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-single.json",
-	//		"http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json":
-	//		return &SearcherConfig{}
-	//	case "http://determined.ai/schemas/expconf/v0/hyperparameter.json",
-	//		"http://determined.ai/schemas/expconf/v0/hyperparameter-int.json":
-	//		return &Hyperparameter{}
+	case "http://determined.ai/schemas/expconf/v0/experiment.json":
+		return &ExperimentConfigV0{}
+	case "http://determined.ai/schemas/expconf/v0/bind-mount.json":
+		return &BindMountV0{}
+	// For union member schemas, just return the union type.
+	case "http://determined.ai/schemas/expconf/v0/searcher.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-adaptive.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-async-halving.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-grid.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-pbt.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-random.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-single.json",
+		"http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json":
+		return &SearcherConfig{}
+	case "http://determined.ai/schemas/expconf/v0/hyperparameter.json",
+		"http://determined.ai/schemas/expconf/v0/hyperparameter-int.json":
+		return &Hyperparameter{}
 
 	// Test-related structs.
 	case "http://determined.ai/schemas/expconf/v0/test-root.json":
@@ -265,11 +264,6 @@ func TestExperimentConfig(t *testing.T) {
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		assert.NilError(t, err)
 		if !strings.HasSuffix(path, ".yaml") {
-			return nil
-		}
-		// TODO: remove this after landing the PR that defines the actual ExperimentConfig objects.
-		if !strings.Contains(path, "test-structs.yaml") {
-			// Ignore all tests except tests on test structs.
 			return nil
 		}
 		displayPath, err := filepath.Rel(dir, path)
