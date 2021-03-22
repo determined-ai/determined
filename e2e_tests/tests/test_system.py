@@ -577,12 +577,12 @@ def test_disable_and_enable_slots() -> None:
 @pytest.mark.parallel  # type: ignore
 @pytest.mark.timeout(300)  # type: ignore
 def test_gang_scheduling() -> None:
-    config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     total_slots = os.getenv("TOTAL_SLOTS")
     if total_slots is None:
-        pytest.fail("test requires TOTAL_SLOTS be set in the environment")
-    config = conf.set_slots_per_trial(config, int(total_slots))
+        pytest.skip("test requires a static cluster and TOTAL_SLOTS set in the environment")
 
+    config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
+    config = conf.set_slots_per_trial(config, int(total_slots))
     model = conf.tutorials_path("mnist_pytorch")
 
     def submit_job() -> None:

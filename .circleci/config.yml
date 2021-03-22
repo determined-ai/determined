@@ -1530,6 +1530,11 @@ jobs:
           gpus-per-machine: <<parameters.gpus-per-machine>>
           node-locations: <<parameters.node-locations>>
       - set-google-application-credentials
+      - run:
+          name: Set environment variables 
+          command: |
+            echo "export TOTAL_SLOTS="$((<<parameters.num-machines>> * <<parameters.gpus-per-machine>>))"" >> $BASH_ENV
+            source $BASH_ENV
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
