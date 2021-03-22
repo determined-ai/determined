@@ -76,6 +76,13 @@ html {
     font-size: var(--theme-sizes-icon-small);
   }
 
+  /* Modal */
+
+  .ant-modal > .ant-modal-content > .ant-modal-header,
+  .ant-modal > .ant-modal-content > .ant-modal-body {
+    padding: var(--theme-sizes-layout-big);
+  }
+
   /* Picker */
 
   .ant-picker {
