@@ -799,7 +799,7 @@ jobs:
           determined-common: true
           determined-cli: true
           determined: true
-          extras-requires: "tensorflow==2.4 torch==1.8 pytorch_lightning==1.2.0"
+          extras-requires: "tensorflow==2.4.1 torch==1.8"
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C examples build
@@ -1183,7 +1183,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extras-requires: "torch==1.8.0 pytorch_lightning==1.2.0"
+          extras-requires: "torch==1.8.0"
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C cli check

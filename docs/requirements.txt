@@ -1,9 +1,12 @@
 # pin docutils at 0.15.2 to avoid transitive dependency conflict with botocore (requires < 0.16)
 docutils==0.15.2
-sphinx==2.4.4
-sphinx-argparse>=0.2.5
-git+https://github.com/determined-ai/determined_sphinx_theme.git@9edfa7c6ce6926def9fc69b8ddd7666f3419a907
-sphinx-sitemap>=2.2.0
+
 pillow
+pytorch-lightning==1.2.0
 rstfmt==0.0.7
+sphinx-argparse>=0.2.5
 sphinx-copybutton
+sphinx-sitemap>=2.2.0
+sphinx==2.4.4
+
+git+https://github.com/determined-ai/determined_sphinx_theme.git@9edfa7c6ce6926def9fc69b8ddd7666f3419a907
