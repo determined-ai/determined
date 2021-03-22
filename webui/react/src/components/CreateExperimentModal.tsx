@@ -1,86 +1,194 @@
-import { Alert, Modal } from 'antd';
+import { Alert, Button, Form, Input, Modal } from 'antd';
+import { ModalFuncProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
-import { paths, routeAll } from 'routes/utils';
-import { createExperiment } from 'services/api';
+import { RawJson } from 'types';
+import { clone } from 'utils/data';
 
 import css from './CreateExperimentModal.module.scss';
 
-interface Props {
-  config: string;
-  error?: string;
-  okText: string;
-  onCancel?: () => void;
-  onConfigChange: (config: string) => void;
-  onVisibleChange: (visible: boolean) => void;
-  parentId: number; // parent experiment ID.
-  title: string;
-  visible: boolean;
+export enum CreateExperimentType {
+  Fork = 'Fork',
+  ContinueTrial = 'Continue Trial',
 }
 
-const CreateExperimentModal: React.FC<Props> = (
-  { visible, config, onVisibleChange, onConfigChange, parentId, error, ...props }: Props,
-) => {
-  const [ configError, setConfigError ] = useState<string>();
+interface Props extends ModalFuncProps {
+  config?: RawJson;
+  error?: string;
+  onCancel?: () => void;
+  onOk?: (config: string) => void;
+  type: CreateExperimentType;
+}
 
-  const editorOnChange = useCallback((newValue: string) => {
-    onConfigChange(newValue);
-    setConfigError(undefined);
-  }, [ onConfigChange, setConfigError ]);
-
-  const handleOk = async (): Promise<void> => {
-    try {
-      // Validate the yaml syntax by attempting to load it.
-      yaml.safeLoad(config);
-      const { id: configId } = await createExperiment({ experimentConfig: config, parentId });
-      onVisibleChange(false);
-      routeAll(paths.experimentDetails(configId));
-    } catch (e) {
-      let errorMessage = 'Failed to config using the provided config.';
-      if (e.name === 'YAMLException') {
-        errorMessage = e.message;
-      } else if (e.response?.data?.message) {
-        errorMessage = e.response.data.message;
-      }
-      setConfigError(errorMessage);
-    }
-  };
-
-  const handleCancel = (): void => {
-    props.onCancel && props.onCancel();
-    onVisibleChange(false);
-  };
-  return <Modal
-    bodyStyle={{ padding: 0 }}
-    className={css.configModal}
-    okText={props.okText}
-    style={{ minWidth: '60rem' }}
-    title={props.title}
-    visible={visible}
-    onCancel={handleCancel}
-    onOk={handleOk}
-  >
-    <MonacoEditor
-      height="40vh"
-      language="yaml"
-      options={{
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        selectOnLineNumbers: true,
-      }}
-      theme="vs-light"
-      value={config}
-      onChange={editorOnChange}
-    />
-    {configError &&
-          <Alert className={css.error} message={configError} type="error" />
-    }
-    {error &&
-          <Alert className={css.error} message={error} type="error" />
-    }
-  </Modal>;
-
+const getExperimentName = (config: RawJson) => {
+  return config.description || '';
 };
+
+const getMaxLengthType = (config: RawJson) => {
+  return (Object.keys(config.searcher?.max_length || {}) || [])[0];
+};
+
+const getMaxLengthValue = (config: RawJson) => {
+  const value = (Object.keys(config.searcher?.max_length || {}) || [])[1];
+  return value ? parseInt(value) : undefined;
+};
+
+const CreateExperimentModal: React.FC<Props> = ({
+  config = {},
+  error,
+  onCancel,
+  onOk,
+  type,
+  ...props
+}: Props) => {
+  const [ form ] = Form.useForm();
+  const [ isAdvancedMode, setIsAdvancedMode ] = useState(false);
+  const [ configError, setConfigError ] = useState<string>();
+  const [ localConfig, setLocalConfig ] = useState<string>('');
+
+  const [ isFork, experimentName, maxLengthType, maxLengthValue ] = useMemo(() => {
+    return [
+      type === CreateExperimentType.Fork,
+      getExperimentName(config),
+      getMaxLengthType(config),
+      getMaxLengthValue(config),
+    ];
+  }, [ config, type ]);
+
+  const getConfigFromForm = useCallback(() => {
+    const formValues = form.getFieldsValue();
+    const newConfig = clone(config);
+
+    if (formValues.description) {
+      newConfig.description = formValues.description;
+    }
+    if (formValues.maxLength) {
+      newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
+    }
+
+    return yaml.safeDump(newConfig);
+  }, [ config, form, maxLengthType ]);
+
+  const handleShowForm = useCallback(() => {
+    setIsAdvancedMode(false);
+  }, []);
+
+  const handleShowEditor = useCallback(() => {
+    setLocalConfig(getConfigFromForm());
+    setIsAdvancedMode(true);
+  }, [ getConfigFromForm ]);
+
+  const handleEditorChange = useCallback((newConfigString: string) => {
+    // Update config string upon each keystroke change.
+    setLocalConfig(newConfigString);
+
+    // Validate the yaml syntax by attempting to load it.
+    try {
+      const newConfig = (yaml.safeLoad(newConfigString) || {}) as RawJson;
+
+      form.setFields([
+        { name: 'description', value: getExperimentName(newConfig) },
+        {
+          name: 'maxLength',
+          value: !isFork ? getMaxLengthValue(newConfig) : undefined,
+        },
+      ]);
+
+      setConfigError(undefined);
+    } catch (e) {
+      setConfigError(e.message);
+    }
+  }, [ form, isFork ]);
+
+  const handleOk = useCallback(async () => {
+    if (!isAdvancedMode) {
+      try {
+        await form.validateFields();
+        if (onOk) onOk(getConfigFromForm());
+      } catch (e) {}
+    } else {
+      if (onOk) onOk(localConfig);
+    }
+  }, [ getConfigFromForm, form, isAdvancedMode, localConfig, onOk ]);
+
+  const handleCancel = useCallback(() => {
+    form.resetFields();
+    if (onCancel) onCancel();
+  }, [ form, onCancel ]);
+
+  useEffect(() => {
+    setLocalConfig(yaml.safeDump(config));
+  }, [ config ]);
+
+  return isAdvancedMode ? (
+    <Modal
+      bodyStyle={{ padding: 0 }}
+      footer={(
+        <>
+          <Button onClick={handleShowForm}>Edit Form</Button>
+          <Button disabled={!!configError} type="primary" onClick={handleOk}>{type}</Button>
+        </>
+      )}
+      style={{ minWidth: '60rem' }}
+      title={props.title}
+      visible={props.visible}
+      onCancel={handleCancel}>
+      <MonacoEditor
+        height="40vh"
+        language="yaml"
+        options={{
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          selectOnLineNumbers: true,
+        }}
+        theme="vs-light"
+        value={localConfig}
+        onChange={handleEditorChange}
+      />
+      {configError && <Alert className={css.error} message={configError} type="error" />}
+      {error && <Alert className={css.error} message={error} type="error" />}
+    </Modal>
+  ) : (
+    <Modal
+      footer={<>
+        <Button onClick={handleShowEditor}>Edit Full Config</Button>
+        <Button type="primary" onClick={handleOk}>{type}</Button>
+      </>}
+      style={{ minWidth: '60rem' }}
+      title={props.title}
+      visible={props.visible}
+      onCancel={handleCancel}>
+      <Form
+        form={form}
+        initialValues={{
+          description: experimentName,
+          maxLength: !isFork ? maxLengthValue : undefined,
+        }}
+        labelCol={{ span: 8 }}
+        name="basic">
+        <Form.Item
+          label="Experiment description"
+          name="description"
+          rules={[
+            { message: 'Please provide a new experiment name.', required: true },
+          ]}>
+          <Input />
+        </Form.Item>
+        {!isFork && (
+          <Form.Item
+            label={`Max ${maxLengthType}`}
+            name="maxLength"
+            rules={[
+              { message: 'Please provide a max length.', required: true },
+            ]}>
+            <Input type="number" />
+          </Form.Item>
+        )}
+      </Form>
+    </Modal>
+  );
+};
+
 export default CreateExperimentModal;

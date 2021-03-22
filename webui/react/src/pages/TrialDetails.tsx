@@ -7,7 +7,7 @@ import { useHistory } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
-import CreateExperimentModalX, { CreateExperimentType } from 'components/CreateExperimentModalX';
+import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Message, { MessageType } from 'components/Message';
@@ -433,7 +433,7 @@ const TrialDetailsComp: React.FC = () => {
         show={showCheckpoint}
         title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
         onHide={handleCheckpointDismiss} />}
-      <CreateExperimentModalX
+      <CreateExperimentModal
         config={contModalConfig}
         error={contModalError}
         title={`Continue Trial ${trialId}`}

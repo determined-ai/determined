@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
-import CreateExperimentModalX, { CreateExperimentType } from 'components/CreateExperimentModalX';
+import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
@@ -182,7 +182,7 @@ const ExperimentDetails: React.FC = () => {
             type={viz} />
         </TabPane>
       </Tabs>
-      <CreateExperimentModalX
+      <CreateExperimentModal
         config={forkModalConfig}
         error={forkModalError}
         title={`Fork Experiment ${id}`}
