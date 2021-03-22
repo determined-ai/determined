@@ -51,7 +51,7 @@ const AppView: React.FC = () => {
   useTheme();
 
   // Poll every 10 minutes
-  usePolling(fetchInfo, { delay: 600000 });
+  usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
     if (!infoResponse.data) return;

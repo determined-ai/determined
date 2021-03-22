@@ -410,7 +410,7 @@ If the problem persists please contact support.',
     setPageSize(tablePagination.pageSize);
   }, [ storage ]);
 
-  const stopPolling = usePolling(fetchTrialDetails);
+  const { stopPolling } = usePolling(fetchTrialDetails);
 
   useEffect(() => {
     fetchExperimentDetails();
