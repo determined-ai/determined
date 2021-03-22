@@ -211,6 +211,7 @@ class PyTorchTrialContext(det.TrialContext):
         self,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
         step_mode: pytorch.LRScheduler.StepMode,
+        frequency: int = 1,
     ) -> torch.optim.lr_scheduler._LRScheduler:
         """
         Returns a wrapped LR scheduler.
@@ -244,7 +245,7 @@ class PyTorchTrialContext(det.TrialContext):
                 self.optimizers,
                 "Must use an optimizer that is returned by wrap_optimizer()",
             )
-        wrapped = pytorch.LRScheduler(lr_scheduler, step_mode)
+        wrapped = pytorch.LRScheduler(lr_scheduler, step_mode, frequency)
         self.lr_schedulers.append(wrapped)
 
         # Return the original LR scheduler to the user in case they have customizations that we
