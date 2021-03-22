@@ -1,5 +1,8 @@
 # After 2 epochs, model should hit 86.24/89.06 F1/EM
 description: ALBert_SQuAD_PyTorch_64gpu
+environment:
+  environment_variables:
+    - DET_TRAINING_JOB=ALBert_SQuAD_PyTorch_64gpu
 hyperparameters:
     global_batch_size: 128
     learning_rate: 0.0002
