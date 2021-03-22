@@ -7,7 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 

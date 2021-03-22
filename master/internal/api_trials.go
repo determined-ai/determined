@@ -11,11 +11,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/golang/protobuf/ptypes"
-
 	"github.com/determined-ai/determined/proto/pkg/logv1"
-
-	"github.com/google/uuid"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -38,11 +34,11 @@ const (
 )
 
 var (
-	batchWaitTime                            = 100 * time.Millisecond
-	distinctFieldBatchWaitTime               = 5 * time.Second
-	defaultTrialProfilerMetricsBatchWaitTime = 10 * time.Millisecond
-	// DefaultTrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
-	DefaultTrialAvailableSeriesBatchWaitTime = 15 * time.Second
+	trialLogsBatchWaitTime            = 100 * time.Millisecond
+	distinctFieldBatchWaitTime        = 5 * time.Second
+	trialProfilerMetricsBatchWaitTime = 10 * time.Millisecond
+	// TrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
+	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
 )
 
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
@@ -84,7 +80,26 @@ func (a *apiServer) TrialLogs(
 	}
 	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
-	onBatch := func(b api.LogBatch) error {
+	var followState interface{}
+	fetch := func(r api.BatchRequest) (api.Batch, error) {
+		switch {
+		case r.Follow, r.Limit > trialLogsBatchSize:
+			r.Limit = trialLogsBatchSize
+		case r.Limit <= 0:
+			return nil, nil
+		}
+
+		b, state, err := a.m.trialLogBackend.TrialLogs(
+			int(req.TrialId), r.Offset, r.Limit, filters, req.OrderBy, followState)
+		if err != nil {
+			return nil, err
+		}
+		followState = state
+
+		return model.TrialLogBatch(b), err
+	}
+
+	onBatch := func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			pl, err := r.(*model.TrialLog).Proto()
 			if err != nil {
@@ -94,37 +109,14 @@ func (a *apiServer) TrialLogs(
 		})
 	}
 
-	var followState interface{}
-	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
-		switch {
-		case lr.Follow, lr.Limit > trialLogsBatchSize:
-			lr.Limit = trialLogsBatchSize
-		case lr.Limit <= 0:
-			return nil, nil
-		}
-
-		b, state, err := a.m.trialLogBackend.TrialLogs(
-			int(req.TrialId), lr.Offset, lr.Limit, lr.Filters, req.OrderBy, followState)
-		if err != nil {
-			return nil, err
-		}
-		followState = state
-
-		return model.TrialLogBatch(b), err
-	}
-
-	lReq := api.LogsRequest{Offset: offset, Limit: limit, Follow: req.Follow, Filters: filters}
-	return a.m.system.MustActorOf(
-		actor.Addr("logStore-"+uuid.New().String()),
-		api.NewLogStoreProcessor(
-			resp.Context(),
-			lReq,
-			fetch,
-			onBatch,
-			a.isTrialTerminalFunc(int(req.TrialId), 20*time.Second),
-			&batchWaitTime,
-		),
-	).AwaitTermination()
+	lReq := api.BatchRequest{Offset: offset, Limit: limit, Follow: req.Follow}
+	return api.NewBatchStreamProcessor(
+		lReq,
+		fetch,
+		onBatch,
+		a.isTrialTerminalFunc(int(req.TrialId), 20*time.Second),
+		trialLogsBatchWaitTime,
+	).Run(resp.Context())
 }
 
 func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error) {
@@ -194,29 +186,25 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer) error {
-	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		fields, err := a.m.trialLogBackend.TrialLogsFields(int(req.TrialId))
-		return api.ToLogBatchOfOne(fields), err
+		return api.ToBatchOfOne(fields), err
 	}
 
-	onBatch := func(b api.LogBatch) error {
+	onBatch := func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			return resp.Send(
 				r.(*apiv1.TrialLogsFieldsResponse))
 		})
 	}
 
-	return a.m.system.MustActorOf(
-		actor.Addr("logStore-"+uuid.New().String()),
-		api.NewLogStoreProcessor(
-			resp.Context(),
-			api.LogsRequest{Follow: req.Follow},
-			fetch,
-			onBatch,
-			nil,
-			&distinctFieldBatchWaitTime,
-		),
-	).AwaitTermination()
+	return api.NewBatchStreamProcessor(
+		api.BatchRequest{Follow: req.Follow},
+		fetch,
+		onBatch,
+		nil,
+		distinctFieldBatchWaitTime,
+	).Run(resp.Context())
 }
 
 func (a *apiServer) GetTrialCheckpoints(
@@ -425,7 +413,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		return fmt.Errorf("failed to marshal labels: %w", err)
 	}
 
-	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		switch {
 		case lr.Follow, lr.Limit > trialProfilerMetricsBatchSize:
 			lr.Limit = trialProfilerMetricsBatchSize
@@ -440,7 +428,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		)
 	}
 
-	onBatch := func(b api.LogBatch) error {
+	onBatch := func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			return resp.Send(&apiv1.GetTrialProfilerMetricsResponse{
 				Batch: r.(*trialv1.TrialProfilerMetricsBatch),
@@ -448,17 +436,13 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		})
 	}
 
-	return a.m.system.MustActorOf(
-		actor.Addr("trialMetricsStream-"+uuid.New().String()),
-		api.NewLogStoreProcessor(
-			resp.Context(),
-			api.LogsRequest{Follow: true},
-			fetch,
-			onBatch,
-			a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
-			&defaultTrialProfilerMetricsBatchWaitTime,
-		),
-	).AwaitTermination()
+	return api.NewBatchStreamProcessor(
+		api.BatchRequest{Follow: true},
+		fetch,
+		onBatch,
+		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
+		trialProfilerMetricsBatchWaitTime,
+	).Run(resp.Context())
 }
 
 func (a *apiServer) GetTrialProfilerAvailableSeries(
@@ -472,31 +456,27 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		return status.Error(codes.NotFound, "trial not found")
 	}
 
-	fetch := func(_ api.LogsRequest) (api.LogBatch, error) {
+	fetch := func(_ api.BatchRequest) (api.Batch, error) {
 		var labels apiv1.GetTrialProfilerAvailableSeriesResponse
-		return api.ToLogBatchOfOne(&labels), a.m.db.QueryProto(
+		return api.ToBatchOfOne(&labels), a.m.db.QueryProto(
 			"get_trial_available_series",
 			&labels, fmt.Sprintf(`{"trialId": %d}`, req.TrialId),
 		)
 	}
 
-	onBatch := func(b api.LogBatch) error {
+	onBatch := func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			return resp.Send(r.(*apiv1.GetTrialProfilerAvailableSeriesResponse))
 		})
 	}
 
-	return a.m.system.MustActorOf(
-		actor.Addr("trialSeriesStream-"+uuid.New().String()),
-		api.NewLogStoreProcessor(
-			resp.Context(),
-			api.LogsRequest{Follow: true},
-			fetch,
-			onBatch,
-			nil,
-			&DefaultTrialAvailableSeriesBatchWaitTime,
-		),
-	).AwaitTermination()
+	return api.NewBatchStreamProcessor(
+		api.BatchRequest{Follow: true},
+		fetch,
+		onBatch,
+		nil,
+		TrialAvailableSeriesBatchWaitTime,
+	).Run(resp.Context())
 }
 
 func (a *apiServer) PostTrialProfilerMetricsBatch(

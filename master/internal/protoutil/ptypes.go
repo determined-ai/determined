@@ -1,10 +1,8 @@
 package protoutil
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -12,11 +10,10 @@ import (
 func TimeSliceFromProto(pTimes []*timestamppb.Timestamp) ([]time.Time, error) {
 	ts := make([]time.Time, len(pTimes))
 	for i, pt := range pTimes {
-		t, err := ptypes.Timestamp(pt)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert proto timestamp: %w", err)
+		if err := pt.CheckValid(); err != nil {
+			return nil, err
 		}
-		ts[i] = t
+		ts[i] = pt.AsTime()
 	}
 	return ts, nil
 }

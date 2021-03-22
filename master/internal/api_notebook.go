@@ -51,13 +51,13 @@ func (a *apiServer) NotebookLogs(
 	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
 	eventManager := a.m.system.Get(cmdManagerAddr.Child("events"))
 
-	logRequest := api.LogsRequest{
+	logRequest := api.BatchRequest{
 		Offset: int(req.Offset),
 		Limit:  int(req.Limit),
 		Follow: req.Follow,
 	}
 
-	onBatch := func(b api.LogBatch) error {
+	onBatch := func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			lr := r.(*logger.Entry)
 			return resp.Send(&apiv1.NotebookLogsResponse{

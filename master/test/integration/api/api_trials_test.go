@@ -256,7 +256,7 @@ func trialProfilerMetricsAvailableSeriesTests(
 	}
 
 	var expected []string
-	internal.DefaultTrialAvailableSeriesBatchWaitTime = 10 * time.Millisecond
+	internal.TrialAvailableSeriesBatchWaitTime = 10 * time.Millisecond
 
 	for _, tb := range testBatches {
 		expected = append(expected, tb.Labels.Name)
