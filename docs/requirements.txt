@@ -8,5 +8,7 @@ sphinx-argparse>=0.2.5
 sphinx-copybutton
 sphinx-sitemap>=2.2.0
 sphinx==2.4.4
+tensorflow==2.4.1
+torch==1.8
 
 git+https://github.com/determined-ai/determined_sphinx_theme.git@9edfa7c6ce6926def9fc69b8ddd7666f3419a907
