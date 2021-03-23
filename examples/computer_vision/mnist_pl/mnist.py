@@ -2,7 +2,6 @@ import torch
 import pytorch_lightning as pl
 from torch.nn import functional as F
 from data import MNISTDataModule
-from typing import Dict, Any
 
 
 class LightningMNISTClassifier(pl.LightningModule):
@@ -67,12 +66,6 @@ class LightningMNISTClassifier(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(),
                                      lr=self.hparams.lr)
         return optimizer
-
-    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        assert checkpoint['test'] == True
-
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        checkpoint['test'] = True
 
 
 if __name__ == '__main__':
