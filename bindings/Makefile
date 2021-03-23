@@ -6,16 +6,16 @@ all: get-deps
 	$(MAKE) build
 
 .PHONY: get-deps
-get-deps: deps/${CODEGEN_BIN}
+get-deps: deps/$(CODEGEN_BIN)
 
-deps/${CODEGEN_BIN}:
+deps/$(CODEGEN_BIN):
 	mkdir -p deps
-	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/${CODEGEN_BIN} \
-		-o deps/${CODEGEN_BIN}
+	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/$(CODEGEN_BIN) \
+		-o deps/$(CODEGEN_BIN)
 
-build/%: ${SWAGGER_SPEC} deps/${CODEGEN_BIN}
+build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
-	java -jar deps/$(CODEGEN_BIN) generate -i ${SWAGGER_SPEC} \
+	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l $* -o build/$*
 	touch build/$*
 
