@@ -7,6 +7,9 @@
 This document shows how to deploy Determined locally or in a production
 cluster using the ``det deploy`` command-line tool, which automates the
 process of starting Determined as a collection of Docker containers.
+``det deploy`` can also be used to install Determined on the cloud; for
+more information, see the :ref:`AWS <install-aws>` and :ref:`GCP
+<install-gcp>` installation guides, respectively.
 
 In a typical production setup, the master and agents will run on
 separate machines. They can also run on a single machine, which is

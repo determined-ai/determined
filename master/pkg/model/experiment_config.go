@@ -182,7 +182,7 @@ func (l *Labels) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// ResourcesConfig configures experiment resource usage.
+// ResourcesConfig configures resource usage for an experiment, command, notebook, or tensorboard.
 type ResourcesConfig struct {
 	// Slots is used by commands while trials use SlotsPerTrial.
 	Slots int `json:"slots,omitempty"`

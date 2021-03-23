@@ -68,7 +68,7 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
 
    -  -  PyTorch (Lightning Adapter)
       -  MNIST
-      -  :download:`mnist_pl.tgz </examples/_mnist_pl.tgz>`
+      -  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
 
    -  -  TensorFlow (Estimator API)
       -  MNIST

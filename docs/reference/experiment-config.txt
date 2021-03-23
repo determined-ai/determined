@@ -958,9 +958,15 @@ allowed to use.
    specified in the :ref:`master configuration <master-configuration>`.
 
 ``priority``
-   The priority assigned to this experiment. Smaller priority assignment
-   indicates higher priority. Only applicable when using the
-   ``priority`` scheduler.
+   The priority assigned to this experiment. Experiments with smaller
+   priority values are scheduled before experiments with higher priority
+   values. Only applicable when using the ``priority`` scheduler. Refer
+   to :ref:`scheduling` for more information.
+
+``resource_pool``
+   The resource pool where this experiment will be scheduled. If no
+   resource pool is specified, experiments will run in the default GPU
+   pool. Refer to :ref:`resource-pools` for more information.
 
 *************
  Bind Mounts
