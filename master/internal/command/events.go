@@ -57,7 +57,7 @@ type event struct {
 	LogEvent *string `json:"log_event"`
 }
 
-type logSubscribers = map[*actor.Ref]webAPI.LogsRequest
+type logSubscribers = map[*actor.Ref]webAPI.BatchRequest
 
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
@@ -133,7 +133,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 		e.processNewLogEvent(ctx, msg)
 
-	case webAPI.LogsRequest:
+	case webAPI.BatchRequest:
 		if ctx.Sender() == nil {
 			panic(ctxMissingSender)
 		}
@@ -258,11 +258,11 @@ func eventToLogEntry(ev *event) *logger.Entry {
 	}
 }
 
-func eventSatisfiesLogRequest(req webAPI.LogsRequest, event *event) bool {
+func eventSatisfiesLogRequest(req webAPI.BatchRequest, event *event) bool {
 	return event.Seq >= req.Offset
 }
 
-func (e *eventManager) getMatchingEvents(req webAPI.LogsRequest) []*event {
+func (e *eventManager) getMatchingEvents(req webAPI.BatchRequest) []*event {
 	events := e.buffer
 	var logs []*event
 

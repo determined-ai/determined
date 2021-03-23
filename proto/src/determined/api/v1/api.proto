@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -441,6 +442,37 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: [ "Experiments", "Trials" ]
+    };
+  }
+  // Stream trial profiler metrics.
+  rpc GetTrialProfilerMetrics(GetTrialProfilerMetricsRequest)
+      returns (stream GetTrialProfilerMetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{labels.trial_id}/profiler/metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Unimplemented" ]
+    };
+  }
+  // Stream the available series in a trial's profiler metrics.
+  rpc GetTrialProfilerAvailableSeries(GetTrialProfilerAvailableSeriesRequest)
+      returns (stream GetTrialProfilerAvailableSeriesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/profiler/available_series"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Unimplemented" ]
+    };
+  }
+  // Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
+  rpc PostTrialProfilerMetricsBatch(PostTrialProfilerMetricsBatchRequest)
+      returns (PostTrialProfilerMetricsBatchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/profiler/metrics"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Unimplemented" ]
     };
   }
   // Kill a trial.

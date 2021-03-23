@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
+
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -505,6 +507,24 @@ func (t TrialLogBatch) Size() int {
 
 // ForEach implements logs.Batch.
 func (t TrialLogBatch) ForEach(f func(interface{}) error) error {
+	for _, tl := range t {
+		if err := f(tl); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// TrialProfilerMetricsBatchBatch represents a batch of trialv1.TrialProfilerMetricsBatch.
+type TrialProfilerMetricsBatchBatch []*trialv1.TrialProfilerMetricsBatch
+
+// Size implements logs.Batch.
+func (t TrialProfilerMetricsBatchBatch) Size() int {
+	return len(t)
+}
+
+// ForEach implements logs.Batch.
+func (t TrialProfilerMetricsBatchBatch) ForEach(f func(interface{}) error) error {
 	for _, tl := range t {
 		if err := f(tl); err != nil {
 			return err

@@ -4,10 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
-
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -63,7 +59,7 @@ func (a *apiServer) MasterLogs(
 		return err
 	}
 
-	onBatch := func(b api.LogBatch) error {
+	onBatch := func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			lr := r.(*logger.Entry)
 			return resp.Send(&apiv1.MasterLogsResponse{
@@ -72,7 +68,7 @@ func (a *apiServer) MasterLogs(
 		})
 	}
 
-	fetch := func(lr api.LogsRequest) (api.LogBatch, error) {
+	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if lr.Follow {
 			lr.Limit = -1
 		}
@@ -81,12 +77,15 @@ func (a *apiServer) MasterLogs(
 
 	total := a.m.logs.Len()
 	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
-	lReq := api.LogsRequest{Offset: offset, Limit: limit, Follow: req.Follow}
+	lReq := api.BatchRequest{Offset: offset, Limit: limit, Follow: req.Follow}
 
-	return a.m.system.MustActorOf(
-		actor.Addr("logStore-"+uuid.New().String()),
-		api.NewLogStoreProcessor(resp.Context(), lReq, fetch, onBatch, nil, nil),
-	).AwaitTermination()
+	return api.NewBatchStreamProcessor(
+		lReq,
+		fetch,
+		onBatch,
+		nil,
+		TrialAvailableSeriesBatchWaitTime,
+	).Run(resp.Context())
 }
 
 func (a *apiServer) ResourceAllocationRaw(

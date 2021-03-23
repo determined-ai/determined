@@ -12,6 +12,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// UnimplementedError is the error return by API endpoints that are not yet implemented.
+var UnimplementedError = status.Error(codes.Unimplemented, "method not yet available")
+
 var fallbackError = errorBody{
 	Error: errorMessage{
 		Code:    codes.Unknown,
