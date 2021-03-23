@@ -6,7 +6,7 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from boto3.exceptions import S3UploadFailedError
 
-from determined_common import storage
+from determined.common import storage
 from tests import s3
 from tests.storage import util
 

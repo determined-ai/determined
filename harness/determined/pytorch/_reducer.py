@@ -4,7 +4,7 @@ from typing import Any, Callable, List, Optional
 
 import numpy as np
 
-import determined_common.check as check
+import determined.common.check as check
 
 
 class Reducer(enum.Enum):

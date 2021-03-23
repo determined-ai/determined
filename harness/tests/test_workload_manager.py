@@ -8,7 +8,7 @@ import pytest
 
 import determined as det
 from determined import layers, tensorboard, workload
-from determined_common import check, storage
+from determined.common import check, storage
 from tests.experiment import utils
 
 

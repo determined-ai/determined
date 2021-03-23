@@ -13,9 +13,9 @@ import dateutil.parser
 import pytest
 import requests
 
-import determined_common.api.authentication as auth
+import determined.common.api.authentication as auth
 from determined import experimental
-from determined_common import api, yaml
+from determined.common import api, yaml
 from tests import cluster
 from tests import config as conf
 

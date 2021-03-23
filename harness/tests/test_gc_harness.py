@@ -6,8 +6,8 @@ import pytest
 import simplejson
 
 from determined import util
+from determined.common import storage
 from determined.exec.gc_checkpoints import delete_checkpoints
-from determined_common import storage
 from tests.storage import util as storage_util
 
 

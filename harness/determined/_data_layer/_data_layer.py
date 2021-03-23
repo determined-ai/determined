@@ -10,8 +10,8 @@ from yogadl import storage, tensorflow
 
 import determined as det
 from determined import horovod
+from determined.common import check
 from determined.horovod import hvd
-from determined_common import check
 
 
 def init_container_storage_path(configured_storage_path: Optional[str]) -> pathlib.Path:

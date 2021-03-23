@@ -11,9 +11,6 @@ orbs:
   queue: eddiewebb/queue@volatile
 
 executors:
-  python-35:
-    docker:
-      - image: python:3.5-slim-buster
   python-36:
     docker:
       - image: python:3.6-slim-buster
@@ -189,15 +186,6 @@ commands:
       determined:
         type: boolean
         default: false
-      determined-common:
-        type: boolean
-        default: false
-      determined-cli:
-        type: boolean
-        default: false
-      determined-deploy:
-        type: boolean
-        default: false
       extras-requires:
         type: string
         default: ""
@@ -220,17 +208,8 @@ commands:
           name: Write cache key
           command: |
             echo <<parameters.executor>> > /tmp/cachefile
-            if [ "<<parameters.determined-common>>" = "true" ]; then
-              cat common/setup.py >> /tmp/cachefile
-            fi
             if [ "<<parameters.determined>>" = "true" ]; then
               cat harness/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.determined-cli>>" = "true" ]; then
-              cat cli/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.determined-deploy>>" = "true" ]; then
-              cat deploy/setup.py >> /tmp/cachefile
             fi
             echo <<parameters.extras-requires>> >> /tmp/cachefile
             if [ -n <<parameters.extra-requirements-file>> ]; then
@@ -241,29 +220,11 @@ commands:
           keys:
             - det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
       - when:
-          condition: <<parameters.determined-common>>
-          steps:
-            - install-wheel:
-                package-name: determined-common
-                package-location: ~/project/common
-      - when:
-          condition: <<parameters.determined-cli>>
-          steps:
-            - install-wheel:
-                package-name: determined-cli
-                package-location: ~/project/cli
-      - when:
           condition: <<parameters.determined>>
           steps:
             - install-wheel:
                 package-name: determined
                 package-location: ~/project/harness
-      - when:
-          condition: <<parameters.determined-deploy>>
-          steps:
-            - install-wheel:
-                package-name: determined-deploy
-                package-location: ~/project/deploy
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -796,8 +757,6 @@ jobs:
       - checkout
       - helm/install-helm-client
       - setup-python-venv:
-          determined-common: true
-          determined-cli: true
           determined: true
           extras-requires: "tensorflow==2.4.1 torch==1.8"
           extra-requirements-file: "docs/requirements.txt"
@@ -976,7 +935,7 @@ jobs:
       - setup-python-venv:
           extras-requires: "awscli"
           executor: determinedai/cimg-base:stable
-      - run: make -C deploy upload-try-now-template
+      - run: make -C harness upload-try-now-template
 
   test-debian-packaging:
     machine:
@@ -1009,9 +968,7 @@ jobs:
 
       - install-webui-test-deps
       - setup-python-venv:
-          determined-common: true
-          determined-cli: true
-          determined-deploy: true
+          determined: true
           extra-requirements-file: "webui/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
       - setup-local-cluster:
@@ -1179,10 +1136,7 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
-          determined-common: true
-          determined-cli: true
           determined: true
-          determined-deploy: true
           extras-requires: "torch==1.8.0"
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1201,7 +1155,6 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
-          determined-common: true
           determined: true
           extras-requires: "tensorflow==2.4.1 torch==1.8.0 torchvision==0.9.0"
           extra-requirements-file: "harness/tests/requirements.txt"
@@ -1214,7 +1167,6 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
-          determined-common: true
           determined: true
           extras-requires: "tensorflow==2.4.1"
           extra-requirements-file: "harness/tests/requirements.txt"
@@ -1227,9 +1179,7 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
-          determined-common: true
           determined: true
-          determined-cli: true
           extra-requirements-file: "examples/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C examples test
@@ -1244,7 +1194,7 @@ jobs:
       - run: python --version
       - run: pip --version
       - run: pip install wheel
-      - run: cd common; python setup.py bdist_wheel -d ../build
+      - run: cd harness; python setup.py bdist_wheel -d ../build
       - run: cd cli; python setup.py bdist_wheel -d ../build
       # Windows needs special treatment of cryptography for unknown reasons.
       - run: sh -c "if which conda ; then conda install cryptography --yes ; fi"
@@ -1255,10 +1205,10 @@ jobs:
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
       - run: pip install setuptools_scm
-      - run: pip install -r cli/tests/requirements.txt
+      - run: pip install -r harness/tests/requirements.txt
       - run: pip freeze
       - run: sh -c "pip check || true"
-      - run: pytest cli/tests
+      - run: pytest harness/tests/cli
 
   test-e2e:
     parameters:
@@ -1282,10 +1232,7 @@ jobs:
           at: .
 
       - setup-python-venv:
-          determined-common: true
-          determined-cli: true
           determined: true
-          determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
 
@@ -1337,8 +1284,7 @@ jobs:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
-          determined-common: true
-          determined-deploy: true
+          determined: true
           executor: determinedai/cimg-base:stable
       - deploy-aws-cluster:
           cluster-id: determined-${CIRCLE_BRANCH////--}
@@ -1386,10 +1332,7 @@ jobs:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
-          determined-common: true
-          determined-cli: true
           determined: true
-          determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - when:
@@ -1468,8 +1411,6 @@ jobs:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
-          determined-common: true
-          determined-cli: true
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1549,8 +1490,6 @@ jobs:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
-          determined-common: true
-          determined-cli: true
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1598,10 +1537,7 @@ jobs:
       - run: docker load --input build/agent.image
 
       - setup-python-venv:
-          determined-common: true
-          determined-cli: true
           determined: true
-          determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
 
@@ -1633,7 +1569,6 @@ workflows:
             parameters:
               executor-name:
                 [
-                  "python-35",
                   "python-36",
                   "python-37",
                   "python-38",
@@ -2040,7 +1975,7 @@ workflows:
       - publish-python-package:
           matrix:
             parameters:
-              path: ["common", "harness", "cli", "deploy"]
+              path: ["harness", "common", "cli", "deploy"]
           context: determined-production
           filters: *release-and-rc-filters
 

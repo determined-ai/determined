@@ -6,7 +6,7 @@ import tensorflow as tf
 
 import determined as det
 from determined import keras
-from determined_common import check
+from determined.common import check
 
 ArrayLike = Union[np.ndarray, List[np.ndarray], Dict[str, np.ndarray]]
 

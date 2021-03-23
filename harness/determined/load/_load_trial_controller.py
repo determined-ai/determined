@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Type, cast
 
 import determined as det
 from determined import horovod, load, tensorboard, workload
-from determined_common import check
+from determined.common import check
 
 
 def load_controller_from_trial(

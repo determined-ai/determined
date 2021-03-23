@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict
 
-from determined_common import yaml
+from determined.common import yaml
 
 MASTER_SCHEME = "http"
 MASTER_IP = "localhost"

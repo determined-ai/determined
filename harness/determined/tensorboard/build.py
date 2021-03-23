@@ -2,8 +2,8 @@ import os
 import pathlib
 from typing import Any, Dict, Optional
 
+from determined.common.storage.shared import _full_storage_path
 from determined.tensorboard import base, gcs, hdfs, s3, shared
-from determined_common.storage.shared import _full_storage_path
 
 
 def get_sync_path(cluster_id: str, experiment_id: str, trial_id: str) -> pathlib.Path:

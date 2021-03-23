@@ -3,8 +3,8 @@ from typing import Any, Optional
 
 from hdfs.client import InsecureClient
 
+from determined.common import util
 from determined.tensorboard import base
-from determined_common import util
 
 
 class HDFSTensorboardManager(base.TensorboardManager):

@@ -11,8 +11,8 @@ import pexpect
 import pytest
 from pexpect import spawn
 
-from determined_common import constants, yaml
-from determined_common.api.authentication import Authentication, Credentials, TokenStore
+from determined.common import constants, yaml
+from determined.common.api.authentication import Authentication, Credentials, TokenStore
 from tests import command
 from tests import config as conf
 from tests import experiment as exp

@@ -1,4 +1,4 @@
-// See determined_common/schemas/extensions.py for the explanation of this and other extensions.
+// See determined/common/schemas/extensions.py for the explanation of this and other extensions.
 // See ./checks.go for notes on implementing extensions for the santhosh-tekuri/jsonschema package.
 
 package extensions

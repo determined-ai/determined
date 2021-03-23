@@ -55,7 +55,7 @@ def pytest_addoption(parser: Parser) -> None:
     path = (
         Path(__file__)
         .parents[2]
-        .joinpath("deploy", "determined_deploy", "local", "docker-compose.yaml")
+        .joinpath("deploy", "determined.deploy", "local", "docker-compose.yaml")
     )
     parser.addoption(
         "--compose-file", action="store", default=str(path), help="Docker compose file"

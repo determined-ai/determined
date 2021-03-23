@@ -18,8 +18,8 @@ from tensorflow_estimator.python.estimator.training import _NewCheckpointListene
 
 import determined as det
 from determined import estimator, horovod, ipc, monkey_patch, tensorboard, workload
+from determined.common import check
 from determined.horovod import hvd
-from determined_common import check
 
 VERY_LARGE_NUMBER = 9999999999999999
 

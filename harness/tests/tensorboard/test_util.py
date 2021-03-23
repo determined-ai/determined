@@ -1,7 +1,7 @@
 import numpy as np
 
 import determined as det
-import determined_common.types
+import determined.common.types
 from determined import constants, workload
 from determined.tensorboard.metric_writers import util as metric_writers_util
 
@@ -17,9 +17,9 @@ def get_dummy_env() -> det.EnvContext:
         experiment_config={"resources": {"slots_per_trial": 1, "native_parallel": False}},
         initial_workload=workload.Workload(
             workload.Workload.Kind.RUN_STEP,
-            determined_common.types.ExperimentID(1),
-            determined_common.types.TrialID(1),
-            determined_common.types.StepID(1),
+            determined.common.types.ExperimentID(1),
+            determined.common.types.TrialID(1),
+            determined.common.types.StepID(1),
             constants.DEFAULT_SCHEDULING_UNIT,
             0,
         ),

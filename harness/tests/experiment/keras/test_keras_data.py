@@ -4,7 +4,7 @@ from tensorflow.keras.utils import Sequence
 
 import determined as det
 from determined import keras
-from determined_common import check
+from determined.common import check
 from tests.experiment import utils  # noqa: I100
 
 

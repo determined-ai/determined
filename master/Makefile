@@ -79,8 +79,6 @@ pre-package:
 	cp -r ../proto/build/swagger build/swagger
 	cp -r ../docs/site/html/* build/webui/docs
 	cp -r ../webui/react/build/* build/webui/react
-	cp ../common/dist/*.whl build/wheels/
-	cp ../cli/dist/*.whl build/wheels/
 	cp ../harness/dist/*.whl build/wheels/
 	cp $(shell packaging/fetch-cloud-forest.sh) build/
 

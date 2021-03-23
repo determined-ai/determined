@@ -42,7 +42,7 @@ Customization strategy:
     - union: Excellent error messages when validating union types
     - optionalRef: like $ref, but only enforced for non-null values
   - The canonical implementations (with thorough comments) may be found in
-    determined_common/schemas/extensions.py
+    determined/common/schemas/extensions.py
 
 Migrating the experiment config:
   - See pkg/schemas/expconf/parse.go for an example of shimming logic.

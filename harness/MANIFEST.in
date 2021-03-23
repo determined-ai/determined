@@ -1,0 +1,3 @@
+include determined/deploy/aws/templates/*.yaml
+include determined/deploy/local/*.yaml
+recursive-include determined/deploy/gcp/terraform *

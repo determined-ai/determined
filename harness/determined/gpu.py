@@ -4,7 +4,7 @@ import subprocess
 from typing import List, NamedTuple, Optional, Tuple
 
 import determined as det
-from determined_common import check
+from determined.common import check
 
 gpu_fields = [
     "index",

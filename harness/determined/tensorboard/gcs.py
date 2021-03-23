@@ -3,8 +3,8 @@ from typing import Any
 
 from google.cloud import storage
 
+from determined.common import util
 from determined.tensorboard import base
-from determined_common import util
 
 
 class GCSTensorboardManager(base.TensorboardManager):

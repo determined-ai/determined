@@ -12,7 +12,7 @@ easy creation and deployment of these resources in GCP. The
 to automatically deploy and configure a Determined cluster in GCP.
 Alternatively, if you already have a process for setting up
 infrastructure with Terraform, you can use our `Terraform modules
-<https://github.com/determined-ai/determined/tree/master/deploy/determined_deploy/gcp/terraform>`__
+<https://github.com/determined-ai/determined/tree/master/harness/determined/deploy/gcp/terraform>`__
 rather than ``determined-deploy``.
 
 For more information about using Determined on GCP, see the

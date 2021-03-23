@@ -2,8 +2,8 @@ import abc
 from enum import Enum, unique
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, cast
 
-from determined_common import check
-from determined_common.types import ExperimentID, StepID, TrialID
+from determined.common import check
+from determined.common.types import ExperimentID, StepID, TrialID
 
 
 class Workload:

@@ -36,9 +36,9 @@ from typing import Any, Dict, Iterator, Optional
 import simplejson
 
 import determined as det
-import determined_common
+import determined.common
 from determined import gpu, horovod, layers, load, workload
-from determined_common import constants, storage
+from determined.common import constants, storage
 
 ENVIRONMENT_VARIABLE_KEYS = {
     "DET_MASTER_ADDR",
@@ -156,7 +156,7 @@ def main() -> None:
 
     experiment_config = simplejson.loads(os.environ["DET_EXPERIMENT_CONFIG"])
     debug = experiment_config.get("debug", False)
-    determined_common.set_logger(debug)
+    determined.common.set_logger(debug)
 
     master_addr = os.environ["DET_MASTER_ADDR"]
     master_port = int(os.environ["DET_MASTER_PORT"])

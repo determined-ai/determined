@@ -9,7 +9,7 @@ from typing import Any, Deque, Dict, Iterator, Optional, Type, Union
 import numpy as np
 import tensorflow as tf
 
-from determined_common import check
+from determined.common import check
 
 Queue = Union[queue.Queue, multiprocessing.Queue]
 Worker = Union[threading.Thread, multiprocessing.Process]
