@@ -1,38 +1,32 @@
-import { Radio } from 'antd';
-import { RadioChangeEvent } from 'antd/lib/radio';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
-import Icon from 'components/Icon';
-
-import css from './GridListRadioGroup.module.scss';
+import RadioGroup from './RadioGroup';
 
 export enum GridListView {
-  Grid,
-  List,
+  Grid = 'grid',
+  List = 'list',
 }
 
 interface Props {
-  onChange?: (e: GridListView) => void;
+  onChange?: (view: GridListView) => void;
   value: GridListView;
 }
 
 const GridListRadioGroup: React.FC<Props> = ({ onChange, value }: Props) => {
-  const [ view, setView ] = useState(value);
-
-  const handleChange = useCallback((e: RadioChangeEvent) => {
-    if (onChange) onChange(e.target.value as GridListView);
-    setView(e.target.value as GridListView);
+  const handleChange = useCallback((id: string) => {
+    if (onChange) onChange(id as GridListView);
   }, [ onChange ]);
 
   return (
-    <Radio.Group className={css.base} value={view} onChange={handleChange}>
-      <Radio.Button className={css.option} value={GridListView.Grid}>
-        <Icon name="grid" size="large" title="Card View" />
-      </Radio.Button>
-      <Radio.Button className={css.option} value={GridListView.List}>
-        <Icon name="list" size="large" title="List View" />
-      </Radio.Button>
-    </Radio.Group>
+    <RadioGroup
+      iconOnly
+      options={[
+        { icon: 'grid', id: GridListView.Grid, label: 'Grid View' },
+        { icon: 'list', id: GridListView.List, label: 'List View' },
+      ]}
+      value={value}
+      onChange={handleChange}
+    />
   );
 };
 

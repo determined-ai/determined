@@ -146,7 +146,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
     if (onChange) onChange(localFilters);
   }, [ localFilters, onChange ]);
 
-  const handleUndo = useCallback(() => {
+  const handleReset = useCallback(() => {
     dispatch({ type: ActionType.Set, value: filters });
   }, [ filters ]);
 
@@ -215,14 +215,14 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         <RadioGroup
           iconOnly
           options={[
-            { icon: 'grid', id: ViewType.Grid, label: 'Square View' },
+            { icon: 'grid', id: ViewType.Grid, label: 'Table View' },
             { icon: 'list', id: ViewType.List, label: 'Wrapped View' },
           ]}
           value={localFilters.view}
           onChange={handleViewChange} />
       )}
       <div className={css.buttons}>
-        <IconButton icon="undo" label="Undo" onClick={handleUndo} />
+        <IconButton icon="reset" label="Reset" onClick={handleReset} />
         <IconButton icon="checkmark" label="Apply" type="primary" onClick={handleApply} />
       </div>
     </div>
