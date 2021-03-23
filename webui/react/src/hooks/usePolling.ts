@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-const DEFAULT_INTERVAL = 5000;
-
 type PollingFn = (() => Promise<void>) | (() => void);
 
 interface PollingHooks {
@@ -13,15 +11,16 @@ interface PollingHooks {
 interface PollingOptions {
   interval?: number;
   runImmediately?: boolean;
-  stopPreviousPoll?: boolean;
 }
 
-const usePolling = (pollingFn: PollingFn, {
-  interval = DEFAULT_INTERVAL,
-  runImmediately = true,
-  stopPreviousPoll = false,
-}: PollingOptions = {}): PollingHooks => {
+const DEFAULT_OPTIONS: PollingOptions = {
+  interval: 5000,
+  runImmediately: true,
+};
+
+const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): PollingHooks => {
   const savedPollingFn = useRef<PollingFn>(pollingFn);
+  const pollingOptions = useRef<PollingOptions>({ ...DEFAULT_OPTIONS, ...options });
   const timer = useRef<NodeJS.Timeout>();
   const isPolling = useRef(false);
 
@@ -32,19 +31,19 @@ const usePolling = (pollingFn: PollingFn, {
     }
   }, []);
 
-  const poll = useCallback(async () => {
-    if (stopPreviousPoll) clearTimer();
-    if (runImmediately) await savedPollingFn.current();
+  const poll = useCallback(() => {
+    clearTimer();
 
     timer.current = setTimeout(async () => {
       await savedPollingFn.current();
       timer.current = undefined;
       if (isPolling.current) poll();
-    }, interval);
-  }, [ clearTimer, interval, runImmediately, stopPreviousPoll ]);
+    }, pollingOptions.current.interval) as unknown as NodeJS.Timeout;
+  }, [ clearTimer ]);
 
-  const startPolling = useCallback(() => {
+  const startPolling = useCallback(async () => {
     isPolling.current = true;
+    if (pollingOptions.current.runImmediately) await savedPollingFn.current();
     poll();
   }, [ poll ]);
 
@@ -62,12 +61,7 @@ const usePolling = (pollingFn: PollingFn, {
   useEffect(() => {
     startPolling();
     return () => stopPolling();
-    /*
-     * The dependency array is intentionally left blank to force
-     * the mount behavior and the unmount behavior.
-     */
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, []);
+  }, [ startPolling, stopPolling ]);
 
   return { isPolling: isPolling.current, startPolling, stopPolling };
 };
