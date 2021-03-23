@@ -3,36 +3,11 @@ import typing
 from typing import Any, Dict
 
 import pytest
-import torch
 
 import determined as det
 from determined import pytorch, workload
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
-
-
-def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
-    """
-    Check that two objects, consisting of any nested structures of lists and
-    dicts, with leaf values of tensors or built-in objects, are equal in
-    structure and values.
-    """
-    if isinstance(a, dict):
-        assert isinstance(b, dict)
-        assert len(a) == len(b)
-        for key in a:
-            assert key in b
-            check_equal_structures(a[key], b[key])
-    elif isinstance(a, list):
-        assert isinstance(b, list)
-        assert len(a) == len(b)
-        for x, y in zip(a, b):
-            check_equal_structures(x, y)
-    elif isinstance(a, torch.Tensor):
-        assert isinstance(b, torch.Tensor)
-        assert torch.allclose(a, b)
-    else:
-        assert a == b
 
 
 def fork_trial_override_lm(overrides: dict):
