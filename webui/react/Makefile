@@ -4,7 +4,7 @@ swagger_client := src/services/swagger
 source_files := $(shell find src -type f)
 ts_bindings_src := ../../bindings/build/typescript-fetch
 ts_bindings_dest := src/services/api-ts-sdk
-ts_bindings := $(shell find ${ts_bindings_src} -type f)
+ts_bindings := $(shell find $(ts_bindings_src) -type f)
 
 .PHONY: default
 default: get-deps
@@ -15,12 +15,12 @@ default: get-deps
 build-bindings:
 	$(MAKE) -C ../../bindings build
 .PHONY: get-deps-api
-get-deps-api: ${ts_bindings_dest}/done.stamp
+get-deps-api: $(ts_bindings_dest)/done.stamp
 	# WARN this has a dependency on build-bindings which isn't linked here.
 
-${ts_bindings_dest}/done.stamp: ${ts_bindings}
-	rm -rf src/services/api-ts-sdk
-	cp -r ${ts_bindings_src} src/services/api-ts-sdk
+$(ts_bindings_dest)/done.stamp: $(ts_bindings)
+	rm -rf $(ts_bindings_dest)
+	cp -r $(ts_bindings_src) $(ts_bindings_dest)
 	touch $@
 
 .PHONY: get-deps-npm
@@ -37,10 +37,10 @@ node_modules/done.stamp: package-lock.json
 get-deps: node_modules/done.stamp
 
 .PHONY: build
-build: ${ts_bindings_dest}/done.stamp
+build: $(ts_bindings_dest)/done.stamp
 	$(MAKE) build/done.stamp
 
-build/done.stamp: ${source_files} node_modules/done.stamp tsconfig.json config-overrides.js
+build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json config-overrides.js
 	npm run build
 	touch $@
 

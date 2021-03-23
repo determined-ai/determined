@@ -1,22 +1,24 @@
-# THOUGHT: assume this makefile is for local builds and ci would go directly into modules if we want to separate image dependecies
-# eg has Java but no Go? I think this + avoiding unnecessary rebuilds at module levels could allow us to simplify our make structure
-# and speed up builds too
-
 .PHONY: all
 all:
 	$(MAKE) get-deps
 	$(MAKE) build
 
 .PHONY: get-deps
-get-deps: get-deps-pip get-deps-master get-deps-bindings get-deps-webui
-	$(MAKE) -C agent $@
-	$(MAKE) -C proto $@
+get-deps: get-deps-pip get-deps-go get-deps-bindings get-deps-webui
+
 .PHONY: get-deps-%
 get-deps-%:
 	$(MAKE) -C $(subst -,/,$*) get-deps
+
 .PHONY: get-deps-pip
 get-deps-pip:
 	pip install -r requirements.txt
+
+.PHONY: get-deps-go
+get-deps-go:
+	$(MAKE) get-deps-master
+	$(MAKE) get-deps-agent
+	$(MAKE) get-deps-proto
 
 .PHONY: package
 package:
