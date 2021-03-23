@@ -72,10 +72,10 @@ class TestPyTorchTrial:
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
-    def test_checkpoint_hooks(self, tmp_path: pathlib.Path) -> None:
+    def test_checkpoint_save_load_hooks(self, tmp_path: pathlib.Path) -> None:
         def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
             assert 'test' in checkpoint
-            assert checkpoint['test'] == False
+            assert checkpoint['test'] == True
 
         def on_save_checkpoint_true(self, checkpoint: Dict[str, Any], *args):
             checkpoint['test'] = True
@@ -85,8 +85,29 @@ class TestPyTorchTrial:
                 'on_load_checkpoint': on_load_checkpoint,
             })
 
-        # with monkey_patch.monkey_patch(la_model.OneVarLM, 'on_save_checkpoint', on_save_checkpoint):
-        def make_trial_controller_fn_1(
+        def make_trial_controller_fn(
+            workloads: workload.Stream, load_path: typing.Optional[str] = None
+        ) -> det.TrialController:
+
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=trial_cls_1,
+                hparams=self.hparams,
+                workloads=workloads,
+                load_path=load_path,
+                trial_seed=self.trial_seed,
+            )
+
+        utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+
+    def test_checkpoint_load_hook(self, tmp_path: pathlib.Path) -> None:
+        def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
+            assert 'test' in checkpoint
+
+        trial_cls_1 = fork_trial_override_lm({
+                'on_load_checkpoint': on_load_checkpoint,
+            })
+
+        def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
         ) -> det.TrialController:
 
@@ -99,27 +120,4 @@ class TestPyTorchTrial:
             )
 
         with pytest.raises(AssertionError):
-            utils.checkpointing_and_restoring_test(make_trial_controller_fn_1, tmp_path)
-
-        def on_save_checkpoint_false(self, checkpoint: Dict[str, Any], *args):
-            checkpoint['test'] = False
-
-        trial_cls_2 = fork_trial_override_lm({
-                'on_save_checkpoint': on_save_checkpoint_false,
-                'on_load_checkpoint': on_load_checkpoint,
-            })
-
-        def make_trial_controller_fn_2(
-            workloads: workload.Stream, load_path: typing.Optional[str] = None
-        ) -> det.TrialController:
-
-
-            return utils.make_trial_controller_from_trial_implementation(
-                trial_class=trial_cls_2,
-                hparams=self.hparams,
-                workloads=workloads,
-                load_path=load_path,
-                trial_seed=self.trial_seed,
-            )
-
-        utils.checkpointing_and_restoring_test(make_trial_controller_fn_2, tmp_path)
+            utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
