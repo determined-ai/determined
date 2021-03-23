@@ -29,7 +29,7 @@ the default GPU pool unless otherwise specified. For this reason we
 recommend that you always create a cluster with at least two pools, one
 with low-cost CPU instances for CPU-only tasks and one with GPU
 instances for GPU tasks. This is the default setup when launching a
-cluster via ``det-deploy``.
+cluster via ``det deploy``.
 
 Here are some scenarios where it can be valuable to use multiple
 resource pools:

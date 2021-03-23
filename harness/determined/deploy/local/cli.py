@@ -1,176 +1,8 @@
 import argparse
 from typing import Callable, Dict
 
+from determined.cli.declarative_argparse import Arg, Cmd
 from determined.deploy.local import cluster_utils
-
-
-def add_cluster_up_subparser(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser(
-        "cluster-up",
-        help="Create a Determined cluster",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "--master-config-path", type=str, default=None, help="path to master configuration"
-    )
-    parser.add_argument(
-        "--agents", type=int, default=1, help="number of agents to start (on this machine)"
-    )
-    parser.add_argument("--master-port", type=int, default=8080, help="port to expose master on")
-    parser.add_argument(
-        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
-    )
-    parser.add_argument("--det-version", type=str, default=None, help="version or commit to use")
-    parser.add_argument(
-        "--db-password",
-        type=str,
-        default="postgres",
-        help="password for master database",
-    )
-    parser.add_argument(
-        "--delete-db",
-        action="store_true",
-        help="remove current master database",
-    )
-    parser.add_argument("--no-gpu", help="disable GPU support for agent", action="store_true")
-    parser.add_argument(
-        "--no-autorestart",
-        help="disable container auto-restart (recommended for local development)",
-        action="store_true",
-    )
-
-
-def add_cluster_down_subparser(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser(
-        "cluster-down",
-        help="Stop a Determined cluster",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
-    )
-    parser.add_argument(
-        "--delete-db",
-        action="store_true",
-        help="remove current master database",
-    )
-
-
-def add_master_up_subparser(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser(
-        "master-up",
-        help="Start a Determined master",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "--master-config-path", type=str, default=None, help="path to master configuration"
-    )
-    parser.add_argument("--master-port", type=int, default=8080, help="port to expose master on")
-    parser.add_argument(
-        "--master-name", type=str, default="determined", help="name for the cluster resources"
-    )
-    parser.add_argument("--det-version", type=str, default=None, help="version or commit to use")
-    parser.add_argument(
-        "--db-password",
-        type=str,
-        default="postgres",
-        help="password for master database",
-    )
-    parser.add_argument(
-        "--delete-db",
-        action="store_true",
-        help="remove current master database",
-    )
-    parser.add_argument(
-        "--no-autorestart",
-        help="disable container auto-restart (recommended for local development)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
-    )
-
-
-def add_master_down_subparser(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser(
-        "master-down",
-        help="Stop a Determined master",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "--master-name", type=str, default="determined", help="name for the cluster resources"
-    )
-    parser.add_argument(
-        "--delete-db",
-        action="store_true",
-        help="remove current master database",
-    )
-    parser.add_argument(
-        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
-    )
-
-
-def add_logs_subparser(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser(
-        "logs",
-        help="Show the logs of a Determined cluster",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
-    )
-    parser.add_argument("--no-follow", help="disable following logs", action="store_true")
-
-
-def add_agent_up_subparser(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser(
-        "agent-up",
-        help="Start a Determined agent",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument("master_host", type=str, help="master hostname")
-    parser.add_argument("--master-port", type=int, default=8080, help="master port")
-    parser.add_argument("--det-version", type=str, default=None, help="version or commit to use")
-    parser.add_argument("--agent-name", type=str, default="det-agent", help="agent name")
-    parser.add_argument("--agent-label", type=str, default=None, help="agent label")
-    parser.add_argument("--agent-resource-pool", type=str, default=None, help="agent resource pool")
-    parser.add_argument("--no-gpu", help="disable GPU support", action="store_true")
-    parser.add_argument(
-        "--no-autorestart",
-        help="disable container auto-restart (recommended for local development)",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
-    )
-
-
-def add_agent_down_subparser(subparsers: argparse._SubParsersAction) -> None:
-    parser = subparsers.add_parser(
-        "agent-down",
-        help="Stop a Determined agent",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument("--agent-name", type=str, default="det-agent", help="agent name")
-    parser.add_argument("--all", help="stop all running agents", action="store_true")
-    parser.add_argument(
-        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
-    )
-
-
-def make_local_parser(subparsers: argparse._SubParsersAction) -> None:
-    parser_local = subparsers.add_parser(
-        "local", help="local help", formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    subparsers = parser_local.add_subparsers(help="command", dest="command")
-    add_cluster_up_subparser(subparsers)
-    add_cluster_down_subparser(subparsers)
-    add_logs_subparser(subparsers)
-    add_master_up_subparser(subparsers)
-    add_master_down_subparser(subparsers)
-    add_agent_up_subparser(subparsers)
-    add_agent_down_subparser(subparsers)
-    subparsers.required = True
 
 
 def handle_cluster_up(args: argparse.Namespace) -> None:
@@ -245,3 +77,195 @@ def deploy_local(args: argparse.Namespace) -> None:
         "master-down": handle_master_down,
     }  # type: Dict[str, Callable[[argparse.Namespace], None]]
     OPERATION_TO_FN[args.command](args)
+
+
+args_description = Cmd(
+    "local",
+    None,
+    "local help",
+    [
+        Cmd(
+            "cluster-up",
+            handle_cluster_up,
+            "Create a Determined cluster",
+            [
+                Arg(
+                    "--master-config-path",
+                    type=str,
+                    default=None,
+                    help="path to master configuration",
+                ),
+                Arg(
+                    "--agents",
+                    type=int,
+                    default=1,
+                    help="number of agents to start (on this machine)",
+                ),
+                Arg("--master-port", type=int, default=8080, help="port to expose master on"),
+                Arg(
+                    "--cluster-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+                Arg("--det-version", type=str, default=None, help="version or commit to use"),
+                Arg(
+                    "--db-password",
+                    type=str,
+                    default="postgres",
+                    help="password for master database",
+                ),
+                Arg(
+                    "--delete-db",
+                    action="store_true",
+                    help="remove current master database",
+                ),
+                Arg("--no-gpu", help="disable GPU support for agent", action="store_true"),
+                Arg(
+                    "--no-autorestart",
+                    help="disable container auto-restart (recommended for local development)",
+                    action="store_true",
+                ),
+            ],
+        ),
+        Cmd(
+            "cluster-down",
+            handle_cluster_down,
+            "Stop a Determined cluster",
+            [
+                Arg(
+                    "--cluster-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+                Arg(
+                    "--delete-db",
+                    action="store_true",
+                    help="remove current master database",
+                ),
+            ],
+        ),
+        Cmd(
+            "master-up",
+            handle_master_up,
+            "Start a Determined master",
+            [
+                Arg(
+                    "--master-config-path",
+                    type=str,
+                    default=None,
+                    help="path to master configuration",
+                ),
+                Arg("--master-port", type=int, default=8080, help="port to expose master on"),
+                Arg(
+                    "--master-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+                Arg("--det-version", type=str, default=None, help="version or commit to use"),
+                Arg(
+                    "--db-password",
+                    type=str,
+                    default="postgres",
+                    help="password for master database",
+                ),
+                Arg(
+                    "--delete-db",
+                    action="store_true",
+                    help="remove current master database",
+                ),
+                Arg(
+                    "--no-autorestart",
+                    help="disable container auto-restart (recommended for local development)",
+                    action="store_true",
+                ),
+                Arg(
+                    "--cluster-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+            ],
+        ),
+        Cmd(
+            "master-down",
+            handle_master_down,
+            "Stop a Determined master",
+            [
+                Arg(
+                    "--master-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+                Arg(
+                    "--delete-db",
+                    action="store_true",
+                    help="remove current master database",
+                ),
+                Arg(
+                    "--cluster-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+            ],
+        ),
+        Cmd(
+            "logs",
+            handle_logs,
+            "Show the logs of a Determined cluster",
+            [
+                Arg(
+                    "--cluster-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+                Arg("--no-follow", help="disable following logs", action="store_true"),
+            ],
+        ),
+        Cmd(
+            "agent-up",
+            handle_agent_up,
+            "Start a Determined agent",
+            [
+                Arg("master_host", type=str, help="master hostname"),
+                Arg("--master-port", type=int, default=8080, help="master port"),
+                Arg("--det-version", type=str, default=None, help="version or commit to use"),
+                Arg("--agent-name", type=str, default="det-agent", help="agent name"),
+                Arg("--agent-label", type=str, default=None, help="agent label"),
+                Arg("--agent-resource-pool", type=str, default=None, help="agent resource pool"),
+                Arg("--no-gpu", help="disable GPU support", action="store_true"),
+                Arg(
+                    "--no-autorestart",
+                    help="disable container auto-restart (recommended for local development)",
+                    action="store_true",
+                ),
+                Arg(
+                    "--cluster-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+            ],
+        ),
+        Cmd(
+            "agent-down",
+            handle_agent_down,
+            "Stop a Determined agent",
+            [
+                Arg("--agent-name", type=str, default="det-agent", help="agent name"),
+                Arg("--all", help="stop all running agents", action="store_true"),
+                Arg(
+                    "--cluster-name",
+                    type=str,
+                    default="determined",
+                    help="name for the cluster resources",
+                ),
+            ],
+        ),
+    ],
+)

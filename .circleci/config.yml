@@ -388,7 +388,7 @@ commands:
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
             echo "-----END ARGS-----"
-            det-deploy aws up \
+            det deploy aws up \
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
@@ -405,7 +405,7 @@ commands:
           name: Terminate AWS Cluster
           when: always
           command: |
-            det-deploy aws down \
+            det deploy aws down \
               --cluster-id <<parameters.cluster-id>>
 
   setup-aws-cluster:
@@ -622,14 +622,14 @@ commands:
       det-version:
         type: string
     steps:
-      - run: det-deploy local cluster-up --no-gpu --delete-db --det-version <<parameters.det-version>>
+      - run: det deploy local cluster-up --no-gpu --delete-db --det-version <<parameters.det-version>>
 
   dump-local-cluster-logs:
     steps:
       - run:
-          name: Dump det-deploy logs
+          name: Dump det deploy logs
           when: always
-          command: det-deploy local logs --no-follow
+          command: det deploy local logs --no-follow
 
   run-e2e-webui-tests:
     steps:

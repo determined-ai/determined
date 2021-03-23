@@ -8,6 +8,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from termcolor import colored
 
+from determined.cli.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.deploy.aws import aws, constants
 from determined.deploy.aws.deployment_types import base, govcloud, secure, simple, vpc
 
@@ -36,195 +37,7 @@ def validate_scheduler_type() -> Callable:
     return validate
 
 
-def make_list_subparser(subparsers: argparse._SubParsersAction) -> None:
-    subparser = subparsers.add_parser("list", help="list CloudFormation stacks")
-    subparser.add_argument(
-        "--region",
-        type=str,
-        default=None,
-        help="AWS region",
-    )
-    subparser.add_argument("--profile", type=str, default=None, help="AWS profile")
-
-
-def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
-    subparser = subparsers.add_parser("down", help="delete CloudFormation stack")
-    require_named = subparser.add_argument_group("required named arguments")
-    require_named.add_argument(
-        "--cluster-id", type=str, help="stack name for CloudFormation cluster", required=True
-    )
-
-    subparser.add_argument(
-        "--region",
-        type=str,
-        default=None,
-        help="AWS region",
-    )
-    subparser.add_argument("--profile", type=str, default=None, help="AWS profile")
-
-
-def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
-    subparser = subparsers.add_parser("up", help="deploy/update CloudFormation stack")
-    require_named = subparser.add_argument_group("required named arguments")
-    require_named.add_argument(
-        "--cluster-id", type=str, help="stack name for CloudFormation cluster", required=True
-    )
-    require_named.add_argument(
-        "--keypair", type=str, help="aws ec2 keypair for master and agent", required=True
-    )
-    subparser.add_argument(
-        "--region",
-        type=str,
-        default=None,
-        help="AWS region",
-    )
-    subparser.add_argument("--profile", type=str, default=None, help="AWS profile")
-    subparser.add_argument(
-        "--master-instance-type",
-        type=str,
-        help="instance type for master",
-    )
-    subparser.add_argument(
-        "--enable-cors",
-        action="store_true",
-        help="allow CORS requests or not: true/false",
-    )
-    subparser.add_argument(
-        "--master-tls-cert",
-    )
-    subparser.add_argument(
-        "--master-tls-key",
-    )
-    subparser.add_argument(
-        "--master-cert-name",
-    )
-    subparser.add_argument(
-        "--gpu-agent-instance-type",
-        type=str,
-        help="instance type for agent in the GPU resource pool",
-    )
-    subparser.add_argument(
-        "--cpu-agent-instance-type",
-        type=str,
-        help="instance type for agent in the CPU resource pool",
-    )
-    subparser.add_argument(
-        "--deployment-type",
-        type=str,
-        choices=constants.deployment_types.DEPLOYMENT_TYPES,
-        default=constants.defaults.DEPLOYMENT_TYPE,
-        help=f"deployment type - "
-        f'must be one of [{", ".join(constants.deployment_types.DEPLOYMENT_TYPES)}]',
-    )
-    subparser.add_argument(
-        "--inbound-cidr",
-        type=str,
-        help="inbound IP Range in CIDR format",
-    )
-    subparser.add_argument(
-        "--agent-subnet-id",
-        type=str,
-        help="subnet to deploy agents into. Optional. Only used with simple deployment type",
-    )
-    subparser.add_argument(
-        "--det-version",
-        type=str,
-        help=argparse.SUPPRESS,
-    )
-    subparser.add_argument(
-        "--db-password",
-        type=str,
-        default=constants.defaults.DB_PASSWORD,
-        help="password for master database",
-    )
-    subparser.add_argument(
-        "--max-idle-agent-period",
-        type=str,
-        help="max agent idle time",
-    )
-    subparser.add_argument(
-        "--max-agent-starting-period",
-        type=str,
-        help="max agent starting time",
-    )
-    subparser.add_argument(
-        "--max-cpu-containers-per-agent",
-        type=int,
-        help="maximum number of cpu containers on agent in the CPU resource pool",
-    )
-    subparser.add_argument(
-        "--min-dynamic-agents",
-        type=int,
-        help="minimum number of dynamic agent instances at one time",
-    )
-    subparser.add_argument(
-        "--max-dynamic-agents",
-        type=int,
-        help="maximum number of dynamic agent instances at one time",
-    )
-    subparser.add_argument(
-        "--spot",
-        action="store_true",
-        help="whether to use spot instances or not",
-    )
-    subparser.add_argument(
-        "--spot-max-price",
-        type=validate_spot_max_price(),
-        help="maximum hourly price for the spot instance (do not include the dollar sign)",
-    )
-    subparser.add_argument(
-        "--scheduler-type",
-        type=validate_scheduler_type(),
-        default="fair_share",
-        help="scheduler to use (defaults to fair_share).",
-    )
-    subparser.add_argument(
-        "--preemption-enabled",
-        type=str,
-        default="false",
-        help="whether task preemption is supported in the scheduler "
-        "(only configurable for priority scheduler).",
-    )
-    subparser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="print deployment template",
-    )
-    subparser.add_argument(
-        "--cpu-env-image",
-        type=str,
-        help="Docker image for CPU tasks",
-    )
-    subparser.add_argument(
-        "--gpu-env-image",
-        type=str,
-        help="Docker image for GPU tasks",
-    )
-    subparser.add_argument(
-        "--log-group-prefix",
-        type=str,
-        help="prefix for output CloudWatch log group",
-    )
-    subparser.add_argument(
-        "--retain-log-group",
-        action="store_const",
-        const="true",
-        help="whether to retain CloudWatch log group after the stack is deleted"
-        " (only available for the simple template)",
-    )
-
-
-def make_aws_parser(subparsers: argparse._SubParsersAction) -> None:
-    parser_aws = subparsers.add_parser("aws", help="AWS help")
-
-    aws_subparsers = parser_aws.add_subparsers(help="command", dest="command")
-    make_list_subparser(aws_subparsers)
-    make_down_subparser(aws_subparsers)
-    make_up_subparser(aws_subparsers)
-    aws_subparsers.required = True
-
-
-def handle_no_credentials() -> None:
+def error_no_credentials() -> None:
     print(
         colored("Unable to locate AWS credentials.", "red"),
         "Did you run %s?" % colored("aws configure", "yellow"),
@@ -236,7 +49,7 @@ def handle_no_credentials() -> None:
     sys.exit(1)
 
 
-def deploy_aws(args: argparse.Namespace) -> None:
+def deploy_aws(command: str, args: argparse.Namespace) -> None:
     if args.profile:
         boto3_session = boto3.Session(profile_name=args.profile, region_name=args.region)
     else:
@@ -244,17 +57,17 @@ def deploy_aws(args: argparse.Namespace) -> None:
 
     if boto3_session.region_name not in constants.misc.SUPPORTED_REGIONS:
         print(
-            f"det-deploy is only supported in {constants.misc.SUPPORTED_REGIONS} - "
+            f"`det deploy` is only supported in {constants.misc.SUPPORTED_REGIONS} - "
             f"tried to deploy to {boto3_session.region_name}"
         )
         print("use the --region argument to deploy to a supported region")
         sys.exit(1)
 
-    if args.command == "list":
+    if command == "list":
         try:
             output = aws.list_stacks(boto3_session)
         except NoCredentialsError:
-            handle_no_credentials()
+            error_no_credentials()
         except Exception as e:
             print(e)
             print("Listing stacks failed. Check the AWS CloudFormation Console for details.")
@@ -266,7 +79,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
     # TODO(DET-4258) Uncomment this when we fully support all P3 regions.
     # if boto3_session.region_name == "eu-west-2" and args.agent_instance_type is None:
     #     print(
-    #         "the default agent instance type for det-deploy (p2.8xlarge) is not available in "
+    #         "the default agent instance type for `det deploy` (p2.8xlarge) is not available in "
     #         "eu-west-2 (London).  Please specify an --agent-instance-type argument."
     #     )
     #     sys.exit(1)
@@ -275,11 +88,11 @@ def deploy_aws(args: argparse.Namespace) -> None:
         print("Deployment Failed - cluster-id much match ^[a-zA-Z][-a-zA-Z0-9]*$")
         sys.exit(1)
 
-    if args.command == "down":
+    if command == "down":
         try:
             aws.delete(args.cluster_id, boto3_session)
         except NoCredentialsError:
-            handle_no_credentials()
+            error_no_credentials()
         except Exception as e:
             print(e)
             print("Stack Deletion Failed. Check the AWS CloudFormation Console for details.")
@@ -366,10 +179,230 @@ def deploy_aws(args: argparse.Namespace) -> None:
     try:
         deployment_object.deploy()
     except NoCredentialsError:
-        handle_no_credentials()
+        error_no_credentials()
     except Exception as e:
         print(e)
         print("Stack Deployment Failed. Check the AWS CloudFormation Console for details.")
         sys.exit(1)
 
     print("Determined Deployment Successful")
+
+
+def handle_list(args: argparse.Namespace) -> None:
+    return deploy_aws("list", args)
+
+
+def handle_up(args: argparse.Namespace) -> None:
+    return deploy_aws("up", args)
+
+
+def handle_down(args: argparse.Namespace) -> None:
+    return deploy_aws("down", args)
+
+
+args_description = Cmd(
+    "aws",
+    None,
+    "AWS help",
+    [
+        Cmd(
+            "list",
+            handle_list,
+            "list CloudFormation stacks",
+            [
+                Arg(
+                    "--region",
+                    type=str,
+                    default=None,
+                    help="AWS region",
+                ),
+                Arg("--profile", type=str, default=None, help="AWS profile"),
+            ],
+        ),
+        Cmd(
+            "down",
+            handle_down,
+            "delete CloudFormation stack",
+            [
+                ArgGroup(
+                    "required named arguments",
+                    None,
+                    [
+                        Arg(
+                            "--cluster-id",
+                            type=str,
+                            help="stack name for CloudFormation cluster",
+                            required=True,
+                        ),
+                    ],
+                ),
+                Arg(
+                    "--region",
+                    type=str,
+                    default=None,
+                    help="AWS region",
+                ),
+                Arg("--profile", type=str, default=None, help="AWS profile"),
+            ],
+        ),
+        Cmd(
+            "up",
+            handle_up,
+            "deploy/update CloudFormation stack",
+            [
+                ArgGroup(
+                    "required named arguments",
+                    None,
+                    [
+                        Arg(
+                            "--cluster-id",
+                            type=str,
+                            help="stack name for CloudFormation cluster",
+                            required=True,
+                        ),
+                        Arg(
+                            "--keypair",
+                            type=str,
+                            help="aws ec2 keypair for master and agent",
+                            required=True,
+                        ),
+                    ],
+                ),
+                Arg(
+                    "--region",
+                    type=str,
+                    default=None,
+                    help="AWS region",
+                ),
+                Arg("--profile", type=str, default=None, help="AWS profile"),
+                Arg(
+                    "--master-instance-type",
+                    type=str,
+                    help="instance type for master",
+                ),
+                Arg(
+                    "--enable-cors",
+                    action="store_true",
+                    help="allow CORS requests or not: true/false",
+                ),
+                Arg("--master-tls-cert"),
+                Arg("--master-tls-key"),
+                Arg("--master-cert-name"),
+                Arg(
+                    "--gpu-agent-instance-type",
+                    type=str,
+                    help="instance type for agent in the GPU resource pool",
+                ),
+                Arg(
+                    "--cpu-agent-instance-type",
+                    type=str,
+                    help="instance type for agent in the CPU resource pool",
+                ),
+                Arg(
+                    "--deployment-type",
+                    type=str,
+                    choices=constants.deployment_types.DEPLOYMENT_TYPES,
+                    default=constants.defaults.DEPLOYMENT_TYPE,
+                    help=f"deployment type - "
+                    f'must be one of [{", ".join(constants.deployment_types.DEPLOYMENT_TYPES)}]',
+                ),
+                Arg(
+                    "--inbound-cidr",
+                    type=str,
+                    help="inbound IP Range in CIDR format",
+                ),
+                Arg(
+                    "--agent-subnet-id",
+                    type=str,
+                    help="subnet to deploy agents into. Optional. Only used with simple deployment type",
+                ),
+                Arg(
+                    "--det-version",
+                    type=str,
+                    help=argparse.SUPPRESS,
+                ),
+                Arg(
+                    "--db-password",
+                    type=str,
+                    default=constants.defaults.DB_PASSWORD,
+                    help="password for master database",
+                ),
+                Arg(
+                    "--max-idle-agent-period",
+                    type=str,
+                    help="max agent idle time",
+                ),
+                Arg(
+                    "--max-agent-starting-period",
+                    type=str,
+                    help="max agent starting time",
+                ),
+                Arg(
+                    "--max-cpu-containers-per-agent",
+                    type=int,
+                    help="maximum number of cpu containers on agent in the CPU resource pool",
+                ),
+                Arg(
+                    "--min-dynamic-agents",
+                    type=int,
+                    help="minimum number of dynamic agent instances at one time",
+                ),
+                Arg(
+                    "--max-dynamic-agents",
+                    type=int,
+                    help="maximum number of dynamic agent instances at one time",
+                ),
+                Arg(
+                    "--spot",
+                    action="store_true",
+                    help="whether to use spot instances or not",
+                ),
+                Arg(
+                    "--spot-max-price",
+                    type=validate_spot_max_price(),
+                    help="maximum hourly price for the spot instance (do not include the dollar sign)",
+                ),
+                Arg(
+                    "--scheduler-type",
+                    type=validate_scheduler_type(),
+                    default="fair_share",
+                    help="scheduler to use (defaults to fair_share).",
+                ),
+                Arg(
+                    "--preemption-enabled",
+                    type=str,
+                    default="false",
+                    help="whether task preemption is supported in the scheduler "
+                    "(only configurable for priority scheduler).",
+                ),
+                Arg(
+                    "--dry-run",
+                    action="store_true",
+                    help="print deployment template",
+                ),
+                Arg(
+                    "--cpu-env-image",
+                    type=str,
+                    help="Docker image for CPU tasks",
+                ),
+                Arg(
+                    "--gpu-env-image",
+                    type=str,
+                    help="Docker image for GPU tasks",
+                ),
+                Arg(
+                    "--log-group-prefix",
+                    type=str,
+                    help="prefix for output CloudWatch log group",
+                ),
+                Arg(
+                    "--retain-log-group",
+                    action="store_const",
+                    const="true",
+                    help="whether to retain CloudWatch log group after the stack is deleted"
+                    " (only available for the simple template)",
+                ),
+            ],
+        ),
+    ],
+)

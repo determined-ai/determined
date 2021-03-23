@@ -12,7 +12,8 @@ from tests import experiment as exp
 
 def det_deploy(subcommand: List) -> None:
     command = [
-        "det-deploy",
+        "det",
+        "deploy",
         "local",
     ] + subcommand
     subprocess.run(command)

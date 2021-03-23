@@ -35,6 +35,8 @@ from determined.common import api, yaml
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_not_none
 from determined.common.util import chunks, debug_mode, get_default_master_address
+from determined.deploy.cli import DEPLOY_CMD_NAME
+from determined.deploy.cli import args_description as deploy_args_description
 
 
 @authentication_required
@@ -159,6 +161,8 @@ args_description = [
         Arg("config_file", type=FileType("r"),
             help="experiment config file (.yaml)")
     ]),
+
+    deploy_args_description,
 ]  # type: List[object]
 
 # fmt: on
@@ -214,6 +218,11 @@ def main(args: List[str] = sys.argv[1:]) -> None:
             api.request.set_master_cert_bundle(cert_fn)
 
         try:
+            # For `det deploy`, skip interaction with master.
+            if v.get("_command") == DEPLOY_CMD_NAME:
+                parsed_args.func(parsed_args)
+                return
+
             try:
                 check_version(parsed_args)
             except requests.exceptions.SSLError:

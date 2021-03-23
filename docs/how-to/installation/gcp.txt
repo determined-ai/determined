@@ -5,15 +5,15 @@
 ###########################
 
 This document describes how to deploy a Determined cluster on Google
-Cloud Platform (GCP). We provide the ``determined-deploy`` package for
+Cloud Platform (GCP). We provide the ``det deploy`` tool for
 easy creation and deployment of these resources in GCP. The
-``determined-deploy`` package uses `Terraform
+``det deploy`` tool uses `Terraform
 <https://learn.hashicorp.com/terraform/getting-started/install.html>`__
 to automatically deploy and configure a Determined cluster in GCP.
 Alternatively, if you already have a process for setting up
 infrastructure with Terraform, you can use our `Terraform modules
 <https://github.com/determined-ai/determined/tree/master/harness/determined/deploy/gcp/terraform>`__
-rather than ``determined-deploy``.
+rather than ``det deploy``.
 
 For more information about using Determined on GCP, see the
 :ref:`topic_guide_gcp` topic guide.
@@ -42,7 +42,7 @@ The following GCP APIs must be enabled on your GCP project:
 Credentials
 ===========
 
-The ``determined-deploy`` package requires credentials in order to
+The ``det deploy`` tool requires credentials in order to
 create resources in GCP. There are two ways to provide these
 credentials:
 
@@ -78,11 +78,11 @@ low; you may wish to request a quota increase.
 #. Install `Terraform
    <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
 
-#. Install ``determined-deploy`` using ``pip``:
+#. Install ``determined`` using ``pip``:
 
    .. code::
 
-      pip install determined-deploy
+      pip install determined
 
 *********************
  Deploying A Cluster
@@ -101,7 +101,7 @@ inside that directory.
    ID, GCP region and zone).
 
    Any future update or deletion commands should be run inside the same
-   directory so ``determined-deploy`` can read the state and variables
+   directory so ``det deploy`` can read the state and variables
    files. If either of these files is deleted, it will be difficult to
    manage the deployment afterward. Storing these files in a safe
    location is strongly recommended.
@@ -110,7 +110,7 @@ To deploy the cluster, run:
 
 .. code::
 
-   det-deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID
+   det deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID
 
 ``CLUSTER_ID`` is an arbitrary unique ID for the new cluster. We
 recommend choosing a cluster ID that is memorable and helps identify
@@ -274,9 +274,9 @@ and zone:
  Updating A Cluster
 ********************
 
-If you need to make changes to your cluster, you can rerun ``det-deploy
+If you need to make changes to your cluster, you can rerun ``det deploy
 gcp up [args]`` in the same directory and your cluster will be updated.
-The ``det-deploy`` tool will only replace resources that need to be
+The ``det deploy`` tool will only replace resources that need to be
 replaced based on the changes you've made in the updated execution.
 
 .. note::
@@ -290,13 +290,13 @@ replaced based on the changes you've made in the updated execution.
 **********************
 
 To bring down the cluster, run the following in the same directory where
-you ran ``det-deploy gcp up``:
+you ran ``det deploy gcp up``:
 
 .. code::
 
-   det-deploy gcp down
+   det deploy gcp down
 
-``det-deploy`` will use the ``.tfstate`` and ``terraform.tfvars.json``
+``det deploy`` will use the ``.tfstate`` and ``terraform.tfvars.json``
 files in the current directory to determine which resources to destroy.
 If you deployed with a service account JSON key file, the same
 credentials file will be used for deprovisioning. Otherwise, default
@@ -337,7 +337,7 @@ Once you have a service account with the appropriate roles, go to the
 <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__
 and create a JSON key file. Save it to a location you'll remember; we'll
 refer to the path to this key file as the ``keypath``, which is an
-optional argument you can supply when using ``determined-deploy``. Once
+optional argument you can supply when using ``det deploy``. Once
 you have the ``keypath`` you can use it to deploy a GCP cluster by
 continuing the :ref:`installation <gcp-install>` section.
 

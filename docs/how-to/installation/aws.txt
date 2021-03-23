@@ -5,8 +5,8 @@
 ###########################
 
 This document describes how to deploy a Determined cluster on Amazon Web
-Services (AWS). We provide the :ref:`determined-deploy
-<determined-deploy>` package for easy creation and deployment of these
+Services (AWS). We provide the :ref:`det deploy
+<determined-deploy>` tool for easy creation and deployment of these
 resources. If you would rather create the cluster manually, see the
 :ref:`aws-manual-deployment` section below.
 
@@ -16,10 +16,11 @@ For more information about using Determined on AWS, see the
 .. _determined-deploy:
 
 **************************************
- ``determined-deploy`` Python Package
+ ``det deploy`` tool
 **************************************
 
-The ``determined-deploy`` package uses `AWS CloudFormation
+The ``det deploy`` tool is provided by ``determined`` python package.
+It uses `AWS CloudFormation
 <https://aws.amazon.com/cloudformation/>`__ to automatically deploy and
 configure a Determined cluster. CloudFormation builds the necessary
 components for Determined into a single CloudFormation stack.
@@ -41,7 +42,7 @@ on your account --- the `default instance limits
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html#ec2-on-demand-instances-limits>`__
 are quite low, particularly for GPU instances. For example, by default
 an AWS account can only create 128 vCPUs worth of P-type instances in a
-given AWS region. The default configuration for ``det-deploy`` can
+given AWS region. The default configuration for ``det deploy`` can
 result in launching up to 5 ``p2.8xlarge`` instances (which have 32
 vCPUs each), which would exceed the default quota. AWS instance limits
 can be increased by submitting a request to the `AWS Support Center
@@ -50,11 +51,11 @@ can be increased by submitting a request to the `AWS Support Center
 Installation
 ============
 
-``determined-deploy`` can be installed using ``pip``:
+``det`` command line tool can be installed using ``pip``:
 
 .. code::
 
-   pip install determined-deploy
+   pip install determined
 
 Deploying
 =========
@@ -63,7 +64,7 @@ The basic command to deploy a cluster is as follows:
 
 .. code::
 
-   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
+   det deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
 
 ``CLUSTER_ID`` is an arbitrary unique ID for the new cluster. We
 recommend choosing a cluster ID that is memorable and helps identify
@@ -84,9 +85,9 @@ including the URL of the Determined master.
 Deployment Types
 ================
 
-``determined-deploy`` supports multiple different deployment types to
+``det deploy`` supports multiple different deployment types to
 work with different security needs. The deployment type can be specified
-using the ``--deployment-type`` argument (e.g., ``det-deploy aws
+using the ``--deployment-type`` argument (e.g., ``det deploy aws
 --deployment-type secure``).
 
 -  ``simple``: The simple deployment provides an easy way to deploy a
@@ -123,7 +124,7 @@ Spinning up the Cluster
 
 .. code::
 
-   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
+   det deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
 
 .. list-table::
    :widths: 25 50 25
@@ -232,7 +233,7 @@ Tearing Down the Cluster
 
 .. code::
 
-   det-deploy aws down --cluster-id CLUSTER_ID
+   det deploy aws down --cluster-id CLUSTER_ID
 
 .. list-table::
    :widths: 25 50 25
@@ -260,7 +261,7 @@ Listing Clusters
 
 .. code::
 
-   det-deploy aws list
+   det deploy aws list
 
 .. list-table::
    :widths: 25 50 25

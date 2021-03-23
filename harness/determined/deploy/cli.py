@@ -1,40 +1,50 @@
 import argparse
-import sys
+import warnings
+from typing import List, Union
 
-import determined
-import determined.deploy.aws.cli
-import determined.deploy.gcp.cli
-import determined.deploy.local.cli
+from determined import __version__
+from determined.cli.declarative_argparse import Arg, Cmd, add_args
+
+from .aws.cli import args_description as aws_args_description
+from .gcp.cli import args_description as gcp_args_description
+from .local.cli import args_description as local_args_description
+
+args_subs: List[Union[Arg, Cmd]] = [
+    # TODO(ilia): Remove --version flag when det-deploy is deprecated.
+    Arg("--version", action="version", version="%(prog)s {}".format(__version__)),
+    local_args_description,
+    aws_args_description,
+    gcp_args_description,
+]
+
+DEPLOY_CMD_NAME = "d|eploy"
+args_description = Cmd(
+    DEPLOY_CMD_NAME,
+    None,
+    "manage deployments",
+    args_subs,
+)
 
 
 def main() -> None:
-    environment_map = {
-        "aws": determined.deploy.aws.cli.deploy_aws,
-        "gcp": determined.deploy.gcp.cli.deploy_gcp,
-        "local": determined.deploy.local.cli.deploy_local,
-    }
-
+    """Deprecated entry point for standalone `det-deploy`."""
     parser = argparse.ArgumentParser(
         description="Manage Determined deployments.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s {}".format(determined.__version__)
+    add_args(parser, args_subs)
+    parsed_args = parser.parse_args()
+
+    v = vars(parsed_args)
+    if not v.get("func"):
+        parser.print_usage()
+        parser.exit(2, "{}: no subcommand specified\n".format(parser.prog))
+
+    warnings.warn(
+        "`det-deploy` executable is deprecated, please use `det deploy` instead.", FutureWarning
     )
-    subparsers = parser.add_subparsers(help="environment", dest="environment")
 
-    determined.deploy.local.cli.make_local_parser(subparsers)
-    determined.deploy.aws.cli.make_aws_parser(subparsers)
-    determined.deploy.gcp.cli.make_gcp_parser(subparsers)
-
-    args = parser.parse_args()
-    environment = args.environment
-    if environment:
-        environment_map[environment](args)
-    else:
-        print("environment is required")
-        parser.print_help()
-        sys.exit(1)
+    parsed_args.func(parsed_args)
 
 
 if __name__ == "__main__":
