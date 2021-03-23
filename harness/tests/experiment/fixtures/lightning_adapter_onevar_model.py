@@ -1,43 +1,8 @@
-"""
-A one-variable linear model with no bias. The datset emits only pairs of (data, label) = (1, 1),
-meaning that the one weight in the model should approach 1 as gradient descent continues.
-
-We will use the mean squared error as the loss.  Since each record is the same, the "mean" part of
-mean squared error means we can analyze every batch as if were just one record.
-
-Now, we can calculate the mean squared error to ensure that we are getting the gradient we are
-expecting.
-
-let:
-    R = learning rate (constant)
-    l = loss
-    w0 = the starting value of the one weight
-    w' = the updated value of the one weight
-
-then calculate the loss:
-
-(1)     l = (label - (data * w0)) ** 2
-
-take derivative of loss WRT w
-
-(2)     dl/dw = - 2 * data * (label - (data * w0))
-
-gradient update:
-
-(3)     update = -R * dl/dw = 2 * R * data * (label - (data * w0))
-
-Finally, we can calculate the updated weight (w') in terms of w0:
-
-(4)     w' = w0 + update = w0 + 2 * R * data * (label - (data * w0))
-
-TODO(DET-1597): migrate the all pytorch XOR trial unit tests to variations of the OneVarTrial.
-"""
-
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 import numpy as np
-import torch
 import pytorch_lightning as pl
+import torch
 
 from determined import pytorch
 from determined.pytorch.lightning import LightningAdapter
@@ -49,6 +14,7 @@ class OnesDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index: int) -> Tuple:
         return torch.Tensor([float(1)]), torch.Tensor([float(1)])
+
 
 class OneVarLM(pl.LightningModule):
     def __init__(self, *args, **kwargs):
@@ -94,6 +60,7 @@ class OneVarLM(pl.LightningModule):
         loss = self.loss_fn(self.model(data), label)
         return {"val_loss": loss}
 
+
 class OneDatasetLDM(pl.LightningDataModule):
     def __init__(self, batch_size: int = 32, *args, **kwargs):
         self.batch_size = batch_size
@@ -107,7 +74,7 @@ class OneDatasetLDM(pl.LightningDataModule):
 
 
 class OneVarTrial(LightningAdapter):
-    def __init__(self, context: pytorch.PyTorchTrialContext, lm_class = OneVarLM) -> None:
+    def __init__(self, context: pytorch.PyTorchTrialContext, lm_class=OneVarLM) -> None:
         self.context = context
         lm = lm_class()
         self.dm = OneDatasetLDM()
@@ -130,16 +97,19 @@ class OneVarTrial(LightningAdapter):
         ), f'{metrics["w_after"]} does not match {metrics["w_exp"]} at batch {batch_idx}'
 
     def build_training_data_loader(self) -> pytorch.DataLoader:
-        return pytorch.DataLoader(self.dm.train_dataloader().dataset,
-                                  batch_size=self.context.get_per_slot_batch_size())
+        return pytorch.DataLoader(
+            self.dm.train_dataloader().dataset, batch_size=self.context.get_per_slot_batch_size()
+        )
 
     def build_validation_data_loader(self) -> pytorch.DataLoader:
-        return pytorch.DataLoader(self.dm.val_dataloader().dataset,
-                                  batch_size=self.context.get_per_slot_batch_size())
+        return pytorch.DataLoader(
+            self.dm.val_dataloader().dataset, batch_size=self.context.get_per_slot_batch_size()
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     model = OneVarLM()
-    trainer = pl.Trainer(max_epochs=2, default_root_dir='/tmp/lightning')
+    trainer = pl.Trainer(max_epochs=2, default_root_dir="/tmp/lightning")
 
     dm = OneDatasetLDM()
     trainer.fit(model, datamodule=dm)
