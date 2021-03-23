@@ -107,9 +107,9 @@ class OneDatasetLDM(pl.LightningDataModule):
 
 
 class OneVarTrial(LightningAdapter):
-    def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
+    def __init__(self, context: pytorch.PyTorchTrialContext, lm_class = OneVarLM) -> None:
         self.context = context
-        lm = OneVarLM()
+        lm = lm_class()
         self.dm = OneDatasetLDM()
         super().__init__(context, lm)
 

@@ -5,9 +5,10 @@ import pytest
 import torch
 
 import determined as det
-from determined import pytorch, workload
+from determined import pytorch, workload, monkey_patch
 from tests.experiment import utils  # noqa: I100
-from tests.experiment.fixtures import pytorch_xor_model
+from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
+from typing import Dict, Any
 
 
 def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
@@ -34,6 +35,15 @@ def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
         assert a == b
 
 
+def fork_trial_override_lm(overrides: dict):
+    new_lm_cls = type('new_lm_cls', (la_model.OneVarLM, ), overrides)
+
+    def init(self, context):
+        super(self.__class__, self).__init__(context, new_lm_cls)
+
+    new_trial_cls = type('new_trial', (la_model.OneVarTrial,), {'__init__': init})
+    return new_trial_cls
+
 class TestPyTorchTrial:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
@@ -52,13 +62,9 @@ class TestPyTorchTrial:
         def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
         ) -> det.TrialController:
-            updated_hparams = {
-                "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH.value,
-                **self.hparams,
-            }
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrialWithLRScheduler,
-                hparams=updated_hparams,
+                trial_class=la_model.OneVarTrial,
+                hparams=self.hparams,
                 workloads=workloads,
                 load_path=load_path,
                 trial_seed=self.trial_seed,
@@ -66,47 +72,54 @@ class TestPyTorchTrial:
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
-    def test_restore_invalid_checkpoint(self, tmp_path: pathlib.Path) -> None:
-        # Build, train, and save a checkpoint with the normal hyperparameters.
-        checkpoint_dir = tmp_path.joinpath("checkpoint")
+    def test_checkpoint_hooks(self, tmp_path: pathlib.Path) -> None:
+        def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
+            assert 'test' in checkpoint
+            assert checkpoint['test'] == False
 
-        def make_workloads_1() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1)
-            yield workload.checkpoint_workload(), [
-                checkpoint_dir
-            ], workload.ignore_workload_response
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
+        def on_save_checkpoint_true(self, checkpoint: Dict[str, Any], *args):
+            checkpoint['test'] = True
 
-        controller1 = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialMulti,
-            hparams=self.hparams,
-            workloads=make_workloads_1(),
-            trial_seed=self.trial_seed,
-        )
-        controller1.run()
+        trial_cls_1 = fork_trial_override_lm({
+                'on_save_checkpoint': on_save_checkpoint_true,
+                'on_load_checkpoint': on_load_checkpoint,
+            })
 
-        # Verify that an invalid architecture fails to load from the checkpoint.
-        def make_workloads_2() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1)
-            yield workload.checkpoint_workload(), [
-                checkpoint_dir
-            ], workload.ignore_workload_response
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
+        # with monkey_patch.monkey_patch(la_model.OneVarLM, 'on_save_checkpoint', on_save_checkpoint):
+        def make_trial_controller_fn_1(
+            workloads: workload.Stream, load_path: typing.Optional[str] = None
+        ) -> det.TrialController:
 
-        hparams2 = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
-
-        with pytest.raises(RuntimeError):
-            controller2 = utils.make_trial_controller_from_trial_implementation(
-                trial_class=pytorch_xor_model.XORTrialMulti,
-                hparams=hparams2,
-                workloads=make_workloads_2(),
-                load_path=checkpoint_dir,
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=trial_cls_1,
+                hparams=self.hparams,
+                workloads=workloads,
+                load_path=load_path,
                 trial_seed=self.trial_seed,
             )
-            controller2.run()
+
+        with pytest.raises(AssertionError):
+            utils.checkpointing_and_restoring_test(make_trial_controller_fn_1, tmp_path)
+
+        def on_save_checkpoint_false(self, checkpoint: Dict[str, Any], *args):
+            checkpoint['test'] = False
+
+        trial_cls_2 = fork_trial_override_lm({
+                'on_save_checkpoint': on_save_checkpoint_false,
+                'on_load_checkpoint': on_load_checkpoint,
+            })
+
+        def make_trial_controller_fn_2(
+            workloads: workload.Stream, load_path: typing.Optional[str] = None
+        ) -> det.TrialController:
 
 
-def test_create_trial_instance() -> None:
-    utils.create_trial_instance(pytorch_xor_model.XORTrial)
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=trial_cls_2,
+                hparams=self.hparams,
+                workloads=workloads,
+                load_path=load_path,
+                trial_seed=self.trial_seed,
+            )
+
+        utils.checkpointing_and_restoring_test(make_trial_controller_fn_2, tmp_path)
