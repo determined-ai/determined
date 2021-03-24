@@ -314,7 +314,8 @@ args_description = Cmd(
                 Arg(
                     "--agent-subnet-id",
                     type=str,
-                    help="subnet to deploy agents into. Optional. Only used with simple deployment type",
+                    help="subnet to deploy agents into. Optional. "
+                    "Only used with simple deployment type",
                 ),
                 Arg(
                     "--det-version",
@@ -360,7 +361,8 @@ args_description = Cmd(
                 Arg(
                     "--spot-max-price",
                     type=validate_spot_max_price(),
-                    help="maximum hourly price for the spot instance (do not include the dollar sign)",
+                    help="maximum hourly price for the spot instance "
+                    "(do not include the dollar sign)",
                 ),
                 Arg(
                     "--scheduler-type",

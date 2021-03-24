@@ -5,25 +5,25 @@
 ###########################
 
 This document describes how to deploy a Determined cluster on Amazon Web
-Services (AWS). We provide the :ref:`det deploy
-<determined-deploy>` tool for easy creation and deployment of these
-resources. If you would rather create the cluster manually, see the
-:ref:`aws-manual-deployment` section below.
+Services (AWS). We provide the :ref:`det deploy <determined-deploy>`
+tool for easy creation and deployment of these resources. If you would
+rather create the cluster manually, see the :ref:`aws-manual-deployment`
+section below.
 
 For more information about using Determined on AWS, see the
 :ref:`topic_guide_aws` topic guide.
 
 .. _determined-deploy:
 
-**************************************
+*********************
  ``det deploy`` tool
-**************************************
+*********************
 
-The ``det deploy`` tool is provided by ``determined`` python package.
-It uses `AWS CloudFormation
-<https://aws.amazon.com/cloudformation/>`__ to automatically deploy and
-configure a Determined cluster. CloudFormation builds the necessary
-components for Determined into a single CloudFormation stack.
+The ``det deploy`` tool is provided by ``determined`` python package. It
+uses `AWS CloudFormation <https://aws.amazon.com/cloudformation/>`__ to
+automatically deploy and configure a Determined cluster. CloudFormation
+builds the necessary components for Determined into a single
+CloudFormation stack.
 
 Requirements
 ============
@@ -85,10 +85,10 @@ including the URL of the Determined master.
 Deployment Types
 ================
 
-``det deploy`` supports multiple different deployment types to
-work with different security needs. The deployment type can be specified
-using the ``--deployment-type`` argument (e.g., ``det deploy aws
---deployment-type secure``).
+``det deploy`` supports multiple different deployment types to work with
+different security needs. The deployment type can be specified using the
+``--deployment-type`` argument (e.g., ``det deploy aws --deployment-type
+secure``).
 
 -  ``simple``: The simple deployment provides an easy way to deploy a
    Determined cluster in AWS. This creates the master instance in the

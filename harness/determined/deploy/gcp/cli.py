@@ -159,7 +159,8 @@ args_description = Cmd(
                         Arg(
                             "--dry-run",
                             action="store_true",
-                            help="return the infrastructure plan to be executed based on your arguments",
+                            help="return the infrastructure plan to be executed "
+                            "based on your arguments",
                         ),
                         Arg(
                             "--keypath",
@@ -171,7 +172,8 @@ args_description = Cmd(
                             "--network",
                             type=str,
                             default="det-default",
-                            help="network name to create (the network should not already exist in the project)",
+                            help="network name to create "
+                            "(the network should not already exist in the project)",
                         ),
                         Arg(
                             "--det-version",
@@ -249,7 +251,8 @@ args_description = Cmd(
                             "--max-idle-agent-period",
                             type=str,
                             default=constants.defaults.MAX_IDLE_AGENT_PERIOD,
-                            help="max agent idle time before it is shut down, e.g. 30m for 30 minutes",
+                            help="max agent idle time before it is shut down, "
+                            "e.g. 30m for 30 minutes",
                         ),
                         Arg(
                             "--max-agent-starting-period",

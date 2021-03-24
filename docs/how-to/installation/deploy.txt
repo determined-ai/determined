@@ -98,8 +98,8 @@ is currently running, run
 .. note::
 
    ``det deploy local cluster-down`` will not remove any agents created
-   with ``det deploy local agent-up``. To remove these agents, use
-   ``det deploy local agent-down``.
+   with ``det deploy local agent-up``. To remove these agents, use ``det
+   deploy local agent-down``.
 
 Deploying a Standalone Master
 =============================
