@@ -1,5 +1,5 @@
 import { Alert, Tabs } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
@@ -95,6 +95,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     hParams: undefined,
     maxTrial: DEFAULT_MAX_TRIALS,
     metric: searcherMetric.current,
+    view: DEFAULT_VIEW,
   };
   const [ typeKey, setTypeKey ] = useState(() => {
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
@@ -324,7 +325,7 @@ const ExperimentVisualization: React.FC<Props> = ({
           <LearningCurve
             experiment={experiment}
             filters={visualizationFilters}
-            hParams={fullHParams.current}
+            fullHParams={fullHParams.current}
             selectedMaxTrial={filters.maxTrial}
             selectedMetric={filters.metric}
           />
@@ -335,7 +336,7 @@ const ExperimentVisualization: React.FC<Props> = ({
           <HpParallelCoordinates
             experiment={experiment}
             filters={visualizationFilters}
-            hParams={fullHParams.current}
+            fullHParams={fullHParams.current}
             selectedBatch={filters.batch}
             selectedBatchMargin={filters.batchMargin}
             selectedHParams={filters.hParams || defaultHParams}
@@ -348,7 +349,7 @@ const ExperimentVisualization: React.FC<Props> = ({
           <HpScatterPlots
             experiment={experiment}
             filters={visualizationFilters}
-            hParams={fullHParams.current}
+            fullHParams={fullHParams.current}
             selectedBatch={filters.batch}
             selectedBatchMargin={filters.batchMargin}
             selectedHParams={filters.hParams || defaultHParams}
@@ -361,7 +362,7 @@ const ExperimentVisualization: React.FC<Props> = ({
           <HpHeatMaps
             experiment={experiment}
             filters={visualizationFilters}
-            hParams={fullHParams.current}
+            fullHParams={fullHParams.current}
             selectedBatch={filters.batch}
             selectedBatchMargin={filters.batchMargin}
             selectedHParams={filters.hParams || defaultHParams}
