@@ -9,10 +9,10 @@ from termcolor import colored
 from determined.common import api, constants, context
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_eq
+from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
 from .command import CONTEXT_DESC, Command, parse_config, render_event_stream
-from .declarative_argparse import Arg, Cmd
 
 Tensorboard = namedtuple(
     "Tensorboard",

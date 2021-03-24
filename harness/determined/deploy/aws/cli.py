@@ -8,7 +8,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from termcolor import colored
 
-from determined.cli.declarative_argparse import Arg, ArgGroup, Cmd
+from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.deploy.aws import aws, constants
 from determined.deploy.aws.deployment_types import base, govcloud, secure, simple, vpc
 

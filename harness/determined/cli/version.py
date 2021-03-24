@@ -8,9 +8,9 @@ from packaging import version
 import determined
 import determined.cli
 from determined.common import api
+from determined.common.declarative_argparse import Cmd
 
 from . import render
-from .declarative_argparse import Cmd
 
 
 def get_version(host: str) -> Dict[str, Any]:

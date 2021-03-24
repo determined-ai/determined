@@ -5,7 +5,7 @@ from typing import Callable
 
 import determined
 import determined.deploy
-from determined.cli.declarative_argparse import Arg, ArgGroup, Cmd
+from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.deploy.gcp import constants, gcp
 
 

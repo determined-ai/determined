@@ -18,7 +18,6 @@ import determined.cli
 import determined.common.api.authentication as auth
 from determined.cli import checkpoint, experiment, render
 from determined.cli.agent import args_description as agent_args_description
-from determined.cli.declarative_argparse import Arg, Cmd, add_args
 from determined.cli.master import args_description as master_args_description
 from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
@@ -34,6 +33,7 @@ from determined.cli.version import check_version
 from determined.common import api, yaml
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_not_none
+from determined.common.declarative_argparse import Arg, Cmd, add_args
 from determined.common.util import chunks, debug_mode, get_default_master_address
 from determined.deploy.cli import DEPLOY_CMD_NAME
 from determined.deploy.cli import args_description as deploy_args_description

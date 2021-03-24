@@ -7,9 +7,9 @@ from termcolor import colored
 
 from determined.common import api, yaml
 from determined.common.api.authentication import authentication_required
+from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
-from .declarative_argparse import Arg, Cmd
 
 TemplateClean = namedtuple("TemplateClean", ["name"])
 TemplateAll = namedtuple("TemplateAll", ["name", "config"])

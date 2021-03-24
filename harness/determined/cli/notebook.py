@@ -7,6 +7,7 @@ from termcolor import colored
 from determined.common import api
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_eq
+from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
 from .command import (
@@ -20,7 +21,6 @@ from .command import (
     parse_config,
     render_event_stream,
 )
-from .declarative_argparse import Arg, Cmd
 
 
 @authentication_required

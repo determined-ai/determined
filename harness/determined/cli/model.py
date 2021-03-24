@@ -4,10 +4,10 @@ from typing import Any, List
 
 from determined.common import api
 from determined.common.api.authentication import authentication_required
+from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import Checkpoint, Determined, Model, ModelOrderBy, ModelSortBy
 
 from . import render
-from .declarative_argparse import Arg, Cmd
 
 
 def render_model(model: Model) -> None:

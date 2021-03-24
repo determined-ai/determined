@@ -6,10 +6,10 @@ from typing import Any, List
 from determined.cli import render
 from determined.common import api
 from determined.common.api.authentication import authentication_required
+from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
 from .checkpoint import format_checkpoint, format_validation, render_checkpoint
-from .declarative_argparse import Arg, Cmd, Group
 
 
 @authentication_required

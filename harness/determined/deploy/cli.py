@@ -3,7 +3,7 @@ import warnings
 from typing import List, Union
 
 from determined import __version__
-from determined.cli.declarative_argparse import Arg, Cmd, add_args
+from determined.common.declarative_argparse import Arg, Cmd, add_args
 
 from .aws.cli import args_description as aws_args_description
 from .gcp.cli import args_description as gcp_args_description

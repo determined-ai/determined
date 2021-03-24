@@ -1,7 +1,7 @@
 import argparse
 from typing import Callable, Dict
 
-from determined.cli.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd
 from determined.deploy.local import cluster_utils
 
 
