@@ -1,71 +1,61 @@
 import { Select } from 'antd';
 import { LabeledValue, SelectValue } from 'antd/es/select';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+
+import { ALL_VALUE } from 'types';
+import { clone, isObject } from 'utils/data';
 
 import SelectFilter, { Props as SelectFilterProps } from './SelectFilter';
 
-const ALL_VALUE = 'All';
-
 const { Option } = Select;
 
-const MultiSelect: React.FC<SelectFilterProps> = (
-  { children, onChange, value, ...props }: SelectFilterProps,
-) => {
+const MultiSelect: React.FC<SelectFilterProps> = ({ onChange, value, ...props }) => {
+  const values = useMemo(() => {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [ value ];
+  }, [ value ]);
 
-  const handleSelect = useCallback((selectedValue: SelectValue, option) => {
+  const handleSelect = useCallback((selected: SelectValue, option) => {
     if (!onChange) return;
 
-    if (selectedValue === ALL_VALUE) {
+    if (selected === ALL_VALUE) {
       onChange([], option);
-      if (document && document.activeElement) {
-        (document.activeElement as HTMLElement).blur();
-      }
-      return;
-    }
-
-    const newValue = Array.isArray(value) ? [ ...value ] : [];
-    if (typeof selectedValue === 'object') {
-      if (newValue.indexOf((selectedValue as LabeledValue).value) === -1) {
-        newValue.push((selectedValue as LabeledValue).value);
-      }
+      if (document.activeElement) (document.activeElement as HTMLElement).blur();
     } else {
-      if (newValue.indexOf(selectedValue) === -1) {
-        newValue.push(selectedValue);
-      }
-    }
-    onChange(newValue as SelectValue, option);
-  }, [ onChange, value ]);
+      const newValue = clone(values);
+      const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
 
-  const handleDeselect = useCallback((selectedValue: SelectValue, option) => {
+      if (!newValue.includes(selectedValue)) newValue.push(selectedValue);
+
+      onChange(newValue as SelectValue, option);
+    }
+  }, [ onChange, values ]);
+
+  const handleDeselect = useCallback((selected: SelectValue, option) => {
     if (!onChange) return;
 
-    let newValue = Array.isArray(value) ? [ ...value ] : [];
-    if (typeof selectedValue === 'object') {
-      newValue = newValue.filter((item) => item !== (selectedValue as LabeledValue).value);
-    } else {
-      newValue = newValue.filter((item) => item !== selectedValue);
-    }
+    const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;
+    const newValue = (clone(values) as SelectValue[]).filter(item => item !== selectedValue);
 
     onChange(newValue as SelectValue, option);
-  }, [ onChange, value ]);
+  }, [ onChange, values ]);
 
-  return <SelectFilter
-    disableTags
-    dropdownMatchSelectWidth={200}
-    mode="multiple"
-    placeholder={'All'}
-    showArrow
-    style={{ width: 130 }}
-    value={value}
-    onDeselect={handleDeselect}
-    onSelect={handleSelect}
-    {...props}
-  >
-    <Option key={ALL_VALUE} value={ALL_VALUE}>
-      {ALL_VALUE}
-    </Option>
-    {children}
-  </SelectFilter>;
+  return (
+    <SelectFilter
+      disableTags
+      dropdownMatchSelectWidth={200}
+      mode="multiple"
+      placeholder={ALL_VALUE}
+      showArrow
+      style={{ width: 130 }}
+      value={value}
+      onDeselect={handleDeselect}
+      onSelect={handleSelect}
+      {...props}>
+      <Option value={ALL_VALUE}>{ALL_VALUE}</Option>
+      {props.children}
+    </SelectFilter>
+  );
 };
 
 export default MultiSelect;
