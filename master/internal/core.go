@@ -247,16 +247,8 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", "text/csv")
 
 	csvWriter := csv.NewWriter(c.Response())
-	formatTimestamp := func(ts *timestamppb.Timestamp) string {
-		if ts == nil {
-			return ""
-		}
-		return ts.AsTime().Format("2006-01-02")
-	}
 
-	header := []string{
-		"aggregation_type", "aggregation_key", "date", "seconds",
-	}
+	header := []string{"aggregation_type", "aggregation_key", "date", "seconds"}
 	if err := csvWriter.Write(header); err != nil {
 		return err
 	}
@@ -273,10 +265,7 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_LABEL:
 			aggType = "label"
 		}
-		fields := []string{
-			aggType, entry.AggregationKey, formatTimestamp(entry.Date),
-			fmt.Sprintf("%f", entry.Seconds),
-		}
+		fields := []string{aggType, entry.AggregationKey, entry.Date, fmt.Sprintf("%f", entry.Seconds)}
 		if err := csvWriter.Write(fields); err != nil {
 			return err
 		}
