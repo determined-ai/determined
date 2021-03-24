@@ -10,7 +10,7 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
 
 
-class TestPyTorchTrial:
+class TestLightningAdapter:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
         # but has been tested with this random seed.  If changing this
@@ -49,7 +49,6 @@ class TestPyTorchTrial:
         class OneVarLA(la_model.OneVarTrial):
             def __init__(self, context):
                 super().__init__(context, OneVarLM)
-
 
         def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
