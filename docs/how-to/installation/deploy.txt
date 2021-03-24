@@ -1,8 +1,8 @@
 .. _install-using-deploy:
 
-#####################################
+#########################################
  Install Determined Using ``det deploy``
-#####################################
+#########################################
 
 This document shows how to deploy Determined locally or in a production
 cluster using the ``det deploy`` command-line tool, which automates the
