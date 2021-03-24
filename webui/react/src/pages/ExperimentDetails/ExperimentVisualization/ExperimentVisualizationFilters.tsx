@@ -2,12 +2,13 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
+import HpSelectFilter from 'components/HpSelectFilter';
 import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import MultiSelect from 'components/MultiSelect';
 import RadioGroup from 'components/RadioGroup';
 import SelectFilter from 'components/SelectFilter';
-import { ExperimentVisualizationType, MetricName } from 'types';
+import { ExperimentVisualizationType, HpImportance, MetricName } from 'types';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
@@ -36,6 +37,7 @@ interface Props {
   batches: number[];
   filters: VisualizationFilters;
   fullHParams: string[];
+  hpImportance?: HpImportance;
   metrics: MetricName[];
   onChange?: (filters: VisualizationFilters) => void;
   onMetricChange?: (metric: MetricName) => void;
@@ -84,6 +86,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   batches,
   filters,
   fullHParams,
+  hpImportance,
   metrics,
   onChange,
   onMetricChange,
@@ -207,12 +210,12 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           onChange={handleMetricChange} />
       )}
       {showHParams && (
-        <MultiSelect
+        <HpSelectFilter
+          fullHParams={fullHParams}
+          hpImportance={hpImportance}
           label="HP"
           value={localFilters.hParams}
-          onChange={handleHParamChange}>
-          {fullHParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
-        </MultiSelect>
+          onChange={handleHParamChange} />
       )}
       {showViews && (
         <RadioGroup
