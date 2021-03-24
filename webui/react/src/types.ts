@@ -200,6 +200,9 @@ interface DataLayer {
   type: string;
 }
 
+export type HpImportance = Record<string, number>;
+export type HpImportanceMap = Record<string, HpImportance>;
+
 export enum ExperimentHyperParamType {
   Categorical = 'categorical',
   Constant = 'const',
@@ -354,8 +357,8 @@ export interface TrialPagination extends WithPagination {
   trials: TrialDetails[];
 }
 
-type HyperparameterValue = number | string | boolean | RawJson
-export type TrialHyperParameters = Record<string, HyperparameterValue>
+type HpValue = number | string | boolean | RawJson
+export type TrialHyperParameters = Record<string, HpValue>
 
 export interface TrialItem extends StartEndTimes {
   bestAvailableCheckpoint?: CheckpointWorkload;
@@ -444,7 +447,7 @@ export type RecentEvent = {
   };
 };
 
-export const ALL_VALUE = 'all';
+export const ALL_VALUE = 'All';
 
 export type AnyTask = CommandTask | ExperimentTask;
 export type RecentTask = AnyTask & RecentEvent;
