@@ -15,9 +15,9 @@ import tabulate
 
 import determined.common
 from determined.cli import checkpoint, render
-from determined.cli.declarative_argparse import Arg, Cmd, Group
 from determined.common import api, constants, context, yaml
 from determined.common.api.authentication import authentication_required
+from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
 from .checkpoint import render_checkpoint
