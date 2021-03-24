@@ -1,16 +1,14 @@
 import { Alert } from 'antd';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
 import Grid, { GridMode } from 'components/Grid';
-import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ScatterPlot from 'components/ScatterPlot';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
-import useStorage from 'hooks/useStorage';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -32,6 +30,7 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
+  selectedView: ViewType;
 }
 
 interface HpData {
@@ -42,12 +41,14 @@ interface HpData {
   trialIds: number[];
 }
 
+enum ViewType {
+  Grid = 'grid',
+  List = 'list',
+}
+
 const generateHpKey = (hParam1: string, hParam2: string): string => {
   return `${hParam1}:${hParam2}`;
 };
-
-const STORAGE_PATH = 'experiment-visualization';
-const STORAGE_VIEW_KEY = 'grid-list-view';
 
 const HpHeatMaps: React.FC<Props> = ({
   experiment,
@@ -57,18 +58,16 @@ const HpHeatMaps: React.FC<Props> = ({
   selectedBatchMargin,
   selectedHParams,
   selectedMetric,
+  selectedView,
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
-  const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
-  const defaultView = storage.get<GridListView>(STORAGE_VIEW_KEY) || GridListView.Grid;
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpData>();
   const [ pageError, setPageError ] = useState<Error>();
-  const [ selectedView, setSelectedView ] = useState(defaultView);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
-  const isListView = selectedView === GridListView.List;
+  const isListView = selectedView === ViewType.List;
 
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric.type === MetricType.Validation &&
@@ -81,11 +80,6 @@ const HpHeatMaps: React.FC<Props> = ({
   const colorScale = useMemo(() => {
     return getColorScale(chartData?.metricRange, smallerIsBetter);
   }, [ chartData, smallerIsBetter ]);
-
-  const handleViewChange = useCallback((view: GridListView) => {
-    storage.set(STORAGE_VIEW_KEY, view);
-    setSelectedView(view);
-  }, [ storage ]);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -225,11 +219,9 @@ const HpHeatMaps: React.FC<Props> = ({
     <div className={css.base} ref={baseRef}>
       <Section
         bodyBorder
-        filters={filters}
-        id="hp-visualization"
-        noBodyPadding
-        options={<GridListRadioGroup value={selectedView} onChange={handleViewChange} />}
-        title="HP Heat Maps">
+        bodyNoPadding
+        bodyScroll
+        filters={filters}>
         <div className={css.container}>{content}</div>
       </Section>
     </div>

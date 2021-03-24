@@ -4,10 +4,7 @@
 
   & > * {
     outline: 0.1rem solid var(--theme-colors-monochrome-12);
+    position: relative;
     z-index: 0;
-  }
-  & > *:hover {
-    outline-color: var(--theme-colors-action-normal);
-    z-index: 1;
   }
 }

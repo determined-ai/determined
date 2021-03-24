@@ -1,17 +1,26 @@
 .base {
+  height: 100%;
+  
   .container {
-    min-height: 40rem;
+    display: inline-flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 20rem;
+    width: 100%;
   }
   .container > [class*=Message_base] {
     height: 40rem;
   }
   .charts {
+    flex-grow: 1;
+    height: 100%;
     overflow: auto;
-    padding: var(--theme-sizes-layout-large);
-    position: relative;
+    width: 100%;
   }
   .legend {
     border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    flex-shrink: 0;
     padding: var(--theme-sizes-layout-large);
+    width: 100%;
   }
 }

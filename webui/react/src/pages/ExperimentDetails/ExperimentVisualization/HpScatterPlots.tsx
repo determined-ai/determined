@@ -161,7 +161,7 @@ const ScatterPlots: React.FC<Props> = ({
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section bodyBorder filters={filters} id="hp-visualization" title="HP Scatter Plots">
+      <Section bodyBorder bodyNoPadding bodyScroll filters={filters}>
         <div className={css.container}>{content}</div>
       </Section>
     </div>

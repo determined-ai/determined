@@ -1,11 +1,9 @@
-import { Alert, Col, Row, Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
+import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import Link from 'components/Link';
 import Message, { MessageType } from 'components/Message';
-import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
@@ -21,14 +19,12 @@ import { terminalRunStates } from 'utils/types';
 
 import css from './ExperimentVisualization.module.scss';
 import ExperimentVisualizationFilters, {
-  MAX_HPARAM_COUNT, VisualizationFilters,
+  MAX_HPARAM_COUNT, ViewType, VisualizationFilters,
 } from './ExperimentVisualization/ExperimentVisualizationFilters';
 import HpHeatMaps from './ExperimentVisualization/HpHeatMaps';
 import HpParallelCoordinates from './ExperimentVisualization/HpParallelCoordinates';
 import HpScatterPlots from './ExperimentVisualization/HpScatterPlots';
 import LearningCurve from './ExperimentVisualization/LearningCurve';
-
-const { Option } = Select;
 
 interface Props {
   basePath: string;
@@ -48,12 +44,7 @@ const DEFAULT_TYPE_KEY = ExperimentVisualizationType.LearningCurve;
 const DEFAULT_BATCH = 0;
 const DEFAULT_BATCH_MARGIN = 10;
 const DEFAULT_MAX_TRIALS = 100;
-const MENU = [
-  { label: 'Learning Curve', type: ExperimentVisualizationType.LearningCurve },
-  { label: 'HP Parallel Coordinates', type: ExperimentVisualizationType.HpParallelCoordinates },
-  { label: 'HP Scatter Plots', type: ExperimentVisualizationType.HpScatterPlots },
-  { label: 'HP Heat Map', type: ExperimentVisualizationType.HpHeatMap },
-];
+const DEFAULT_VIEW = ViewType.Grid;
 const PAGE_ERROR_MESSAGES = {
   [PageError.MetricBatches]: 'Unable to retrieve experiment batches info.',
   [PageError.MetricNames]: 'Unable to retrieve experiment metric info.',
@@ -90,6 +81,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       hParams: storedFilters?.hParams || fullHParams.current.slice(0, MAX_HPARAM_COUNT),
       maxTrial: storedFilters?.maxTrial || DEFAULT_MAX_TRIALS,
       metric: storedFilters?.metric || searcherMetric.current,
+      view: storedFilters?.view || DEFAULT_VIEW,
     };
   });
   const [ activeMetric, setActiveMetric ] = useState<MetricName>(filters.metric);
@@ -100,13 +92,14 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   const handleFiltersChange = useCallback((filters: VisualizationFilters) => {
     setFilters(filters);
-  }, []);
+    storage.set(STORAGE_FILTERS_KEY, filters);
+  }, [ storage ]);
 
   const handleMetricChange = useCallback((metric: MetricName) => {
     setActiveMetric(metric);
   }, []);
 
-  const handleChartTypeChange = useCallback((type: SelectValue) => {
+  const handleTabChange = useCallback((type: string) => {
     setTypeKey(type as ExperimentVisualizationType);
     history.replace(type === DEFAULT_TYPE_KEY ? basePath : `${basePath}/${type}`);
   }, [ basePath, history ]);
@@ -248,89 +241,59 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Row>
-        <Col
-          lg={{ order: 1, span: 20 }}
-          md={{ order: 1, span: 18 }}
-          sm={{ order: 2, span: 24 }}
-          span={24}
-          xs={{ order: 2, span: 24 }}>
-          {typeKey === ExperimentVisualizationType.LearningCurve && (
-            <LearningCurve
-              experiment={experiment}
-              filters={visualizationFilters}
-              hParams={fullHParams.current}
-              selectedMaxTrial={filters.maxTrial}
-              selectedMetric={filters.metric}
-            />
-          )}
-          {typeKey === ExperimentVisualizationType.HpParallelCoordinates && (
-            <HpParallelCoordinates
-              experiment={experiment}
-              filters={visualizationFilters}
-              hParams={fullHParams.current}
-              selectedBatch={filters.batch}
-              selectedBatchMargin={filters.batchMargin}
-              selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
-            />
-          )}
-          {typeKey === ExperimentVisualizationType.HpScatterPlots && (
-            <HpScatterPlots
-              experiment={experiment}
-              filters={visualizationFilters}
-              hParams={fullHParams.current}
-              selectedBatch={filters.batch}
-              selectedBatchMargin={filters.batchMargin}
-              selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
-            />
-          )}
-          {typeKey === ExperimentVisualizationType.HpHeatMap && (
-            <HpHeatMaps
-              experiment={experiment}
-              filters={visualizationFilters}
-              hParams={fullHParams.current}
-              selectedBatch={filters.batch}
-              selectedBatchMargin={filters.batchMargin}
-              selectedHParams={filters.hParams}
-              selectedMetric={filters.metric}
-            />
-          )}
-        </Col>
-        <Col
-          lg={{ order: 2, span: 4 }}
-          md={{ order: 2, span: 6 }}
-          sm={{ order: 1, span: 24 }}
-          span={24}
-          xs={{ order: 1, span: 24 }}>
-          <div className={css.inspector}>
-            <div className={css.menu}>
-              {MENU.map(item => {
-                const linkClasses = [ css.link ];
-                if (typeKey === item.type) linkClasses.push(css.active);
-                return (
-                  <Link
-                    className={linkClasses.join(' ')}
-                    key={item.type}
-                    path={`${basePath}/${item.type}`}
-                    onClick={() => handleChartTypeChange(item.type)}>{item.label}</Link>
-                );
-              })}
-            </div>
-            <div className={css.mobileMenu}>
-              <SelectFilter
-                label="Chart Type"
-                value={typeKey}
-                onChange={handleChartTypeChange}>
-                {MENU.map(item => (
-                  <Option key={item.type} value={item.type}>{item.label}</Option>
-                ))}
-              </SelectFilter>
-            </div>
-          </div>
-        </Col>
-      </Row>
+      <Tabs activeKey={typeKey} className={css.base} type="card" onChange={handleTabChange}>
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.LearningCurve}
+          tab="Learning Curve">
+          <LearningCurve
+            experiment={experiment}
+            filters={visualizationFilters}
+            hParams={fullHParams.current}
+            selectedMaxTrial={filters.maxTrial}
+            selectedMetric={filters.metric}
+          />
+        </Tabs.TabPane>
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.HpParallelCoordinates}
+          tab="HP Parallel Coordinates">
+          <HpParallelCoordinates
+            experiment={experiment}
+            filters={visualizationFilters}
+            hParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
+          />
+        </Tabs.TabPane>
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.HpScatterPlots}
+          tab="HP Scatter Plots">
+          <HpScatterPlots
+            experiment={experiment}
+            filters={visualizationFilters}
+            hParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
+          />
+        </Tabs.TabPane>
+        <Tabs.TabPane
+          key={ExperimentVisualizationType.HpHeatMap}
+          tab="HP Heat Map">
+          <HpHeatMaps
+            experiment={experiment}
+            filters={visualizationFilters}
+            hParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
+            selectedView={filters.view}
+          />
+        </Tabs.TabPane>
+      </Tabs>
     </div>
   );
 };
