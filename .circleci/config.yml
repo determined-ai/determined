@@ -4,7 +4,6 @@ version: 2.1
 orbs:
   win: circleci/windows@2.3.0
   slack: circleci/slack@3.4.2
-  gke: circleci/gcp-gke@1.1.0
   kubernetes: circleci/kubernetes@0.11.0
   helm: circleci/helm@1.2.0
   gcloud: circleci/gcp-cli@2.1.0
@@ -500,24 +499,40 @@ commands:
         type: string
       node-locations:
         type: string
+      gcloud-service-key:
+        default: GCLOUD_SERVICE_KEY
+        description: The gcloud service key
+        type: env_var_name
+      google-compute-zone:
+        default: GOOGLE_COMPUTE_ZONE
+        description: The Google compute zone to connect with via the gcloud CLI
+        type: env_var_name
+      google-project-id:
+        default: GOOGLE_PROJECT_ID
+        description: The Google project ID to connect with via the gcloud CLI
+        type: env_var_name
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
-      - gke/create-cluster:
-          cluster: ${CLUSTER_ID}
-          perform-login: true
-          install-kubectl: true
-          additional-args: |
-            --cluster-version=<<parameters.gke-version>> \
-            --machine-type=<<parameters.machine-type>> \
-            --num-nodes=<<parameters.num-machines>> \
-            --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> \
-            --region=<<parameters.region>> \
-            --node-locations=<<parameters.node-locations>> \
-            --scopes=storage-rw \
-            --image-type=UBUNTU
-      - kubernetes/create-or-update-resource:
-          resource-file-path: .circleci/scripts/gpu-daemonset.yaml
+      - gcloud/install:
+          version: "319.0.0"
+      - kubernetes/install-kubectl
+      - gcloud/initialize:
+          gcloud-service-key: <<parameters.gcloud-service-key>>
+          google-compute-zone: <<parameters.google-compute-zone>>
+          google-project-id: <<parameters.google-project-id>>
+      - run:
+          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1
+          name: Create GKE cluster
+      - run:
+          command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+          name: Create GPU node pool
+      - run:
+          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
+          name: Get Kubeconfig
+      - run:
+          command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+          name: Install NVIDIA drivers
       - helm/install-helm-chart:
           chart: helm/charts/determined
           helm-version: v3.2.4
@@ -551,9 +566,6 @@ commands:
         type: integer
       node-locations:
         type: string
-      release-channel:
-        type: string
-        default: rapid
       gcloud-service-key:
         default: GCLOUD_SERVICE_KEY
         description: The gcloud service key
@@ -577,14 +589,14 @@ commands:
           google-compute-zone: <<parameters.google-compute-zone>>
           google-project-id: <<parameters.google-project-id>>
       - run:
-          command: gcloud beta container clusters create ${CLUSTER_ID} --addons=HorizontalPodAutoscaling,HttpLoadBalancing,Istio,CloudRun,NodeLocalDNS --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --zone=us-central1-c --release-channel rapid --node-locations=us-central1-c --subnetwork=default --enable-stackdriver-kubernetes --scopes storage-rw,cloud-platform --num-nodes 1
+          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --zone=us-central1-c --node-locations=us-central1-c --scopes storage-rw,cloud-platform --num-nodes 1
           name: Create GKE cluster
+      - run:
+          command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --zone <<parameters.node-locations>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+          name: Create GPU node pool
       - run:
           command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --zone <<parameters.node-locations>>
           name: Get Kubeconfig
-      - run:
-          command: gcloud container node-pools create accel --project determined-ai --zone <<parameters.node-locations>> --cluster ${CLUSTER_ID} --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --enable-autorepair --disk-size=100 --scopes cloud-platform --verbosity error
-          name: Create GPU node pool
       - run:
           command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
           name: Install NVIDIA drivers
@@ -1379,7 +1391,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.17.15-gke.800"
+        default: "1.18.15-gke.1501"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1449,7 +1461,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.12-gke.1205"
+        default: "1.18.15-gke.1501"
       machine-type:
         type: string
         default: "a2-highgpu-1g"
