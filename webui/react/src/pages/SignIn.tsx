@@ -39,7 +39,7 @@ const SignIn: React.FC = () => {
    * and this will pick up that auth and automatically redirect them into
    * their previous app.
    */
-  usePolling(useAuthCheck(canceler), { delay: 1000 });
+  usePolling(useAuthCheck(canceler), { interval: 1000 });
 
   /*
    * Check for when `isAuthenticated` becomes true and redirect

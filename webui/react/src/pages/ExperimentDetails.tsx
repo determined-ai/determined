@@ -1,20 +1,19 @@
 import { Space, Tabs } from 'antd';
-import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
-import CreateExperimentModal from 'components/CreateExperimentModal';
+import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
-import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
-import { paths } from 'routes/utils';
+import { paths, routeAll } from 'routes/utils';
 import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'services/api';
+import { createExperiment } from 'services/api';
 import { isAborted } from 'services/utils';
-import { ExperimentBase, ExperimentVisualizationType, ValidationHistory } from 'types';
+import { ExperimentBase, ExperimentVisualizationType, RawJson, ValidationHistory } from 'types';
 import { clone, isEqual } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
@@ -43,12 +42,13 @@ const ExperimentDetails: React.FC = () => {
   const history = useHistory();
   const defaultTabKey = tab && TAB_KEYS.indexOf(tab) ? tab : DEFAULT_TAB_KEY;
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
-  const [ forkModalVisible, setForkModalVisible ] = useState(false);
-  const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
+  const [ forkModalConfig, setForkModalConfig ] = useState<RawJson>();
+  const [ forkModalError, setForkModalError ] = useState<string>();
+  const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
 
   const id = parseInt(experimentId);
   const basePath = paths.experimentDetails(experimentId);
@@ -59,16 +59,10 @@ const ExperimentDetails: React.FC = () => {
         getExperimentDetails({ id }, { signal: canceler.signal }),
         getExpValidationHistory({ id }, { signal: canceler.signal }),
       ]);
-      if (!isEqual(experimentData, experiment)) {
-        setExperiment(experimentData);
-      }
-      if (!isEqual(validationHistory, valHistory)) {
-        setValHistory(validationHistory);
-      }
+      if (!isEqual(experimentData, experiment)) setExperiment(experimentData);
+      if (!isEqual(validationHistory, valHistory)) setValHistory(validationHistory);
     } catch (e) {
-      if (!pageError && !isAborted(e)) {
-        setPageError(e);
-      }
+      if (!pageError && !isAborted(e)) setPageError(e);
     }
   }, [
     experiment,
@@ -78,21 +72,7 @@ const ExperimentDetails: React.FC = () => {
     valHistory,
   ]);
 
-  const setFreshForkConfig = useCallback(() => {
-    if (!experiment?.configRaw) return;
-    // do not reset the config if the modal is open
-    if (forkModalVisible) return;
-    const prefix = 'Fork of ';
-    const rawConfig = clone(experiment.configRaw);
-    rawConfig.description = prefix + rawConfig.description;
-    upgradeConfig(rawConfig);
-    setForkModalConfig(yaml.safeDump(rawConfig));
-  }, [ experiment?.configRaw, forkModalVisible ]);
-
-  const handleForkModalCancel = useCallback(() => {
-    setForkModalVisible(false);
-    setFreshForkConfig();
-  }, [ setFreshForkConfig ]);
+  const { startPolling, stopPolling } = usePolling(fetchExperimentDetails);
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);
@@ -100,10 +80,46 @@ const ExperimentDetails: React.FC = () => {
   }, [ basePath, history ]);
 
   const showForkModal = useCallback((): void => {
-    setForkModalVisible(true);
-  }, [ setForkModalVisible ]);
+    if (experiment?.configRaw) {
+      const rawConfig: RawJson = clone(experiment.configRaw);
+      rawConfig.description = `Fork of ${rawConfig.description}`;
+      upgradeConfig(rawConfig);
+      setForkModalConfig(rawConfig);
+    }
+    setIsForkModalVisible(true);
+  }, [ experiment?.configRaw ]);
 
-  const stopPolling = usePolling(fetchExperimentDetails);
+  const handleForkModalCancel = useCallback(() => {
+    setIsForkModalVisible(false);
+  }, []);
+
+  const handleForkModalSubmit = useCallback(async (newConfig: string) => {
+    try {
+      const { id: configId } = await createExperiment({
+        experimentConfig: newConfig,
+        parentId: id,
+      });
+
+      // Reset experiment state and start polling for newly forked experiment.
+      setIsForkModalVisible(false);
+      setExperiment(undefined);
+
+      // Route to newly forkex experiment.
+      routeAll(paths.experimentDetails(configId));
+
+      // Add a slight delay to allow polling function to update.
+      setTimeout(() => startPolling(), 100);
+    } catch (e) {
+      setForkModalError(e.response?.data?.message || 'Unable to create experiment.');
+      let errorMessage = 'Unable to fork experiment with the provide config.';
+      if (e.name === 'YAMLException') {
+        errorMessage = e.message;
+      } else if (e.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      }
+      setForkModalError(errorMessage);
+    }
+  }, [ id, startPolling ]);
 
   useEffect(() => {
     if (tab && (!TAB_KEYS.includes(tab) || tab === DEFAULT_TAB_KEY)) {
@@ -120,19 +136,6 @@ const ExperimentDetails: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
-
-  useEffect(() => {
-    try {
-      setFreshForkConfig();
-    } catch (e) {
-      handleError({
-        error: e,
-        message: 'failed to load experiment config',
-        type: ErrorType.ApiBadResponse,
-      });
-      setForkModalConfig('failed to load experiment config');
-    }
-  }, [ setFreshForkConfig ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Experiment ID ${experimentId}`} />;
@@ -181,13 +184,13 @@ const ExperimentDetails: React.FC = () => {
       </Tabs>
       <CreateExperimentModal
         config={forkModalConfig}
-        okText="Fork"
-        parentId={id}
+        error={forkModalError}
         title={`Fork Experiment ${id}`}
-        visible={forkModalVisible}
+        type={CreateExperimentType.Fork}
+        visible={isForkModalVisible}
         onCancel={handleForkModalCancel}
-        onConfigChange={setForkModalConfig}
-        onVisibleChange={setForkModalVisible} />
+        onOk={handleForkModalSubmit}
+      />
     </Page>
   );
 };

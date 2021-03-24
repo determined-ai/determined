@@ -1,14 +1,13 @@
-import { Button, Col, Form, Input, Modal, Row, Select, Tooltip } from 'antd';
+import { Button, Col, Row, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import axios from 'axios';
-import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { useHistory } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
-import CreateExperimentModal from 'components/CreateExperimentModal';
+import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Message, { MessageType } from 'components/Message';
@@ -57,17 +56,6 @@ enum TrialInfoFilter {
   CheckpointOrValidation = 'Has Checkpoint or Validation',
 }
 
-const getTrialLength = (config?: RawJson): [string, number] | undefined => {
-  if (!config) return undefined;
-  const entries = Object.entries(config?.searcher.max_length || {});
-  return entries[0] as [string, number] || [ 'batches', 100 ];
-};
-
-const setTrialLength = (experimentConfig: RawJson, length: number): void => {
-  const trialLength = getTrialLength(experimentConfig);
-  if (trialLength) experimentConfig.searcher.max_length = { [trialLength[0]]: length } ;
-};
-
 const trialContinueConfig = (
   experimentConfig: RawJson,
   trialHparams: TrialHyperParameters,
@@ -104,14 +92,7 @@ const TrialDetailsComp: React.FC = () => {
   );
   const [ pageSize, setPageSize ] = useState(initLimit);
   const [ showFilter, setShowFilter ] = useState(initFilter);
-  const [ contModalVisible, setContModalVisible ] = useState(false);
-  const [ contFormVisible, setContFormVisible ] = useState(false);
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-  const [ contModalConfig, setContModalConfig ] = useState('Loading');
-  const [ contMaxLength, setContMaxLength ] = useState<number>();
-  const [ contDescription, setContDescription ] = useState<string>('Loading');
-  const [ contError, setContError ] = useState<string>();
-  const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
@@ -124,11 +105,11 @@ const TrialDetailsComp: React.FC = () => {
     isLoading: true,
     source,
   });
+  const [ contModalConfig, setContModalConfig ] = useState<RawJson>();
+  const [ contModalError, setContModalError ] = useState<string>();
+  const [ isContModalVisible, setIsContModalVisible ] = useState(false);
 
   const trial = trialDetails.data;
-  const hparams = trial?.hparams;
-  const experimentId = trial?.experimentId;
-  const experimentConfig = experiment?.config;
   const storageMetricsPath = experiment ? `experiments/${experiment.id}` : undefined;
   const storageChartMetricsKey =
     storageMetricsPath && `${storageMetricsPath}/${STORAGE_CHART_METRICS_KEY}`;
@@ -145,25 +126,14 @@ const TrialDetailsComp: React.FC = () => {
     trial?.workloads || [],
   ), [ trial?.workloads ]);
 
-  const upgradedConfig = useMemo(() => {
-    if (!experiment?.configRaw) return;
-    const configClone = clone(experiment.configRaw);
-    upgradeConfig(configClone);
-    return configClone;
-  }, [ experiment?.configRaw ]);
-
-  const trialLength = useMemo(() => {
-    return getTrialLength(upgradedConfig);
-  }, [ upgradedConfig ]);
-
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
-      if (record.checkpoint && hasCheckpointStep(record)) {
+      if (trial && record.checkpoint && hasCheckpointStep(record)) {
         const checkpoint = {
           ...record.checkpoint,
           batch: record.checkpoint.numBatches + record.checkpoint.priorBatchesProcessed,
-          experimentId,
-          trialId: trialId,
+          experimentId: trial?.experimentId,
+          trialId: trial?.id,
         };
         return (
           <Tooltip title="View Checkpoint">
@@ -185,7 +155,7 @@ const TrialDetailsComp: React.FC = () => {
       return metricCol;
     };
 
-    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
+    const { metric, smallerIsBetter } = experiment?.config?.searcher || {};
     const newColumns = [ ...defaultColumns ].map(column => {
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
       return column;
@@ -206,7 +176,7 @@ const TrialDetailsComp: React.FC = () => {
     });
 
     return newColumns;
-  }, [ experimentConfig, experimentId, metrics, trialId ]);
+  }, [ experiment?.config, metrics, trial ]);
 
   const workloadSteps = useMemo(() => {
     const data = trial?.workloads || [];
@@ -225,18 +195,18 @@ const TrialDetailsComp: React.FC = () => {
   }, [ showFilter, trial?.workloads ]);
 
   const fetchExperimentDetails = useCallback(async () => {
-    if (!experimentId) return;
+    if (!trial) return;
 
     try {
       const response = await getExperimentDetails(
-        { id: experimentId },
+        { id: trial.experimentId },
         { signal: canceler.signal },
       );
       setExperiment(response);
 
       // Experiment id does not exist in route, reroute to the one with it
       if (!experimentIdParam) {
-        history.replace(paths.trialDetails(trialId, experimentId));
+        history.replace(paths.trialDetails(trial.id, trial.experimentId));
       }
 
       // Default to selecting config search metric only.
@@ -262,13 +232,12 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [
     canceler,
-    experimentId,
     experimentIdParam,
     history,
     metricNames,
     storage,
     storageTableMetricsKey,
-    trialId,
+    trial,
   ]);
 
   const fetchTrialDetails = useCallback(async () => {
@@ -282,103 +251,58 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [ canceler, trialDetails.error, trialId ]);
 
-  const handleActionClick = useCallback((action: TrialAction) => (): void => {
-    switch (action) {
-      case TrialAction.Continue:
-        setContFormVisible(true);
-        break;
+  const { stopPolling } = usePolling(fetchTrialDetails);
+
+  const showContModal = useCallback(() => {
+    if (experiment?.configRaw && trial) {
+      const rawConfig = trialContinueConfig(clone(experiment.configRaw), trial.hparams, trial.id);
+      rawConfig.description = [
+        `Continuation of trial ${trial.id},`,
+        `experiment ${trial.experimentId} (${rawConfig.description})`,
+      ].join(' ');
+      upgradeConfig(rawConfig);
+      setContModalConfig(rawConfig);
     }
-  }, []);
-
-  const setFreshContinueConfig = useCallback(() => {
-    if (!upgradedConfig || !hparams) return;
-    // do not reset the config if the modal is open
-    if (contModalVisible || contFormVisible) return;
-    const config = clone(upgradedConfig);
-    const newDescription = `Continuation of trial ${trialId}, experiment` +
-      ` ${experimentId} (${config.description})`;
-    setContDescription(newDescription);
-    const maxLength = trialLength && trialLength[1];
-    if (maxLength !== undefined) setContMaxLength(maxLength);
-
-    config.description = newDescription;
-    if (maxLength) setTrialLength(config, maxLength);
-    const newConfig = trialContinueConfig(config, hparams, trialId);
-    setContModalConfig(yaml.safeDump(newConfig));
-  }, [
-    contFormVisible,
-    contModalVisible,
-    upgradedConfig,
-    experimentId,
-    hparams,
-    trialId,
-    trialLength,
-  ]);
-
-  const handleContFormCancel = useCallback(() => {
-    setContFormVisible(false);
-    setFreshContinueConfig();
-    form.resetFields();
-  }, [ setFreshContinueConfig, form ]);
+    setIsContModalVisible(true);
+  }, [ experiment?.configRaw, trial ]);
 
   const handleContModalCancel = useCallback(() => {
-    setContModalVisible(false);
-    setFreshContinueConfig();
-  }, [ setFreshContinueConfig ]);
+    setIsContModalVisible(false);
+  }, []);
 
-  const updateStatesFromForm = useCallback(() => {
-    if (!hparams || !trialId) return;
-    const formValues = form.getFieldsValue();
-    try {
-      const expConfig = yaml.safeLoad(contModalConfig) as RawJson;
-      expConfig.description = formValues.description;
-      setTrialLength(expConfig, parseInt(formValues.maxLength));
-      const updateConfig = trialContinueConfig(expConfig, hparams, trialId);
-      setContModalConfig(yaml.safeDump(updateConfig));
-      return updateConfig;
-    } catch (e) {
-      handleError({
-        error: e,
-        message: 'Failed to parse experiment config',
-        publicMessage: 'Please check the experiment config. \
-If the problem persists please contact support.',
-        publicSubject: 'Failed to parse experiment config',
-        silent: false,
-        type: ErrorType.Api,
-      });
-    }
-  }, [ contModalConfig, form, hparams, trialId ]);
+  const handleContModalSubmit = useCallback(async (newConfig: string) => {
+    if (!trial) return;
 
-  const handleFormCreate = useCallback(async () => {
-    if (!experimentId) return;
-    const updatedConfig = updateStatesFromForm();
     try {
       const { id: newExperimentId } = await createExperiment({
-        experimentConfig: JSON.stringify(updatedConfig),
-        parentId: experimentId,
+        experimentConfig: newConfig,
+        parentId: trial.experimentId,
       });
+      setIsContModalVisible(false);
       routeAll(paths.experimentDetails(newExperimentId));
     } catch (e) {
       handleError({
         error: e,
         message: 'Failed to continue trial',
-        publicMessage: 'Check the experiment config. \
-If the problem persists please contact support.',
+        publicMessage: [
+          'Check the experiment config.',
+          'If the problem persists please contact support.',
+        ].join(' '),
         publicSubject: 'Failed to continue trial',
         silent: false,
         type: ErrorType.Api,
       });
-      setContError(e.response?.data?.message || e.message);
-      setContModalVisible(true);
-    } finally {
-      setContFormVisible(false);
+      setContModalError(e.response?.data?.message || e.message);
     }
-  }, [ experimentId, updateStatesFromForm ]);
+  }, [ trial ]);
 
-  const handleConfigChange = useCallback((config: string) => {
-    setContModalConfig(config);
-    setContError(undefined);
-  }, []);
+  const handleActionClick = useCallback((action: TrialAction) => (): void => {
+    switch (action) {
+      case TrialAction.Continue:
+        showContModal();
+        break;
+    }
+  }, [ showContModal ]);
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
     event.stopPropagation();
@@ -399,18 +323,10 @@ If the problem persists please contact support.',
     if (storageTableMetricsKey) storage.set(storageTableMetricsKey, value);
   }, [ storage, storageTableMetricsKey ]);
 
-  const handleEditContConfig = useCallback(() => {
-    updateStatesFromForm();
-    setContFormVisible(false);
-    setContModalVisible(true);
-  }, [ updateStatesFromForm ]);
-
   const handleTableChange = useCallback((tablePagination) => {
     storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
     setPageSize(tablePagination.pageSize);
   }, [ storage ]);
-
-  const stopPolling = usePolling(fetchTrialDetails);
 
   useEffect(() => {
     fetchExperimentDetails();
@@ -429,19 +345,6 @@ If the problem persists please contact support.',
     };
   }, [ canceler, source ]);
 
-  useEffect(() => {
-    try {
-      setFreshContinueConfig();
-    } catch (e) {
-      handleError({
-        error: e,
-        message: 'failed to load experiment config',
-        type: ErrorType.ApiBadResponse,
-      });
-      setContModalConfig('failed to load experiment config');
-    }
-  }, [ setFreshContinueConfig ]);
-
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
   if (trialDetails.error !== undefined) {
     const message = isNotFound(trialDetails.error) ?
@@ -452,7 +355,7 @@ If the problem persists please contact support.',
       title={message}
       type={MessageType.Warning} />;
   }
-  if (!trial || !experiment || !upgradedConfig) return <Spinner />;
+  if (!trial || !experiment) return <Spinner />;
 
   const options = (
     <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
@@ -502,7 +405,7 @@ If the problem persists please contact support.',
             defaultMetricNames={defaultMetrics}
             metricNames={metricNames}
             storageKey={storageChartMetricsKey}
-            validationMetric={experimentConfig?.searcher.metric}
+            validationMetric={experiment?.config?.searcher.metric}
             workloads={trial?.workloads} />
         </Col>
         <Col span={24}>
@@ -524,57 +427,21 @@ If the problem persists please contact support.',
           </Section>
         </Col>
       </Row>
-      {activeCheckpoint && experimentConfig && <CheckpointModal
+      {activeCheckpoint && experiment?.config && <CheckpointModal
         checkpoint={activeCheckpoint}
-        config={experimentConfig}
+        config={experiment?.config}
         show={showCheckpoint}
         title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
         onHide={handleCheckpointDismiss} />}
       <CreateExperimentModal
         config={contModalConfig}
-        error={contError}
-        okText="Continue Trial"
-        parentId={experiment.id}
+        error={contModalError}
         title={`Continue Trial ${trialId}`}
-        visible={contModalVisible}
+        type={CreateExperimentType.ContinueTrial}
+        visible={isContModalVisible}
         onCancel={handleContModalCancel}
-        onConfigChange={handleConfigChange}
-        onVisibleChange={setContModalVisible} />
-      <Modal
-        footer={<>
-          <Button onClick={handleEditContConfig}>Edit Full Config</Button>
-          <Button type="primary" onClick={handleFormCreate}>Continue Trial</Button>
-        </>}
-        style={{ minWidth: '60rem' }}
-        title={`Continue Trial ${trialId} of Experiment ${experimentId}`}
-        visible={contFormVisible}
-        onCancel={handleContFormCancel}
-      >
-        <Form
-          form={form}
-          initialValues={{ description: contDescription, maxLength: contMaxLength }}
-          labelCol={{ span: 8 }}
-          name="basic"
-        >
-          <Form.Item
-            label={`Max ${trialLength && trialLength[0]}`}
-            name="maxLength"
-            rules={[ { message: 'Please set max length', required: true } ]}
-          >
-            <Input type="number" />
-          </Form.Item>
-
-          <Form.Item
-            label="Experiment description"
-            name="description"
-            rules={[
-              { message: 'Please set a description for the new experiment', required: true },
-            ]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
+        onOk={handleContModalSubmit}
+      />
     </Page>
   );
 };

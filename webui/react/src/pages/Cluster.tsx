@@ -41,7 +41,7 @@ const Cluster: React.FC = () => {
     setResourcePools(resourcePools);
   }, []);
 
-  usePolling(fetchResourcePools, { delay: 10000 });
+  usePolling(fetchResourcePools, { interval: 10000 });
 
   const cpuContainers = useMemo(() => {
     const tally = {

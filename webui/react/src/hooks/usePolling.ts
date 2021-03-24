@@ -1,18 +1,28 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-const DEFAULT_DELAY = 5000;
-
 type PollingFn = (() => Promise<void>) | (() => void);
-type StopFn = () => void;
 
-interface PollingOptions {
-  delay?: number;
+interface PollingHooks {
+  isPolling: boolean;
+  startPolling: () => void;
+  stopPolling: () => void;
 }
 
-const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): StopFn => {
+interface PollingOptions {
+  interval?: number;
+  runImmediately?: boolean;
+}
+
+const DEFAULT_OPTIONS: PollingOptions = {
+  interval: 5000,
+  runImmediately: true,
+};
+
+const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): PollingHooks => {
   const savedPollingFn = useRef<PollingFn>(pollingFn);
+  const pollingOptions = useRef<PollingOptions>({ ...DEFAULT_OPTIONS, ...options });
   const timer = useRef<NodeJS.Timeout>();
-  const active = useRef(false);
+  const isPolling = useRef(false);
 
   const clearTimer = useCallback(() => {
     if (timer.current) {
@@ -21,42 +31,39 @@ const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): StopF
     }
   }, []);
 
-  const poll = useCallback(async (): Promise<void> => {
-    await savedPollingFn.current();
-
-    if (active.current) {
-      timer.current = setTimeout(() => {
-        timer.current = undefined;
-        poll();
-      }, delay || DEFAULT_DELAY);
-    }
-  }, [ delay ]);
-
-  const startPolling = useCallback(() => {
+  const poll = useCallback(() => {
     clearTimer();
-    active.current = true;
+
+    timer.current = setTimeout(async () => {
+      await savedPollingFn.current();
+      timer.current = undefined;
+      if (isPolling.current) poll();
+    }, pollingOptions.current.interval) as unknown as NodeJS.Timeout;
+  }, [ clearTimer ]);
+
+  const startPolling = useCallback(async () => {
+    isPolling.current = true;
+    if (pollingOptions.current.runImmediately) await savedPollingFn.current();
     poll();
-  }, [ clearTimer, poll ]);
+  }, [ poll ]);
 
   const stopPolling = useCallback(() => {
-    active.current = false;
+    isPolling.current = false;
     clearTimer();
   }, [ clearTimer ]);
 
   // Update polling function if a new one is passed in.
   useEffect(() => {
     savedPollingFn.current = pollingFn;
-    if (!active.current) startPolling();
-  }, [ pollingFn, startPolling ]);
+  }, [ pollingFn ]);
 
   // Start polling when mounted and stop polling when umounted.
   useEffect(() => {
     startPolling();
     return () => stopPolling();
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, []);
+  }, [ startPolling, stopPolling ]);
 
-  return stopPolling;
+  return { isPolling: isPolling.current, startPolling, stopPolling };
 };
 
 export default usePolling;

@@ -173,7 +173,7 @@ const ExperimentOverview: React.FC<Props> = ({
     }
   }, [ experiment.id, canceler, pagination, sorter ]);
 
-  const stopPolling = usePolling(fetchExperimentTrials);
+  const { stopPolling } = usePolling(fetchExperimentTrials);
 
   // Get new trials based on changes to the pagination and sorter.
   useEffect(() => {
