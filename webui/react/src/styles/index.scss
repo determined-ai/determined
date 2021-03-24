@@ -38,6 +38,7 @@ code {
 code.block {
   display: block;
   margin: var(--theme-sizes-layout-medium) 0;
+  overflow-x: scroll;
   padding: var(--theme-sizes-layout-medium);
   white-space: pre;
 }

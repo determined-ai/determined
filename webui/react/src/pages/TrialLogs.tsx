@@ -8,7 +8,7 @@ import Message, { MessageType } from 'components/Message';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
-import { paths } from 'routes/utils';
+import { paths, serverAddress } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
@@ -128,7 +128,8 @@ const TrialLogs: React.FC = () => {
       content: <div>
         We recommend using the Determined CLI to download trial logs:
         <code className="block">
-          det trial logs {trialId} &gt; experiment_{experimentId}_trial_{trialId}_logs.txt
+          det -m {serverAddress()} trial logs {trialId} &gt;
+          experiment_{experimentId}_trial_{trialId}_logs.txt
         </code>
       </div>,
       icon: <ExclamationCircleOutlined />,
