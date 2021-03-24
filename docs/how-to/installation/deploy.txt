@@ -1,7 +1,7 @@
 .. _install-using-deploy:
 
 #####################################
- Install Determined Using det deploy
+ Install Determined Using ``det deploy``
 #####################################
 
 This document shows how to deploy Determined locally or in a production

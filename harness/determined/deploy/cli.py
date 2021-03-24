@@ -10,7 +10,7 @@ from .gcp.cli import args_description as gcp_args_description
 from .local.cli import args_description as local_args_description
 
 args_subs: List[Union[Arg, Cmd]] = [
-    # TODO(ilia): Remove --version flag when det-deploy is deprecated.
+    # TODO(DET-5171): Remove --version flag when det-deploy is deprecated.
     Arg("--version", action="version", version="%(prog)s {}".format(__version__)),
     local_args_description,
     aws_args_description,
