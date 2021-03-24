@@ -12,6 +12,7 @@ from determined.common.api.experiment import (
     follow_test_experiment_logs,
     trial_logs,
 )
+from determined.common.api.profiler import post_trial_profiler_metrics
 from determined.common.api.request import (
     WebSocket,
     add_token_to_headers,

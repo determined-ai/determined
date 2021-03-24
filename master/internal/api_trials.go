@@ -483,6 +483,13 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	_ context.Context,
 	req *apiv1.PostTrialProfilerMetricsBatchRequest,
 ) (*apiv1.PostTrialProfilerMetricsBatchResponse, error) {
+	switch {
+	case req.Batch == nil:
+		return nil, status.Error(codes.InvalidArgument, "missing metrics")
+	case req.Batch.Labels == nil:
+		return nil, status.Error(codes.InvalidArgument, "missing labels")
+	}
+
 	switch exists, err := a.m.db.CheckTrialExists(int(req.Batch.Labels.TrialId)); {
 	case err != nil:
 		return nil, err

@@ -31,6 +31,7 @@ import logging
 import os
 import pathlib
 import sys
+from datetime import datetime
 from typing import Any, Dict, Iterator, Optional
 
 import simplejson
@@ -38,7 +39,7 @@ import simplejson
 import determined as det
 import determined.common
 from determined import gpu, horovod, layers, load, workload
-from determined.common import constants, storage
+from determined.common import api, constants, storage
 
 ENVIRONMENT_VARIABLE_KEYS = {
     "DET_MASTER_ADDR",
@@ -210,6 +211,18 @@ def main() -> None:
         managed_training=True,
         test_mode=False,
         on_cluster=True,
+    )
+
+    api.post_trial_profiler_metrics(
+        env.master_url,
+        [0.1, 0.2],
+        [1, 1],
+        [datetime.utcnow().isoformat() + "Z", datetime.utcnow().isoformat() + "Z"],
+        {
+            "trial_id": os.environ["DET_TRIAL_ID"],
+            "name": "cpu_util",
+            "agent_id": os.environ["DET_AGENT_ID"],
+        },
     )
 
     logging.info(
