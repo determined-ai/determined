@@ -10,16 +10,6 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
 
 
-def fork_trial_override_lm(overrides: dict):
-    new_lm_cls = type("new_lm_cls", (la_model.OneVarLM,), overrides)
-
-    def init(self, context):
-        super(self.__class__, self).__init__(context, new_lm_cls)
-
-    new_trial_cls = type("new_trial", (la_model.OneVarTrial,), {"__init__": init})
-    return new_trial_cls
-
-
 class TestPyTorchTrial:
     def setup_method(self) -> None:
         # This training setup is not guaranteed to converge in general,
@@ -48,26 +38,25 @@ class TestPyTorchTrial:
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
     def test_checkpoint_save_load_hooks(self, tmp_path: pathlib.Path) -> None:
-        def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
-            assert "test" in checkpoint
-            assert checkpoint["test"] is True
+        class OneVarLM(la_model.OneVarLM):
+            def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
+                assert "test" in checkpoint
+                assert checkpoint["test"] is True
 
-        def on_save_checkpoint_true(self, checkpoint: Dict[str, Any], *args):
-            checkpoint["test"] = True
+            def on_save_checkpoint(self, checkpoint: Dict[str, Any]):
+                checkpoint["test"] = True
 
-        trial_cls_1 = fork_trial_override_lm(
-            {
-                "on_save_checkpoint": on_save_checkpoint_true,
-                "on_load_checkpoint": on_load_checkpoint,
-            }
-        )
+        class OneVarLA(la_model.OneVarTrial):
+            def __init__(self, context):
+                super().__init__(context, OneVarLM)
+
 
         def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=trial_cls_1,
+                trial_class=OneVarLA,
                 hparams=self.hparams,
                 workloads=workloads,
                 load_path=load_path,
@@ -77,21 +66,20 @@ class TestPyTorchTrial:
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
     def test_checkpoint_load_hook(self, tmp_path: pathlib.Path) -> None:
-        def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
-            assert "test" in checkpoint
+        class OneVarLM(la_model.OneVarLM):
+            def on_load_checkpoint(self, checkpoint: Dict[str, Any]):
+                assert "test" in checkpoint
 
-        trial_cls_1 = fork_trial_override_lm(
-            {
-                "on_load_checkpoint": on_load_checkpoint,
-            }
-        )
+        class OneVarLA(la_model.OneVarTrial):
+            def __init__(self, context):
+                super().__init__(context, OneVarLM)
 
         def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=trial_cls_1,
+                trial_class=OneVarLA,
                 hparams=self.hparams,
                 workloads=workloads,
                 load_path=load_path,
