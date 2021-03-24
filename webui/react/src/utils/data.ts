@@ -53,6 +53,9 @@ export const getPathOrElse = <T>(
   return value !== undefined ? value : fallback;
 };
 
+/*
+  Categorize a list of items based on `keyFn` condition.
+*/
 export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<string, T[]> => {
   const d: Record<string, T[]> = {};
   array.forEach(item => {
