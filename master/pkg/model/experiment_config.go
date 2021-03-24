@@ -3,7 +3,9 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -44,6 +46,7 @@ type ExperimentConfig struct {
 	Internal                 *InternalConfig           `json:"internal"`
 	Entrypoint               string                    `json:"entrypoint"`
 	DataLayer                DataLayerConfig           `json:"data_layer"`
+	Profiling                ProfilingConfig           `json:"profiling"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -312,4 +315,45 @@ type InternalConfig struct {
 // NativeConfig represents configuration set by Determined native implementations.
 type NativeConfig struct {
 	Command []string `json:"command"`
+}
+
+// ProfilingConfig represents the configuration settings to enable and configure profiling.
+type ProfilingConfig struct {
+	Enabled bool `json:"enabled"`
+	Window  struct {
+		Batches string `json:"batches"`
+	} `json:"window"`
+}
+
+// Validate implements the check.Validatable interface.
+func (p ProfilingConfig) Validate() []error {
+	if !p.Enabled {
+		return nil
+	}
+
+	var errs []error
+	batches := strings.Split(p.Window.Batches, "-")
+	if len(batches) != 2 {
+		errs = append(errs, fmt.Errorf("malformed batch window: %s", batches))
+		return errs
+	}
+
+	batchStart, sErr := strconv.Atoi(batches[0])
+	if sErr != nil {
+		errs = append(errs, fmt.Errorf("malformed batch index %s: %w", batches[0], sErr))
+		return errs
+	}
+
+	batchEnd, eErr := strconv.Atoi(batches[1])
+	if eErr != nil {
+		errs = append(errs, fmt.Errorf("malformed batch index %s: %w", batches[0], sErr))
+		return errs
+	}
+
+	if batchStart > batchEnd {
+		errs = append(errs, fmt.Errorf("malformed batch window: %d > %d", batchStart, batchEnd))
+		return errs
+	}
+
+	return nil
 }

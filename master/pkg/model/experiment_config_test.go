@@ -536,3 +536,24 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
+
+func TestExperimentProfiling(t *testing.T) {
+	actual := DefaultExperimentConfig(nil)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "description": "provided",
+  "profiling": {
+    "enabled": true,
+    "window": {
+      "batches": "2-10"
+    }
+  }
+}`), &actual))
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Description = description
+	expected.Profiling.Enabled = true
+	expected.Profiling.Window.Batches = "2-10"
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+	assert.NilError(t, check.Validate(expected.Profiling))
+}
