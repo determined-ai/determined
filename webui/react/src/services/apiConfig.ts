@@ -35,6 +35,7 @@ export const detApi = {
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
+  StreamingUnimplemented: Api.UnimplementedApiFetchParamCreator(ApiConfig),
   Tensorboards: new Api.TensorboardsApi(ApiConfig),
   Users: new Api.UsersApi(ApiConfig),
 };
@@ -60,6 +61,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Shells = new Api.ShellsApi(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
   detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
+  detApi.StreamingUnimplemented = Api.UnimplementedApiFetchParamCreator(config);
   detApi.Tensorboards = new Api.TensorboardsApi(config);
   detApi.Users = new Api.UsersApi(config);
 };

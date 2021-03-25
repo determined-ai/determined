@@ -175,6 +175,7 @@ export const ioExperimentConfig = io.type({
   description: io.string,
   hyperparameters: ioHyperparameters,
   labels: optional(io.array(io.string)),
+  profiling: optional(io.type({ enabled: io.boolean })),
   resources: ioExpResources,
   searcher: io.type({
     metric: io.string,

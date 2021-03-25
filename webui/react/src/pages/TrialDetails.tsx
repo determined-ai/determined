@@ -12,6 +12,7 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
+import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths, routeAll } from 'routes/utils';
 import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
@@ -24,6 +25,7 @@ const { TabPane } = Tabs;
 
 enum TabType {
   Overview = 'overview',
+  Profiles = 'profiles',
 }
 
 interface Params {
@@ -239,6 +241,9 @@ const TrialDetailsComp: React.FC = () => {
       <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key={TabType.Overview} tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trial} />
+        </TabPane>
+        <TabPane key={TabType.Profiles} tab="Profiles">
+          <TrialDetailsProfiles experiment={experiment} trial={trial} />
         </TabPane>
       </Tabs>
       <CreateExperimentModal

@@ -1,6 +1,18 @@
-import { isPercent, percent, percentToFloat, roundToPrecision } from './number';
+import { findFactorOfNumber, isPercent, percent, percentToFloat, roundToPrecision } from './number';
 
 describe('number utility', () => {
+  describe('findFactorOfNumber', () => {
+    it('should find factors of number', () => {
+      expect(findFactorOfNumber(-12)).toStrictEqual([ 1, 2, 3, 4, 6, 12 ]);
+      expect(findFactorOfNumber(-1)).toStrictEqual([ 1 ]);
+      expect(findFactorOfNumber(0)).toStrictEqual([ ]);
+      expect(findFactorOfNumber(1)).toStrictEqual([ 1 ]);
+      expect(findFactorOfNumber(12)).toStrictEqual([ 1, 2, 3, 4, 6, 12 ]);
+      expect(findFactorOfNumber(1093)).toStrictEqual([ 1, 1093 ]);
+      expect(findFactorOfNumber(12345)).toStrictEqual([ 1, 3, 5, 15, 823, 2469, 4115, 12345 ]);
+    });
+  });
+
   describe('isPercent', () => {
     it('should return true for percents', () => {
       expect(isPercent('100%')).toBe(true);

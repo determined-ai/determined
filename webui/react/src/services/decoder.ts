@@ -220,6 +220,7 @@ export const ioToExperimentConfig =
     description: io.description,
     hyperparameters: ioToExperimentHyperparameters(io.hyperparameters),
     labels: io.labels || undefined,
+    profiling: { enabled: !!io.profiling?.enabled },
     resources: {},
     searcher: {
       ...io.searcher,
