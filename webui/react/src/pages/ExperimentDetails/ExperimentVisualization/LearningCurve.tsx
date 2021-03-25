@@ -163,32 +163,28 @@ const LearningCurve: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section bodyBorder bodyScroll filters={filters}>
+      <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
-          {!hasLoaded ? <Spinner /> : (
-            <>
-              <div className={css.chart}>
-                <LearningCurveChart
-                  data={chartData}
-                  focusedTrialId={tableTrialId}
-                  selectedMetric={selectedMetric}
-                  trialIds={trialIds}
-                  xValues={batches}
-                  onTrialClick={handleTrialClick}
-                  onTrialFocus={handleTrialFocus} />
-              </div>
-              <HpTrialTable
-                experimentId={experiment.id}
-                highlightedTrialId={chartTrialId}
-                hyperparameters={hyperparameters}
-                metric={selectedMetric}
-                trialHps={trialHps}
-                trialIds={trialIds}
-                onMouseEnter={handleTableMouseEnter}
-                onMouseLeave={handleTableMouseLeave}
-              />
-            </>
-          )}
+          <div className={css.chart}>
+            <LearningCurveChart
+              data={chartData}
+              focusedTrialId={tableTrialId}
+              selectedMetric={selectedMetric}
+              trialIds={trialIds}
+              xValues={batches}
+              onTrialClick={handleTrialClick}
+              onTrialFocus={handleTrialFocus} />
+          </div>
+          <HpTrialTable
+            experimentId={experiment.id}
+            highlightedTrialId={chartTrialId}
+            hyperparameters={hyperparameters}
+            metric={selectedMetric}
+            trialHps={trialHps}
+            trialIds={trialIds}
+            onMouseEnter={handleTableMouseEnter}
+            onMouseLeave={handleTableMouseLeave}
+          />
         </div>
       </Section>
     </div>

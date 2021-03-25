@@ -230,32 +230,28 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Section bodyBorder bodyScroll filters={filters}>
+      <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
-          {!hasLoaded || !chartData ? <Spinner /> : (
-            <>
-              <div className={css.chart}>
-                <ParallelCoordinates
-                  colorScale={colorScale}
-                  colorScaleKey={metricNameToStr(selectedMetric)}
-                  data={chartData.data}
-                  dimensions={dimensions}
-                  onFilter={handleChartFilter}
-                />
-              </div>
-              <div>
-                <HpTrialTable
-                  colorScale={colorScale}
-                  experimentId={experiment.id}
-                  filteredTrialIdMap={filteredTrialIdMap}
-                  hyperparameters={hyperparameters}
-                  metric={selectedMetric}
-                  trialHps={trialHps}
-                  trialIds={chartData.trialIds}
-                />
-              </div>
-            </>
-          )}
+          <div className={css.chart}>
+            <ParallelCoordinates
+              colorScale={colorScale}
+              colorScaleKey={metricNameToStr(selectedMetric)}
+              data={chartData?.data || {}}
+              dimensions={dimensions}
+              onFilter={handleChartFilter}
+            />
+          </div>
+          <div>
+            <HpTrialTable
+              colorScale={colorScale}
+              experimentId={experiment.id}
+              filteredTrialIdMap={filteredTrialIdMap}
+              hyperparameters={hyperparameters}
+              metric={selectedMetric}
+              trialHps={trialHps}
+              trialIds={chartData?.trialIds || []}
+            />
+          </div>
           <div className={css.tooltip} ref={tooltipRef}>
             <div className={css.box}>
               <div className={css.row}>

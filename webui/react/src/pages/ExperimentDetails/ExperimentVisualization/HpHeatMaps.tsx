@@ -174,55 +174,51 @@ const HpHeatMaps: React.FC<Props> = ({
     );
   }
 
-  let content = <Spinner />;
-  if (hasLoaded && chartData) {
-    if (chartData.trialIds.length === 0) {
-      content = <Message title="No data to plot." type={MessageType.Empty} />;
-    } else {
-      content = (
-        <>
-          <div className={css.legend}>
-            <ColorLegend
-              colorScale={colorScale}
-              title={<MetricBadgeTag metric={selectedMetric} />} />
-          </div>
-          <div className={css.charts}>
-            <Grid
-              border={true}
-              minItemWidth={resize.width > 320 ? 35 : 27}
-              mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
-              {selectedHParams.map(hParam1 => selectedHParams.map(hParam2 => {
-                const key = generateHpKey(hParam1, hParam2);
-                return <ScatterPlot
-                  colorScale={colorScale}
-                  height={350}
-                  key={key}
-                  valueLabel={metricNameToStr(selectedMetric)}
-                  values={chartData.hpMetrics[key]}
-                  width={350}
-                  x={chartData.hpValues[hParam1]}
-                  xLabel={hParam1}
-                  xLogScale={chartData.hpLogScales[hParam1]}
-                  y={chartData.hpValues[hParam2]}
-                  yLabel={hParam2}
-                  yLogScale={chartData.hpLogScales[hParam2]}
-                />;
-              }))}
-            </Grid>
-          </div>
-        </>
-      );
-    }
-  }
-
   return (
     <div className={css.base} ref={baseRef}>
       <Section
         bodyBorder
         bodyNoPadding
         bodyScroll
-        filters={filters}>
-        <div className={css.container}>{content}</div>
+        filters={filters}
+        loading={!hasLoaded}>
+        <div className={css.container}>
+          {chartData?.trialIds.length === 0 ? (
+            <Message title="No data to plot." type={MessageType.Empty} />
+          ) : (
+            <>
+              <div className={css.legend}>
+                <ColorLegend
+                  colorScale={colorScale}
+                  title={<MetricBadgeTag metric={selectedMetric} />} />
+              </div>
+              <div className={css.charts}>
+                <Grid
+                  border={true}
+                  minItemWidth={resize.width > 320 ? 35 : 27}
+                  mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
+                  {selectedHParams.map(hParam1 => selectedHParams.map(hParam2 => {
+                    const key = generateHpKey(hParam1, hParam2);
+                    return <ScatterPlot
+                      colorScale={colorScale}
+                      height={350}
+                      key={key}
+                      valueLabel={metricNameToStr(selectedMetric)}
+                      values={chartData?.hpMetrics[key]}
+                      width={350}
+                      x={chartData?.hpValues[hParam1] || []}
+                      xLabel={hParam1}
+                      xLogScale={chartData?.hpLogScales[hParam1]}
+                      y={chartData?.hpValues[hParam2] || []}
+                      yLabel={hParam2}
+                      yLogScale={chartData?.hpLogScales[hParam2]}
+                    />;
+                  }))}
+                </Grid>
+              </div>
+            </>
+          )}
+        </div>
       </Section>
     </div>
   );

@@ -4,6 +4,7 @@ import { isString } from 'utils/data';
 import { generateAlphaNumeric, toHtmlId } from 'utils/string';
 
 import css from './Section.module.scss';
+import Spinner from './Spinner';
 
 interface Props {
   bodyBorder?: boolean;
@@ -13,6 +14,7 @@ interface Props {
   filters?: React.ReactNode;
   hideTitle?: boolean;
   id?: string;
+  loading?: boolean;
   maxHeight?: boolean;
   options?: React.ReactNode;
   title?: string | React.ReactElement;
@@ -40,12 +42,15 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
           {props.options && <div className={css.options}>{props.options}</div>}
         </div>
       )}
-      {props.filters && (
+      {!props.loading && props.filters && (
         <div className={css.filterBar}>
           {props.filters}
         </div>
       )}
-      <div className={css.body}>{props.children}</div>
+      <div className={css.body}>
+        {!props.loading && props.children}
+        {props.loading && <Spinner />}
+      </div>
     </section>
   );
 };

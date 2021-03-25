@@ -135,34 +135,29 @@ const ScatterPlots: React.FC<Props> = ({
     );
   }
 
-  let content = <Spinner />;
-  if (hasLoaded && chartData) {
-    if (chartData.trialIds.length === 0) {
-      content = <Message title="No data to plot." type={MessageType.Empty} />;
-    } else {
-      content = (
-        <Grid
-          border={true}
-          minItemWidth={resize.width > 320 ? 35 : 27}
-          mode={GridMode.AutoFill}>
-          {selectedHParams.map(hParam => (
-            <ScatterPlot
-              key={hParam}
-              x={chartData.hpValues[hParam]}
-              xLabel={hParam}
-              xLogScale={chartData.hpLogScales[hParam]}
-              y={chartData.metricValues[hParam]}
-              yLabel={metricNameToStr(selectedMetric)} />
-          ))}
-        </Grid>
-      );
-    }
-  }
-
   return (
     <div className={css.base} ref={baseRef}>
-      <Section bodyBorder bodyNoPadding bodyScroll filters={filters}>
-        <div className={css.container}>{content}</div>
+      <Section bodyBorder bodyNoPadding bodyScroll filters={filters} loading={!hasLoaded}>
+        <div className={css.container}>
+          {chartData?.trialIds.length === 0 ? (
+            <Message title="No data to plot." type={MessageType.Empty} />
+          ) : (
+            <Grid
+              border={true}
+              minItemWidth={resize.width > 320 ? 35 : 27}
+              mode={GridMode.AutoFill}>
+              {selectedHParams.map(hParam => (
+                <ScatterPlot
+                  key={hParam}
+                  x={chartData?.hpValues[hParam] || []}
+                  xLabel={hParam}
+                  xLogScale={chartData?.hpLogScales[hParam]}
+                  y={chartData?.metricValues[hParam] || []}
+                  yLabel={metricNameToStr(selectedMetric)} />
+              ))}
+            </Grid>
+          )}
+        </div>
       </Section>
     </div>
   );
