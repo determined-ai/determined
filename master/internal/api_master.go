@@ -119,25 +119,5 @@ func (a *apiServer) ResourceAllocationAggregated(
 	_ context.Context,
 	req *apiv1.ResourceAllocationAggregatedRequest,
 ) (*apiv1.ResourceAllocationAggregatedResponse, error) {
-	resp := &apiv1.ResourceAllocationAggregatedResponse{}
-
-	start, err := time.Parse("2006-01-02", req.StartDate)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid start date")
-	}
-	end, err := time.Parse("2006-01-02", req.EndDate)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid end date")
-	}
-	if start.After(end) {
-		return nil, errors.New("start date cannot be after end date")
-	}
-
-	if err := a.m.db.QueryProto(
-		"get_aggregated_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
-	); err != nil {
-		return nil, errors.Wrap(err, "error fetching aggregated allocation data")
-	}
-
-	return resp, nil
+	return a.m.fetchAggregatedResourceAllocation(req)
 }

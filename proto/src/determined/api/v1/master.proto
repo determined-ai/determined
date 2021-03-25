@@ -92,6 +92,8 @@ message ResourceAllocationAggregatedRequest {
   // The last day to consider (the exact time is midnight UTC at the end of the
   // day).
   string end_date = 2;
+  // The period over which to perform aggregation.
+  determined.master.v1.ResourceAllocationAggregationPeriod period = 3;
 }
 // Response to ResourceAllocationAggregatedRequest.
 message ResourceAllocationAggregatedResponse {
