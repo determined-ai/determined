@@ -78,7 +78,9 @@ const HpSelectFilter: React.FC<Props> = ({
         return (
           <Option className={css.option} key={hParam} value={hParam}>
             {hParam}
-            {importance && <HumanReadableFloat num={importance} precision={1} />}
+            {importance && (
+              <HumanReadableFloat num={importance} precision={1} tooltipPrefix="Importance: " />
+            )}
           </Option>
         );
       })}
