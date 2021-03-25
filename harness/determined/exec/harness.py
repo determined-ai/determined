@@ -134,7 +134,7 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 )
                 subproc.run()
             else:
-                metrics_thread = metrics.SystemMetricsThread()
+                metrics_thread = metrics.SystemMetricsThread(env.master_url)
                 metrics_thread.start()
 
                 if env.experiment_config.debug_enabled():

@@ -5,6 +5,7 @@ import datetime
 from typing import Any, Dict, Iterator, Optional
 import queue
 import time
+from determined.common import api
 
 def humanize_float(num): return "{0:,.2f}".format(num)
 
@@ -151,8 +152,7 @@ class SystemMetricsThread(threading.Thread):
     MEASUREMENT_INTERVAL = 0.1
 
 
-
-    def __init__(self):
+    def __init__(self, master_url: str):
 
         self.verbose = True
         self.log("Creating SystemMetricsThread")
@@ -161,12 +161,15 @@ class SystemMetricsThread(threading.Thread):
         self.current_batch = 1
 
         self.dispatch_queue = queue.Queue()
-        self.sending_thread = SystemMetricsSendingThread(self.dispatch_queue)
-        self.sending_thread.start()
 
         # TODO: Correctly extract these values
         TRIAL_ID = 0
         AGENT_ID = 0
+
+        self.sending_thread = SystemMetricsSendingThread(self.dispatch_queue, master_url)
+        self.sending_thread.start()
+
+
         self.current_metrics = MetricsHolder(TRIAL_ID, AGENT_ID)
 
         self.quitting = False
@@ -235,6 +238,8 @@ class SystemMetricsThread(threading.Thread):
                 self.current_metrics.reset()
                 batch_start_time = time.time()
 
+            time.sleep(0.02)
+
     def update_current_batch(self, new_current_batch):
         self.current_batch = new_current_batch
 
@@ -260,8 +265,9 @@ class SystemMetricsThread(threading.Thread):
 # This is a thread that exists solely so that we can make API calls without blocking
 # It has a SimpleQueue through which work is sent to the thread
 class SystemMetricsSendingThread(threading.Thread):
-    def __init__(self, inbound_queue: queue.Queue) -> None:
+    def __init__(self, inbound_queue: queue.Queue, master_url: str) -> None:
         print("[SystemMetricsSendingThread] Creating SystemMetricsSendingThread")
+        self.master_url = master_url
         self.POLL_INTERVAL_SECS = 0.5
         self.inbound_queue = inbound_queue
 
@@ -285,38 +291,19 @@ class SystemMetricsSendingThread(threading.Thread):
             # print(f"[SystemMetricsSendingThread] Sending a batch. {humanize_float(time.time())}")
             self.send_batch(batch_to_send)
 
-    # This is a blocking operation (that handles retries?) that must handle all exceptions gracefully
-    def send_batch(self, batch):
-        # TODO: Automatically retry X times and then log and drop the batch
-        # self.all.append(batch)
-        # self.short_circuit_counter += 1
-        # print(f"[SystemMetricsSendingThread] Sending batch {self.short_circuit_counter}")
-        # if self.short_circuit_counter > 10:
-        #     print("BIG DUMP TIME")
-        #     full = {
-        #         GPU_UTIL_METRIC: [],
-        #         NET_THRU_SENT_METRIC: [],
-        #         NET_THRU_RECV_METRIC: [],
-        #         DISK_IOPS_METRIC: [],
-        #         DISK_THRU_READ_METRIC: [],
-        #         DISK_THRU_WRITE_METRIC: [],
-        #         FREE_MEM_METRIC: [],
-        #         SIMPLE_CPU_UTIL_METRIC: []
-        #     }
-        #     for batch in self.all:
-        #         for metric_name in batch.keys():
-        #             metric_batch_as_json = [metric.json() for metric in batch[metric_name]]
-        #             full[metric_name].extend(metric_batch_as_json)
-        #
-        #     for metric in full.keys():
-        #         metrics = full[metric]
-        #         for datapoint in metrics:
-        #             print(f"[MET - {metric}] SPLICE_HERE {datapoint}")
-        #         # print(f"NEW METRIC - {metric}")
-        #         # print(full[metric])
-        #
-        #     self.short_circuit_counter = -1_000_000_000
-        pass
+    # This is a blocking operation that must handle all exceptions gracefully
+    def send_batch(self, post_bodies):
+        # TODO: Handle exceptions and automatically retry X times and then log and drop the batch
+        # TODO: Change API so we don't have to make so many independent API calls
+
+        for post_body in post_bodies:
+            api.post_trial_profiler_metrics(
+                self.master_url,
+                post_body["values"],
+                post_body["batches"],
+                post_body["timestamps"],
+                post_body["labels"],
+            )
 
     def quit(self):
         self.quitting = True

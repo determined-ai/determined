@@ -113,6 +113,14 @@ class EnvContext:
         return per_gpu_batch_size, effective_batch_size
 
     @property
+    def master_url(self) -> str:
+        return "{}://{}:{}".format(
+            "https" if self.use_tls else "http",
+            self.master_addr,
+            self.master_port,
+        )
+
+    @property
     def per_slot_batch_size(self) -> int:
         return self._per_slot_batch_size
 
