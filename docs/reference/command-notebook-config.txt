@@ -6,9 +6,12 @@
 
 The behavior of Determined tasks, such as TensorBoards, notebooks,
 :ref:`commands, and shells <commands-and-shells>`, can be influenced by
-setting a variety of configuration variables. Configuration settings can
-be specified by passing a YAML configuration file when launching the
-workload via the Determined CLI:
+setting a variety of configuration variables. These configuration
+variables are similar but not identical to the configuration options
+supported by :ref:`experiments <experiment-configuration>`.
+
+Configuration settings can be specified by passing a YAML configuration
+file when launching the workload via the Determined CLI:
 
 .. code::
 
@@ -36,13 +39,12 @@ Determined task unless otherwise specified.
 
 The following configuration settings are supported:
 
--  ``description``: A human-readable description of the
-   command/notebook. This does not need to be unique. The default
-   description consists of a timestamp and the entrypoint of the
-   command.
+-  ``description``: A human-readable description of the task. This does
+   not need to be unique. The default description consists of a
+   timestamp and the entrypoint of the command.
 
 -  ``environment``: Specifies the environment of the container that is
-   used to execute the command/notebook.
+   used to execute the task.
 
    -  ``image``: Specifies a Docker image to use when executing the
       workload. The image must be available via ``docker pull`` to every
@@ -77,32 +79,37 @@ The following configuration settings are supported:
       -  ``server`` (optional)
       -  ``email`` (optional)
 
--  ``resources``: The resources Determined allows a command/notebook to
-   use.
+-  ``resources``: The resources Determined allows a task to use.
 
-   -  ``slots``: Specifies the number of slots to use for the
-      command/notebook. The default value is ``1``. The maximum value is
-      the number of slots on the agent in the cluster with the most
-      slots. For example, Determined will be unable to schedule a
-      command that requests 4 slots if the Determined cluster is
-      composed of agents with 2 slots each. The number of slots for
-      TensorBoard is fixed at ``0`` and may not be changed.
+   -  ``slots``: Specifies the number of slots to use for the task. The
+      default value is ``1``. The maximum value is the number of slots
+      on the agent in the cluster with the most slots. For example,
+      Determined will be unable to schedule a task that requests 4 slots
+      if the Determined cluster is composed of agents with 2 slots each.
+      The number of slots for TensorBoard is fixed at ``0`` and may not
+      be changed.
 
-   -  ``agent_label``: If set, the command/notebook will *only* be
-      scheduled on agents that have the given label set. If this is not
-      set (the default behavior), the command/notebook will only be
-      scheduled on unlabeled agents. An agent's label can be configured
-      via the ``label`` field in the :ref:`agent configuration
-      <agent-configuration>`.
+   -  ``agent_label``: If set, the task will *only* be scheduled on
+      agents that have the given label set. If this is not set (the
+      default behavior), the task will only be scheduled on unlabeled
+      agents. An agent's label can be configured via the ``label`` field
+      in the :ref:`agent configuration <agent-configuration>`.
 
-   -  ``shm_size``: The size in bytes of ``/dev/shm`` for trial
+   -  ``shm_size``: The size in bytes of ``/dev/shm`` for task
       containers. Defaults to ``4294967296`` (4GiB). If set, this value
       overrides the value specified in the :ref:`master configuration
       <master-configuration>`.
 
-   -  ``priority``: The priority assigned to this experiment. Smaller
-      priority assignment indicates higher priority. Only applicable
-      when using the ``priority`` scheduler.
+   -  ``priority``: The priority assigned to this task. Tasks with
+      smaller priority values are scheduled before tasks with higher
+      priority values. Only applicable when using the ``priority``
+      scheduler. Refer to :ref:`scheduling` for more information.
+
+   -  ``resource_pool``: The resource pool where this task will be
+      scheduled. If no resource pool is specified, CPU-only tasks will
+      be scheduled in the default CPU pool, while GPU-using tasks will
+      be scheduled in the default GPU tool. Refer to
+      :ref:`resource-pools` for more information.
 
 -  ``bind_mounts``: Specifies a collection of directories that are
    bind-mounted into the Docker containers for execution. This can be

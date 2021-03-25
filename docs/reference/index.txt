@@ -14,8 +14,9 @@ concepts of the product.
 
 **Configurations**
 
--  :ref:`config-template`
 -  :ref:`experiment-configuration`
+-  :ref:`command-notebook-configuration`
+-  :ref:`cluster-configuration`
 
 The full list of reference guides can be found below:
 

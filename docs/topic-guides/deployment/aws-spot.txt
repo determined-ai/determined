@@ -46,19 +46,42 @@ instance type. GPU instances, particularly those with the most modern
 GPUs, are often in high demand and they may sometimes be difficult to
 get as spot instances.
 
-********************
- Spot On Determined
-********************
+**************************************
+ Using Spot Instances with Determined
+**************************************
 
 Because they can be reclaimed, using spot instances requires you to have
 good fault tolerance built into your software. Determined was built with
 fault-tolerance as a core feature, so using spot instances is usually as
-easy as setting ``spot: true`` in the master configuration.
+easy as configuring a :ref:`resource pool <resource-pools>` with ``spot:
+true`` in the master configuration. Here is a fragment of a master
+configuration file that defines a resource pool with up to 10 p2.8xlarge
+spot instances:
+
+.. code:: yaml
+
+   resource_pools:
+     - pool_name: aws-spot-p2-8xlarge
+       provider:
+         type: aws
+         max_instances: 10
+         instance_type: p2.8xlarge
+         spot: true
+         # ...
+
+When using ``det deploy`` to install Determined on AWS, you can also
+specify ``--spot`` when running ``det deploy aws up`` to cause the
+default CPU and GPU resource pools to use spot instances.
 
 AWS might not always have the capacity to fulfill spot requests. When
 AWS is out of capacity, the Determined cluster will wait until AWS has
 capacity and can fulfill the requests. This will be visible in the
-master logs.
+master logs. A useful approach is to configure the master with two
+resource pools, one that uses spot instances and another that uses
+on-demand instances. This allows users to easily select whether to use
+spot or on-demand instances for a given job by setting
+``resources.resource_pool`` appropriately in their experiment
+configuration file.
 
 **************
  Spot Pricing
