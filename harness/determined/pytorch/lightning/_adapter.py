@@ -32,10 +32,8 @@ def check_compatibility(lm: pl.LightningModule) -> None:
         "manual_backward",
         "on_fit_end",
         "on_fit_start",
-        "on_load_checkpoint",
         "on_pretrain_routine_end",
         "on_pretrain_routine_start",
-        "on_save_checkpoint",
         "on_test_batch_end",
         "on_test_batch_start",
         "on_test_epoch_end",
@@ -185,6 +183,12 @@ class LightningAdapter(PyTorchTrial):
             def on_validation_epoch_end(self, outputs: List[Any]) -> None:
                 lm.on_validation_epoch_end()
                 lm.validation_epoch_end(outputs)
+
+            def on_checkpoint_load_start(self, checkpoint: Dict[str, Any]) -> None:
+                lm.on_load_checkpoint(checkpoint)
+
+            def on_checkpoint_save_start(self, checkpoint: Dict[str, Any]) -> None:
+                lm.on_save_checkpoint(checkpoint)
 
         return {"_lightning_module": LightningAdapterCallback()}
 

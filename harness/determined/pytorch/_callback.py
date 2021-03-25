@@ -51,6 +51,18 @@ class PyTorchCallback:
         # TODO(DET-3555): remove this once it has been deprecated long enough.
         pass
 
+    def on_checkpoint_load_start(self, checkpoint: Dict[str, Any]) -> None:
+        """
+        Run before state_dict is restored.
+        """
+        pass
+
+    def on_checkpoint_save_start(self, checkpoint: Dict[str, Any]) -> None:
+        """
+        Run before checkpoint is persisted.
+        """
+        pass
+
     def on_checkpoint_end(self, checkpoint_dir: str) -> None:
         """
         Run after every checkpoint.

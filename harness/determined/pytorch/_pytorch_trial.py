@@ -582,11 +582,17 @@ class PyTorchTrialController(det.LoopTrialController):
             ["checkpoint.pt"],
         ]
 
+        checkpoint: Optional[Dict[str, Any]] = None
         for ckpt_path in potential_paths:
             maybe_ckpt = self.load_path.joinpath(*ckpt_path)
             if maybe_ckpt.exists():
                 checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
                 break
+        if checkpoint is None or not isinstance(checkpoint, dict):
+            return
+
+        for callback in self.callbacks.values():
+            callback.on_checkpoint_load_start(checkpoint)
 
         if "model_state_dict" in checkpoint:
             # Backward compatible with older checkpoint format.
@@ -718,6 +724,9 @@ class PyTorchTrialController(det.LoopTrialController):
 
         if self.context._use_apex:
             checkpoint["amp_state"] = apex.amp.state_dict()
+
+        for callback in self.callbacks.values():
+            callback.on_checkpoint_save_start(checkpoint)
 
         torch.save(checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle)
 
