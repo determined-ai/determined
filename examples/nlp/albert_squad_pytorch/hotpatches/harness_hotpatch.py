@@ -256,133 +256,21 @@ class QuickTimer:
 ##                              Measurements                                            ##
 ##########################################################################################
 
-# Measured in percent
-class SimpleCpuUtilization:
-    def __init__(self, timestamp, batch_idx, util_percent):
+class Measurement:
+    def __init__(self, timestamp, batch_idx, value):
         self.timestamp = timestamp
         self.batch_idx = batch_idx
-        self.util_percent = util_percent
+        self.measurement = value
 
-    def json(self):
-        return {
-            "measurement": SIMPLE_CPU_UTIL_METRIC,
-            "timestamp": self.timestamp,
-            "batch_idx": self.batch_idx,
-            "util": self.util_percent
-        }
+# SimpleCpuUtilization = Measured in percent
+# FreeMemory = Measured in Gigabytes
+# NetworkSentThroughput = Measured in Gigabit/s
+# NetworkRecvThroughput = Measured in Gigabit/s
+# DiskIops
+# DiskReadThroughput = Measured in bytes/second
+# DiskWriteThroughput = Measured in bytes/second
+# GpuUtilization = Measured in percent
 
-
-# Measured in Gigabytes
-class FreeMemory:
-    def __init__(self, timestamp, batch_idx, memory_free):
-        self.timestamp = timestamp
-        self.batch_idx = batch_idx
-        self.memory_free = memory_free
-
-    def json(self):
-        return {
-            "measurement": FREE_MEM_METRIC,
-            "timestamp": self.timestamp,
-            "batch_idx": self.batch_idx,
-            "free_memory": self.memory_free
-        }
-
-
-# Measured in Gigabit/s
-class NetworkSentThroughput:
-    def __init__(self, timestamp, batch_idx, throughput):
-        self.timestamp = timestamp
-        self.batch_idx = batch_idx
-        self.throughput = throughput
-
-    def json(self):
-        return {
-            "measurement": NET_THRU_SENT_METRIC,
-            "timestamp": self.timestamp,
-            "batch_idx": self.batch_idx,
-            "network_sent_throughput": self.throughput
-        }
-
-
-# Measured in Gigabit/s
-class NetworkRecvThroughput:
-    def __init__(self, timestamp, batch_idx, throughput):
-        self.timestamp = timestamp
-        self.batch_idx = batch_idx
-        self.throughput = throughput
-
-    def json(self):
-        return {
-            "measurement": NET_THRU_RECV_METRIC,
-            "timestamp": self.timestamp,
-            "batch_idx": self.batch_idx,
-            "network_recv_throughput": self.throughput
-        }
-
-
-class DiskIops:
-    def __init__(self, timestamp, batch_idx, iops):
-        self.timestamp = timestamp
-        self.batch_idx = batch_idx
-        self.iops = iops
-
-    def json(self):
-        return {
-            "measurement": DISK_IOPS_METRIC,
-            "timestamp": self.timestamp,
-            "batch_idx": self.batch_idx,
-            "iops": self.iops
-        }
-
-
-# Measured in bytes/second
-class DiskReadThroughput:
-    def __init__(self, timestamp, batch_idx, throughput):
-        self.timestamp = timestamp
-        self.batch_idx = batch_idx
-        self.throughput = throughput
-
-    def json(self):
-        return {
-            "measurement": DISK_THRU_READ_METRIC,
-            "timestamp": self.timestamp,
-            "batch_idx": self.batch_idx,
-            "disk_read_throughput": self.throughput
-        }
-
-
-# Measured in bytes/second
-class DiskWriteThroughput:
-    def __init__(self, timestamp, batch_idx, throughput):
-        self.timestamp = timestamp
-        self.batch_idx = batch_idx
-        self.throughput = throughput
-
-    def json(self):
-        return {
-            "measurement": DISK_THRU_WRITE_METRIC,
-            "timestamp": self.timestamp,
-            "batch_idx": self.batch_idx,
-            "disk_write_throughput": self.throughput
-        }
-
-
-# Measured in percent
-class GpuUtilization:
-    def __init__(self, timestamp, batch_idx, gpu_uuid, utilization):
-        self.timestamp = timestamp
-        self.batch_idx = batch_idx
-        self.gpu_uuid = gpu_uuid
-        self.utilization = utilization
-
-    def json(self):
-        return {
-            "measurement": GPU_UTIL_METRIC,
-            "timestamp": self.timestamp,
-            "batch_idx": self.batch_idx,
-            "gpu_uuid": self.gpu_uuid,
-            "util": self.utilization
-        }
 
 
 ##########################################################################################
@@ -396,7 +284,7 @@ class SimpleCpuUtilCollector:
         cpu_util = psutil.cpu_percent()
         timestamp = time.time()
         timer.stop()
-        return SimpleCpuUtilization(timestamp, batch_idx, cpu_util)
+        return Measurement(timestamp, batch_idx, cpu_util)
 
 
 
@@ -409,9 +297,7 @@ class FreeMemoryCollector:
         free_mem_bytes = psutil.virtual_memory().free
         timestamp = time.time()
         timer.stop()
-        # print(free_mem_bytes)
-        # print(free_mem_bytes * GIGA)
-        return FreeMemory(timestamp, batch_idx, free_mem_bytes * GIGA)
+        return Measurement(timestamp, batch_idx, free_mem_bytes * GIGA)
 
 
 
@@ -445,8 +331,8 @@ class NetThroughputCollector:
         sent_throughput_gigabits_per_second = sent_throughput_bytes_per_second * 8 * GIGA
         recv_throughput_gigabits_per_second = recv_throughput_bytes_per_second * 8 * GIGA
         timer.stop()
-        return NetworkSentThroughput(end_time, batch_idx, sent_throughput_gigabits_per_second), \
-               NetworkRecvThroughput(end_time, batch_idx, recv_throughput_gigabits_per_second)
+        return Measurement(end_time, batch_idx, sent_throughput_gigabits_per_second), \
+               Measurement(end_time, batch_idx, recv_throughput_gigabits_per_second)
 
 
 class DiskReadWriteRateCollector:
@@ -474,7 +360,7 @@ class DiskReadWriteRateCollector:
         read_count_delta = disk.read_count - self.start_read_count
         write_count_delta = disk.write_count - self.start_write_count
 
-        time_delta_ns = end_time - self.start_time
+        time_delta = end_time - self.start_time
 
         self.start_time = end_time
         self.start_read_bytes = disk.read_bytes
@@ -482,15 +368,15 @@ class DiskReadWriteRateCollector:
         self.start_read_count = disk.read_count
         self.start_write_count = disk.write_count
 
-        read_throughput_bytes_per_second = read_bytes_delta / time_delta_ns
-        write_throughput_bytes_per_second = write_bytes_delta / time_delta_ns
+        read_throughput_bytes_per_second = read_bytes_delta / time_delta
+        write_throughput_bytes_per_second = write_bytes_delta / time_delta
 
-        read_throughput_count_per_second = read_count_delta / time_delta_ns
-        write_throughput_count_per_second = write_count_delta / time_delta_ns
+        read_throughput_count_per_second = read_count_delta / time_delta
+        write_throughput_count_per_second = write_count_delta / time_delta
 
-        read_throughput = DiskReadThroughput(end_time, batch_idx, read_throughput_bytes_per_second)
-        write_throughput = DiskWriteThroughput(end_time, batch_idx, write_throughput_bytes_per_second)
-        iops = DiskIops(end_time, batch_idx, read_throughput_count_per_second + write_throughput_count_per_second)
+        read_throughput = Measurement(end_time, batch_idx, read_throughput_bytes_per_second)
+        write_throughput = Measurement(end_time, batch_idx, write_throughput_bytes_per_second)
+        iops = Measurement(end_time, batch_idx, read_throughput_count_per_second + write_throughput_count_per_second)
 
         timer.stop()
         return read_throughput, write_throughput, iops
@@ -504,18 +390,17 @@ class GpuUtilCollector:
 
     def measure(self, batch_idx):
         timer = QuickTimer("GpuUtilCollector")
-        measurements = []
+        measurements = {}
         timestamp = time.time()
         for i in range(self.num_gpus):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             try:
                 util = pynvml.nvmlDeviceGetUtilizationRates(handle)
                 gpu_util = util.gpu
+
             except pynvml.NVMLError as err:
-                # TODO: Is this how we want to communicate error in metric collection?
-                gpu_util = -1
-            measurement = GpuUtilization(timestamp, batch_idx, handle, gpu_util)
-            measurements.append(measurement)
+                continue
+            measurements[handle] = Measurement(timestamp, batch_idx, gpu_util)
         timer.stop()
         return measurements
 
@@ -530,16 +415,99 @@ class DiskFree:
     pass
 
 
+SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
+
+class MetricsHolder:
+    # TODO: Change these constants to match ERD/what backend expects
+    GPU_UTIL_METRIC = "GPU_UTIL"
+    NET_THRU_SENT_METRIC = "NET_THRU_SENT"
+    NET_THRU_RECV_METRIC = "NET_THRU_RECV"
+    DISK_IOPS_METRIC = "DISK_IOPS"
+    DISK_THRU_READ_METRIC = "DISK_THRU_READ"
+    DISK_THRU_WRITE_METRIC = "DISK_THRU_WRITE"
+    FREE_MEM_METRIC = "FREE_MEM"
+    SIMPLE_CPU_UTIL_METRIC = "SIMPLE_CPU_UTIL"
 
 
-GPU_UTIL_METRIC = "GPU_UTIL"
-NET_THRU_SENT_METRIC = "NET_THRU_SENT"
-NET_THRU_RECV_METRIC = "NET_THRU_RECV"
-DISK_IOPS_METRIC = "DISK_IOPS"
-DISK_THRU_READ_METRIC = "DISK_THRU_READ"
-DISK_THRU_WRITE_METRIC = "DISK_THRU_WRITE"
-FREE_MEM_METRIC = "FREE_MEM"
-SIMPLE_CPU_UTIL_METRIC = "SIMPLE_CPU_UTIL"
+    def __init__(self, trial_id, agent_id):
+        self.trial_id = trial_id
+        self.agent_id = agent_id
+        self.reset()
+
+    def reset(self):
+        self.current_measurements = {
+            MetricsHolder.GPU_UTIL_METRIC: {},
+            # "GPU_MEM": [],
+            MetricsHolder.NET_THRU_SENT_METRIC: [],
+            MetricsHolder.NET_THRU_RECV_METRIC: [],
+            # "DISK_FREE": [],
+            MetricsHolder.DISK_IOPS_METRIC: [],
+            MetricsHolder.DISK_THRU_READ_METRIC: [],
+            MetricsHolder.DISK_THRU_WRITE_METRIC: [],
+            MetricsHolder.FREE_MEM_METRIC: [],
+            MetricsHolder.SIMPLE_CPU_UTIL_METRIC: []
+        }
+
+    def add_nongpu_measurement(self, metric_type, measurement):
+        assert metric_type in self.current_measurements.keys(), f"Tried to add unknown type of metric: {metric_type}"
+        self.current_measurements[metric_type].append(measurement)
+
+    def add_gpu_measurement(self, metric_type, gpu_uuid, measurement):
+        assert metric_type in self.current_measurements.keys(), f"Tried to add unknown type of metric: {metric_type}"
+        if gpu_uuid not in self.current_measurements[metric_type].keys():
+            self.current_measurements[metric_type][gpu_uuid] = []
+        self.current_measurements[metric_type][gpu_uuid].append(measurement)
+
+    def to_post_timestamp(self, timestamp):
+        # TODO
+        pass
+
+    def convert_to_post_format(self):
+        post_formatted = []
+        for metric_type in self.current_measurements.keys():
+            if metric_type != MetricsHolder.GPU_UTIL_METRIC and len(self.current_measurements[metric_type]) > 0:
+                single_metric_batch = {
+                    "values": [],
+                    "batches": [],
+                    "timestamps": [],
+                    "labels": {
+                        "trialId": self.trial_id,
+                        "name": metric_type,
+                        "agentId": self.agent_id,
+                        "gpuUuid": "",
+                        "metricType": SYSTEM_METRIC_TYPE_ENUM
+                    }
+                }
+                for measurement in self.current_measurements[metric_type]:
+                    single_metric_batch["values"].append(measurement.measurement)
+                    single_metric_batch["batches"].append(measurement.batch_index)
+                    single_metric_batch["timestamp"].append(self.to_post_timestamp(measurement.timestamp))
+                post_formatted.append(single_metric_batch)
+
+            # GPU Metrics need to be grouped by GPU UUID
+            if metric_type == MetricsHolder.GPU_UTIL_METRIC and len(self.current_measurements[metric_type].keys()) > 0:
+                for gpu_uuid in self.current_measurements[metric_type].keys():
+                    single_metric_batch = {
+                        "values": [],
+                        "batches": [],
+                        "timestamps": [],
+                        "labels": {
+                            "trialId": self.trial_id,
+                            "name": metric_type,
+                            "agentId": self.agent_id,
+                            "gpuUuid": gpu_uuid,
+                            "metricType": SYSTEM_METRIC_TYPE_ENUM
+                        }
+                    }
+                    for measurement in self.current_measurements[metric_type][gpu_uuid]:
+                        single_metric_batch["values"].append(measurement.measurement)
+                        single_metric_batch["batches"].append(measurement.batch_index)
+                        single_metric_batch["timestamp"].append(self.to_post_timestamp(measurement.timestamp))
+                    post_formatted.append(single_metric_batch)
+
+
+
+
 
 class SystemMetricsThread(threading.Thread):
     """
@@ -555,6 +523,8 @@ class SystemMetricsThread(threading.Thread):
     FLUSH_INTERVAL = 5  # Send batched info every 5 seconds
     MEASUREMENT_INTERVAL = 0.1
 
+    # TODO: Correctly extract these values
+
     def __init__(self) -> None:
 
         self.verbose = True
@@ -567,18 +537,9 @@ class SystemMetricsThread(threading.Thread):
         self.sending_thread = SystemMetricsSendingThread(self.dispatch_queue)
         self.sending_thread.start()
 
-        self.current_metric_batch = {
-            GPU_UTIL_METRIC: [],
-            # "GPU_MEM": [],
-            NET_THRU_SENT_METRIC: [],
-            NET_THRU_RECV_METRIC: [],
-            # "DISK_FREE": [],
-            DISK_IOPS_METRIC: [],
-            DISK_THRU_READ_METRIC: [],
-            DISK_THRU_WRITE_METRIC: [],
-            FREE_MEM_METRIC: [],
-            SIMPLE_CPU_UTIL_METRIC: []
-        }
+        TRIAL_ID = 0
+        AGENT_ID = 0
+        self.current_metrics = MetricsHolder(TRIAL_ID, AGENT_ID)
 
         self.quitting = False
         super().__init__()
@@ -621,7 +582,7 @@ class SystemMetricsThread(threading.Thread):
                 # self.log("Taking new measurement - cpu")
                 cpu_util_measurement = cpu_util_collector.measure(immutable_batch_idx)
                 # self.log("Taking new measurement - gpu")
-                gpu_util_measurement = gpu_util_collector.measure(immutable_batch_idx)
+                gpu_util_measurements = gpu_util_collector.measure(immutable_batch_idx)
                 # self.log("Taking new measurement - network")
                 net_thru_sent_measurement, net_thru_recv_measurement = network_throughput_collector.measure(immutable_batch_idx)
                 # self.log("Taking new measurement - memory")
@@ -629,32 +590,25 @@ class SystemMetricsThread(threading.Thread):
                 # self.log("Taking new measurement - disk")
                 disk_read_thru_measurement, disk_write_thru_measurement, iops_measurement = disk_collector.measure(immutable_batch_idx)
 
-                self.current_metric_batch[GPU_UTIL_METRIC].extend(gpu_util_measurement)
-                self.current_metric_batch[NET_THRU_SENT_METRIC].append(net_thru_sent_measurement)
-                self.current_metric_batch[NET_THRU_RECV_METRIC].append(net_thru_recv_measurement)
-                self.current_metric_batch[DISK_IOPS_METRIC].append(iops_measurement)
-                self.current_metric_batch[DISK_THRU_READ_METRIC].append(disk_read_thru_measurement)
-                self.current_metric_batch[DISK_THRU_WRITE_METRIC].append(disk_write_thru_measurement)
-                self.current_metric_batch[FREE_MEM_METRIC].append(free_memory_measurement)
-                self.current_metric_batch[SIMPLE_CPU_UTIL_METRIC].append(cpu_util_measurement)
+                # TODO: GPU UTIL needs to be grouped by UUID
+                for gpu_uuid in gpu_util_measurements.keys():
+                    self.current_metrics.add_gpu_measurement(MetricsHolder.GPU_UTIL_METRIC, gpu_uuid, gpu_util_measurements[gpu_uuid])
+
+                self.current_metrics.add_nongpu_measurement(MetricsHolder.NET_THRU_SENT_METRIC, net_thru_sent_measurement)
+                self.current_metrics.add_nongpu_measurement(MetricsHolder.NET_THRU_RECV_METRIC, net_thru_recv_measurement)
+                self.current_metrics.add_nongpu_measurement(MetricsHolder.DISK_IOPS_METRIC, iops_measurement)
+                self.current_metrics.add_nongpu_measurement(MetricsHolder.DISK_THRU_READ_METRIC, disk_read_thru_measurement)
+                self.current_metrics.add_nongpu_measurement(MetricsHolder.DISK_THRU_WRITE_METRIC, disk_write_thru_measurement)
+                self.current_metrics.add_nongpu_measurement(MetricsHolder.FREE_MEM_METRIC, free_memory_measurement)
+                self.current_metrics.add_nongpu_measurement(MetricsHolder.SIMPLE_CPU_UTIL_METRIC, cpu_util_measurement)
+
                 last_measurement_time = time.time()
-                # self.log("Finished taking measurement")
 
 
             # Check if it is time to flush the batch and start a new batch
             if time.time() - batch_start_time > self.FLUSH_INTERVAL:
-                # self.log("Completed a batch")
-                self.enqueue_for_async_send(self.current_metric_batch)
-                self.current_metric_batch = {
-                    GPU_UTIL_METRIC: [],
-                    NET_THRU_SENT_METRIC: [],
-                    NET_THRU_RECV_METRIC: [],
-                    DISK_IOPS_METRIC: [],
-                    DISK_THRU_READ_METRIC: [],
-                    DISK_THRU_WRITE_METRIC: [],
-                    FREE_MEM_METRIC: [],
-                    SIMPLE_CPU_UTIL_METRIC: []
-                }
+                self.enqueue_for_async_send(self.current_metrics.convert_to_post_format())
+                self.current_metrics.reset()
                 batch_start_time = time.time()
 
 
@@ -676,9 +630,6 @@ class SystemMetricsThread(threading.Thread):
         self.quitting = True
 
 
-class MetricsBatch:
-    def as_string(self):
-        pass
 
 
 import queue
