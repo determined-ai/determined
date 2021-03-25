@@ -84,8 +84,7 @@ def maybe_load_checkpoint(
 
 
 def build_and_run_training_pipeline(env: det.EnvContext) -> None:
-    metrics_thread = SystemMetricsThread()
-    metrics_thread.start()
+
 
     # Create the socket manager. The socket manager will connect to the master and read messages
     # until it receives the rendezvous_info.
@@ -523,9 +522,9 @@ class SystemMetricsThread(threading.Thread):
     FLUSH_INTERVAL = 5  # Send batched info every 5 seconds
     MEASUREMENT_INTERVAL = 0.1
 
-    # TODO: Correctly extract these values
 
-    def __init__(self) -> None:
+
+    def __init__(self):
 
         self.verbose = True
         self.log("Creating SystemMetricsThread")
@@ -537,6 +536,7 @@ class SystemMetricsThread(threading.Thread):
         self.sending_thread = SystemMetricsSendingThread(self.dispatch_queue)
         self.sending_thread.start()
 
+        # TODO: Correctly extract these values
         TRIAL_ID = 0
         AGENT_ID = 0
         self.current_metrics = MetricsHolder(TRIAL_ID, AGENT_ID)
@@ -560,6 +560,8 @@ class SystemMetricsThread(threading.Thread):
         while True:
             if self.quitting:
                 break
+
+            # TODO: Check if we should shut down due to max duration exceeded or max batch idx exceeded
 
             if not self.is_active:
                 time.sleep(1)
@@ -590,7 +592,6 @@ class SystemMetricsThread(threading.Thread):
                 # self.log("Taking new measurement - disk")
                 disk_read_thru_measurement, disk_write_thru_measurement, iops_measurement = disk_collector.measure(immutable_batch_idx)
 
-                # TODO: GPU UTIL needs to be grouped by UUID
                 for gpu_uuid in gpu_util_measurements.keys():
                     self.current_metrics.add_gpu_measurement(MetricsHolder.GPU_UTIL_METRIC, gpu_uuid, gpu_util_measurements[gpu_uuid])
 
@@ -666,6 +667,7 @@ class SystemMetricsSendingThread(threading.Thread):
 
     # This is a blocking operation (that handles retries?) that must handle all exceptions gracefully
     def send_batch(self, batch):
+        # TODO: Automatically retry X times and then log and drop the batch
         # self.all.append(batch)
         # self.short_circuit_counter += 1
         # print(f"[SystemMetricsSendingThread] Sending batch {self.short_circuit_counter}")
