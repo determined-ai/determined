@@ -67,7 +67,6 @@ const HpSelectFilter: React.FC<Props> = ({
       mode="multiple"
       placeholder={ALL_VALUE}
       showArrow
-      style={{ width: 130 }}
       value={value}
       onDeselect={handleDeselect}
       onSelect={handleSelect}
