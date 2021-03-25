@@ -26,3 +26,4 @@ from determined.common.api.request import (
     put,
     ws,
 )
+from determined.common.api.profiler import post_trial_profiler_metrics
