@@ -212,7 +212,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         <HpSelectFilter
           fullHParams={fullHParams}
           hpImportance={hpImportance}
-          label="HP"
+          label={`HP (max ${MAX_HPARAM_COUNT})`}
           value={localFilters.hParams}
           onChange={handleHParamChange} />
       )}

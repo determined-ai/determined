@@ -1,4 +1,6 @@
-import { CommandState, HpImportance, MetricName, MetricType, Primitive, RunState, State } from 'types';
+import {
+  CommandState, HpImportance, MetricName, MetricType, Primitive, RunState, State,
+} from 'types';
 
 const runStateSortValues: Record<RunState, number> = {
   [RunState.Active]: 0,
