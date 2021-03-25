@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import HpSelectFilter from 'components/HpSelectFilter';
 import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
-import MultiSelect from 'components/MultiSelect';
 import RadioGroup from 'components/RadioGroup';
 import SelectFilter from 'components/SelectFilter';
 import { ExperimentVisualizationType, HpImportance, MetricName } from 'types';
@@ -17,7 +16,7 @@ const { Option } = Select;
 export interface VisualizationFilters {
   batch: number;
   batchMargin: number;
-  hParams?: string[];
+  hParams: string[];
   maxTrial: number;
   metric: MetricName;
   view: ViewType;
