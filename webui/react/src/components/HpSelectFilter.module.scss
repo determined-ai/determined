@@ -7,10 +7,7 @@
     flex-grow: 1;
     justify-content: space-between;
   }
-  .option > *:first-child > span:first-child {
-    flex-grow: 1;
-  }
-  .option > *:first-child > span:nth-child(2) {
+  .option > *:first-child > span {
     margin-left: var(--theme-sizes-layout-big);
   }
   .option > *:nth-child(2) {

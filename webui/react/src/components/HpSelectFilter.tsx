@@ -5,6 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import { ALL_VALUE, HpImportance } from 'types';
 import { clone, isObject } from 'utils/data';
+import { hpImportanceSorter } from 'utils/sort';
 
 import css from './HpSelectFilter.module.scss';
 import SelectFilter, { Props as SelectFilterProps } from './SelectFilter';
@@ -29,15 +30,8 @@ const HpSelectFilter: React.FC<Props> = ({
   }, [ value ]);
 
   const sortedFullHParams = useMemo(() => {
-    const hpImportanceSorter = (a: string, b: string) => {
-      const aValue = hpImportance[a];
-      const bValue = hpImportance[b];
-      if (aValue < bValue) return 1;
-      if (aValue > bValue) return -1;
-      return 0;
-    };
     const hParams = clone(fullHParams) as string[];
-    return hParams.sortAll(hpImportanceSorter);
+    return hParams.sortAll((a, b) => hpImportanceSorter(a, b, hpImportance));
   }, [ hpImportance, fullHParams ]);
 
   const handleSelect = useCallback((selected: SelectValue, option) => {
@@ -83,7 +77,7 @@ const HpSelectFilter: React.FC<Props> = ({
         const importance = hpImportance[hParam];
         return (
           <Option className={css.option} key={hParam} value={hParam}>
-            <span>{hParam}</span>
+            {hParam}
             {importance && <HumanReadableFloat num={importance} precision={1} />}
           </Option>
         );
