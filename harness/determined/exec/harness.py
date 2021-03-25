@@ -37,7 +37,7 @@ import simplejson
 
 import determined as det
 import determined.common
-from determined import gpu, horovod, layers, load, workload
+from determined import gpu, horovod, layers, load, workload, metrics
 from determined.common import constants, storage
 
 ENVIRONMENT_VARIABLE_KEYS = {
@@ -134,6 +134,9 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 )
                 subproc.run()
             else:
+                metrics_thread = metrics.SystemMetricsThread()
+                metrics_thread.start()
+
                 if env.experiment_config.debug_enabled():
                     faulthandler.dump_traceback_later(30, repeat=True)
 
@@ -163,6 +166,8 @@ def main() -> None:
     use_tls = distutils.util.strtobool(os.environ.get("DET_USE_TLS", "false"))
     master_cert_file = os.environ.get("DET_MASTER_CERT_FILE")
     master_cert_name = os.environ.get("DET_MASTER_CERT_NAME")
+
+    # TODO: Add agent id to list of serialized envvars
     agent_id = os.environ["DET_AGENT_ID"]
     container_id = os.environ["DET_CONTAINER_ID"]
     hparams = simplejson.loads(os.environ["DET_HPARAMS"])
@@ -183,6 +188,8 @@ def main() -> None:
     trial_seed = int(os.environ["DET_TRIAL_SEED"])
 
     gpu_uuids = gpu.get_gpu_uuids_and_validate(use_gpu, slot_ids)
+
+    # TODO: Add auth token to list of serialized envvars - DET_TASK_TOKEN
 
     env = det.EnvContext(
         master_addr,

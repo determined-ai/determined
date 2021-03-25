@@ -2,6 +2,9 @@ import threading
 import psutil
 import pynvml
 import datetime
+from typing import Any, Dict, Iterator, Optional
+import queue
+import time
 
 def humanize_float(num): return "{0:,.2f}".format(num)
 
@@ -128,7 +131,7 @@ class MetricsHolder:
                         single_metric_batch["batches"].append(measurement.batch_index)
                         single_metric_batch["timestamp"].append(self.to_post_timestamp(measurement.timestamp))
                     post_formatted.append(single_metric_batch)
-
+        return post_formatted
 
 
 
@@ -186,11 +189,12 @@ class SystemMetricsThread(threading.Thread):
             if self.quitting:
                 break
 
-            # TODO: Check if we should shut down due to max duration exceeded or max batch idx exceeded
-
             if not self.is_active:
                 time.sleep(1)
                 continue
+
+            # TODO: Check if we should shut down due to max duration exceeded or max batch idx exceeded
+
 
             # One-time initialization
             if last_measurement_time is None:
@@ -204,17 +208,11 @@ class SystemMetricsThread(threading.Thread):
 
             # Check if it is time to take a new measurement
             if time.time() - last_measurement_time > self.MEASUREMENT_INTERVAL:
-                # self.log("Taking new set of measurements")
                 immutable_batch_idx = self.current_batch
-                # self.log("Taking new measurement - cpu")
                 cpu_util_measurement = cpu_util_collector.measure(immutable_batch_idx)
-                # self.log("Taking new measurement - gpu")
                 gpu_util_measurements = gpu_util_collector.measure(immutable_batch_idx)
-                # self.log("Taking new measurement - network")
                 net_thru_sent_measurement, net_thru_recv_measurement = network_throughput_collector.measure(immutable_batch_idx)
-                # self.log("Taking new measurement - memory")
                 free_memory_measurement = free_memory_collector.measure(immutable_batch_idx)
-                # self.log("Taking new measurement - disk")
                 disk_read_thru_measurement, disk_write_thru_measurement, iops_measurement = disk_collector.measure(immutable_batch_idx)
 
                 for gpu_uuid in gpu_util_measurements.keys():
@@ -237,8 +235,6 @@ class SystemMetricsThread(threading.Thread):
                 self.current_metrics.reset()
                 batch_start_time = time.time()
 
-
-
     def update_current_batch(self, new_current_batch):
         self.current_batch = new_current_batch
 
@@ -258,8 +254,7 @@ class SystemMetricsThread(threading.Thread):
 
 
 
-import queue
-import time
+
 
 
 # This is a thread that exists solely so that we can make API calls without blocking
