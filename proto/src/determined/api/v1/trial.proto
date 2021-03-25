@@ -20,9 +20,6 @@ message TrialLogsRequest {
   };
   // The id of the trial.
   int32 trial_id = 1;
-  // Skip the number of trial logs before returning results. Negative values
-  // denote number of trial logs to skip from the end before returning results.
-  int32 offset = 3;
   // Limit the number of trial logs. A value of 0 denotes no limit.
   int32 limit = 4;
   // Continue following logs until the trial stops.
@@ -266,8 +263,8 @@ message PostTrialProfilerMetricsBatchRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "batch" ] }
   };
-  // The batch to create.
-  determined.trial.v1.TrialProfilerMetricsBatch batch = 1;
+  // The batches to create.
+  repeated determined.trial.v1.TrialProfilerMetricsBatch batches = 1;
 }
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}

@@ -485,34 +485,50 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	_ context.Context,
 	req *apiv1.PostTrialProfilerMetricsBatchRequest,
 ) (*apiv1.PostTrialProfilerMetricsBatchResponse, error) {
-	switch exists, err := a.m.db.CheckTrialExists(int(req.Batch.Labels.TrialId)); {
-	case err != nil:
-		return nil, err
-	case !exists:
-		return nil, status.Error(codes.NotFound, "trial not found")
-	}
+	var errs *multierror.Error
+	existingTrials := map[int]bool{}
+	for _, batch := range req.Batches {
+		trialID := int(batch.Labels.TrialId)
+		if !existingTrials[trialID] {
+			switch exists, err := a.m.db.CheckTrialExists(trialID); {
+			case err != nil:
+				errs = multierror.Append(errs, err)
+				continue
+			case !exists:
+				errs = multierror.Append(errs, status.Error(codes.NotFound, "trial not found"))
+				continue
+			default:
+				existingTrials[trialID] = true
+			}
+		}
 
-	if len(req.Batch.Values) != len(req.Batch.Batches) ||
-		len(req.Batch.Batches) != len(req.Batch.Timestamps) {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"values, batches and timestamps should be equal sized arrays")
-	}
+		if len(batch.Values) != len(batch.Batches) ||
+			len(batch.Batches) != len(batch.Timestamps) {
+			errs = multierror.Append(errs, status.Errorf(codes.InvalidArgument,
+				"values, batches and timestamps should be equal sized arrays"))
+			continue
+		}
 
-	labels, err := protojson.Marshal(req.Batch.Labels)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal labels: %w", err)
-	}
+		labels, err := protojson.Marshal(batch.Labels)
+		if err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("failed to marshal labels: %w", err))
+			continue
+		}
 
-	timestamps, err := protoutil.TimeSliceFromProto(req.Batch.Timestamps)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert proto timestamps: %w", err)
-	}
+		timestamps, err := protoutil.TimeSliceFromProto(batch.Timestamps)
+		if err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("failed to convert proto timestamps: %w", err))
+			continue
+		}
 
-	if err := a.m.db.InsertTrialProfilerMetricsBatch(
-		req.Batch.Values, req.Batch.Batches, timestamps, labels); err != nil {
-		return nil, err
+		if err := a.m.db.InsertTrialProfilerMetricsBatch(
+			batch.Values, batch.Batches, timestamps, labels,
+		); err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("failed to insert batch: %w", err))
+			continue
+		}
 	}
-	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, nil
+	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
 // isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and
