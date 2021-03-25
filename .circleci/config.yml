@@ -1000,6 +1000,14 @@ jobs:
       - react-get-deps
       - run: make -C webui/react check
 
+  lint-webui-tests:
+    docker:
+      - image: cimg/node:12.16
+    steps:
+      - checkout
+      - run: make -C webui/tests get-deps
+      - run: make -C webui/tests check
+
   build-react-preview:
     docker:
       - image: cimg/node:12.16
@@ -1573,6 +1581,7 @@ workflows:
       - lint-react:
           requires:
             - build-bindings
+      - lint-webui-tests
 
   test-cli:
     jobs:

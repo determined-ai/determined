@@ -10,13 +10,13 @@ clean-%:
 	$(MAKE) -C $* clean
 
 .PHONY: fmt
-fmt: fmt-react fmt-tests
+fmt: fmt-react
 .PHONY: fmt-%
 fmt-%:
 	$(MAKE) -C $* fmt
 
 .PHONY: check
-check: check-react check-tests
+check: check-react
 .PHONY: check-%
 check-%:
 	$(MAKE) -C $* check
@@ -24,7 +24,6 @@ check-%:
 .PHONY: get-deps
 get-deps:
 	$(MAKE) -C react $@
-	$(MAKE) -C tests $@
 
 .PHONY: build
 build:
