@@ -32,7 +32,7 @@ cluster without writing a model, see :ref:`commands-and-shells`.
    cluster by setting the ``DET_MASTER`` environment variable to the
    hostname or IP address where Determined is running.
 
--  For Determined clusters installed using ``det-deploy local``: when
+-  For Determined clusters installed using ``det deploy local``: when
    you run your first experiment, Determined needs to download Docker
    images with the dependencies needed to run deep learning workloads.
    This initial download can take some time, depending on the speed of
@@ -162,7 +162,7 @@ output:
 
 We can view the status of the experiment in the WebUI. In a browser, go
 to ``http://DET_MASTER/``, where ``DET_MASTER`` is the URL or IP address
-of your Determined cluster. If you installed locally via ``det-deploy
+of your Determined cluster. If you installed locally via ``det deploy
 local``, this will likely be ``http://localhost:8080/`` . A Determined
 dashboard will be displayed similar to the one below:
 

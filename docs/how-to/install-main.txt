@@ -38,10 +38,10 @@ machines that you would like to install Determined on, whether that
 means a single laptop for local development or a fleet of multi-GPU
 servers.
 
-``det-deploy`` is the most convenient on-premise option; once installed,
+``det deploy`` is the most convenient on-premise option; once installed,
 it will allow you to start a cluster by running a single command on each
 machine. If you would like more control over the process, you can
-instead manually manage the Docker images that ``det-deploy`` uses
+instead manually manage the Docker images that ``det deploy`` uses
 internally. If you are using Ubuntu, you also have the option of
 installing most components of Determined using Debian packages and
 running them as `systemd
@@ -102,9 +102,9 @@ use `Docker <https://www.docker.com/>`_ to run the master and agents.
 Depending on your installation method, some of these services will be
 installed for you:
 
--  On a cloud provider using ``det-deploy``, Docker and PostgreSQL will
+-  On a cloud provider using ``det deploy``, Docker and PostgreSQL will
    be installed for you.
--  On-premise using ``det-deploy``, Docker will need to be installed.
+-  On-premise using ``det deploy``, Docker will need to be installed.
 -  When doing a manual installation, you will have to install Docker and
    PostgreSQL yourself.
 

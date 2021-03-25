@@ -4,10 +4,10 @@ from typing import Any, Dict, List, Optional
 
 from determined.common import api, constants, experimental
 from determined.common.api.authentication import authentication_required
+from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import Determined
 
 from . import render
-from .declarative_argparse import Arg, Cmd
 
 
 def format_validation(validation: Dict[str, Any]) -> List[Any]:

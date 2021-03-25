@@ -18,7 +18,6 @@ import determined.cli
 import determined.common.api.authentication as auth
 from determined.cli import checkpoint, experiment, render
 from determined.cli.agent import args_description as agent_args_description
-from determined.cli.declarative_argparse import Arg, Cmd, add_args
 from determined.cli.master import args_description as master_args_description
 from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
@@ -34,7 +33,10 @@ from determined.cli.version import check_version
 from determined.common import api, yaml
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_not_none
+from determined.common.declarative_argparse import Arg, Cmd, add_args
 from determined.common.util import chunks, debug_mode, get_default_master_address
+from determined.deploy.cli import DEPLOY_CMD_NAME
+from determined.deploy.cli import args_description as deploy_args_description
 
 
 @authentication_required
@@ -159,6 +161,8 @@ args_description = [
         Arg("config_file", type=FileType("r"),
             help="experiment config file (.yaml)")
     ]),
+
+    deploy_args_description,
 ]  # type: List[object]
 
 # fmt: on
@@ -214,6 +218,11 @@ def main(args: List[str] = sys.argv[1:]) -> None:
             api.request.set_master_cert_bundle(cert_fn)
 
         try:
+            # For `det deploy`, skip interaction with master.
+            if v.get("_command") == DEPLOY_CMD_NAME:
+                parsed_args.func(parsed_args)
+                return
+
             try:
                 check_version(parsed_args)
             except requests.exceptions.SSLError:

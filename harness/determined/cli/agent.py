@@ -9,8 +9,7 @@ from determined.cli import render
 from determined.common import api
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_false
-
-from .declarative_argparse import Arg, Cmd, Group
+from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
 def local_id(address: str) -> str:

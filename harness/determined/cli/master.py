@@ -8,8 +8,7 @@ from requests import Response
 from determined.common import api
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_gt
-
-from .declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd
 
 
 @authentication_required

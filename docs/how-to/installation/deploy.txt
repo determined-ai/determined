@@ -1,11 +1,11 @@
 .. _install-using-deploy:
 
-#####################################
- Install Determined Using det-deploy
-#####################################
+#########################################
+ Install Determined Using ``det deploy``
+#########################################
 
 This document shows how to deploy Determined locally or in a production
-cluster using the ``det-deploy`` command-line tool, which automates the
+cluster using the ``det deploy`` command-line tool, which automates the
 process of starting Determined as a collection of Docker containers.
 
 In a typical production setup, the master and agents will run on
@@ -19,15 +19,15 @@ instructions for both scenarios.
 
 .. note::
 
-   Docker must be installed to use ``det-deploy`` for local
+   Docker must be installed to use ``det deploy`` for local
    installations. Please refer to our :ref:`installation
    <install-docker>` steps for Docker.
 
-Install ``det-deploy`` by running
+Install ``determined`` python package by running
 
 .. code::
 
-   pip install determined-deploy
+   pip install determined
 
 .. _configuring-cluster-install:
 
@@ -42,7 +42,7 @@ also :ref:`sample configuration files available <config-template>`.
 
 .. note::
 
-   ``det-deploy`` will use a default configuration file if you don't
+   ``det deploy`` will use a default configuration file if you don't
    provide one. It also transparently manages PostgreSQL along with the
    master, so the configuration options related to those services do not
    need to be set.
@@ -57,10 +57,10 @@ this, run one of the following commands:
 .. code::
 
    # If the machine has GPUs:
-   det-deploy local cluster-up
+   det deploy local cluster-up
 
    # If the machine doesn't have GPUs:
-   det-deploy local cluster-up --no-gpu
+   det deploy local cluster-up --no-gpu
 
 This will start a master and an agent on that machine. To verify that
 the master is running, navigate to ``http://<master-hostname>:8080`` in
@@ -73,17 +73,17 @@ available on the machine).
 
 For production deployments, you'll want to :ref:`use a cluster
 configuration file <configuring-cluster-install>`. To provide this
-configuration file to ``det-deploy``, use:
+configuration file to ``det deploy``, use:
 
 .. code::
 
-   det-deploy local cluster-up --master-config-path <path to master.yaml>
+   det deploy local cluster-up --master-config-path <path to master.yaml>
 
 If you want to create more than one agent locally, you can use:
 
 .. code::
 
-   det-deploy local cluster-up --agents <number of agents>
+   det deploy local cluster-up --agents <number of agents>
 
 Stopping a Single-Node Cluster
 ==============================
@@ -93,13 +93,13 @@ is currently running, run
 
 .. code::
 
-   det-deploy local cluster-down
+   det deploy local cluster-down
 
 .. note::
 
-   ``det-deploy local cluster-down`` will not remove any agents created
-   with ``det-deploy local agent-up``. To remove these agents, use
-   ``det-deploy local agent-down``.
+   ``det deploy local cluster-down`` will not remove any agents created
+   with ``det deploy local agent-up``. To remove these agents, use ``det
+   deploy local agent-down``.
 
 Deploying a Standalone Master
 =============================
@@ -110,20 +110,20 @@ order to start a standalone master, run:
 
 .. code::
 
-   det-deploy local master-up
+   det deploy local master-up
 
 .. note::
 
    For production deployments, you'll want to :ref:`use a cluster
    configuration file. <configuring-cluster-install>` To provide this
-   configuration file to ``det-deploy``, use the flag
+   configuration file to ``det deploy``, use the flag
    ``--master-config-path <path to master.yaml>``.
 
 To stop a running master, run:
 
 .. code::
 
-   det-deploy local master-down
+   det deploy local master-down
 
 Deploying Agents
 ================
@@ -134,10 +134,10 @@ commands:
 .. code::
 
    # If the machine has GPUs:
-   det-deploy local agent-up <master_hostname>
+   det deploy local agent-up <master_hostname>
 
    # If the machine doesn't have GPUs:
-   det-deploy local agent-up --no-gpu <master_hostname>
+   det deploy local agent-up --no-gpu <master_hostname>
 
 This will create an agent on that machine. To verify whether it has
 successfully connected to the master, navigate to the WebUI and check
@@ -148,7 +148,7 @@ To launch the agent into a specific resource pool, use the
 
 .. code::
 
-   det-deploy local agent-up --agent-resource-pool=<resource_pool> <master_hostname>
+   det deploy local agent-up --agent-resource-pool=<resource_pool> <master_hostname>
 
 For more information about resource pools, see :ref:`resource-pools`.
 
@@ -156,4 +156,4 @@ To stop a running agent, run:
 
 .. code::
 
-   det-deploy local agent-down
+   det deploy local agent-down

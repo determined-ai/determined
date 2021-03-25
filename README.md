@@ -34,7 +34,7 @@ python3.7 -m venv ~/.virtualenvs/test
 . ~/.virtualenvs/test/bin/activate
 pip install determined
 # To start a cluster with GPUs, remove `no-gpu` flag.
-det-deploy local cluster-up --no-gpu
+det deploy local cluster-up --no-gpu
 # Access web UI at localhost:8080. By default, "determined" user accepts a blank password.
 
 # Navigate to a Determined example.

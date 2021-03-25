@@ -74,9 +74,26 @@ class Arg:
 class Group:
     """Describes a mutually exclusive group of options."""
 
-    def __init__(self, *options: Any, **kwargs: Any) -> None:
+    def __init__(self, *options: Arg, **kwargs: Any) -> None:
         self.options = options
         self.kwargs = kwargs
+
+
+class ArgGroup:
+    """
+    Describes a named conceptual group of options. Arguments are passed to
+    `add_argument_group`.
+    """
+
+    def __init__(
+        self,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        child_args: Optional[List[Arg]] = None,
+    ) -> None:
+        self.title = title
+        self.description = description
+        self.child_args = child_args or []
 
 
 def wrap_func(parser: ArgumentParser, func: Callable) -> Callable:
@@ -146,6 +163,7 @@ def add_args(parser: ArgumentParser, description: List[Any], depth: int = 0) -> 
             subparser = subparsers.add_parser(main_name, **subparser_kwargs)
 
             subparser.set_defaults(func=thing.func)
+            subparser.set_defaults(**{("_" + "sub" * depth + "command"): thing.name})
 
             # If this is the default subcommand, make calling the parent with
             # no subcommand behave the same as calling this subcommand with no
@@ -164,6 +182,11 @@ def add_args(parser: ArgumentParser, description: List[Any], depth: int = 0) -> 
             group = parser.add_mutually_exclusive_group(**thing.kwargs)
             for option in thing.options:
                 group.add_argument(*option.args, **option.kwargs)
+
+        elif isinstance(thing, ArgGroup):
+            arg_group = parser.add_argument_group(thing.title, thing.description)
+            for child_arg in thing.child_args:
+                arg_group.add_argument(*child_arg.args, **child_arg.kwargs)
 
     # If there are any subcommands but none claimed the default action, make
     # the default print help.

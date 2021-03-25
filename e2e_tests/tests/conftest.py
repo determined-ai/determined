@@ -47,7 +47,10 @@ def pytest_addoption(parser: Parser) -> None:
         "--master-port", action="store", default="8080", help="Master port for integration tests"
     )
     parser.addoption(
-        "--det-version", action="store", default=None, help="Determind version for det-deploy tests"
+        "--det-version",
+        action="store",
+        default=None,
+        help="Determined version for det deploy tests",
     )
     parser.addoption(
         "--require-secrets", action="store_true", help="fail tests when s3 access fails"

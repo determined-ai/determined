@@ -17,8 +17,8 @@ involved task, so this guide is recommended for users who have hit the
 limitations of the default logging backend.
 
 Using the default logging backend, with a standard deployment using
-``det-deploy``, the cluster can ingest logs about as fast as Postgres
-can persist them. For example, with ``det-deploy aws`` using Aurora
+``det deploy``, the cluster can ingest logs about as fast as Postgres
+can persist them. For example, with ``det deploy aws`` using Aurora
 Serverless with 2 capacity units, ingestion speed maxes out around 10-15
 MB/s (where the database's CPU hits ~90%). To get a little more mileage
 from the default, we recommend increasing the capacity of the database.

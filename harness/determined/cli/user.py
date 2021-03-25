@@ -10,9 +10,9 @@ from termcolor import colored
 import determined.common.api.authentication as auth
 from determined.common import api
 from determined.common.api.authentication import authentication_required
+from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
-from .declarative_argparse import Arg, Cmd
 
 FullUser = namedtuple(
     "FullUser",

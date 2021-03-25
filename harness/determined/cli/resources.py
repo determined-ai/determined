@@ -4,9 +4,9 @@ from typing import Any, List
 
 import requests
 
-from determined.cli.declarative_argparse import Arg, Cmd
 from determined.common import api
 from determined.common.api.authentication import authentication_required
+from determined.common.declarative_argparse import Arg, Cmd
 
 
 # Print the body of a response in chunks so we don't have to buffer the whole thing.
