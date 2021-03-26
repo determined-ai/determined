@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 )
 
@@ -74,6 +75,10 @@ resource_pools:
 						MaxInstances:           5,
 					},
 					MaxCPUContainersPerAgent: 100,
+					TaskContainerDefaults: model.TaskContainerDefaultsConfig{
+						ShmSizeBytes: 4294967296,
+						NetworkMode:  "bridge",
+					},
 				},
 			},
 		},
