@@ -1223,27 +1223,6 @@ for more details on how to set environment variables in containers.
    The file system path to use as the mount point in the trial runner
    container for storing the local cache.
 
-***********
- Profiling
-***********
-
-The ``profiling`` section specifies configuration options related to
-experiment profiling. Determined currently supports the collection of
-system metrics for all frameworks (up to 5 minutes of collection) and
-the collection of timing metrics for PyTorchTrial.
-
-**Optional Fields**
-
-``enabled``
-   Specifies if profiling is enabled for the given experiment.
-
-``window``
-   Specifies the window in which to collect metrics.
-
-   ``batches``
-      The window in terms of batches. For example, `2-10` would result
-      in the harness profiling batches 2 through 10, inclusive.
-
 .. _experiment-configuration_training_units:
 
 ****************

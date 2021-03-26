@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -319,10 +318,9 @@ type NativeConfig struct {
 
 // ProfilingConfig represents the configuration settings to enable and configure profiling.
 type ProfilingConfig struct {
-	Enabled bool `json:"enabled"`
-	Window  struct {
-		Batches string `json:"batches"`
-	} `json:"window"`
+	Enabled       bool `json:"enabled"`
+	BeginOnBatch  int  `json:"begin_on_batch"`
+	EndAfterBatch int  `json:"end_after_batch"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -332,26 +330,10 @@ func (p ProfilingConfig) Validate() []error {
 	}
 
 	var errs []error
-	batches := strings.Split(p.Window.Batches, "-")
-	if len(batches) != 2 {
-		errs = append(errs, fmt.Errorf("malformed batch window: %s", batches))
-		return errs
-	}
 
-	batchStart, sErr := strconv.Atoi(batches[0])
-	if sErr != nil {
-		errs = append(errs, fmt.Errorf("malformed batch index %s: %w", batches[0], sErr))
-		return errs
-	}
-
-	batchEnd, eErr := strconv.Atoi(batches[1])
-	if eErr != nil {
-		errs = append(errs, fmt.Errorf("malformed batch index %s: %w", batches[0], sErr))
-		return errs
-	}
-
-	if batchStart > batchEnd {
-		errs = append(errs, fmt.Errorf("malformed batch window: %d > %d", batchStart, batchEnd))
+	if p.BeginOnBatch > p.EndAfterBatch {
+		errs = append(errs,
+			fmt.Errorf("malformed batch window: %d > %d", p.BeginOnBatch, p.EndAfterBatch))
 		return errs
 	}
 
