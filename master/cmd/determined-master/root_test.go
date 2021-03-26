@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
@@ -61,6 +62,10 @@ task_container_defaults:
 			PoolName:                 "default",
 			Provider:                 providerConf,
 			MaxCPUContainersPerAgent: 100,
+			TaskContainerDefaults: model.TaskContainerDefaultsConfig{
+				ShmSizeBytes: 4294967296,
+				NetworkMode:  "bridge",
+			},
 		},
 	}
 	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{
