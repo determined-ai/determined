@@ -26,6 +26,8 @@ export interface Props<T = SelectValue> extends SelectProps<T> {
 export const ALL_VALUE = 'all';
 
 const countOptions = (children: React.ReactNode): number => {
+  if (!children) return 0;
+
   let count = 0;
   if (Array.isArray(children)) {
     count += children.map(child => countOptions(child)).reduce((acc, count) => acc + count, 0);

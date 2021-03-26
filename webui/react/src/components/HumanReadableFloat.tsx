@@ -6,6 +6,7 @@ import { CommonProps } from 'types';
 interface Props extends CommonProps {
   num: number;
   precision?: number;
+  tooltipPrefix?: string;
 }
 
 const defaultProps: Props = {
@@ -13,22 +14,22 @@ const defaultProps: Props = {
   precision: 6,
 };
 
-const HumanReadableFloat: React.FC<Props> = ({ num, precision }: Props) => {
+const HumanReadableFloat: React.FC<Props> = ({ num, precision, tooltipPrefix }: Props) => {
   const isInteger = Number.isInteger(num);
   const absoluteNum = Math.abs(num);
   const stringNum = num.toString();
-  let label: string = stringNum;
+  let content: string = stringNum;
 
   if (!isInteger) {
-    label = num.toFixed(precision);
+    content = num.toFixed(precision);
     if (absoluteNum < 0.01 || absoluteNum > 999) {
-      label = num.toExponential(precision);
+      content = num.toExponential(precision);
     }
   }
 
   return (
-    <Tooltip title={stringNum}>
-      <span>{label}</span>
+    <Tooltip title={`${tooltipPrefix}${stringNum}`}>
+      <span>{content}</span>
     </Tooltip>
   );
 };

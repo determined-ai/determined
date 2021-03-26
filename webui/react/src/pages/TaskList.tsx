@@ -8,7 +8,6 @@ import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
-import { Indicator } from 'components/Spinner';
 import {
   defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE, taskNameRenderer,
 } from 'components/Table';
@@ -303,10 +302,7 @@ const TaskList: React.FC = () => {
         <ResponsiveTable<CommandTask>
           columns={columns}
           dataSource={filteredTasks}
-          loading={{
-            indicator: <Indicator />,
-            spinning: !hasLoaded,
-          }}
+          loading={!hasLoaded}
           pagination={getPaginationConfig(filteredTasks.length, filters.limit)}
           rowClassName={() => defaultRowClassName({ clickable: false })}
           rowKey="id"

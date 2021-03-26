@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: Experiment visualizations attempt to pick the most relevant
+   hyperparameters to visualize by default, using HP importance if
+   available.

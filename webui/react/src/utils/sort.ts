@@ -1,4 +1,6 @@
-import { CommandState, MetricName, MetricType, Primitive, RunState, State } from 'types';
+import {
+  CommandState, HpImportance, MetricName, MetricType, Primitive, RunState, State,
+} from 'types';
 
 const runStateSortValues: Record<RunState, number> = {
   [RunState.Active]: 0,
@@ -34,6 +36,14 @@ export const booleanSorter = (a: boolean, b: boolean): number => {
 
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
   return commandStateSortValues[a] - commandStateSortValues[b];
+};
+
+export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImportance): number => {
+  const aValue = hpImportance[a];
+  const bValue = hpImportance[b];
+  if (aValue < bValue) return 1;
+  if (aValue > bValue) return -1;
+  return 0;
 };
 
 /*

@@ -140,6 +140,9 @@ html {
   .ant-spin-nested-loading {
     height: inherit;
   }
+  .ant-spin-nested-loading > div > .ant-spin-spinning {
+    max-height: inherit;
+  }
 
   /* Statistic */
 

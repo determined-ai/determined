@@ -5,7 +5,6 @@ import Message, { MessageType } from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
@@ -223,14 +222,12 @@ const Dashboard: React.FC = () => {
           </OverviewStats> : null}
         </Grid>
       </Section>
-      <Section divider={true} options={taskFilter} title="Recent Tasks">
-        {showTasksSpinner
-          ? <Spinner />
-          : tasks.length !== 0
-            ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
-            : <Message
-              title="No recent tasks matching the current filters"
-              type={MessageType.Empty} />
+      <Section divider={true} loading={showTasksSpinner} options={taskFilter} title="Recent Tasks">
+        {tasks.length !== 0
+          ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
+          : <Message
+            title="No recent tasks matching the current filters"
+            type={MessageType.Empty} />
         }
       </Section>
     </Page>

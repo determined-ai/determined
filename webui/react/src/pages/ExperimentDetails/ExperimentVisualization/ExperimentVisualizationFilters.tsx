@@ -2,12 +2,12 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
+import HpSelectFilter from 'components/HpSelectFilter';
 import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
-import MultiSelect from 'components/MultiSelect';
 import RadioGroup from 'components/RadioGroup';
 import SelectFilter from 'components/SelectFilter';
-import { ExperimentVisualizationType, MetricName } from 'types';
+import { ExperimentVisualizationType, HpImportance, MetricName } from 'types';
 
 import css from './ExperimentVisualizationFilters.module.scss';
 
@@ -36,9 +36,11 @@ interface Props {
   batches: number[];
   filters: VisualizationFilters;
   fullHParams: string[];
+  hpImportance?: HpImportance;
   metrics: MetricName[];
   onChange?: (filters: VisualizationFilters) => void;
   onMetricChange?: (metric: MetricName) => void;
+  onReset?: () => void;
   type: ExperimentVisualizationType,
 }
 
@@ -83,9 +85,11 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   batches,
   filters,
   fullHParams,
+  hpImportance,
   metrics,
   onChange,
   onMetricChange,
+  onReset,
   type,
 }: Props) => {
   const [ localFilters, dispatch ] = useReducer(reducer, filters);
@@ -148,7 +152,8 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
 
   const handleReset = useCallback(() => {
     dispatch({ type: ActionType.Set, value: filters });
-  }, [ filters ]);
+    if (onReset) onReset();
+  }, [ filters, onReset ]);
 
   // Pick the first valid option if the current local batch is invalid.
   useEffect(() => {
@@ -204,12 +209,12 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
           onChange={handleMetricChange} />
       )}
       {showHParams && (
-        <MultiSelect
-          label="HP"
+        <HpSelectFilter
+          fullHParams={fullHParams}
+          hpImportance={hpImportance}
+          label={`HP (max ${MAX_HPARAM_COUNT})`}
           value={localFilters.hParams}
-          onChange={handleHParamChange}>
-          {fullHParams.map(hParam => <Option key={hParam} value={hParam}>{hParam}</Option>)}
-        </MultiSelect>
+          onChange={handleHParamChange} />
       )}
       {showViews && (
         <RadioGroup

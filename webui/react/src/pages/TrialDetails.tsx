@@ -18,7 +18,7 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter, { ALL_VALUE } from 'components/SelectFilter';
-import Spinner, { Indicator } from 'components/Spinner';
+import Spinner from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -413,10 +413,7 @@ const TrialDetailsComp: React.FC = () => {
             <ResponsiveTable<Step>
               columns={columns}
               dataSource={workloadSteps}
-              loading={{
-                indicator: <Indicator />,
-                spinning: trialDetails.isLoading,
-              }}
+              loading={trialDetails.isLoading}
               pagination={getPaginationConfig(workloadSteps.length, pageSize)}
               rowClassName={defaultRowClassName({ clickable: false })}
               rowKey="batchNum"

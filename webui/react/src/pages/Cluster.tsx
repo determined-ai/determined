@@ -9,7 +9,6 @@ import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
 import Agents from 'contexts/Agents';
 import ClusterOverview, { agentsToOverview } from 'contexts/ClusterOverview';
@@ -164,10 +163,7 @@ const Cluster: React.FC = () => {
           <ResponsiveTable<ResourcePool>
             columns={columns}
             dataSource={resourcePools}
-            loading={{
-              indicator: <Indicator />,
-              spinning: !agents, // TODO replace with resource pools
-            }}
+            loading={!agents} // TODO replace with resource pools
             pagination={getPaginationConfig(resourcePools.length, 10)}
             rowClassName={defaultRowClassName({ clickable: true })}
             rowKey="name"

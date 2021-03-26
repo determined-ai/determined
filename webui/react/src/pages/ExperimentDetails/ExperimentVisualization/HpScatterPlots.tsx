@@ -20,7 +20,7 @@ import css from './HpScatterPlots.module.scss';
 interface Props {
   experiment: ExperimentBase;
   filters?: React.ReactNode;
-  hParams: string[];
+  fullHParams: string[];
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
@@ -36,8 +36,8 @@ interface HpMetricData {
 
 const ScatterPlots: React.FC<Props> = ({
   experiment,
-  hParams,
   filters,
+  fullHParams,
   selectedBatch,
   selectedBatchMargin,
   selectedHParams,
@@ -79,7 +79,7 @@ const ScatterPlots: React.FC<Props> = ({
           const trialId = trial.trialId;
           trialIds.push(trialId);
 
-          hParams.forEach(hParam => {
+          fullHParams.forEach(hParam => {
             if (!isNumber(trial.hparams[hParam])) return;
 
             hpTrialMap[hParam] = hpTrialMap[hParam] || {};
@@ -91,7 +91,7 @@ const ScatterPlots: React.FC<Props> = ({
           });
         });
 
-        hParams.forEach(hParam => {
+        fullHParams.forEach(hParam => {
           const hp = (experiment.config.hyperparameters || {})[hParam];
           if (hp.type === ExperimentHyperParamType.Log) hpLogScaleMap[hParam] = true;
 
@@ -118,7 +118,7 @@ const ScatterPlots: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment, hParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
+  }, [ experiment, fullHParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
   if (pageError) {
     return <Message title={pageError.message} />;
@@ -135,34 +135,29 @@ const ScatterPlots: React.FC<Props> = ({
     );
   }
 
-  let content = <Spinner />;
-  if (hasLoaded && chartData) {
-    if (chartData.trialIds.length === 0) {
-      content = <Message title="No data to plot." type={MessageType.Empty} />;
-    } else {
-      content = (
-        <Grid
-          border={true}
-          minItemWidth={resize.width > 320 ? 35 : 27}
-          mode={GridMode.AutoFill}>
-          {selectedHParams.map(hParam => (
-            <ScatterPlot
-              key={hParam}
-              x={chartData.hpValues[hParam]}
-              xLabel={hParam}
-              xLogScale={chartData.hpLogScales[hParam]}
-              y={chartData.metricValues[hParam]}
-              yLabel={metricNameToStr(selectedMetric)} />
-          ))}
-        </Grid>
-      );
-    }
-  }
-
   return (
     <div className={css.base} ref={baseRef}>
-      <Section bodyBorder bodyNoPadding bodyScroll filters={filters}>
-        <div className={css.container}>{content}</div>
+      <Section bodyBorder bodyNoPadding bodyScroll filters={filters} loading={!hasLoaded}>
+        <div className={css.container}>
+          {chartData?.trialIds.length === 0 ? (
+            <Message title="No data to plot." type={MessageType.Empty} />
+          ) : (
+            <Grid
+              border={true}
+              minItemWidth={resize.width > 320 ? 35 : 27}
+              mode={GridMode.AutoFill}>
+              {selectedHParams.map(hParam => (
+                <ScatterPlot
+                  key={hParam}
+                  x={chartData?.hpValues[hParam] || []}
+                  xLabel={hParam}
+                  xLogScale={chartData?.hpLogScales[hParam]}
+                  y={chartData?.metricValues[hParam] || []}
+                  yLabel={metricNameToStr(selectedMetric)} />
+              ))}
+            </Grid>
+          )}
+        </div>
       </Section>
     </div>
   );

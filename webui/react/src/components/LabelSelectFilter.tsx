@@ -34,16 +34,8 @@ const LabelSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   }, [ canceler ]);
 
   return (
-    <MultiSelect
-      label="Labels"
-      value={value || []}
-      onChange={onChange}
-    >
-      {labels.map((label) => (
-        <Option key={label} value={label}>
-          {label}
-        </Option>
-      ))}
+    <MultiSelect label="Labels" value={value} onChange={onChange}>
+      {labels.map((label) => <Option key={label} value={label}>{label}</Option>)}
     </MultiSelect>
   );
 };

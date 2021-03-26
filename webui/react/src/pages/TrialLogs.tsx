@@ -149,7 +149,7 @@ const TrialLogs: React.FC = () => {
   }, [ experimentId, experimentIdParam, history, trialId ]);
 
   if (!experimentId || !trialId) {
-    return <Spinner spinning={true} />;
+    return <Spinner />;
   }
 
   if (trial.errorCount > 0 && !trial.isLoading) {

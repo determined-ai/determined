@@ -2,18 +2,37 @@ import { Select } from 'antd';
 import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import { ALL_VALUE } from 'types';
+import HumanReadableFloat from 'components/HumanReadableFloat';
+import { ALL_VALUE, HpImportance } from 'types';
 import { clone, isObject } from 'utils/data';
+import { hpImportanceSorter } from 'utils/sort';
 
+import css from './HpSelectFilter.module.scss';
 import SelectFilter, { Props as SelectFilterProps } from './SelectFilter';
 
 const { Option } = Select;
 
-const MultiSelect: React.FC<SelectFilterProps> = ({ onChange, value, ...props }) => {
+interface Props extends SelectFilterProps {
+  fullHParams: string[];
+  hpImportance?: HpImportance;
+}
+
+const HpSelectFilter: React.FC<Props> = ({
+  fullHParams,
+  hpImportance = {},
+  onChange,
+  value,
+  ...props
+}: Props) => {
   const values = useMemo(() => {
     if (!value) return [];
     return Array.isArray(value) ? value : [ value ];
   }, [ value ]);
+
+  const sortedFullHParams = useMemo(() => {
+    const hParams = clone(fullHParams) as string[];
+    return hParams.sortAll((a, b) => hpImportanceSorter(a, b, hpImportance));
+  }, [ hpImportance, fullHParams ]);
 
   const handleSelect = useCallback((selected: SelectValue, option) => {
     if (!onChange) return;
@@ -42,20 +61,30 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ onChange, value, ...props })
 
   return (
     <SelectFilter
+      className={css.base}
       disableTags
-      dropdownMatchSelectWidth={200}
+      dropdownMatchSelectWidth={300}
       mode="multiple"
-      placeholder="All"
+      placeholder={ALL_VALUE}
       showArrow
-      style={{ width: 130 }}
       value={value}
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
-      <Option value={ALL_VALUE}>All</Option>
-      {props.children}
+      <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
+      {sortedFullHParams.map(hParam => {
+        const importance = hpImportance[hParam];
+        return (
+          <Option className={css.option} key={hParam} value={hParam}>
+            {hParam}
+            {importance && (
+              <HumanReadableFloat num={importance} precision={1} tooltipPrefix="Importance: " />
+            )}
+          </Option>
+        );
+      })}
     </SelectFilter>
   );
 };
 
-export default MultiSelect;
+export default HpSelectFilter;
