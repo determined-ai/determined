@@ -1,7 +1,7 @@
 import functools
 import itertools
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
-from typing import Any, Callable, List, Optional, Tuple, cast
+from typing import Any, Callable, List, NamedTuple, Optional, Tuple, cast
 
 
 def make_prefixes(desc: str) -> List[str]:
@@ -96,6 +96,17 @@ class ArgGroup:
         self.child_args = child_args or []
 
 
+class BoolOptArg(NamedTuple):
+    """Describes a boolean --foo / --no-foo flag pair."""
+
+    true_name: str
+    false_name: str
+    dest: str
+    default: bool = False
+    true_help: Optional[str] = None
+    false_help: Optional[str] = None
+
+
 def wrap_func(parser: ArgumentParser, func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(args: Namespace) -> Any:
@@ -187,6 +198,15 @@ def add_args(parser: ArgumentParser, description: List[Any], depth: int = 0) -> 
             arg_group = parser.add_argument_group(thing.title, thing.description)
             for child_arg in thing.child_args:
                 arg_group.add_argument(*child_arg.args, **child_arg.kwargs)
+
+        elif isinstance(thing, BoolOptArg):
+            parser.add_argument(
+                thing.true_name, dest=thing.dest, action="store_true", help=thing.true_help
+            )
+            parser.add_argument(
+                thing.false_name, dest=thing.dest, action="store_false", help=thing.false_help
+            )
+            parser.set_defaults(**{thing.dest: thing.default})
 
     # If there are any subcommands but none claimed the default action, make
     # the default print help.

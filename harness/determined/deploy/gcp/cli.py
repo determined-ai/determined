@@ -65,6 +65,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "local_state_path",
         "master",
         "user",
+        "no_preflight_checks",
         "func",
         "_command",
         "_subcommand",

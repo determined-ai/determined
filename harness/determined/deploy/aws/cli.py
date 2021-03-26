@@ -9,8 +9,10 @@ from botocore.exceptions import NoCredentialsError
 from termcolor import colored
 
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
-from determined.deploy.aws import aws, constants
-from determined.deploy.aws.deployment_types import base, govcloud, secure, simple, vpc
+
+from . import aws, constants
+from .deployment_types import base, govcloud, secure, simple, vpc
+from .preflight import check_quotas
 
 
 def validate_spot_max_price() -> Callable:
@@ -170,6 +172,9 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     }
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)
+
+    if not args.no_preflight_checks:
+        check_quotas(det_configs, deployment_object)
 
     if args.dry_run:
         deployment_object.print()
