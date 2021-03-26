@@ -5,22 +5,28 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // DefaultRPConfig returns the default resources pool configuration.
 func defaultRPConfig() *ResourcePoolConfig {
 	return &ResourcePoolConfig{
 		MaxCPUContainersPerAgent: 100,
+		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
+			ShmSizeBytes: 4294967296,
+			NetworkMode:  "bridge",
+		},
 	}
 }
 
 // ResourcePoolConfig hosts the configuration for a resource pool.
 type ResourcePoolConfig struct {
-	PoolName                 string              `json:"pool_name"`
-	Description              string              `json:"description"`
-	Provider                 *provisioner.Config `json:"provider"`
-	Scheduler                *SchedulerConfig    `json:"scheduler,omitempty"`
-	MaxCPUContainersPerAgent int                 `json:"max_cpu_containers_per_agent"`
+	PoolName                 string                            `json:"pool_name"`
+	Description              string                            `json:"description"`
+	Provider                 *provisioner.Config               `json:"provider"`
+	Scheduler                *SchedulerConfig                  `json:"scheduler,omitempty"`
+	MaxCPUContainersPerAgent int                               `json:"max_cpu_containers_per_agent"`
+	TaskContainerDefaults    model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
