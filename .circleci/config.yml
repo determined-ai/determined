@@ -1157,7 +1157,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "torch==1.8.0"
+          extras-requires: "torch==1.7.1"
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C cli check
@@ -1176,7 +1176,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1 torch==1.8.0 torchvision==0.9.0"
+          extras-requires: "tensorflow==2.4.1 torch==1.7.1 torchvision==0.8.2"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test
