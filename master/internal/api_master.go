@@ -84,7 +84,7 @@ func (a *apiServer) MasterLogs(
 		fetch,
 		onBatch,
 		nil,
-		TrialAvailableSeriesBatchWaitTime,
+		masterLogsBatchWaitTime,
 	).Run(resp.Context())
 }
 

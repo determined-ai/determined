@@ -37,7 +37,6 @@ const TrialLogs: React.FC = () => {
     useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
         trialId,
-        0,
         TAIL_SIZE,
         false,
         filters.agentIds,
@@ -57,7 +56,6 @@ const TrialLogs: React.FC = () => {
     useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
         trialId,
-        0,
         TAIL_SIZE,
         false,
         filters.agentIds,
@@ -85,7 +83,6 @@ const TrialLogs: React.FC = () => {
     useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
         trialId,
-        0,
         0,
         true,
         filters.agentIds,

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/determined-ai/determined/master/internal/protoutil"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -34,6 +36,7 @@ const (
 )
 
 var (
+	masterLogsBatchWaitTime           = 100 * time.Millisecond
 	trialLogsBatchWaitTime            = 100 * time.Millisecond
 	distinctFieldBatchWaitTime        = 5 * time.Second
 	trialProfilerMetricsBatchWaitTime = 10 * time.Millisecond
@@ -45,7 +48,7 @@ var (
 // must support to provide the features surfaced in API.
 type TrialLogBackend interface {
 	TrialLogs(
-		trialID, offset, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
+		trialID, limit int, filters []api.Filter, order apiv1.OrderBy, state interface{},
 	) ([]*model.TrialLog, interface{}, error)
 	AddTrialLogs([]*model.TrialLog) error
 	TrialLogsCount(trialID int, filters []api.Filter) (int, error)
@@ -74,12 +77,6 @@ func (a *apiServer) TrialLogs(
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
 	}
 
-	total, err := a.m.trialLogBackend.TrialLogsCount(int(req.TrialId), filters)
-	if err != nil {
-		return fmt.Errorf("failed to get trial count from backend: %w", err)
-	}
-	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
-
 	var followState interface{}
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
 		switch {
@@ -89,29 +86,34 @@ func (a *apiServer) TrialLogs(
 			return nil, nil
 		}
 
-		b, state, err := a.m.trialLogBackend.TrialLogs(
-			int(req.TrialId), r.Offset, r.Limit, filters, req.OrderBy, followState)
-		if err != nil {
-			return nil, err
+		b, state, fErr := a.m.trialLogBackend.TrialLogs(
+			int(req.TrialId), r.Limit, filters, req.OrderBy, followState)
+		if fErr != nil {
+			return nil, fErr
 		}
 		followState = state
 
-		return model.TrialLogBatch(b), err
+		return model.TrialLogBatch(b), nil
 	}
 
 	onBatch := func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
-			pl, err := r.(*model.TrialLog).Proto()
-			if err != nil {
-				return err
+			pl, pErr := r.(*model.TrialLog).Proto()
+			if pErr != nil {
+				return pErr
 			}
 			return resp.Send(pl)
 		})
 	}
 
-	lReq := api.BatchRequest{Offset: offset, Limit: limit, Follow: req.Follow}
+	total, err := a.m.trialLogBackend.TrialLogsCount(int(req.TrialId), filters)
+	if err != nil {
+		return fmt.Errorf("failed to get trial count from backend: %w", err)
+	}
+	effectiveLimit := api.EffectiveLimit(int(req.Limit), 0, total)
+
 	return api.NewBatchStreamProcessor(
-		lReq,
+		api.BatchRequest{Limit: effectiveLimit, Follow: req.Follow},
 		fetch,
 		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), 20*time.Second),
@@ -483,34 +485,50 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	_ context.Context,
 	req *apiv1.PostTrialProfilerMetricsBatchRequest,
 ) (*apiv1.PostTrialProfilerMetricsBatchResponse, error) {
-	switch exists, err := a.m.db.CheckTrialExists(int(req.Batch.Labels.TrialId)); {
-	case err != nil:
-		return nil, err
-	case !exists:
-		return nil, status.Error(codes.NotFound, "trial not found")
-	}
+	var errs *multierror.Error
+	existingTrials := map[int]bool{}
+	for _, batch := range req.Batches {
+		trialID := int(batch.Labels.TrialId)
+		if !existingTrials[trialID] {
+			switch exists, err := a.m.db.CheckTrialExists(trialID); {
+			case err != nil:
+				errs = multierror.Append(errs, err)
+				continue
+			case !exists:
+				errs = multierror.Append(errs, status.Error(codes.NotFound, "trial not found"))
+				continue
+			default:
+				existingTrials[trialID] = true
+			}
+		}
 
-	if len(req.Batch.Values) != len(req.Batch.Batches) ||
-		len(req.Batch.Batches) != len(req.Batch.Timestamps) {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"values, batches and timestamps should be equal sized arrays")
-	}
+		if len(batch.Values) != len(batch.Batches) ||
+			len(batch.Batches) != len(batch.Timestamps) {
+			errs = multierror.Append(errs, status.Errorf(codes.InvalidArgument,
+				"values, batches and timestamps should be equal sized arrays"))
+			continue
+		}
 
-	labels, err := protojson.Marshal(req.Batch.Labels)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal labels: %w", err)
-	}
+		labels, err := protojson.Marshal(batch.Labels)
+		if err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("failed to marshal labels: %w", err))
+			continue
+		}
 
-	timestamps, err := protoutil.TimeSliceFromProto(req.Batch.Timestamps)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert proto timestamps: %w", err)
-	}
+		timestamps, err := protoutil.TimeSliceFromProto(batch.Timestamps)
+		if err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("failed to convert proto timestamps: %w", err))
+			continue
+		}
 
-	if err := a.m.db.InsertTrialProfilerMetricsBatch(
-		req.Batch.Values, req.Batch.Batches, timestamps, labels); err != nil {
-		return nil, err
+		if err := a.m.db.InsertTrialProfilerMetricsBatch(
+			batch.Values, batch.Batches, timestamps, labels,
+		); err != nil {
+			errs = multierror.Append(errs, fmt.Errorf("failed to insert batch: %w", err))
+			continue
+		}
 	}
-	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, nil
+	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
 // isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and

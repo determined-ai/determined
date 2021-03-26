@@ -93,17 +93,14 @@ func (e *Elastic) TrialLogsCount(trialID int, fs []api.Filter) (int, error) {
 // search after over itself.
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-search-after.html
 func (e *Elastic) TrialLogs(
-	trialID, offset, limit int, fs []api.Filter, order apiv1.OrderBy, searchAfter interface{},
+	trialID, limit int, fs []api.Filter, order apiv1.OrderBy, searchAfter interface{},
 ) ([]*model.TrialLog, interface{}, error) {
 	if limit > elasticMaxQuerySize {
 		limit = elasticMaxQuerySize
 	}
 
 	query := jsonObj{
-		// Use from+size to begin at the requested offset, but move to search after
-		// API after first query to paginate the requests.
 		"size": limit,
-		"from": offset,
 		"query": jsonObj{
 			"bool": jsonObj{
 				"filter": append(filtersToElastic(fs),
@@ -143,9 +140,6 @@ func (e *Elastic) TrialLogs(
 
 	if searchAfter != nil {
 		query["search_after"] = searchAfter
-		// If a request comes with searchAfter values, offset is meaningless
-		// so we just remove it.
-		delete(query, "from")
 	}
 
 	resp := struct {

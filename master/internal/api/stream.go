@@ -88,43 +88,46 @@ func NewBatchStreamProcessor(
 // Run runs the batch stream processor.
 func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 	t := time.NewTicker(p.batchWaitTime)
+	defer t.Stop()
 	for {
+		switch batch, err := p.fetcher(p.req); {
+		case err != nil:
+			return errors.Wrapf(err, "failed to fetch batch")
+		case batch == nil, batch.Size() == 0:
+			if !p.req.Follow {
+				return nil
+			}
+
+			if p.terminateCheck != nil {
+				terminate, err := p.terminateCheck()
+				switch {
+				case err != nil:
+					return errors.Wrap(err, "failed to check the termination status")
+				case terminate:
+					return nil
+				}
+			}
+		default:
+			// Check the ctx again before we process, since fetch takes most of the time and
+			// a send on a closed ctx will print errors in the master log that can be misleading.
+			if ctx.Err() != nil {
+				return nil
+			}
+			p.req.Limit -= batch.Size()
+			p.req.Offset += batch.Size()
+			switch err := p.process(batch); {
+			case err != nil:
+				return fmt.Errorf("failed while processing batch: %w", err)
+			case !p.req.Follow && p.req.Limit <= 0:
+				return nil
+			}
+		}
+
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-t.C:
-			switch batch, err := p.fetcher(p.req); {
-			case err != nil:
-				return errors.Wrapf(err, "failed to fetch batch")
-			case batch == nil, batch.Size() == 0:
-				if !p.req.Follow {
-					return nil
-				}
-
-				if p.terminateCheck != nil {
-					terminate, err := p.terminateCheck()
-					switch {
-					case err != nil:
-						return errors.Wrap(err, "failed to check the termination status.")
-					case terminate:
-						return nil
-					}
-				}
-			default:
-				// Check the ctx again before we process, since fetch takes most of the time and
-				// a send on a closed ctx will print errors in the master log that can be misleading.
-				if ctx.Err() != nil {
-					return nil
-				}
-				p.req.Limit -= batch.Size()
-				p.req.Offset += batch.Size()
-				switch err := p.process(batch); {
-				case err != nil:
-					return fmt.Errorf("failed while processing batch: %w", err)
-				case !p.req.Follow && p.req.Limit <= 0:
-					return nil
-				}
-			}
+			continue
 		}
 	}
 }

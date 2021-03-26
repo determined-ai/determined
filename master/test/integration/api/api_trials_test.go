@@ -191,14 +191,18 @@ func trialProfilerMetricsTests(
 		// When we add some metrics that match our stream.
 		match := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "brad's agent", "1")
 		_, err := cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batch: match,
+			Batches: []*trialv1.TrialProfilerMetricsBatch{
+				match,
+			},
 		})
 		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
 
 		// And some that do not match our stream.
 		notMatch := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "someone else's agent", "1")
 		_, err = cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batch: notMatch,
+			Batches: []*trialv1.TrialProfilerMetricsBatch{
+				notMatch,
+			},
 		})
 		assert.NilError(t, err, "failed to insert mocked unmatched trial profiler metrics")
 
@@ -261,7 +265,9 @@ func trialProfilerMetricsAvailableSeriesTests(
 	for _, tb := range testBatches {
 		expected = append(expected, tb.Labels.Name)
 		_, err := cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batch: tb,
+			Batches: []*trialv1.TrialProfilerMetricsBatch{
+				tb,
+			},
 		})
 		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
 
@@ -317,7 +323,6 @@ func trialLogAPITests(
 		{
 			name: "agent_id in list",
 			req: &apiv1.TrialLogsRequest{
-				Offset: 0,
 				Limit:  2,
 				Follow: false,
 				AgentIds: []string{
@@ -354,7 +359,6 @@ func trialLogAPITests(
 		{
 			name: "rank_id in list",
 			req: &apiv1.TrialLogsRequest{
-				Offset: 0,
 				Limit:  2,
 				Follow: false,
 				RankIds: []int32{
@@ -391,7 +395,6 @@ func trialLogAPITests(
 		{
 			name: "timestamp_before",
 			req: &apiv1.TrialLogsRequest{
-				Offset:          0,
 				Limit:           1,
 				Follow:          false,
 				TimestampBefore: pTime0,
@@ -413,7 +416,6 @@ func trialLogAPITests(
 		{
 			name: "timestamp_after",
 			req: &apiv1.TrialLogsRequest{
-				Offset:         0,
 				Limit:          1,
 				Follow:         false,
 				TimestampAfter: pTime0,
@@ -440,7 +442,6 @@ func trialLogAPITests(
 		{
 			name: "order by desc",
 			req: &apiv1.TrialLogsRequest{
-				Offset:  0,
 				Limit:   3,
 				Follow:  false,
 				OrderBy: apiv1.OrderBy_ORDER_BY_DESC,

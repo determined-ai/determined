@@ -26,8 +26,15 @@ var trialLogsFieldMap = map[string]string{
 
 // TrialLogs takes a trial ID and log offset, limit and filters and returns matching trial logs.
 func (db *PgDB) TrialLogs(
-	trialID, offset, limit int, fs []api.Filter, order apiv1.OrderBy, _ interface{},
+	trialID, limit int, fs []api.Filter, order apiv1.OrderBy, followState interface{},
 ) ([]*model.TrialLog, interface{}, error) {
+	var offset int
+	if followState == nil {
+		offset = 0
+	} else {
+		offset = followState.(int)
+	}
+
 	params := []interface{}{trialID, offset, limit}
 	fragment, params := filtersToSQL(fs, params, trialLogsFieldMap)
 	query := fmt.Sprintf(`
@@ -64,7 +71,11 @@ ORDER BY timestamp %s OFFSET $2 LIMIT $3
 `, fragment, orderByToSQL(order))
 
 	var b []*model.TrialLog
-	return b, nil, db.queryRows(query, &b, params...)
+	if err := db.queryRows(query, &b, params...); err != nil {
+		return nil, nil, err
+	}
+
+	return b, offset + len(b), nil
 }
 
 // AddTrialLogs adds a list of *model.TrialLog objects to the database with automatic IDs.
