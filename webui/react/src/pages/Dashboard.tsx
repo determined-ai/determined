@@ -5,7 +5,6 @@ import Message, { MessageType } from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';

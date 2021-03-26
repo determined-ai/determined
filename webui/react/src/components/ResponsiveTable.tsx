@@ -1,18 +1,22 @@
 import { Table } from 'antd';
+import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import React, { useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
 
+import Spinner from './Spinner';
+
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 type ResponsiveTable = <T extends object>(props: TableProps<T>) => JSX.Element;
 
-const ResponsiveTable: ResponsiveTable = ({ scroll, ...props }) => {
+const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
   const [ hasScrollBeenEnabled, setHasScrollBeenEnabled ] = useState<boolean>(false);
   const [ tableScroll, setTableScroll ] = useState(scroll);
   const tableRef = useRef<HTMLDivElement>(null);
-
   const resize = useResize(tableRef);
+
+  const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   useEffect(() => {
     if (!tableRef.current || resize.width === 0) return;
@@ -42,7 +46,9 @@ const ResponsiveTable: ResponsiveTable = ({ scroll, ...props }) => {
   }, [ hasScrollBeenEnabled, resize, scroll ]);
 
   return <div ref={tableRef}>
-    <Table scroll={tableScroll} {...props} />
+    <Spinner spinning={spinning}>
+      <Table scroll={tableScroll} {...props} />
+    </Spinner>
   </div>;
 };
 

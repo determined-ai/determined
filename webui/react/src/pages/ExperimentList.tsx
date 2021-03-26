@@ -9,7 +9,6 @@ import LabelSelectFilter from 'components/LabelSelectFilter';
 import Page from 'components/Page';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
-import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
   defaultRowClassName, ExperimentRenderer,
@@ -531,10 +530,7 @@ const ExperimentList: React.FC = () => {
         <ResponsiveTable<ExperimentItem>
           columns={columns}
           dataSource={experiments}
-          loading={{
-            indicator: <Indicator />,
-            spinning: isLoading,
-          }}
+          loading={isLoading}
           pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"

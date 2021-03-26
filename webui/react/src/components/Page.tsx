@@ -7,6 +7,7 @@ import { CommonProps } from 'types';
 import Info from '../contexts/Info';
 
 import css from './Page.module.scss';
+import Spinner from './Spinner';
 
 export interface BreadCrumbRoute {
   breadcrumbName: string;
@@ -17,6 +18,7 @@ export interface Props extends CommonProps {
   breadcrumb?: BreadCrumbRoute[];
   docTitle?: string;
   id?: string;
+  loading?: boolean;
   options?: React.ReactNode;
   stickHeader?: boolean;
   subTitle?: React.ReactNode;
@@ -55,7 +57,9 @@ const Page: React.FC<Props> = (props: Props) => {
         sticky={props.stickHeader}
         subTitle={props.subTitle}
         title={props.title} />}
-      <div className={css.body}>{props.children}</div>
+      <div className={css.body}>
+        <Spinner spinning={!!props.loading}>{props.children}</Spinner>
+      </div>
     </main>
   );
 };
