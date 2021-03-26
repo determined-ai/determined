@@ -17,5 +17,5 @@ resources:
 environment:
   # This model only works with Tensorflow 2.2+.
   image:
-     cpu: "determinedai/environments:py-3.7-pytorch-1.8-lightning-1.2-tf-2.4-cpu-145c0d8"
-     gpu: "determinedai/environments:cuda-10.2-pytorch-1.8-lightning-1.2-tf-2.4-gpu-145c0d8"
+     cpu: "determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-1c4ea10"
+     gpu: "determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-1c4ea10"
