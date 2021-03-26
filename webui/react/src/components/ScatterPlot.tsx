@@ -73,8 +73,8 @@ const ScatterPlot: React.FC<Props> = ({
 
   const chartData = useMemo(() => {
     const hovertemplate = [
-      `${xLabel || 'x'}: %{x:.6f}`,
-      `${yLabel || 'y'}: %{y:.6f}`,
+      `${xLabel || 'x'}: %{x}`,
+      `${yLabel || 'y'}: %{y}`,
     ];
 
     if (values) hovertemplate.push(`${valueLabel || 'value'}: %{text}`);
