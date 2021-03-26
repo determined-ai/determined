@@ -45,14 +45,14 @@ const MultiSelect: React.FC<SelectFilterProps> = ({ onChange, value, ...props })
       disableTags
       dropdownMatchSelectWidth={200}
       mode="multiple"
-      placeholder={ALL_VALUE}
+      placeholder="All"
       showArrow
       style={{ width: 130 }}
       value={value}
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
-      <Option value={ALL_VALUE}>{ALL_VALUE}</Option>
+      <Option value={ALL_VALUE}>All</Option>
       {props.children}
     </SelectFilter>
   );

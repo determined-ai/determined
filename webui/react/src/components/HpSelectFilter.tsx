@@ -71,7 +71,7 @@ const HpSelectFilter: React.FC<Props> = ({
       onDeselect={handleDeselect}
       onSelect={handleSelect}
       {...props}>
-      <Option value={ALL_VALUE}>{ALL_VALUE}</Option>
+      <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
       {sortedFullHParams.map(hParam => {
         const importance = hpImportance[hParam];
         return (

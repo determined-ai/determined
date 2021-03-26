@@ -448,7 +448,7 @@ export type RecentEvent = {
   };
 };
 
-export const ALL_VALUE = 'All';
+export const ALL_VALUE = 'all';
 
 export type AnyTask = CommandTask | ExperimentTask;
 export type RecentTask = AnyTask & RecentEvent;
