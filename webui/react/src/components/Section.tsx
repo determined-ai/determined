@@ -48,8 +48,7 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
         </div>
       )}
       <div className={css.body}>
-        {!props.loading && props.children}
-        {props.loading && <Spinner />}
+        {props.loading ? <Spinner /> : props.children}
       </div>
     </section>
   );

@@ -39,6 +39,7 @@
     flex-grow: 1;
     height: max-content;
     min-height: 0;
+    position: relative;
   }
   .filterBar {
     background-color: var(--theme-colors-monochrome-15);
