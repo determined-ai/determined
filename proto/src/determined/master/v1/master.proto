@@ -55,16 +55,17 @@ enum ResourceAllocationAggregationType {
   RESOURCE_ALLOCATION_AGGREGATION_TYPE_LABEL = 3;
 }
 
-// One instance of slots in the cluster being allocated to a task during a day
-// (aggregated).
+// One instance of slots in the cluster being allocated to a task during a
+// period (aggregated).
 message ResourceAllocationAggregatedEntry {
-  // The type of aggregation performed for this entry.
-  ResourceAllocationAggregationType aggregation_type = 1;
-  // The value on which the aggregation was grouped ("total" for TOTAL, the
-  // username for USER, or the experiment label for LABEL).
-  string aggregation_key = 2;
-  // The date (YYYY-MM-DD) or month (YYYY-MM) of this entry.
-  string date = 3;
+  // The date of this entry.
+  string period_start = 1;
+  // The period over which aggregation occurred.
+  ResourceAllocationAggregationPeriod period = 2;
   // The total number of seconds included in this allocation entry.
-  float seconds = 4;
+  float seconds = 3;
+  // The seconds in the cluster used by experiments belonging to each user.
+  map<string, float> by_user = 4;
+  // The seconds in the cluster used by experiments labeled with each label.
+  map<string, float> by_label = 5;
 }

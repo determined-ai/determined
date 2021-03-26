@@ -297,24 +297,26 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	csvWriter := csv.NewWriter(c.Response())
 
 	header := []string{"aggregation_type", "aggregation_key", "date", "seconds"}
-	if err := csvWriter.Write(header); err != nil {
+	if err = csvWriter.Write(header); err != nil {
 		return err
 	}
 
+	write := func(aggType, aggKey, start string, seconds float32) error {
+		return csvWriter.Write([]string{aggType, aggKey, start, fmt.Sprintf("%f", seconds)})
+	}
+
 	for _, entry := range resp.ResourceEntries {
-		var aggType string
-		switch entry.AggregationType {
-		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_UNSPECIFIED:
-			return errors.New("got aggregation entry with unspecified type")
-		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_TOTAL:
-			aggType = "total"
-		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_USER:
-			aggType = "user"
-		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_LABEL:
-			aggType = "label"
+		for label, seconds := range entry.ByLabel {
+			if err = write("label", label, entry.PeriodStart, seconds); err != nil {
+				return err
+			}
 		}
-		fields := []string{aggType, entry.AggregationKey, entry.Date, fmt.Sprintf("%f", entry.Seconds)}
-		if err := csvWriter.Write(fields); err != nil {
+		for user, seconds := range entry.ByUser {
+			if err = write("user", user, entry.PeriodStart, seconds); err != nil {
+				return err
+			}
+		}
+		if err = write("total", "total", entry.PeriodStart, entry.Seconds); err != nil {
 			return err
 		}
 	}
