@@ -29,18 +29,24 @@ const breadCrumbRender = (route: Route, params: unknown, routes: Route[]) => {
 const PageHeader: React.FC<Props> = (props: Props) => {
   const classes = [ css.base ];
 
+  const showHeader = props.title || props.subTitle || props.options;
+
   if (props.sticky) classes.push(css.sticky);
 
   return (
     <div className={classes.join(' ')}>
-      <div className={css.breadcrumbs}>
-        <Breadcrumb itemRender={breadCrumbRender} routes={props.breadcrumb} />
-      </div>
-      <div className={css.header}>
-        <div className={css.title}>{props.title}</div>
-        <div className={css.subTitle}>{props.subTitle}</div>
-        <div className={css.options}>{props.options}</div>
-      </div>
+      {props.breadcrumb && (
+        <div className={css.breadcrumbs}>
+          <Breadcrumb itemRender={breadCrumbRender} routes={props.breadcrumb} />
+        </div>
+      )}
+      {showHeader && (
+        <div className={css.header}>
+          <div className={css.title}>{props.title}</div>
+          <div className={css.subTitle}>{props.subTitle}</div>
+          <div className={css.options}>{props.options}</div>
+        </div>
+      )}
     </div>
   );
 };

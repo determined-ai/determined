@@ -20,7 +20,7 @@ export interface Props extends CommonProps {
   id?: string;
   loading?: boolean;
   options?: React.ReactNode;
-  stickHeader?: boolean;
+  stickyHeader?: boolean;
   subTitle?: React.ReactNode;
   title?: string;
 }
@@ -44,7 +44,7 @@ const Page: React.FC<Props> = (props: Props) => {
     info.clusterName,
   );
 
-  if (props.stickHeader) classes.push(css.stickyHeader);
+  if (props.stickyHeader) classes.push(css.stickyHeader);
 
   return (
     <main className={classes.join(' ')} id={props.id}>
@@ -54,7 +54,7 @@ const Page: React.FC<Props> = (props: Props) => {
       {showHeader && <PageHeader
         breadcrumb={props.breadcrumb}
         options={props.options}
-        sticky={props.stickHeader}
+        sticky={props.stickyHeader}
         subTitle={props.subTitle}
         title={props.title} />}
       <div className={css.body}>
