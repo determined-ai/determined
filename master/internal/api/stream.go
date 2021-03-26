@@ -102,7 +102,7 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 				terminate, err := p.terminateCheck()
 				switch {
 				case err != nil:
-					return errors.Wrap(err, "failed to check the termination status.")
+					return errors.Wrap(err, "failed to check the termination status")
 				case terminate:
 					return nil
 				}
