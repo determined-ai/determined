@@ -23,6 +23,7 @@ import css from './LogViewer.module.scss';
 import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
 import LogViewerLevel, { ICON_WIDTH } from './LogViewerLevel';
 import Page, { Props as PageProps } from './Page';
+import Section from './Section';
 
 export interface LogViewerTimestampFilter {
   timestampAfter?: Dayjs,   // exclusive of the specified date time
@@ -398,13 +399,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   const logOptions = (
     <Space>
-      {FilterComponent && (
-        <FilterComponent
-          filter={filter}
-          filterOptions={filterOptions}
-          onChange={setFilter}
-        />
-      )}
       <Tooltip placement="bottomRight" title="Copy to Clipboard">
         <Button
           aria-label="Copy to Clipboard"
@@ -452,40 +446,50 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   return (
     <Page {...props.pageProps} options={logOptions}>
-      <div className={css.base} ref={baseRef}>
-        <div className={css.container} ref={container}>
-          <VariableSizeList
-            height={listMeasure.height}
-            itemCount={logs.length}
-            itemData={logs}
-            itemSize={getItemHeight}
-            ref={listRef}
-            width='100%'
-            onItemsRendered={onItemsRendered}
-          >
-            {LogViewerRow}
-          </VariableSizeList>
+      <Section
+        bodyBorder
+        bodyNoPadding
+        filters={FilterComponent && <FilterComponent
+          filter={filter}
+          filterOptions={filterOptions}
+          onChange={setFilter}
+        />}
+        maxHeight>
+        <div className={css.base} ref={baseRef}>
+          <div className={css.container} ref={container}>
+            <VariableSizeList
+              height={listMeasure.height}
+              itemCount={logs.length}
+              itemData={logs}
+              itemSize={getItemHeight}
+              ref={listRef}
+              width='100%'
+              onItemsRendered={onItemsRendered}
+            >
+              {LogViewerRow}
+            </VariableSizeList>
+          </div>
+          <div className={css.scrollTo}>
+            <Tooltip placement="left" title="Scroll to Top">
+              <Button
+                aria-label="Scroll to Top"
+                className={[ css.scrollToTop, css.show ].join(' ')}
+                icon={<Icon name="arrow-up" />}
+                onClick={handleScrollToTop} />
+            </Tooltip>
+            <Tooltip
+              placement="left"
+              title={direction === DIRECTIONS.BOTTOM_TO_TOP ? 'Tailing Enabled' : 'Enable Tailing'}
+            >
+              <Button
+                aria-label="Enable Tailing"
+                className={enableTailingClasses.join(' ')}
+                icon={<Icon name="arrow-down" />}
+                onClick={handleEnableTailing} />
+            </Tooltip>
+          </div>
         </div>
-        <div className={css.scrollTo}>
-          <Tooltip placement="left" title="Scroll to Top">
-            <Button
-              aria-label="Scroll to Top"
-              className={[ css.scrollToTop, css.show ].join(' ')}
-              icon={<Icon name="arrow-up" />}
-              onClick={handleScrollToTop} />
-          </Tooltip>
-          <Tooltip
-            placement="left"
-            title={direction === DIRECTIONS.BOTTOM_TO_TOP ? 'Tailing Enabled' : 'Enable Tailing'}
-          >
-            <Button
-              aria-label="Enable Tailing"
-              className={enableTailingClasses.join(' ')}
-              icon={<Icon name="arrow-down" />}
-              onClick={handleEnableTailing} />
-          </Tooltip>
-        </div>
-      </div>
+      </Section>
     </Page>
   );
 };
