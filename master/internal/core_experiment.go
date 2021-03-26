@@ -352,10 +352,79 @@ type CreateExperimentParams struct {
 	ValidateOnly  bool            `json:"validate_only"`
 }
 
+// getResourcePoolTaskContainerDefaults is a helper function that partially parses an experiment
+// config, and returns a TaskContainerDefaultsConfig that can be fed to
+// model.DefaultExperimentConfig().  This is of course way too convoluted to be "nice", but all of
+// this will go away when we can use schemas.Merge() rather than layers of json.Unmarshal().
+func getResourcePoolTaskContainerDefaults(
+	configBytes []byte,
+	masterConfig Config,
+) model.TaskContainerDefaultsConfig {
+	var out model.TaskContainerDefaultsConfig
+
+	// Lowest-priority settings are the main TaskContainerDefaults section.
+	if b, err := yaml.Marshal(masterConfig.TaskContainerDefaults); err != nil {
+		return out
+	} else if err = yaml.Unmarshal(b, &out); err != nil {
+		return out
+	}
+
+	// Now find out what ResourcePool the experiment wants.
+	var poolDefaults model.TaskContainerDefaultsConfig
+
+	config := model.ExperimentConfig{
+		Resources: model.ResourcesConfig{
+			SlotsPerTrial: 1,
+		},
+	}
+
+	if err := yaml.Unmarshal(configBytes, &config); err != nil {
+		// This is not where validation errors are raised.
+		return out
+	}
+
+	findMatchingPoolDefaults := func(name string) model.TaskContainerDefaultsConfig {
+		for _, pool := range masterConfig.ResourcePools {
+			if config.Resources.ResourcePool == pool.PoolName {
+				return pool.TaskContainerDefaults
+			}
+		}
+		return model.TaskContainerDefaultsConfig{}
+	}
+
+	switch {
+	case config.Resources.ResourcePool != "":
+		poolDefaults = findMatchingPoolDefaults(config.Resources.ResourcePool)
+	case masterConfig.ResourceManager.AgentRM == nil:
+		// Skip looking up default resource pool settings.
+	case config.Resources.SlotsPerTrial == 0:
+		poolDefaults = findMatchingPoolDefaults(
+			masterConfig.ResourceManager.AgentRM.DefaultCPUResourcePool,
+		)
+	default:
+		poolDefaults = findMatchingPoolDefaults(
+			masterConfig.ResourceManager.AgentRM.DefaultGPUResourcePool,
+		)
+	}
+
+	// Layer the chosen ResourcePool's TaskContainerDefaults on top of output.
+	if b, err := yaml.Marshal(poolDefaults); err != nil {
+		return out
+	} else if err = yaml.Unmarshal(b, &out); err != nil {
+		return out
+	}
+
+	return out
+}
+
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	*model.Experiment, bool, error,
 ) {
-	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
+	taskContainerDefaults := getResourcePoolTaskContainerDefaults(
+		[]byte(params.ConfigBytes), *m.config,
+	)
+
+	config := model.DefaultExperimentConfig(&taskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
 	if err != nil {
