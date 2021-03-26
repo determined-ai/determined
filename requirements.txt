@@ -1,6 +1,6 @@
+-e harness
 -e common
 -e cli
--e harness
 -e deploy
 -r docs/requirements.txt
 -r harness/tests/requirements.txt
