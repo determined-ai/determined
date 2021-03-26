@@ -294,6 +294,14 @@ export default class StepImplementation {
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
   }
 
+  @Step('Open TensorBoard from experiment row <row>')
+  public async openExperimentInTensorBoard(row: string) {
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 12 }));
+    await t.click(t.text('View in TensorBoard', t.within(t.$('.ant-dropdown'))), {
+      waitForEvents: ['targetNavigated'],
+    });
+  }
+
   @Step('Toggle show archived button')
   public async toggleShowArchived() {
     await t.click(t.text('Show Archived'));
