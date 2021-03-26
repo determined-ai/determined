@@ -11,7 +11,6 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import { ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap } from 'types';
-import { isNumber } from 'utils/data';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
@@ -80,8 +79,6 @@ const ScatterPlots: React.FC<Props> = ({
           trialIds.push(trialId);
 
           fullHParams.forEach(hParam => {
-            if (!isNumber(trial.hparams[hParam])) return;
-
             hpTrialMap[hParam] = hpTrialMap[hParam] || {};
             hpTrialMap[hParam][trialId] = hpTrialMap[hParam][trialId] || {};
             hpTrialMap[hParam][trialId] = {

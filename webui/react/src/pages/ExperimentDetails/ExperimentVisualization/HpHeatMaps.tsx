@@ -16,7 +16,7 @@ import {
   ExperimentBase, ExperimentHyperParamType, MetricName, MetricType, metricTypeParamMap, Range,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { isNumber, isObject } from 'utils/data';
+import { isObject } from 'utils/data';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
@@ -112,7 +112,6 @@ const HpHeatMaps: React.FC<Props> = ({
 
           const trialId = trial.trialId;
           const trialHParams = Object.keys(trial.hparams)
-            .filter(hParam => isNumber(trial.hparams[hParam]))
             .filter(hParam => fullHParams.includes(hParam))
             .sort((a, b) => a.localeCompare(b, 'en'));
 

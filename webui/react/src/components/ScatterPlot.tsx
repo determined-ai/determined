@@ -6,7 +6,7 @@ import Plotly, { Layout, PlotData, PlotMarker } from 'Plotly';
 import themes, { defaultThemeId } from 'themes';
 import { getNumericRange } from 'utils/chart';
 import { ColorScale, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
-import { clone } from 'utils/data';
+import { clone, isString } from 'utils/data';
 import { roundToPrecision } from 'utils/number';
 import { generateAlphaNumeric, truncate } from 'utils/string';
 
@@ -18,10 +18,10 @@ interface Props {
   valueLabel?: string;
   values?: number[];
   width?: number;
-  x: number[];
+  x: (number | string)[];
   xLabel?: string;
   xLogScale?: boolean;
-  y: number[];
+  y: (number| string)[];
   yLabel?: string;
   yLogScale?: boolean;
 }
@@ -64,10 +64,17 @@ const ScatterPlot: React.FC<Props> = ({
 
   const valueRange = useMemo(() => getNumericRange(values || [], false), [ values ]);
 
+  const { xIsString, yIsString } = useMemo(() => {
+    return {
+      xIsString: x.length !== 0 && isString(x[0]),
+      yIsString: y.length !== 0 && isString(y[0]),
+    };
+  }, [ x, y ]);
+
   const chartData = useMemo(() => {
     const hovertemplate = [
-      `${xLabel || 'x'}: %{x:.6f}`,
-      `${yLabel || 'y'}: %{y:.6f}`,
+      `${xLabel || 'x'}: %{x}`,
+      `${yLabel || 'y'}: %{y}`,
     ];
 
     if (values) hovertemplate.push(`${valueLabel || 'value'}: %{text}`);
@@ -134,11 +141,12 @@ const ScatterPlot: React.FC<Props> = ({
       if (!chartRef.current || resize.width === 0 || resize.height === 0) return;
       const rect = chartRef.current.getBoundingClientRect();
       const layout = { ...chartLayout, height: rect.height, width: rect.width };
+      if (xIsString) layout.xaxis = { ...layout.xaxis, tickangle: 90 };
       Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);
     });
 
     throttleResize();
-  }, [ chartData, chartLayout, resize ]);
+  }, [ chartData, chartLayout, resize, xIsString, yIsString ]);
 
   return <div id={id} ref={chartRef} />;
 };
