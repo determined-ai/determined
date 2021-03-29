@@ -151,15 +151,18 @@ class LightningAdapter(PyTorchTrial):
                 super().__init__(context, lightning_module=lm)
 
         Arguments:
-            context (``PyTorchTrialContext``)
+            context (PyTorchTrialContext)
             lightning_module (``LightningModule``):
-                user-defined lightning module.
-            precision (32, 16):
-                precision to use.
-            amp_backend ("native", "apex"):
-                automatic mixed precision backend to use.
-            amp_level ('O0', 'O1', 'O2', 'O3'):
+                User-defined lightning module.
+            precision (int, default=32):
+                Precision to use.
+                Accepted values are 16, and 32.
+            amp_backend (str):
+                Automatic mixed precision backend to use.
+                Accepted values are "native", and "mixed".
+            amp_level (str, optional):
                 Apex amp optimization level.
+                Accepted values are "O0", "O1", "O2", and "O3".
                 https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
 
         """
