@@ -62,9 +62,9 @@ setup(
         "tf-240-cuda102": ["tensorflow-gpu==2.4.1"],
         "tf-240-cpu": ["tensorflow==2.4.1"],
         "tf-241-cuda110": ["tensorflow-gpu==2.4.1"],
-        "pytorch-18-cuda102": ["torch==1.8.0", "torchvision==0.9.0"],
-        "pytorch-18-cuda110": ["torch==1.8.0", "torchvision==0.9.0"],
-        "pytorch-18-cpu": ["torch==1.8.0", "torchvision==0.9.0"],
+        "pytorch-18-cuda102": ["torch==1.7.1", "torchvision==0.8.2"],
+        "pytorch-18-cuda110": ["torch==1.7.1", "torchvision==0.8.2"],
+        "pytorch-18-cpu": ["torch==1.7.1", "torchvision==0.8.2"],
     },
     zip_safe=False,
     entry_points={
