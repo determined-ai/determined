@@ -393,7 +393,7 @@ const TrialDetailsComp: React.FC = () => {
         trial={trial}
         onClick={handleActionClick}
         onSettled={fetchTrialDetails} />}
-      stickHeader
+      stickyHeader
       subTitle={<Badge state={trial?.state} type={BadgeType.State} />}
       title={`Trial ${trialId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>

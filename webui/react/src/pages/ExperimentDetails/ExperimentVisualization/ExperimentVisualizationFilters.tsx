@@ -162,7 +162,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
   }, [ batches, localFilters.batch ]);
 
   return (
-    <div className={css.base}>
+    <>
       {showMaxTrials && (
         <SelectFilter
           enableSearchFilter={false}
@@ -230,7 +230,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         <IconButton icon="reset" label="Reset" onClick={handleReset} />
         <IconButton icon="checkmark" label="Apply" type="primary" onClick={handleApply} />
       </div>
-    </div>
+    </>
   );
 };
 

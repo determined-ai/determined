@@ -1,13 +1,2 @@
-.base {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding: var(--theme-sizes-layout-tiny);
-  width: 100%;
-
-  & > * { margin: var(--theme-sizes-layout-tiny); }
-  .buttons {
-    display: inline-flex;
-  }
-  .buttons > *:not(:first-child) { margin-left: var(--theme-sizes-layout-medium); }
-}
+.buttons { display: inline-flex; }
+.buttons > *:not(:first-child) { margin-left: var(--theme-sizes-layout-medium); }

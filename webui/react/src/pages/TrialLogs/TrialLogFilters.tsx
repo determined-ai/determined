@@ -7,9 +7,6 @@ import React, { useMemo } from 'react';
 import DatePickerFilter from 'components/DatePickerFilter';
 import { LogViewerTimestampFilter } from 'components/LogViewerTimestamp';
 import MultiSelect from 'components/MultiSelect';
-import ResponsiveFilters from 'components/ResponsiveFilters';
-
-import css from './TrialLogFilters.module.scss';
 
 dayjs.extend(utc);
 
@@ -98,7 +95,7 @@ const TrialLogFilters: React.FC<LogViewerTimestampFilterComponentProp> =
     }, []);
 
     return (
-      <ResponsiveFilters>
+      <>
         <MultiSelect
           label="Agents"
           value={filter.agentIds || []}
@@ -153,13 +150,8 @@ const TrialLogFilters: React.FC<LogViewerTimestampFilterComponentProp> =
           value={filter.timestampBefore}
           onChange={onBeforeDateChange}
         />
-        <Button
-          className={css.clearButton}
-          onClick={onClear}
-        >
-          Clear
-        </Button>
-      </ResponsiveFilters>
+        <Button onClick={onClear}>Clear</Button>
+      </>
     );
   };
 
