@@ -1,0 +1,1 @@
+../../../../examples/computer_vision/mnist_pl/model_def.py

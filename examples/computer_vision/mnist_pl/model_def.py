@@ -9,13 +9,13 @@ from determined.pytorch.lightning import LightningAdapter
 import mnist
 
 class MNISTTrial(LightningAdapter):
-    def __init__(self, context: PyTorchTrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext, *args, **kwargs) -> None:
         lm = mnist.LightningMNISTClassifier(lr=context.get_hparam('learning_rate'))
         data_dir = f"/tmp/data-rank{context.distributed.get_rank()}"
         self.dm = mnist.MNISTDataModule(context.get_data_config()["url"],
                                         data_dir)
 
-        super().__init__(context, lightning_module=lm)
+        super().__init__(context, lightning_module=lm, *args, **kwargs)
         self.dm.prepare_data()
 
     def build_training_data_loader(self) -> DataLoader:
