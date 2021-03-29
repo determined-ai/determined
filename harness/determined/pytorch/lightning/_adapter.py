@@ -125,7 +125,7 @@ class LightningAdapter(PyTorchTrial):
         self,
         context: PyTorchTrialContext,
         lightning_module: pl.LightningModule,
-        precision: Union[Literal[32], Literal[16]] = 32,
+        precision: int = 32,
         amp_backend: Union[Literal["native"], Literal["apex"]] = "native",
         amp_level: Optional[str] = None,
     ):
@@ -150,14 +150,17 @@ class LightningAdapter(PyTorchTrial):
                 lm = mnist.LightningMNISTClassifier(lr=context.get_hparam('learning_rate'))
                 super().__init__(context, lightning_module=lm)
 
-
-        :param context: a reference to the associated PyTorchTrialContext.
-        :param lightning_module: user-defined lightning module.
-        :param precision: the type of precision to use.
-        :param amp_backend: automatic mixed precision backend to use.
-        :param amp_level: Apex amp optimization level.
-            https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
-
+        Arguments:
+            context (``PyTorchTrialContext``)
+            lightning_module (``LightningModule``):
+                user-defined lightning module.
+            precision (32, 16):
+                precision to use.
+            amp_backend ("native", "apex"):
+                automatic mixed precision backend to use.
+            amp_level ('O0', 'O1', 'O2', 'O3'):
+                Apex amp optimization level.
+                https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
 
         """
         check_compatibility(lightning_module)
