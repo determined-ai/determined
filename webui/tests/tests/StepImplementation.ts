@@ -2,7 +2,6 @@
 import {
   AfterSpec,
   AfterSuite,
-  BeforeScenario,
   BeforeSpec,
   BeforeSuite,
   ExecutionContext,
@@ -303,13 +302,6 @@ export default class StepImplementation {
   @Step('Launch tensorboard')
   public async launchTensorboard() {
     await clickAndCloseTab(t.button('View in TensorBoard'));
-  }
-
-  @Step('Close wait page tab')
-  public async closeTab() {
-    await t.waitFor(100);
-    await t.closeTab(/http.*\/(wait|proxy)/);
-    await t.waitFor(100);
   }
 
   /* Dashboard Page Steps */
