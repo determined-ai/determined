@@ -152,13 +152,9 @@ class LightningAdapter(PyTorchTrial):
 
 
         :param context: a reference to the associated PyTorchTrialContext.
-        :type context: PyTorchTrialContext
         :param lightning_module: user-defined lightning module.
-        :type lightning_module: LightningModule
         :param precision: the type of precision to use.
-        :type precision: Union[Literal[32], Literal[16]]
         :param amp_backend: automatic mixed precision backend to use.
-        :type amp_backend: str
         :param amp_level: Apex amp optimization level.
             https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
 
