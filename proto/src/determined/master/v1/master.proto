@@ -5,6 +5,17 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/masterv1";
 
 import "google/protobuf/timestamp.proto";
 
+// The period over which to perform aggregation.
+enum ResourceAllocationAggregationPeriod {
+  // Unspecified. This value will never actually be returned by the API, it is
+  // just an artifact of using protobuf.
+  RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED = 0;
+  // Aggregation by day.
+  RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY = 1;
+  // Aggregation by month.
+  RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY = 2;
+}
+
 // One instance of slots in the cluster being allocated to a task.
 message ResourceAllocationRawEntry {
   // The kind of workload being run during this allocation (training,
@@ -52,8 +63,8 @@ message ResourceAllocationAggregatedEntry {
   // The value on which the aggregation was grouped ("total" for TOTAL, the
   // username for USER, or the experiment label for LABEL).
   string aggregation_key = 2;
-  // The date of this entry.
-  google.protobuf.Timestamp date = 3;
+  // The date (YYYY-MM-DD) or month (YYYY-MM) of this entry.
+  string date = 3;
   // The total number of seconds included in this allocation entry.
   float seconds = 4;
 }

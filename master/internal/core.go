@@ -216,47 +216,87 @@ func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	return nil
 }
 
+func (m *Master) fetchAggregatedResourceAllocation(
+	req *apiv1.ResourceAllocationAggregatedRequest,
+) (*apiv1.ResourceAllocationAggregatedResponse, error) {
+	resp := &apiv1.ResourceAllocationAggregatedResponse{}
+
+	switch req.Period {
+	case masterv1.ResourceAllocationAggregationPeriod_RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY:
+		start, err := time.Parse("2006-01-02", req.StartDate)
+		if err != nil {
+			return nil, errors.Wrap(err, "invalid start date")
+		}
+		end, err := time.Parse("2006-01-02", req.EndDate)
+		if err != nil {
+			return nil, errors.Wrap(err, "invalid end date")
+		}
+		if start.After(end) {
+			return nil, errors.New("start date cannot be after end date")
+		}
+
+		if err := m.db.QueryProto(
+			"get_aggregated_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
+		); err != nil {
+			return nil, errors.Wrap(err, "error fetching aggregated allocation data")
+		}
+
+		return resp, nil
+
+	case masterv1.ResourceAllocationAggregationPeriod_RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY:
+		start, err := time.Parse("2006-01", req.StartDate)
+		if err != nil {
+			return nil, errors.Wrap(err, "invalid start date")
+		}
+		end, err := time.Parse("2006-01", req.EndDate)
+		if err != nil {
+			return nil, errors.Wrap(err, "invalid end date")
+		}
+		end = end.AddDate(0, 1, -1)
+		if start.After(end) {
+			return nil, errors.New("start date cannot be after end date")
+		}
+
+		if err := m.db.QueryProto(
+			"get_monthly_aggregated_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
+		); err != nil {
+			return nil, errors.Wrap(err, "error fetching aggregated allocation data")
+		}
+
+		return resp, nil
+
+	default:
+		return nil, errors.New("no aggregation period specified")
+	}
+}
+
 func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	args := struct {
-		Start string `query:"start_date"`
-		End   string `query:"end_date"`
+		Start  string `query:"start_date"`
+		End    string `query:"end_date"`
+		Period string `query:"period"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
 
-	start, err := time.Parse("2006-01-02", args.Start)
-	if err != nil {
-		return errors.Wrap(err, "invalid start date")
-	}
-	end, err := time.Parse("2006-01-02", args.End)
-	if err != nil {
-		return errors.Wrap(err, "invalid end date")
-	}
-	if start.After(end) {
-		return errors.New("start date cannot be after end date")
-	}
+	resp, err := m.fetchAggregatedResourceAllocation(&apiv1.ResourceAllocationAggregatedRequest{
+		StartDate: args.Start,
+		EndDate:   args.End,
+		Period: masterv1.ResourceAllocationAggregationPeriod(
+			masterv1.ResourceAllocationAggregationPeriod_value[args.Period],
+		),
+	})
 
-	resp := &apiv1.ResourceAllocationAggregatedResponse{}
-	if err := m.db.QueryProto(
-		"get_aggregated_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
-	); err != nil {
-		return errors.Wrap(err, "error fetching allocation data")
+	if err != nil {
+		return err
 	}
 
 	c.Response().Header().Set("Content-Type", "text/csv")
 
 	csvWriter := csv.NewWriter(c.Response())
-	formatTimestamp := func(ts *timestamppb.Timestamp) string {
-		if ts == nil {
-			return ""
-		}
-		return ts.AsTime().Format("2006-01-02")
-	}
 
-	header := []string{
-		"aggregation_type", "aggregation_key", "date", "seconds",
-	}
+	header := []string{"aggregation_type", "aggregation_key", "date", "seconds"}
 	if err := csvWriter.Write(header); err != nil {
 		return err
 	}
@@ -273,10 +313,7 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 		case masterv1.ResourceAllocationAggregationType_RESOURCE_ALLOCATION_AGGREGATION_TYPE_LABEL:
 			aggType = "label"
 		}
-		fields := []string{
-			aggType, entry.AggregationKey, formatTimestamp(entry.Date),
-			fmt.Sprintf("%f", entry.Seconds),
-		}
+		fields := []string{aggType, entry.AggregationKey, entry.Date, fmt.Sprintf("%f", entry.Seconds)}
 		if err := csvWriter.Write(fields); err != nil {
 			return err
 		}
