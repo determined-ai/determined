@@ -2,6 +2,7 @@
 import {
   AfterSpec,
   AfterSuite,
+  BeforeScenario,
   BeforeSpec,
   BeforeSuite,
   ExecutionContext,
@@ -50,6 +51,30 @@ const goto = async (url: string) => {
   await t.goto(url, { waitForEvents: ['loadEventFired'] });
 };
 
+/*
+ * Taiko `elements()` often return duplicate elements after upgrading to 1.2.3.
+ * Use the text values of the element as a hash to dedupe the elements.
+ */
+const getElements = async (
+  selector: string | ((args?: any) => any),
+  options?: t.DollarOptions | t.RelativeSearchElement,
+  ...args: t.RelativeSearchElement[]
+): Promise<t.Element[]> => {
+  const map: Record<string, boolean> = {};
+  const elements = await t.$(selector, options, ...args).elements();
+  const dedupedElements = [];
+
+  for (const element of elements) {
+    const hash = (await element.text()).replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
+    if (!map[hash]) {
+      map[hash] = true;
+      dedupedElements.push(element);
+    }
+  }
+
+  return dedupedElements;
+};
+
 export default class StepImplementation {
   @BeforeSuite()
   public async beforeSuite() {
@@ -78,6 +103,12 @@ export default class StepImplementation {
   @AfterSpec()
   public async afterSpec() {
     await video.stopRecording();
+  }
+
+  @BeforeSpec({ tags: ['skip'] })
+  public async beforeSkipSpec(context: ExecutionContext) {
+    const spec = context.getCurrentSpec().getName();
+    throw new Error(`Skipping spec ${spec}`);
   }
 
   /* Authentication Steps */
@@ -215,8 +246,9 @@ export default class StepImplementation {
 
   @Step('Should have <count> table rows')
   public async checkTableRowCount(count: string) {
+    const rows = await getElements('tr[data-row-key]');
     const expectedCount = parseInt(count);
-    await assert.strictEqual((await t.$('tr[data-row-key]').elements()).length, expectedCount);
+    await assert.strictEqual(rows.length, expectedCount);
   }
 
   @Step('Sort table by column <column>')
@@ -347,13 +379,13 @@ export default class StepImplementation {
 
   @Step('Should show <count> resource pool cards')
   public async checkResourcePoolCardCount(count: string) {
-    const elements = await t.$('div[class^="ResourcePoolCard_base"]').elements();
-    assert.strictEqual(elements.length, parseInt(count));
+    const cards = await getElements('div[class^="ResourcePoolCard_base"]');
+    assert.strictEqual(cards.length, parseInt(count));
   }
 
   @Step('Should show <count> agents in stats')
   public async checkAgentCountStats(count: string) {
-    const stats = await t.$('div[class^="OverviewStats_base"]').elements();
+    const stats = await getElements('div[class^="OverviewStats_base"]');
     assert.strictEqual(stats.length, 3);
     const numAgents = (await stats[0].text()).replace('Connected Agents', '');
     assert.strictEqual(parseInt(numAgents), parseInt(count));
@@ -362,6 +394,7 @@ export default class StepImplementation {
   /* Logs */
   @Step('Should have some log entries')
   public async checkSomeLogLines() {
-    assert.ok((await t.$('[class*=LogViewer_line]').elements()).length > 0);
+    const logs = await getElements('[class*=LogViewer_line]');
+    assert.ok(logs.length > 0);
   }
 }
