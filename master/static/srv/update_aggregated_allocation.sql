@@ -15,7 +15,9 @@ workloads AS (
             FROM
                 -- `*` computes the intersection of the two ranges.
                 upper(const.period * range) - lower(const.period * range)
-        ) AS seconds
+        ) * (
+            experiments.config -> 'resources' ->> 'slots_per_trial'
+        ) :: float AS seconds
     FROM
         (
             SELECT
@@ -36,10 +38,21 @@ workloads AS (
             FROM
                 checkpoints
         ) AS all_workloads,
+        trials,
+        experiments,
         const
     WHERE
         -- `&&` determines whether the ranges overlap.
         const.period && all_workloads.range
+        AND all_workloads.trial_id = trials.id
+        AND trials.experiment_id = experiments.id
+        AND (
+            -- Sometimes experiments end uncleanly, leaving workloads permanently without end
+            -- times. Anything in that state must be excluded or it'll show up in all the statistics
+            -- forevermore.
+            upper(all_workloads.range) IS NOT NULL
+            OR experiments.state = 'ACTIVE'
+        )
 ),
 user_agg AS (
     SELECT
