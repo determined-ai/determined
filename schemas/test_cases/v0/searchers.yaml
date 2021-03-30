@@ -72,6 +72,7 @@
     smaller_is_better: true
     source_checkpoint_uuid: null
     source_trial_id: 15
+    stop_once: true
 
 - name: adaptive searcher (valid)
   matches:
@@ -128,6 +129,7 @@
     smaller_is_better: true
     source_checkpoint_uuid: null
     source_trial_id: 15
+    stop_once: true
 
 - name: pbt searcher (valid)
   matches:

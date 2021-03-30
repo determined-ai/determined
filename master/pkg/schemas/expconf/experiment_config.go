@@ -137,11 +137,14 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 //go:generate ../gen.sh
 // ResourcesConfigV0 configures experiment resource usage.
 type ResourcesConfigV0 struct {
+	// Slots is used by commands while trials use SlotsPerTrial.
+	Slots *int `json:"slots,omitempty"`
+
 	MaxSlots       *int     `json:"max_slots"`
 	SlotsPerTrial  *int     `json:"slots_per_trial"`
 	Weight         *float64 `json:"weight"`
 	NativeParallel *bool    `json:"native_parallel,omitempty"`
-	ShmSize        *int     `json:"shm_size,omitempty"`
+	ShmSize        *int     `json:"shm_size"`
 	AgentLabel     *string  `json:"agent_label"`
 	ResourcePool   *string  `json:"resource_pool"`
 	Priority       *int     `json:"priority"`

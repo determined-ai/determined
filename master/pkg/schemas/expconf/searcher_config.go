@@ -8,12 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-// MaxAllowedTrials is the maximum number of trials that we allow to be created for a single
-// experiment. The limitation is not fundamental, but we start running into issues with performance,
-// memory, and crashes at some point, and this is a defense against that sort of thing. Currently,
-// the limit is only enforced for grid and simple adaptive searchers.
-const MaxAllowedTrials = 2000
-
 //go:generate ../gen.sh
 // SearcherConfigV0 holds the searcher configurations.
 type SearcherConfigV0 struct {
@@ -150,6 +144,7 @@ type AsyncHalvingConfigV0 struct {
 	MaxTrials           int      `json:"max_trials"`
 	Divisor             *float64 `json:"divisor"`
 	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
+	StopOnce            *bool    `json:"stop_once"`
 }
 
 // Unit implements the model.InUnits interface.
@@ -234,6 +229,7 @@ type AdaptiveASHAConfigV0 struct {
 	Mode                *AdaptiveMode `json:"mode"`
 	MaxRungs            *int          `json:"max_rungs"`
 	MaxConcurrentTrials *int          `json:"max_concurrent_trials"`
+	StopOnce            *bool         `json:"stop_once"`
 }
 
 // Unit implements the model.InUnits interface.

@@ -235,6 +235,30 @@ class EnvironmentVariablesV0(schemas.SchemaBase):
         return super().from_dict(d, prevalidated)
 
 
+class RegistryAuthConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+    auth: Optional[str] = None
+    email: Optional[str] = None
+    identitytoken: Optional[str] = None
+    password: Optional[str] = None
+    registrytoken: Optional[str] = None
+    serveraddress: Optional[str] = None
+    username: Optional[str] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        auth: Optional[str] = None,
+        email: Optional[str] = None,
+        identitytoken: Optional[str] = None,
+        password: Optional[str] = None,
+        registrytoken: Optional[str] = None,
+        serveraddress: Optional[str] = None,
+        username: Optional[str] = None,
+    ) -> None:
+        pass
+
+
 class EnvironmentConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment.json"
     environment_variables: Optional[EnvironmentVariablesV0] = None
@@ -242,7 +266,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     image: Optional[EnvironmentImageV0] = None
     pod_spec: Optional[Dict[str, Any]] = None
     ports: Optional[Dict[str, int]] = None
-    registry_auth: Optional[Dict[str, Any]] = None
+    registry_auth: Optional[RegistryAuthConfigV0] = None
 
     @schemas.auto_init
     def __init__(
@@ -252,7 +276,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         image: Optional[EnvironmentImageV0] = None,
         pod_spec: Optional[Dict[str, Any]] = None,
         ports: Optional[Dict[str, int]] = None,
-        registry_auth: Optional[Dict[str, Any]] = None,
+        registry_auth: Optional[RegistryAuthConfigV0] = None,
     ) -> None:
         pass
 
@@ -479,6 +503,7 @@ class AsyncHalvingConfigV0(schemas.SchemaBase):
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
     source_trial_id: Optional[int] = None
+    stop_once: Optional[int] = None
 
     @schemas.auto_init
     def __init__(
@@ -492,6 +517,7 @@ class AsyncHalvingConfigV0(schemas.SchemaBase):
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
+        stop_once: Optional[int] = None,
     ) -> None:
         pass
 
@@ -572,6 +598,7 @@ class AdaptiveASHAConfigV0(schemas.SchemaBase):
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
     source_trial_id: Optional[int] = None
+    stop_once: Optional[int] = None
 
     @schemas.auto_init
     def __init__(
@@ -587,6 +614,7 @@ class AdaptiveASHAConfigV0(schemas.SchemaBase):
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
+        stop_once: Optional[int] = None,
     ) -> None:
         pass
 

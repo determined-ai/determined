@@ -123,7 +123,7 @@ class Case:
         assert obj2 == obj1, "round trip failed with defaults"
 
 
-CASES_ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "schemas", "test_cases")
+CASES_ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "..", "schemas", "test_cases")
 
 
 # Get a list of all test cases.

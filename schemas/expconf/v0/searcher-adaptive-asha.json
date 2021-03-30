@@ -87,6 +87,13 @@
                 "null"
             ],
             "default": null
+        },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
         }
     }
 }

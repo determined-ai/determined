@@ -34,7 +34,17 @@
         cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-1c4ea10
         gpu: determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-1c4ea10
       pod_spec: null
-      ports: null
+      ports:
+        qwer: 1234
+        asdf: 5678
+      registry_auth:
+        username: usr
+        password: pwd
+        auth: ath
+        email: eml
+        serveraddress: srvaddr
+        identitytoken: idtkn
+        registrytoken: rgtkn
     hyperparameters:
       global_batch_size:
         type: const
@@ -166,6 +176,7 @@
     resources:
       agent_label: ''
       native_parallel: false
+      shm_size: null
       slots_per_trial: 1
       weight: 1
       max_slots: null

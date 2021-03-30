@@ -1,76 +1,59 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/resources.json",
-    "title": "ResourcesConfig",
+    "$id": "http://determined.ai/schemas/expconf/v0/registry-auth.json",
+    "title": "RegistryAuth",
     "type": "object",
     "additionalProperties": false,
     "required": [],
     "properties": {
-        "agent_label": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": ""
-        },
-        "max_slots": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "native_parallel": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": false
-        },
-        "priority": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "minimum": 1,
-            "maximum": 99,
-            "default": null
-        },
-        "resource_pool": {
+        "username": {
             "type": [
                 "string",
                 "null"
             ],
             "default": null
         },
-        "shm_size": {
+        "password": {
             "type": [
-                "integer",
+                "string",
                 "null"
             ],
             "default": null
         },
-        "slots": {
+        "auth": {
             "type": [
-                "integer",
+                "string",
                 "null"
             ],
             "default": null
         },
-        "slots_per_trial": {
+        "email": {
             "type": [
-                "integer",
+                "string",
                 "null"
             ],
-            "minimum": 0,
-            "default": 1
+            "default": null
         },
-        "weight": {
+        "serveraddress": {
             "type": [
-                "number",
+                "string",
                 "null"
             ],
-            "default": 1
+            "default": null
+        },
+        "identitytoken": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "registrytoken": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         }
     }
 }

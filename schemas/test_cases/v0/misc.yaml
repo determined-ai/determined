@@ -119,3 +119,10 @@
     bucket: asdf
     bucket_directory_path: /asdf/asdf
     local_cache_container_path: /asdf/asdf
+
+- name: allow useless slots config in resources
+  matches:
+    - http://determined.ai/schemas/expconf/v0/resources.json
+  case:
+    slots: 1
+    slots_per_trial: 1
