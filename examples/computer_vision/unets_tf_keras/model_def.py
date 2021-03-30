@@ -47,8 +47,8 @@ class UNetsTrial(TFKerasTrial):
 
         # This is the last layer of the model
         last = tf.keras.layers.Conv2DTranspose(
-            output_channels, 3, strides=2,
-            padding='same')  #64x64 -> 128x128
+            output_channels, 3, strides=2, padding="same"
+        )  # 64x64 -> 128x128
 
         x = last(x)
 
@@ -56,26 +56,31 @@ class UNetsTrial(TFKerasTrial):
         return model
 
     def download_weights(self):
-        weights_dir = self.download_directory + '/weights/'
-        data_file = self.context.get_data_config()['data_file']
-        mobilenet_link = 'https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v2/' + data_file
+        weights_dir = self.download_directory + "/weights/"
+        data_file = self.context.get_data_config()["data_file"]
+        mobilenet_link = (
+            "https://storage.googleapis.com/tensorflow/keras-applications/mobilenet_v2/"
+            + data_file
+        )
         os.mkdir(weights_dir)
 
-        urllib.request.urlretrieve(mobilenet_link,weights_dir + data_file)
+        urllib.request.urlretrieve(mobilenet_link, weights_dir + data_file)
         return weights_dir + data_file
 
     def build_model(self):
-        model_weights_loc =  self.download_weights()
+        model_weights_loc = self.download_weights()
 
-        base_model = tf.keras.applications.MobileNetV2(input_shape=[128, 128, 3], include_top=False, weights=model_weights_loc)
+        base_model = tf.keras.applications.MobileNetV2(
+            input_shape=[128, 128, 3], include_top=False, weights=model_weights_loc
+        )
 
         # Use the activations of these layers
         layer_names = [
-            'block_1_expand_relu',   # 64x64
-            'block_3_expand_relu',   # 32x32
-            'block_6_expand_relu',   # 16x16
-            'block_13_expand_relu',  # 8x8
-            'block_16_project',      # 4x4
+            "block_1_expand_relu",  # 64x64
+            "block_3_expand_relu",  # 32x32
+            "block_6_expand_relu",  # 16x16
+            "block_13_expand_relu",  # 8x8
+            "block_16_project",  # 4x4
         ]
         layers = [base_model.get_layer(name).output for name in layer_names]
 
@@ -85,10 +90,10 @@ class UNetsTrial(TFKerasTrial):
         self.down_stack.trainable = False
 
         self.up_stack = [
-        pix2pix.upsample(512, 3),  # 4x4 -> 8x8
-        pix2pix.upsample(256, 3),  # 8x8 -> 16x16
-        pix2pix.upsample(128, 3),  # 16x16 -> 32x32
-        pix2pix.upsample(64, 3),   # 32x32 -> 64x64
+            pix2pix.upsample(512, 3),  # 4x4 -> 8x8
+            pix2pix.upsample(256, 3),  # 8x8 -> 16x16
+            pix2pix.upsample(128, 3),  # 16x16 -> 32x32
+            pix2pix.upsample(64, 3),  # 32x32 -> 64x64
         ]
 
         model = self.unet_model(self.context.get_hparam("OUTPUT_CHANNELS"))
@@ -103,13 +108,13 @@ class UNetsTrial(TFKerasTrial):
         model.compile(
             optimizer=optimizer,
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-            metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")]
+            metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")],
         )
         return model
 
     def build_training_data_loader(self):
         dataset = tfds.load(
-            'oxford_iiit_pet:3.*.*',
+            "oxford_iiit_pet:3.*.*",
             split="train",
             with_info=False,
             data_dir=self.download_directory,
@@ -117,8 +122,8 @@ class UNetsTrial(TFKerasTrial):
         )
 
         def load_image_train(datapoint):
-            input_image = tf.image.resize(datapoint['image'], (128, 128))
-            input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
+            input_image = tf.image.resize(datapoint["image"], (128, 128))
+            input_mask = tf.image.resize(datapoint["segmentation_mask"], (128, 128))
 
             if np.random.uniform(()) > 0.5:
                 input_image = tf.image.flip_left_right(input_image)
@@ -127,24 +132,34 @@ class UNetsTrial(TFKerasTrial):
             input_image, input_mask = self.normalize(input_image, input_mask)
             return input_image, input_mask
 
-        train = dataset.map(load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        train = dataset.map(
+            load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE
+        )
         train = self.context.wrap_dataset(train)
-        train_dataset = train.cache().shuffle(self.context.get_data_config().get("BUFFER_SIZE")).batch(self.context.get_per_slot_batch_size()).repeat()
-        train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        train_dataset = (
+            train.cache()
+            .shuffle(self.context.get_data_config().get("BUFFER_SIZE"))
+            .batch(self.context.get_per_slot_batch_size())
+            .repeat()
+        )
+        train_dataset = train_dataset.prefetch(
+            buffer_size=tf.data.experimental.AUTOTUNE
+        )
 
         return train_dataset
 
     def build_validation_data_loader(self):
         dataset, info = tfds.load(
-            'oxford_iiit_pet:3.*.*',
+            "oxford_iiit_pet:3.*.*",
             split="test",
             with_info=True,
             data_dir=self.download_directory,
             download=not self.data_downloaded,
         )
+
         def load_image_test(datapoint):
-            input_image = tf.image.resize(datapoint['image'], (128, 128))
-            input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
+            input_image = tf.image.resize(datapoint["image"], (128, 128))
+            input_mask = tf.image.resize(datapoint["segmentation_mask"], (128, 128))
 
             input_image, input_mask = self.normalize(input_image, input_mask)
 

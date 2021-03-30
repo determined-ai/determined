@@ -2,7 +2,12 @@ from typing import Dict, Sequence, Union
 import torch
 import torch.nn as nn
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
+from determined.pytorch import (
+    DataLoader,
+    PyTorchTrial,
+    PyTorchTrialContext,
+    LRScheduler,
+)
 import data
 import constants
 
@@ -23,13 +28,15 @@ class BertSQuADPyTorch(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
-        self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
-            self.context.get_hparam("model_type")
-        ]
+        (
+            self.config_class,
+            self.tokenizer_class,
+            self.model_class,
+        ) = constants.MODEL_CLASSES[self.context.get_hparam("model_type")]
         self.tokenizer = self.tokenizer_class.from_pretrained(
             self.context.get_data_config().get("pretrained_model_name"),
             do_lower_case=True,
-            cache_dir=None
+            cache_dir=None,
         )
 
         cache_dir_per_rank = f"/tmp/{self.context.distributed.get_rank()}"
@@ -38,33 +45,44 @@ class BertSQuADPyTorch(PyTorchTrial):
             self.context.get_data_config().get("pretrained_model_name"),
             cache_dir=cache_dir_per_rank,
         )
-        self.model = self.context.wrap_model(self.model_class.from_pretrained(
-            self.context.get_data_config().get("pretrained_model_name"),
-            from_tf=bool(".ckpt" in self.context.get_data_config().get("pretrained_model_name")),
-            config=config,
-            cache_dir=cache_dir_per_rank,
-        ))
+        self.model = self.context.wrap_model(
+            self.model_class.from_pretrained(
+                self.context.get_data_config().get("pretrained_model_name"),
+                from_tf=bool(
+                    ".ckpt"
+                    in self.context.get_data_config().get("pretrained_model_name")
+                ),
+                config=config,
+                cache_dir=cache_dir_per_rank,
+            )
+        )
 
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
             {
                 "params": [
-                    p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)
+                    p
+                    for n, p in self.model.named_parameters()
+                    if not any(nd in n for nd in no_decay)
                 ],
                 "weight_decay": self.context.get_hparam("weight_decay"),
             },
             {
                 "params": [
-                    p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)
+                    p
+                    for n, p in self.model.named_parameters()
+                    if any(nd in n for nd in no_decay)
                 ],
                 "weight_decay": 0.0,
             },
         ]
-        self.optimizer = self.context.wrap_optimizer(AdamW(
-            optimizer_grouped_parameters,
-            lr=self.context.get_hparam("learning_rate"),
-            eps=self.context.get_hparam("adam_epsilon")
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            AdamW(
+                optimizer_grouped_parameters,
+                lr=self.context.get_hparam("learning_rate"),
+                eps=self.context.get_hparam("adam_epsilon"),
+            )
+        )
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
             get_linear_schedule_with_warmup(
@@ -72,9 +90,8 @@ class BertSQuADPyTorch(PyTorchTrial):
                 num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
                 num_training_steps=self.context.get_hparam("num_training_steps"),
             ),
-            LRScheduler.StepMode.STEP_EVERY_BATCH
+            LRScheduler.StepMode.STEP_EVERY_BATCH,
         )
-
 
     def build_training_data_loader(self):
         train_dataset, _, _ = data.load_and_cache_examples(
@@ -86,10 +103,16 @@ class BertSQuADPyTorch(PyTorchTrial):
             max_query_length=self.context.get_hparam("max_query_length"),
             evaluate=False,
         )
-        return DataLoader(train_dataset, batch_size=self.context.get_per_slot_batch_size())
+        return DataLoader(
+            train_dataset, batch_size=self.context.get_per_slot_batch_size()
+        )
 
     def build_validation_data_loader(self):
-        self.validation_dataset, self.validation_examples, self.validation_features = data.load_and_cache_examples(
+        (
+            self.validation_dataset,
+            self.validation_examples,
+            self.validation_features,
+        ) = data.load_and_cache_examples(
             data_dir=self.download_directory,
             tokenizer=self.tokenizer,
             task=self.context.get_data_config().get("task"),
@@ -119,7 +142,7 @@ class BertSQuADPyTorch(PyTorchTrial):
             self.optimizer,
             clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
                 params, self.context.get_hparam("max_grad_norm")
-            )
+            ),
         )
 
         return {"loss": loss}
@@ -137,7 +160,9 @@ class BertSQuADPyTorch(PyTorchTrial):
             for i, feature_index in enumerate(feature_indices):
                 eval_feature = self.validation_features[feature_index.item()]
                 unique_id = int(eval_feature.unique_id)
-                output = [output[i].detach().cpu().tolist() for output in outputs.to_tuple()]
+                output = [
+                    output[i].detach().cpu().tolist() for output in outputs.to_tuple()
+                ]
                 start_logits, end_logits = output
                 result = SquadResult(unique_id, start_logits, end_logits)
                 all_results.append(result)

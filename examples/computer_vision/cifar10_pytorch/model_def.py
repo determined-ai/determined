@@ -23,11 +23,14 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 def accuracy_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
     """Return the accuracy rate based on dense predictions and sparse labels."""
-    assert len(predictions) == len(labels), "Predictions and labels must have the same length."
+    assert len(predictions) == len(
+        labels
+    ), "Predictions and labels must have the same length."
     assert len(labels.shape) == 1, "Labels must be a column vector."
 
     return (  # type: ignore
-        float((predictions.argmax(1) == labels.to(torch.long)).sum()) / predictions.shape[0]
+        float((predictions.argmax(1) == labels.to(torch.long)).sum())
+        / predictions.shape[0]
     )
 
 
@@ -46,32 +49,36 @@ class CIFARTrial(PyTorchTrial):
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = tempfile.mkdtemp()
 
-        self.model = self.context.wrap_model(nn.Sequential(
-            nn.Conv2d(NUM_CHANNELS, IMAGE_SIZE, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(32, 32, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 2)),
-            nn.Dropout2d(self.context.get_hparam("layer1_dropout")),
-            nn.Conv2d(32, 64, (3, 3), padding=1),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, (3, 3)),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 2)),
-            nn.Dropout2d(self.context.get_hparam("layer2_dropout")),
-            Flatten(),
-            nn.Linear(2304, 512),
-            nn.ReLU(),
-            nn.Dropout2d(self.context.get_hparam("layer3_dropout")),
-            nn.Linear(512, NUM_CLASSES),
-        ))
+        self.model = self.context.wrap_model(
+            nn.Sequential(
+                nn.Conv2d(NUM_CHANNELS, IMAGE_SIZE, kernel_size=(3, 3)),
+                nn.ReLU(),
+                nn.Conv2d(32, 32, kernel_size=(3, 3)),
+                nn.ReLU(),
+                nn.MaxPool2d((2, 2)),
+                nn.Dropout2d(self.context.get_hparam("layer1_dropout")),
+                nn.Conv2d(32, 64, (3, 3), padding=1),
+                nn.ReLU(),
+                nn.Conv2d(64, 64, (3, 3)),
+                nn.ReLU(),
+                nn.MaxPool2d((2, 2)),
+                nn.Dropout2d(self.context.get_hparam("layer2_dropout")),
+                Flatten(),
+                nn.Linear(2304, 512),
+                nn.ReLU(),
+                nn.Dropout2d(self.context.get_hparam("layer3_dropout")),
+                nn.Linear(512, NUM_CLASSES),
+            )
+        )
 
-        self.optimizer = self.context.wrap_optimizer(torch.optim.RMSprop(  # type: ignore
-            self.model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            weight_decay=self.context.get_hparam("learning_rate_decay"),
-            alpha=0.9,
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            torch.optim.RMSprop(  # type: ignore
+                self.model.parameters(),
+                lr=self.context.get_hparam("learning_rate"),
+                weight_decay=self.context.get_hparam("learning_rate_decay"),
+                alpha=0.9,
+            )
+        )
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -101,7 +108,10 @@ class CIFARTrial(PyTorchTrial):
 
     def build_training_data_loader(self) -> Any:
         transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
         )
         trainset = torchvision.datasets.CIFAR10(
             root=self.download_directory, train=True, download=True, transform=transform
@@ -110,10 +120,16 @@ class CIFARTrial(PyTorchTrial):
 
     def build_validation_data_loader(self) -> Any:
         transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
         )
         valset = torchvision.datasets.CIFAR10(
-            root=self.download_directory, train=False, download=True, transform=transform
+            root=self.download_directory,
+            train=False,
+            download=True,
+            transform=transform,
         )
 
         return DataLoader(valset, batch_size=self.context.get_per_slot_batch_size())

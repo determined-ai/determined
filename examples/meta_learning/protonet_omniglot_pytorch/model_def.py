@@ -7,7 +7,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import numpy as np
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext, TorchData
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchTrial,
+    PyTorchTrialContext,
+    TorchData,
+)
 from data import OmniglotTasks
 
 
@@ -63,19 +69,23 @@ class OmniglotProtoNetTrial(PyTorchTrial):
                 nn.MaxPool2d(2),
             )
 
-        self.model = self.context.wrap_model(nn.Sequential(
-            conv_block(x_dim, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, z_dim),
-            Flatten(),
-        ))
+        self.model = self.context.wrap_model(
+            nn.Sequential(
+                conv_block(x_dim, hid_dim),
+                conv_block(hid_dim, hid_dim),
+                conv_block(hid_dim, hid_dim),
+                conv_block(hid_dim, z_dim),
+                Flatten(),
+            )
+        )
 
-        self.optimizer = self.context.wrap_optimizer(torch.optim.Adam(
-            self.model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            weight_decay=self.context.get_hparam("weight_decay"),
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            torch.optim.Adam(
+                self.model.parameters(),
+                lr=self.context.get_hparam("learning_rate"),
+                weight_decay=self.context.get_hparam("weight_decay"),
+            )
+        )
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
             torch.optim.lr_scheduler.StepLR(
@@ -83,7 +93,7 @@ class OmniglotProtoNetTrial(PyTorchTrial):
                 self.context.get_hparam("reduce_every"),
                 gamma=self.context.get_hparam("lr_gamma"),
             ),
-            LRScheduler.StepMode.STEP_EVERY_EPOCH
+            LRScheduler.StepMode.STEP_EVERY_EPOCH,
         )
 
     def get_train_valid_splits(self):
@@ -159,7 +169,8 @@ class OmniglotProtoNetTrial(PyTorchTrial):
         # Prototype size: (num_classes, embedding_dim)
         prototypes = (
             embedding[0 : num_classes * num_support]
-            .contiguous().view(num_classes, num_support, embedding_dim)
+            .contiguous()
+            .view(num_classes, num_support, embedding_dim)
             .mean(1)
         )
 
@@ -172,13 +183,21 @@ class OmniglotProtoNetTrial(PyTorchTrial):
 
         # Class log probabilities by treating -distances as logits
         # Log_prob_query size: (num_classes, num_query, num_classes)
-        log_prob_query = F.log_softmax(-euclidean_dist, dim=1).contiguous().view(
-            num_classes, num_query, -1
+        log_prob_query = (
+            F.log_softmax(-euclidean_dist, dim=1)
+            .contiguous()
+            .view(num_classes, num_query, -1)
         )
 
         # Match query examples with classes
         y_query_expand = y_query.contiguous().view(num_classes, num_query, 1)
-        loss = -log_prob_query.gather(2, y_query_expand).squeeze().contiguous().view(-1).mean()
+        loss = (
+            -log_prob_query.gather(2, y_query_expand)
+            .squeeze()
+            .contiguous()
+            .view(-1)
+            .mean()
+        )
 
         _, pred_query = log_prob_query.max(2)
 
@@ -209,7 +228,9 @@ class OmniglotProtoNetTrial(PyTorchTrial):
         self.context.step_optimizer(self.optimizer)
         return outputs
 
-    def evaluate_full_dataset(self, data_loader: torch.utils.data.dataloader.DataLoader):
+    def evaluate_full_dataset(
+        self, data_loader: torch.utils.data.dataloader.DataLoader
+    ):
         total_loss = 0
         total_acc = 0
 

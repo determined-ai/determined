@@ -13,7 +13,12 @@ import numpy as np
 import torch
 from torch import nn
 
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchTrial,
+    PyTorchTrialContext,
+)
 from transformers import AdamW, get_linear_schedule_with_warmup
 from transformers import glue_compute_metrics as compute_metrics
 from transformers import glue_processors as processors
@@ -35,7 +40,9 @@ class BertPytorch(PyTorchTrial):
         config_class, model_class, tokenizer_class = constants.MODEL_CLASSES[
             self.context.get_hparam("model_type")
         ]
-        processor = processors[f"{self.context.get_data_config().get('task').lower()}"]()
+        processor = processors[
+            f"{self.context.get_data_config().get('task').lower()}"
+        ]()
         label_list = processor.get_labels()
         num_labels = len(label_list)
 
@@ -46,33 +53,43 @@ class BertPytorch(PyTorchTrial):
             finetuning_task=self.context.get_data_config().get("task").lower(),
             cache_dir=cache_dir_per_rank,
         )
-        self.model = self.context.wrap_model(model_class.from_pretrained(
-            self.context.get_data_config().get("model_name_or_path"),
-            from_tf=(".ckpt" in self.context.get_data_config().get("model_name_or_path")),
-            config=config,
-            cache_dir=cache_dir_per_rank,
-        ))
+        self.model = self.context.wrap_model(
+            model_class.from_pretrained(
+                self.context.get_data_config().get("model_name_or_path"),
+                from_tf=(
+                    ".ckpt" in self.context.get_data_config().get("model_name_or_path")
+                ),
+                config=config,
+                cache_dir=cache_dir_per_rank,
+            )
+        )
 
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
             {
                 "params": [
-                    p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)
+                    p
+                    for n, p in self.model.named_parameters()
+                    if not any(nd in n for nd in no_decay)
                 ],
                 "weight_decay": self.context.get_hparam("weight_decay"),
             },
             {
                 "params": [
-                    p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)
+                    p
+                    for n, p in self.model.named_parameters()
+                    if any(nd in n for nd in no_decay)
                 ],
                 "weight_decay": 0.0,
             },
         ]
-        self.optimizer = self.context.wrap_optimizer(AdamW(
-            optimizer_grouped_parameters,
-            lr=self.context.get_hparam("learning_rate"),
-            eps=self.context.get_hparam("adam_epsilon"),
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            AdamW(
+                optimizer_grouped_parameters,
+                lr=self.context.get_hparam("learning_rate"),
+                eps=self.context.get_hparam("adam_epsilon"),
+            )
+        )
         self.lr_scheduler = self.context.wrap_lr_scheduler(
             get_linear_schedule_with_warmup(
                 self.optimizer,
@@ -104,7 +121,9 @@ class BertPytorch(PyTorchTrial):
             max_seq_length=self.context.get_hparam("max_seq_length"),
             evaluate=False,
         )
-        return DataLoader(train_dataset, batch_size=self.context.get_per_slot_batch_size())
+        return DataLoader(
+            train_dataset, batch_size=self.context.get_per_slot_batch_size()
+        )
 
     def build_validation_data_loader(self) -> DataLoader:
         if not self.data_downloaded:
@@ -117,7 +136,9 @@ class BertPytorch(PyTorchTrial):
             max_seq_length=self.context.get_hparam("max_seq_length"),
             evaluate=True,
         )
-        return DataLoader(test_dataset, batch_size=self.context.get_per_slot_batch_size())
+        return DataLoader(
+            test_dataset, batch_size=self.context.get_per_slot_batch_size()
+        )
 
     def get_metrics(self, outputs, inputs):
         """
@@ -148,7 +169,9 @@ class BertPytorch(PyTorchTrial):
 
         if self.context.get_hparam("model_type") != "distilbert":
             inputs["token_type_ids"] = (
-                batch[2] if self.context.get_hparam("model_type") in ["bert", "xlnet"] else None
+                batch[2]
+                if self.context.get_hparam("model_type") in ["bert", "xlnet"]
+                else None
             )
         outputs = self.model(**inputs)
         results = self.get_metrics(outputs, inputs)
@@ -167,7 +190,9 @@ class BertPytorch(PyTorchTrial):
 
         if self.context.get_hparam("model_type") != "distilbert":
             inputs["token_type_ids"] = (
-                batch[2] if self.context.get_hparam("model_type") in ["bert", "xlnet"] else None
+                batch[2]
+                if self.context.get_hparam("model_type") in ["bert", "xlnet"]
+                else None
             )
         outputs = self.model(**inputs)
         results = self.get_metrics(outputs, inputs)

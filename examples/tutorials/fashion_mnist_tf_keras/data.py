@@ -36,13 +36,17 @@ def load_training_data():
 
     paths = []
     for fname in files:
-        paths.append(get_file(fname, origin=base + fname, cache_subdir=download_directory))
+        paths.append(
+            get_file(fname, origin=base + fname, cache_subdir=download_directory)
+        )
 
     with gzip.open(paths[0], "rb") as lbpath:
         y_train = np.frombuffer(lbpath.read(), np.uint8, offset=8)
 
     with gzip.open(paths[1], "rb") as imgpath:
-        x_train = np.frombuffer(imgpath.read(), np.uint8, offset=16).reshape(len(y_train), 28, 28)
+        x_train = np.frombuffer(imgpath.read(), np.uint8, offset=16).reshape(
+            len(y_train), 28, 28
+        )
 
     return x_train, y_train
 
@@ -68,12 +72,16 @@ def load_validation_data():
 
     paths = []
     for fname in files:
-        paths.append(get_file(fname, origin=base + fname, cache_subdir=download_directory))
+        paths.append(
+            get_file(fname, origin=base + fname, cache_subdir=download_directory)
+        )
 
     with gzip.open(paths[0], "rb") as lbpath:
         y_test = np.frombuffer(lbpath.read(), np.uint8, offset=8)
 
     with gzip.open(paths[1], "rb") as imgpath:
-        x_test = np.frombuffer(imgpath.read(), np.uint8, offset=16).reshape(len(y_test), 28, 28)
+        x_test = np.frombuffer(imgpath.read(), np.uint8, offset=16).reshape(
+            len(y_test), 28, 28
+        )
 
     return x_test, y_test

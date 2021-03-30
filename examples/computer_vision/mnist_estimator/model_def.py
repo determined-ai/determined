@@ -9,13 +9,18 @@ from typing import Callable, Dict, List, Tuple
 
 import tensorflow as tf
 
-from determined.estimator import EstimatorTrial, EstimatorTrialContext, ServingInputReceiverFn
+from determined.estimator import (
+    EstimatorTrial,
+    EstimatorTrialContext,
+    ServingInputReceiverFn,
+)
 
 
 WORK_DIRECTORY = "/tmp/determined-mnist-estimator-work-dir"
 MNIST_TF_RECORDS_FILE = "mnist-tfrecord.tar.gz"
 MNIST_TF_RECORDS_URL = (
-    "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/" + MNIST_TF_RECORDS_FILE
+    "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/"
+    + MNIST_TF_RECORDS_FILE
 )
 
 IMAGE_SIZE = 28
@@ -38,9 +43,13 @@ def download_data(download_directory) -> str:
         r = requests.get(MNIST_TF_RECORDS_URL)
         with tf.io.gfile.GFile(filepath, "wb") as f:
             f.write(r.content)
-            logging.info("Downloaded {} ({} bytes)".format(MNIST_TF_RECORDS_FILE, f.size()))
+            logging.info(
+                "Downloaded {} ({} bytes)".format(MNIST_TF_RECORDS_FILE, f.size())
+            )
 
-        logging.info("Extracting {} to {}".format(MNIST_TF_RECORDS_FILE, download_directory))
+        logging.info(
+            "Extracting {} to {}".format(MNIST_TF_RECORDS_FILE, download_directory)
+        )
         with tarfile.open(filepath, mode="r:gz") as f:
             f.extractall(path=download_directory)
 
@@ -49,7 +58,9 @@ def download_data(download_directory) -> str:
     return data_dir
 
 
-def parse_mnist_tfrecord(serialized_example: tf.Tensor) -> Tuple[Dict[str, tf.Tensor], tf.Tensor]:
+def parse_mnist_tfrecord(
+    serialized_example: tf.Tensor,
+) -> Tuple[Dict[str, tf.Tensor], tf.Tensor]:
     """
     Parse a TFRecord representing a single MNIST data point into an input
     feature tensor and a label tensor.
@@ -57,12 +68,14 @@ def parse_mnist_tfrecord(serialized_example: tf.Tensor) -> Tuple[Dict[str, tf.Te
     Returns: (features: Dict[str, Tensor], label: Tensor)
     """
     raw = tf.io.parse_example(
-        serialized=serialized_example, features={"image_raw": tf.io.FixedLenFeature([], tf.string)}
+        serialized=serialized_example,
+        features={"image_raw": tf.io.FixedLenFeature([], tf.string)},
     )
     image = tf.io.decode_raw(raw["image_raw"], tf.float32)
 
     label_dict = tf.io.parse_example(
-        serialized=serialized_example, features={"label": tf.io.FixedLenFeature(1, tf.int64)}
+        serialized=serialized_example,
+        features={"label": tf.io.FixedLenFeature(1, tf.int64)},
     )
     return {"image": image}, label_dict["label"]
 
@@ -129,20 +142,32 @@ class MNistTrial(EstimatorTrial):
 
     @staticmethod
     def _get_filenames(directory: str) -> List[str]:
-        return [os.path.join(directory, path) for path in tf.io.gfile.listdir(directory)]
+        return [
+            os.path.join(directory, path) for path in tf.io.gfile.listdir(directory)
+        ]
 
     def build_train_spec(self) -> tf.estimator.TrainSpec:
         if not self.data_downloaded:
-            self.download_directory = download_data(download_directory=self.download_directory)
+            self.download_directory = download_data(
+                download_directory=self.download_directory
+            )
             self.data_downloaded = True
 
-        train_files = self._get_filenames(os.path.join(self.download_directory, "train"))
+        train_files = self._get_filenames(
+            os.path.join(self.download_directory, "train")
+        )
         return tf.estimator.TrainSpec(self._input_fn(train_files, shuffle=True))
 
     def build_validation_spec(self) -> tf.estimator.EvalSpec:
         if not self.data_downloaded:
-            self.download_directory = download_data(download_directory=self.download_directory)
+            self.download_directory = download_data(
+                download_directory=self.download_directory
+            )
             self.data_downloaded = True
 
-        val_files = self._get_filenames(os.path.join(self.download_directory, "validation"))
-        return tf.estimator.EvalSpec(self._input_fn(val_files, shuffle=False), steps=None)
+        val_files = self._get_filenames(
+            os.path.join(self.download_directory, "validation")
+        )
+        return tf.estimator.EvalSpec(
+            self._input_fn(val_files, shuffle=False), steps=None
+        )

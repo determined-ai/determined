@@ -24,7 +24,9 @@ class FashionMNISTTrial(TFKerasTrial):
         model = keras.Sequential(
             [
                 keras.layers.Flatten(input_shape=(28, 28)),
-                keras.layers.Dense(self.context.get_hparam("dense1"), activation="relu"),
+                keras.layers.Dense(
+                    self.context.get_hparam("dense1"), activation="relu"
+                ),
                 keras.layers.Dense(10),
             ]
         )
@@ -35,7 +37,7 @@ class FashionMNISTTrial(TFKerasTrial):
         # Create and wrap the optimizer.
         optimizer = tf.keras.optimizers.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
-        
+
         model.compile(
             optimizer=optimizer,
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),

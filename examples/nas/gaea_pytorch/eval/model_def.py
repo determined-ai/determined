@@ -233,7 +233,8 @@ class GAEAEvalTrial(PyTorchTrial):
         self.context.step_optimizer(
             self.optimizer,
             clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
-                params, self.context.get_hparam("clip_gradients_l2_norm"),
+                params,
+                self.context.get_hparam("clip_gradients_l2_norm"),
             ),
         )
 
@@ -261,4 +262,3 @@ class GAEAEvalTrial(PyTorchTrial):
             "top1_ema": ema_top1,
             "top5_ema": ema_top5,
         }
-

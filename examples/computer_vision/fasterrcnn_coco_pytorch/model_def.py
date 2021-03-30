@@ -18,7 +18,12 @@ from torch import nn
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchTrial,
+    PyTorchTrialContext,
+)
 
 from data import download_data, get_transform, collate_fn, PennFudanDataset
 
@@ -33,10 +38,13 @@ class ObjectDetectionTrial(PyTorchTrial):
         # overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         download_data(
-            download_directory=self.download_directory, data_config=self.context.get_data_config(),
+            download_directory=self.download_directory,
+            data_config=self.context.get_data_config(),
         )
 
-        dataset = PennFudanDataset(self.download_directory + "/PennFudanPed", get_transform())
+        dataset = PennFudanDataset(
+            self.download_directory + "/PennFudanPed", get_transform()
+        )
 
         # Split 80/20 into training and validation datasets.
         train_size = int(0.8 * len(dataset))
@@ -56,17 +64,19 @@ class ObjectDetectionTrial(PyTorchTrial):
         self.model = self.context.wrap_model(model)
 
         # Wrap the optimizer.
-        self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
-            self.model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            momentum=self.context.get_hparam("momentum"),
-            weight_decay=self.context.get_hparam("weight_decay"),
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            torch.optim.SGD(
+                self.model.parameters(),
+                lr=self.context.get_hparam("learning_rate"),
+                momentum=self.context.get_hparam("momentum"),
+                weight_decay=self.context.get_hparam("weight_decay"),
+            )
+        )
 
         # Wrap the LR scheduler.
         self.lr_scheduler = self.context.wrap_lr_scheduler(
             torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1),
-            step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH
+            step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
         )
 
     def build_training_data_loader(self) -> DataLoader:

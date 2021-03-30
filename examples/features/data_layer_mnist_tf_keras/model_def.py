@@ -31,7 +31,9 @@ class MnistTrial(TFKerasTrial):
     def __init__(self, context: TFKerasTrialContext) -> None:
         self.context = context
         self.base_learning_rate = context.get_hparam("learning_rate")  # type: float
-        self.learning_rate_decay = context.get_hparam("learning_rate_decay")  # type: float
+        self.learning_rate_decay = context.get_hparam(
+            "learning_rate_decay"
+        )  # type: float
 
     def session_config(self) -> tf.compat.v1.ConfigProto:
         return tf.compat.v1.ConfigProto()
@@ -39,12 +41,18 @@ class MnistTrial(TFKerasTrial):
     def build_model(self) -> Sequential:
         image = tf.keras.layers.Input(shape=(28, 28, 1))
 
-        y = tf.keras.layers.Conv2D(filters=32, kernel_size=5, padding="same", activation="relu")(
-            image
-        )
-        y = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="same")(y)
-        y = tf.keras.layers.Conv2D(filters=32, kernel_size=5, padding="same", activation="relu")(y)
-        y = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="same")(y)
+        y = tf.keras.layers.Conv2D(
+            filters=32, kernel_size=5, padding="same", activation="relu"
+        )(image)
+        y = tf.keras.layers.MaxPooling2D(
+            pool_size=(2, 2), strides=(2, 2), padding="same"
+        )(y)
+        y = tf.keras.layers.Conv2D(
+            filters=32, kernel_size=5, padding="same", activation="relu"
+        )(y)
+        y = tf.keras.layers.MaxPooling2D(
+            pool_size=(2, 2), strides=(2, 2), padding="same"
+        )(y)
         y = tf.keras.layers.Flatten()(y)
         y = tf.keras.layers.Dense(1024, activation="relu")(y)
         y = tf.keras.layers.Dropout(0.4)(y)
@@ -72,12 +80,16 @@ class MnistTrial(TFKerasTrial):
         return [TensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
     def build_training_data_loader(self) -> tf.data.Dataset:
-        @self.context.experimental.cache_train_dataset("mnist-tf-keras", "v1", shuffle=True)
+        @self.context.experimental.cache_train_dataset(
+            "mnist-tf-keras", "v1", shuffle=True
+        )
         def make_dataset() -> tf.data.Dataset:
             mnist_builder = tfds.builder("mnist")
             mnist_builder.download_and_prepare(download_dir="/cifar")
             mnist_train = mnist_builder.as_dataset(
-                split="train", decoders={"image": decode_image()}, as_supervised=True,
+                split="train",
+                decoders={"image": decode_image()},
+                as_supervised=True,
             )
             return mnist_train
 
@@ -91,7 +103,9 @@ class MnistTrial(TFKerasTrial):
             mnist_builder = tfds.builder("mnist")
             mnist_builder.download_and_prepare(download_dir="/cifar")
             mnist_val = mnist_builder.as_dataset(
-                split="test", decoders={"image": decode_image()}, as_supervised=True,
+                split="test",
+                decoders={"image": decode_image()},
+                as_supervised=True,
             )
             return mnist_val
 

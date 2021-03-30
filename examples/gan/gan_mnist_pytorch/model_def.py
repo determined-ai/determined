@@ -16,7 +16,12 @@ import torch.nn.functional as F
 import torchvision
 from torch.optim.lr_scheduler import LambdaLR
 
-from determined.pytorch import PyTorchTrial, PyTorchTrialContext, DataLoader, LRScheduler
+from determined.pytorch import (
+    PyTorchTrial,
+    PyTorchTrialContext,
+    DataLoader,
+    LRScheduler,
+)
 from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 import data
@@ -42,7 +47,7 @@ class Generator(nn.Module):
             *block(256, 512),
             *block(512, 1024),
             nn.Linear(1024, int(np.prod(img_shape))),
-            nn.Tanh()
+            nn.Tanh(),
         )
 
     def forward(self, z):
@@ -82,18 +87,25 @@ class GANTrial(PyTorchTrial):
 
         # Initialize the models.
         mnist_shape = (1, 28, 28)
-        self.generator = self.context.wrap_model(Generator(latent_dim=self.context.get_hparam("latent_dim"),
-                                                           img_shape=mnist_shape))
-        self.discriminator = self.context.wrap_model(Discriminator(img_shape=mnist_shape))
+        self.generator = self.context.wrap_model(
+            Generator(
+                latent_dim=self.context.get_hparam("latent_dim"), img_shape=mnist_shape
+            )
+        )
+        self.discriminator = self.context.wrap_model(
+            Discriminator(img_shape=mnist_shape)
+        )
 
         # Initialize the optimizers and learning rate scheduler.
         lr = self.context.get_hparam("lr")
         b1 = self.context.get_hparam("b1")
         b2 = self.context.get_hparam("b2")
-        self.opt_g = self.context.wrap_optimizer(torch.optim.Adam(self.generator.parameters(),
-                                                                  lr=lr, betas=(b1, b2)))
-        self.opt_d = self.context.wrap_optimizer(torch.optim.Adam(self.discriminator.parameters(),
-                                                                  lr=lr, betas=(b1, b2)))
+        self.opt_g = self.context.wrap_optimizer(
+            torch.optim.Adam(self.generator.parameters(), lr=lr, betas=(b1, b2))
+        )
+        self.opt_d = self.context.wrap_optimizer(
+            torch.optim.Adam(self.discriminator.parameters(), lr=lr, betas=(b1, b2))
+        )
         self.lr_g = self.context.wrap_lr_scheduler(
             lr_scheduler=LambdaLR(self.opt_g, lr_lambda=lambda epoch: 0.95 ** epoch),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
@@ -119,7 +131,9 @@ class GANTrial(PyTorchTrial):
             self.data_downloaded = True
 
         validation_data = data.get_dataset(self.download_directory, train=False)
-        return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
+        return DataLoader(
+            validation_data, batch_size=self.context.get_per_slot_batch_size()
+        )
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -140,7 +154,9 @@ class GANTrial(PyTorchTrial):
         # Log sampled images to Tensorboard.
         sample_imgs = generated_imgs[:6]
         grid = torchvision.utils.make_grid(sample_imgs)
-        self.logger.writer.add_image(f'generated_images_epoch_{epoch_idx}', grid, batch_idx)
+        self.logger.writer.add_image(
+            f"generated_images_epoch_{epoch_idx}", grid, batch_idx
+        )
 
         # Calculate generator loss.
         valid = torch.ones(imgs.size(0), 1)
@@ -150,7 +166,6 @@ class GANTrial(PyTorchTrial):
         # Run backward pass and step the optimizer for the generator.
         self.context.backward(g_loss)
         self.context.step_optimizer(self.opt_g)
-
 
         # Train discriminator.
         # Set `requires_grad_` to only update parameters on the discriminator.
@@ -163,7 +178,9 @@ class GANTrial(PyTorchTrial):
         real_loss = F.binary_cross_entropy(self.discriminator(imgs), valid)
         fake = torch.zeros(generated_imgs.size(0), 1)
         fake = self.context.to_device(fake)
-        fake_loss = F.binary_cross_entropy(self.discriminator(generated_imgs.detach()), fake)
+        fake_loss = F.binary_cross_entropy(
+            self.discriminator(generated_imgs.detach()), fake
+        )
         d_loss = (real_loss + fake_loss) / 2
 
         # Run backward pass and step the optimizer for the generator.
@@ -171,9 +188,9 @@ class GANTrial(PyTorchTrial):
         self.context.step_optimizer(self.opt_d)
 
         return {
-            'loss': d_loss,
-            'g_loss': g_loss,
-            'd_loss': d_loss,
+            "loss": d_loss,
+            "g_loss": g_loss,
+            "d_loss": d_loss,
         }
 
     def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:

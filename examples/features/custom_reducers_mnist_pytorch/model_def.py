@@ -14,7 +14,12 @@ from torch import nn
 
 from layers import Flatten
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, MetricReducer
+from determined.pytorch import (
+    DataLoader,
+    PyTorchTrial,
+    PyTorchTrialContext,
+    MetricReducer,
+)
 
 import data
 
@@ -29,9 +34,9 @@ class PerClassF1Score(MetricReducer):
 
     def reset(self):
         # reset() will be called before each training and validation workload.
-        self.true_positives = [0.] * self.num_classes
-        self.false_positives = [0.] * self.num_classes
-        self.false_negatives = [0.] * self.num_classes
+        self.true_positives = [0.0] * self.num_classes
+        self.false_positives = [0.0] * self.num_classes
+        self.false_negatives = [0.0] * self.num_classes
 
     def update(self, y_true, y_pred):
         # We are responsible for calling update() as part of our train_batch() and evaluate_batch()
@@ -60,7 +65,7 @@ class PerClassF1Score(MetricReducer):
             fp = sum(slot_fp[cls] for slot_fp in per_slot_fp)
             fn = sum(slot_fn[cls] for slot_fn in per_slot_fn)
             # F1 score formula from Wikipedia.
-            score = tp / (tp + .5 * (fp + fn))
+            score = tp / (tp + 0.5 * (fp + fn))
             f1_scores[f"f1_score_{cls}"] = score
         return f1_scores
 
@@ -72,25 +77,31 @@ class MNistTrial(PyTorchTrial):
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 
-        self.model = self.context.wrap_model(nn.Sequential(
-            nn.Conv2d(1, self.context.get_hparam("n_filters1"), 3, 1),
-            nn.ReLU(),
-            nn.Conv2d(
-                self.context.get_hparam("n_filters1"), self.context.get_hparam("n_filters2"), 3,
-            ),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Dropout2d(self.context.get_hparam("dropout1")),
-            Flatten(),
-            nn.Linear(144 * self.context.get_hparam("n_filters2"), 128),
-            nn.ReLU(),
-            nn.Dropout2d(self.context.get_hparam("dropout2")),
-            nn.Linear(128, 10),
-            nn.LogSoftmax(),
-        ))
+        self.model = self.context.wrap_model(
+            nn.Sequential(
+                nn.Conv2d(1, self.context.get_hparam("n_filters1"), 3, 1),
+                nn.ReLU(),
+                nn.Conv2d(
+                    self.context.get_hparam("n_filters1"),
+                    self.context.get_hparam("n_filters2"),
+                    3,
+                ),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
+                nn.Dropout2d(self.context.get_hparam("dropout1")),
+                Flatten(),
+                nn.Linear(144 * self.context.get_hparam("n_filters2"), 128),
+                nn.ReLU(),
+                nn.Dropout2d(self.context.get_hparam("dropout2")),
+                nn.Linear(128, 10),
+                nn.LogSoftmax(),
+            )
+        )
 
-        self.optimizer = self.context.wrap_optimizer(torch.optim.Adadelta(
-            self.model.parameters(), lr=self.context.get_hparam("learning_rate"))
+        self.optimizer = self.context.wrap_optimizer(
+            torch.optim.Adadelta(
+                self.model.parameters(), lr=self.context.get_hparam("learning_rate")
+            )
         )
 
         # We let name=None (by not specifiying name) to return a dictionary of metrics from a
@@ -118,7 +129,9 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         validation_data = data.get_dataset(self.download_directory, train=False)
-        return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
+        return DataLoader(
+            validation_data, batch_size=self.context.get_per_slot_batch_size()
+        )
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int

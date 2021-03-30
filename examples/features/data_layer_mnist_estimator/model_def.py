@@ -18,7 +18,9 @@ def get_filenames(directory: str) -> List[str]:
     return [os.path.join(directory, path) for path in tf.io.gfile.listdir(directory)]
 
 
-def parse_mnist_tfrecord(serialized_example: tf.Tensor) -> Tuple[Dict[str, tf.Tensor], tf.Tensor]:
+def parse_mnist_tfrecord(
+    serialized_example: tf.Tensor,
+) -> Tuple[Dict[str, tf.Tensor], tf.Tensor]:
     """
     Parse a TFRecord representing a single MNIST data point into an input
     feature tensor and a label tensor.
@@ -26,12 +28,14 @@ def parse_mnist_tfrecord(serialized_example: tf.Tensor) -> Tuple[Dict[str, tf.Te
     Returns: (features: Dict[str, Tensor], label: Tensor)
     """
     raw = tf.io.parse_example(
-        serialized=serialized_example, features={"image_raw": tf.io.FixedLenFeature([], tf.string)}
+        serialized=serialized_example,
+        features={"image_raw": tf.io.FixedLenFeature([], tf.string)},
     )
     image = tf.io.decode_raw(raw["image_raw"], tf.float32)
 
     label_dict = tf.io.parse_example(
-        serialized=serialized_example, features={"label": tf.io.FixedLenFeature(1, tf.int64)}
+        serialized=serialized_example,
+        features={"label": tf.io.FixedLenFeature(1, tf.int64)},
     )
     return {"image": image}, label_dict["label"]
 
@@ -85,7 +89,9 @@ class MNistTrial(EstimatorTrial):
 
     def _make_validation_input_fn(self) -> Callable:
         def _fn() -> tf.data.TFRecordDataset:
-            @self.context.experimental.cache_validation_dataset("mnist-estimator-const", "v1")
+            @self.context.experimental.cache_validation_dataset(
+                "mnist-estimator-const", "v1"
+            )
             def make_dataset() -> tf.data.TFRecordDataset:
                 download_directory = util.download_data("/tmp/data")
                 files = get_filenames(os.path.join(download_directory, "validation"))

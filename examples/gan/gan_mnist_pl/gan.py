@@ -30,9 +30,7 @@ import pytorch_lightning as pl
 from data import MNISTDataModule
 
 
-
 class Generator(nn.Module):
-
     def __init__(self, latent_dim, img_shape):
         super().__init__()
         self.img_shape = img_shape
@@ -88,8 +86,9 @@ class Discriminator(nn.Module):
     - `type_as` is the way we recommend to do this.
   - This example shows how to use multiple dataloaders in your `LightningModule`.
 """
-class GAN(pl.LightningModule):
 
+
+class GAN(pl.LightningModule):
     def __init__(
         self,
         channels,
@@ -107,7 +106,9 @@ class GAN(pl.LightningModule):
 
         # networks
         data_shape = (channels, width, height)
-        self.generator = Generator(latent_dim=self.hparams.latent_dim, img_shape=data_shape)
+        self.generator = Generator(
+            latent_dim=self.hparams.latent_dim, img_shape=data_shape
+        )
         self.discriminator = Discriminator(img_shape=data_shape)
 
         self.validation_z = torch.randn(8, self.hparams.latent_dim)
@@ -146,12 +147,14 @@ class GAN(pl.LightningModule):
 
             # adversarial loss is binary cross-entropy
             g_loss = self.adversarial_loss(self.discriminator(self(z)), valid)
-            tqdm_dict = {'g_loss': g_loss}
-            output = OrderedDict({
-                'loss': g_loss,
-                # 'progress_bar': tqdm_dict, # not valid in PyTorchTrial
-                # 'log': tqdm_dict,
-            })
+            tqdm_dict = {"g_loss": g_loss}
+            output = OrderedDict(
+                {
+                    "loss": g_loss,
+                    # 'progress_bar': tqdm_dict, # not valid in PyTorchTrial
+                    # 'log': tqdm_dict,
+                }
+            )
             return output
 
         # train discriminator
@@ -169,16 +172,19 @@ class GAN(pl.LightningModule):
             fake = fake.type_as(imgs)
 
             fake_loss = self.adversarial_loss(
-                self.discriminator(self(z).detach()), fake)
+                self.discriminator(self(z).detach()), fake
+            )
 
             # discriminator loss is the average of these
             d_loss = (real_loss + fake_loss) / 2
-            tqdm_dict = {'d_loss': d_loss}
-            output = OrderedDict({
-                'loss': d_loss,
-                # 'progress_bar': tqdm_dict,
-                # 'log': tqdm_dict
-            })
+            tqdm_dict = {"d_loss": d_loss}
+            output = OrderedDict(
+                {
+                    "loss": d_loss,
+                    # 'progress_bar': tqdm_dict,
+                    # 'log': tqdm_dict
+                }
+            )
             return output
 
     # CHANGE add validation step
@@ -186,7 +192,7 @@ class GAN(pl.LightningModule):
         imgs, _ = batch
         valid = torch.ones(imgs.size(0), 1, device=self.device)
         loss = F.binary_cross_entropy(self.discriminator(imgs), valid)
-        return {'loss': loss}
+        return {"loss": loss}
 
     def configure_optimizers(self):
         lr = self.hparams.lr
@@ -198,8 +204,15 @@ class GAN(pl.LightningModule):
         return [opt_g, opt_d], []
 
 
-if __name__ == '__main__':
-    dm = MNISTDataModule('https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz')
+if __name__ == "__main__":
+    dm = MNISTDataModule(
+        "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+    )
     model = GAN(*dm.size())
-    trainer = pl.Trainer(gpus=1, max_epochs=5, progress_bar_refresh_rate=20, default_root_dir='/tmp/lightning')
+    trainer = pl.Trainer(
+        gpus=1,
+        max_epochs=5,
+        progress_bar_refresh_rate=20,
+        default_root_dir="/tmp/lightning",
+    )
     trainer.fit(model, dm)

@@ -13,7 +13,9 @@ from determined import estimator
 NUM_CLASSES = 10
 
 
-def calculate_logits(hparams: Dict[str, Any], images: tf.Tensor, training: bool) -> tf.Tensor:
+def calculate_logits(
+    hparams: Dict[str, Any], images: tf.Tensor, training: bool
+) -> tf.Tensor:
     """This example assumes you already have something like this written for defining your graph."""
     conv1 = tf.layers.conv2d(
         inputs=tf.cast(images, tf.float32),
@@ -73,7 +75,9 @@ def make_model_fn(context: estimator.EstimatorTrialContext) -> Callable:
     # Determined).
     #
     # Read more at https://www.tensorflow.org/guide/estimator.
-    def model_fn(features: Any, mode: tf.estimator.ModeKeys) -> tf.estimator.EstimatorSpec:
+    def model_fn(
+        features: Any, mode: tf.estimator.ModeKeys
+    ) -> tf.estimator.EstimatorSpec:
         # The "features" argument must be named "features", but in this simple example, it
         # contains the full output of our dataset, including the images and the labels.
         images = features["image"]
@@ -88,16 +92,12 @@ def make_model_fn(context: estimator.EstimatorTrialContext) -> Callable:
             optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
             optimizer = context.wrap_optimizer(optimizer)
 
-            train_op = optimizer.minimize(
-                loss, global_step=tf.train.get_global_step()
-            )
+            train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
             return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
         if mode == tf.estimator.ModeKeys.EVAL:
             # Build a graph for validation.
-            logits = calculate_logits(
-                context.get_hparams(), images, training=False
-            )
+            logits = calculate_logits(context.get_hparams(), images, training=False)
             loss = calculate_loss(labels, logits)
             predictions = calculate_predictions(logits)
             error = calculate_error(predictions, labels)

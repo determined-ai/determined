@@ -80,22 +80,18 @@ class BoostedTreesTrial(EstimatorTrial):
 
     def build_validation_spec(self) -> tf.estimator.EvalSpec:
         return tf.estimator.EvalSpec(
-            self.make_input_fn(self.dfeval, self.y_eval, shuffle=False),
-            steps=None
+            self.make_input_fn(self.dfeval, self.y_eval, shuffle=False), steps=None
         )
 
-
     def load_dataset(self):
-    
+
         dftrain = pd.read_csv(
             self.context.get_data_config()["titanic_dataset"]["train"]
         )
-        dfeval = pd.read_csv(
-            self.context.get_data_config()["titanic_dataset"]["eval"]
-        )
+        dfeval = pd.read_csv(self.context.get_data_config()["titanic_dataset"]["eval"])
         y_train = dftrain.pop("survived")
         y_eval = dfeval.pop("survived")
-    
+
         CATEGORICAL_COLUMNS = [
             "sex",
             "n_siblings_spouses",
@@ -106,24 +102,24 @@ class BoostedTreesTrial(EstimatorTrial):
             "alone",
         ]
         NUMERIC_COLUMNS = ["age", "fare"]
-    
+
         def one_hot_cat_column(feature_name, vocab):
             return tf.feature_column.indicator_column(
                 tf.feature_column.categorical_column_with_vocabulary_list(
                     feature_name, vocab
                 )
             )
-    
+
         feature_columns = []
-    
+
         for feature_name in CATEGORICAL_COLUMNS:
             # Need to one-hot encode categorical features.
             vocabulary = dftrain[feature_name].unique()
             feature_columns.append(one_hot_cat_column(feature_name, vocabulary))
-    
+
         for feature_name in NUMERIC_COLUMNS:
             feature_columns.append(
                 tf.feature_column.numeric_column(feature_name, dtype=tf.float32)
             )
-    
+
         return dftrain, dfeval, y_train, y_eval, feature_columns

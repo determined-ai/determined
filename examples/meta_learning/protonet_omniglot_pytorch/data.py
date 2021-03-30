@@ -24,8 +24,8 @@ class OmniglotTasks(Dataset):
         """
         Each subfolder of the parent data directory is a separate
         alphabet with multiple characters.  Each class is a certain
-        character within an alphabet.  Tasks will correspond to 
-        n-way classification problems where the learner will 
+        character within an alphabet.  Tasks will correspond to
+        n-way classification problems where the learner will
         have to predict which of n classes a test image belongs to.
 
         Args:
@@ -60,9 +60,10 @@ class OmniglotTasks(Dataset):
         """
         This collate function returns a list of dictionaries in a batch.
 
-        Whereas by default, the collate function zips the dictionary field 
-        values into a list and returns a single dictionary.  
+        Whereas by default, the collate function zips the dictionary field
+        values into a list and returns a single dictionary.
         """
+
         def collate(examples):
             return examples
 

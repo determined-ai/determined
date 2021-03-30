@@ -5,7 +5,6 @@ from data import MNISTDataModule
 
 
 class LightningMNISTClassifier(pl.LightningModule):
-
     def __init__(self, *args, lr: float, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -18,7 +17,6 @@ class LightningMNISTClassifier(pl.LightningModule):
         # Setting default dims here because we know them.
         # Could optionally be assigned dynamically in dm.setup()
         self.dims = (1, 28, 28)
-
 
     def forward(self, x):
         batch_size, channels, width, height = x.size()
@@ -49,28 +47,29 @@ class LightningMNISTClassifier(pl.LightningModule):
         x, y = batch
         logits = self.forward(x)
         loss = self._loss_fn(logits, y)
-        self.log('train_loss', loss)
-        return {'loss': loss}
+        self.log("train_loss", loss)
+        return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         x, y = batch
         logits = self.forward(x)
         loss = self._loss_fn(logits, y)
-        self.log('val_loss', loss)
+        self.log("val_loss", loss)
 
         pred = logits.argmax(dim=1, keepdim=True)
         accuracy = pred.eq(y.view_as(pred)).sum().item() / len(x)
-        return {'val_loss': loss, 'accuracy': accuracy}
+        return {"val_loss": loss, "accuracy": accuracy}
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(),
-                                     lr=self.hparams.lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
         return optimizer
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     model = LightningMNISTClassifier(lr=1e-3)
-    trainer = pl.Trainer(max_epochs=2, default_root_dir='/tmp/lightning')
+    trainer = pl.Trainer(max_epochs=2, default_root_dir="/tmp/lightning")
 
-    dm = MNISTDataModule('https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz')
+    dm = MNISTDataModule(
+        "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+    )
     trainer.fit(model, datamodule=dm)

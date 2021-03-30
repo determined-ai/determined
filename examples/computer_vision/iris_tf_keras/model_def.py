@@ -78,11 +78,17 @@ class IrisTrial(keras.TFKerasTrial):
         return model
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-        return [keras.callbacks.TensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
+        return [
+            keras.callbacks.TensorBoard(
+                update_freq="batch", profile_batch=0, histogram_freq=1
+            )
+        ]
 
     def build_training_data_loader(self) -> keras.InputData:
         # Ignore header line and read the training CSV observations into a pandas DataFrame.
-        train = pd.read_csv(self.context.get_data_config()["train_url"], names=DS_COLUMNS, header=0)
+        train = pd.read_csv(
+            self.context.get_data_config()["train_url"], names=DS_COLUMNS, header=0
+        )
         train_features, train_labels = train, train.pop(LABEL_HEADER)
 
         # Since we're building a classifier, convert the labels in the raw
@@ -94,7 +100,9 @@ class IrisTrial(keras.TFKerasTrial):
 
     def build_validation_data_loader(self) -> keras.InputData:
         # Ignore header line and read the test CSV observations into a pandas DataFrame.
-        test = pd.read_csv(self.context.get_data_config()["test_url"], names=DS_COLUMNS, header=0)
+        test = pd.read_csv(
+            self.context.get_data_config()["test_url"], names=DS_COLUMNS, header=0
+        )
         test_features, test_labels = test, test.pop(LABEL_HEADER)
 
         # Since we're building a classifier, convert the labels in the raw

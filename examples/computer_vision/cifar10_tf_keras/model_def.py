@@ -31,6 +31,7 @@ from data import (
 
 from determined import keras
 
+
 class CIFARTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext) -> None:
         self.context = context

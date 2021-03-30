@@ -89,8 +89,8 @@ class MMDetTrial(PyTorchTrial):
     def evaluate_full_dataset(
         self, data_loader: torch.utils.data.DataLoader
     ) -> Dict[str, Any]:
-        if self.data_config["backend"]=="fake":
-            return {'bbox_mAP': 0}
+        if self.data_config["backend"] == "fake":
+            return {"bbox_mAP": 0}
 
         # Will need custom reducer to do this across gpus
         prog_bar = ProgressBar(len(data_loader.dataset))

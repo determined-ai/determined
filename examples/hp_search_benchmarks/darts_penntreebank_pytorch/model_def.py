@@ -15,7 +15,12 @@ import torch
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchTrial,
+    PyTorchTrialContext,
+)
 
 import randomNAS_files.data_util as data_util
 from randomNAS_files.model import RNNModel
@@ -76,29 +81,33 @@ class DARTSRNNTrial(PyTorchTrial):
 
         # Define the model
         genotype = self.get_genotype_from_hps()
-        self.model = self.context.wrap_model(RNNModel(
-            self.ntokens,
-            self.hparams.emsize,
-            self.hparams.nhid,
-            self.hparams.nhidlast,
-            self.hparams.dropout,
-            self.hparams.dropouth,
-            self.hparams.dropoutx,
-            self.hparams.dropouti,
-            self.hparams.dropoute,
-            genotype=genotype,
-        ))
+        self.model = self.context.wrap_model(
+            RNNModel(
+                self.ntokens,
+                self.hparams.emsize,
+                self.hparams.nhid,
+                self.hparams.nhidlast,
+                self.hparams.dropout,
+                self.hparams.dropouth,
+                self.hparams.dropoutx,
+                self.hparams.dropouti,
+                self.hparams.dropoute,
+                genotype=genotype,
+            )
+        )
         total_params = sum(x.data.nelement() for x in self.model.parameters())
         logging.info("Model total parameters: {}".format(total_params))
 
         # Define the optimizer
-        self._optimizer = self.context.wrap_optimizer(HybridSGD(
-            self.model.parameters(),
-            self.hparams.learning_rate,
-            self.hparams.weight_decay,
-            lambd=0,
-            t0=0,
-        ))
+        self._optimizer = self.context.wrap_optimizer(
+            HybridSGD(
+                self.model.parameters(),
+                self.hparams.learning_rate,
+                self.hparams.weight_decay,
+                lambd=0,
+                t0=0,
+            )
+        )
 
         # Define the LR scheduler
         self.myLR = MyLR(self._optimizer, self.hparams)
@@ -115,7 +124,9 @@ class DARTSRNNTrial(PyTorchTrial):
         return DataLoader(
             train_dataset,
             batch_sampler=data.BatchSamp(
-                train_dataset, self.hparams.bptt, self.hparams.max_seq_length_delta,
+                train_dataset,
+                self.hparams.bptt,
+                self.hparams.max_seq_length_delta,
             ),
             collate_fn=data.PadSequence(),
         )
@@ -161,7 +172,9 @@ class DARTSRNNTrial(PyTorchTrial):
                 logging.info("Switching to ASGD.")
                 self._optimizer.set_optim("ASGD")
 
-    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
+    def train_batch(
+        self, batch: Any, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
         """
         Trains the provided batch.
         Returns: Dictionary of the calculated Metrics
@@ -190,7 +203,8 @@ class DARTSRNNTrial(PyTorchTrial):
         )
 
         raw_loss = nn.functional.nll_loss(
-            log_prob.contiguous().view(-1, log_prob.size(2)), labels.contiguous().contiguous().view(-1)
+            log_prob.contiguous().view(-1, log_prob.size(2)),
+            labels.contiguous().contiguous().view(-1),
         )
 
         loss = raw_loss
@@ -223,7 +237,8 @@ class DARTSRNNTrial(PyTorchTrial):
         self.context.step_optimizer(
             self._optimizer,
             clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
-                params, self.context.get_hparam("clip_gradients_l2_norm"),
+                params,
+                self.context.get_hparam("clip_gradients_l2_norm"),
             ),
         )
 
