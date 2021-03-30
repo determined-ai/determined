@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: Avoid flashing `No data to plot` when loading HP visualizaton
+   tab on experiment detail page.
