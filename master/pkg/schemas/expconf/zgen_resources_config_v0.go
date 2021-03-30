@@ -8,6 +8,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
+func (r ResourcesConfigV0) GetSlots() *int {
+	return r.Slots
+}
+
 func (r ResourcesConfigV0) GetMaxSlots() *int {
 	return r.MaxSlots
 }

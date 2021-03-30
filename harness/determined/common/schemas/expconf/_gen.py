@@ -695,6 +695,14 @@ schemas = {
             ],
             "default": false
         },
+        "registry_auth": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+        },
         "pod_spec": {
             "type": [
                 "object",
@@ -1610,6 +1618,70 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/registry-auth.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/registry-auth.json",
+    "title": "RegistryAuth",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "username": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "password": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "auth": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "email": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "serveraddress": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "identitytoken": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "registrytoken": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/reproducibility.json": json.loads(
         r"""
 {
@@ -1627,7 +1699,8 @@ schemas = {
                 "integer",
                 "null"
             ],
-            "default": null
+            "default": null,
+            "minimum": 0
         }
     }
 }
@@ -1682,6 +1755,13 @@ schemas = {
             "default": null
         },
         "shm_size": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "slots": {
             "type": [
                 "integer",
                 "null"
@@ -1862,6 +1942,13 @@ schemas = {
                 "null"
             ],
             "default": null
+        },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
         }
     }
 }
@@ -2128,6 +2215,13 @@ schemas = {
                 "null"
             ],
             "default": null
+        },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
         }
     }
 }

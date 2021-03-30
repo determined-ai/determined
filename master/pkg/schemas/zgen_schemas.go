@@ -637,6 +637,14 @@ var (
             ],
             "default": false
         },
+        "registry_auth": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+        },
         "pod_spec": {
             "type": [
                 "object",
@@ -1490,6 +1498,66 @@ var (
     }
 }
 `)
+	textRegistryAuthV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/registry-auth.json",
+    "title": "RegistryAuth",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "username": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "password": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "auth": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "email": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "serveraddress": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "identitytoken": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "registrytoken": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+`)
 	textReproducibilityConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/reproducibility.json",
@@ -1505,7 +1573,8 @@ var (
                 "integer",
                 "null"
             ],
-            "default": null
+            "default": null,
+            "minimum": 0
         }
     }
 }
@@ -1556,6 +1625,13 @@ var (
             "default": null
         },
         "shm_size": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "slots": {
             "type": [
                 "integer",
                 "null"
@@ -1728,6 +1804,13 @@ var (
                 "null"
             ],
             "default": null
+        },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
         }
     }
 }
@@ -1982,6 +2065,13 @@ var (
                 "null"
             ],
             "default": null
+        },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
         }
     }
 }
@@ -2673,6 +2763,8 @@ var (
 
 	schemaOptimizationsConfigV0 interface{}
 
+	schemaRegistryAuthV0 interface{}
+
 	schemaReproducibilityConfigV0 interface{}
 
 	schemaResourcesConfigV0 interface{}
@@ -3061,6 +3153,17 @@ func ParsedOptimizationsConfigV0() interface{} {
 	return schemaOptimizationsConfigV0
 }
 
+func ParsedRegistryAuthV0() interface{} {
+	if schemaRegistryAuthV0 != nil {
+		return schemaRegistryAuthV0
+	}
+	err := json.Unmarshal(textRegistryAuthV0, &schemaRegistryAuthV0)
+	if err != nil {
+		panic("invalid embedded json for RegistryAuthV0")
+	}
+	return schemaRegistryAuthV0
+}
+
 func ParsedReproducibilityConfigV0() interface{} {
 	if schemaReproducibilityConfigV0 != nil {
 		return schemaReproducibilityConfigV0
@@ -3360,6 +3463,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textNativeConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+	cachedSchemaBytesMap[url] = textRegistryAuthV0
 	url = "http://determined.ai/schemas/expconf/v0/reproducibility.json"
 	cachedSchemaBytesMap[url] = textReproducibilityConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/resources.json"
