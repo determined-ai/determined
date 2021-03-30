@@ -17,7 +17,7 @@ import Avatar from './Avatar';
 import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
-import css from './Navigation.module.scss';
+import css from './NavigationSideBar.module.scss';
 
 interface ItemProps extends LinkProps {
   badge?: number;
@@ -52,7 +52,7 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
 
 const STORAGE_KEY = 'collapsed';
 
-const Navigation: React.FC = () => {
+const NavigationSideBar: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const ui = UI.useStateContext();
@@ -195,4 +195,4 @@ const Navigation: React.FC = () => {
   );
 };
 
-export default Navigation;
+export default NavigationSideBar;

@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useLayoutEffect } from 'react';
 
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
-import Navigation from 'components/Navigation';
+import NavigationSideBar from 'components/NavigationSideBar';
 import NavigationTabbar from 'components/NavigationTabbar';
 import NavigationTopbar from 'components/NavigationTopbar';
 import Router from 'components/Router';
@@ -93,7 +93,7 @@ const AppView: React.FC = () => {
     <div className={classes.join(' ')}>
       <Spinner spinning={ui.showSpinner}>
         <div className={css.body}>
-          <Navigation />
+          <NavigationSideBar />
           <NavigationTopbar />
           <main><Router routes={appRoutes} /></main>
           <NavigationTabbar />
