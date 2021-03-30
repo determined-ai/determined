@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -376,6 +377,10 @@ func saveAndReload(method SearchMethod) error {
 	} else if state2, err := method.Snapshot(); err != nil { // Test restore is correct.
 		return err
 	} else if !bytes.Equal(state, state2) {
+		var unmarshaledState = method.Restore(state)
+		var unmarshaledState2 = method.Restore(state2)
+		fmt.Printf("%+v\n", unmarshaledState)
+		fmt.Printf("%+v\n", unmarshaledState2)
 		return errors.New("successive snapshots were not identical")
 	}
 	return nil

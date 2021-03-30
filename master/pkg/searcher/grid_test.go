@@ -153,7 +153,10 @@ func TestGridSearchMethod(t *testing.T) {
 				newEarlyExitPredefinedTrial(toOps("300B"), .1),
 			},
 			config: model.SearcherConfig{
-				GridConfig: &model.GridConfig{MaxLength: model.NewLengthInBatches(300)},
+				GridConfig: &model.GridConfig{
+					MaxLength:           model.NewLengthInBatches(300),
+					MaxConcurrentTrials: 2,
+				},
 			},
 			hparams: generateHyperparameters([]int{2, 1, 3}),
 		},

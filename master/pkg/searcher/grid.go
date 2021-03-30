@@ -10,9 +10,14 @@ import (
 )
 
 type (
-	// gridSearchState stores the state for grid. Though grid is stateless, it is useful
-	// on restart to know the type of searcher during restore, in the event it must be shimmed.
+	// gridSearchState stores the state for grid. The state will track the remaining hp settings
+	// that have yet to be created for evaluation.  PendingTrials tracks how many trials have
+	// active workloads and is used to check max_concurrent_trials for the searcher is respected.
+	// Tracking searcher type on restart gives us the ability to differentiate grid searches
+	// in a shim if needed.
 	gridSearchState struct {
+		PendingTrials    int              `json:"pending_trials"`
+		RemainingTrials  []hparamSample   `json:"remaining_trials"`
 		SearchMethodType SearchMethodType `json:"search_method_type"`
 	}
 	// gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,
@@ -27,35 +32,77 @@ type (
 
 func newGridSearch(config model.GridConfig) SearchMethod {
 	return &gridSearch{
-		GridConfig:      config,
-		gridSearchState: gridSearchState{GridSearch},
+		GridConfig: config,
+		gridSearchState: gridSearchState{
+			SearchMethodType: GridSearch,
+			RemainingTrials:  make([]hparamSample, 0),
+		},
 	}
 }
 
 func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
-	var ops []Operation
 	grid := newHyperparameterGrid(ctx.hparams)
 	s.trials = len(grid)
-	for _, params := range grid {
+	s.RemainingTrials = append(s.RemainingTrials, grid...)
+	initialTrials := s.trials
+	if s.MaxConcurrentTrials > 0 {
+		initialTrials = min(s.trials, s.MaxConcurrentTrials)
+	}
+	var ops []Operation
+	for trial := 0; trial < initialTrials; trial++ {
+		params := s.RemainingTrials[len(s.RemainingTrials)-1]
+		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
 		ops = append(ops, NewValidate(create.RequestID))
 		ops = append(ops, NewClose(create.RequestID))
+		s.PendingTrials++
 	}
 	return ops, nil
 }
 
 func (s *gridSearch) progress(unitsCompleted float64) float64 {
+	if s.MaxConcurrentTrials > 0 && s.PendingTrials > s.MaxConcurrentTrials {
+		panic("pending trials is greater than max_concurrent_trials")
+	}
 	return unitsCompleted / float64(s.GridConfig.MaxLength.MultInt(s.trials).Units)
 }
 
 // trialExitedEarly does nothing since grid does not take actions based on
 // search status or progress.
 func (s *gridSearch) trialExitedEarly(
-	context, model.RequestID, workload.ExitedReason,
+	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
-	return nil, nil
+	s.PendingTrials--
+	var ops []Operation
+	if len(s.RemainingTrials) > 0 {
+		params := s.RemainingTrials[len(s.RemainingTrials)-1]
+		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
+		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
+		ops = append(ops, create)
+		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
+		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewClose(create.RequestID))
+		s.PendingTrials++
+	}
+	return ops, nil
+}
+
+func (s *gridSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
+	s.PendingTrials--
+	var ops []Operation
+	if len(s.RemainingTrials) > 0 {
+		params := s.RemainingTrials[len(s.RemainingTrials)-1]
+		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
+		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
+		ops = append(ops, create)
+		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
+		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewClose(create.RequestID))
+		s.PendingTrials++
+	}
+	return ops, nil
 }
 
 func newHyperparameterGrid(params model.Hyperparameters) []hparamSample {

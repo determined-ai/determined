@@ -532,6 +532,11 @@ validation metrics should be computed more frequently.
    Whether to minimize or maximize the metric defined above. The default
    value is ``true`` (minimize).
 
+``max_concurrent_trials``
+   The maximum number of trials that can be worked on simultaneously.
+   The default value is ``0``, in which case we will try to work on as
+   many trials as possible.
+
 ``source_trial_id``
    If specified, the weights of *every* trial in the search will be
    initialized to the most recent checkpoint of the given trial ID. This
@@ -566,6 +571,11 @@ For more details see the :ref:`topic-guides_hp-tuning-det_grid`.
 ``smaller_is_better``
    Whether to minimize or maximize the metric defined above. The default
    value is ``true`` (minimize).
+
+``max_concurrent_trials``
+   The maximum number of trials that can be worked on simultaneously.
+   The default value is ``0``, in which case we will try to work on as
+   many trials as possible.
 
 ``source_trial_id``
    If specified, the weights of this trial will be initialized to the

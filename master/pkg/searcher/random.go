@@ -8,10 +8,15 @@ import (
 )
 
 type (
-	// randomSearchState stores the state for grid. Though random is stateless, it is useful
-	// on restart to know the type of searcher during restore, in the event it must be shimmed.
-	// This gives us the ability to differentiate single and random in a shim.
+	// randomSearchState stores the state for random.  Since not all trials are always created at
+	// initialization, we need to track CreatedTrials so we know whether we need to create more
+	// trials when workloads complete so that we reach MaxTrials.  PendingTrials tracks active
+	// workloads and is used to check max_concurrent_trials for the searcher is respected.
+	// Tracking searcher type on restart gives us the ability to differentiate random searches
+	// in a shim if needed.
 	randomSearchState struct {
+		CreatedTrials    int              `json:"created_trials"`
+		PendingTrials    int              `json:"pending_trials"`
 		SearchMethodType SearchMethodType `json:"search_method_type"`
 	}
 	// randomSearch corresponds to the standard random search method. Each random trial configuration
@@ -25,31 +30,44 @@ type (
 
 func newRandomSearch(config model.RandomConfig) SearchMethod {
 	return &randomSearch{
-		RandomConfig:      config,
-		randomSearchState: randomSearchState{RandomSearch},
+		RandomConfig: config,
+		randomSearchState: randomSearchState{
+			SearchMethodType: RandomSearch,
+		},
 	}
 }
 
 func newSingleSearch(config model.SingleConfig) SearchMethod {
 	return &randomSearch{
-		RandomConfig:      model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
-		randomSearchState: randomSearchState{SingleSearch},
+		RandomConfig: model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
+		randomSearchState: randomSearchState{
+			SearchMethodType: SingleSearch,
+		},
 	}
 }
 
 func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
-	for trial := 0; trial < s.MaxTrials; trial++ {
+	initialTrials := s.MaxTrials
+	if s.MaxConcurrentTrials > 0 {
+		initialTrials = min(s.MaxTrials, s.MaxConcurrentTrials)
+	}
+	for trial := 0; trial < initialTrials; trial++ {
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
 		ops = append(ops, NewValidate(create.RequestID))
 		ops = append(ops, NewClose(create.RequestID))
+		s.CreatedTrials++
+		s.PendingTrials++
 	}
 	return ops, nil
 }
 
 func (s *randomSearch) progress(unitsCompleted float64) float64 {
+	if s.MaxConcurrentTrials > 0 && s.PendingTrials > s.MaxConcurrentTrials {
+		panic("pending trials is greater than max_concurrent_trials")
+	}
 	return unitsCompleted / float64(s.MaxLength.MultInt(s.MaxTrials).Units)
 }
 
@@ -58,6 +76,7 @@ func (s *randomSearch) progress(unitsCompleted float64) float64 {
 func (s *randomSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
+	s.PendingTrials--
 	if exitedReason == workload.InvalidHP {
 		var ops []Operation
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
@@ -65,11 +84,27 @@ func (s *randomSearch) trialExitedEarly(
 		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
 		ops = append(ops, NewValidate(create.RequestID))
 		ops = append(ops, NewClose(create.RequestID))
+		s.CreatedTrials++
+		s.PendingTrials++
 		return ops, nil
 	}
 	return nil, nil
 }
 
+func (s *randomSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
+	s.PendingTrials--
+	var ops []Operation
+	if s.CreatedTrials < s.MaxTrials {
+		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		ops = append(ops, create)
+		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
+		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewClose(create.RequestID))
+		s.CreatedTrials++
+		s.PendingTrials++
+	}
+	return ops, nil
+}
 func (s *randomSearch) Snapshot() (json.RawMessage, error) {
 	return json.Marshal(s.randomSearchState)
 }
