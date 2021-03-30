@@ -21,7 +21,6 @@ export const useFetchAgents = (canceler: AbortController): () => Promise<void> =
     try {
       const agentsResponse = await getAgents({ signal: canceler.signal });
 
-      // Checking for changes before making an update call.
       if (!isEqual(agents, agentsResponse)) {
         setAgents({ type: Agents.ActionType.Set, value: agentsResponse });
         setOverview({ type: ClusterOverview.ActionType.SetAgents, value: agentsResponse });

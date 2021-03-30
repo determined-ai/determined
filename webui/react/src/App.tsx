@@ -1,5 +1,5 @@
 import { Button, notification } from 'antd';
-import React, { useCallback, useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
@@ -10,18 +10,14 @@ import Agents from 'contexts/Agents';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
-import Info from 'contexts/Info';
+import Info, { useFetchInfo } from 'contexts/Info';
 import UI from 'contexts/UI';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
-import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import appRoutes from 'routes';
-import { getInfo } from 'services/api';
-import { EmptyParams } from 'services/types';
-import { DeterminedInfo } from 'types';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -30,21 +26,15 @@ import { paths } from './routes/utils';
 const AppView: React.FC = () => {
   const resize = useResize();
   const info = Info.useStateContext();
-  const setInfo = Info.useActionContext();
-  const [ infoResponse, triggerInfoRequest ] = useRestApi<EmptyParams, DeterminedInfo>(getInfo, {});
+  const [ canceler ] = useState(new AbortController());
 
-  const fetchInfo = useCallback(() => triggerInfoRequest({}), [ triggerInfoRequest ]);
+  const fetchInfo = useFetchInfo(canceler);
 
   useRouteTracker();
   useTheme();
 
   // Poll every 10 minutes
   usePolling(fetchInfo, { interval: 600000 });
-
-  useEffect(() => {
-    if (!infoResponse.data) return;
-    setInfo({ type: Info.ActionType.Set, value: infoResponse.data });
-  }, [ infoResponse, setInfo ]);
 
   useEffect(() => {
     setupAnalytics(info);
@@ -69,6 +59,10 @@ const AppView: React.FC = () => {
       });
     }
   }, [ info ]);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
