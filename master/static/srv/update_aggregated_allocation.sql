@@ -72,7 +72,12 @@ label_agg AS (
         (
             SELECT
                 id,
-                jsonb_array_elements(config -> 'labels') AS label
+                jsonb_array_elements(
+                    CASE
+                        WHEN config ->> 'labels' IS NULL THEN '[]' :: jsonb
+                        ELSE config -> 'labels'
+                    END
+                ) AS label
             FROM
                 experiments
         ) AS labels
@@ -93,7 +98,7 @@ pool_agg AS (
         (
             SELECT
                 id,
-                config #>> '{resources, resource_pool}' AS aggregation_key
+                coalesce(config #>> '{resources, resource_pool}', 'default') AS aggregation_key
             FROM
                 experiments
         ) experiments
@@ -114,7 +119,7 @@ agent_label_agg AS (
         (
             SELECT
                 id,
-                config #>> '{resources, agent_label}' AS aggregation_key
+                coalesce(config #>> '{resources, agent_label}', '') AS aggregation_key
             FROM
                 experiments
         ) experiments
