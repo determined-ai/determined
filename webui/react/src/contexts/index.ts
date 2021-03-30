@@ -1,6 +1,6 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
-import { clone, isEqual } from 'utils/data';
+import { clone } from 'utils/data';
 
 enum ActionType { Reset, Set }
 

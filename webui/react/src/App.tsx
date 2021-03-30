@@ -9,7 +9,6 @@ import Compose from 'Compose';
 import Agents from 'contexts/Agents';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
-import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Info, { useFetchInfo } from 'contexts/Info';
 import UI from 'contexts/UI';
 import Users from 'contexts/Users';
@@ -84,10 +83,6 @@ const App: React.FC = () => {
       Users.Provider,
       Agents.Provider,
       ClusterOverview.Provider,
-      Commands.Provider,
-      Notebooks.Provider,
-      Shells.Provider,
-      Tensorboards.Provider,
       UI.Provider,
     ]}>
       <AppView />
