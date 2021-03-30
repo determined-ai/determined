@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useFetchAgents } from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
@@ -14,7 +14,7 @@ import NavigationTopbar from './NavigationTopbar';
 import Spinner from './Spinner';
 
 interface Props {
-  children?: ReactNode;
+  children?: React.ReactNode;
 }
 
 const Navigation: React.FC<Props> = ({ children }) => {
@@ -28,9 +28,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   usePolling(fetchAgents);
 
   useEffect(() => {
-    return () => {
-      canceler.abort();
-    };
+    return () => canceler.abort();
   }, [ canceler ]);
 
   return (
