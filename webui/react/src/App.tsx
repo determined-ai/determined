@@ -3,11 +3,8 @@ import React, { useCallback, useEffect, useLayoutEffect } from 'react';
 
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
-import NavigationSideBar from 'components/NavigationSideBar';
-import NavigationTabbar from 'components/NavigationTabbar';
-import NavigationTopbar from 'components/NavigationTopbar';
+import Navigation from 'components/Navigation';
 import Router from 'components/Router';
-import Spinner from 'components/Spinner';
 import Compose from 'Compose';
 import Agents from 'contexts/Agents';
 import Auth from 'contexts/Auth';
@@ -24,28 +21,19 @@ import useTheme from 'hooks/useTheme';
 import appRoutes from 'routes';
 import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';
-import { DeterminedInfo, ResourceType } from 'types';
-import { correctViewportHeight, refreshPage, updateFaviconType } from 'utils/browser';
+import { DeterminedInfo } from 'types';
+import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
 import { paths } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-  const { isAuthenticated } = Auth.useStateContext();
-  const ui = UI.useStateContext();
-  const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
-  const setUI = UI.useActionContext();
   const [ infoResponse, triggerInfoRequest ] = useRestApi<EmptyParams, DeterminedInfo>(getInfo, {});
-  const classes = [ css.base ];
 
   const fetchInfo = useCallback(() => triggerInfoRequest({}), [ triggerInfoRequest ]);
-
-  if (!ui.showChrome || !isAuthenticated) classes.push(css.noChrome);
-
-  updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
 
   useRouteTracker();
   useTheme();
@@ -82,23 +70,14 @@ const AppView: React.FC = () => {
     }
   }, [ info ]);
 
-  useEffect(() => {
-    setUI({ type: UI.ActionType.ShowSpinner });
-  }, [ setUI ]);
-
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
   return (
-    <div className={classes.join(' ')}>
-      <Spinner spinning={ui.showSpinner}>
-        <div className={css.body}>
-          <NavigationSideBar />
-          <NavigationTopbar />
-          <main><Router routes={appRoutes} /></main>
-          <NavigationTabbar />
-        </div>
-      </Spinner>
+    <div className={css.base}>
+      <Navigation>
+        <main><Router routes={appRoutes} /></main>
+      </Navigation>
     </div>
   );
 };

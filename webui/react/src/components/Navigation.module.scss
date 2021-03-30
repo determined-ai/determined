@@ -1,0 +1,39 @@
+.base {
+  display: flex;
+  flex-grow: 1;
+
+  [class*=NavigationSideBar_base_] {
+    flex-grow: 0;
+    position: relative;
+    // Avoid setting anything else with a z-index of 1000 or higher  in the non-nav/main content area
+    z-index: 1000;
+  }
+  [class*=NavigationTopbar_base] {
+    display: none;
+    flex-grow: 0;
+    // Avoid setting anything else with a z-index of 1000 or higher  in the non-nav/main content area
+    z-index: 1000;
+  }
+  [class*=NavigationTabbar_base] {
+    display: none;
+    flex-grow: 0;
+    // Avoid setting anything else with a z-index of 1000 or higher  in the non-nav/main content area
+    z-index: 1000;
+  }
+  & > main {
+    flex-grow: 1;
+    height: calc(var(--vh, 1vh) * 100);
+    overflow: auto;
+  }
+
+  @media only screen and (max-width: $breakpoint-mobile) {
+    flex-direction: column;
+
+    [class*=NavigationSideBar_base_] { display: none; }
+    [class*=NavigationTopbar_base_] { display: flex; }
+    [class*=NavigationTabbar_base] { display: flex; }
+    & > main {
+      height: calc(var(--vh, 1vh) * 100 - var(--theme-sizes-navigation-topbarHeight) - var(--theme-sizes-navigation-toolbarHeight));
+    }
+  }
+}

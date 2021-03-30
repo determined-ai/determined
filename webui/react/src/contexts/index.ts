@@ -43,7 +43,6 @@ export const generateContext = <T, A = Action<T>>(options: Options<T, A>): Expor
       case ActionType.Reset:
         return initialState;
       case ActionType.Set:
-        if (isEqual(state, action.value)) return state;
         return clone(action.value);
       default:
         return state;
