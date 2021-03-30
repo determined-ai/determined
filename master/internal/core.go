@@ -306,17 +306,27 @@ func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	}
 
 	for _, entry := range resp.ResourceEntries {
-		for label, seconds := range entry.ByLabel {
-			if err = write("label", label, entry.PeriodStart, seconds); err != nil {
-				return err
+		writeAggType := func(agg string, vals map[string]float32) error {
+			for key, seconds := range vals {
+				if err = write(agg, key, entry.PeriodStart, seconds); err != nil {
+					return err
+				}
 			}
+			return nil
 		}
-		for user, seconds := range entry.ByUser {
-			if err = write("user", user, entry.PeriodStart, seconds); err != nil {
-				return err
-			}
+		if err = writeAggType("experiment_label", entry.ByExperimentLabel); err != nil {
+			return err
 		}
-		if err = write("total", "total", entry.PeriodStart, entry.Seconds); err != nil {
+		if err = writeAggType("username", entry.ByUsername); err != nil {
+			return err
+		}
+		if err = writeAggType("resource_pool", entry.ByResourcePool); err != nil {
+			return err
+		}
+		if err = writeAggType("agent_label", entry.ByAgentLabel); err != nil {
+			return err
+		}
+		if err = writeAggType("total", map[string]float32{"total": entry.Seconds}); err != nil {
 			return err
 		}
 	}

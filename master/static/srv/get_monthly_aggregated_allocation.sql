@@ -45,18 +45,36 @@ SELECT
         FROM
             months
         WHERE
-            aggregation_type = 'user'
+            aggregation_type = 'username'
             AND months.period_start = starts.period_start
-    ) AS by_user,
+    ) AS by_username,
     (
         SELECT
             jsonb_object_agg(aggregation_key, seconds)
         FROM
             months
         WHERE
-            aggregation_type = 'label'
+            aggregation_type = 'experiment_label'
             AND months.period_start = starts.period_start
-    ) AS by_label
+    ) AS by_experiment_label,
+    (
+        SELECT
+            jsonb_object_agg(aggregation_key, seconds)
+        FROM
+            months
+        WHERE
+            aggregation_type = 'resource_pool'
+            AND months.period_start = starts.period_start
+    ) AS by_resource_pool,
+    (
+        SELECT
+            jsonb_object_agg(aggregation_key, seconds)
+        FROM
+            months
+        WHERE
+            aggregation_type = 'agent_label'
+            AND months.period_start = starts.period_start
+    ) AS by_agent_label
 FROM
     starts
 ORDER BY

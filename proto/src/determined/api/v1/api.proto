@@ -878,6 +878,9 @@ service Determined {
     option (google.api.http) = {
       get: "/api/v1/resources/allocation/raw"
     };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
   }
 
   // Get an aggregated view of resource allocation during the given time period.
@@ -885,6 +888,9 @@ service Determined {
       returns (ResourceAllocationAggregatedResponse) {
     option (google.api.http) = {
       get: "/api/v1/resources/allocation/aggregated"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
     };
   }
 }

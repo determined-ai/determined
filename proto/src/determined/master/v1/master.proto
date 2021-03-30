@@ -65,7 +65,13 @@ message ResourceAllocationAggregatedEntry {
   // The total number of seconds included in this allocation entry.
   float seconds = 3;
   // The seconds in the cluster used by experiments belonging to each user.
-  map<string, float> by_user = 4;
+  map<string, float> by_username = 4;
   // The seconds in the cluster used by experiments labeled with each label.
-  map<string, float> by_label = 5;
+  map<string, float> by_experiment_label = 5;
+  // The seconds in the cluster used by experiments assigned to each resource
+  // pool.
+  map<string, float> by_resource_pool = 6;
+  // The seconds in the cluster used by experiments assigned to each agent
+  // label.
+  map<string, float> by_agent_label = 7;
 }

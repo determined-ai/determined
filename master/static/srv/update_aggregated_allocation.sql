@@ -43,7 +43,7 @@ workloads AS (
 ),
 user_agg AS (
     SELECT
-        'user' AS aggregation_type,
+        'username' AS aggregation_type,
         users.username AS aggregation_key,
         sum(workloads.seconds) AS seconds
     FROM
@@ -60,7 +60,7 @@ user_agg AS (
 ),
 label_agg AS (
     SELECT
-        'label' AS aggregation_type,
+        'experiment_label' AS aggregation_type,
         -- This seems to be the most convenient way to convert from a JSONB string value to a normal
         -- string value.
         labels.label #>> '{}' AS aggregation_key,
@@ -82,6 +82,48 @@ label_agg AS (
     GROUP BY
         labels.label
 ),
+pool_agg AS (
+    SELECT
+        'resource_pool' AS aggregation_type,
+        experiments.aggregation_key,
+        sum(workloads.seconds) AS seconds
+    FROM
+        workloads,
+        trials,
+        (
+            SELECT
+                id,
+                config #>> '{resources, resource_pool}' AS aggregation_key
+            FROM
+                experiments
+        ) experiments
+    WHERE
+        workloads.trial_id = trials.id
+        AND trials.experiment_id = experiments.id
+    GROUP BY
+        experiments.aggregation_key
+),
+agent_label_agg AS (
+    SELECT
+        'agent_label' AS aggregation_type,
+        experiments.aggregation_key,
+        sum(workloads.seconds) AS seconds
+    FROM
+        workloads,
+        trials,
+        (
+            SELECT
+                id,
+                config #>> '{resources, agent_label}' AS aggregation_key
+            FROM
+                experiments
+        ) experiments
+    WHERE
+        workloads.trial_id = trials.id
+        AND trials.experiment_id = experiments.id
+    GROUP BY
+        experiments.aggregation_key
+),
 all_aggs AS (
     SELECT
         *
@@ -92,6 +134,16 @@ all_aggs AS (
         *
     FROM
         label_agg
+    UNION ALL
+    SELECT
+        *
+    FROM
+        pool_agg
+    UNION ALL
+    SELECT
+        *
+    FROM
+        agent_label_agg
     UNION ALL
     SELECT
         'total' AS aggregation_type,

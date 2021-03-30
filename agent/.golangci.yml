@@ -75,6 +75,7 @@ linters:
     - maligned
     - nestif
     - noctx
+    - scopelint
     - testpackage
     - unparam
     - wsl
