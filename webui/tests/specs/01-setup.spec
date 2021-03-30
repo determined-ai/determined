@@ -22,17 +22,13 @@ Specification to stop the running experiments to setup a controlled environment.
 
 ## Create tensorboards
 
-* "View in TensorBoard" experiment row "1"
-* Close wait page tab
-* "View in TensorBoard" experiment row "2"
-* Close wait page tab
+* Open TensorBoard from experiment row "1"
+* Open TensorBoard from experiment row "2"
 
 ## Create notebooks
 
 * Launch cpu-only notebook
-* Close wait page tab
 * Launch notebook
-* Close wait page tab
 
 ## Sign out
 

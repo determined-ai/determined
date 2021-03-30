@@ -30,8 +30,17 @@ const viewports = {
 
 /* Helper functions */
 
-const clickAndWaitForPage = async (selector: t.SearchElement | t.MouseCoordinates) => {
-  await t.click(selector, { waitForEvents: ['loadEventFired'] });
+const clickAndWaitForPage = async (
+  selector: t.SearchElement | t.MouseCoordinates,
+  external = false,
+) => {
+  const waitForEvents: t.BrowserEvent[] = [external ? 'targetNavigated' : 'loadEventFired'];
+  await t.click(selector, { waitForEvents });
+};
+
+const clickAndCloseTab = async (selector: t.SearchElement | t.MouseCoordinates) => {
+  await t.click(selector, { waitForEvents: ['targetNavigated'] });
+  await t.closeTab();
 };
 
 const checkTextContentFor = async (keywords: string[], shouldExist: boolean, timeout = 1500) => {
@@ -48,6 +57,30 @@ const checkTextContentFor = async (keywords: string[], shouldExist: boolean, tim
 
 const goto = async (url: string) => {
   await t.goto(url, { waitForEvents: ['loadEventFired'] });
+};
+
+/*
+ * Taiko `elements()` often return duplicate elements after upgrading to 1.2.3.
+ * Use the text values of the element as a hash to dedupe the elements.
+ */
+const getElements = async (
+  selector: string,
+  options?: t.DollarOptions | t.RelativeSearchElement,
+  ...args: t.RelativeSearchElement[]
+): Promise<t.Element[]> => {
+  const map: Record<string, boolean> = {};
+  const elements = await t.$(selector, options, ...args).elements();
+  const dedupedElements = [];
+
+  for (const element of elements) {
+    const hash = (await element.text()).replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
+    if (!map[hash]) {
+      map[hash] = true;
+      dedupedElements.push(element);
+    }
+  }
+
+  return dedupedElements;
 };
 
 export default class StepImplementation {
@@ -78,6 +111,12 @@ export default class StepImplementation {
   @AfterSpec()
   public async afterSpec() {
     await video.stopRecording();
+  }
+
+  @BeforeSpec({ tags: ['skip'] })
+  public async beforeSkipSpec(context: ExecutionContext) {
+    const spec = context.getCurrentSpec().getName();
+    throw new Error(`Skipping spec ${spec}`);
   }
 
   /* Authentication Steps */
@@ -141,14 +180,10 @@ export default class StepImplementation {
   public async navigateWithTable(table: Table) {
     for (var row of table.getTableRows()) {
       const label = row.getCell('label');
-      await clickAndWaitForPage(t.link(label, t.within(t.$('[class*=Navigation_base]'))));
-
+      const link = t.link(label, t.within(t.$('[class*=Navigation_base]')));
       const external = row.getCell('external') === 'true';
-      if (external) {
-        const title = row.getCell('title');
-        const titleRegex = new RegExp(title, 'i');
-        await t.switchTo(titleRegex);
-      }
+
+      await clickAndWaitForPage(link, external);
 
       const path = row.getCell('route');
       const url = await t.currentURL();
@@ -215,8 +250,9 @@ export default class StepImplementation {
 
   @Step('Should have <count> table rows')
   public async checkTableRowCount(count: string) {
+    const rows = await getElements('tr[data-row-key]');
     const expectedCount = parseInt(count);
-    await assert.strictEqual((await t.$('tr[data-row-key]').elements()).length, expectedCount);
+    await assert.strictEqual(rows.length, expectedCount);
   }
 
   @Step('Sort table by column <column>')
@@ -254,25 +290,18 @@ export default class StepImplementation {
 
   @Step('Launch notebook')
   public async launchNotebook() {
-    await clickAndWaitForPage(t.button('Launch Notebook'));
+    await clickAndCloseTab(t.button('Launch Notebook'));
   }
 
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
     await t.click(t.$('[class*=Navigation_launchIcon]'));
-    await clickAndWaitForPage(t.text('Launch CPU-only Notebook'));
+    await clickAndCloseTab(t.text('Launch CPU-only Notebook'));
   }
 
   @Step('Launch tensorboard')
   public async launchTensorboard() {
-    await clickAndWaitForPage(t.button('View in TensorBoard'));
-  }
-
-  @Step('Close wait page tab')
-  public async closeTab() {
-    await t.waitFor(100);
-    await t.closeTab(/http.*\/(wait|proxy)/);
-    await t.waitFor(100);
+    await clickAndCloseTab(t.button('View in TensorBoard'));
   }
 
   /* Dashboard Page Steps */
@@ -280,10 +309,8 @@ export default class StepImplementation {
   @Step('Should have <count> recent task cards')
   public async checkRecentTasks(count: string) {
     const expectedCount = parseInt(count);
-    await assert.strictEqual(
-      (await t.$('[class*=TaskCard_base]').elements()).length,
-      expectedCount,
-    );
+    const cards = await getElements('[class*=TaskCard_base]');
+    await assert.strictEqual(cards.length, expectedCount);
   }
 
   /* Experiment List Page Steps */
@@ -292,6 +319,12 @@ export default class StepImplementation {
   public async modifyExperiment(action: string, row: string) {
     await t.click(t.tableCell({ row: parseInt(row) + 1, col: 12 }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
+  }
+
+  @Step('Open TensorBoard from experiment row <row>')
+  public async openExperimentInTensorBoard(row: string) {
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 12 }));
+    await clickAndCloseTab(t.text('View in TensorBoard', t.within(t.$('.ant-dropdown'))));
   }
 
   @Step('Toggle show archived button')
@@ -339,13 +372,13 @@ export default class StepImplementation {
 
   @Step('Should show <count> resource pool cards')
   public async checkResourcePoolCardCount(count: string) {
-    const elements = await t.$('div[class^="ResourcePoolCard_base"]').elements();
-    assert.strictEqual(elements.length, parseInt(count));
+    const cards = await getElements('div[class^="ResourcePoolCard_base"]');
+    assert.strictEqual(cards.length, parseInt(count));
   }
 
   @Step('Should show <count> agents in stats')
   public async checkAgentCountStats(count: string) {
-    const stats = await t.$('div[class^="OverviewStats_base"]').elements();
+    const stats = await getElements('div[class^="OverviewStats_base"]');
     assert.strictEqual(stats.length, 3);
     const numAgents = (await stats[0].text()).replace('Connected Agents', '');
     assert.strictEqual(parseInt(numAgents), parseInt(count));
@@ -354,6 +387,7 @@ export default class StepImplementation {
   /* Logs */
   @Step('Should have some log entries')
   public async checkSomeLogLines() {
-    assert.ok((await t.$('[class*=LogViewer_line]').elements()).length > 0);
+    const logs = await getElements('[class*=LogViewer_line]');
+    assert.ok(logs.length > 0);
   }
 }
