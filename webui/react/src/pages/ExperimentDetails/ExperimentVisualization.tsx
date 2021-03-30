@@ -275,6 +275,8 @@ const ExperimentVisualization: React.FC<Props> = ({
       type="warning" />;
   } else if (pageError) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
+  } else if (!hasLoaded) {
+    return <Spinner />;
   } else if (!hasData) {
     return isExperimentTerminal ? (
       <Message title="No data to plot." type={MessageType.Empty} />
@@ -286,8 +288,6 @@ const ExperimentVisualization: React.FC<Props> = ({
         <Spinner />
       </div>
     );
-  } else if (!hasLoaded) {
-    return <Spinner />;
   }
 
   const visualizationFilters = (
