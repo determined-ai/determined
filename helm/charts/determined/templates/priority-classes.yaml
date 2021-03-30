@@ -1,5 +1,5 @@
 {{- if .Values.defaultScheduler}}
-{{- if eq .Values.defaultScheduler "coscheduler"}}
+{{- if eq (.Values.defaultScheduler | trim ) "coscheduler"}}
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
