@@ -43,6 +43,11 @@ test:
 
 fmt:
 	make -C tests fmt
+	black .
+# 	isort -y
 
 check:
 	make -C tests check
+	black . --check
+# 	isort --check-only
+	mypy `find . -name '*.py'`
