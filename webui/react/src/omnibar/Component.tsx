@@ -1,5 +1,7 @@
 import OmnibarNpm from 'omnibar';
 import React from 'react';
+import { GlobalHotKeys } from 'react-hotkeys';
+import OmnibarCtx from 'omnibar/Context';
 
 import * as Tree from 'omnibar/Tree';
 
@@ -17,7 +19,20 @@ const ItemRenderer = (p: ItemProps<any>) => {
   );
 };
 
+const globalKeymap = {
+  HIDE_OMNIBAR: [ 'esc' ], // TODO scope it to the component
+};
+
+
 const Omnibar: React.FC = () => {
+  const setOmnibar = OmnibarCtx.useActionContext();
+  const globalKeyHandler = {
+    HIDE_OMNIBAR: (): void => {
+      setOmnibar({ type: OmnibarCtx.ActionType.Hide })
+      alert('esc pressed')
+    },
+    SHOW_OMNIBAR: (): void => setOmnibar({ type: OmnibarCtx.ActionType.Show }),
+  };
   return (
     <div className={css.base}>
       <div className={css.bar} id="omnibar">
@@ -35,6 +50,7 @@ const Omnibar: React.FC = () => {
           onAction={Tree.onAction}
         /*render={ItemRenderer}*/ />
       </div>
+    <GlobalHotKeys handlers={globalKeyHandler} keyMap={globalKeymap} />
     </div>
   );
 };

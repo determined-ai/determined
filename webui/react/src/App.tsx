@@ -35,7 +35,7 @@ import css from './App.module.scss';
 import { paths } from './routes/utils';
 
 const globalKeymap = {
-  HIDE_OMNIBAR: [ 'esc' ], // TODO scope it to the component
+  // HIDE_OMNIBAR: [ 'esc' ], // TODO scope it to the component
   SHOW_OMNIBAR: [ 'ctrl+space' ],
 };
 
@@ -59,7 +59,10 @@ const AppView: React.FC = () => {
   const OmnibarState = OmnibarCtx.useStateContext();
   const setOmnibar = OmnibarCtx.useActionContext();
   const globalKeyHandler = {
-    HIDE_OMNIBAR: (): void => setOmnibar({ type: OmnibarCtx.ActionType.Hide }),
+    // HIDE_OMNIBAR: (): void => {
+    //   setOmnibar({ type: OmnibarCtx.ActionType.Hide })
+    //   // alert('esc pressed')
+    // },
     SHOW_OMNIBAR: (): void => setOmnibar({ type: OmnibarCtx.ActionType.Show }),
   };
 
