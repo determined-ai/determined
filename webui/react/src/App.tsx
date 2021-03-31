@@ -1,5 +1,7 @@
 import { Button, notification } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect } from 'react';
+import { GlobalHotKeys } from 'react-hotkeys';
+import { Redirect, Route, Switch } from 'react-router-dom';
 
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
@@ -26,9 +28,16 @@ import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { DeterminedInfo, ResourceType } from 'types';
 import { correctViewportHeight, refreshPage, updateFaviconType } from 'utils/browser';
+import Omnibar, { keymap as omnibarKeymap } from 'omnibar/Component';
+import OmnibarCtx from 'omnibar/Context';
 
 import css from './App.module.scss';
 import { paths } from './routes/utils';
+
+const globalKeymap = {
+  HIDE_OMNIBAR: [ 'esc' ], // TODO scope it to the component
+  SHOW_OMNIBAR: [ 'ctrl+space' ],
+};
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -46,6 +55,13 @@ const AppView: React.FC = () => {
   if (!ui.showChrome || !isAuthenticated) classes.push(css.noChrome);
 
   updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
+
+  const OmnibarState = OmnibarCtx.useStateContext();
+  const setOmnibar = OmnibarCtx.useActionContext();
+  const globalKeyHandler = {
+    HIDE_OMNIBAR: (): void => setOmnibar({ type: OmnibarCtx.ActionType.Hide }),
+    SHOW_OMNIBAR: (): void => setOmnibar({ type: OmnibarCtx.ActionType.Show }),
+  };
 
   useRouteTracker();
   useTheme();
@@ -99,11 +115,27 @@ const AppView: React.FC = () => {
           <NavigationTabbar />
         </div>
       </Spinner>
+      {OmnibarState.isShowing && <Omnibar />}
+      <GlobalHotKeys handlers={globalKeyHandler} keyMap={globalKeymap} />
+
     </div>
   );
 };
 
+// <div className={css.base}>
+//   {isAuthenticated && <NavBar username={username} />}
+//   <div className={css.body}>
+//     {isAuthenticated && <SideBar />}
+//     <Switch>
+//       <Route exact path="/">
+//         <Redirect to={defaultAppRoute.path} />
+//       </Route>
+//       <Router routes={appRoutes} />
+//     </Switch>
+//   </div>
+
 const App: React.FC = () => {
+
   return (
     <Compose components={[
       Auth.Provider,
@@ -116,6 +148,7 @@ const App: React.FC = () => {
       Shells.Provider,
       Tensorboards.Provider,
       UI.Provider,
+      OmnibarCtx.Provider,
     ]}>
       <AppView />
     </Compose>
