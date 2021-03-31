@@ -6,14 +6,23 @@ LightningModule with Determined's PyTorch control loop.
 
 from determined.pytorch import PyTorchTrialContext, DataLoader
 from determined.pytorch.lightning import LightningAdapter
+
+import data
 import mnist
+
 
 class MNISTTrial(LightningAdapter):
     def __init__(self, context: PyTorchTrialContext, *args, **kwargs) -> None:
-        lm = mnist.LightningMNISTClassifier(lr=context.get_hparam('learning_rate'))
+        lm = mnist.LitMNIST(
+            hidden_size=context.get_hparam('hidden_size'),
+            learning_rate=context.get_hparam('learning_rate'),
+        )
         data_dir = f"/tmp/data-rank{context.distributed.get_rank()}"
-        self.dm = mnist.MNISTDataModule(context.get_data_config()["url"],
-                                        data_dir)
+        self.dm = data.MNISTDataModule(
+            data_url=context.get_data_config()["url"],
+            data_dir=data_dir,
+            batch_size=context.get_per_slot_batch_size(),
+        )
 
         super().__init__(context, lightning_module=lm, *args, **kwargs)
         self.dm.prepare_data()

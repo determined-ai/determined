@@ -1,76 +1,91 @@
+# The class LitMNIST is modified from the Pytorch Lightning example:
+# https://colab.research.google.com/github/PytorchLightning/pytorch-lightning/
+# blob/master/notebooks/01-mnist-hello-world.ipynb#scrollTo=4DNItffri95Q
+#
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import torch
-import pytorch_lightning as pl
+from torch import nn
 from torch.nn import functional as F
-from data import MNISTDataModule
+from torchvision import transforms
+import pytorch_lightning as pl
+from pytorch_lightning.metrics.functional import accuracy
+
+import data
 
 
-class LightningMNISTClassifier(pl.LightningModule):
+class LitMNIST(pl.LightningModule):
+    def __init__(self, hidden_size=64, learning_rate=2e-4):
 
-    def __init__(self, *args, lr: float, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
-        self.save_hyperparameters()
-        # mnist images are (1, 28, 28) (channels, width, height)
-        self.layer_1 = torch.nn.Linear(28 * 28, 128)
-        self.layer_2 = torch.nn.Linear(128, 256)
-        self.layer_3 = torch.nn.Linear(256, 10)
-        # self.dims is returned when you call dm.size()
-        # Setting default dims here because we know them.
-        # Could optionally be assigned dynamically in dm.setup()
+        # Set our init args as class attributes
+        self.hidden_size = hidden_size
+        self.learning_rate = learning_rate
+
+        # Hardcode some dataset specific attributes
+        self.num_classes = 10
         self.dims = (1, 28, 28)
+        channels, width, height = self.dims
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
 
+        # Define PyTorch model
+        self.model = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(channels * width * height, hidden_size),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(hidden_size, self.num_classes)
+        )
 
     def forward(self, x):
-        batch_size, channels, width, height = x.size()
+        x = self.model(x)
+        return F.log_softmax(x, dim=1)
 
-        # (b, 1, 28, 28) -> (b, 1*28*28)
-        x = x.view(batch_size, -1)
-
-        # layer 1 (b, 1*28*28) -> (b, 128)
-        x = self.layer_1(x)
-        x = torch.relu(x)
-
-        # layer 2 (b, 128) -> (b, 256)
-        x = self.layer_2(x)
-        x = torch.relu(x)
-
-        # layer 3 (b, 256) -> (b, 10)
-        x = self.layer_3(x)
-
-        # probability distribution over labels
-        x = torch.log_softmax(x, dim=1)
-
-        return x
-
-    def _loss_fn(self, logits, labels):
-        return F.nll_loss(logits, labels)
-
-    def training_step(self, batch, *args, **kwargs):
+    def training_step(self, batch, batch_idx):
         x, y = batch
-        logits = self.forward(x)
-        loss = self._loss_fn(logits, y)
+        logits = self(x)
+        loss = F.nll_loss(logits, y)
         self.log('train_loss', loss)
         return {'loss': loss}
 
-    def validation_step(self, batch, batch_idx, *args, **kwargs):
+    def validation_step(self, batch, batch_idx):
         x, y = batch
-        logits = self.forward(x)
-        loss = self._loss_fn(logits, y)
-        self.log('val_loss', loss)
+        logits = self(x)
+        loss = F.nll_loss(logits, y)
+        preds = torch.argmax(logits, dim=1)
+        acc = accuracy(preds, y)
 
-        pred = logits.argmax(dim=1, keepdim=True)
-        accuracy = pred.eq(y.view_as(pred)).sum().item() / len(x)
-        return {'val_loss': loss, 'accuracy': accuracy}
+        return {'val_loss': loss, 'accuracy': acc}
+
+    def test_step(self, batch, batch_idx):
+        # Here we just reuse the validation_step for testing
+        return self.validation_step(batch, batch_idx)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(),
-                                     lr=self.hparams.lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
 
 if __name__ == '__main__':
-    model = LightningMNISTClassifier(lr=1e-3)
-    trainer = pl.Trainer(max_epochs=2, default_root_dir='/tmp/lightning')
-
-    dm = MNISTDataModule('https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz')
+    model = LitMNIST()
+    trainer = pl.Trainer(max_epochs=3, default_root_dir='/tmp/lightning')
+    dm = data.MNISTDataModule('https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz')
     trainer.fit(model, datamodule=dm)
