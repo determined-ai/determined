@@ -108,13 +108,17 @@ const ExperimentVisualization: React.FC<Props> = ({
   const [ hpImportanceMap, setHpImportanceMap ] = useState<HpImportanceMap>();
   const [ pageError, setPageError ] = useState<PageError>();
 
-  const { hasData, hasLoaded, isExperimentTerminal } = useMemo(() => {
+  const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
       hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
       hasLoaded: batches && metrics && hpImportanceMap,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
+      isSupported: ![
+        ExperimentSearcherName.Single,
+        ExperimentSearcherName.Pbt,
+      ].includes(experiment.config.searcher.name),
     };
-  }, [ batches, experiment.state, metrics, hpImportanceMap ]);
+  }, [ batches, experiment, metrics, hpImportanceMap ]);
 
   const hpImportance = useMemo(() => {
     if (!hpImportanceMap) return {};
@@ -148,6 +152,8 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Stream available metrics.
   useEffect(() => {
+    if (!isSupported) return;
+
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
@@ -197,10 +203,12 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ experiment.id, filters?.metric ]);
+  }, [ experiment.id, filters?.metric, isSupported ]);
 
   // Stream available batches.
   useEffect(() => {
+    if (!isSupported) return;
+
     const canceler = new AbortController();
     const metricTypeParam = activeMetric.type === MetricType.Training
       ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
@@ -225,7 +233,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     });
 
     return () => canceler.abort();
-  }, [ activeMetric, experiment.id, filters.batch ]);
+  }, [ activeMetric, experiment.id, filters.batch, isSupported ]);
 
   // Set the default filter batch.
   useEffect(() => {
@@ -244,6 +252,7 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   // Update default filter hParams if not previously set.
   useEffect(() => {
+    if (!isSupported) return;
     if (filters.hParams.length !== 0) return;
 
     setFilters(prev => {
@@ -254,12 +263,9 @@ const ExperimentVisualization: React.FC<Props> = ({
       }
       return { ...prev, hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
     });
-  }, [ filters, hpImportanceMap ]);
+  }, [ filters, hpImportanceMap, isSupported ]);
 
-  if ([
-    ExperimentSearcherName.Single,
-    ExperimentSearcherName.Pbt,
-  ].includes(experiment.config.searcher.name)) {
+  if (!isSupported) {
     const alertMessage = `
       Hyperparameter visualizations are not applicable for single trial or PBT experiments.
     `;
