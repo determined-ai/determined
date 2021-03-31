@@ -1,0 +1,18 @@
+description: mnist_pytorch_lightning_const with PyTorch AMP API automatically enabled
+data:
+  url: "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+hyperparameters:
+  global_batch_size: 64
+  learning_rate: 0.001
+searcher:
+  name: single
+  metric: val_loss
+  max_length:
+      batches: 937
+  smaller_is_better: true
+entrypoint: auto_amp_model_def:MNistAutoAMPTrial
+environment:
+  image:
+    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.10.0
+    cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.10.0
+

@@ -7,6 +7,7 @@ import torch
 from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.optim.optimizer import Optimizer
+from typing_extensions import Literal
 
 from determined.common import check
 from determined.errors import InvalidModelException
@@ -120,7 +121,14 @@ class LightningAdapter(PyTorchTrial):
     simple job submission to the Determined cluster, and so on.
     """
 
-    def __init__(self, context: PyTorchTrialContext, lightning_module: pl.LightningModule):
+    def __init__(
+        self,
+        context: PyTorchTrialContext,
+        lightning_module: pl.LightningModule,
+        precision: Union[Literal[32], Literal[16]] = 32,
+        amp_backend: Union[Literal["native"], Literal["apex"]] = "native",
+        amp_level: Union[Literal["O0", "O1", "O2", "O3"]] = "O2",
+    ):
         """
         This performs the necessary initialization steps to:
 
@@ -142,15 +150,45 @@ class LightningAdapter(PyTorchTrial):
                 lm = mnist.LightningMNISTClassifier(lr=context.get_hparam('learning_rate'))
                 super().__init__(context, lightning_module=lm)
 
+        Arguments:
+            context (PyTorchTrialContext)
+            lightning_module (``LightningModule``):
+                User-defined lightning module.
+            precision (int, default=32):
+                Precision to use.
+                Accepted values are 16, and 32.
+            amp_backend (str):
+                Automatic mixed precision backend to use.
+                Accepted values are "native", and "mixed".
+            amp_level (str, optional, default="O2"):
+                Apex amp optimization level.
+                Accepted values are "O0", "O1", "O2", and "O3".
+                https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
 
         """
+        check.check_in(precision, {16, 32}, "only precisions 16 & 32 are supported.")
+        check.check_in(amp_backend, {"native", "apex"}, 'only "native", and "apex" are supported')
+
         check_compatibility(lightning_module)
         override_unsupported_nud(lightning_module, context)
+
+        if precision == 16 and amp_backend == "native":
+            context.experimental.use_amp()
+
         context.wrap_model(lightning_module)
+
         pls = _LightningAdapterState(context, lightning_module, [])
         self._pls = pls
         optimizers, _ = self.setup_optimizers_schedulers()
         pls.optimizers = optimizers
+
+        if precision == 16 and amp_backend == "apex":
+            context.configure_apex_amp(
+                context.models,
+                context.optimizers,
+                enabled=True,
+                opt_level=amp_level,
+            )
 
         # set lightning_module properties
         pls.lm.use_ddp = False
@@ -159,8 +197,10 @@ class LightningAdapter(PyTorchTrial):
         pls.lm.use_tpu = False
         type(pls.lm).local_rank = context.distributed.get_local_rank()  # type: ignore
         type(pls.lm).global_rank = context.distributed.get_rank()  # type: ignore
-        pls.lm.use_amp = context.experimental._auto_amp or context._use_apex
         pls.lm.to(context.device)
+        use_amp = context.experimental._auto_amp or context._use_apex
+        pls.lm.use_amp = use_amp
+        pls.lm.precision = "mixed" if use_amp else precision  # type: ignore
 
     def build_callbacks(self) -> Dict[str, PyTorchCallback]:
         """

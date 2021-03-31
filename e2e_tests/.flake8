@@ -36,3 +36,9 @@ import-order-style = edited
 # flake8-quotes
 inline-quotes = "
 multiline-quotes = """
+
+exclude =
+  ./tests/fixtures/pytorch_lightning_amp/model_def.py,
+  ./tests/fixtures/pytorch_lightning_amp/mnist.py,
+  ./tests/fixtures/pytorch_lightning_amp/data.py
+ 
