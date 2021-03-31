@@ -67,10 +67,4 @@ setup(
         "pytorch-18-cpu": ["torch==1.7.1", "torchvision==0.8.2"],
     },
     zip_safe=False,
-    entry_points={
-        "console_scripts": [
-            "det = determined.cli.__main__:main",
-            "det-deploy = determined.deploy.__main__:main",
-        ]
-    },
 )

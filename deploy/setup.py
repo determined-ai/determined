@@ -14,5 +14,11 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "determined==0.14.6.dev0",
+        "determined-cli==0.14.6.dev0",
     ],
+    entry_points={
+        "console_scripts": [
+            "det-deploy = determined.deploy.__main__:main",
+        ]
+    },
 )
