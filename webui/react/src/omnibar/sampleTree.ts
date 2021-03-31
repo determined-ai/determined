@@ -1,10 +1,12 @@
 import { Children, LeafNode, NLNode } from 'AsyncTree';
 import { archiveExperiment, getExperiments, killExperiment } from 'services/api';
 import { activeRunStates, terminalRunStates } from 'utils/types';
+import {paths} from 'routes/utils';
 
 const alertAction = (msg: string) => ((): void => alert(msg));
 const visitAction = (url: string) => ((): void => window.location.assign(url));
 
+// TODO contextual trees. (different trees based on the page)
 const root: NLNode = {
   options: [
     {
@@ -22,6 +24,7 @@ const root: NLNode = {
         return options;
       },
       title: 'killExperiments',
+      // TODO aliases, labels
     },
     {
       options: async (): Promise<Children> => {
@@ -38,7 +41,7 @@ const root: NLNode = {
     {
       options: [
         {
-          onAction: visitAction('/ui/experiments'),
+          onAction: visitAction(paths.experimentList()),
           title: 'experiments',
         },
         {
@@ -51,7 +54,7 @@ const root: NLNode = {
             //   })); // is use of `this` discouraged?
             const options: Children = exps.map(exp => (
               {
-                onAction: visitAction('/ui/experiments/' + exp.id),
+                onAction: visitAction(paths.experimentDetails(exp.id)),
                 title: `${exp.id}`, // render more info
               })); // is use of `this` discouraged?
             return options;
@@ -60,8 +63,8 @@ const root: NLNode = {
           title: 'experiment',
         },
         {
-          onAction: visitAction('/ui/experiments'),
-          title: 'tensorboards',
+          onAction: visitAction(paths.taskList()),
+          title: 'tasks',
         },
       ],
       title: 'goto',
