@@ -77,11 +77,11 @@ low; you may wish to request a quota increase.
 #. Install `Terraform
    <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
 
-#. Install ``determined`` using ``pip``:
+#. Install ``determined-deploy`` using ``pip``:
 
    .. code::
 
-      pip install determined
+      pip install determined-deploy
 
 *********************
  Deploying A Cluster
