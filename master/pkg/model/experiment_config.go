@@ -182,6 +182,33 @@ func (l *Labels) UnmarshalJSON(data []byte) error {
 	return err
 }
 
+// DevicesConfig is the configuration for bind mounts.
+type DevicesConfig []DeviceConfig
+
+// UnmarshalJSON implements the json.Unmarshaler interface so that DeviceConfigs are additive.
+func (d *DevicesConfig) UnmarshalJSON(data []byte) error {
+	unmarshaled := make([]DeviceConfig, 0)
+	if err := json.Unmarshal(data, &unmarshaled); err != nil {
+		return errors.Wrap(err, "failed to parse devices")
+	}
+	*d = append(*d, unmarshaled...)
+	return nil
+}
+
+// DeviceConfig configures trial runner filesystem bind mounts.
+type DeviceConfig struct {
+	HostPath      string `json:"host_path"`
+	ContainerPath string `json:"container_path"`
+	Mode          string `json:"mode"`
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
+	d.Mode = "mrw"
+	type DefaultParser *DeviceConfig
+	return errors.Wrap(json.Unmarshal(data, DefaultParser(d)), "failed to parse device")
+}
+
 // ResourcesConfig configures resource usage for an experiment, command, notebook, or tensorboard.
 type ResourcesConfig struct {
 	// Slots is used by commands while trials use SlotsPerTrial.
@@ -195,6 +222,9 @@ type ResourcesConfig struct {
 	AgentLabel     string  `json:"agent_label"`
 	ResourcePool   string  `json:"resource_pool"`
 	Priority       *int    `json:"priority,omitempty"`
+
+	// omitempty since is not an officially announced feature yet
+	Devices *DevicesConfig `json:"devices,omitempty"`
 }
 
 // ValidatePrioritySetting checks that priority if set is within a valid range.
