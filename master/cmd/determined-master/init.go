@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/determined-ai/determined/master/internal"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 )
 
@@ -129,4 +130,9 @@ func registerConfig() {
 		defaults.Telemetry.SegmentMasterKey, "the Segment write key for the master")
 	registerString(flags, name("telemetry", "segment-webui-key"),
 		defaults.Telemetry.SegmentWebUIKey, "the Segment write key for the WebUI")
+
+	registerString(flags, name("checkpoint-storage", "type"),
+		model.DefaultCheckpointStorageType, "checkpoint storage type")
+	registerString(flags, name("checkpoint-storage", "host-path"),
+		model.DefaultSharedFSHostPath, "checkpoint storage host path")
 }

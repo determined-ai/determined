@@ -29,6 +29,13 @@ const (
 	defaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-1c4ea10"
 )
 
+const (
+	// DefaultCheckpointStorageType is SharedFS.
+	DefaultCheckpointStorageType = "shared_fs"
+	// DefaultSharedFSHostPath is the default path on hosts for SharedFS storage mounts.
+	DefaultSharedFSHostPath = "/tmp"
+)
+
 // DefaultExperimentConfig returns a new default experiment config.
 func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ExperimentConfig {
 	defaultDescription := fmt.Sprintf(
@@ -41,7 +48,9 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 			SaveExperimentBest: 0,
 			SaveTrialBest:      1,
 			SaveTrialLatest:    1,
-			SharedFSConfig:     &SharedFSConfig{},
+			SharedFSConfig: &SharedFSConfig{
+				HostPath: DefaultSharedFSHostPath,
+			},
 		},
 		CheckpointPolicy: BestCheckpointPolicy,
 		DataLayer: DataLayerConfig{

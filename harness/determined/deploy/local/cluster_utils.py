@@ -112,7 +112,8 @@ def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> N
 
 def master_up(
     port: int,
-    master_config_path: Path,
+    master_config_path: Optional[Path],
+    storage_host_path: Path,
     master_name: str,
     version: Optional[str],
     db_password: str,
@@ -122,16 +123,13 @@ def master_up(
 ) -> None:
     command = ["up", "-d"]
     extra_files = []
-    if master_config_path is not None:
-        master_config_path = Path(master_config_path).resolve()
-        mount_yaml = Path(__file__).parent.joinpath("mount.yaml").resolve()
-        extra_files.append(str(mount_yaml))
     if version is None:
         version = determined.__version__
     if autorestart:
         restart_policy = "unless-stopped"
     else:
         restart_policy = "no"
+
     env = {
         "INTEGRATIONS_HOST_PORT": str(port),
         "DET_MASTER_CONFIG": str(master_config_path),
@@ -139,6 +137,22 @@ def master_up(
         "DET_VERSION": version,
         "DET_RESTART_POLICY": restart_policy,
     }
+
+    # When master config yaml is provided, we don't provide our own storage path
+    # as we expect the yaml to specify checkpoint_storage.
+    if master_config_path is not None:
+        master_config_path = Path(master_config_path).resolve()
+        mount_yaml = Path(__file__).parent.joinpath("mount.yaml").resolve()
+        extra_files.append(str(mount_yaml))
+    else:
+        storage_yaml = Path(__file__).parent.joinpath("storage.yaml").resolve()
+        extra_files.append(str(storage_yaml))
+
+        if not storage_host_path.exists():
+            storage_host_path.mkdir(parents=True)
+
+        env["DET_CHECKPOINT_STORAGE_HOST_PATH"] = str(storage_host_path)
+
     master_down(master_name, delete_db)
     docker_compose(command, master_name, env, extra_files=extra_files)
     _wait_for_master("localhost", port, cluster_name)
@@ -154,7 +168,8 @@ def master_down(master_name: str, delete_db: bool) -> None:
 def cluster_up(
     num_agents: int,
     port: int,
-    master_config_path: Path,
+    master_config_path: Optional[Path],
+    storage_host_path: Path,
     cluster_name: str,
     version: Optional[str],
     db_password: str,
@@ -166,6 +181,7 @@ def cluster_up(
     master_up(
         port=port,
         master_config_path=master_config_path,
+        storage_host_path=storage_host_path,
         master_name=cluster_name,
         version=version,
         db_password=db_password,

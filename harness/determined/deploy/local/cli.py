@@ -1,11 +1,16 @@
 import argparse
 import sys
+from pathlib import Path
 from typing import Callable, Dict
 
-from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd
+import appdirs
+
+from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
 
 from . import cluster_utils
 from .preflight import check_docker_install
+
+DEFAULT_STORAGE_HOST_PATH = Path(appdirs.user_data_dir("determined"))
 
 
 def handle_cluster_up(args: argparse.Namespace) -> None:
@@ -16,6 +21,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         num_agents=args.agents,
         port=args.master_port,
         master_config_path=args.master_config_path,
+        storage_host_path=args.storage_host_path,
         cluster_name=args.cluster_name,
         version=args.det_version,
         db_password=args.db_password,
@@ -37,6 +43,7 @@ def handle_master_up(args: argparse.Namespace) -> None:
     cluster_utils.master_up(
         port=args.master_port,
         master_config_path=args.master_config_path,
+        storage_host_path=args.storage_host_path,
         master_name=args.master_name,
         version=args.det_version,
         db_password=args.db_password,
@@ -95,11 +102,19 @@ args_description = Cmd(
             handle_cluster_up,
             "Create a Determined cluster",
             [
-                Arg(
-                    "--master-config-path",
-                    type=str,
-                    default=None,
-                    help="path to master configuration",
+                Group(
+                    Arg(
+                        "--master-config-path",
+                        type=Path,
+                        default=None,
+                        help="path to master configuration",
+                    ),
+                    Arg(
+                        "--storage-host-path",
+                        type=Path,
+                        default=DEFAULT_STORAGE_HOST_PATH,
+                        help="Storage location for cluster data (e.g. checkpoints)",
+                    ),
                 ),
                 Arg(
                     "--agents",
@@ -164,11 +179,19 @@ args_description = Cmd(
             handle_master_up,
             "Start a Determined master",
             [
-                Arg(
-                    "--master-config-path",
-                    type=str,
-                    default=None,
-                    help="path to master configuration",
+                Group(
+                    Arg(
+                        "--master-config-path",
+                        type=str,
+                        default=None,
+                        help="path to master configuration",
+                    ),
+                    Arg(
+                        "--storage-host-path",
+                        type=str,
+                        default=DEFAULT_STORAGE_HOST_PATH,
+                        help="Storage location for cluster data (e.g. checkpoints)",
+                    ),
                 ),
                 Arg("--master-port", type=int, default=8080, help="port to expose master on"),
                 Arg(

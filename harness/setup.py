@@ -55,6 +55,7 @@ setup(
         "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
         "docker-compose>=1.13.0",
         "tqdm",
+        "appdirs",
     ],
     extras_require={
         "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],

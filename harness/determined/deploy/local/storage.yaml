@@ -1,0 +1,7 @@
+version: "3.7"
+
+services:
+  determined-master:
+    environment:
+      DET_CHECKPOINT_STORAGE_TYPE: shared_fs
+      DET_CHECKPOINT_STORAGE_HOST_PATH: ${DET_CHECKPOINT_STORAGE_HOST_PATH}
