@@ -1,11 +1,12 @@
 import { Button, Col, Row } from 'antd';
 import dayjs from 'dayjs';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Section from 'components/Section';
 import { parseUrl } from 'routes/utils';
 import { getResourceAllocationAggregated } from 'services/api';
 import { sumArrays } from 'utils/array';
+import { secondToHour } from 'utils/time';
 
 import css from './ClusterHistoricalUsage.module.scss';
 import ClusterHistoricalUsageChart from './ClusterHistoricalUsageChart';
@@ -13,7 +14,6 @@ import ClusterHistoricalUsageCsvModal from './ClusterHistoricalUsageCsvModal';
 import ClusterHistoricalUsageFilters, {
   ClusterHistoricalUsageFiltersInterface,
 } from './ClusterHistoricalUsageFilters';
-import { generateFakeUsagePeriod } from './tmp';
 
 export const DEFAULT_RANGE_DAY = 14;
 export const DEFAULT_RANGE_MONTH = 6;
@@ -23,16 +23,6 @@ export const MAX_RANGE_MONTH = 36;
 export enum GroupBy {
   Day = 'day',
   Month = 'month',
-}
-
-export interface UsagePeriod {
-  hoursByAgentLabel: Record<string, number>,
-  hoursByExperimentLabel: Record<string, number>,
-  hoursByResourcePool: Record<string, number>,
-  hoursByUsername: Record<string, number>,
-  hoursTotal: number,
-  periodStart: string;
-  periodType: GroupBy,
 }
 
 interface ChartSeries {
@@ -46,13 +36,13 @@ interface ChartSeries {
 }
 
 const mapToChartSeries = (labelByPeriod: Record<string, number>[]): Record<string, number[]> => {
-  // 1. convert [periodIndex: {label: hours}, ...] to {label: {periodIndex: hours}, ...}
+  // 1. convert [periodIndex: {label: seconds}, ...] to {label: {periodIndex: hours}, ...}
   const periodByLabelIndexed: Record<string, Record<number, number>> = {};
   labelByPeriod.forEach((period, periodIndex) => {
     Object.keys(period).forEach(label => {
       periodByLabelIndexed[label] = {
         ...(periodByLabelIndexed[label] || {}),
-        [periodIndex]: period[label],
+        [periodIndex]: secondToHour(period[label]),
       };
     });
   });
@@ -183,44 +173,32 @@ const ClusterHistoricalUsage: React.FC = () => {
   /*
    * Load chart data
    */
-  // const fetchResourceAllocationData =
-  //   useCallback(async (reqFilters: ClusterHistoricalUsageFiltersInterface) => {
-  //     setChartSeries(null);
-  //
-  //     const res = await getResourceAllocationAggregated({
-  //       endDate: reqFilters.beforeDate,
-  //       period: (reqFilters.groupBy === GroupBy.Month
-  //         ? 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
-  //         : 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'),
-  //       startDate: reqFilters.afterDate,
-  //     });
-  //
-  //     console.log('res', res);
-  //   }, []);
   useEffect(() => {
     if (!isUrlParsed) return;
     setChartSeries(null);
 
-    const timeout = setTimeout(() => {
-      const apiRes = generateFakeUsagePeriod(
-        filters.groupBy,
-        filters.afterDate,
-        filters.beforeDate,
-      );
-      const chartSeries = {
-        groupedBy: filters.groupBy,
-        hoursByAgentLabel: mapToChartSeries(apiRes.map(item => item.hoursByAgentLabel)),
-        hoursByExperimentLabel: mapToChartSeries(apiRes.map(item => item.hoursByExperimentLabel)),
-        hoursByResourcePool: mapToChartSeries(apiRes.map(item => item.hoursByResourcePool)),
-        hoursByUsername: mapToChartSeries(apiRes.map(item => item.hoursByUsername)),
-        hoursTotal: { total: apiRes.map(item => item.hoursTotal) },
-        time: apiRes.map(item => item.periodStart),
-      };
-      setChartSeries(chartSeries);
-    }, 1000);
+    (async () => {
+      const res = await getResourceAllocationAggregated({
+        endDate: filters.beforeDate,
+        period: (filters.groupBy === GroupBy.Month
+          ? 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
+          : 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY'),
+        startDate: filters.afterDate,
+      });
 
-    return () => clearTimeout(timeout);
-  }, [ filters.afterDate, filters.beforeDate, filters.groupBy, isUrlParsed ]);
+      const entries = res.resourceEntries;
+
+      setChartSeries({
+        groupedBy: filters.groupBy,
+        hoursByAgentLabel: mapToChartSeries(entries.map(item => item.byAgentLabel)),
+        hoursByExperimentLabel: mapToChartSeries(entries.map(item => item.byExperimentLabel)),
+        hoursByResourcePool: mapToChartSeries(entries.map(item => item.byResourcePool)),
+        hoursByUsername: mapToChartSeries(entries.map(item => item.byUsername)),
+        hoursTotal: { total: entries.map(item => secondToHour(item.seconds)) },
+        time: entries.map(item => item.periodStart),
+      });
+    })();
+  }, [ filters, isUrlParsed ]);
 
   return (
     <>
