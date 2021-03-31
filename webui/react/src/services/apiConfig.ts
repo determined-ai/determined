@@ -169,9 +169,11 @@ export const getResourceAllocationAggregated: DetApi<
   name: 'getResourceAllocationAggregated',
   postProcess: (response) => response,
   request: (params: GetResourceAllocationAggregatedParams, options) => {
+    const dateFormat = (params.period === 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
+      ? 'YYYY-MM' : 'YYYY-MM-DD');
     return detApi.Cluster.determinedResourceAllocationAggregated(
-      params.startDate.format('YYYY-MM-DD'),
-      params.endDate.format('YYYY-MM-DD'),
+      params.startDate.format(dateFormat),
+      params.endDate.format(dateFormat),
       params.period,
       options,
     );
