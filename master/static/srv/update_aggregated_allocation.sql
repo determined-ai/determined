@@ -15,7 +15,9 @@ workloads AS (
             FROM
                 -- `*` computes the intersection of the two ranges.
                 upper(const.period * range) - lower(const.period * range)
-        ) AS seconds
+        ) * (
+            experiments.config -> 'resources' ->> 'slots_per_trial'
+        ) :: float AS seconds
     FROM
         (
             SELECT
@@ -36,14 +38,25 @@ workloads AS (
             FROM
                 checkpoints
         ) AS all_workloads,
+        trials,
+        experiments,
         const
     WHERE
         -- `&&` determines whether the ranges overlap.
         const.period && all_workloads.range
+        AND all_workloads.trial_id = trials.id
+        AND trials.experiment_id = experiments.id
+        AND (
+            -- Sometimes experiments end uncleanly, leaving workloads permanently without end
+            -- times. Anything in that state must be excluded or it'll show up in all the statistics
+            -- forevermore.
+            upper(all_workloads.range) IS NOT NULL
+            OR experiments.state = 'ACTIVE'
+        )
 ),
 user_agg AS (
     SELECT
-        'user' AS aggregation_type,
+        'username' AS aggregation_type,
         users.username AS aggregation_key,
         sum(workloads.seconds) AS seconds
     FROM
@@ -60,7 +73,7 @@ user_agg AS (
 ),
 label_agg AS (
     SELECT
-        'label' AS aggregation_type,
+        'experiment_label' AS aggregation_type,
         -- This seems to be the most convenient way to convert from a JSONB string value to a normal
         -- string value.
         labels.label #>> '{}' AS aggregation_key,
@@ -72,7 +85,12 @@ label_agg AS (
         (
             SELECT
                 id,
-                jsonb_array_elements(config -> 'labels') AS label
+                jsonb_array_elements(
+                    CASE
+                        WHEN config ->> 'labels' IS NULL THEN '[]' :: jsonb
+                        ELSE config -> 'labels'
+                    END
+                ) AS label
             FROM
                 experiments
         ) AS labels
@@ -81,6 +99,48 @@ label_agg AS (
         AND trials.experiment_id = labels.id
     GROUP BY
         labels.label
+),
+pool_agg AS (
+    SELECT
+        'resource_pool' AS aggregation_type,
+        experiments.aggregation_key,
+        sum(workloads.seconds) AS seconds
+    FROM
+        workloads,
+        trials,
+        (
+            SELECT
+                id,
+                coalesce(config #>> '{resources, resource_pool}', 'default') AS aggregation_key
+            FROM
+                experiments
+        ) experiments
+    WHERE
+        workloads.trial_id = trials.id
+        AND trials.experiment_id = experiments.id
+    GROUP BY
+        experiments.aggregation_key
+),
+agent_label_agg AS (
+    SELECT
+        'agent_label' AS aggregation_type,
+        experiments.aggregation_key,
+        sum(workloads.seconds) AS seconds
+    FROM
+        workloads,
+        trials,
+        (
+            SELECT
+                id,
+                coalesce(config #>> '{resources, agent_label}', '') AS aggregation_key
+            FROM
+                experiments
+        ) experiments
+    WHERE
+        workloads.trial_id = trials.id
+        AND trials.experiment_id = experiments.id
+    GROUP BY
+        experiments.aggregation_key
 ),
 all_aggs AS (
     SELECT
@@ -92,6 +152,16 @@ all_aggs AS (
         *
     FROM
         label_agg
+    UNION ALL
+    SELECT
+        *
+    FROM
+        pool_agg
+    UNION ALL
+    SELECT
+        *
+    FROM
+        agent_label_agg
     UNION ALL
     SELECT
         'total' AS aggregation_type,
