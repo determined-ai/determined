@@ -9,7 +9,7 @@
 #/proto/pkg/modelv1
 
 # WebUI
-/webui/                        @hamidzr
+# /webui/
 
 # Experiment/trial actors
 /master/internal/trial.go      @aaron276h
@@ -31,10 +31,10 @@
 #/cli/
 
 # API
-/proto/                        @hamidzr
-/master/internal/api           @hamidzr
-/master/internal/grpcutil      @hamidzr
-/master/internal/api*.go       @hamidzr
+# /proto/
+# /master/internal/api
+# /master/internal/grpcutil
+# /master/internal/api*.go
 
 # Kubernetes
 /master/internal/kubernetes/   @aaron276h
