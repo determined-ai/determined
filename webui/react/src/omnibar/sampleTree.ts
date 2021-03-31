@@ -1,10 +1,10 @@
 import { Children, LeafNode, NLNode } from 'AsyncTree';
+import { paths, routeAll } from 'routes/utils';
 import { archiveExperiment, getExperiments, killExperiment } from 'services/api';
 import { activeRunStates, terminalRunStates } from 'utils/types';
-import {paths} from 'routes/utils';
 
 const alertAction = (msg: string) => ((): void => alert(msg));
-const visitAction = (url: string) => ((): void => window.location.assign(url));
+const visitAction = (url: string) => ((): void => routeAll(url));
 
 // TODO contextual trees. (different trees based on the page)
 const root: NLNode = {
