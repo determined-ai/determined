@@ -46,7 +46,6 @@ export const detApi = {
   Auth: new Api.AuthenticationApi(ApiConfig),
   Cluster: new Api.ClusterApi(ApiConfig),
   Commands: new Api.CommandsApi(ApiConfig),
-  Determined: new Api.DeterminedApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   Internal: new Api.InternalApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
@@ -72,7 +71,6 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Auth = new Api.AuthenticationApi(config);
   detApi.Cluster = new Api.ClusterApi(config);
   detApi.Commands = new Api.CommandsApi(config);
-  detApi.Determined = new Api.DeterminedApi(config);
   detApi.Experiments = new Api.ExperimentsApi(config);
   detApi.Internal = new Api.InternalApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
@@ -171,7 +169,7 @@ export const getResourceAllocationAggregated: DetApi<
   name: 'getResourceAllocationAggregated',
   postProcess: (response) => response,
   request: (params: GetResourceAllocationAggregatedParams, options) => {
-    return detApi.Determined.determinedResourceAllocationAggregated(
+    return detApi.Cluster.determinedResourceAllocationAggregated(
       params.startDate.format('YYYY-MM-DD'),
       params.endDate.format('YYYY-MM-DD'),
       params.period,
