@@ -75,10 +75,6 @@ class LitMNIST(pl.LightningModule):
 
         return {'val_loss': loss, 'accuracy': acc}
 
-    def test_step(self, batch, batch_idx):
-        # Here we just reuse the validation_step for testing
-        return self.validation_step(batch, batch_idx)
-
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
