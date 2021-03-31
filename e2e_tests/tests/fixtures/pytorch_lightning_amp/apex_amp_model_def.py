@@ -1,6 +1,6 @@
 """
-This example demonstrates how to modify a model to use PyTorch's support for
-NVIDIA APEX in Determined.
+This example demonstrates how to modify a LightningAdapter model to
+use PyTorchTrial support for NVIDIA APEX in Determined.
 """
 
 from model_def import MNISTTrial
