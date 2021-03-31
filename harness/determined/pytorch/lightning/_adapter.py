@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
 from pytorch_lightning.utilities.model_helpers import is_overridden
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from typing_extensions import Literal
 
@@ -232,7 +233,7 @@ class LightningAdapter(PyTorchTrial):
 
         return {"_lightning_module": LightningAdapterCallback()}
 
-    def setup_optimizers_schedulers(self) -> Tuple[List[Optimizer], List[LRScheduler]]:
+    def setup_optimizers_schedulers(self) -> Tuple[List[Optimizer], List[_LRScheduler]]:
         """
         Wrap optimizers and lr_schedulers returned by `configure_optimizers` to
         work with Determined.
@@ -244,8 +245,18 @@ class LightningAdapter(PyTorchTrial):
         optimizers = cast(List[Optimizer], optimizers)
         lr_scheduler_dicts = cast(List[dict], lr_scheduler_dicts)
 
-        def lightning_scheduler_dict_to_det(lrs: dict) -> LRScheduler:
+        ordered_optimizers = []
+        optimizers_dict: Dict[Optimizer, Optimizer] = {}
+        for opt in optimizers:
+            wrapped_opt = self._pls.context.wrap_optimizer(opt)
+            ordered_optimizers.append(wrapped_opt)
+            optimizers_dict[opt] = wrapped_opt
+
+        def lightning_scheduler_dict_to_det(lrs: dict) -> _LRScheduler:
             """
+            wrap user defined lr_scheduler and switch the attached optimizer with the
+            wrapped version.
+
             input_dict = {
                 'scheduler': None,
                 'name': None,  # no custom name
@@ -266,18 +277,20 @@ class LightningAdapter(PyTorchTrial):
                 if lrs["interval"] == "epoch"
                 else LRScheduler.StepMode.STEP_EVERY_BATCH
             )
-            opt = getattr(lrs["scheduler"], "optimizer", None)
-            if opt is not None:
-                check.is_in(
-                    opt,
-                    self._pls.optimizers,
-                    "Must use an optimizer that is returned by wrap_optimizer()",
-                )
-            return LRScheduler(lrs["scheduler"], step_mode, frequency=lrs["frequency"])
 
-        optimizers = [self._pls.context.wrap_optimizer(opt) for opt in optimizers]
+            wrapped_opt = optimizers_dict[getattr(lrs["scheduler"], "optimizer", None)]
+            if wrapped_opt is None:
+                raise InvalidModelException("missing optimizer for lr_scheduler")
+
+            # switch the users unwrapped optimizer with wrapped optimizer.
+            lrs["scheduler"].optimizer = wrapped_opt
+            return self._pls.context.wrap_lr_scheduler(
+                lrs["scheduler"], step_mode, frequency=lrs["frequency"]
+            )
+
         lr_schedulers = [lightning_scheduler_dict_to_det(lrs) for lrs in lr_scheduler_dicts]
-        return optimizers, lr_schedulers
+
+        return ordered_optimizers, lr_schedulers
 
     def _build_train_args(self, batch: TorchData, batch_idx: int, opt_idx: int) -> List[Any]:
         # taken from pytorch_lightning
