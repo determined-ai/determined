@@ -83,6 +83,28 @@ func ToContainerSpec(t TaskSpec) container.Spec {
 		shmSize = t.TaskContainerDefaults.ShmSizeBytes
 	}
 
+	var capAdd []string
+	if env.AddCapabilities != nil {
+		capAdd = *env.AddCapabilities
+	}
+
+	var capDrop []string
+	if env.DropCapabilities != nil {
+		capDrop = *env.DropCapabilities
+	}
+
+	resources := t.ResourcesConfig()
+	var devices []docker.DeviceMapping
+	if resources.Devices != nil {
+		for _, device := range *resources.Devices {
+			devices = append(devices, docker.DeviceMapping{
+				PathOnHost:        device.HostPath,
+				PathInContainer:   device.ContainerPath,
+				CgroupPermissions: device.Mode,
+			})
+		}
+	}
+
 	spec := container.Spec{
 		PullSpec: container.PullSpec{
 			Registry:  env.RegistryAuth,
@@ -102,6 +124,12 @@ func ToContainerSpec(t TaskSpec) container.Spec {
 				Mounts:          t.Mounts(),
 				PublishAllPorts: true,
 				ShmSize:         shmSize,
+				CapAdd:          capAdd,
+				CapDrop:         capDrop,
+
+				Resources: docker.Resources{
+					Devices: devices,
+				},
 			},
 			Archives:         t.Archives(),
 			UseFluentLogging: t.UseFluentLogging(),
