@@ -4,6 +4,7 @@ data:
 hyperparameters:
   global_batch_size: 64
   learning_rate: 0.001
+  hidden_size: 64
 searcher:
   name: single
   metric: val_loss
