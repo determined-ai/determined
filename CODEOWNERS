@@ -1,5 +1,5 @@
 # Scheduler
-/master/internal/scheduler/    @aaron276h
+# /master/internal/scheduler/
 
 # Provisioner
 /master/internal/provisioner/  @shiyuann
@@ -12,8 +12,8 @@
 # /webui/
 
 # Experiment/trial actors
-/master/internal/trial.go      @aaron276h
-/master/internal/experiment.go @aaron276h
+# /master/internal/trial.go
+# /master/internal/experiment.go
 
 # Actor infrastructure
 #/master/pkg/actor
@@ -37,20 +37,20 @@
 # /master/internal/api*.go
 
 # Kubernetes
-/master/internal/kubernetes/   @aaron276h
+# /master/internal/kubernetes/
 
 # Agent, container
 /agent/                        @stoksc
 
 # Harness, container
-/harness/                      @aaron276h @shiyuann
+/harness/                      @shiyuann
 
 # D-train
-/harness/determined/horovod.py                @aaron276h
-/harness/determined/ipc.py                    @aaron276h
-/harness/determined/layers/_worker_process.py @aaron276h
-/harness/determined/_trial_controller.py      @aaron276h
-/harness/determined/exec/worker_process.py    @aaron276h
+# /harness/determined/horovod.py
+# /harness/determined/ipc.py
+# /harness/determined/layers/_worker_process.py
+# /harness/determined/_trial_controller.py
+# /harness/determined/exec/worker_process.py
 
 # Tensorboard
 #/master/internal/command/tensorboard_manager.go
@@ -63,7 +63,7 @@
 #/master/internal/command/shell_manager.go
 
 # CI infrastructure
-/.circleci/                    @aaron276h
+# /.circleci/
 
 # Build/packaging
 #packaging/
