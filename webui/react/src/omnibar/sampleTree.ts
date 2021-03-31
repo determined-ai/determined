@@ -5,7 +5,7 @@ import { activeRunStates, terminalRunStates } from 'utils/types';
 const alertAction = (msg: string) => ((): void => alert(msg));
 const visitAction = (url: string) => ((): void => window.location.assign(url));
 
-const root: NLNode  = {
+const root: NLNode = {
   options: [
     {
       onAction: (): void => alert(new Date()),
@@ -13,7 +13,7 @@ const root: NLNode  = {
     },
     {
       options: async (): Promise<Children> => {
-        const {experiments: exps} = await getExperiments({ states: activeRunStates });
+        const { experiments: exps } = await getExperiments({ states: activeRunStates });
         const options: LeafNode[] = exps.map(exp => (
           {
             onAction: (): unknown => killExperiment({ experimentId: exp.id }),
@@ -25,10 +25,10 @@ const root: NLNode  = {
     },
     {
       options: async (): Promise<Children> => {
-        const {experiments: exps} = await getExperiments({ states: Array.from(terminalRunStates) as any });
+        const { experiments: exps } = await getExperiments({ states: Array.from(terminalRunStates) as any });
         const options: Children = exps.map(exp => (
           {
-            onAction: (): unknown => archiveExperiment({experimentId: exp.id}),
+            onAction: (): unknown => archiveExperiment({ experimentId: exp.id }),
             title: `${exp.id}`,
           })); // is use of `this` discouraged?
         return options;
@@ -43,7 +43,7 @@ const root: NLNode  = {
         },
         {
           options: async (): Promise<Children> => {
-            const {experiments: exps} = await getExperiments({});
+            const { experiments: exps } = await getExperiments({});
             // const options: LeafNode[] = exps.map(exp => (
             //   {
             //     options: new Array(3).fill(null).map((_, idx) => idx+1),

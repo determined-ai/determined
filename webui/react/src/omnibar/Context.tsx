@@ -13,9 +13,7 @@ type Action =
   | { type: ActionType.Hide }
   | { type: ActionType.Show; opaque?: boolean }
 
-const defaultState = {
-  isShowing: false,
-};
+const defaultState = { isShowing: false };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {

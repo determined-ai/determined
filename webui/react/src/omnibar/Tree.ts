@@ -20,7 +20,7 @@ const parseInput = async (input: string): Promise<TreeRequest> => {
   };
 };
 
-const absPathToAddress = (path: TreePath): string[] =>  (path.map(tn => tn.title).slice(1));
+const absPathToAddress = (path: TreePath): string[] => (path.map(tn => tn.title).slice(1));
 
 const query = async (input: string): Promise<Children> => {
   const { path, query } = await parseInput(input);
@@ -55,7 +55,7 @@ export const onAction = async <T>(item: T): Promise<void> => {
     const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
     if (input) {
       const { path } = await parseInput(input.value);
-      input.value = (path.length > 1 ?  absPathToAddress(path).join(SEPARATOR) + SEPARATOR  : '')
+      input.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
         + item.title;
       // trigger the onchange
       input.onchange && input.onchange(undefined as unknown as Event);

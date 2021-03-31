@@ -23,13 +23,13 @@ import useResize from 'hooks/useResize';
 import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
+import Omnibar, { keymap as omnibarKeymap } from 'omnibar/Component';
+import OmnibarCtx from 'omnibar/Context';
 import appRoutes from 'routes';
 import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { DeterminedInfo, ResourceType } from 'types';
 import { correctViewportHeight, refreshPage, updateFaviconType } from 'utils/browser';
-import Omnibar, { keymap as omnibarKeymap } from 'omnibar/Component';
-import OmnibarCtx from 'omnibar/Context';
 
 import css from './App.module.scss';
 import { paths } from './routes/utils';

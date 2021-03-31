@@ -39,8 +39,6 @@ const Omnibar: React.FC = () => {
   );
 };
 
-export const keymap = {
-  HIDE_OMNIBAR: 'esc',
-};
+export const keymap = { HIDE_OMNIBAR: 'esc' };
 
 export default Omnibar;

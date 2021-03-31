@@ -8,11 +8,12 @@
   width: 100%;
 
   .bar {
-    min-width: 50rem;
     left: 50%;
+    min-width: 50rem;
     position: absolute;
     top: 50%;
     transform: translate(-50%, -50%);
+
     input {
       border-radius: 3px;
     }
