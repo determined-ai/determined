@@ -132,5 +132,9 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		defaultConfig.Environment.Image = *taskContainerDefaults.Image
 	}
 
+	defaultConfig.Resources.Devices = taskContainerDefaults.Devices
+	defaultConfig.Environment.AddCapabilities = taskContainerDefaults.AddCapabilities
+	defaultConfig.Environment.DropCapabilities = taskContainerDefaults.DropCapabilities
+
 	return defaultConfig
 }
