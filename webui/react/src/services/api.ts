@@ -1,26 +1,11 @@
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
-  CommandIdParams,
-  CreateExperimentParams,
-  EmptyParams,
-  ExperimentDetailsParams,
-  ExperimentIdParams,
-  GetCommandsParams,
-  GetExperimentsParams,
-  GetNotebooksParams,
-  GetResourceAllocationAggregatedParams,
-  GetShellsParams,
-  GetTensorboardsParams,
-  GetTrialsParams,
-  LaunchNotebookParams,
-  LaunchTensorboardParams,
-  LoginResponse,
-  LogsParams,
-  PatchExperimentParams,
-  SingleEntityParams,
-  TaskLogsParams,
-  TrialDetailsParams,
+  CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
+  GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams,
+  LaunchNotebookParams, LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams,
+  SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import {
