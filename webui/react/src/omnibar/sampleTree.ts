@@ -13,7 +13,7 @@ const root: NLNode  = {
     },
     {
       options: async (): Promise<Children> => {
-        const exps = await getExperiments({ states: activeRunStates });
+        const {experiments: exps} = await getExperiments({ states: activeRunStates });
         const options: LeafNode[] = exps.map(exp => (
           {
             onAction: (): unknown => killExperiment({ experimentId: exp.id }),
@@ -25,10 +25,10 @@ const root: NLNode  = {
     },
     {
       options: async (): Promise<Children> => {
-        const exps = await getExperiments({ states: terminalRunStates });
+        const {experiments: exps} = await getExperiments({ states: Array.from(terminalRunStates) as any });
         const options: Children = exps.map(exp => (
           {
-            onAction: (): unknown => archiveExperiment(exp.id, true),
+            onAction: (): unknown => archiveExperiment({experimentId: exp.id}),
             title: `${exp.id}`,
           })); // is use of `this` discouraged?
         return options;
@@ -43,7 +43,7 @@ const root: NLNode  = {
         },
         {
           options: async (): Promise<Children> => {
-            const exps = await getExperiments({});
+            const {experiments: exps} = await getExperiments({});
             // const options: LeafNode[] = exps.map(exp => (
             //   {
             //     options: new Array(3).fill(null).map((_, idx) => idx+1),

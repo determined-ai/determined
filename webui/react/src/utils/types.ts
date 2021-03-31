@@ -145,8 +145,7 @@ export const resourceStateToLabel: {[key in ResourceState]: string} = {
   [ResourceState.Unspecified]: 'Unspecified',
 };
 
-// export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
-export const isTaskKillable = (task: RecentTask): boolean => {
+export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };
