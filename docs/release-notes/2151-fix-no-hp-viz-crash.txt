@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: Fix hp-viz page crashing when viewing a single trial or PBT
+   experiment (unsupported experiment).
