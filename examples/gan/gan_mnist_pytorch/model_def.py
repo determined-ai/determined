@@ -93,7 +93,8 @@ class GANTrial(PyTorchTrial):
         self.context = context
         self.logger = TorchWriter()
 
-        # Create a unique download directory for each rank so they don't overwrite each other.
+        # Create a unique download directory for each rank so they don't overwrite each
+        # other when doing distributed training.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 

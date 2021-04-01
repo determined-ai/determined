@@ -10,7 +10,7 @@ import determined.common.check as check
 class Reducer(enum.Enum):
     """
     A ``Reducer`` defines a method for reducing (aggregating) evaluation
-    metrics. See :meth:`determined.pytorch.PyTorchTrial.evaluation_reducer` for
+    metrics. See :meth:`~determined.pytorch.PyTorchTrial.evaluation_reducer` for
     details.
 
     Attributes:

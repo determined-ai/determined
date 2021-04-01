@@ -35,12 +35,12 @@ class LRScheduler:
         step_mode: StepMode,
         frequency: int = 1,
     ):
-        """LRScheduler constructor
+        """LRScheduler constructor.
 
         Args:
-            scheduler (:py:class:`torch.optim.lr_scheduler._LRScheduler`):
+            scheduler (:class:`torch.optim.lr_scheduler._LRScheduler`):
                 Learning rate scheduler to be used by Determined.
-            step_mode (:py:class:`det.pytorch.LRSchedulerStepMode`):
+            step_mode (:class:`determined.pytorch.LRSchedulerStepMode`):
                 The strategy Determined will use to call (or not call) scheduler.step().
 
                 1. ``STEP_EVERY_EPOCH``: Determined will call scheduler.step() after
@@ -53,7 +53,7 @@ class LRScheduler:
                    It is up to the user to decide when to call scheduler.step(),
                    and whether to pass any arguments.
             frequency:
-                Sets the frequency with witch the batch and epoch step modes get triggered.
+                Sets the frequency at which the batch and epoch step modes get triggered.
         """
         check.check_not_none(scheduler)
         check.check_isinstance(step_mode, LRScheduler.StepMode)

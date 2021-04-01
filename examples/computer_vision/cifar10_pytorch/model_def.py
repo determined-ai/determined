@@ -43,7 +43,8 @@ class CIFARTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
-        # Create a unique download directory for each rank so they don't overwrite each other.
+        # Create a unique download directory for each rank so they don't overwrite each
+        # other when doing distributed training.
         self.download_directory = tempfile.mkdtemp()
 
         self.model = self.context.wrap_model(nn.Sequential(
@@ -90,7 +91,7 @@ class CIFARTrial(PyTorchTrial):
     def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
         """
         Calculate validation metrics for a batch and return them as a dictionary.
-        This method is not necessary if the user overwrites evaluate_full_dataset().
+        This method is not necessary if the user defines evaluate_full_dataset().
         """
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch

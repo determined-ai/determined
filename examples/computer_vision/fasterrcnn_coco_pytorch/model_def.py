@@ -29,8 +29,8 @@ class ObjectDetectionTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
-        # Create a unique download directory for each rank so they don't
-        # overwrite each other.
+        # Create a unique download directory for each rank so they don't overwrite each
+        # other when doing distributed training.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         download_data(
             download_directory=self.download_directory, data_config=self.context.get_data_config(),
