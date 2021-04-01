@@ -1,6 +1,6 @@
 import { Button, Col, Row } from 'antd';
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router';
 
 import Section from 'components/Section';
@@ -132,19 +132,21 @@ const ClusterHistoricalUsage: React.FC = () => {
 
   return (
     <>
-      <Row className={css.filter} justify="end">
-        <Col>
-          <ClusterHistoricalUsageFilters
-            value={filters}
-            onChange={setFilters}
-          />
-        </Col>
-        <Col>
-          <Button onClick={() => setIsCsvModalVisible(true)}>
-            Download CSV
-          </Button>
-        </Col>
-      </Row>
+      <div className={css.filterWrapper}>
+        <Row className={css.filter} justify="end">
+          <Col>
+            <ClusterHistoricalUsageFilters
+              value={filters}
+              onChange={setFilters}
+            />
+          </Col>
+          <Col>
+            <Button onClick={() => setIsCsvModalVisible(true)}>
+              Download CSV
+            </Button>
+          </Col>
+        </Row>
+      </div>
 
       <Section bodyBorder loading={!chartSeries} title="GPU Hours Allocated">
         { chartSeries && (
