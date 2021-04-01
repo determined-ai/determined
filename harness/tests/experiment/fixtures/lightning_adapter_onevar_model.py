@@ -32,7 +32,8 @@ class OneVarLM(pl.LightningModule):
 
     def configure_optimizers(self):
         opt = torch.optim.SGD(self.model.parameters(), self.lr)
-        return opt
+        sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1e-4)
+        return [opt], [sched]
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         data, label = batch
