@@ -1,0 +1,50 @@
+description: supclr_train_eval
+
+hyperparameters:
+  train_features: true
+  supervised: true
+  global_batch_size: 1024
+  optimizer: sgd
+  learning_rate: 0.5
+  momentum: 0.9
+  weight_decay: 1e-4
+  cosine: true
+  lr_decay_rate: 0.1
+  lr_decay_epochs: 
+    - 700
+    - 800
+    - 900
+  cls_learning_rate: 0.1
+  # Interval in which to train the classifier head
+  train_cls_every_n_epochs: 10
+  # How many epochs to loop over the data when training classifier head
+  train_cls_epochs: 10
+  warm: true
+  warm_epochs: 10
+  warmup_from: 0.01
+  temperature: 0.1
+  backbone: resnet50
+  use_sync_bn: false
+
+data:
+  dataset: cifar10
+  crop_size: 32
+  data_dir: /data
+  num_workers: 8
+
+bind_mounts:
+    - host_path: /tmp
+      container_path: /data
+    
+resources:
+    slots_per_trial: 6
+min_validation_period:
+  epochs: 10
+records_per_epoch: 50000
+searcher:
+  name: single
+  metric: accuracy
+  smaller_is_better: false
+  max_length:
+    epochs: 1000
+entrypoint: train_eval_model_def:ContrastiveLearningTrial

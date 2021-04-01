@@ -115,3 +115,47 @@ def test_deformabledetr_coco_pytorch_distributed() -> None:
     exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("deformabledetr_coco_pytorch"), 1
     )
+
+
+@pytest.mark.distributed  # type: ignore
+def test_supclr_pytorch_distributed() -> None:
+    config = conf.load_config(conf.cv_examples_path("contrastive_learning_pytorch/supclr.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.cv_examples_path("contrastive_learning_pytorch"), 1
+    )
+
+
+@pytest.mark.distributed  # type: ignore
+def test_simclr_pytorch_distributed() -> None:
+    config = conf.load_config(conf.cv_examples_path("contrastive_learning_pytorch/simclr.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.cv_examples_path("contrastive_learning_pytorch"), 1
+    )
+
+
+@pytest.mark.distributed  # type: ignore
+def test_supclr_train_eval_pytorch_distributed() -> None:
+    config = conf.load_config(
+        conf.cv_examples_path("contrastive_learning_pytorch/supclr_train_eval.yaml")
+    )
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.cv_examples_path("contrastive_learning_pytorch"), 1
+    )
+
+
+@pytest.mark.distributed  # type: ignore
+def test_simclr_train_eval_pytorch_distributed() -> None:
+    config = conf.load_config(
+        conf.cv_examples_path("contrastive_learning_pytorch/simclr_train_eval.yaml")
+    )
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.cv_examples_path("contrastive_learning_pytorch"), 1
+    )
