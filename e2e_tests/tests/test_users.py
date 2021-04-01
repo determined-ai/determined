@@ -581,7 +581,6 @@ def test_non_root_experiment(auth: Authentication, tmp_path: pathlib.Path) -> No
             with FileTree(
                 tmp_path,
                 {
-                    "startup-hook.sh": "det --version || exit 77",
                     "const.yaml": yaml.dump(config),  # type: ignore
                     "model_def.py": model_def_content,
                 },
