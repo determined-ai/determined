@@ -1,9 +1,9 @@
 import { Button, Col, Row } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
+import { useHistory } from 'react-router';
 
 import Section from 'components/Section';
-import { parseUrl } from 'routes/utils';
 import { getResourceAllocationAggregated } from 'services/api';
 
 import css from './ClusterHistoricalUsage.module.scss';
@@ -25,7 +25,7 @@ export enum GroupBy {
 }
 
 const ClusterHistoricalUsage: React.FC = () => {
-  const [ chartSeries, setChartSeries ] = useState<ResourceAllocationChartSeries|null>(null);
+  const [ chartSeries, setChartSeries ] = useState<ResourceAllocationChartSeries>();
   const [ filters, setFilters ] = useState<ClusterHistoricalUsageFiltersInterface>({
     afterDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
     beforeDate: dayjs().subtract(1, 'day'),
@@ -33,6 +33,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [ isCsvModalVisible, setIsCsvModalVisible ] = useState<boolean>(false);
   const [ isUrlParsed, setIsUrlParsed ] = useState<boolean>(false);
+  const history = useHistory();
 
   /*
   * When filters changes update the page URL.
@@ -42,7 +43,6 @@ const ClusterHistoricalUsage: React.FC = () => {
 
     const dateFormat = 'YYYY-MM' + (filters.groupBy === GroupBy.Day ? '-DD' : '');
     const searchParams = new URLSearchParams;
-    const url = parseUrl(window.location.href);
 
     // after
     searchParams.append('after', filters.afterDate.format(dateFormat));
@@ -53,12 +53,8 @@ const ClusterHistoricalUsage: React.FC = () => {
     // group-by
     searchParams.append('group-by', filters.groupBy);
 
-    window.history.pushState(
-      {},
-      '',
-      url.origin + url.pathname + '?' + searchParams.toString(),
-    );
-  }, [ filters, isUrlParsed ]);
+    history.push('/cluster/historical-usage?' + searchParams.toString());
+  }, [ filters, history, isUrlParsed ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
@@ -66,7 +62,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   useEffect(() => {
     if (isUrlParsed) return;
 
-    const urlSearchParams = parseUrl(window.location.href).searchParams;
+    const urlSearchParams = new URLSearchParams(history.location.search);
 
     // after
     const after = dayjs(urlSearchParams.get('after') || '');
@@ -97,7 +93,7 @@ const ClusterHistoricalUsage: React.FC = () => {
 
     setFilters(filters);
     setIsUrlParsed(true);
-  }, [ filters, isUrlParsed ]);
+  }, [ filters, history.location.search, isUrlParsed ]);
 
   /*
    * When grouped by month force csv modal to display start/end of month
@@ -117,7 +113,7 @@ const ClusterHistoricalUsage: React.FC = () => {
    */
   useEffect(() => {
     if (!isUrlParsed) return;
-    setChartSeries(null);
+    setChartSeries(undefined);
 
     (async () => {
       const res = await getResourceAllocationAggregated({
@@ -150,8 +146,8 @@ const ClusterHistoricalUsage: React.FC = () => {
         </Col>
       </Row>
 
-      <Section bodyBorder loading={chartSeries == null} title="GPU Hours Allocated">
-        { chartSeries != null && (
+      <Section bodyBorder loading={!chartSeries} title="GPU Hours Allocated">
+        { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursTotal}
@@ -160,8 +156,8 @@ const ClusterHistoricalUsage: React.FC = () => {
         ) }
       </Section>
 
-      <Section bodyBorder loading={chartSeries == null} title="GPU Hours by User">
-        { chartSeries != null && (
+      <Section bodyBorder loading={!chartSeries} title="GPU Hours by User">
+        { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursByUsername}
@@ -171,8 +167,8 @@ const ClusterHistoricalUsage: React.FC = () => {
         ) }
       </Section>
 
-      <Section bodyBorder loading={chartSeries == null} title="GPU Hours by Label">
-        { chartSeries != null && (
+      <Section bodyBorder loading={!chartSeries} title="GPU Hours by Label">
+        { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursByExperimentLabel}
@@ -182,8 +178,8 @@ const ClusterHistoricalUsage: React.FC = () => {
         ) }
       </Section>
 
-      <Section bodyBorder loading={chartSeries == null} title="GPU Hours by Resource Pool">
-        { chartSeries != null && (
+      <Section bodyBorder loading={!chartSeries} title="GPU Hours by Resource Pool">
+        { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursByResourcePool}
@@ -193,8 +189,8 @@ const ClusterHistoricalUsage: React.FC = () => {
         ) }
       </Section>
 
-      <Section bodyBorder loading={chartSeries == null} title="GPU Hours by Agent Label">
-        { chartSeries != null && (
+      <Section bodyBorder loading={!chartSeries} title="GPU Hours by Agent Label">
+        { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
             hoursByLabel={chartSeries.hoursByAgentLabel}

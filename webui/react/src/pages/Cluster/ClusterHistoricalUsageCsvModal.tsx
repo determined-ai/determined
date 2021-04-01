@@ -26,7 +26,6 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = (
     handlePath(event, {
       external: true,
       path: serverAddress('/resources/allocation/raw?' + searchParams.toString()),
-      popout: true,
     });
 
     onVisibleChange(false);

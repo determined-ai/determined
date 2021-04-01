@@ -25,12 +25,15 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   hoursTotal,
   time,
 }: ClusterHistoricalUsageChartProps) => {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const resize = useResize(chartRef);
   const [ chart, setChart ] = useState<uPlot>();
+  const chartRef = useRef<HTMLDivElement>(null);
+  const hasData = Object.keys(hoursByLabel).reduce((agg, label) => (
+    agg || hoursByLabel[label].length > 0
+  ), false);
+  const resize = useResize(chartRef);
 
   useEffect(() => {
-    if (!chartRef.current) return;
+    if (!chartRef.current || !hasData) return;
 
     let dateFormat = 'MM-DD';
     let timeSeries: Series = { label: 'Day', value: '{YYYY}-{MM}-{DD}' };
@@ -63,7 +66,6 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
     const options = {
       axes: [
         {
-          grid: { show: false },
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
             const rangeSecs = scaleMax - scaleMin;
             const rangeDays = rangeSecs / (24 * 60 * 60);
@@ -95,18 +97,16 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       setChart(undefined);
       plotChart.destroy();
     };
-  }, [
-    groupBy,
-    height,
-    hoursByLabel,
-    hoursTotal,
-    time,
-  ]);
+  }, [ groupBy, hasData, height, hoursByLabel, hoursTotal, time ]);
 
   // Resize the chart when resize events happen.
   useEffect(() => {
     if (chart) chart.setSize({ height, width: resize.width });
   }, [ chart, height, resize ]);
+
+  if (!hasData) {
+    return (<div>No data to plot.</div>);
+  }
 
   return (
     <div className={css.base}>
