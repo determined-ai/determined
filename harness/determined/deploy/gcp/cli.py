@@ -3,9 +3,12 @@ import os
 import sys
 from typing import Callable
 
+from termcolor import colored
+
 import determined
 import determined.deploy
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
+from determined.deploy.errors import MasterTimeoutExpired
 from determined.deploy.gcp import constants, gcp
 
 
@@ -66,6 +69,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "master",
         "user",
         "no_preflight_checks",
+        "no_wait_for_master",
         "func",
         "_command",
         "_subcommand",
@@ -92,8 +96,24 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
 
     print("Starting Determined Deployment")
     gcp.deploy(det_configs, env, variables_to_exclude)
-    print("\nDetermined Deployment Successful")
-    print("Please allow 1-5 minutes for the master instance to be accessible via the web-ui\n")
+
+    if not args.no_wait_for_master:
+        try:
+            gcp.wait_for_master(det_configs, env, timeout=5 * 60)
+        except MasterTimeoutExpired:
+            print(
+                colored(
+                    "Determined cluster has been deployed, but Master health check has failed.",
+                    "red",
+                )
+            )
+            print("For details, SSH to Master instance and check /var/log/cloud-init-output.log")
+            sys.exit(1)
+
+    print("Determined Deployment Successful")
+
+    if args.no_wait_for_master:
+        print("Please allow 1-5 minutes for the master instance to be accessible via the web-ui\n")
 
 
 def handle_down(args: argparse.Namespace) -> None:

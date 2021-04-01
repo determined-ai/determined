@@ -2,16 +2,15 @@ import os
 import re
 import subprocess
 import sys
-import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 import docker
-import requests
 
 import determined
 import determined.deploy
-from determined.common import api
+from determined.deploy.errors import MasterTimeoutExpired
+from determined.deploy.healthcheck import wait_for_master
 
 # This object, when included in the host config in a container creation request, tells Docker to
 # expose all host GPUs inside a container.
@@ -40,10 +39,6 @@ def get_shell_id() -> str:
     args = ["id", "-u", "-n"]
     byte_str: str = subprocess.check_output(args, encoding="utf-8")
     return byte_str.rstrip("\n").strip("'").strip()
-
-
-def _make_master_url(master_host: str, master_port: int, suffix: str = "") -> str:
-    return "http://{}:{}/{}".format(master_host, master_port, suffix)
 
 
 def get_proxy_addr() -> str:
@@ -95,19 +90,13 @@ def docker_compose(
 
 
 def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> None:
-    for _ in range(50):
-        try:
-            r = api.get(_make_master_url(master_host, master_port), "info", authenticated=False)
-            if r.status_code == requests.codes.ok:
-                return
-        except api.errors.MasterNotFoundException:
-            pass
-        print("Waiting for master to be available...")
-        time.sleep(2)
-
-    print("Timed out connecting to master, but attempting to dump logs from cluster...")
-    docker_compose(["logs"], cluster_name)
-    raise ConnectionError("Timed out connecting to master")
+    try:
+        wait_for_master(master_host, master_port, timeout=100)
+        return
+    except MasterTimeoutExpired:
+        print("Timed out connecting to master, but attempting to dump logs from cluster...")
+        docker_compose(["logs"], cluster_name)
+        raise ConnectionError("Timed out connecting to master")
 
 
 def master_up(

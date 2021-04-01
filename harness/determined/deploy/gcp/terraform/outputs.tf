@@ -46,6 +46,10 @@ output "NOTE" {
   value = "> To use the Determined CLI without needing to specify the master in each command, run:\n\n  export DET_MASTER=${module.compute.web_ui}\n"
 }
 
+output "SSH-to-Master" {
+  value = "> To ssh to Determined Master instance, run:\n\n  gcloud compute ssh ${module.compute.master_instance_name}\n"
+}
+
 output "Web-UI" {
   value = "${module.compute.web_ui}"
 }

@@ -9,6 +9,7 @@ from botocore.exceptions import NoCredentialsError
 from termcolor import colored
 
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
+from determined.deploy.errors import MasterTimeoutExpired
 
 from . import aws, constants
 from .deployment_types import base, govcloud, secure, simple, vpc
@@ -187,8 +188,25 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         error_no_credentials()
     except Exception as e:
         print(e)
-        print("Stack Deployment Failed. Check the AWS CloudFormation Console for details.")
+        print(
+            colored(
+                "Stack Deployment Failed. Check the AWS CloudFormation Console for details.", "red"
+            )
+        )
         sys.exit(1)
+
+    if not args.no_wait_for_master:
+        try:
+            deployment_object.wait_for_master(timeout=5 * 60)
+        except MasterTimeoutExpired:
+            print(
+                colored(
+                    "Determined cluster has been deployed, but Master health check has failed.",
+                    "red",
+                )
+            )
+            print("For details, SSH to Master instance and check /var/log/cloud-init-output.log")
+            sys.exit(1)
 
     print("Determined Deployment Successful")
 
