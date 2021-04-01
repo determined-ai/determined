@@ -293,10 +293,12 @@ class LightningAdapter(PyTorchTrial):
                     "- Tuple of dictionaries as described, with an optional ‘frequency’ key.\n"
                 )
 
-            check.check_isinstance(lrs["scheduler"].optimizer, _LRScheduler,
-                                   "A returned LRScheduler from `configure_optimizers` is "
-                                   "missing the optimizer attribute."
-                                  )
+            check.check_isinstance(
+                lrs["scheduler"].optimizer,
+                Optimizer,
+                "A returned LRScheduler from `configure_optimizers` is "
+                "missing the optimizer attribute.",
+            )
 
             # switch the user's unwrapped optimizer with the wrapped version.
             lrs["scheduler"].optimizer = wrapped_opt
