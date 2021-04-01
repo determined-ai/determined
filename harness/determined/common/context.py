@@ -117,10 +117,7 @@ class Context:
 
         root_path = local_path
 
-        # By default, we ignore all byte-compiled Python files to ignore a
-        # potential stale compilation. Users may also define custom .detignore
-        # files to ignore arbitrary paths.
-        ignore = ["__pycache__/", "*.py[co]", "*$py.class"]
+        ignore = list(constants.DEFAULT_DETIGNORE)
         ignore_path = root_path.joinpath(".detignore")
         if ignore_path.is_file():
             with ignore_path.open("r") as detignore_file:
