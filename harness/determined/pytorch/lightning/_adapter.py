@@ -280,9 +280,20 @@ class LightningAdapter(PyTorchTrial):
 
             wrapped_opt = optimizers_dict[getattr(lrs["scheduler"], "optimizer", None)]
             if wrapped_opt is None:
-                raise InvalidModelException("missing optimizer for lr_scheduler")
+                raise InvalidModelException(
+                    "An LRScheduler is returned in `configure_optimizers` without having "
+                    "returned the optimizer itself. Please follow PyTorchLightning's documenation"
+                    "to make sure you're returning one of the expected values."
+                    "- Single optimizer.\n"
+                    "- List or Tuple - List of optimizers.\n"
+                    "- Two lists - The first list has multiple optimizers, the second a list of"
+                    "LRSchedulers (or lr_dict).\n"
+                    "- Dictionary, with an ‘optimizer’ key, and (optionally) a ‘lr_scheduler’ key"
+                    "whose value is a single LR scheduler or lr_dict.\n"
+                    "- Tuple of dictionaries as described, with an optional ‘frequency’ key.\n"
+                )
 
-            # switch the users unwrapped optimizer with wrapped optimizer.
+            # switch the user's unwrapped optimizer with the wrapped version.
             lrs["scheduler"].optimizer = wrapped_opt
             return self._pls.context.wrap_lr_scheduler(
                 lrs["scheduler"], step_mode, frequency=lrs["frequency"]
