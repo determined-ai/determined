@@ -128,7 +128,7 @@ class LightningAdapter(PyTorchTrial):
         lightning_module: pl.LightningModule,
         precision: Union[Literal[32], Literal[16]] = 32,
         amp_backend: Union[Literal["native"], Literal["apex"]] = "native",
-        amp_level: Union[Literal["O0", "O1", "O2", "O3"]] = "O2",
+        amp_level: Union[Literal["O0", "O1", "O2", "O3"]] = "O1",
     ):
         """
         This performs the necessary initialization steps to:
@@ -161,7 +161,7 @@ class LightningAdapter(PyTorchTrial):
             amp_backend (str):
                 Automatic mixed precision backend to use.
                 Accepted values are "native", and "mixed".
-            amp_level (str, optional, default="O2"):
+            amp_level (str, optional, default="O1"):
                 Apex amp optimization level.
                 Accepted values are "O0", "O1", "O2", and "O3".
                 https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
