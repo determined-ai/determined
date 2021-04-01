@@ -27,6 +27,7 @@ prep-root:
 	@ln -s $(abspath ../docs/site/html/*) build/webui/docs
 	@ln -s $(abspath ../webui/react/build/*) build/webui/react
 	@ln -s $(abspath ../harness/dist/*.whl) build/wheels/
+	@ln -s $(abspath ../common/dist/*.whl) build/wheels/
 
 .PHONY: run
 run: prep-root
