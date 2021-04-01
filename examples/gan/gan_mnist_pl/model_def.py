@@ -12,10 +12,10 @@ class GANTrial(LightningAdapter):
     def __init__(self, context: PyTorchTrialContext) -> None:
         data_dir = f'/tmp/data-rank{context.distributed.get_rank()}'
         self.dm = gan.MNISTDataModule(context.get_data_config()['url'], data_dir,
-                                      batch_size=context.get_global_batch_size())
+                                      batch_size=context.get_per_slot_batch_size())
         channels, width, height = self.dm.size()
         lm = gan.GAN(channels, width, height,
-                    batch_size=context.get_global_batch_size(),
+                    batch_size=context.get_per_slot_batch_size(),
                     lr=context.get_hparam('lr'),
                     b1=context.get_hparam('b1'),
                     b2=context.get_hparam('b2'),
