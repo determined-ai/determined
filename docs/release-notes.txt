@@ -8,6 +8,52 @@
  Version 0.14
 **************
 
+Version 0.14.6
+==============
+
+**Release Date:** April 1, 2021
+
+**New Features**
+
+-  API: Add a new endpoint to delete experiments. This endpoint is only
+   enabled for admin users and deletes all resources associated with an
+   experiment. This includes checkpoint storage, Tensorboards, trial
+   logs from all backends and metadata such as history and metrics,
+   stored in PostgreSQL.
+
+-  API: Add a new endpoint to fetch aggregated historical resource
+   allocation information.
+
+-  CLI: Add new commands ``det resources raw`` and ``det resources
+   aggregated`` to access resource allocation information.
+
+-  PyTorch Lightning: Add an adapter to support ``LightningModule`` from
+   PyTorch Lightning in the PyTorchTrial API. :ref:`Read more about this
+   in the documentation here <lightning-adapter>`.
+
+-  WebUI: Experiment visualizations attempt to pick the most relevant
+   hyperparameters to visualize by default, using HP importance if
+   available.
+
+-  WebUI: Add support for showing categorical hyperparameters in HP
+   Scatter Plots and HP Heat Map for experiment visualizations.
+
+**Improvements**
+
+-  Images: The default environment images have been updated to CUDA
+   10.2, PyTorch 1.8, and TensorFlow 1.15.5 with Python 3.7. Previous
+   images are still available but must be specified in the experiment or
+   command configuration. It is recommended to validate the performance
+   of models when changing CUDA versions as some models can experience
+   significant changes in training time, etc. :ref:`Consult the
+   "Environment Configuration" section in the documentation for details
+   <custom-env>`.
+
+**Bug Fixes**
+
+-  WebUI: Fix the hyperparameter visualization page crashing when
+   viewing a single trial or PBT experiment (unsupported experiment).
+
 Version 0.14.5
 ==============
 
