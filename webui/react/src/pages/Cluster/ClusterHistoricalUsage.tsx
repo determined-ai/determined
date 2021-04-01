@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router';
 
 import Section from 'components/Section';
+import useResize from 'hooks/useResize';
 import { getResourceAllocationAggregated } from 'services/api';
 
 import css from './ClusterHistoricalUsage.module.scss';
@@ -33,6 +34,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   });
   const [ isCsvModalVisible, setIsCsvModalVisible ] = useState<boolean>(false);
   const [ isUrlParsed, setIsUrlParsed ] = useState<boolean>(false);
+  const filterBarRef = useRef<HTMLDivElement>(null);
   const history = useHistory();
 
   /*
@@ -95,6 +97,13 @@ const ClusterHistoricalUsage: React.FC = () => {
     setIsUrlParsed(true);
   }, [ filters, history.location.search, isUrlParsed ]);
 
+  /* On first load: make sure filter bar doesn't overlap charts */
+  const filterBarResize = useResize(filterBarRef);
+  useEffect(() => {
+    if (!filterBarRef.current || !filterBarRef.current.parentElement) return;
+    filterBarRef.current.parentElement.style.height = filterBarResize.height + 'px';
+  }, [ filterBarRef, filterBarResize ]);
+
   /*
    * When grouped by month force csv modal to display start/end of month
    */
@@ -132,8 +141,8 @@ const ClusterHistoricalUsage: React.FC = () => {
 
   return (
     <>
-      <div className={css.filterWrapper}>
-        <Row className={css.filter} justify="end">
+      <div>
+        <Row className={css.filter} justify="end" ref={filterBarRef}>
           <Col>
             <ClusterHistoricalUsageFilters
               value={filters}
