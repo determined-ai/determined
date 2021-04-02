@@ -87,3 +87,41 @@ class TestLightningAdapter:
 
         with pytest.raises(AssertionError):
             utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+
+    def test_lr_scheduler(self, tmp_path: pathlib.Path) -> None:
+        class OneVarLA(la_model.OneVarTrial):
+            def read_lr_value(self):
+                return self._pls.optimizers[0].param_groups[0]["lr"]
+
+            def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
+                callbacks = super().build_callbacks()
+
+                class TestCallback(pytorch.PyTorchCallback):
+                    def __init__(this) -> None:
+                        super().__init__()
+                        this.last_lr = None
+
+                    def on_training_epoch_start(this) -> None:
+                        if this.last_lr is None:
+                            this.last_lr = self.read_lr_value()
+                        else:
+                            assert this.last_lr > self.read_lr_value()
+                        return super().on_training_epoch_start()
+
+                callbacks.update({"test_callbacks": TestCallback()})
+                return callbacks
+
+        def make_trial_controller_fn(
+            workloads: workload.Stream, load_path: typing.Optional[str] = None
+        ) -> det.TrialController:
+
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=OneVarLA,
+                hparams=self.hparams,
+                workloads=workloads,
+                load_path=load_path,
+                trial_seed=self.trial_seed,
+            )
+
+        with pytest.raises(AssertionError):
+            utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
