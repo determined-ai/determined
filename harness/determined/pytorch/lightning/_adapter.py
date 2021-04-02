@@ -268,7 +268,7 @@ class LightningAdapter(PyTorchTrial):
             }
             """
             if lrs["reduce_on_plateau"]:
-                raise InvalidModelException("LRScheduler reduce_on_plateaue is not supported")
+                raise InvalidModelException("LRScheduler reduce_on_plateau is not supported")
             if lrs["monitor"] is not None:
                 raise InvalidModelException("LRScheduler monitor is not supported")
 
