@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined-cli",
-    version="0.14.6.dev0",
+    version="0.14.7.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -13,7 +13,7 @@ setup(
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     python_requires=">=3.6",
     install_requires=[
-        "determined==0.14.6.dev0",
+        "determined==0.14.7.dev0",
     ],
     entry_points={
         "console_scripts": [
