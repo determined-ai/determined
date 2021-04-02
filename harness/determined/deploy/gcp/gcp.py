@@ -10,19 +10,25 @@ import googleapiclient.discovery
 from google.auth.exceptions import DefaultCredentialsError
 from termcolor import colored
 
+from .preflight import check_quota
+
 TF_VARS_FILE = "terraform.tfvars.json"
 
 
-def deploy(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
+def deploy(configs: Dict, env: Dict, variables_to_exclude: List, dry_run: bool = False) -> None:
     validate_gcp_credentials(configs)
+    if not configs.get("no_preflight_checks"):
+        check_quota(configs)
+
     terraform_init(configs, env)
-    terraform_apply(configs, env, variables_to_exclude)
+    if dry_run:
+        terraform_plan(configs, env, variables_to_exclude)
+    else:
+        terraform_apply(configs, env, variables_to_exclude)
 
 
 def dry_run(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
-    validate_gcp_credentials(configs)
-    terraform_init(configs, env)
-    terraform_plan(configs, env, variables_to_exclude)
+    return deploy(configs, env, variables_to_exclude, dry_run=True)
 
 
 def terraform_dir(configs: Dict) -> str:

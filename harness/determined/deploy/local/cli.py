@@ -1,11 +1,17 @@
 import argparse
+import sys
 from typing import Callable, Dict
 
-from determined.common.declarative_argparse import Arg, Cmd
-from determined.deploy.local import cluster_utils
+from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd
+
+from . import cluster_utils
+from .preflight import check_docker_install
 
 
 def handle_cluster_up(args: argparse.Namespace) -> None:
+    if not args.no_preflight_checks:
+        check_docker_install()
+
     cluster_utils.cluster_up(
         num_agents=args.agents,
         port=args.master_port,
@@ -14,7 +20,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         version=args.det_version,
         db_password=args.db_password,
         delete_db=args.delete_db,
-        no_gpu=args.no_gpu,
+        gpu=args.gpu,
         autorestart=(not args.no_autorestart),
     )
 
@@ -48,7 +54,7 @@ def handle_agent_up(args: argparse.Namespace) -> None:
     cluster_utils.agent_up(
         master_host=args.master_host,
         master_port=args.master_port,
-        no_gpu=args.no_gpu,
+        gpu=args.gpu,
         agent_name=args.agent_name,
         agent_label=args.agent_label,
         agent_resource_pool=args.agent_resource_pool,
@@ -120,7 +126,14 @@ args_description = Cmd(
                     action="store_true",
                     help="remove current master database",
                 ),
-                Arg("--no-gpu", help="disable GPU support for agent", action="store_true"),
+                BoolOptArg(
+                    "--gpu",
+                    "--no-gpu",
+                    dest="gpu",
+                    default=("darwin" not in sys.platform),
+                    true_help="enable GPU support for agent",
+                    false_help="disable GPU support for agent",
+                ),
                 Arg(
                     "--no-autorestart",
                     help="disable container auto-restart (recommended for local development)",
@@ -238,7 +251,14 @@ args_description = Cmd(
                 Arg("--agent-name", type=str, default="det-agent", help="agent name"),
                 Arg("--agent-label", type=str, default=None, help="agent label"),
                 Arg("--agent-resource-pool", type=str, default=None, help="agent resource pool"),
-                Arg("--no-gpu", help="disable GPU support", action="store_true"),
+                BoolOptArg(
+                    "--gpu",
+                    "--no-gpu",
+                    dest="gpu",
+                    default=("darwin" not in sys.platform),
+                    true_help="enable GPU support for agent",
+                    false_help="disable GPU support for agent",
+                ),
                 Arg(
                     "--no-autorestart",
                     help="disable container auto-restart (recommended for local development)",

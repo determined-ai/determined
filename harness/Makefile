@@ -74,3 +74,7 @@ determined/common/schemas/expconf/_gen.py: $(GENERATION_INPUTS)
 	../schemas/gen.py python\
 		--package expconf \
 		--output $@
+
+.PHONY: gen-deploy-aws-vcpu-mapping
+gen-deploy-aws-vcpu-mapping:
+	python -m determined.deploy.aws.gen_vcpu_mapping determined/deploy/aws/vcpu_mapping.yaml

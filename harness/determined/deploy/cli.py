@@ -12,6 +12,7 @@ from .local.cli import args_description as local_args_description
 args_subs: List[Union[Arg, Cmd]] = [
     # TODO(DET-5171): Remove --version flag when det-deploy is deprecated.
     Arg("--version", action="version", version="%(prog)s {}".format(__version__)),
+    Arg("--no-preflight-checks", action="store_true", help="Disable preflight checks"),
     local_args_description,
     aws_args_description,
     gcp_args_description,

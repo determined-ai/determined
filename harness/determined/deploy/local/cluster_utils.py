@@ -159,7 +159,7 @@ def cluster_up(
     version: Optional[str],
     db_password: str,
     delete_db: bool,
-    no_gpu: bool,
+    gpu: bool,
     autorestart: bool,
 ) -> None:
     cluster_down(cluster_name, delete_db)
@@ -184,7 +184,7 @@ def cluster_up(
             agent_resource_pool=None,
             version=version,
             labels=labels,
-            no_gpu=no_gpu,
+            gpu=gpu,
             autorestart=autorestart,
             cluster_name=cluster_name,
         )
@@ -206,7 +206,7 @@ def agent_up(
     agent_label: Optional[str],
     agent_resource_pool: Optional[str],
     version: Optional[str],
-    no_gpu: bool,
+    gpu: bool,
     autorestart: bool,
     cluster_name: str,
     labels: Optional[Dict] = None,
@@ -232,14 +232,9 @@ def agent_up(
     if labels is None:
         labels = {}
     labels["ai.determined.type"] = "agent"
-    if autorestart:
-        restart_policy = {"Name": "unless-stopped"}  # type: Optional[Dict[str, str]]
-    else:
-        restart_policy = None
-    if no_gpu:
-        device_requests = None
-    else:
-        device_requests = [GPU_DEVICE_REQUEST]
+
+    restart_policy = {"Name": "unless-stopped"} if autorestart else None
+    device_requests = [GPU_DEVICE_REQUEST] if gpu else None
 
     docker_client = docker.from_env()
 
