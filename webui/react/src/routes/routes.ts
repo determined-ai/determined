@@ -16,7 +16,7 @@ const routes: RouteConfig[] = [
   {
     id: 'trialDetails',
     needAuth: true,
-    path: '/experiments/:experimentId/trials/:trialId',
+    path: '/experiments/:experimentId/trials/:trialId/:tab?',
     title: 'Trial',
   },
   {
