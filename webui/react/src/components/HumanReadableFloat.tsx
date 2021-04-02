@@ -14,7 +14,7 @@ const defaultProps: Props = {
   precision: 6,
 };
 
-const HumanReadableFloat: React.FC<Props> = ({ num, precision, tooltipPrefix }: Props) => {
+const HumanReadableFloat: React.FC<Props> = ({ num, precision, tooltipPrefix = '' }: Props) => {
   const isInteger = Number.isInteger(num);
   const absoluteNum = Math.abs(num);
   const stringNum = num.toString();
