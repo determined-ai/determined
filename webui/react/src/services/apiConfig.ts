@@ -8,9 +8,9 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, DetApi, EmptyParams, ExperimentDetailsParams,
   ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
-  GetShellsParams, GetTensorboardsParams, GetTrialsParams, HttpApi, LaunchNotebookParams,
-  LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams,
-  TaskLogsParams, TrialDetailsParams,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams,
+  HttpApi, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse, LogsParams,
+  PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
@@ -143,6 +143,24 @@ export const getResourcePools: DetApi<EmptyParams, Api.V1GetResourcePoolsRespons
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
   request: () => detApi.Internal.determinedGetResourcePools(),
+};
+
+export const getResourceAllocationAggregated: DetApi<
+  GetResourceAllocationAggregatedParams, Api.V1ResourceAllocationAggregatedResponse,
+  Api.V1ResourceAllocationAggregatedResponse
+> = {
+  name: 'getResourceAllocationAggregated',
+  postProcess: (response) => response,
+  request: (params: GetResourceAllocationAggregatedParams, options) => {
+    const dateFormat = (params.period === 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
+      ? 'YYYY-MM' : 'YYYY-MM-DD');
+    return detApi.Cluster.determinedResourceAllocationAggregated(
+      params.startDate.format(dateFormat),
+      params.endDate.format(dateFormat),
+      params.period,
+      options,
+    );
+  },
 };
 
 /* Experiment */

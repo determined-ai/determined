@@ -1,29 +1,20 @@
 import { DatePicker } from 'antd';
+import { PickerProps } from 'antd/es/date-picker/generatePicker';
 import { Dayjs } from 'dayjs';
 import React from 'react';
 
 import Label from './Label';
 import css from './SelectFilter.module.scss';
 
-interface Props {
-  className?: string;
+type Props = PickerProps<Dayjs> & {
   label: string;
-  onChange?: (date: Dayjs | null) => void;
-  value?: Dayjs;
 }
 
-const DatePickerFilter: React.FC<Props> = ({ className = '', label, onChange, value }: Props) => {
-  const classes = [ className, css.base ];
-
+const DatePickerFilter: React.FC<Props> = ({ label, ...props }: Props) => {
   return (
-    <div className={classes.join(' ')}>
+    <div className={css.base}>
       <Label>{label}</Label>
-      <DatePicker
-        showNow={false}
-        showTime
-        value={value}
-        onChange={onChange}
-      />
+      <DatePicker {...props} />
     </div>
   );
 };

@@ -97,6 +97,10 @@ message ResourceAllocationAggregatedRequest {
 }
 // Response to ResourceAllocationAggregatedRequest.
 message ResourceAllocationAggregatedResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resourceEntries" ] }
+  };
+
   // An entry summarizing one workload.
   repeated determined.master.v1.ResourceAllocationAggregatedEntry
       resource_entries = 1;

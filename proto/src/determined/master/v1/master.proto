@@ -4,6 +4,7 @@ package determined.master.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/masterv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // The period over which to perform aggregation.
 enum ResourceAllocationAggregationPeriod {
@@ -58,6 +59,19 @@ enum ResourceAllocationAggregationType {
 // One instance of slots in the cluster being allocated to a task during a
 // period (aggregated).
 message ResourceAllocationAggregatedEntry {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "periodStart",
+        "period",
+        "seconds",
+        "byUsername",
+        "byExperimentLabel",
+        "byResourcePool",
+        "byAgentLabel"
+      ]
+    }
+  };
   // The date of this entry.
   string period_start = 1;
   // The period over which aggregation occurred.

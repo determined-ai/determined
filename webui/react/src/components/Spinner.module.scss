@@ -3,6 +3,11 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes rotateCentered {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
 .spin {
   animation: rotate 1s linear infinite;
 }
@@ -11,4 +16,8 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
+
+  &.spin {
+    animation: rotateCentered 1s linear infinite;
+  }
 }

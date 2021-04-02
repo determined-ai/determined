@@ -384,6 +384,11 @@ export default class StepImplementation {
     assert.strictEqual(parseInt(numAgents), parseInt(count));
   }
 
+  @Step('Page should contain <text>')
+  public async checkTextExist(value: string) {
+    assert.ok(t.text(value).exists());
+  }
+
   /* Logs */
   @Step('Should have some log entries')
   public async checkSomeLogLines() {

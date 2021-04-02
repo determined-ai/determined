@@ -29,3 +29,8 @@ export const shortEnglishHumannizer = humanizeDuration.humanizer({
   round: true,
   spacer: '',
 });
+
+export const secondToHour = (seconds: number): number => {
+  const hourInSecond = (60 * 60);
+  return (seconds / hourInSecond);
+};
