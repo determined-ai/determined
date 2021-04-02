@@ -102,10 +102,11 @@ class TestLightningAdapter:
                         this.last_lr = None
 
                     def on_training_epoch_start(this) -> None:
+                        raise Exception()
                         if this.last_lr is None:
                             this.last_lr = self.read_lr_value()
                         else:
-                            assert this.last_lr > self.read_lr_value()
+                            assert this.last_lr < self.read_lr_value()
                         return super().on_training_epoch_start()
 
                 callbacks.update({"test_callbacks": TestCallback()})
