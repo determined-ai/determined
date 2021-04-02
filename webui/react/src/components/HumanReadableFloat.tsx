@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import React from 'react';
 
 import { CommonProps } from 'types';
+import { listToStr } from 'utils/string';
 
 interface Props extends CommonProps {
   num: number;
@@ -28,7 +29,7 @@ const HumanReadableFloat: React.FC<Props> = ({ num, precision, tooltipPrefix }: 
   }
 
   return (
-    <Tooltip title={`${tooltipPrefix}${stringNum}`}>
+    <Tooltip title={listToStr([ tooltipPrefix, stringNum ], '')}>
       <span>{content}</span>
     </Tooltip>
   );
