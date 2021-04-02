@@ -26,8 +26,8 @@ export enum GroupBy {
   Month = 'month',
 }
 
-const GROUP_BY_KEY = 'group-by';
 const STORAGE_PATH = 'cluster/historical-usage';
+const STORAGE_GROUP_BY_KEY = 'group-by';
 
 const ClusterHistoricalUsage: React.FC = () => {
   const [ chartSeries, setChartSeries ] = useState<ResourceAllocationChartSeries>();
@@ -40,7 +40,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   const [ filters, setFilters ] = useState<ClusterHistoricalUsageFiltersInterface>({
     afterDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
     beforeDate: dayjs().subtract(1, 'day'),
-    groupBy: storage.getWithDefault(GROUP_BY_KEY, GroupBy.Day),
+    groupBy: storage.getWithDefault(STORAGE_GROUP_BY_KEY, GroupBy.Day),
   });
 
   /*
@@ -60,7 +60,7 @@ const ClusterHistoricalUsage: React.FC = () => {
 
     // group-by
     searchParams.append('group-by', filters.groupBy);
-    storage.set(GROUP_BY_KEY, filters.groupBy);
+    storage.set(STORAGE_GROUP_BY_KEY, filters.groupBy);
 
     history.push('/cluster/historical-usage?' + searchParams.toString());
   }, [ filters, history, isUrlParsed, storage ]);
