@@ -90,27 +90,19 @@ class TestLightningAdapter:
 
     def test_lr_scheduler(self, tmp_path: pathlib.Path) -> None:
         class OneVarLA(la_model.OneVarTrial):
+            def __init__(self, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.last_lr = None
+
             def read_lr_value(self):
                 return self._pls.optimizers[0].param_groups[0]["lr"]
 
-            def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
-                callbacks = super().build_callbacks()
-
-                class TestCallback(pytorch.PyTorchCallback):
-                    def __init__(this) -> None:
-                        super().__init__()
-                        this.last_lr = None
-
-                    def on_training_epoch_start(this) -> None:
-                        raise Exception()
-                        if this.last_lr is None:
-                            this.last_lr = self.read_lr_value()
-                        else:
-                            assert this.last_lr < self.read_lr_value()
-                        return super().on_training_epoch_start()
-
-                callbacks.update({"test_callbacks": TestCallback()})
-                return callbacks
+            def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int):
+                if self.last_lr is None:
+                    self.last_lr = self.read_lr_value()
+                else:
+                    assert self.last_lr < self.read_lr_value()
+                return super().train_batch(batch, epoch_idx, batch_idx)
 
         def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
