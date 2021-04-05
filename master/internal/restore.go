@@ -16,7 +16,7 @@ import (
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
 // shimmed. Experiment and trial snapshots share a version currently.
-const experimentSnapshotVersion = 1
+const experimentSnapshotVersion = 2
 
 // Restore works by restoring from distributed consistent snapshots taken through the course
 // of an experiment. Snapshots within the system flow from the bottom up, starting with the
@@ -193,11 +193,13 @@ func (e *experiment) snapshotAndSave(ctx *actor.Context, ts trialSnapshot) {
 // experimentSnapshotShims maps a version to the shim that bumps that version.
 var experimentSnapshotShims = map[int]snapshotShimFunc{
 	0: shimExperimentSnapshotV0,
+	1: shimExperimentSnapshotV1,
 }
 
 // trialSnapshotShims maps a version to the shim that bumps that version.
 var trialSnapshotShims = map[int]snapshotShimFunc{
 	0: shimTrialSnapshotV0,
+	1: noopShim,
 }
 
 // shimExperimentSnapshot shims a trial snapshot to the version required by the master,
@@ -211,6 +213,10 @@ func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
 // returning an error in the same cases as shimExperimentSnapshot.
 func shimTrialSnapshot(snapshot []byte, version int) ([]byte, error) {
 	return shimSnapshot(trialSnapshotShims, snapshot, version)
+}
+
+func noopShim(snapshot []byte) ([]byte, error) {
+	return snapshot, nil
 }
 
 func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
@@ -297,4 +303,23 @@ func shimTrialSnapshotV0(snapshot []byte) ([]byte, error) {
 	}
 
 	return json.Marshal(trialSnapshotV0)
+}
+
+// Version 1 => 2 shims
+
+// shimExperimentSnapshotV1 shims a v1 snapshot to a v2 snapshot. From v1 to v2,
+//
+func shimExperimentSnapshotV1(snapshot []byte) ([]byte, error) {
+	var experimentSnapshotV1 map[string]interface{}
+	if err := json.Unmarshal(snapshot, &experimentSnapshotV1); err != nil {
+		return nil, err
+	}
+
+	searcherState := experimentSnapshotV1["searcher_state"].(map[string]interface{})
+
+	delete(searcherState, "total_units_completed")
+	delete(searcherState, "units_completed_by_trial")
+	searcherState["trial_progress"] = map[model.RequestID]model.Length{}
+
+	return json.Marshal(experimentSnapshotV1)
 }

@@ -33,9 +33,8 @@ type SearchMethod interface {
 	// trialClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
 	trialClosed(ctx context, requestID model.RequestID) ([]Operation, error)
-	// progress returns experiment progress as a float between 0.0 and 1.0. As search methods
-	// receive completed workloads, they should internally track progress.
-	progress(totalUnitsCompleted float64) float64
+	// progress returns experiment progress as a float between 0.0 and 1.0.
+	progress(map[model.RequestID]model.Length) float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
 	trialExitedEarly(
 		ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
@@ -121,4 +120,12 @@ func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, e
 func (defaultSearchMethod) trialExitedEarly( //nolint: unused
 	context, model.RequestID, workload.ExitedReason) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
+}
+
+func sumTrialLengths(unit model.Unit, ls map[model.RequestID]model.Length) model.Length {
+	sum := model.NewLength(unit, 0)
+	for _, l := range ls {
+		sum = sum.Add(l)
+	}
+	return sum
 }

@@ -131,9 +131,6 @@ func Simulate(
 				return simulation, err
 			}
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
-			if train, ok := operation.(Train); ok {
-				s.WorkloadCompleted(requestID, float64(train.Length.Units))
-			}
 			ops, err := s.OperationCompleted(trialIDs[requestID], operation, metrics)
 			if err != nil {
 				return simulation, err
@@ -172,9 +169,9 @@ func Simulate(
 	}
 
 	lastProgress = s.Progress()
-	if lastProgress != 1.0 {
+	if lastProgress > 1.0 {
 		return simulation, errors.Errorf(
-			"searcher progress did not end at 100%%: %f%%", lastProgress*100)
+			"searcher progress was greater than 100%%: %f%%", lastProgress*100)
 	}
 	if len(simulation.Results) != len(requestIDs) {
 		return simulation, errors.New("more trials created than completed")

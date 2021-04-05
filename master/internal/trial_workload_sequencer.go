@@ -395,6 +395,10 @@ func (s *trialWorkloadSequencer) batchesUntilCkptNeeded() int {
 	return s.minCheckpointPeriod.ToNearestBatch(s.unitContext) - s.BatchesSinceLastCkpt
 }
 
+func (s *trialWorkloadSequencer) Progress() model.Length {
+	return model.UnitsFromBatches(s.unitContext, s.TotalBatchesProcessed)
+}
+
 func min(initial int, values ...int) int {
 	minValue := initial
 	for _, value := range values {

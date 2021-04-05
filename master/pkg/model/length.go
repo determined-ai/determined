@@ -105,14 +105,14 @@ func NewLengthInEpochs(epochs int) Length {
 }
 
 // UnitsFromBatches return the number of units completed by the given batches, rounded up.
-func UnitsFromBatches(batches int, ctx UnitContext) float64 {
+func UnitsFromBatches(ctx UnitContext, batches int) Length {
 	switch ctx.defaultUnit {
 	case Records:
-		return float64(batches * ctx.globalBatchSize)
+		return Length{Unit: Records, Units: batches * ctx.globalBatchSize}
 	case Batches:
-		return float64(batches)
+		return Length{Unit: Batches, Units: batches}
 	case Epochs:
-		return float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch)
+		return Length{Unit: Epochs, Units: (batches * ctx.globalBatchSize) / ctx.recordsPerEpoch}
 	default:
 		panic(fmt.Sprintf("invalid unit in ctx: %s", ctx.defaultUnit))
 	}

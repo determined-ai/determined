@@ -651,10 +651,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	}
 
 	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
-	out := trialCompletedWorkload{
-		completedMessage: msg,
-		unitsCompleted:   model.UnitsFromBatches(msg.Workload.NumBatches, t.sequencer.unitContext),
-	}
+	out := trialCompletedWorkload{completedMessage: msg}
 
 	isBestValidation := ctx.Ask(ctx.Self().Parent(), trialValidation{
 		validationMetrics: msg.ValidationMetrics,
@@ -683,6 +680,11 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	}); err != nil {
 		return errors.Wrap(err, "failed to send workloadCompleted with snapshot")
 	}
+
+	ctx.Tell(ctx.Self().Parent(), trialReportProgress{
+		requestID: t.create.RequestID,
+		progress:  t.sequencer.Progress(),
+	})
 
 	switch {
 	case trialErrored:
@@ -1126,6 +1128,10 @@ func (t *trial) terminated(ctx *actor.Context) {
 		if err := t.reset(); err != nil {
 			ctx.Log().Warn("failed to reset trial", err)
 		}
+		ctx.Tell(ctx.Self().Parent(), trialReportProgress{
+			requestID: t.create.RequestID,
+			progress:  t.sequencer.Progress(),
+		})
 		return
 	}
 
