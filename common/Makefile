@@ -1,13 +1,3 @@
-.PHONY: clean
-clean:
-	rm -rf .pytest_cache/
-	rm -rf .mypy_cache/
-	rm -rf *.egg-info/
-	rm -rf pip-wheel-metadata/
-	rm -rf dist/
-	rm -rf build/
-	find . \( -name __pycache__ -o -name \*.pyc \) -delete
-
 .PHONY: build
 build:
 	python setup.py -q bdist_wheel
@@ -31,3 +21,13 @@ check:
 .PHONY: test
 test:
 	pytest -v tests
+
+.PHONY: clean
+clean:
+	rm -rf .pytest_cache/
+	rm -rf .mypy_cache/
+	rm -rf *.egg-info/
+	rm -rf pip-wheel-metadata/
+	rm -rf dist/
+	rm -rf build/
+	find . \( -name __pycache__ -o -name \*.pyc \) -delete

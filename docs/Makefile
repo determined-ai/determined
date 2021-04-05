@@ -1,4 +1,5 @@
 export VERSION := $(shell cat ../VERSION)
+.DEFAULT_GOAL := build
 
 SPHINXOPTS    = -W
 SPHINXBUILD   = sphinx-build

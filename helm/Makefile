@@ -1,10 +1,10 @@
-fmt:
-	helm lint charts/determined/
-
 .PHONY: build
 build: clean
 	mkdir -p build/
 	helm package --destination build charts/determined
+
+fmt:
+	helm lint charts/determined/
 
 .PHONY: clean
 clean:
