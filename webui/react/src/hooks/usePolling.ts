@@ -5,12 +5,16 @@ type PollingFn = (() => Promise<void>) | (() => void);
 interface PollingHooks {
   isPolling: boolean;
   startPolling: () => void;
-  stopPolling: () => void;
+  stopPolling: (options?: StopOptions) => void;
 }
 
 interface PollingOptions {
   interval?: number;
   runImmediately?: boolean;
+}
+
+interface StopOptions {
+  terminateGracefully?: boolean;
 }
 
 const DEFAULT_OPTIONS: PollingOptions = {
@@ -47,9 +51,9 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
     poll();
   }, [ poll ]);
 
-  const stopPolling = useCallback(() => {
+  const stopPolling = useCallback((options: StopOptions = {}) => {
     isPolling.current = false;
-    clearTimer();
+    if (!options.terminateGracefully) clearTimer();
   }, [ clearTimer ]);
 
   // Update polling function if a new one is passed in.
