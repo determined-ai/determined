@@ -90,10 +90,8 @@ data:
     {{ end }}
 
     {{- if .Values.telemetry }}
-    {{- if .Values.telemetry.enabled }}
     telemetry:
       enabled: {{ .Values.telemetry.enabled }}
-    {{- end }}
     {{- end }}
 
     {{- if .Values.clusterName }}
