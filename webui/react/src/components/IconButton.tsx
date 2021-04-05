@@ -1,5 +1,6 @@
 import { Button, Tooltip } from 'antd';
 import { ButtonType } from 'antd/es/button';
+import { TooltipPlacement } from 'antd/es/tooltip';
 import React, { useCallback } from 'react';
 
 import Icon from 'components/Icon';
@@ -11,10 +12,18 @@ interface Props {
   icon: string;
   label: string;
   onClick?: (event: React.MouseEvent) => void;
+  tooltipPlacement?: TooltipPlacement;
   type?: ButtonType;
 }
 
-const IconButton: React.FC<Props> = ({ className, icon, label, onClick, type }: Props) => {
+const IconButton: React.FC<Props> = ({
+  className,
+  icon,
+  label,
+  onClick,
+  tooltipPlacement = 'top',
+  type,
+}: Props) => {
   const classes = [ css.base ];
 
   if (className) classes.push(className);
@@ -24,7 +33,7 @@ const IconButton: React.FC<Props> = ({ className, icon, label, onClick, type }: 
   }, [ onClick ]);
 
   return (
-    <Tooltip placement="top" title={label}>
+    <Tooltip placement={tooltipPlacement} title={label}>
       <Button
         aria-label={label}
         className={classes.join(' ')}
