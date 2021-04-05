@@ -3,13 +3,14 @@ import { ButtonType } from 'antd/es/button';
 import { TooltipPlacement } from 'antd/es/tooltip';
 import React, { useCallback } from 'react';
 
-import Icon from 'components/Icon';
+import Icon, { IconSize } from 'components/Icon';
 
 import css from './IconButton.module.scss';
 
 interface Props {
   className?: string;
   icon: string;
+  iconSize?: IconSize;
   label: string;
   onClick?: (event: React.MouseEvent) => void;
   tooltipPlacement?: TooltipPlacement;
@@ -19,6 +20,7 @@ interface Props {
 const IconButton: React.FC<Props> = ({
   className,
   icon,
+  iconSize = 'medium',
   label,
   onClick,
   tooltipPlacement = 'top',
@@ -39,7 +41,7 @@ const IconButton: React.FC<Props> = ({
         className={classes.join(' ')}
         type={type}
         onClick={handleClick}>
-        <Icon name={icon} />
+        <Icon name={icon} size={iconSize} />
       </Button>
     </Tooltip>
   );
