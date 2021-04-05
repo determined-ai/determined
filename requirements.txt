@@ -19,6 +19,6 @@ flake8-tuple>=0.4.0
 isort==4.3.21
 # pytest 6.0 is based on mypy 0.780
 mypy==0.780
-bump2version>=1.0.0
+bump2version>=1.0.1
 # Earlier versions had different type annotations
 pyzmq>=22
