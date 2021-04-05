@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -44,6 +45,7 @@ type ExperimentConfig struct {
 	Internal                 *InternalConfig           `json:"internal"`
 	Entrypoint               string                    `json:"entrypoint"`
 	DataLayer                DataLayerConfig           `json:"data_layer"`
+	Profiling                ProfilingConfig           `json:"profiling"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -312,4 +314,28 @@ type InternalConfig struct {
 // NativeConfig represents configuration set by Determined native implementations.
 type NativeConfig struct {
 	Command []string `json:"command"`
+}
+
+// ProfilingConfig represents the configuration settings to enable and configure profiling.
+type ProfilingConfig struct {
+	Enabled       bool `json:"enabled"`
+	BeginOnBatch  int  `json:"begin_on_batch"`
+	EndAfterBatch int  `json:"end_after_batch"`
+}
+
+// Validate implements the check.Validatable interface.
+func (p ProfilingConfig) Validate() []error {
+	if !p.Enabled {
+		return nil
+	}
+
+	var errs []error
+
+	if p.BeginOnBatch > p.EndAfterBatch {
+		errs = append(errs,
+			fmt.Errorf("malformed batch window: %d > %d", p.BeginOnBatch, p.EndAfterBatch))
+		return errs
+	}
+
+	return nil
 }

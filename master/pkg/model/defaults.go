@@ -119,6 +119,9 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 			ExperimentSeed: uint32(time.Now().Unix()),
 		},
 		MaxRestarts: 5,
+		Profiling: ProfilingConfig{
+			Enabled: false,
+		},
 	}
 
 	if taskContainerDefaults == nil {
