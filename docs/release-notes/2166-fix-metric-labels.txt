@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: Fix an issue where metric values in some UI views were
+   prefixed with `undefined`
