@@ -11,8 +11,8 @@ There are three methods to customize the environment that workloads
 execute in:
 
 #. Environment variables
-#. Specifying a startup hook (``startup-hook.sh``)
-#. Using a custom Docker image
+#. Startup hooks (``startup-hook.sh``)
+#. Custom Docker images
 
 .. _environment-variables:
 
@@ -23,8 +23,9 @@ execute in:
 For both trial runners and commands, Determined allows users to
 configure the environment variables inside the container through the
 ``environment.environment_variables`` configuration field of the
-experiment config. The format is a list of strings in the format
-``NAME=VALUE``:
+:ref:`experiment <experiment-configuration>` or :ref:`task
+<command-notebook-configuration>` config. The format is a list of
+strings in the format ``NAME=VALUE``:
 
 .. code:: yaml
 
@@ -88,8 +89,8 @@ commands, and any other workflow in the Determined system.
 Default Images
 ==============
 
-In the current version of Determined, the experiments and commands are
-executed in containers with the following:
+In the current version of Determined, experiments and tasks are executed
+in containers with the following:
 
 -  Ubuntu 18.04
 -  CUDA 10.2
@@ -118,8 +119,8 @@ CUDA 11 Images
 ==============
 
 Determined also supports running CUDA 11-enabled versions of the
-frameworks, and has a Docker image you can use for experiments and
-commands containing the following:
+frameworks, and has a Docker image you can use for experiments and tasks
+containing the following:
 
 -  Ubuntu 18.04
 -  CUDA 11.0

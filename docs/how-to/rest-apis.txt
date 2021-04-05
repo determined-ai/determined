@@ -20,7 +20,7 @@ Most of the API calls to Determined cluster need to be authenticated. On
 each API call, the server expects a Bearer token to be present.
 
 To receive a token POST a valid username and password combination to the
-login endpoint, currently at `/api/v1/auth/login` with the following
+login endpoint, currently at ``/api/v1/auth/login`` with the following
 format:
 
 .. code:: json
@@ -55,9 +55,9 @@ Sample response:
      }
    }
 
-Once we have the token we can store and attach to our future API calls
-under `Authorization` header and with the following format: `Bearer
-$TOKEN`.
+Once we have the token, we should store it and attach it to future API
+calls under the ``Authorization`` header using the following format:
+``Bearer $TOKEN``.
 
 *********
  Example
@@ -69,12 +69,12 @@ experiment that was previously archived.
 By looking at the archive endpoint entry from our API docs (Swagger UI),
 we see that all we need is an experiment ID.
 
-To find our an experiment that was archived, we lookup the experiments
-endpoint on our to figure out which filtering options we have. We see
-that we have ``archived`` and ``limit`` to work with. Using a bearer
-token we authenticate our request. We then use the ``archived`` and
-``limit`` query parameters to limit the result set to only show a single
-archived experiment.
+To find an experiment that was archived, we lookup the experiments
+endpoint to figure out which filtering options we have. We see that we
+have ``archived`` and ``limit`` to work with. Using a bearer token we
+authenticate our request. We then use the ``archived`` and ``limit``
+query parameters to limit the result set to only show a single archived
+experiment.
 
 .. code:: bash
 

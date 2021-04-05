@@ -34,7 +34,7 @@ Command Line
 The following command will automatically start a notebook with a single
 GPU and open it in your browser.
 
-.. code:: bash
+.. code::
 
    det notebook start
 
@@ -42,14 +42,14 @@ The ``--context`` option adds a folder or file to the notebook
 environment, allowing its contents to be accessed from within the
 notebook.
 
-.. code:: bash
+.. code::
 
    det notebook start --context folder/file
 
 The ``--config-file`` option can be used to create a notebook with an
 environment specified by a configuration file.
 
-.. code:: bash
+.. code::
 
    det notebook start --config-file config.yaml
 
@@ -67,22 +67,22 @@ see :ref:`notebook-configuration`.
 Other Useful Commands
 ---------------------
 
-A full list of notebook commands can be found by running:
+A full list of notebook-related commands can be found by running:
 
-.. code:: bash
+.. code::
 
    det notebook --help
 
 To view all running notebooks:
 
-.. code:: bash
+.. code::
 
    det notebook list
 
-To kill a notebook, you need its ID, which can be found using the list
-command.
+To kill a notebook, you need its ID, which can be found using the
+``list`` command.
 
-.. code:: bash
+.. code::
 
    det notebook kill <id>
 
@@ -140,8 +140,8 @@ See :ref:`command-notebook-configuration` for details on the supported
 configuration options.
 
 Finally, to configure notebooks to run a predefined set of commands at
-startup (as with :ref:`experiments <startup-hooks>`), you can include a
-``--context`` option:
+startup, you can use a :ref:`startup hook <startup-hooks>` along with
+the ``--context`` option:
 
 .. code::
 

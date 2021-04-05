@@ -592,7 +592,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type
     configure ``min_validation_period`` for the experiment appropriately (likely it should be
     configured to validate every epoch).
 
-    In Determined, on_test_end may be called slightly more often than ``min_validation_period``
+    In Determined, ``on_test_end`` may be called slightly more often than ``min_validation_period``
     during some types of hyperparameter searches, but it is unlikely for that to occur often
     enough have a meaningful impact on this callback's operation.
     """

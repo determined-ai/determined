@@ -10,7 +10,8 @@
 
 Before setting up Determined Master, the user should set up a Kubernetes
 cluster with GPU enabled nodes and Kubernetes version 1.15 or later. You
-can use a :ref:`GKE cluster <setup-gke-cluster>` or an :ref:`EKS cluster
+can setup Kubernetes manually, or you can use a managed Kubernetes
+service such as :ref:`GKE <setup-gke-cluster>` or :ref:`EKS
 <setup-eks-cluster>`.
 
 **************************************
@@ -20,10 +21,10 @@ can use a :ref:`GKE cluster <setup-gke-cluster>` or an :ref:`EKS cluster
 To deploy a custom version of the Determined Master, we deploy a
 long-running pod in Kubernetes, command it to sleep, then exec into it
 and build our Master. To add a sleep command, modify the template
-`helm/charts/determined/templates/master-deployment.yaml` to include the
-command and args:
+``helm/charts/determined/templates/master-deployment.yaml`` to include
+the command and args:
 
-.. code:: bash
+.. code:: yaml
 
    spec:
      ...
@@ -34,7 +35,7 @@ command and args:
        args: ["99999m"]
        ...
 
-Next apply the Determined helm chart and exec into the pod containing
+Next apply the Determined Helm chart and exec into the pod containing
 Master.
 
 .. code:: bash
@@ -54,8 +55,8 @@ Before installing Determined, you will need to install the dependencies
 specified in the `contributing guide
 <https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
 
-You can use `apt` and `pip` to install most of the dependencies, but you
-will need to download and manually install `golang
+You can use ``apt`` and ``pip`` to install most of the dependencies, but
+you will need to download and manually install `golang
 <https://golang.org/dl/>`__, `node <https://deb.nodesource.com/>`__,
 `protobuf <https://github.com/protocolbuffers/protobuf/releases>`__, and
 `helm <https://helm.sh/docs/intro/install/>`__. Here is an example of
@@ -89,7 +90,7 @@ installing all the necessary dependencies:
    chmod 700 get_helm.sh
    ./get_helm.sh
 
-In addition to installing these packages, the `.bashrc` needs to be
+In addition to installing these packages, ``.bashrc`` needs to be
 updated with new paths.
 
 .. code:: bash
@@ -108,7 +109,7 @@ and activate a virtual environment for Determined.
 
 After the dependencies have been installed, some changes need to be made
 within the Determined repository. First, copy the Master configuration
-found at `/etc/determined/master.yaml` and place it under a new name
+found at ``/etc/determined/master.yaml`` and place it under a new name
 inside the Determined repo, for example at
 `determined/tools/k8s-master.yaml` (there already exists a master.yaml
 in the tools dir).
@@ -124,11 +125,11 @@ end:
 
    root: build
 
-After that, edit the file `determined/tools/run-server.py`. Inside the
-main function's `try` clause, comment out everything except for four
-lines related to `master`:
+After that, edit the file ``determined/tools/run-server.py``. Inside the
+main function's ``try`` clause, comment out everything except for four
+lines related to ``master``:
 
-.. code:: bash
+.. code::
 
    def main() -> None:
      ...
@@ -140,13 +141,13 @@ lines related to `master`:
        ...
        master.join()
 
-Do not modify the `except` or `finally` clauses.
+Do not modify the ``except`` or ``finally`` clauses.
 
-Lastly, inside the `run_master` function of
-`determined/tools/run-server.py`, change the config file from
-`master.yaml` to the copied master config, i.e. `k8s-master.yaml`.
+Lastly, inside the ``run_master`` function of
+``determined/tools/run-server.py``, change the config file from
+``master.yaml`` to the copied master config, i.e. ``k8s-master.yaml``.
 
-.. code:: bash
+.. code::
 
    def run_master() -> mp.Process:
      ...
@@ -154,7 +155,7 @@ Lastly, inside the `run_master` function of
      ...
 
 We are now ready to build and run the Determined Master! From the
-Determined repo, run `make all` to build and `make -C tools run` to
+Determined repo, run ``make all`` to build and ``make -C tools run`` to
 start the Master.
 
 ************

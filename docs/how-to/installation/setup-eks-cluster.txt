@@ -277,13 +277,13 @@ following configuration in a new file such as
 
 To deploy an autoscaler that works with Determined, apply the official
 autoscaler `configuration
-<https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-run-on-master.yaml>`_
+<https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-run-on-control-plane.yaml>`_
 first, then apply the custom ``determined-autoscaler.yaml``.
 
 .. code:: bash
 
    # Apply the official autoscaler configuration
-   kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-run-on-master.yaml
+   kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-run-on-control-plane.yaml
 
    # Apply the custom deployment
    kubectl apply -f <cluster-autoscaler yaml, e.g. `determined-autoscaler.yaml`>

@@ -14,19 +14,16 @@ starting guides.
 -  :ref:`install-cluster`
 -  :ref:`dynamic-agents-gcp`
 -  :ref:`dynamic-agents-aws`
--  :ref:`custom-pod-specs`
 
-**Hyperparameter**
-
--  :ref:`hyperparameter-tuning`
-
-**Distributed Training**
+**Common Workflows**
 
 -  :ref:`multi-gpu-training`
-
-**Model Debugging**
-
+-  :ref:`hyperparameter-tuning`
 -  :ref:`model-debug`
+-  :ref:`how-to-notebooks`
+-  :ref:`how-to-tensorboard`
+-  :ref:`use-trained-models`
+-  :ref:`rest-api-getting-started`
 
 The full list of our how-to guides can be found below:
 

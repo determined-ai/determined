@@ -6,8 +6,8 @@
 
 In this guide, we'll go over some of what happens under the hood when a
 user submits an experiment to Determined. We'll cover how the experiment
-gets to the master, how it's turned into concrete trials to run on the
-cluster, and what happens within each trial.
+gets to the master, how it is turned into one or more trials that run on
+the cluster, and what happens within each trial.
 
 ***********
  Uploading
@@ -21,12 +21,11 @@ The context must be a directory containing all of the Python code
 necessary to run the model.
 
 We don't allow the total size of the files in the context to exceed 95
-MiB. As a result, datasets should not be included directly in the
-experiment definition; instead, users should set up data loaders to read
-data from an external source.
-
-..
-   TODO: Add a link to the in-flight best data practices doc.
+MiB. As a result, datasets should typically not be included directly in
+the experiment definition; instead, users should set up data loaders to
+read data from an external source. Refer to the tutorial on
+:ref:`accessing data <data-access>` for more suggestions on data
+loading.
 
 If the context is valid, the CLI takes its contents, along with the
 configuration file, and sends them to the master over the network.
@@ -43,9 +42,12 @@ defines a set of hyperparameter configurations, each of which
 corresponds to one trial.
 
 When a trial is ready to begin running, the master communicates with the
-appropriate agent (or agents, in the case of distributed training),
-which creates `Docker <https://www.docker.com>`_ containers holding the
-user model code, along with the Determined harness.
+appropriate agent (or agents, in the case of :ref:`distributed training
+<multi-gpu-training>`), which creates `Docker <https://www.docker.com>`_
+containers holding the user model code, along with the Determined
+harness. Determined supplies a set of default Docker container images
+that are appropriate for many deep learning tasks, but users can also
+supply a :ref:`custom image <custom-docker-images>` if desired.
 
 *********************
  Importing the Model
