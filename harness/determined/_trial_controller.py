@@ -41,7 +41,6 @@ class TrialController(metaclass=abc.ABCMeta):
         load_path: Optional[pathlib.Path],
         rendezvous_info: RendezvousInfo,
         hvd_config: horovod.HorovodContext,
-        metrics_thread: metrics.SystemMetricsThread
     ) -> None:
         self.context = context
         self.env = env
@@ -49,7 +48,6 @@ class TrialController(metaclass=abc.ABCMeta):
         self.load_path = load_path
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
-        self.metrics_thread = metrics_thread
 
         self._check_if_trial_supports_configurations(env)
 
@@ -72,7 +70,6 @@ class TrialController(metaclass=abc.ABCMeta):
         load_path: Optional[pathlib.Path],
         rendezvous_info: RendezvousInfo,
         hvd_config: horovod.HorovodContext,
-        metrics_thread: metrics.SystemMetricsThread,
     ) -> "TrialController":
         """
         Create a TrialController from an instantiated framework-matched Trial.

@@ -1,5 +1,6 @@
 import faulthandler
 import logging
+import os
 import pathlib
 import sys
 
@@ -26,6 +27,9 @@ def main() -> None:
     worker_process_env = layers.WorkerProcessContext.from_file(worker_process_env_path)
 
     config_logging(worker_process_env)
+
+    # API code expects credential to be available as an environment variable
+    os.environ["DET_TASK_TOKEN"] = worker_process_env.env.det_task_token
 
     if worker_process_env.env.experiment_config.debug_enabled():
         faulthandler.dump_traceback_later(30, repeat=True)

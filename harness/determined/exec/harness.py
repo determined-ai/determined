@@ -57,6 +57,7 @@ ENVIRONMENT_VARIABLE_KEYS = {
     "DET_WORKLOAD_MANAGER_TYPE",
     "DET_RENDEZVOUS_PORTS",
     "DET_TRIAL_RUNNER_NETWORK_INTERFACE",
+    "DET_TASK_TOKEN"
 }
 
 
@@ -134,8 +135,6 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 )
                 subproc.run()
             else:
-                metrics_thread = metrics.SystemMetricsThread(env.master_url)
-                metrics_thread.start()
 
                 if env.experiment_config.debug_enabled():
                     faulthandler.dump_traceback_later(30, repeat=True)
@@ -167,7 +166,6 @@ def main() -> None:
     master_cert_file = os.environ.get("DET_MASTER_CERT_FILE")
     master_cert_name = os.environ.get("DET_MASTER_CERT_NAME")
 
-    # TODO: Add agent id to list of serialized envvars
     agent_id = os.environ["DET_AGENT_ID"]
     container_id = os.environ["DET_CONTAINER_ID"]
     hparams = simplejson.loads(os.environ["DET_HPARAMS"])
@@ -184,12 +182,12 @@ def main() -> None:
     det_trial_runner_network_interface = os.environ["DET_TRIAL_RUNNER_NETWORK_INTERFACE"]
     det_trial_id = os.environ["DET_TRIAL_ID"]
     det_experiment_id = os.environ["DET_EXPERIMENT_ID"]
+    det_agent_id = os.environ["DET_AGENT_ID"]
     det_cluster_id = os.environ["DET_CLUSTER_ID"]
+    det_task_token = os.environ["DET_TASK_TOKEN"]
     trial_seed = int(os.environ["DET_TRIAL_SEED"])
 
     gpu_uuids = gpu.get_gpu_uuids_and_validate(use_gpu, slot_ids)
-
-    # TODO: Add auth token to list of serialized envvars - DET_TASK_TOKEN
 
     env = det.EnvContext(
         master_addr,
@@ -212,7 +210,9 @@ def main() -> None:
         det_trial_runner_network_interface,
         det_trial_id,
         det_experiment_id,
+        det_agent_id,
         det_cluster_id,
+        det_task_token,
         trial_seed,
         managed_training=True,
         test_mode=False,

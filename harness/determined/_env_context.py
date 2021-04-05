@@ -29,7 +29,9 @@ class EnvContext:
         det_trial_runner_network_interface: str,
         det_trial_id: str,
         det_experiment_id: str,
+        det_agent_id: str,
         det_cluster_id: str,
+        det_task_token: str,
         trial_seed: int,
         managed_training: bool,
         test_mode: bool,
@@ -55,7 +57,9 @@ class EnvContext:
         self.det_trial_runner_network_interface = det_trial_runner_network_interface
         self.det_trial_id = det_trial_id
         self.det_experiment_id = det_experiment_id
+        self.det_agent_id = det_agent_id
         self.det_cluster_id = det_cluster_id
+        self.det_task_token = det_task_token
         self.trial_seed = trial_seed
         self.managed_training = managed_training
         self.test_mode = test_mode

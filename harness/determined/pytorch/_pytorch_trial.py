@@ -285,7 +285,6 @@ class PyTorchTrialController(det.LoopTrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
-            self.metrics_thread.update_current_batch(batch_idx)
             batch = next(self.training_iterator)
             num_inputs += pytorch.data_length(batch)
             batch = self.context.to_device(batch)
