@@ -5,18 +5,16 @@ architecture is a pre-requisite for Sprinkle API, and it is also closely
 related to the low-level Sprinkle API, but the work outlined here does not
 actually deliver either of the low-level or high-level Sprinkle APIs.
 
+### Master-side work
+
 1. Redo Searcher Progress Calculation
 
    Let the workload sequencer (and eventually the harness) report its progress
    in the current searcher operation and let the searcher aggregate individual
    trials' progress into total progress.
 
-1. Rewrite or delete: save experiment best
-
-    Argument to delete: too much work, not enough benefit.  Let GC do its job.
-
-    Argument to rewrite: the harness could just query best metric so far via
-    the REST api to if it should checkpoint or not.
+1. Rewrite save experiment best as a simple `GetExperimentBest()`-like call
+   against the database.  No more interaction with the actor system.
 
 1. Change Searcher to emit the new SearcherOp: each op is a single combined
    training/validation/checkpoint request, identified by absolute lengths of
@@ -33,12 +31,16 @@ actually deliver either of the low-level or high-level Sprinkle APIs.
    was descheduled or paused.  Searcher-requested stops go through the searcher
    api.
 
-1. Modify golang workload sequencer to use new internal push APIs.
+1. (assume harness-side work is done) Expose all push apis and delete golang
+   workload sequencer.  Migrate to refactored harness.
 
-1. Move workload sequencer to python + expose REST APIs
+### Harness-side work
 
-   An instance of the python sequencer would live inside PyTorchTrial,
-   TFKerasTrial and EstimatorTrial.
+1. Implement a dummy master with all push APIs
+
+1. Write a python workload sequencer
+
+1. Refactor harness, eliminate layers in favor of push APIs
 
 ## Raw notes:
 ```
@@ -59,9 +61,13 @@ Order of Work, or "what do we need to do accomplish this design":
             this involves the same master-knows-dataset-length problems we currently have
 
   - rewrite or delete: save experiment best
-        ryan votes delete this
-        bradley,shiyuan votes trial calls an API that asks for the best validation so far.
-        action-item: talk to product(?) about this
+      - ryan votes delete this (edit, he now votes for the API call)
+      - bradley,shiyuan votes trial calls an API that asks for the best validation so far.
+      - edit: a new proposal is to let pushing validation metrics respond with
+        the best metric so far.
+            this seems like a strange appendage to the push architecture call
+            though, since all the other metrics pushing would be unidirectional
+            and could even be done asynchronously if you wanted.
 
   - change searcher uses abs lengths
 

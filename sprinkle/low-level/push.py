@@ -32,6 +32,9 @@ context.training.report_validation_metrics(
     reducer=...         # optional: for assisted metric reduction across workers
 )
 
+# For implementing save_experiment_best:
+context.training.get_experiment_best_validation()
+
 # Checkpoints
 context.api._begin_checkpoint()                             # non-user-facing call
 context.api._report_checkpoint(uuid, start_time, end_time)  # non-user-facing call
@@ -104,21 +107,40 @@ class SearcherOp:
         assert self._unit == EPOCHS
         return self._length
 
-    def report_progress(self, ...):
+    def report_progress(self, length)
         # optional API; it's too hard to try to infer progress in the master
-        ...
+        context.training._report_progress(length)
 
     def complete(self, searcher_metric):
         # tell the master about the searcher metric;
         # the next call to next_searcher_op() will now return something new
         context.training._complete_searcher_op(searcher_metric)
 
-# maybe an iterator to wrap next_searcher_op()?
-for op in contex.training.iter_searcher_ops():
-    # obviously you'd use our keras first-class support instead,
-    # but for academic purposes, you could just feed this value to your trainer
-    metrics = model.fit(epochs=op.epochs)
-    op.complete(seacher_metric=metrics["val_accuracy"])
+
+# The "basic" searcher API supporst all searchers with epoch-based training.
+basic_searcher = context.training.get_basic_searcher()
+for epoch in basic_searcher.epochs(initial_epoch=0):
+    metrics = train_one_epoch_and_validate()
+    # We automatically report progress or complete the op as necessary.
+    basic_searcher.report(metrics["val_accuracy"])
+
+
+# The "advanced" searcher API has you use SearcherOps directly.
+epochs_complete = 0
+advanced_searcher = context.training.get_advanced_searcher()
+for op in advanced_searcher.ops():
+
+    # It's on you to report metrics.
+    def epoch_end_cb():
+        nonlocal epochs_complete
+        epochs_complete += 1
+        advanced_searcher.report_searcher_progress(epochs_complete)
+
+    do_training(length=op.epochs, cb=epoch_end_cb)
+
+    val_metrics = do_validation()
+    op.complete(val_metrics["accuracy"])
+
 
 
 """
@@ -126,8 +148,21 @@ Preemption API
 
 Different than adaptive's early stopping; more like the cancel button or a spot instance.
 
-Internally, the chief worker is calling context.api._should_preempt() and between workers we
-are doing periodic asynchronous allgathering to decide when to preempt, so that all workers
-preempt together
+(Normally, a worker thread is running on the chief to get the preemption message from the master,
+either via long-polling or via websockets.  When the preemption signal is received, the thread will
+set a flag that the chief worker can read.)
+
+By itself, should_preempt() is blocking.  This is meant to be called every epoch, so it will exit
+after the first epoch where a pause or deschedule was requested.  The chief checks for the
+preemption flag (from the worker thread) and broadcasts the decision to all workers.
+
+When block=False, the chief will check the preemption and broadcast the decision to all workers.
+However, the result will not be gathered until the beginning of the *next* call to should_preempt()
+(the beginning of the next batch) which effectively hides the network latency behind the forwards
+and backwards passes for the batch.  This is meant to be called every batch, so you can have very
+responsive preemption for a snappy cluster experience or for spot instance support.
 """
-context.should_preempt(period=10)  # called every batch or something
+context.should_preempt()             # blocking, to call every epoch or something
+                                     # (emits warnings about performance if you call it too much)
+
+context.should_preempt(block=False)  # performant enough to call every batch

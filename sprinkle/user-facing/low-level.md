@@ -293,18 +293,11 @@ than hacking something together with bindmounts:
 
 ## Step 2: Basic HP Search + best practices
 
-(rb: after writing out this API, I am not actually that crazy about it, so
-don't look to closely at the searcher API itself)
-
 You already have many great benefits of Determined with very little work.  Now,
 let's add support for basic hyperparameter searches.  After this, you'll be
 able to run random searches, grid searches, and even hyperband searches, using
 the "adaptive" searcher, Determined's state-of-the-art implementation of the
 hyperband algorithm!
-
-Note that with only basic HP support, adaptive searches will be rougly 20% less
-efficient than with advanced HP support, but they will still far outperform
-random or grid searches.
 
 As we introduce HP search, we are also going to implement some best practices
 for model definitions, including:
@@ -351,11 +344,9 @@ for model definitions, including:
         # keep track of how many batches we have trained
         batches_trained = 0
 
-+       # basic searcher API: just find out how long to train for
-+       searcher_op = context.training.basic_search()
-
 -       for epoch in range(config.EPOCHS):
-+       for epoch in range(searcher_op.epochs):
++       searcher = context.training.get_basic_searcher()
++       for epoch in searcher.epochs(initial_epoch=0):
             # train model
             ...
 
@@ -368,13 +359,8 @@ for model definitions, including:
             # report validation metrics to the master
             ...
 
-+           if epoch == searcher_op.epochs - 1:
-+               # on the last epoch, report your final metric
-+               searcher_op.complete(searcher)
-+           else:
-+               # totally optional: tell the searcher about your intermediate
-+               # progress so the webui can estimate overall progress
-+               searcher_op.report_progress(epoch)
++           # report this epochs value of the searcher_metric
++           searcher.report(eval_loss)
 
         # checkpoint model
         with context.checkpoint.save_path() as path:
@@ -443,9 +429,10 @@ all you have to do for fault tolerance is load that checkpoint and go!
 
     searcher_op = context.training.basic_search()
 
--   for epoch in range(searcher_op.epochs):
+    searcher = context.training.get_basic_searcher()
+-   for epoch in searcher.epochs(initial_epoch=0):
 +   # Only train for the amount that remains
-+   for epoch in range(last_epoch, searcher_op.epochs):
++   for epoch in searcher.epochs(initial_epoch=last_epoch):
         # train model
         ...
 
@@ -458,7 +445,7 @@ all you have to do for fault tolerance is load that checkpoint and go!
         # report validation metrics to the master
         ...
 
-        # report searcher progress or complete
+        # report searcher_metric
         ...
 
 +       # checkpoint every epoch for high fault-tolerance
