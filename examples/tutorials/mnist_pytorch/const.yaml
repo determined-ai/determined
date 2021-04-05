@@ -12,6 +12,6 @@ searcher:
   name: single
   metric: validation_loss
   max_length:
-      batches: 937000 #60,000 training images with batch size 64
+      batches: 937 #60,000 training images with batch size 64
   smaller_is_better: true
 entrypoint: model_def:MNistTrial

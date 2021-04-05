@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from determined.common import api
 
-
+# TODO: Change to match new multiple batch interface
 def post_trial_profiler_metrics(
     master_url: str,
     values: List[float],
