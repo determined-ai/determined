@@ -1,6 +1,5 @@
 """
-This example shows how to interact with the Determined PyTorch interface to
-build a basic MNIST network.
+This example showcases usage of checkpoint PyTorchTrial callbacks.
 
 In the `__init__` method, the model and optimizer are wrapped with `wrap_model`
 and `wrap_optimizer`. This model is single-input and single-output.
@@ -34,6 +33,9 @@ class MyCallbacks(PyTorchCallback):
     def on_checkpoint_save_start(self, checkpoint: Dict[str, Any]) -> None:
         print("saving checkpoint")
         checkpoint["x"] = self.x
+
+    def on_checkpoint_end(self, checkpoint_dir: str) -> None:
+        print(f"checkpoint dir: {checkpoint_dir}")
 
 
 class MNistTrial(PyTorchTrial):
