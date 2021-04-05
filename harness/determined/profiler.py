@@ -505,7 +505,7 @@ class GpuUtilCollector:
                 gpu_util = util.gpu
 
             except pynvml.NVMLError as err:
-                # TODO: Log this error?
+                # TODO: Log this error
                 continue
             measurements[handle] = Measurement(timestamp, batch_idx, gpu_util)
         return measurements
