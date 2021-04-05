@@ -295,7 +295,7 @@ export default class StepImplementation {
 
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
-    await t.click(t.$('[class*=Navigation_launchIcon]'));
+    await t.click(t.$('[class*=NavigationSideBar_launchIcon]'));
     await clickAndCloseTab(t.text('Launch CPU-only Notebook'));
   }
 
