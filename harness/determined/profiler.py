@@ -112,9 +112,11 @@ class ProfilerAgent:
         self.sys_metric_collector_thread.join()
         self.sender_thread.join()
 
-    # TODO: Add new timing to TimingBatcher
+
     def record_timing(self):
-        pass
+        if not self.is_enabled:
+            return
+        # TODO: Add new timing to TimingBatcher
 
 
 
@@ -264,6 +266,7 @@ class SysMetricCollectorThread(threading.Thread):
         self.current_batch_idx = new_batch_idx
 
     def enqueue_for_async_send(self, metric_batch):
+        # TODO: Handle exception
         # This method can theoretically raise a FULL error, but SimpleQueues are unbounded so
         # I don't think it will ever happen (https://docs.python.org/3/library/queue.html#queue.Queue.put)
         # self.log("Enqueuing metric batch", metric_batch)
@@ -335,7 +338,7 @@ class SysMetricCollectorThread(threading.Thread):
 
 
 # This is a thread that exists solely so that we can make API calls without blocking
-# It has a SimpleQueue through which work is sent to the thread
+# It has a Queue through which work is sent to the thread
 class ProfilerSenderThread(threading.Thread):
     POLL_INTERVAL_SECS = 0.5
     def __init__(self, inbound_queue: queue.Queue, master_url: str) -> None:
