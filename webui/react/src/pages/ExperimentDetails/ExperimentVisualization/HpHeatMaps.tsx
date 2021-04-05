@@ -1,7 +1,8 @@
 import { Alert } from 'antd';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
+import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
 import MetricBadgeTag from 'components/MetricBadgeTag';
@@ -65,6 +66,8 @@ const HpHeatMaps: React.FC<Props> = ({
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpData>();
   const [ pageError, setPageError ] = useState<Error>();
+  const [ activeHParam, setActiveHParam ] = useState<[ string, string ]>();
+  const [ galleryHeight, setGalleryHeight ] = useState<number>(450);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
@@ -80,6 +83,44 @@ const HpHeatMaps: React.FC<Props> = ({
   const colorScale = useMemo(() => {
     return getColorScale(chartData?.metricRange, smallerIsBetter);
   }, [ chartData, smallerIsBetter ]);
+
+  const handleChartClick = useCallback((hParam1: string, hParam2: string) => {
+    setActiveHParam([ hParam1, hParam2 ]);
+  }, []);
+
+  const handleGalleryClose = useCallback(() => setActiveHParam(undefined), []);
+
+  const handleGalleryNext = useCallback(() => {
+    setActiveHParam(prev => {
+      if (!prev) return prev;
+      const index0 = selectedHParams.indexOf(prev[0]);
+      const index1 = selectedHParams.indexOf(prev[1]);
+      if (index0 === -1 || index1 === -1) return prev;
+      if (index0 === selectedHParams.length - 1 && index1 === selectedHParams.length - 1) {
+        return [ selectedHParams[0], selectedHParams[0] ];
+      } else if (index1 === selectedHParams.length - 1) {
+        return [ selectedHParams[index0 + 1], selectedHParams[0] ];
+      } else {
+        return [ selectedHParams[index0], selectedHParams[index1 + 1] ];
+      }
+    });
+  }, [ selectedHParams ]);
+
+  const handleGalleryPrevious = useCallback(() => {
+    setActiveHParam(prev => {
+      if (!prev) return prev;
+      const index0 = selectedHParams.indexOf(prev[0]);
+      const index1 = selectedHParams.indexOf(prev[1]);
+      if (index0 === -1 || index1 === -1) return prev;
+      if (index0 === 0 && index1 === 0) {
+        return [ selectedHParams.last(), selectedHParams.last() ];
+      } else if (index1 === 0) {
+        return [ selectedHParams[index0 - 1], selectedHParams.last() ];
+      } else {
+        return [ selectedHParams[index0], selectedHParams[index1 - 1] ];
+      }
+    });
+  }, [ selectedHParams ]);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -158,6 +199,8 @@ const HpHeatMaps: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ experiment, fullHParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
+  useEffect(() => setGalleryHeight(resize.height), [ resize ]);
+
   if (pageError) {
     return <Message title={pageError.message} />;
   } else if (hasLoaded && !chartData) {
@@ -198,20 +241,24 @@ const HpHeatMaps: React.FC<Props> = ({
                   mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
                   {selectedHParams.map(hParam1 => selectedHParams.map(hParam2 => {
                     const key = generateHpKey(hParam1, hParam2);
-                    return <ScatterPlot
-                      colorScale={colorScale}
-                      height={350}
-                      key={key}
-                      valueLabel={metricNameToStr(selectedMetric)}
-                      values={chartData?.hpMetrics[key]}
-                      width={350}
-                      x={chartData?.hpValues[hParam1] || []}
-                      xLabel={hParam1}
-                      xLogScale={chartData?.hpLogScales[hParam1]}
-                      y={chartData?.hpValues[hParam2] || []}
-                      yLabel={hParam2}
-                      yLogScale={chartData?.hpLogScales[hParam2]}
-                    />;
+                    return (
+                      <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
+                        <ScatterPlot
+                          colorScale={colorScale}
+                          disableZoom
+                          height={350}
+                          valueLabel={metricNameToStr(selectedMetric)}
+                          values={chartData?.hpMetrics[key]}
+                          width={350}
+                          x={chartData?.hpValues[hParam1] || []}
+                          xLabel={hParam1}
+                          xLogScale={chartData?.hpLogScales[hParam1]}
+                          y={chartData?.hpValues[hParam2] || []}
+                          yLabel={hParam2}
+                          yLogScale={chartData?.hpLogScales[hParam2]}
+                        />
+                      </div>
+                    );
                   }))}
                 </Grid>
               </div>
@@ -219,6 +266,26 @@ const HpHeatMaps: React.FC<Props> = ({
           )}
         </div>
       </Section>
+      <GalleryModal
+        height={galleryHeight}
+        visible={!!activeHParam}
+        onCancel={handleGalleryClose}
+        onNext={handleGalleryNext}
+        onPrevious={handleGalleryPrevious}>
+        {activeHParam && <ScatterPlot
+          colorScale={colorScale}
+          height={galleryHeight}
+          valueLabel={metricNameToStr(selectedMetric)}
+          values={chartData?.hpMetrics[generateHpKey(activeHParam[0], activeHParam[1])]}
+          width={350}
+          x={chartData?.hpValues[activeHParam[0]] || []}
+          xLabel={activeHParam[0]}
+          xLogScale={chartData?.hpLogScales[activeHParam[0]]}
+          y={chartData?.hpValues[activeHParam[1]] || []}
+          yLabel={activeHParam[1]}
+          yLogScale={chartData?.hpLogScales[activeHParam[1]]}
+        />}
+      </GalleryModal>
     </div>
   );
 };
