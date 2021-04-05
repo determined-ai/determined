@@ -5,6 +5,7 @@ import { useHistory } from 'react-router';
 
 import Section from 'components/Section';
 import useResize from 'hooks/useResize';
+import useStorage from 'hooks/useStorage';
 import { getResourceAllocationAggregated } from 'services/api';
 
 import css from './ClusterHistoricalUsage.module.scss';
@@ -25,17 +26,22 @@ export enum GroupBy {
   Month = 'month',
 }
 
+const STORAGE_PATH = 'cluster/historical-usage';
+const STORAGE_GROUP_BY_KEY = 'group-by';
+
 const ClusterHistoricalUsage: React.FC = () => {
   const [ chartSeries, setChartSeries ] = useState<ResourceAllocationChartSeries>();
-  const [ filters, setFilters ] = useState<ClusterHistoricalUsageFiltersInterface>({
-    afterDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
-    beforeDate: dayjs().subtract(1, 'day'),
-    groupBy: GroupBy.Day,
-  });
   const [ isCsvModalVisible, setIsCsvModalVisible ] = useState<boolean>(false);
   const [ isUrlParsed, setIsUrlParsed ] = useState<boolean>(false);
   const filterBarRef = useRef<HTMLDivElement>(null);
   const history = useHistory();
+  const storage = useStorage(STORAGE_PATH);
+
+  const [ filters, setFilters ] = useState<ClusterHistoricalUsageFiltersInterface>({
+    afterDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
+    beforeDate: dayjs().subtract(1, 'day'),
+    groupBy: storage.getWithDefault(STORAGE_GROUP_BY_KEY, GroupBy.Day),
+  });
 
   /*
   * When filters changes update the page URL.
@@ -54,9 +60,10 @@ const ClusterHistoricalUsage: React.FC = () => {
 
     // group-by
     searchParams.append('group-by', filters.groupBy);
+    storage.set(STORAGE_GROUP_BY_KEY, filters.groupBy);
 
     history.push('/cluster/historical-usage?' + searchParams.toString());
-  }, [ filters, history, isUrlParsed ]);
+  }, [ filters, history, isUrlParsed, storage ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
