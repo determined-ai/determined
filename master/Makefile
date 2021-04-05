@@ -41,6 +41,7 @@ get-deps:
 	# For hyperparameter importance computation
 	go get github.com/ryanbressler/CloudForest
 	go install github.com/ryanbressler/CloudForest/growforest
+	go mod tidy
 
 .PHONY: build
 build: gen

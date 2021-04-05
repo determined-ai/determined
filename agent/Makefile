@@ -12,6 +12,7 @@ get-deps:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
+	go mod tidy
 
 .PHONY: build
 build:
