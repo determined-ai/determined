@@ -372,13 +372,13 @@ export default class StepImplementation {
 
   @Step('Should show <count> resource pool cards')
   public async checkResourcePoolCardCount(count: string) {
-    const cards = await getElements('div[class^="ResourcePoolCard_base"]');
+    const cards = await getElements('div[class*=ResourcePoolCard_base]');
     assert.strictEqual(cards.length, parseInt(count));
   }
 
   @Step('Should show <count> agents in stats')
   public async checkAgentCountStats(count: string) {
-    const stats = await getElements('div[class^="OverviewStats_base"]');
+    const stats = await getElements('div[class*=OverviewStats_base]');
     assert.strictEqual(stats.length, 3);
     const numAgents = (await stats[0].text()).replace('Connected Agents', '');
     assert.strictEqual(parseInt(numAgents), parseInt(count));

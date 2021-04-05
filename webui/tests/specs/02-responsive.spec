@@ -11,12 +11,12 @@ Specification to test the responsive design elements.
 ## Test mobile view
 
 * Switch to mobile view
-* Should have element "nav[class^='Navigation'] a[aria-label^='Overflow']" present
+* Should have element "nav[class*=Navigation] a[aria-label*=Overflow]" present
 
 ## Test desktop view
 
 * Switch to desktop view
-* Should have element "nav[class^='Navigation'] a[aria-label^='Docs']" present
+* Should have element "nav[class*=Navigation] a[aria-label*=Docs]" present
 
 ## Sign out
 
