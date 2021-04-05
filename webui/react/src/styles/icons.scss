@@ -4,10 +4,10 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('fonts/determined-ai.woff2?zdjkl6') format('woff2'),
-    url('fonts/determined-ai.woff?zdjkl6') format('woff'),
-    url('fonts/determined-ai.ttf?zdjkl6') format('truetype'),
-    url('fonts/determined-ai.svg?zdjkl6#determined-ai') format('svg');
+    url('fonts/determined-ai.woff2?wo5opj') format('woff2'),
+    url('fonts/determined-ai.woff?wo5opj') format('woff'),
+    url('fonts/determined-ai.ttf?wo5opj') format('truetype'),
+    url('fonts/determined-ai.svg?wo5opj#determined-ai') format('svg');
 }
 
 [class^='icon-'],
@@ -28,6 +28,8 @@
 }
 .icon-add-small::before { content: '\e92b'; }
 .icon-arrow-down::before { content: '\ea02'; }
+.icon-arrow-left::before { content: '\ea04'; }
+.icon-arrow-right::before { content: '\ea05'; }
 .icon-arrow-up::before { content: '\ea03'; }
 .icon-dai-logo::before { content: '\e900'; }
 .icon-dashboard::before { content: '\e924'; }
