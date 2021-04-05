@@ -7,8 +7,48 @@ import attrdict
 logger = logging.getLogger(__name__)
 
 
-@dataclasses.dataclass
-class DatasetKwargs:
+class FlexibleDataclass:
+    """
+    A variant of dataclass that allows fields without defaults to be unpopulated for
+    class instances.
+
+    Fields with defaults will always be set as instance attributes.
+    Fields without defaults will be set as attributes only if a value is provided in the init.
+    """
+
+    def __init__(self, **kwargs: Dict[str, Any]) -> None:
+        field_names = [f.name for f in dataclasses.fields(self)]
+
+        # If a dictionary key corresponds to a field, set it as an attribute.
+        for k, v in kwargs.items():
+            if k in field_names:
+                setattr(self, k, v)
+
+        # Otherwise, for fields with defaults, set those attributes.
+        for f in dataclasses.fields(self):
+            if not hasattr(self, f.name) and f.default is not dataclasses.MISSING:
+                setattr(self, f.name, f.default)
+
+    def as_dict(self) -> Dict[str, Any]:
+        output = {}
+        for f in dataclasses.fields(self):
+            if hasattr(self, f.name):
+                output[f.name] = getattr(self, f.name)
+        return output
+
+    def __repr__(self) -> str:
+        fields_str = ", ".join(
+            [
+                "{}={}".format(f.name, getattr(self, f.name))
+                for f in dataclasses.fields(self)
+                if hasattr(self, f.name)
+            ]
+        )
+        return self.__class__.__qualname__ + f"({fields_str})"
+
+
+@dataclasses.dataclass(init=False, repr=False)
+class DatasetKwargs(FlexibleDataclass):
     dataset_name: Optional[str] = dataclasses.field(
         default=None,
         metadata={
@@ -46,9 +86,29 @@ class DatasetKwargs:
     )
 
 
-@dataclasses.dataclass
-class ConfigKwargs:
-    pretrained_model_name_or_path: str = dataclasses.field()
+@dataclasses.dataclass(init=False, repr=False)
+class ConfigKwargs(FlexibleDataclass):
+    # Fields without defaults will be set as attributes only if a value is provided in the init.
+    num_labels: Optional[int] = dataclasses.field(
+        metadata={
+            "help": "Number of labels to use in the last layer added to the model, typically "
+            "for a classification task."
+        },
+    )
+    finetuning_task: Optional[str] = dataclasses.field(
+        metadata={
+            "help": "Name of the task used to fine-tune the model. This can be used when "
+            "converting from an original PyTorch checkpoint."
+        },
+    )
+
+    # Fields with defaults should always be set.
+    pretrained_model_name_or_path: Optional[str] = dataclasses.field(
+        default=None,
+        metadata={
+            "help": "Path to pretrained model or model identifier from huggingface.co/models"
+        },
+    )
     cache_dir: Optional[str] = dataclasses.field(
         default=None,
         metadata={
@@ -70,25 +130,25 @@ class ConfigKwargs:
             "(necessary to use this script with private models)."
         },
     )
-    num_labels: Optional[int] = dataclasses.field(
-        default=2,
+
+
+@dataclasses.dataclass(init=False, repr=False)
+class TokenizerKwargs(FlexibleDataclass):
+    # Fields without defaults will be set as attributes only if a value is provided in the init.
+    do_lower_case: Optional[bool] = dataclasses.field(
         metadata={
-            "help": "Number of labels to use in the last layer added to the model, typically "
-            "for a classification task."
+            "help": "arg to indicate if tokenizer should do lower case in "
+            "AutoTokenizer.from_pretrained()"
         },
     )
-    finetuning_task: Optional[str] = dataclasses.field(
+
+    # Fields with defaults should always be set.
+    pretrained_model_name_or_path: Optional[str] = dataclasses.field(
         default=None,
         metadata={
-            "help": "Name of the task used to fine-tune the model. This can be used when "
-            "converting from an original PyTorch checkpoint."
+            "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
     )
-
-
-@dataclasses.dataclass
-class TokenizerKwargs:
-    pretrained_model_name_or_path: str = dataclasses.field()
     cache_dir: Optional[str] = dataclasses.field(
         default=None,
         metadata={
@@ -120,7 +180,7 @@ class TokenizerKwargs:
 
 
 @dataclasses.dataclass
-class ModelKwargs:
+class ModelKwargs(FlexibleDataclass):
     pretrained_model_name_or_path: str = dataclasses.field()
     cache_dir: Optional[str] = dataclasses.field(
         default=None,
@@ -201,7 +261,9 @@ class LRSchedulerKwargs:
 
 
 def parse_dict_to_dataclasses(
-    dataclass_types: Tuple[Any, ...], args: Union[Dict, attrdict.AttrDict], as_dict: bool = False
+    dataclass_types: Tuple[Any, ...],
+    args: Union[Dict[str, Any], attrdict.AttrDict],
+    as_dict: bool = False,
 ) -> Tuple[Any, ...]:
     """
     This function will fill in values for a dataclass if the target key is found
@@ -222,7 +284,10 @@ def parse_dict_to_dataclasses(
         inputs = {k: v for k, v in args.items() if k in keys}
         obj = dtype(**inputs)
         if as_dict:
-            obj = attrdict.AttrDict(dataclasses.asdict(obj))
+            try:
+                obj = attrdict.AttrDict(obj.as_dict())
+            except AttributeError:
+                obj = attrdict.AttrDict(dataclasses.asdict(obj))
         outputs.append(obj)
     return (*outputs,)
 
@@ -243,10 +308,6 @@ def default_parse_config_tokenizer_model_kwargs(
     """
     if not isinstance(hparams, attrdict.AttrDict):
         hparams = attrdict.AttrDict(hparams)
-    if "num_labels" not in hparams:
-        logger.warning(
-            "The num_labels field is not set in hyperparameters. It will be set to 2 by default."
-        )
     config_args, tokenizer_args, model_args = parse_dict_to_dataclasses(
         (ConfigKwargs, TokenizerKwargs, ModelKwargs), hparams, as_dict=True
     )

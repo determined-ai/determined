@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import attrdict
@@ -24,12 +25,15 @@ MODEL_MODES = {
     "question-answering": transformers.AutoModelForQuestionAnswering,
 }
 
+logger = logging.getLogger(__name__)
+
 
 def build_using_auto(
     config_kwargs: Union[Dict, attrdict.AttrDict],
     tokenizer_kwargs: Union[Dict, attrdict.AttrDict],
     model_mode: str,
     model_kwargs: Union[Dict, attrdict.AttrDict],
+    use_pretrained_weights: bool = True,
 ) -> Tuple[
     transformers.PretrainedConfig,  # This is how it's named in transformers
     transformers.PreTrainedTokenizer,
@@ -54,8 +58,11 @@ def build_using_auto(
     model_builder = MODEL_MODES[model_mode]
     if isinstance(model_kwargs, hf_parse.ModelKwargs):
         model_kwargs = dataclasses.asdict(model_kwargs)
-    model_kwargs["config"] = config
-    model = model_builder.from_pretrained(**model_kwargs)
+    if use_pretrained_weights:
+        model_kwargs["config"] = config
+        model = model_builder.from_pretrained(**model_kwargs)
+    else:
+        model = model_builder.from_config(config)
     return config, tokenizer, model
 
 
@@ -179,7 +186,7 @@ def default_load_dataset(
         data_files = {}
         if data_config.train_file is not None:
             data_files["train"] = data_config.train_file
-        if data_config["validation_file"] is not None:
+        if data_config.validation_file is not None:
             data_files["validation"] = data_config.validation_file
         extension = data_config.train_file.split(".")[-1]
         if extension == "txt":
@@ -206,22 +213,27 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
             self.hparams = attrdict.AttrDict(context.get_hparams())
         if not hasattr(self, "data_config"):
             self.data_config = attrdict.AttrDict(context.get_data_config())
+        if not hasattr(self, "exp_config"):
+            self.exp_config = attrdict.AttrDict(context.get_experiment_config())
         # Check to make sure all expected hyperparameters are set.
         self.check_hparams()
-        print(self.hparams)
 
         # Parse hparams and data_config.
         (
-            config_kwargs,
-            tokenizer_kwargs,
-            model_kwargs,
+            self.config_kwargs,
+            self.tokenizer_kwargs,
+            self.model_kwargs,
         ) = hf_parse.default_parse_config_tokenizer_model_kwargs(self.hparams)
         optimizer_kwargs, scheduler_kwargs = hf_parse.default_parse_optimizer_lr_scheduler_kwargs(
             self.hparams
         )
 
         self.config, self.tokenizer, self.model = build_using_auto(
-            config_kwargs, tokenizer_kwargs, self.hparams.model_mode, model_kwargs
+            self.config_kwargs,
+            self.tokenizer_kwargs,
+            self.hparams.model_mode,
+            self.model_kwargs,
+            use_pretrained_weights=self.hparams.use_pretrained_weights,
         )
         self.model = self.context.wrap_model(self.model)
 
@@ -246,12 +258,23 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         )
 
     def check_hparams(self) -> None:
+        # We require hparams to be an AttrDict.
+        if not isinstance(self.hparams, attrdict.AttrDict):
+            self.hparams = attrdict.AttrDict(self.hparams)
+
         if "num_training_steps" not in self.hparams:
             # Compute the total number of training iterations used to configure the
             # learning rate scheduler.
-            self.hparams["num_training_steps"] = utils.compute_num_training_steps(
+            self.hparams.num_training_steps = utils.compute_num_training_steps(
                 self.context.get_experiment_config(), self.context.get_global_batch_size()
             )
+        if "use_pretrained_weights" not in self.hparams:
+            logger.warning(
+                "We will be using pretrained weights for the model by default."
+                "If you want to train the model from scratch, you can set a hyperparameter "
+                "named use_pretrained_weights to false in the experiment config."
+            )
+            self.hparams.use_pretrained_weights = True
 
         required_hps = ("use_apex_amp", "model_mode", "num_training_steps")
         for hp in required_hps:

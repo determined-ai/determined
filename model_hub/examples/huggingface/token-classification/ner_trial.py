@@ -8,7 +8,6 @@ import transformers
 
 import determined.pytorch as det_torch
 import model_hub.huggingface as hf
-import model_hub.utils as utils
 
 
 class NERTrial(hf.BaseTransformerTrial):
@@ -17,7 +16,6 @@ class NERTrial(hf.BaseTransformerTrial):
         self.context = context
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())
-        self.logger.info(self.context.get_experiment_config())
 
         # Load dataset and get metadata.
         # This needs to be done before we initialize the HF config, tokenizer, and model
@@ -27,6 +25,7 @@ class NERTrial(hf.BaseTransformerTrial):
         self.hparams["num_labels"] = datasets_metadata.num_labels
 
         super(NERTrial, self).__init__(context)
+        self.logger.info(self.config)
 
         # We need to create the tokenized dataset after init because we need to model and
         # tokenizer to be available.
@@ -39,12 +38,21 @@ class NERTrial(hf.BaseTransformerTrial):
             datasets_metadata.label_column_name,
             datasets_metadata.label_to_id,
         )
+        train_length = len(self.tokenized_datasets["train"])
+        self.logger.info("training records: {}".format(train_length))
+        if (
+            "records_per_epoch" in self.exp_config
+            and train_length != self.exp_config["records_per_epoch"]
+        ):
+            self.logger.warning(
+                "number of train records {} does not match records_per_epoch of {}".format(
+                    train_length, self.exp_config["records_per_epoch"]
+                )
+            )
 
         # Create metric reducer
         self.reducer = context.experimental.wrap_reducer(
-            utils.PredLabelFnReducer(
-                functools.partial(ner_utils.compute_metrics, datasets_metadata.label_list)
-            ),
+            functools.partial(ner_utils.compute_metrics, datasets_metadata.label_list),
             for_training=False,
         )
 
@@ -67,7 +75,7 @@ class NERTrial(hf.BaseTransformerTrial):
         tmp_eval_loss, logits = outputs[:2]
         preds = logits.detach().cpu().numpy()
         out_label_ids = batch["labels"].detach().cpu().numpy()  # type: ignore
-        self.reducer.update(preds, out_label_ids)  # type: ignore
+        self.reducer.update((preds, out_label_ids))  # type: ignore
         # Although we are returning the empty dictionary below, we will still get the metrics from
         # custom reducer that we passed to the context during initialization.
         return {}
