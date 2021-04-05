@@ -1,9 +1,7 @@
-from typing import Any, Callable, List, Union
+from typing import List, Union
 
 import numpy as np
 import torch
-
-import determined.pytorch as det_torch
 
 
 def expand_like(arrays: List[np.ndarray], fill: float = -100) -> np.ndarray:
@@ -46,40 +44,4 @@ def numpify(x: Union[List, np.ndarray, torch.Tensor]) -> np.ndarray:
         return np.array(x)
     if isinstance(x, torch.Tensor):
         return x.cpu().numpy()
-    raise NotImplementedError
-
-
-class PredLabelFnReducer(det_torch.MetricReducer):
-    def __init__(self, fn: Callable):
-        """
-        Custom reducer that will apply the provided fn to predictions and labels aggregated
-        across all ranks.
-
-        We will collected batched predictions and labels in each slot.  Then the batched
-        predictions and labels will be stacked together along the first dimensions.
-        The batch predictions can differ in the second dimension and we will simply fill
-        to the max size with -100.
-
-        See the expand_like function above for more details.
-        """
-        self.fn = fn
-        self.reset()
-
-    def reset(self) -> None:
-        self.predictions: List[np.ndarray] = []
-        self.labels: List[np.ndarray] = []
-
-    def update(
-        self,
-        preds: Union[List, np.ndarray, torch.Tensor],
-        labels: Union[List, np.ndarray, torch.Tensor],
-    ) -> None:
-        self.predictions.append(numpify(preds))
-        self.labels.append(numpify(labels))
-
-    def per_slot_reduce(self) -> np.ndarray:
-        return expand_like(self.predictions), expand_like(self.labels)
-
-    def cross_slot_reduce(self, per_slot_metrics: List[np.ndarray]) -> Any:
-        predictions, labels = zip(*per_slot_metrics)
-        return self.fn(expand_like(predictions), expand_like(labels))
+    raise TypeError("Expected input of type List, np.ndarray, or torch.Tensor.")

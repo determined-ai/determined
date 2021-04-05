@@ -21,6 +21,4 @@ docker push "$tag"
 mkdir -p "$artifacts"
 
 log_file="$artifacts/publish-$log_name"
-(
-    echo "${underscore_name}"
-) > "$log_file"
+echo "${underscore_name}" > "$log_file"

@@ -17,10 +17,32 @@ import torch
 from seqeval import metrics as seq_metrics
 
 from model_hub import huggingface as hf
+from model_hub import utils
+
+# The functions below are largely derived from the associated transformers example.
+#
+# Copyright 2020 The HuggingFace Team. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============================================================================================
 
 
-def compute_metrics(label_list: List[Any], predictions: np.ndarray, labels: np.ndarray) -> Dict:
+def compute_metrics(label_list: List[Any], pred_labels) -> Dict:
+    predictions, labels = zip(*pred_labels)
+    predictions = utils.expand_like(predictions)
     predictions = np.argmax(predictions, axis=2)
+
+    labels = utils.expand_like(labels)
 
     # Remove ignored index (special tokens)
     true_predictions = [

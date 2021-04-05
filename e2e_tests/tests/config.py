@@ -164,6 +164,12 @@ def set_random_seed(config: Dict[Any, Any], seed: int) -> Dict[Any, Any]:
     return config
 
 
+def set_hparam(config: Dict[Any, Any], name: str, value: Any) -> Dict[Any, Any]:
+    config = config.copy()
+    config["hyperparameters"][name] = {"type": "const", "val": value}
+    return config
+
+
 def set_perform_initial_validation(config: Dict[Any, Any], init_val: bool) -> Dict[Any, Any]:
     config = config.copy()
     config["perform_initial_validation"] = init_val

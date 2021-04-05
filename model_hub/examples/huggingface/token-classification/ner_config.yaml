@@ -1,29 +1,17 @@
 description: ner_trial
 hyperparameters:
-  use_apex_amp: false
   pretrained_model_name_or_path: bert-base-uncased
   model_mode: token-classification
   finetuning_task: ner
+  use_pretrained_weights: true
+  use_apex_amp: false
   # Training Args
-  global_batch_size: 16
+  global_batch_size: 8
   learning_rate: 5e-5
   adam_epsilon: 1e-8
   weight_decay: 0
   lr_scheduler_type: linear
   num_warmup_steps: 0
-environment:
-    image: determinedai/model-hub-transformers:0.14.6.dev0
-resources:
-  slots_per_trial: 2
-min_validation_period: 
-  batches: 500
-records_per_epoch: 14041
-searcher:
-  name: single
-  metric: accuracy_score
-  max_length:
-    epochs: 3
-  smaller_is_better: false
 data:
   dataset_name: conll2003
   dataset_config_name: null
@@ -34,4 +22,22 @@ data:
   overwrite_cache: false
   pad_to_max_length: false
   label_all_tokens: false
+# Number of records per epoch differs based on max_seq_length.
+records_per_epoch: 14041
+min_validation_period:
+  batches: 500
+searcher:
+  name: single
+  metric: accuracy_score
+  max_length:
+    epochs: 3
+  smaller_is_better: false
+environment:
+  image: determinedai/model-hub-transformers:0.15.2.dev0
+resources:
+  slots_per_trial: 1
+# We add a bind_mount here so that cached data, tokenized data, and models will be saved.
+bind_mounts:
+  - host_path: /tmp
+    container_path: /root/.cache
 entrypoint: ner_trial:NERTrial

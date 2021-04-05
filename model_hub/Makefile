@@ -4,9 +4,9 @@ SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
 ARTIFACTS_DIR := /tmp/artifacts
 
 # Model-hub library environments will be built on top of the default GPU and CPU images in master/pkg/model/defaults.go
-DEFAULT_GPU_IMAGE := determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-1c4ea10
-TRANSFORMERS_VERSION := 4.3.3
-DATASETS_VERSION := 1.3.0
+DEFAULT_GPU_IMAGE := determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-da9ba40
+TRANSFORMERS_VERSION := 4.4.2
+DATASETS_VERSION := 1.5.0
 TRANSFORMERS_ENVIRONMENT_ROOT := determinedai/model-hub-transformers
 
 .PHONY: clean
@@ -86,9 +86,4 @@ build-docker: build-transformers
 
 .PHONY: publish-docker
 publish-docker: publish-transformers
-
-# This will replace the environment field in the experiment configs at run time for CI.
-.PHONY: update-config-envs-dev
-update-config-envs:
-	./docker/update-experiment-config-envs.sh model-hub-transformers:$(SHORT_GIT_HASH)
 

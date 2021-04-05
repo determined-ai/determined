@@ -230,6 +230,7 @@ commands:
             - install-wheel:
                 package-name: determined
                 package-location: ~/project/harness
+      - when:
           condition: <<parameters.model-hub>>
           steps:
             - install-wheel:
@@ -1387,7 +1388,6 @@ jobs:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
-      - run: make -C model_hub update-config-envs
       - when:
           condition: <<parameters.enable-tls>>
           steps:
