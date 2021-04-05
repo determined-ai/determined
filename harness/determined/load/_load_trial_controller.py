@@ -3,7 +3,7 @@ import pathlib
 from typing import Optional, Tuple, Type, cast
 
 import determined as det
-from determined import horovod, load, tensorboard, workload, metrics
+from determined import horovod, load, tensorboard, workload
 from determined.common import check
 
 
@@ -129,7 +129,6 @@ def prepare_controller(
     """
 
     if env.experiment_config.native_enabled():
-        # TODO: Add metrics thread to native
         controller = load_native_implementation_controller(
             env, workloads, load_path, rendezvous_info, hvd_config
         )

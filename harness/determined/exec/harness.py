@@ -37,7 +37,7 @@ import simplejson
 
 import determined as det
 import determined.common
-from determined import gpu, horovod, layers, load, workload, metrics
+from determined import gpu, horovod, layers, load, workload
 from determined.common import constants, storage
 
 ENVIRONMENT_VARIABLE_KEYS = {
@@ -135,7 +135,6 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 )
                 subproc.run()
             else:
-
                 if env.experiment_config.debug_enabled():
                     faulthandler.dump_traceback_later(30, repeat=True)
 
@@ -165,7 +164,6 @@ def main() -> None:
     use_tls = distutils.util.strtobool(os.environ.get("DET_USE_TLS", "false"))
     master_cert_file = os.environ.get("DET_MASTER_CERT_FILE")
     master_cert_name = os.environ.get("DET_MASTER_CERT_NAME")
-
     agent_id = os.environ["DET_AGENT_ID"]
     container_id = os.environ["DET_CONTAINER_ID"]
     hparams = simplejson.loads(os.environ["DET_HPARAMS"])

@@ -1,6 +1,5 @@
 # After 2 epochs, model should hit 85.76/88.87 F1/EM
 description: ALBert_SQuAD_PyTorch_1gpu
-max_restarts: 0
 hyperparameters:
     global_batch_size: 2
     learning_rate: 5e-5
