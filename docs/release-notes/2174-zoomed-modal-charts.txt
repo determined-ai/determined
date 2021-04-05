@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: Add gallery mode to HP Scatter Plots and HP Heatmap sections
+   of HP visualizations to allow users to inspect each scatter plot in
+   full detail.
