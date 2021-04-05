@@ -16,19 +16,16 @@ import TableBatch from 'components/TableBatch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
-import {
-  Commands, Notebooks, Shells, Tensorboards, useFetchCommands, useFetchNotebooks, useFetchShells,
-  useFetchTensorboards,
-} from 'contexts/Commands';
 import Users, { useFetchUsers } from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
-import { killTask } from 'services/api';
+import { getCommands, getNotebooks, getShells, getTensorboards, killTask } from 'services/api';
 import { ApiSorter } from 'services/types';
 import { ShirtSize } from 'themes';
 import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
+import { isEqual } from 'utils/data';
 import { alphanumericSorter, numericSorter } from 'utils/sort';
 import { filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
@@ -75,13 +72,8 @@ const STORAGE_FILTERS_KEY = 'filters';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const TaskList: React.FC = () => {
-  const [ canceler ] = useState(new AbortController());
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
-  const commands = Commands.useStateContext();
-  const notebooks = Notebooks.useStateContext();
-  const shells = Shells.useStateContext();
-  const tensorboards = Tensorboards.useStateContext();
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,
@@ -90,6 +82,8 @@ const TaskList: React.FC = () => {
       username: auth.user?.username,
     },
   );
+  const [ canceler ] = useState(new AbortController());
+  const [ tasks, setTasks ] = useState<CommandTask[]>([]);
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
@@ -98,17 +92,8 @@ const TaskList: React.FC = () => {
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
   const fetchUsers = useFetchUsers(canceler);
-  const fetchCommands = useFetchCommands(canceler);
-  const fetchNotebooks = useFetchNotebooks(canceler);
-  const fetchShells = useFetchShells(canceler);
-  const fetchTensorboards = useFetchTensorboards(canceler);
 
-  const tasks = [ commands, notebooks, shells, tensorboards ];
-
-  const loadedTasks = tasks
-    .map(src => src || [])
-    .reduce((acc, src) => [ ...acc, ...src ], [])
-    .map(commandToTask);
+  const loadedTasks = tasks.map(commandToTask);
 
   const hasLoaded = tasks.reduce((acc, src) => acc && !!src, true);
 
@@ -134,19 +119,28 @@ const TaskList: React.FC = () => {
     return false;
   }, [ selectedTasks ]);
 
+  const fetchTasks = useCallback(async () => {
+    try {
+      const [ commands, notebooks, shells, tensorboards ] = await Promise.all([
+        getCommands({ signal: canceler.signal }),
+        getNotebooks({ signal: canceler.signal }),
+        getShells({ signal: canceler.signal }),
+        getTensorboards({ signal: canceler.signal }),
+      ]);
+      const newTasks = [ ...commands, ...notebooks, ...shells, ...tensorboards ];
+      setTasks(prev => {
+        if (isEqual(prev, newTasks)) return prev;
+        return newTasks;
+      });
+    } catch (e) {
+      handleError({ message: 'Unable to fetch tasks.', silent: true, type: ErrorType.Api });
+    }
+  }, [ canceler ]);
+
   const fetchAll = useCallback((): void => {
     fetchUsers();
-    fetchCommands();
-    fetchNotebooks();
-    fetchShells();
-    fetchTensorboards();
-  }, [
-    fetchUsers,
-    fetchCommands,
-    fetchNotebooks,
-    fetchShells,
-    fetchTensorboards,
-  ]);
+    fetchTasks();
+  }, [ fetchTasks, fetchUsers ]);
 
   const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
   const handleSourceDismiss = useCallback(() => setSourcesModal(undefined), []);

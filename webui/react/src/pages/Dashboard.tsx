@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
@@ -9,22 +9,21 @@ import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
-import {
-  Commands, Notebooks, Shells, Tensorboards,
-  useFetchCommands, useFetchNotebooks, useFetchShells, useFetchTensorboards,
-} from 'contexts/Commands';
 import Users, { useFetchUsers } from 'contexts/Users';
 import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import { getExperiments } from 'services/api';
+import {
+  getCommands, getExperiments, getNotebooks, getShells, getTensorboards,
+} from 'services/api';
 import { encodeExperimentState } from 'services/decoder';
 import { ShirtSize } from 'themes';
 import {
   ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,
   ResourceType, RunState, TaskFilters, TaskType,
 } from 'types';
+import { isEqual } from 'utils/data';
 import { filterTasks } from 'utils/task';
 import { activeCommandStates, activeRunStates, commandToTask, experimentToTask } from 'utils/types';
 
@@ -44,8 +43,13 @@ const defaultFilters: TaskFilters = {
 const STORAGE_PATH = 'dashboard';
 const STORAGE_FILTERS_KEY = 'filters';
 
+const countActiveCommand = (commands: CommandTask[]): number => {
+  return commands.filter(command => activeCommandStates.includes(command.state)).length;
+};
+
 const Dashboard: React.FC = () => {
   const auth = Auth.useStateContext();
+  const overview = ClusterOverview.useStateContext();
   const users = Users.useStateContext();
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(
@@ -56,20 +60,18 @@ const Dashboard: React.FC = () => {
     },
   );
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
-  const overview = ClusterOverview.useStateContext();
-  const commands = Commands.useStateContext();
-  const notebooks = Notebooks.useStateContext();
-  const shells = Shells.useStateContext();
-  const tensorboards = Tensorboards.useStateContext();
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
+  const [ tasks, setTasks ] = useState<CommandTask[]>();
+  const [ activeTaskTally, setActiveTaskTally ] = useState({
+    [CommandType.Command]: 0,
+    [CommandType.Notebook]: 0,
+    [CommandType.Shell]: 0,
+    [CommandType.Tensorboard]: 0,
+  });
   const [ activeExperimentCount, setActiveExperimentCount ] = useState<number>();
 
   const fetchUsers = useFetchUsers(canceler);
-  const fetchCommands = useFetchCommands(canceler);
-  const fetchNotebooks = useFetchNotebooks(canceler);
-  const fetchShells = useFetchShells(canceler);
-  const fetchTensorboards = useFetchTensorboards(canceler);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
@@ -89,7 +91,10 @@ const Dashboard: React.FC = () => {
         },
         { signal: canceler.signal },
       );
-      setExperiments(response.experiments);
+      setExperiments(prev => {
+        if (isEqual(prev, response.experiments)) return prev;
+        return response.experiments;
+      });
     } catch (e) {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
     }
@@ -111,23 +116,40 @@ const Dashboard: React.FC = () => {
     }
   }, [ canceler, setActiveExperimentCount ]);
 
+  const fetchTasks = useCallback(async () => {
+    try {
+      const [ commands, notebooks, shells, tensorboards ] = await Promise.all([
+        getCommands({ signal: canceler.signal }),
+        getNotebooks({ signal: canceler.signal }),
+        getShells({ signal: canceler.signal }),
+        getTensorboards({ signal: canceler.signal }),
+      ]);
+      setActiveTaskTally(prev => {
+        const newTally = {
+          [CommandType.Command]: countActiveCommand(commands),
+          [CommandType.Notebook]: countActiveCommand(notebooks),
+          [CommandType.Shell]: countActiveCommand(shells),
+          [CommandType.Tensorboard]: countActiveCommand(tensorboards),
+        };
+        if (!isEqual(prev, newTally)) return newTally;
+        return prev;
+      });
+      setTasks(prev => {
+        const newTasks = [ ...commands, ...notebooks, ...shells, ...tensorboards ];
+        if (isEqual(prev, newTasks)) return prev;
+        return newTasks;
+      });
+    } catch (e) {
+      handleError({ message: 'Unable to fetch tasks.', silent: true, type: ErrorType.Api });
+    }
+  }, [ canceler ]);
+
   const fetchAll = useCallback(() => {
     fetchUsers();
     fetchExperiments();
     fetchActiveExperiments();
-    fetchCommands();
-    fetchNotebooks();
-    fetchShells();
-    fetchTensorboards();
-  }, [
-    fetchUsers,
-    fetchExperiments,
-    fetchActiveExperiments,
-    fetchCommands,
-    fetchNotebooks,
-    fetchShells,
-    fetchTensorboards,
-  ]);
+    fetchTasks();
+  }, [ fetchUsers, fetchExperiments, fetchActiveExperiments, fetchTasks ]);
 
   usePolling(fetchAll);
 
@@ -135,41 +157,12 @@ const Dashboard: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  /* Overview */
-
-  const countActiveCommand = (commands: CommandTask[]): number => {
-    return commands.filter(command => activeCommandStates.includes(command.state)).length;
-  };
-
-  const activeTaskTally = {
-    [CommandType.Command]: countActiveCommand(commands || []),
-    [CommandType.Notebook]: countActiveCommand(notebooks || []),
-    [CommandType.Shell]: countActiveCommand(shells || []),
-    [CommandType.Tensorboard]: countActiveCommand(tensorboards || []),
-    Experiment: activeExperimentCount,
-  };
-
   /* Recent Tasks */
 
-  const showTasksSpinner = (
-    !experiments ||
-    !commands ||
-    !notebooks ||
-    !shells ||
-    !tensorboards
-  );
-
-  const genericCommands = [
-    ...(commands || []),
-    ...(notebooks || []),
-    ...(shells || []),
-    ...(tensorboards || []),
-  ];
-
-  const loadedTasks = [
+  const loadedTasks = useMemo(() => ([
     ...(experiments || []).map(experimentToTask),
-    ...genericCommands.map(commandToTask),
-  ];
+    ...(tasks || []).map(commandToTask),
+  ]), [ experiments, tasks ] );
 
   const sortedTasks = loadedTasks.sort(
     (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,
@@ -178,17 +171,11 @@ const Dashboard: React.FC = () => {
   const filteredTasks = filterTasks<TaskType, RecentTask>(sortedTasks, filters, users || [])
     .slice(0, filters.limit);
 
-  const tasks = filteredTasks.map((props: RecentTask) => {
-    return <TaskCard key={props.id} {...props} />;
-  });
-
   const handleFilterChange = useCallback((filters: TaskFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
     setExperiments(undefined);
   }, [ setExperiments, setFilters, storage ]);
-
-  const taskFilter = <TaskFilter filters={filters} onChange={handleFilterChange} />;
 
   return (
     <Page docTitle="Overview" id="dashboard">
@@ -205,8 +192,8 @@ const Dashboard: React.FC = () => {
             {overview[ResourceType.CPU].available}
             <small>/{overview[ResourceType.CPU].total}</small>
           </OverviewStats> : null}
-          {activeTaskTally.Experiment ? <OverviewStats title="Active Experiments">
-            {activeTaskTally.Experiment}
+          {activeExperimentCount ? <OverviewStats title="Active Experiments">
+            {activeExperimentCount}
           </OverviewStats> : null}
           {activeTaskTally[CommandType.Notebook] ? <OverviewStats title="Active Notebooks">
             {activeTaskTally[CommandType.Notebook]}
@@ -222,10 +209,17 @@ const Dashboard: React.FC = () => {
           </OverviewStats> : null}
         </Grid>
       </Section>
-      <Section divider={true} loading={showTasksSpinner} options={taskFilter} title="Recent Tasks">
-        {tasks.length !== 0
-          ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
-          : <Message
+      <Section
+        divider
+        loading={!experiments || !tasks}
+        options={<TaskFilter filters={filters} onChange={handleFilterChange} />}
+        title="Recent Tasks">
+        {filteredTasks.length !== 0
+          ? (
+            <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>
+              {filteredTasks.map((props: RecentTask) => <TaskCard key={props.id} {...props} />)}
+            </Grid>
+          ) : <Message
             title="No recent tasks matching the current filters"
             type={MessageType.Empty} />
         }

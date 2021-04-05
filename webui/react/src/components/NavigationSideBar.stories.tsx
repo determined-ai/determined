@@ -4,12 +4,12 @@ import Auth from 'contexts/Auth';
 import { AuthDecorator, ClusterOverviewDecorator, UIDecorator } from 'storybook/ContextDecorators';
 import RouterDecorator from 'storybook/RouterDecorator';
 
-import Navigation from './Navigation';
+import NavigationSideBar from './NavigationSideBar';
 
 export default {
-  component: Navigation,
+  component: NavigationSideBar,
   decorators: [ AuthDecorator, ClusterOverviewDecorator, RouterDecorator, UIDecorator ],
-  title: 'Navigation',
+  title: 'NavigationSideBar',
 };
 
 const NavigationLoggedIn = () => {
@@ -19,7 +19,7 @@ const NavigationLoggedIn = () => {
     setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true } });
   }, [ setAuth ]);
 
-  return <Navigation />;
+  return <NavigationSideBar />;
 };
 
 export const Default = (): React.ReactNode => (
