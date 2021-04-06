@@ -38,10 +38,6 @@ including:
    <experiment-configuration_single-searcher-max-length>` in most
    searchers
 
--  :ref:`searcher.budget
-   <experiment-configuration_adaptive-advanced-budget>` when using the
-   ``adaptive`` searcher
-
 -  :ref:`searcher.length_per_round
    <experiment-configuration_length-per-round>` when using the ``pbt``
    searcher
