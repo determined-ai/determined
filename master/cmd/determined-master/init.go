@@ -47,7 +47,7 @@ func (c configKey) FlagName() string {
 }
 
 func registerEnv(name configKey) {
-	v.BindEnv(name.AccessPath(), name.EnvName())
+	_ = v.BindEnv(name.AccessPath(), name.EnvName())
 }
 
 func registerString(flags *pflag.FlagSet, name configKey, value string, usage string) {
