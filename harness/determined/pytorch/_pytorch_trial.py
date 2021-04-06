@@ -252,12 +252,15 @@ class PyTorchTrialController(det.LoopTrialController):
         """
         This function aims at automatically step a LR scheduler. It should be called per batch.
         """
+        print('step mode is ', lr_scheduler._step_mode)
         if lr_scheduler._step_mode == pytorch.LRScheduler.StepMode.STEP_EVERY_BATCH:
             if (batch_idx + 1) % lr_scheduler._frequency == 0:
+                print(f'stepping batchid {batch_idx}')
                 lr_scheduler.step()
         elif lr_scheduler._step_mode == pytorch.LRScheduler.StepMode.STEP_EVERY_EPOCH:
             mod = (batch_idx + 1) % (len(self.training_loader) * lr_scheduler._frequency)
             if mod == 0 or mod < self.hvd_config.aggregation_frequency:
+                print(f'stepping batchid {batch_idx}')
                 lr_scheduler.step()
 
     def _should_update_scaler(self) -> bool:

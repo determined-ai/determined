@@ -371,6 +371,30 @@ RestorableMakeControllerFn = Callable[
 ]
 
 
+def train_and_validate(
+    make_trial_controller_fn: Callable[[workload.Stream], det.TrialController],
+    steps: int = 10,
+) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
+    metrics = {'t': [], 'v': []}
+
+    def make_workloads(
+        steps: int
+    ) -> workload.Stream:
+        trainer = TrainAndValidate()
+
+        yield from trainer.send(steps, validation_freq=1, scheduling_unit=10)
+        tm, vm = trainer.result()
+        metrics['t'] += tm
+        metrics['v'] += vm
+
+        yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+    controller = make_trial_controller_fn(make_workloads(steps))
+    controller.run()
+
+    return (metrics['t'], metrics['v'])
+
+
 def checkpointing_and_restoring_test(
     make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: Path
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
@@ -395,7 +419,7 @@ def checkpointing_and_restoring_test(
     ) -> workload.Stream:
         trainer = TrainAndValidate()
 
-        yield from trainer.send(steps, validation_freq=1, scheduling_unit=1000)
+        yield from trainer.send(steps, validation_freq=1, scheduling_unit=10)
         tm, vm = trainer.result()
         training_metrics[tag] += tm
         validation_metrics[tag] += vm

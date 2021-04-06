@@ -95,27 +95,36 @@ class TestLightningAdapter:
                 self.last_lr = None
 
             def read_lr_value(self):
+                # for lrs in self._pls.lr_schedulers:
+                #     print("Current learning rate is A: {}".format(lrs.get_last_lr()))
                 for param_group in self._pls.optimizers[0].param_groups:
                     print("Current learning rate is: {}".format(param_group['lr']))
                 return self._pls.optimizers[0].param_groups[0]["lr"]
 
             def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int):
+                print(f'batch id {batch_idx}')
                 if self.last_lr is None:
                     self.last_lr = self.read_lr_value()
-                # else:
-                #     assert self.last_lr > self.read_lr_value()
+                else:
+                    assert self.last_lr > self.read_lr_value()
                 return super().train_batch(batch, epoch_idx, batch_idx)
 
         def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
         ) -> det.TrialController:
 
+            updated_hparams = {
+                "global_batch_size": 20,
+                **self.hparams,
+            }
+
+
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=OneVarLA,
-                hparams=self.hparams,
+                hparams=updated_hparams,
                 workloads=workloads,
                 load_path=load_path,
                 trial_seed=self.trial_seed,
             )
 
-        utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+        utils.train_and_validate(make_trial_controller_fn)

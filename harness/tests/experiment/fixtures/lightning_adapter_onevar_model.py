@@ -33,12 +33,18 @@ class OneVarLM(pl.LightningModule):
     def configure_optimizers(self):
         opt = torch.optim.SGD(self.model.parameters(), self.lr)
         import random
-        sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda e: random.random())
+        sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1)
+        # sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda e: random.random())
+        # sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda e: e+0.001)
+        # return [opt], [sched]
         return {
-            'scheduler': sched, # The LR scheduler instance (required)
+            # error in lightning doc? a17c941cc source/common/optimizers.rst l:231
+            'lr_scheduler': {
+                'scheduler': sched,
+                'frequency': 1,
+                'interval': 'step',
+            },
             'optimizer': opt,
-            'interval': 'batch', # The unit of the scheduler's step size
-            'frequency': 1, # The frequency of the scheduler
         }
 
     def training_step(self, batch, batch_idx, *args, **kwargs):

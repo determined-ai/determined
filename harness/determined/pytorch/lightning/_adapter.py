@@ -108,10 +108,12 @@ class _LightningAdapterState:
         context: PyTorchTrialContext,
         lm: pl.LightningModule,
         optimizers: List[Optimizer],
+        lr_schedulers: List[_LRScheduler],
     ):
         self.context = context
         self.lm = lm
         self.optimizers = optimizers
+        self.lr_schedulers = lr_schedulers
 
 
 class LightningAdapter(PyTorchTrial):
@@ -178,9 +180,10 @@ class LightningAdapter(PyTorchTrial):
 
         context.wrap_model(lightning_module)
 
-        pls = _LightningAdapterState(context, lightning_module, [])
+        pls = _LightningAdapterState(context, lightning_module, [], [])
         self._pls = pls
-        optimizers, _ = self.setup_optimizers_schedulers()
+        optimizers, lr_schedulers = self.setup_optimizers_schedulers()
+        pls.lr_schedulers = lr_schedulers
         pls.optimizers = optimizers
 
         if precision == 16 and amp_backend == "apex":
@@ -242,7 +245,15 @@ class LightningAdapter(PyTorchTrial):
         optimizers, lr_scheduler_dicts, _ = TrainerOptimizersMixin().init_optimizers(
             self._pls.lm,
         )
+
+        rv = self._pls.lm.configure_optimizers()
+        # print(rv)
+        # if isinstance(rv, dict):
+        #     merge_scheduler_conf(x, lr_scheduler_dicts)
+        # elif: isinstance()
+
         optimizers = cast(List[Optimizer], optimizers)
+        print('lrs dicts', lr_scheduler_dicts)
         lr_scheduler_dicts = cast(List[dict], lr_scheduler_dicts)
 
         ordered_optimizers = []
@@ -277,6 +288,7 @@ class LightningAdapter(PyTorchTrial):
                 if lrs["interval"] == "epoch"
                 else LRScheduler.StepMode.STEP_EVERY_BATCH
             )
+            print('step mode in adapter is', step_mode, lrs["interval"])
 
             wrapped_opt = optimizers_dict[getattr(lrs["scheduler"], "optimizer", None)]
             if wrapped_opt is None:
