@@ -395,7 +395,7 @@ func (s *trialWorkloadSequencer) batchesUntilCkptNeeded() int {
 	return s.minCheckpointPeriod.ToNearestBatch(s.unitContext) - s.BatchesSinceLastCkpt
 }
 
-func (s *trialWorkloadSequencer) Progress() model.Length {
+func (s *trialWorkloadSequencer) Progress() model.PartialUnits {
 	return model.UnitsFromBatches(s.unitContext, s.TotalBatchesProcessed)
 }
 

@@ -57,7 +57,7 @@ type (
 	}
 	trialReportProgress struct {
 		requestID model.RequestID
-		progress  model.Length
+		progress  model.PartialUnits
 	}
 	getTrial       struct{ trialID int }
 	killExperiment struct{}

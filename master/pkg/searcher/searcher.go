@@ -15,14 +15,14 @@ import (
 type (
 	// SearcherState encapsulates all persisted searcher state.
 	SearcherState struct {
-		TrialOperations OperationList                    `json:"trial_operations"`
-		TrialsRequested int                              `json:"trials_requested"`
-		TrialsClosed    map[model.RequestID]bool         `json:"trials_closed"`
-		TrialIDs        map[model.RequestID]int          `json:"trial_ids"`
-		RequestIDs      map[int]model.RequestID          `json:"request_ids"`
-		Failures        map[model.RequestID]bool         `json:"failures"`
-		TrialProgress   map[model.RequestID]model.Length `json:"trial_progress"`
-		Shutdown        bool                             `json:"shutdown"`
+		TrialOperations OperationList                          `json:"trial_operations"`
+		TrialsRequested int                                    `json:"trials_requested"`
+		TrialsClosed    map[model.RequestID]bool               `json:"trials_closed"`
+		TrialIDs        map[model.RequestID]int                `json:"trial_ids"`
+		RequestIDs      map[int]model.RequestID                `json:"request_ids"`
+		Failures        map[model.RequestID]bool               `json:"failures"`
+		TrialProgress   map[model.RequestID]model.PartialUnits `json:"trial_progress"`
+		Shutdown        bool                                   `json:"shutdown"`
 
 		Rand *nprand.State `json:"rand"`
 
@@ -48,7 +48,7 @@ func NewSearcher(seed uint32, method SearchMethod, hparams model.Hyperparameters
 			TrialIDs:      map[model.RequestID]int{},
 			RequestIDs:    map[int]model.RequestID{},
 			Failures:      map[model.RequestID]bool{},
-			TrialProgress: map[model.RequestID]model.Length{},
+			TrialProgress: map[model.RequestID]model.PartialUnits{},
 		},
 	}
 }
@@ -73,7 +73,7 @@ func (s *Searcher) InitialOperations() ([]Operation, error) {
 func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error) {
 	s.TrialIDs[create.RequestID] = trialID
 	s.RequestIDs[trialID] = create.RequestID
-	s.TrialProgress[create.RequestID] = model.NewLength(s.method.Unit(), 0)
+	s.TrialProgress[create.RequestID] = 0
 	operations, err := s.method.trialCreated(s.context(), create.RequestID)
 	if err != nil {
 		return nil, errors.Wrapf(err,
@@ -109,7 +109,7 @@ func (s *Searcher) TrialExitedEarly(
 }
 
 // SetTrialProgress informs the searcher of the progress of a given trial.
-func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.Length) {
+func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.PartialUnits) {
 	s.TrialProgress[requestID] = progress
 }
 

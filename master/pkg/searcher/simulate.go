@@ -82,7 +82,7 @@ func Simulate(
 		random = rand.New(rand.NewSource(*seed))
 	}
 
-	lengthCompleted := make(map[model.RequestID]model.Length)
+	lengthCompleted := make(map[model.RequestID]model.PartialUnits)
 	pending := make(map[model.RequestID][]Operation)
 	trialIDs := make(map[model.RequestID]int)
 	var requestIDs []model.RequestID
@@ -120,7 +120,7 @@ func Simulate(
 				return simulation, err
 			}
 			trialOpIdxs[requestID] = 0
-			lengthCompleted[requestID] = model.NewLength(s.method.Unit(), 0)
+			lengthCompleted[requestID] = 0
 			shutdown, err = handleOperations(pending, &requestIDs, ops)
 			if err != nil {
 				return simulation, err
@@ -134,7 +134,7 @@ func Simulate(
 			}
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
 			if train, ok := operation.(Train); ok {
-				lengthCompleted[requestID] = lengthCompleted[requestID].Add(train.Length)
+				lengthCompleted[requestID] += model.PartialUnits(train.Length.Units)
 				s.SetTrialProgress(requestID, lengthCompleted[requestID])
 			}
 			ops, err := s.OperationCompleted(trialIDs[requestID], operation, metrics)
