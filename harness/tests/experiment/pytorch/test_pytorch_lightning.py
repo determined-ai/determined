@@ -101,7 +101,7 @@ class TestLightningAdapter:
                 if self.last_lr is None:
                     self.last_lr = self.read_lr_value()
                 else:
-                    assert self.last_lr < self.read_lr_value()
+                    assert self.last_lr > self.read_lr_value()
                 return super().train_batch(batch, epoch_idx, batch_idx)
 
         def make_trial_controller_fn(
@@ -116,5 +116,4 @@ class TestLightningAdapter:
                 trial_seed=self.trial_seed,
             )
 
-        with pytest.raises(AssertionError):
-            utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+        utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
