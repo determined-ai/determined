@@ -60,7 +60,8 @@ class DARTSRNNTrial(PyTorchTrial):
         self.data_config = context.get_data_config()
         self.hparams = AttrDict(context.get_hparams())
 
-        # Create a unique download directory for each rank so they don't overwrite each other.
+        # Create a unique download directory for each rank so they don't overwrite each
+        # other when doing distributed training.
         self.download_directory = self.data_config["data_download_dir"]
         data.download_data(self.download_directory)
         corpus = data_util.Corpus(self.download_directory)

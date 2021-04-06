@@ -750,29 +750,27 @@ class PyTorchTrial(det.Trial):
 
     * **Define models, optimizers, and LR schedulers**.
 
-       Initialize models, optimizers, and LR schedulers and wrap them with
-       ``wrap_model``, ``wrap_optimizer``, ``wrap_lr_scheduler`` provided by
-       :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`
-       in the :meth:`__init__`.
+       In the :meth:`__init__` method, initialize models, optimizers, and LR schedulers
+       and wrap them with ``wrap_model``, ``wrap_optimizer``, ``wrap_lr_scheduler``
+       provided by :class:`~determined.pytorch.PyTorchTrialContext`.
 
     * **Run forward and backward passes**.
 
-       Call ``backward`` and ``step_optimizer`` provided by
-       :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>` in :meth:`train_batch`.
-       Note that we support arbitrary numbers of models, optimizers, and LR schedulers
+       In :meth:`train_batch`, call ``backward`` and ``step_optimizer`` provided by
+       :class:`~determined.pytorch.PyTorchTrialContext`.
+       We support arbitrary numbers of models, optimizers, and LR schedulers
        and arbitrary orders of running forward and backward passes.
 
     * **Configure automatic mixed precision**.
 
-       Call ``configure_apex_amp`` provided by
-       :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`
-       in the :meth:`__init__`.
+       In the :meth:`__init__` method, call ``configure_apex_amp`` provided by
+       :class:`~determined.pytorch.PyTorchTrialContext`.
 
     * **Clip gradients**.
 
-       In the :meth:`train_batch`, pass a function into
+       In :meth:`train_batch`, pass a function into
        ``step_optimizer(optimizer, clip_grads=...)`` provided by
-       :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`.
+       :class:`~determined.pytorch.PyTorchTrialContext`.
     """
 
     trial_controller_class = PyTorchTrialController
@@ -903,8 +901,10 @@ class PyTorchTrial(det.Trial):
 
     def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
         """
-        Calculate evaluation metrics for a batch and return them as a
-        dictionary mapping metric names to metric values.
+        Calculate validation metrics for a batch and return them as a
+        dictionary mapping metric names to metric values. Per-batch validation metrics
+        are reduced (aggregated) to produce a single set of validation metrics for the
+        entire validation set (see :meth:`evaluation_reducer`).
 
         There are two ways to specify evaluation metrics. Either override
         :meth:`evaluate_batch` or :meth:`evaluate_full_dataset`. While
@@ -937,7 +937,7 @@ class PyTorchTrial(det.Trial):
         values (i.e., each returned metric is the average or sum of that metric
         across the entire validation set).
 
-        This validation can not be distributed and is performed on a single
+        This validation cannot be distributed and is performed on a single
         device, even when multiple devices (slots) are used for training. Only
         one of :meth:`evaluate_full_dataset` and :meth:`evaluate_batch` should
         be overridden by a trial.

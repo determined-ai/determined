@@ -126,7 +126,7 @@ Building the Model
 The :meth:`~determined.keras.TFKerasTrial.build_model` method returns a
 compiled ``tf.keras.Model`` object. The Fashion MNIST model code uses
 the Keras Sequential API and we can continue to use that API in our
-implementation of ``build_model``. The only minor differences is that
+implementation of ``build_model``. The only minor differences are that
 the model needs to be wrapped by calling
 :func:`self.context.wrap_model()
 <determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled
@@ -235,7 +235,7 @@ should reach about 85% accuracy on the validation set, which matches the
 original ``tf.keras`` implementation.
 
 The ``entrypoint`` specifies the name of the trial class to use. This is
-useful if our model code contains more than one trial class. In this
+useful if the model code contains more than one trial class. In this
 case, we use an entrypoint of ``model_def:FashionMNISTTrial`` because
 our trial class is named ``FashionMNISTTrial`` and it is defined in a
 Python file named ``model_def.py``.

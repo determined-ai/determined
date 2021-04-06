@@ -519,16 +519,16 @@ def _tf_keras_callback_load_state(cb: Any, state: Any) -> None:
 class EarlyStopping(tf.keras.callbacks.EarlyStopping, Callback):  # type: ignore
     """
     EarlyStopping behaves exactly like the ``tf.keras.callbacks.EarlyStopping`` except that it
-    checks after every on_test_end() rather than every on_epoch_end() and it can save and restore
-    its state after pauses in training.
+    checks after every ``on_test_end()`` rather than every ``on_epoch_end()`` and it can save
+    and restore its state after pauses in training.
 
     Therefore, part of configuring the Determined implementation of EarlyStopping is to
-    configure min_validation_period for the experiment appropriately (likely it should be
+    configure ``min_validation_period`` for the experiment appropriately (likely it should be
     configured to validate every epoch).
 
-    In Determined, on_test_end may be called slightly more often that min_validation_period during
-    some types of hyperparameter searches, but it is unlikely for that to occur often enough have
-    a meaningful impact on this callback's operation.
+    In Determined, ``on_test_end`` may be called slightly more often than ``min_validation_period``
+    during some types of hyperparameter searches, but it is unlikely for that to occur often enough
+    have a meaningful impact on this callback's operation.
     """
 
     _savable_attributes = {
@@ -585,16 +585,16 @@ class EarlyStopping(tf.keras.callbacks.EarlyStopping, Callback):  # type: ignore
 class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type: ignore
     """
     ReduceLROnPlateau behaves exactly like the ``tf.keras.callbacks.ReduceLROnPlateau`` except that
-    it checks after every on_test_end() rather than every on_epoch_end() and it can save and
+    it checks after every ``on_test_end()`` rather than every ``on_epoch_end()`` and it can save and
     restore its state after pauses in training.
 
     Therefore, part of configuring the Determined implementation of ReduceLROnPlateau is to
-    configure min_validation_period for the experiment appropriately (likely it should be
+    configure ``min_validation_period`` for the experiment appropriately (likely it should be
     configured to validate every epoch).
 
-    In Determined, on_test_end may be called slightly more often that min_validation_period during
-    some types of hyperparameter searches, but it is unlikely for that to occur often enough have
-    a meaningful impact on this callback's operation.
+    In Determined, on_test_end may be called slightly more often than ``min_validation_period``
+    during some types of hyperparameter searches, but it is unlikely for that to occur often
+    enough have a meaningful impact on this callback's operation.
     """
 
     _savable_attributes = {

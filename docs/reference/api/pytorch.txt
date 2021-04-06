@@ -30,15 +30,18 @@ Data Loading
 ============
 
 Loading data into ``PyTorchTrial`` models is done by defining two
-functions, ``build_training_data_loader()`` and
-``build_validation_data_loader()``. These functions should each return
-an instance of ``determined.pytorch.DataLoader``.
+functions,
+:meth:`~determined.pytorch.PyTorchTrial.build_training_data_loader` and
+:meth:`~determined.pytorch.PyTorchTrial.build_validation_data_loader`.
+These functions should each return an instance of
+:class:`determined.pytorch.DataLoader`.
 ``determined.pytorch.DataLoader`` behaves the same as
 ``torch.utils.data.DataLoader`` and is a drop-in replacement.
 
 Each ``DataLoader`` is allowed to return batches with arbitrary
 structures of the following types, which will be fed directly to the
-``train_batch`` and ``evaluate_batch`` functions:
+:meth:`~determined.pytorch.PyTorchTrial.train_batch` and
+:meth:`~determined.pytorch.PyTorchTrial.evaluate_batch` functions:
 
 -  ``np.ndarray``
 
@@ -88,7 +91,7 @@ Trial Context
 
 :class:`determined.pytorch.PyTorchTrialContext` subclasses
 :class:`determined.TrialContext`. It provides useful methods for writing
-``Trial`` subclasses.
+``PyTorchTrial`` subclasses.
 
 .. autoclass:: determined.pytorch.PyTorchTrialContext
    :members:

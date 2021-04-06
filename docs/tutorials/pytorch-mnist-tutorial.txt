@@ -37,15 +37,17 @@ search <hyperparameter-tuning>` without changing your model code, and
 Determined will store and visualize your model metrics automatically.
 
 When training a PyTorch model, Determined provides a built-in training
-loop that feeds each batch of data into your ``train_batch`` function,
-where you will perform the forward pass, the backpropagation, and the
-computation of training metrics for that batch. Determined also handles
+loop that feeds each batch of training data into your ``train_batch``
+function, which should perform the forward pass, backpropagation, and
+compute training metrics for the batch. Determined also handles
 checkpointing, log management, and device initialization. To plug your
 model code into the Determined training loop, you define methods to
 perform the following tasks:
 
 -  initialize the models, optimizers, and LR schedulers
 -  define the training function for forward and backward passes
+-  define the evaluation function to compute the loss and other metrics
+   on the validation data set
 -  load the training data set
 -  load the validation data set
 
@@ -87,11 +89,11 @@ Here is what the skeleton of our trial class looks like:
            pass
 
        def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
-           # Run the training forward passes on the models and backward passes on the optimizers
+           # Run forward passes on the models and backward passes on the optimizers.
            pass
 
        def evaluate_batch(self, batch: TorchData):
-           # Define how to evaluate the model by calculating loss and other metrics.
+           # Define how to evaluate the model by calculating loss and other metrics
            # for a batch of validation data.
            pass
 
@@ -117,10 +119,11 @@ parameter, an instance of
 :class:`~determined.TrialContext`. The trial context contains
 information about the trial, such as the values of the hyperparameters
 to use for training. All the models and optimizers must be wrapped with
-``wrap_model`` and ``wrap_optimizer`` respectively provided by
-:class:`~determined.pytorch.PyTorchTrialContext`. This MNIST model code
-uses the Torch Sequential API and ``torch.optim.Adadelta``. The current
-values of the model's hyperparameters can be accessed via the
+``wrap_model`` and ``wrap_optimizer`` respectively, which are provided
+by :class:`~determined.pytorch.PyTorchTrialContext`. In this MNIST
+example, the model code uses the Torch Sequential API and
+``torch.optim.Adadelta``. The current values of the model's
+hyperparameters can be accessed via the
 :func:`~determined.TrialContext.get_hparam` method of the trial context.
 
 .. code:: python
@@ -128,6 +131,11 @@ values of the model's hyperparameters can be accessed via the
    def __init__(self, context: PyTorchTrialContext):
        # Store trial context for later use.
        self.context = context
+
+       # Create a unique download directory for each rank so they don't overwrite each
+       # other when doing distributed training.
+       self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
+       self.data_downloaded = False
 
        # Initialize the model and wrap it using self.context.wrap_model().
        self.model = self.context.wrap_model(
@@ -161,7 +169,7 @@ values of the model's hyperparameters can be accessed via the
 Loading Data
 ============
 
-The last two methods we need to define are
+The next two methods we need to define are
 ``build_training_data_loader`` and ``build_validation_data_loader``.
 Determined uses these methods to load the training and validation
 datasets, respectively. Both methods should return a
@@ -201,13 +209,14 @@ tutorial on :ref:`data-access`.
 Defining ``train_batch``
 ========================
 
-The ``train_batch`` method runs the forward passes through the models
-and the backward passes on the losses and steps the optimizers with a
-single batch of data. Determined expects a dictionary with the
-user-defined metrics and will automatically average all the metrics
-across batches. If an optimizer is set to automatically handle zeroing
-out the gradients, ``step_optimizer`` will zero out the gradients and
-there will be no need to call ``optim.zero_grad()``.
+The :func:`~determined.pytorch.PyTorchTrial.train_batch` method is
+passed a single batch of data from the validation data set; it should
+run the forward passes on the models, the backward passes on the losses,
+and step the optimizers. This method should return a dictionary with
+user-defined training metrics; Determined will automatically average all
+the metrics across batches. If an optimizer is set to automatically
+handle zeroing out the gradients, ``step_optimizer`` will zero out the
+gradients and there will be no need to call ``optim.zero_grad()``.
 
 .. code:: python
 
@@ -225,6 +234,19 @@ there will be no need to call ``optim.zero_grad()``.
 
        return {"loss": loss}
 
+Defining ``evaluate_batch``
+===========================
+
+The :func:`~determined.pytorch.PyTorchTrial.evaluate_batch` method is
+passed a single batch of data from the validation data set; it should
+compute the user-defined validation metrics on that data, and return
+them as a dictionary that maps metric names to values. The metric values
+for each batch are reduced (aggregated) to produce a single value of
+each metric for the entire validation set. By default, metric values are
+averaged but this behavior can be customized by overridding
+:func:`~determined.pytorch.PyTorchTrial.evaluation_reducer`.
+
+.. code:: python
 
    def evaluate_batch(self, batch: TorchData):
        batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
@@ -278,7 +300,7 @@ model's hyperparameters:
    entrypoint: model_def:MNistTrial
 
 The ``entrypoint`` specifies the name of the trial class to use. This is
-useful if our model code contains more than one trial class. In this
+useful if the model code contains more than one trial class. In this
 case, we use an entrypoint of ``model_def:MNistTrial`` because our trial
 class is named ``MNistTrial`` and it is defined in a Python file named
 ``model_def.py``.
