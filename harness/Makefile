@@ -1,13 +1,3 @@
-.PHONY: clean
-clean:
-	rm -rf .pytest_cache/
-	rm -rf .mypy_cache/
-	rm -rf *.egg-info/
-	rm -rf pip-wheel-metadata/
-	rm -rf dist/
-	rm -rf build/
-	find . \( -name __pycache__ -o -name \*.pyc \) -delete
-
 .PHONY: build
 build:
 	python setup.py -q bdist_wheel
@@ -42,6 +32,16 @@ test-tf2:
 	# anywhere but the "start" of your program. See:
 	# https://github.com/tensorflow/tensorflow/issues/18304#issuecomment-379435515.
 	pytest -v --runslow --durations=0 tests/experiment/keras
+
+.PHONY: clean
+clean:
+	rm -rf .pytest_cache/
+	rm -rf .mypy_cache/
+	rm -rf *.egg-info/
+	rm -rf pip-wheel-metadata/
+	rm -rf dist/
+	rm -rf build/
+	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 
 .PHONY: upload-try-now-template
 upload-try-now-template: TRY_NOW_TEMPLATE = simple.yaml

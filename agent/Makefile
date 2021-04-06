@@ -1,5 +1,6 @@
 export VERSION:=$(shell cat ../VERSION)
 export GO111MODULE := on
+.DEFAULT_GOAL := build
 
 .PHONY: clean
 clean:
