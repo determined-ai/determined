@@ -15,15 +15,14 @@ import (
 type (
 	// SearcherState encapsulates all persisted searcher state.
 	SearcherState struct {
-		TrialOperations       OperationList               `json:"trial_operations"`
-		TrialsRequested       int                         `json:"trials_requested"`
-		TrialsClosed          map[model.RequestID]bool    `json:"trials_closed"`
-		TrialIDs              map[model.RequestID]int     `json:"trial_ids"`
-		RequestIDs            map[int]model.RequestID     `json:"request_ids"`
-		Failures              map[model.RequestID]bool    `json:"failures"`
-		TotalUnitsCompleted   float64                     `json:"total_units_completed"`
-		UnitsCompletedByTrial map[model.RequestID]float64 `json:"units_completed_by_trial"`
-		Shutdown              bool                        `json:"shutdown"`
+		TrialOperations OperationList                          `json:"trial_operations"`
+		TrialsRequested int                                    `json:"trials_requested"`
+		TrialsClosed    map[model.RequestID]bool               `json:"trials_closed"`
+		TrialIDs        map[model.RequestID]int                `json:"trial_ids"`
+		RequestIDs      map[int]model.RequestID                `json:"request_ids"`
+		Failures        map[model.RequestID]bool               `json:"failures"`
+		TrialProgress   map[model.RequestID]model.PartialUnits `json:"trial_progress"`
+		Shutdown        bool                                   `json:"shutdown"`
 
 		Rand *nprand.State `json:"rand"`
 
@@ -44,12 +43,12 @@ func NewSearcher(seed uint32, method SearchMethod, hparams model.Hyperparameters
 		hparams: hparams,
 		method:  method,
 		SearcherState: SearcherState{
-			Rand:                  nprand.New(seed),
-			TrialsClosed:          map[model.RequestID]bool{},
-			TrialIDs:              map[model.RequestID]int{},
-			RequestIDs:            map[int]model.RequestID{},
-			Failures:              map[model.RequestID]bool{},
-			UnitsCompletedByTrial: map[model.RequestID]float64{},
+			Rand:          nprand.New(seed),
+			TrialsClosed:  map[model.RequestID]bool{},
+			TrialIDs:      map[model.RequestID]int{},
+			RequestIDs:    map[int]model.RequestID{},
+			Failures:      map[model.RequestID]bool{},
+			TrialProgress: map[model.RequestID]model.PartialUnits{},
 		},
 	}
 }
@@ -74,7 +73,7 @@ func (s *Searcher) InitialOperations() ([]Operation, error) {
 func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error) {
 	s.TrialIDs[create.RequestID] = trialID
 	s.RequestIDs[trialID] = create.RequestID
-	s.UnitsCompletedByTrial[create.RequestID] = 0
+	s.TrialProgress[create.RequestID] = 0
 	operations, err := s.method.trialCreated(s.context(), create.RequestID)
 	if err != nil {
 		return nil, errors.Wrapf(err,
@@ -95,8 +94,7 @@ func (s *Searcher) TrialExitedEarly(
 
 	switch exitedReason {
 	case workload.InvalidHP:
-		unitsCancelled := s.UnitsCompletedByTrial[requestID]
-		s.TotalUnitsCompleted -= unitsCancelled
+		delete(s.TrialProgress, requestID)
 	case workload.Errored:
 		// Only workload.Errored is considered a failure (since failures cause an experiment
 		// to be in the failed state).
@@ -110,11 +108,9 @@ func (s *Searcher) TrialExitedEarly(
 	return operations, nil
 }
 
-// WorkloadCompleted informs the searcher that the workload is completed. This relays the message
-// to the event log and records the units as complete for search method progress.
-func (s *Searcher) WorkloadCompleted(requestID model.RequestID, unitsCompleted float64) {
-	s.TotalUnitsCompleted += unitsCompleted
-	s.UnitsCompletedByTrial[requestID] += unitsCompleted
+// SetTrialProgress informs the searcher of the progress of a given trial.
+func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.PartialUnits) {
+	s.TrialProgress[requestID] = progress
 }
 
 // OperationCompleted informs the searcher that the given workload initiated by the same searcher
@@ -150,7 +146,6 @@ func (s *Searcher) OperationCompleted(
 // TrialClosed informs the searcher that the trial has been closed as a result of a Close operation.
 func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	s.TrialsClosed[requestID] = true
-	delete(s.UnitsCompletedByTrial, requestID)
 	operations, err := s.method.trialClosed(s.context(), requestID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
@@ -165,7 +160,7 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 
 // Progress returns experiment progress as a float between 0.0 and 1.0.
 func (s *Searcher) Progress() float64 {
-	progress := s.method.progress(s.TotalUnitsCompleted)
+	progress := s.method.progress(s.TrialProgress)
 	if math.IsNaN(progress) || math.IsInf(progress, 0) {
 		return 0.0
 	}

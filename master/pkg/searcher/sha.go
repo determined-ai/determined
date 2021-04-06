@@ -212,8 +212,9 @@ func (s *syncHalvingSearch) promoteSync(
 	return ops, nil
 }
 
-func (s *syncHalvingSearch) progress(unitsCompleted float64) float64 {
-	return math.Min(1, unitsCompleted/float64(s.expectedUnits.Units))
+func (s *syncHalvingSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
+	// TODO(brad): Rewrite SHA progress, ...maybe.
+	return float64(sumTrialLengths(trialProgress)) / float64(s.expectedUnits.Units)
 }
 
 func (s *syncHalvingSearch) trialExitedEarly(

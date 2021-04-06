@@ -19,6 +19,9 @@ const (
 	Epochs  Unit = "epoches"
 )
 
+// PartialUnits represent partial epochs, batches or records where the Unit is implied.
+type PartialUnits float64
+
 // UnitContext contains all the context for switching the Unit of a Length freely.
 type UnitContext struct {
 	defaultUnit     Unit
@@ -105,14 +108,14 @@ func NewLengthInEpochs(epochs int) Length {
 }
 
 // UnitsFromBatches return the number of units completed by the given batches, rounded up.
-func UnitsFromBatches(batches int, ctx UnitContext) float64 {
+func UnitsFromBatches(ctx UnitContext, batches int) PartialUnits {
 	switch ctx.defaultUnit {
 	case Records:
-		return float64(batches * ctx.globalBatchSize)
+		return PartialUnits(float64(batches * ctx.globalBatchSize))
 	case Batches:
-		return float64(batches)
+		return PartialUnits(float64(batches))
 	case Epochs:
-		return float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch)
+		return PartialUnits(float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch))
 	default:
 		panic(fmt.Sprintf("invalid unit in ctx: %s", ctx.defaultUnit))
 	}

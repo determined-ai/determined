@@ -37,11 +37,8 @@ type (
 	}
 	trialCompletedWorkload struct {
 		completedMessage workload.CompletedMessage
-		// unitsCompleted is passed as a float because while the searcher will only request integral
-		// units, a trial may complete partial units (especially in the case of epochs).
-		unitsCompleted float64
-		completedOps   []trialCompletedOperation
-		earlyExit      *trialExitedEarly
+		completedOps     []trialCompletedOperation
+		earlyExit        *trialExitedEarly
 		trialSnapshot
 	}
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
@@ -58,7 +55,10 @@ type (
 		trialID   int
 		snapshot  []byte
 	}
-	getProgress    struct{}
+	trialReportProgress struct {
+		requestID model.RequestID
+		progress  model.PartialUnits
+	}
 	getTrial       struct{ trialID int }
 	killExperiment struct{}
 )
@@ -203,7 +203,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ops, err := e.searcher.OperationCompleted(msg.trialID, msg.op, msg.metrics)
 		e.processOperations(ctx, ops, err)
 	case trialCompletedWorkload:
-		e.searcher.WorkloadCompleted(msg.requestID, msg.unitsCompleted)
 		for _, op := range msg.completedOps {
 			ops, err := e.searcher.OperationCompleted(msg.trialID, op.op, op.metrics)
 			e.processOperations(ctx, ops, err)
@@ -212,15 +211,17 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.earlyExit.exitedReason)
 			e.processOperations(ctx, ops, err)
 		}
+	case trialValidation:
+		if msg.validationMetrics != nil {
+			ctx.Respond(e.isBestValidation(*msg.validationMetrics))
+		}
+	case trialReportProgress:
+		e.searcher.SetTrialProgress(msg.requestID, msg.progress)
 		progress := e.searcher.Progress()
 		if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
-	case trialValidation:
-		if msg.validationMetrics != nil {
-			ctx.Respond(e.isBestValidation(*msg.validationMetrics))
-		}
 	case sendNextWorkload:
 		// Pass this back to the trial; this message is just used to allow the trial to synchronize
 		// with the searcher.
@@ -232,9 +233,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
 	case trialClosed:
 		e.trialClosed(ctx, msg.requestID)
-	case getProgress:
-		progress := e.searcher.Progress()
-		ctx.Respond(&progress)
 
 	case getTrial:
 		requestID, ok := e.searcher.RequestID(msg.trialID)

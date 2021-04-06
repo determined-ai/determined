@@ -6,8 +6,7 @@ import (
 	"strings"
 	"time"
 
-	// nolint:staticcheck // This is needed until grpc-gateway fully transitions
-	// to the new protobuf API.
+	// nolint:staticcheck // This is needed until grpc-gateway fully transitions.
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

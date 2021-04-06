@@ -62,11 +62,13 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 	return ops, nil
 }
 
-func (s *gridSearch) progress(unitsCompleted float64) float64 {
+func (s *gridSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
 	if s.MaxConcurrentTrials > 0 && s.PendingTrials > s.MaxConcurrentTrials {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
-	return unitsCompleted / float64(s.GridConfig.MaxLength.MultInt(s.trials).Units)
+	unitsCompleted := sumTrialLengths(trialProgress)
+	unitsExpected := s.MaxLength.Units * s.trials
+	return float64(unitsCompleted) / float64(unitsExpected)
 }
 
 // trialExitedEarly does nothing since grid does not take actions based on

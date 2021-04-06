@@ -82,6 +82,7 @@ func Simulate(
 		random = rand.New(rand.NewSource(*seed))
 	}
 
+	lengthCompleted := make(map[model.RequestID]model.PartialUnits)
 	pending := make(map[model.RequestID][]Operation)
 	trialIDs := make(map[model.RequestID]int)
 	var requestIDs []model.RequestID
@@ -119,6 +120,7 @@ func Simulate(
 				return simulation, err
 			}
 			trialOpIdxs[requestID] = 0
+			lengthCompleted[requestID] = 0
 			shutdown, err = handleOperations(pending, &requestIDs, ops)
 			if err != nil {
 				return simulation, err
@@ -132,7 +134,8 @@ func Simulate(
 			}
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
 			if train, ok := operation.(Train); ok {
-				s.WorkloadCompleted(requestID, float64(train.Length.Units))
+				lengthCompleted[requestID] += model.PartialUnits(train.Length.Units)
+				s.SetTrialProgress(requestID, lengthCompleted[requestID])
 			}
 			ops, err := s.OperationCompleted(trialIDs[requestID], operation, metrics)
 			if err != nil {
@@ -174,7 +177,7 @@ func Simulate(
 	lastProgress = s.Progress()
 	if lastProgress != 1.0 {
 		return simulation, errors.Errorf(
-			"searcher progress did not end at 100%%: %f%%", lastProgress*100)
+			"searcher progress was not equal to 100%%: %f%%", lastProgress*100)
 	}
 	if len(simulation.Results) != len(requestIDs) {
 		return simulation, errors.New("more trials created than completed")
