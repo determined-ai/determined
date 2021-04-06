@@ -308,7 +308,8 @@ func shimTrialSnapshotV0(snapshot []byte) ([]byte, error) {
 // Version 1 => 2 shims
 
 // shimExperimentSnapshotV1 shims a v1 snapshot to a v2 snapshot. From v1 to v2,
-//
+// progress was rewritten so that individual trial progress was tracked and aggregated
+// instead of just maintaining the total units completed.
 func shimExperimentSnapshotV1(snapshot []byte) ([]byte, error) {
 	var experimentSnapshotV1 map[string]interface{}
 	if err := json.Unmarshal(snapshot, &experimentSnapshotV1); err != nil {
