@@ -47,7 +47,7 @@ output "NOTE" {
 }
 
 output "SSH-to-Master" {
-  value = "> To ssh to Determined Master instance, run:\n\n  gcloud compute ssh ${module.compute.master_instance_name}\n"
+  value = "> To SSH to Determined master instance, run:\n\n  gcloud compute ssh ${module.compute.master_instance_name}\n"
 }
 
 output "Web-UI" {

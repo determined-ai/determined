@@ -94,5 +94,5 @@ class Secure(base.DeterminedDeployment):
         )
 
     def wait_for_master(self, timeout: int = 0) -> None:
-        print("Skipping automated master healthcheck due to bastion host usage.")
+        print("Skipping automated master health check due to bastion host usage.")
         return
