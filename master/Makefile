@@ -81,7 +81,6 @@ pre-package:
 	cp -r ../docs/site/html/* build/webui/docs
 	cp -r ../webui/react/build/* build/webui/react
 	cp ../harness/dist/*.whl build/wheels/
-	cp ../cli/dist/*.whl build/wheels/
 	cp $(shell packaging/fetch-cloud-forest.sh) build/
 
 .PHONY: package

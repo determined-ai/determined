@@ -15,9 +15,4 @@ setup(
     install_requires=[
         "determined==0.14.7.dev0",
     ],
-    entry_points={
-        "console_scripts": [
-            "det = determined.cli.__main__:main",
-        ]
-    },
 )

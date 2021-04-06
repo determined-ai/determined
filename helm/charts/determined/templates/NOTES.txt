@@ -43,5 +43,5 @@ WARNING: defaultScheduler has been set to an unsupported value. The cluster defa
 {{ end -}}
 
 Once you have the IP address, configure master address locally by running: `export DET_MASTER=<ip address>:{{ .Values.masterPort }}`.
-To submit experiments please install the Determined CLI locally: `pip install determined-cli`.
+To submit experiments please install the Determined CLI locally: `pip install determined`.
 To access the WebUI go to: {{ $httpOrHttps }}://<ip address>:{{ .Values.masterPort }}.

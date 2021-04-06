@@ -26,11 +26,11 @@ instructions for both scenarios.
    installations. Please refer to our :ref:`installation
    <install-docker>` steps for Docker.
 
-Install ``determined-deploy`` python package by running
+Install ``determined`` python package by running
 
 .. code::
 
-   pip install determined-deploy
+   pip install determined
 
 .. _configuring-cluster-install:
 

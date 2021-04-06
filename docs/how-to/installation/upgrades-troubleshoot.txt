@@ -42,7 +42,16 @@ All users should also upgrade the CLI by running
 
 .. code::
 
-   pip install determined-cli
+   pip install --upgrade determined
+
+When upgrading from a version earlier than 0.15.0, first uninstall all
+individual packages provided by determined, and then install the new
+version:
+
+.. code::
+
+   pip uninstall -y determined-common determined determined-cli determined-deploy
+   pip install determined
 
 Be sure to do this for every user or virtualenv that has installed the
 old version of the CLI.
