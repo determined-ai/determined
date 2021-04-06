@@ -1,6 +1,7 @@
 import { Alert } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import Message, { MessageType } from 'components/Message';
 import ScatterPlot from 'components/ScatterPlot';
@@ -46,9 +47,35 @@ const ScatterPlots: React.FC<Props> = ({
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ chartData, setChartData ] = useState<HpMetricData>();
   const [ pageError, setPageError ] = useState<Error>();
+  const [ activeHParam, setActiveHParam ] = useState<string>();
+  const [ galleryHeight, setGalleryHeight ] = useState<number>(450);
 
   const resize = useResize(baseRef);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
+
+  const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);
+
+  const handleGalleryClose = useCallback(() => setActiveHParam(undefined), []);
+
+  const handleGalleryNext = useCallback(() => {
+    setActiveHParam(prev => {
+      if (!prev) return prev;
+      const index = selectedHParams.indexOf(prev);
+      if (index === -1) return prev;
+      const nextIndex = index === selectedHParams.length - 1 ? 0 : index + 1;
+      return selectedHParams[nextIndex];
+    });
+  }, [ selectedHParams ]);
+
+  const handleGalleryPrevious = useCallback(() => {
+    setActiveHParam(prev => {
+      if (!prev) return prev;
+      const index = selectedHParams.indexOf(prev);
+      if (index === -1) return prev;
+      const prevIndex = index === 0 ? selectedHParams.length - 1 : index - 1;
+      return selectedHParams[prevIndex];
+    });
+  }, [ selectedHParams ]);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -117,6 +144,8 @@ const ScatterPlots: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ experiment, fullHParams, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
+  useEffect(() => setGalleryHeight(resize.height), [ resize ]);
+
   if (pageError) {
     return <Message title={pageError.message} />;
   } else if (hasLoaded && !chartData) {
@@ -144,18 +173,36 @@ const ScatterPlots: React.FC<Props> = ({
               minItemWidth={resize.width > 320 ? 35 : 27}
               mode={GridMode.AutoFill}>
               {selectedHParams.map(hParam => (
-                <ScatterPlot
-                  key={hParam}
-                  x={chartData?.hpValues[hParam] || []}
-                  xLabel={hParam}
-                  xLogScale={chartData?.hpLogScales[hParam]}
-                  y={chartData?.metricValues[hParam] || []}
-                  yLabel={metricNameToStr(selectedMetric)} />
+                <div key={hParam} onClick={() => handleChartClick(hParam)}>
+                  <ScatterPlot
+                    disableZoom
+                    x={chartData?.hpValues[hParam] || []}
+                    xLabel={hParam}
+                    xLogScale={chartData?.hpLogScales[hParam]}
+                    y={chartData?.metricValues[hParam] || []}
+                    yLabel={metricNameToStr(selectedMetric)}
+                  />
+                </div>
               ))}
             </Grid>
           )}
         </div>
       </Section>
+      <GalleryModal
+        height={galleryHeight}
+        visible={!!activeHParam}
+        onCancel={handleGalleryClose}
+        onNext={handleGalleryNext}
+        onPrevious={handleGalleryPrevious}>
+        {activeHParam && <ScatterPlot
+          height={galleryHeight}
+          x={chartData?.hpValues[activeHParam] || []}
+          xLabel={activeHParam}
+          xLogScale={chartData?.hpLogScales[activeHParam]}
+          y={chartData?.metricValues[activeHParam] || []}
+          yLabel={metricNameToStr(selectedMetric)}
+        />}
+      </GalleryModal>
     </div>
   );
 };

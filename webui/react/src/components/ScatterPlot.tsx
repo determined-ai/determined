@@ -12,6 +12,7 @@ import { generateAlphaNumeric, truncate } from 'utils/string';
 
 interface Props {
   colorScale?: ColorScale[];
+  disableZoom?: boolean;
   height?: number;
   id?: string;
   title?: string;
@@ -45,6 +46,7 @@ const plotlyConfig: Partial<Plotly.Config> = {
 
 const ScatterPlot: React.FC<Props> = ({
   colorScale,
+  disableZoom,
   height,
   title,
   valueLabel,
@@ -110,6 +112,10 @@ const ScatterPlot: React.FC<Props> = ({
 
   const chartLayout: Partial<Layout> = useMemo(() => {
     const layout = clone(plotlyLayout);
+    if (disableZoom) {
+      layout.xaxis.fixedrange = true;
+      layout.yaxis.fixedrange = true;
+    }
     if (title) {
       layout.title.text = title;
     } else if (xLabel && yLabel) {
@@ -122,13 +128,13 @@ const ScatterPlot: React.FC<Props> = ({
     if (height) layout.height = height;
     if (width) layout.width = width;
     return layout;
-  }, [ height, title, width, xLabel, xLogScale, yLabel, yLogScale ]);
+  }, [ disableZoom, height, title, width, xLabel, xLogScale, yLabel, yLogScale ]);
 
   useEffect(() => {
     const ref = chartRef.current;
     if (!ref) return;
 
-    Plotly.react(ref, [], plotlyLayout, plotlyConfig);
+    Plotly.newPlot(ref, [], plotlyLayout, plotlyConfig);
 
     return () => {
       Plotly.purge(ref);
@@ -140,7 +146,7 @@ const ScatterPlot: React.FC<Props> = ({
     const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
       if (!chartRef.current || resize.width === 0 || resize.height === 0) return;
       const rect = chartRef.current.getBoundingClientRect();
-      const layout = { ...chartLayout, height: rect.height, width: rect.width };
+      const layout = { ...chartLayout, width: rect.width };
       if (xIsString) layout.xaxis = { ...layout.xaxis, tickangle: 90 };
       Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);
     });

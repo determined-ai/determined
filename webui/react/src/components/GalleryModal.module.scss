@@ -1,0 +1,14 @@
+.base {
+  padding: 0 var(--theme-sizes-layout-enormous);
+
+  .prev,
+  .next {
+    height: calc(2 * var(--theme-sizes-layout-giant));
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--theme-sizes-layout-giant);
+  }
+  .prev { left: var(--theme-sizes-layout-medium); }
+  .next { right: var(--theme-sizes-layout-medium); }
+}
