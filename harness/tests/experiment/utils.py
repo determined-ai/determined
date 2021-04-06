@@ -395,7 +395,7 @@ def checkpointing_and_restoring_test(
     ) -> workload.Stream:
         trainer = TrainAndValidate()
 
-        yield from trainer.send(steps, validation_freq=1, scheduling_unit=100)
+        yield from trainer.send(steps, validation_freq=1, scheduling_unit=1000)
         tm, vm = trainer.result()
         training_metrics[tag] += tm
         validation_metrics[tag] += vm
