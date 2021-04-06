@@ -1,10 +1,11 @@
+import Auth from 'contexts/Auth';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
-import Auth from 'contexts/Auth';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import { logout } from 'services/api';
+import { updateDetApi } from 'services/apiConfig';
 
 const SignOut: React.FC = () => {
   const history = useHistory();
@@ -28,7 +29,8 @@ const SignOut: React.FC = () => {
           type: ErrorType.Server,
         });
       }
-      setAuth({ type: Auth.ActionType.Reset });
+      updateDetApi({ apiKey: undefined });
+      storeDispatch({ type: StoreActionType.ResetAuth });
       history.push(paths.login(), location.state);
     };
 

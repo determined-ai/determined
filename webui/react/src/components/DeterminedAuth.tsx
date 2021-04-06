@@ -40,7 +40,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler, source }: Props) => {
     try {
       const options = { signal: canceler.signal };
       const { token } = await login({ ...creds as Credentials, cancelToken: source.token });
-      updateDetApi({ apiKey: 'Bearer ' + token });
+      updateDetApi({ apiKey: `Bearer ${token}` });
       const user = await getCurrentUser(options);
       setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, token, user } });
       storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
