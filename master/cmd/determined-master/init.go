@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/determined-ai/determined/master/internal"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 )
 
@@ -45,6 +44,10 @@ func (c configKey) AccessPath() string {
 
 func (c configKey) FlagName() string {
 	return strings.Join(c, "-")
+}
+
+func registerEnv(name configKey) {
+	v.BindEnv(name.AccessPath(), name.EnvName())
 }
 
 func registerString(flags *pflag.FlagSet, name configKey, value string, usage string) {
@@ -131,8 +134,8 @@ func registerConfig() {
 	registerString(flags, name("telemetry", "segment-webui-key"),
 		defaults.Telemetry.SegmentWebUIKey, "the Segment write key for the WebUI")
 
-	registerString(flags, name("checkpoint-storage", "type"),
-		model.DefaultCheckpointStorageType, "checkpoint storage type")
-	registerString(flags, name("checkpoint-storage", "host-path"),
-		model.DefaultSharedFSHostPath, "checkpoint storage host path")
+	// These env vars are used by `det deploy` to override host_path.
+	// We don't register pflags for these to avoid setting a default.
+	registerEnv(name("checkpoint-storage", "type"))
+	registerEnv(name("checkpoint-storage", "host-path"))
 }
