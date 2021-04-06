@@ -319,8 +319,8 @@ func shimExperimentSnapshotV1(snapshot []byte) ([]byte, error) {
 	searcherState := experimentSnapshotV1["searcher_state"].(map[string]interface{})
 
 	delete(searcherState, "total_units_completed")
+	searcherState["trial_progress"] = searcherState["units_completed_by_trial"]
 	delete(searcherState, "units_completed_by_trial")
-	searcherState["trial_progress"] = map[model.RequestID]model.Length{}
 
 	return json.Marshal(experimentSnapshotV1)
 }
