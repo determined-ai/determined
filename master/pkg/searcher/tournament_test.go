@@ -45,39 +45,36 @@ func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 }
 
 func TestTournamentSearchMethod(t *testing.T) {
-	// Run both of the tests from adaptive_test.go side by side.
 	expectedTrials := []predefinedTrial{
-		newConstantPredefinedTrial(toOps("800B V 2400B V"), 0.1),
-		newConstantPredefinedTrial(toOps("800B V"), 0.2),
-		newConstantPredefinedTrial(toOps("3200B V"), 0.3),
+		newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.1),
+		newConstantPredefinedTrial(toOps("1000B V"), 0.2),
+		newConstantPredefinedTrial(toOps("1000B V"), 0.3),
 
-		newConstantPredefinedTrial(toOps("800B V 2400B V"), 0.3),
-		newConstantPredefinedTrial(toOps("800B V"), 0.2),
-		newConstantPredefinedTrial(toOps("3200B V"), 0.1),
+		newConstantPredefinedTrial(toOps("1000B V"), 0.3),
+		newConstantPredefinedTrial(toOps("1000B V"), 0.2),
+		newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.1),
 	}
 
 	adaptiveConfig1 := model.SearcherConfig{
-		AdaptiveConfig: &model.AdaptiveConfig{
+		AsyncHalvingConfig: &model.AsyncHalvingConfig{
 			Metric:          "error",
+			NumRungs:        3,
 			SmallerIsBetter: true,
-			MaxLength:       model.NewLengthInBatches(3200),
-			Budget:          model.NewLengthInBatches(6400),
-			Mode:            model.StandardMode,
-			MaxRungs:        2,
-			Divisor:         4,
+			MaxLength:       model.NewLengthInBatches(9000),
+			MaxTrials:       3,
+			Divisor:         3,
 		},
 	}
 	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1)
 
 	adaptiveConfig2 := model.SearcherConfig{
-		AdaptiveConfig: &model.AdaptiveConfig{
+		AsyncHalvingConfig: &model.AsyncHalvingConfig{
 			Metric:          "error",
-			SmallerIsBetter: false,
-			MaxLength:       model.NewLengthInBatches(3200),
-			Budget:          model.NewLengthInBatches(6400),
-			Mode:            model.StandardMode,
-			MaxRungs:        2,
-			Divisor:         4,
+			NumRungs:        3,
+			SmallerIsBetter: true,
+			MaxLength:       model.NewLengthInBatches(9000),
+			MaxTrials:       3,
+			Divisor:         3,
 		},
 	}
 	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2)

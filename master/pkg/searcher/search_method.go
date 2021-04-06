@@ -55,12 +55,8 @@ const (
 	RandomSearch SearchMethodType = "random"
 	// GridSearch is the SearchMethodType for a grid searcher.
 	GridSearch SearchMethodType = "grid"
-	// SHASearch is the SearchMethodType for a SHA searcher.
-	SHASearch SearchMethodType = "sha"
 	// AdaptiveSearch is the SearchMethodType for a adaptive searcher.
 	AdaptiveSearch SearchMethodType = "adaptive"
-	// AdaptiveSimpleSearch is the SearchMethodType for a adaptive simple searcher.
-	AdaptiveSimpleSearch SearchMethodType = "adaptive_simple"
 	// ASHASearch is the SearchMethodType for a ASHA searcher.
 	ASHASearch SearchMethodType = "asha"
 	// AdaptiveASHASearch is the SearchMethodType for a adaptive ASHA searcher.
@@ -78,12 +74,6 @@ func NewSearchMethod(c model.SearcherConfig) SearchMethod {
 		return newRandomSearch(*c.RandomConfig)
 	case c.GridConfig != nil:
 		return newGridSearch(*c.GridConfig)
-	case c.SyncHalvingConfig != nil:
-		return newSyncHalvingSearch(*c.SyncHalvingConfig)
-	case c.AdaptiveConfig != nil:
-		return newAdaptiveSearch(*c.AdaptiveConfig)
-	case c.AdaptiveSimpleConfig != nil:
-		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig)
 	case c.AsyncHalvingConfig != nil:
 		if c.AsyncHalvingConfig.StopOnce {
 			return newAsyncHalvingStoppingSearch(*c.AsyncHalvingConfig)

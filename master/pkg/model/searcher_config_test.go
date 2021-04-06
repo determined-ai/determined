@@ -36,21 +36,22 @@ func TestDefaultSmallerIsBetter(t *testing.T) {
 	var actual1 = DefaultExperimentConfig(nil).Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
 {
-  "name": "adaptive_simple",
+  "name": "random",
   "metric": "metric",
-  "smaller_is_better": true
+  "smaller_is_better": true,
+  "max_trials": 10,
+  "max_length": {
+    "batches": 10
+  }
 }
 `), &actual1))
 
 	expected1 := SearcherConfig{
 		Metric:          "metric",
 		SmallerIsBetter: true,
-		AdaptiveSimpleConfig: &AdaptiveSimpleConfig{
-			Metric:          "metric",
-			SmallerIsBetter: true,
-			Divisor:         4,
-			MaxRungs:        5,
-			Mode:            StandardMode,
+		RandomConfig: &RandomConfig{
+			MaxTrials: 10,
+			MaxLength: NewLengthInBatches(10),
 		},
 	}
 	assert.DeepEqual(t, actual1, expected1)
@@ -58,20 +59,21 @@ func TestDefaultSmallerIsBetter(t *testing.T) {
 	var actual2 = DefaultExperimentConfig(nil).Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
 {
-  "name": "adaptive_simple",
-  "metric": "metric"
+  "name": "random",
+  "metric": "metric",
+  "max_trials": 10,
+  "max_length": {
+    "batches": 10
+  }
 }
 `), &actual2))
 
 	expected2 := SearcherConfig{
 		Metric:          "metric",
 		SmallerIsBetter: true,
-		AdaptiveSimpleConfig: &AdaptiveSimpleConfig{
-			Metric:          "metric",
-			SmallerIsBetter: true,
-			Divisor:         4,
-			MaxRungs:        5,
-			Mode:            StandardMode,
+		RandomConfig: &RandomConfig{
+			MaxTrials: 10,
+			MaxLength: NewLengthInBatches(10),
 		},
 	}
 	assert.DeepEqual(t, actual2, expected2)
@@ -79,55 +81,25 @@ func TestDefaultSmallerIsBetter(t *testing.T) {
 	var actual3 = DefaultExperimentConfig(nil).Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
 {
-  "name": "adaptive_simple",
+  "name": "random",
   "metric": "metric",
-  "smaller_is_better": false
+  "max_trials": 10,
+  "smaller_is_better": false,
+  "max_length": {
+    "batches": 10
+  }
 }
 `), &actual3))
 
 	expected3 := SearcherConfig{
 		Metric:          "metric",
 		SmallerIsBetter: false,
-		AdaptiveSimpleConfig: &AdaptiveSimpleConfig{
-			Metric:          "metric",
-			SmallerIsBetter: false,
-			Divisor:         4,
-			MaxRungs:        5,
-			Mode:            StandardMode,
+		RandomConfig: &RandomConfig{
+			MaxTrials: 10,
+			MaxLength: NewLengthInBatches(10),
 		},
 	}
 	assert.DeepEqual(t, actual3, expected3)
-}
-
-// TestAdaptiveBracketRungsConfig checks that adaptive config bracket rungs are loaded correctly.
-func TestAdaptiveBracketRungsConfig(t *testing.T) {
-	json1 := []byte(`
-{
-  "name": "adaptive",
-  "metric": "metric",
-  "max_length": {
-	  "batches": 128
-  },
-  "budget": {
-	  "batches": 100
-  },
-  "bracket_rungs": [5, 10, 15, 20]
-}
-`)
-	var actual SearcherConfig
-	assert.NilError(t, json.Unmarshal(json1, &actual))
-
-	maxLength, budget := 128, 100
-	expected := SearcherConfig{
-		Metric: "metric",
-		AdaptiveConfig: &AdaptiveConfig{
-			Metric:       "metric",
-			MaxLength:    NewLengthInBatches(maxLength),
-			Budget:       NewLengthInBatches(budget),
-			BracketRungs: []int{5, 10, 15, 20},
-		},
-	}
-	assert.DeepEqual(t, actual, expected)
 }
 
 // TestAdaptiveASHABracketRungsConfig checks that adaptive_asha config bracket rungs are correct.

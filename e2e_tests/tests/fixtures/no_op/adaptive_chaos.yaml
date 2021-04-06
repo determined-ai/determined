@@ -13,15 +13,11 @@ hyperparameters:
   metrics_sigma: 0
   chaos_probability: 0.005
 searcher:
-  name: adaptive
+  name: adaptive_asha
   metric: validation_error
+  max_trials: 30
   max_length:
     batches: 64000
-  budget:
-    batches: 600000
-  mode: standard
-  max_rungs: 3
-  divisor: 4
 reproducibility:
   experiment_seed: 999
 max_restarts: 1000
