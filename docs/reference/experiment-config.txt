@@ -434,8 +434,7 @@ space will be explored. To run an experiment that trains a single trial
 with fixed hyperparameters, specify the ``single`` searcher and specify
 constant values for the model's hyperparameters. Otherwise, Determined
 supports six different hyperparameter search algorithms: ``random``,
-``grid``, ``adaptive_asha``, ``adaptive_simple``, ``adaptive``, and
-``pbt``.
+``grid``, ``adaptive_asha``, and ``pbt``.
 
 The name of the hyperparameter search algorithm to use is configured via
 the ``name`` field; the remaining fields configure the behavior of the
