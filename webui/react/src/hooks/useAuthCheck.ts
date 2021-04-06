@@ -1,6 +1,7 @@
 import Auth, { AUTH_COOKIE_KEY } from 'contexts/Auth';
 import { useCallback, useEffect } from 'react';
 
+import { AUTH_COOKIE_KEY, StoreActionType, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
 import { getCurrentUser, isAuthFailure } from 'services/api';
@@ -9,7 +10,7 @@ import { isAborted } from 'services/utils';
 import { getCookie } from 'utils/browser';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
-  const setAuth = Auth.useActionContext();
+  const storeDispatch = useStoreDispatch();
 
   const checkAuth = useCallback(async (): Promise<void> => {
     /*
@@ -28,7 +29,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
      */
     const authToken = globalStorage.authToken;
     if (!authToken) {
-      setAuth({ type: Auth.ActionType.MarkChecked });
+      storeDispatch({ type: StoreActionType.SetAuthCheck });
       return;
     }
 
@@ -57,9 +58,9 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
         storeDispatch({ type: StoreActionType.SetAuthCheck });
       }
     }
-  }, [ canceler, setAuth ]);
+  }, [ canceler, storeDispatch ]);
 
-  useEffect(() => setAuth({ type: Auth.ActionType.ResetChecked }), [ setAuth ]);
+  useEffect(() => storeDispatch({ type: StoreActionType.ResetAuthCheck }), [ storeDispatch ]);
 
   return checkAuth;
 };

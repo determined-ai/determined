@@ -3,9 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import Auth from 'contexts/Auth';
-import ClusterOverview from 'contexts/ClusterOverview';
-import UI from 'contexts/UI';
+import { StoreActionType, useStore, useStoreDispatch } from 'contexts/Store';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
@@ -25,7 +23,7 @@ interface ItemProps extends LinkProps {
 }
 
 const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemProps) => {
-  const ui = UI.useStateContext();
+  const { ui } = useStore();
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
   const classes = [ css.navItem ];
@@ -51,19 +49,17 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
 const STORAGE_KEY = 'collapsed';
 
 const NavigationSideBar: React.FC = () => {
-  const { isAuthenticated, user } = Auth.useStateContext();
-  const overview = ClusterOverview.useStateContext();
-  const ui = UI.useStateContext();
-  const setUI = UI.useActionContext();
+  const { auth, cluster: overview, ui } = useStore();
+  const storeDispatch = useStoreDispatch();
   const storage = useStorage('navigation');
   const [ isCollapsed, setIsCollapsed ] = useState(storage.getWithDefault(STORAGE_KEY, false));
   const [ isShowingCpu, setIsShowingCpu ] = useState(false);
 
-  const showNavigation = isAuthenticated && ui.showChrome;
+  const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
   const shortVersion = version.split('.').slice(0, 3).join('.');
   const isVersionLong = (version.match(/\./g) || []).length > 2;
-  const username = user?.username || 'Anonymous';
+  const username = auth.user?.username || 'Anonymous';
   const cluster = overview[ResourceType.ALL].allocation === 0 ?
     undefined : `${overview[ResourceType.ALL].allocation}%`;
 
@@ -78,8 +74,9 @@ const NavigationSideBar: React.FC = () => {
   }, [ isCollapsed, storage ]);
 
   useEffect(() => {
-    setUI({ type: isCollapsed ? UI.ActionType.CollapseChrome : UI.ActionType.ExpandChrome });
-  }, [ isCollapsed, setUI ]);
+    const type = isCollapsed ? StoreActionType.CollapseUIChrome : StoreActionType.ExpandUIChrome;
+    storeDispatch({ type });
+  }, [ isCollapsed, storeDispatch ]);
 
   if (!showNavigation) return null;
 

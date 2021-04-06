@@ -9,8 +9,7 @@ import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
-import Auth from 'contexts/Auth';
-import UI from 'contexts/UI';
+import { StoreActionType, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
@@ -26,9 +25,8 @@ interface Queries {
 
 const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
-  const auth = Auth.useStateContext();
-  const ui = UI.useStateContext();
-  const setUI = UI.useActionContext();
+  const { auth } = useStore();
+  const storeDispatch = useStoreDispatch();
   const queries: Queries = queryString.parse(location.search);
   const [ canceler ] = useState(new AbortController());
   const [ source ] = useState(axios.CancelToken.source());
@@ -48,7 +46,7 @@ const SignIn: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
-      setUI({ type: UI.ActionType.HideSpinner });
+      storeDispatch({ type: StoreActionType.HideUISpinner });
 
       // Show auth token via notification if requested via query parameters.
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
@@ -58,15 +56,14 @@ const SignIn: React.FC = () => {
       const redirect = queries.redirect || locationToPath(loginRedirect);
       routeAll(redirect || defaultRoute.path);
     } else if (auth.checked) {
-      setUI({ type: UI.ActionType.HideSpinner });
+      storeDispatch({ type: StoreActionType.HideUISpinner });
     }
   }, [
     auth.checked,
     auth.isAuthenticated,
     location,
     queries,
-    setUI,
-    ui,
+    storeDispatch,
   ]);
 
   // Stop the polling upon a dismount of this page.

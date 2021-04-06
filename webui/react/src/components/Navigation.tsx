@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { useFetchAgents } from 'contexts/Agents';
-import ClusterOverview from 'contexts/ClusterOverview';
-import UI from 'contexts/UI';
+import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import { ResourceType } from 'types';
-import { updateFaviconType } from 'utils/browser';
 
 import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';
@@ -18,13 +15,11 @@ interface Props {
 }
 
 const Navigation: React.FC<Props> = ({ children }) => {
-  const cluster = ClusterOverview.useStateContext();
-  const ui = UI.useStateContext();
+  const { ui } = useStore();
   const [ canceler ] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);
 
-  updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
   usePolling(fetchAgents);
 
   useEffect(() => {

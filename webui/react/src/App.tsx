@@ -5,13 +5,8 @@ import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import Router from 'components/Router';
-import Compose from 'Compose';
-import Agents from 'contexts/Agents';
-import Auth from 'contexts/Auth';
-import ClusterOverview from 'contexts/ClusterOverview';
-import Info, { useFetchInfo } from 'contexts/Info';
-import UI from 'contexts/UI';
-import Users from 'contexts/Users';
+import { useFetchInfo } from 'contexts/Info';
+import StoreProvider, { useStore } from 'contexts/Store';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
@@ -25,7 +20,7 @@ import { paths } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-  const info = Info.useStateContext();
+  const { info } = useStore();
   const [ canceler ] = useState(new AbortController());
 
   const fetchInfo = useFetchInfo(canceler);
@@ -79,16 +74,9 @@ const AppView: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Compose components={[
-      Auth.Provider,
-      Info.Provider,
-      Users.Provider,
-      Agents.Provider,
-      ClusterOverview.Provider,
-      UI.Provider,
-    ]}>
+    <StoreProvider>
       <AppView />
-    </Compose>
+    </StoreProvider>
   );
 };
 

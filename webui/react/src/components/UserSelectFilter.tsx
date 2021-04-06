@@ -2,8 +2,7 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import Auth from 'contexts/Auth';
-import Users from 'contexts/Users';
+import { useStore } from 'contexts/Store';
 import { ALL_VALUE, User } from 'types';
 
 import SelectFilter from './SelectFilter';
@@ -19,8 +18,7 @@ const userToSelectOption = (user: User): React.ReactNode =>
   <Option key={user.username} value={user.username}>{user.username}</Option>;
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
-  const auth = Auth.useStateContext();
-  const users = Users.useStateContext();
+  const { auth, users } = useStore();
 
   const handleSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;

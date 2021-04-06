@@ -7,9 +7,8 @@ import Page from 'components/Page';
 import Section from 'components/Section';
 import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
-import Auth from 'contexts/Auth';
-import ClusterOverview from 'contexts/ClusterOverview';
-import Users, { useFetchUsers } from 'contexts/Users';
+import { useStore } from 'contexts/Store';
+import { useFetchUsers } from 'contexts/Users';
 import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -48,9 +47,7 @@ const countActiveCommand = (commands: CommandTask[]): number => {
 };
 
 const Dashboard: React.FC = () => {
-  const auth = Auth.useStateContext();
-  const overview = ClusterOverview.useStateContext();
-  const users = Users.useStateContext();
+  const { auth, cluster: overview, users } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,

@@ -2,9 +2,8 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 
 import PageHeader from 'components/PageHeader';
+import { useStore } from 'contexts/Store';
 import { CommonProps } from 'types';
-
-import Info from '../contexts/Info';
 
 import css from './Page.module.scss';
 import Spinner from './Spinner';
@@ -36,7 +35,7 @@ const getFullDocTitle = (title?: string, clusterName?: string) => {
 
 const Page: React.FC<Props> = (props: Props) => {
   const classes = [ props.className, css.base ];
-  const info = Info.useStateContext();
+  const { info } = useStore();
   const showHeader = props.breadcrumb || props.title;
 
   const docTitle = getFullDocTitle(
