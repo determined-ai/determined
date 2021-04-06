@@ -1,4 +1,4 @@
-FROM determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0
+FROM determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-1c4ea10
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y git ninja-build libglib2.0-0 libsm6 lib
     && rm -rf /var/lib/apt/lists/*
 
 # Install MMCV
-RUN pip install mmcv-full==latest+torch1.4.0+cu100 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
+RUN pip install mmcv-full==latest+torch1.7.0+cu102 -f https://openmmlab.oss-accelerate.aliyuncs.com/mmcv/dist/index.html
 
 # Install MMDetection
 RUN conda clean --all
