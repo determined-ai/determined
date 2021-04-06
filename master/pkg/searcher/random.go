@@ -86,7 +86,7 @@ func (s *randomSearch) trialExitedEarly(
 		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
 		ops = append(ops, NewValidate(create.RequestID))
 		ops = append(ops, NewClose(create.RequestID))
-		s.CreatedTrials++
+		// We don't increment CreatedTrials here because this trial is replacing the invalid trial.
 		s.PendingTrials++
 		return ops, nil
 	}
