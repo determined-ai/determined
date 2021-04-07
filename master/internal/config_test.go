@@ -39,6 +39,8 @@ resource_pools:
     provider:
       max_idle_agent_period: 30s
       max_agent_starting_period: 30s
+    task_container_defaults:
+      dtrain_network_interface: if0
 `
 	expected := Config{
 		Log: logger.Config{
@@ -75,9 +77,10 @@ resource_pools:
 						MaxInstances:           5,
 					},
 					MaxCPUContainersPerAgent: 100,
-					TaskContainerDefaults: model.TaskContainerDefaultsConfig{
-						ShmSizeBytes: 4294967296,
-						NetworkMode:  "bridge",
+					TaskContainerDefaults: &model.TaskContainerDefaultsConfig{
+						ShmSizeBytes:           4294967296,
+						NetworkMode:            "bridge",
+						DtrainNetworkInterface: "if0",
 					},
 				},
 			},
@@ -145,7 +148,7 @@ db:
 
 checkpoint_storage:
   type: s3
-  access_key: my_key 
+  access_key: my_key
   secret_key: my_secret
   bucket: my_bucket
 `
