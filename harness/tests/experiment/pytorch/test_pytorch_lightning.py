@@ -17,10 +17,7 @@ class TestLightningAdapter:
         # random seed, verify the initial conditions converge.
         self.trial_seed = 17
         self.hparams = {
-            "hidden_size": 2,
-            "learning_rate": 0.5,
             "global_batch_size": 4,
-            "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.MANUAL_STEP.value,
         }
 
     def test_checkpointing_and_restoring(self, tmp_path: pathlib.Path) -> None:
@@ -102,6 +99,7 @@ class TestLightningAdapter:
                     self.last_lr = self.read_lr_value()
                 else:
                     assert self.last_lr > self.read_lr_value()
+                    self.last_lr = self.read_lr_value()
                 return super().train_batch(batch, epoch_idx, batch_idx)
 
         def make_trial_controller_fn(
@@ -111,6 +109,46 @@ class TestLightningAdapter:
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=OneVarLA,
                 hparams=self.hparams,
+                workloads=workloads,
+                load_path=load_path,
+                trial_seed=self.trial_seed,
+            )
+
+        utils.train_and_validate(make_trial_controller_fn)
+
+    def test_lr_scheduler_frequency(self, tmp_path: pathlib.Path) -> None:
+        class OneVarLA(la_model.OneVarTrial):
+            def __init__(self, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.last_lr = None
+
+            def read_lr_value(self):
+                return self._pls.optimizers[0].param_groups[0]["lr"]
+
+            def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int):
+                if self.last_lr is None:
+                    self.last_lr = self.read_lr_value()
+                elif batch_idx > 1:
+                    if batch_idx % 2 == 0:
+                        assert self.last_lr > self.read_lr_value()
+                    else:
+                        assert self.last_lr == self.read_lr_value()
+                    self.last_lr = self.read_lr_value()
+                    pass
+
+                return super().train_batch(batch, epoch_idx, batch_idx)
+
+        def make_trial_controller_fn(
+            workloads: workload.Stream, load_path: typing.Optional[str] = None
+        ) -> det.TrialController:
+
+            updated_params = {
+                **self.hparams,
+                "lr_frequency": 2,
+            }
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=OneVarLA,
+                hparams=updated_params,
                 workloads=workloads,
                 load_path=load_path,
                 trial_seed=self.trial_seed,

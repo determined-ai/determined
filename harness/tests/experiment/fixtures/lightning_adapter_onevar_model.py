@@ -17,26 +17,28 @@ class OnesDataset(torch.utils.data.Dataset):
 
 
 class OneVarLM(pl.LightningModule):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, lr_frequency=1, *args, **kwargs):
+        super().__init__()
 
         model = torch.nn.Linear(1, 1, False)
         self.model = model
+        self.save_hyperparameters()
 
         # Manually initialize the one weight to 0.
         model.weight.data.fill_(0)
 
-        self.lr = 0.08
+        self.lr = 0.5
 
         self.loss_fn = torch.nn.MSELoss()
 
     def configure_optimizers(self):
         opt = torch.optim.SGD(self.model.parameters(), self.lr)
         sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=1e-8)
+        print('hparams', self.hparams)
         return {
             "lr_scheduler": {
                 "scheduler": sched,
-                "frequency": 1,
+                "frequency": self.hparams['lr_frequency'],
                 "interval": "step",
             },
             "optimizer": opt,
@@ -84,7 +86,7 @@ class OneDatasetLDM(pl.LightningDataModule):
 class OneVarTrial(LightningAdapter):
     def __init__(self, context: pytorch.PyTorchTrialContext, lm_class=OneVarLM) -> None:
         self.context = context
-        lm = lm_class()
+        lm = lm_class(**context.get_hparams())
         self.dm = OneDatasetLDM()
         super().__init__(context, lm)
 

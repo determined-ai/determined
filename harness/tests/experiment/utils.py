@@ -373,7 +373,7 @@ RestorableMakeControllerFn = Callable[
 
 def train_and_validate(
     make_trial_controller_fn: Callable[[workload.Stream], det.TrialController],
-    steps: int = 10,
+    steps: int = 2,
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
     metrics: Dict[str, Any] = {"t": [], "v": []}
 
