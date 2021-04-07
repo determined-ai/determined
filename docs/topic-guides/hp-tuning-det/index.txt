@@ -29,34 +29,6 @@ hyperparameter configurations in a principled fashion.
 asynchronous search functionality more suitable for large-scale HP
 search experiments in the distributed setting.
 
-Synchronous Searchers
-=====================
-
-.. warning::
-
-   Adaptive (Simple) and Adaptive (Advanced) are deprecated and will be
-   removed in a future release. We recommend using the state-of-the-art
-   :ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`
-   searcher.
-
-Determined also offers two synchronous adaptive searchers that differ in
-their level of configurability.
-
-Adaptive (Simple) and Adaptive (Advanced) build on the two prototypical
-adaptive downsampling approaches, `Successive Halving
-<https://arxiv.org/pdf/1502.07943.pdf>`_ (SHA) and `Hyperband
-<https://arxiv.org/abs/1603.06560>`_.
-
-#. :ref:`Adaptive (Simple) <topic-guides_hp-tuning-det_adaptive-simple>`
-   is easier to configure and provides sensible default settings for
-   most situations. This searcher requires just two intuitive settings:
-   the number of configurations to evaluate, and the maximum allowed
-   resource budget per configuration.
-
-#. :ref:`Adaptive (Advanced)
-   <topic-guides_hp-tuning-det_adaptive-advanced>` allows users to
-   control the adaptive search behavior in a more fine-grained way.
-
 *************************
  Other Supported Methods
 *************************
@@ -89,10 +61,7 @@ restart it from the latest checkpoint unless we have done so
 experiment configuration. Once we have reached ``max_restarts``, any
 further trials that fail will be marked as errored and will not be
 restarted. For search methods that adapt to validation metric values
-(:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`,
-:ref:`Adaptive(Simple) <topic-guides_hp-tuning-det_adaptive-simple>`,
-:ref:`Adaptive (Advanced)
-<topic-guides_hp-tuning-det_adaptive-advanced>`, and
+(:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`,, and
 :ref:`Population-based training (PBT)
 <topic-guides_hp-tuning-det_pbt>`), we do not continue training errored
 trials, even if the search method would typically call for us to
