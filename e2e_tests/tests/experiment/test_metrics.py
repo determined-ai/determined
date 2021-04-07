@@ -62,7 +62,6 @@ def test_streaming_metrics_api() -> None:
 
 @pytest.mark.nightly  # type: ignore
 @pytest.mark.timeout(1200)  # type: ignore
-@pytest.mark.skip(reason="HP importance is currently disabled by default")  # type: ignore
 def test_hp_importance_api() -> None:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
 
