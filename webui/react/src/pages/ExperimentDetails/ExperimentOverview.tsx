@@ -181,7 +181,7 @@ const ExperimentOverview: React.FC<Props> = ({
   }, [ fetchExperimentTrials ]);
 
   useEffect(() => {
-    if (terminalRunStates.has(experiment.state)) stopPolling();
+    if (terminalRunStates.has(experiment.state)) stopPolling({ terminateGracefully: true });
   }, [ experiment.state, stopPolling ]);
 
   useEffect(() => {

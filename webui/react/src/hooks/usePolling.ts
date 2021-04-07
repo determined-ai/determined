@@ -5,12 +5,22 @@ type PollingFn = (() => Promise<void>) | (() => void);
 interface PollingHooks {
   isPolling: boolean;
   startPolling: () => void;
-  stopPolling: () => void;
+  stopPolling: (options?: StopOptions) => void;
 }
 
 interface PollingOptions {
   interval?: number;
   runImmediately?: boolean;
+}
+
+/*
+ * When calling `stopPolling` with `terminateGracefully` set to true,
+ * the polling will be marked as stopped but we avoid killing the timer.
+ * This means that the polling function will allowed to run one last time
+ * before terminating.
+ */
+interface StopOptions {
+  terminateGracefully?: boolean;
 }
 
 const DEFAULT_OPTIONS: PollingOptions = {
@@ -47,9 +57,9 @@ const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): Polling
     poll();
   }, [ poll ]);
 
-  const stopPolling = useCallback(() => {
+  const stopPolling = useCallback((options: StopOptions = {}) => {
     isPolling.current = false;
-    clearTimer();
+    if (!options.terminateGracefully) clearTimer();
   }, [ clearTimer ]);
 
   // Update polling function if a new one is passed in.
