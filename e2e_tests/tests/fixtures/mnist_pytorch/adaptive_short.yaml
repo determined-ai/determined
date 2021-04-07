@@ -31,6 +31,7 @@ searcher:
   max_length:
     batches: 400
   max_trials: 5
+  max_rungs: 2
   mode: aggressive
   divisor: 2
 max_restarts: 0
