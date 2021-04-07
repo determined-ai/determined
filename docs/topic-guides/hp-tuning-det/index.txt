@@ -126,7 +126,5 @@ considered to be "completed", whereas trials that fail are marked as
    hp-single
    hp-grid
    hp-random
-   hp-adaptive-simple
-   hp-adaptive-advanced
    hp-adaptive-asha
    hp-pbt

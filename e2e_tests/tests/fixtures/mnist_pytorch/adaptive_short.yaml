@@ -25,13 +25,12 @@ hyperparameters:
     minval: .2
     maxval: .8
 searcher:
-  name: adaptive
+  name: adaptive_asha
   metric: validation_loss
   smaller_is_better: true
   max_length:
     batches: 400
-  budget:
-    batches: 1600
+  max_trials: 8
   mode: aggressive
   max_rungs: 2
   divisor: 2
