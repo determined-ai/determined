@@ -2,6 +2,7 @@ import { Modal } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import React, { PropsWithChildren, useCallback, useEffect, useState } from 'react';
 
+import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import useResize from 'hooks/useResize';
 import { isNumber } from 'utils/data';
 import { isPercent, percentToFloat } from 'utils/number';
@@ -44,6 +45,22 @@ const GalleryModal: React.FC<PropsWithChildren<Props>> = ({
       setMinHeight(height);
     }
   }, [ height, resize ]);
+
+  useEffect(() => {
+    const keyUpListener = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        if (onPrevious) onPrevious();
+      } else if (e.key === 'ArrowRight') {
+        if (onNext) onNext();
+      }
+    };
+
+    keyEmitter.on(KeyEvent.KeyUp, keyUpListener);
+
+    return () => {
+      keyEmitter.off(KeyEvent.KeyUp, keyUpListener);
+    };
+  }, [ onNext, onPrevious ]);
 
   return (
     <Modal
