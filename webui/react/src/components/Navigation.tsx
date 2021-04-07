@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-import { useFetchAgents } from 'contexts/Agents';
 import { useStore } from 'contexts/Store';
+import { useFetchAgents } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 
 import css from './Navigation.module.scss';

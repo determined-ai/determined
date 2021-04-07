@@ -8,9 +8,9 @@ import Section from 'components/Section';
 import TaskCard from 'components/TaskCard';
 import TaskFilter from 'components/TaskFilter';
 import { useStore } from 'contexts/Store';
-import { useFetchUsers } from 'contexts/Users';
 import { ErrorType } from 'ErrorHandler';
 import handleError from 'ErrorHandler';
+import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import {
