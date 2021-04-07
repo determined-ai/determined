@@ -90,7 +90,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       width: chartRef.current.offsetWidth,
     } as Options;
 
-    const plotChart = new uPlot(options, data, chartRef.current);
+    const plotChart = new uPlot(options, data as uPlot.AlignedData, chartRef.current);
     setChart(plotChart);
 
     return () => {

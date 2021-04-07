@@ -14,7 +14,7 @@ export enum CreateExperimentType {
   ContinueTrial = 'Continue Trial',
 }
 
-interface Props extends ModalFuncProps {
+interface Props extends Omit<ModalFuncProps, 'type'> {
   config?: RawJson;
   error?: string;
   onCancel?: () => void;
