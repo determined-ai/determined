@@ -25,7 +25,7 @@
 # 
 
 # Restart
-/master/internal/experiment.go
+# /master/internal/experiment.go
 
 # CLI
 #/cli/
@@ -40,7 +40,7 @@
 # /master/internal/kubernetes/
 
 # Agent, container
-/agent/
+# /agent/
 
 # Harness, container
 /harness/                      @shiyuann
