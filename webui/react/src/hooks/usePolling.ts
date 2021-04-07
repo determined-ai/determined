@@ -13,6 +13,12 @@ interface PollingOptions {
   runImmediately?: boolean;
 }
 
+/*
+ * When calling `stopPolling` with `terminateGracefully` set to true,
+ * the polling will be marked as stopped but we avoid killing the timer.
+ * This means that the polling function will allowed to run one last time
+ * before terminating.
+ */
 interface StopOptions {
   terminateGracefully?: boolean;
 }
