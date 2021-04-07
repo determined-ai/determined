@@ -79,10 +79,7 @@ class XORNetMulti(XORNet):
 
 class StepableLRSchedule(torch.optim.lr_scheduler._LRScheduler):
     def get_lr(self) -> float:
-        rv = [self._step_count for _ in self.base_lrs]
-        print(rv)
-        import random
-        return random.random()
+        return [self._step_count for _ in self.base_lrs]
 
 
 class ModifyableLRSchedule(torch.optim.lr_scheduler._LRScheduler):

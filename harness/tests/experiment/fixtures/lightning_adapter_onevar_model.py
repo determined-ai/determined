@@ -26,25 +26,20 @@ class OneVarLM(pl.LightningModule):
         # Manually initialize the one weight to 0.
         model.weight.data.fill_(0)
 
-        self.lr = 0.8
+        self.lr = 0.08
 
         self.loss_fn = torch.nn.MSELoss()
 
     def configure_optimizers(self):
         opt = torch.optim.SGD(self.model.parameters(), self.lr)
-        import random
-        sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1)
-        # sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda e: random.random())
-        # sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda e: e+0.001)
-        # return [opt], [sched]
+        sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=1e-8)
         return {
-            # error in lightning doc? a17c941cc source/common/optimizers.rst l:231
-            'lr_scheduler': {
-                'scheduler': sched,
-                'frequency': 1,
-                'interval': 'step',
+            "lr_scheduler": {
+                "scheduler": sched,
+                "frequency": 1,
+                "interval": "step",
             },
-            'optimizer': opt,
+            "optimizer": opt,
         }
 
     def training_step(self, batch, batch_idx, *args, **kwargs):

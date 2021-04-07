@@ -95,14 +95,9 @@ class TestLightningAdapter:
                 self.last_lr = None
 
             def read_lr_value(self):
-                # for lrs in self._pls.lr_schedulers:
-                #     print("Current learning rate is A: {}".format(lrs.get_last_lr()))
-                for param_group in self._pls.optimizers[0].param_groups:
-                    print("Current learning rate is: {}".format(param_group['lr']))
                 return self._pls.optimizers[0].param_groups[0]["lr"]
 
             def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int):
-                print(f'batch id {batch_idx}')
                 if self.last_lr is None:
                     self.last_lr = self.read_lr_value()
                 else:
@@ -113,15 +108,9 @@ class TestLightningAdapter:
             workloads: workload.Stream, load_path: typing.Optional[str] = None
         ) -> det.TrialController:
 
-            updated_hparams = {
-                "global_batch_size": 20,
-                **self.hparams,
-            }
-
-
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=OneVarLA,
-                hparams=updated_hparams,
+                hparams=self.hparams,
                 workloads=workloads,
                 load_path=load_path,
                 trial_seed=self.trial_seed,

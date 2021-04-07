@@ -246,14 +246,7 @@ class LightningAdapter(PyTorchTrial):
             self._pls.lm,
         )
 
-        rv = self._pls.lm.configure_optimizers()
-        # print(rv)
-        # if isinstance(rv, dict):
-        #     merge_scheduler_conf(x, lr_scheduler_dicts)
-        # elif: isinstance()
-
         optimizers = cast(List[Optimizer], optimizers)
-        print('lrs dicts', lr_scheduler_dicts)
         lr_scheduler_dicts = cast(List[dict], lr_scheduler_dicts)
 
         ordered_optimizers = []
@@ -288,7 +281,6 @@ class LightningAdapter(PyTorchTrial):
                 if lrs["interval"] == "epoch"
                 else LRScheduler.StepMode.STEP_EVERY_BATCH
             )
-            print('step mode in adapter is', step_mode, lrs["interval"])
 
             wrapped_opt = optimizers_dict[getattr(lrs["scheduler"], "optimizer", None)]
             if wrapped_opt is None:
