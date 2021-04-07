@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 
-import { InfoDecorator } from 'storybook/ContextDecorators';
+import StoreDecorator from 'storybook/StoreDecorator';
 import { downloadText, simulateLogsDownload } from 'utils/browser';
 
 import LogViewer, { LogViewerHandles } from './LogViewer';
 
 export default {
   component: LogViewer,
-  decorators: [ InfoDecorator ],
+  decorators: [ StoreDecorator ],
   parameters: { layout: 'fullscreen' },
   title: 'LogViewer',
 };

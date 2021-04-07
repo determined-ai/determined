@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
-import Users from 'contexts/Users';
-import { AuthDecorator, UsersDecorator } from 'storybook/ContextDecorators';
+import { StoreActionType, useStoreDispatch } from 'contexts/Store';
+import StoreDecorator from 'storybook/StoreDecorator';
 
 import UserSelectFilter from './UserSelectFilter';
 
 export default {
   component: UserSelectFilter,
-  decorators: [ AuthDecorator, UsersDecorator ],
+  decorators: [ StoreDecorator ],
   title: 'UserSelectFilter',
 };
 
@@ -17,18 +17,18 @@ interface Props {
 
 const UserSelectFilterWithUsers: React.FC<Props> = ({ value }: Props) => {
   const [ currentValue, setCurrentValue ] = useState(value);
-  const setUsers = Users.useActionContext();
+  const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
-    setUsers({
-      type: Users.ActionType.Set,
+    storeDispatch({
+      type: StoreActionType.SetUsers,
       value: [
         { isActive: true, isAdmin: true, username: 'admin' },
         { isActive: true, isAdmin: false, username: 'user' },
         { isActive: false, isAdmin: false, username: 'inactive' },
       ],
     });
-  }, [ setUsers ]);
+  }, [ storeDispatch ]);
 
   return (
     <UserSelectFilter

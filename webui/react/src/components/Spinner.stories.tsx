@@ -1,13 +1,10 @@
 import React from 'react';
 
-import { InfoDecorator } from 'storybook/ContextDecorators';
-
 import Page from './Page';
 import Spinner from './Spinner';
 
 export default {
   component: Spinner,
-  decorators: [ InfoDecorator ],
   title: 'Spinner',
 };
 
