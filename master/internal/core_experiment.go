@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // ExperimentRequestQuery contains values for the experiments request queries with defaults already
@@ -352,26 +353,7 @@ type CreateExperimentParams struct {
 	ValidateOnly  bool            `json:"validate_only"`
 }
 
-// getResourcePoolTaskContainerDefaults is a helper function that partially parses an experiment
-// config, and returns a TaskContainerDefaultsConfig that can be fed to
-// model.DefaultExperimentConfig().  This is of course way too convoluted to be "nice", but all of
-// this will go away when we can use schemas.Merge() rather than layers of json.Unmarshal().
-func getResourcePoolTaskContainerDefaults(
-	configBytes []byte,
-	masterConfig Config,
-) model.TaskContainerDefaultsConfig {
-	var out model.TaskContainerDefaultsConfig
-
-	// Lowest-priority settings are the main TaskContainerDefaults section.
-	if b, err := yaml.Marshal(masterConfig.TaskContainerDefaults); err != nil {
-		return out
-	} else if err = yaml.Unmarshal(b, &out); err != nil {
-		return out
-	}
-
-	// Now find out what ResourcePool the experiment wants.
-	var poolDefaults model.TaskContainerDefaultsConfig
-
+func getResourcePoolSpecFromConfigBytes(configBytes []byte) (string, int) {
 	config := model.ExperimentConfig{
 		Resources: model.ResourcesConfig{
 			SlotsPerTrial: 1,
@@ -380,55 +362,72 @@ func getResourcePoolTaskContainerDefaults(
 
 	if err := yaml.Unmarshal(configBytes, &config); err != nil {
 		// This is not where validation errors are raised.
-		return out
+		return "", 1
 	}
+
+	return config.Resources.ResourcePool, config.Resources.SlotsPerTrial
+}
+
+// getResourcePoolTaskContainerDefaults is a helper function that partially parses an experiment
+// config, and returns a TaskContainerDefaultsConfig that can be fed to
+// model.DefaultExperimentConfig().  This is of course way too convoluted to be "nice", but all of
+// this will go away when we can use schemas.Merge() rather than layers of json.Unmarshal().
+func getResourcePoolTaskContainerDefaultsByName(
+	poolName string,
+	slotsPerTrial int,
+	masterConfig Config,
+) model.TaskContainerDefaultsConfig {
+	// Always fall back to the top-level TaskContainerDefaults
+	fallback := masterConfig.TaskContainerDefaults
 
 	findMatchingPoolDefaults := func(name string) model.TaskContainerDefaultsConfig {
 		for _, pool := range masterConfig.ResourcePools {
-			if config.Resources.ResourcePool == pool.PoolName {
-				return pool.TaskContainerDefaults
+			if name == pool.PoolName {
+				if pool.TaskContainerDefaults == nil {
+					return fallback
+				}
+				return *pool.TaskContainerDefaults
 			}
 		}
-		return model.TaskContainerDefaultsConfig{}
+		return fallback
 	}
 
 	switch {
-	case config.Resources.ResourcePool != "":
-		poolDefaults = findMatchingPoolDefaults(config.Resources.ResourcePool)
+	case poolName != "":
+		// Find a resource pool that matches the pool name specified.
+		return findMatchingPoolDefaults(poolName)
 	case masterConfig.ResourceManager.AgentRM == nil:
-		// Skip looking up default resource pool settings.
-	case config.Resources.SlotsPerTrial == 0:
-		poolDefaults = findMatchingPoolDefaults(
+		// For k8s resource managers, don't try to find resource pool settings.
+		return fallback
+	case slotsPerTrial == 0:
+		// Use the resource pool for cpu slots.
+		return findMatchingPoolDefaults(
 			masterConfig.ResourceManager.AgentRM.DefaultCPUResourcePool,
 		)
 	default:
-		poolDefaults = findMatchingPoolDefaults(
+		// Use the resource pool for gpu slots.
+		return findMatchingPoolDefaults(
 			masterConfig.ResourceManager.AgentRM.DefaultGPUResourcePool,
 		)
 	}
-
-	// Layer the chosen ResourcePool's TaskContainerDefaults on top of output.
-	if b, err := yaml.Marshal(poolDefaults); err != nil {
-		return out
-	} else if err = yaml.Unmarshal(b, &out); err != nil {
-		return out
-	}
-
-	return out
 }
 
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
-	*model.Experiment, bool, error,
+	*model.Experiment, bool, *tasks.TaskSpec, error,
 ) {
-	taskContainerDefaults := getResourcePoolTaskContainerDefaults(
-		[]byte(params.ConfigBytes), *m.config,
+	poolName, slotsPerTrial := getResourcePoolSpecFromConfigBytes([]byte(params.ConfigBytes))
+	taskContainerDefaults := getResourcePoolTaskContainerDefaultsByName(
+		poolName, slotsPerTrial, *m.config,
 	)
+	// Not a deep copy, but deep enough not to overwrite the master's TaskContainerDefaults.
+	taskSpec := *m.taskSpec
+	taskSpec.TaskContainerDefaults = taskContainerDefaults
 
 	config := model.DefaultExperimentConfig(&taskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
 	if err != nil {
-		return nil, false, errors.Wrap(err, "invalid experiment configuration")
+		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	config.CheckpointStorage = *checkpointStorage
@@ -436,17 +435,17 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	if params.Template != nil {
 		template, terr := m.db.TemplateByName(*params.Template)
 		if terr != nil {
-			return nil, false, terr
+			return nil, false, nil, terr
 		}
 		if yerr := yaml.Unmarshal(template.Config, &config, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, false, yerr
+			return nil, false, nil, yerr
 		}
 	}
 
 	if yerr := yaml.Unmarshal(
 		[]byte(params.ConfigBytes), &config, yaml.DisallowUnknownFields,
 	); yerr != nil {
-		return nil, false, errors.Wrap(yerr, "invalid experiment configuration")
+		return nil, false, nil, errors.Wrap(yerr, "invalid experiment configuration")
 	}
 
 	if config.Environment.PodSpec == nil {
@@ -457,8 +456,9 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 		}
 	}
 
-	if cerr := check.Validate(config); cerr != nil {
-		return nil, false, errors.Wrap(cerr, "invalid experiment configuration")
+	err = check.Validate(config)
+	if err != nil {
+		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	var modelBytes []byte
@@ -466,14 +466,14 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 		var dbErr error
 		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(*params.ParentID)
 		if dbErr != nil {
-			return nil, false, errors.Wrapf(
+			return nil, false, nil, errors.Wrapf(
 				dbErr, "unable to find parent experiment %v", *params.ParentID)
 		}
 	} else {
 		var compressErr error
 		modelBytes, compressErr = archive.ToTarGz(params.ModelDef)
 		if compressErr != nil {
-			return nil, false, errors.Wrapf(
+			return nil, false, nil, errors.Wrapf(
 				compressErr, "unable to find compress model definition")
 		}
 	}
@@ -481,7 +481,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	dbExp, err := model.NewExperiment(
 		config, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate)
-	return dbExp, params.ValidateOnly, err
+	return dbExp, params.ValidateOnly, &taskSpec, err
 }
 
 func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
@@ -497,7 +497,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		return nil, errors.Wrap(err, "invalid experiment params")
 	}
 
-	dbExp, validateOnly, err := m.parseCreateExperiment(&params)
+	dbExp, validateOnly, taskSpec, err := m.parseCreateExperiment(&params)
 
 	if err != nil {
 		return nil, echo.NewHTTPError(
@@ -510,7 +510,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	dbExp.OwnerID = &user.ID
-	e, err := newExperiment(m, dbExp)
+	e, err := newExperiment(m, dbExp, taskSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}

@@ -19,7 +19,7 @@ func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
 	raw := `
 resource_pools:
   - pool_name: default
-    provider: 
+    provider:
       type: gcp
       base_config:
         disks:
@@ -57,15 +57,15 @@ task_container_defaults:
 			},
 		},
 	}
+	expected.TaskContainerDefaults = model.TaskContainerDefaultsConfig{
+		ShmSizeBytes: 4294967296,
+		NetworkMode:  "bridge",
+	}
 	expected.ResourcePools = []resourcemanagers.ResourcePoolConfig{
 		{
 			PoolName:                 "default",
 			Provider:                 providerConf,
 			MaxCPUContainersPerAgent: 100,
-			TaskContainerDefaults: model.TaskContainerDefaultsConfig{
-				ShmSizeBytes: 4294967296,
-				NetworkMode:  "bridge",
-			},
 		},
 	}
 	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{
