@@ -100,16 +100,24 @@ type (
 // Create a new experiment object from the given model experiment object, along with its searcher
 // and log. If the input object has no ID set, also create a new experiment in the database and set
 // the returned object's ID appropriately.
-func newExperiment(master *Master, expModel *model.Experiment) (*experiment, error) {
+func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.TaskSpec) (
+	*experiment, error,
+) {
 	conf := expModel.Config
 
+	// Validate the ResourcePool setting.  The reason to do it now and not in postExperiment like
+	// all the other validations is that the resource pool should be revalidated every time the
+	// master restarts.
 	if err := sproto.ValidateRP(master.system, conf.Resources.ResourcePool); err != nil {
 		return nil, err
 	}
-
 	// If the resource pool isn't set, fill in the default.
 	if expModel.Config.Resources.ResourcePool == "" {
-		expModel.Config.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(master.system)
+		if expModel.Config.Resources.SlotsPerTrial == 0 {
+			expModel.Config.Resources.ResourcePool = sproto.GetDefaultCPUResourcePool(master.system)
+		} else {
+			expModel.Config.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(master.system)
+		}
 	}
 
 	method := searcher.NewSearchMethod(conf.Searcher)
@@ -162,7 +170,7 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		warmStartCheckpoint: checkpoint,
 
 		agentUserGroup: agentUserGroup,
-		taskSpec:       master.taskSpec,
+		taskSpec:       taskSpec,
 
 		faultToleranceEnabled: true,
 	}, nil
