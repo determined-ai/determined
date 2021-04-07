@@ -68,7 +68,7 @@ subroutines spawned.
 The first section here gives a description of ASHA. The second section
 describes why you would choose ``adaptive_asha`` over plain
 ``asynchronous_halving``. The third section gives a summary of the
-asynchrnous part of ``adaptive_asha``. The finally section and
+asynchronous part of ``adaptive_asha``. The finally section and
 conclusion is a set of FAQs regarding ``adaptive_asha``.
 
 ASHA
@@ -162,12 +162,14 @@ number of trials at each rung (N in the above ASHA example).
 Why Asynchronous Halving?
 =========================
 
-Adaptive (ASHA) is an approximation to the resource allocation scheme
-used by Determined's old ``adaptive`` and ``adaptive_simple`` searchers.
-While Adaptive promoted hyperparameter configurations synchronously,
-resulting in underutilized nodes waiting on completion of validation
-steps for other configurations, ASHA uses asynchronous promotions to
-maximize compute efficiency of the searcher.
+Synchronous halving promotes hyperparameter configurations
+synchronously, waiting for each rung to complete before performing any
+promotions. This allows the algorithm to have complete information about
+all trials at the time of promotion, but it results in underutilized
+nodes waiting on completion of validation steps for other
+configurations. ASHA, or asynchronous halving, uses asynchronously
+promotes trials when it has the minimum information required to make a
+decision in order to maximize compute efficiency of the searcher.
 
 See the difference in asynchronous vs. sychronous promotions in the two
 animated GIFs below:

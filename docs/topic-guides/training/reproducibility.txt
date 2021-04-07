@@ -36,8 +36,6 @@ Determined currently does not offer support for:
    GPUs. If only CPUs are used for training, reproducible results can be
    achieved---see below.
 
-#. Reproducibility when using the ``adaptive`` search method.
-
 **************
  Random Seeds
 **************
