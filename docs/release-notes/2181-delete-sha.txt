@@ -2,5 +2,5 @@
 
 **Removals**
 
--  Searcher: The ``adaptive`` and ``adaptive_simple`` searchers, which
+-  Searcher: The ``adaptive`` and ``adaptive_simple`` searchers which
    were deprecated in 0.13.7 have been removed.
