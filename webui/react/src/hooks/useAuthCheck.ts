@@ -1,4 +1,3 @@
-import Auth, { AUTH_COOKIE_KEY } from 'contexts/Auth';
 import { useCallback, useEffect } from 'react';
 
 import { AUTH_COOKIE_KEY, StoreActionType, useStoreDispatch } from 'contexts/Store';

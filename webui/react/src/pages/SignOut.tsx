@@ -1,4 +1,3 @@
-import Auth from 'contexts/Auth';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
@@ -29,6 +28,7 @@ const SignOut: React.FC = () => {
           type: ErrorType.Server,
         });
       }
+      updateDetApi({ apiKey: undefined });
       storeDispatch({ type: StoreActionType.ResetAuth });
       history.push(paths.login(), location.state);
     };
