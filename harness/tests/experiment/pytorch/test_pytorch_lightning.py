@@ -5,7 +5,7 @@ from typing import Any, Dict
 import pytest
 
 import determined as det
-from determined import pytorch, workload
+from determined import workload
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
 
@@ -86,28 +86,16 @@ class TestLightningAdapter:
             utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
     def test_lr_scheduler(self, tmp_path: pathlib.Path) -> None:
-        class OneVarLA(la_model.OneVarTrial):
-            def __init__(self, *args, **kwargs) -> None:
-                super().__init__(*args, **kwargs)
-                self.last_lr = None
-
-            def read_lr_value(self):
-                return self._pls.optimizers[0].param_groups[0]["lr"]
-
-            def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int):
-                if self.last_lr is None:
-                    self.last_lr = self.read_lr_value()
-                else:
-                    assert self.last_lr > self.read_lr_value()
-                    self.last_lr = self.read_lr_value()
-                return super().train_batch(batch, epoch_idx, batch_idx)
+        class OneVarLAFreq1(la_model.OneVarTrialLRScheduler):
+            def check_lr_value(self, batch_idx: int):
+                assert self.last_lr > self.read_lr_value()
 
         def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=OneVarLA,
+                trial_class=OneVarLAFreq1,
                 hparams=self.hparams,
                 workloads=workloads,
                 load_path=load_path,
@@ -116,27 +104,13 @@ class TestLightningAdapter:
 
         utils.train_and_validate(make_trial_controller_fn)
 
-    def test_lr_scheduler_frequency(self, tmp_path: pathlib.Path) -> None:
-        class OneVarLA(la_model.OneVarTrial):
-            def __init__(self, *args, **kwargs) -> None:
-                super().__init__(*args, **kwargs)
-                self.last_lr = None
-
-            def read_lr_value(self):
-                return self._pls.optimizers[0].param_groups[0]["lr"]
-
-            def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int):
-                if self.last_lr is None:
-                    self.last_lr = self.read_lr_value()
-                elif batch_idx > 1:
-                    if batch_idx % 2 == 0:
-                        assert self.last_lr > self.read_lr_value()
-                    else:
-                        assert self.last_lr == self.read_lr_value()
-                    self.last_lr = self.read_lr_value()
-                    pass
-
-                return super().train_batch(batch, epoch_idx, batch_idx)
+    def test_lr_scheduler_frequency(self) -> None:
+        class OneVarLAFreq2(la_model.OneVarTrialLRScheduler):
+            def check_lr_value(self, batch_idx: int):
+                if batch_idx % 2 == 0:
+                    assert self.last_lr > self.read_lr_value()
+                else:
+                    assert self.last_lr == self.read_lr_value()
 
         def make_trial_controller_fn(
             workloads: workload.Stream, load_path: typing.Optional[str] = None
@@ -147,7 +121,7 @@ class TestLightningAdapter:
                 "lr_frequency": 2,
             }
             return utils.make_trial_controller_from_trial_implementation(
-                trial_class=OneVarLA,
+                trial_class=OneVarLAFreq2,
                 hparams=updated_params,
                 workloads=workloads,
                 load_path=load_path,

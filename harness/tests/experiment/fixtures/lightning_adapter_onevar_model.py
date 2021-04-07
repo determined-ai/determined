@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -34,11 +35,10 @@ class OneVarLM(pl.LightningModule):
     def configure_optimizers(self):
         opt = torch.optim.SGD(self.model.parameters(), self.lr)
         sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=1e-8)
-        print('hparams', self.hparams)
         return {
             "lr_scheduler": {
                 "scheduler": sched,
-                "frequency": self.hparams['lr_frequency'],
+                "frequency": self.hparams["lr_frequency"],
                 "interval": "step",
             },
             "optimizer": opt,
@@ -115,6 +115,27 @@ class OneVarTrial(LightningAdapter):
         return pytorch.DataLoader(
             self.dm.val_dataloader().dataset, batch_size=self.context.get_per_slot_batch_size()
         )
+
+
+class OneVarTrialLRScheduler(OneVarTrial):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.last_lr = None
+
+    def read_lr_value(self):
+        return self._pls.optimizers[0].param_groups[0]["lr"]
+
+    @abstractmethod
+    def check_lr_value(self, batch_idx: int):
+        raise NotImplementedError()
+
+    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int):
+        if self.last_lr is None:
+            self.last_lr = self.read_lr_value()
+        else:
+            self.check_lr_value(batch_idx)
+            self.last_lr = self.read_lr_value()
+        return super().train_batch(batch, epoch_idx, batch_idx)
 
 
 if __name__ == "__main__":
