@@ -44,6 +44,12 @@ All users should also upgrade the CLI by running
 
    pip install --upgrade determined
 
+.. _upgrading-from-before-0_15_0:
+
+****************************
+ Upgrading from ``<0.15.0``
+****************************
+
 When upgrading from a version earlier than 0.15.0, first uninstall all
 individual packages provided by determined, and then install the new
 version:
