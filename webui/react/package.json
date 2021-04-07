@@ -21,6 +21,7 @@
     "antd": "^4.6.6",
     "axios": "^0.21.1",
     "can-ndjson-stream": "^1.0.2",
+    "dayjs": "^1.10.4",
     "eventemitter3": "^4.0.7",
     "fp-ts": "^2.8.4",
     "history": "^4.10.1",
