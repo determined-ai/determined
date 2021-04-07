@@ -19,13 +19,13 @@
 #/master/pkg/actor
 
 # HP Search
-#/master/pkg/searcher/          @stoksc
+#/master/pkg/searcher/
 
 # Checkpoint export
 # 
 
 # Restart
-/master/internal/experiment.go @stoksc
+/master/internal/experiment.go
 
 # CLI
 #/cli/
@@ -40,7 +40,7 @@
 # /master/internal/kubernetes/
 
 # Agent, container
-/agent/                        @stoksc
+/agent/
 
 # Harness, container
 /harness/                      @shiyuann
