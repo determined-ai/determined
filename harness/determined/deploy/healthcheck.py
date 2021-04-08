@@ -36,8 +36,7 @@ def wait_for_master_url(master_url: str, timeout: int = DEFAULT_TIMEOUT) -> None
                 pass
             if not polling:
                 polling = True
-                # Third dot will be added two lines later.
-                print("Waiting for master instance to be available..", end="", flush=True)
+                print("Waiting for master instance to be available...", end="", flush=True)
             time.sleep(POLL_INTERVAL)
             print(".", end="", flush=True)
 
