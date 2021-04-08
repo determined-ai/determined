@@ -174,7 +174,6 @@ type (
 		RunID int `json:"run_id"`
 
 		// The following fields tracks the reasons for termination.
-		EarlyExit                  bool `json:"early_exit"`
 		PendingGracefulTermination bool `json:"pending_graceful_termination"`
 		TerminationSent            bool `json:"termination_sent"`
 		CancelUnready              bool `json:"cancel_unready"`
@@ -643,6 +642,11 @@ func (t *trial) processAllocated(
 }
 
 func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.CompletedMessage) error {
+	defer ctx.Tell(ctx.Self().Parent(), trialReportProgress{
+		requestID: t.create.RequestID,
+		progress:  t.sequencer.Progress(),
+	})
+
 	if msg.ExitedReason == nil || *msg.ExitedReason == workload.UserCanceled ||
 		*msg.ExitedReason == workload.InvalidHP {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
@@ -650,48 +654,45 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 		}
 	}
 
-	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
-	out := trialCompletedWorkload{completedMessage: msg}
-
-	isBestValidation := ctx.Ask(ctx.Self().Parent(), trialValidation{
-		validationMetrics: msg.ValidationMetrics,
-	})
-	op, metrics, err := t.sequencer.WorkloadCompleted(msg, isBestValidation)
-	switch {
-	case err != nil:
-		return errors.Wrap(err, "failed to pass completed message to sequencer")
-	case op != nil:
-		out.completedOps = append(out.completedOps, trialCompletedOperation{op: op, metrics: metrics})
-	}
-
-	trialErrored := false
 	if msg.ExitedReason != nil {
-		ctx.Log().Infof("exiting trial early: %v", msg.ExitedReason)
-		t.EarlyExit = true
-		out.earlyExit = &trialExitedEarly{trialID: t.id, exitedReason: *msg.ExitedReason}
-		if *msg.ExitedReason == workload.Errored {
-			trialErrored = true
+		reason := *msg.ExitedReason
+		ctx.Log().Infof("exiting trial early from %v with reason %v", msg.Workload, reason)
+
+		immediateExit := t.sequencer.WorkloadFailed(reason)
+
+		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
+			return trialReportEarlyExit{reason: *msg.ExitedReason, trialSnapshot: s}
+		}); err != nil {
+			return errors.Wrap(err, "failed to report early exit with snapshot")
 		}
+
+		if immediateExit {
+			return nil
+		}
+		return t.sendNextWorkload(ctx)
 	}
 
-	if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-		out.trialSnapshot = s
-		return out
-	}); err != nil {
-		return errors.Wrap(err, "failed to send workloadCompleted with snapshot")
-	}
+	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
 
-	ctx.Tell(ctx.Self().Parent(), trialReportProgress{
-		requestID: t.create.RequestID,
-		progress:  t.sequencer.Progress(),
-	})
+	isBestValidationFunc := func() bool {
+		return ctx.Ask(ctx.Self().Parent(), trialQueryIsBestValidation{
+			validationMetrics: *msg.ValidationMetrics,
+		}).Get().(bool)
+	}
+	reportValidation, err := t.sequencer.WorkloadCompleted(msg, isBestValidationFunc)
+	if err != nil {
+		return errors.Wrap(err, "failed to pass completed message to sequencer")
+	}
 
 	switch {
-	case trialErrored:
-		return nil
-	case out.completedOps != nil:
-		// If we completed a searcher operation, synchronize with the searcher to allow it to relay any
-		// new operations to the trial. Otherwise just continue the trial immediately.
+	case reportValidation:
+		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
+			return trialReportValidation{metrics: *msg.ValidationMetrics, trialSnapshot: s}
+		}); err != nil {
+			return errors.Wrap(err, "failed to report validation with snapshot")
+		}
+		// If we talked to the searcher, fully synchronize with the it to allow it to relay any
+		// new operations to the trial.
 		ctx.Tell(ctx.Self().Parent(), sendNextWorkload{runID: t.RunID})
 		return nil
 	default:
@@ -1030,7 +1031,7 @@ func (t *trial) reset() error {
 }
 
 func (t *trial) trialClosing() bool {
-	return t.EarlyExit || t.Killed || t.Restarts > t.experiment.Config.MaxRestarts ||
+	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.experiment.Config.MaxRestarts ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
 }

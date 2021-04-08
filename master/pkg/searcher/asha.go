@@ -54,11 +54,12 @@ const ashaExitedMetricValue = math.MaxFloat64
 
 func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
+	unitsNeeded := 0
 	for id := 0; id < config.NumRungs; id++ {
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
 		downsamplingRate := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
-		unitsNeeded := max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
+		unitsNeeded += max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
 		rungs = append(rungs, &rung{UnitsNeeded: model.NewLength(config.Unit(), unitsNeeded)})
 	}
 
@@ -148,7 +149,6 @@ func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error)
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
 		s.PendingTrials++
 	}
 	return ops, nil
@@ -171,7 +171,7 @@ func (s *asyncHalvingSearch) trialClosed(
 }
 
 func (s *asyncHalvingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
+	ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	s.PendingTrials--
 	// Extract the relevant metric as a float.
@@ -223,7 +223,6 @@ func (s *asyncHalvingSearch) promoteAsync(
 			if !s.EarlyExitTrials[promotionID] {
 				unitsNeeded := max(nextRung.UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
 				ops = append(ops, NewTrain(promotionID, model.NewLength(s.Unit(), unitsNeeded)))
-				ops = append(ops, NewValidate(promotionID))
 				addedTrainWorkload = true
 				s.PendingTrials++
 			} else {
@@ -243,7 +242,6 @@ func (s *asyncHalvingSearch) promoteAsync(
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
 	}
 
 	// Only close out trials once we have reached the MaxTrials for the searcher.
@@ -317,7 +315,6 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
 		s.PendingTrials++
 		return ops, nil
 	}

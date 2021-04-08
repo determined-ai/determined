@@ -113,29 +113,15 @@ func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.Pa
 	s.TrialProgress[requestID] = progress
 }
 
-// OperationCompleted informs the searcher that the given workload initiated by the same searcher
-// has completed. Returns any new operations as a result of this workload completing.
-func (s *Searcher) OperationCompleted(
-	trialID int, op Runnable, metrics interface{},
-) ([]Operation, error) {
+// ValidationCompleted informs the searcher that a validation for the trial was completed.
+func (s *Searcher) ValidationCompleted(trialID int, metrics workload.ValidationMetrics) ([]Operation, error) {
 	requestID, ok := s.RequestIDs[trialID]
 	if !ok {
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
 
-	var operations []Operation
-	var err error
-
-	switch tOp := op.(type) {
-	case Train:
-		operations, err = s.method.trainCompleted(s.context(), requestID, tOp)
-	case Validate:
-		operations, err = s.method.validationCompleted(
-			s.context(), requestID, tOp, *metrics.(*workload.ValidationMetrics))
-	default:
-		return nil, errors.Errorf("unexpected op: %s", tOp)
-	}
-
+	// TODO(Brad): This type assertion is stupid.
+	operations, err := s.method.validationCompleted(s.context(), requestID, metrics)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}

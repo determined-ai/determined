@@ -50,8 +50,6 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 				case model.Epochs:
 					keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
 				}
-			case Validate:
-				keyParts = append(keyParts, "V")
 			default:
 				return nil, errors.Errorf("unexpected operation: %v", op)
 			}
@@ -127,17 +125,20 @@ func Simulate(
 			}
 			nextTrialID++
 		case Runnable:
-			metrics, err := generateMetrics(
-				random, trialIDs[requestID], trialOpIdxs[requestID], operation, valFunc, metricName)
-			if err != nil {
-				return simulation, err
-			}
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
 			if train, ok := operation.(Train); ok {
 				lengthCompleted[requestID] += model.PartialUnits(train.Length.Units)
 				s.SetTrialProgress(requestID, lengthCompleted[requestID])
 			}
-			ops, err := s.OperationCompleted(trialIDs[requestID], operation, metrics)
+
+			train, ok := operation.(Train)
+			if !ok {
+				return simulation, fmt.Errorf("unexpected runnable type: %T", operation)
+			}
+
+			s.SetTrialProgress(requestID, model.PartialUnits(train.Length.Units))
+			metrics := generateMetrics(random, trialIDs[requestID], trialOpIdxs[requestID], valFunc, metricName)
+			ops, err := s.ValidationCompleted(trialIDs[requestID], metrics)
 			if err != nil {
 				return simulation, err
 			}
@@ -242,20 +243,12 @@ func pickTrial(
 }
 
 func generateMetrics(
-	random *rand.Rand, trialID, opIdx int, operation Runnable, valFunc ValidationFunction,
-	metric string,
-) (interface{}, error) {
-	switch operation.(type) {
-	case Train:
-		return make(map[string]interface{}), nil
-	case Validate:
-		return &workload.ValidationMetrics{
-			NumInputs: 1,
-			Metrics: map[string]interface{}{
-				metric: valFunc(random, trialID, opIdx),
-			},
-		}, nil
-	default:
-		return nil, errors.Errorf("unexpected workload: %v", operation)
+	random *rand.Rand, trialID, opIdx int, valFunc ValidationFunction, metric string,
+) workload.ValidationMetrics {
+	return workload.ValidationMetrics{
+		NumInputs: 1,
+		Metrics: map[string]interface{}{
+			metric: valFunc(random, trialID, opIdx),
+		},
 	}
 }

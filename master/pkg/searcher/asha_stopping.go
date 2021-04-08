@@ -26,11 +26,12 @@ type asyncHalvingStoppingSearch struct {
 
 func newAsyncHalvingStoppingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
+	unitsNeeded := 0
 	for id := 0; id < config.NumRungs; id++ {
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
 		downsamplingRate := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
-		unitsNeeded := max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
+		unitsNeeded += max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
 				UnitsNeeded:       model.NewLength(config.Unit(), unitsNeeded),
@@ -109,7 +110,6 @@ func (s *asyncHalvingStoppingSearch) initialOperations(ctx context) ([]Operation
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
 	}
 	return ops, nil
 }
@@ -129,7 +129,7 @@ func (s *asyncHalvingStoppingSearch) trialClosed(
 }
 
 func (s *asyncHalvingStoppingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
+	ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.Metric)
@@ -186,7 +186,6 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 				nextRung.OutstandingTrials++
 				unitsNeeded := max(nextRung.UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
 				ops = append(ops, NewTrain(requestID, model.NewLength(s.Unit(), unitsNeeded)))
-				ops = append(ops, NewValidate(requestID))
 				addedTrainWorkload = true
 			} else {
 				ops = append(ops, NewClose(requestID))
@@ -202,7 +201,6 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
 	}
 
 	return ops
@@ -246,7 +244,6 @@ func (s *asyncHalvingStoppingSearch) trialExitedEarly(
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
 		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
 		return ops, nil
 	}
 	s.EarlyExitTrials[requestID] = true

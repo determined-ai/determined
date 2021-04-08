@@ -44,8 +44,6 @@ func (l OperationList) MarshalJSON() ([]byte, error) {
 			typedOp.OperationType = CreateOperation
 		case Train:
 			typedOp.OperationType = TrainOperation
-		case Validate:
-			typedOp.OperationType = ValidateOperation
 		case Close:
 			typedOp.OperationType = CloseOperation
 		default:
@@ -82,11 +80,7 @@ func (l *OperationList) UnmarshalJSON(b []byte) error {
 			}
 			ops = append(ops, op)
 		case ValidateOperation:
-			var op Validate
-			if err := json.Unmarshal(b, &op); err != nil {
-				return err
-			}
-			ops = append(ops, op)
+			// TODO(brad): shim validates out
 		case CloseOperation:
 			var op Close
 			if err := json.Unmarshal(b, &op); err != nil {
@@ -168,7 +162,8 @@ func (c Checkpoint) String() string {
 	return fmt.Sprintf("{Checkpoint %s}", c.RequestID)
 }
 
-// Train is an operation emitted by search methods to signal the trial train for a specified length.
+// Train is an operation emitted by search methods to signal the trial train until
+// its total batches trained equals the specified length.
 type Train struct {
 	RequestID model.RequestID
 	Length    model.Length
@@ -188,26 +183,6 @@ func (t Train) Runnable() {}
 
 // GetRequestID implemented Requested.
 func (t Train) GetRequestID() model.RequestID { return t.RequestID }
-
-// Validate is an operation emitted by search methods to signal the trial to validate.
-type Validate struct {
-	RequestID model.RequestID
-}
-
-// NewValidate returns a new validate operation.
-func NewValidate(requestID model.RequestID) Validate {
-	return Validate{requestID}
-}
-
-func (v Validate) String() string {
-	return fmt.Sprintf("{Validate %s}", v.RequestID)
-}
-
-// Runnable implements Runnable.
-func (v Validate) Runnable() {}
-
-// GetRequestID implemented Requested.
-func (v Validate) GetRequestID() model.RequestID { return v.RequestID }
 
 // Close the trial with the given trial id.
 type Close struct {
