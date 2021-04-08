@@ -4,7 +4,6 @@ import random
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import cloudpickle
 import numpy as np
 import torch
 
@@ -728,7 +727,7 @@ class PyTorchTrialController(det.LoopTrialController):
         for callback in self.callbacks.values():
             callback.on_checkpoint_save_start(checkpoint)
 
-        torch.save(checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle)
+        torch.save(checkpoint, str(path.joinpath("state_dict.pth")))
 
         for callback in self.callbacks.values():
             callback.on_checkpoint_end(str(path))
@@ -737,7 +736,7 @@ class PyTorchTrialController(det.LoopTrialController):
             workload.Response,
             {
                 "framework": f"torch-{torch.__version__}",
-                "format": "cloudpickle",
+                "format": "pickle",
             },
         )
 
