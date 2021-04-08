@@ -197,7 +197,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
 
     if not args.no_wait_for_master:
         try:
-            deployment_object.wait_for_master(timeout=5 * 60)
+            deployment_object.wait_for_master(timeout=10 * 60)
         except MasterTimeoutExpired:
             print(
                 colored(
