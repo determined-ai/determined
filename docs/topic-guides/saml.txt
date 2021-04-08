@@ -4,11 +4,10 @@
  SAML Integration (Enterprise Edition)
 #######################################
 
-Determined EE provides a SAML integration to allow users to use
-single sign-on (SSO) with their organization's identity provider (IdP)
-and to provide system administrators better control over access to
-resources. Currently, the only officially supported identity provider
-is Okta.
+Determined EE provides a SAML integration to allow users to use single
+sign-on (SSO) with their organization's identity provider (IdP) and to
+provide system administrators better control over access to resources.
+Currently, the only officially supported identity provider is Okta.
 
 **********************
  Configuring your IdP
@@ -63,8 +62,8 @@ the name format unspecified and a value ``user.login``.
 Okta will show that more steps are required to complete the
 configuration and link to a page with their IdP SSO URL, IdP Issuer URL
 (synonymous to IdP Descriptor URL), and public certificate. Use these to
-configure the Determined master in ``master.yaml``. The cert will
-need to be saved and mounted into the master's container.
+configure the Determined master in ``master.yaml``. The cert will need
+to be saved and mounted into the master's container.
 
 .. code:: yaml
 

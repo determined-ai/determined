@@ -69,7 +69,8 @@ integration:
 .. note::
 
    The username and password shown here are arbitrary and only expected
-   to match the values specified in the ``scim.auth`` master configuration.
+   to match the values specified in the ``scim.auth`` master
+   configuration.
 
 Then navigate to ``Determined -> Provisioning -> To App`` and enable the
 provisioning features your organization wants to use with Okta.
