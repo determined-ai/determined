@@ -8,6 +8,8 @@ from urllib.parse import parse_qs, urlparse
 from determined.common import api
 from determined.common.declarative_argparse import Arg, Cmd
 
+from .errors import MasterEERequired
+
 CLI_REDIRECT_PORT = 49176
 
 
@@ -45,7 +47,10 @@ def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
 
 def sso(parsed_args: Namespace) -> None:
     master_info = api.get(parsed_args.master, "info", authenticated=False).json()
-    sso_providers = master_info.get("sso_providers", None)
+    try:
+        sso_providers = master_info["sso_providers"]
+    except KeyError:
+        raise MasterEERequired("No SSO providers data")
     if not sso_providers:
         print("No SSO providers found.")
         return
@@ -84,7 +89,11 @@ def sso(parsed_args: Namespace) -> None:
 def list_providers(parsed_args: Namespace) -> None:
     master_info = api.get(parsed_args.master, "info", authenticated=False).json()
 
-    sso_providers = master_info["sso_providers"]
+    try:
+        sso_providers = master_info["sso_providers"]
+    except KeyError:
+        raise MasterEERequired("No SSO providers data")
+
     if len(sso_providers) == 0:
         print("No SSO providers found.")
         return

@@ -162,8 +162,9 @@ def do_request(
     if r.status_code == 403:
         username = authentication.Authentication.instance().get_session_user()
         raise errors.UnauthenticatedException(username=username)
-
-    if r.status_code >= 300:
+    elif r.status_code == 404:
+        raise errors.NotFoundException(r)
+    elif r.status_code >= 300:
         raise errors.APIException(r)
 
     return r

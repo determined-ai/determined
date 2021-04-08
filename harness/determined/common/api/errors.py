@@ -37,6 +37,10 @@ class APIException(BadRequestException):
         self.status_code = response.status_code
 
 
+class NotFoundException(APIException):
+    pass
+
+
 class UnauthenticatedException(BadRequestException):
     def __init__(self, username: str):
         super().__init__(
