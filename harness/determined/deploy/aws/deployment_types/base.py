@@ -6,7 +6,8 @@ from termcolor import colored
 
 import determined
 import determined.deploy
-from determined.deploy.aws import constants
+from determined.deploy.aws import aws, constants
+from determined.deploy.healthcheck import wait_for_master
 
 
 class DeterminedDeployment(metaclass=abc.ABCMeta):
@@ -41,6 +42,10 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         with open(self.template_path) as f:
             print(f.read())
 
+    def wait_for_master(self, timeout: int = 5 * 60) -> None:
+        master_ip = self._get_master_ip()
+        return wait_for_master(master_ip, timeout=timeout)
+
     def consolidate_parameters(self) -> List[Dict[str, Any]]:
         return [
             {"ParameterKey": k, "ParameterValue": str(self.parameters[k])}
@@ -74,3 +79,20 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
 
     def print_output_info(self, **kwargs: str) -> None:
         print("\n".join(self.info_partials).format(**kwargs))
+
+    def _get_aws_output(self) -> Dict[str, str]:
+        stack_name = self.parameters[constants.cloudformation.CLUSTER_ID]
+        boto3_session = self.parameters[constants.cloudformation.BOTO3_SESSION]
+        return aws.get_output(stack_name, boto3_session)
+
+    def print_results(self) -> None:
+        output = self._get_aws_output()
+        master_ip = output[constants.cloudformation.DET_ADDRESS]
+        region = output[constants.cloudformation.REGION]
+        log_group = output[constants.cloudformation.LOG_GROUP]
+
+        self.print_output_info(master_ip=master_ip, region=region, log_group=log_group)
+
+    def _get_master_ip(self) -> str:
+        output = self._get_aws_output()
+        return output[constants.cloudformation.DET_ADDRESS]

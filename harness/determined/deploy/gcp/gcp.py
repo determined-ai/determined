@@ -10,9 +10,12 @@ import googleapiclient.discovery
 from google.auth.exceptions import DefaultCredentialsError
 from termcolor import colored
 
+from determined.deploy.healthcheck import wait_for_master_url
+
 from .preflight import check_quota
 
 TF_VARS_FILE = "terraform.tfvars.json"
+TF_STATE_FILE = "terraform.tfstate"
 
 
 def deploy(configs: Dict, env: Dict, variables_to_exclude: List, dry_run: bool = False) -> None:
@@ -71,7 +74,7 @@ def terraform_write_variables(configs: Dict, variables_to_exclude: List) -> str:
     if "zone" not in configs:
         configs["zone"] = f"{configs['region']}-b"
 
-    vars_file_path = os.path.join(configs["local_state_path"], TF_VARS_FILE)
+    vars_file_path = get_terraform_vars_file_path(configs)
 
     tf_vars = {k: configs[k] for k in configs if k not in variables_to_exclude}
     with open(vars_file_path, "w") as f:
@@ -129,6 +132,23 @@ def terraform_apply(configs: Dict, env: Dict, variables_to_exclude: List) -> Non
     command += [terraform_dir(configs)]
 
     run_command(" ".join(command), env)
+
+
+def terraform_output(configs: Dict, env: Dict, variable_name: str) -> Any:
+    state_file_path = os.path.join(configs["local_state_path"], TF_STATE_FILE)
+    command = [
+        "terraform",
+        "output",
+        f"--state={state_file_path}",
+        "--json",
+        variable_name,
+    ]
+
+    # `terraform output` can take state file path, but it doesn't like
+    # TF_DATA_DIR env variable.
+    env_sanitized = {k: v for (k, v) in env.items() if k != "TF_DATA_DIR"}
+    json_value = subprocess.check_output(command, env=env_sanitized)
+    return json.loads(json_value)
 
 
 def wait_for_operations(compute: Any, tf_vars: Dict, operations: List) -> bool:
@@ -302,3 +322,8 @@ def set_gcp_credentials_env(tf_vars: Dict) -> None:
     keypath = tf_vars.get("keypath")
     if keypath:
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = keypath
+
+
+def wait_for_master(configs: Dict, env: Dict, timeout: int = 300) -> None:
+    master_url = terraform_output(configs, env, "Web-UI")
+    wait_for_master_url(master_url, timeout)

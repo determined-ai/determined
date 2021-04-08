@@ -1,6 +1,5 @@
 from typing import Iterable
 
-import boto3
 from termcolor import colored
 
 from determined.deploy.aws import aws, constants
@@ -63,12 +62,12 @@ class Secure(base.DeterminedDeployment):
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
         )
-        self.print_results(
-            self.parameters[constants.cloudformation.CLUSTER_ID],
-            self.parameters[constants.cloudformation.BOTO3_SESSION],
-        )
+        self.print_results()
 
-    def print_results(self, stack_name: str, boto3_session: boto3.session.Session) -> None:
+    def print_results(self) -> None:
+        stack_name = self.parameters[constants.cloudformation.CLUSTER_ID]
+        boto3_session = self.parameters[constants.cloudformation.BOTO3_SESSION]
+
         output = aws.get_output(stack_name, boto3_session)
 
         bastion_ip = aws.get_ec2_info(output["BastionId"], boto3_session)[
@@ -93,3 +92,7 @@ class Secure(base.DeterminedDeployment):
             self.logs_info,
             self.ssh_info,
         )
+
+    def wait_for_master(self, timeout: int = 0) -> None:
+        print("Skipping automated master health check due to bastion host usage.")
+        return

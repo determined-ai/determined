@@ -1,4 +1,3 @@
-import boto3
 from termcolor import colored
 
 from determined.deploy.aws import aws, constants
@@ -54,15 +53,4 @@ class Govcloud(base.DeterminedDeployment):
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
         )
-        self.print_results(
-            self.parameters[constants.cloudformation.CLUSTER_ID],
-            self.parameters[constants.cloudformation.BOTO3_SESSION],
-        )
-
-    def print_results(self, stack_name: str, boto3_session: boto3.session.Session) -> None:
-        output = aws.get_output(stack_name, boto3_session)
-        master_ip = output[constants.cloudformation.DET_ADDRESS]
-        region = output[constants.cloudformation.REGION]
-        log_group = output[constants.cloudformation.LOG_GROUP]
-
-        self.print_output_info(master_ip=master_ip, region=region, log_group=log_group)
+        self.print_results()
