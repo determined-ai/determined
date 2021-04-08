@@ -2,13 +2,29 @@ from typing import Dict, List
 
 from determined.common import api
 
-# TODO: Change to match new multiple batch interface
-def post_trial_profiler_metrics(
+
+class TrialProfilerMetricsBatch:
+    """
+    TrialProfilerMetricsBatch is the representation of a batch of trial
+    profiler metrics as accepted by POST /api/v1/trials/:trial_id/profiler/metrics
+    """
+
+    def __init__(
+        self,
+        values: List[float],
+        batches: List[int],
+        timestamps: List[str],
+        labels: Dict[str, str],
+    ):
+        self.values = values
+        self.batches = batches
+        self.timestamps = timestamps
+        self.labels = labels
+
+
+def post_trial_profiler_metrics_batches(
     master_url: str,
-    values: List[float],
-    batches: List[int],
-    timestamps: List[str],
-    labels: Dict[str, str],
+    batches: List[TrialProfilerMetricsBatch],
 ) -> None:
     """
     Post the given metrics to the master to be persisted. Labels
@@ -19,12 +35,5 @@ def post_trial_profiler_metrics(
     api.post(
         master_url,
         "/api/v1/trials/profiler/metrics",
-        body={
-            "batch": {
-                "values": values,
-                "batches": batches,
-                "timestamps": timestamps,
-                "labels": labels,
-            }
-        },
+        body={"batches": [b.__dict__ for b in batches]},
     )
