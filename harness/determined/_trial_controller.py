@@ -4,7 +4,7 @@ import pathlib
 from typing import Any, Dict, List, Optional, cast
 
 import determined as det
-from determined import constants, horovod, ipc, workload, metrics
+from determined import constants, horovod, ipc, workload
 from determined._rendezvous_info import RendezvousInfo
 from determined.common import check
 from determined.common.types import StepID
