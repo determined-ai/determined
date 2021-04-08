@@ -12,6 +12,7 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import Info, { useFetchInfo } from 'contexts/Info';
 import UI from 'contexts/UI';
 import Users from 'contexts/Users';
+import useKeyTracker from 'hooks/useKeyTracker';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
@@ -29,6 +30,7 @@ const AppView: React.FC = () => {
 
   const fetchInfo = useFetchInfo(canceler);
 
+  useKeyTracker();
   useRouteTracker();
   useTheme();
 
