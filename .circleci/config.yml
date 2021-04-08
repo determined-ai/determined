@@ -411,7 +411,7 @@ commands:
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
             echo "-----END ARGS-----"
-            det deploy aws up \
+            det deploy --no-wait-for-master aws up \
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
