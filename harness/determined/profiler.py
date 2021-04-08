@@ -1,3 +1,4 @@
+import logging
 import threading
 import psutil
 import pynvml
@@ -512,7 +513,7 @@ class GpuUtilCollector:
                 util = pynvml.nvmlDeviceGetUtilizationRates(handle)
                 measurements[handle] = Measurement(timestamp, batch_idx, util.gpu)
             except pynvml.NVMLError as e:
-                logging.warning(f"failed to sample GPU utilization: {e}")
+                logging.warning(f"failed to sample GPU utilization for GPU {i}: {e}")
         return measurements
 
 
@@ -530,5 +531,5 @@ class GpuMemoryCollector():
                 info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 measurements[handle] = Measurement(timestamp, batch_idx, info.free)
             except pynvml.NVMLError as e:
-                logging.warning(f"failed to sample GPU memory: {e}")
+                logging.warning(f"failed to sample GPU memory for GPU {i}: {e}")
         return measurements
