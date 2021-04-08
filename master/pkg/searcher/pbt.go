@@ -161,7 +161,7 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 	// Continue all non-closed trials.
 	for _, requestID := range trialIDs[:len(trialIDs)-numTruncate] {
 		if !s.EarlyExitTrials[requestID] {
-			ops = append(ops, NewTrain(requestID, s.LengthPerRound.MultInt(s.TrialRoundsCompleted[requestID] + 1)))
+			ops = append(ops, NewTrain(requestID, s.LengthPerRound.MultInt(s.TrialRoundsCompleted[requestID]+1)))
 		} else {
 			s.Metrics[requestID] = pbtExitedMetricValue
 		}

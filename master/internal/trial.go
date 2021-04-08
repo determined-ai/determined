@@ -680,11 +680,9 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 		}).Get().(bool)
 	}
 	reportValidation, err := t.sequencer.WorkloadCompleted(msg, isBestValidationFunc)
-	if err != nil {
-		return errors.Wrap(err, "failed to pass completed message to sequencer")
-	}
-
 	switch {
+	case err != nil:
+		return errors.Wrap(err, "failed to pass completed message to sequencer")
 	case reportValidation:
 		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
 			return trialReportValidation{metrics: *msg.ValidationMetrics, trialSnapshot: s}

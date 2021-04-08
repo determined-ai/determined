@@ -229,7 +229,7 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 			errors.New("cannot call sequencer.Workload() before sequencer.SetTrialID()")
 	}
 
-	if s.postGracefulStopCheckpointNeeded() || s.postValidationCheckpointNeeded()  || s.minCheckpointNeeded() {
+	if s.postGracefulStopCheckpointNeeded() || s.postValidationCheckpointNeeded() || s.minCheckpointNeeded() {
 		return s.checkpoint(), nil
 	}
 
