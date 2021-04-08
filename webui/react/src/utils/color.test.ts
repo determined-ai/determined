@@ -49,7 +49,7 @@ describe('color utility', () => {
   ];
 
   describe('glasbeyColor', () => {
-    const firstColor = 'rgb(87, 43, 255)';
+    const firstColor = 'rgb(0, 155, 222)';
     const lastColor = 'rgb(142, 190, 88)';
 
     it('should match first glasbey color', () => {
