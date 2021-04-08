@@ -1399,6 +1399,18 @@ Version 0.12.10
 -  Add a timeout to trial containers to ensure they are terminated
    promptly.
 
+Version 0.12.9
+==============
+
+**Release Date:** June 16, 2020
+
+-  Retry ``ConnectionError`` and ``ProtocolError`` types for uploads to
+   Google Cloud Storage.
+-  Fix a bug where the CLI was unable to make secure websocket
+   connections to the master.
+-  Add the ``det user rename`` CLI command for admins to change the
+   username of existing users.
+
 Version 0.12.7
 ==============
 
@@ -1482,6 +1494,13 @@ Version 0.12.7
    provides an out-of-the-box option for running non-privileged
    containers with a working home directory.
 
+Version 0.12.6
+==============
+
+**Release Date:** June 5, 2020
+
+-  Add end of training callback to EstimatorTrial.
+
 Version 0.12.5
 ==============
 
@@ -1522,6 +1541,15 @@ Version 0.12.5
 
 -  CLI: Include the number of containers on each agent in the output of
    ``det agent list``.
+
+Enterprise:
+
+-  Add support for using SCIM (System for Cross-domain Identity
+   Management) to provision users. For usage, see :ref:`scim`.
+-  Add support for using OAuth2 to secure Determined's SCIM integration.
+   For usage, see :ref:`oauth`.
+-  Add support for users to sign-on through an external IdP with SAML.
+   For usage, see :ref:`saml`.
 
 Version 0.12.4
 ==============

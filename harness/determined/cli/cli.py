@@ -21,9 +21,11 @@ from determined.cli.agent import args_description as agent_args_description
 from determined.cli.master import args_description as master_args_description
 from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
+from determined.cli.oauth import args_description as oauth_args_description
 from determined.cli.remote import args_description as remote_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
+from determined.cli.sso import args_description as auth_args_description
 from determined.cli.template import args_description as template_args_description
 from determined.cli.tensorboard import args_description as tensorboard_args_description
 from determined.cli.trial import args_description as trial_args_description
@@ -182,6 +184,8 @@ all_args_description = (
     + remote_args_description
     + user_args_description
     + version_args_description
+    + auth_args_description
+    + oauth_args_description
 )
 
 
