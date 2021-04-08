@@ -201,11 +201,11 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         except MasterTimeoutExpired:
             print(
                 colored(
-                    "Determined cluster has been deployed, but Master health check has failed.",
+                    "Determined cluster has been deployed, but master health check has failed.",
                     "red",
                 )
             )
-            print("For details, SSH to Master instance and check /var/log/cloud-init-output.log")
+            print("For details, SSH to master instance and check /var/log/cloud-init-output.log.")
             sys.exit(1)
 
     print("Determined Deployment Successful")
