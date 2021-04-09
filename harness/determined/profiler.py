@@ -92,7 +92,7 @@ class ProfilerAgent:
 
         # Check if we should start collecting metrics
         if not self.is_enabled and not self.has_finished and self.current_batch_idx >= self.start_on_batch:
-                self._begin_collection()
+            self._begin_collection()
 
         # Check if we should stop collecting metrics due to batch idx being exceeded
         if self.is_enabled and self.end_after_batch is not None and self.current_batch_idx > self.end_after_batch:
