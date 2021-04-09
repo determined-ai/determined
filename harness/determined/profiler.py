@@ -1,3 +1,4 @@
+import logging
 import threading
 import psutil
 import pynvml
@@ -8,6 +9,8 @@ from determined.common import api
 
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
+
+LOG_NAMESPACE = "determined-profiler"
 
 
 
@@ -129,6 +132,7 @@ class Measurement:
 
 class SysMetricType:
     GPU_UTIL_METRIC = "gpu_util"
+    GPU_FREE_MEMORY_METRIC = "gpu_free_memory"
     NET_THRU_SENT_METRIC = "net_throughput_sent"
     NET_THRU_RECV_METRIC = "net_throughput_recv"
     DISK_IOPS_METRIC = "disk_iops"
@@ -277,6 +281,7 @@ class SysMetricCollectorThread(threading.Thread):
         batch_start_time = None
         cpu_util_collector = SimpleCpuUtilCollector()
         gpu_util_collector = GpuUtilCollector()
+        gpu_memory_collection = GpuMemoryCollector()
         network_throughput_collector = NetThroughputCollector()
         free_memory_collector = FreeMemoryCollector()
         disk_collector = DiskReadWriteRateCollector()
@@ -303,12 +308,16 @@ class SysMetricCollectorThread(threading.Thread):
                 immutable_batch_idx = self.current_batch_idx
                 cpu_util_measurement = cpu_util_collector.measure(immutable_batch_idx)
                 gpu_util_measurements = gpu_util_collector.measure(immutable_batch_idx)
+                gpu_memory_measurements = gpu_memory_collection.measure(immutable_batch_idx)
                 net_thru_sent_measurement, net_thru_recv_measurement = network_throughput_collector.measure(immutable_batch_idx)
                 free_memory_measurement = free_memory_collector.measure(immutable_batch_idx)
                 disk_read_thru_measurement, disk_write_thru_measurement, iops_measurement = disk_collector.measure(immutable_batch_idx)
 
                 for gpu_uuid in gpu_util_measurements.keys():
                     self.current_batch.add_gpu_measurement(SysMetricType.GPU_UTIL_METRIC, gpu_uuid, gpu_util_measurements[gpu_uuid])
+
+                for gpu_uuid in gpu_memory_measurements.keys():
+                    self.current_batch.add_gpu_measurement(SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_util_measurements[gpu_uuid])
 
                 self.current_batch.add_nongpu_measurement(SysMetricType.NET_THRU_SENT_METRIC, net_thru_sent_measurement)
                 self.current_batch.add_nongpu_measurement(SysMetricType.NET_THRU_RECV_METRIC, net_thru_recv_measurement)
@@ -492,7 +501,6 @@ class DiskReadWriteRateCollector:
         return read_throughput, write_throughput, iops
 
 
-
 class GpuUtilCollector:
     def __init__(self):
         pynvml.nvmlInit()
@@ -505,20 +513,25 @@ class GpuUtilCollector:
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             try:
                 util = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                gpu_util = util.gpu
-
-            except pynvml.NVMLError as err:
-                # TODO: Log this error
-                continue
-            measurements[handle] = Measurement(timestamp, batch_idx, gpu_util)
+                measurements[handle] = Measurement(timestamp, batch_idx, util.gpu)
+            except pynvml.NVMLError as e:
+                logging.info(f"{LOG_NAMESPACE}: failed to sample GPU utilization for GPU {i}: {e}")
         return measurements
 
 
-# TODO: Haven't figured out how to collect GPU memory usage yet
-class GpuMemory:
-    pass
+class GpuMemoryCollector():
+    def __init__(self):
+        pynvml.nvmlInit()
+        self.num_gpus = pynvml.nvmlDeviceGetCount()
 
-
-# The psutil way of measuring this is to query by a path. Should we just query /?
-class DiskFree:
-    pass
+    def measure(self, batch_idx):
+        measurements = {}
+        timestamp = datetime.datetime.utcnow()
+        for i in range(self.num_gpus):
+            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            try:
+                info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+                measurements[handle] = Measurement(timestamp, batch_idx, info.free)
+            except pynvml.NVMLError as e:
+                logging.info(f"{LOG_NAMESPACE}: failed to sample GPU memory for GPU {i}: {e}")
+        return measurements
