@@ -348,11 +348,10 @@ class ProfilerSenderThread(threading.Thread):
     def __init__(self, inbound_queue: queue.Queue, master_url: str) -> None:
         self.master_url = master_url
         self.inbound_queue = inbound_queue
-        self.control_queue = queue.Queue()
         super().__init__(daemon=True)
 
     def kill(self):
-        self.control_queue.put(ShutdownMessage())
+        self.inbound_queue.put(ShutdownMessage())
 
     def run(self) -> None:
         while True:
