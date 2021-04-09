@@ -25,15 +25,14 @@ hyperparameters:
     minval: .2
     maxval: .8
 searcher:
-  name: adaptive
+  name: adaptive_asha
   metric: validation_loss
   smaller_is_better: true
   max_length:
     batches: 400
-  budget:
-    batches: 1600
-  mode: aggressive
+  max_trials: 5
   max_rungs: 2
+  mode: aggressive
   divisor: 2
 max_restarts: 0
 # bind-mounting the /tmp/work_dir directory for the mnist_pytorch experiment

@@ -26,7 +26,7 @@ A typical set of configuration values for PBT:
 -  ``num_rounds``, ``length_per_round``: The product of these values is
    the total training length for a trial that survives to the end of the
    experiment; it should be chosen similarly to the value of
-   ``max_length`` for :ref:`topic-guides_hp-tuning-det_adaptive-simple`.
+   ``max_length`` for :ref:`topic-guides_hp-tuning-det_adaptive-asha`.
    For a given value of the product, decreasing ``length_per_round``
    creates more opportunity for evaluation and selection of good
    configurations at the cost of higher variance and computational

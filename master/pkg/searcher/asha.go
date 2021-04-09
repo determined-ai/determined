@@ -31,6 +31,23 @@ type (
 		model.AsyncHalvingConfig
 		asyncHalvingSearchState
 	}
+
+	trialMetric struct {
+		RequestID model.RequestID `json:"request_id"`
+		Metric    float64         `json:"metric"`
+		// fields below used by asha.go.
+		Promoted bool `json:"promoted"`
+	}
+
+	// rung describes a set of trials that are to be trained for the same number of units.
+	rung struct {
+		UnitsNeeded   model.Length  `json:"units_needed"`
+		Metrics       []trialMetric `json:"metrics"`
+		StartTrials   int           `json:"start_trials"`
+		PromoteTrials int           `json:"promote_trials"`
+		// field below used by asha.go.
+		OutstandingTrials int `json:"outstanding_trials"`
+	}
 )
 
 const ashaExitedMetricValue = math.MaxFloat64

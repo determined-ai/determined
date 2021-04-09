@@ -569,11 +569,9 @@ Version 0.13.7
 
 **Deprecated Features**
 
--  Deprecate the :ref:`simple
-   <topic-guides_hp-tuning-det_adaptive-simple>` and :ref:`advanced
-   <topic-guides_hp-tuning-det_adaptive-advanced>` adaptive
-   hyperparameter search algorithms. They will be removed in a future
-   release. Both algorithms have been replaced with
+-  Deprecate the simple and advanced adaptive hyperparameter search
+   algorithms. They will be removed in a future release. Both algorithms
+   have been replaced with
    :ref:`topic-guides_hp-tuning-det_adaptive-asha`, which has
    state-of-the-art performance, as well as better scalability and
    resource-efficiency.

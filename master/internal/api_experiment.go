@@ -839,12 +839,6 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherC
 		ranking = ByMetricOfInterest
 	case s.GridConfig != nil:
 		ranking = ByMetricOfInterest
-	case s.SyncHalvingConfig != nil:
-		ranking = ByTrainingLength
-	case s.AdaptiveConfig != nil:
-		ranking = ByTrainingLength
-	case s.AdaptiveSimpleConfig != nil:
-		ranking = ByTrainingLength
 	case s.AsyncHalvingConfig != nil:
 		ranking = ByTrainingLength
 	case s.AdaptiveASHAConfig != nil:

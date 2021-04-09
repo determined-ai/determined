@@ -22,15 +22,12 @@ type SearcherConfig struct {
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	SingleConfig         *SingleConfig         `union:"name,single" json:"-"`
-	RandomConfig         *RandomConfig         `union:"name,random" json:"-"`
-	GridConfig           *GridConfig           `union:"name,grid" json:"-"`
-	SyncHalvingConfig    *SyncHalvingConfig    `union:"name,sync_halving" json:"-"`
-	AsyncHalvingConfig   *AsyncHalvingConfig   `union:"name,async_halving" json:"-"`
-	AdaptiveConfig       *AdaptiveConfig       `union:"name,adaptive" json:"-"`
-	AdaptiveSimpleConfig *AdaptiveSimpleConfig `union:"name,adaptive_simple" json:"-"`
-	AdaptiveASHAConfig   *AdaptiveASHAConfig   `union:"name,adaptive_asha" json:"-"`
-	PBTConfig            *PBTConfig            `union:"name,pbt" json:"-"`
+	SingleConfig       *SingleConfig       `union:"name,single" json:"-"`
+	RandomConfig       *RandomConfig       `union:"name,random" json:"-"`
+	GridConfig         *GridConfig         `union:"name,grid" json:"-"`
+	AsyncHalvingConfig *AsyncHalvingConfig `union:"name,async_halving" json:"-"`
+	AdaptiveASHAConfig *AdaptiveASHAConfig `union:"name,adaptive_asha" json:"-"`
+	PBTConfig          *PBTConfig          `union:"name,pbt" json:"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -56,12 +53,6 @@ func (s SearcherConfig) Unit() Unit {
 		return s.RandomConfig.Unit()
 	case s.GridConfig != nil:
 		return s.GridConfig.Unit()
-	case s.SyncHalvingConfig != nil:
-		return s.SyncHalvingConfig.Unit()
-	case s.AdaptiveConfig != nil:
-		return s.AdaptiveConfig.Unit()
-	case s.AdaptiveSimpleConfig != nil:
-		return s.AdaptiveSimpleConfig.Unit()
 	case s.AsyncHalvingConfig != nil:
 		return s.AsyncHalvingConfig.Unit()
 	case s.AdaptiveASHAConfig != nil:
@@ -130,22 +121,6 @@ func (g GridConfig) Validate() (errs []error) {
 	}
 }
 
-// SyncHalvingConfig configures synchronous successive halving.
-type SyncHalvingConfig struct {
-	Metric          string  `json:"metric"`
-	SmallerIsBetter bool    `json:"smaller_is_better"`
-	NumRungs        int     `json:"num_rungs"`
-	MaxLength       Length  `json:"max_length"`
-	Budget          Length  `json:"budget"`
-	Divisor         float64 `json:"divisor"`
-	TrainStragglers bool    `json:"train_stragglers"`
-}
-
-// Unit implements the model.InUnits interface.
-func (s SyncHalvingConfig) Unit() Unit {
-	return s.MaxLength.Unit
-}
-
 // AsyncHalvingConfig configures asynchronous successive halving.
 type AsyncHalvingConfig struct {
 	Metric              string  `json:"metric"`
@@ -187,70 +162,6 @@ const (
 	// configurations.
 	ConservativeMode = "conservative"
 )
-
-// AdaptiveConfig configures an adaptive search.
-type AdaptiveConfig struct {
-	Metric          string       `json:"metric"`
-	SmallerIsBetter bool         `json:"smaller_is_better"`
-	MaxLength       Length       `json:"max_length"`
-	Budget          Length       `json:"budget"`
-	BracketRungs    []int        `json:"bracket_rungs"`
-	Divisor         float64      `json:"divisor"`
-	TrainStragglers bool         `json:"train_stragglers"`
-	Mode            AdaptiveMode `json:"mode"`
-	MaxRungs        int          `json:"max_rungs"`
-}
-
-// Validate implements the check.Validatable interface.
-func (a AdaptiveConfig) Validate() []error {
-	return []error{
-		check.GreaterThan(a.Budget.Units, a.MaxLength.Units,
-			"budget must be > max_length"),
-		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
-		check.GreaterThan(a.Budget.Units, 0, "budget must be > 0"),
-		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
-		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
-			"invalid adaptive mode"),
-		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
-		check.Equal(a.MaxLength.Unit, a.Budget.Unit,
-			"max_length and budget must be specified in terms of the same unit"),
-	}
-}
-
-// Unit implements the model.InUnits interface.
-func (a AdaptiveConfig) Unit() Unit {
-	return a.MaxLength.Unit
-}
-
-// AdaptiveSimpleConfig configures an simplified adaptive search.
-type AdaptiveSimpleConfig struct {
-	Metric          string       `json:"metric"`
-	SmallerIsBetter bool         `json:"smaller_is_better"`
-	MaxLength       Length       `json:"max_length"`
-	MaxTrials       int          `json:"max_trials"`
-	Divisor         float64      `json:"divisor"`
-	Mode            AdaptiveMode `json:"mode"`
-	MaxRungs        int          `json:"max_rungs"`
-}
-
-// Validate implements the check.Validatable interface.
-func (a AdaptiveSimpleConfig) Validate() []error {
-	return []error{
-		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
-		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
-		check.LessThanOrEqualTo(a.MaxTrials, MaxAllowedTrials,
-			"max_trials must be <= %d", MaxAllowedTrials),
-		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
-		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
-			"invalid adaptive mode"),
-		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
-	}
-}
-
-// Unit implements the model.InUnits interface.
-func (a AdaptiveSimpleConfig) Unit() Unit {
-	return a.MaxLength.Unit
-}
 
 // AdaptiveASHAConfig configures an adaptive searcher for use with ASHA.
 type AdaptiveASHAConfig struct {

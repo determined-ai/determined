@@ -56,24 +56,6 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 			GridConfig: &GridConfig{
 				MaxConcurrentTrials: 0,
 			},
-			SyncHalvingConfig: &SyncHalvingConfig{
-				SmallerIsBetter: true,
-				Divisor:         4,
-				TrainStragglers: true,
-			},
-			AdaptiveConfig: &AdaptiveConfig{
-				SmallerIsBetter: true,
-				Divisor:         4,
-				TrainStragglers: true,
-				Mode:            StandardMode,
-				MaxRungs:        5,
-			},
-			AdaptiveSimpleConfig: &AdaptiveSimpleConfig{
-				SmallerIsBetter: true,
-				Divisor:         4,
-				Mode:            StandardMode,
-				MaxRungs:        5,
-			},
 			AsyncHalvingConfig: &AsyncHalvingConfig{
 				SmallerIsBetter:     true,
 				Divisor:             4,

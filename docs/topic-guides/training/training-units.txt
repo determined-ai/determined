@@ -38,10 +38,6 @@ including:
    <experiment-configuration_single-searcher-max-length>` in most
    searchers
 
--  :ref:`searcher.budget
-   <experiment-configuration_adaptive-advanced-budget>` when using the
-   ``adaptive`` searcher
-
 -  :ref:`searcher.length_per_round
    <experiment-configuration_length-per-round>` when using the ``pbt``
    searcher
@@ -77,7 +73,7 @@ with a few caveats:
    between trials of the search, and hence cannot be converted to a
    fixed number of records or epochs.
 
--  When using adaptive searchers, such as :ref:`adaptive_asha
+-  When using :ref:`adaptive_asha
    <experiment-configuration-searcher-adaptive>`, a single training unit
    is treated as atomic (unable to be divided into fractional parts)
    when dividing ``max_length`` into the series of rounds (or rungs) by

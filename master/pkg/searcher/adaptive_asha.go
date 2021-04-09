@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"fmt"
 	"math"
 	"sort"
 
@@ -103,4 +104,59 @@ func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
 	}
 
 	return newTournamentSearch(AdaptiveASHASearch, methods...)
+}
+
+type adaptiveMode func(maxRungs int) []int
+
+func conservativeMode(maxRungs int) []int {
+	bracketRungs := make([]int, 0, maxRungs)
+	for i := 1; i <= maxRungs; i++ {
+		bracketRungs = append(bracketRungs, i)
+	}
+	return bracketRungs
+}
+
+func standardMode(maxRungs int) []int {
+	var bracketRungs []int
+	for i := (maxRungs-1)/2 + 1; i <= maxRungs; i++ {
+		bracketRungs = append(bracketRungs, i)
+	}
+	return bracketRungs
+}
+
+func aggressiveMode(maxRungs int) []int {
+	return []int{maxRungs}
+}
+
+func parseAdaptiveMode(rawMode model.AdaptiveMode) adaptiveMode {
+	switch rawMode {
+	case model.ConservativeMode:
+		return conservativeMode
+	case model.StandardMode:
+		return standardMode
+	case model.AggressiveMode:
+		return aggressiveMode
+	default:
+		panic(fmt.Sprintf("unexpected adaptive mode: %s", rawMode))
+	}
+}
+
+func max(initial int, values ...int) int {
+	maxValue := initial
+	for _, value := range values {
+		if value > maxValue {
+			maxValue = value
+		}
+	}
+	return maxValue
+}
+
+func min(initial int, values ...int) int {
+	minValue := initial
+	for _, value := range values {
+		if value < minValue {
+			minValue = value
+		}
+	}
+	return minValue
 }
