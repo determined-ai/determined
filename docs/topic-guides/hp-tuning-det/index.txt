@@ -61,7 +61,7 @@ restart it from the latest checkpoint unless we have done so
 experiment configuration. Once we have reached ``max_restarts``, any
 further trials that fail will be marked as errored and will not be
 restarted. For search methods that adapt to validation metric values
-(:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`,, and
+(:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`, and
 :ref:`Population-based training (PBT)
 <topic-guides_hp-tuning-det_pbt>`), we do not continue training errored
 trials, even if the search method would typically call for us to
