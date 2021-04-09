@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
-import { StoreActionType, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { RouteConfig } from 'routes/types';
 import { paths } from 'routes/utils';
@@ -23,7 +23,7 @@ const Router: React.FC<Props> = (props: Props) => {
 
   useEffect(() => {
     if (auth.isAuthenticated) {
-      storeDispatch({ type: StoreActionType.HideUISpinner });
+      storeDispatch({ type: StoreAction.HideUISpinner });
     }
   }, [ auth.isAuthenticated, storeDispatch ]);
 

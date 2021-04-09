@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import { StoreActionType, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
@@ -74,7 +74,7 @@ const NavigationSideBar: React.FC = () => {
   }, [ isCollapsed, storage ]);
 
   useEffect(() => {
-    const type = isCollapsed ? StoreActionType.CollapseUIChrome : StoreActionType.ExpandUIChrome;
+    const type = isCollapsed ? StoreAction.CollapseUIChrome : StoreAction.ExpandUIChrome;
     storeDispatch({ type });
   }, [ isCollapsed, storeDispatch ]);
 

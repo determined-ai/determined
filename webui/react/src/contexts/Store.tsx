@@ -25,7 +25,7 @@ interface State {
   users: DetailedUser[];
 }
 
-export enum StoreActionType {
+export enum StoreAction {
   Reset,
 
   // Agents
@@ -53,20 +53,20 @@ export enum StoreActionType {
 }
 
 type Action =
-| { type: StoreActionType.Reset }
-| { type: StoreActionType.SetAgents; value: Agent[] }
-| { type: StoreActionType.ResetAuth }
-| { type: StoreActionType.ResetAuthCheck }
-| { type: StoreActionType.SetAuth; value: Auth }
-| { type: StoreActionType.SetAuthCheck }
-| { type: StoreActionType.SetInfo; value: DeterminedInfo }
-| { type: StoreActionType.CollapseUIChrome }
-| { type: StoreActionType.ExpandUIChrome }
-| { type: StoreActionType.HideUIChrome }
-| { type: StoreActionType.HideUISpinner }
-| { type: StoreActionType.ShowUIChrome }
-| { type: StoreActionType.ShowUISpinner }
-| { type: StoreActionType.SetUsers; value: DetailedUser[] }
+| { type: StoreAction.Reset }
+| { type: StoreAction.SetAgents; value: Agent[] }
+| { type: StoreAction.ResetAuth }
+| { type: StoreAction.ResetAuthCheck }
+| { type: StoreAction.SetAuth; value: Auth }
+| { type: StoreAction.SetAuthCheck }
+| { type: StoreAction.SetInfo; value: DeterminedInfo }
+| { type: StoreAction.CollapseUIChrome }
+| { type: StoreAction.ExpandUIChrome }
+| { type: StoreAction.HideUIChrome }
+| { type: StoreAction.HideUISpinner }
+| { type: StoreAction.ShowUIChrome }
+| { type: StoreAction.ShowUISpinner }
+| { type: StoreAction.SetUsers; value: DetailedUser[] }
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -137,52 +137,52 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
 
 const reducer = (state: State, action: Action) => {
   switch (action.type) {
-    case StoreActionType.Reset:
+    case StoreAction.Reset:
       return clone(initState);
-    case StoreActionType.SetAgents: {
+    case StoreAction.SetAgents: {
       if (action.value.length === 0) return state;
       if (isEqual(state.agents, action.value)) return state;
       const cluster = agentsToOverview(action.value);
       updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
       return { ...state, agents: action.value, cluster };
     }
-    case StoreActionType.ResetAuth:
+    case StoreAction.ResetAuth:
       clearAuthCookie();
       globalStorage.removeAuthToken();
       return { ...state, auth: { ...initAuth } };
-    case StoreActionType.ResetAuthCheck:
+    case StoreAction.ResetAuthCheck:
       if (!state.auth.checked) return state;
       return { ...state, auth: { ...state.auth, checked: false } };
-    case StoreActionType.SetAuth:
+    case StoreAction.SetAuth:
       if (action.value.token) {
         globalStorage.authToken = action.value.token;
       }
       return { ...state, auth: { ...action.value, checked: true } };
-    case StoreActionType.SetAuthCheck:
+    case StoreAction.SetAuthCheck:
       if (state.auth.checked) return state;
       return { ...state, auth: { ...state.auth, checked: true } };
-    case StoreActionType.SetInfo:
+    case StoreAction.SetInfo:
       if (isEqual(state.info, action.value)) return state;
       return { ...state, info: action.value };
-    case StoreActionType.CollapseUIChrome:
+    case StoreAction.CollapseUIChrome:
       if (state.ui.chromeCollapsed) return state;
       return { ...state, ui: { ...state.ui, chromeCollapsed: true } };
-    case StoreActionType.ExpandUIChrome:
+    case StoreAction.ExpandUIChrome:
       if (!state.ui.chromeCollapsed) return state;
       return { ...state, ui: { ...state.ui, chromeCollapsed: false } };
-    case StoreActionType.HideUIChrome:
+    case StoreAction.HideUIChrome:
       if (!state.ui.showChrome) return state;
       return { ...state, ui: { ...state.ui, showChrome: false } };
-    case StoreActionType.HideUISpinner:
+    case StoreAction.HideUISpinner:
       if (!state.ui.showSpinner) return state;
       return { ...state, ui: { ...state.ui, showSpinner: false } };
-    case StoreActionType.ShowUIChrome:
+    case StoreAction.ShowUIChrome:
       if (state.ui.showChrome) return state;
       return { ...state, ui: { ...state.ui, showChrome: true } };
-    case StoreActionType.ShowUISpinner:
+    case StoreAction.ShowUISpinner:
       if (state.ui.showSpinner) return state;
       return { ...state, ui: { ...state.ui, showSpinner: true } };
-    case StoreActionType.SetUsers:
+    case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
     default:

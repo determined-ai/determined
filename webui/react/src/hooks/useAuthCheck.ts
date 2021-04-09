@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
-import { AUTH_COOKIE_KEY, StoreActionType, useStoreDispatch } from 'contexts/Store';
+import { AUTH_COOKIE_KEY, StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
 import { getCurrentUser, isAuthFailure } from 'services/api';
@@ -28,7 +28,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
      */
     const authToken = globalStorage.authToken;
     if (!authToken) {
-      storeDispatch({ type: StoreActionType.SetAuthCheck });
+      storeDispatch({ type: StoreAction.SetAuthCheck });
       return;
     }
 
@@ -36,7 +36,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
       const user = await getCurrentUser({ signal: canceler.signal });
       updateDetApi({ apiKey: `Bearer ${authToken}` });
       storeDispatch({
-        type: StoreActionType.SetAuth,
+        type: StoreAction.SetAuth,
         value: { isAuthenticated: true, token: authToken, user },
       });
     } catch (e) {
@@ -53,13 +53,13 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
       });
       if (isAuthError) {
         updateDetApi({ apiKey: undefined });
-        storeDispatch({ type: StoreActionType.ResetAuth });
-        storeDispatch({ type: StoreActionType.SetAuthCheck });
+        storeDispatch({ type: StoreAction.ResetAuth });
+        storeDispatch({ type: StoreAction.SetAuthCheck });
       }
     }
   }, [ canceler, storeDispatch ]);
 
-  useEffect(() => storeDispatch({ type: StoreActionType.ResetAuthCheck }), [ storeDispatch ]);
+  useEffect(() => storeDispatch({ type: StoreAction.ResetAuthCheck }), [ storeDispatch ]);
 
   return checkAuth;
 };

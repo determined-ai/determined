@@ -6,7 +6,7 @@ import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
 import { IndicatorUnpositioned } from 'components/Spinner';
-import { StoreActionType, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { CommandState } from 'types';
@@ -35,8 +35,8 @@ const Wait: React.FC = () => {
   const taskTypeCap = capitalize(taskType);
 
   useEffect(() => {
-    storeDispatch({ type: StoreActionType.HideUIChrome });
-    return () => storeDispatch({ type: StoreActionType.ShowUIChrome });
+    storeDispatch({ type: StoreAction.HideUIChrome });
+    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
   }, [ storeDispatch ]);
 
   const handleWsError = (err: Error) => {

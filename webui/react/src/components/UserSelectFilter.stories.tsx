@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { StoreActionType, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import StoreDecorator from 'storybook/StoreDecorator';
 
 import UserSelectFilter from './UserSelectFilter';
@@ -21,7 +21,7 @@ const UserSelectFilterWithUsers: React.FC<Props> = ({ value }: Props) => {
 
   useEffect(() => {
     storeDispatch({
-      type: StoreActionType.SetUsers,
+      type: StoreAction.SetUsers,
       value: [
         { isActive: true, isAdmin: true, username: 'admin' },
         { isActive: true, isAdmin: false, username: 'user' },

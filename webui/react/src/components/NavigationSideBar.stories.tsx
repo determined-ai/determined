@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { StoreActionType, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import RouterDecorator from 'storybook/RouterDecorator';
 import StoreDecorator from 'storybook/StoreDecorator';
 
@@ -16,7 +16,7 @@ const NavigationLoggedIn = () => {
   const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
-    storeDispatch({ type: StoreActionType.SetAuth, value: { isAuthenticated: true } });
+    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
   return <NavigationSideBar />;

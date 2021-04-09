@@ -9,7 +9,7 @@ import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
-import { StoreActionType, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
@@ -46,7 +46,7 @@ const SignIn: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
-      storeDispatch({ type: StoreActionType.HideUISpinner });
+      storeDispatch({ type: StoreAction.HideUISpinner });
 
       // Show auth token via notification if requested via query parameters.
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
@@ -56,7 +56,7 @@ const SignIn: React.FC = () => {
       const redirect = queries.redirect || locationToPath(loginRedirect);
       routeAll(redirect || defaultRoute.path);
     } else if (auth.checked) {
-      storeDispatch({ type: StoreActionType.HideUISpinner });
+      storeDispatch({ type: StoreAction.HideUISpinner });
     }
   }, [
     auth.checked,
