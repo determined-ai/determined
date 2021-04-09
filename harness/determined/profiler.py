@@ -18,7 +18,6 @@ LOG_NAMESPACE = "determined-profiler"
 
 
 
-
 class ProfilerAgent:
     """
     Agent that collects metrics and sends them to the master. It has:
@@ -64,13 +63,12 @@ class ProfilerAgent:
 
         # Track duration to stop collecting after 5 minutes. start_time also serves as
         # the indicator that collection has begun.
-        self.start_time = None
-        # TODO: Currently we only check for shutdown in update_batch_idx(). This is a problem when there
-        #       is a long period of time between batch_idx being updated (such as during validation)
-        #       because it won't shut down until validation completes. We probably need to create a
-        #       new thread to enforce the timeout correctly.
-        self.max_collection_seconds = 300
+        self.has_started = False
         self.has_finished = False
+        self.max_collection_seconds = 300
+        self.shutdown_timer = threading.Timer(self.max_collection_seconds, self._end_collection)
+        self.shutdown_timer.daemon = True
+        self.shutdown_lock = threading.Lock()
 
         # Set up the thread responsible for making API calls
         self.send_queue = queue.Queue()
@@ -87,9 +85,7 @@ class ProfilerAgent:
 
     @property
     def is_enabled(self):
-        # If the timer didn't start, collection hasn't been enabled
-        has_started = self.start_time is not None
-        return has_started and not self.has_finished
+        return self.has_started and not self.has_finished
 
     def update_batch_idx(self, new_batch_idx: int):
         self.current_batch_idx = new_batch_idx
@@ -97,33 +93,38 @@ class ProfilerAgent:
 
         # Check if we should start collecting metrics
         if not self.is_enabled and not self.has_finished and self.current_batch_idx >= self.start_on_batch:
-            self._begin_collection()
-            self.start_time = time.time()
+                self._begin_collection()
 
-        # Check if we should stop collecting metrics.
-        if self.is_enabled:
-            exceeded_max_batch = False
-            if self.end_after_batch is not None:
-                exceeded_max_batch = self.current_batch_idx > self.end_after_batch
-            exceeded_max_dur = time.time() - self.start_time > self.max_collection_seconds
-            if exceeded_max_batch or exceeded_max_dur:
-                self._end_collection()
-                self.has_finished = True
-
+        # Check if we should stop collecting metrics due to batch idx being exceeded
+        if self.is_enabled and self.end_after_batch is not None and self.current_batch_idx > self.end_after_batch:
+            self._end_collection()
 
     def _begin_collection(self):
         self.sys_metric_collector_thread.activate()
         # TODO: Start up TimingBatcher as well
+        self.shutdown_timer.start()
+        self.has_started = True
 
     def _end_collection(self):
-        # Shut down in reverse creation order
-        self.sys_metric_collector_thread.kill()
-        self.sys_metric_collector_thread.join()
+        """
+        Stop collecting data and shut down child threads. This function can be invoked due to the
+        max batch idx being exceeded or due to timeout, so the function needs to be threadsafe.
+        """
+        # Make _end_collection idempotent
+        with self.shutdown_lock:
+            if self.has_finished:
+                return
 
-        self.sender_thread.kill()
-        self.sender_thread.join()
+            # Shut down in reverse creation order
+            self.sys_metric_collector_thread.kill()
+            self.sys_metric_collector_thread.join()
 
-        # TODO: Shut down TimingBatcher as well
+            self.sender_thread.kill()
+            self.sender_thread.join()
+
+            self.has_finished = True
+
+            # TODO: Shut down TimingBatcher as well
 
     def record_timing(self, timing):
         if not self.is_enabled:
