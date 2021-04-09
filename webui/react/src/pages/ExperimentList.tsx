@@ -37,6 +37,7 @@ import { validateDetApiEnum } from 'services/utils';
 import {
   ALL_VALUE, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
+import { isEqual } from 'utils/data';
 import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
@@ -289,7 +290,10 @@ const ExperimentList: React.FC = () => {
         { signal: canceler.signal },
       );
       setTotal(response.pagination.total || 0);
-      setExperiments(response.experiments);
+      setExperiments(prev => {
+        if (isEqual(prev, response.experiments)) return prev;
+        return response.experiments;
+      });
       setIsLoading(false);
     } catch (e) {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
