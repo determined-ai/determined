@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import { SelectProps, SelectValue } from 'antd/es/select';
+import { RefSelectProps, SelectProps, SelectValue } from 'antd/es/select';
 import React, {
   forwardRef,
   PropsWithChildren,
@@ -18,7 +18,7 @@ export interface Props<T = SelectValue> extends SelectProps<T> {
   disableTags?: boolean;
   enableSearchFilter?: boolean;
   label: string;
-  ref?: React.Ref<Select<SelectValue>>;
+  ref?: React.Ref<RefSelectProps>;
   style?: React.CSSProperties;
   verticalLayout?: boolean;
 }
@@ -56,7 +56,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
     verticalLayout = false,
     ...props
   }: PropsWithChildren<Props>,
-  ref?: React.Ref<Select<SelectValue>>,
+  ref?: React.Ref<RefSelectProps>,
 ) {
   const [ isOpen, setIsOpen ] = useState(false);
   const classes = [ className, css.base ];

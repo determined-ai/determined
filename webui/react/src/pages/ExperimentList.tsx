@@ -19,10 +19,10 @@ import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
-import Auth from 'contexts/Auth';
-import { useFetchUsers } from 'contexts/Users';
+import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
+import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
@@ -74,7 +74,7 @@ const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
 };
 
 const ExperimentList: React.FC = () => {
-  const auth = Auth.useStateContext();
+  const { auth } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilters = storage.getWithDefault(

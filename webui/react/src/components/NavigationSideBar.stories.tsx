@@ -1,23 +1,23 @@
 import React, { useEffect } from 'react';
 
-import Auth from 'contexts/Auth';
-import { AuthDecorator, ClusterOverviewDecorator, UIDecorator } from 'storybook/ContextDecorators';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import RouterDecorator from 'storybook/RouterDecorator';
+import StoreDecorator from 'storybook/StoreDecorator';
 
 import NavigationSideBar from './NavigationSideBar';
 
 export default {
   component: NavigationSideBar,
-  decorators: [ AuthDecorator, ClusterOverviewDecorator, RouterDecorator, UIDecorator ],
+  decorators: [ StoreDecorator, RouterDecorator ],
   title: 'NavigationSideBar',
 };
 
 const NavigationLoggedIn = () => {
-  const setAuth = Auth.useActionContext();
+  const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
-    setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true } });
-  }, [ setAuth ]);
+    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
+  }, [ storeDispatch ]);
 
   return <NavigationSideBar />;
 };

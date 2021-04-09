@@ -50,7 +50,7 @@ const webpackConfig = override(
   adjustStyleLoaders(({ use: [ , css, postcss, resolve, processor ] }) => {
     if (processor && processor.loader.includes('sass-loader')) {
       processor.options = processor.options || {};
-      processor.options.prependData = '@import \'global.scss\';';
+      processor.options.additionalData = '@import \'global.scss\';';
       processor.options.sassOptions = processor.options.sassOptions || {};
       processor.options.sassOptions.includePaths = processor.options.sassOptions.includePaths || [];
       processor.options.sassOptions.includePaths.push(path.join(__dirname, './src/styles'));

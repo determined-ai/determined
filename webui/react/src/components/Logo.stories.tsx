@@ -5,9 +5,12 @@ import Logo, { LogoTypes } from './Logo';
 export default {
   component: Logo,
   parameters: {
-    backgrounds: [
-      { default: true, name: 'dark background', value: '#111' },
-    ],
+    backgrounds: {
+      default: 'dark background',
+      values: [
+        { name: 'dark background', value: '#111' },
+      ],
+    },
   },
   title: 'Logo',
 };

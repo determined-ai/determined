@@ -4,8 +4,7 @@ import React, { useCallback, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Link from 'components/Link';
-import Auth from 'contexts/Auth';
-import UI from 'contexts/UI';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import { getCurrentUser, isLoginFailure, login } from 'services/api';
@@ -29,25 +28,27 @@ const storage = new Storage({ basePath: '/DeterminedAuth', store: window.localSt
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC<Props> = ({ canceler, source }: Props) => {
-  const setAuth = Auth.useActionContext();
-  const setUI = UI.useActionContext();
+  const storeDispatch = useStoreDispatch();
   const [ isBadCredentials, setIsBadCredentials ] = useState(false);
   const [ canSubmit, setCanSubmit ] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
 
   const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
-    setUI({ type: UI.ActionType.ShowSpinner });
+    storeDispatch({ type: StoreAction.ShowUISpinner });
     setCanSubmit(false);
     try {
       const options = { signal: canceler.signal };
       const { token } = await login({ ...creds as Credentials, cancelToken: source.token });
-      updateDetApi({ apiKey: 'Bearer ' + token });
+      updateDetApi({ apiKey: `Bearer ${token}` });
       const user = await getCurrentUser(options);
-      setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, token, user } });
+      storeDispatch({
+        type: StoreAction.SetAuth,
+        value: { isAuthenticated: true, token, user },
+      });
       storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
     } catch (e) {
       const isBadCredentialsSync = isLoginFailure(e);
       setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
-      setUI({ type: UI.ActionType.HideSpinner });
+      storeDispatch({ type: StoreAction.HideUISpinner });
       const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
       if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
       handleError({
@@ -62,7 +63,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler, source }: Props) => {
     } finally {
       setCanSubmit(true);
     }
-  }, [ canceler, setAuth, setUI, source ]);
+  }, [ canceler, source, storeDispatch ]);
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;

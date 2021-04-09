@@ -26,7 +26,7 @@ const useResize = (ref?: RefObject<HTMLElement>): ResizeInfo => {
       else return;
     }
 
-    const handleResize: ResizeObserverCallback = entries => {
+    const handleResize: ResizeObserverCallback = (entries: ResizeObserverEntry[]) => {
       // Check to make sure the ref container is being observed for resize.
       const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
       if (!element || elements.indexOf(element) === -1) return;

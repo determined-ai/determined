@@ -21,7 +21,7 @@ import {
 import { noOp } from './utils';
 
 const ApiConfig = new Api.Configuration({
-  apiKey: 'Bearer ' + globalStorage.authToken,
+  apiKey: `Bearer ${globalStorage.authToken}`,
   basePath: serverAddress(),
 });
 
@@ -42,7 +42,7 @@ export const detApi = {
 const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters):
 Api.ConfigurationParameters => {
   return {
-    apiKey: 'Bearer ' + globalStorage.authToken,
+    apiKey: `Bearer ${globalStorage.authToken}`,
     basePath: serverAddress(),
     ...apiConfig,
   };

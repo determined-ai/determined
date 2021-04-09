@@ -1,28 +1,24 @@
 import React, { useEffect } from 'react';
 
-import Auth from 'contexts/Auth';
-import { AuthDecorator, ClusterOverviewDecorator, UIDecorator } from 'storybook/ContextDecorators';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import RouterDecorator from 'storybook/RouterDecorator';
+import StoreDecorator from 'storybook/StoreDecorator';
 
 import NavigationTopbar from './NavigationTopbar';
 
 export default {
   component: NavigationTopbar,
-  decorators: [
-    AuthDecorator,
-    ClusterOverviewDecorator,
-    RouterDecorator,
-    UIDecorator ],
+  decorators: [ StoreDecorator, RouterDecorator ],
   parameters: { layout: 'fullscreen' },
   title: 'NavigationTopbar',
 };
 
 const NavigationTopbarLoggedIn = () => {
-  const setAuth = Auth.useActionContext();
+  const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
-    setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true } });
-  }, [ setAuth ]);
+    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
+  }, [ storeDispatch ]);
 
   return <NavigationTopbar />;
 };

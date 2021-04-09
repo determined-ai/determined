@@ -1,8 +1,7 @@
 import { Menu } from 'antd';
 import React from 'react';
 
-import Auth from 'contexts/Auth';
-import UI from 'contexts/UI';
+import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 
 import Avatar from './Avatar';
@@ -12,11 +11,10 @@ import Logo, { LogoTypes } from './Logo';
 import css from './NavigationTopbar.module.scss';
 
 const NavigationTopbar: React.FC = () => {
-  const { isAuthenticated, user } = Auth.useStateContext();
-  const ui = UI.useStateContext();
+  const { auth, ui } = useStore();
 
-  const username = user?.username || 'Anonymous';
-  const showNavigation = isAuthenticated && ui.showChrome;
+  const username = auth.user?.username || 'Anonymous';
+  const showNavigation = auth.isAuthenticated && ui.showChrome;
 
   if (!showNavigation) return null;
 

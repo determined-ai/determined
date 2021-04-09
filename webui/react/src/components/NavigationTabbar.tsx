@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import Auth from 'contexts/Auth';
-import ClusterOverview from 'contexts/ClusterOverview';
-import UI from 'contexts/UI';
+import { useStore } from 'contexts/Store';
 import { handlePath, paths } from 'routes/utils';
 import { ResourceType } from 'types';
 import { launchNotebook } from 'utils/task';
@@ -38,14 +36,12 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { isAuthenticated } = Auth.useStateContext();
-  const ui = UI.useStateContext();
-  const overview = ClusterOverview.useStateContext();
+  const { auth, cluster: overview, ui } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
 
   const cluster = overview[ResourceType.ALL].allocation === 0 ?
     undefined : `${overview[ResourceType.ALL].allocation}%`;
-  const showNavigation = isAuthenticated && ui.showChrome;
+  const showNavigation = auth.isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleActionSheetCancel = useCallback(() => setIsShowingOverflow(false), []);

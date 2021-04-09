@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
-import Auth from 'contexts/Auth';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import { logout } from 'services/api';
+import { updateDetApi } from 'services/apiConfig';
 
 const SignOut: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
-  const auth = Auth.useStateContext();
-  const setAuth = Auth.useActionContext();
+  const storeDispatch = useStoreDispatch();
   const [ isSigningOut, setIsSigningOut ] = useState(false);
 
   useEffect(() => {
@@ -28,13 +28,14 @@ const SignOut: React.FC = () => {
           type: ErrorType.Server,
         });
       }
-      setAuth({ type: Auth.ActionType.Reset });
+      updateDetApi({ apiKey: undefined });
+      storeDispatch({ type: StoreAction.ResetAuth });
       history.push(paths.login(), location.state);
     };
 
     if (!isSigningOut) signOut();
 
-  }, [ auth.isAuthenticated, history, location.state, isSigningOut, setAuth ]);
+  }, [ history, location.state, isSigningOut, storeDispatch ]);
 
   return null;
 };

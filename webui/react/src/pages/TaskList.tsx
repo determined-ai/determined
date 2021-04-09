@@ -15,9 +15,9 @@ import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import TaskFilter from 'components/TaskFilter';
-import Auth from 'contexts/Auth';
-import Users, { useFetchUsers } from 'contexts/Users';
+import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
@@ -72,8 +72,7 @@ const STORAGE_FILTERS_KEY = 'filters';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const TaskList: React.FC = () => {
-  const auth = Auth.useStateContext();
-  const users = Users.useStateContext();
+  const { auth, users } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,

@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
+import { RefSelectProps, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { MetricName, MetricType } from 'types';
@@ -45,7 +45,7 @@ const MetricSelectFilter: React.FC<Props> = ({
   onChange,
 }: Props) => {
   const [ filterString, setFilterString ] = useState('');
-  const selectRef = useRef<Select<SelectValue>>(null);
+  const selectRef = useRef<RefSelectProps>(null);
 
   const metricValues = useMemo(() => {
     if (multiple && Array.isArray(value)) return value.map(metric => metricNameToValue(metric));

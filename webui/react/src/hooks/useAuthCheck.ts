@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
-import Auth, { AUTH_COOKIE_KEY } from 'contexts/Auth';
+import { AUTH_COOKIE_KEY, StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
 import { getCurrentUser, isAuthFailure } from 'services/api';
@@ -9,7 +9,7 @@ import { isAborted } from 'services/utils';
 import { getCookie } from 'utils/browser';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
-  const setAuth = Auth.useActionContext();
+  const storeDispatch = useStoreDispatch();
 
   const checkAuth = useCallback(async (): Promise<void> => {
     /*
@@ -19,7 +19,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     const cookieToken = getCookie(AUTH_COOKIE_KEY);
     if (cookieToken) {
       globalStorage.authToken = cookieToken;
-      updateDetApi({ apiKey: 'Bearer ' + cookieToken });
+      updateDetApi({ apiKey: `Bearer ${cookieToken}` });
     }
 
     /*
@@ -28,14 +28,15 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
      */
     const authToken = globalStorage.authToken;
     if (!authToken) {
-      setAuth({ type: Auth.ActionType.MarkChecked });
+      storeDispatch({ type: StoreAction.SetAuthCheck });
       return;
     }
 
     try {
       const user = await getCurrentUser({ signal: canceler.signal });
-      setAuth({
-        type: Auth.ActionType.Set,
+      updateDetApi({ apiKey: `Bearer ${authToken}` });
+      storeDispatch({
+        type: StoreAction.SetAuth,
         value: { isAuthenticated: true, token: authToken, user },
       });
     } catch (e) {
@@ -51,13 +52,14 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
         type: isAuthError ? ErrorType.Auth : ErrorType.Server,
       });
       if (isAuthError) {
-        setAuth({ type: Auth.ActionType.Reset });
-        setAuth({ type: Auth.ActionType.MarkChecked });
+        updateDetApi({ apiKey: undefined });
+        storeDispatch({ type: StoreAction.ResetAuth });
+        storeDispatch({ type: StoreAction.SetAuthCheck });
       }
     }
-  }, [ canceler, setAuth ]);
+  }, [ canceler, storeDispatch ]);
 
-  useEffect(() => setAuth({ type: Auth.ActionType.ResetChecked }), [ setAuth ]);
+  useEffect(() => storeDispatch({ type: StoreAction.ResetAuthCheck }), [ storeDispatch ]);
 
   return checkAuth;
 };

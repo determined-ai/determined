@@ -6,7 +6,7 @@ import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
 import { IndicatorUnpositioned } from 'components/Spinner';
-import UI from 'contexts/UI';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { CommandState } from 'types';
@@ -28,16 +28,16 @@ interface Queries {
 
 const Wait: React.FC = () => {
   const { taskType } = useParams<Params>();
-  const setUI = UI.useActionContext();
+  const storeDispatch = useStoreDispatch();
   const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
   const taskTypeCap = capitalize(taskType);
 
   useEffect(() => {
-    setUI({ type: UI.ActionType.HideChrome });
-    return () => setUI({ type: UI.ActionType.ShowChrome });
-  }, [ setUI ]);
+    storeDispatch({ type: StoreAction.HideUIChrome });
+    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
+  }, [ storeDispatch ]);
 
   const handleWsError = (err: Error) => {
     handleError({
