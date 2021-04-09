@@ -3,10 +3,11 @@ import logging
 import queue
 import threading
 import time
-from typing import Any, Dict, List
+from typing import Optional, List, Dict, Any
 
 import psutil
 import pynvml
+
 
 from determined.common import api
 from determined.common.api import TrialProfilerMetricsBatch
@@ -26,7 +27,9 @@ class ProfilerAgent:
     - [UNIMPLEMENTED] something to batch Timings and periodically flush to sender_thread (timings_batcher)
 
     The ProfilerAgent needs to be created at the beginning of training and it needs
-    to be notified every time the batch_idx increases.
+    to be notified every time the batch_idx increases. When it is created, it launches
+    the sender_thread and the sys_metric_collector_thread. They will be cleaned up
+    either once end_after_batch is finished or after 5 minutes have passed.
 
     You can also ship Timings through the ProfilerAgent with the record_timing() method. This
     functionality has not yet been implemented - we need to batch the timings and periodically
@@ -51,7 +54,7 @@ class ProfilerAgent:
         profiler_agent.record_timing(forward_pass_timing)
     ```
     """
-    def __init__(self, trial_id, agent_id, master_url, start_on_batch, end_after_batch):
+    def __init__(self, trial_id: int, agent_id: str, master_url: str, start_on_batch: int, end_after_batch: Optional[int] = None):
         self.current_batch_idx = 0
         self.agent_id = agent_id
         self.trial_id = trial_id
@@ -99,7 +102,9 @@ class ProfilerAgent:
 
         # Check if we should stop collecting metrics.
         if self.is_enabled:
-            exceeded_max_batch = self.current_batch_idx > self.end_after_batch
+            exceeded_max_batch = False
+            if self.end_after_batch is not None:
+                exceeded_max_batch = self.current_batch_idx > self.end_after_batch
             exceeded_max_dur = time.time() - self.start_time > self.max_collection_seconds
             if exceeded_max_batch or exceeded_max_dur:
                 self._end_collection()
@@ -111,15 +116,16 @@ class ProfilerAgent:
         # TODO: Start up TimingBatcher as well
 
     def _end_collection(self):
+        # Shut down in reverse creation order
         self.sys_metric_collector_thread.kill()
-        self.sender_thread.kill()
-        # TODO: Shut down TimingBatcher as well
-
         self.sys_metric_collector_thread.join()
+
+        self.sender_thread.kill()
         self.sender_thread.join()
 
+        # TODO: Shut down TimingBatcher as well
 
-    def record_timing(self):
+    def record_timing(self, timing):
         if not self.is_enabled:
             return
         # TODO: Add new timing to TimingBatcher
@@ -127,7 +133,7 @@ class ProfilerAgent:
 
 
 class Measurement:
-    def __init__(self, timestamp: datetime.datetime, batch_idx, value):
+    def __init__(self, timestamp: datetime.datetime, batch_idx: int, value: float):
         self.timestamp = timestamp
         self.batch_idx = batch_idx
         self.measurement = value
@@ -158,10 +164,9 @@ class SysMetricBatcher:
     def clear(self):
         self.batch = {
             SysMetricType.GPU_UTIL_METRIC: {},
-            # "GPU_MEM": [],
+            SysMetricType.GPU_FREE_MEMORY_METRIC: [],
             SysMetricType.NET_THRU_SENT_METRIC: [],
             SysMetricType.NET_THRU_RECV_METRIC: [],
-            # "DISK_FREE": [],
             SysMetricType.DISK_IOPS_METRIC: [],
             SysMetricType.DISK_THRU_READ_METRIC: [],
             SysMetricType.DISK_THRU_WRITE_METRIC: [],
@@ -169,12 +174,12 @@ class SysMetricBatcher:
             SysMetricType.SIMPLE_CPU_UTIL_METRIC: []
         }
 
-    def add_nongpu_measurement(self, metric_type, measurement):
+    def add_nongpu_measurement(self, metric_type: str, measurement: Measurement):
         assert metric_type in self.batch.keys(), \
             f"Tried to add unknown type of non-GPU metric: {metric_type}"
         self.batch[metric_type].append(measurement)
 
-    def add_gpu_measurement(self, metric_type, gpu_uuid, measurement):
+    def add_gpu_measurement(self, metric_type: str, gpu_uuid: str, measurement: Measurement):
         assert metric_type in self.batch.keys(), \
             f"Tried to add unknown type of GPU metric: {metric_type}"
         if gpu_uuid not in self.batch[metric_type].keys():
@@ -225,6 +230,12 @@ class SysMetricBatcher:
         return trial_profiler_metrics_batches
 
 
+class StartMessage:
+    pass
+
+class ShutdownMessage:
+    pass
+
 class SysMetricCollectorThread(threading.Thread):
     """
     Background thread for collecting profiler metrics at a high granularity and shipping them to the master
@@ -239,37 +250,27 @@ class SysMetricCollectorThread(threading.Thread):
     - GpuUtilization = Measured in percent
     """
 
-    ACTIVE_POLL_INTERVAL = 1  # Check if metric collection has been turned on/off every 1 second
     FLUSH_INTERVAL = 10  # How often to make API calls
     MEASUREMENT_INTERVAL = 0.1
 
-    def __init__(self, trial_id, agent_id, send_queue):
-
-        self.is_active = False
-        self.quitting = False
+    def __init__(self, trial_id: int, agent_id: str, send_queue: queue.Queue):
 
         self.current_batch_idx = 0
         self.send_queue = send_queue
+        self.control_queue = queue.Queue()
         self.current_batch = SysMetricBatcher(trial_id, agent_id)
         self.current_batch.clear()
 
-        super().__init__()
+        super().__init__(daemon=True)
 
     def activate(self):
-        self.is_active = True
+        self.control_queue.put(StartMessage())
 
     def kill(self):
-        self.quitting = True
+        self.control_queue.put(ShutdownMessage())
 
-    def update_batch_idx(self, new_batch_idx):
+    def update_batch_idx(self, new_batch_idx: int):
         self.current_batch_idx = new_batch_idx
-
-    def enqueue_for_async_send(self, metric_batch):
-        # TODO: Handle exception
-        # This method can theoretically raise a FULL error, but SimpleQueues are unbounded so
-        # I don't think it will ever happen (https://docs.python.org/3/library/queue.html#queue.Queue.put)
-        # self.log("Enqueuing metric batch", metric_batch)
-        self.send_queue.put_nowait(metric_batch)
 
     def run(self) -> None:
         last_measurement_time = None
@@ -281,14 +282,26 @@ class SysMetricCollectorThread(threading.Thread):
         free_memory_collector = FreeMemoryCollector()
         disk_collector = DiskReadWriteRateCollector()
 
-        while True:
-            if self.quitting:
-                # We drop any partial batches
-                break
+        msg = self.control_queue.get()
+        if isinstance(msg, ShutdownMessage):
+            return
 
-            if not self.is_active:
-                time.sleep(1)
-                continue
+        next_collection = time.time()
+
+        while True:
+            now = time.time()
+            if now < next_collection:
+                # check for quit message while we wait
+                sleep_time = next_collection - now
+                try:
+                    msg = self.control_queue.get(timeout=sleep_time)
+                    if isinstance(msg, ShutdownMessage):
+                        # Drop any partial batches
+                        return
+                except queue.Empty:
+                    pass
+
+            next_collection += self.MEASUREMENT_INTERVAL
 
             # One-time initialization
             if last_measurement_time is None:
@@ -297,81 +310,63 @@ class SysMetricCollectorThread(threading.Thread):
                 network_throughput_collector.reset()
                 disk_collector.reset()
 
-
             # Check if it is time to take a new measurement
             if time.time() - last_measurement_time > self.MEASUREMENT_INTERVAL:
                 immutable_batch_idx = self.current_batch_idx
-                cpu_util_measurement = cpu_util_collector.measure(immutable_batch_idx)
-                gpu_util_measurements = gpu_util_collector.measure(immutable_batch_idx)
-                gpu_memory_measurements = gpu_memory_collection.measure(immutable_batch_idx)
-                net_thru_sent_measurement, net_thru_recv_measurement = network_throughput_collector.measure(immutable_batch_idx)
-                free_memory_measurement = free_memory_collector.measure(immutable_batch_idx)
-                disk_read_thru_measurement, disk_write_thru_measurement, iops_measurement = disk_collector.measure(immutable_batch_idx)
+                cpu_util = cpu_util_collector.measure(immutable_batch_idx)
+                gpu_util = gpu_util_collector.measure(immutable_batch_idx)
+                gpu_memory = gpu_memory_collection.measure(immutable_batch_idx)
+                net_thru_sent, net_thru_recv = network_throughput_collector.measure(immutable_batch_idx)
+                free_memory = free_memory_collector.measure(immutable_batch_idx)
+                disk_read_thru, disk_write_thru, iops = disk_collector.measure(immutable_batch_idx)
 
-                for gpu_uuid in gpu_util_measurements.keys():
-                    self.current_batch.add_gpu_measurement(SysMetricType.GPU_UTIL_METRIC, gpu_uuid, gpu_util_measurements[gpu_uuid])
+                for gpu_uuid in gpu_util.keys():
+                    self.current_batch.add_gpu_measurement(SysMetricType.GPU_UTIL_METRIC, gpu_uuid, gpu_util[gpu_uuid])
 
-                for gpu_uuid in gpu_memory_measurements.keys():
-                    self.current_batch.add_gpu_measurement(SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_util_measurements[gpu_uuid])
+                for gpu_uuid in gpu_memory.keys():
+                    self.current_batch.add_gpu_measurement(SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_util[gpu_uuid])
 
-                self.current_batch.add_nongpu_measurement(SysMetricType.NET_THRU_SENT_METRIC, net_thru_sent_measurement)
-                self.current_batch.add_nongpu_measurement(SysMetricType.NET_THRU_RECV_METRIC, net_thru_recv_measurement)
-                self.current_batch.add_nongpu_measurement(SysMetricType.DISK_IOPS_METRIC, iops_measurement)
-                self.current_batch.add_nongpu_measurement(SysMetricType.DISK_THRU_READ_METRIC, disk_read_thru_measurement)
-                self.current_batch.add_nongpu_measurement(SysMetricType.DISK_THRU_WRITE_METRIC, disk_write_thru_measurement)
-                self.current_batch.add_nongpu_measurement(SysMetricType.FREE_MEM_METRIC, free_memory_measurement)
-                self.current_batch.add_nongpu_measurement(SysMetricType.SIMPLE_CPU_UTIL_METRIC, cpu_util_measurement)
-
+                self.current_batch.add_nongpu_measurement(SysMetricType.NET_THRU_SENT_METRIC, net_thru_sent)
+                self.current_batch.add_nongpu_measurement(SysMetricType.NET_THRU_RECV_METRIC, net_thru_recv)
+                self.current_batch.add_nongpu_measurement(SysMetricType.DISK_IOPS_METRIC, iops)
+                self.current_batch.add_nongpu_measurement(SysMetricType.DISK_THRU_READ_METRIC, disk_read_thru)
+                self.current_batch.add_nongpu_measurement(SysMetricType.DISK_THRU_WRITE_METRIC, disk_write_thru)
+                self.current_batch.add_nongpu_measurement(SysMetricType.FREE_MEM_METRIC, free_memory)
+                self.current_batch.add_nongpu_measurement(SysMetricType.SIMPLE_CPU_UTIL_METRIC, cpu_util)
                 last_measurement_time = time.time()
-
 
             # Check if it is time to flush the batch and start a new batch
             if time.time() - batch_start_time > self.FLUSH_INTERVAL:
-                self.enqueue_for_async_send(self.current_batch.convert_to_post_format())
+                self.send_queue.put(self.current_batch.convert_to_post_format())
                 self.current_batch.clear()
                 batch_start_time = time.time()
-
-            time.sleep(0.02)
-
-
-
-
-
-
-
 
 
 # This is a thread that exists solely so that we can make API calls without blocking
 # It has a Queue through which work is sent to the thread
 class ProfilerSenderThread(threading.Thread):
-    POLL_INTERVAL_SECS = 0.5
     def __init__(self, inbound_queue: queue.Queue, master_url: str) -> None:
         self.master_url = master_url
         self.inbound_queue = inbound_queue
-        self.quitting = False
-        super().__init__()
+        super().__init__(daemon=True)
+
+    def kill(self):
+        self.inbound_queue.put(ShutdownMessage())
 
     def run(self) -> None:
         while True:
-            if self.quitting:
-                break
-
-            try:
-                batch_to_send = self.inbound_queue.get_nowait()
-            except queue.Empty:
-                time.sleep(ProfilerSenderThread.POLL_INTERVAL_SECS)
-                continue
-
-            self.send_batch(batch_to_send)
+            message = self.inbound_queue.get()
+            if isinstance(message, ShutdownMessage):
+                return
+            self.send_batch(message)
 
     # This is a blocking operation that must handle all exceptions gracefully
     def send_batch(self, post_bodies: List[TrialProfilerMetricsBatch]):
-        # TODO: In the case of repeated failure, this can take a long time
+        # TODO: In the case of repeated failures, this can take a long time
         #       and we have no mechanism to handle the inbound queue filling up
-        max_attempts = 5
 
         # TODO: Convert to work with new multiple batch API
-
+        max_attempts = 2
         for post_body in post_bodies:
             for i in range(max_attempts):
                 try:
@@ -385,19 +380,12 @@ class ProfilerSenderThread(threading.Thread):
                     break
                 except Exception as e:
                     # TODO: We could handle specific API errors differently as some are non-recoverable
-                    # TODO: Log info about error
                     logging.warning(f"Failed to post metrics with labels {post_body['labels']} to the master: {e}")
-                    time.sleep(i**2)  # exponential backoff
-
-
-    def kill(self):
-        self.quitting = True
-
-
-
+                    time.sleep(1)
 
 
 GIGA = 1_000_000_000
+
 
 class SimpleCpuUtilCollector:
     def measure(self, batch_idx):
@@ -406,16 +394,11 @@ class SimpleCpuUtilCollector:
         return Measurement(timestamp, batch_idx, cpu_util)
 
 
-
 class FreeMemoryCollector:
-    # We choose to report free memory instead of available memory because it is useful to
-    # be able to see memory usage for cached files, but we could change to available instead
-    # https://psutil.readthedocs.io/en/latest/#psutil.virtual_memory
     def measure(self, batch_idx):
-        free_mem_bytes = psutil.virtual_memory().free
+        free_mem_bytes = psutil.virtual_memory().available
         timestamp = datetime.datetime.utcnow()
         return Measurement(timestamp, batch_idx, free_mem_bytes * GIGA)
-
 
 
 class NetThroughputCollector:
@@ -432,8 +415,8 @@ class NetThroughputCollector:
         net = psutil.net_io_counters()
         end_time = time.time()
 
-        sent_bytes_delta = net.bytes_sent - self.start_sent
-        recv_bytes_delta = net.bytes_recv - self.start_recv
+        delta_sent_bytes = net.bytes_sent - self.start_sent
+        delta_recv_bytes = net.bytes_recv - self.start_recv
 
         time_delta = end_time - self.start_time
 
@@ -441,8 +424,8 @@ class NetThroughputCollector:
         self.start_sent = net.bytes_sent
         self.start_recv = net.bytes_recv
 
-        sent_throughput_bytes_per_second = sent_bytes_delta / time_delta
-        recv_throughput_bytes_per_second = recv_bytes_delta / time_delta
+        sent_throughput_bytes_per_second = delta_sent_bytes / time_delta
+        recv_throughput_bytes_per_second = delta_recv_bytes / time_delta
 
         sent_throughput_gigabits_per_second = sent_throughput_bytes_per_second * 8 * GIGA
         recv_throughput_gigabits_per_second = recv_throughput_bytes_per_second * 8 * GIGA
@@ -470,13 +453,13 @@ class DiskReadWriteRateCollector:
         disk = psutil.disk_io_counters()
         end_time = time.time()
 
-        read_bytes_delta = disk.read_bytes - self.start_read_bytes
-        write_bytes_delta = disk.write_bytes - self.start_write_bytes
+        delta_read_bytes = disk.read_bytes - self.start_read_bytes
+        delta_write_bytes = disk.write_bytes - self.start_write_bytes
 
-        read_count_delta = disk.read_count - self.start_read_count
-        write_count_delta = disk.write_count - self.start_write_count
+        delta_read_count = disk.read_count - self.start_read_count
+        delta_write_count = disk.write_count - self.start_write_count
 
-        time_delta = end_time - self.start_time
+        delta_time = end_time - self.start_time
 
         self.start_time = end_time
         self.start_read_bytes = disk.read_bytes
@@ -484,16 +467,16 @@ class DiskReadWriteRateCollector:
         self.start_read_count = disk.read_count
         self.start_write_count = disk.write_count
 
-        read_throughput_bytes_per_second = read_bytes_delta / time_delta
-        write_throughput_bytes_per_second = write_bytes_delta / time_delta
+        read_throughput_bytes_per_sec = delta_read_bytes / delta_time
+        write_throughput_bytes_per_sec = delta_write_bytes / delta_time
 
-        read_throughput_count_per_second = read_count_delta / time_delta
-        write_throughput_count_per_second = write_count_delta / time_delta
+        read_throughput_count_per_sec = delta_read_count / delta_time
+        write_throughput_count_per_sec = delta_write_count / delta_time
 
         timestamp = datetime.datetime.fromtimestamp(end_time)
-        read_throughput = Measurement(timestamp, batch_idx, read_throughput_bytes_per_second)
-        write_throughput = Measurement(timestamp, batch_idx, write_throughput_bytes_per_second)
-        iops = Measurement(timestamp, batch_idx, read_throughput_count_per_second + write_throughput_count_per_second)
+        read_throughput = Measurement(timestamp, batch_idx, read_throughput_bytes_per_sec)
+        write_throughput = Measurement(timestamp, batch_idx, write_throughput_bytes_per_sec)
+        iops = Measurement(timestamp, batch_idx, read_throughput_count_per_sec + write_throughput_count_per_sec)
 
         return read_throughput, write_throughput, iops
 
