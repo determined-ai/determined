@@ -50,7 +50,7 @@ type commandOwner struct {
 // commands (e.g., commands, notebooks, shells) if a request
 // does not specify any configuration options.
 func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) model.CommandConfig {
-	environment := model.DefaultExperimentConfig(taskContainerDefaults).Environment
+	expConf := model.DefaultExperimentConfig(taskContainerDefaults)
 	return model.CommandConfig{
 		Resources: model.ResourcesConfig{
 			Slots:  1,
@@ -58,8 +58,9 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 			// SlotsPerTrial is not used by commands. They prefer Slots instead.
 			// It is only defined here to pass check.Validate.
 			SlotsPerTrial: 1,
+			Devices:       expConf.Resources.Devices,
 		},
-		Environment: environment,
+		Environment: expConf.Environment,
 	}
 }
 

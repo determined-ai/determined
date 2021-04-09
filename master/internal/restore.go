@@ -64,13 +64,10 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 
 	// Get the TaskSpec for this experiment.
-	taskContainerDefaults := getResourcePoolTaskContainerDefaultsByName(
+	taskSpec := m.makeTaskSpec(
 		expModel.Config.Resources.ResourcePool,
 		expModel.Config.Resources.SlotsPerTrial,
-		*m.config,
 	)
-	taskSpec := *m.taskSpec
-	taskSpec.TaskContainerDefaults = taskContainerDefaults
 
 	log.WithField("experiment", expModel.ID).Info("restoring experiment")
 	snapshot, err := m.retrieveExperimentSnapshot(expModel)

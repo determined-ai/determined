@@ -9,6 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/ghodss/yaml"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
@@ -227,6 +229,29 @@ type ResourcesConfig struct {
 
 	// omitempty since is not an officially announced feature yet
 	Devices *DevicesConfig `json:"devices,omitempty"`
+}
+
+// ParseJustResources is a helper function for breaking the circular dependency where we need the
+// TaskContainerDefaults to unmarshal an ExperimentConfig, but we need the Resources.ResourcePool
+// setting to know which TaskContainerDefaults to use.  It does not throw errors; if unmarshalling
+// fails that can just get caught later.
+func ParseJustResources(configBytes []byte) ResourcesConfig {
+	// Make this function usable on experiment or command configs.
+	type DummyConfig struct {
+		Resources ResourcesConfig `json:"resources"`
+	}
+
+	dummy := DummyConfig{
+		Resources: ResourcesConfig{
+			Slots:         1,
+			SlotsPerTrial: 1,
+		},
+	}
+
+	// Don't throw errors; validation should happen elsewhere.
+	_ = yaml.Unmarshal(configBytes, &dummy)
+
+	return dummy.Resources
 }
 
 // ValidatePrioritySetting checks that priority if set is within a valid range.
