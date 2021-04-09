@@ -138,7 +138,7 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
 const reducer = (state: State, action: Action) => {
   switch (action.type) {
     case StoreAction.Reset:
-      return clone(initState);
+      return clone(initState) as State;
     case StoreAction.SetAgents: {
       if (action.value.length === 0) return state;
       if (isEqual(state.agents, action.value)) return state;
