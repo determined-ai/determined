@@ -10,6 +10,8 @@ from determined.common import api
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 
+LOG_NAMESPACE = "determined-profiler"
+
 
 
 
@@ -513,7 +515,7 @@ class GpuUtilCollector:
                 util = pynvml.nvmlDeviceGetUtilizationRates(handle)
                 measurements[handle] = Measurement(timestamp, batch_idx, util.gpu)
             except pynvml.NVMLError as e:
-                logging.warning(f"failed to sample GPU utilization for GPU {i}: {e}")
+                logging.info(f"{LOG_NAMESPACE}: failed to sample GPU utilization for GPU {i}: {e}")
         return measurements
 
 
@@ -531,5 +533,5 @@ class GpuMemoryCollector():
                 info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 measurements[handle] = Measurement(timestamp, batch_idx, info.free)
             except pynvml.NVMLError as e:
-                logging.warning(f"failed to sample GPU memory for GPU {i}: {e}")
+                logging.info(f"{LOG_NAMESPACE}: failed to sample GPU memory for GPU {i}: {e}")
         return measurements
