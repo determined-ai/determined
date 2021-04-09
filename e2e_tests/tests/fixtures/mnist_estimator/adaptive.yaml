@@ -23,13 +23,12 @@ hyperparameters:
     minval: 0.0
     maxval: 0.5
 searcher:
-  name: adaptive
+  name: adaptive_asha
   metric: accuracy
   smaller_is_better: false
   max_length:
     batches: 200
-  budget:
-    batches: 400
+  max_trials: 2
   mode: aggressive
   max_rungs: 2
 entrypoint: model_def:MNistTrial
