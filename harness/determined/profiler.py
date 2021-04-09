@@ -27,7 +27,9 @@ class ProfilerAgent:
     - [UNIMPLEMENTED] something to batch Timings and periodically flush to sender_thread (timings_batcher)
 
     The ProfilerAgent needs to be created at the beginning of training and it needs
-    to be notified every time the batch_idx increases.
+    to be notified every time the batch_idx increases. When it is created, it launches
+    the sender_thread and the sys_metric_collector_thread. They will be cleaned up
+    either once end_after_batch is finished or after 5 minutes have passed.
 
     You can also ship Timings through the ProfilerAgent with the record_timing() method. This
     functionality has not yet been implemented - we need to batch the timings and periodically
@@ -259,7 +261,7 @@ class SysMetricCollectorThread(threading.Thread):
         self.current_batch = SysMetricBatcher(trial_id, agent_id)
         self.current_batch.clear()
 
-        super().__init__()
+        super().__init__(daemon=True)
 
     def activate(self):
         self.control_queue.put(StartMessage())
@@ -347,7 +349,7 @@ class ProfilerSenderThread(threading.Thread):
         self.master_url = master_url
         self.inbound_queue = inbound_queue
         self.control_queue = queue.Queue()
-        super().__init__()
+        super().__init__(daemon=True)
 
     def kill(self):
         self.control_queue.put(ShutdownMessage())
