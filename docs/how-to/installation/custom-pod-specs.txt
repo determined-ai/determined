@@ -86,7 +86,8 @@ configured in ``values.yaml`` of the :ref:`Determined helm chart
 ``taskContainerDefaults.gpuPodSpec``. The ``gpuPodSpec`` is applied to
 all tasks that use GPUs (e.g., experiments, notebooks). ``cpuPodSpec``
 is applied to all tasks that only use CPUs (e.g., TensorBoards, CPU-only
-notebooks).
+notebooks). Fields that are not specified will remain at their default
+Determined values.
 
 Example of configuring default pod specs:
 
