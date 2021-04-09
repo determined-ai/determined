@@ -165,6 +165,9 @@ Parameters:
 Conditions:
   RetainLogGroup: !Equals [!Ref RetainLogGroup, true]
   DeleteLogGroup: !Not [!Equals [!Ref RetainLogGroup, true]]
+  UseTLS: !And
+    - !Not [!Equals [!Ref MasterTLSCert, ""]]
+    - !Not [!Equals [!Ref MasterTLSKey, ""]]
 
 Resources:
   CheckpointBucket:
@@ -714,6 +717,14 @@ Outputs:
   DeterminedAddress:
     Description: Ip address of Determined Master
     Value: !GetAtt MasterInstance.PublicDnsName
+
+  MasterPort:
+    Description: IP Port of Determined Master
+    Value: !If [UseTLS, "8443", "8080"]
+
+  MasterScheme:
+    Description: Determined Master URL scheme
+    Value: !If [UseTLS, "https", "http"]
 
   AgentTagName:
     Description: Tag Name for the agents
