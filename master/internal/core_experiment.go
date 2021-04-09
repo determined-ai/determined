@@ -353,77 +353,13 @@ type CreateExperimentParams struct {
 	ValidateOnly  bool            `json:"validate_only"`
 }
 
-func getResourcePoolSpecFromConfigBytes(configBytes []byte) (string, int) {
-	config := model.ExperimentConfig{
-		Resources: model.ResourcesConfig{
-			SlotsPerTrial: 1,
-		},
-	}
-
-	if err := yaml.Unmarshal(configBytes, &config); err != nil {
-		// This is not where validation errors are raised.
-		return "", 1
-	}
-
-	return config.Resources.ResourcePool, config.Resources.SlotsPerTrial
-}
-
-// getResourcePoolTaskContainerDefaults is a helper function that partially parses an experiment
-// config, and returns a TaskContainerDefaultsConfig that can be fed to
-// model.DefaultExperimentConfig().  This is of course way too convoluted to be "nice", but all of
-// this will go away when we can use schemas.Merge() rather than layers of json.Unmarshal().
-func getResourcePoolTaskContainerDefaultsByName(
-	poolName string,
-	slotsPerTrial int,
-	masterConfig Config,
-) model.TaskContainerDefaultsConfig {
-	// Always fall back to the top-level TaskContainerDefaults
-	fallback := masterConfig.TaskContainerDefaults
-
-	findMatchingPoolDefaults := func(name string) model.TaskContainerDefaultsConfig {
-		for _, pool := range masterConfig.ResourcePools {
-			if name == pool.PoolName {
-				if pool.TaskContainerDefaults == nil {
-					return fallback
-				}
-				return *pool.TaskContainerDefaults
-			}
-		}
-		return fallback
-	}
-
-	switch {
-	case poolName != "":
-		// Find a resource pool that matches the pool name specified.
-		return findMatchingPoolDefaults(poolName)
-	case masterConfig.ResourceManager.AgentRM == nil:
-		// For k8s resource managers, don't try to find resource pool settings.
-		return fallback
-	case slotsPerTrial == 0:
-		// Use the resource pool for cpu slots.
-		return findMatchingPoolDefaults(
-			masterConfig.ResourceManager.AgentRM.DefaultCPUResourcePool,
-		)
-	default:
-		// Use the resource pool for gpu slots.
-		return findMatchingPoolDefaults(
-			masterConfig.ResourceManager.AgentRM.DefaultGPUResourcePool,
-		)
-	}
-}
-
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	*model.Experiment, bool, *tasks.TaskSpec, error,
 ) {
-	poolName, slotsPerTrial := getResourcePoolSpecFromConfigBytes([]byte(params.ConfigBytes))
-	taskContainerDefaults := getResourcePoolTaskContainerDefaultsByName(
-		poolName, slotsPerTrial, *m.config,
-	)
-	// Not a deep copy, but deep enough not to overwrite the master's TaskContainerDefaults.
-	taskSpec := *m.taskSpec
-	taskSpec.TaskContainerDefaults = taskContainerDefaults
+	resources := model.ParseJustResources([]byte(params.ConfigBytes))
+	taskSpec := m.makeTaskSpec(resources.ResourcePool, resources.SlotsPerTrial)
 
-	config := model.DefaultExperimentConfig(&taskContainerDefaults)
+	config := model.DefaultExperimentConfig(&taskSpec.TaskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
 	if err != nil {

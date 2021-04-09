@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 type commandRequest struct {
@@ -23,6 +24,7 @@ type commandRequest struct {
 
 	Owner          commandOwner
 	AgentUserGroup *model.AgentUserGroup
+	TaskSpec       tasks.TaskSpec
 }
 
 // CommandParams describes parameters for launching a command.
@@ -53,10 +55,12 @@ func parseCommandRequest(
 	db *db.PgDB,
 	user model.User,
 	params *CommandParams,
-	taskContainerDefaults *model.TaskContainerDefaultsConfig,
+	makeTaskSpec tasks.MakeTaskSpecFn,
 	mustBeZeroSlot bool,
 ) (*commandRequest, error) {
-	config := DefaultConfig(taskContainerDefaults)
+	resources := model.ParseJustResources([]byte(params.ConfigBytes))
+	taskSpec := makeTaskSpec(resources.ResourcePool, resources.Slots)
+	config := DefaultConfig(&taskSpec.TaskContainerDefaults)
 	if params.Template != nil {
 		template, err := db.TemplateByName(*params.Template)
 		if err != nil {
@@ -115,5 +119,6 @@ func parseCommandRequest(
 			Username: user.Username,
 		},
 		AgentUserGroup: agentUserGroup,
+		TaskSpec:       taskSpec,
 	}, nil
 }
