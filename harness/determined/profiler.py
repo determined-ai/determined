@@ -1,12 +1,15 @@
+import datetime
 import logging
+import queue
 import threading
+import time
+from typing import Any, Dict, List
+
 import psutil
 import pynvml
-import datetime
-import queue
-import time
-from determined.common import api
 
+from determined.common import api
+from determined.common.api import TrialProfilerMetricsBatch
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 
@@ -183,51 +186,43 @@ class SysMetricBatcher:
             f"Input to conversion function must be a datetime object. Instead got {type(timestamp)}"
         return timestamp.isoformat() + "Z"
 
-    def convert_to_post_format(self):
-        post_formatted = []
-        for metric_type in self.batch.keys():
+    def convert_to_post_format(self) -> List[TrialProfilerMetricsBatch]:
+        def to_post_format(measurements: List[Any], labels: Dict[str, Any]) -> TrialProfilerMetricsBatch:
+            values, batches, timestamps = [], [], []
+            for m in measurements:
+                values.append(m.measurement)
+                batches.append(m.batch_index)
+                timestamps.append(self.convert_to_timestamp_str(m.timestamp))
+            return TrialProfilerMetricsBatch(values, batches, timestamps, labels)
+
+        def make_labels(name: str, metric_type: str, gpu_uuid_label: str = "") -> Dict[str, Any]:
+            return {
+                "trialId": self.trial_id,
+                "name": name,
+                "agentId": self.agent_id,
+                "gpuUuid": gpu_uuid_label,
+                "metricType": metric_type
+            }
+
+        trial_profiler_metrics_batches = []
+        for metric_name in self.batch.keys():
             # TODO: Don't forget to include GPU Memory
-            if metric_type != SysMetricType.GPU_UTIL_METRIC and len(self.batch[metric_type]) > 0:
-                single_metric_batch = {
-                    "values": [],
-                    "batches": [],
-                    "timestamps": [],
-                    "labels": {
-                        "trialId": self.trial_id,
-                        "name": metric_type,
-                        "agentId": self.agent_id,
-                        "gpuUuid": "",
-                        "metricType": SYSTEM_METRIC_TYPE_ENUM
-                    }
-                }
-                for measurement in self.batch[metric_type]:
-                    single_metric_batch["values"].append(measurement.measurement)
-                    single_metric_batch["batches"].append(measurement.batch_index)
-                    single_metric_batch["timestamp"].append(self.convert_to_timestamp_str(measurement.timestamp))
-                post_formatted.append(single_metric_batch)
+            if metric_name != SysMetricType.GPU_UTIL_METRIC and len(self.batch[metric_name]) > 0:
+                trial_profiler_metrics_batches.append(to_post_format(
+                    self.batch[metric_name],
+                    make_labels(metric_name, SYSTEM_METRIC_TYPE_ENUM),
+                ))
 
             # GPU Metrics need to be grouped by GPU UUID
             # TODO: Don't forget to include GPU Memory
-            if metric_type == SysMetricType.GPU_UTIL_METRIC and len(self.batch[metric_type].keys()) > 0:
-                for gpu_uuid in self.batch[metric_type].keys():
-                    single_metric_batch = {
-                        "values": [],
-                        "batches": [],
-                        "timestamps": [],
-                        "labels": {
-                            "trialId": self.trial_id,
-                            "name": metric_type,
-                            "agentId": self.agent_id,
-                            "gpuUuid": gpu_uuid,
-                            "metricType": SYSTEM_METRIC_TYPE_ENUM
-                        }
-                    }
-                    for measurement in self.batch[metric_type][gpu_uuid]:
-                        single_metric_batch["values"].append(measurement.measurement)
-                        single_metric_batch["batches"].append(measurement.batch_index)
-                        single_metric_batch["timestamp"].append(self.convert_to_timestamp_str(measurement.timestamp))
-                    post_formatted.append(single_metric_batch)
-        return post_formatted
+            if metric_name == SysMetricType.GPU_UTIL_METRIC and len(self.batch[metric_name].keys()) > 0:
+                for gpu_uuid in self.batch[metric_name].keys():
+                    trial_profiler_metrics_batches.append(to_post_format(
+                        self.batch[metric_name][gpu_uuid],
+                        make_labels(metric_name, SYSTEM_METRIC_TYPE_ENUM, gpu_uuid_label=gpu_uuid)
+                    ))
+
+        return trial_profiler_metrics_batches
 
 
 class SysMetricCollectorThread(threading.Thread):
@@ -370,12 +365,13 @@ class ProfilerSenderThread(threading.Thread):
             self.send_batch(batch_to_send)
 
     # This is a blocking operation that must handle all exceptions gracefully
-    def send_batch(self, post_bodies):
+    def send_batch(self, post_bodies: List[TrialProfilerMetricsBatch]):
         # TODO: In the case of repeated failure, this can take a long time
         #       and we have no mechanism to handle the inbound queue filling up
         max_attempts = 5
 
         # TODO: Convert to work with new multiple batch API
+
         for post_body in post_bodies:
             for i in range(max_attempts):
                 try:
@@ -390,6 +386,7 @@ class ProfilerSenderThread(threading.Thread):
                 except Exception as e:
                     # TODO: We could handle specific API errors differently as some are non-recoverable
                     # TODO: Log info about error
+                    logging.warning(f"Failed to post metrics with labels {post_body['labels']} to the master: {e}")
                     time.sleep(i**2)  # exponential backoff
 
 
