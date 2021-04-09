@@ -40,7 +40,7 @@ from determined.common.util import chunks, debug_mode, get_default_master_addres
 from determined.deploy.cli import DEPLOY_CMD_NAME
 from determined.deploy.cli import args_description as deploy_args_description
 
-from .errors import MasterEERequired
+from .errors import EnterpriseOnlyError
 
 
 @authentication_required
@@ -282,7 +282,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
                 "Failed to login: Attempted to read a corrupted token cache. "
                 "The store has been deleted; please try again."
             )
-        except MasterEERequired as e:
+        except EnterpriseOnlyError as e:
             die(f"Determined Enterprise Edition is required for this functionality: {e}")
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)

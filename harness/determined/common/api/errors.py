@@ -44,8 +44,9 @@ class NotFoundException(APIException):
 class UnauthenticatedException(BadRequestException):
     def __init__(self, username: str):
         super().__init__(
-            message="Unauthenticated: Please use 'det user login <username>' for password login or"
-            " 'det auth login --provider=<provider>' to login through an SSO provider"
+            message="Unauthenticated: Please use 'det user login <username>' for password login, or"
+            " for Enterprise users logging in with an SSO provider,"
+            " use 'det auth login --provider=<provider>'."
         )
         self.username = username
 

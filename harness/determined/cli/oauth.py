@@ -7,7 +7,7 @@ from determined.common import api
 from determined.common.api.errors import NotFoundException
 from determined.common.declarative_argparse import Arg, Cmd
 
-from .errors import MasterEERequired
+from .errors import EnterpriseOnlyError
 
 
 @authentication_required
@@ -15,7 +15,7 @@ def list_clients(parsed_args: Namespace) -> None:
     try:
         clients = api.get(parsed_args.master, "oauth2/clients").json()
     except NotFoundException:
-        raise MasterEERequired("API not found: oauth2/clients")
+        raise EnterpriseOnlyError("API not found: oauth2/clients")
 
     headers = ["Name", "Client ID", "Domain"]
     keys = ["name", "id", "domain"]
@@ -31,7 +31,7 @@ def add_client(parsed_args: Namespace) -> None:
             body={"domain": parsed_args.domain, "name": parsed_args.name},
         ).json()
     except NotFoundException:
-        raise MasterEERequired("API not found: oauth2/clients")
+        raise EnterpriseOnlyError("API not found: oauth2/clients")
     print("Client ID:     {}".format(client["id"]))
     print("Client secret: {}".format(client["secret"]))
 
@@ -41,7 +41,7 @@ def remove_client(parsed_args: Namespace) -> None:
     try:
         api.delete(parsed_args.master, "oauth2/clients/{}".format(parsed_args.client_id))
     except NotFoundException:
-        raise MasterEERequired("API not found: oauth2/clients")
+        raise EnterpriseOnlyError("API not found: oauth2/clients")
 
 
 # fmt: off
