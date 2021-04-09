@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional, Tuple, cast
 
 
 class ExperimentConfig(dict):
@@ -25,6 +25,15 @@ class ExperimentConfig(dict):
 
     def experiment_seed(self) -> int:
         return int(self.get("reproducibility", {}).get("experiment_seed", 0))
+
+    def profiling_enabled(self) -> bool:
+        return bool(self.get("profiling", {}).get("enabled", False))
+
+    def profiling_interval(self) -> Tuple[int, int]:
+        return (
+            int(self.get("profiling", {}).get("begin_on_batch", 0)),
+            int(self.get("profiling", {}).get("end_after_batch", 0))
+        )
 
     def get_data_layer_type(self) -> str:
         return cast(str, self["data_layer"]["type"])

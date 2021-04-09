@@ -1,4 +1,11 @@
 import datetime
+import abc
+from contextlib import contextmanager
+from typing import Any, Optional
+import threading
+import psutil
+import pynvml
+import os
 import logging
 import queue
 import threading
@@ -8,18 +15,61 @@ from typing import Optional, List, Dict, Any
 import psutil
 import pynvml
 
-
+from timeit import default_timer
+import determined as det
 from determined.common import api
 from determined.common.api import TrialProfilerMetricsBatch
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
-
+TIMING_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_TIMING"
 LOG_NAMESPACE = "determined-profiler"
 
 
+def build_profiler_agent(env: det.EnvContext) -> 'ProfilerAgent':
+    if env.experiment_config.profiling_enabled() and get_rank_if_horovod_process_else_return_zero() == 0:
+        begin_on_batch, end_after_batch = env.experiment_config.profiling_interval()
+        return SystemProfilerAgent(
+            env.det_trial_id,
+            env.det_agent_id,
+            env.master_url,
+            begin_on_batch,
+            end_after_batch
+        )
+    return NoopProfilerAgent()
 
 
-class ProfilerAgent:
+class ProfilerAgent(metaclass=abc.ABCMeta):
+    """
+    Base agent when profiling is disabled.
+    """
+    @abc.abstractmethod
+    def update_batch_idx(self, new_batch_idx: int):
+        pass
+
+    @abc.abstractmethod
+    def record_timing(self, metric_name: str):
+        pass
+
+
+class NoopProfilerAgent(ProfilerAgent):
+    """
+    Base agent when profiling is disabled.
+    """
+    def __enter__(self) -> 'NoopProfilerAgent':
+        return self
+
+    def __exit__(self):
+        pass
+
+    def update_batch_idx(self, new_batch_idx: int):
+        pass
+
+    @contextmanager
+    def record_timing(self, metric_name: str):
+        pass
+
+
+class SystemProfilerAgent(ProfilerAgent):
     """
     Agent that collects metrics and sends them to the master. It has:
     - a thread to send data to the Master API (sender_thread)
@@ -55,6 +105,7 @@ class ProfilerAgent:
     ```
     """
     def __init__(self, trial_id: int, agent_id: str, master_url: str, start_on_batch: int, end_after_batch: Optional[int] = None):
+        self.killed = False
         self.current_batch_idx = 0
         self.agent_id = agent_id
         self.trial_id = trial_id
@@ -81,9 +132,7 @@ class ProfilerAgent:
         self.sys_metric_collector_thread = SysMetricCollectorThread(trial_id, agent_id, self.send_queue)
         self.sys_metric_collector_thread.start()
 
-        # TODO: Add data structure to batch timings and then send to SenderThread
-        #       Does this need to be its own thread to flush correctly?
-        # self.timings_batcher = TimingsBatcher()
+        self.timings_batcher = TimingMetricBatcher(trial_id, agent_id)
 
     @property
     def is_enabled(self):
@@ -94,6 +143,7 @@ class ProfilerAgent:
     def update_batch_idx(self, new_batch_idx: int):
         self.current_batch_idx = new_batch_idx
         self.sys_metric_collector_thread.update_batch_idx(self.current_batch_idx)
+        self.send_queue.put(self.timings_batcher.convert_to_post_format())
 
         # Check if we should start collecting metrics
         if not self.is_enabled and not self.has_finished and self.current_batch_idx >= self.start_on_batch:
@@ -110,12 +160,20 @@ class ProfilerAgent:
                 self._end_collection()
                 self.has_finished = True
 
+    def __enter__(self) -> 'SystemProfilerAgent':
+        return self
+
+    def __exit__(self):
+        self._end_collection()
 
     def _begin_collection(self):
         self.sys_metric_collector_thread.activate()
         # TODO: Start up TimingBatcher as well
 
     def _end_collection(self):
+        if self.killed:
+            return
+        self.killed = True
         # Shut down in reverse creation order
         self.sys_metric_collector_thread.kill()
         self.sys_metric_collector_thread.join()
@@ -123,13 +181,20 @@ class ProfilerAgent:
         self.sender_thread.kill()
         self.sender_thread.join()
 
-        # TODO: Shut down TimingBatcher as well
-
-    def record_timing(self, timing):
+    @contextmanager
+    def record_timing(self, metric_name: str) -> None:
+        # TODO(brad): Check within batch range.
         if not self.is_enabled:
             return
-        # TODO: Add new timing to TimingBatcher
-
+        start = default_timer()
+        yield
+        duration = default_timer() - start
+        self.timings_batcher.add_measurement(
+            metric_name,
+            self.current_batch_idx,
+            datetime.datetime.utcnow(),
+            duration
+        )
 
 
 class Measurement:
@@ -235,6 +300,53 @@ class StartMessage:
 
 class ShutdownMessage:
     pass
+
+class TimingMetricBatcher:
+    """
+    Data structure to collect batches of SysMetrics and then convert them to the format expected by the API
+    """
+
+    def __init__(self, trial_id, agent_id):
+        self.trial_id = trial_id
+        self.agent_id = agent_id
+        self.batch = {} # Dict[str, List['Measurement']]
+
+    def add_measurement(self, metric_name: str, batch_idx: int, timestamp: datetime.datetime, value: float):
+        if metric_name not in self.batch.keys():
+            self.batch[metric_name] = []
+
+        self.batch[metric_name].append(Measurement(
+            timestamp,
+            batch_idx,
+            value
+        ))
+
+    def convert_to_timestamp_str(self, timestamp: datetime.datetime):
+        return timestamp.isoformat() + "Z"
+
+    def convert_to_post_format(self):
+        post_formatted = []
+        for metric_type in self.batch.keys():
+            batches, timestamps, values = [], [], []
+            for m in self.batch[metric_type]:
+                batches.append(m.batch_index)
+                timestamps.append(self.convert_to_timestamp_str(m.timestamp))
+                values.append(m.value)
+            single_metric_batch = {
+                "values": values,
+                "batches": batches,
+                "timestamps":timestamps,
+                "labels": {
+                    "trialId": self.trial_id,
+                    "name": metric_type,
+                    "agentId": self.agent_id,
+                    "metricType": TIMING_METRIC_TYPE_ENUM
+                }
+            }
+            post_formatted.append(single_metric_batch)
+        self.batch = {}
+        return post_formatted
+
 
 class SysMetricCollectorThread(threading.Thread):
     """
@@ -515,3 +627,7 @@ class GpuMemoryCollector():
             except pynvml.NVMLError as e:
                 logging.info(f"{LOG_NAMESPACE}: failed to sample GPU memory for GPU {i}: {e}")
         return measurements
+
+
+def get_rank_if_horovod_process_else_return_zero() -> Optional[int]:
+    return int(os.getenv("HOROVOD_LOCAL_RANK", 0))
