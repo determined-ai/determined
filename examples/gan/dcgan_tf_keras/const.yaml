@@ -15,5 +15,5 @@ entrypoint: model_def:DCGanTrial
 environment:
   # This model only works with Tensorflow 2.2+.
   image:
-     cpu: "determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-1c4ea10"
-     gpu: "determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-1c4ea10"
+     cpu: "determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-bcc9598"
+     gpu: "determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-bcc9598"

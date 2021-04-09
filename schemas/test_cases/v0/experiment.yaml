@@ -31,8 +31,8 @@
       environment_variables: {}
       force_pull_image: false
       image:
-        cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-1c4ea10
-        gpu: determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-1c4ea10
+        cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-bcc9598
+        gpu: determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-bcc9598
       pod_spec: null
       ports: null
     hyperparameters:
