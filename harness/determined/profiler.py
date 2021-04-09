@@ -61,8 +61,7 @@ class ProfilerAgent:
         self.start_on_batch = start_on_batch
         self.end_after_batch = end_after_batch
 
-        # Track duration to stop collecting after 5 minutes. start_time also serves as
-        # the indicator that collection has begun.
+        # Set up timer to stop collecting after 5 minutes
         self.has_started = False
         self.has_finished = False
         self.max_collection_seconds = 300
