@@ -7,7 +7,7 @@ Mappings:
       Master: ami-af9379de
       Agent: ami-0b71e56244b8ac1cb
     us-gov-west-1:
-      Master: ami-a6e8d2c7
+      Master: ami-84556de5
       Agent: ami-0d26002529bfac823
 Parameters:
   Keypair:

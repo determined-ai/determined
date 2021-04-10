@@ -36,7 +36,9 @@ be registered in the determined repo. Here is the process:
    and `*_bastion_ami` image tags in bumpenvs.yaml.  This isn't strictly
    necessary; we just need to run it periodically, and now is a fine time. The
    base images in environments/cloud/environments-packer.json also need to be
-   manually updated periodically.
+   manually updated periodically. AWS GovCloud images need to be updated
+   manually as they are (at the time of this writing) missing or not current
+   in Ubuntu's AMI locator.
 
 6. Run `./bumpenvs.py bumpenvs.yaml`.  This will do a simple string replacement
    in the repository, replacing the `old` values with the `new` values for

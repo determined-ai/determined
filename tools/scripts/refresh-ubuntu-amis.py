@@ -76,14 +76,14 @@ if __name__ == "__main__":
     for image_type, subconf in conf.items():
         if image_type.endswith("_master_ami"):
             region = image_type.rstrip("_master_ami").replace("_", "-")
-            # Master AMIs are based on Xenial.
-            new_ami = get_ubuntu_ami("xenial", region)
+            # Master AMIs are based on Focal.
+            new_ami = get_ubuntu_ami("focal", region)
             update_tag_for_image_type(subconf, new_ami)
 
         if image_type.endswith("_bastion_ami"):
             region = image_type.rstrip("_bastion_ami").replace("_", "-")
-            # Bastion AMIs are based on Bionic.
-            new_ami = get_ubuntu_ami("bionic", region)
+            # Bastion AMIs are based on Focal.
+            new_ami = get_ubuntu_ami("focal", region)
             update_tag_for_image_type(subconf, new_ami)
 
     with open(path, "w") as f:
