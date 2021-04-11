@@ -241,6 +241,9 @@ export interface ExperimentConfig {
   description: string;
   hyperparameters: ExperimentHyperParams;
   labels?: string[];
+  profiling?: {
+    enabled: boolean;
+  };
   resources: {
     maxSlots?: number;
   };

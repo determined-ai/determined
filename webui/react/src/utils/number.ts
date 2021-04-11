@@ -2,6 +2,22 @@ import { isString } from './data';
 
 const PERCENT_REGEX = /^(\d+\.?\d*|\.\d+)%$/;
 
+export const findFactorOfNumber = (n: number): number[] => {
+  const abs = Math.abs(n);
+  const factorsAsc = [];
+  const factorsDesc = [];
+
+  for (let i = 1; i <= Math.floor(Math.sqrt(abs)); i++) {
+    if (abs % i !== 0) continue;
+    factorsAsc.push(i);
+
+    if (abs/i === i) continue;
+    factorsDesc.push(abs/i);
+  }
+
+  return factorsAsc.concat(factorsDesc.reverse());
+};
+
 export const isPercent = (data: unknown): boolean => {
   if (!isString(data)) return false;
   return PERCENT_REGEX.test(data);
