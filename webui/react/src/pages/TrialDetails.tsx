@@ -242,9 +242,11 @@ const TrialDetailsComp: React.FC = () => {
         <TabPane key={TabType.Overview} tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trial} />
         </TabPane>
-        <TabPane key={TabType.Profiles} tab="Profiles">
-          <TrialDetailsProfiles experiment={experiment} trial={trial} />
-        </TabPane>
+        {tabKey === TabType.Profiles && (
+          <TabPane key={TabType.Profiles} tab="Profiles">
+            <TrialDetailsProfiles experiment={experiment} trial={trial} />
+          </TabPane>
+        )}
       </Tabs>
       <CreateExperimentModal
         config={contModalConfig}
