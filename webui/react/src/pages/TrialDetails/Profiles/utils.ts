@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { debounce } from 'throttle-debounce';
+import { AlignedData } from 'uplot';
 
 import {
   V1GetTrialProfilerAvailableSeriesResponse, V1GetTrialProfilerMetricsResponse,
@@ -27,7 +28,7 @@ export type MetricsAggregateInterface = {
 };
 
 export const convertMetricsToUplotData =
-  (data: Record<number, Record<string, number>>): Array<number[]> => {
+  (data: Record<number, Record<string, number>>): AlignedData => {
     const series: Array<number[]> = [];
     const timeSerie: number[] = [];
 

@@ -49,7 +49,7 @@ const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
       width: chartRef.current.offsetWidth,
     } as Options;
 
-    const plotChart = new uPlot(options, [], chartRef.current);
+    const plotChart = new uPlot(options, [ [] ], chartRef.current);
     setChart(plotChart);
 
     return () => {
