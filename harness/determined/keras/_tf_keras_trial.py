@@ -567,7 +567,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # Save RNG state.
         rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
-        if version.parse(tf.__version__) < version.parse("2.0.0"):
+        if not (version.parse(tf.__version__) >= version.parse("2.0.0") and tf._tf2.enabled()):
             rng_state["tf_rng_global_seed"] = tf.compat.v1.random.get_seed(0)[0]
         else:
             generator = tf.random.get_global_generator()
@@ -742,7 +742,9 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # Starting in TF 2.2 users may define custom test_step() that do
         # not use the model metrics.
-        use_model_metrics = version.parse(tf.__version__) < version.parse("2.2.0")
+        use_model_metrics = not (
+            version.parse(tf.__version__) >= version.parse("2.2.0") and tf._tf2.enabled()
+        )
         evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
 
         if self.env.test_mode:
