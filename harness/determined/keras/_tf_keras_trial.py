@@ -642,7 +642,7 @@ class TFKerasTrialController(det.LoopTrialController):
             np.random.set_state(rng_state["np_rng_state"])
             random.setstate(rng_state["random_rng_state"])
 
-            if version.parse(tf.__version__) < version.parse("2.0.0"):
+            if not(version.parse(tf.__version__) >= version.parse("2.0.0") and tf._tf2.enabled()):
                 tf.compat.v1.random.set_random_seed(rng_state["tf_rng_global_seed"])
             else:
                 algorithm = rng_state["tf2_rng_global_algorithm"]
