@@ -8,6 +8,6 @@ const (
 
 // Default task environment docker image names.
 const (
-	DefaultCPUImage = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-1c4ea10"
-	DefaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-1c4ea10"
+	DefaultCPUImage = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da9ba40"
+	DefaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-da9ba40"
 )

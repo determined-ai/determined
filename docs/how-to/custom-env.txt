@@ -109,9 +109,9 @@ and values of the hyperparameters for the current trial.
 .. note::
 
    The default images are
-   ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.10.0``
+   ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.11.0``
    and
-   ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.10.0``
+   ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.11.0``
    for GPU and CPU respectively.
 
 CUDA 11 Images
@@ -133,7 +133,7 @@ This can be configured in your experiment configuration like below:
 .. code:: yaml
 
    environment:
-     image: "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.10.0"
+     image: "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0"
 
 Older Images
 ============
@@ -173,7 +173,7 @@ Here is an example of a ``Dockerfile`` that installs both ``conda``- and
 
 .. code::
 
-   FROM determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.10.0
+   FROM determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.11.0
    RUN apt-get update && apt-get install -y unzip python-opencv graphviz
    COPY environment.yml /tmp/environment.yml
    COPY pip_requirements.txt /tmp/pip_requirements.txt
