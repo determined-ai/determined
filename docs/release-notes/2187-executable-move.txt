@@ -2,13 +2,13 @@
 
 **Improvements**
 
--  **Breaking Change:** CLI: `det` and `det-deploy` executables have
-   been moved to `determined` package, which now includes all of
-   Determined libraries and tools. `determined-cli`,
+-  **Breaking Change:** CLI: ``det`` and ``det-deploy`` executables have
+   been moved to the `determined` package, which now includes all
+   Determined libraries and tools. The `determined-cli`,
    `determined-deploy`, and `determined-common` packages are now
    deprecated.
 
    -  When upgrading from older versions, `det` command may break for
       some users because of `pip` limitations. Please uninstall outdated
-      packages, and then reinstall determined. See more at
+      packages, and then reinstall Determined. See more at
       :ref:`upgrading-from-before-0_15_0`.

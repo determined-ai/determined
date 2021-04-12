@@ -79,7 +79,7 @@ After upgrading Determined and trying to use the CLI, I get ``det: command not f
 ============================================================================================
 
 When upgrading from a version earlier than 0.15.0, some users may need
-to uninstall determined and then install it back again by running:
+to uninstall Determined and then install it again by running:
 
 .. code::
 
