@@ -1,0 +1,17 @@
+description: deepsad_main
+hyperparameters:
+  learning_rate: .0001
+  weight_decay: 0.5e-4
+  global_batch_size: 512
+  eta: 1.0
+records_per_epoch: 6447
+searcher:
+  name: single
+  metric: validation_loss
+  max_length:
+    epochs: 150
+  smaller_is_better: true
+entrypoint: model_def:DeepSADMainTrial
+max_restarts: 0
+min_validation_period:
+  epochs: 5
