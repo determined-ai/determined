@@ -57,7 +57,7 @@ TensorBoard for multiple experiments use ``det tensorboard start
    visualizations.
 
 **************************
- Customizing Tensorboards
+ Customizing TensorBoards
 **************************
 
 Determined supports initializing TensorBoard with a YAML configuration

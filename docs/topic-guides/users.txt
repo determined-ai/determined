@@ -158,10 +158,10 @@ the respective commands:
 WebUI
 =====
 
-Just as in the CLI, by default the WebUI will only assets created by the
-current user. To see assets belonging to all users, uncheck the "Show
-only mine" checkbox in the filter panel found in the tab for each asset
-type.
+Just as in the CLI, by default the WebUI will only show assets created
+by the current user. To see assets belonging to all users, uncheck the
+"Show only mine" checkbox in the filter panel found in the tab for each
+asset type.
 
 *******************************
  Activating/deactivating users
@@ -260,7 +260,7 @@ the following configuration to ``master.yaml``:
        group: det-nobody
        gid: 65533
 
-When combining the ``det-nobody`` user with custom docker images,
+When combining the ``det-nobody`` user with custom Docker images,
 administrators should either build the custom image as layers on top of
 the default Determined Environments as illustrated in
 :ref:`custom-docker-images`, or they should create the ``det-nobody``

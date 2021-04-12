@@ -4,7 +4,8 @@
  Determined Task Configuration
 ###############################
 
-The behavior of Determined tasks, such as TensorBoards, notebooks,
+The behavior of Determined tasks, such as :ref:`TensorBoards
+<how-to-tensorboard>`, :ref:`notebooks <how-to-notebooks>`,
 :ref:`commands, and shells <commands-and-shells>`, can be influenced by
 setting a variety of configuration variables. These configuration
 variables are similar but not identical to the configuration options
