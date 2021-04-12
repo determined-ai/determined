@@ -185,12 +185,6 @@ commands:
       determined:
         type: boolean
         default: false
-      determined-cli:
-        type: boolean
-        default: false
-      determined-deploy:
-        type: boolean
-        default: false
       extras-requires:
         type: string
         default: ""
@@ -216,12 +210,6 @@ commands:
             if [ "<<parameters.determined>>" = "true" ]; then
               cat harness/setup.py >> /tmp/cachefile
             fi
-            if [ "<<parameters.determined-cli>>" = "true" ]; then
-              cat cli/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.determined-deploy>>" = "true" ]; then
-              cat deploy/setup.py >> /tmp/cachefile
-            fi
             echo <<parameters.extras-requires>> >> /tmp/cachefile
             if [ -n <<parameters.extra-requirements-file>> ]; then
               cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
@@ -236,18 +224,6 @@ commands:
             - install-wheel:
                 package-name: determined
                 package-location: ~/project/harness
-      - when:
-          condition: <<parameters.determined-cli>>
-          steps:
-            - install-wheel:
-                package-name: determined-cli
-                package-location: ~/project/cli
-      - when:
-          condition: <<parameters.determined-deploy>>
-          steps:
-            - install-wheel:
-                package-name: determined-deploy
-                package-location: ~/project/deploy
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -796,7 +772,6 @@ jobs:
       - helm/install-helm-client
       - setup-python-venv:
           determined: true
-          determined-cli: true
           extras-requires: "tensorflow==2.4.1 torch==1.8"
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1008,8 +983,6 @@ jobs:
       - install-webui-test-deps
       - setup-python-venv:
           determined: true
-          determined-cli: true
-          determined-deploy: true
           extra-requirements-file: "webui/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
       - setup-local-cluster:
@@ -1186,8 +1159,6 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          determined-cli: true
-          determined-deploy: true
           extras-requires: "torch==1.7.1"
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1231,7 +1202,6 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          determined-cli: true
           extra-requirements-file: "examples/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C examples test
@@ -1247,10 +1217,9 @@ jobs:
       - run: pip --version
       - run: pip install wheel
       - run: cd harness; python setup.py bdist_wheel -d ../build
-      - run: cd cli; python setup.py bdist_wheel -d ../build
       # Windows needs special treatment of cryptography for unknown reasons.
       - run: sh -c "if which conda ; then conda install cryptography --yes ; fi"
-      - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
+      - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
@@ -1285,8 +1254,6 @@ jobs:
 
       - setup-python-venv:
           determined: true
-          determined-cli: true
-          determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
 
@@ -1339,8 +1306,6 @@ jobs:
       - set-slack-user-id
       - setup-python-venv:
           determined: true
-          determined-cli: true
-          determined-deploy: true
           executor: determinedai/cimg-base:stable
       - deploy-aws-cluster:
           cluster-id: determined-${CIRCLE_BRANCH////--}
@@ -1389,8 +1354,6 @@ jobs:
       - set-slack-user-id
       - setup-python-venv:
           determined: true
-          determined-cli: true
-          determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - when:
@@ -1470,7 +1433,6 @@ jobs:
       - set-slack-user-id
       - setup-python-venv:
           determined: true
-          determined-cli: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - setup-gke-cluster:
@@ -1555,7 +1517,6 @@ jobs:
       - set-slack-user-id
       - setup-python-venv:
           determined: true
-          determined-cli: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - setup-gke-cluster-cuda-11:
@@ -1608,8 +1569,6 @@ jobs:
 
       - setup-python-venv:
           determined: true
-          determined-cli: true
-          determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
 

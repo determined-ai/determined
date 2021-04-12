@@ -32,7 +32,7 @@ Follow [these instructions](https://docs.determined.ai/latest/how-to/installatio
 # Start a Determined cluster locally.
 python3.7 -m venv ~/.virtualenvs/test
 . ~/.virtualenvs/test/bin/activate
-pip install determined-cli
+pip install determined
 # To start a cluster with GPUs, remove `no-gpu` flag.
 det deploy local cluster-up --no-gpu
 # Access web UI at localhost:8080. By default, "determined" user accepts a blank password.

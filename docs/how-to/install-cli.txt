@@ -13,9 +13,9 @@ installed via ``pip``:
 
 .. code::
 
-   pip install determined-cli
+   pip install determined
 
-The CLI requires Python >= 3.5. We suggest installing the CLI into a
+The CLI requires Python >= 3.6. We suggest installing the CLI into a
 `virtualenv <https://virtualenv.pypa.io/en/latest/>`__, although this is
 optional. To install the CLI into a virtualenv, first activate the
 virtualenv and then type the command above.

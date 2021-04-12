@@ -19,7 +19,7 @@ For more information about using Determined on AWS, see the
  ``det deploy`` tool
 *********************
 
-The ``det deploy`` tool is provided by ``determined-deploy`` python
+The ``det deploy`` tool is provided by the ``determined`` Python
 package. It uses `AWS CloudFormation
 <https://aws.amazon.com/cloudformation/>`__ to automatically deploy and
 configure a Determined cluster. CloudFormation builds the necessary
@@ -51,11 +51,11 @@ can be increased by submitting a request to the `AWS Support Center
 Installation
 ============
 
-``det deploy`` command line tool can be installed using ``pip``:
+``det`` command line tool can be installed using ``pip``:
 
 .. code::
 
-   pip install determined-deploy
+   pip install determined
 
 Deploying
 =========

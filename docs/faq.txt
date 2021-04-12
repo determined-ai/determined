@@ -11,7 +11,7 @@ How do I install the CLI?
 
 .. code:: bash
 
-   pip install determined-cli
+   pip install determined
 
 For more details, see the :ref:`installation instructions
 <install-cli>`.
@@ -74,6 +74,17 @@ You may be trying to install a non-released version of Determined or a
 version in a private registry without the right secret. Please see the
 documentation on how to configure which :ref:`version of Determined
 <configure-determined-kubernetes-version>` to install on Kubernetes.
+
+After upgrading Determined and trying to use the CLI, I get ``det: command not found`` error
+============================================================================================
+
+When upgrading from a version earlier than 0.15.0, some users may need
+to uninstall Determined and then install it again by running:
+
+.. code::
+
+   pip uninstall -y determined-common determined determined-cli determined-deploy
+   pip install determined
 
 *************************
  Packages and Containers
