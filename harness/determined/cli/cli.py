@@ -21,9 +21,11 @@ from determined.cli.agent import args_description as agent_args_description
 from determined.cli.master import args_description as master_args_description
 from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
+from determined.cli.oauth import args_description as oauth_args_description
 from determined.cli.remote import args_description as remote_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
+from determined.cli.sso import args_description as auth_args_description
 from determined.cli.template import args_description as template_args_description
 from determined.cli.tensorboard import args_description as tensorboard_args_description
 from determined.cli.trial import args_description as trial_args_description
@@ -37,6 +39,8 @@ from determined.common.declarative_argparse import Arg, Cmd, add_args
 from determined.common.util import chunks, debug_mode, get_default_master_address
 from determined.deploy.cli import DEPLOY_CMD_NAME
 from determined.deploy.cli import args_description as deploy_args_description
+
+from .errors import EnterpriseOnlyError
 
 
 @authentication_required
@@ -182,6 +186,8 @@ all_args_description = (
     + remote_args_description
     + user_args_description
     + version_args_description
+    + auth_args_description
+    + oauth_args_description
 )
 
 
@@ -276,6 +282,8 @@ def main(args: List[str] = sys.argv[1:]) -> None:
                 "Failed to login: Attempted to read a corrupted token cache. "
                 "The store has been deleted; please try again."
             )
+        except EnterpriseOnlyError as e:
+            die(f"Determined Enterprise Edition is required for this functionality: {e}")
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:
