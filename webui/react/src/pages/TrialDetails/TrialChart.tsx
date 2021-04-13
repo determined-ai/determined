@@ -1,10 +1,17 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AlignedData } from 'uplot';
 
-import MetricChart from 'components/MetricChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
+import ResponsiveFilters from 'components/ResponsiveFilters';
+import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
+import Section from 'components/Section';
+import UPlotChart, { Options } from 'components/UPlotChart';
+import { tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
 import useStorage from 'hooks/useStorage';
-import { PlotData } from 'Plotly';
 import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
+import { glasbeyColor } from 'utils/color';
+
+import css from '../ExperimentDetails/ExperimentChart.module.scss';
 
 interface Props {
   defaultMetricNames: MetricName[];
@@ -17,94 +24,81 @@ interface Props {
 
 const STORAGE_PATH = 'trial-detail';
 
-// Plotly.js colors imported from node_modules/plotly.js/src/components/color/attributes.js
-const chartColorList = [
-  '#1f77b4',  // muted blue
-  '#ff7f0e',  // safety orange
-  '#2ca02c',  // cooked asparagus green
-  '#d62728',  // brick red
-  '#9467bd',  // muted purple
-  '#8c564b',  // chestnut brown
-  '#e377c2',  // raspberry yogurt pink
-  '#7f7f7f',  // middle gray
-  '#bcbd22',  // curry yellow-green
-  '#17becf',  // blue-teal
-];
-
-const metricColorByKey: { [metricKey: string]: string } = {};
-
-const getMetricColorByKey = (metricKey: string): string => {
-  if (!metricColorByKey[metricKey]) {
-    const index = Object.keys(metricColorByKey).length % chartColorList.length;
-    metricColorByKey[metricKey] = chartColorList[index];
-  }
-  return metricColorByKey[metricKey];
-};
-
 const TrialChart: React.FC<Props> = ({
+  defaultMetricNames,
   metricNames,
   storageKey,
   validationMetric,
-  defaultMetricNames,
-  ...props
+  workloads,
 }: Props) => {
-  const storage = useStorage(STORAGE_PATH);
+  const [ chartData, setChartData ] = useState<AlignedData>();
+  const [ chartOptions, setChartOptions ] = useState<Options>();
+  const [ scale, setScale ] = useState<Scale>(Scale.Linear);
   const defaultMetric = metricNames.find(metricName => {
     return metricName.name === validationMetric && metricName.type === MetricType.Validation;
   });
   const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
   const initMetric = defaultMetric || fallbackMetric;
-  const initMetrics = storage.getWithDefault(storageKey || '', initMetric ? [ initMetric ] : []);
-  const [ metrics, setMetrics ] = useState<MetricName[]>(initMetrics);
+  const storage = useStorage(STORAGE_PATH);
 
-  const metricsSelected = JSON.stringify([ initMetric ]) !== JSON.stringify(metrics);
+  const [ metrics, setMetrics ] = useState<MetricName[]>(
+    storage.getWithDefault(storageKey || '', initMetric ? [ initMetric ] : []),
+  );
 
-  const data: Partial<PlotData>[] = useMemo(() => {
-    const dataMap: Record<string, Partial<PlotData>> = {};
+  useEffect(() => {
+    setChartOptions({
+      axes: [
+        { label: 'Batches' },
+        { label: 'Metric Value' },
+      ],
+      height: 400,
+      legend: { show: false },
+      plugins: [ tooltipsPlugin() ],
+      scales: {
+        x: { time: false },
+        y: { distr: scale === Scale.Log ? 3 : 1 },
+      },
+      series: [
+        { label: 'Batch' },
+        ...metricNames.map((metricName, index) => ({
+          label: metricName.name,
+          show: (metrics.find(metric => (
+            metricName.name === metric.name && metricName.type === metric.type
+          ))) != null,
+          spanGaps: true,
+          stroke: glasbeyColor(index),
+          width: 2,
+        })),
+      ],
+    });
+  }, [ metricNames, metrics, scale ]);
 
-    (props.workloads || []).forEach(wlWrapper => {
-      metrics.forEach(metric => {
-        if (!metric) return;
+  useEffect(() => {
+    const xValues: number[] = [];
+    const yValues: Record<string, Record<string, number>> = {};
+    metricNames.forEach((metric, index) => yValues[index] = {});
+
+    (workloads || []).forEach(wlWrapper => {
+      metricNames.forEach((metric, index) => {
         const metricsWl = metric.type === MetricType.Training ?
           wlWrapper.training : wlWrapper.validation;
-        if (!metricsWl || metricsWl.state !== RunState.Completed) return;
+        if (!metricsWl || !metricsWl.metrics || metricsWl.state !== RunState.Completed) return;
 
-        const source = metricsWl.metrics || {};
         const x = metricsWl.numBatches + metricsWl.priorBatchesProcessed;
-        const y = source[metric.name];
+        if (!xValues.includes(x)) xValues.push(x);
 
-        const metricKey = `${metric.type}_${metric.name}`;
-
-        const text = [
-          `Batches: ${x}`,
-          `Metric Value: ${y}`,
-        ].join('<br>');
-
-        if (text && x && y) {
-          if (!dataMap[metricKey]) {
-            dataMap[metricKey] = {
-              hovertemplate: '%{text}<extra></extra>',
-              line: { color: getMetricColorByKey(metricKey) },
-              mode: 'lines+markers',
-              name: `${metric.name} (${metric.type})`,
-              text: [],
-              type: 'scatter',
-              x: [],
-              y: [],
-            };
-          }
-          (dataMap[metricKey].text as string[]).push(text);
-          (dataMap[metricKey].x as number[]).push(x);
-          (dataMap[metricKey].y as number[]).push(y);
-        }
+        yValues[index][x] = metricsWl.metrics[metric.name];
       });
     });
 
-    return Object.values(dataMap).reduce((acc, value) => {
-      acc.push(value);
-      return acc;
-    }, [] as Partial<PlotData>[]);
-  }, [ metrics, props.workloads ]);
+    xValues.sort((a,b) => a-b);
+
+    const yValuesArray: (number | null)[][] = Object.values(yValues).map(yValue => {
+      return xValues.map(xValue => yValue[xValue] || null);
+    });
+
+    setChartData([ xValues, ...yValuesArray ]);
+  }, [ metricNames, workloads ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     setMetrics(value);
@@ -112,19 +106,25 @@ const TrialChart: React.FC<Props> = ({
     if (storageKey) storage.set(storageKey, value);
   }, [ storage, storageKey ]);
 
-  return <MetricChart
-    data={data}
-    id={props.id}
-    metricsSelected={metricsSelected}
-    options={<MetricSelectFilter
-      defaultMetricNames={defaultMetricNames}
-      metricNames={metricNames}
-      multiple
-      value={metrics}
-      onChange={handleMetricChange} />}
-    title="Metrics"
-    xLabel="Batches"
-    yLabel="Metric Value" />;
+  const options = (
+    <ResponsiveFilters>
+      <MetricSelectFilter
+        defaultMetricNames={defaultMetricNames}
+        metricNames={metricNames}
+        multiple
+        value={metrics}
+        onChange={handleMetricChange} />
+      <ScaleSelectFilter value={scale} onChange={setScale} />
+    </ResponsiveFilters>
+  );
+
+  return (
+    <Section bodyBorder maxHeight options={options} title='Metrics'>
+      <div className={css.base}>
+        <UPlotChart data={chartData} options={chartOptions} />
+      </div>
+    </Section>
+  );
 };
 
 export default TrialChart;

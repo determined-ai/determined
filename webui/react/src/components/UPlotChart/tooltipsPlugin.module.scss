@@ -1,0 +1,43 @@
+.tooltip {
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  display: none;
+  font-size: 11px;
+  line-height: 13px;
+  padding: 0 7px 1px 6px;
+  position: absolute;
+  z-index: 100;
+
+  .valueX,
+  .valueY,
+  .valueYEmpty {
+    margin: 5px 0;
+    position: relative;
+    white-space: nowrap;
+  }
+  .valueY,
+  .valueYEmpty {
+    padding-left: 13px;
+  }
+  .valueYEmpty {
+    opacity: 0.5;
+  }
+  .color {
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 100%;
+    display: inline-block;
+    height: 9px;
+    left: 0;
+    position: absolute;
+    top: 3px;
+    vertical-align: top;
+    width: 9px;
+  }
+}
+.bar {
+  background: #7f7f7f;
+  bottom: 0;
+  position: absolute;
+  top: 0;
+  width: 1px;
+}

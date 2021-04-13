@@ -1,62 +1,93 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AlignedData } from 'uplot';
 
-import MetricChart from 'components/MetricChart';
-import { PlotData } from 'Plotly';
+import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
+import Section from 'components/Section';
+import UPlotChart, { Options } from 'components/UPlotChart';
+import { ChartTooltipData, tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
 import { ValidationHistory } from 'types';
+import { glasbeyColor } from 'utils/color';
+
+import css from './ExperimentChart.module.scss';
 
 interface Props {
-  id?: string;
   startTime?: string;
   validationHistory?: ValidationHistory[];
   validationMetric?: string;
 }
 
-const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props) => {
-  const titleDetail = validationMetric ? ` (${validationMetric})` : '';
-  const title = `Best Validation Metric${titleDetail}`;
+const ExperimentChart: React.FC<Props> = ({
+  startTime,
+  validationHistory,
+  validationMetric,
+}: Props) => {
+  const [ chartData, setChartData ] = useState<AlignedData>();
+  const [ chartOptions, setChartOptions ] = useState<Options>();
+  const [ scale, setScale ] = useState<Scale>(Scale.Linear);
+  const chartTooltipData = useRef<ChartTooltipData[]>();
 
-  const data: Partial<PlotData>[] = useMemo(() => {
-    if (!props.startTime || !props.validationHistory) return [];
+  useEffect(() => {
+    const getTooltipTextForXIndex = (xIndex: number): ChartTooltipData => {
+      if (!chartTooltipData.current) return [];
+      return chartTooltipData.current.map(serieLabel => serieLabel[xIndex] || null);
+    };
 
-    const startTime = new Date(props.startTime).getTime();
-    const textData: string[] = [];
-    const xData: number[] = [];
-    const yData: number[] = [];
+    setChartOptions({
+      axes: [
+        { label: 'Time Elapsed (sec)' },
+        { label: 'Metric Value' },
+      ],
+      height: 400,
+      legend: { show: false },
+      plugins: [ tooltipsPlugin({ getTooltipTextForXIndex }) ],
+      scales: {
+        x: { time: false },
+        y: { distr: scale === Scale.Log ? 3 : 1 },
+      },
+      series: [
+        { label: 'Time Elapsed (sec)' },
+        {
+          label: validationMetric,
+          stroke: glasbeyColor(0),
+          width: 2,
+        },
+      ],
+    });
+  }, [ scale, validationMetric ]);
 
-    props.validationHistory.forEach(validation => {
-      const endTime = new Date(validation.endTime).getTime();
-      const x = (endTime - startTime) / 1000;
-      const y = validation.validationError;
-      const text = [
-        `Trial ${validation.trialId}`,
-        `Elapsed Time: ${x} sec`,
-        `Metric Value: ${y}`,
-      ].join('<br>');
-      if (text && x && y) {
-        textData.push(text);
-        xData.push(x);
-        yData.push(y);
-      }
+  useEffect(() => {
+    if (!startTime || !validationHistory) return;
+
+    const startTimestamp = new Date(startTime).getTime();
+    const x: number[] = [];
+    const y: number[] = [];
+    const yTooltip: string[] = [];
+
+    validationHistory.forEach(validation => {
+      if (!validation.validationError) return;
+
+      const endTimestamp = new Date(validation.endTime).getTime();
+
+      x.push((endTimestamp - startTimestamp) / 1000);
+      y.push(validation.validationError);
+      yTooltip.push('Trial ' + validation.trialId);
     });
 
-    return [ {
-      hovermode: 'y unified',
-      hovertemplate: '%{text}<extra></extra>',
-      mode: 'lines+markers',
-      name: validationMetric,
-      text: textData,
-      type: 'scatter',
-      x: xData,
-      y: yData,
-    } ];
-  }, [ props.startTime, props.validationHistory, validationMetric ]);
+    chartTooltipData.current = [ yTooltip ];
+    setChartData([ x, y ]);
+  }, [ chartTooltipData, startTime, validationHistory ]);
 
-  return <MetricChart
-    data={data}
-    id={props.id}
-    title={title}
-    xLabel="Time Elapsed (sec)"
-    yLabel="Metric Value" />;
+  const options = <ScaleSelectFilter value={scale} onChange={setScale} />;
+  const title = 'Best Validation Metric'
+    + (validationMetric ? ` (${validationMetric})` : '');
+
+  return (
+    <Section bodyBorder maxHeight options={options} title={title}>
+      <div className={css.base}>
+        <UPlotChart data={chartData} options={chartOptions} />
+      </div>
+    </Section>
+  );
 };
 
 export default ExperimentChart;

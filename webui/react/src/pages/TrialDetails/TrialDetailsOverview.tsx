@@ -23,7 +23,6 @@ import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/step';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 
 import TrialChart from './TrialChart';
-import css from './TrialDetailsOverview.module.scss';
 import { columns as defaultColumns } from './TrialDetailsOverview.table';
 
 const { Option } = Select;
@@ -202,7 +201,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
   return (
     <>
-      <Row className={css.topRow} gutter={[ 16, 16 ]}>
+      <Row gutter={[ 16, 16 ]}>
         <Col lg={10} span={24} xl={8} xxl={6}>
           <TrialInfoBox experiment={experiment} trial={trial} />
         </Col>
