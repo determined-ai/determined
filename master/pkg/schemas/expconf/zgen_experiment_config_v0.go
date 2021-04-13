@@ -108,6 +108,13 @@ func (e ExperimentConfigV0) GetPerformInitialValidation() bool {
 	return *e.PerformInitialValidation
 }
 
+func (e ExperimentConfigV0) GetProfiling() ProfilingConfigV0 {
+	if e.Profiling == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .GetProfiling")
+	}
+	return *e.Profiling
+}
+
 func (e ExperimentConfigV0) GetRecordsPerEpoch() int {
 	if e.RecordsPerEpoch == nil {
 		panic("You must call WithDefaults on ExperimentConfigV0 before .GetRecordsPerEpoch")

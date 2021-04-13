@@ -855,6 +855,14 @@ var (
             ],
             "default": false
         },
+        "profiling": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/profiling.json"
+        },
         "records_per_epoch": {
             "type": [
                 "integer",
@@ -1494,6 +1502,72 @@ var (
             ],
             "minimum": 0,
             "default": 64
+        }
+    }
+}
+`)
+	textProfilingConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/profiling.json",
+    "title": "ProfilingConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "enabled": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "begin_on_batch": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 0
+        },
+        "end_on_batch": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 1
+        }
+    },
+    "conditional": {
+        "$comment": "when enabled=true, assert begin < end",
+        "when": {
+            "required": [
+                "enabled"
+            ],
+            "properties": {
+                "enabled": {
+                    "const": true
+                }
+            }
+        },
+        "enforce": {
+            "required": [
+                "begin_on_batch",
+                "end_on_batch"
+            ],
+            "propeties": {
+                "begin_on_batch": {
+                    "type": "integer"
+                },
+                "end_on_batch": {
+                    "type": "integer"
+                }
+            },
+            "compareProperties": {
+                "type": "a<b",
+                "a": "begin_on_batch",
+                "b": "end_on_batch"
+            }
         }
     }
 }
@@ -2499,6 +2573,8 @@ var (
 
 	schemaOptimizationsConfigV0 interface{}
 
+	schemaProfilingConfigV0 interface{}
+
 	schemaRegistryAuthV0 interface{}
 
 	schemaReproducibilityConfigV0 interface{}
@@ -2883,6 +2959,17 @@ func ParsedOptimizationsConfigV0() interface{} {
 	return schemaOptimizationsConfigV0
 }
 
+func ParsedProfilingConfigV0() interface{} {
+	if schemaProfilingConfigV0 != nil {
+		return schemaProfilingConfigV0
+	}
+	err := json.Unmarshal(textProfilingConfigV0, &schemaProfilingConfigV0)
+	if err != nil {
+		panic("invalid embedded json for ProfilingConfigV0")
+	}
+	return schemaProfilingConfigV0
+}
+
 func ParsedRegistryAuthV0() interface{} {
 	if schemaRegistryAuthV0 != nil {
 		return schemaRegistryAuthV0
@@ -3160,6 +3247,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textNativeConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/profiling.json"
+	cachedSchemaBytesMap[url] = textProfilingConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/registry-auth.json"
 	cachedSchemaBytesMap[url] = textRegistryAuthV0
 	url = "http://determined.ai/schemas/expconf/v0/reproducibility.json"

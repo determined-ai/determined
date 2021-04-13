@@ -917,6 +917,14 @@ schemas = {
             ],
             "default": false
         },
+        "profiling": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/profiling.json"
+        },
         "records_per_epoch": {
             "type": [
                 "integer",
@@ -1612,6 +1620,76 @@ schemas = {
             ],
             "minimum": 0,
             "default": 64
+        }
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/profiling.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/profiling.json",
+    "title": "ProfilingConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "enabled": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "begin_on_batch": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 0
+        },
+        "end_on_batch": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 1
+        }
+    },
+    "conditional": {
+        "$comment": "when enabled=true, assert begin < end",
+        "when": {
+            "required": [
+                "enabled"
+            ],
+            "properties": {
+                "enabled": {
+                    "const": true
+                }
+            }
+        },
+        "enforce": {
+            "required": [
+                "begin_on_batch",
+                "end_on_batch"
+            ],
+            "propeties": {
+                "begin_on_batch": {
+                    "type": "integer"
+                },
+                "end_on_batch": {
+                    "type": "integer"
+                }
+            },
+            "compareProperties": {
+                "type": "a<b",
+                "a": "begin_on_batch",
+                "b": "end_on_batch"
+            }
         }
     }
 }
