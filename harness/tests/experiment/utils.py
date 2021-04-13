@@ -375,7 +375,7 @@ def train_and_validate(
     make_trial_controller_fn: Callable[[workload.Stream], det.TrialController],
     steps: int = 2,
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
-    metrics: Dict[str, Any] = {"t": [], "v": []}
+    metrics: Dict[str, Any] = {"training": [], "validation": []}
 
     def make_workloads(steps: int) -> workload.Stream:
         trainer = TrainAndValidate()
