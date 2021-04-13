@@ -21,3 +21,6 @@ build-storybook/
 node_modules/
 
 report.*.json
+
+# .env with ESLINT_NO_DEV_ERRORS=true allows CRA to build with linting errors
+!.env
