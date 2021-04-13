@@ -9,8 +9,8 @@ import (
 )
 
 // DefaultRPConfig returns the default resources pool configuration.
-func defaultRPConfig() *ResourcePoolConfig {
-	return &ResourcePoolConfig{
+func defaultRPConfig() ResourcePoolConfig {
+	return ResourcePoolConfig{
 		MaxCPUContainersPerAgent: 100,
 	}
 }
@@ -27,7 +27,7 @@ type ResourcePoolConfig struct {
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (r *ResourcePoolConfig) UnmarshalJSON(data []byte) error {
-	*r = *defaultRPConfig()
+	*r = defaultRPConfig()
 	type DefaultParser *ResourcePoolConfig
 	return json.Unmarshal(data, DefaultParser(r))
 }

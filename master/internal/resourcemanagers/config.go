@@ -26,7 +26,7 @@ func (r *ResourceConfig) ResolveResource() error {
 		r.ResourceManager.AgentRM = &AgentResourceManagerConfig{}
 	}
 	if r.ResourceManager.AgentRM != nil && r.ResourcePools == nil {
-		defaultPool := *defaultRPConfig()
+		defaultPool := defaultRPConfig()
 		defaultPool.PoolName = defaultResourcePoolName
 		r.ResourcePools = []ResourcePoolConfig{defaultPool}
 	}

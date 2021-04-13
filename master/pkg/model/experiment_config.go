@@ -186,7 +186,8 @@ func (l *Labels) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// DevicesConfig is the configuration for bind mounts.
+// DevicesConfig is the configuration for devices.  It is a named type because it needs custom
+// merging behavior (via UnmarshalJSON).
 type DevicesConfig []DeviceConfig
 
 // UnmarshalJSON implements the json.Unmarshaler interface so that DeviceConfigs are additive.
@@ -227,8 +228,7 @@ type ResourcesConfig struct {
 	ResourcePool   string  `json:"resource_pool"`
 	Priority       *int    `json:"priority,omitempty"`
 
-	// omitempty since is not an officially announced feature yet
-	Devices *DevicesConfig `json:"devices,omitempty"`
+	Devices DevicesConfig `json:"devices"`
 }
 
 // ParseJustResources is a helper function for breaking the circular dependency where we need the

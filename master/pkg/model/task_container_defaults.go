@@ -28,10 +28,9 @@ type TaskContainerDefaultsConfig struct {
 	RegistryAuth           *types.AuthConfig     `json:"registry_auth,omitempty"`
 	ForcePullImage         bool                  `json:"force_pull_image,omitempty"`
 
-	// omitempty since they are not officially announced features yet
-	AddCapabilities  *[]string      `json:"add_capabilities,omitempty"`
-	DropCapabilities *[]string      `json:"drop_capabilities,omitempty"`
-	Devices          *DevicesConfig `json:"devices,omitempty"`
+	AddCapabilities  []string      `json:"add_capabilities"`
+	DropCapabilities []string      `json:"drop_capabilities"`
+	Devices          DevicesConfig `json:"devices"`
 }
 
 func validatePortRange(portRange string) []error {
