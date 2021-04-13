@@ -17,6 +17,7 @@
     - http://determined.ai/schemas/expconf/v0/searcher-random.json
   case:
     name: random
+    max_concurrent_trials: 2
     max_length:
       batches: 1000
     max_trials: 1000
@@ -31,6 +32,7 @@
     - http://determined.ai/schemas/expconf/v0/searcher-grid.json
   case:
     name: grid
+    max_concurrent_trials: 2
     max_length:
       batches: 1000
     metric: loss

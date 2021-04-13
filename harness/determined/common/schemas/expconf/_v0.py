@@ -440,6 +440,7 @@ class RandomConfigV0(schemas.SchemaBase):
     max_length: LengthV0
     max_trials: int
     metric: str
+    max_concurrent_trials: Optional[int] = None
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
     source_trial_id: Optional[int] = None
@@ -450,6 +451,7 @@ class RandomConfigV0(schemas.SchemaBase):
         max_length: LengthV0,
         max_trials: int,
         metric: str,
+        max_concurrent_trials: Optional[int] = None,
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
@@ -462,6 +464,7 @@ class GridConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
     max_length: LengthV0
     metric: str
+    max_concurrent_trials: Optional[int] = None
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
     source_trial_id: Optional[int] = None
@@ -471,6 +474,7 @@ class GridConfigV0(schemas.SchemaBase):
         self,
         max_length: LengthV0,
         metric: str,
+        max_concurrent_trials: Optional[int] = None,
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,

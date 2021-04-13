@@ -77,8 +77,9 @@ type RandomConfigV0 struct {
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	MaxLength LengthV0 `json:"max_length"`
-	MaxTrials int      `json:"max_trials"`
+	MaxLength           LengthV0 `json:"max_length"`
+	MaxTrials           int      `json:"max_trials"`
+	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
 }
 
 // Unit implements the model.InUnits interface.
@@ -94,7 +95,8 @@ type GridConfigV0 struct {
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	MaxLength LengthV0 `json:"max_length"`
+	MaxLength           LengthV0 `json:"max_length"`
+	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
 }
 
 // Unit implements the model.InUnits interface.
