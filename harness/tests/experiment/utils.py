@@ -382,15 +382,15 @@ def train_and_validate(
 
         yield from trainer.send(steps, validation_freq=1, scheduling_unit=10)
         tm, vm = trainer.result()
-        metrics["t"] += tm
-        metrics["v"] += vm
+        metrics["training"] += tm
+        metrics["validation"] += vm
 
         yield workload.terminate_workload(), [], workload.ignore_workload_response
 
     controller = make_trial_controller_fn(make_workloads(steps))
     controller.run()
 
-    return (metrics["t"], metrics["v"])
+    return (metrics["training"], metrics["validation"])
 
 
 def checkpointing_and_restoring_test(
