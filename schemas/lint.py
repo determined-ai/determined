@@ -68,6 +68,7 @@ SUPPORTED_KEYWORDS_BY_TYPE = {
         "allOf",
         "optionalRef",
         "$comment",
+        "conditional",
     },
     "array": {"items", "default", "unionKey", "minLength", "checks", "$comment"},
     "string": {"pattern", "default", "unionKey", "checks", "$comment"},
