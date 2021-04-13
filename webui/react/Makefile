@@ -41,7 +41,7 @@ build: $(ts_bindings_dest)/done.stamp
 	$(MAKE) build/done.stamp
 
 build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json config-overrides.js
-	npm run build
+	ESLINT_NO_DEV_ERRORS=true npm run build
 	touch $@
 
 .PHONY: build-storybook
