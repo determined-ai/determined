@@ -93,6 +93,22 @@ class ReproducibilityConfigV0(schemas.SchemaBase):
             self.experiment_seed = int(time.time())
 
 
+class ProfilingConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/profiling.json"
+    enabled: Optional[bool] = None
+    begin_on_batch: Optional[int] = None
+    end_on_batch: Optional[int] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        enabled: Optional[bool] = None,
+        begin_on_batch: Optional[int] = None,
+        end_on_batch: Optional[int] = None,
+    ) -> None:
+        pass
+
+
 class LengthV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/length.json"
     batches: Optional[int] = None
@@ -726,6 +742,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     min_validation_period: Optional[LengthV0] = None
     optimizations: Optional[OptimizationsConfigV0] = None
     perform_initial_validation: Optional[bool] = None
+    profiling: Optional[ProfilingConfigV0] = None
     records_per_epoch: Optional[int] = None
     reproducibility: Optional[ReproducibilityConfigV0] = None
     resources: Optional[ResourcesConfigV0] = None
@@ -754,6 +771,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         min_validation_period: Optional[LengthV0] = None,
         optimizations: Optional[OptimizationsConfigV0] = None,
         perform_initial_validation: Optional[bool] = None,
+        profiling: Optional[ProfilingConfigV0] = None,
         records_per_epoch: Optional[int] = None,
         reproducibility: Optional[ReproducibilityConfigV0] = None,
         resources: Optional[ResourcesConfigV0] = None,

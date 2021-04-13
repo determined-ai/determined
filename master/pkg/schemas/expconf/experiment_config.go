@@ -32,6 +32,7 @@ type ExperimentConfigV0 struct {
 	MinValidationPeriod      *LengthV0                   `json:"min_validation_period"`
 	Optimizations            *OptimizationsConfigV0      `json:"optimizations"`
 	PerformInitialValidation *bool                       `json:"perform_initial_validation"`
+	Profiling                *ProfilingConfigV0          `json:"profiling"`
 	RecordsPerEpoch          *int                        `json:"records_per_epoch"`
 	Reproducibility          *ReproducibilityConfigV0    `json:"reproducibility"`
 	Resources                *ResourcesConfigV0          `json:"resources"`

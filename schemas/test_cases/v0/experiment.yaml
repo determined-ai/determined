@@ -83,6 +83,10 @@
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
     perform_initial_validation: false
+    profiling:
+      enabled: true
+      begin_on_batch: 0
+      end_on_batch: 1
     records_per_epoch: 0
     reproducibility:
       experiment_seed: 1606239866
@@ -170,6 +174,10 @@
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
     perform_initial_validation: false
+    profiling:
+      enabled: false
+      begin_on_batch: null
+      end_on_batch: null
     records_per_epoch: 0
     reproducibility:
       experiment_seed: "*"
