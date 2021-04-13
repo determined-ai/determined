@@ -462,35 +462,6 @@ class GridConfigV0(schemas.SchemaBase):
         pass
 
 
-@SearcherConfigV0.member("sync_halving")
-class SyncHalvingConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
-    budget: LengthV0
-    max_length: LengthV0
-    metric: str
-    num_rungs: int
-    divisor: Optional[float] = None
-    smaller_is_better: Optional[bool] = None
-    source_checkpoint_uuid: Optional[str] = None
-    source_trial_id: Optional[int] = None
-    train_stragglers: Optional[bool] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        budget: LengthV0,
-        max_length: LengthV0,
-        metric: str,
-        num_rungs: int,
-        divisor: Optional[float] = None,
-        smaller_is_better: Optional[bool] = None,
-        source_checkpoint_uuid: Optional[str] = None,
-        source_trial_id: Optional[int] = None,
-        train_stragglers: Optional[bool] = None,
-    ) -> None:
-        pass
-
-
 @SearcherConfigV0.member("async_halving")
 class AsyncHalvingConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
@@ -518,68 +489,6 @@ class AsyncHalvingConfigV0(schemas.SchemaBase):
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
         stop_once: Optional[int] = None,
-    ) -> None:
-        pass
-
-
-@SearcherConfigV0.member("adaptive")
-class AdaptiveConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
-    budget: LengthV0
-    max_length: LengthV0
-    metric: str
-    bracket_rungs: Optional[List[int]] = None
-    divisor: Optional[float] = None
-    max_rungs: Optional[int] = None
-    mode: Optional[AdaptiveMode] = None
-    smaller_is_better: Optional[bool] = None
-    source_checkpoint_uuid: Optional[str] = None
-    source_trial_id: Optional[int] = None
-    train_stragglers: Optional[bool] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        budget: LengthV0,
-        max_length: LengthV0,
-        metric: str,
-        bracket_rungs: Optional[List[int]] = None,
-        divisor: Optional[float] = None,
-        max_rungs: Optional[int] = None,
-        mode: Optional[AdaptiveMode] = None,
-        smaller_is_better: Optional[bool] = None,
-        source_checkpoint_uuid: Optional[str] = None,
-        source_trial_id: Optional[int] = None,
-        train_stragglers: Optional[bool] = None,
-    ) -> None:
-        pass
-
-
-@SearcherConfigV0.member("adaptive_simple")
-class AdaptiveSimpleConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
-    max_length: LengthV0
-    max_trials: int
-    metric: str
-    divisor: Optional[float] = None
-    max_rungs: Optional[int] = None
-    mode: Optional[AdaptiveMode] = None
-    smaller_is_better: Optional[bool] = None
-    source_checkpoint_uuid: Optional[str] = None
-    source_trial_id: Optional[int] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        max_length: LengthV0,
-        max_trials: int,
-        metric: str,
-        divisor: Optional[float] = None,
-        max_rungs: Optional[int] = None,
-        mode: Optional[AdaptiveMode] = None,
-        smaller_is_better: Optional[bool] = None,
-        source_checkpoint_uuid: Optional[str] = None,
-        source_trial_id: Optional[int] = None,
     ) -> None:
         pass
 
@@ -676,10 +585,7 @@ SearcherConfigV0_Type = Union[
     SingleConfigV0,
     RandomConfigV0,
     GridConfigV0,
-    SyncHalvingConfigV0,
     AsyncHalvingConfigV0,
-    AdaptiveConfigV0,
-    AdaptiveSimpleConfigV0,
     AdaptiveASHAConfigV0,
     PBTConfigV0,
 ]

@@ -3,7 +3,7 @@
     "$id": "http://determined.ai/schemas/expconf/v0/searcher.json",
     "title": "SearcherConfig",
     "union": {
-        "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive', 'adaptive_asha', 'adaptive_simple', or 'pbt'",
+        "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
         "items": [
             {
                 "unionKey": "const:name=single",
@@ -22,20 +22,8 @@
                 "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
             },
             {
-                "unionKey": "const:name=adaptive_simple",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
-            },
-            {
-                "unionKey": "const:name=adaptive",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
-            },
-            {
                 "unionKey": "const:name=pbt",
                 "$ref": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-            },
-            {
-                "unionKey": "const:name=sync_halving",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
             },
             {
                 "unionKey": "const:name=async_halving",
