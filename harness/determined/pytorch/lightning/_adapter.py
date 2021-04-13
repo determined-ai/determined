@@ -108,10 +108,12 @@ class _LightningAdapterState:
         context: PyTorchTrialContext,
         lm: pl.LightningModule,
         optimizers: List[Optimizer],
+        lr_schedulers: List[_LRScheduler],
     ):
         self.context = context
         self.lm = lm
         self.optimizers = optimizers
+        self.lr_schedulers = lr_schedulers
 
 
 class LightningAdapter(PyTorchTrial):
@@ -178,10 +180,9 @@ class LightningAdapter(PyTorchTrial):
 
         context.wrap_model(lightning_module)
 
-        pls = _LightningAdapterState(context, lightning_module, [])
+        pls = _LightningAdapterState(context, lightning_module, [], [])
         self._pls = pls
-        optimizers, _ = self.setup_optimizers_schedulers()
-        pls.optimizers = optimizers
+        pls.optimizers, pls.lr_schedulers = self.setup_optimizers_schedulers()
 
         if precision == 16 and amp_backend == "apex":
             context.configure_apex_amp(
@@ -242,6 +243,7 @@ class LightningAdapter(PyTorchTrial):
         optimizers, lr_scheduler_dicts, _ = TrainerOptimizersMixin().init_optimizers(
             self._pls.lm,
         )
+
         optimizers = cast(List[Optimizer], optimizers)
         lr_scheduler_dicts = cast(List[dict], lr_scheduler_dicts)
 
@@ -268,7 +270,7 @@ class LightningAdapter(PyTorchTrial):
             }
             """
             if lrs["reduce_on_plateau"]:
-                raise InvalidModelException("LRScheduler reduce_on_plateaue is not supported")
+                raise InvalidModelException("LRScheduler reduce_on_plateau is not supported")
             if lrs["monitor"] is not None:
                 raise InvalidModelException("LRScheduler monitor is not supported")
 

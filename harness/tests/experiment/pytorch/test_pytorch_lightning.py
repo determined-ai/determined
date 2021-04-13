@@ -5,7 +5,7 @@ from typing import Any, Dict
 import pytest
 
 import determined as det
-from determined import pytorch, workload
+from determined import workload
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import lightning_adapter_onevar_model as la_model
 
@@ -17,10 +17,7 @@ class TestLightningAdapter:
         # random seed, verify the initial conditions converge.
         self.trial_seed = 17
         self.hparams = {
-            "hidden_size": 2,
-            "learning_rate": 0.5,
             "global_batch_size": 4,
-            "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.MANUAL_STEP.value,
         }
 
     def test_checkpointing_and_restoring(self, tmp_path: pathlib.Path) -> None:
@@ -87,3 +84,48 @@ class TestLightningAdapter:
 
         with pytest.raises(AssertionError):
             utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
+
+    def test_lr_scheduler(self, tmp_path: pathlib.Path) -> None:
+        class OneVarLAFreq1(la_model.OneVarTrialLRScheduler):
+            def check_lr_value(self, batch_idx: int):
+                assert self.last_lr > self.read_lr_value()
+
+        def make_trial_controller_fn(
+            workloads: workload.Stream, load_path: typing.Optional[str] = None
+        ) -> det.TrialController:
+
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=OneVarLAFreq1,
+                hparams=self.hparams,
+                workloads=workloads,
+                load_path=load_path,
+                trial_seed=self.trial_seed,
+            )
+
+        utils.train_and_validate(make_trial_controller_fn)
+
+    def test_lr_scheduler_frequency(self) -> None:
+        class OneVarLAFreq2(la_model.OneVarTrialLRScheduler):
+            def check_lr_value(self, batch_idx: int):
+                if batch_idx % 2 == 0:
+                    assert self.last_lr > self.read_lr_value()
+                else:
+                    assert self.last_lr == self.read_lr_value()
+
+        def make_trial_controller_fn(
+            workloads: workload.Stream, load_path: typing.Optional[str] = None
+        ) -> det.TrialController:
+
+            updated_params = {
+                **self.hparams,
+                "lr_frequency": 2,
+            }
+            return utils.make_trial_controller_from_trial_implementation(
+                trial_class=OneVarLAFreq2,
+                hparams=updated_params,
+                workloads=workloads,
+                load_path=load_path,
+                trial_seed=self.trial_seed,
+            )
+
+        utils.train_and_validate(make_trial_controller_fn)

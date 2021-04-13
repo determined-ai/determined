@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -17,23 +18,31 @@ class OnesDataset(torch.utils.data.Dataset):
 
 
 class OneVarLM(pl.LightningModule):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, lr_frequency=1, *args, **kwargs):
+        super().__init__()
 
         model = torch.nn.Linear(1, 1, False)
         self.model = model
+        self.save_hyperparameters()
 
         # Manually initialize the one weight to 0.
         model.weight.data.fill_(0)
 
-        self.lr = 0.001
+        self.lr = 0.5
 
         self.loss_fn = torch.nn.MSELoss()
 
     def configure_optimizers(self):
         opt = torch.optim.SGD(self.model.parameters(), self.lr)
-        sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=1e-6)
-        return [opt], [sched]
+        sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1, gamma=1e-8)
+        return {
+            "lr_scheduler": {
+                "scheduler": sched,
+                "frequency": self.hparams["lr_frequency"],
+                "interval": "step",
+            },
+            "optimizer": opt,
+        }
 
     def training_step(self, batch, batch_idx, *args, **kwargs):
         data, label = batch
@@ -77,7 +86,7 @@ class OneDatasetLDM(pl.LightningDataModule):
 class OneVarTrial(LightningAdapter):
     def __init__(self, context: pytorch.PyTorchTrialContext, lm_class=OneVarLM) -> None:
         self.context = context
-        lm = lm_class()
+        lm = lm_class(**context.get_hparams())
         self.dm = OneDatasetLDM()
         super().__init__(context, lm)
 
@@ -106,6 +115,27 @@ class OneVarTrial(LightningAdapter):
         return pytorch.DataLoader(
             self.dm.val_dataloader().dataset, batch_size=self.context.get_per_slot_batch_size()
         )
+
+
+class OneVarTrialLRScheduler(OneVarTrial):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.last_lr = None
+
+    def read_lr_value(self):
+        return self._pls.optimizers[0].param_groups[0]["lr"]
+
+    @abstractmethod
+    def check_lr_value(self, batch_idx: int):
+        raise NotImplementedError()
+
+    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int):
+        if self.last_lr is None:
+            self.last_lr = self.read_lr_value()
+        else:
+            self.check_lr_value(batch_idx)
+            self.last_lr = self.read_lr_value()
+        return super().train_batch(batch, epoch_idx, batch_idx)
 
 
 if __name__ == "__main__":
