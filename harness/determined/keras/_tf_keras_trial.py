@@ -22,6 +22,7 @@ from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
 from determined import horovod, keras, util, workload
+from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
 
@@ -566,13 +567,8 @@ class TFKerasTrialController(det.LoopTrialController):
                 save_optimizer_weights_to_hdf5_group(opt_group, optimizer)
 
         # Save RNG state.
-        rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
-        if not (version.parse(tf.__version__) >= version.parse("2.0.0") and tf._tf2.enabled()):
-            rng_state["tf_rng_global_seed"] = tf.compat.v1.random.get_seed(0)[0]
-        else:
-            generator = tf.random.get_global_generator()
-            rng_state["tf2_rng_global_algorithm"] = generator.algorithm
-            rng_state["tf2_rng_global_state"] = generator.state
+        rng_state = get_rng_state()
+
         with open(path.joinpath("rng_state.pkl"), "wb") as f:
             pickle.dump(rng_state, f)
 
@@ -639,16 +635,8 @@ class TFKerasTrialController(det.LoopTrialController):
         try:
             with open(self.load_path.joinpath("rng_state.pkl"), "rb") as f:
                 rng_state = pickle.load(f)
-            np.random.set_state(rng_state["np_rng_state"])
-            random.setstate(rng_state["random_rng_state"])
 
-            if not (version.parse(tf.__version__) >= version.parse("2.0.0") and tf._tf2.enabled()):
-                tf.compat.v1.random.set_random_seed(rng_state["tf_rng_global_seed"])
-            else:
-                algorithm = rng_state["tf2_rng_global_algorithm"]
-                state = rng_state["tf2_rng_global_state"]
-                generator = tf.random.Generator.from_state(state, algorithm)
-                tf.random.set_global_generator(generator)
+            set_rng_state(rng_state)
         except IOError:
             logging.warning("Checkpoint did not include RNG state.")
 
@@ -743,7 +731,9 @@ class TFKerasTrialController(det.LoopTrialController):
         # Starting in TF 2.2 users may define custom test_step() that do
         # not use the model metrics.
         use_model_metrics = not (
-            version.parse(tf.__version__) >= version.parse("2.2.0") and tf._tf2.enabled()
+            version.parse(tf.__version__) >= version.parse("2.2.0")
+            and tf._tf2.enabled()
+            and tf.executing_eagerly()
         )
         evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
 
