@@ -80,6 +80,18 @@ The following configuration settings are supported:
       -  ``server`` (optional)
       -  ``email`` (optional)
 
+   -  ``add_capabilities``: A list of capability strings to pass to the
+      Docker daemon. Each entry in the list is equivalent to a
+      ``--cap-add CAP`` command line argument to ``docker run``.
+      ``add_capabilities`` is honored by resource managers of type
+      ``agent`` but is ignored by resource managers of type
+      ``kubernetes``. See :ref:`master configuration
+      <master-configuration>` for details about resource managers.
+
+   -  ``drop_capabilities``: Just like ``add_capabilities`` but
+      corresponding to the ``--cap-drop`` argument of ``docker run``
+      rather than ``--cap-add``.
+
 -  ``resources``: The resources Determined allows a task to use.
 
    -  ``slots``: Specifies the number of slots to use for the task. The
@@ -111,6 +123,27 @@ The following configuration settings are supported:
       be scheduled in the default CPU pool, while GPU-using tasks will
       be scheduled in the default GPU tool. Refer to
       :ref:`resource-pools` for more information.
+
+   -  ``devices``: A list of device strings to pass to the Docker
+      daemon. Each entry in the list is equivalent to a ``--device
+      DEVICE`` command line argument to ``docker run``. ``devices`` is
+      honored by resource managers of type ``agent`` but is ignored by
+      resource managers of type ``kubernetes``. See :ref:`master
+      configuration <master-configuration>` for details about resource
+      managers.
+
+``resource_pool``
+   The resource pool where this experiment will be scheduled. If no
+   resource pool is specified, experiments will run in the default GPU
+   pool. Refer to :ref:`resource-pools` for more information.
+
+``devices``
+   A list of device strings to pass to the Docker daemon. Each entry in
+   the list is equivalent to a ``--device DEVICE`` command line argument
+   to ``docker run``. ``devices`` is honored by resource managers of
+   type ``agent`` but is ignored by resource managers of type
+   ``kubernetes``. See :ref:`master configuration
+   <master-configuration>` for details about resource managers.
 
 -  ``bind_mounts``: Specifies a collection of directories that are
    bind-mounted into the Docker containers for execution. This can be
