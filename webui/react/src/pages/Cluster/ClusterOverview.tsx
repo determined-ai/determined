@@ -22,6 +22,7 @@ import css from './ClusterOverview.module.scss';
 
 const STORAGE_PATH = 'cluster';
 const VIEW_CHOICE_KEY = 'view-choice';
+const abc = 'abc';
 
 const ClusterOverview: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
