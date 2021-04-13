@@ -18,16 +18,7 @@ func (s SearcherConfigV0) GetUnionMember() interface{} {
 	if s.GridConfig != nil {
 		return nil
 	}
-	if s.SyncHalvingConfig != nil {
-		return nil
-	}
 	if s.AsyncHalvingConfig != nil {
-		return nil
-	}
-	if s.AdaptiveConfig != nil {
-		return nil
-	}
-	if s.AdaptiveSimpleConfig != nil {
 		return nil
 	}
 	if s.AdaptiveASHAConfig != nil {
@@ -49,17 +40,8 @@ func (s SearcherConfigV0) GetMetric() string {
 	if s.GridConfig != nil {
 		return s.GridConfig.GetMetric()
 	}
-	if s.SyncHalvingConfig != nil {
-		return s.SyncHalvingConfig.GetMetric()
-	}
 	if s.AsyncHalvingConfig != nil {
 		return s.AsyncHalvingConfig.GetMetric()
-	}
-	if s.AdaptiveConfig != nil {
-		return s.AdaptiveConfig.GetMetric()
-	}
-	if s.AdaptiveSimpleConfig != nil {
-		return s.AdaptiveSimpleConfig.GetMetric()
 	}
 	if s.AdaptiveASHAConfig != nil {
 		return s.AdaptiveASHAConfig.GetMetric()
@@ -80,17 +62,8 @@ func (s SearcherConfigV0) GetSmallerIsBetter() bool {
 	if s.GridConfig != nil {
 		return s.GridConfig.GetSmallerIsBetter()
 	}
-	if s.SyncHalvingConfig != nil {
-		return s.SyncHalvingConfig.GetSmallerIsBetter()
-	}
 	if s.AsyncHalvingConfig != nil {
 		return s.AsyncHalvingConfig.GetSmallerIsBetter()
-	}
-	if s.AdaptiveConfig != nil {
-		return s.AdaptiveConfig.GetSmallerIsBetter()
-	}
-	if s.AdaptiveSimpleConfig != nil {
-		return s.AdaptiveSimpleConfig.GetSmallerIsBetter()
 	}
 	if s.AdaptiveASHAConfig != nil {
 		return s.AdaptiveASHAConfig.GetSmallerIsBetter()
@@ -111,17 +84,8 @@ func (s SearcherConfigV0) GetSourceCheckpointUUID() *string {
 	if s.GridConfig != nil {
 		return s.GridConfig.GetSourceCheckpointUUID()
 	}
-	if s.SyncHalvingConfig != nil {
-		return s.SyncHalvingConfig.GetSourceCheckpointUUID()
-	}
 	if s.AsyncHalvingConfig != nil {
 		return s.AsyncHalvingConfig.GetSourceCheckpointUUID()
-	}
-	if s.AdaptiveConfig != nil {
-		return s.AdaptiveConfig.GetSourceCheckpointUUID()
-	}
-	if s.AdaptiveSimpleConfig != nil {
-		return s.AdaptiveSimpleConfig.GetSourceCheckpointUUID()
 	}
 	if s.AdaptiveASHAConfig != nil {
 		return s.AdaptiveASHAConfig.GetSourceCheckpointUUID()
@@ -142,17 +106,8 @@ func (s SearcherConfigV0) GetSourceTrialID() *int {
 	if s.GridConfig != nil {
 		return s.GridConfig.GetSourceTrialID()
 	}
-	if s.SyncHalvingConfig != nil {
-		return s.SyncHalvingConfig.GetSourceTrialID()
-	}
 	if s.AsyncHalvingConfig != nil {
 		return s.AsyncHalvingConfig.GetSourceTrialID()
-	}
-	if s.AdaptiveConfig != nil {
-		return s.AdaptiveConfig.GetSourceTrialID()
-	}
-	if s.AdaptiveSimpleConfig != nil {
-		return s.AdaptiveSimpleConfig.GetSourceTrialID()
 	}
 	if s.AdaptiveASHAConfig != nil {
 		return s.AdaptiveASHAConfig.GetSourceTrialID()

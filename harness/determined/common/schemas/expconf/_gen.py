@@ -1955,197 +1955,6 @@ schemas = {
 
 """
     ),
-    "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json",
-    "title": "AdaptiveSimpleConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name",
-        "max_trials",
-        "max_length",
-        "metric"
-    ],
-    "properties": {
-        "name": {
-            "const": "adaptive_simple"
-        },
-        "max_trials": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 2000
-        },
-        "mode": {
-            "enum": [
-                null,
-                "aggressive",
-                "standard",
-                "conservative"
-            ],
-            "default": "standard"
-        },
-        "divisor": {
-            "type": [
-                "number",
-                "null"
-            ],
-            "exclusiveMinimum": 1,
-            "default": 4
-        },
-        "max_rungs": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "minimum": 1,
-            "default": 5
-        },
-        "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
-        },
-        "metric": {
-            "type": "string"
-        },
-        "smaller_is_better": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    }
-}
-
-"""
-    ),
-    "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json",
-    "title": "AdaptiveConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name",
-        "budget",
-        "max_length",
-        "metric"
-    ],
-    "properties": {
-        "name": {
-            "const": "adaptive"
-        },
-        "budget": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/length.json"
-        },
-        "bracket_rungs": {
-            "type": [
-                "array",
-                "null"
-            ],
-            "default": [],
-            "items": {
-                "type": "integer"
-            }
-        },
-        "mode": {
-            "enum": [
-                null,
-                "aggressive",
-                "standard",
-                "conservative"
-            ],
-            "default": "standard"
-        },
-        "divisor": {
-            "type": [
-                "number",
-                "null"
-            ],
-            "exclusiveMinimum": 1,
-            "default": 4
-        },
-        "max_rungs": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "minimum": 1,
-            "default": 5
-        },
-        "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
-        },
-        "train_stragglers": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "metric": {
-            "type": "string"
-        },
-        "smaller_is_better": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    },
-    "checks": {
-        "max_length and budget must be specified in terms of the same unit": {
-            "compareProperties": {
-                "type": "same_units",
-                "a": "max_length",
-                "b": "budget"
-            }
-        },
-        "budget must be greater than max_length": {
-            "compareProperties": {
-                "type": "length_a<length_b",
-                "a": "max_length",
-                "b": "budget"
-            }
-        }
-    }
-}
-
-"""
-    ),
     "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json": json.loads(
         r"""
 {
@@ -2483,79 +2292,6 @@ schemas = {
 
 """
     ),
-    "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json": json.loads(
-        r"""
-{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json",
-    "title": "SyncHalvingConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name",
-        "num_rungs",
-        "max_length",
-        "budget",
-        "metric"
-    ],
-    "properties": {
-        "name": {
-            "const": "sync_halving"
-        },
-        "budget": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
-        },
-        "num_rungs": {
-            "type": "integer",
-            "minimum": 1
-        },
-        "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
-        },
-        "divisor": {
-            "type": [
-                "number",
-                "null"
-            ],
-            "exclusiveMinimum": 1,
-            "default": 4
-        },
-        "train_stragglers": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "metric": {
-            "type": "string"
-        },
-        "smaller_is_better": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    }
-}
-
-"""
-    ),
     "http://determined.ai/schemas/expconf/v0/searcher.json": json.loads(
         r"""
 {
@@ -2563,7 +2299,7 @@ schemas = {
     "$id": "http://determined.ai/schemas/expconf/v0/searcher.json",
     "title": "SearcherConfig",
     "union": {
-        "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive', 'adaptive_asha', 'adaptive_simple', or 'pbt'",
+        "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
         "items": [
             {
                 "unionKey": "const:name=single",
@@ -2582,20 +2318,8 @@ schemas = {
                 "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
             },
             {
-                "unionKey": "const:name=adaptive_simple",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
-            },
-            {
-                "unionKey": "const:name=adaptive",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
-            },
-            {
                 "unionKey": "const:name=pbt",
                 "$ref": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-            },
-            {
-                "unionKey": "const:name=sync_halving",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
             },
             {
                 "unionKey": "const:name=async_halving",
