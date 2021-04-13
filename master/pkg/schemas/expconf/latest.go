@@ -3,8 +3,6 @@ package expconf
 // This file defines the latest version of each config, which should be used throughout the system.
 
 type AdaptiveASHAConfig = AdaptiveASHAConfigV0
-type AdaptiveConfig = AdaptiveConfigV0
-type AdaptiveSimpleConfig = AdaptiveSimpleConfigV0
 type AsyncHalvingConfig = AsyncHalvingConfigV0
 type BindMount = BindMountV0
 type BindMountsConfig = BindMountsConfigV0
@@ -36,4 +34,3 @@ type SearcherConfig = SearcherConfigV0
 type SharedFSConfig = SharedFSConfigV0
 type SharedFSDataLayerConfig = SharedFSDataLayerConfigV0
 type SingleConfig = SingleConfigV0
-type SyncHalvingConfig = SyncHalvingConfigV0

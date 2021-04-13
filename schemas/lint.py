@@ -314,8 +314,6 @@ def check_compareProperties(schema: dict, path: str, ctx: LintContext) -> Errors
         errors.append((subpath, "has no b"))
     if compare["type"] not in {
         "a<b",
-        "same_units",
-        "length_a<length_b",
         "a_is_subdir_of_b",
     }:
         errors.append((subpath, f'invalid type: {compare["type"]}'))

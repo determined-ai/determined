@@ -15,30 +15,6 @@
     minval: 2
     maxval: 2
 
-- name: same_units and length_a<length_b compareProperties (valid)
-  matches:
-    - http://determined.ai/schemas/expconf/v0/searcher-adaptive.json
-  case:
-    name: adaptive
-    metric: loss
-    budget:
-      epochs: 2
-    max_length:
-      epochs: 1
-
-- name: same_units and length_a<length_b compareProperties (invalid)
-  errors:
-    http://determined.ai/schemas/expconf/v0/searcher-adaptive.json:
-      - max_length and budget must be specified in terms of the same unit
-      - budget must be greater than max_length
-  case:
-    name: adaptive
-    metric: loss
-    budget:
-      epochs: 2
-    max_length:
-      records: 10
-
 - name: a_is_subdir_of_b (valid, no storage path)
   matches:
     - http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
