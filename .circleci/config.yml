@@ -1751,9 +1751,7 @@ workflows:
                 - master
           requires:
             - package-and-push-system-dev
-          matrix:
-            parameters:
-              max-dynamic-agents: [2]
+          max-dynamic-agents: 2
 
       - deploy:
           name: deploy-release-party
