@@ -321,3 +321,15 @@ def test_pytorch_cpu_rng_restore() -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 def test_pytorch_gpu_rng_restore() -> None:
     _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand", "gpu_rand"])
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.tensorflow2_cpu
+def test_keras_tf2_disabled_rng_restore() -> None:
+    _test_rng_restore("keras_tf2_disabled_no_op", ["val_rand_rand", "val_np_rand", "val_tf_rand"])
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.tensorflow2_cpu
+def test_estimator_tf2_disabled_rng_restore() -> None:
+    _test_rng_restore("estimator_tf2_disabled_no_op", ["val_rand_rand", "val_np_rand", "val_tf_rand"])
