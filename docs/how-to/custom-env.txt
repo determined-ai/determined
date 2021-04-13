@@ -115,6 +115,8 @@ and values of the hyperparameters for the current trial.
    ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.11.0``
    for GPU and CPU respectively.
 
+.. _cuda-11-images:
+
 CUDA 11 Images
 ==============
 
@@ -124,7 +126,7 @@ containing the following:
 
 -  Ubuntu 18.04
 -  CUDA 11.0
--  Python 3.6.9
+-  Python 3.7
 -  TensorFlow 2.4.1
 -  PyTorch 1.7.1
 -  PyTorch Lightning 1.2

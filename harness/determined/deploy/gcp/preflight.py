@@ -13,6 +13,7 @@ ON_DEMAND_QUOTA_CODES = {
     "nvidia-tesla-p100": "NVIDIA_P100_GPUS",
     "nvidia-tesla-p4": "NVIDIA_P4_GPUS",
     "nvidia-tesla-k80": "NVIDIA_K80_GPUS",
+    "nvidia-tesla-a100": "NVIDIA_A100_GPUS",
 }
 
 PREEMPTIBLE_QUOTA_CODES = {k: "PREEMPTIBLE_" + v for (k, v) in ON_DEMAND_QUOTA_CODES.items()}

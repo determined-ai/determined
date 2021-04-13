@@ -340,6 +340,43 @@ optional argument you can supply when using ``det deploy``. Once you
 have the ``keypath`` you can use it to deploy a GCP cluster by
 continuing the :ref:`installation <gcp-install>` section.
 
+.. _gcp-det-deploy-a100:
+
+Running Determined on NVIDIA A100 GPUs
+======================================
+
+Determined makes it possible to try out your models on latest NVIDIA
+A100 GPUs, however there're a few considerations:
+
+-  A100s may not be available in your default GCP region and zone, and
+   you may need to specify a different one explicitly. `See more on GPU
+   availablity
+   <https://cloud.google.com/compute/docs/gpus/gpu-regions-zones>`__
+
+-  Make sure you have sufficient resource quota for A100s in your target
+   region and zone. `See more on quotas
+   <https://cloud.google.com/compute/quotas>`__
+
+-  Adjust maximum number of instances and to be within your quota using
+   ``--max-dynamic-agents NUMBER``.
+
+-  For compatibility and performance reasons, Determined is currently
+   using CUDA 10.2 by default. A100 requires CUDA 11, so you need to use
+   :ref:`corresponding environment images <cuda-11-images>`.
+
+This command line will spin up a cluster of up to 2 A100s in
+``us-central1-c`` zone:
+
+.. code::
+
+   det deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID \
+      --max-dynamic-agents 2 \
+      --gpu-agent-instance-type a2-highgpu-1g --gpu-num 1 \
+      --gpu-type nvidia-tesla-a100 \
+      --region us-central1 --zone us-central1-c \
+      --gpu-env-image determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0 \
+      --cpu-env-image determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.11.0
+
 ************
  Next Steps
 ************
