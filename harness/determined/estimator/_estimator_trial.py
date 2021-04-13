@@ -342,13 +342,12 @@ class DeterminedControlHook(estimator.RunHook):
 
     def save_rng_state_with_checkpoint(self, checkpoint_dir: str) -> None:
         rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
-        if tf.executing_eagerly():
-            if version.parse(tf.__version__) < version.parse("2.0.0"):
-                rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
-            else:
-                generator = tf.random.get_global_generator()
-                rng_state["tf2_rng_global_algorithm"] = generator.algorithm
-                rng_state["tf2_rng_global_state"] = generator.state
+        if not tf.executing_eagerly() or version.parse(tf.__version__) < version.parse("2.0.0"):
+            rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
+        else:
+            generator = tf.random.get_global_generator()
+            rng_state["tf2_rng_global_algorithm"] = generator.algorithm
+            rng_state["tf2_rng_global_state"] = generator.state
         with open(checkpoint_dir + "/rng_state.pkl", "wb") as f:
             pickle.dump(rng_state, f)
 
