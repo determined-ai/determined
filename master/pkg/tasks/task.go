@@ -83,9 +83,6 @@ func ToContainerSpec(t TaskSpec) container.Spec {
 		shmSize = t.TaskContainerDefaults.ShmSizeBytes
 	}
 
-	capAdd := env.AddCapabilities
-	capDrop := env.DropCapabilities
-
 	resources := t.ResourcesConfig()
 	var devices []docker.DeviceMapping
 	for _, device := range resources.Devices {
@@ -115,8 +112,8 @@ func ToContainerSpec(t TaskSpec) container.Spec {
 				Mounts:          t.Mounts(),
 				PublishAllPorts: true,
 				ShmSize:         shmSize,
-				CapAdd:          capAdd,
-				CapDrop:         capDrop,
+				CapAdd:          env.AddCapabilities,
+				CapDrop:         env.DropCapabilities,
 
 				Resources: docker.Resources{
 					Devices: devices,
