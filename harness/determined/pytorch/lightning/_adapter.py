@@ -182,9 +182,7 @@ class LightningAdapter(PyTorchTrial):
 
         pls = _LightningAdapterState(context, lightning_module, [], [])
         self._pls = pls
-        optimizers, lr_schedulers = self.setup_optimizers_schedulers()
-        pls.lr_schedulers = lr_schedulers
-        pls.optimizers = optimizers
+        pls.optimizers, pls.lr_schedulers = self.setup_optimizers_schedulers()
 
         if precision == 16 and amp_backend == "apex":
             context.configure_apex_amp(
