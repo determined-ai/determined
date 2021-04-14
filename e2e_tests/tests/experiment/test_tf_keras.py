@@ -96,6 +96,20 @@ def test_tf_keras_mnist_parallel() -> None:
     assert len(trials) == 1
 
 
+@pytest.mark.tensorflow2_cpu  # type: ignore
+def test_tf_keras_tf2_disabled() -> None:
+    """Keras on tf2 with tf2 and eager execution disabled."""
+    config = conf.load_config(conf.fixtures_path("keras_tf2_disabled_no_op/const.yaml"))
+    config = conf.set_max_length(config, {"batches": 1})
+    config = conf.set_tf2_image(config)
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.fixtures_path("keras_tf2_disabled_no_op"), 1
+    )
+    trials = exp.experiment_trials(experiment_id)
+    assert len(trials) == 1
+    exp.export_and_load_model(experiment_id)
+
+
 @pytest.mark.parametrize(  # type: ignore
     "tf2",
     [pytest.param(False, marks=pytest.mark.tensorflow1_cpu)],

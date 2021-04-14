@@ -1,0 +1,20 @@
+description: noop-keras
+data:
+  model_type: single_output
+entrypoint: model_def:NoopKerasTrial
+hyperparameters:
+    global_batch_size: 8
+scheduling_unit: 1
+searcher:
+  name: single
+  metric: val_loss
+  max_length:
+    batches: 3
+  smaller_is_better: true
+max_restarts: 0
+min_checkpoint_period:
+  batches: 1
+min_validation_period:
+  batches: 1
+checkpoint_storage:
+  save_trial_best: 3

@@ -18,6 +18,7 @@ from tensorflow_estimator.python.estimator.training import _NewCheckpointListene
 
 import determined as det
 from determined import estimator, horovod, ipc, monkey_patch, tensorboard, workload
+from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
 
@@ -327,28 +328,11 @@ class DeterminedControlHook(estimator.RunHook):
 
         if rng_state is not None:
             logging.info("Restoring RNG state from checkpoint")
-            np.random.set_state(rng_state["np_rng_state"])
-            random.setstate(rng_state["random_rng_state"])
-
-            if version.parse(tf.__version__) < version.parse("2.0.0"):
-                if "tf_rng_global_seed" in rng_state:
-                    tf.random.set_random_seed(rng_state["tf_rng_global_seed"])
-            else:
-                if "tf2_rng_global_algorithm" in rng_state and "tf2_rng_global_state" in rng_state:
-                    algorithm = rng_state["tf2_rng_global_algorithm"]
-                    state = rng_state["tf2_rng_global_state"]
-                    generator = tf.random.Generator.from_state(state, algorithm)
-                    tf.random.set_global_generator(generator)
+            set_rng_state(rng_state)
 
     def save_rng_state_with_checkpoint(self, checkpoint_dir: str) -> None:
-        rng_state = {"np_rng_state": np.random.get_state(), "random_rng_state": random.getstate()}
-        if tf.executing_eagerly():
-            if version.parse(tf.__version__) < version.parse("2.0.0"):
-                rng_state["tf_rng_global_seed"] = tf.random.get_seed(0)[0]
-            else:
-                generator = tf.random.get_global_generator()
-                rng_state["tf2_rng_global_algorithm"] = generator.algorithm
-                rng_state["tf2_rng_global_state"] = generator.state
+        rng_state = get_rng_state()
+
         with open(checkpoint_dir + "/rng_state.pkl", "wb") as f:
             pickle.dump(rng_state, f)
 
