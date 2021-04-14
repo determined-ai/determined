@@ -60,7 +60,7 @@ def test_streaming_metrics_api() -> None:
         pytest.fail("trials-sample (validation): %s. Results: %s" % valid_trials_sample_results)
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.distributed  # type: ignore
 @pytest.mark.timeout(1800)  # type: ignore
 def test_hp_importance_api() -> None:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
