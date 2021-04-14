@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
-    "start": "ESLINT_NO_DEV_ERRORS=true react-app-rewired start",
+    "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
