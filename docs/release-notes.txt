@@ -15,7 +15,7 @@ Version 0.15.0
 
 **New Features**
 
--  WebUI: Provide historical utilization data on the Cluster page. This
+-  WebUI: Provide historical allocation data on the Cluster page. This
    page breaks down GPU hours by user, label, and resource pool. See
    :ref:`historical-cluster-usage-data` for more information.
 
