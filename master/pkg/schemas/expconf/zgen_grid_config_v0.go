@@ -31,6 +31,13 @@ func (g GridConfigV0) GetMaxLength() LengthV0 {
 	return g.MaxLength
 }
 
+func (g GridConfigV0) GetMaxConcurrentTrials() int {
+	if g.MaxConcurrentTrials == nil {
+		panic("You must call WithDefaults on GridConfigV0 before .GetMaxConcurrentTrials")
+	}
+	return *g.MaxConcurrentTrials
+}
+
 func (g GridConfigV0) WithDefaults() GridConfigV0 {
 	return schemas.WithDefaults(g).(GridConfigV0)
 }

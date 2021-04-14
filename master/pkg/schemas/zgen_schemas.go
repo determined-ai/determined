@@ -1982,6 +1982,14 @@ var (
         "name": {
             "const": "grid"
         },
+        "max_concurrent_trials": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 0
+        },
         "max_length": {
             "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
@@ -2126,6 +2134,14 @@ var (
     "properties": {
         "name": {
             "const": "random"
+        },
+        "max_concurrent_trials": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 0
         },
         "max_trials": {
             "type": "integer",

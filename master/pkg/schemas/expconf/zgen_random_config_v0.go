@@ -35,6 +35,13 @@ func (r RandomConfigV0) GetMaxTrials() int {
 	return r.MaxTrials
 }
 
+func (r RandomConfigV0) GetMaxConcurrentTrials() int {
+	if r.MaxConcurrentTrials == nil {
+		panic("You must call WithDefaults on RandomConfigV0 before .GetMaxConcurrentTrials")
+	}
+	return *r.MaxConcurrentTrials
+}
+
 func (r RandomConfigV0) WithDefaults() RandomConfigV0 {
 	return schemas.WithDefaults(r).(RandomConfigV0)
 }
