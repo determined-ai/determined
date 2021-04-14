@@ -16,7 +16,7 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
     template = None  # type: Optional[str]
 
     master_info = "Configure the Determined CLI: " + colored(
-        "export DET_MASTER={master_ip}", "yellow"
+        "export DET_MASTER={master_url}", "yellow"
     )
     ui_info = "View the Determined UI: " + colored("{master_url}", "blue")
     logs_info = "View Logs at: " + colored(

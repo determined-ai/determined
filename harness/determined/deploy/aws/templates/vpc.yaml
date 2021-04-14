@@ -828,7 +828,7 @@ Outputs:
     Value: !GetAtt MasterInstance.PublicDnsName
 
   MasterPort:
-    Description: IP Port of Determined Master
+    Description: Network Port of Determined Master
     Value: !If [UseTLS, "8443", "8080"]
 
   MasterScheme:
