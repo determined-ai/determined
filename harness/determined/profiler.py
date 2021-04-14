@@ -7,7 +7,7 @@ import logging
 import queue
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import psutil
 import pynvml
@@ -24,8 +24,10 @@ class ProfilerAgent:
     """
     Agent that collects metrics and sends them to the master. It has:
     - a thread to send data to the Master API (sender_thread)
-    - a thread to collect System Metrics and periodically flush to sender_thread (sys_metric_collector_thread)
-    - [UNIMPLEMENTED] something to batch Timings and periodically flush to sender_thread (timings_batcher)
+    - a thread to collect System Metrics and periodically flush to
+      sender_thread (sys_metric_collector_thread)
+    - [UNIMPLEMENTED] something to batch Timings and periodically flush to
+      sender_thread (timings_batcher)
 
     The ProfilerAgent needs to be created at the beginning of training and it needs
     to be notified every time the batch_idx increases. When it is created, it launches
@@ -37,22 +39,22 @@ class ProfilerAgent:
     flush them to the sender_thread.
 
     Profiling is only active between start_on_batch and end_after_batch. It will also automatically
-    shut down 5 minutes after starting. When profiling is not active, no system metrics are collected
-    and the record_timing function is a no-op.
+    shut down 5 minutes after starting. When profiling is not active, no system metrics are
+    collected and the record_timing function is a no-op.
 
     Usage:
     ```
-    profiler_agent = ProfilerAgent(self, trial_id, agent_id, master_url, start_on_batch, end_after_batch)
+    agent = ProfilerAgent(self, trial_id, agent_id, master_url, start_on_batch, end_after_batch)
 
     for batch_idx, batch in enumerate(batches):
-        profiler_agent.update_batch_idx(batch_idx)
+        agent.update_batch_idx(batch_idx)
 
         # NOTE: Timing API has not been fully developed yet
         forward_pass_timing = Timing("forward_pass")
         forward_pass_timing.start()
         # Do forward pass
         forward_pass_timing.end()
-        profiler_agent.record_timing(forward_pass_timing)
+        agent.record_timing(forward_pass_timing)
     ```
     """
 
@@ -80,7 +82,10 @@ class ProfilerAgent:
         self.shutdown_lock = threading.Lock()
 
         # Set up the thread responsible for making API calls
-        self.send_queue = queue.Queue()
+        self.send_queue: """queue.Queue[Union[
+            List['TrialProfilerMetricsBatch'],
+            'ShutdownMessage',
+        ]]""" = queue.Queue()
         self.sender_thread = ProfilerSenderThread(self.send_queue, self.master_url)
         self.sender_thread.start()
 
@@ -95,10 +100,10 @@ class ProfilerAgent:
         # self.timings_batcher = TimingsBatcher()
 
     @property
-    def is_enabled(self):
+    def is_enabled(self) -> bool:
         return self.has_started and not self.has_finished
 
-    def update_batch_idx(self, new_batch_idx: int):
+    def update_batch_idx(self, new_batch_idx: int) -> None:
         self.current_batch_idx = new_batch_idx
         self.sys_metric_collector_thread.update_batch_idx(self.current_batch_idx)
 
@@ -118,13 +123,13 @@ class ProfilerAgent:
         ):
             self._end_collection()
 
-    def _begin_collection(self):
+    def _begin_collection(self) -> None:
         self.sys_metric_collector_thread.activate()
         # TODO: Start up TimingBatcher as well
         self.shutdown_timer.start()
         self.has_started = True
 
-    def _end_collection(self):
+    def _end_collection(self) -> None:
         """
         Stop collecting data and shut down child threads. This function can be invoked due to the
         max batch idx being exceeded or due to timeout, so the function needs to be threadsafe.
@@ -145,7 +150,7 @@ class ProfilerAgent:
 
             # TODO: Shut down TimingBatcher as well
 
-    def record_timing(self, timing):
+    def record_timing(self, timing: float) -> None:
         if not self.is_enabled:
             return
         # TODO: Add new timing to TimingBatcher
@@ -172,15 +177,16 @@ class SysMetricType:
 
 class SysMetricBatcher:
     """
-    Data structure to collect batches of SysMetrics and then convert them to the format expected by the API
+    Data structure to collect batches of SysMetrics and then convert them to the format expected by
+    the API
     """
 
-    def __init__(self, trial_id, agent_id):
+    def __init__(self, trial_id: int, agent_id: str) -> None:
         self.trial_id = trial_id
         self.agent_id = agent_id
         self.clear()
 
-    def clear(self):
+    def clear(self) -> None:
         self.batch = {
             SysMetricType.GPU_UTIL_METRIC: {},
             SysMetricType.GPU_FREE_MEMORY_METRIC: [],
@@ -191,15 +197,17 @@ class SysMetricBatcher:
             SysMetricType.DISK_THRU_WRITE_METRIC: [],
             SysMetricType.FREE_MEM_METRIC: [],
             SysMetricType.SIMPLE_CPU_UTIL_METRIC: [],
-        }
+        }  # type: Dict[str, Any]
 
-    def add_nongpu_measurement(self, metric_type: str, measurement: Measurement):
+    def add_nongpu_measurement(self, metric_type: str, measurement: "Measurement") -> None:
         assert (
             metric_type in self.batch.keys()
         ), f"Tried to add unknown type of non-GPU metric: {metric_type}"
         self.batch[metric_type].append(measurement)
 
-    def add_gpu_measurement(self, metric_type: str, gpu_uuid: str, measurement: Measurement):
+    def add_gpu_measurement(
+        self, metric_type: str, gpu_uuid: str, measurement: "Measurement"
+    ) -> None:
         assert (
             metric_type in self.batch.keys()
         ), f"Tried to add unknown type of GPU metric: {metric_type}"
@@ -207,16 +215,13 @@ class SysMetricBatcher:
             self.batch[metric_type][gpu_uuid] = []
         self.batch[metric_type][gpu_uuid].append(measurement)
 
-    def convert_to_timestamp_str(self, timestamp: datetime.datetime):
-        assert isinstance(
-            timestamp, datetime.datetime
-        ), f"Input to conversion function must be a datetime object. Instead got {type(timestamp)}"
+    def convert_to_timestamp_str(self, timestamp: datetime.datetime) -> str:
         return timestamp.isoformat() + "Z"
 
-    def convert_to_post_format(self) -> List[TrialProfilerMetricsBatch]:
+    def convert_to_post_format(self) -> List["TrialProfilerMetricsBatch"]:
         def to_post_format(
             measurements: List[Any], labels: Dict[str, Any]
-        ) -> TrialProfilerMetricsBatch:
+        ) -> "TrialProfilerMetricsBatch":
             values, batches, timestamps = [], [], []
             for m in measurements:
                 values.append(m.measurement)
@@ -273,7 +278,8 @@ class ShutdownMessage:
 
 class SysMetricCollectorThread(threading.Thread):
     """
-    Background thread for collecting profiler metrics at a high granularity and shipping them to the master
+    Background thread for collecting profiler metrics at a high granularity and shipping them to
+    the master
 
     - SimpleCpuUtilization = Measured in percent
     - FreeMemory = Measured in Gigabytes
@@ -292,19 +298,19 @@ class SysMetricCollectorThread(threading.Thread):
 
         self.current_batch_idx = 0
         self.send_queue = send_queue
-        self.control_queue = queue.Queue()
+        self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
         self.current_batch = SysMetricBatcher(trial_id, agent_id)
         self.current_batch.clear()
 
         super().__init__(daemon=True)
 
-    def activate(self):
+    def activate(self) -> None:
         self.control_queue.put(StartMessage())
 
-    def kill(self):
+    def kill(self) -> None:
         self.control_queue.put(ShutdownMessage())
 
-    def update_batch_idx(self, new_batch_idx: int):
+    def update_batch_idx(self, new_batch_idx: int) -> None:
         self.current_batch_idx = new_batch_idx
 
     def run(self) -> None:
@@ -321,6 +327,7 @@ class SysMetricCollectorThread(threading.Thread):
         if isinstance(msg, ShutdownMessage):
             return
 
+        batch_start_time = time.time()
         next_collection = time.time()
 
         while True:
@@ -341,7 +348,6 @@ class SysMetricCollectorThread(threading.Thread):
             # One-time initialization
             if last_measurement_time is None:
                 last_measurement_time = time.time()
-                batch_start_time = time.time()
                 network_throughput_collector.reset()
                 disk_collector.reset()
 
@@ -403,7 +409,7 @@ class ProfilerSenderThread(threading.Thread):
         self.inbound_queue = inbound_queue
         super().__init__(daemon=True)
 
-    def kill(self):
+    def kill(self) -> None:
         self.inbound_queue.put(ShutdownMessage())
 
     def run(self) -> None:
@@ -411,62 +417,40 @@ class ProfilerSenderThread(threading.Thread):
             message = self.inbound_queue.get()
             if isinstance(message, ShutdownMessage):
                 return
-            self.send_batch(message)
-
-    # This is a blocking operation that must handle all exceptions gracefully
-    def send_batch(self, post_bodies: List[TrialProfilerMetricsBatch]):
-        # TODO: In the case of repeated failures, this can take a long time
-        #       and we have no mechanism to handle the inbound queue filling up
-
-        # TODO: Convert to work with new multiple batch API
-        max_attempts = 2
-        for post_body in post_bodies:
-            for i in range(max_attempts):
-                try:
-                    api.post_trial_profiler_metrics(
-                        self.master_url,
-                        post_body["values"],
-                        post_body["batches"],
-                        post_body["timestamps"],
-                        post_body["labels"],
-                    )
-                    break
-                except Exception as e:
-                    # TODO: We could handle specific API errors differently as some are non-recoverable
-                    logging.warning(
-                        f"Failed to post metrics with labels {post_body['labels']} to the master: {e}"
-                    )
-                    time.sleep(1)
+            api.post_trial_profiler_metrics_batches(
+                self.master_url,
+                message,
+            )
 
 
 GIGA = 1_000_000_000
 
 
 class SimpleCpuUtilCollector:
-    def measure(self, batch_idx):
+    def measure(self, batch_idx: int) -> "Measurement":
         cpu_util = psutil.cpu_percent()
         timestamp = datetime.datetime.utcnow()
         return Measurement(timestamp, batch_idx, cpu_util)
 
 
 class FreeMemoryCollector:
-    def measure(self, batch_idx):
+    def measure(self, batch_idx: int) -> "Measurement":
         free_mem_bytes = psutil.virtual_memory().available
         timestamp = datetime.datetime.utcnow()
         return Measurement(timestamp, batch_idx, free_mem_bytes * GIGA)
 
 
 class NetThroughputCollector:
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.start_time = time.time()
         net = psutil.net_io_counters()
         self.start_sent = net.bytes_sent
         self.start_recv = net.bytes_recv
 
-    def measure(self, batch_idx):
+    def measure(self, batch_idx: int) -> Tuple["Measurement", "Measurement"]:
         net = psutil.net_io_counters()
         end_time = time.time()
 
@@ -492,10 +476,10 @@ class NetThroughputCollector:
 
 
 class DiskReadWriteRateCollector:
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self.start_time = time.time()
         disk = psutil.disk_io_counters()
 
@@ -505,7 +489,7 @@ class DiskReadWriteRateCollector:
         self.start_read_count = disk.read_count
         self.start_write_count = disk.write_count
 
-    def measure(self, batch_idx):
+    def measure(self, batch_idx: int) -> Tuple["Measurement", "Measurement", "Measurement"]:
         disk = psutil.disk_io_counters()
         end_time = time.time()
 
@@ -540,11 +524,11 @@ class DiskReadWriteRateCollector:
 
 
 class GpuUtilCollector:
-    def __init__(self):
+    def __init__(self) -> None:
         pynvml.nvmlInit()
         self.num_gpus = pynvml.nvmlDeviceGetCount()
 
-    def measure(self, batch_idx):
+    def measure(self, batch_idx: int) -> Dict[str, "Measurement"]:
         measurements = {}
         timestamp = datetime.datetime.utcnow()
         for i in range(self.num_gpus):
@@ -558,11 +542,11 @@ class GpuUtilCollector:
 
 
 class GpuMemoryCollector:
-    def __init__(self):
+    def __init__(self) -> None:
         pynvml.nvmlInit()
         self.num_gpus = pynvml.nvmlDeviceGetCount()
 
-    def measure(self, batch_idx):
+    def measure(self, batch_idx: int) -> Dict[str, "Measurement"]:
         measurements = {}
         timestamp = datetime.datetime.utcnow()
         for i in range(self.num_gpus):

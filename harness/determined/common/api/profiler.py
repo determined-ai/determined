@@ -1,5 +1,8 @@
 from typing import Dict, List
 
+import backoff
+from requests.exceptions import RequestException
+
 from determined.common import api
 
 
@@ -22,6 +25,12 @@ class TrialProfilerMetricsBatch:
         self.labels = labels
 
 
+@backoff.on_exception(  # type: ignore
+    backoff.constant,
+    RequestException,
+    max_tries=2,
+    giveup=lambda e: e.response is not None and e.response.status_code < 500,
+)
 def post_trial_profiler_metrics_batches(
     master_url: str,
     batches: List[TrialProfilerMetricsBatch],
