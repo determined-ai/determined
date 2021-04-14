@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  WebUI: Add support for showing categorical hyperparameters in HP
-   Scatter Plots and HP Heat Map for experiment visualizations.
