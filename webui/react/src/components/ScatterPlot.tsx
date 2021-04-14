@@ -144,15 +144,19 @@ const ScatterPlot: React.FC<Props> = ({
   // Redraw the chart when we detect changes in the data or a resize event.
   useEffect(() => {
     const throttleResize = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
-      if (!chartRef.current || resize.width === 0 || resize.height === 0) return;
+      if (!chartRef.current) return;
+
       const rect = chartRef.current.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
       const layout = { ...chartLayout, width: rect.width };
       if (xIsString) layout.xaxis = { ...layout.xaxis, tickangle: 90 };
-      Plotly.react(chartRef.current, [ chartData ], layout, plotlyConfig);
+
+      Plotly.react(id, [ chartData ], layout, plotlyConfig);
     });
 
     throttleResize();
-  }, [ chartData, chartLayout, resize, xIsString, yIsString ]);
+  }, [ chartData, chartLayout, id, resize, xIsString, yIsString ]);
 
   return <div id={id} ref={chartRef} />;
 };
