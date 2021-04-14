@@ -56,6 +56,13 @@ func (r ResourcesConfigV0) GetPriority() *int {
 	return r.Priority
 }
 
+func (r ResourcesConfigV0) GetDevices() DevicesConfigV0 {
+	if r.Devices == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .GetDevices")
+	}
+	return *r.Devices
+}
+
 func (r ResourcesConfigV0) WithDefaults() ResourcesConfigV0 {
 	return schemas.WithDefaults(r).(ResourcesConfigV0)
 }

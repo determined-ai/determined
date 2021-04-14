@@ -532,6 +532,37 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/device.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/device.json",
+    "title": "Device",
+    "additionalProperties": false,
+    "required": [
+        "host_path",
+        "container_path"
+    ],
+    "type": "object",
+    "properties": {
+        "host_path": {
+            "type": "string"
+        },
+        "container_path": {
+            "type": "string"
+        },
+        "mode": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": "mrw"
+        }
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/environment-image-map.json": json.loads(
         r"""
 {
@@ -702,6 +733,26 @@ schemas = {
             ],
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+        },
+        "add_capabilities": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "drop_capabilities": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         },
         "pod_spec": {
             "type": [
@@ -1801,6 +1852,16 @@ schemas = {
                 "null"
             ],
             "default": ""
+        },
+        "devices": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
+            },
+            "default": []
         },
         "max_slots": {
             "type": [

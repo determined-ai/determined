@@ -492,6 +492,33 @@ var (
     }
 }
 `)
+	textDeviceV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/device.json",
+    "title": "Device",
+    "additionalProperties": false,
+    "required": [
+        "host_path",
+        "container_path"
+    ],
+    "type": "object",
+    "properties": {
+        "host_path": {
+            "type": "string"
+        },
+        "container_path": {
+            "type": "string"
+        },
+        "mode": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": "mrw"
+        }
+    }
+}
+`)
 	textEnvironmentImageMapV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/environment-image-map.json",
@@ -644,6 +671,26 @@ var (
             ],
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+        },
+        "add_capabilities": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "drop_capabilities": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         },
         "pod_spec": {
             "type": [
@@ -1668,6 +1715,16 @@ var (
             ],
             "default": ""
         },
+        "devices": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
+            },
+            "default": []
+        },
         "max_slots": {
             "type": [
                 "integer",
@@ -2549,6 +2606,8 @@ var (
 
 	schemaDataLayerConfigV0 interface{}
 
+	schemaDeviceV0 interface{}
+
 	schemaEnvironmentImageMapV0 interface{}
 
 	schemaEnvironmentImageV0 interface{}
@@ -2753,6 +2812,17 @@ func ParsedDataLayerConfigV0() interface{} {
 		panic("invalid embedded json for DataLayerConfigV0")
 	}
 	return schemaDataLayerConfigV0
+}
+
+func ParsedDeviceV0() interface{} {
+	if schemaDeviceV0 != nil {
+		return schemaDeviceV0
+	}
+	err := json.Unmarshal(textDeviceV0, &schemaDeviceV0)
+	if err != nil {
+		panic("invalid embedded json for DeviceV0")
+	}
+	return schemaDeviceV0
 }
 
 func ParsedEnvironmentImageMapV0() interface{} {
@@ -3223,6 +3293,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textSharedFSDataLayerConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/data-layer.json"
 	cachedSchemaBytesMap[url] = textDataLayerConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/device.json"
+	cachedSchemaBytesMap[url] = textDeviceV0
 	url = "http://determined.ai/schemas/expconf/v0/environment-image-map.json"
 	cachedSchemaBytesMap[url] = textEnvironmentImageMapV0
 	url = "http://determined.ai/schemas/expconf/v0/environment-image.json"
