@@ -6,8 +6,9 @@ from termcolor import colored
 
 import determined
 import determined.deploy
+from determined.common import api
 from determined.deploy.aws import aws, constants
-from determined.deploy.healthcheck import wait_for_master
+from determined.deploy.healthcheck import wait_for_master_url
 
 
 class DeterminedDeployment(metaclass=abc.ABCMeta):
@@ -15,9 +16,9 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
     template = None  # type: Optional[str]
 
     master_info = "Configure the Determined CLI: " + colored(
-        "export DET_MASTER={master_ip}", "yellow"
+        "export DET_MASTER={master_url}", "yellow"
     )
-    ui_info = "View the Determined UI: " + colored("http://{master_ip}:8080", "blue")
+    ui_info = "View the Determined UI: " + colored("{master_url}", "blue")
     logs_info = "View Logs at: " + colored(
         "https://{region}.console.aws.amazon.com/cloudwatch/home?"
         "region={region}#logStream:group={log_group}",
@@ -43,8 +44,10 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
             print(f.read())
 
     def wait_for_master(self, timeout: int = 5 * 60) -> None:
-        master_ip = self._get_master_ip()
-        return wait_for_master(master_ip, timeout=timeout)
+        if self.parameters[constants.cloudformation.MASTER_TLS_CERT]:
+            api.request.set_master_cert_bundle(False)
+        master_url = self._get_master_url()
+        return wait_for_master_url(master_url, timeout=timeout)
 
     def consolidate_parameters(self) -> List[Dict[str, Any]]:
         return [
@@ -90,9 +93,19 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         master_ip = output[constants.cloudformation.DET_ADDRESS]
         region = output[constants.cloudformation.REGION]
         log_group = output[constants.cloudformation.LOG_GROUP]
+        master_url = self._get_master_url()
 
-        self.print_output_info(master_ip=master_ip, region=region, log_group=log_group)
+        self.print_output_info(
+            master_ip=master_ip, master_url=master_url, region=region, log_group=log_group
+        )
 
-    def _get_master_ip(self) -> str:
+    def _get_master_url(self) -> str:
         output = self._get_aws_output()
-        return output[constants.cloudformation.DET_ADDRESS]
+
+        master_ip = output[constants.cloudformation.DET_ADDRESS]
+        master_port = output[constants.cloudformation.MASTER_PORT]
+        master_scheme = output[constants.cloudformation.MASTER_SCHEME]
+
+        master_url = f"{master_scheme}://{master_ip}:{master_port}"
+
+        return master_url

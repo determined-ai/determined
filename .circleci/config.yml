@@ -387,7 +387,7 @@ commands:
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
             echo "-----END ARGS-----"
-            det deploy --no-wait-for-master aws up \
+            det deploy aws up \
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
@@ -446,10 +446,6 @@ commands:
           cluster-id: ${CLUSTER_ID}
           master-tls-cert: <<parameters.master-tls-cert>>
           master-tls-key: <<parameters.master-tls-key>>
-      - wait-for-master:
-          scheme: ${MASTER_SCHEME:-http}
-          host: ${MASTER_HOST}
-          port: ${MASTER_PORT:-8080}
 
   terminate-gke-cluster:
     parameters:

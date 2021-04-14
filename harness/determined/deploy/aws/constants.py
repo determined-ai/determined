@@ -35,6 +35,8 @@ class cloudformation:
     SUBNET_ID_KEY = "SubnetId"
     INBOUND_CIDR = "InboundCIDRRange"
     DET_ADDRESS = "DeterminedAddress"
+    MASTER_PORT = "MasterPort"
+    MASTER_SCHEME = "MasterScheme"
     VERSION = "Version"
     DB_PASSWORD = "DBPassword"
     ENABLE_CORS = "EnableCORS"

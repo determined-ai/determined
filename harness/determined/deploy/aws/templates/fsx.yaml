@@ -165,6 +165,11 @@ Parameters:
     Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
     Default: determined
 
+Conditions:
+  UseTLS: !And
+    - !Not [!Equals [!Ref MasterTLSCert, ""]]
+    - !Not [!Equals [!Ref MasterTLSKey, ""]]
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -894,6 +899,14 @@ Outputs:
   DeterminedAddress:
     Description: Ip address of Determined Master
     Value: !GetAtt MasterInstance.PublicDnsName
+
+  MasterPort:
+    Description: Network Port of Determined Master
+    Value: !If [UseTLS, "8443", "8080"]
+
+  MasterScheme:
+    Description: Determined Master URL scheme
+    Value: !If [UseTLS, "https", "http"]
 
   AgentTagName:
     Description: Tag Name for the agents
