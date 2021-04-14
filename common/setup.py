@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined-common",
-    version="0.15.0.dev0",
+    version="0.15.0rc0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -14,7 +14,7 @@ setup(
     python_requires=">=3.5",
     package_data={"determined.common": ["py.typed"]},
     install_requires=[
-        "determined==0.15.0.dev0",
+        "determined==0.15.0rc0",
     ],
     zip_safe=False,
 )
