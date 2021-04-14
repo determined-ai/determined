@@ -289,7 +289,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			experiment:     e.Experiment,
 		})
 
-		ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
+		if e.searcher.Shutdown {
+			ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
+		}
 
 		if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {
 			ctx.Log().WithError(err).Errorf(
