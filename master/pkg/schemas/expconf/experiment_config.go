@@ -32,6 +32,7 @@ type ExperimentConfigV0 struct {
 	MinValidationPeriod      *LengthV0                   `json:"min_validation_period"`
 	Optimizations            *OptimizationsConfigV0      `json:"optimizations"`
 	PerformInitialValidation *bool                       `json:"perform_initial_validation"`
+	Profiling                *ProfilingConfigV0          `json:"profiling"`
 	RecordsPerEpoch          *int                        `json:"records_per_epoch"`
 	Reproducibility          *ReproducibilityConfigV0    `json:"reproducibility"`
 	Resources                *ResourcesConfigV0          `json:"resources"`
@@ -137,14 +138,19 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 //go:generate ../gen.sh
 // ResourcesConfigV0 configures experiment resource usage.
 type ResourcesConfigV0 struct {
+	// Slots is used by commands while trials use SlotsPerTrial.
+	Slots *int `json:"slots,omitempty"`
+
 	MaxSlots       *int     `json:"max_slots"`
 	SlotsPerTrial  *int     `json:"slots_per_trial"`
 	Weight         *float64 `json:"weight"`
 	NativeParallel *bool    `json:"native_parallel,omitempty"`
-	ShmSize        *int     `json:"shm_size,omitempty"`
+	ShmSize        *int     `json:"shm_size"`
 	AgentLabel     *string  `json:"agent_label"`
 	ResourcePool   *string  `json:"resource_pool"`
 	Priority       *int     `json:"priority"`
+
+	Devices *DevicesConfigV0 `json:"devices"`
 }
 
 //go:generate ../gen.sh
@@ -181,6 +187,27 @@ type BindMountV0 struct {
 	ContainerPath string  `json:"container_path"`
 	ReadOnly      *bool   `json:"read_only"`
 	Propagation   *string `json:"propagation"`
+}
+
+// DevicesConfigV0 is the configuration for devices.
+type DevicesConfigV0 []DeviceV0
+
+// Merge implements the Mergable interface.
+func (b DevicesConfig) Merge(other interface{}) interface{} {
+	tOther := other.(DevicesConfig)
+	// Merge by appending.
+	out := DevicesConfig{}
+	out = append(out, b...)
+	out = append(out, tOther...)
+	return out
+}
+
+//go:generate ../gen.sh
+// DeviceV0 configures trial runner filesystem bind mounts.
+type DeviceV0 struct {
+	HostPath      string  `json:"host_path"`
+	ContainerPath string  `json:"container_path"`
+	Mode          *string `json:"mode"`
 }
 
 //go:generate ../gen.sh

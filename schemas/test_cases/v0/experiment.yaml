@@ -34,7 +34,17 @@
         cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-da9ba40
         gpu: determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-da9ba40
       pod_spec: null
-      ports: null
+      ports:
+        qwer: 1234
+        asdf: 5678
+      registry_auth:
+        username: usr
+        password: pwd
+        auth: ath
+        email: eml
+        serveraddress: srvaddr
+        identitytoken: idtkn
+        registrytoken: rgtkn
     hyperparameters:
       global_batch_size:
         type: const
@@ -73,11 +83,19 @@
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
     perform_initial_validation: false
+    profiling:
+      enabled: true
+      begin_on_batch: 0
+      end_on_batch: 1
     records_per_epoch: 0
     reproducibility:
       experiment_seed: 1606239866
     resources:
       agent_label: 'big_al'
+      devices:
+        - host_path: "/dev/infiniband"
+          container_path: "/dev/infiniband"
+          mode: "rmw"
       slots_per_trial: 15
       weight: 1000
       max_slots: 900
@@ -160,12 +178,18 @@
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
     perform_initial_validation: false
+    profiling:
+      enabled: false
+      begin_on_batch: null
+      end_on_batch: null
     records_per_epoch: 0
     reproducibility:
       experiment_seed: "*"
     resources:
       agent_label: ''
+      devices: []
       native_parallel: false
+      shm_size: null
       slots_per_trial: 1
       weight: 1
       max_slots: null

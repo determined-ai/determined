@@ -14,6 +14,14 @@
         "name": {
             "const": "random"
         },
+        "max_concurrent_trials": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 0
+        },
         "max_trials": {
             "type": "integer",
             "minimum": 1

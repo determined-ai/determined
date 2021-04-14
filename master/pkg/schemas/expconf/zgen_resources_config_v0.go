@@ -8,6 +8,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
+func (r ResourcesConfigV0) GetSlots() *int {
+	return r.Slots
+}
+
 func (r ResourcesConfigV0) GetMaxSlots() *int {
 	return r.MaxSlots
 }
@@ -50,6 +54,13 @@ func (r ResourcesConfigV0) GetResourcePool() *string {
 
 func (r ResourcesConfigV0) GetPriority() *int {
 	return r.Priority
+}
+
+func (r ResourcesConfigV0) GetDevices() DevicesConfigV0 {
+	if r.Devices == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .GetDevices")
+	}
+	return *r.Devices
 }
 
 func (r ResourcesConfigV0) WithDefaults() ResourcesConfigV0 {

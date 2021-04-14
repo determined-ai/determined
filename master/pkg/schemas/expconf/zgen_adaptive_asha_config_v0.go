@@ -70,6 +70,13 @@ func (a AdaptiveASHAConfigV0) GetMaxConcurrentTrials() int {
 	return *a.MaxConcurrentTrials
 }
 
+func (a AdaptiveASHAConfigV0) GetStopOnce() bool {
+	if a.StopOnce == nil {
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .GetStopOnce")
+	}
+	return *a.StopOnce
+}
+
 func (a AdaptiveASHAConfigV0) WithDefaults() AdaptiveASHAConfigV0 {
 	return schemas.WithDefaults(a).(AdaptiveASHAConfigV0)
 }

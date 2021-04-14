@@ -8,24 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-// MaxAllowedTrials is the maximum number of trials that we allow to be created for a single
-// experiment. The limitation is not fundamental, but we start running into issues with performance,
-// memory, and crashes at some point, and this is a defense against that sort of thing. Currently,
-// the limit is only enforced for grid and simple adaptive searchers.
-const MaxAllowedTrials = 2000
-
 //go:generate ../gen.sh
 // SearcherConfigV0 holds the searcher configurations.
 type SearcherConfigV0 struct {
-	SingleConfig         *SingleConfigV0         `union:"name,single" json:"-"`
-	RandomConfig         *RandomConfigV0         `union:"name,random" json:"-"`
-	GridConfig           *GridConfigV0           `union:"name,grid" json:"-"`
-	SyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving" json:"-"`
-	AsyncHalvingConfig   *AsyncHalvingConfigV0   `union:"name,async_halving" json:"-"`
-	AdaptiveConfig       *AdaptiveConfigV0       `union:"name,adaptive" json:"-"`
-	AdaptiveSimpleConfig *AdaptiveSimpleConfigV0 `union:"name,adaptive_simple" json:"-"`
-	AdaptiveASHAConfig   *AdaptiveASHAConfigV0   `union:"name,adaptive_asha" json:"-"`
-	PBTConfig            *PBTConfigV0            `union:"name,pbt" json:"-"`
+	SingleConfig       *SingleConfigV0       `union:"name,single" json:"-"`
+	RandomConfig       *RandomConfigV0       `union:"name,random" json:"-"`
+	GridConfig         *GridConfigV0         `union:"name,grid" json:"-"`
+	AsyncHalvingConfig *AsyncHalvingConfigV0 `union:"name,async_halving" json:"-"`
+	AdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
+	PBTConfig          *PBTConfigV0          `union:"name,pbt" json:"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -51,12 +42,6 @@ func (s SearcherConfigV0) Unit() Unit {
 		return s.RandomConfig.Unit()
 	case s.GridConfig != nil:
 		return s.GridConfig.Unit()
-	case s.SyncHalvingConfig != nil:
-		return s.SyncHalvingConfig.Unit()
-	case s.AdaptiveConfig != nil:
-		return s.AdaptiveConfig.Unit()
-	case s.AdaptiveSimpleConfig != nil:
-		return s.AdaptiveSimpleConfig.Unit()
 	case s.AsyncHalvingConfig != nil:
 		return s.AsyncHalvingConfig.Unit()
 	case s.AdaptiveASHAConfig != nil:
@@ -92,8 +77,9 @@ type RandomConfigV0 struct {
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	MaxLength LengthV0 `json:"max_length"`
-	MaxTrials int      `json:"max_trials"`
+	MaxLength           LengthV0 `json:"max_length"`
+	MaxTrials           int      `json:"max_trials"`
+	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
 }
 
 // Unit implements the model.InUnits interface.
@@ -109,32 +95,13 @@ type GridConfigV0 struct {
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	MaxLength LengthV0 `json:"max_length"`
+	MaxLength           LengthV0 `json:"max_length"`
+	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
 }
 
 // Unit implements the model.InUnits interface.
 func (g GridConfigV0) Unit() Unit {
 	return g.MaxLength.Unit
-}
-
-//go:generate ../gen.sh
-// SyncHalvingConfigV0 configures synchronous successive halving.
-type SyncHalvingConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
-
-	NumRungs        int      `json:"num_rungs"`
-	MaxLength       LengthV0 `json:"max_length"`
-	Budget          LengthV0 `json:"budget"`
-	Divisor         *float64 `json:"divisor"`
-	TrainStragglers *bool    `json:"train_stragglers"`
-}
-
-// Unit implements the model.InUnits interface.
-func (s SyncHalvingConfigV0) Unit() Unit {
-	return s.MaxLength.Unit
 }
 
 //go:generate ../gen.sh
@@ -150,6 +117,7 @@ type AsyncHalvingConfigV0 struct {
 	MaxTrials           int      `json:"max_trials"`
 	Divisor             *float64 `json:"divisor"`
 	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
+	StopOnce            *bool    `json:"stop_once"`
 }
 
 // Unit implements the model.InUnits interface.
@@ -178,48 +146,6 @@ func AdaptiveModePtr(mode string) *AdaptiveMode {
 }
 
 //go:generate ../gen.sh
-// AdaptiveConfigV0 configures an adaptive search.
-type AdaptiveConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
-
-	MaxLength       LengthV0      `json:"max_length"`
-	Budget          LengthV0      `json:"budget"`
-	BracketRungs    *[]int        `json:"bracket_rungs"`
-	Divisor         *float64      `json:"divisor"`
-	TrainStragglers *bool         `json:"train_stragglers"`
-	Mode            *AdaptiveMode `json:"mode"`
-	MaxRungs        *int          `json:"max_rungs"`
-}
-
-// Unit implements the model.InUnits interface.
-func (a AdaptiveConfigV0) Unit() Unit {
-	return a.MaxLength.Unit
-}
-
-//go:generate ../gen.sh
-// AdaptiveSimpleConfigV0 configures an simplified adaptive search.
-type AdaptiveSimpleConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
-
-	MaxLength LengthV0      `json:"max_length"`
-	MaxTrials int           `json:"max_trials"`
-	Divisor   *float64      `json:"divisor"`
-	Mode      *AdaptiveMode `json:"mode"`
-	MaxRungs  *int          `json:"max_rungs"`
-}
-
-// Unit implements the model.InUnits interface.
-func (a AdaptiveSimpleConfigV0) Unit() Unit {
-	return a.MaxLength.Unit
-}
-
-//go:generate ../gen.sh
 // AdaptiveASHAConfigV0 configures an adaptive searcher for use with ASHA.
 type AdaptiveASHAConfigV0 struct {
 	Metric               string  `json:"metric"`
@@ -234,6 +160,7 @@ type AdaptiveASHAConfigV0 struct {
 	Mode                *AdaptiveMode `json:"mode"`
 	MaxRungs            *int          `json:"max_rungs"`
 	MaxConcurrentTrials *int          `json:"max_concurrent_trials"`
+	StopOnce            *bool         `json:"stop_once"`
 }
 
 // Unit implements the model.InUnits interface.

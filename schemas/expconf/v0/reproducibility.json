@@ -13,7 +13,8 @@
                 "integer",
                 "null"
             ],
-            "default": null
+            "default": null,
+            "minimum": 0
         }
     }
 }

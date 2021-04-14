@@ -13,6 +13,16 @@
             ],
             "default": ""
         },
+        "devices": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
+            },
+            "default": []
+        },
         "max_slots": {
             "type": [
                 "integer",
@@ -44,6 +54,13 @@
             "default": null
         },
         "shm_size": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "slots": {
             "type": [
                 "integer",
                 "null"

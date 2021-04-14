@@ -17,6 +17,7 @@
     - http://determined.ai/schemas/expconf/v0/searcher-random.json
   case:
     name: random
+    max_concurrent_trials: 2
     max_length:
       batches: 1000
     max_trials: 1000
@@ -31,30 +32,13 @@
     - http://determined.ai/schemas/expconf/v0/searcher-grid.json
   case:
     name: grid
+    max_concurrent_trials: 2
     max_length:
       batches: 1000
     metric: loss
     smaller_is_better: true
     source_checkpoint_uuid: "asdf"
     source_trial_id: null
-
-- name: sync_halving searcher (valid)
-  matches:
-    - http://determined.ai/schemas/expconf/v0/searcher.json
-    - http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json
-  case:
-    name: sync_halving
-    max_length:
-      batches: 1000
-    num_rungs: 5
-    budget:
-      epochs: 1
-    divisor: 1.5
-    train_stragglers: true
-    metric: loss
-    smaller_is_better: true
-    source_checkpoint_uuid: null
-    source_trial_id: 15
 
 - name: async_halving searcher (valid)
   matches:
@@ -72,43 +56,7 @@
     smaller_is_better: true
     source_checkpoint_uuid: null
     source_trial_id: 15
-
-- name: adaptive searcher (valid)
-  matches:
-    - http://determined.ai/schemas/expconf/v0/searcher.json
-    - http://determined.ai/schemas/expconf/v0/searcher-adaptive.json
-  case:
-    name: adaptive
-    max_length:
-      batches: 1000
-    budget:
-      batches: 10000
-    bracket_rungs: [1, 2, 3, 4, 5]
-    divisor: 1.5
-    train_stragglers: true
-    max_rungs: 5
-    mode: standard
-    metric: loss
-    smaller_is_better: true
-    source_checkpoint_uuid: null
-    source_trial_id: 15
-
-- name: adaptive_simple searcher (valid)
-  matches:
-    - http://determined.ai/schemas/expconf/v0/searcher.json
-    - http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json
-  case:
-    name: adaptive_simple
-    max_length:
-      batches: 1000
-    max_trials: 100
-    max_rungs: 5
-    mode: standard
-    divisor: 1.5
-    metric: loss
-    smaller_is_better: true
-    source_checkpoint_uuid: null
-    source_trial_id: 15
+    stop_once: true
 
 - name: adaptive_asha searcher (valid)
   matches:
@@ -128,6 +76,7 @@
     smaller_is_better: true
     source_checkpoint_uuid: null
     source_trial_id: 15
+    stop_once: true
 
 - name: pbt searcher (valid)
   matches:

@@ -224,29 +224,6 @@ def compareProperties(
             yield jsonschema.ValidationError(f"{a_path} must be less than {b_path}")
         return
 
-    if typ == "same_units":
-        # same_units refers to a Length object.
-        if not isinstance(a, dict) or not isinstance(b, dict):
-            return
-        if next(iter(a.keys())) != next(iter(b.keys())):
-            yield jsonschema.ValidationError(
-                f"{a_path} must be defined in the same units as {b_path}"
-            )
-        return
-
-    if typ == "length_a<length_b":
-        # length_a<length_b compares two length objects.
-        if not isinstance(a, dict) or not isinstance(b, dict):
-            return
-        # Assume the same units.
-        length_a = next(iter(a.values()))
-        length_b = next(iter(b.values()))
-        if not isinstance(length_a, int) or not isinstance(length_b, int):
-            return
-        if length_a >= length_b:
-            yield jsonschema.ValidationError(f"{a_path} must be less than {b_path}")
-        return
-
     if typ == "a_is_subdir_of_b":
         a_norm = os.path.normpath(a)
         b_norm = os.path.normpath(b)

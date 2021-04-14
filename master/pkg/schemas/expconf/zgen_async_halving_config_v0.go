@@ -53,6 +53,13 @@ func (a AsyncHalvingConfigV0) GetMaxConcurrentTrials() int {
 	return *a.MaxConcurrentTrials
 }
 
+func (a AsyncHalvingConfigV0) GetStopOnce() bool {
+	if a.StopOnce == nil {
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .GetStopOnce")
+	}
+	return *a.StopOnce
+}
+
 func (a AsyncHalvingConfigV0) WithDefaults() AsyncHalvingConfigV0 {
 	return schemas.WithDefaults(a).(AsyncHalvingConfigV0)
 }

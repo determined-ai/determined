@@ -5,9 +5,26 @@ from typing import Any, Dict, List, Optional, TypeVar, Union
 from determined.common import schemas
 
 
+class DeviceV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/device.json"
+    container_path: str
+    host_path: str
+    mode: Optional[bool] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        container_path: str,
+        host_path: str,
+        mode: Optional[bool] = None,
+    ) -> None:
+        pass
+
+
 class ResourcesConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/resources.json"
     agent_label: Optional[str] = None
+    devices: Optional[List[DeviceV0]] = None
     max_slots: Optional[int] = None
     native_parallel: Optional[bool] = None
     priority: Optional[int] = None
@@ -20,6 +37,7 @@ class ResourcesConfigV0(schemas.SchemaBase):
     def __init__(
         self,
         agent_label: Optional[str] = None,
+        devices: Optional[List[DeviceV0]] = None,
         max_slots: Optional[int] = None,
         native_parallel: Optional[bool] = None,
         priority: Optional[int] = None,
@@ -91,6 +109,22 @@ class ReproducibilityConfigV0(schemas.SchemaBase):
     def runtime_defaults(self) -> None:
         if self.experiment_seed is None:
             self.experiment_seed = int(time.time())
+
+
+class ProfilingConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/profiling.json"
+    enabled: Optional[bool] = None
+    begin_on_batch: Optional[int] = None
+    end_on_batch: Optional[int] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        enabled: Optional[bool] = None,
+        begin_on_batch: Optional[int] = None,
+        end_on_batch: Optional[int] = None,
+    ) -> None:
+        pass
 
 
 class LengthV0(schemas.SchemaBase):
@@ -235,6 +269,30 @@ class EnvironmentVariablesV0(schemas.SchemaBase):
         return super().from_dict(d, prevalidated)
 
 
+class RegistryAuthConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+    auth: Optional[str] = None
+    email: Optional[str] = None
+    identitytoken: Optional[str] = None
+    password: Optional[str] = None
+    registrytoken: Optional[str] = None
+    serveraddress: Optional[str] = None
+    username: Optional[str] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        auth: Optional[str] = None,
+        email: Optional[str] = None,
+        identitytoken: Optional[str] = None,
+        password: Optional[str] = None,
+        registrytoken: Optional[str] = None,
+        serveraddress: Optional[str] = None,
+        username: Optional[str] = None,
+    ) -> None:
+        pass
+
+
 class EnvironmentConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment.json"
     environment_variables: Optional[EnvironmentVariablesV0] = None
@@ -242,7 +300,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     image: Optional[EnvironmentImageV0] = None
     pod_spec: Optional[Dict[str, Any]] = None
     ports: Optional[Dict[str, int]] = None
-    registry_auth: Optional[Dict[str, Any]] = None
+    registry_auth: Optional[RegistryAuthConfigV0] = None
 
     @schemas.auto_init
     def __init__(
@@ -252,7 +310,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         image: Optional[EnvironmentImageV0] = None,
         pod_spec: Optional[Dict[str, Any]] = None,
         ports: Optional[Dict[str, int]] = None,
-        registry_auth: Optional[Dict[str, Any]] = None,
+        registry_auth: Optional[RegistryAuthConfigV0] = None,
     ) -> None:
         pass
 
@@ -400,6 +458,7 @@ class RandomConfigV0(schemas.SchemaBase):
     max_length: LengthV0
     max_trials: int
     metric: str
+    max_concurrent_trials: Optional[int] = None
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
     source_trial_id: Optional[int] = None
@@ -410,6 +469,7 @@ class RandomConfigV0(schemas.SchemaBase):
         max_length: LengthV0,
         max_trials: int,
         metric: str,
+        max_concurrent_trials: Optional[int] = None,
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
@@ -422,6 +482,7 @@ class GridConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
     max_length: LengthV0
     metric: str
+    max_concurrent_trials: Optional[int] = None
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
     source_trial_id: Optional[int] = None
@@ -431,38 +492,10 @@ class GridConfigV0(schemas.SchemaBase):
         self,
         max_length: LengthV0,
         metric: str,
+        max_concurrent_trials: Optional[int] = None,
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
-    ) -> None:
-        pass
-
-
-@SearcherConfigV0.member("sync_halving")
-class SyncHalvingConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
-    budget: LengthV0
-    max_length: LengthV0
-    metric: str
-    num_rungs: int
-    divisor: Optional[float] = None
-    smaller_is_better: Optional[bool] = None
-    source_checkpoint_uuid: Optional[str] = None
-    source_trial_id: Optional[int] = None
-    train_stragglers: Optional[bool] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        budget: LengthV0,
-        max_length: LengthV0,
-        metric: str,
-        num_rungs: int,
-        divisor: Optional[float] = None,
-        smaller_is_better: Optional[bool] = None,
-        source_checkpoint_uuid: Optional[str] = None,
-        source_trial_id: Optional[int] = None,
-        train_stragglers: Optional[bool] = None,
     ) -> None:
         pass
 
@@ -479,6 +512,7 @@ class AsyncHalvingConfigV0(schemas.SchemaBase):
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
     source_trial_id: Optional[int] = None
+    stop_once: Optional[int] = None
 
     @schemas.auto_init
     def __init__(
@@ -492,68 +526,7 @@ class AsyncHalvingConfigV0(schemas.SchemaBase):
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
-    ) -> None:
-        pass
-
-
-@SearcherConfigV0.member("adaptive")
-class AdaptiveConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
-    budget: LengthV0
-    max_length: LengthV0
-    metric: str
-    bracket_rungs: Optional[List[int]] = None
-    divisor: Optional[float] = None
-    max_rungs: Optional[int] = None
-    mode: Optional[AdaptiveMode] = None
-    smaller_is_better: Optional[bool] = None
-    source_checkpoint_uuid: Optional[str] = None
-    source_trial_id: Optional[int] = None
-    train_stragglers: Optional[bool] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        budget: LengthV0,
-        max_length: LengthV0,
-        metric: str,
-        bracket_rungs: Optional[List[int]] = None,
-        divisor: Optional[float] = None,
-        max_rungs: Optional[int] = None,
-        mode: Optional[AdaptiveMode] = None,
-        smaller_is_better: Optional[bool] = None,
-        source_checkpoint_uuid: Optional[str] = None,
-        source_trial_id: Optional[int] = None,
-        train_stragglers: Optional[bool] = None,
-    ) -> None:
-        pass
-
-
-@SearcherConfigV0.member("adaptive_simple")
-class AdaptiveSimpleConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
-    max_length: LengthV0
-    max_trials: int
-    metric: str
-    divisor: Optional[float] = None
-    max_rungs: Optional[int] = None
-    mode: Optional[AdaptiveMode] = None
-    smaller_is_better: Optional[bool] = None
-    source_checkpoint_uuid: Optional[str] = None
-    source_trial_id: Optional[int] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        max_length: LengthV0,
-        max_trials: int,
-        metric: str,
-        divisor: Optional[float] = None,
-        max_rungs: Optional[int] = None,
-        mode: Optional[AdaptiveMode] = None,
-        smaller_is_better: Optional[bool] = None,
-        source_checkpoint_uuid: Optional[str] = None,
-        source_trial_id: Optional[int] = None,
+        stop_once: Optional[int] = None,
     ) -> None:
         pass
 
@@ -572,6 +545,7 @@ class AdaptiveASHAConfigV0(schemas.SchemaBase):
     smaller_is_better: Optional[bool] = None
     source_checkpoint_uuid: Optional[str] = None
     source_trial_id: Optional[int] = None
+    stop_once: Optional[int] = None
 
     @schemas.auto_init
     def __init__(
@@ -587,6 +561,7 @@ class AdaptiveASHAConfigV0(schemas.SchemaBase):
         smaller_is_better: Optional[bool] = None,
         source_checkpoint_uuid: Optional[str] = None,
         source_trial_id: Optional[int] = None,
+        stop_once: Optional[int] = None,
     ) -> None:
         pass
 
@@ -648,10 +623,7 @@ SearcherConfigV0_Type = Union[
     SingleConfigV0,
     RandomConfigV0,
     GridConfigV0,
-    SyncHalvingConfigV0,
     AsyncHalvingConfigV0,
-    AdaptiveConfigV0,
-    AdaptiveSimpleConfigV0,
     AdaptiveASHAConfigV0,
     PBTConfigV0,
 ]
@@ -792,6 +764,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     min_validation_period: Optional[LengthV0] = None
     optimizations: Optional[OptimizationsConfigV0] = None
     perform_initial_validation: Optional[bool] = None
+    profiling: Optional[ProfilingConfigV0] = None
     records_per_epoch: Optional[int] = None
     reproducibility: Optional[ReproducibilityConfigV0] = None
     resources: Optional[ResourcesConfigV0] = None
@@ -820,6 +793,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         min_validation_period: Optional[LengthV0] = None,
         optimizations: Optional[OptimizationsConfigV0] = None,
         perform_initial_validation: Optional[bool] = None,
+        profiling: Optional[ProfilingConfigV0] = None,
         records_per_epoch: Optional[int] = None,
         reproducibility: Optional[ReproducibilityConfigV0] = None,
         resources: Optional[ResourcesConfigV0] = None,

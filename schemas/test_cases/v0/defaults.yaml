@@ -43,6 +43,7 @@
     source_checkpoint_uuid: "asdf"
   defaulted:
     name: random
+    max_concurrent_trials: 0
     max_length:
       batches: 1000
     max_trials: 1000
@@ -63,38 +64,12 @@
     source_trial_id: 15
   defaulted:
     name: grid
+    max_concurrent_trials: 0
     max_length:
       batches: 1000
     metric: loss
     smaller_is_better: true
     source_trial_id: 15
-    source_checkpoint_uuid: null
-
-- name: sync_halving searcher defaults
-  matches:
-    - http://determined.ai/schemas/expconf/v0/searcher.json
-    - http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json
-  case:
-    name: sync_halving
-    max_length:
-      batches: 1000
-    num_rungs: 5
-    budget:
-      epochs: 1
-    metric: loss
-    smaller_is_better: true
-  defaulted:
-    name: sync_halving
-    max_length:
-      batches: 1000
-    num_rungs: 5
-    budget:
-      epochs: 1
-    metric: loss
-    smaller_is_better: true
-    divisor: 4
-    train_stragglers: true
-    source_trial_id: null
     source_checkpoint_uuid: null
 
 - name: async_halving searcher defaults
@@ -120,57 +95,7 @@
     smaller_is_better: true
     source_trial_id: null
     source_checkpoint_uuid: null
-
-- name: adaptive searcher defaults
-  matches:
-    - http://determined.ai/schemas/expconf/v0/searcher.json
-    - http://determined.ai/schemas/expconf/v0/searcher-adaptive.json
-  case:
-    name: adaptive
-    max_length:
-      batches: 1000
-    budget:
-      batches: 10000
-    metric: loss
-  defaulted:
-    name: adaptive
-    max_length:
-      batches: 1000
-    budget:
-      batches: 10000
-    bracket_rungs: []
-    divisor: 4
-    train_stragglers: true
-    max_rungs: 5
-    mode: standard
-    metric: loss
-    smaller_is_better: true
-    source_trial_id: null
-    source_checkpoint_uuid: null
-
-- name: adaptive_simple searcher defaults
-  matches:
-    - http://determined.ai/schemas/expconf/v0/searcher.json
-    - http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json
-  case:
-    name: adaptive_simple
-    max_length:
-      batches: 1000
-    max_trials: 100
-    max_rungs: 5
-    metric: loss
-  defaulted:
-    name: adaptive_simple
-    max_length:
-      batches: 1000
-    max_trials: 100
-    max_rungs: 5
-    divisor: 4
-    mode: standard
-    metric: loss
-    smaller_is_better: true
-    source_trial_id: null
-    source_checkpoint_uuid: null
+    stop_once: false
 
 - name: adaptive_asha searcher defaults
   matches:
@@ -196,6 +121,7 @@
     smaller_is_better: true
     source_trial_id: null
     source_checkpoint_uuid: null
+    stop_once: false
 
 - name: pbt searcher defaults
   matches:

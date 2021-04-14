@@ -492,6 +492,33 @@ var (
     }
 }
 `)
+	textDeviceV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/device.json",
+    "title": "Device",
+    "additionalProperties": false,
+    "required": [
+        "host_path",
+        "container_path"
+    ],
+    "type": "object",
+    "properties": {
+        "host_path": {
+            "type": "string"
+        },
+        "container_path": {
+            "type": "string"
+        },
+        "mode": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": "mrw"
+        }
+    }
+}
+`)
 	textEnvironmentImageMapV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/environment-image-map.json",
@@ -636,6 +663,34 @@ var (
                 "null"
             ],
             "default": false
+        },
+        "registry_auth": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+        },
+        "add_capabilities": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "drop_capabilities": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
         },
         "pod_spec": {
             "type": [
@@ -846,6 +901,14 @@ var (
                 "null"
             ],
             "default": false
+        },
+        "profiling": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/profiling.json"
         },
         "records_per_epoch": {
             "type": [
@@ -1490,6 +1553,132 @@ var (
     }
 }
 `)
+	textProfilingConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/profiling.json",
+    "title": "ProfilingConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "enabled": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "begin_on_batch": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 0
+        },
+        "end_on_batch": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 1
+        }
+    },
+    "conditional": {
+        "$comment": "when enabled=true, assert begin < end",
+        "when": {
+            "required": [
+                "enabled"
+            ],
+            "properties": {
+                "enabled": {
+                    "const": true
+                }
+            }
+        },
+        "enforce": {
+            "required": [
+                "begin_on_batch",
+                "end_on_batch"
+            ],
+            "propeties": {
+                "begin_on_batch": {
+                    "type": "integer"
+                },
+                "end_on_batch": {
+                    "type": "integer"
+                }
+            },
+            "compareProperties": {
+                "type": "a<b",
+                "a": "begin_on_batch",
+                "b": "end_on_batch"
+            }
+        }
+    }
+}
+`)
+	textRegistryAuthV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/registry-auth.json",
+    "title": "RegistryAuth",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "username": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "password": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "auth": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "email": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "serveraddress": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "identitytoken": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "registrytoken": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+`)
 	textReproducibilityConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/reproducibility.json",
@@ -1505,7 +1694,8 @@ var (
                 "integer",
                 "null"
             ],
-            "default": null
+            "default": null,
+            "minimum": 0
         }
     }
 }
@@ -1524,6 +1714,16 @@ var (
                 "null"
             ],
             "default": ""
+        },
+        "devices": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
+            },
+            "default": []
         },
         "max_slots": {
             "type": [
@@ -1556,6 +1756,13 @@ var (
             "default": null
         },
         "shm_size": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "slots": {
             "type": [
                 "integer",
                 "null"
@@ -1728,189 +1935,13 @@ var (
                 "null"
             ],
             "default": null
-        }
-    }
-}
-`)
-	textAdaptiveSimpleConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json",
-    "title": "AdaptiveSimpleConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name",
-        "max_trials",
-        "max_length",
-        "metric"
-    ],
-    "properties": {
-        "name": {
-            "const": "adaptive_simple"
         },
-        "max_trials": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 2000
-        },
-        "mode": {
-            "enum": [
-                null,
-                "aggressive",
-                "standard",
-                "conservative"
-            ],
-            "default": "standard"
-        },
-        "divisor": {
-            "type": [
-                "number",
-                "null"
-            ],
-            "exclusiveMinimum": 1,
-            "default": 4
-        },
-        "max_rungs": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "minimum": 1,
-            "default": 5
-        },
-        "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
-        },
-        "metric": {
-            "type": "string"
-        },
-        "smaller_is_better": {
+        "stop_once": {
             "type": [
                 "boolean",
                 "null"
             ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    }
-}
-`)
-	textAdaptiveConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json",
-    "title": "AdaptiveConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name",
-        "budget",
-        "max_length",
-        "metric"
-    ],
-    "properties": {
-        "name": {
-            "const": "adaptive"
-        },
-        "budget": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/length.json"
-        },
-        "bracket_rungs": {
-            "type": [
-                "array",
-                "null"
-            ],
-            "default": [],
-            "items": {
-                "type": "integer"
-            }
-        },
-        "mode": {
-            "enum": [
-                null,
-                "aggressive",
-                "standard",
-                "conservative"
-            ],
-            "default": "standard"
-        },
-        "divisor": {
-            "type": [
-                "number",
-                "null"
-            ],
-            "exclusiveMinimum": 1,
-            "default": 4
-        },
-        "max_rungs": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "minimum": 1,
-            "default": 5
-        },
-        "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
-        },
-        "train_stragglers": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "metric": {
-            "type": "string"
-        },
-        "smaller_is_better": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    },
-    "checks": {
-        "max_length and budget must be specified in terms of the same unit": {
-            "compareProperties": {
-                "type": "same_units",
-                "a": "max_length",
-                "b": "budget"
-            }
-        },
-        "budget must be greater than max_length": {
-            "compareProperties": {
-                "type": "length_a<length_b",
-                "a": "max_length",
-                "b": "budget"
-            }
+            "default": false
         }
     }
 }
@@ -1982,6 +2013,13 @@ var (
                 "null"
             ],
             "default": null
+        },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
         }
     }
 }
@@ -2000,6 +2038,14 @@ var (
     "properties": {
         "name": {
             "const": "grid"
+        },
+        "max_concurrent_trials": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 0
         },
         "max_length": {
             "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
@@ -2146,6 +2192,14 @@ var (
         "name": {
             "const": "random"
         },
+        "max_concurrent_trials": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 0
+        },
         "max_trials": {
             "type": "integer",
             "minimum": 1
@@ -2225,81 +2279,12 @@ var (
     }
 }
 `)
-	textSyncHalvingConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json",
-    "title": "SyncHalvingConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "name",
-        "num_rungs",
-        "max_length",
-        "budget",
-        "metric"
-    ],
-    "properties": {
-        "name": {
-            "const": "sync_halving"
-        },
-        "budget": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
-        },
-        "num_rungs": {
-            "type": "integer",
-            "minimum": 1
-        },
-        "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
-        },
-        "divisor": {
-            "type": [
-                "number",
-                "null"
-            ],
-            "exclusiveMinimum": 1,
-            "default": 4
-        },
-        "train_stragglers": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "metric": {
-            "type": "string"
-        },
-        "smaller_is_better": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": true
-        },
-        "source_trial_id": {
-            "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
-        },
-        "source_checkpoint_uuid": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    }
-}
-`)
 	textSearcherConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher.json",
     "title": "SearcherConfig",
     "union": {
-        "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive', 'adaptive_asha', 'adaptive_simple', or 'pbt'",
+        "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
         "items": [
             {
                 "unionKey": "const:name=single",
@@ -2318,20 +2303,8 @@ var (
                 "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
             },
             {
-                "unionKey": "const:name=adaptive_simple",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
-            },
-            {
-                "unionKey": "const:name=adaptive",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
-            },
-            {
                 "unionKey": "const:name=pbt",
                 "$ref": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-            },
-            {
-                "unionKey": "const:name=sync_halving",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
             },
             {
                 "unionKey": "const:name=async_halving",
@@ -2633,6 +2606,8 @@ var (
 
 	schemaDataLayerConfigV0 interface{}
 
+	schemaDeviceV0 interface{}
+
 	schemaEnvironmentImageMapV0 interface{}
 
 	schemaEnvironmentImageV0 interface{}
@@ -2673,6 +2648,10 @@ var (
 
 	schemaOptimizationsConfigV0 interface{}
 
+	schemaProfilingConfigV0 interface{}
+
+	schemaRegistryAuthV0 interface{}
+
 	schemaReproducibilityConfigV0 interface{}
 
 	schemaResourcesConfigV0 interface{}
@@ -2680,10 +2659,6 @@ var (
 	schemaS3ConfigV0 interface{}
 
 	schemaAdaptiveASHAConfigV0 interface{}
-
-	schemaAdaptiveSimpleConfigV0 interface{}
-
-	schemaAdaptiveConfigV0 interface{}
 
 	schemaAsyncHalvingConfigV0 interface{}
 
@@ -2694,8 +2669,6 @@ var (
 	schemaRandomConfigV0 interface{}
 
 	schemaSingleConfigV0 interface{}
-
-	schemaSyncHalvingConfigV0 interface{}
 
 	schemaSearcherConfigV0 interface{}
 
@@ -2839,6 +2812,17 @@ func ParsedDataLayerConfigV0() interface{} {
 		panic("invalid embedded json for DataLayerConfigV0")
 	}
 	return schemaDataLayerConfigV0
+}
+
+func ParsedDeviceV0() interface{} {
+	if schemaDeviceV0 != nil {
+		return schemaDeviceV0
+	}
+	err := json.Unmarshal(textDeviceV0, &schemaDeviceV0)
+	if err != nil {
+		panic("invalid embedded json for DeviceV0")
+	}
+	return schemaDeviceV0
 }
 
 func ParsedEnvironmentImageMapV0() interface{} {
@@ -3061,6 +3045,28 @@ func ParsedOptimizationsConfigV0() interface{} {
 	return schemaOptimizationsConfigV0
 }
 
+func ParsedProfilingConfigV0() interface{} {
+	if schemaProfilingConfigV0 != nil {
+		return schemaProfilingConfigV0
+	}
+	err := json.Unmarshal(textProfilingConfigV0, &schemaProfilingConfigV0)
+	if err != nil {
+		panic("invalid embedded json for ProfilingConfigV0")
+	}
+	return schemaProfilingConfigV0
+}
+
+func ParsedRegistryAuthV0() interface{} {
+	if schemaRegistryAuthV0 != nil {
+		return schemaRegistryAuthV0
+	}
+	err := json.Unmarshal(textRegistryAuthV0, &schemaRegistryAuthV0)
+	if err != nil {
+		panic("invalid embedded json for RegistryAuthV0")
+	}
+	return schemaRegistryAuthV0
+}
+
 func ParsedReproducibilityConfigV0() interface{} {
 	if schemaReproducibilityConfigV0 != nil {
 		return schemaReproducibilityConfigV0
@@ -3103,28 +3109,6 @@ func ParsedAdaptiveASHAConfigV0() interface{} {
 		panic("invalid embedded json for AdaptiveASHAConfigV0")
 	}
 	return schemaAdaptiveASHAConfigV0
-}
-
-func ParsedAdaptiveSimpleConfigV0() interface{} {
-	if schemaAdaptiveSimpleConfigV0 != nil {
-		return schemaAdaptiveSimpleConfigV0
-	}
-	err := json.Unmarshal(textAdaptiveSimpleConfigV0, &schemaAdaptiveSimpleConfigV0)
-	if err != nil {
-		panic("invalid embedded json for AdaptiveSimpleConfigV0")
-	}
-	return schemaAdaptiveSimpleConfigV0
-}
-
-func ParsedAdaptiveConfigV0() interface{} {
-	if schemaAdaptiveConfigV0 != nil {
-		return schemaAdaptiveConfigV0
-	}
-	err := json.Unmarshal(textAdaptiveConfigV0, &schemaAdaptiveConfigV0)
-	if err != nil {
-		panic("invalid embedded json for AdaptiveConfigV0")
-	}
-	return schemaAdaptiveConfigV0
 }
 
 func ParsedAsyncHalvingConfigV0() interface{} {
@@ -3180,17 +3164,6 @@ func ParsedSingleConfigV0() interface{} {
 		panic("invalid embedded json for SingleConfigV0")
 	}
 	return schemaSingleConfigV0
-}
-
-func ParsedSyncHalvingConfigV0() interface{} {
-	if schemaSyncHalvingConfigV0 != nil {
-		return schemaSyncHalvingConfigV0
-	}
-	err := json.Unmarshal(textSyncHalvingConfigV0, &schemaSyncHalvingConfigV0)
-	if err != nil {
-		panic("invalid embedded json for SyncHalvingConfigV0")
-	}
-	return schemaSyncHalvingConfigV0
 }
 
 func ParsedSearcherConfigV0() interface{} {
@@ -3320,6 +3293,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textSharedFSDataLayerConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/data-layer.json"
 	cachedSchemaBytesMap[url] = textDataLayerConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/device.json"
+	cachedSchemaBytesMap[url] = textDeviceV0
 	url = "http://determined.ai/schemas/expconf/v0/environment-image-map.json"
 	cachedSchemaBytesMap[url] = textEnvironmentImageMapV0
 	url = "http://determined.ai/schemas/expconf/v0/environment-image.json"
@@ -3360,6 +3335,10 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textNativeConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/profiling.json"
+	cachedSchemaBytesMap[url] = textProfilingConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/registry-auth.json"
+	cachedSchemaBytesMap[url] = textRegistryAuthV0
 	url = "http://determined.ai/schemas/expconf/v0/reproducibility.json"
 	cachedSchemaBytesMap[url] = textReproducibilityConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/resources.json"
@@ -3368,10 +3347,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textS3ConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
 	cachedSchemaBytesMap[url] = textAdaptiveASHAConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
-	cachedSchemaBytesMap[url] = textAdaptiveSimpleConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
-	cachedSchemaBytesMap[url] = textAdaptiveConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
 	cachedSchemaBytesMap[url] = textAsyncHalvingConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
@@ -3382,8 +3357,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textRandomConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-single.json"
 	cachedSchemaBytesMap[url] = textSingleConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
-	cachedSchemaBytesMap[url] = textSyncHalvingConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher.json"
 	cachedSchemaBytesMap[url] = textSearcherConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/security.json"
