@@ -5,8 +5,106 @@
 ###############
 
 **************
+ Version 0.15
+**************
+
+Version 0.15.0
+==============
+
+**Release Date:** April 14, 2021
+
+**New Features**
+
+-  WebUI: Provide historical allocation data on the Cluster page. This
+   page breaks down GPU hours by user, label, and resource pool. See
+   :ref:`historical-cluster-usage-data` for more information.
+
+-  WebUI: Add a gallery mode to the hyperparameter scatter plot and
+   heatmap visualizaztions to allow users to inspect each scatter plot
+   in full detail.
+
+**Improvements**
+
+-  **Breaking Change** CLI: Consolidate ``det`` and ``det-deploy``
+   executables into the ``determined`` package, which now includes all
+   Determined libraries and tools. The ``determined-cli``,
+   ``determined-deploy``, and ``determined-common`` packages are now
+   deprecated.
+
+   -  When upgrading from older versions, ``det`` command may break for
+      some users because of ``pip`` limitations. Please uninstall
+      outdated packages, and then reinstall Determined. See more at
+      :ref:`upgrading-from-before-0_15_0`.
+
+-  PyTorch: Remove ``cloudpickle`` as a dependency for PyTorch
+   checkpoints. This does not affect compatibility of existing
+   checkpoints. This change will improve portability across Python
+   versions.
+
+-  Deploy: Move default storage location for checkpoint data in local
+   clusters deployed via ``det deploy local`` to an OS-specific user
+   data directory (e.g. ``$XDG_DATA_HOME/determined`` or
+   ``~/.local/share/determined`` on Linux, and ``~/Library/Application
+   Support/determined`` on macOS). Previously, ``/tmp`` was used. This
+   location can be changed using the ``--storage-host-path`` command
+   line flag of ``det deploy local``. If users provide their own custom
+   ``master.yaml`` via ``--master-config-path``, the configured
+   ``checkpoint_storage`` in ``master.yaml`` will take precedence.
+
+-  Searcher: Remove support for ``adaptive`` and ``adaptive_simple``
+   searchers which were deprecated in Determined 0.13.7.
+
+**Bug Fixes**
+
+-  WebUI: Fix an issue where the metric value occasionally had the word
+   "undefined" prepended.
+
+**************
  Version 0.14
 **************
+
+Version 0.14.6
+==============
+
+**Release Date:** April 1, 2021
+
+**New Features**
+
+-  REST API: Add a new endpoint to delete experiments. This endpoint is
+   only enabled for admin users and deletes all resources associated
+   with an experiment. This includes checkpoint storage, Tensorboards,
+   trial logs from all backends and metadata such as history and
+   metrics, stored in PostgreSQL.
+
+-  REST API: Add a new endpoint to fetch aggregated historical resource
+   allocation information.
+
+-  CLI: Add new commands ``det resources raw`` and ``det resources
+   aggregated`` to access resource allocation information.
+
+-  PyTorch Lightning: Add an adapter to support ``LightningModule`` from
+   PyTorch Lightning in the PyTorchTrial API. See
+   :ref:`lightning-adapter` for more information.
+
+**Improvements**
+
+-  Images: The default environment images have been updated to CUDA
+   10.2, PyTorch 1.8, and TensorFlow 1.15.5 with Python 3.7. Previous
+   images are still available but must be specified in the experiment or
+   command configuration. It is recommended to validate the performance
+   of models when changing CUDA versions as some models can experience
+   significant changes in training time, etc. See :ref:`custom-env` for
+   more information.
+
+-  WebUI: Improve the hyperparameter scatter plot and heat map
+   visualizations by adding support for showing categorical
+   hyperparameters.
+
+**Bug Fixes**
+
+-  WebUI: Fix the hyperparameter visualization page crashing when
+   viewing single trial or PBT experiments, both of which are
+   intentionally unsupported for hyperparameter visualizations.
 
 Version 0.14.5
 ==============
