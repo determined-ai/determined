@@ -25,10 +25,13 @@ const VIEW_CHOICE_KEY = 'view-choice';
 
 const ClusterOverview: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
-  const initView = storage.getWithDefault(VIEW_CHOICE_KEY, GridListView.Grid);
+  const initView = storage.get<GridListView>(VIEW_CHOICE_KEY);
   const { agents, cluster: overview } = useStore();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
-  const [ selectedView, setSelectedView ] = useState<GridListView>(initView);
+  const [ selectedView, setSelectedView ] = useState<GridListView>(() => {
+    if (initView && Object.values(GridListView).includes(initView as GridListView)) return initView;
+    return GridListView.Grid;
+  });
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ canceler ] = useState(new AbortController());
 
