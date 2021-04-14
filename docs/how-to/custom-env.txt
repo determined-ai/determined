@@ -159,9 +159,7 @@ those extra dependencies are quick to install, you may want to consider
 using a :ref:`startup hook <startup-hooks>`. For situations where
 installing dependencies via ``startup-hook.sh`` would take too long, we
 suggest building your own Docker image and publishing to a Docker
-registry like `Docker Hub <https://hub.docker.com/>`__. We recommend
-that custom images use one of the official Determined images as a base
-image (using the ``FROM`` instruction).
+registry like `Docker Hub <https://hub.docker.com/>`__.
 
 .. warning::
 
@@ -169,20 +167,27 @@ image (using the ``FROM`` instruction).
    Apex packages as doing so will conflict with the base packages that
    are installed into Determined's official environments.
 
-Here is an example of a ``Dockerfile`` that installs both ``conda``- and
-``pip``-based dependencies.
+We recommend that custom images use one of the official Determined
+images as a base image (using the ``FROM`` instruction). Here is an
+example of a Dockerfile that installs custom ``conda``-, ``pip``- and
+``apt``-based dependencies.
 
-.. code::
+.. code:: bash
 
+   # Determined Image
    FROM determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.11.0
-   RUN apt-get update && apt-get install -y unzip python-opencv graphviz
+
+   # Custom Configuration
+   RUN apt-get update && \
+      DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata && \
+      apt-get install -y unzip python-opencv graphviz
    COPY environment.yml /tmp/environment.yml
    COPY pip_requirements.txt /tmp/pip_requirements.txt
-   RUN conda env update --name base --file /tmp/environment.yml && \
-       conda clean --all --force-pkgs-dirs --yes
+   RUN conda env update --name base --file /tmp/environment.yaml
+   RUN conda clean --all --force-pkgs-dirs --yes
    RUN eval "$(conda shell.bash hook)" && \
-       conda activate base && \
-       pip install --requirement /tmp/pip_requirements.txt
+      conda activate base && \
+      pip install --requirement /tmp/pip_requirements.txt
 
 Assuming this image has been published to a public repository on Docker
 Hub, you can configure an experiment, command, or notebook to use the
