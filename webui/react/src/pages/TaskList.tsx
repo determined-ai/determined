@@ -205,6 +205,7 @@ const TaskList: React.FC = () => {
 
   const handleFilterChange = useCallback((filters: TaskFilters<CommandType>): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
+    setSelectedRowKeys([]);
     setFilters(filters);
   }, [ setFilters, storage ]);
 

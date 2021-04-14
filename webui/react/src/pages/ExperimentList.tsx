@@ -349,6 +349,7 @@ const ExperimentList: React.FC = () => {
 
   const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
+    setSelectedRowKeys([]);
     setFilters(filters);
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
