@@ -36,7 +36,10 @@ Version 0.15.0
       outdated packages, and then reinstall Determined. See more at
       :ref:`upgrading-from-before-0_15_0`.
 
--  PyTorch: Remove ``cloudpickle`` as a dependency for PyTorch checkpoints. This does not affect compatibility of existing checkpoints. This change will improve portability across Python versions.
+-  PyTorch: Remove ``cloudpickle`` as a dependency for PyTorch
+   checkpoints. This does not affect compatibility of existing
+   checkpoints. This change will improve portability across Python
+   versions.
 
 -  Deploy: Move default storage location for checkpoint data in local
    clusters deployed via ``det deploy local`` to an OS-specific user
