@@ -1710,6 +1710,7 @@ workflows:
                 - master
           requires:
             - package-and-push-system-dev
+          max-dynamic-agents: 2
 
       - deploy:
           name: deploy-release-party
