@@ -19,6 +19,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/pkg/errors"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -183,6 +185,10 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	experimentConfig *model.ExperimentConfig, masterConfig HPImportanceConfig,
 	growforest string, workingDir string) (map[string]float64, error) {
+	if len(data) == 0 {
+		return nil, errors.New("not enough data to compute HP importance")
+	}
+
 	growforestInput := path.Join(workingDir, arffFile)
 	growforestOutput := path.Join(workingDir, importanceFile)
 
