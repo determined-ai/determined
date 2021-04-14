@@ -460,7 +460,7 @@ def verify_completed_experiment_metadata(
     # When the experiment completes, all slots should now be free. This
     # requires terminating the experiment's last container, which might
     # take some time.
-    max_secs_to_free_slots = 30
+    max_secs_to_free_slots = 900
     for _ in range(max_secs_to_free_slots):
         if cluster.num_free_slots() == cluster.num_slots():
             break
