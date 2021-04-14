@@ -43,6 +43,7 @@
     source_checkpoint_uuid: "asdf"
   defaulted:
     name: random
+    max_concurrent_trials: 0
     max_length:
       batches: 1000
     max_trials: 1000
@@ -63,6 +64,7 @@
     source_trial_id: 15
   defaulted:
     name: grid
+    max_concurrent_trials: 0
     max_length:
       batches: 1000
     metric: loss
