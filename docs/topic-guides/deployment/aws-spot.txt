@@ -119,7 +119,7 @@ reductions when using V100s, without specifying a ``spot_max_price``.
 Missing service-linked role
 ===========================
 
-Some users may encounter the following error in the Determined Master
+Some users may encounter the following error in the Determined master
 logs the first time they try to use spot instances:
 
 .. code::
@@ -133,5 +133,3 @@ or use AWS CLI to create the ``AWSServiceRoleForEC2Spot`` role:
 .. code::
 
    aws iam create-service-linked-role --aws-service-name spot.amazonaws.com
-
-For more details, please see
