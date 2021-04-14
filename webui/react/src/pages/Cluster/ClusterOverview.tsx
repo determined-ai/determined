@@ -10,6 +10,7 @@ import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
 import { agentsToOverview, useStore } from 'contexts/Store';
+import { useFetchAgents } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
@@ -35,9 +36,13 @@ const ClusterOverview: React.FC = () => {
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ canceler ] = useState(new AbortController());
 
+  const fetchAgents = useFetchAgents(canceler);
+
   const fetchResourcePools = useCallback(async () => {
-    const resourcePools = await getResourcePools({});
-    setResourcePools(resourcePools);
+    try {
+      const resourcePools = await getResourcePools({});
+      setResourcePools(resourcePools);
+    } catch (e) {}
   }, []);
 
   usePolling(fetchResourcePools, { interval: 10000 });
@@ -110,8 +115,10 @@ const ClusterOverview: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    fetchAgents();
+
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [ canceler, fetchAgents ]);
 
   return (
     <>
@@ -122,16 +129,16 @@ const ClusterOverview: React.FC = () => {
           </OverviewStats>
           {overview.GPU.total ?
             <OverviewStats title="GPU Slots Allocated">
-              {overview.GPU.total - overview.GPU.available} / {overview.GPU.total}
+              {overview.GPU.total - overview.GPU.available} <small>/ {overview.GPU.total}</small>
             </OverviewStats>: null
           }
           {overview.CPU.total ?
             <OverviewStats title="CPU Slots Allocated">
-              {overview.CPU.total - overview.CPU.available} / {overview.CPU.total}
+              {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
             </OverviewStats> : null
           }
           <OverviewStats title="CPU Containers Running">
-            {cpuContainers.running}/{cpuContainers.total}
+            {cpuContainers.running} <small>/ {cpuContainers.total}</small>
           </OverviewStats>
         </Grid>
       </Section>
