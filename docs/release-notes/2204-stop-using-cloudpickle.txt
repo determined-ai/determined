@@ -1,0 +1,7 @@
+:orphan:
+
+**Improvements**
+
+-  PyTorch checkpoints are no longer saved using cloudpickle. This should
+   not impact compatibility of existing checkpoints and improves portability
+   across Python versions.
