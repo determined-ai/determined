@@ -237,8 +237,10 @@ func (g GCCheckpoints) Entrypoint() []string {
 }
 
 // Environment implements InnerSpec.
-func (g GCCheckpoints) Environment(TaskSpec) model.Environment {
-	return g.ExperimentConfig.Environment
+func (g GCCheckpoints) Environment(t TaskSpec) model.Environment {
+	env := model.DefaultExperimentConfig(&t.TaskContainerDefaults).Environment
+	env.EnvironmentVariables = g.ExperimentConfig.Environment.EnvironmentVariables
+	return env
 }
 
 // EnvVars implements InnerSpec.
