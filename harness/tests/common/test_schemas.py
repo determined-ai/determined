@@ -14,23 +14,32 @@ def strip_runtime_defaultable(obj: Any, defaulted: Any) -> Any:
     Recursively find strings of "*" in defaulted and set corresponding non-None values in obj to
     also be "*", so that equality tests will pass.
     """
+    if defaulted is None or obj is None:
+        return obj
+
     if isinstance(defaulted, str):
-        if defaulted == "*" and obj is not None:
+        if defaulted == "*":
             return "*"
 
     # Recurse through dicts.
     if isinstance(defaulted, dict):
         if not isinstance(obj, dict):
-            return
-        common_keys = set(defaulted.keys()).intersection(set(obj.keys()))
-        return {k: strip_runtime_defaultable(obj.get(k), defaulted.get(k)) for k in common_keys}
+            return obj
+        return {k: strip_runtime_defaultable(obj.get(k), defaulted.get(k)) for k in obj}
+
+    if isinstance(defaulted, tuple):
+        defaulted = list(defaulted)
 
     # Recurse through lists.
-    if isinstance(defaulted, (list, tuple)):
+    if isinstance(defaulted, list):
         if not isinstance(obj, (list, tuple)):
-            return
-        limit = min(len(obj), len(defaulted))
-        return [strip_runtime_defaultable(obj[i], defaulted[i]) for i in range(limit)]
+            return obj
+
+        # Truncate defaulted (if it's long) then pad with Nones (if it's short).
+        defaulted = defaulted[: len(obj)]
+        defaulted = defaulted + [None] * (len(obj) - len(defaulted))
+
+        return [strip_runtime_defaultable(o, d) for o, d in zip(obj, defaulted)]
 
     return obj
 
@@ -126,7 +135,9 @@ class Case:
 CASES_ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "..", "schemas", "test_cases")
 
 
-# Get a list of all test cases.
+# Get a list of all test cases.  They are parameterized this way because it makes it extremely
+# easy to identify which test failed from the log output.  Otherwise, we would just yield the full
+# test case here.
 def all_cases() -> Iterator["str"]:
     for root, _, files in os.walk(CASES_ROOT):
         for file in files:
@@ -144,8 +155,9 @@ def test_schemas(test_case: str) -> None:
     cases_file, case_name = test_case.split("::", 1)
     with open(os.path.join(CASES_ROOT, cases_file)) as f:
         cases = yaml.safe_load(f)
-    for case in cases:
-        Case(**case).run()
+    # Find the right test from the file of test cases.
+    case = [c for c in cases if c["name"] == case_name][0]
+    Case(**case).run()
 
 
 def lint_schema_subclasses(cls: type) -> None:
