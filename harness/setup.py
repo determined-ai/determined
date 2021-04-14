@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.15.0rc0",
+    version="0.15.0rc1",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
