@@ -10,6 +10,7 @@ type CategoricalHyperparameter = CategoricalHyperparameterV0
 type CheckpointStorageConfig = CheckpointStorageConfigV0
 type ConstHyperparameter = ConstHyperparameterV0
 type DataLayerConfig = DataLayerConfigV0
+type DevicesConfig = DevicesConfigV0
 type DoubleHyperparameter = DoubleHyperparameterV0
 type EnvironmentConfig = EnvironmentConfigV0
 type ExperimentConfig = ExperimentConfigV0

@@ -51,6 +51,26 @@
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/registry-auth.json"
         },
+        "add_capabilities": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "drop_capabilities": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
         "pod_spec": {
             "type": [
                 "object",

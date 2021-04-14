@@ -149,6 +149,8 @@ type ResourcesConfigV0 struct {
 	AgentLabel     *string  `json:"agent_label"`
 	ResourcePool   *string  `json:"resource_pool"`
 	Priority       *int     `json:"priority"`
+
+	Devices *DevicesConfigV0 `json:"devices"`
 }
 
 //go:generate ../gen.sh
@@ -185,6 +187,27 @@ type BindMountV0 struct {
 	ContainerPath string  `json:"container_path"`
 	ReadOnly      *bool   `json:"read_only"`
 	Propagation   *string `json:"propagation"`
+}
+
+// DevicesConfigV0 is the configuration for devices.
+type DevicesConfigV0 []DeviceV0
+
+// Merge implements the Mergable interface.
+func (b DevicesConfig) Merge(other interface{}) interface{} {
+	tOther := other.(DevicesConfig)
+	// Merge by appending.
+	out := DevicesConfig{}
+	out = append(out, b...)
+	out = append(out, tOther...)
+	return out
+}
+
+//go:generate ../gen.sh
+// DeviceV0 configures trial runner filesystem bind mounts.
+type DeviceV0 struct {
+	HostPath      string  `json:"host_path"`
+	ContainerPath string  `json:"container_path"`
+	Mode          *string `json:"mode"`
 }
 
 //go:generate ../gen.sh

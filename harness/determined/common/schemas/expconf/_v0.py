@@ -5,9 +5,26 @@ from typing import Any, Dict, List, Optional, TypeVar, Union
 from determined.common import schemas
 
 
+class DeviceV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/device.json"
+    container_path: str
+    host_path: str
+    mode: Optional[bool] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        container_path: str,
+        host_path: str,
+        mode: Optional[bool] = None,
+    ) -> None:
+        pass
+
+
 class ResourcesConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/resources.json"
     agent_label: Optional[str] = None
+    devices: Optional[List[DeviceV0]] = None
     max_slots: Optional[int] = None
     native_parallel: Optional[bool] = None
     priority: Optional[int] = None
@@ -20,6 +37,7 @@ class ResourcesConfigV0(schemas.SchemaBase):
     def __init__(
         self,
         agent_label: Optional[str] = None,
+        devices: Optional[List[DeviceV0]] = None,
         max_slots: Optional[int] = None,
         native_parallel: Optional[bool] = None,
         priority: Optional[int] = None,

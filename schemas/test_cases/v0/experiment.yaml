@@ -92,6 +92,10 @@
       experiment_seed: 1606239866
     resources:
       agent_label: 'big_al'
+      devices:
+        - host_path: "/dev/infiniband"
+          container_path: "/dev/infiniband"
+          mode: "rmw"
       slots_per_trial: 15
       weight: 1000
       max_slots: 900
@@ -183,6 +187,7 @@
       experiment_seed: "*"
     resources:
       agent_label: ''
+      devices: []
       native_parallel: false
       shm_size: null
       slots_per_trial: 1
