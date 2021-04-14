@@ -228,8 +228,8 @@ args_description = Cmd(
                         ),
                         Arg(
                             "--preemptible",
-                            type=str,
-                            default="false",
+                            type=bool,
+                            default=False,
                             help="whether to use preemptible instances for dynamic agents",
                         ),
                         Arg(
