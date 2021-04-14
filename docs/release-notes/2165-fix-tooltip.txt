@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Fix human readable number tooltip of showing `undefined`
-   prefix.
