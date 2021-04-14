@@ -119,16 +119,16 @@ const ClusterOverview: React.FC = () => {
           </OverviewStats>
           {overview.GPU.total ?
             <OverviewStats title="GPU Slots Allocated">
-              {overview.GPU.total - overview.GPU.available} / {overview.GPU.total}
+              {overview.GPU.total - overview.GPU.available} <small>/ {overview.GPU.total}</small>
             </OverviewStats>: null
           }
           {overview.CPU.total ?
             <OverviewStats title="CPU Slots Allocated">
-              {overview.CPU.total - overview.CPU.available} / {overview.CPU.total}
+              {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
             </OverviewStats> : null
           }
           <OverviewStats title="CPU Containers Running">
-            {cpuContainers.running}/{cpuContainers.total}
+            {cpuContainers.running} <small>/ {cpuContainers.total}</small>
           </OverviewStats>
         </Grid>
       </Section>
