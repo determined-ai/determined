@@ -25,10 +25,7 @@ func (e EnvironmentConfigV0) GetEnvironmentVariables() EnvironmentVariablesMapV0
 }
 
 func (e EnvironmentConfigV0) GetPorts() map[string]int {
-	if e.Ports == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .GetPorts")
-	}
-	return *e.Ports
+	return e.Ports
 }
 
 func (e EnvironmentConfigV0) GetRegistryAuth() *types.AuthConfig {
@@ -47,17 +44,11 @@ func (e EnvironmentConfigV0) GetPodSpec() *k8sV1.Pod {
 }
 
 func (e EnvironmentConfigV0) GetAddCapabilities() []string {
-	if e.AddCapabilities == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .GetAddCapabilities")
-	}
-	return *e.AddCapabilities
+	return e.AddCapabilities
 }
 
 func (e EnvironmentConfigV0) GetDropCapabilities() []string {
-	if e.DropCapabilities == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .GetDropCapabilities")
-	}
-	return *e.DropCapabilities
+	return e.DropCapabilities
 }
 
 func (e EnvironmentConfigV0) WithDefaults() EnvironmentConfigV0 {

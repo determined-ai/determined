@@ -9,10 +9,7 @@ import (
 )
 
 func (e ExperimentConfigV0) GetBindMounts() BindMountsConfigV0 {
-	if e.BindMounts == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetBindMounts")
-	}
-	return *e.BindMounts
+	return e.BindMounts
 }
 
 func (e ExperimentConfigV0) GetCheckpointPolicy() string {
@@ -34,10 +31,7 @@ func (e ExperimentConfigV0) GetDataLayer() DataLayerConfigV0 {
 }
 
 func (e ExperimentConfigV0) GetData() map[string]interface{} {
-	if e.Data == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetData")
-	}
-	return *e.Data
+	return e.Data
 }
 
 func (e ExperimentConfigV0) GetDebug() bool {
@@ -67,10 +61,7 @@ func (e ExperimentConfigV0) GetInternal() *InternalConfigV0 {
 }
 
 func (e ExperimentConfigV0) GetLabels() LabelsV0 {
-	if e.Labels == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetLabels")
-	}
-	return *e.Labels
+	return e.Labels
 }
 
 func (e ExperimentConfigV0) GetMaxRestarts() int {

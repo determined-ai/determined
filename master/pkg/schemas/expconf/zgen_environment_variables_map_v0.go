@@ -9,17 +9,11 @@ import (
 )
 
 func (e EnvironmentVariablesMapV0) GetCPU() []string {
-	if e.CPU == nil {
-		panic("You must call WithDefaults on EnvironmentVariablesMapV0 before .GetCPU")
-	}
-	return *e.CPU
+	return e.CPU
 }
 
 func (e EnvironmentVariablesMapV0) GetGPU() []string {
-	if e.GPU == nil {
-		panic("You must call WithDefaults on EnvironmentVariablesMapV0 before .GetGPU")
-	}
-	return *e.GPU
+	return e.GPU
 }
 
 func (e EnvironmentVariablesMapV0) WithDefaults() EnvironmentVariablesMapV0 {

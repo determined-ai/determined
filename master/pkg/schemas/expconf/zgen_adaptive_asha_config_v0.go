@@ -36,10 +36,7 @@ func (a AdaptiveASHAConfigV0) GetMaxTrials() int {
 }
 
 func (a AdaptiveASHAConfigV0) GetBracketRungs() []int {
-	if a.BracketRungs == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .GetBracketRungs")
-	}
-	return *a.BracketRungs
+	return a.BracketRungs
 }
 
 func (a AdaptiveASHAConfigV0) GetDivisor() float64 {
