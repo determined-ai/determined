@@ -22,7 +22,7 @@ func TestRandomTournamentSearcher(t *testing.T) {
 			MaxLength: model.NewLengthInBatches(200),
 		}),
 	)
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("300B"),
 		toOps("300B"),
 		toOps("200B"),

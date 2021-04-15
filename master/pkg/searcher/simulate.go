@@ -31,7 +31,7 @@ func TrialIDMetric(_ *rand.Rand, trialID, _ int) float64 {
 }
 
 // SimulationResults holds all created trials and all executed workloads for each trial.
-type SimulationResults map[model.RequestID][]Runnable
+type SimulationResults map[model.RequestID][]ValidateAfter
 
 // MarshalJSON implements the json.Marshaler interface.
 func (s SimulationResults) MarshalJSON() ([]byte, error) {
@@ -40,18 +40,13 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 	for _, ops := range s {
 		var keyParts []string
 		for _, op := range ops {
-			switch op := op.(type) {
-			case Train:
-				switch op.Length.Unit {
-				case model.Records:
-					keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
-				case model.Batches:
-					keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
-				case model.Epochs:
-					keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
-				}
-			default:
-				return nil, errors.Errorf("unexpected operation: %v", op)
+			switch op.Length.Unit {
+			case model.Records:
+				keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
+			case model.Batches:
+				keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
+			case model.Epochs:
+				keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
 			}
 		}
 		summary[strings.Join(keyParts, " ")]++
@@ -111,7 +106,7 @@ func Simulate(
 
 		switch operation := operation.(type) {
 		case Create:
-			simulation.Results[requestID] = []Runnable{}
+			simulation.Results[requestID] = []ValidateAfter{}
 			trialIDs[requestID] = nextTrialID
 			ops, err := s.TrialCreated(operation, nextTrialID)
 			if err != nil {
@@ -124,7 +119,7 @@ func Simulate(
 				return simulation, err
 			}
 			nextTrialID++
-		case Train:
+		case ValidateAfter:
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
 			s.SetTrialProgress(requestID, model.PartialUnits(operation.Length.Units))
 

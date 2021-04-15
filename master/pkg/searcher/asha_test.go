@@ -13,7 +13,7 @@ func TestASHASearcherRecords(t *testing.T) {
 		Divisor:   3,
 		MaxTrials: 12,
 	}
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("64000R"), toOps("64000R"), toOps("64000R"),
 		toOps("64000R"), toOps("64000R"), toOps("64000R"),
 		toOps("64000R"), toOps("64000R"),
@@ -32,7 +32,7 @@ func TestASHASearcherBatches(t *testing.T) {
 		Divisor:   3,
 		MaxTrials: 12,
 	}
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("1000B"), toOps("1000B"), toOps("1000B"),
 		toOps("1000B"), toOps("1000B"), toOps("1000B"),
 		toOps("1000B"), toOps("1000B"),
@@ -51,7 +51,7 @@ func TestASHASearcherEpochs(t *testing.T) {
 		Divisor:   3,
 		MaxTrials: 12,
 	}
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("1E"), toOps("1E"), toOps("1E"),
 		toOps("1E"), toOps("1E"), toOps("1E"),
 		toOps("1E"), toOps("1E"),

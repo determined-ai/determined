@@ -108,7 +108,7 @@ func (s *asyncHalvingStoppingSearch) initialOperations(ctx context) ([]Operation
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.Rungs[0].UnitsNeeded))
 	}
 	return ops, nil
 }
@@ -184,7 +184,7 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 				s.TrialRungs[requestID] = rungIndex + 1
 				nextRung.OutstandingTrials++
 				unitsNeeded := max(nextRung.UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
-				ops = append(ops, NewTrain(requestID, model.NewLength(s.Unit(), unitsNeeded)))
+				ops = append(ops, NewValidateAfter(requestID, model.NewLength(s.Unit(), unitsNeeded)))
 				addedTrainWorkload = true
 			} else {
 				ops = append(ops, NewClose(requestID))
@@ -199,7 +199,7 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.Rungs[0].UnitsNeeded))
 	}
 
 	return ops
@@ -242,7 +242,7 @@ func (s *asyncHalvingStoppingSearch) trialExitedEarly(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.Rungs[0].UnitsNeeded))
 		return ops, nil
 	}
 	s.EarlyExitTrials[requestID] = true

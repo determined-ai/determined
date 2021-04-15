@@ -67,7 +67,7 @@ func (s *pbtSearch) initialOperations(ctx context) ([]Operation, error) {
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialParams[create.RequestID] = create.Hparams
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.LengthPerRound))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.LengthPerRound))
 	}
 	return ops, nil
 }
@@ -154,14 +154,14 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 
 			ops = append(ops,
 				create,
-				NewTrain(create.RequestID, s.LengthPerRound))
+				NewValidateAfter(create.RequestID, s.LengthPerRound))
 		}
 	}
 
 	// Continue all non-closed trials.
 	for _, requestID := range trialIDs[:len(trialIDs)-numTruncate] {
 		if !s.EarlyExitTrials[requestID] {
-			ops = append(ops, NewTrain(
+			ops = append(ops, NewValidateAfter(
 				requestID, s.LengthPerRound.MultInt(s.TrialRoundsCompleted[requestID]+1)))
 		} else {
 			s.Metrics[requestID] = pbtExitedMetricValue

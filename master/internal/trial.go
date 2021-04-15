@@ -365,7 +365,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 func (t *trial) processOperations(ops []searcher.Operation) {
 	for _, op := range ops {
 		switch op := op.(type) {
-		case searcher.Runnable:
+		case searcher.ValidateAfter:
 			t.sequencer.OperationRequested(op)
 		case searcher.Close:
 			t.close = &op

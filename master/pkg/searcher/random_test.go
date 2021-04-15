@@ -8,7 +8,7 @@ import (
 
 func TestRandomSearcherRecords(t *testing.T) {
 	actual := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInRecords(19200)}
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("19200R"),
 		toOps("19200R"),
 		toOps("19200R"),
@@ -20,7 +20,7 @@ func TestRandomSearcherRecords(t *testing.T) {
 
 func TestRandomSearcherBatches(t *testing.T) {
 	actual := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInBatches(300)}
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("300B"),
 		toOps("300B"),
 		toOps("300B"),

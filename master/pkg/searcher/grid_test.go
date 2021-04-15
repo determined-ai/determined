@@ -110,7 +110,7 @@ func TestGridIntCountNegative(t *testing.T) {
 func TestGridSearcherRecords(t *testing.T) {
 	actual := model.GridConfig{MaxLength: model.NewLengthInRecords(19200)}
 	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("19200R"), toOps("19200R"), toOps("19200R"),
 		toOps("19200R"), toOps("19200R"), toOps("19200R"),
 	}
@@ -121,7 +121,7 @@ func TestGridSearcherRecords(t *testing.T) {
 func TestGridSearcherBatches(t *testing.T) {
 	actual := model.GridConfig{MaxLength: model.NewLengthInBatches(300)}
 	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("300B"), toOps("300B"), toOps("300B"),
 		toOps("300B"), toOps("300B"), toOps("300B"),
 	}
@@ -132,7 +132,7 @@ func TestGridSearcherBatches(t *testing.T) {
 func TestGridSearcherEpochs(t *testing.T) {
 	actual := model.GridConfig{MaxLength: model.NewLengthInEpochs(3)}
 	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("3E"), toOps("3E"), toOps("3E"),
 		toOps("3E"), toOps("3E"), toOps("3E"),
 	}

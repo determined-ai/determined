@@ -43,7 +43,7 @@ type (
 		trialID      int
 		trialIDValid bool
 
-		ops []searcher.Runnable
+		ops []searcher.ValidateAfter
 
 		experiment *model.Experiment
 		create     searcher.Create
@@ -99,7 +99,7 @@ func (s *trialWorkloadSequencer) WorkloadManagerType() model.WorkloadManagerType
 }
 
 // OperationRequested records an operation requested by the searcher.
-func (s *trialWorkloadSequencer) OperationRequested(op searcher.Runnable) {
+func (s *trialWorkloadSequencer) OperationRequested(op searcher.ValidateAfter) {
 	s.ops = append(s.ops, op)
 }
 
@@ -168,9 +168,8 @@ func (s *trialWorkloadSequencer) runStepCompleted(msg workload.CompletedMessage)
 	s.BatchesTowardsCurrentOp += msg.Workload.NumBatches
 	s.BatchesSinceLastVal += msg.Workload.NumBatches
 	s.BatchesSinceLastCkpt += msg.Workload.NumBatches
-	if tOp, ok := s.ops[s.CurOpIdx].(searcher.Train); ok &&
-		// We choose not to handle partial batches.
-		tOp.Length.EqualWithinBatch(s.TotalBatchesProcessed, s.unitContext) {
+	// We choose not to handle partial batches.
+	if s.ops[s.CurOpIdx].Length.EqualWithinBatch(s.TotalBatchesProcessed, s.unitContext) {
 		s.CurOpIdx++
 		s.BatchesTowardsCurrentOp = 0
 	}
@@ -238,21 +237,16 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 		return s.validate(), nil
 	}
 
-	switch tOp := s.ops[s.CurOpIdx].(type) {
-	case searcher.Train:
-		batchesLeft := tOp.Length.ToNearestBatch(s.unitContext) - s.BatchesTowardsCurrentOp
-		batchesTilVal := s.batchesUntilValNeeded()
-		batchesTilCkpt := s.batchesUntilCkptNeeded()
-		batchesThisStep := max(min(
-			batchesLeft,
-			batchesTilVal,
-			batchesTilCkpt,
-			s.schedulingUnit,
-		), 1)
-		return s.train(batchesThisStep), nil
-	default:
-		return workload.Workload{}, errors.New("unexpected op type determining workload")
-	}
+	batchesLeft := s.ops[s.CurOpIdx].Length.ToNearestBatch(s.unitContext) - s.BatchesTowardsCurrentOp
+	batchesTilVal := s.batchesUntilValNeeded()
+	batchesTilCkpt := s.batchesUntilCkptNeeded()
+	batchesThisStep := max(min(
+		batchesLeft,
+		batchesTilVal,
+		batchesTilCkpt,
+		s.schedulingUnit,
+	), 1)
+	return s.train(batchesThisStep), nil
 }
 
 func (s trialWorkloadSequencer) hasSearcherValidation() bool {

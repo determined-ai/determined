@@ -48,7 +48,7 @@ checkpoint_policy: none
 	}, model.TrialWorkloadSequencerType)
 
 	schedulingUnit := model.DefaultExperimentConfig(nil).SchedulingUnit
-	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500))
+	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Batches, 500))
 
 	trainWorkload1 := workload.Workload{
 		Kind:                  workload.RunStep,
@@ -307,7 +307,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
-	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500))
+	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Batches, 500))
 	s.OperationRequested(train)
 
 	reportVal, err := s.WorkloadCompleted(workload.CompletedMessage{
@@ -342,7 +342,7 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
-	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Records, 24))
+	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Records, 24))
 	s.OperationRequested(
 		train,
 	)

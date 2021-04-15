@@ -31,7 +31,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Runnable{
+		expected := [][]ValidateAfter{
 			toOps("200B 400B"),
 			toOps("200B"),
 			toOps("200B"),
@@ -57,7 +57,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Runnable{
+		expected := [][]ValidateAfter{
 			toOps("400B 800B 1200B 1600B"),
 			toOps("400B 800B 1200B 1600B"),
 			toOps("400B 800B 1200B 1600B"),
@@ -88,7 +88,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Runnable{
+		expected := [][]ValidateAfter{
 			toOps("1700B 3400B"),
 			toOps("1700B 3400B"),
 			toOps("1700B"),
@@ -117,7 +117,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Runnable{
+		expected := [][]ValidateAfter{
 			toOps("500B 1000B"),
 			toOps("500B 1000B"),
 			toOps("500B 1000B"),
@@ -159,7 +159,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Runnable{
+		expected := [][]ValidateAfter{
 			toOps("500B 1000B 1500B 2000B 2500B 3000B 3500B 4000B"),
 			toOps("500B 1000B 1500B 2000B 2500B 3000B 3500B 4000B"),
 			toOps("500B"),

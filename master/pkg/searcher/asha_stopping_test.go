@@ -20,7 +20,7 @@ func TestASHAStoppingSearcherRecords(t *testing.T) {
 	// there have been no promotions so far.  Since trials cannot be restarted and metrics increase
 	// for later trials, only the first trial will be promoted and all others will be stopped on
 	// the first rung.  See continueTraining method in asha_stopping.go for the logic.
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("64000R 192000R 576000R"),
 		toOps("64000R"), toOps("64000R"), toOps("64000R"),
 		toOps("64000R"), toOps("64000R"), toOps("64000R"),
@@ -40,7 +40,7 @@ func TestASHAStoppingSearcherBatches(t *testing.T) {
 		StopOnce:            true,
 		MaxConcurrentTrials: 2,
 	}
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("1000B 3000B 9000B"),
 		toOps("1000B"), toOps("1000B"), toOps("1000B"),
 		toOps("1000B"), toOps("1000B"), toOps("1000B"),
@@ -60,7 +60,7 @@ func TestASHAStoppingSearcherEpochs(t *testing.T) {
 		StopOnce:            true,
 		MaxConcurrentTrials: 2,
 	}
-	expected := [][]Runnable{
+	expected := [][]ValidateAfter{
 		toOps("1E 4E 12E"),
 		toOps("1E"), toOps("1E"), toOps("1E"),
 		toOps("1E"), toOps("1E"), toOps("1E"),
