@@ -45,6 +45,10 @@
         serveraddress: srvaddr
         identitytoken: idtkn
         registrytoken: rgtkn
+      add_capabilities:
+        - CAP_CHOWN
+      drop_capabilities:
+        - CAP_KILL
     hyperparameters:
       global_batch_size:
         type: const
@@ -157,6 +161,8 @@
       pod_spec:
       ports: {}
       registry_auth: null
+      add_capabilities: []
+      drop_capabilities: []
     hyperparameters:
       global_batch_size:
         type: const

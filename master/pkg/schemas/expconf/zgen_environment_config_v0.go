@@ -46,6 +46,20 @@ func (e EnvironmentConfigV0) GetPodSpec() *k8sV1.Pod {
 	return e.PodSpec
 }
 
+func (e EnvironmentConfigV0) GetAddCapabilities() []string {
+	if e.AddCapabilities == nil {
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .GetAddCapabilities")
+	}
+	return *e.AddCapabilities
+}
+
+func (e EnvironmentConfigV0) GetDropCapabilities() []string {
+	if e.DropCapabilities == nil {
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .GetDropCapabilities")
+	}
+	return *e.DropCapabilities
+}
+
 func (e EnvironmentConfigV0) WithDefaults() EnvironmentConfigV0 {
 	return schemas.WithDefaults(e).(EnvironmentConfigV0)
 }

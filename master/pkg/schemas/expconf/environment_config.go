@@ -22,6 +22,9 @@ type EnvironmentConfigV0 struct {
 	RegistryAuth   *types.AuthConfig `json:"registry_auth"`
 	ForcePullImage *bool             `json:"force_pull_image"`
 	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
+
+	AddCapabilities  *[]string `json:"add_capabilities"`
+	DropCapabilities *[]string `json:"drop_capabilities"`
 }
 
 //go:generate ../gen.sh
