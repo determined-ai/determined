@@ -276,14 +276,14 @@ const HpHeatMaps: React.FC<Props> = ({
           colorScale={colorScale}
           height={galleryHeight}
           valueLabel={metricNameToStr(selectedMetric)}
-          values={chartData?.hpMetrics[generateHpKey(activeHParam[0], activeHParam[1])]}
+          values={chartData?.hpMetrics[generateHpKey(activeHParam[1], activeHParam[0])]}
           width={350}
-          x={chartData?.hpValues[activeHParam[0]] || []}
-          xLabel={activeHParam[0]}
-          xLogScale={chartData?.hpLogScales[activeHParam[0]]}
-          y={chartData?.hpValues[activeHParam[1]] || []}
-          yLabel={activeHParam[1]}
-          yLogScale={chartData?.hpLogScales[activeHParam[1]]}
+          x={chartData?.hpValues[activeHParam[1]] || []}
+          xLabel={activeHParam[1]}
+          xLogScale={chartData?.hpLogScales[activeHParam[1]]}
+          y={chartData?.hpValues[activeHParam[0]] || []}
+          yLabel={activeHParam[0]}
+          yLogScale={chartData?.hpLogScales[activeHParam[0]]}
         />}
       </GalleryModal>
     </div>
