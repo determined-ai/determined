@@ -155,7 +155,7 @@ type AdaptiveASHAConfigV0 struct {
 
 	MaxLength           LengthV0      `json:"max_length"`
 	MaxTrials           int           `json:"max_trials"`
-	BracketRungs        *[]int        `json:"bracket_rungs"`
+	BracketRungs        []int         `json:"bracket_rungs"`
 	Divisor             *float64      `json:"divisor"`
 	Mode                *AdaptiveMode `json:"mode"`
 	MaxRungs            *int          `json:"max_rungs"`

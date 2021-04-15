@@ -1,6 +1,7 @@
 package expconf
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -16,17 +17,17 @@ import (
 // ExperimentConfigV0 is a versioned experiment config.
 type ExperimentConfigV0 struct {
 	// Fields which can be omitted or defined at the cluster level.
-	BindMounts               *BindMountsConfigV0         `json:"bind_mounts"`
+	BindMounts               BindMountsConfigV0          `json:"bind_mounts"`
 	CheckpointPolicy         *string                     `json:"checkpoint_policy"`
 	CheckpointStorage        *CheckpointStorageConfigV0  `json:"checkpoint_storage"`
 	DataLayer                *DataLayerConfigV0          `json:"data_layer"`
-	Data                     *map[string]interface{}     `json:"data"`
+	Data                     map[string]interface{}      `json:"data"`
 	Debug                    *bool                       `json:"debug"`
 	Description              *string                     `json:"description"`
 	Entrypoint               *string                     `json:"entrypoint"`
 	Environment              *EnvironmentConfigV0        `json:"environment"`
 	Internal                 *InternalConfigV0           `json:"internal,omitempty"`
-	Labels                   *LabelsV0                   `json:"labels"`
+	Labels                   LabelsV0                    `json:"labels"`
 	MaxRestarts              *int                        `json:"max_restarts"`
 	MinCheckpointPeriod      *LengthV0                   `json:"min_checkpoint_period"`
 	MinValidationPeriod      *LengthV0                   `json:"min_validation_period"`
@@ -107,6 +108,9 @@ type LabelsV0 map[string]bool
 
 // MarshalJSON implements the json.Marshaler interface.
 func (l LabelsV0) MarshalJSON() ([]byte, error) {
+	if l == nil {
+		return []byte("null"), nil
+	}
 	labels := make([]string, 0, len(l))
 	// var labels []string
 	for label := range l {
@@ -117,6 +121,9 @@ func (l LabelsV0) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (l *LabelsV0) UnmarshalJSON(data []byte) error {
+	if data == nil || bytes.Equal(data, []byte("null")) {
+		return nil
+	}
 	if *l == nil {
 		*l = make(map[string]bool)
 	}
@@ -150,7 +157,7 @@ type ResourcesConfigV0 struct {
 	ResourcePool   *string  `json:"resource_pool"`
 	Priority       *int     `json:"priority"`
 
-	Devices *DevicesConfigV0 `json:"devices"`
+	Devices DevicesConfigV0 `json:"devices"`
 }
 
 //go:generate ../gen.sh
@@ -246,5 +253,5 @@ type InternalConfigV0 struct {
 //go:generate ../gen.sh
 // NativeConfigV0 is a legacy config.
 type NativeConfigV0 struct {
-	Command *[]string `json:"command"`
+	Command []string `json:"command"`
 }

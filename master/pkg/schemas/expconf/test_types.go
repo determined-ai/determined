@@ -67,6 +67,8 @@ type TestRootV0 struct {
 	SubObj             *TestSubV0   `json:"sub_obj"`
 	SubUnion           *TestUnionV0 `json:"sub_union"`
 	RuntimeDefaultable *int         `json:"runtime_defaultable"`
+	DefaultedArray     []string     `json:"defaulted_array"`
+	NodefaultArray     []string     `json:"nodefault_array"`
 }
 
 // RuntimeDefaults implements the RuntimeDefaultable interface.
