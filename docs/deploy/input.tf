@@ -1,5 +1,5 @@
 variable "det_version" {
-  type        = "string"
+  type        = string
   description = "The Determined version the docs are currently built under"
 }
 
