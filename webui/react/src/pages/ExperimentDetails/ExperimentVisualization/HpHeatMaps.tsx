@@ -240,9 +240,9 @@ const HpHeatMaps: React.FC<Props> = ({
                   minItemWidth={resize.width > 320 ? 35 : 27}
                   mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
                   {selectedHParams.map(hParam1 => selectedHParams.map(hParam2 => {
-                    const key = generateHpKey(hParam2, hParam1);
+                    const key = generateHpKey(hParam1, hParam2);
                     return (
-                      <div key={key} onClick={() => handleChartClick(hParam2, hParam1)}>
+                      <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
                         <ScatterPlot
                           colorScale={colorScale}
                           disableZoom
@@ -276,7 +276,7 @@ const HpHeatMaps: React.FC<Props> = ({
           colorScale={colorScale}
           height={galleryHeight}
           valueLabel={metricNameToStr(selectedMetric)}
-          values={chartData?.hpMetrics[generateHpKey(activeHParam[1], activeHParam[0])]}
+          values={chartData?.hpMetrics[generateHpKey(activeHParam[0], activeHParam[1])]}
           width={350}
           x={chartData?.hpValues[activeHParam[1]] || []}
           xLabel={activeHParam[1]}
