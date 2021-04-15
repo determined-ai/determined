@@ -585,6 +585,12 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
 
+	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
+	if err != nil {
+		return err
+	}
+	m.hpImportance, _ = m.system.ActorOf(actor.Addr(hpimportance.RootAddr), hpi)
+
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
@@ -790,12 +796,6 @@ func (m *Master) Run(ctx context.Context) error {
 	} else {
 		log.Info("telemetry reporting is disabled")
 	}
-
-	hpi, err := hpimportance.NewManager(m.db, m.system, m.config.HPImportance, m.config.Root)
-	if err != nil {
-		return err
-	}
-	m.hpImportance, _ = m.system.ActorOf(actor.Addr(hpimportance.RootAddr), hpi)
 
 	return m.startServers(ctx, cert)
 }

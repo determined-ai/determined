@@ -191,8 +191,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			e.restoreTrialsFromPriorOperations(ctx, e.searcher.TrialOperations)
 		} else {
 			e.processOperations(ctx, e.searcher.TrialOperations, nil)
+			ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
 		}
-		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
 		// Since e.searcher.TrialOperations should have all trials that were previously
 		// allocated, we can stop trying to restore new trials after processing these.
 		e.restored = false
