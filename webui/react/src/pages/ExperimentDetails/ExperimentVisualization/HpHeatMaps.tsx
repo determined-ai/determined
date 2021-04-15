@@ -240,9 +240,9 @@ const HpHeatMaps: React.FC<Props> = ({
                   minItemWidth={resize.width > 320 ? 35 : 27}
                   mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
                   {selectedHParams.map(hParam1 => selectedHParams.map(hParam2 => {
-                    const key = generateHpKey(hParam1, hParam2);
+                    const key = generateHpKey(hParam2, hParam1);
                     return (
-                      <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
+                      <div key={key} onClick={() => handleChartClick(hParam2, hParam1)}>
                         <ScatterPlot
                           colorScale={colorScale}
                           disableZoom
@@ -250,12 +250,12 @@ const HpHeatMaps: React.FC<Props> = ({
                           valueLabel={metricNameToStr(selectedMetric)}
                           values={chartData?.hpMetrics[key]}
                           width={350}
-                          x={chartData?.hpValues[hParam1] || []}
-                          xLabel={hParam1}
-                          xLogScale={chartData?.hpLogScales[hParam1]}
-                          y={chartData?.hpValues[hParam2] || []}
-                          yLabel={hParam2}
-                          yLogScale={chartData?.hpLogScales[hParam2]}
+                          x={chartData?.hpValues[hParam2] || []}
+                          xLabel={hParam2}
+                          xLogScale={chartData?.hpLogScales[hParam2]}
+                          y={chartData?.hpValues[hParam1] || []}
+                          yLabel={hParam1}
+                          yLogScale={chartData?.hpLogScales[hParam1]}
                         />
                       </div>
                     );
