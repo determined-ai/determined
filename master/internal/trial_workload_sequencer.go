@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 
 	"github.com/determined-ai/determined/master/pkg/workload"
@@ -152,12 +153,21 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 
 // WorkloadFailed notifies the sequencer that the workload failed. The sequencer returns
 // with a bool indicating if the failure should result in a hard or graceful stop.
-func (s *trialWorkloadSequencer) WorkloadFailed(reason workload.ExitedReason) bool {
-	s.ExitingEarly = true
+func (s *trialWorkloadSequencer) WorkloadFailed(
+	msg workload.CompletedMessage,
+	reason workload.ExitedReason,
+) (bool, error) {
 	if reason == workload.UserCanceled || reason == workload.InvalidHP {
+		// UserCanceled and InvalidHP are still considered "completed".
+		if _, err := s.WorkloadCompleted(msg, func() bool {
+			return false
+		}); err != nil {
+			return false, fmt.Errorf("failed to complete workload with exit reason %v: %w", reason, err)
+		}
 		s.GracefulStop = true
 	}
-	return s.ExitingEarly && !s.GracefulStop
+	s.ExitingEarly = true
+	return s.ExitingEarly && !s.GracefulStop, nil
 }
 
 // runStepCompleted updates the internal state of the sequencer to account for a completed

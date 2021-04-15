@@ -658,12 +658,15 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 		reason := *msg.ExitedReason
 		ctx.Log().Infof("exiting trial early from %v with reason %v", msg.Workload, reason)
 
-		immediateExit := t.sequencer.WorkloadFailed(reason)
+		immediateExit, err := t.sequencer.WorkloadFailed(msg, reason)
+		if err != nil {
+			return fmt.Errorf("failed to report workload failed: %w", err)
+		}
 
 		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
 			return trialReportEarlyExit{reason: *msg.ExitedReason, trialSnapshot: s}
 		}); err != nil {
-			return errors.Wrap(err, "failed to report early exit with snapshot")
+			return fmt.Errorf("failed to report early exit with snapshot: %w", err)
 		}
 
 		if immediateExit {
