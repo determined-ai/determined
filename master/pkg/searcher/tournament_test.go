@@ -23,11 +23,11 @@ func TestRandomTournamentSearcher(t *testing.T) {
 		}),
 	)
 	expected := [][]Runnable{
-		toOps("300B V"),
-		toOps("300B V"),
-		toOps("200B V"),
-		toOps("200B V"),
-		toOps("200B V"),
+		toOps("300B"),
+		toOps("300B"),
+		toOps("200B"),
+		toOps("200B"),
+		toOps("200B"),
 	}
 	checkSimulation(t, actual, nil, ConstantValidation, expected)
 }
@@ -46,13 +46,13 @@ func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 
 func TestTournamentSearchMethod(t *testing.T) {
 	expectedTrials := []predefinedTrial{
-		newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.1),
-		newConstantPredefinedTrial(toOps("1000B V"), 0.2),
-		newConstantPredefinedTrial(toOps("1000B V"), 0.3),
+		newConstantPredefinedTrial(toOps("1000B 3000B"), 0.1),
+		newConstantPredefinedTrial(toOps("1000B"), 0.2),
+		newConstantPredefinedTrial(toOps("1000B"), 0.3),
 
-		newConstantPredefinedTrial(toOps("1000B V"), 0.3),
-		newConstantPredefinedTrial(toOps("1000B V"), 0.2),
-		newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.1),
+		newConstantPredefinedTrial(toOps("1000B"), 0.3),
+		newConstantPredefinedTrial(toOps("1000B"), 0.2),
+		newConstantPredefinedTrial(toOps("1000B 3000B"), 0.1),
 	}
 
 	adaptiveConfig1 := model.SearcherConfig{

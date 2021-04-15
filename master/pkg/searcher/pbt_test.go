@@ -32,9 +32,9 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		}
 
 		expected := [][]Runnable{
-			toOps("200B V 200B V"),
-			toOps("200B V"),
-			toOps("200B V"),
+			toOps("200B 400B"),
+			toOps("200B"),
+			toOps("200B"),
 		}
 		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
@@ -58,9 +58,9 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		}
 
 		expected := [][]Runnable{
-			toOps("400B V 400B V 400B V 400B V"),
-			toOps("400B V 400B V 400B V 400B V"),
-			toOps("400B V 400B V 400B V 400B V"),
+			toOps("400B 800B 1200B 1600B"),
+			toOps("400B 800B 1200B 1600B"),
+			toOps("400B 800B 1200B 1600B"),
 		}
 		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
@@ -89,10 +89,10 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		}
 
 		expected := [][]Runnable{
-			toOps("1700B V 1700B V"),
-			toOps("1700B V 1700B V"),
-			toOps("1700B V"),
-			toOps("1700B V"),
+			toOps("1700B 3400B"),
+			toOps("1700B 3400B"),
+			toOps("1700B"),
+			toOps("1700B"),
 		}
 		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
@@ -118,24 +118,24 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		}
 
 		expected := [][]Runnable{
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V 500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B 1000B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
 		}
 		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
@@ -160,24 +160,24 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 		}
 
 		expected := [][]Runnable{
-			toOps("500B V 500B V 500B V 500B V 500B V 500B V 500B V 500B V"),
-			toOps("500B V 500B V 500B V 500B V 500B V 500B V 500B V 500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
-			toOps("500B V"),
+			toOps("500B 1000B 1500B 2000B 2500B 3000B 3500B 4000B"),
+			toOps("500B 1000B 1500B 2000B 2500B 3000B 3500B 4000B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
+			toOps("500B"),
 		}
 		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
@@ -370,14 +370,14 @@ func TestPBTSearchMethod(t *testing.T) {
 			name: "smaller is better",
 			expectedTrials: []predefinedTrial{
 				// First generation.
-				newConstantPredefinedTrial(toOps("200B V 200B V"), 0.5),
-				newConstantPredefinedTrial(toOps("200B V"), 0.6),
+				newConstantPredefinedTrial(toOps("200B 400B"), 0.5),
+				newConstantPredefinedTrial(toOps("200B"), 0.6),
 				// Second generation beats first generation.
-				newConstantPredefinedTrial(toOps("200B V 200B V 200B V"), 0.1),
+				newConstantPredefinedTrial(toOps("200B 400B 600B"), 0.1),
 				// Third generation loses to second generation.
-				newConstantPredefinedTrial(toOps("200B V"), 0.2),
+				newConstantPredefinedTrial(toOps("200B"), 0.2),
 				// Fourth generation loses to second generation also.
-				newConstantPredefinedTrial(toOps("200B V"), 0.3),
+				newConstantPredefinedTrial(toOps("200B"), 0.3),
 			},
 			config: model.SearcherConfig{
 				PBTConfig: &model.PBTConfig{
@@ -398,13 +398,13 @@ func TestPBTSearchMethod(t *testing.T) {
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newEarlyExitPredefinedTrial(toOps("200B"), 0.5),
-				newConstantPredefinedTrial(toOps("200B V 200B V"), 0.6),
+				newConstantPredefinedTrial(toOps("200B 400B"), 0.6),
 				// Second generation beats first generation.
-				newConstantPredefinedTrial(toOps("200B V 200B V 200B V"), 0.1),
+				newConstantPredefinedTrial(toOps("200B 400B 600B"), 0.1),
 				// Third generation loses to second generation.
-				newConstantPredefinedTrial(toOps("200B V"), 0.2),
+				newConstantPredefinedTrial(toOps("200B"), 0.2),
 				// Fourth generation loses to second generation also.
-				newConstantPredefinedTrial(toOps("200B V"), 0.3),
+				newConstantPredefinedTrial(toOps("200B"), 0.3),
 			},
 			config: model.SearcherConfig{
 				PBTConfig: &model.PBTConfig{
@@ -424,14 +424,14 @@ func TestPBTSearchMethod(t *testing.T) {
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
 				// First generation.
-				newConstantPredefinedTrial(toOps("200B V 200B V"), 0.5),
-				newConstantPredefinedTrial(toOps("200B V"), 0.4),
+				newConstantPredefinedTrial(toOps("200B 400B"), 0.5),
+				newConstantPredefinedTrial(toOps("200B"), 0.4),
 				// Second generation beats first generation.
-				newConstantPredefinedTrial(toOps("200B V 200B V 200B V"), 0.9),
+				newConstantPredefinedTrial(toOps("200B 400B 600B"), 0.9),
 				// Third generation loses to second generation.
-				newConstantPredefinedTrial(toOps("200B V"), 0.8),
+				newConstantPredefinedTrial(toOps("200B"), 0.8),
 				// Fourth generation loses to second generation also.
-				newConstantPredefinedTrial(toOps("200B V"), 0.7),
+				newConstantPredefinedTrial(toOps("200B"), 0.7),
 			},
 			config: model.SearcherConfig{
 				PBTConfig: &model.PBTConfig{
@@ -451,14 +451,14 @@ func TestPBTSearchMethod(t *testing.T) {
 			name: "early exit -- smaller is not better",
 			expectedTrials: []predefinedTrial{
 				// First generation.
-				newEarlyExitPredefinedTrial(toOps("200B V 200B"), 0.5),
-				newConstantPredefinedTrial(toOps("200B V"), 0.4),
+				newEarlyExitPredefinedTrial(toOps("200B 400B"), 0.5),
+				newConstantPredefinedTrial(toOps("200B"), 0.4),
 				// Second generation beats first generation.
-				newConstantPredefinedTrial(toOps("200B V 200B V 200B V"), 0.9),
+				newConstantPredefinedTrial(toOps("200B 400B 600B"), 0.9),
 				// Third generation loses to second generation.
-				newConstantPredefinedTrial(toOps("200B V"), 0.8),
+				newConstantPredefinedTrial(toOps("200B"), 0.8),
 				// Fourth generation loses to second generation also.
-				newConstantPredefinedTrial(toOps("200B V"), 0.7),
+				newConstantPredefinedTrial(toOps("200B"), 0.7),
 			},
 			config: model.SearcherConfig{
 				PBTConfig: &model.PBTConfig{

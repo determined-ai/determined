@@ -124,25 +124,17 @@ func Simulate(
 				return simulation, err
 			}
 			nextTrialID++
-		case Runnable:
+		case Train:
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
-			if train, ok := operation.(Train); ok {
-				lengthCompleted[requestID] += model.PartialUnits(train.Length.Units)
-				s.SetTrialProgress(requestID, lengthCompleted[requestID])
-			}
+			s.SetTrialProgress(requestID, model.PartialUnits(operation.Length.Units))
 
-			train, ok := operation.(Train)
-			if !ok {
-				return simulation, fmt.Errorf("unexpected runnable type: %T", operation)
-			}
-
-			s.SetTrialProgress(requestID, model.PartialUnits(train.Length.Units))
 			metrics := generateMetrics(random, trialIDs[requestID], trialOpIdxs[requestID], valFunc, metricName)
 			ops, err := s.ValidationCompleted(trialIDs[requestID], metrics)
 			if err != nil {
 				return simulation, err
 			}
 			trialOpIdxs[requestID]++
+
 			shutdown, err = handleOperations(pending, &requestIDs, ops)
 			if err != nil {
 				return simulation, err

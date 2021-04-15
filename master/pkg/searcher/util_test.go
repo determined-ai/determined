@@ -30,11 +30,6 @@ func isExpected(actual, expected []Runnable) bool {
 			if !ok || op.Length != act.Length {
 				return false
 			}
-		case Validate:
-			_, ok := expected[i].(Validate)
-			if !ok {
-				return false
-			}
 		default:
 			panic("trial had unexpected operation type")
 		}
@@ -102,10 +97,7 @@ func toOps(types string) (ops []Runnable) {
 	for _, unparsed := range strings.Fields(types) {
 		switch char := string(unparsed[0]); char {
 		case "V":
-			if len(unparsed) > 1 {
-				panic("invalid short-form op")
-			}
-			ops = append(ops, Validate{})
+			panic("invalid short-form op")
 		default:
 			count, err := strconv.Atoi(unparsed[:len(unparsed)-1])
 			if err != nil {
@@ -140,10 +132,8 @@ func newPredefinedTrial(ops []Runnable, earlyExit *int, valMetrics []float64) pr
 
 func newEarlyExitPredefinedTrial(ops []Runnable, valMetric float64) predefinedTrial {
 	var valMetrics []float64
-	for _, op := range ops {
-		if _, ok := op.(Validate); ok {
-			valMetrics = append(valMetrics, valMetric)
-		}
+	for range ops {
+		valMetrics = append(valMetrics, valMetric)
 	}
 	exitEarly := len(ops) - 1
 	return newPredefinedTrial(ops, &exitEarly, valMetrics)
@@ -151,10 +141,8 @@ func newEarlyExitPredefinedTrial(ops []Runnable, valMetric float64) predefinedTr
 
 func newConstantPredefinedTrial(ops []Runnable, valMetric float64) predefinedTrial {
 	var valMetrics []float64
-	for _, op := range ops {
-		if _, ok := op.(Validate); ok {
-			valMetrics = append(valMetrics, valMetric)
-		}
+	for _ = range ops {
+		valMetrics = append(valMetrics, valMetric)
 	}
 	return newPredefinedTrial(ops, nil, valMetrics)
 }
@@ -171,25 +159,6 @@ func (t *predefinedTrial) Train(length model.Length, opIndex int) error {
 		return errors.Errorf("wanted %s got %s", tOp.Length, length)
 	}
 	return nil
-}
-
-func (t *predefinedTrial) Validate(opIndex int) (float64, error) {
-	if opIndex >= len(t.Ops) {
-		return 0, errors.Errorf("ran out of expected ops trying to validate")
-	}
-	if _, ok := t.Ops[opIndex].(Validate); !ok {
-		return 0, errors.Errorf("wanted %v", t.Ops[0])
-	}
-	valsSeen := 0
-	for idx := range t.Ops {
-		if idx == opIndex {
-			return t.ValMetrics[valsSeen], nil
-		}
-		if _, ok := t.Ops[idx].(Validate); ok {
-			valsSeen++
-		}
-	}
-	return 0, errors.New("ran out of metrics to return for validations")
 }
 
 func (t *predefinedTrial) CheckComplete(opIndex int) error {
@@ -209,6 +178,7 @@ func checkValueSimulation(
 
 	trialIDs := map[model.RequestID]int{}
 	trialOpIdx := map[model.RequestID]int{}
+	trialEarlyExits := map[model.RequestID]bool{}
 
 	ctx := context{
 		rand:    nprand.New(0),
@@ -223,7 +193,6 @@ func checkValueSimulation(
 	pending = append(pending, ops...)
 
 	for len(pending) > 0 {
-		var exitEarly bool
 		var requestID model.RequestID
 		operation := pending[0]
 		pending = pending[1:]
@@ -245,10 +214,14 @@ func checkValueSimulation(
 
 		case Runnable:
 			requestID = operation.GetRequestID()
+			if trialEarlyExits[requestID] {
+				continue
+			}
+
 			trialID := trialIDs[requestID]
 			trial := expectedTrials[trialID]
 			if trial.EarlyExit != nil && trialOpIdx[requestID] == *trial.EarlyExit {
-				exitEarly = true
+				trialEarlyExits[requestID] = true
 			}
 			ops, err = simulateOperationComplete(ctx, method, trial, operation, trialOpIdx[requestID])
 			if err != nil {
@@ -278,20 +251,6 @@ func checkValueSimulation(
 		}
 
 		pending = append(pending, ops...)
-		if exitEarly {
-			var newPending []Operation
-			for _, op := range pending {
-				switch op := op.(type) {
-				case Requested:
-					if op.GetRequestID() != requestID {
-						newPending = append(newPending, op)
-					}
-				default:
-					newPending = append(newPending, op)
-				}
-			}
-			pending = newPending
-		}
 	}
 
 	for requestID, trialID := range trialIDs {
@@ -336,27 +295,19 @@ func simulateOperationComplete(
 		if err = trial.Train(operation.Length, opIndex); err != nil {
 			return nil, errors.Wrap(err, "error checking Train with predefinedTrial")
 		}
-
 		if trial.EarlyExit != nil && opIndex == *trial.EarlyExit {
 			ops, err = method.trialExitedEarly(ctx, operation.RequestID, workload.UserCanceled)
-		} else {
-			ops, err = method.trainCompleted(ctx, operation.RequestID, operation)
-		}
-		if err != nil {
-			return nil, errors.Wrap(err, "trainCompleted")
+			if err != nil {
+				return nil, errors.Wrap(err, "trainCompleted")
+			}
+			return ops, nil
 		}
 
-	case Validate:
-		val, vErr := trial.Validate(opIndex)
-		if vErr != nil {
-			return nil, errors.Wrap(err, "error checking Validate with predefinedTrial")
-		}
-		metrics := workload.ValidationMetrics{
+		ops, err = method.validationCompleted(ctx, operation.RequestID, workload.ValidationMetrics{
 			Metrics: map[string]interface{}{
-				"error": val,
+				"error": trial.ValMetrics[opIndex],
 			},
-		}
-		ops, err = method.validationCompleted(ctx, operation.RequestID, operation, metrics)
+		})
 		if err != nil {
 			return nil, errors.Wrap(err, "validationCompleted")
 		}

@@ -21,11 +21,11 @@ func TestASHAStoppingSearcherRecords(t *testing.T) {
 	// for later trials, only the first trial will be promoted and all others will be stopped on
 	// the first rung.  See continueTraining method in asha_stopping.go for the logic.
 	expected := [][]Runnable{
-		toOps("64000R V 128000R V 384000R V"),
-		toOps("64000R V"), toOps("64000R V"), toOps("64000R V"),
-		toOps("64000R V"), toOps("64000R V"), toOps("64000R V"),
-		toOps("64000R V"), toOps("64000R V"), toOps("64000R V"),
-		toOps("64000R V"), toOps("64000R V"),
+		toOps("64000R 192000R 576000R"),
+		toOps("64000R"), toOps("64000R"), toOps("64000R"),
+		toOps("64000R"), toOps("64000R"), toOps("64000R"),
+		toOps("64000R"), toOps("64000R"), toOps("64000R"),
+		toOps("64000R"), toOps("64000R"),
 	}
 	checkSimulation(t, newAsyncHalvingStoppingSearch(actual), nil, TrialIDMetric, expected)
 }
@@ -41,11 +41,11 @@ func TestASHAStoppingSearcherBatches(t *testing.T) {
 		MaxConcurrentTrials: 2,
 	}
 	expected := [][]Runnable{
-		toOps("1000B V 2000B V 6000B V"),
-		toOps("1000B V"), toOps("1000B V"), toOps("1000B V"),
-		toOps("1000B V"), toOps("1000B V"), toOps("1000B V"),
-		toOps("1000B V"), toOps("1000B V"), toOps("1000B V"),
-		toOps("1000B V"), toOps("1000B V"),
+		toOps("1000B 3000B 9000B"),
+		toOps("1000B"), toOps("1000B"), toOps("1000B"),
+		toOps("1000B"), toOps("1000B"), toOps("1000B"),
+		toOps("1000B"), toOps("1000B"), toOps("1000B"),
+		toOps("1000B"), toOps("1000B"),
 	}
 	checkSimulation(t, newAsyncHalvingStoppingSearch(actual), nil, TrialIDMetric, expected)
 }
@@ -61,11 +61,11 @@ func TestASHAStoppingSearcherEpochs(t *testing.T) {
 		MaxConcurrentTrials: 2,
 	}
 	expected := [][]Runnable{
-		toOps("1E V 3E V 8E V"),
-		toOps("1E V"), toOps("1E V"), toOps("1E V"),
-		toOps("1E V"), toOps("1E V"), toOps("1E V"),
-		toOps("1E V"), toOps("1E V"), toOps("1E V"),
-		toOps("1E V"), toOps("1E V"),
+		toOps("1E 4E 12E"),
+		toOps("1E"), toOps("1E"), toOps("1E"),
+		toOps("1E"), toOps("1E"), toOps("1E"),
+		toOps("1E"), toOps("1E"), toOps("1E"),
+		toOps("1E"), toOps("1E"),
 	}
 	checkSimulation(t, newAsyncHalvingStoppingSearch(actual), nil, TrialIDMetric, expected)
 }
@@ -76,18 +76,18 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.05),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.06),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.07),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.08),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.09),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.10),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.11),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.12),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B"), 0.05),
+				newConstantPredefinedTrial(toOps("1000B"), 0.06),
+				newConstantPredefinedTrial(toOps("1000B"), 0.07),
+				newConstantPredefinedTrial(toOps("1000B"), 0.08),
+				newConstantPredefinedTrial(toOps("1000B"), 0.09),
+				newConstantPredefinedTrial(toOps("1000B"), 0.10),
+				newConstantPredefinedTrial(toOps("1000B"), 0.11),
+				newConstantPredefinedTrial(toOps("1000B"), 0.12),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
@@ -105,18 +105,18 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "smaller is better (round robin)",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B"), 0.04),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
@@ -134,18 +134,18 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.05),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.06),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.07),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.08),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.09),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.10),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.11),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.12),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.05),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.06),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.07),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.08),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.09),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.10),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.11),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.12),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
@@ -163,18 +163,18 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "smaller is not better (round robin)",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B 3000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B 3000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.04),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
@@ -192,18 +192,18 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is better (round robin)",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
-				newEarlyExitPredefinedTrial(toOps("1000B V 2000B"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B"), 0.04),
+				newEarlyExitPredefinedTrial(toOps("1000B 3000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B"), 0.04),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
@@ -221,18 +221,18 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is not better (round robin)",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.03),
-				newEarlyExitPredefinedTrial(toOps("1000B V 2000B"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.04),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.01),
-				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.03),
-				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.03),
+				newEarlyExitPredefinedTrial(toOps("1000B 3000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B 3000B 9000B"), 0.04),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
@@ -253,10 +253,10 @@ func TestASHAStoppingSearchMethod(t *testing.T) {
 				// The first trial is promoted due to asynchronous
 				// promotions despite being below top 1/3 of trials in
 				// base rung.
-				newConstantPredefinedTrial(toOps("9000B V"), 0.05),
-				newConstantPredefinedTrial(toOps("9000B V"), 0.06),
-				newConstantPredefinedTrial(toOps("9000B V"), 0.07),
-				newConstantPredefinedTrial(toOps("9000B V"), 0.08),
+				newConstantPredefinedTrial(toOps("9000B"), 0.05),
+				newConstantPredefinedTrial(toOps("9000B"), 0.06),
+				newConstantPredefinedTrial(toOps("9000B"), 0.07),
+				newConstantPredefinedTrial(toOps("9000B"), 0.08),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{

@@ -38,11 +38,11 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 		{
 			name: "smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
-				newConstantPredefinedTrial(toOps("300B V"), 0.2),
-				newConstantPredefinedTrial(toOps("300B V"), 0.3),
-				newConstantPredefinedTrial(toOps("900B V"), 0.4),
-				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
+				newConstantPredefinedTrial(toOps("300B"), 0.2),
+				newConstantPredefinedTrial(toOps("300B"), 0.3),
+				newConstantPredefinedTrial(toOps("900B"), 0.4),
+				newConstantPredefinedTrial(toOps("900B"), 0.5),
 			},
 			config: model.SearcherConfig{
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
@@ -60,11 +60,11 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
 				newEarlyExitPredefinedTrial(toOps("300B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B V"), 0.3),
-				newConstantPredefinedTrial(toOps("900B V"), 0.4),
-				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+				newConstantPredefinedTrial(toOps("300B"), 0.3),
+				newConstantPredefinedTrial(toOps("900B"), 0.4),
+				newConstantPredefinedTrial(toOps("900B"), 0.5),
 			},
 			config: model.SearcherConfig{
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
@@ -82,11 +82,11 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 		{
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.5),
-				newConstantPredefinedTrial(toOps("300B V"), 0.4),
-				newConstantPredefinedTrial(toOps("300B V"), 0.3),
-				newConstantPredefinedTrial(toOps("900B V"), 0.2),
-				newConstantPredefinedTrial(toOps("900B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.5),
+				newConstantPredefinedTrial(toOps("300B"), 0.4),
+				newConstantPredefinedTrial(toOps("300B"), 0.3),
+				newConstantPredefinedTrial(toOps("900B"), 0.2),
+				newConstantPredefinedTrial(toOps("900B"), 0.1),
 			},
 			config: model.SearcherConfig{
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
@@ -104,11 +104,11 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.5),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.5),
 				newEarlyExitPredefinedTrial(toOps("300B"), 0.4),
-				newConstantPredefinedTrial(toOps("300B V"), 0.3),
-				newConstantPredefinedTrial(toOps("900B V"), 0.2),
-				newConstantPredefinedTrial(toOps("900B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B"), 0.3),
+				newConstantPredefinedTrial(toOps("900B"), 0.2),
+				newConstantPredefinedTrial(toOps("900B"), 0.1),
 			},
 			config: model.SearcherConfig{
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
@@ -134,11 +134,11 @@ func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
-				newConstantPredefinedTrial(toOps("300B V"), 0.2),
-				newConstantPredefinedTrial(toOps("300B V"), 0.3),
-				newConstantPredefinedTrial(toOps("900B V"), 0.4),
-				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
+				newConstantPredefinedTrial(toOps("300B"), 0.2),
+				newConstantPredefinedTrial(toOps("300B"), 0.3),
+				newConstantPredefinedTrial(toOps("900B"), 0.4),
+				newConstantPredefinedTrial(toOps("900B"), 0.5),
 			},
 			config: model.SearcherConfig{
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
@@ -157,11 +157,11 @@ func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
 				newEarlyExitPredefinedTrial(toOps("300B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B V"), 0.3),
-				newConstantPredefinedTrial(toOps("900B V"), 0.4),
-				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+				newConstantPredefinedTrial(toOps("300B"), 0.3),
+				newConstantPredefinedTrial(toOps("900B"), 0.4),
+				newConstantPredefinedTrial(toOps("900B"), 0.5),
 			},
 			config: model.SearcherConfig{
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
@@ -180,11 +180,11 @@ func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.2),
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.3),
-				newConstantPredefinedTrial(toOps("900B V"), 0.4),
-				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.2),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.3),
+				newConstantPredefinedTrial(toOps("900B"), 0.4),
+				newConstantPredefinedTrial(toOps("900B"), 0.5),
 			},
 			config: model.SearcherConfig{
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
@@ -203,11 +203,11 @@ func TestAdaptiveASHAStoppingSearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.1),
 				newEarlyExitPredefinedTrial(toOps("300B"), 0.2),
-				newConstantPredefinedTrial(toOps("300B V 600B V"), 0.3),
-				newConstantPredefinedTrial(toOps("900B V"), 0.4),
-				newConstantPredefinedTrial(toOps("900B V"), 0.5),
+				newConstantPredefinedTrial(toOps("300B 900B"), 0.3),
+				newConstantPredefinedTrial(toOps("900B"), 0.4),
+				newConstantPredefinedTrial(toOps("900B"), 0.5),
 			},
 			config: model.SearcherConfig{
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{

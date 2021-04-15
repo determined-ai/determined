@@ -229,7 +229,8 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 			errors.New("cannot call sequencer.Workload() before sequencer.SetTrialID()")
 	}
 
-	if s.postGracefulStopCheckpointNeeded() || s.postValidationCheckpointNeeded() || s.minCheckpointNeeded() {
+	if s.preSearchValidationCheckpointNeeded() || s.postGracefulStopCheckpointNeeded() ||
+		s.postValidationCheckpointNeeded() || s.minCheckpointNeeded() {
 		return s.checkpoint(), nil
 	}
 
@@ -368,6 +369,10 @@ func (s *trialWorkloadSequencer) postGracefulStopCheckpointNeeded() bool {
 
 func (s *trialWorkloadSequencer) postValidationCheckpointNeeded() bool {
 	return s.NeedPostValidationCkpt && s.BatchesSinceLastCkpt != 0
+}
+
+func (s *trialWorkloadSequencer) preSearchValidationCheckpointNeeded() bool {
+	return s.hasSearcherValidation() && s.BatchesSinceLastCkpt != 0
 }
 
 func (s *trialWorkloadSequencer) batchesUntilCkptNeeded() int {
