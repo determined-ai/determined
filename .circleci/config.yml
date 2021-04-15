@@ -292,6 +292,7 @@ commands:
       - run:
           name: Run e2e tests
           working_directory: ~/project/e2e_tests
+          no_output_timeout: 30m
           command: |
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             pytest -vv -s \
