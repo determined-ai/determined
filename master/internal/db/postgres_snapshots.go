@@ -15,7 +15,7 @@ func (db *PgDB) ExperimentSnapshot(experimentID int) ([]byte, int, error) {
 		Content []byte `db:"content"`
 	}{}
 	if err := db.query(`
-SELECT content
+SELECT version, content
 FROM experiment_snapshots
 WHERE experiment_id = $1
 ORDER BY id DESC
@@ -36,7 +36,7 @@ func (db *PgDB) TrialSnapshot(
 		Content []byte `db:"content"`
 	}{}
 	if err := db.query(`
-SELECT content
+SELECT version, content
 FROM trial_snapshots
 WHERE experiment_id = $1 AND request_id = $2
 ORDER BY id DESC
