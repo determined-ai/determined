@@ -109,9 +109,9 @@ func (s *trialWorkloadSequencer) SetTrialID(trialID int) {
 }
 
 // WorkloadCompleted receives the searcher.CompletedMessage and updates the internal state of the
-// trialWorkloadSequencer accordingly. It and WorkloadFailed are the only methods that should update the state.
-// It snapshots this state whenever we've just completed a checkpoint, and should be the only method
-// to alter the snapshot, too.
+// trialWorkloadSequencer accordingly. It and WorkloadFailed are the only methods that should update
+// the state. It snapshots this state whenever we've just completed a checkpoint, and should be the
+// only method to alter the snapshot, too.
 func (s *trialWorkloadSequencer) WorkloadCompleted(
 	msg workload.CompletedMessage, isBestValFunc func() bool,
 ) (reportValidation bool, err error) {
@@ -256,7 +256,7 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 }
 
 func (s trialWorkloadSequencer) hasSearcherValidation() bool {
-	// If we just finished an op, but didn't end with a validation, we have a searcher validation to do.
+	// If we just finished an op, but didn't end with a validation, we have a searcher validation.
 	if s.BatchesTowardsCurrentOp == 0 && s.BatchesSinceLastVal != 0 {
 		return true
 	}

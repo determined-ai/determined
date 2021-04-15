@@ -27,7 +27,6 @@ type (
 	}
 
 	asyncHalvingSearch struct {
-		defaultSearchMethod
 		model.AsyncHalvingConfig
 		asyncHalvingSearchState
 	}

@@ -114,7 +114,9 @@ func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.Pa
 }
 
 // ValidationCompleted informs the searcher that a validation for the trial was completed.
-func (s *Searcher) ValidationCompleted(trialID int, metrics workload.ValidationMetrics) ([]Operation, error) {
+func (s *Searcher) ValidationCompleted(
+	trialID int, metrics workload.ValidationMetrics,
+) ([]Operation, error) {
 	requestID, ok := s.RequestIDs[trialID]
 	if !ok {
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)

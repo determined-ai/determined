@@ -128,7 +128,8 @@ func Simulate(
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
 			s.SetTrialProgress(requestID, model.PartialUnits(operation.Length.Units))
 
-			metrics := generateMetrics(random, trialIDs[requestID], trialOpIdxs[requestID], valFunc, metricName)
+			metrics := generateMetrics(
+				random, trialIDs[requestID], trialOpIdxs[requestID], valFunc, metricName)
 			ops, err := s.ValidationCompleted(trialIDs[requestID], metrics)
 			if err != nil {
 				return simulation, err

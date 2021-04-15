@@ -141,7 +141,7 @@ func newEarlyExitPredefinedTrial(ops []Runnable, valMetric float64) predefinedTr
 
 func newConstantPredefinedTrial(ops []Runnable, valMetric float64) predefinedTrial {
 	var valMetrics []float64
-	for _ = range ops {
+	for range ops {
 		valMetrics = append(valMetrics, valMetric)
 	}
 	return newPredefinedTrial(ops, nil, valMetrics)

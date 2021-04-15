@@ -165,7 +165,9 @@ checkpoint_policy: none
 	isNotBestVal := func() bool { return false }
 
 	// Complete first RUN_STEP.
-	reportVal, err := s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload1}, isNotBestVal)
+	reportVal, err := s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: trainWorkload1,
+	}, isNotBestVal)
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	w, err = s.Workload()
@@ -174,7 +176,9 @@ checkpoint_policy: none
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload1)
 
 	// Complete second RUN_STEP.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload2}, isNotBestVal)
+	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: trainWorkload2,
+	}, isNotBestVal)
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	w, err = s.Workload()
@@ -194,14 +198,18 @@ checkpoint_policy: none
 	assert.Equal(t, w, trainWorkload3)
 
 	// Complete third and fourth RUN_STEP.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload3}, isNotBestVal)
+	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: trainWorkload3,
+	}, isNotBestVal)
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload4)
 
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload4}, isNotBestVal)
+	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: trainWorkload4,
+	}, isNotBestVal)
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	w, err = s.Workload()
@@ -230,7 +238,9 @@ checkpoint_policy: none
 	assert.Equal(t, w, trainWorkload5)
 
 	// Complete last RUN_STEP.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload5}, nil)
+	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: trainWorkload5,
+	}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	w, err = s.Workload()
@@ -246,7 +256,9 @@ checkpoint_policy: none
 	assert.Equal(t, w, trainWorkload5)
 
 	// Replay last RUN_STEP after rollback.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload5}, nil)
+	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: trainWorkload5,
+	}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	w, err = s.Workload()
