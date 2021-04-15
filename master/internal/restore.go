@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -16,7 +15,7 @@ import (
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
 // shimmed. Experiment and trial snapshots share a version currently.
-const experimentSnapshotVersion = 2
+const experimentSnapshotVersion = 3
 
 // Restore works by restoring from distributed consistent snapshots taken through the course
 // of an experiment. Snapshots within the system flow from the bottom up, starting with the
@@ -105,7 +104,7 @@ func (e *experiment) restoreTrial(
 		return true
 	default:
 		trialID = &trial.ID
-		l = l.WithField("trial-id", trialID)
+		l = l.WithField("trial-id", trial.ID)
 		if _, terminal = model.TerminalStates[trial.State]; terminal {
 			l.Infof("trial was in terminal state in restore: %s", trial.State)
 			return true
@@ -194,12 +193,14 @@ func (e *experiment) snapshotAndSave(ctx *actor.Context, ts trialSnapshot) {
 var experimentSnapshotShims = map[int]snapshotShimFunc{
 	0: shimExperimentSnapshotV0,
 	1: shimExperimentSnapshotV1,
+	2: shimExperimentSnapshotV2,
 }
 
 // trialSnapshotShims maps a version to the shim that bumps that version.
 var trialSnapshotShims = map[int]snapshotShimFunc{
 	0: shimTrialSnapshotV0,
 	1: noopShim,
+	2: shimTrialSnapshotV2,
 }
 
 // shimExperimentSnapshot shims a trial snapshot to the version required by the master,
@@ -323,4 +324,78 @@ func shimExperimentSnapshotV1(snapshot []byte) ([]byte, error) {
 	delete(searcherState, "units_completed_by_trial")
 
 	return json.Marshal(experimentSnapshotV1)
+}
+
+// Version 2 => 3 shims
+
+// shimExperimentSnapshotV2 shims a v2 snapshot to a v3 snapshot. From v2 to v3,
+// Train and Validate operations were merged into a single ValidateAfter operation
+// that indicates to the trial the total units to train before reporting a validation
+// to the searcher.
+func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
+	var experimentSnapshotV2 map[string]interface{}
+	if err := json.Unmarshal(snapshot, &experimentSnapshotV2); err != nil {
+		return nil, err
+	}
+
+	searcherState := experimentSnapshotV2["searcher_state"].(map[string]interface{})
+	operationsList := searcherState["trial_operations"].([]interface{})
+
+	totalUnitsForTrial := map[string]float64{} // string is model.RequestID
+	var newOperationsList []map[string]interface{}
+	for _, iOp := range operationsList {
+		op := iOp.(map[string]interface{})
+		switch searcher.OperationType(op["OperationType"].(float64)) {
+		case searcher.TrainOperation:
+			op := op["Operation"].(map[string]interface{})
+			requestID := op["RequestID"].(string)
+			length := op["Length"].(map[string]interface{})
+			for unit, units := range length {
+				totalUnitsForTrial[requestID] += units.(float64)
+				newOperationsList = append(newOperationsList, map[string]interface{}{
+					"OperationType": searcher.ValidateAfterOperation,
+					"Operation": map[string]interface{}{
+						"RequestID": requestID,
+						"Length": map[string]interface{}{
+							unit: totalUnitsForTrial[requestID],
+						},
+					},
+				})
+			}
+		case searcher.ValidateOperation:
+			continue
+		default:
+			newOperationsList = append(newOperationsList, op)
+		}
+	}
+
+	searcherState["trial_operations"] = newOperationsList
+
+	return json.Marshal(experimentSnapshotV2)
+}
+
+// shimTrialSnapshotV2 shims a v2 trial snapshot to a v3 trial snapshot.
+// From v2 to v3, Train and Validate operations were replaced by ValidateAfter ops.
+func shimTrialSnapshotV2(snapshot []byte) ([]byte, error) {
+	var trialSnapshotV2 map[string]interface{}
+	if err := json.Unmarshal(snapshot, &trialSnapshotV2); err != nil {
+		return nil, err
+	}
+
+	// Remove instances of `cached_checkpoint`.
+	sequencerState := trialSnapshotV2["trial_workload_sequencer_state"].(map[string]interface{})
+
+	// Previously, operations were always issued in twos, now they are issued in ones.
+	// Being on the N or N + 1 opIdx previous, where N = 2k for some k is now equivalent
+	// to being on the N / 2 opIdx. Whether we were on the N or N + 1'th op is encoded in
+	// the BatchesTowardsCurrentOp == 0 && BatchesSinceLastVal != 0, so into a training op
+	// but not done.
+	sequencerState["cur_op_idx"] = int(sequencerState["cur_op_idx"].(float64)) / 2
+
+	if sequencerState["latest_snapshot"] != nil {
+		latestSnapshot := sequencerState["latest_snapshot"].(map[string]interface{})
+		latestSnapshot["cur_op_idx"] = int(latestSnapshot["cur_op_idx"].(float64)) / 2
+	}
+
+	return json.Marshal(trialSnapshotV2)
 }

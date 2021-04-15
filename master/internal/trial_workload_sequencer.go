@@ -237,7 +237,7 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 		return s.validate(), nil
 	}
 
-	batchesLeft := s.ops[s.CurOpIdx].Length.ToNearestBatch(s.unitContext) - s.BatchesTowardsCurrentOp
+	batchesLeft := s.ops[s.CurOpIdx].Length.ToNearestBatch(s.unitContext) - s.TotalBatchesProcessed
 	batchesTilVal := s.batchesUntilValNeeded()
 	batchesTilCkpt := s.batchesUntilCkptNeeded()
 	batchesThisStep := max(min(

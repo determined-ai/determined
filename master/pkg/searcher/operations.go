@@ -28,10 +28,11 @@ type (
 
 // All the operation types that support serialization.
 const (
-	CreateOperation   OperationType = 0
-	TrainOperation    OperationType = 1
-	ValidateOperation OperationType = 2
-	CloseOperation    OperationType = 4
+	CreateOperation        OperationType = 0
+	TrainOperation         OperationType = 1
+	ValidateOperation      OperationType = 2
+	CloseOperation         OperationType = 4
+	ValidateAfterOperation OperationType = 5
 )
 
 // MarshalJSON implements json.Marshaler.
@@ -43,7 +44,7 @@ func (l OperationList) MarshalJSON() ([]byte, error) {
 		case Create:
 			typedOp.OperationType = CreateOperation
 		case ValidateAfter:
-			typedOp.OperationType = TrainOperation
+			typedOp.OperationType = ValidateAfterOperation
 		case Close:
 			typedOp.OperationType = CloseOperation
 		default:
@@ -73,14 +74,12 @@ func (l *OperationList) UnmarshalJSON(b []byte) error {
 				return err
 			}
 			ops = append(ops, op)
-		case TrainOperation:
+		case ValidateAfterOperation:
 			var op ValidateAfter
 			if err := json.Unmarshal(b, &op); err != nil {
 				return err
 			}
 			ops = append(ops, op)
-		case ValidateOperation:
-			// TODO(brad): shim validates out
 		case CloseOperation:
 			var op Close
 			if err := json.Unmarshal(b, &op); err != nil {
