@@ -295,6 +295,8 @@ class RegistryAuthConfigV0(schemas.SchemaBase):
 
 class EnvironmentConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment.json"
+    add_capabilities: Optional[List[str]] = None
+    drop_capabilities: Optional[List[str]] = None
     environment_variables: Optional[EnvironmentVariablesV0] = None
     force_pull_image: Optional[bool] = None
     image: Optional[EnvironmentImageV0] = None
@@ -305,6 +307,8 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     @schemas.auto_init
     def __init__(
         self,
+        add_capabilities: Optional[List[str]] = None,
+        drop_capabilities: Optional[List[str]] = None,
         environment_variables: Optional[EnvironmentVariablesV0] = None,
         force_pull_image: Optional[bool] = None,
         image: Optional[EnvironmentImageV0] = None,
