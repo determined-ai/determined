@@ -1,5 +1,6 @@
 # Set the path React is going to be served from eg ./ for serving from root.
 export PUBLIC_URL ?= /det
+export ESLINT_NO_DEV_ERRORS ?= true
 swagger_client := src/services/swagger
 source_files := $(shell find src -type f)
 ts_bindings_src := ../../bindings/build/typescript-fetch
