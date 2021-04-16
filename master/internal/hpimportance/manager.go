@@ -160,22 +160,30 @@ func (m *manager) triggerPartialWork(ctx *actor.Context) {
 	for i := 0; i < len(ids) && i < len(hpis); i++ {
 		for metric, metricHpi := range hpis[i].TrainingMetrics {
 			if metricHpi.Pending || metricHpi.InProgress {
-				ctx.Tell(ctx.Self(), startWork{
+				task := startWork{
 					experimentID: ids[i],
 					metricName:   metric,
 					metricType:   model.TrainingMetric,
 					config:       m.config,
-				})
+				}
+				err := m.pool.SubmitTask(task)
+				if err != nil {
+					ctx.Log().Errorf("failed to submit hp importance work on restart %v: %v", task, err)
+				}
 			}
 		}
 		for metric, metricHpi := range hpis[i].ValidationMetrics {
 			if metricHpi.Pending || metricHpi.InProgress {
-				ctx.Tell(ctx.Self(), startWork{
+				task := startWork{
 					experimentID: ids[i],
 					metricName:   metric,
 					metricType:   model.ValidationMetric,
 					config:       m.config,
-				})
+				}
+				err := m.pool.SubmitTask(task)
+				if err != nil {
+					ctx.Log().Errorf("failed to submit hp importance work on restart %v: %v", task, err)
+				}
 			}
 		}
 	}
