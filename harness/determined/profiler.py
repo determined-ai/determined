@@ -10,7 +10,13 @@ import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import psutil
-import pynvml
+try:
+    import pynvml
+    pynvml.nvmlInit()
+except ModuleNotFoundError:
+    pass
+except pynvml.NVMLError_LibraryNotFound:
+    pass
 
 from determined.common import api
 from determined.common.api import TrialProfilerMetricsBatch
@@ -525,7 +531,6 @@ class DiskReadWriteRateCollector:
 
 class GpuUtilCollector:
     def __init__(self) -> None:
-        pynvml.nvmlInit()
         self.num_gpus = pynvml.nvmlDeviceGetCount()
 
     def measure(self, batch_idx: int) -> Dict[str, "Measurement"]:
@@ -543,7 +548,6 @@ class GpuUtilCollector:
 
 class GpuMemoryCollector:
     def __init__(self) -> None:
-        pynvml.nvmlInit()
         self.num_gpus = pynvml.nvmlDeviceGetCount()
 
     def measure(self, batch_idx: int) -> Dict[str, "Measurement"]:
