@@ -297,7 +297,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			experiment:     e.Experiment,
 		})
 
-		if e.searcher.Shutdown {
+		if e.State == model.CompletedState {
 			ctx.Tell(e.hpImportance, hpimportance.ExperimentCompleted{ID: e.ID})
 		}
 
