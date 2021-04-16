@@ -29,7 +29,7 @@ type commandManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	taskSpec              *tasks.TaskSpec
+	makeTaskSpec          tasks.MakeTaskSpecFn
 }
 
 // CommandLaunchRequest describes a request to launch a new command.
@@ -69,7 +69,7 @@ func (c *commandManager) processLaunchRequest(
 	req CommandLaunchRequest,
 ) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), c.db, *req.User, req.CommandParams, &c.taskSpec.TaskContainerDefaults, false,
+		ctx.Self().System(), c.db, *req.User, req.CommandParams, c.makeTaskSpec, false,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
@@ -140,7 +140,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	if len(config.Entrypoint) == 1 {
 		config.Entrypoint = append(shellFormEntrypoint, config.Entrypoint...)
 	}
-	setPodSpec(&config, c.taskSpec.TaskContainerDefaults)
+	setPodSpec(&config, req.TaskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:    sproto.NewTaskID(),
@@ -149,7 +149,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
-		taskSpec:       c.taskSpec,
+		taskSpec:       &req.TaskSpec,
 
 		db: c.db,
 	}

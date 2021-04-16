@@ -64,7 +64,7 @@ type tensorboardManager struct {
 	defaultAgentUserGroup model.AgentUserGroup
 	timeout               time.Duration
 	proxyRef              *actor.Ref
-	taskSpec              *tasks.TaskSpec
+	makeTaskSpec          tasks.MakeTaskSpecFn
 }
 
 type tensorboardTick struct{}
@@ -125,7 +125,7 @@ func (t *tensorboardManager) processLaunchRequest(
 	// request to make sure that we fill in the correct default value for 'slots' if the
 	// user didn't set it explicitly.
 	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), t.db, *user, req.CommandParams, &t.taskSpec.TaskContainerDefaults, true,
+		ctx.Self().System(), t.db, *user, req.CommandParams, t.makeTaskSpec, true,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
@@ -300,14 +300,14 @@ func (t *tensorboardManager) newTensorBoard(
 
 		if len(exp.TrialIDs) == 0 {
 			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
-				logBasePath, t.taskSpec.ClusterID, exp.ID)
+				logBasePath, commandReq.TaskSpec.ClusterID, exp.ID)
 			logDirs = append(logDirs, expDir)
 			continue
 		}
 
 		for _, id := range exp.TrialIDs {
 			trialDir := fmt.Sprintf("trial_%d:%s/%s/tensorboard/experiment/%d/trial/%d/",
-				id, logBasePath, t.taskSpec.ClusterID, exp.ID, id)
+				id, logBasePath, commandReq.TaskSpec.ClusterID, exp.ID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
@@ -357,7 +357,7 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
-	setPodSpec(&config, t.taskSpec.TaskContainerDefaults)
+	setPodSpec(&config, commandReq.TaskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:          taskID,
@@ -376,7 +376,7 @@ func (t *tensorboardManager) newTensorBoard(
 		serviceAddress: &serviceAddress,
 		owner:          commandReq.Owner,
 		agentUserGroup: commandReq.AgentUserGroup,
-		taskSpec:       t.taskSpec,
+		taskSpec:       &commandReq.TaskSpec,
 
 		db: t.db,
 	}, nil

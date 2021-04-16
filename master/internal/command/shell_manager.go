@@ -41,7 +41,7 @@ type shellManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	taskSpec              *tasks.TaskSpec
+	makeTaskSpec          tasks.MakeTaskSpecFn
 }
 
 // ShellLaunchRequest describes a request to launch a new shell.
@@ -78,7 +78,7 @@ func (s *shellManager) processLaunchRequest(
 	req ShellLaunchRequest,
 ) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), s.db, *req.User, req.CommandParams, &s.taskSpec.TaskContainerDefaults, false,
+		ctx.Self().System(), s.db, *req.User, req.CommandParams, s.makeTaskSpec, false,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
@@ -174,7 +174,7 @@ func (s *shellManager) newShell(
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}
 
-	setPodSpec(&config, s.taskSpec.TaskContainerDefaults)
+	setPodSpec(&config, req.TaskSpec.TaskContainerDefaults)
 
 	additionalFiles := archive.Archive{
 		req.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
@@ -219,7 +219,7 @@ func (s *shellManager) newShell(
 		serviceAddress: &serviceAddress,
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
-		taskSpec:       s.taskSpec,
+		taskSpec:       &req.TaskSpec,
 
 		proxyTCP: true,
 

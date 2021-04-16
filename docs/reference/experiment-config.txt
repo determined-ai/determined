@@ -819,6 +819,16 @@ allowed to use.
    resource pool is specified, experiments will run in the default GPU
    pool. Refer to :ref:`resource-pools` for more information.
 
+.. _exp-resources-devices:
+
+``devices``
+   A list of device strings to pass to the Docker daemon. Each entry in
+   the list is equivalent to a ``--device DEVICE`` command line argument
+   to ``docker run``. ``devices`` is honored by resource managers of
+   type ``agent`` but is ignored by resource managers of type
+   ``kubernetes``. See :ref:`master configuration
+   <master-configuration>` for details about resource managers.
+
 *************
  Bind Mounts
 *************
@@ -913,6 +923,20 @@ more information on customizing the trial environment, refer to
    Only applicable when running Determined on Kubernetes. Applies a pod
    spec to the pods that are launched by Determined for this task. See
    :ref:`custom-pod-specs` for details.
+
+.. _exp-environment-add-capapbilities:
+
+``add_capabilities``
+   A list of Linux capabilities to grant to task containers. Each entry
+   in the list is equivalent to a ``--cap-add CAP`` command line
+   argument to ``docker run``. ``add_capabilities`` is honored by
+   resource managers of type ``agent`` but is ignored by resource
+   managers of type ``kubernetes``. See :ref:`master configuration
+   <master-configuration>` for details about resource managers.
+
+``drop_capabilities``
+   Just like ``add_capabilities`` but corresponding to the
+   ``--cap-drop`` argument of ``docker run`` rather than ``--cap-add``.
 
 ***************
  Optimizations

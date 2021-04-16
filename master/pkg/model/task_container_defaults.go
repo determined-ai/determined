@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"regexp"
 	"strconv"
 
@@ -26,6 +27,10 @@ type TaskContainerDefaultsConfig struct {
 	Image                  *RuntimeItem          `json:"image,omitempty"`
 	RegistryAuth           *types.AuthConfig     `json:"registry_auth,omitempty"`
 	ForcePullImage         bool                  `json:"force_pull_image,omitempty"`
+
+	AddCapabilities  []string      `json:"add_capabilities"`
+	DropCapabilities []string      `json:"drop_capabilities"`
+	Devices          DevicesConfig `json:"devices"`
 }
 
 func validatePortRange(portRange string) []error {
@@ -60,8 +65,28 @@ func validatePortRange(portRange string) []error {
 	return errs
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface.
+// Setting defaults here is necessary over our usual "Define a default struct and unmarshal into it"
+// strategy because there are places (resource pool configs) where we need to know if the task
+// container defaults were set at all or if they were not; if they were set then that resource
+// pool's task container defaults are used instead of the toplevel master config's settings.  To
+// know if the user set them at the resource pool level, the resource pool has to have a nullable
+// pointer, which is not compatible with our usual strategy for defaults.
+func (c *TaskContainerDefaultsConfig) UnmarshalJSON(data []byte) error {
+	c.ShmSizeBytes = 4294967296
+	c.NetworkMode = "bridge"
+	type DefaultParser *TaskContainerDefaultsConfig
+	if err := json.Unmarshal(data, DefaultParser(c)); err != nil {
+		return errors.Wrap(err, "failed to parse task container defaults")
+	}
+	return nil
+}
+
 // Validate implements the check.Validatable interface.
-func (c TaskContainerDefaultsConfig) Validate() []error {
+func (c *TaskContainerDefaultsConfig) Validate() []error {
+	if c == nil {
+		return nil
+	}
 	errs := []error{
 		check.GreaterThan(c.ShmSizeBytes, int64(0), "shm_size_bytes must be >= 0"),
 		check.NotEmpty(string(c.NetworkMode), "network_mode must be set"),

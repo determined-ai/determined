@@ -106,7 +106,7 @@ type notebookManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	taskSpec              *tasks.TaskSpec
+	makeTaskSpec          tasks.MakeTaskSpecFn
 }
 
 // NotebookLaunchRequest describes a request to launch a new notebook.
@@ -120,7 +120,7 @@ func (n *notebookManager) processLaunchRequest(
 	req NotebookLaunchRequest,
 ) (*summary, int, error) {
 	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), n.db, *req.User, req.CommandParams, &n.taskSpec.TaskContainerDefaults, false,
+		ctx.Self().System(), n.db, *req.User, req.CommandParams, n.makeTaskSpec, false,
 	)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
@@ -226,7 +226,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 	config.Entrypoint = notebookEntrypoint
 
-	setPodSpec(&config, n.taskSpec.TaskContainerDefaults)
+	setPodSpec(&config, req.TaskSpec.TaskContainerDefaults)
 
 	if config.Description == "" {
 		var err error
@@ -281,7 +281,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
-		taskSpec:       n.taskSpec,
+		taskSpec:       &req.TaskSpec,
 
 		db: n.db,
 	}, nil

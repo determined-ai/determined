@@ -31,6 +31,9 @@ type Environment struct {
 	RegistryAuth   *types.AuthConfig `json:"registry_auth,omitempty"`
 	ForcePullImage bool              `json:"force_pull_image"`
 	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
+
+	AddCapabilities  []string `json:"add_capabilities"`
+	DropCapabilities []string `json:"drop_capabilities"`
 }
 
 // RuntimeItem configures the runtime image.

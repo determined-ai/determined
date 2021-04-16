@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // ExperimentRequestQuery contains values for the experiments request queries with defaults already
@@ -353,13 +354,16 @@ type CreateExperimentParams struct {
 }
 
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
-	*model.Experiment, bool, error,
+	*model.Experiment, bool, *tasks.TaskSpec, error,
 ) {
-	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
+	resources := model.ParseJustResources([]byte(params.ConfigBytes))
+	taskSpec := m.makeTaskSpec(resources.ResourcePool, resources.SlotsPerTrial)
+
+	config := model.DefaultExperimentConfig(&taskSpec.TaskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
 	if err != nil {
-		return nil, false, errors.Wrap(err, "invalid experiment configuration")
+		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	config.CheckpointStorage = *checkpointStorage
@@ -367,17 +371,17 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	if params.Template != nil {
 		template, terr := m.db.TemplateByName(*params.Template)
 		if terr != nil {
-			return nil, false, terr
+			return nil, false, nil, terr
 		}
 		if yerr := yaml.Unmarshal(template.Config, &config, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, false, yerr
+			return nil, false, nil, yerr
 		}
 	}
 
 	if yerr := yaml.Unmarshal(
 		[]byte(params.ConfigBytes), &config, yaml.DisallowUnknownFields,
 	); yerr != nil {
-		return nil, false, errors.Wrap(yerr, "invalid experiment configuration")
+		return nil, false, nil, errors.Wrap(yerr, "invalid experiment configuration")
 	}
 
 	if config.Environment.PodSpec == nil {
@@ -388,8 +392,9 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 		}
 	}
 
-	if cerr := check.Validate(config); cerr != nil {
-		return nil, false, errors.Wrap(cerr, "invalid experiment configuration")
+	err = check.Validate(config)
+	if err != nil {
+		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	var modelBytes []byte
@@ -397,14 +402,14 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 		var dbErr error
 		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(*params.ParentID)
 		if dbErr != nil {
-			return nil, false, errors.Wrapf(
+			return nil, false, nil, errors.Wrapf(
 				dbErr, "unable to find parent experiment %v", *params.ParentID)
 		}
 	} else {
 		var compressErr error
 		modelBytes, compressErr = archive.ToTarGz(params.ModelDef)
 		if compressErr != nil {
-			return nil, false, errors.Wrapf(
+			return nil, false, nil, errors.Wrapf(
 				compressErr, "unable to find compress model definition")
 		}
 	}
@@ -412,7 +417,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	dbExp, err := model.NewExperiment(
 		config, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate)
-	return dbExp, params.ValidateOnly, err
+	return dbExp, params.ValidateOnly, &taskSpec, err
 }
 
 func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
@@ -428,7 +433,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		return nil, errors.Wrap(err, "invalid experiment params")
 	}
 
-	dbExp, validateOnly, err := m.parseCreateExperiment(&params)
+	dbExp, validateOnly, taskSpec, err := m.parseCreateExperiment(&params)
 
 	if err != nil {
 		return nil, echo.NewHTTPError(
@@ -441,7 +446,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	dbExp.OwnerID = &user.ID
-	e, err := newExperiment(m, dbExp)
+	e, err := newExperiment(m, dbExp, taskSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}

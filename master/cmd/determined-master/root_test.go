@@ -12,13 +12,14 @@ import (
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
 	raw := `
 resource_pools:
   - pool_name: default
-    provider: 
+    provider:
       type: gcp
       base_config:
         disks:
@@ -55,6 +56,10 @@ task_container_defaults:
 				},
 			},
 		},
+	}
+	expected.TaskContainerDefaults = model.TaskContainerDefaultsConfig{
+		ShmSizeBytes: 4294967296,
+		NetworkMode:  "bridge",
 	}
 	expected.ResourcePools = []resourcemanagers.ResourcePoolConfig{
 		{

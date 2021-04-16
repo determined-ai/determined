@@ -213,6 +213,8 @@ The master supports the following configuration settings:
 -  ``port``: The TCP port on which the master accepts all incoming
    connections. Defaults to ``8080``.
 
+.. _master-task-container-defaults:
+
 -  ``task_container_defaults``: Specifies Docker defaults for all task
    containers. A task represents a single schedulable unit, such as a
    trial, command, or tensorboard.
@@ -293,6 +295,18 @@ The master supports the following configuration settings:
       -  ``password`` (required)
       -  ``serveraddress`` (optional)
       -  ``email`` (optional)
+
+   -  ``add_capabilities``: The default list of Linux capabilities to
+      grant to task containers. Ignored by resource managers of type
+      ``kubernetes``. See :ref:`environment.add_capabilities
+      <exp-environment-add-capapbilities>` for more details.
+
+   -  ``drop_capabilities``: Just like ``add_capabilities`` but for
+      dropping capabilities.
+
+   -  ``devices``: The default list of devices to pass to the Docker
+      daemon. Ignored by resource managers of type ``kubernetes``. See
+      :ref:`resources.devices <exp-resources-devices>` for more details.
 
 -  ``root``: Specifies the root directory of the state files. Defaults
    to ``/usr/share/determined/master``.
@@ -406,6 +420,13 @@ The master supports the following configuration settings:
 
    -  ``max_cpu_containers_per_agent``: The maximum number of CPU-only
       containers that can be scheduled on each agent in this pool.
+
+   -  ``task_container_defaults``: Each resource pool may specify a
+      ``task_container_defaults`` that overrides the :ref:`top-level
+      setting <master-task-container-defaults>` for all tasks launched
+      in that resource pool. There is no merging behavior; when a
+      resource pool's ``task_container_defaults`` is set, tasks launched
+      in that pool will completely ignore the top-level setting.
 
    -  ``scheduler``: Specifies how Determined schedules tasks to agents.
       The scheduler configuration on each resource pool will override

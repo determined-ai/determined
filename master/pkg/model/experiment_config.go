@@ -9,6 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/ghodss/yaml"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
@@ -184,6 +186,34 @@ func (l *Labels) UnmarshalJSON(data []byte) error {
 	return err
 }
 
+// DevicesConfig is the configuration for devices.  It is a named type because it needs custom
+// merging behavior (via UnmarshalJSON).
+type DevicesConfig []DeviceConfig
+
+// UnmarshalJSON implements the json.Unmarshaler interface so that DeviceConfigs are additive.
+func (d *DevicesConfig) UnmarshalJSON(data []byte) error {
+	unmarshaled := make([]DeviceConfig, 0)
+	if err := json.Unmarshal(data, &unmarshaled); err != nil {
+		return errors.Wrap(err, "failed to parse devices")
+	}
+	*d = append(*d, unmarshaled...)
+	return nil
+}
+
+// DeviceConfig configures trial runner filesystem bind mounts.
+type DeviceConfig struct {
+	HostPath      string `json:"host_path"`
+	ContainerPath string `json:"container_path"`
+	Mode          string `json:"mode"`
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
+	d.Mode = "mrw"
+	type DefaultParser *DeviceConfig
+	return errors.Wrap(json.Unmarshal(data, DefaultParser(d)), "failed to parse device")
+}
+
 // ResourcesConfig configures resource usage for an experiment, command, notebook, or tensorboard.
 type ResourcesConfig struct {
 	// Slots is used by commands while trials use SlotsPerTrial.
@@ -197,6 +227,31 @@ type ResourcesConfig struct {
 	AgentLabel     string  `json:"agent_label"`
 	ResourcePool   string  `json:"resource_pool"`
 	Priority       *int    `json:"priority,omitempty"`
+
+	Devices DevicesConfig `json:"devices"`
+}
+
+// ParseJustResources is a helper function for breaking the circular dependency where we need the
+// TaskContainerDefaults to unmarshal an ExperimentConfig, but we need the Resources.ResourcePool
+// setting to know which TaskContainerDefaults to use.  It does not throw errors; if unmarshalling
+// fails that can just get caught later.
+func ParseJustResources(configBytes []byte) ResourcesConfig {
+	// Make this function usable on experiment or command configs.
+	type DummyConfig struct {
+		Resources ResourcesConfig `json:"resources"`
+	}
+
+	dummy := DummyConfig{
+		Resources: ResourcesConfig{
+			Slots:         1,
+			SlotsPerTrial: 1,
+		},
+	}
+
+	// Don't throw errors; validation should happen elsewhere.
+	_ = yaml.Unmarshal(configBytes, &dummy)
+
+	return dummy.Resources
 }
 
 // ValidatePrioritySetting checks that priority if set is within a valid range.

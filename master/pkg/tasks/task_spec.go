@@ -20,6 +20,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// MakeTaskSpecFn is a workaround for the delayed initialization that we have around how tasks are
+// run.  The master knows which task spec and task container defaults belong to which pool, but the
+// actual parsing of configs might be delegated to e.g. a CommandManager which does not have access
+// to the same information.  This lets us avoid extra Asks or passing the Master object around.
+type MakeTaskSpecFn func(poolName string, numSlots int) TaskSpec
+
 // InnerSpec defines the interface for a particular kind of task container.
 type InnerSpec interface {
 	// Archives returns the files to include in the container for this task (apart from the base files

@@ -63,12 +63,18 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		)
 	}
 
+	// Get the TaskSpec for this experiment.
+	taskSpec := m.makeTaskSpec(
+		expModel.Config.Resources.ResourcePool,
+		expModel.Config.Resources.SlotsPerTrial,
+	)
+
 	log.WithField("experiment", expModel.ID).Info("restoring experiment")
 	snapshot, err := m.retrieveExperimentSnapshot(expModel)
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
 	}
-	e, err := newExperiment(m, expModel)
+	e, err := newExperiment(m, expModel, &taskSpec)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
 	}
