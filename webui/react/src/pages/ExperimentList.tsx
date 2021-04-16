@@ -1,11 +1,11 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal } from 'antd';
+import { Button, Input, Modal, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
-import LabelSelectFilter from 'components/LabelSelectFilter';
+import MultiSelect from 'components/MultiSelect';
 import Page from 'components/Page';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -27,7 +27,7 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, getExperiments,
+  activateExperiment, archiveExperiment, cancelExperiment, getExperimentLabels, getExperiments,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -38,6 +38,7 @@ import {
   ALL_VALUE, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
+import { alphanumericSorter } from 'utils/sort';
 import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
@@ -45,6 +46,8 @@ import { openCommand } from 'wait';
 
 import css from './ExperimentList.module.scss';
 import { columns as defaultColumns, idRenderer } from './ExperimentList.table';
+
+const { Option } = Select;
 
 enum Action {
   Activate = 'Activate',
@@ -88,6 +91,7 @@ const ExperimentList: React.FC = () => {
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
+  const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
@@ -96,8 +100,6 @@ const ExperimentList: React.FC = () => {
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ total, setTotal ] = useState(0);
-
-  const fetchUsers = useFetchUsers(canceler);
 
   /*
    * When filters changes update the page URL.
@@ -269,6 +271,8 @@ const ExperimentList: React.FC = () => {
     return tracker;
   }, [ selectedExperiments ]);
 
+  const fetchUsers = useFetchUsers(canceler);
+
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const states = filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
@@ -301,14 +305,23 @@ const ExperimentList: React.FC = () => {
     }
   }, [ canceler, filters, pagination, search, sorter ]);
 
+  const fetchLabels = useCallback(async () => {
+    try {
+      const labels = await getExperimentLabels({ signal: canceler.signal });
+      labels.sort((a, b) => alphanumericSorter(a, b));
+      setLabels(labels);
+    } catch (e) {}
+  }, [ canceler.signal ]);
+
   const fetchAll = useCallback(() => {
     fetchExperiments();
+    fetchLabels();
     fetchUsers();
-  }, [ fetchExperiments, fetchUsers ]);
+  }, [ fetchExperiments, fetchLabels, fetchUsers ]);
 
   usePolling(fetchAll);
 
-  const experimentTags = useExperimentTags(fetchExperiments);
+  const experimentTags = useExperimentTags(fetchAll);
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
@@ -496,9 +509,9 @@ const ExperimentList: React.FC = () => {
               checked={filters.showArchived}
               prefixLabel="Show Archived"
               onChange={handleArchiveChange} />
-            <LabelSelectFilter
-              value={filters.labels}
-              onChange={handleLabelsChange} />
+            <MultiSelect label="Labels" value={filters.labels} onChange={handleLabelsChange}>
+              {labels.map((label) => <Option key={label} value={label}>{label}</Option>)}
+            </MultiSelect>
             <StateSelectFilter
               showCommandStates={false}
               value={filters.states}
