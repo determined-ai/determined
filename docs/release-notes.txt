@@ -8,6 +8,19 @@
  Version 0.15
 **************
 
+Version 0.15.1
+==============
+
+**Release Date:** April 16, 2021
+
+**Bug Fixes**
+
+-  Trials: Fix ``TFKerasTrial`` on TensorFlow 2 with disabled v2 behavior 
+   and/or disabled eager execution.
+-  Master: Fix two issues that caused experiments to not recover 
+   successfully on master crashes (after upgrading to version 0.15.0).
+
+
 Version 0.15.0
 ==============
 
