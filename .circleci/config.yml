@@ -1213,7 +1213,8 @@ jobs:
       - run: pip install wheel
       - run: cd harness; python setup.py bdist_wheel -d ../build
       # Windows needs special treatment of cryptography for unknown reasons.
-      - run: sh -c "if which conda ; then conda install cryptography --yes ; fi"
+      # LMDB also has special requirements that only apply to windows (patch-ng).
+      - run: sh -c "if which conda ; then conda install cryptography patch-ng --yes ; fi"
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze
       # Allow this to fail, but it is useful for debugging.
