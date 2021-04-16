@@ -29,6 +29,19 @@ from determined.horovod import hvd
 IMPOSSIBLY_LARGE_EPOCHS = sys.maxsize
 
 
+def is_tf2_enabled() -> bool:
+    """Checks if `tf.compat.v1.disable_v2_behavior` has been called."""
+    if version.parse(tf.__version__) < version.parse("2.0.0"):
+        return False
+
+    try:
+        # Try recent tf2 variant first.
+        return tf._tf2.enabled()  # type: ignore
+    except AttributeError:
+        # Fallback to legacy option for tensorflow circa 2.2.0.
+        return tf.python.tf2.enabled()  # type: ignore
+
+
 def load_optimizer_weights(
     model: Model, h5group: Any, optimizer: tf.keras.optimizers.Optimizer
 ) -> None:
@@ -732,7 +745,7 @@ class TFKerasTrialController(det.LoopTrialController):
         # not use the model metrics.
         use_model_metrics = not (
             version.parse(tf.__version__) >= version.parse("2.2.0")
-            and tf._tf2.enabled()
+            and is_tf2_enabled()
             and tf.executing_eagerly()
         )
         evaluate_kwargs = {} if use_model_metrics else {"return_dict": True}
