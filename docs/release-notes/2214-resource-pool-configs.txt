@@ -3,7 +3,7 @@
 **New Features**
 
 -  Add support for the ``--devices``, ``--cap-add``, and ``--cap-drop``
-   arugments to the ``docker run`` command. These are configured in an
+   arguments to the ``docker run`` command. These are configured in an
    experiment or command/notebook config via ``resources.devices``,
    ``environment.add_capabilities``, and
    ``environment.drop_capabilities``. These settings can combine to
@@ -20,5 +20,6 @@
    configure tasks in each pool with the correct settings. When a
    resource pool has a ``task_container_defaults`` field set, the
    top-level ``task_container_defaults`` will be ignored for tasks
-   launched in that pool (there is no merging behavior. See
-   :ref:`resource-pool-config` for more information.
+   launched in that pool (there is no merging behavior. See Resource
+   Pool configuration under :ref:`cluster-configuration` for more
+   information.

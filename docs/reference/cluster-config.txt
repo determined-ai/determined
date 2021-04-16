@@ -407,8 +407,6 @@ The master supports the following configuration settings:
       -  ``master_service_name``: The service account Determined uses to
          interact with the Kubernetes API.
 
-.. _resource-pool-config:
-
 -  ``resource_pools``: A list of resource pools. A resource pool is a
    collection of identical computational resources. Users can specify
    which resource pool a job should be assigned to when the job is
