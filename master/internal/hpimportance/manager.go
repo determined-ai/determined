@@ -256,6 +256,7 @@ func (m *manager) workCompleted(ctx *actor.Context, msg workCompleted) {
 		return
 	}
 	metricData := hpi.GetMetricHPImportance(msg.metricName, msg.metricType)
+	metricData.Error = ""
 	metricData.ExperimentProgress = msg.progress
 	metricData.HpImportance = msg.results
 	metricData.InProgress = false
