@@ -250,12 +250,12 @@ const HpHeatMaps: React.FC<Props> = ({
                           valueLabel={metricNameToStr(selectedMetric)}
                           values={chartData?.hpMetrics[key]}
                           width={350}
-                          x={chartData?.hpValues[hParam1] || []}
-                          xLabel={hParam1}
-                          xLogScale={chartData?.hpLogScales[hParam1]}
-                          y={chartData?.hpValues[hParam2] || []}
-                          yLabel={hParam2}
-                          yLogScale={chartData?.hpLogScales[hParam2]}
+                          x={chartData?.hpValues[hParam2] || []}
+                          xLabel={hParam2}
+                          xLogScale={chartData?.hpLogScales[hParam2]}
+                          y={chartData?.hpValues[hParam1] || []}
+                          yLabel={hParam1}
+                          yLogScale={chartData?.hpLogScales[hParam1]}
                         />
                       </div>
                     );
@@ -278,12 +278,12 @@ const HpHeatMaps: React.FC<Props> = ({
           valueLabel={metricNameToStr(selectedMetric)}
           values={chartData?.hpMetrics[generateHpKey(activeHParam[0], activeHParam[1])]}
           width={350}
-          x={chartData?.hpValues[activeHParam[0]] || []}
-          xLabel={activeHParam[0]}
-          xLogScale={chartData?.hpLogScales[activeHParam[0]]}
-          y={chartData?.hpValues[activeHParam[1]] || []}
-          yLabel={activeHParam[1]}
-          yLogScale={chartData?.hpLogScales[activeHParam[1]]}
+          x={chartData?.hpValues[activeHParam[1]] || []}
+          xLabel={activeHParam[1]}
+          xLogScale={chartData?.hpLogScales[activeHParam[1]]}
+          y={chartData?.hpValues[activeHParam[0]] || []}
+          yLabel={activeHParam[0]}
+          yLogScale={chartData?.hpLogScales[activeHParam[0]]}
         />}
       </GalleryModal>
     </div>
