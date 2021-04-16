@@ -214,6 +214,17 @@ checkpoint_policy: none
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
+	assert.Equal(t, w, validationWorkload4)
+
+	// Complete second COMPUTE_VALIDATION_METRICS.
+	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+		Workload:          validationWorkload4,
+		ValidationMetrics: &workload.ValidationMetrics{},
+	}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	w, err = s.Workload()
+	assert.NilError(t, err)
 	assert.Equal(t, w, checkpointWorkload4)
 
 	// Complete first CHECKPOINT_MODEL.
@@ -225,17 +236,6 @@ checkpoint_policy: none
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
-
-	// Complete second COMPUTE_VALIDATION_METRICS.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
-		Workload:          validationWorkload4,
-		ValidationMetrics: &workload.ValidationMetrics{},
-	}, nil)
-	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
-	w, err = s.Workload()
-	assert.NilError(t, err)
-	assert.Equal(t, w, trainWorkload5)
 
 	// Complete last RUN_STEP.
 	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
@@ -310,7 +310,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Batches, 500))
 	s.OperationRequested(train)
 
-	reportVal, err := s.WorkloadCompleted(workload.CompletedMessage{
+	msg := workload.CompletedMessage{
 		Workload: workload.Workload{
 			Kind:                  workload.RunStep,
 			ExperimentID:          1,
@@ -319,12 +319,13 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 			NumBatches:            expConfig.SchedulingUnit,
 			PriorBatchesProcessed: 0,
 		},
-	}, nil)
+	}
+	reportVal, err := s.WorkloadCompleted(msg, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 
 	exitedReason := workload.ExitedReason("not ok")
-	immediateExit := s.WorkloadFailed(exitedReason)
+	immediateExit, err := s.WorkloadFailed(msg, exitedReason)
 	assert.NilError(t, err)
 	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
 	assert.Equal(t, immediateExit, true, "should have been exiting early, immediately")
