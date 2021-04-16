@@ -45,52 +45,55 @@ func getDefaultSource(obj reflect.Value) interface{} {
 	return nil
 }
 
+func allocateWithDefaultBytes(typ reflect.Type, defaultBytes []byte) reflect.Value {
+	// json.Unmarshal requires a pointer to work.
+	ptr := reflect.New(typ)
+	err := json.Unmarshal(defaultBytes, ptr.Interface())
+	if err != nil {
+		panic(
+			fmt.Sprintf(
+				"failed to unmarshal defaultBytes into %T: %q: %v",
+				ptr.Interface(),
+				string(defaultBytes),
+				err.Error(),
+			),
+		)
+	}
+	return ptr.Elem()
+}
+
 // withDefaults is the recursive layer under WithDefaults.  withDefaults will return a clean copy
 // of the original value, with defaults set.
 func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.Value {
 	// fmt.Printf("withDefaults on %v (%T)\n", name, obj.Interface())
 
-	// Handle pointers first.
-	if obj.Kind() == reflect.Ptr {
+	// Handle nil values and defaultBytes all in one place.
+	if obj.Kind() == reflect.Interface ||
+		obj.Kind() == reflect.Ptr ||
+		obj.Kind() == reflect.Slice ||
+		obj.Kind() == reflect.Map {
 		if obj.IsZero() {
 			if defaultBytes == nil {
 				// Nil pointer with no defaultBytes means we are done recursing.
 				return obj
 			}
-			// Otherwise, since we have default bytes, allocate the new object.
-			out := reflect.New(obj.Type().Elem())
-			// Fill the object with default bytes.
-			err := json.Unmarshal(defaultBytes, out.Interface())
-			if err != nil {
-				panic(
-					fmt.Sprintf(
-						"failed to unmarshal defaultBytes into %T: %q: %v",
-						obj.Interface(),
-						string(defaultBytes),
-						err.Error(),
-					),
-				)
-			}
-			// We already consumed defaultBytes, so set it to nil when we recurse.
-			return withDefaults(out, nil, name)
+			// Use a clean copy of default bytes from obj, rather than a nil value.
+			obj = allocateWithDefaultBytes(obj.Type(), defaultBytes)
 		}
-		// Allocate a new pointer and set is avlue
-		out := reflect.New(obj.Type().Elem())
-		out.Elem().Set(withDefaults(obj.Elem(), defaultBytes, name))
-		return out
-	}
-
-	// Next handle interfaces.
-	if obj.Kind() == reflect.Interface {
-		if obj.IsZero() {
-			return cpy(obj)
-		}
-		return withDefaults(obj.Elem(), defaultBytes, name)
 	}
 
 	var out reflect.Value
 
 	switch obj.Kind() {
+	case reflect.Interface:
+		out = withDefaults(obj.Elem(), defaultBytes, name)
+
+	case reflect.Ptr:
+		// Allocate the output pointer.
+		out = reflect.New(obj.Type().Elem())
+		// Recurse into the content of the object.
+		out.Elem().Set(withDefaults(obj.Elem(), nil, name))
+
 	case reflect.Struct:
 		defaultSource := getDefaultSource(obj)
 		out = reflect.New(obj.Type()).Elem()
@@ -107,16 +110,12 @@ func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 		}
 
 	case reflect.Slice:
-		if obj.IsZero() {
-			out = cpy(obj)
-		} else {
-			typ := reflect.SliceOf(obj.Type().Elem())
-			out = reflect.MakeSlice(typ, 0, obj.Len())
-			for i := 0; i < obj.Len(); i++ {
-				elemName := fmt.Sprintf("%v[%v]", name, i)
-				// Recurse into the elem (there's no per-element defaults yet).
-				out = reflect.Append(out, withDefaults(obj.Index(i), nil, elemName))
-			}
+		typ := reflect.SliceOf(obj.Type().Elem())
+		out = reflect.MakeSlice(typ, 0, obj.Len())
+		for i := 0; i < obj.Len(); i++ {
+			elemName := fmt.Sprintf("%v[%v]", name, i)
+			// Recurse into the elem (there's no per-element defaults yet).
+			out = reflect.Append(out, withDefaults(obj.Index(i), nil, elemName))
 		}
 
 	case reflect.Map:
@@ -135,9 +134,7 @@ func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 	case reflect.Array,
 		reflect.Chan,
 		reflect.Func,
-		reflect.UnsafePointer,
-		reflect.Ptr,
-		reflect.Interface:
+		reflect.UnsafePointer:
 		panic(fmt.Sprintf(
 			"unable to withDefaults at %v of type %T, kind %v", name, obj.Interface(), obj.Kind(),
 		))
@@ -147,13 +144,13 @@ func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 	}
 
 	// Any non-pointer, non-interface type may be RuntimeDefaultable.
-	if out.IsValid() {
+	if out.Kind() != reflect.Ptr && out.IsValid() {
 		if defaultable, ok := out.Interface().(RuntimeDefaultable); ok {
 			out = reflect.ValueOf(defaultable.RuntimeDefaults())
 		}
 	}
 
-	// fmt.Printf("withDefaults on %v (%T) returning %v\n", name, obj.Interface(), obj.Interface())
+	// fmt.Printf("withDefaults on %v (%T) returning %T\n", name, obj.Interface(), out.Interface())
 
 	return out
 }

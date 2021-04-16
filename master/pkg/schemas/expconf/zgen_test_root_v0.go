@@ -27,6 +27,14 @@ func (t TestRootV0) GetRuntimeDefaultable() *int {
 	return t.RuntimeDefaultable
 }
 
+func (t TestRootV0) GetDefaultedArray() []string {
+	return t.DefaultedArray
+}
+
+func (t TestRootV0) GetNodefaultArray() []string {
+	return t.NodefaultArray
+}
+
 func (t TestRootV0) WithDefaults() TestRootV0 {
 	return schemas.WithDefaults(t).(TestRootV0)
 }

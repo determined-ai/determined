@@ -57,10 +57,7 @@ func (r ResourcesConfigV0) GetPriority() *int {
 }
 
 func (r ResourcesConfigV0) GetDevices() DevicesConfigV0 {
-	if r.Devices == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .GetDevices")
-	}
-	return *r.Devices
+	return r.Devices
 }
 
 func (r ResourcesConfigV0) WithDefaults() ResourcesConfigV0 {

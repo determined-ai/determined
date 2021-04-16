@@ -2489,6 +2489,26 @@ var (
                 "null"
             ],
             "default": null
+        },
+        "defaulted_array": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
+        "nodefault_array": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": null,
+            "items": {
+                "type": "string"
+            }
         }
     }
 }

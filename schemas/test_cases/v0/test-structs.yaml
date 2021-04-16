@@ -9,6 +9,8 @@
       val_y: default_y
     sub_union: null
     runtime_defaultable: "*"
+    defaulted_array: []
+    nodefault_array: null
 
 - name: root full (valid)
   matches:
@@ -22,6 +24,11 @@
       val_a: 1
       common_val: common_val
     runtime_defaultable: 777
+    defaulted_array:
+      - hello
+      - world
+    nodefault_array:
+      - shall we play a game?
   defaulted:
     val_x: 1
     sub_obj:
@@ -31,6 +38,11 @@
       val_a: 1
       common_val: common_val
     runtime_defaultable: 777
+    defaulted_array:
+      - hello
+      - world
+    nodefault_array:
+      - shall we play a game?
 
 - name: union unmarshal (valid, type=a)
   matches:

@@ -244,14 +244,46 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         "eventuallyRequired", []
     )
 
+    KNOWN_MAP_OR_SLICE_ALIAS_TYPES = [
+        "BindMountsConfigV0",
+        "DevicesConfigV0",
+        "LabelsV0",
+    ]
+
     if default is not None:
-        if not type.startswith("*"):
+        if type.startswith("*map[") or type.startswith("*[]"):
             raise AssertionError(
-                f"{tag} type ({type}) must be a pointer since it can be defaulted"
+                f"ERROR: {tag} type ({type}) is a pointer to a map or slice type.\n"
+                "This is not allowed, since maps and slices can be nil by default, so it is\n"
+                "an unnecesary layer of indirection which complicates the code."
             )
-        if type.startswith("**"):
+        elif type.startswith("*"):
+            # Pointers are nil-able, and the non-nil type is without the '*'.
+            type = type[1:]
+        elif (
+            type.startswith("map[")
+            or type.startswith("[]")
+            or type in KNOWN_MAP_OR_SLICE_ALIAS_TYPES
+        ):
+            # Maps and Slices are nil-able, and the non-nil type is just the same type.
+            pass
+        elif type.startswith("**"):
             raise AssertionError(f"{tag} type ({type}) must not be a double pointer")
-        type = type[1:]
+        else:
+            raise AssertionError(
+                f"ERROR: {tag} type ({type}) must be a pointer since it can be defaulted!\n"
+                "\n"
+                "Otherwise, after deserialization it would be impossible to know if\n"
+                "the user provided the value or not.\n"
+                "\n"
+                "Note: since slices and maps can be be nil by default, they do not need to\n"
+                f"be made pointers.  If {type} is a type alias for a map or slice type, like:\n"
+                "\n"
+                "    type BindMountsConfigV0 []BindMounts\n"
+                "\n"
+                f'then you can safely add "{type}" to KNOWN_MAP_OR_SLICE_ALIAS_TYPES\n'
+                "in schemas/gen.py to avoid this error."
+            )
 
     return type, default, required
 
@@ -267,7 +299,7 @@ def go_getters(struct: str, schema: Schema, spec: List[FieldSpec]) -> List[str]:
     for field, type, tag in spec:
         defaulted_type, default, required = get_defaulted_type(schema, tag, type)
 
-        if default is None:
+        if defaulted_type == type:
             lines.append(f"func ({x} {struct}) Get{field}() {type} {{")
             lines.append(f"\treturn {x}.{field}")
             lines.append("}")
@@ -560,5 +592,5 @@ if __name__ == "__main__":
         else:
             raise ValueError(f"unrecognized generator: {generator}")
     except AssertionError as e:
-        print(e, file=sys.stderr)
+        print("\x1b[31m" + str(e) + "\x1b[m", file=sys.stderr)
         sys.exit(1)

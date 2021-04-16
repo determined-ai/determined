@@ -875,6 +875,8 @@ class TestRootV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/test-root.json"
 
     val_x: int
+    defaulted_array: Optional[List[str]] = None
+    nodefault_array: Optional[List[str]] = None
     sub_obj: Optional[TestSubV0] = None
     sub_union: Optional[TestUnionV0_Type] = None
     runtime_defaultable: Optional[int] = None
@@ -883,6 +885,8 @@ class TestRootV0(schemas.SchemaBase):
     def __init__(
         self,
         val_x: int,
+        defaulted_array: Optional[List[str]] = None,
+        nodefault_array: Optional[List[str]] = None,
         sub_obj: Optional[TestSubV0] = None,
         sub_union: Optional[TestUnionV0_Type] = None,
         runtime_defaultable: Optional[int] = None,

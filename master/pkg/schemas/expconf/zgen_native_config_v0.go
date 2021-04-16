@@ -8,7 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (n NativeConfigV0) GetCommand() *[]string {
+func (n NativeConfigV0) GetCommand() []string {
 	return n.Command
 }
 
