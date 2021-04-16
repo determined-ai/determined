@@ -150,11 +150,11 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
 	}
-	s.Record(operations)
 	if s.TrialsRequested == len(s.TrialsClosed) {
 		shutdown := Shutdown{Failure: len(s.Failures) >= s.TrialsRequested}
 		operations = append(operations, shutdown)
 	}
+	s.Record(operations)
 	return operations, nil
 }
 
