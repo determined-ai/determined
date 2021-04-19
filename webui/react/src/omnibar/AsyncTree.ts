@@ -12,9 +12,10 @@ export type Children = TreeNode[]
 export type TreePath = TreeNode[]
 export type TreeNode = LeafNode | NLNode;
 export type ComputedChildren = (arg?: NLNode) => Children | Promise<Children>
+export type FinalAction = (node?: LeafNode) => Eventually<void>;
 
 export interface LeafNode extends BaseNode {
-  onAction: (arg: LeafNode) => void; // with potential response. could be shown
+  onAction: FinalAction; // with potential response. could be shown
 }
 
 // Non-leaf Node

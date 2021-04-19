@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useStore } from 'contexts/Store';
 import { useFetchAgents } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import { importApiStorageRemote, setRRMode } from 'recordReplay';
 
 import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';

@@ -3,12 +3,13 @@ import { globalStorage } from 'globalStorage';
 import { alertAction } from 'omnibar/actions';
 import { Children, TreeNode } from 'omnibar/AsyncTree';
 import devExtension from 'omnibar/nodes/dev.rr.tmp';
+import { serverAddress } from 'routes/utils';
 
 const dev: TreeNode[] = [
   {
     options: [
       {
-        onAction: alertAction(`address: ${globalStorage.serverAddress}`),
+        onAction: () => alertAction(`address: ${serverAddress()}`)() ,
         title: 'show',
       },
       {

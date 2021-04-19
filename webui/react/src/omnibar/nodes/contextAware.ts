@@ -23,7 +23,7 @@ const experimentOptions = (id: number): TreeNode[] => {
   // TODO check state and offer options.
   return [
     {
-      onAction: (): unknown => killExperiment({ experimentId: id }),
+      onAction: () => killExperiment({ experimentId: id }),
       title: 'kill',
     },
   ];
