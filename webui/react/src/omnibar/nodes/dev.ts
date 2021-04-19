@@ -2,6 +2,7 @@ import { setServerAddress } from 'dev';
 import { globalStorage } from 'globalStorage';
 import { alertAction } from 'omnibar/actions';
 import { Children, TreeNode } from 'omnibar/AsyncTree';
+import devExtension from 'omnibar/nodes/dev.rr.tmp';
 
 const dev: TreeNode[] = [
   {
@@ -26,6 +27,7 @@ const dev: TreeNode[] = [
     ],
     title: 'serverAddress',
   },
+  ...devExtension,
 ];
 
 export default dev;
