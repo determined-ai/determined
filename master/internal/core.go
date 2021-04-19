@@ -706,7 +706,6 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Static("/docs/rest-api", filepath.Join(webuiRoot, "docs", "rest-api"))
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
 
-	reactCacheControl := fmt.Sprintf("max-age=%d", int((time.Hour * 24 * 1).Seconds()))
 	webuiGroup := m.echo.Group(webuiBaseRoute)
 	webuiGroup.File("/", reactIndex)
 	webuiGroup.GET("/*", func(c echo.Context) error {
@@ -735,7 +734,6 @@ func (m *Master) Run(ctx context.Context) error {
 			hasMatchingFile = !stat.IsDir()
 		}
 		if hasMatchingFile {
-			c.Response().Header().Set("Cache-Control", reactCacheControl)
 			return c.File(requestedFile)
 		}
 
