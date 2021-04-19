@@ -8,8 +8,8 @@ import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, killExperiment, killTask,
-  openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
+  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
+  killTask, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { AnyTask, CommandTask, ExperimentTask, RunState } from 'types';
 import { capitalize } from 'utils/string';
@@ -24,6 +24,7 @@ export enum Action {
   Activate = 'activate',
   Archive = 'archive',
   Cancel = 'cancel',
+  Delete = 'delete',
   Kill = 'kill',
   Pause = 'pause',
   Tensorboard = 'tensorboard',
@@ -43,6 +44,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   const isExperimentTerminal = terminalRunStates.has(task.state as RunState);
   const isArchivable = isExperiment && isExperimentTerminal && !(task as ExperimentTask).archived;
   const isUnarchivable = isExperiment && isExperimentTerminal && (task as ExperimentTask).archived;
+  const isDeletable = isExperiment && isExperimentTerminal;
   const isKillable = isTaskKillable(task);
   const isPausable = isExperiment
     && task.state === RunState.Active;
@@ -67,6 +69,10 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           break;
         case Action.Cancel:
           await cancelExperiment({ experimentId: id });
+          if (onComplete) onComplete(action);
+          break;
+        case Action.Delete:
+          await deleteExperiment({ experimentId: id });
           if (onComplete) onComplete(action);
           break;
         case Action.Tensorboard: {
@@ -112,6 +118,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   if (isUnarchivable) menuItems.push(<Menu.Item key={Action.Unarchive}>Unarchive</Menu.Item>);
   if (isCancelable) menuItems.push(<Menu.Item key={Action.Cancel}>Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key={Action.Kill}>Kill</Menu.Item>);
+  if (isDeletable) menuItems.push(<Menu.Item key={Action.Delete}>Delete</Menu.Item>);
   if (isExperiment) {
     menuItems.push(<Menu.Item key={Action.Tensorboard}>View in TensorBoard</Menu.Item>);
   } else {

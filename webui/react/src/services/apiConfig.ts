@@ -257,6 +257,14 @@ export const cancelExperiment: DetApi<ExperimentIdParams, Api.V1CancelExperiment
   },
 };
 
+export const deleteExperiment: DetApi<ExperimentIdParams, Api.V1DeleteExperimentResponse, void> = {
+  name: 'deleteExperiment',
+  postProcess: noOp,
+  request: (params: ExperimentIdParams, options) => {
+    return detApi.Experiments.determinedDeleteExperiment(params.experimentId, options);
+  },
+};
+
 export const killExperiment: DetApi<ExperimentIdParams, Api.V1KillExperimentResponse, void> = {
   name: 'killExperiment',
   postProcess: noOp,

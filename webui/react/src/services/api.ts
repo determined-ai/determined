@@ -115,6 +115,10 @@ export const cancelExperiment = generateDetApi<
   ExperimentIdParams, Api.V1CancelExperimentResponse, void
 >(Config.cancelExperiment);
 
+export const deleteExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1DeleteExperimentResponse, void
+  >(Config.deleteExperiment);
+
 export const killExperiment = generateDetApi<
   ExperimentIdParams, Api.V1KillExperimentResponse, void
 >(Config.killExperiment);

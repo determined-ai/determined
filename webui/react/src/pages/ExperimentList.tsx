@@ -27,8 +27,8 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, getExperimentLabels, getExperiments,
-  killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
+  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
+  getExperiments, killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
@@ -53,6 +53,7 @@ enum Action {
   Activate = 'Activate',
   Archive = 'Archive',
   Cancel = 'Cancel',
+  Delete = 'Delete',
   Kill = 'Kill',
   Pause = 'Pause',
   OpenTensorBoard = 'OpenTensorboard',
@@ -242,6 +243,7 @@ const ExperimentList: React.FC = () => {
     hasActivatable,
     hasArchivable,
     hasCancelable,
+    hasDeletable,
     hasKillable,
     hasPausable,
     hasUnarchivable,
@@ -250,6 +252,7 @@ const ExperimentList: React.FC = () => {
       hasActivatable: false,
       hasArchivable: false,
       hasCancelable: false,
+      hasDeletable: selectedExperiments.length > 0,
       hasKillable: false,
       hasPausable: false,
       hasUnarchivable: false,
@@ -258,12 +261,14 @@ const ExperimentList: React.FC = () => {
       const experiment = selectedExperiments[i];
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.includes(experiment.state);
+      const isDeletable = terminalRunStates.has(experiment.state);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
       const isPausable = experiment.state === RunState.Active;
       if (!tracker.hasArchivable && isArchivable) tracker.hasArchivable = true;
       if (!tracker.hasUnarchivable && experiment.archived) tracker.hasUnarchivable = true;
       if (!tracker.hasCancelable && isCancelable) tracker.hasCancelable = true;
+      if (!tracker.hasDeletable || !isDeletable) tracker.hasDeletable = false;
       if (!tracker.hasKillable && isKillable) tracker.hasKillable = true;
       if (!tracker.hasActivatable && isActivatable) tracker.hasActivatable = true;
       if (!tracker.hasPausable && isPausable) tracker.hasPausable = true;
@@ -403,6 +408,8 @@ const ExperimentList: React.FC = () => {
             return archiveExperiment({ experimentId: experiment.id });
           case Action.Cancel:
             return cancelExperiment({ experimentId: experiment.id });
+          case Action.Delete:
+            return deleteExperiment({ experimentId: experiment.id });
           case Action.Kill:
             return killExperiment({ experimentId: experiment.id });
           case Action.Pause:
@@ -544,6 +551,10 @@ const ExperimentList: React.FC = () => {
             disabled={!hasKillable}
             type="primary"
             onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
+          <Button
+            danger
+            disabled={!hasDeletable}
+            onClick={(): void => handleConfirmation(Action.Delete)}>Delete</Button>
         </TableBatch>
         <ResponsiveTable<ExperimentItem>
           columns={columns}
