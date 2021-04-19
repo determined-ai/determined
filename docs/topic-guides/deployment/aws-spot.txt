@@ -128,7 +128,8 @@ logs the first time they try to use spot instances:
 
 When this error occurs, please check the `AWS documentation
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html#service-linked-roles-spot-instance-requests>`__.
-Most likely, you will need to use the AWS CLI to create the ``AWSServiceRoleForEC2Spot`` role:
+Most likely, you will need to use the AWS CLI to create the
+``AWSServiceRoleForEC2Spot`` role:
 
 .. code::
 
