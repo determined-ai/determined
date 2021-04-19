@@ -13,6 +13,7 @@ import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
+import { checkForImport } from 'recordReplay';
 import appRoutes from 'routes';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
@@ -31,6 +32,7 @@ const AppView: React.FC = () => {
   useTheme();
 
   // Poll every 10 minutes
+
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
@@ -74,10 +76,17 @@ const AppView: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const [ checkedImport, setCheckedImport ] = useState<boolean>(false);
+
+  useEffect(() => {
+    // CHECK
+    checkForImport().then(() => setCheckedImport(true));
+  }, []);
+
   return (
     <HelmetProvider>
       <StoreProvider>
-        <AppView />
+        {checkedImport && <AppView />}
       </StoreProvider>
     </HelmetProvider>
   );

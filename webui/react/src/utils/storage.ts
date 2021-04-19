@@ -1,6 +1,7 @@
 export interface Store {
   clear(): void;
   getItem(key: string): string | null;
+  keys(): string[];
   removeItem(key: string): void;
   setItem(key: string, value: string): void;
 }
@@ -33,6 +34,10 @@ export class MemoryStore implements Store {
 
   setItem(key: string, value: string): void {
     this.store[key] = value;
+  }
+
+  keys(): string[] {
+    return Object.keys(this.store);
   }
 }
 
@@ -74,6 +79,34 @@ export class Storage {
     const path = this.computeKey(key);
     const item = JSON.stringify(value);
     this.store.setItem(path, item);
+  }
+
+  keys(): string[] {
+    const prefix = this.pathKeys.join(this.delimiter) + this.delimiter;
+    return this.store.keys()
+      .filter(key => key.startsWith(prefix))
+      .map(key => key.replace(prefix, ''));
+  }
+
+  toString(): string {
+    const inMemoryRepr = this.keys().reduce((acc: Record<string, unknown>, cur: string) => {
+      cur;
+      acc[cur] = this.get(cur);
+      return acc;
+    }, {});
+
+    return JSON.stringify(inMemoryRepr);
+  }
+
+  fromString(marshalled: string): void {
+    const inMemoryRepr = JSON.parse(marshalled);
+    for (const key in inMemoryRepr) {
+      this.set(key, inMemoryRepr[key]);
+    }
+  }
+
+  reset(): void {
+    this.keys().forEach(key => this.remove(key));
   }
 
   private computeKey(key: string): string {
