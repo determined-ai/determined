@@ -27,7 +27,7 @@ import { paths, serverAddress } from './routes/utils';
 const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
-  const { info, ui } = useStore();
+  const { auth, info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
   const { setThemeId } = useTheme();
 
@@ -42,7 +42,7 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    setupAnalytics(info);
+    setupAnalytics(auth, info);
 
     /*
      * Check to make sure the WebUI version matches the platform version.
@@ -67,7 +67,7 @@ const AppView: React.FC = () => {
         placement: 'bottomRight',
       });
     }
-  }, [ info ]);
+  }, [ auth, info ]);
 
   // Detect branding changes and update theme accordingly.
   useEffect(() => {
