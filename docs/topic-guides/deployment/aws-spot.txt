@@ -111,3 +111,26 @@ are not willing to delay their experiments. In this case, it may be best
 to not set ``spot_max_price`` and pay whatever the market price is. Your
 mileage may vary, but at Determined, we have regularly seen 70% cost
 reductions when using V100s, without specifying a ``spot_max_price``.
+
+*****************
+ Troubleshooting
+*****************
+
+Missing service-linked role
+===========================
+
+Some users may encounter the following error in the Determined master
+logs the first time they try to use spot instances:
+
+.. code::
+
+   AWS error while launching spot instances, AuthFailure.ServiceLinkedRoleCreationNotPermitted, The provided credentials do not have permission to create the service-linked role for EC2 Spot Instances.
+
+When this error occurs, please check the `AWS documentation
+<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html#service-linked-roles-spot-instance-requests>`__.
+Most likely, you will need to use the AWS CLI to create the
+``AWSServiceRoleForEC2Spot`` role:
+
+.. code::
+
+   aws iam create-service-linked-role --aws-service-name spot.amazonaws.com
