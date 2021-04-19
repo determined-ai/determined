@@ -1,4 +1,4 @@
-import { DeterminedInfo } from 'types';
+import { Auth, DeterminedInfo } from 'types';
 
 import handleError, { ErrorLevel, ErrorType } from './ErrorHandler';
 import { getTelemetry } from './services/api';
@@ -48,7 +48,7 @@ const getReadyAnalytics = (): SegmentAnalytics.AnalyticsJS | undefined => {
   return undefined;
 };
 
-export const setupAnalytics = async (info: DeterminedInfo): Promise<void> => {
+export const setupAnalytics = async (auth: Auth, info: DeterminedInfo): Promise<void> => {
   if (!data.analytics) data.analytics = getReadyAnalytics();
   if (!data.analytics || data.isEnabled) return;
 
@@ -56,13 +56,19 @@ export const setupAnalytics = async (info: DeterminedInfo): Promise<void> => {
    * Segment key should be 32 characters composed of upper case letters,
    * lower case letters and numbers 0-9.
    */
-  if (info.isTelemetryEnabled) {
+  if (auth.user && info.isTelemetryEnabled) {
     try {
       const telemetry = await getTelemetry({});
       const isProperKey = telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(telemetry.segmentKey);
       if (isProperKey) {
         data.analytics.load(telemetry.segmentKey || '');
-        data.analytics.identify(info.clusterId);
+        data.analytics.identify(auth.user.username, {
+          clusterId: info.clusterId,
+          clusterName: info.clusterName,
+          edition: 'OSS',
+          masterId: info.masterId,
+          version: info.version,
+        });
         data.isEnabled = true;
       }
     } catch (e) {

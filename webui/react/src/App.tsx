@@ -20,7 +20,7 @@ import { paths } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-  const { info } = useStore();
+  const { auth, info } = useStore();
   const [ canceler ] = useState(new AbortController());
 
   const fetchInfo = useFetchInfo(canceler);
@@ -33,7 +33,7 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    setupAnalytics(info);
+    setupAnalytics(auth, info);
 
     // Check to make sure the WebUI version matches the platform version.
     if (info.version !== process.env.VERSION) {
@@ -54,7 +54,7 @@ const AppView: React.FC = () => {
         placement: 'bottomRight',
       });
     }
-  }, [ info ]);
+  }, [ auth, info ]);
 
   useEffect(() => {
     return () => canceler.abort();
