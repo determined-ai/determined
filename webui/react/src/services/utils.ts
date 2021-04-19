@@ -2,13 +2,14 @@ import axios, { AxiosResponse } from 'axios';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
+import { applyRRMiddleware, genRequestKey, rrState } from 'recordReplay';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
 
 import { ApiCommonParams, DetApi, FetchOptions, HttpApi } from './types';
 
-/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
 
 /* Response Helpers */
@@ -71,27 +72,29 @@ export const processApiError = (name: string, e: Error): DaError => {
     type: isAuthError ? ErrorType.Auth : ErrorType.Server,
   });
 };
-
 export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
   return async function(params: Input & ApiCommonParams): Promise<Output> {
     const httpOpts = api.httpOptions(params);
 
+    const key = await genRequestKey(api.name, params); // TODO tack on axios
     try {
-      let headers = httpOpts.headers;
-      if (!api.unAuthenticated) {
-        headers = {
-          Authorization: `Bearer ${globalStorage.authToken}`,
-          ...headers,
-        };
-      }
-      const response = api.stubbedResponse ? { data: api.stubbedResponse } as AxiosResponse<unknown>
-        : await http.request({
-          cancelToken: params.cancelToken,
-          data: httpOpts.body,
-          headers,
-          method: httpOpts.method || 'GET',
-          url: serverAddress() + httpOpts.url,
-        });
+      const response = await applyRRMiddleware(key, async () => {
+        let headers = httpOpts.headers;
+        if (!api.unAuthenticated) {
+          headers = {
+            Authorization: `Bearer ${globalStorage.authToken}`,
+            ...headers,
+          };
+        }
+        return api.stubbedResponse ? { data: api.stubbedResponse }
+          : await http.request({
+            cancelToken: params.cancelToken,
+            data: httpOpts.body,
+            headers,
+            method: httpOpts.method || 'GET',
+            url: serverAddress() + httpOpts.url,
+          });
+      }) as AxiosResponse<unknown>;
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
@@ -104,8 +107,12 @@ export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
   return async function(params: Input, options?: FetchOptions): Promise<Output> {
     try {
-      const response = api.stubbedResponse ?
-        api.stubbedResponse : await api.request(params, options);
+      const key = await genRequestKey(api.name, params);
+      // FIXME cancel/abort fnctionality. also this might be better if it sits outsdie try/catch
+      const response = await applyRRMiddleware<DetOutput>(key, () => {
+        return api.stubbedResponse ?
+          api.stubbedResponse : api.request(params, options);
+      });
       return api.postProcess(response);
     } catch (e) {
       if (!isAborted(e)) processApiError(api.name, e);
@@ -115,6 +122,47 @@ export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetO
 }
 
 /* gRPC Helpers */
+
+const makeFetch = async (
+  fetchArgs: Api.FetchArgs,
+): Promise<Response> => {
+  const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
+
+  /*
+     * Default fetch credentials is set to `same-origin`, but we need to change it
+     * to `include` for local dev because the ports do not match up (3000 vs 8080).
+     */
+  if (process.env.IS_DEV) options.credentials = 'include';
+
+  const response = await fetch(serverAddress(fetchArgs.url), options);
+  if (!(response instanceof Response)) {
+    throw new Error('fetch failed'); // FIXME
+  }
+  return response;
+};
+
+interface EventValue<T> {
+  error?: Error;
+  result?: T
+}
+
+export const fetchStreamOneShot = async <T = unknown>(
+  fetchArgs: Api.FetchArgs,
+): Promise<EventValue<T>[]> => {
+  const response = await makeFetch(fetchArgs);
+  const resp = await response.text();
+  // if (resp === '') return [];
+  const values = resp.split('\n')
+    .filter(l => l !== '')
+    .map(line => {
+      try {
+        return JSON.parse(line);
+      } catch (_) {
+        return null;
+      }
+    }).filter(x => x);
+  return values;
+};
 
 /*
   consumeStream is used to consume streams from the generated TS client.
@@ -131,20 +179,26 @@ export const consumeStream = async <T = unknown>(
   onEvent: (event: T) => void,
 ): Promise<void> => {
   try {
-    const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
 
-    /*
-     * Default fetch credentials is set to `same-origin`, but we need to change it
-     * to `include` for local dev because the ports do not match up (3000 vs 8080).
-     */
-    if (process.env.IS_DEV) options.credentials = 'include';
+    if (rrState.mode !== 'disabled') {
+      // TODO use a custom recorder and record the same stream.
+      const key = await genRequestKey(fetchArgs.url, {});
+      // FIXME this still opens a connection to ther server..
+      const values = await applyRRMiddleware(
+        key,
+        () => fetchStreamOneShot<T>(fetchArgs),
+      ) as EventValue<T>[];
+      values.filter(val => !!val.result && !val.error)
+        .forEach(val => onEvent(val.result as T));
+      return;
+    }
 
-    const response = await fetch(serverAddress(fetchArgs.url), options);
+    const response = await makeFetch(fetchArgs);
     const reader = ndjsonStream(response.body).getReader();
 
     // Cancel reader if an abort signal is received.
-    if (options && options.signal) {
-      const signal: AbortSignal = options.signal;
+    if (fetchArgs.options && fetchArgs.options.signal) {
+      const signal: AbortSignal = fetchArgs.options.signal;
       const abortHandler = () => {
         reader.cancel();
         signal.removeEventListener('abort', abortHandler);

@@ -1,6 +1,6 @@
 /* Tools and tweaks for dev environments */
-
 import { globalStorage } from 'globalStorage';
+import { devControls } from 'recordReplay';
 import * as Api from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 
@@ -10,7 +10,10 @@ const setServerAddress = (address: string) => {
   updateDetApi({ basePath: serverAddress });
 };
 
+window.dev = window.dev || {};
 window.dev = {
+  ...window.dev,
+  ...devControls,
   resetServerAddress: () => globalStorage.removeServerAddress(),
   setServerAddress,
 };
