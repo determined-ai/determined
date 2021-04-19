@@ -98,6 +98,7 @@ func (t TLSOptions) Validate() []error {
 
 // FluentOptions stores configurable Fluent Bit-related options.
 type FluentOptions struct {
-	Image string `json:"image"`
-	Port  int    `json:"port"`
+	Image         string `json:"image"`
+	Port          int    `json:"port"`
+	ContainerName string `json:"container_name"`
 }

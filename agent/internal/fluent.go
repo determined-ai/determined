@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"time"
 
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
@@ -85,10 +86,9 @@ func startLoggingContainer(
 	opts Options,
 	masterSetOpts aproto.MasterSetAgentOptions,
 ) (int, string, error) {
-	const containerName = "determined-fluent"
 	imageName := opts.Fluent.Image
 
-	if err := removeContainerByName(docker, containerName); err != nil {
+	if err := removeContainerByName(docker, opts.Fluent.ContainerName); err != nil {
 		return 0, "", errors.Wrap(err, "failed to kill old logging container")
 	}
 
@@ -130,6 +130,7 @@ func startLoggingContainer(
 		[]fluent.ConfigSection{
 			{
 				{"Name", "forward"},
+				{"Port", strconv.Itoa(opts.Fluent.Port)},
 				// Setting mem_buf_limit and storage.type=filesystem allows Fluent Bit to buffer log data to
 				// disk if the rest of the pipeline is backed up. In combination with setting the Docker log
 				// driver to run in non-blocking mode, that lets us avoid impacting application performance when
@@ -182,7 +183,7 @@ func startLoggingContainer(
 			},
 		},
 		nil,
-		containerName,
+		opts.Fluent.ContainerName,
 	)
 	if err != nil {
 		return 0, "", err

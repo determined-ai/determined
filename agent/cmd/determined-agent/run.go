@@ -147,6 +147,8 @@ func newRunCmd() *cobra.Command {
 		"Docker image to use for the managed Fluent Bit daemon")
 	cmd.Flags().IntVar(&opts.Fluent.Port, "fluent-port", 24224,
 		"TCP port for the Fluent Bit daemon to listen on")
+	cmd.Flags().StringVar(&opts.Fluent.ContainerName, "fluent-container-name", "determined-fluent",
+		"Name for the Fluent Bit container")
 
 	return cmd
 }

@@ -103,8 +103,9 @@ func defaultAgentConfig() Options {
 		BindIP:              "0.0.0.0",
 		BindPort:            9090,
 		Fluent: FluentOptions{
-			Image: "fluent/fluent-bit:1.6",
-			Port:  24224,
+			Image:         "fluent/fluent-bit:1.6",
+			Port:          24224,
+			ContainerName: "determined-fluent-test",
 		},
 	}
 }

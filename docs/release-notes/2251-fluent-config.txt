@@ -1,0 +1,10 @@
+:orphan:
+
+**New Features**
+
+-  Agent: Support configuring the name of the Fluent Bit logging
+   container via the ``--fluent-container-name`` option.
+
+**Bug Fixes**
+
+-  Agent: Take the ``--fluent-port`` option into account.
