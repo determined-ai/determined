@@ -16,11 +16,16 @@ interface UI {
   showSpinner: boolean;
 }
 
-interface State {
+interface OmnibarState {
+  isShowing: boolean;
+}
+
+export interface State {
   agents: Agent[];
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
+  omnibar: OmnibarState
   ui: UI;
   users: DetailedUser[];
 }
@@ -50,9 +55,13 @@ export enum StoreAction {
 
   // Users
   SetUsers,
+
+  // Omnibar
+  HideOmnibar,
+  ShowOmnibar,
 }
 
-type Action =
+export type Action =
 | { type: StoreAction.Reset }
 | { type: StoreAction.SetAgents; value: Agent[] }
 | { type: StoreAction.ResetAuth }
@@ -67,6 +76,8 @@ type Action =
 | { type: StoreAction.ShowUIChrome }
 | { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
+| { type: StoreAction.HideOmnibar }
+| { type: StoreAction.ShowOmnibar }
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -98,6 +109,7 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
+  omnibar: { isShowing: false },
   ui: initUI,
   users: [],
 };
@@ -135,7 +147,7 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   return overview;
 };
 
-const reducer = (state: State, action: Action) => {
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
@@ -184,6 +196,12 @@ const reducer = (state: State, action: Action) => {
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
+    case StoreAction.HideOmnibar:
+      if (!state.omnibar.isShowing) return state;
+      return { ...state, omnibar: { ...state.omnibar, isShowing: false } };
+    case StoreAction.ShowOmnibar:
+      if (state.omnibar.isShowing) return state;
+      return { ...state, omnibar: { ...state.omnibar, isShowing: true } };
     default:
       return state;
   }

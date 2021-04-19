@@ -4,7 +4,7 @@ import { devControls } from 'recordReplay';
 import * as Api from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 
-const setServerAddress = (address: string) => {
+export const setServerAddress = (address: string): void => {
   const serverAddress = address.replace(/\/\s*$/, '');
   globalStorage.serverAddress = serverAddress;
   updateDetApi({ basePath: serverAddress });

@@ -80,7 +80,7 @@ export const terminalRunStates: Set<RunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
-  RunState.Deleted,
+  // RunState.Deleted, // FIXME experiments endpoint filter does not accept this state value
 ]);
 
 export const runStateToLabel: {[key in RunState]: string} = {
