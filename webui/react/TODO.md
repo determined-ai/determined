@@ -6,7 +6,7 @@
 - paste multiple cmds to execute.
 - [~] sort out label and title usage. custom renderer? 
   - auto add space on confirmation?
-- show output to the user
+- [x] show output to the user
 - use `help` cmd output as suggestions? 
 - allow search through the fully resolve tree paths (help output)
 
@@ -50,10 +50,11 @@ ops:
 
 ## shareable
 
-- strip auth keys
-- [p1] load from url with a sharable link pointing to a specific route in the ui.
-  - [ ] import from url
+- [ ] improve streaming endpoints capture
+- [x] carry user pref to get the same request params.
+- [x] strip auth keys
+- [x] load from url with a sharable link pointing to a specific route in the ui.
+  - [x] import from url
   - intercept before routing? import and set mode to replay
-- improve streaming endpoints capture
 - [x] add to omnibar
   

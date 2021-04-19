@@ -1,10 +1,13 @@
+import { message } from 'antd';
 import Fuse from 'fuse.js';
 
 import { StoreAction } from 'contexts/Store';
+import handleError, { ErrorType } from 'ErrorHandler';
 import { BaseNode, Children, getNodeChildren, isLeafNode,
-  isNLNode, isTreeNode, traverseTree, TreePath } from 'omnibar/AsyncTree';
+  isNLNode, isTreeNode, LeafNode, traverseTree, TreePath } from 'omnibar/AsyncTree';
 import { store } from 'omnibar/exposedStore';
 import root from 'omnibar/sampleTree';
+import { noOp } from 'services/utils';
 
 const SEPARATOR = ' ';
 
@@ -26,6 +29,13 @@ const parseInput = async (input: string): Promise<TreeRequest> => {
 
 const absPathToAddress = (path: TreePath): string[] => (path.map(tn => tn.title).slice(1));
 
+const noResultsNode: LeafNode = {
+  closeBar: true,
+  label: 'no sub branches: exit',
+  onAction: noOp,
+  title: 'Exit',
+};
+
 const query = async (input: string): Promise<Children> => {
   const { path, query } = await parseInput(input);
   const node = path[path.length-1];
@@ -42,26 +52,32 @@ const query = async (input: string): Promise<Children> => {
   );
   const matches = query === '' ? children : fuse.search(query).map(r => r.item);
 
-  if (isNLNode(node) && node.onCustomInput) {
+  if (isNLNode(node)) {
+    if (node.onCustomInput) {
     // TODO provide hint if query is empty.
-    const moreOptions = await node.onCustomInput(query);
-    matches.push(...moreOptions);
+      const moreOptions = await node.onCustomInput(query);
+      matches.push(...moreOptions);
+    } else if (matches.length === 0) {
+      matches.push(noResultsNode);
+    }
   }
   return matches;
 };
 
 export const extension = async(input: string): Promise<Children> => {
-  console.debug('extension triggered');
   try {
     return await query(input);
   } catch (e) {
-    console.error(e);
+    handleError({
+      error: e,
+      message: 'failed to query omnibar',
+      type: ErrorType.Ui,
+    });
     return [];
   }
 };
 
 export const onAction = async (item: BaseNode): Promise<void> => {
-  console.debug('onaction called', item);
   if (!!item && isTreeNode(item)) {
     // TODO should be replaced, perhaps, with a update to the omnibar package's command decorator
     // TODO setup the omnibar with context and tree
@@ -75,13 +91,12 @@ export const onAction = async (item: BaseNode): Promise<void> => {
     // trigger the onchange
     input.onchange && input.onchange(undefined as unknown as Event);
     if (isLeafNode(item)) {
-      const actionRv = await item.onAction(item);
-      if (item.closeBar) store?.dispatch({ type: StoreAction.HideOmnibar });
-      // always close the bar for location modules.
-      if (path.find(n => n.title === 'goto')) {
+      await item.onAction(item);
+      if (item.closeBar || path.find(n => n.title === 'goto')) {
         store?.dispatch({ type: StoreAction.HideOmnibar });
+      } else {
+        message.info('Action executed.', 1);
       }
-      return actionRv;
     }
   }
   // else meh

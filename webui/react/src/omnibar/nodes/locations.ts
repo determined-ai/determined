@@ -2,7 +2,7 @@ import { visitAction } from 'omnibar/actions';
 import { Children, TreeNode } from 'omnibar/AsyncTree';
 import { paths } from 'routes/utils';
 import { getExperiments, getExpTrials } from 'services/api';
-import { getTensorboards } from 'services/api';
+import { getNotebooks, getTensorboards } from 'services/api';
 import { terminalCommandStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -58,6 +58,7 @@ const locations: TreeNode[] = [
     title: 'dashboard',
   },
   {
+    aliases: [ 'notebooks', 'tensorboards', 'commands', 'shells' ],
     onAction: visitAction(paths.taskList()),
     title: 'tasks',
   },
@@ -75,7 +76,7 @@ const locations: TreeNode[] = [
   },
   {
     options: async (): Promise<Children> => {
-      const nbs = await getTensorboards({});
+      const nbs = await getNotebooks({});
       return nbs
         .filter(nb => !terminalCommandStates.has(nb.state))
         .map(nb => ({

@@ -109,6 +109,10 @@ export class Storage {
     this.keys().forEach(key => this.remove(key));
   }
 
+  fork(basePath: string): Storage {
+    basePath = [ ...this.pathKeys, basePath ].join(this.delimiter);
+    return new Storage({ basePath, delimiter: this.delimiter, store: this.store });
+  }
   private computeKey(key: string): string {
     return [ ...this.pathKeys, key ].join(this.delimiter);
   }
@@ -116,4 +120,5 @@ export class Storage {
   private parsePath (path: string, delimiter: string): string[] {
     return path.split(delimiter).filter(key => key !== '');
   }
+
 }

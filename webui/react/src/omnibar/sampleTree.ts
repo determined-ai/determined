@@ -1,5 +1,5 @@
-import { alertAction, parseIds, visitAction } from 'omnibar/actions';
-import { Children, dfsStaticRoutes, LeafNode, NLNode } from 'omnibar/AsyncTree';
+import { displayHelp, parseIds, visitAction } from 'omnibar/actions';
+import { Children, LeafNode, NLNode } from 'omnibar/AsyncTree';
 import dev from 'omnibar/nodes/dev';
 import locations from 'omnibar/nodes/locations';
 import { paths } from 'routes/utils';
@@ -20,7 +20,7 @@ const root: NLNode = {
         });
         const options: LeafNode[] = exps.map(exp => (
           {
-            onAction: (): unknown => pauseExperiment({ experimentId: exp.id }),
+            onAction: () => pauseExperiment({ experimentId: exp.id }),
             title: `${exp.id}`,
           }));
         return options;
@@ -36,7 +36,7 @@ const root: NLNode = {
         });
         const options: LeafNode[] = exps.map(exp => (
           {
-            onAction: (): unknown => activateExperiment({ experimentId: exp.id }),
+            onAction: () => activateExperiment({ experimentId: exp.id }),
             title: `${exp.id}`,
           }));
         return options;
@@ -57,7 +57,7 @@ const root: NLNode = {
           })); // is use of `this` discouraged?
         return options;
       },
-      title: 'archiveExperiments',
+      title: 'archiveExperiment',
     },
     {
       options: locations,
@@ -77,7 +77,7 @@ const root: NLNode = {
               .filter(cmd => !terminalCommandStates.has(cmd.state))
               .map(cmd => (
                 {
-                  onAction: (): unknown => killNotebook({ commandId: cmd.id }),
+                  onAction: () => killNotebook({ commandId: cmd.id }),
                   title: `${cmd.name}`, // differentiate view only vs command text?
                 }));
             return options;
@@ -95,7 +95,7 @@ const root: NLNode = {
               .filter(cmd => !terminalCommandStates.has(cmd.state))
               .map(cmd => (
                 {
-                  onAction: (): unknown => killTensorboard({ commandId: cmd.id }),
+                  onAction: () => killTensorboard({ commandId: cmd.id }),
                   title: `${cmd.name}`,
                 }));
             return options;
@@ -112,7 +112,7 @@ const root: NLNode = {
             });
             const options: LeafNode[] = exps.map(exp => (
               {
-                onAction: (): unknown => killExperiment({ experimentId: exp.id }),
+                onAction: () => killExperiment({ experimentId: exp.id }),
                 title: `${exp.id}`,
               })); // is use of `this` discouraged?
             return options;
@@ -177,27 +177,16 @@ const root: NLNode = {
       title: 'launch',
     },
     {
-      onAction: (): void => {
-        // FIXME
-        alertAction('Dialing Hamid..')();
-        const paths = dfsStaticRoutes([], [], root);
-        const text = paths
-          .map(path => path.reduce((acc, cur) => `${acc} ${cur.title}`, ''))
-          .map(addr => addr.replace('root ', ''))
-          .sort()
-          .join('\n');
-        console.log(text);
-        // this could be full suggestions when query is empty.
-      },
-      title: 'help',
-    },
-    {
       onAction: visitAction(paths.logout()),
       title: 'logout',
     },
     {
       options: dev,
       title: 'dev',
+    },
+    {
+      onAction: displayHelp,
+      title: 'help',
     },
   ],
   title: 'root',

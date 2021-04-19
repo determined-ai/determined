@@ -1,32 +1,40 @@
 /* eslint-disable no-console */
 
+import { sha512 } from 'js-sha512';
+
+import handleError, { ErrorType } from 'ErrorHandler';
+import { globalStorage } from 'globalStorage';
 import { downloadText } from 'utils/browser';
 import { clone } from 'utils/data';
 import { Storage } from 'utils/storage';
 import { Eventually } from 'utils/types';
 
-export const rrStorage = new Storage({
-  basePath: 'recs',
+const rrStorage = new Storage({
+  basePath: 'recordReplay',
   store: window.localStorage,
 });
+
+const rrConfigStorage = rrStorage.fork('config');
+const rrResponseStorage = rrStorage.fork('responses');
+
+export const userPreferencesStorage = new Storage(
+  { basePath: 'u', delimiter: ':', store: window.localStorage },
+);
 
 export type Mode = 'record' | 'replay' | 'mixed' | 'disabled';
 const modes = new Set([ 'record', 'replay', 'mixed', 'disabled' ]);
 
-const RR_MODE_KEY = 'rrMode';
+const RR_MODE_KEY = 'mode';
 interface State {
   mode: Mode;
-  storage: Storage;
 }
 
-export const rrState: State = {
-  mode: window.localStorage.getItem(RR_MODE_KEY) as Mode || 'disabled',
-  storage: rrStorage,
-};
+export const rrState: State =
+  { mode: rrConfigStorage.getWithDefault(RR_MODE_KEY, 'disabled') as Mode };
 
 export const exportApiStorage = (): void => {
-  // TODO gather and add on metadata.
-  const fName = `det-export${new Date().toLocaleString().replaceAll(' ', '')}.hal.json`;
+  rrConfigStorage.set('ui', userPreferencesStorage.toString());
+  const fName = `det-export-${new Date().toLocaleString().replaceAll(' ', '')}.hal.json`;
   downloadText(
     fName,
     [ rrStorage.toString() ],
@@ -34,9 +42,16 @@ export const exportApiStorage = (): void => {
 };
 
 export const setRRMode = (mode: Mode): void => {
-  // FIXME don't direclty work with local storage.
   if (!modes.has(mode)) throw new Error(`unrecognized mode: ${mode}`);
-  window.localStorage.setItem(RR_MODE_KEY, mode);
+  rrConfigStorage.set(RR_MODE_KEY, mode);
+  // we set an auth token to the ui thinks it has already authenticated.
+  if (mode === 'replay' && !globalStorage.authToken) globalStorage.authToken = 'fake-token';
+  if (mode === 'replay') {
+    const recordedUiConfig = rrConfigStorage.get<string>('ui');
+    if (recordedUiConfig) {
+      userPreferencesStorage.fromString(recordedUiConfig);
+    }
+  }
   rrState.mode = mode;
 };
 
@@ -53,12 +68,10 @@ export const importApiStorageRemote = async (url: string): Promise<void> => {
   rrStorage.fromString(marshalled);
 };
 
-export const importApiStorage = (): void => {
-  requestTextFileUpload((marshalled: string | null) => {
-    if (!marshalled) return;
-    console.log('loading from uploaded file');
-    rrStorage.fromString(marshalled);
-  });
+export const importApiStorage = async (): Promise<void> => {
+  const contents = await requestTextFileUpload();
+  console.log('loading from uploaded file');
+  rrStorage.fromString(contents);
 };
 
 export const resetApiStorage = (): void => {
@@ -69,53 +82,53 @@ export const resetApiStorage = (): void => {
 /*
   Provide a way to get file input from user.
 */
-export const requestTextFileUpload = (callback: (c: string | null) => void): void => {
+export const requestTextFileUpload = (): Promise<string> => {
 
-  // TODO use antd.Modal
   const el = document.createElement('input');
   el.setAttribute('type', 'file');
 
-  const readSingleFile = (e: Event) => {
-    if (e.target === null) return;
-    const files = (<HTMLInputElement>e.target).files;
-    if (files === null) return;
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const contents = e.target && e.target.result;
-      if (!(contents instanceof ArrayBuffer)) callback(contents);
-      document.body.removeChild(el);
+  return new Promise((resolve, reject) => {
+
+    const readSingleFile = (e: Event) => {
+      if (e.target === null) return;
+      const files = (<HTMLInputElement>e.target).files;
+      if (files === null) return;
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const contents = e.target && e.target.result;
+        if (typeof contents === 'string') resolve(contents);
+        document.body.removeChild(el);
+        reject(contents);
+      };
+      reader.readAsText(file);
     };
-    reader.readAsText(file);
-  };
 
-  el.addEventListener('change', readSingleFile, false);
-  document.body.insertBefore(el, document.body.firstChild);
+    el.addEventListener('change', readSingleFile, false);
+    document.body.insertBefore(el, document.body.firstChild);
+
+  });
 };
-
-async function hashText(text: string) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
-}
 
 /*
   Generate a unique key used to represent a specific request given
   all the relevant parameters.
 */
-export const genRequestKey = (name: string, params: unknown): Promise<string> => {
+export const genRequestKey = (name: string, params: unknown): string => {
   // name = name.replace('/', '-');
   const p = clone(params);
   const ineffectiveKeys = [ 'cancelToken', 'password', 'signal', 'username' ];
   ineffectiveKeys.forEach(k => delete p[k]);
   // WARN TODO we are relying on JSON.stringify to serialize objects with the same exact way between
   // different machines. If the assumption is broken there won't be a match.
-  const key = name + '' + JSON.stringify(p);
-  // return key;
-  return hashText(key);
+  return `${name}:${sha512(JSON.stringify(p))}`;
+};
+
+const sanitizeResponse = (resp: any): any => {
+  if (resp instanceof Object && 'data' in resp && 'token' in resp.data) {
+    return { ...resp, token: 'omitted' };
+  }
+  return resp;
 };
 
 /*
@@ -132,23 +145,27 @@ export const applyRRMiddleware = async <T>(
       return request();
     case 'record':
       response = await request();
-      console.log(`recording response to ${key} as `, response);
-      rrStorage.set(key, response);
+      console.debug(`recording response to ${key} as `, response);
+      rrResponseStorage.set(key, sanitizeResponse(response));
       return response;
     case 'replay':
-      console.log('replaying', key);
-      response = rrStorage.get<T>(key);
-      if (response === null) throw new Error('missing response'); // TODO DaError
+      response = rrResponseStorage.get<T>(key);
+      console.debug('replaying', key);
+      if (response === null) throw handleError({
+        message: 'Ran into an unrecorded request in replay mode.',
+        silent: false,
+        type: ErrorType.Ui,
+      });
       return response;
     case 'mixed':
-      response = rrStorage.get<T>(key);
+      response = rrResponseStorage.get<T>(key);
       if (response !== null) {
-        console.log('replaying', key);
+        console.debug('replaying', key);
         return response;
       } else {
         response = await request();
-        console.log(`recording response to ${key} as `, response);
-        rrStorage.set(key, response);
+        console.debug(`recording response to ${key} as `, response);
+        rrResponseStorage.set(key, sanitizeResponse(response));
         return response;
       }
     default:
@@ -157,16 +174,29 @@ export const applyRRMiddleware = async <T>(
   }
 };
 
-export const checkForImport = async () => {
+export const setupRRStorageAndReplay = (exportedContent: string): void => {
+  userPreferencesStorage.reset();
+  resetApiStorage();
+  rrStorage.fromString(exportedContent);
+  setRRMode('replay');
+};
+
+export const checkForImport = async (): Promise<void> => {
   const queryParamKey = 'import';
   const searchParams = new URLSearchParams(window.location.search);
   const remoteImport = searchParams.get(queryParamKey);
   if (!remoteImport) return;
   try {
-    await importApiStorageRemote(remoteImport);
-    setRRMode('replay');
+    const res = await window.fetch(remoteImport);
+    const marshalled = await res.text();
+    setupRRStorageAndReplay(marshalled);
   } catch (e) {
-    console.error('failed to load from remote', remoteImport);
+    handleError({
+      error: e,
+      message: `failed to load from remote: ${remoteImport}`,
+      silent: false,
+      type: ErrorType.Ui,
+    });
     console.error(e);
   }
 };
