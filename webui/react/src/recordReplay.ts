@@ -10,7 +10,7 @@ export const rrStorage = new Storage({
   store: window.localStorage,
 });
 
-type Mode = 'record' | 'replay' | 'mixed' | 'disabled';
+export type Mode = 'record' | 'replay' | 'mixed' | 'disabled';
 const modes = new Set([ 'record', 'replay', 'mixed', 'disabled' ]);
 
 const RR_MODE_KEY = 'rrMode';
@@ -174,6 +174,7 @@ export const checkForImport = async () => {
 export const devControls = {
   exportApiStorage,
   importApiStorage,
+  importApiStorageClipboard,
   importApiStorageRemote,
   resetApiStorage,
   rrState: rrState,

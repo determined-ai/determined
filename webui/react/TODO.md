@@ -40,9 +40,9 @@ ops:
   - task
   - single pages: exps, tasks, cluster, dashboard
 - dev `! ` prefix
-  - set/reset server: `setServerAddress`, `resetServerAddress`, `showServerAddress`
+  - [x] set/reset server: `setServerAddress`, `resetServerAddress`, `showServerAddress`
   - reset browser pref: `resetBrowserPref`
-  - shareable ui: start/stop record, replay, export, import,
+  - [x] shareable ui: start/stop record, replay, export, import,
 - logout
 - show help
 
