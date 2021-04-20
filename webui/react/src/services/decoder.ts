@@ -19,16 +19,6 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map(user => mapV1User(user));
 };
 
-export const jsonToUsers = (data: unknown): types.DetailedUser[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeDetailedUsers>(ioTypes.ioDetailedUsers, data);
-  return io.map(user => ({
-    id: user.id,
-    isActive: user.active,
-    isAdmin: user.admin,
-    username: user.username,
-  }));
-};
-
 export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
   return {
     clusterId: data.clusterId,

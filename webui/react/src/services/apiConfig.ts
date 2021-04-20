@@ -83,20 +83,6 @@ export const commandToEndpoint: Record<CommandType, string> = {
 
 /* Authentication */
 
-// export const login: HttpApi<Credentials, LoginResponse> = {
-//   httpOptions: ({ password, username }) => {
-//     return {
-//       body: { password: saltAndHashPassword(password), username },
-//       method: 'POST',
-//       // task websocket connections still depend on cookies for authentication.
-//       url: '/login?cookie=true',
-//     };
-//   },
-//   name: 'login',
-//   postProcess: (response) => decoder.jsonToLogin(response.data),
-//   unAuthenticated: true,
-// };
-
 export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, LoginResponse> = {
   name: 'login',
   postProcess: (resp) => ({ token: resp.token, user: decoder.mapV1User(resp.user) }),

@@ -25,23 +25,6 @@ export const decode = <T>(type: io.Mixed, data: any): T => {
 
 const optional = (x: io.Mixed) => io.union([ x, io.null, io.undefined ]);
 
-/* User */
-
-export const ioDetailedUser = io.type({
-  active: io.boolean,
-  admin: io.boolean,
-  id: io.number,
-  username: io.string,
-});
-
-export const ioDetailedUsers = io.array(ioDetailedUser);
-
-export type ioTypeDetailedUsers = io.TypeOf<typeof ioDetailedUsers>;
-
-export const ioLogin = io.type({ token: io.string });
-
-export type ioTypeLogin = io.TypeOf<typeof ioLogin>;
-
 /* Info */
 
 export const ioDeterminedInfo = io.type({
