@@ -627,6 +627,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
+	m.echo.Use(middleware.Gzip())
 	m.echo.Use(middleware.AddTrailingSlashWithConfig(middleware.TrailingSlashConfig{
 		Skipper: func(c echo.Context) bool {
 			return !staticWebDirectoryPaths[c.Path()]
