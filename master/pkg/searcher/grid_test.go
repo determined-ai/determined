@@ -110,9 +110,9 @@ func TestGridIntCountNegative(t *testing.T) {
 func TestGridSearcherRecords(t *testing.T) {
 	actual := model.GridConfig{MaxLength: model.NewLengthInRecords(19200)}
 	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]Runnable{
-		toOps("19200R V"), toOps("19200R V"), toOps("19200R V"),
-		toOps("19200R V"), toOps("19200R V"), toOps("19200R V"),
+	expected := [][]ValidateAfter{
+		toOps("19200R"), toOps("19200R"), toOps("19200R"),
+		toOps("19200R"), toOps("19200R"), toOps("19200R"),
 	}
 	searchMethod := newGridSearch(actual)
 	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
@@ -121,9 +121,9 @@ func TestGridSearcherRecords(t *testing.T) {
 func TestGridSearcherBatches(t *testing.T) {
 	actual := model.GridConfig{MaxLength: model.NewLengthInBatches(300)}
 	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]Runnable{
-		toOps("300B V"), toOps("300B V"), toOps("300B V"),
-		toOps("300B V"), toOps("300B V"), toOps("300B V"),
+	expected := [][]ValidateAfter{
+		toOps("300B"), toOps("300B"), toOps("300B"),
+		toOps("300B"), toOps("300B"), toOps("300B"),
 	}
 	searchMethod := newGridSearch(actual)
 	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
@@ -132,9 +132,9 @@ func TestGridSearcherBatches(t *testing.T) {
 func TestGridSearcherEpochs(t *testing.T) {
 	actual := model.GridConfig{MaxLength: model.NewLengthInEpochs(3)}
 	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]Runnable{
-		toOps("3E V"), toOps("3E V"), toOps("3E V"),
-		toOps("3E V"), toOps("3E V"), toOps("3E V"),
+	expected := [][]ValidateAfter{
+		toOps("3E"), toOps("3E"), toOps("3E"),
+		toOps("3E"), toOps("3E"), toOps("3E"),
 	}
 	searchMethod := newGridSearch(actual)
 	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
@@ -145,11 +145,11 @@ func TestGridSearchMethod(t *testing.T) {
 		{
 			name: "test grid search method",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B V"), 0.1),
-				newConstantPredefinedTrial(toOps("300B V"), 0.1),
-				newConstantPredefinedTrial(toOps("300B V"), 0.1),
-				newConstantPredefinedTrial(toOps("300B V"), 0.1),
-				newConstantPredefinedTrial(toOps("300B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B"), 0.1),
+				newConstantPredefinedTrial(toOps("300B"), 0.1),
+				newConstantPredefinedTrial(toOps("300B"), 0.1),
+				newConstantPredefinedTrial(toOps("300B"), 0.1),
+				newConstantPredefinedTrial(toOps("300B"), 0.1),
 				newEarlyExitPredefinedTrial(toOps("300B"), .1),
 			},
 			config: model.SearcherConfig{

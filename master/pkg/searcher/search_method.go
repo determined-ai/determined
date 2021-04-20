@@ -21,14 +21,11 @@ type SearchMethod interface {
 	// trialCreated informs the searcher that a trial has been created as a result of a Create
 	// operation.
 	trialCreated(ctx context, requestID model.RequestID) ([]Operation, error)
-	// trainCompleted informs the searcher that the training workload initiated by the same searcher
-	// has completed. It returns any new operations as a result of this workload completing.
-	trainCompleted(ctx context, requestID model.RequestID, train Train) ([]Operation, error)
 	// validationCompleted informs the searcher that the validation workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
 	validationCompleted(
-		ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
+		ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
 	) ([]Operation, error)
 	// trialClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
@@ -93,12 +90,9 @@ type defaultSearchMethod struct{}
 func (defaultSearchMethod) trialCreated(context, model.RequestID) ([]Operation, error) {
 	return nil, nil
 }
-func (defaultSearchMethod) trainCompleted(context, model.RequestID, Train) ([]Operation, error) {
-	return nil, nil
-}
 
 func (defaultSearchMethod) validationCompleted(
-	context, model.RequestID, Validate, workload.ValidationMetrics,
+	context, model.RequestID, workload.ValidationMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }

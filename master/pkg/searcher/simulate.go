@@ -31,7 +31,7 @@ func TrialIDMetric(_ *rand.Rand, trialID, _ int) float64 {
 }
 
 // SimulationResults holds all created trials and all executed workloads for each trial.
-type SimulationResults map[model.RequestID][]Runnable
+type SimulationResults map[model.RequestID][]ValidateAfter
 
 // MarshalJSON implements the json.Marshaler interface.
 func (s SimulationResults) MarshalJSON() ([]byte, error) {
@@ -40,20 +40,13 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 	for _, ops := range s {
 		var keyParts []string
 		for _, op := range ops {
-			switch op := op.(type) {
-			case Train:
-				switch op.Length.Unit {
-				case model.Records:
-					keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
-				case model.Batches:
-					keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
-				case model.Epochs:
-					keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
-				}
-			case Validate:
-				keyParts = append(keyParts, "V")
-			default:
-				return nil, errors.Errorf("unexpected operation: %v", op)
+			switch op.Length.Unit {
+			case model.Records:
+				keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
+			case model.Batches:
+				keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
+			case model.Epochs:
+				keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
 			}
 		}
 		summary[strings.Join(keyParts, " ")]++
@@ -113,7 +106,7 @@ func Simulate(
 
 		switch operation := operation.(type) {
 		case Create:
-			simulation.Results[requestID] = []Runnable{}
+			simulation.Results[requestID] = []ValidateAfter{}
 			trialIDs[requestID] = nextTrialID
 			ops, err := s.TrialCreated(operation, nextTrialID)
 			if err != nil {
@@ -126,22 +119,18 @@ func Simulate(
 				return simulation, err
 			}
 			nextTrialID++
-		case Runnable:
-			metrics, err := generateMetrics(
-				random, trialIDs[requestID], trialOpIdxs[requestID], operation, valFunc, metricName)
-			if err != nil {
-				return simulation, err
-			}
+		case ValidateAfter:
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
-			if train, ok := operation.(Train); ok {
-				lengthCompleted[requestID] += model.PartialUnits(train.Length.Units)
-				s.SetTrialProgress(requestID, lengthCompleted[requestID])
-			}
-			ops, err := s.OperationCompleted(trialIDs[requestID], operation, metrics)
+			s.SetTrialProgress(requestID, model.PartialUnits(operation.Length.Units))
+
+			metrics := generateMetrics(
+				random, trialIDs[requestID], trialOpIdxs[requestID], valFunc, metricName)
+			ops, err := s.ValidationCompleted(trialIDs[requestID], metrics)
 			if err != nil {
 				return simulation, err
 			}
 			trialOpIdxs[requestID]++
+
 			shutdown, err = handleOperations(pending, &requestIDs, ops)
 			if err != nil {
 				return simulation, err
@@ -242,20 +231,12 @@ func pickTrial(
 }
 
 func generateMetrics(
-	random *rand.Rand, trialID, opIdx int, operation Runnable, valFunc ValidationFunction,
-	metric string,
-) (interface{}, error) {
-	switch operation.(type) {
-	case Train:
-		return make(map[string]interface{}), nil
-	case Validate:
-		return &workload.ValidationMetrics{
-			NumInputs: 1,
-			Metrics: map[string]interface{}{
-				metric: valFunc(random, trialID, opIdx),
-			},
-		}, nil
-	default:
-		return nil, errors.Errorf("unexpected workload: %v", operation)
+	random *rand.Rand, trialID, opIdx int, valFunc ValidationFunction, metric string,
+) workload.ValidationMetrics {
+	return workload.ValidationMetrics{
+		NumInputs: 1,
+		Metrics: map[string]interface{}{
+			metric: valFunc(random, trialID, opIdx),
+		},
 	}
 }

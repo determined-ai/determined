@@ -8,11 +8,11 @@ import (
 
 func TestRandomSearcherRecords(t *testing.T) {
 	actual := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInRecords(19200)}
-	expected := [][]Runnable{
-		toOps("19200R V"),
-		toOps("19200R V"),
-		toOps("19200R V"),
-		toOps("19200R V"),
+	expected := [][]ValidateAfter{
+		toOps("19200R"),
+		toOps("19200R"),
+		toOps("19200R"),
+		toOps("19200R"),
 	}
 	search := newRandomSearch(actual)
 	checkSimulation(t, search, nil, ConstantValidation, expected)
@@ -20,11 +20,11 @@ func TestRandomSearcherRecords(t *testing.T) {
 
 func TestRandomSearcherBatches(t *testing.T) {
 	actual := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInBatches(300)}
-	expected := [][]Runnable{
-		toOps("300B V"),
-		toOps("300B V"),
-		toOps("300B V"),
-		toOps("300B V"),
+	expected := [][]ValidateAfter{
+		toOps("300B"),
+		toOps("300B"),
+		toOps("300B"),
+		toOps("300B"),
 	}
 	search := newRandomSearch(actual)
 	checkSimulation(t, search, nil, ConstantValidation, expected)
@@ -41,9 +41,9 @@ func TestRandomSearchMethod(t *testing.T) {
 		{
 			name: "test random search method",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("500B V"), .1),
-				newConstantPredefinedTrial(toOps("500B V"), .1),
-				newConstantPredefinedTrial(toOps("500B V"), .1),
+				newConstantPredefinedTrial(toOps("500B"), .1),
+				newConstantPredefinedTrial(toOps("500B"), .1),
+				newConstantPredefinedTrial(toOps("500B"), .1),
 				newEarlyExitPredefinedTrial(toOps("500B"), .1),
 			},
 			config: model.SearcherConfig{
@@ -57,10 +57,10 @@ func TestRandomSearchMethod(t *testing.T) {
 		{
 			name: "test random search method with records",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("32017R V"), .1),
-				newConstantPredefinedTrial(toOps("32017R V"), .1),
-				newConstantPredefinedTrial(toOps("32017R V"), .1),
-				newConstantPredefinedTrial(toOps("32017R V"), .1),
+				newConstantPredefinedTrial(toOps("32017R"), .1),
+				newConstantPredefinedTrial(toOps("32017R"), .1),
+				newConstantPredefinedTrial(toOps("32017R"), .1),
+				newConstantPredefinedTrial(toOps("32017R"), .1),
 			},
 			config: model.SearcherConfig{
 				RandomConfig: &model.RandomConfig{
@@ -79,7 +79,7 @@ func TestSingleSearchMethod(t *testing.T) {
 		{
 			name: "test single search method",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("500B V"), .1),
+				newConstantPredefinedTrial(toOps("500B"), .1),
 			},
 			config: model.SearcherConfig{
 				SingleConfig: &model.SingleConfig{

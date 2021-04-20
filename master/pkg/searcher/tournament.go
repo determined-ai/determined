@@ -82,22 +82,12 @@ func (s *tournamentSearch) trialCreated(
 	return s.markCreates(subSearchID, ops), err
 }
 
-func (s *tournamentSearch) trainCompleted(
-	ctx context, requestID model.RequestID, train Train,
-) ([]Operation, error) {
-	subSearchID := s.TrialTable[requestID]
-	subSearch := s.subSearches[subSearchID]
-	s.SubSearchUnitsCompleted[subSearchID] += float64(train.Length.Units)
-	ops, err := subSearch.trainCompleted(ctx, requestID, train)
-	return s.markCreates(subSearchID, ops), err
-}
-
 func (s *tournamentSearch) validationCompleted(
-	ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
+	ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	subSearchID := s.TrialTable[requestID]
 	subSearch := s.subSearches[subSearchID]
-	ops, err := subSearch.validationCompleted(ctx, requestID, validate, metrics)
+	ops, err := subSearch.validationCompleted(ctx, requestID, metrics)
 	return s.markCreates(subSearchID, ops), err
 }
 

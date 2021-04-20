@@ -270,55 +270,60 @@ func (a *apiServer) PreviewHPSearch(
 	}
 	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
 	indexes := make(map[string]int)
-	toProto := func(op searcher.Runnable) (experimentv1.RunnableOperation, error) {
-		switch op := op.(type) {
-		case searcher.Train:
-			switch op.Length.Unit {
-			case model.Records:
-				return experimentv1.RunnableOperation{
-					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
+	toProto := func(op searcher.ValidateAfter) ([]*experimentv1.RunnableOperation, error) {
+		switch op.Length.Unit {
+		case model.Records:
+			return []*experimentv1.RunnableOperation{
+				{
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
 					Length: &experimentv1.TrainingUnits{
 						Unit:  experimentv1.Unit_UNIT_RECORDS,
 						Count: int32(op.Length.Units),
 					},
-				}, nil
-			case model.Batches:
-				return experimentv1.RunnableOperation{
+				},
+				{
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+				},
+			}, nil
+		case model.Batches:
+			return []*experimentv1.RunnableOperation{
+				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingUnits{
 						Unit:  experimentv1.Unit_UNIT_BATCHES,
 						Count: int32(op.Length.Units),
 					},
-				}, nil
-			case model.Epochs:
-				return experimentv1.RunnableOperation{
+				},
+				{
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+				},
+			}, nil
+		case model.Epochs:
+			return []*experimentv1.RunnableOperation{
+				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingUnits{
 						Unit:  experimentv1.Unit_UNIT_EPOCHS,
 						Count: int32(op.Length.Units),
 					},
-				}, nil
-			default:
-				return experimentv1.RunnableOperation{},
-					fmt.Errorf("unrecognized unit %s", op.Length.Unit)
-			}
-		case searcher.Validate:
-			return experimentv1.RunnableOperation{
-				Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+				},
+				{
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+				},
 			}, nil
 		default:
-			return experimentv1.RunnableOperation{},
-				fmt.Errorf("unrecognized searcher.Runnable %s", op)
+			return []*experimentv1.RunnableOperation{},
+				fmt.Errorf("unrecognized unit %s", op.Length.Unit)
 		}
 	}
 	for _, result := range sim.Results {
 		var operations []*experimentv1.RunnableOperation
 		for _, msg := range result {
-			op, err := toProto(msg)
+			ops, err := toProto(msg)
 			if err != nil {
 				return nil, errors.Wrapf(err, "error converting msg in simultion result %s", msg)
 			}
-			operations = append(operations, &op)
+			operations = append(operations, ops...)
 		}
 		hash := fmt.Sprint(operations)
 		if i, ok := indexes[hash]; ok {

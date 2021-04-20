@@ -27,41 +27,35 @@ type (
 		create searcher.Create
 		trialSnapshot
 	}
-	trialCompletedOperation struct {
-		op      searcher.Runnable
-		metrics interface{}
+	trialReportValidation struct {
+		metrics workload.ValidationMetrics
 		trialSnapshot
 	}
-	trialValidation struct {
-		validationMetrics *workload.ValidationMetrics
-	}
-	trialCompletedWorkload struct {
-		completedMessage workload.CompletedMessage
-		completedOps     []trialCompletedOperation
-		earlyExit        *trialExitedEarly
+	trialReportEarlyExit struct {
+		reason workload.ExitedReason
 		trialSnapshot
+	}
+	trialReportProgress struct {
+		requestID model.RequestID
+		progress  model.PartialUnits
+	}
+	trialQueryIsBestValidation struct {
+		validationMetrics workload.ValidationMetrics
 	}
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
 	// its actor.PostStop and when the experiment snapshots the trial closed.
 	trialClosed struct {
 		requestID model.RequestID
 	}
-	trialExitedEarly struct {
-		trialID      int
-		exitedReason workload.ExitedReason
-	}
-	trialSnapshot struct {
-		requestID model.RequestID
-		trialID   int
-		snapshot  []byte
-	}
-	trialReportProgress struct {
-		requestID model.RequestID
-		progress  model.PartialUnits
-	}
 	getTrial       struct{ trialID int }
 	killExperiment struct{}
 )
+
+type trialSnapshot struct {
+	requestID model.RequestID
+	trialID   int
+	snapshot  []byte
+}
 
 type trialSnapshotCarrier interface {
 	getSnapshot() trialSnapshot
@@ -207,22 +201,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
 		e.processOperations(ctx, ops, err)
-	case trialCompletedOperation:
-		ops, err := e.searcher.OperationCompleted(msg.trialID, msg.op, msg.metrics)
+	case trialReportValidation:
+		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metrics)
 		e.processOperations(ctx, ops, err)
-	case trialCompletedWorkload:
-		for _, op := range msg.completedOps {
-			ops, err := e.searcher.OperationCompleted(msg.trialID, op.op, op.metrics)
-			e.processOperations(ctx, ops, err)
-		}
-		if msg.earlyExit != nil {
-			ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.earlyExit.exitedReason)
-			e.processOperations(ctx, ops, err)
-		}
-	case trialValidation:
-		if msg.validationMetrics != nil {
-			ctx.Respond(e.isBestValidation(*msg.validationMetrics))
-		}
+	case trialReportEarlyExit:
+		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
+		e.processOperations(ctx, ops, err)
+	case trialQueryIsBestValidation:
+		ctx.Respond(e.isBestValidation(msg.validationMetrics))
 	case trialReportProgress:
 		e.searcher.SetTrialProgress(msg.requestID, msg.progress)
 		progress := e.searcher.Progress()

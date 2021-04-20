@@ -54,8 +54,7 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
-		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}
@@ -83,15 +82,14 @@ func (s *gridSearch) trialExitedEarly(
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
-		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}
 	return ops, nil
 }
 
-func (s *gridSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
+func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, error) {
 	s.PendingTrials--
 	var ops []Operation
 	if len(s.RemainingTrials) > 0 {
@@ -99,8 +97,7 @@ func (s *gridSearch) trialClosed(ctx context, requestID model.RequestID) ([]Oper
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
-		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}

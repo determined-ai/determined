@@ -28,10 +28,11 @@ type (
 
 // All the operation types that support serialization.
 const (
-	CreateOperation   OperationType = 0
-	TrainOperation    OperationType = 1
-	ValidateOperation OperationType = 2
-	CloseOperation    OperationType = 4
+	CreateOperation        OperationType = 0
+	TrainOperation         OperationType = 1
+	ValidateOperation      OperationType = 2
+	CloseOperation         OperationType = 4
+	ValidateAfterOperation OperationType = 5
 )
 
 // MarshalJSON implements json.Marshaler.
@@ -42,10 +43,8 @@ func (l OperationList) MarshalJSON() ([]byte, error) {
 		switch op.(type) {
 		case Create:
 			typedOp.OperationType = CreateOperation
-		case Train:
-			typedOp.OperationType = TrainOperation
-		case Validate:
-			typedOp.OperationType = ValidateOperation
+		case ValidateAfter:
+			typedOp.OperationType = ValidateAfterOperation
 		case Close:
 			typedOp.OperationType = CloseOperation
 		default:
@@ -75,14 +74,8 @@ func (l *OperationList) UnmarshalJSON(b []byte) error {
 				return err
 			}
 			ops = append(ops, op)
-		case TrainOperation:
-			var op Train
-			if err := json.Unmarshal(b, &op); err != nil {
-				return err
-			}
-			ops = append(ops, op)
-		case ValidateOperation:
-			var op Validate
+		case ValidateAfterOperation:
+			var op ValidateAfter
 			if err := json.Unmarshal(b, &op); err != nil {
 				return err
 			}
@@ -105,13 +98,6 @@ func (l *OperationList) UnmarshalJSON(b []byte) error {
 // for a specific trial.
 type Requested interface {
 	GetRequestID() model.RequestID
-}
-
-// Runnable represents any runnable operation. It acts as a sum type for Train, Validate,
-// Checkpoints and any future operations that the harness may run.
-type Runnable interface {
-	Requested
-	Runnable()
 }
 
 // Create a new trial for the search method.
@@ -168,46 +154,24 @@ func (c Checkpoint) String() string {
 	return fmt.Sprintf("{Checkpoint %s}", c.RequestID)
 }
 
-// Train is an operation emitted by search methods to signal the trial train for a specified length.
-type Train struct {
+// ValidateAfter is an operation emitted by search methods to signal the trial train until
+// its total batches trained equals the specified length.
+type ValidateAfter struct {
 	RequestID model.RequestID
 	Length    model.Length
 }
 
-// NewTrain returns a new train operation.
-func NewTrain(requestID model.RequestID, length model.Length) Train {
-	return Train{requestID, length}
+// NewValidateAfter returns a new train operation.
+func NewValidateAfter(requestID model.RequestID, length model.Length) ValidateAfter {
+	return ValidateAfter{requestID, length}
 }
 
-func (t Train) String() string {
-	return fmt.Sprintf("{Train %s, %s}", t.RequestID, t.Length)
+func (t ValidateAfter) String() string {
+	return fmt.Sprintf("{ValidateAfter %s, %s}", t.RequestID, t.Length)
 }
-
-// Runnable implements Runnable.
-func (t Train) Runnable() {}
 
 // GetRequestID implemented Requested.
-func (t Train) GetRequestID() model.RequestID { return t.RequestID }
-
-// Validate is an operation emitted by search methods to signal the trial to validate.
-type Validate struct {
-	RequestID model.RequestID
-}
-
-// NewValidate returns a new validate operation.
-func NewValidate(requestID model.RequestID) Validate {
-	return Validate{requestID}
-}
-
-func (v Validate) String() string {
-	return fmt.Sprintf("{Validate %s}", v.RequestID)
-}
-
-// Runnable implements Runnable.
-func (v Validate) Runnable() {}
-
-// GetRequestID implemented Requested.
-func (v Validate) GetRequestID() model.RequestID { return v.RequestID }
+func (t ValidateAfter) GetRequestID() model.RequestID { return t.RequestID }
 
 // Close the trial with the given trial id.
 type Close struct {

@@ -19,18 +19,18 @@ import (
 // The searcher state and config match that of AsyncHalvingSearch but we will only run
 // the stopping based version if StopOnce is true.
 type asyncHalvingStoppingSearch struct {
-	defaultSearchMethod
 	model.AsyncHalvingConfig
 	asyncHalvingSearchState
 }
 
 func newAsyncHalvingStoppingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
+	unitsNeeded := 0
 	for id := 0; id < config.NumRungs; id++ {
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
 		downsamplingRate := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
-		unitsNeeded := max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
+		unitsNeeded += max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
 				UnitsNeeded:       model.NewLength(config.Unit(), unitsNeeded),
@@ -108,8 +108,7 @@ func (s *asyncHalvingStoppingSearch) initialOperations(ctx context) ([]Operation
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.Rungs[0].UnitsNeeded))
 	}
 	return ops, nil
 }
@@ -129,7 +128,7 @@ func (s *asyncHalvingStoppingSearch) trialClosed(
 }
 
 func (s *asyncHalvingStoppingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, validate Validate, metrics workload.ValidationMetrics,
+	ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.Metric)
@@ -185,8 +184,7 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 				s.TrialRungs[requestID] = rungIndex + 1
 				nextRung.OutstandingTrials++
 				unitsNeeded := max(nextRung.UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
-				ops = append(ops, NewTrain(requestID, model.NewLength(s.Unit(), unitsNeeded)))
-				ops = append(ops, NewValidate(requestID))
+				ops = append(ops, NewValidateAfter(requestID, model.NewLength(s.Unit(), unitsNeeded)))
 				addedTrainWorkload = true
 			} else {
 				ops = append(ops, NewClose(requestID))
@@ -201,8 +199,7 @@ func (s *asyncHalvingStoppingSearch) promoteAsync(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.Rungs[0].UnitsNeeded))
 	}
 
 	return ops
@@ -245,8 +242,7 @@ func (s *asyncHalvingStoppingSearch) trialExitedEarly(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		ops = append(ops, NewTrain(create.RequestID, s.Rungs[0].UnitsNeeded))
-		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.Rungs[0].UnitsNeeded))
 		return ops, nil
 	}
 	s.EarlyExitTrials[requestID] = true
