@@ -8,20 +8,36 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (l LogHyperparameterV0) GetMinval() float64 {
-	return l.Minval
+func (l LogHyperparameterV0) Minval() float64 {
+	return l.RawMinval
 }
 
-func (l LogHyperparameterV0) GetMaxval() float64 {
-	return l.Maxval
+func (l *LogHyperparameterV0) SetMinval(val float64) {
+	l.RawMinval = val
 }
 
-func (l LogHyperparameterV0) GetBase() float64 {
-	return l.Base
+func (l LogHyperparameterV0) Maxval() float64 {
+	return l.RawMaxval
 }
 
-func (l LogHyperparameterV0) GetCount() *int {
-	return l.Count
+func (l *LogHyperparameterV0) SetMaxval(val float64) {
+	l.RawMaxval = val
+}
+
+func (l LogHyperparameterV0) Base() float64 {
+	return l.RawBase
+}
+
+func (l *LogHyperparameterV0) SetBase(val float64) {
+	l.RawBase = val
+}
+
+func (l LogHyperparameterV0) Count() *int {
+	return l.RawCount
+}
+
+func (l *LogHyperparameterV0) SetCount(val *int) {
+	l.RawCount = val
 }
 
 func (l LogHyperparameterV0) WithDefaults() LogHyperparameterV0 {

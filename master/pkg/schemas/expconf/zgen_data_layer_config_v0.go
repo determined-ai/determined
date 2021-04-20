@@ -9,13 +9,13 @@ import (
 )
 
 func (d DataLayerConfigV0) GetUnionMember() interface{} {
-	if d.SharedFSConfig != nil {
+	if d.RawSharedFSConfig != nil {
 		return nil
 	}
-	if d.S3Config != nil {
+	if d.RawS3Config != nil {
 		return nil
 	}
-	if d.GCSConfig != nil {
+	if d.RawGCSConfig != nil {
 		return nil
 	}
 	panic("no union member defined")

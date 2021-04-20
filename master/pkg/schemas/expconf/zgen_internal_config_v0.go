@@ -8,8 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (i InternalConfigV0) GetNative() *NativeConfigV0 {
-	return i.Native
+func (i InternalConfigV0) Native() NativeConfigV0 {
+	if i.RawNative == nil {
+		panic("You must call WithDefaults on InternalConfigV0 before .RawNative")
+	}
+	return *i.RawNative
+}
+
+func (i *InternalConfigV0) SetNative(val NativeConfigV0) {
+	i.RawNative = &val
 }
 
 func (i InternalConfigV0) WithDefaults() InternalConfigV0 {

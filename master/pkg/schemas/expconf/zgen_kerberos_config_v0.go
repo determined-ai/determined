@@ -8,8 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (k KerberosConfigV0) GetConfigFile() *string {
-	return k.ConfigFile
+func (k KerberosConfigV0) ConfigFile() string {
+	if k.RawConfigFile == nil {
+		panic("You must call WithDefaults on KerberosConfigV0 before .RawConfigFile")
+	}
+	return *k.RawConfigFile
+}
+
+func (k *KerberosConfigV0) SetConfigFile(val string) {
+	k.RawConfigFile = &val
 }
 
 func (k KerberosConfigV0) WithDefaults() KerberosConfigV0 {

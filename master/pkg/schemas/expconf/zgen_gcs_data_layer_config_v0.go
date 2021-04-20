@@ -8,20 +8,36 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (g GCSDataLayerConfigV0) GetBucket() string {
-	return g.Bucket
+func (g GCSDataLayerConfigV0) Bucket() string {
+	return g.RawBucket
 }
 
-func (g GCSDataLayerConfigV0) GetBucketDirectoryPath() string {
-	return g.BucketDirectoryPath
+func (g *GCSDataLayerConfigV0) SetBucket(val string) {
+	g.RawBucket = val
 }
 
-func (g GCSDataLayerConfigV0) GetLocalCacheContainerPath() *string {
-	return g.LocalCacheContainerPath
+func (g GCSDataLayerConfigV0) BucketDirectoryPath() string {
+	return g.RawBucketDirectoryPath
 }
 
-func (g GCSDataLayerConfigV0) GetLocalCacheHostPath() *string {
-	return g.LocalCacheHostPath
+func (g *GCSDataLayerConfigV0) SetBucketDirectoryPath(val string) {
+	g.RawBucketDirectoryPath = val
+}
+
+func (g GCSDataLayerConfigV0) LocalCacheContainerPath() *string {
+	return g.RawLocalCacheContainerPath
+}
+
+func (g *GCSDataLayerConfigV0) SetLocalCacheContainerPath(val *string) {
+	g.RawLocalCacheContainerPath = val
+}
+
+func (g GCSDataLayerConfigV0) LocalCacheHostPath() *string {
+	return g.RawLocalCacheHostPath
+}
+
+func (g *GCSDataLayerConfigV0) SetLocalCacheHostPath(val *string) {
+	g.RawLocalCacheHostPath = val
 }
 
 func (g GCSDataLayerConfigV0) WithDefaults() GCSDataLayerConfigV0 {

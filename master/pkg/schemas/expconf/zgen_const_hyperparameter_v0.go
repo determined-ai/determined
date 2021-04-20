@@ -8,8 +8,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (c ConstHyperparameterV0) GetVal() interface{} {
-	return c.Val
+func (c ConstHyperparameterV0) Val() interface{} {
+	return c.RawVal
+}
+
+func (c *ConstHyperparameterV0) SetVal(val interface{}) {
+	c.RawVal = val
 }
 
 func (c ConstHyperparameterV0) WithDefaults() ConstHyperparameterV0 {

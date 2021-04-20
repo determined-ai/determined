@@ -8,8 +8,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (c CategoricalHyperparameterV0) GetVals() []interface{} {
-	return c.Vals
+func (c CategoricalHyperparameterV0) Vals() []interface{} {
+	return c.RawVals
+}
+
+func (c *CategoricalHyperparameterV0) SetVals(val []interface{}) {
+	c.RawVals = val
 }
 
 func (c CategoricalHyperparameterV0) WithDefaults() CategoricalHyperparameterV0 {

@@ -8,19 +8,31 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (d DeviceV0) GetHostPath() string {
-	return d.HostPath
+func (d DeviceV0) HostPath() string {
+	return d.RawHostPath
 }
 
-func (d DeviceV0) GetContainerPath() string {
-	return d.ContainerPath
+func (d *DeviceV0) SetHostPath(val string) {
+	d.RawHostPath = val
 }
 
-func (d DeviceV0) GetMode() string {
-	if d.Mode == nil {
-		panic("You must call WithDefaults on DeviceV0 before .GetMode")
+func (d DeviceV0) ContainerPath() string {
+	return d.RawContainerPath
+}
+
+func (d *DeviceV0) SetContainerPath(val string) {
+	d.RawContainerPath = val
+}
+
+func (d DeviceV0) Mode() string {
+	if d.RawMode == nil {
+		panic("You must call WithDefaults on DeviceV0 before .RawMode")
 	}
-	return *d.Mode
+	return *d.RawMode
+}
+
+func (d *DeviceV0) SetMode(val string) {
+	d.RawMode = &val
 }
 
 func (d DeviceV0) WithDefaults() DeviceV0 {

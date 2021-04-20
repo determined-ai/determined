@@ -8,26 +8,42 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (b BindMountV0) GetHostPath() string {
-	return b.HostPath
+func (b BindMountV0) HostPath() string {
+	return b.RawHostPath
 }
 
-func (b BindMountV0) GetContainerPath() string {
-	return b.ContainerPath
+func (b *BindMountV0) SetHostPath(val string) {
+	b.RawHostPath = val
 }
 
-func (b BindMountV0) GetReadOnly() bool {
-	if b.ReadOnly == nil {
-		panic("You must call WithDefaults on BindMountV0 before .GetReadOnly")
+func (b BindMountV0) ContainerPath() string {
+	return b.RawContainerPath
+}
+
+func (b *BindMountV0) SetContainerPath(val string) {
+	b.RawContainerPath = val
+}
+
+func (b BindMountV0) ReadOnly() bool {
+	if b.RawReadOnly == nil {
+		panic("You must call WithDefaults on BindMountV0 before .RawReadOnly")
 	}
-	return *b.ReadOnly
+	return *b.RawReadOnly
 }
 
-func (b BindMountV0) GetPropagation() string {
-	if b.Propagation == nil {
-		panic("You must call WithDefaults on BindMountV0 before .GetPropagation")
+func (b *BindMountV0) SetReadOnly(val bool) {
+	b.RawReadOnly = &val
+}
+
+func (b BindMountV0) Propagation() string {
+	if b.RawPropagation == nil {
+		panic("You must call WithDefaults on BindMountV0 before .RawPropagation")
 	}
-	return *b.Propagation
+	return *b.RawPropagation
+}
+
+func (b *BindMountV0) SetPropagation(val string) {
+	b.RawPropagation = &val
 }
 
 func (b BindMountV0) WithDefaults() BindMountV0 {

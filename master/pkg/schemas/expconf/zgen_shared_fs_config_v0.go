@@ -8,52 +8,88 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SharedFSConfigV0) GetSaveExperimentBest() int {
-	if s.SaveExperimentBest == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .GetSaveExperimentBest")
+func (s SharedFSConfigV0) SaveExperimentBest() int {
+	if s.RawSaveExperimentBest == nil {
+		panic("You must call WithDefaults on SharedFSConfigV0 before .RawSaveExperimentBest")
 	}
-	return *s.SaveExperimentBest
+	return *s.RawSaveExperimentBest
 }
 
-func (s SharedFSConfigV0) GetSaveTrialBest() int {
-	if s.SaveTrialBest == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .GetSaveTrialBest")
+func (s *SharedFSConfigV0) SetSaveExperimentBest(val int) {
+	s.RawSaveExperimentBest = &val
+}
+
+func (s SharedFSConfigV0) SaveTrialBest() int {
+	if s.RawSaveTrialBest == nil {
+		panic("You must call WithDefaults on SharedFSConfigV0 before .RawSaveTrialBest")
 	}
-	return *s.SaveTrialBest
+	return *s.RawSaveTrialBest
 }
 
-func (s SharedFSConfigV0) GetSaveTrialLatest() int {
-	if s.SaveTrialLatest == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .GetSaveTrialLatest")
+func (s *SharedFSConfigV0) SetSaveTrialBest(val int) {
+	s.RawSaveTrialBest = &val
+}
+
+func (s SharedFSConfigV0) SaveTrialLatest() int {
+	if s.RawSaveTrialLatest == nil {
+		panic("You must call WithDefaults on SharedFSConfigV0 before .RawSaveTrialLatest")
 	}
-	return *s.SaveTrialLatest
+	return *s.RawSaveTrialLatest
 }
 
-func (s SharedFSConfigV0) GetHostPath() string {
-	return s.HostPath
+func (s *SharedFSConfigV0) SetSaveTrialLatest(val int) {
+	s.RawSaveTrialLatest = &val
 }
 
-func (s SharedFSConfigV0) GetContainerPath() *string {
-	return s.ContainerPath
+func (s SharedFSConfigV0) HostPath() string {
+	return s.RawHostPath
 }
 
-func (s SharedFSConfigV0) GetCheckpointPath() *string {
-	return s.CheckpointPath
+func (s *SharedFSConfigV0) SetHostPath(val string) {
+	s.RawHostPath = val
 }
 
-func (s SharedFSConfigV0) GetTensorboardPath() *string {
-	return s.TensorboardPath
+func (s SharedFSConfigV0) ContainerPath() *string {
+	return s.RawContainerPath
 }
 
-func (s SharedFSConfigV0) GetStoragePath() *string {
-	return s.StoragePath
+func (s *SharedFSConfigV0) SetContainerPath(val *string) {
+	s.RawContainerPath = val
 }
 
-func (s SharedFSConfigV0) GetPropagation() string {
-	if s.Propagation == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .GetPropagation")
+func (s SharedFSConfigV0) CheckpointPath() *string {
+	return s.RawCheckpointPath
+}
+
+func (s *SharedFSConfigV0) SetCheckpointPath(val *string) {
+	s.RawCheckpointPath = val
+}
+
+func (s SharedFSConfigV0) TensorboardPath() *string {
+	return s.RawTensorboardPath
+}
+
+func (s *SharedFSConfigV0) SetTensorboardPath(val *string) {
+	s.RawTensorboardPath = val
+}
+
+func (s SharedFSConfigV0) StoragePath() *string {
+	return s.RawStoragePath
+}
+
+func (s *SharedFSConfigV0) SetStoragePath(val *string) {
+	s.RawStoragePath = val
+}
+
+func (s SharedFSConfigV0) Propagation() string {
+	if s.RawPropagation == nil {
+		panic("You must call WithDefaults on SharedFSConfigV0 before .RawPropagation")
 	}
-	return *s.Propagation
+	return *s.RawPropagation
+}
+
+func (s *SharedFSConfigV0) SetPropagation(val string) {
+	s.RawPropagation = &val
 }
 
 func (s SharedFSConfigV0) WithDefaults() SharedFSConfigV0 {

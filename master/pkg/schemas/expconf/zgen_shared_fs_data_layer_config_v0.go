@@ -8,12 +8,20 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SharedFSDataLayerConfigV0) GetContainerStoragePath() *string {
-	return s.ContainerStoragePath
+func (s SharedFSDataLayerConfigV0) ContainerStoragePath() *string {
+	return s.RawContainerStoragePath
 }
 
-func (s SharedFSDataLayerConfigV0) GetHostStoragePath() *string {
-	return s.HostStoragePath
+func (s *SharedFSDataLayerConfigV0) SetContainerStoragePath(val *string) {
+	s.RawContainerStoragePath = val
+}
+
+func (s SharedFSDataLayerConfigV0) HostStoragePath() *string {
+	return s.RawHostStoragePath
+}
+
+func (s *SharedFSDataLayerConfigV0) SetHostStoragePath(val *string) {
+	s.RawHostStoragePath = val
 }
 
 func (s SharedFSDataLayerConfigV0) WithDefaults() SharedFSDataLayerConfigV0 {

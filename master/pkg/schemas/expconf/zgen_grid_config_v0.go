@@ -8,34 +8,58 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (g GridConfigV0) GetMetric() string {
-	return g.Metric
+func (g GridConfigV0) Metric() string {
+	return g.RawMetric
 }
 
-func (g GridConfigV0) GetSmallerIsBetter() bool {
-	if g.SmallerIsBetter == nil {
-		panic("You must call WithDefaults on GridConfigV0 before .GetSmallerIsBetter")
+func (g *GridConfigV0) SetMetric(val string) {
+	g.RawMetric = val
+}
+
+func (g GridConfigV0) SmallerIsBetter() bool {
+	if g.RawSmallerIsBetter == nil {
+		panic("You must call WithDefaults on GridConfigV0 before .RawSmallerIsBetter")
 	}
-	return *g.SmallerIsBetter
+	return *g.RawSmallerIsBetter
 }
 
-func (g GridConfigV0) GetSourceTrialID() *int {
-	return g.SourceTrialID
+func (g *GridConfigV0) SetSmallerIsBetter(val bool) {
+	g.RawSmallerIsBetter = &val
 }
 
-func (g GridConfigV0) GetSourceCheckpointUUID() *string {
-	return g.SourceCheckpointUUID
+func (g GridConfigV0) SourceTrialID() *int {
+	return g.RawSourceTrialID
 }
 
-func (g GridConfigV0) GetMaxLength() LengthV0 {
-	return g.MaxLength
+func (g *GridConfigV0) SetSourceTrialID(val *int) {
+	g.RawSourceTrialID = val
 }
 
-func (g GridConfigV0) GetMaxConcurrentTrials() int {
-	if g.MaxConcurrentTrials == nil {
-		panic("You must call WithDefaults on GridConfigV0 before .GetMaxConcurrentTrials")
+func (g GridConfigV0) SourceCheckpointUUID() *string {
+	return g.RawSourceCheckpointUUID
+}
+
+func (g *GridConfigV0) SetSourceCheckpointUUID(val *string) {
+	g.RawSourceCheckpointUUID = val
+}
+
+func (g GridConfigV0) MaxLength() LengthV0 {
+	return g.RawMaxLength
+}
+
+func (g *GridConfigV0) SetMaxLength(val LengthV0) {
+	g.RawMaxLength = val
+}
+
+func (g GridConfigV0) MaxConcurrentTrials() int {
+	if g.RawMaxConcurrentTrials == nil {
+		panic("You must call WithDefaults on GridConfigV0 before .RawMaxConcurrentTrials")
 	}
-	return *g.MaxConcurrentTrials
+	return *g.RawMaxConcurrentTrials
+}
+
+func (g *GridConfigV0) SetMaxConcurrentTrials(val int) {
+	g.RawMaxConcurrentTrials = &val
 }
 
 func (g GridConfigV0) WithDefaults() GridConfigV0 {

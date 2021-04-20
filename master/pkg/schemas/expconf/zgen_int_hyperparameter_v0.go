@@ -8,16 +8,28 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (i IntHyperparameterV0) GetMinval() int {
-	return i.Minval
+func (i IntHyperparameterV0) Minval() int {
+	return i.RawMinval
 }
 
-func (i IntHyperparameterV0) GetMaxval() int {
-	return i.Maxval
+func (i *IntHyperparameterV0) SetMinval(val int) {
+	i.RawMinval = val
 }
 
-func (i IntHyperparameterV0) GetCount() *int {
-	return i.Count
+func (i IntHyperparameterV0) Maxval() int {
+	return i.RawMaxval
+}
+
+func (i *IntHyperparameterV0) SetMaxval(val int) {
+	i.RawMaxval = val
+}
+
+func (i IntHyperparameterV0) Count() *int {
+	return i.RawCount
+}
+
+func (i *IntHyperparameterV0) SetCount(val *int) {
+	i.RawCount = val
 }
 
 func (i IntHyperparameterV0) WithDefaults() IntHyperparameterV0 {
