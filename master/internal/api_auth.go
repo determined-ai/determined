@@ -35,7 +35,13 @@ func (a *apiServer) Login(
 		return nil, err
 	}
 
-	if !user.ValidatePassword(replicateClientSideSaltAndHash(req.Password)) {
+	var hashedPassword string
+	if req.IsHashed {
+		hashedPassword = req.Password
+	} else {
+		hashedPassword = replicateClientSideSaltAndHash(req.Password)
+	}
+	if !user.ValidatePassword(hashedPassword) {
 		return nil, grpcutil.ErrInvalidCredentials
 	}
 
