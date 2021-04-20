@@ -6,7 +6,6 @@ import { isNumber, isObject, isPrimitive } from 'utils/data';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
-import { LoginResponse } from './types';
 
 export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {
@@ -28,11 +27,6 @@ export const jsonToUsers = (data: unknown): types.DetailedUser[] => {
     isAdmin: user.admin,
     username: user.username,
   }));
-};
-
-export const jsonToLogin = (data: unknown): LoginResponse => {
-  const io = ioTypes.decode<ioTypes.ioTypeLogin>(ioTypes.ioLogin, data);
-  return { token: io.token };
 };
 
 export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {

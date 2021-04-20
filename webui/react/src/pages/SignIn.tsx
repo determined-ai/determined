@@ -29,7 +29,6 @@ const SignIn: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const queries: Queries = queryString.parse(location.search);
   const [ canceler ] = useState(new AbortController());
-  const [ source ] = useState(axios.CancelToken.source());
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -84,7 +83,7 @@ const SignIn: React.FC = () => {
         </Helmet>
         <div className={css.content}>
           <Logo type={LogoTypes.OnLightVertical} />
-          <DeterminedAuth canceler={canceler} source={source} />
+          <DeterminedAuth canceler={canceler} />
         </div>
       </div>
     </Page>

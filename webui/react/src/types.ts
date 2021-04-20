@@ -32,11 +32,6 @@ export interface Auth {
   user?: DetailedUser;
 }
 
-export interface Credentials {
-  password?: string;
-  username: string;
-}
-
 export interface DeterminedInfo {
   clusterId: string;
   clusterName: string;

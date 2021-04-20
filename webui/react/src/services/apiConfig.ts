@@ -13,7 +13,7 @@ import {
   PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import {
-  Agent, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
+  Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
   ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails, TrialPagination,
   ValidationHistory,
 } from 'types';
@@ -83,18 +83,26 @@ export const commandToEndpoint: Record<CommandType, string> = {
 
 /* Authentication */
 
-export const login: HttpApi<Credentials, LoginResponse> = {
-  httpOptions: ({ password, username }) => {
-    return {
-      body: { password: saltAndHashPassword(password), username },
-      method: 'POST',
-      // task websocket connections still depend on cookies for authentication.
-      url: '/login?cookie=true',
-    };
-  },
+// export const login: HttpApi<Credentials, LoginResponse> = {
+//   httpOptions: ({ password, username }) => {
+//     return {
+//       body: { password: saltAndHashPassword(password), username },
+//       method: 'POST',
+//       // task websocket connections still depend on cookies for authentication.
+//       url: '/login?cookie=true',
+//     };
+//   },
+//   name: 'login',
+//   postProcess: (response) => decoder.jsonToLogin(response.data),
+//   unAuthenticated: true,
+// };
+
+export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, LoginResponse> = {
   name: 'login',
-  postProcess: (response) => decoder.jsonToLogin(response.data),
-  unAuthenticated: true,
+  postProcess: (resp) => ({ token: resp.token, user: decoder.mapV1User(resp.user) }),
+  request: (params) => detApi.Auth.determinedLogin(
+    { ...params, isHashed: true, password: saltAndHashPassword(params.password) },
+  ),
 };
 
 export const logout: DetApi<EmptyParams, Api.V1LogoutResponse, void> = {
