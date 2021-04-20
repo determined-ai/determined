@@ -5,6 +5,9 @@ import (
 	"crypto/sha512"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -26,6 +29,10 @@ func replicateClientSideSaltAndHash(password string) string {
 
 func (a *apiServer) Login(
 	_ context.Context, req *apiv1.LoginRequest) (*apiv1.LoginResponse, error) {
+	if req.Username == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing argument: username")
+	}
+
 	user, err := a.m.db.UserByUsername(req.Username)
 	switch err {
 	case nil:
