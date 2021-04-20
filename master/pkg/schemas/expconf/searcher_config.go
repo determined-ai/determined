@@ -11,12 +11,12 @@ import (
 //go:generate ../gen.sh
 // SearcherConfigV0 holds the searcher configurations.
 type SearcherConfigV0 struct {
-	SingleConfig       *SingleConfigV0       `union:"name,single" json:"-"`
-	RandomConfig       *RandomConfigV0       `union:"name,random" json:"-"`
-	GridConfig         *GridConfigV0         `union:"name,grid" json:"-"`
-	AsyncHalvingConfig *AsyncHalvingConfigV0 `union:"name,async_halving" json:"-"`
-	AdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
-	PBTConfig          *PBTConfigV0          `union:"name,pbt" json:"-"`
+	RawSingleConfig       *SingleConfigV0       `union:"name,single" json:"-"`
+	RawRandomConfig       *RandomConfigV0       `union:"name,random" json:"-"`
+	RawGridConfig         *GridConfigV0         `union:"name,grid" json:"-"`
+	RawAsyncHalvingConfig *AsyncHalvingConfigV0 `union:"name,async_halving" json:"-"`
+	RawAdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
+	RawPBTConfig          *PBTConfigV0          `union:"name,pbt" json:"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -36,18 +36,18 @@ func (s *SearcherConfigV0) UnmarshalJSON(data []byte) error {
 // Unit implements the model.InUnits interface.
 func (s SearcherConfigV0) Unit() Unit {
 	switch {
-	case s.SingleConfig != nil:
-		return s.SingleConfig.Unit()
-	case s.RandomConfig != nil:
-		return s.RandomConfig.Unit()
-	case s.GridConfig != nil:
-		return s.GridConfig.Unit()
-	case s.AsyncHalvingConfig != nil:
-		return s.AsyncHalvingConfig.Unit()
-	case s.AdaptiveASHAConfig != nil:
-		return s.AdaptiveASHAConfig.Unit()
-	case s.PBTConfig != nil:
-		return s.PBTConfig.Unit()
+	case s.RawSingleConfig != nil:
+		return s.RawSingleConfig.Unit()
+	case s.RawRandomConfig != nil:
+		return s.RawRandomConfig.Unit()
+	case s.RawGridConfig != nil:
+		return s.RawGridConfig.Unit()
+	case s.RawAsyncHalvingConfig != nil:
+		return s.RawAsyncHalvingConfig.Unit()
+	case s.RawAdaptiveASHAConfig != nil:
+		return s.RawAdaptiveASHAConfig.Unit()
+	case s.RawPBTConfig != nil:
+		return s.RawPBTConfig.Unit()
 	default:
 		panic("no searcher type specified")
 	}
@@ -56,73 +56,73 @@ func (s SearcherConfigV0) Unit() Unit {
 //go:generate ../gen.sh
 // SingleConfigV0 configures a single trial.
 type SingleConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
+	RawMetric               string  `json:"metric"`
+	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
+	RawSourceTrialID        *int    `json:"source_trial_id"`
+	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	MaxLength LengthV0 `json:"max_length"`
+	RawMaxLength LengthV0 `json:"max_length"`
 }
 
 // Unit implements the model.InUnits interface.
 func (s SingleConfigV0) Unit() Unit {
-	return s.MaxLength.Unit
+	return s.RawMaxLength.Unit
 }
 
 //go:generate ../gen.sh
 // RandomConfigV0 configures a random search.
 type RandomConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
+	RawMetric               string  `json:"metric"`
+	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
+	RawSourceTrialID        *int    `json:"source_trial_id"`
+	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	MaxLength           LengthV0 `json:"max_length"`
-	MaxTrials           int      `json:"max_trials"`
-	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
+	RawMaxLength           LengthV0 `json:"max_length"`
+	RawMaxTrials           int      `json:"max_trials"`
+	RawMaxConcurrentTrials *int     `json:"max_concurrent_trials"`
 }
 
 // Unit implements the model.InUnits interface.
 func (r RandomConfigV0) Unit() Unit {
-	return r.MaxLength.Unit
+	return r.RawMaxLength.Unit
 }
 
 //go:generate ../gen.sh
 // GridConfigV0 configures a grid search.
 type GridConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
+	RawMetric               string  `json:"metric"`
+	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
+	RawSourceTrialID        *int    `json:"source_trial_id"`
+	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	MaxLength           LengthV0 `json:"max_length"`
-	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
+	RawMaxLength           LengthV0 `json:"max_length"`
+	RawMaxConcurrentTrials *int     `json:"max_concurrent_trials"`
 }
 
 // Unit implements the model.InUnits interface.
 func (g GridConfigV0) Unit() Unit {
-	return g.MaxLength.Unit
+	return g.RawMaxLength.Unit
 }
 
 //go:generate ../gen.sh
 // AsyncHalvingConfigV0 configures asynchronous successive halving.
 type AsyncHalvingConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
+	RawMetric               string  `json:"metric"`
+	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
+	RawSourceTrialID        *int    `json:"source_trial_id"`
+	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	NumRungs            int      `json:"num_rungs"`
-	MaxLength           LengthV0 `json:"max_length"`
-	MaxTrials           int      `json:"max_trials"`
-	Divisor             *float64 `json:"divisor"`
-	MaxConcurrentTrials *int     `json:"max_concurrent_trials"`
-	StopOnce            *bool    `json:"stop_once"`
+	RawNumRungs            int      `json:"num_rungs"`
+	RawMaxLength           LengthV0 `json:"max_length"`
+	RawMaxTrials           int      `json:"max_trials"`
+	RawDivisor             *float64 `json:"divisor"`
+	RawMaxConcurrentTrials *int     `json:"max_concurrent_trials"`
+	RawStopOnce            *bool    `json:"stop_once"`
 }
 
 // Unit implements the model.InUnits interface.
 func (a AsyncHalvingConfigV0) Unit() Unit {
-	return a.MaxLength.Unit
+	return a.RawMaxLength.Unit
 }
 
 // AdaptiveMode specifies how aggressively to perform early stopping.
@@ -148,54 +148,54 @@ func AdaptiveModePtr(mode string) *AdaptiveMode {
 //go:generate ../gen.sh
 // AdaptiveASHAConfigV0 configures an adaptive searcher for use with ASHA.
 type AdaptiveASHAConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
+	RawMetric               string  `json:"metric"`
+	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
+	RawSourceTrialID        *int    `json:"source_trial_id"`
+	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	MaxLength           LengthV0      `json:"max_length"`
-	MaxTrials           int           `json:"max_trials"`
-	BracketRungs        []int         `json:"bracket_rungs"`
-	Divisor             *float64      `json:"divisor"`
-	Mode                *AdaptiveMode `json:"mode"`
-	MaxRungs            *int          `json:"max_rungs"`
-	MaxConcurrentTrials *int          `json:"max_concurrent_trials"`
-	StopOnce            *bool         `json:"stop_once"`
+	RawMaxLength           LengthV0      `json:"max_length"`
+	RawMaxTrials           int           `json:"max_trials"`
+	RawBracketRungs        []int         `json:"bracket_rungs"`
+	RawDivisor             *float64      `json:"divisor"`
+	RawMode                *AdaptiveMode `json:"mode"`
+	RawMaxRungs            *int          `json:"max_rungs"`
+	RawMaxConcurrentTrials *int          `json:"max_concurrent_trials"`
+	RawStopOnce            *bool         `json:"stop_once"`
 }
 
 // Unit implements the model.InUnits interface.
 func (a AdaptiveASHAConfigV0) Unit() Unit {
-	return a.MaxLength.Unit
+	return a.RawMaxLength.Unit
 }
 
 // PBTReplaceConfig configures replacement for a PBT search.
 type PBTReplaceConfig struct {
-	TruncateFraction float64 `json:"truncate_fraction"`
+	RawTruncateFraction float64 `json:"truncate_fraction"`
 }
 
 // PBTExploreConfig configures exploration for a PBT search.
 type PBTExploreConfig struct {
-	ResampleProbability float64 `json:"resample_probability"`
-	PerturbFactor       float64 `json:"perturb_factor"`
+	RawResampleProbability float64 `json:"resample_probability"`
+	RawPerturbFactor       float64 `json:"perturb_factor"`
 }
 
 //go:generate ../gen.sh
 // PBTConfigV0 configures a PBT search.
 type PBTConfigV0 struct {
-	Metric               string  `json:"metric"`
-	SmallerIsBetter      *bool   `json:"smaller_is_better"`
-	SourceTrialID        *int    `json:"source_trial_id"`
-	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
+	RawMetric               string  `json:"metric"`
+	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
+	RawSourceTrialID        *int    `json:"source_trial_id"`
+	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
-	PopulationSize int      `json:"population_size"`
-	NumRounds      int      `json:"num_rounds"`
-	LengthPerRound LengthV0 `json:"length_per_round"`
+	RawPopulationSize int      `json:"population_size"`
+	RawNumRounds      int      `json:"num_rounds"`
+	RawLengthPerRound LengthV0 `json:"length_per_round"`
 
-	ReplaceFunction PBTReplaceConfig `json:"replace_function"`
-	ExploreFunction PBTExploreConfig `json:"explore_function"`
+	RawReplaceFunction PBTReplaceConfig `json:"replace_function"`
+	RawExploreFunction PBTExploreConfig `json:"explore_function"`
 }
 
 // Unit implements the model.InUnits interface.
-func (p PBTConfig) Unit() Unit {
-	return p.LengthPerRound.Unit
+func (p PBTConfigV0) Unit() Unit {
+	return p.RawLengthPerRound.Unit
 }

@@ -15,34 +15,34 @@ import (
 //go:generate ../gen.sh --import github.com/docker/docker/api/types,k8sV1:k8s.io/api/core/v1
 // EnvironmentConfigV0 configures the environment of a Determined command or experiment.
 type EnvironmentConfigV0 struct {
-	Image                *EnvironmentImageMapV0     `json:"image"`
-	EnvironmentVariables *EnvironmentVariablesMapV0 `json:"environment_variables"`
+	RawImage                *EnvironmentImageMapV0     `json:"image"`
+	RawEnvironmentVariables *EnvironmentVariablesMapV0 `json:"environment_variables"`
 
-	Ports          map[string]int    `json:"ports"`
-	RegistryAuth   *types.AuthConfig `json:"registry_auth"`
-	ForcePullImage *bool             `json:"force_pull_image"`
-	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
+	RawPorts          map[string]int    `json:"ports"`
+	RawRegistryAuth   *types.AuthConfig `json:"registry_auth"`
+	RawForcePullImage *bool             `json:"force_pull_image"`
+	RawPodSpec        *k8sV1.Pod        `json:"pod_spec"`
 
-	AddCapabilities  []string `json:"add_capabilities"`
-	DropCapabilities []string `json:"drop_capabilities"`
+	RawAddCapabilities  []string `json:"add_capabilities"`
+	RawDropCapabilities []string `json:"drop_capabilities"`
 }
 
 //go:generate ../gen.sh
 // EnvironmentImageMapV0 configures the runtime image.
 type EnvironmentImageMapV0 struct {
-	CPU *string `json:"cpu"`
-	GPU *string `json:"gpu"`
+	RawCPU *string `json:"cpu"`
+	RawGPU *string `json:"gpu"`
 }
 
 // RuntimeDefaults implements the RuntimeDefaultable interface.
 func (e EnvironmentImageMapV0) RuntimeDefaults() interface{} {
-	if e.CPU == nil {
+	if e.RawCPU == nil {
 		cpu := DefaultCPUImage
-		e.CPU = &cpu
+		e.RawCPU = &cpu
 	}
-	if e.GPU == nil {
+	if e.RawGPU == nil {
 		gpu := DefaultGPUImage
-		e.GPU = &gpu
+		e.RawGPU = &gpu
 	}
 	return e
 }
@@ -51,8 +51,8 @@ func (e EnvironmentImageMapV0) RuntimeDefaults() interface{} {
 func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 	var plain string
 	if err := json.Unmarshal(data, &plain); err == nil {
-		e.CPU = &plain
-		e.GPU = &plain
+		e.RawCPU = &plain
+		e.RawGPU = &plain
 		return nil
 	}
 	type DefaultParser EnvironmentImageMapV0
@@ -60,8 +60,8 @@ func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &jsonItem); err != nil {
 		return errors.Wrapf(err, "failed to parse runtime item")
 	}
-	e.CPU = jsonItem.CPU
-	e.GPU = jsonItem.GPU
+	e.RawCPU = jsonItem.RawCPU
+	e.RawGPU = jsonItem.RawGPU
 	return nil
 }
 
@@ -69,9 +69,9 @@ func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 func (e *EnvironmentImageMapV0) For(deviceType device.Type) string {
 	switch deviceType {
 	case device.CPU:
-		return *e.CPU
+		return *e.RawCPU
 	case device.GPU:
-		return *e.GPU
+		return *e.RawGPU
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}
@@ -80,18 +80,18 @@ func (e *EnvironmentImageMapV0) For(deviceType device.Type) string {
 //go:generate ../gen.sh
 // EnvironmentVariablesMapV0 configures the runtime environment variables.
 type EnvironmentVariablesMapV0 struct {
-	CPU []string `json:"cpu"`
-	GPU []string `json:"gpu"`
+	RawCPU []string `json:"cpu"`
+	RawGPU []string `json:"gpu"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	var plain []string
 	if err := json.Unmarshal(data, &plain); err == nil {
-		e.CPU = []string{}
-		e.GPU = []string{}
-		e.CPU = append(e.CPU, plain...)
-		e.GPU = append(e.GPU, plain...)
+		e.RawCPU = []string{}
+		e.RawGPU = []string{}
+		e.RawCPU = append(e.RawCPU, plain...)
+		e.RawGPU = append(e.RawGPU, plain...)
 		return nil
 	}
 	type DefaultParser EnvironmentVariablesMapV0
@@ -99,13 +99,13 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &jsonItems); err != nil {
 		return errors.Wrapf(err, "failed to parse runtime items")
 	}
-	e.CPU = []string{}
-	e.GPU = []string{}
-	if jsonItems.CPU != nil {
-		e.CPU = append(e.CPU, jsonItems.CPU...)
+	e.RawCPU = []string{}
+	e.RawGPU = []string{}
+	if jsonItems.RawCPU != nil {
+		e.RawCPU = append(e.RawCPU, jsonItems.RawCPU...)
 	}
-	if jsonItems.GPU != nil {
-		e.GPU = append(e.GPU, jsonItems.GPU...)
+	if jsonItems.RawGPU != nil {
+		e.RawGPU = append(e.RawGPU, jsonItems.RawGPU...)
 	}
 	return nil
 }
@@ -114,9 +114,9 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 func (e *EnvironmentVariablesMapV0) For(deviceType device.Type) []string {
 	switch deviceType {
 	case device.CPU:
-		return e.CPU
+		return e.RawCPU
 	case device.GPU:
-		return e.GPU
+		return e.RawGPU
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}

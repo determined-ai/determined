@@ -10,23 +10,23 @@ import (
 
 func TestBindMountsMerge(t *testing.T) {
 	e1 := ExperimentConfig{
-		BindMounts: BindMountsConfig{
+		RawBindMounts: BindMountsConfig{
 			BindMount{
-				HostPath:      "/host/e1",
-				ContainerPath: "/container/e1",
+				RawHostPath:      "/host/e1",
+				RawContainerPath: "/container/e1",
 			},
 		},
 	}
 	e2 := ExperimentConfig{
-		BindMounts: BindMountsConfig{
+		RawBindMounts: BindMountsConfig{
 			BindMount{
-				HostPath:      "/host/e2",
-				ContainerPath: "/container/e2",
+				RawHostPath:      "/host/e2",
+				RawContainerPath: "/container/e2",
 			},
 		},
 	}
 	out := schemas.Merge(e1, e2).(ExperimentConfig)
-	assert.Assert(t, len(out.BindMounts) == 2)
-	assert.Assert(t, out.BindMounts[0].HostPath == "/host/e1")
-	assert.Assert(t, out.BindMounts[1].HostPath == "/host/e2")
+	assert.Assert(t, len(out.RawBindMounts) == 2)
+	assert.Assert(t, out.RawBindMounts[0].RawHostPath == "/host/e1")
+	assert.Assert(t, out.RawBindMounts[1].RawHostPath == "/host/e2")
 }

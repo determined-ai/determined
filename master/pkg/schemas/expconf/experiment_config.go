@@ -17,33 +17,33 @@ import (
 // ExperimentConfigV0 is a versioned experiment config.
 type ExperimentConfigV0 struct {
 	// Fields which can be omitted or defined at the cluster level.
-	BindMounts               BindMountsConfigV0          `json:"bind_mounts"`
-	CheckpointPolicy         *string                     `json:"checkpoint_policy"`
-	CheckpointStorage        *CheckpointStorageConfigV0  `json:"checkpoint_storage"`
-	DataLayer                *DataLayerConfigV0          `json:"data_layer"`
-	Data                     map[string]interface{}      `json:"data"`
-	Debug                    *bool                       `json:"debug"`
-	Description              *string                     `json:"description"`
-	Entrypoint               *string                     `json:"entrypoint"`
-	Environment              *EnvironmentConfigV0        `json:"environment"`
-	Internal                 *InternalConfigV0           `json:"internal,omitempty"`
-	Labels                   LabelsV0                    `json:"labels"`
-	MaxRestarts              *int                        `json:"max_restarts"`
-	MinCheckpointPeriod      *LengthV0                   `json:"min_checkpoint_period"`
-	MinValidationPeriod      *LengthV0                   `json:"min_validation_period"`
-	Optimizations            *OptimizationsConfigV0      `json:"optimizations"`
-	PerformInitialValidation *bool                       `json:"perform_initial_validation"`
-	Profiling                *ProfilingConfigV0          `json:"profiling"`
-	RecordsPerEpoch          *int                        `json:"records_per_epoch"`
-	Reproducibility          *ReproducibilityConfigV0    `json:"reproducibility"`
-	Resources                *ResourcesConfigV0          `json:"resources"`
-	SchedulingUnit           *int                        `json:"scheduling_unit"`
-	Security                 *SecurityConfigV0           `json:"security,omitempty"`
-	TensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
+	RawBindMounts               BindMountsConfigV0          `json:"bind_mounts"`
+	RawCheckpointPolicy         *string                     `json:"checkpoint_policy"`
+	RawCheckpointStorage        *CheckpointStorageConfigV0  `json:"checkpoint_storage"`
+	RawDataLayer                *DataLayerConfigV0          `json:"data_layer"`
+	RawData                     map[string]interface{}      `json:"data"`
+	RawDebug                    *bool                       `json:"debug"`
+	RawDescription              *string                     `json:"description"`
+	RawEntrypoint               *string                     `json:"entrypoint"`
+	RawEnvironment              *EnvironmentConfigV0        `json:"environment"`
+	RawInternal                 *InternalConfigV0           `json:"internal,omitempty"`
+	RawLabels                   LabelsV0                    `json:"labels"`
+	RawMaxRestarts              *int                        `json:"max_restarts"`
+	RawMinCheckpointPeriod      *LengthV0                   `json:"min_checkpoint_period"`
+	RawMinValidationPeriod      *LengthV0                   `json:"min_validation_period"`
+	RawOptimizations            *OptimizationsConfigV0      `json:"optimizations"`
+	RawPerformInitialValidation *bool                       `json:"perform_initial_validation"`
+	RawProfiling                *ProfilingConfigV0          `json:"profiling"`
+	RawRecordsPerEpoch          *int                        `json:"records_per_epoch"`
+	RawReproducibility          *ReproducibilityConfigV0    `json:"reproducibility"`
+	RawResources                *ResourcesConfigV0          `json:"resources"`
+	RawSchedulingUnit           *int                        `json:"scheduling_unit"`
+	RawSecurity                 *SecurityConfigV0           `json:"security,omitempty"`
+	RawTensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
 
 	// Fields which must be defined by the user.
-	Hyperparameters HyperparametersV0 `json:"hyperparameters"`
-	Searcher        SearcherConfigV0  `json:"searcher"`
+	RawHyperparameters HyperparametersV0 `json:"hyperparameters"`
+	RawSearcher        SearcherConfigV0  `json:"searcher"`
 }
 
 func runtimeDefaultDescription() *string {
@@ -57,19 +57,19 @@ func runtimeDefaultDescription() *string {
 // RuntimeDefaults implements the RuntimeDefaultable interface.
 func (e ExperimentConfigV0) RuntimeDefaults() interface{} {
 	// Description has runtime defaults.
-	if e.Description == nil {
-		e.Description = runtimeDefaultDescription()
+	if e.RawDescription == nil {
+		e.RawDescription = runtimeDefaultDescription()
 	}
 	return e
 }
 
 // Unit implements the model.InUnits interface.
-func (e *ExperimentConfig) Unit() Unit {
-	return e.Searcher.Unit()
+func (e *ExperimentConfigV0) Unit() Unit {
+	return e.RawSearcher.Unit()
 }
 
 // Value implements the driver.Valuer interface.
-func (e ExperimentConfig) Value() (driver.Value, error) {
+func (e ExperimentConfigV0) Value() (driver.Value, error) {
 	// Validate the object before passing it to the database.
 	err := schemas.IsComplete(&e)
 	if err != nil {
@@ -85,7 +85,7 @@ func (e ExperimentConfig) Value() (driver.Value, error) {
 }
 
 // Scan implements the db.Scanner interface.
-func (e *ExperimentConfig) Scan(src interface{}) error {
+func (e *ExperimentConfigV0) Scan(src interface{}) error {
 	byts, ok := src.([]byte)
 	if !ok {
 		return errors.Errorf("unable to convert to []byte: %v", src)
@@ -146,42 +146,42 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 // ResourcesConfigV0 configures experiment resource usage.
 type ResourcesConfigV0 struct {
 	// Slots is used by commands while trials use SlotsPerTrial.
-	Slots *int `json:"slots,omitempty"`
+	RawSlots *int `json:"slots,omitempty"`
 
-	MaxSlots       *int     `json:"max_slots"`
-	SlotsPerTrial  *int     `json:"slots_per_trial"`
-	Weight         *float64 `json:"weight"`
-	NativeParallel *bool    `json:"native_parallel,omitempty"`
-	ShmSize        *int     `json:"shm_size"`
-	AgentLabel     *string  `json:"agent_label"`
-	ResourcePool   *string  `json:"resource_pool"`
-	Priority       *int     `json:"priority"`
+	RawMaxSlots       *int     `json:"max_slots"`
+	RawSlotsPerTrial  *int     `json:"slots_per_trial"`
+	RawWeight         *float64 `json:"weight"`
+	RawNativeParallel *bool    `json:"native_parallel,omitempty"`
+	RawShmSize        *int     `json:"shm_size"`
+	RawAgentLabel     *string  `json:"agent_label"`
+	RawResourcePool   *string  `json:"resource_pool"`
+	RawPriority       *int     `json:"priority"`
 
-	Devices DevicesConfigV0 `json:"devices"`
+	RawDevices DevicesConfigV0 `json:"devices"`
 }
 
 //go:generate ../gen.sh
 // OptimizationsConfigV0 is a legacy config value.
 type OptimizationsConfigV0 struct {
-	AggregationFrequency       *int    `json:"aggregation_frequency"`
-	AverageAggregatedGradients *bool   `json:"average_aggregated_gradients"`
-	AverageTrainingMetrics     *bool   `json:"average_training_metrics"`
-	GradientCompression        *bool   `json:"gradient_compression"`
-	GradUpdateSizeFile         *string `json:"grad_updates_size_file"`
-	MixedPrecision             *string `json:"mixed_precision,omitempty"`
-	TensorFusionThreshold      *int    `json:"tensor_fusion_threshold"`
-	TensorFusionCycleTime      *int    `json:"tensor_fusion_cycle_time"`
-	AutoTuneTensorFusion       *bool   `json:"auto_tune_tensor_fusion"`
+	RawAggregationFrequency       *int    `json:"aggregation_frequency"`
+	RawAverageAggregatedGradients *bool   `json:"average_aggregated_gradients"`
+	RawAverageTrainingMetrics     *bool   `json:"average_training_metrics"`
+	RawGradientCompression        *bool   `json:"gradient_compression"`
+	RawGradUpdateSizeFile         *string `json:"grad_updates_size_file"`
+	RawMixedPrecision             *string `json:"mixed_precision,omitempty"`
+	RawTensorFusionThreshold      *int    `json:"tensor_fusion_threshold"`
+	RawTensorFusionCycleTime      *int    `json:"tensor_fusion_cycle_time"`
+	RawAutoTuneTensorFusion       *bool   `json:"auto_tune_tensor_fusion"`
 }
 
 // BindMountsConfigV0 is the configuration for bind mounts.
 type BindMountsConfigV0 []BindMountV0
 
 // Merge implements the Mergable interface.
-func (b BindMountsConfig) Merge(other interface{}) interface{} {
-	tOther := other.(BindMountsConfig)
+func (b BindMountsConfigV0) Merge(other interface{}) interface{} {
+	tOther := other.(BindMountsConfigV0)
 	// Merge by appending.
-	out := BindMountsConfig{}
+	out := BindMountsConfigV0{}
 	out = append(out, b...)
 	out = append(out, tOther...)
 	return out
@@ -190,20 +190,20 @@ func (b BindMountsConfig) Merge(other interface{}) interface{} {
 //go:generate ../gen.sh
 // BindMountV0 configures trial runner filesystem bind mounts.
 type BindMountV0 struct {
-	HostPath      string  `json:"host_path"`
-	ContainerPath string  `json:"container_path"`
-	ReadOnly      *bool   `json:"read_only"`
-	Propagation   *string `json:"propagation"`
+	RawHostPath      string  `json:"host_path"`
+	RawContainerPath string  `json:"container_path"`
+	RawReadOnly      *bool   `json:"read_only"`
+	RawPropagation   *string `json:"propagation"`
 }
 
 // DevicesConfigV0 is the configuration for devices.
 type DevicesConfigV0 []DeviceV0
 
 // Merge implements the Mergable interface.
-func (b DevicesConfig) Merge(other interface{}) interface{} {
-	tOther := other.(DevicesConfig)
+func (b DevicesConfigV0) Merge(other interface{}) interface{} {
+	tOther := other.(DevicesConfigV0)
 	// Merge by appending.
-	out := DevicesConfig{}
+	out := DevicesConfigV0{}
 	out = append(out, b...)
 	out = append(out, tOther...)
 	return out
@@ -212,22 +212,22 @@ func (b DevicesConfig) Merge(other interface{}) interface{} {
 //go:generate ../gen.sh
 // DeviceV0 configures trial runner filesystem bind mounts.
 type DeviceV0 struct {
-	HostPath      string  `json:"host_path"`
-	ContainerPath string  `json:"container_path"`
-	Mode          *string `json:"mode"`
+	RawHostPath      string  `json:"host_path"`
+	RawContainerPath string  `json:"container_path"`
+	RawMode          *string `json:"mode"`
 }
 
 //go:generate ../gen.sh
 // ReproducibilityConfigV0 configures parameters related to reproducibility.
 type ReproducibilityConfigV0 struct {
-	ExperimentSeed *uint32 `json:"experiment_seed"`
+	RawExperimentSeed *uint32 `json:"experiment_seed"`
 }
 
 // RuntimeDefaults implements the RuntimeDefaultable interface.
 func (r ReproducibilityConfigV0) RuntimeDefaults() interface{} {
-	if r.ExperimentSeed == nil {
+	if r.RawExperimentSeed == nil {
 		t := uint32(time.Now().Unix())
-		r.ExperimentSeed = &t
+		r.RawExperimentSeed = &t
 	}
 	return r
 }
@@ -235,23 +235,23 @@ func (r ReproducibilityConfigV0) RuntimeDefaults() interface{} {
 //go:generate ../gen.sh
 // SecurityConfigV0 is a legacy config.
 type SecurityConfigV0 struct {
-	Kerberos *KerberosConfigV0 `json:"kerberos"`
+	RawKerberos *KerberosConfigV0 `json:"kerberos"`
 }
 
 //go:generate ../gen.sh
 // KerberosConfigV0 is a legacy config.
 type KerberosConfigV0 struct {
-	ConfigFile *string `json:"config_file"`
+	RawConfigFile *string `json:"config_file"`
 }
 
 //go:generate ../gen.sh
 // InternalConfigV0 is a legacy config.
 type InternalConfigV0 struct {
-	Native *NativeConfigV0 `json:"native"`
+	RawNative *NativeConfigV0 `json:"native"`
 }
 
 //go:generate ../gen.sh
 // NativeConfigV0 is a legacy config.
 type NativeConfigV0 struct {
-	Command []string `json:"command"`
+	RawCommand []string `json:"command"`
 }

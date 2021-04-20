@@ -16,11 +16,11 @@ type HyperparametersV0 map[string]HyperparameterV0
 //go:generate ../gen.sh
 // HyperparameterV0 is a sum type for hyperparameters.
 type HyperparameterV0 struct {
-	ConstHyperparameter       *ConstHyperparameterV0       `union:"type,const" json:"-"`
-	IntHyperparameter         *IntHyperparameterV0         `union:"type,int" json:"-"`
-	DoubleHyperparameter      *DoubleHyperparameterV0      `union:"type,double" json:"-"`
-	LogHyperparameter         *LogHyperparameterV0         `union:"type,log" json:"-"`
-	CategoricalHyperparameter *CategoricalHyperparameterV0 `union:"type,categorical" json:"-"`
+	RawConstHyperparameter       *ConstHyperparameterV0       `union:"type,const" json:"-"`
+	RawIntHyperparameter         *IntHyperparameterV0         `union:"type,int" json:"-"`
+	RawDoubleHyperparameter      *DoubleHyperparameterV0      `union:"type,double" json:"-"`
+	RawLogHyperparameter         *LogHyperparameterV0         `union:"type,log" json:"-"`
+	RawCategoricalHyperparameter *CategoricalHyperparameterV0 `union:"type,categorical" json:"-"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -32,7 +32,7 @@ func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 	if _, ok := parsed.(map[string]interface{}); ok {
 		return union.Unmarshal(data, h)
 	}
-	h.ConstHyperparameter = &ConstHyperparameter{Val: parsed}
+	h.RawConstHyperparameter = &ConstHyperparameterV0{RawVal: parsed}
 	return nil
 }
 
@@ -56,38 +56,38 @@ func (h HyperparametersV0) Each(f func(name string, param HyperparameterV0)) {
 //go:generate ../gen.sh
 // ConstHyperparameterV0 is a constant.
 type ConstHyperparameterV0 struct {
-	Val interface{} `json:"val"`
+	RawVal interface{} `json:"val"`
 }
 
 //go:generate ../gen.sh
 // IntHyperparameterV0 is an interval of ints.
 type IntHyperparameterV0 struct {
-	Minval int  `json:"minval"`
-	Maxval int  `json:"maxval"`
-	Count  *int `json:"count,omitempty"`
+	RawMinval int  `json:"minval"`
+	RawMaxval int  `json:"maxval"`
+	RawCount  *int `json:"count,omitempty"`
 }
 
 //go:generate ../gen.sh
 // DoubleHyperparameterV0 is an interval of float64s.
 type DoubleHyperparameterV0 struct {
-	Minval float64 `json:"minval"`
-	Maxval float64 `json:"maxval"`
-	Count  *int    `json:"count,omitempty"`
+	RawMinval float64 `json:"minval"`
+	RawMaxval float64 `json:"maxval"`
+	RawCount  *int    `json:"count,omitempty"`
 }
 
 //go:generate ../gen.sh
 // LogHyperparameterV0 is a log-uniformly distributed interval of float64s.
 type LogHyperparameterV0 struct {
 	// Minimum value is `base ^ minval`.
-	Minval float64 `json:"minval"`
+	RawMinval float64 `json:"minval"`
 	// Maximum value is `base ^ maxval`.
-	Maxval float64 `json:"maxval"`
-	Base   float64 `json:"base"`
-	Count  *int    `json:"count,omitempty"`
+	RawMaxval float64 `json:"maxval"`
+	RawBase   float64 `json:"base"`
+	RawCount  *int    `json:"count,omitempty"`
 }
 
 //go:generate ../gen.sh
 // CategoricalHyperparameterV0 is a collection of values (levels) of the category.
 type CategoricalHyperparameterV0 struct {
-	Vals []interface{} `json:"vals"`
+	RawVals []interface{} `json:"vals"`
 }
