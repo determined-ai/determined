@@ -15,7 +15,7 @@ message LoginRequest {
   string username = 1;
   // The password of the user.
   string password = 2;
-  // Indicate whether the password is pre-salted & hashed or not.
+  // Indicate whether the provided password is pre-salted & hashed or not.
   bool is_hashed = 3;
 }
 // Response to LoginRequest.
