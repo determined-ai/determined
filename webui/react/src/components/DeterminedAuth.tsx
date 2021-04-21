@@ -6,8 +6,7 @@ import Link from 'components/Link';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
-import { getCurrentUser, isLoginFailure, login } from 'services/api';
-import { V1LoginRequest } from 'services/api-ts-sdk';
+import { isLoginFailure, login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { Storage } from 'utils/storage';
 
@@ -34,16 +33,14 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
     storeDispatch({ type: StoreAction.ShowUISpinner });
     setCanSubmit(false);
     try {
-      const options = { signal: canceler.signal };
-      const { token } = await login(
+      const { token, user } = await login(
         {
           password: creds.password || '',
           username: creds.username || '',
         }
-        , options,
+        , { signal: canceler.signal },
       );
       updateDetApi({ apiKey: `Bearer ${token}` });
-      const user = await getCurrentUser(options);
       storeDispatch({
         type: StoreAction.SetAuth,
         value: { isAuthenticated: true, token, user },
