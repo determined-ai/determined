@@ -3,9 +3,10 @@ import logging
 import queue
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import psutil
+
 from determined.common import api
 from determined.common.api import TrialProfilerMetricsBatch
 
@@ -22,6 +23,7 @@ LOG_NAMESPACE = "determined-profiler"
 SHOULD_PROFILE_GPUS = None
 try:
     import pynvml
+
     pynvml.nvmlInit()
     SHOULD_PROFILE_GPUS = True
 except ModuleNotFoundError:
@@ -31,7 +33,9 @@ except pynvml.NVMLError_LibraryNotFound:
     logging.info(f"{LOG_NAMESPACE} pynvml LibraryNotFound error. Not collecting GPU metrics")
     SHOULD_PROFILE_GPUS = False
 
-assert SHOULD_PROFILE_GPUS is not None, "Could not set up pynvml, but also did not fail in the expected way."
+assert (
+    SHOULD_PROFILE_GPUS is not None
+), "Could not set up pynvml, but also did not fail in the expected way."
 
 
 class Measurement:
@@ -63,8 +67,8 @@ class ProfilerAgent:
     Profiling is only active between start_on_batch and end_after_batch. It will also automatically
     shut down 5 minutes after starting. When profiling is not active, no system metrics are
     collected and the record_timing function is a no-op.
-
     """
+
     def __init__(
         self,
         trial_id: int,
@@ -128,7 +132,7 @@ class ProfilerAgent:
             return
         self._end_collection()
 
-    def __enter__(self) -> 'ProfilerAgent':
+    def __enter__(self) -> "ProfilerAgent":
         self.start()
         return self
 
@@ -137,7 +141,10 @@ class ProfilerAgent:
 
     @property
     def is_enabled(self) -> bool:
-        """ Is the ProfilingAgent supposed to do anything at all? If this is false, the entire profiler is a no-op """
+        """
+        Is the ProfilingAgent supposed to do anything at all?
+        If this is false, the entire profiler is a no-op
+        """
         if not self.profiling_is_enabled_in_experiment_config:
             return False
         return self.sysmetrics_is_enabled or self.timings_is_enabled
@@ -152,7 +159,9 @@ class ProfilerAgent:
 
     @property
     def is_active(self) -> bool:
-        """ Is the ProfilingAgent actively collecting data and shipping to the API """
+        """
+        Is the ProfilingAgent actively collecting data and shipping to the API?
+        """
         if not self.is_enabled:
             return False
         return self.has_started and not self.has_finished
@@ -238,7 +247,9 @@ class CustomTimer(threading.Thread):
     ```
     """
 
-    def __init__(self, duration: int, callback: Callable, callback_args: Optional[List[Any]] = None):
+    def __init__(
+        self, duration: int, callback: Callable, callback_args: Optional[List[Any]] = None
+    ):
         self.duration = duration
         self.callback = callback
         self.callback_args = callback_args if callback_args is not None else []
@@ -269,9 +280,6 @@ class CustomTimer(threading.Thread):
             self.callback(*self.callback_args)
 
 
-
-
-
 class SysMetricCollectorThread(threading.Thread):
     """
     Background thread for collecting profiler metrics at a high granularity and shipping them to
@@ -300,7 +308,7 @@ class SysMetricCollectorThread(threading.Thread):
         super().__init__(daemon=True)
 
     def activate(self) -> None:
-        """ Begin collecting System Metrics """
+        """Begin collecting System Metrics"""
         self.control_queue.put(StartMessage())
 
     def kill(self) -> None:
@@ -310,7 +318,6 @@ class SysMetricCollectorThread(threading.Thread):
         self.current_batch_idx = new_batch_idx
 
     def run(self) -> None:
-        last_measurement_time = None
         cpu_util_collector = SimpleCpuUtilCollector()
         gpu_util_collector = GpuUtilCollector()
         gpu_memory_collection = GpuMemoryCollector()
@@ -363,9 +370,7 @@ class SysMetricCollectorThread(threading.Thread):
             )
 
             free_memory = free_memory_collector.measure(self.current_batch_idx)
-            self.current_batch.add_nongpu_measurement(
-                SysMetricType.FREE_MEM_METRIC, free_memory
-            )
+            self.current_batch.add_nongpu_measurement(SysMetricType.FREE_MEM_METRIC, free_memory)
 
             disk_read_thru, disk_write_thru, iops = disk_collector.measure(self.current_batch_idx)
             self.current_batch.add_nongpu_measurement(
@@ -396,12 +401,12 @@ class SysMetricCollectorThread(threading.Thread):
                 batch_start_time = time.time()
 
 
-
 class ProfilerSenderThread(threading.Thread):
     """
     This is a thread that exists solely so that we can make API calls without blocking.
     It has a Queue through which work is sent to the thread
     """
+
     def __init__(self, inbound_queue: queue.Queue, master_url: str) -> None:
         self.master_url = master_url
         self.inbound_queue = inbound_queue
@@ -419,7 +424,6 @@ class ProfilerSenderThread(threading.Thread):
                 self.master_url,
                 message,
             )
-
 
 
 class SysMetricType:
@@ -500,7 +504,8 @@ class SysMetricBatcher:
         trial_profiler_metrics_batches = []
         for metric_name in self.batch.keys():
             if (
-                metric_name not in [SysMetricType.GPU_UTIL_METRIC, SysMetricType.GPU_FREE_MEMORY_METRIC]
+                metric_name
+                not in [SysMetricType.GPU_UTIL_METRIC, SysMetricType.GPU_FREE_MEMORY_METRIC]
                 and len(self.batch[metric_name]) > 0
             ):
                 trial_profiler_metrics_batches.append(
@@ -527,7 +532,6 @@ class SysMetricBatcher:
                         )
 
         return trial_profiler_metrics_batches
-
 
 
 GIGA = 1_000_000_000
@@ -662,5 +666,3 @@ class GpuMemoryCollector:
             except pynvml.NVMLError as e:
                 logging.info(f"{LOG_NAMESPACE}: failed to sample GPU memory for GPU {i}: {e}")
         return measurements
-
-

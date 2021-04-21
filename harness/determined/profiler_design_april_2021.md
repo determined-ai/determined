@@ -24,7 +24,7 @@ We need many of the standard features of a metric collection utility like Telegr
 - Optionally end after a specific batch
 - End when the harness exits - do not allow threads to prevent the harness from shutting down
 - Collect no more than 5 minutes worth of data (to protect the DB)
-- Collect System Metrics once per machine
+- Collect System Metrics once per machine (local rank=0)
 
 ## Acceptable Deficiencies 
 
@@ -32,7 +32,7 @@ We need many of the standard features of a metric collection utility like Telegr
 - If the harness cannot make API calls to the master, retry once, then log and skip it.
 - Do not implement backpressure - try to send data to the master as quickly as possible to avoid a buildup of data to be sent, but do no more than that.
 - When the Profiler shuts down, drop any partial batches rather than sending them.
-- Collect timings only from a single GPU (rank=0)
+- Collect timings only from a single GPU (global rank=0)
 
 
 ## Python Implementation
