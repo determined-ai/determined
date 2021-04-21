@@ -8,146 +8,252 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (e ExperimentConfigV0) GetBindMounts() BindMountsConfigV0 {
-	return e.BindMounts
+func (e ExperimentConfigV0) BindMounts() BindMountsConfigV0 {
+	return e.RawBindMounts
 }
 
-func (e ExperimentConfigV0) GetCheckpointPolicy() string {
-	if e.CheckpointPolicy == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetCheckpointPolicy")
+func (e *ExperimentConfigV0) SetBindMounts(val BindMountsConfigV0) {
+	e.RawBindMounts = val
+}
+
+func (e ExperimentConfigV0) CheckpointPolicy() string {
+	if e.RawCheckpointPolicy == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawCheckpointPolicy")
 	}
-	return *e.CheckpointPolicy
+	return *e.RawCheckpointPolicy
 }
 
-func (e ExperimentConfigV0) GetCheckpointStorage() *CheckpointStorageConfigV0 {
-	return e.CheckpointStorage
+func (e *ExperimentConfigV0) SetCheckpointPolicy(val string) {
+	e.RawCheckpointPolicy = &val
 }
 
-func (e ExperimentConfigV0) GetDataLayer() DataLayerConfigV0 {
-	if e.DataLayer == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetDataLayer")
+func (e ExperimentConfigV0) CheckpointStorage() CheckpointStorageConfigV0 {
+	if e.RawCheckpointStorage == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawCheckpointStorage")
 	}
-	return *e.DataLayer
+	return *e.RawCheckpointStorage
 }
 
-func (e ExperimentConfigV0) GetData() map[string]interface{} {
-	return e.Data
+func (e *ExperimentConfigV0) SetCheckpointStorage(val CheckpointStorageConfigV0) {
+	e.RawCheckpointStorage = &val
 }
 
-func (e ExperimentConfigV0) GetDebug() bool {
-	if e.Debug == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetDebug")
+func (e ExperimentConfigV0) DataLayer() DataLayerConfigV0 {
+	if e.RawDataLayer == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawDataLayer")
 	}
-	return *e.Debug
+	return *e.RawDataLayer
 }
 
-func (e ExperimentConfigV0) GetDescription() *string {
-	return e.Description
+func (e *ExperimentConfigV0) SetDataLayer(val DataLayerConfigV0) {
+	e.RawDataLayer = &val
 }
 
-func (e ExperimentConfigV0) GetEntrypoint() *string {
-	return e.Entrypoint
+func (e ExperimentConfigV0) Data() map[string]interface{} {
+	return e.RawData
 }
 
-func (e ExperimentConfigV0) GetEnvironment() EnvironmentConfigV0 {
-	if e.Environment == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetEnvironment")
+func (e *ExperimentConfigV0) SetData(val map[string]interface{}) {
+	e.RawData = val
+}
+
+func (e ExperimentConfigV0) Debug() bool {
+	if e.RawDebug == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawDebug")
 	}
-	return *e.Environment
+	return *e.RawDebug
 }
 
-func (e ExperimentConfigV0) GetInternal() *InternalConfigV0 {
-	return e.Internal
+func (e *ExperimentConfigV0) SetDebug(val bool) {
+	e.RawDebug = &val
 }
 
-func (e ExperimentConfigV0) GetLabels() LabelsV0 {
-	return e.Labels
-}
-
-func (e ExperimentConfigV0) GetMaxRestarts() int {
-	if e.MaxRestarts == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetMaxRestarts")
+func (e ExperimentConfigV0) Description() string {
+	if e.RawDescription == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawDescription")
 	}
-	return *e.MaxRestarts
+	return *e.RawDescription
 }
 
-func (e ExperimentConfigV0) GetMinCheckpointPeriod() LengthV0 {
-	if e.MinCheckpointPeriod == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetMinCheckpointPeriod")
+func (e *ExperimentConfigV0) SetDescription(val string) {
+	e.RawDescription = &val
+}
+
+func (e ExperimentConfigV0) Entrypoint() *string {
+	return e.RawEntrypoint
+}
+
+func (e *ExperimentConfigV0) SetEntrypoint(val *string) {
+	e.RawEntrypoint = val
+}
+
+func (e ExperimentConfigV0) Environment() EnvironmentConfigV0 {
+	if e.RawEnvironment == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawEnvironment")
 	}
-	return *e.MinCheckpointPeriod
+	return *e.RawEnvironment
 }
 
-func (e ExperimentConfigV0) GetMinValidationPeriod() LengthV0 {
-	if e.MinValidationPeriod == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetMinValidationPeriod")
+func (e *ExperimentConfigV0) SetEnvironment(val EnvironmentConfigV0) {
+	e.RawEnvironment = &val
+}
+
+func (e ExperimentConfigV0) Internal() *InternalConfigV0 {
+	return e.RawInternal
+}
+
+func (e *ExperimentConfigV0) SetInternal(val *InternalConfigV0) {
+	e.RawInternal = val
+}
+
+func (e ExperimentConfigV0) Labels() LabelsV0 {
+	return e.RawLabels
+}
+
+func (e *ExperimentConfigV0) SetLabels(val LabelsV0) {
+	e.RawLabels = val
+}
+
+func (e ExperimentConfigV0) MaxRestarts() int {
+	if e.RawMaxRestarts == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawMaxRestarts")
 	}
-	return *e.MinValidationPeriod
+	return *e.RawMaxRestarts
 }
 
-func (e ExperimentConfigV0) GetOptimizations() OptimizationsConfigV0 {
-	if e.Optimizations == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetOptimizations")
+func (e *ExperimentConfigV0) SetMaxRestarts(val int) {
+	e.RawMaxRestarts = &val
+}
+
+func (e ExperimentConfigV0) MinCheckpointPeriod() LengthV0 {
+	if e.RawMinCheckpointPeriod == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawMinCheckpointPeriod")
 	}
-	return *e.Optimizations
+	return *e.RawMinCheckpointPeriod
 }
 
-func (e ExperimentConfigV0) GetPerformInitialValidation() bool {
-	if e.PerformInitialValidation == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetPerformInitialValidation")
+func (e *ExperimentConfigV0) SetMinCheckpointPeriod(val LengthV0) {
+	e.RawMinCheckpointPeriod = &val
+}
+
+func (e ExperimentConfigV0) MinValidationPeriod() LengthV0 {
+	if e.RawMinValidationPeriod == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawMinValidationPeriod")
 	}
-	return *e.PerformInitialValidation
+	return *e.RawMinValidationPeriod
 }
 
-func (e ExperimentConfigV0) GetProfiling() ProfilingConfigV0 {
-	if e.Profiling == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetProfiling")
+func (e *ExperimentConfigV0) SetMinValidationPeriod(val LengthV0) {
+	e.RawMinValidationPeriod = &val
+}
+
+func (e ExperimentConfigV0) Optimizations() OptimizationsConfigV0 {
+	if e.RawOptimizations == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawOptimizations")
 	}
-	return *e.Profiling
+	return *e.RawOptimizations
 }
 
-func (e ExperimentConfigV0) GetRecordsPerEpoch() int {
-	if e.RecordsPerEpoch == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetRecordsPerEpoch")
+func (e *ExperimentConfigV0) SetOptimizations(val OptimizationsConfigV0) {
+	e.RawOptimizations = &val
+}
+
+func (e ExperimentConfigV0) PerformInitialValidation() bool {
+	if e.RawPerformInitialValidation == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawPerformInitialValidation")
 	}
-	return *e.RecordsPerEpoch
+	return *e.RawPerformInitialValidation
 }
 
-func (e ExperimentConfigV0) GetReproducibility() ReproducibilityConfigV0 {
-	if e.Reproducibility == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetReproducibility")
+func (e *ExperimentConfigV0) SetPerformInitialValidation(val bool) {
+	e.RawPerformInitialValidation = &val
+}
+
+func (e ExperimentConfigV0) Profiling() ProfilingConfigV0 {
+	if e.RawProfiling == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawProfiling")
 	}
-	return *e.Reproducibility
+	return *e.RawProfiling
 }
 
-func (e ExperimentConfigV0) GetResources() ResourcesConfigV0 {
-	if e.Resources == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetResources")
+func (e *ExperimentConfigV0) SetProfiling(val ProfilingConfigV0) {
+	e.RawProfiling = &val
+}
+
+func (e ExperimentConfigV0) RecordsPerEpoch() int {
+	if e.RawRecordsPerEpoch == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawRecordsPerEpoch")
 	}
-	return *e.Resources
+	return *e.RawRecordsPerEpoch
 }
 
-func (e ExperimentConfigV0) GetSchedulingUnit() int {
-	if e.SchedulingUnit == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .GetSchedulingUnit")
+func (e *ExperimentConfigV0) SetRecordsPerEpoch(val int) {
+	e.RawRecordsPerEpoch = &val
+}
+
+func (e ExperimentConfigV0) Reproducibility() ReproducibilityConfigV0 {
+	if e.RawReproducibility == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawReproducibility")
 	}
-	return *e.SchedulingUnit
+	return *e.RawReproducibility
 }
 
-func (e ExperimentConfigV0) GetSecurity() *SecurityConfigV0 {
-	return e.Security
+func (e *ExperimentConfigV0) SetReproducibility(val ReproducibilityConfigV0) {
+	e.RawReproducibility = &val
 }
 
-func (e ExperimentConfigV0) GetTensorboardStorage() *TensorboardStorageConfigV0 {
-	return e.TensorboardStorage
+func (e ExperimentConfigV0) Resources() ResourcesConfigV0 {
+	if e.RawResources == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawResources")
+	}
+	return *e.RawResources
 }
 
-func (e ExperimentConfigV0) GetHyperparameters() HyperparametersV0 {
-	return e.Hyperparameters
+func (e *ExperimentConfigV0) SetResources(val ResourcesConfigV0) {
+	e.RawResources = &val
 }
 
-func (e ExperimentConfigV0) GetSearcher() SearcherConfigV0 {
-	return e.Searcher
+func (e ExperimentConfigV0) SchedulingUnit() int {
+	if e.RawSchedulingUnit == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawSchedulingUnit")
+	}
+	return *e.RawSchedulingUnit
+}
+
+func (e *ExperimentConfigV0) SetSchedulingUnit(val int) {
+	e.RawSchedulingUnit = &val
+}
+
+func (e ExperimentConfigV0) Security() *SecurityConfigV0 {
+	return e.RawSecurity
+}
+
+func (e *ExperimentConfigV0) SetSecurity(val *SecurityConfigV0) {
+	e.RawSecurity = val
+}
+
+func (e ExperimentConfigV0) TensorboardStorage() *TensorboardStorageConfigV0 {
+	return e.RawTensorboardStorage
+}
+
+func (e *ExperimentConfigV0) SetTensorboardStorage(val *TensorboardStorageConfigV0) {
+	e.RawTensorboardStorage = val
+}
+
+func (e ExperimentConfigV0) Hyperparameters() HyperparametersV0 {
+	return e.RawHyperparameters
+}
+
+func (e *ExperimentConfigV0) SetHyperparameters(val HyperparametersV0) {
+	e.RawHyperparameters = val
+}
+
+func (e ExperimentConfigV0) Searcher() SearcherConfigV0 {
+	return e.RawSearcher
+}
+
+func (e *ExperimentConfigV0) SetSearcher(val SearcherConfigV0) {
+	e.RawSearcher = val
 }
 
 func (e ExperimentConfigV0) WithDefaults() ExperimentConfigV0 {

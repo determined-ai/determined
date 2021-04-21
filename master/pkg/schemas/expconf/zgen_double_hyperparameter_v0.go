@@ -8,16 +8,28 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (d DoubleHyperparameterV0) GetMinval() float64 {
-	return d.Minval
+func (d DoubleHyperparameterV0) Minval() float64 {
+	return d.RawMinval
 }
 
-func (d DoubleHyperparameterV0) GetMaxval() float64 {
-	return d.Maxval
+func (d *DoubleHyperparameterV0) SetMinval(val float64) {
+	d.RawMinval = val
 }
 
-func (d DoubleHyperparameterV0) GetCount() *int {
-	return d.Count
+func (d DoubleHyperparameterV0) Maxval() float64 {
+	return d.RawMaxval
+}
+
+func (d *DoubleHyperparameterV0) SetMaxval(val float64) {
+	d.RawMaxval = val
+}
+
+func (d DoubleHyperparameterV0) Count() *int {
+	return d.RawCount
+}
+
+func (d *DoubleHyperparameterV0) SetCount(val *int) {
+	d.RawCount = val
 }
 
 func (d DoubleHyperparameterV0) WithDefaults() DoubleHyperparameterV0 {

@@ -8,11 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (t TestSubV0) GetValY() string {
-	if t.ValY == nil {
-		panic("You must call WithDefaults on TestSubV0 before .GetValY")
+func (t TestSubV0) ValY() string {
+	if t.RawValY == nil {
+		panic("You must call WithDefaults on TestSubV0 before .RawValY")
 	}
-	return *t.ValY
+	return *t.RawValY
+}
+
+func (t *TestSubV0) SetValY(val string) {
+	t.RawValY = &val
 }
 
 func (t TestSubV0) WithDefaults() TestSubV0 {

@@ -31,7 +31,7 @@ build/schema_gen.stamp: $(GENERATION_INPUTS)
 check-gen: force-gen gen
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
-	test -z "$(shell git status --porcelain ./pkg/schemas)"
+	test -z "$(shell git status --porcelain '**/zgen*')"
 
 .PHONY: get-deps
 get-deps:

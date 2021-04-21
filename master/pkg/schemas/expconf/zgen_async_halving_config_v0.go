@@ -8,56 +8,96 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (a AsyncHalvingConfigV0) GetMetric() string {
-	return a.Metric
+func (a AsyncHalvingConfigV0) Metric() string {
+	return a.RawMetric
 }
 
-func (a AsyncHalvingConfigV0) GetSmallerIsBetter() bool {
-	if a.SmallerIsBetter == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .GetSmallerIsBetter")
+func (a *AsyncHalvingConfigV0) SetMetric(val string) {
+	a.RawMetric = val
+}
+
+func (a AsyncHalvingConfigV0) SmallerIsBetter() bool {
+	if a.RawSmallerIsBetter == nil {
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawSmallerIsBetter")
 	}
-	return *a.SmallerIsBetter
+	return *a.RawSmallerIsBetter
 }
 
-func (a AsyncHalvingConfigV0) GetSourceTrialID() *int {
-	return a.SourceTrialID
+func (a *AsyncHalvingConfigV0) SetSmallerIsBetter(val bool) {
+	a.RawSmallerIsBetter = &val
 }
 
-func (a AsyncHalvingConfigV0) GetSourceCheckpointUUID() *string {
-	return a.SourceCheckpointUUID
+func (a AsyncHalvingConfigV0) SourceTrialID() *int {
+	return a.RawSourceTrialID
 }
 
-func (a AsyncHalvingConfigV0) GetNumRungs() int {
-	return a.NumRungs
+func (a *AsyncHalvingConfigV0) SetSourceTrialID(val *int) {
+	a.RawSourceTrialID = val
 }
 
-func (a AsyncHalvingConfigV0) GetMaxLength() LengthV0 {
-	return a.MaxLength
+func (a AsyncHalvingConfigV0) SourceCheckpointUUID() *string {
+	return a.RawSourceCheckpointUUID
 }
 
-func (a AsyncHalvingConfigV0) GetMaxTrials() int {
-	return a.MaxTrials
+func (a *AsyncHalvingConfigV0) SetSourceCheckpointUUID(val *string) {
+	a.RawSourceCheckpointUUID = val
 }
 
-func (a AsyncHalvingConfigV0) GetDivisor() float64 {
-	if a.Divisor == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .GetDivisor")
+func (a AsyncHalvingConfigV0) NumRungs() int {
+	return a.RawNumRungs
+}
+
+func (a *AsyncHalvingConfigV0) SetNumRungs(val int) {
+	a.RawNumRungs = val
+}
+
+func (a AsyncHalvingConfigV0) MaxLength() LengthV0 {
+	return a.RawMaxLength
+}
+
+func (a *AsyncHalvingConfigV0) SetMaxLength(val LengthV0) {
+	a.RawMaxLength = val
+}
+
+func (a AsyncHalvingConfigV0) MaxTrials() int {
+	return a.RawMaxTrials
+}
+
+func (a *AsyncHalvingConfigV0) SetMaxTrials(val int) {
+	a.RawMaxTrials = val
+}
+
+func (a AsyncHalvingConfigV0) Divisor() float64 {
+	if a.RawDivisor == nil {
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawDivisor")
 	}
-	return *a.Divisor
+	return *a.RawDivisor
 }
 
-func (a AsyncHalvingConfigV0) GetMaxConcurrentTrials() int {
-	if a.MaxConcurrentTrials == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .GetMaxConcurrentTrials")
-	}
-	return *a.MaxConcurrentTrials
+func (a *AsyncHalvingConfigV0) SetDivisor(val float64) {
+	a.RawDivisor = &val
 }
 
-func (a AsyncHalvingConfigV0) GetStopOnce() bool {
-	if a.StopOnce == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .GetStopOnce")
+func (a AsyncHalvingConfigV0) MaxConcurrentTrials() int {
+	if a.RawMaxConcurrentTrials == nil {
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawMaxConcurrentTrials")
 	}
-	return *a.StopOnce
+	return *a.RawMaxConcurrentTrials
+}
+
+func (a *AsyncHalvingConfigV0) SetMaxConcurrentTrials(val int) {
+	a.RawMaxConcurrentTrials = &val
+}
+
+func (a AsyncHalvingConfigV0) StopOnce() bool {
+	if a.RawStopOnce == nil {
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawStopOnce")
+	}
+	return *a.RawStopOnce
+}
+
+func (a *AsyncHalvingConfigV0) SetStopOnce(val bool) {
+	a.RawStopOnce = &val
 }
 
 func (a AsyncHalvingConfigV0) WithDefaults() AsyncHalvingConfigV0 {

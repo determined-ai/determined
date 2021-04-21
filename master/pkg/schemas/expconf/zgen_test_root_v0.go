@@ -8,31 +8,55 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (t TestRootV0) GetValX() int {
-	return t.ValX
+func (t TestRootV0) ValX() int {
+	return t.RawValX
 }
 
-func (t TestRootV0) GetSubObj() TestSubV0 {
-	if t.SubObj == nil {
-		panic("You must call WithDefaults on TestRootV0 before .GetSubObj")
+func (t *TestRootV0) SetValX(val int) {
+	t.RawValX = val
+}
+
+func (t TestRootV0) SubObj() TestSubV0 {
+	if t.RawSubObj == nil {
+		panic("You must call WithDefaults on TestRootV0 before .RawSubObj")
 	}
-	return *t.SubObj
+	return *t.RawSubObj
 }
 
-func (t TestRootV0) GetSubUnion() *TestUnionV0 {
-	return t.SubUnion
+func (t *TestRootV0) SetSubObj(val TestSubV0) {
+	t.RawSubObj = &val
 }
 
-func (t TestRootV0) GetRuntimeDefaultable() *int {
-	return t.RuntimeDefaultable
+func (t TestRootV0) SubUnion() *TestUnionV0 {
+	return t.RawSubUnion
 }
 
-func (t TestRootV0) GetDefaultedArray() []string {
-	return t.DefaultedArray
+func (t *TestRootV0) SetSubUnion(val *TestUnionV0) {
+	t.RawSubUnion = val
 }
 
-func (t TestRootV0) GetNodefaultArray() []string {
-	return t.NodefaultArray
+func (t TestRootV0) RuntimeDefaultable() *int {
+	return t.RawRuntimeDefaultable
+}
+
+func (t *TestRootV0) SetRuntimeDefaultable(val *int) {
+	t.RawRuntimeDefaultable = val
+}
+
+func (t TestRootV0) DefaultedArray() []string {
+	return t.RawDefaultedArray
+}
+
+func (t *TestRootV0) SetDefaultedArray(val []string) {
+	t.RawDefaultedArray = val
+}
+
+func (t TestRootV0) NodefaultArray() []string {
+	return t.RawNodefaultArray
+}
+
+func (t *TestRootV0) SetNodefaultArray(val []string) {
+	t.RawNodefaultArray = val
 }
 
 func (t TestRootV0) WithDefaults() TestRootV0 {

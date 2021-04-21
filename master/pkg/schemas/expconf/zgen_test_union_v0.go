@@ -9,31 +9,31 @@ import (
 )
 
 func (t TestUnionV0) GetUnionMember() interface{} {
-	if t.A != nil {
+	if t.RawA != nil {
 		return nil
 	}
-	if t.B != nil {
+	if t.RawB != nil {
 		return nil
 	}
 	panic("no union member defined")
 }
 
-func (t TestUnionV0) GetCommonVal() string {
-	if t.A != nil {
-		return t.A.GetCommonVal()
+func (t TestUnionV0) CommonVal() string {
+	if t.RawA != nil {
+		return t.RawA.CommonVal()
 	}
-	if t.B != nil {
-		return t.B.GetCommonVal()
+	if t.RawB != nil {
+		return t.RawB.CommonVal()
 	}
 	panic("no union member defined")
 }
 
-func (t TestUnionV0) GetType() string {
-	if t.A != nil {
-		return t.A.GetType()
+func (t TestUnionV0) Type() string {
+	if t.RawA != nil {
+		return t.RawA.Type()
 	}
-	if t.B != nil {
-		return t.B.GetType()
+	if t.RawB != nil {
+		return t.RawB.Type()
 	}
 	panic("no union member defined")
 }

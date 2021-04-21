@@ -9,111 +9,111 @@ import (
 )
 
 func (s SearcherConfigV0) GetUnionMember() interface{} {
-	if s.SingleConfig != nil {
+	if s.RawSingleConfig != nil {
 		return nil
 	}
-	if s.RandomConfig != nil {
+	if s.RawRandomConfig != nil {
 		return nil
 	}
-	if s.GridConfig != nil {
+	if s.RawGridConfig != nil {
 		return nil
 	}
-	if s.AsyncHalvingConfig != nil {
+	if s.RawAsyncHalvingConfig != nil {
 		return nil
 	}
-	if s.AdaptiveASHAConfig != nil {
+	if s.RawAdaptiveASHAConfig != nil {
 		return nil
 	}
-	if s.PBTConfig != nil {
+	if s.RawPBTConfig != nil {
 		return nil
 	}
 	panic("no union member defined")
 }
 
-func (s SearcherConfigV0) GetMetric() string {
-	if s.SingleConfig != nil {
-		return s.SingleConfig.GetMetric()
+func (s SearcherConfigV0) Metric() string {
+	if s.RawSingleConfig != nil {
+		return s.RawSingleConfig.Metric()
 	}
-	if s.RandomConfig != nil {
-		return s.RandomConfig.GetMetric()
+	if s.RawRandomConfig != nil {
+		return s.RawRandomConfig.Metric()
 	}
-	if s.GridConfig != nil {
-		return s.GridConfig.GetMetric()
+	if s.RawGridConfig != nil {
+		return s.RawGridConfig.Metric()
 	}
-	if s.AsyncHalvingConfig != nil {
-		return s.AsyncHalvingConfig.GetMetric()
+	if s.RawAsyncHalvingConfig != nil {
+		return s.RawAsyncHalvingConfig.Metric()
 	}
-	if s.AdaptiveASHAConfig != nil {
-		return s.AdaptiveASHAConfig.GetMetric()
+	if s.RawAdaptiveASHAConfig != nil {
+		return s.RawAdaptiveASHAConfig.Metric()
 	}
-	if s.PBTConfig != nil {
-		return s.PBTConfig.GetMetric()
-	}
-	panic("no union member defined")
-}
-
-func (s SearcherConfigV0) GetSmallerIsBetter() bool {
-	if s.SingleConfig != nil {
-		return s.SingleConfig.GetSmallerIsBetter()
-	}
-	if s.RandomConfig != nil {
-		return s.RandomConfig.GetSmallerIsBetter()
-	}
-	if s.GridConfig != nil {
-		return s.GridConfig.GetSmallerIsBetter()
-	}
-	if s.AsyncHalvingConfig != nil {
-		return s.AsyncHalvingConfig.GetSmallerIsBetter()
-	}
-	if s.AdaptiveASHAConfig != nil {
-		return s.AdaptiveASHAConfig.GetSmallerIsBetter()
-	}
-	if s.PBTConfig != nil {
-		return s.PBTConfig.GetSmallerIsBetter()
+	if s.RawPBTConfig != nil {
+		return s.RawPBTConfig.Metric()
 	}
 	panic("no union member defined")
 }
 
-func (s SearcherConfigV0) GetSourceCheckpointUUID() *string {
-	if s.SingleConfig != nil {
-		return s.SingleConfig.GetSourceCheckpointUUID()
+func (s SearcherConfigV0) SmallerIsBetter() bool {
+	if s.RawSingleConfig != nil {
+		return s.RawSingleConfig.SmallerIsBetter()
 	}
-	if s.RandomConfig != nil {
-		return s.RandomConfig.GetSourceCheckpointUUID()
+	if s.RawRandomConfig != nil {
+		return s.RawRandomConfig.SmallerIsBetter()
 	}
-	if s.GridConfig != nil {
-		return s.GridConfig.GetSourceCheckpointUUID()
+	if s.RawGridConfig != nil {
+		return s.RawGridConfig.SmallerIsBetter()
 	}
-	if s.AsyncHalvingConfig != nil {
-		return s.AsyncHalvingConfig.GetSourceCheckpointUUID()
+	if s.RawAsyncHalvingConfig != nil {
+		return s.RawAsyncHalvingConfig.SmallerIsBetter()
 	}
-	if s.AdaptiveASHAConfig != nil {
-		return s.AdaptiveASHAConfig.GetSourceCheckpointUUID()
+	if s.RawAdaptiveASHAConfig != nil {
+		return s.RawAdaptiveASHAConfig.SmallerIsBetter()
 	}
-	if s.PBTConfig != nil {
-		return s.PBTConfig.GetSourceCheckpointUUID()
+	if s.RawPBTConfig != nil {
+		return s.RawPBTConfig.SmallerIsBetter()
 	}
 	panic("no union member defined")
 }
 
-func (s SearcherConfigV0) GetSourceTrialID() *int {
-	if s.SingleConfig != nil {
-		return s.SingleConfig.GetSourceTrialID()
+func (s SearcherConfigV0) SourceCheckpointUUID() *string {
+	if s.RawSingleConfig != nil {
+		return s.RawSingleConfig.SourceCheckpointUUID()
 	}
-	if s.RandomConfig != nil {
-		return s.RandomConfig.GetSourceTrialID()
+	if s.RawRandomConfig != nil {
+		return s.RawRandomConfig.SourceCheckpointUUID()
 	}
-	if s.GridConfig != nil {
-		return s.GridConfig.GetSourceTrialID()
+	if s.RawGridConfig != nil {
+		return s.RawGridConfig.SourceCheckpointUUID()
 	}
-	if s.AsyncHalvingConfig != nil {
-		return s.AsyncHalvingConfig.GetSourceTrialID()
+	if s.RawAsyncHalvingConfig != nil {
+		return s.RawAsyncHalvingConfig.SourceCheckpointUUID()
 	}
-	if s.AdaptiveASHAConfig != nil {
-		return s.AdaptiveASHAConfig.GetSourceTrialID()
+	if s.RawAdaptiveASHAConfig != nil {
+		return s.RawAdaptiveASHAConfig.SourceCheckpointUUID()
 	}
-	if s.PBTConfig != nil {
-		return s.PBTConfig.GetSourceTrialID()
+	if s.RawPBTConfig != nil {
+		return s.RawPBTConfig.SourceCheckpointUUID()
+	}
+	panic("no union member defined")
+}
+
+func (s SearcherConfigV0) SourceTrialID() *int {
+	if s.RawSingleConfig != nil {
+		return s.RawSingleConfig.SourceTrialID()
+	}
+	if s.RawRandomConfig != nil {
+		return s.RawRandomConfig.SourceTrialID()
+	}
+	if s.RawGridConfig != nil {
+		return s.RawGridConfig.SourceTrialID()
+	}
+	if s.RawAsyncHalvingConfig != nil {
+		return s.RawAsyncHalvingConfig.SourceTrialID()
+	}
+	if s.RawAdaptiveASHAConfig != nil {
+		return s.RawAdaptiveASHAConfig.SourceTrialID()
+	}
+	if s.RawPBTConfig != nil {
+		return s.RawPBTConfig.SourceTrialID()
 	}
 	panic("no union member defined")
 }

@@ -8,19 +8,31 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (t TestUnionBV0) GetType() string {
-	return t.Type
+func (t TestUnionBV0) Type() string {
+	return t.RawType
 }
 
-func (t TestUnionBV0) GetValB() int {
-	return t.ValB
+func (t *TestUnionBV0) SetType(val string) {
+	t.RawType = val
 }
 
-func (t TestUnionBV0) GetCommonVal() string {
-	if t.CommonVal == nil {
-		panic("You must call WithDefaults on TestUnionBV0 before .GetCommonVal")
+func (t TestUnionBV0) ValB() int {
+	return t.RawValB
+}
+
+func (t *TestUnionBV0) SetValB(val int) {
+	t.RawValB = val
+}
+
+func (t TestUnionBV0) CommonVal() string {
+	if t.RawCommonVal == nil {
+		panic("You must call WithDefaults on TestUnionBV0 before .RawCommonVal")
 	}
-	return *t.CommonVal
+	return *t.RawCommonVal
+}
+
+func (t *TestUnionBV0) SetCommonVal(val string) {
+	t.RawCommonVal = &val
 }
 
 func (t TestUnionBV0) WithDefaults() TestUnionBV0 {

@@ -8,12 +8,26 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (e EnvironmentImageMapV0) GetCPU() *string {
-	return e.CPU
+func (e EnvironmentImageMapV0) CPU() string {
+	if e.RawCPU == nil {
+		panic("You must call WithDefaults on EnvironmentImageMapV0 before .RawCPU")
+	}
+	return *e.RawCPU
 }
 
-func (e EnvironmentImageMapV0) GetGPU() *string {
-	return e.GPU
+func (e *EnvironmentImageMapV0) SetCPU(val string) {
+	e.RawCPU = &val
+}
+
+func (e EnvironmentImageMapV0) GPU() string {
+	if e.RawGPU == nil {
+		panic("You must call WithDefaults on EnvironmentImageMapV0 before .RawGPU")
+	}
+	return *e.RawGPU
+}
+
+func (e *EnvironmentImageMapV0) SetGPU(val string) {
+	e.RawGPU = &val
 }
 
 func (e EnvironmentImageMapV0) WithDefaults() EnvironmentImageMapV0 {

@@ -8,12 +8,20 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (e EnvironmentVariablesMapV0) GetCPU() []string {
-	return e.CPU
+func (e EnvironmentVariablesMapV0) CPU() []string {
+	return e.RawCPU
 }
 
-func (e EnvironmentVariablesMapV0) GetGPU() []string {
-	return e.GPU
+func (e *EnvironmentVariablesMapV0) SetCPU(val []string) {
+	e.RawCPU = val
+}
+
+func (e EnvironmentVariablesMapV0) GPU() []string {
+	return e.RawGPU
+}
+
+func (e *EnvironmentVariablesMapV0) SetGPU(val []string) {
+	e.RawGPU = val
 }
 
 func (e EnvironmentVariablesMapV0) WithDefaults() EnvironmentVariablesMapV0 {

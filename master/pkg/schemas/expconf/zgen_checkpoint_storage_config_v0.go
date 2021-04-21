@@ -9,65 +9,65 @@ import (
 )
 
 func (c CheckpointStorageConfigV0) GetUnionMember() interface{} {
-	if c.SharedFSConfig != nil {
+	if c.RawSharedFSConfig != nil {
 		return nil
 	}
-	if c.HDFSConfig != nil {
+	if c.RawHDFSConfig != nil {
 		return nil
 	}
-	if c.S3Config != nil {
+	if c.RawS3Config != nil {
 		return nil
 	}
-	if c.GCSConfig != nil {
+	if c.RawGCSConfig != nil {
 		return nil
 	}
 	panic("no union member defined")
 }
 
-func (c CheckpointStorageConfigV0) GetSaveExperimentBest() int {
-	if c.SharedFSConfig != nil {
-		return c.SharedFSConfig.GetSaveExperimentBest()
+func (c CheckpointStorageConfigV0) SaveExperimentBest() int {
+	if c.RawSharedFSConfig != nil {
+		return c.RawSharedFSConfig.SaveExperimentBest()
 	}
-	if c.HDFSConfig != nil {
-		return c.HDFSConfig.GetSaveExperimentBest()
+	if c.RawHDFSConfig != nil {
+		return c.RawHDFSConfig.SaveExperimentBest()
 	}
-	if c.S3Config != nil {
-		return c.S3Config.GetSaveExperimentBest()
+	if c.RawS3Config != nil {
+		return c.RawS3Config.SaveExperimentBest()
 	}
-	if c.GCSConfig != nil {
-		return c.GCSConfig.GetSaveExperimentBest()
-	}
-	panic("no union member defined")
-}
-
-func (c CheckpointStorageConfigV0) GetSaveTrialBest() int {
-	if c.SharedFSConfig != nil {
-		return c.SharedFSConfig.GetSaveTrialBest()
-	}
-	if c.HDFSConfig != nil {
-		return c.HDFSConfig.GetSaveTrialBest()
-	}
-	if c.S3Config != nil {
-		return c.S3Config.GetSaveTrialBest()
-	}
-	if c.GCSConfig != nil {
-		return c.GCSConfig.GetSaveTrialBest()
+	if c.RawGCSConfig != nil {
+		return c.RawGCSConfig.SaveExperimentBest()
 	}
 	panic("no union member defined")
 }
 
-func (c CheckpointStorageConfigV0) GetSaveTrialLatest() int {
-	if c.SharedFSConfig != nil {
-		return c.SharedFSConfig.GetSaveTrialLatest()
+func (c CheckpointStorageConfigV0) SaveTrialBest() int {
+	if c.RawSharedFSConfig != nil {
+		return c.RawSharedFSConfig.SaveTrialBest()
 	}
-	if c.HDFSConfig != nil {
-		return c.HDFSConfig.GetSaveTrialLatest()
+	if c.RawHDFSConfig != nil {
+		return c.RawHDFSConfig.SaveTrialBest()
 	}
-	if c.S3Config != nil {
-		return c.S3Config.GetSaveTrialLatest()
+	if c.RawS3Config != nil {
+		return c.RawS3Config.SaveTrialBest()
 	}
-	if c.GCSConfig != nil {
-		return c.GCSConfig.GetSaveTrialLatest()
+	if c.RawGCSConfig != nil {
+		return c.RawGCSConfig.SaveTrialBest()
+	}
+	panic("no union member defined")
+}
+
+func (c CheckpointStorageConfigV0) SaveTrialLatest() int {
+	if c.RawSharedFSConfig != nil {
+		return c.RawSharedFSConfig.SaveTrialLatest()
+	}
+	if c.RawHDFSConfig != nil {
+		return c.RawHDFSConfig.SaveTrialLatest()
+	}
+	if c.RawS3Config != nil {
+		return c.RawS3Config.SaveTrialLatest()
+	}
+	if c.RawGCSConfig != nil {
+		return c.RawGCSConfig.SaveTrialLatest()
 	}
 	panic("no union member defined")
 }

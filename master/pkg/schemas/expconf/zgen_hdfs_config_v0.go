@@ -8,37 +8,61 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (h HDFSConfigV0) GetSaveExperimentBest() int {
-	if h.SaveExperimentBest == nil {
-		panic("You must call WithDefaults on HDFSConfigV0 before .GetSaveExperimentBest")
+func (h HDFSConfigV0) SaveExperimentBest() int {
+	if h.RawSaveExperimentBest == nil {
+		panic("You must call WithDefaults on HDFSConfigV0 before .RawSaveExperimentBest")
 	}
-	return *h.SaveExperimentBest
+	return *h.RawSaveExperimentBest
 }
 
-func (h HDFSConfigV0) GetSaveTrialBest() int {
-	if h.SaveTrialBest == nil {
-		panic("You must call WithDefaults on HDFSConfigV0 before .GetSaveTrialBest")
+func (h *HDFSConfigV0) SetSaveExperimentBest(val int) {
+	h.RawSaveExperimentBest = &val
+}
+
+func (h HDFSConfigV0) SaveTrialBest() int {
+	if h.RawSaveTrialBest == nil {
+		panic("You must call WithDefaults on HDFSConfigV0 before .RawSaveTrialBest")
 	}
-	return *h.SaveTrialBest
+	return *h.RawSaveTrialBest
 }
 
-func (h HDFSConfigV0) GetSaveTrialLatest() int {
-	if h.SaveTrialLatest == nil {
-		panic("You must call WithDefaults on HDFSConfigV0 before .GetSaveTrialLatest")
+func (h *HDFSConfigV0) SetSaveTrialBest(val int) {
+	h.RawSaveTrialBest = &val
+}
+
+func (h HDFSConfigV0) SaveTrialLatest() int {
+	if h.RawSaveTrialLatest == nil {
+		panic("You must call WithDefaults on HDFSConfigV0 before .RawSaveTrialLatest")
 	}
-	return *h.SaveTrialLatest
+	return *h.RawSaveTrialLatest
 }
 
-func (h HDFSConfigV0) GetURL() string {
-	return h.URL
+func (h *HDFSConfigV0) SetSaveTrialLatest(val int) {
+	h.RawSaveTrialLatest = &val
 }
 
-func (h HDFSConfigV0) GetPath() string {
-	return h.Path
+func (h HDFSConfigV0) URL() string {
+	return h.RawURL
 }
 
-func (h HDFSConfigV0) GetUser() *string {
-	return h.User
+func (h *HDFSConfigV0) SetURL(val string) {
+	h.RawURL = val
+}
+
+func (h HDFSConfigV0) Path() string {
+	return h.RawPath
+}
+
+func (h *HDFSConfigV0) SetPath(val string) {
+	h.RawPath = val
+}
+
+func (h HDFSConfigV0) User() *string {
+	return h.RawUser
+}
+
+func (h *HDFSConfigV0) SetUser(val *string) {
+	h.RawUser = val
 }
 
 func (h HDFSConfigV0) WithDefaults() HDFSConfigV0 {

@@ -17,7 +17,7 @@ def camel_to_snake(name: str) -> str:
     out = name[0].lower()
     for c0, c1, c2 in zip(name[:-2], name[1:-1], name[2:]):
         # Catch lower->upper transitions.
-        if c0.islower() and c1.isupper():
+        if not c0.isupper() and c1.isupper():
             out += "_"
         # Catch acronym endings.
         if c0.isupper() and c1.isupper() and c2.islower():
@@ -142,12 +142,12 @@ def next_struct_name(file: str, start: int) -> str:
     """
     with open(file) as f:
         for lineno, line in enumerate(f.readlines()):
-            if lineno <= start:
+            if lineno < start:
                 continue
             match = re.match("type ([\\S]+) struct", line)
             if match is not None:
                 return match[1]
-    raise AssertionError(f"did not find struct in {file} after line {line}")
+    raise AssertionError(f"did not find struct in {file} after line {start}")
 
 
 # FieldSpec = (field, type, tag)
@@ -225,7 +225,7 @@ def find_schema(package: str, struct: str) -> Schema:
             if schema.golang_title != struct:
                 continue
             return schema
-    raise AssertionError("failed to find schema")
+    raise AssertionError(f"failed to find schema matching title=={struct}")
 
 
 def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, bool]:
@@ -240,7 +240,7 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         prop = {}
     default = prop.get("default")
 
-    required = schema.schema.get("required", []) or schema.schema.get(
+    required = tag in schema.schema.get("required", []) or tag in schema.schema.get(
         "eventuallyRequired", []
     )
 
@@ -250,7 +250,9 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         "LabelsV0",
     ]
 
-    if default is not None:
+    # There are two ways that you can know the final value of a pointer field will never be nil;
+    # either the default value is not null, or the field is eventuallyRequired.
+    if default is not None or required:
         if type.startswith("*map[") or type.startswith("*[]"):
             raise AssertionError(
                 f"ERROR: {tag} type ({type}) is a pointer to a map or slice type.\n"
@@ -269,7 +271,7 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
             pass
         elif type.startswith("**"):
             raise AssertionError(f"{tag} type ({type}) must not be a double pointer")
-        else:
+        elif default is not None:
             raise AssertionError(
                 f"ERROR: {tag} type ({type}) must be a pointer since it can be defaulted!\n"
                 "\n"
@@ -288,7 +290,9 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
     return type, default, required
 
 
-def go_getters(struct: str, schema: Schema, spec: List[FieldSpec]) -> List[str]:
+def go_getters_and_setters(
+    struct: str, schema: Schema, spec: List[FieldSpec]
+) -> List[str]:
     lines = []  # type: List[str]
 
     if len(spec) < 1:
@@ -299,19 +303,45 @@ def go_getters(struct: str, schema: Schema, spec: List[FieldSpec]) -> List[str]:
     for field, type, tag in spec:
         defaulted_type, default, required = get_defaulted_type(schema, tag, type)
 
+        if not field.startswith("Raw"):
+            raise AssertionError(
+                f'{struct} has field {field} which doesn\'t start with "Raw"; all fields should '
+                'start with "Raw" and the getter will be the primary API for accessing those '
+                "values.  When the field is a pointer-type with a non-nil default type, the getter "
+                "will be a non-pointer (automatic dereferencing) for use after WithDefaults() is "
+                "used to fill the default values."
+            )
+
+        getter = field[len("Raw") :]
+
         if defaulted_type == type:
-            lines.append(f"func ({x} {struct}) Get{field}() {type} {{")
+            # Getter for nonpointer field.
+            lines.append(f"func ({x} {struct}) {getter}() {type} {{")
             lines.append(f"\treturn {x}.{field}")
             lines.append("}")
             lines.append("")
+
+            # Setter for nonpointer field.
+            lines.append(f"func ({x} *{struct}) Set{getter}(val {type}) {{")
+            lines.append(f"\t{x}.{field} = val")
+            lines.append("}")
+            lines.append("")
+
         else:
-            lines.append(f"func ({x} {struct}) Get{field}() {defaulted_type} {{")
+            # Getter for pointer field.
+            lines.append(f"func ({x} {struct}) {getter}() {defaulted_type} {{")
             lines.append(f"\tif {x}.{field} == nil {{")
             lines.append(
-                f'\t\tpanic("You must call WithDefaults on {struct} before .Get{field}")'
+                f'\t\tpanic("You must call WithDefaults on {struct} before .{field}")'
             )
             lines.append("\t}")
             lines.append(f"\treturn *{x}.{field}")
+            lines.append("}")
+            lines.append("")
+
+            # Setter for pointer field.
+            lines.append(f"func ({x} *{struct}) Set{getter}(val {defaulted_type}) {{")
+            lines.append(f"\t{x}.{field} = &val")
             lines.append("}")
             lines.append("")
 
@@ -382,10 +412,12 @@ def go_unions(
     # Define getters for each of the common members of the union.
     common_members = get_union_common_members(file, package, union_types)
     for common_field, type in common_members:
-        lines.append(f"func ({x} {struct}) Get{common_field}() {type} {{")
+        # Getter.
+        getter = common_field[len("Raw") :]
+        lines.append(f"func ({x} {struct}) {getter}() {type} {{")
         for field, _ in union_spec:
             lines.append(f"\tif {x}.{field} != nil {{")
-            lines.append(f"\t\treturn {x}.{field}.Get{common_field}()")
+            lines.append(f"\t\treturn {x}.{field}.{getter}()")
             lines.append("\t}")
         lines.append('\tpanic("no union member defined")')
         lines.append("}")
@@ -462,8 +494,9 @@ def gen_go_struct(
     lines.append("")
 
     lines.append("import (")
-    lines.append('\t"github.com/santhosh-tekuri/jsonschema/v2"')
 
+    # Sort imports so `make fmt` doesn't cause obnoxious issues.
+    imports = sorted(['"github.com/santhosh-tekuri/jsonschema/v2"'] + imports)
     for imp in imports:
         lines.append("\t" + imp)
     lines.append("")
@@ -471,7 +504,7 @@ def gen_go_struct(
     lines.append(")")
     lines.append("")
 
-    lines += go_getters(struct, schema, field_spec)
+    lines += go_getters_and_setters(struct, schema, field_spec)
     lines += go_unions(struct, package, file, schema, union_spec)
     lines += go_helpers(struct)
     lines += go_schema_interface(struct, schema.url)

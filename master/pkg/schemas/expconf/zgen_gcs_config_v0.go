@@ -8,29 +8,45 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (g GCSConfigV0) GetSaveExperimentBest() int {
-	if g.SaveExperimentBest == nil {
-		panic("You must call WithDefaults on GCSConfigV0 before .GetSaveExperimentBest")
+func (g GCSConfigV0) SaveExperimentBest() int {
+	if g.RawSaveExperimentBest == nil {
+		panic("You must call WithDefaults on GCSConfigV0 before .RawSaveExperimentBest")
 	}
-	return *g.SaveExperimentBest
+	return *g.RawSaveExperimentBest
 }
 
-func (g GCSConfigV0) GetSaveTrialBest() int {
-	if g.SaveTrialBest == nil {
-		panic("You must call WithDefaults on GCSConfigV0 before .GetSaveTrialBest")
-	}
-	return *g.SaveTrialBest
+func (g *GCSConfigV0) SetSaveExperimentBest(val int) {
+	g.RawSaveExperimentBest = &val
 }
 
-func (g GCSConfigV0) GetSaveTrialLatest() int {
-	if g.SaveTrialLatest == nil {
-		panic("You must call WithDefaults on GCSConfigV0 before .GetSaveTrialLatest")
+func (g GCSConfigV0) SaveTrialBest() int {
+	if g.RawSaveTrialBest == nil {
+		panic("You must call WithDefaults on GCSConfigV0 before .RawSaveTrialBest")
 	}
-	return *g.SaveTrialLatest
+	return *g.RawSaveTrialBest
 }
 
-func (g GCSConfigV0) GetBucket() string {
-	return g.Bucket
+func (g *GCSConfigV0) SetSaveTrialBest(val int) {
+	g.RawSaveTrialBest = &val
+}
+
+func (g GCSConfigV0) SaveTrialLatest() int {
+	if g.RawSaveTrialLatest == nil {
+		panic("You must call WithDefaults on GCSConfigV0 before .RawSaveTrialLatest")
+	}
+	return *g.RawSaveTrialLatest
+}
+
+func (g *GCSConfigV0) SetSaveTrialLatest(val int) {
+	g.RawSaveTrialLatest = &val
+}
+
+func (g GCSConfigV0) Bucket() string {
+	return g.RawBucket
+}
+
+func (g *GCSConfigV0) SetBucket(val string) {
+	g.RawBucket = val
 }
 
 func (g GCSConfigV0) WithDefaults() GCSConfigV0 {

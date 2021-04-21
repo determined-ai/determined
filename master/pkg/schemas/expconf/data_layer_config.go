@@ -11,9 +11,9 @@ import (
 //go:generate ../gen.sh
 // DataLayerConfigV0 configures data layer storage.
 type DataLayerConfigV0 struct {
-	SharedFSConfig *SharedFSDataLayerConfigV0 `union:"type,shared_fs" json:"-"`
-	S3Config       *S3DataLayerConfigV0       `union:"type,s3" json:"-"`
-	GCSConfig      *GCSDataLayerConfigV0      `union:"type,gcs" json:"-"`
+	RawSharedFSConfig *SharedFSDataLayerConfigV0 `union:"type,shared_fs" json:"-"`
+	RawS3Config       *S3DataLayerConfigV0       `union:"type,s3" json:"-"`
+	RawGCSConfig      *GCSDataLayerConfigV0      `union:"type,gcs" json:"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -33,27 +33,27 @@ func (d *DataLayerConfigV0) UnmarshalJSON(data []byte) error {
 //go:generate ../gen.sh
 // SharedFSDataLayerConfigV0 configures data layer storage on a local file system.
 type SharedFSDataLayerConfigV0 struct {
-	ContainerStoragePath *string `json:"container_storage_path"`
-	HostStoragePath      *string `json:"host_storage_path"`
+	RawContainerStoragePath *string `json:"container_storage_path"`
+	RawHostStoragePath      *string `json:"host_storage_path"`
 }
 
 //go:generate ../gen.sh
 // S3DataLayerConfigV0 configures data layer storage on S3.
 type S3DataLayerConfigV0 struct {
-	Bucket                  string  `json:"bucket"`
-	BucketDirectoryPath     string  `json:"bucket_directory_path"`
-	LocalCacheContainerPath *string `json:"local_cache_container_path"`
-	LocalCacheHostPath      *string `json:"local_cache_host_path"`
-	AccessKey               *string `json:"access_key"`
-	SecretKey               *string `json:"secret_key"`
-	EndpointURL             *string `json:"endpoint_url"`
+	RawBucket                  string  `json:"bucket"`
+	RawBucketDirectoryPath     string  `json:"bucket_directory_path"`
+	RawLocalCacheContainerPath *string `json:"local_cache_container_path"`
+	RawLocalCacheHostPath      *string `json:"local_cache_host_path"`
+	RawAccessKey               *string `json:"access_key"`
+	RawSecretKey               *string `json:"secret_key"`
+	RawEndpointURL             *string `json:"endpoint_url"`
 }
 
 //go:generate ../gen.sh
 // GCSDataLayerConfigV0 configures data layer storage on GCS.
 type GCSDataLayerConfigV0 struct {
-	Bucket                  string  `json:"bucket"`
-	BucketDirectoryPath     string  `json:"bucket_directory_path"`
-	LocalCacheContainerPath *string `json:"local_cache_container_path"`
-	LocalCacheHostPath      *string `json:"local_cache_host_path"`
+	RawBucket                  string  `json:"bucket"`
+	RawBucketDirectoryPath     string  `json:"bucket_directory_path"`
+	RawLocalCacheContainerPath *string `json:"local_cache_container_path"`
+	RawLocalCacheHostPath      *string `json:"local_cache_host_path"`
 }

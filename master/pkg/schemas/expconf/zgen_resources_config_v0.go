@@ -8,56 +8,96 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (r ResourcesConfigV0) GetSlots() *int {
-	return r.Slots
+func (r ResourcesConfigV0) Slots() *int {
+	return r.RawSlots
 }
 
-func (r ResourcesConfigV0) GetMaxSlots() *int {
-	return r.MaxSlots
+func (r *ResourcesConfigV0) SetSlots(val *int) {
+	r.RawSlots = val
 }
 
-func (r ResourcesConfigV0) GetSlotsPerTrial() int {
-	if r.SlotsPerTrial == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .GetSlotsPerTrial")
+func (r ResourcesConfigV0) MaxSlots() *int {
+	return r.RawMaxSlots
+}
+
+func (r *ResourcesConfigV0) SetMaxSlots(val *int) {
+	r.RawMaxSlots = val
+}
+
+func (r ResourcesConfigV0) SlotsPerTrial() int {
+	if r.RawSlotsPerTrial == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .RawSlotsPerTrial")
 	}
-	return *r.SlotsPerTrial
+	return *r.RawSlotsPerTrial
 }
 
-func (r ResourcesConfigV0) GetWeight() float64 {
-	if r.Weight == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .GetWeight")
+func (r *ResourcesConfigV0) SetSlotsPerTrial(val int) {
+	r.RawSlotsPerTrial = &val
+}
+
+func (r ResourcesConfigV0) Weight() float64 {
+	if r.RawWeight == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .RawWeight")
 	}
-	return *r.Weight
+	return *r.RawWeight
 }
 
-func (r ResourcesConfigV0) GetNativeParallel() bool {
-	if r.NativeParallel == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .GetNativeParallel")
+func (r *ResourcesConfigV0) SetWeight(val float64) {
+	r.RawWeight = &val
+}
+
+func (r ResourcesConfigV0) NativeParallel() bool {
+	if r.RawNativeParallel == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .RawNativeParallel")
 	}
-	return *r.NativeParallel
+	return *r.RawNativeParallel
 }
 
-func (r ResourcesConfigV0) GetShmSize() *int {
-	return r.ShmSize
+func (r *ResourcesConfigV0) SetNativeParallel(val bool) {
+	r.RawNativeParallel = &val
 }
 
-func (r ResourcesConfigV0) GetAgentLabel() string {
-	if r.AgentLabel == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .GetAgentLabel")
+func (r ResourcesConfigV0) ShmSize() *int {
+	return r.RawShmSize
+}
+
+func (r *ResourcesConfigV0) SetShmSize(val *int) {
+	r.RawShmSize = val
+}
+
+func (r ResourcesConfigV0) AgentLabel() string {
+	if r.RawAgentLabel == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .RawAgentLabel")
 	}
-	return *r.AgentLabel
+	return *r.RawAgentLabel
 }
 
-func (r ResourcesConfigV0) GetResourcePool() *string {
-	return r.ResourcePool
+func (r *ResourcesConfigV0) SetAgentLabel(val string) {
+	r.RawAgentLabel = &val
 }
 
-func (r ResourcesConfigV0) GetPriority() *int {
-	return r.Priority
+func (r ResourcesConfigV0) ResourcePool() *string {
+	return r.RawResourcePool
 }
 
-func (r ResourcesConfigV0) GetDevices() DevicesConfigV0 {
-	return r.Devices
+func (r *ResourcesConfigV0) SetResourcePool(val *string) {
+	r.RawResourcePool = val
+}
+
+func (r ResourcesConfigV0) Priority() *int {
+	return r.RawPriority
+}
+
+func (r *ResourcesConfigV0) SetPriority(val *int) {
+	r.RawPriority = val
+}
+
+func (r ResourcesConfigV0) Devices() DevicesConfigV0 {
+	return r.RawDevices
+}
+
+func (r *ResourcesConfigV0) SetDevices(val DevicesConfigV0) {
+	r.RawDevices = val
 }
 
 func (r ResourcesConfigV0) WithDefaults() ResourcesConfigV0 {

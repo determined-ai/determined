@@ -8,19 +8,31 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (p ProfilingConfigV0) GetEnabled() bool {
-	if p.Enabled == nil {
-		panic("You must call WithDefaults on ProfilingConfigV0 before .GetEnabled")
+func (p ProfilingConfigV0) Enabled() bool {
+	if p.RawEnabled == nil {
+		panic("You must call WithDefaults on ProfilingConfigV0 before .RawEnabled")
 	}
-	return *p.Enabled
+	return *p.RawEnabled
 }
 
-func (p ProfilingConfigV0) GetBeginOnBatch() *int {
-	return p.BeginOnBatch
+func (p *ProfilingConfigV0) SetEnabled(val bool) {
+	p.RawEnabled = &val
 }
 
-func (p ProfilingConfigV0) GetEndOnBatch() *int {
-	return p.EndOnBatch
+func (p ProfilingConfigV0) BeginOnBatch() *int {
+	return p.RawBeginOnBatch
+}
+
+func (p *ProfilingConfigV0) SetBeginOnBatch(val *int) {
+	p.RawBeginOnBatch = val
+}
+
+func (p ProfilingConfigV0) EndOnBatch() *int {
+	return p.RawEndOnBatch
+}
+
+func (p *ProfilingConfigV0) SetEndOnBatch(val *int) {
+	p.RawEndOnBatch = val
 }
 
 func (p ProfilingConfigV0) WithDefaults() ProfilingConfigV0 {

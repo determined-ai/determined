@@ -8,38 +8,66 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (r RandomConfigV0) GetMetric() string {
-	return r.Metric
+func (r RandomConfigV0) Metric() string {
+	return r.RawMetric
 }
 
-func (r RandomConfigV0) GetSmallerIsBetter() bool {
-	if r.SmallerIsBetter == nil {
-		panic("You must call WithDefaults on RandomConfigV0 before .GetSmallerIsBetter")
+func (r *RandomConfigV0) SetMetric(val string) {
+	r.RawMetric = val
+}
+
+func (r RandomConfigV0) SmallerIsBetter() bool {
+	if r.RawSmallerIsBetter == nil {
+		panic("You must call WithDefaults on RandomConfigV0 before .RawSmallerIsBetter")
 	}
-	return *r.SmallerIsBetter
+	return *r.RawSmallerIsBetter
 }
 
-func (r RandomConfigV0) GetSourceTrialID() *int {
-	return r.SourceTrialID
+func (r *RandomConfigV0) SetSmallerIsBetter(val bool) {
+	r.RawSmallerIsBetter = &val
 }
 
-func (r RandomConfigV0) GetSourceCheckpointUUID() *string {
-	return r.SourceCheckpointUUID
+func (r RandomConfigV0) SourceTrialID() *int {
+	return r.RawSourceTrialID
 }
 
-func (r RandomConfigV0) GetMaxLength() LengthV0 {
-	return r.MaxLength
+func (r *RandomConfigV0) SetSourceTrialID(val *int) {
+	r.RawSourceTrialID = val
 }
 
-func (r RandomConfigV0) GetMaxTrials() int {
-	return r.MaxTrials
+func (r RandomConfigV0) SourceCheckpointUUID() *string {
+	return r.RawSourceCheckpointUUID
 }
 
-func (r RandomConfigV0) GetMaxConcurrentTrials() int {
-	if r.MaxConcurrentTrials == nil {
-		panic("You must call WithDefaults on RandomConfigV0 before .GetMaxConcurrentTrials")
+func (r *RandomConfigV0) SetSourceCheckpointUUID(val *string) {
+	r.RawSourceCheckpointUUID = val
+}
+
+func (r RandomConfigV0) MaxLength() LengthV0 {
+	return r.RawMaxLength
+}
+
+func (r *RandomConfigV0) SetMaxLength(val LengthV0) {
+	r.RawMaxLength = val
+}
+
+func (r RandomConfigV0) MaxTrials() int {
+	return r.RawMaxTrials
+}
+
+func (r *RandomConfigV0) SetMaxTrials(val int) {
+	r.RawMaxTrials = val
+}
+
+func (r RandomConfigV0) MaxConcurrentTrials() int {
+	if r.RawMaxConcurrentTrials == nil {
+		panic("You must call WithDefaults on RandomConfigV0 before .RawMaxConcurrentTrials")
 	}
-	return *r.MaxConcurrentTrials
+	return *r.RawMaxConcurrentTrials
+}
+
+func (r *RandomConfigV0) SetMaxConcurrentTrials(val int) {
+	r.RawMaxConcurrentTrials = &val
 }
 
 func (r RandomConfigV0) WithDefaults() RandomConfigV0 {

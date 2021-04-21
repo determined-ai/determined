@@ -8,43 +8,79 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (p PBTConfigV0) GetMetric() string {
-	return p.Metric
+func (p PBTConfigV0) Metric() string {
+	return p.RawMetric
 }
 
-func (p PBTConfigV0) GetSmallerIsBetter() bool {
-	if p.SmallerIsBetter == nil {
-		panic("You must call WithDefaults on PBTConfigV0 before .GetSmallerIsBetter")
+func (p *PBTConfigV0) SetMetric(val string) {
+	p.RawMetric = val
+}
+
+func (p PBTConfigV0) SmallerIsBetter() bool {
+	if p.RawSmallerIsBetter == nil {
+		panic("You must call WithDefaults on PBTConfigV0 before .RawSmallerIsBetter")
 	}
-	return *p.SmallerIsBetter
+	return *p.RawSmallerIsBetter
 }
 
-func (p PBTConfigV0) GetSourceTrialID() *int {
-	return p.SourceTrialID
+func (p *PBTConfigV0) SetSmallerIsBetter(val bool) {
+	p.RawSmallerIsBetter = &val
 }
 
-func (p PBTConfigV0) GetSourceCheckpointUUID() *string {
-	return p.SourceCheckpointUUID
+func (p PBTConfigV0) SourceTrialID() *int {
+	return p.RawSourceTrialID
 }
 
-func (p PBTConfigV0) GetPopulationSize() int {
-	return p.PopulationSize
+func (p *PBTConfigV0) SetSourceTrialID(val *int) {
+	p.RawSourceTrialID = val
 }
 
-func (p PBTConfigV0) GetNumRounds() int {
-	return p.NumRounds
+func (p PBTConfigV0) SourceCheckpointUUID() *string {
+	return p.RawSourceCheckpointUUID
 }
 
-func (p PBTConfigV0) GetLengthPerRound() LengthV0 {
-	return p.LengthPerRound
+func (p *PBTConfigV0) SetSourceCheckpointUUID(val *string) {
+	p.RawSourceCheckpointUUID = val
 }
 
-func (p PBTConfigV0) GetReplaceFunction() PBTReplaceConfig {
-	return p.ReplaceFunction
+func (p PBTConfigV0) PopulationSize() int {
+	return p.RawPopulationSize
 }
 
-func (p PBTConfigV0) GetExploreFunction() PBTExploreConfig {
-	return p.ExploreFunction
+func (p *PBTConfigV0) SetPopulationSize(val int) {
+	p.RawPopulationSize = val
+}
+
+func (p PBTConfigV0) NumRounds() int {
+	return p.RawNumRounds
+}
+
+func (p *PBTConfigV0) SetNumRounds(val int) {
+	p.RawNumRounds = val
+}
+
+func (p PBTConfigV0) LengthPerRound() LengthV0 {
+	return p.RawLengthPerRound
+}
+
+func (p *PBTConfigV0) SetLengthPerRound(val LengthV0) {
+	p.RawLengthPerRound = val
+}
+
+func (p PBTConfigV0) ReplaceFunction() PBTReplaceConfig {
+	return p.RawReplaceFunction
+}
+
+func (p *PBTConfigV0) SetReplaceFunction(val PBTReplaceConfig) {
+	p.RawReplaceFunction = val
+}
+
+func (p PBTConfigV0) ExploreFunction() PBTExploreConfig {
+	return p.RawExploreFunction
+}
+
+func (p *PBTConfigV0) SetExploreFunction(val PBTExploreConfig) {
+	p.RawExploreFunction = val
 }
 
 func (p PBTConfigV0) WithDefaults() PBTConfigV0 {

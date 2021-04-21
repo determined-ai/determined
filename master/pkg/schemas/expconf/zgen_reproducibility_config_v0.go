@@ -8,8 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (r ReproducibilityConfigV0) GetExperimentSeed() *uint32 {
-	return r.ExperimentSeed
+func (r ReproducibilityConfigV0) ExperimentSeed() uint32 {
+	if r.RawExperimentSeed == nil {
+		panic("You must call WithDefaults on ReproducibilityConfigV0 before .RawExperimentSeed")
+	}
+	return *r.RawExperimentSeed
+}
+
+func (r *ReproducibilityConfigV0) SetExperimentSeed(val uint32) {
+	r.RawExperimentSeed = &val
 }
 
 func (r ReproducibilityConfigV0) WithDefaults() ReproducibilityConfigV0 {
