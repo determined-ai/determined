@@ -7,6 +7,7 @@ import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
+import { trackAxis } from 'components/UPlotChart/trackAxis';
 import useStorage from 'hooks/useStorage';
 import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
 import { glasbeyColor } from 'utils/color';
@@ -53,7 +54,7 @@ const TrialChart: React.FC<Props> = ({
       ],
       height: 400,
       legend: { show: false },
-      plugins: [ tooltipsPlugin() ],
+      plugins: [ tooltipsPlugin(), trackAxis() ],
       scales: {
         x: { time: false },
         y: { distr: scale === Scale.Log ? 3 : 1 },
