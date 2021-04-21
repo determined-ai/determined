@@ -10,6 +10,8 @@ import psutil
 from determined.common import api
 from determined.common.api import TrialProfilerMetricsBatch
 
+
+
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 
 LOG_NAMESPACE = "determined-profiler"
@@ -17,7 +19,6 @@ LOG_NAMESPACE = "determined-profiler"
 SHOULD_PROFILE_GPUS = None
 try:
     import pynvml
-
     pynvml.nvmlInit()
     SHOULD_PROFILE_GPUS = True
 except ModuleNotFoundError:
@@ -26,10 +27,10 @@ except ModuleNotFoundError:
 except pynvml.NVMLError_LibraryNotFound:
     logging.info(f"{LOG_NAMESPACE} pynvml LibraryNotFound error. Not collecting GPU metrics")
     SHOULD_PROFILE_GPUS = False
+except Exception as e:
+    raise RuntimeError(f"Could not set up pynvml, but it failed with an unexpected error: {e}")
 
-assert (
-    SHOULD_PROFILE_GPUS is not None
-), "Could not set up pynvml, but also did not fail in the expected way."
+assert SHOULD_PROFILE_GPUS is not None
 
 
 class Measurement:
@@ -45,6 +46,8 @@ class StartMessage:
 
 class ShutdownMessage:
     pass
+
+SendQueueType = queue.Queue[Union[List[TrialProfilerMetricsBatch], ShutdownMessage]]
 
 
 class ProfilerAgent:
@@ -97,10 +100,7 @@ class ProfilerAgent:
             self.shutdown_timer = CustomTimer(self.max_collection_seconds, self._end_collection)
 
             # Set up the thread responsible for making API calls
-            self.send_queue: """queue.Queue[Union[
-    List['TrialProfilerMetricsBatch'],
-    'ShutdownMessage',
-]]""" = queue.Queue()
+            self.send_queue = queue.Queue()  # type: SendQueueType
             self.sender_thread = ProfilerSenderThread(self.send_queue, self.master_url)
 
             if self.sysmetrics_is_enabled:
