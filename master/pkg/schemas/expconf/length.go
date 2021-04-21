@@ -21,9 +21,9 @@ const (
 
 // UnitContext contains all the context for switching the Unit of a Length freely.
 type UnitContext struct {
-	DefaultUnit     Unit
-	GlobalBatchSize int
-	RecordsPerEpoch int
+	defaultUnit     Unit
+	globalBatchSize int
+	recordsPerEpoch int
 }
 
 // NewUnitContext creates a new UnitContext.
@@ -106,15 +106,15 @@ func NewLengthInEpochs(epochs int) LengthV0 {
 
 // UnitsFromBatches return the number of units completed by the given batches, rounded up.
 func UnitsFromBatches(batches int, ctx UnitContext) float64 {
-	switch ctx.DefaultUnit {
+	switch ctx.defaultUnit {
 	case Records:
-		return float64(batches * ctx.GlobalBatchSize)
+		return float64(batches * ctx.globalBatchSize)
 	case Batches:
 		return float64(batches)
 	case Epochs:
-		return float64(batches*ctx.GlobalBatchSize) / float64(ctx.RecordsPerEpoch)
+		return float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch)
 	default:
-		panic(fmt.Sprintf("invalid unit in ctx: %s", ctx.DefaultUnit))
+		panic(fmt.Sprintf("invalid unit in ctx: %s", ctx.defaultUnit))
 	}
 }
 
@@ -161,11 +161,11 @@ func (l LengthV0) DivInt(other int) LengthV0 {
 func (l LengthV0) ToNearestBatch(ctx UnitContext) int {
 	switch l.Unit {
 	case Records:
-		return l.Units / ctx.GlobalBatchSize
+		return l.Units / ctx.globalBatchSize
 	case Batches:
 		return l.Units
 	case Epochs:
-		return (l.Units * ctx.RecordsPerEpoch) / ctx.GlobalBatchSize
+		return (l.Units * ctx.recordsPerEpoch) / ctx.globalBatchSize
 	default:
 		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
 	}
@@ -176,13 +176,13 @@ func (l LengthV0) ToNearestBatch(ctx UnitContext) int {
 func (l LengthV0) EqualWithinBatch(batches int, ctx UnitContext) bool {
 	switch l.Unit {
 	case Records:
-		diff := abs(l.Units - batches*ctx.GlobalBatchSize)
-		return diff < ctx.GlobalBatchSize
+		diff := abs(l.Units - batches*ctx.globalBatchSize)
+		return diff < ctx.globalBatchSize
 	case Batches:
 		return l.Units == batches
 	case Epochs:
-		diff := abs(l.Units*ctx.RecordsPerEpoch - batches*ctx.GlobalBatchSize)
-		return diff < ctx.GlobalBatchSize
+		diff := abs(l.Units*ctx.recordsPerEpoch - batches*ctx.globalBatchSize)
+		return diff < ctx.globalBatchSize
 	default:
 		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
 	}

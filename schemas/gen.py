@@ -240,7 +240,7 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         prop = {}
     default = prop.get("default")
 
-    required = schema.schema.get("required", []) or schema.schema.get(
+    required = tag in schema.schema.get("required", []) or tag in schema.schema.get(
         "eventuallyRequired", []
     )
 
@@ -250,7 +250,9 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         "LabelsV0",
     ]
 
-    if default is not None:
+    # There are two ways that you can know the final value of a pointer field will never be nil;
+    # either the default value is not null, or the field is eventuallyRequired.
+    if default is not None or required:
         if type.startswith("*map[") or type.startswith("*[]"):
             raise AssertionError(
                 f"ERROR: {tag} type ({type}) is a pointer to a map or slice type.\n"
@@ -269,7 +271,7 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
             pass
         elif type.startswith("**"):
             raise AssertionError(f"{tag} type ({type}) must not be a double pointer")
-        else:
+        elif default is not None:
             raise AssertionError(
                 f"ERROR: {tag} type ({type}) must be a pointer since it can be defaulted!\n"
                 "\n"
@@ -320,7 +322,7 @@ def go_getters_and_setters(
             lines.append("")
 
             # Setter for nonpointer field.
-            lines.append(f"func ({x} {struct}) Set{getter}(val {type}) {{")
+            lines.append(f"func ({x} *{struct}) Set{getter}(val {type}) {{")
             lines.append(f"\t{x}.{field} = val")
             lines.append("}")
             lines.append("")
@@ -338,7 +340,7 @@ def go_getters_and_setters(
             lines.append("")
 
             # Setter for pointer field.
-            lines.append(f"func ({x} {struct}) Set{getter}(val {defaulted_type}) {{")
+            lines.append(f"func ({x} *{struct}) Set{getter}(val {defaulted_type}) {{")
             lines.append(f"\t{x}.{field} = &val")
             lines.append("}")
             lines.append("")
