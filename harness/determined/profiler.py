@@ -10,8 +10,6 @@ import psutil
 from determined.common import api
 from determined.common.api import TrialProfilerMetricsBatch
 
-
-
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 
 LOG_NAMESPACE = "determined-profiler"
@@ -19,6 +17,7 @@ LOG_NAMESPACE = "determined-profiler"
 SHOULD_PROFILE_GPUS = None
 try:
     import pynvml
+
     pynvml.nvmlInit()
     SHOULD_PROFILE_GPUS = True
 except ModuleNotFoundError:
@@ -46,6 +45,7 @@ class StartMessage:
 
 class ShutdownMessage:
     pass
+
 
 SendQueueType = queue.Queue[Union[List[TrialProfilerMetricsBatch], ShutdownMessage]]
 
