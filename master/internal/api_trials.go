@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/protoutil"
@@ -42,6 +43,9 @@ var (
 	trialProfilerMetricsBatchWaitTime = 10 * time.Millisecond
 	// TrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
 	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
+
+	// Common errors
+	trialNotFound = status.Error(codes.NotFound, "trial not found")
 )
 
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
@@ -455,7 +459,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	case err != nil:
 		return err
 	case !exists:
-		return status.Error(codes.NotFound, "trial not found")
+		return trialNotFound
 	}
 
 	fetch := func(_ api.BatchRequest) (api.Batch, error) {
@@ -529,6 +533,42 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 		}
 	}
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
+}
+
+func (a *apiServer) TrialPreemptionSignal(
+	req *apiv1.TrialPreemptionSignalRequest,
+	resp apiv1.Determined_TrialPreemptionSignalServer,
+) error {
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	switch {
+	case err == db.ErrNotFound:
+		return trialNotFound
+	case err != nil:
+		return err
+	}
+	trialAddr := actor.Addr("experiments", eID, rID)
+
+	id := uuid.New()
+	signal := make(chan struct{}, 1)
+	a.m.system.TellAt(trialAddr, trialWatchPreemption{id: id, signal: signal})
+	unwatch := func() { a.m.system.TellAt(trialAddr, trialUnwatchPreemption{id: id}) }
+
+	for {
+		select {
+		case _, ok := <-signal:
+			if !ok {
+				// Do not call unwatch() when the channel is closed.
+				return nil
+			}
+			if err := resp.Send(&apiv1.TrialPreemptionSignalResponse{}); err != nil {
+				unwatch()
+				return err
+			}
+		case <-resp.Context().Done():
+			unwatch()
+			return nil
+		}
+	}
 }
 
 // isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and

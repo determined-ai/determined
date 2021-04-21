@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
@@ -98,6 +99,18 @@ type (
 	containerConnected struct {
 		ContainerID cproto.ID
 		socket      *websocket.Conn
+	}
+
+	// trialWatchPreemption begins watching if the trial has been preempted,
+	// either by the scheduler, as is the priority scheduler, or by the user, when paused.
+	// The trial responds to this message with a boolean, where true indicate indicates
+	// we were preempted.
+	trialWatchPreemption struct {
+		id     uuid.UUID
+		signal chan<- struct{}
+	}
+	trialUnwatchPreemption struct {
+		id uuid.UUID
 	}
 )
 
@@ -228,6 +241,8 @@ type (
 		taskSpec       *tasks.TaskSpec
 		privateKey     []byte
 		publicKey      []byte
+
+		preemptionWatchers map[uuid.UUID]chan<- struct{}
 	}
 )
 
@@ -265,6 +280,8 @@ func newTrial(
 
 		agentUserGroup: exp.agentUserGroup,
 		taskSpec:       exp.taskSpec,
+
+		preemptionWatchers: make(map[uuid.UUID]chan<- struct{}),
 	}
 }
 
@@ -296,6 +313,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		// the code below this switch statement to handle releasing resources in
 		// the scheduler. This should be refactored into the terminating logic.
 
+	case trialWatchPreemption:
+		t.preemptionWatchers[msg.id] = msg.signal
+		if t.PendingGracefulTermination {
+			msg.signal <- struct{}{}
+		}
+	case trialUnwatchPreemption:
+		delete(t.preemptionWatchers, msg.id)
+
 	case actor.PostStop:
 		if !t.idSet {
 			return nil
@@ -313,6 +338,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 		if err := t.db.UpdateTrial(t.id, endState); err != nil {
 			ctx.Log().Error(err)
+		}
+		for _, w := range t.preemptionWatchers {
+			close(w)
 		}
 		return nil
 	default:
@@ -1052,7 +1080,7 @@ func (t *trial) terminate(ctx *actor.Context, kill bool) {
 		}
 	case !t.PendingGracefulTermination:
 		ctx.Log().Info("gracefully terminating trial")
-		t.PendingGracefulTermination = true
+		t.MarkPendingGracefulTermination(ctx)
 	}
 }
 
@@ -1166,6 +1194,17 @@ func (t *trial) terminated(ctx *actor.Context) {
 		ctx.Log().
 			WithError(err).
 			Error("failed to process errored message")
+	}
+}
+
+func (t *trial) MarkPendingGracefulTermination(ctx *actor.Context) {
+	t.PendingGracefulTermination = true
+	for _, w := range t.preemptionWatchers {
+		select {
+		case w <- struct{}{}:
+		default:
+			ctx.Log().Info("skipping sending preemption signal because channel was full")
+		}
 	}
 }
 
