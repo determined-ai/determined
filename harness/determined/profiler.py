@@ -47,9 +47,6 @@ class ShutdownMessage:
     pass
 
 
-SendQueueType = queue.Queue[Union[List[TrialProfilerMetricsBatch], ShutdownMessage]]
-
-
 class ProfilerAgent:
     """
     Agent that collects metrics and sends them to the master.
@@ -100,7 +97,9 @@ class ProfilerAgent:
             self.shutdown_timer = CustomTimer(self.max_collection_seconds, self._end_collection)
 
             # Set up the thread responsible for making API calls
-            self.send_queue = queue.Queue()  # type: SendQueueType
+            self.send_queue = (
+                queue.Queue()
+            )  # type: """queue.Queue[Union[List[TrialProfilerMetricsBatch], ShutdownMessage]]"""
             self.sender_thread = ProfilerSenderThread(self.send_queue, self.master_url)
 
             if self.sysmetrics_is_enabled:
