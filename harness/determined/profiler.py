@@ -315,11 +315,13 @@ class SysMetricCollectorThread(threading.Thread):
 
     def run(self) -> None:
         cpu_util_collector = SimpleCpuUtilCollector()
-        gpu_util_collector = GpuUtilCollector()
-        gpu_memory_collection = GpuMemoryCollector()
         net_throughput_collector = NetThroughputCollector()
         free_memory_collector = FreeMemoryCollector()
         disk_collector = DiskReadWriteRateCollector()
+
+        if SHOULD_PROFILE_GPUS:
+            gpu_util_collector = GpuUtilCollector()
+            gpu_memory_collection = GpuMemoryCollector()
 
         # Do nothing while we wait for a StartMessage
         msg = self.control_queue.get()
