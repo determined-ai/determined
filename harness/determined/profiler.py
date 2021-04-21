@@ -10,12 +10,6 @@ import psutil
 from determined.common import api
 from determined.common.api import TrialProfilerMetricsBatch
 
-SendQueueType = """queue.Queue[Union[
-    List['TrialProfilerMetricsBatch'],
-    'ShutdownMessage',
-]]"""
-
-
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 
 LOG_NAMESPACE = "determined-profiler"
@@ -103,7 +97,10 @@ class ProfilerAgent:
             self.shutdown_timer = CustomTimer(self.max_collection_seconds, self._end_collection)
 
             # Set up the thread responsible for making API calls
-            self.send_queue: SendQueueType = queue.Queue()
+            self.send_queue: """queue.Queue[Union[
+    List['TrialProfilerMetricsBatch'],
+    'ShutdownMessage',
+]]""" = queue.Queue()
             self.sender_thread = ProfilerSenderThread(self.send_queue, self.master_url)
 
             if self.sysmetrics_is_enabled:
@@ -136,7 +133,7 @@ class ProfilerAgent:
         self.start()
         return self
 
-    def __exit__(self):
+    def __exit__(self) -> None:
         self.end()
 
     @property
