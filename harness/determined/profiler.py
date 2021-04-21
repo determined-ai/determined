@@ -44,6 +44,11 @@ class StartMessage:
 class ShutdownMessage:
     pass
 
+DEBUG=True
+def debug_log(*args):
+    args_as_str = " ".join([str(arg) for arg in args])
+    if DEBUG:
+        logging.info(f"{LOG_NAMESPACE} (DEBUG) {args_as_str}")
 
 class ProfilerAgent:
     """
@@ -72,6 +77,9 @@ class ProfilerAgent:
         start_on_batch: int,
         end_after_batch: Optional[int] = None,
     ):
+
+        debug_log("ProfilingAgent __init__")
+
         self.current_batch_idx = 0
         self.agent_id = agent_id
         self.trial_id = trial_id
@@ -117,10 +125,13 @@ class ProfilerAgent:
         if not self.is_enabled:
             return
 
+        debug_log("ProfilerAgent.start")
+
         self.sender_thread.start()
         self.shutdown_timer.start()
 
         if self.sysmetrics_is_enabled:
+            debug_log("ProfilerAgent.start - starting sys_metric_collector_thread")
             self.sys_metric_collector_thread.start()
 
     def end(self) -> None:
@@ -138,6 +149,7 @@ class ProfilerAgent:
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:
+        debug_log("ProfilerAgent exited context manager")
         self.end()
 
     @property
@@ -187,12 +199,14 @@ class ProfilerAgent:
             and self.end_after_batch is not None
             and self.current_batch_idx > self.end_after_batch
         ):
+            debug_log(f"ProfilerAgent.update_batch_idx exceeded end_after_batch ({self.end_after_batch}) and shutting down")
             self._end_collection()
 
     def _begin_collection(self) -> None:
         if not self.is_enabled:
             return
 
+        debug_log("ProfilerAgent._begin_collection")
         # Note: due to its simplicity, sender_thread doesn't need to be activated
         self.sys_metric_collector_thread.activate()
         # TODO [DET-5062]: Activate TimingBatcher as well
@@ -205,7 +219,7 @@ class ProfilerAgent:
         max batch idx being exceeded, due to timeout or due to the ProfilingAgent shutting down as
         the harness exits, so the function needs to be threadsafe and idempotent.
         """
-
+        debug_log("ProfilerAgent._end_collection")
         with self.shutdown_lock:
             if self.has_finished:
                 return
@@ -274,6 +288,7 @@ class PreemptibleTimer(threading.Thread):
                 return
         except queue.Empty:
             # Time is up!
+            debug_log("CustomTimer time expired, executing callback fn")
             self.callback()
 
 
@@ -306,6 +321,7 @@ class SysMetricCollectorThread(threading.Thread):
 
     def activate(self) -> None:
         """Begin collecting System Metrics"""
+        debug_log("SysMetricCollectorThread.activate()")
         self.control_queue.put(StartMessage())
 
     def kill(self) -> None:
@@ -329,6 +345,8 @@ class SysMetricCollectorThread(threading.Thread):
         if isinstance(msg, ShutdownMessage):
             return
 
+        debug_log("SysMetricCollectorThread.run - StartMessage received")
+
         # Do initial measurement for rate-based collectors
         net_throughput_collector.reset()
         disk_collector.reset()
@@ -337,6 +355,7 @@ class SysMetricCollectorThread(threading.Thread):
         next_collection = time.time() + self.MEASUREMENT_INTERVAL
 
         while True:
+            debug_log("SysMetricCollectorThread.run - started new iteration of while loop")
             # This code is using a trick with the control_queue to sleep/block until the next
             # measurement should be taken, while still being able to respond to a shutdown
             # request immediately.
@@ -346,12 +365,16 @@ class SysMetricCollectorThread(threading.Thread):
                 # a negative timeout will lead to an exception when retrieving from the queue
                 sleep_time = max(sleep_time, 0)
                 try:
+                    debug_log("SysMetricCollectorThread.run - waiting", sleep_time, "seconds for next collection")
                     msg = self.control_queue.get(timeout=sleep_time)
                     if isinstance(msg, ShutdownMessage):
+                        debug_log("SysMetricCollectorThread.run - received shutdown message in while loop")
                         # Drop any partial batches if we receive a shutdown
                         return
                 except queue.Empty:
                     pass
+
+            debug_log("SysMetricCollectorThread.run - time for the next collection")
 
             next_collection += self.MEASUREMENT_INTERVAL
 
@@ -359,6 +382,7 @@ class SysMetricCollectorThread(threading.Thread):
             self.current_batch.add_nongpu_measurement(
                 SysMetricType.SIMPLE_CPU_UTIL_METRIC, cpu_util
             )
+            debug_log("SysMetricCollectorThread.run - collected CPU metric and stored measurement")
 
             net_thru_sent, net_thru_recv = net_throughput_collector.measure(self.current_batch_idx)
             self.current_batch.add_nongpu_measurement(
@@ -392,9 +416,10 @@ class SysMetricCollectorThread(threading.Thread):
                     self.current_batch.add_gpu_measurement(
                         SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_util[gpu_uuid]
                     )
-
+            debug_log("SysMetricCollectorThread.run - collected all metrics")
             # Check if it is time to flush the batch and start a new batch
             if time.time() - batch_start_time > self.FLUSH_INTERVAL:
+                debug_log("SysMetricCollectorThread.run - decided to flush the batch")
                 self.send_queue.put(self.current_batch.convert_to_post_format())
                 self.current_batch.clear()
                 batch_start_time = time.time()
@@ -419,6 +444,7 @@ class ProfilerSenderThread(threading.Thread):
             message = self.inbound_queue.get()
             if isinstance(message, ShutdownMessage):
                 return
+            debug_log("ProfilerBatchToSend", self.master_url, message)
             api.post_trial_profiler_metrics_batches(
                 self.master_url,
                 message,

@@ -17,7 +17,7 @@ from tensorflow.python.util import function_utils
 from tensorflow_estimator.python.estimator.training import _NewCheckpointListenerForEvaluate
 
 import determined as det
-from determined import estimator, horovod, ipc, monkey_patch, tensorboard, workload
+from determined import estimator, horovod, ipc, monkey_patch, tensorboard, workload, profiler
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
@@ -55,7 +55,8 @@ class DeterminedControlHook(estimator.RunHook):
     break out of the loop to re-enter train_and_evaluate().
     """
 
-    def __init__(self, estimator_trial_controller: "EstimatorTrialController") -> None:
+    def __init__(self, estimator_trial_controller: "EstimatorTrialController", prof: profiler.ProfilerAgent) -> None:
+        self.total_batches_processed = 0
         self.batches_processed_in_step = 0
         self.estimator_trial_controller = estimator_trial_controller
 
@@ -72,6 +73,8 @@ class DeterminedControlHook(estimator.RunHook):
 
         # Store the response_func for train_for_step workloads while we do the training.
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
+
+        self.prof = prof
 
     def begin(self) -> None:
         # For performance reasons, we collect per batch metrics
@@ -97,6 +100,7 @@ class DeterminedControlHook(estimator.RunHook):
     def before_run(
         self, run_context: tf.estimator.SessionRunContext
     ) -> tf.estimator.SessionRunArgs:
+        self.prof.update_batch_idx(self.total_batches_processed)
         return tf.estimator.SessionRunArgs(
             {"summary": self._summary_op, "global_step": self._global_step_tensor}
         )
@@ -132,6 +136,7 @@ class DeterminedControlHook(estimator.RunHook):
         self.num_batches = cast(int, self.num_batches)
         self._collect_batch_metrics(run_values)
         self.batches_processed_in_step += 1
+        self.total_batches_processed += 1
         if self.batches_processed_in_step < self.num_batches:
             return
 
@@ -345,10 +350,13 @@ class EstimatorTrialController(det.LoopTrialController):
         val_spec: tf.estimator.EvalSpec,
         serving_input_receiver_fns: Dict[str, estimator.ServingInputReceiverFn],
         context: estimator.EstimatorContext,
+        prof: profiler.ProfilerAgent,
         *args: Any,
         **kwargs: Any,
     ) -> None:
         super().__init__(context, *args, **kwargs)  # type: ignore
+
+        self.prof = prof
 
         # Catch if the estimator has been configured to use a tf.distribute.Strategy
         # as this can conflict with Determined's distributed training and lead to
@@ -452,6 +460,7 @@ class EstimatorTrialController(det.LoopTrialController):
     @staticmethod
     def from_trial(
         trial_inst: det.Trial,
+        prof: profiler.ProfilerAgent,
         context: det.TrialContext,
         env: det.EnvContext,
         *args: Any,
@@ -475,6 +484,7 @@ class EstimatorTrialController(det.LoopTrialController):
             trial_inst.build_validation_spec(),
             trial_inst.build_serving_input_receiver_fns(),
             context,
+            prof,
             env,
             *args,
             **kwargs,
