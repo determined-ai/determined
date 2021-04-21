@@ -17,6 +17,7 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
   let tooltipEl: HTMLDivElement|null = null;
 
   const _buildTooltipHtml = (uPlot: uPlot, idx: number): string => {
+    let hasValue = false;
     let html = '';
 
     let header: ChartTooltip = null;
@@ -42,6 +43,8 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
       const label = yLabels[i - 1] || null;
       const valueRaw = uPlot.data[i][idx];
 
+      if (valueRaw) hasValue = true;
+
       const cssClass = valueRaw ? css.valueY : css.valueYEmpty;
       html += `<div class="${cssClass}">`
         + `<span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>`
@@ -50,7 +53,7 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
         + '</div>';
     });
 
-    return html;
+    return (hasValue ? html : '');
   };
 
   const _getTooltipLeftPx = (uPlot: uPlot, idx: number): number => {

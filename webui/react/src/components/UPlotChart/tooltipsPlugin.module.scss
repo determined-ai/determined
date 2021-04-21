@@ -4,14 +4,13 @@
   display: none;
   font-size: 11px;
   line-height: 13px;
-  padding: 0 7px 1px 6px;
   position: absolute;
   z-index: 100;
 
   .valueX,
   .valueY,
   .valueYEmpty {
-    margin: 5px 0;
+    margin: 5px 6px;
     position: relative;
     white-space: nowrap;
   }
