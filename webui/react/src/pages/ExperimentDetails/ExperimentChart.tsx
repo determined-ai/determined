@@ -4,7 +4,7 @@ import { AlignedData } from 'uplot';
 import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlotChart';
-import { ChartTooltipData, tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
+import { ChartTooltip, tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
 import { ValidationHistory } from 'types';
 import { glasbeyColor } from 'utils/color';
 
@@ -24,12 +24,12 @@ const ExperimentChart: React.FC<Props> = ({
   const [ chartData, setChartData ] = useState<AlignedData>();
   const [ chartOptions, setChartOptions ] = useState<Options>();
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
-  const chartTooltipData = useRef<ChartTooltipData[]>();
+  const chartTooltipData = useRef<ChartTooltip[][]>();
 
   useEffect(() => {
-    const getTooltipTextForXIndex = (xIndex: number): ChartTooltipData => {
-      if (!chartTooltipData.current) return [];
-      return chartTooltipData.current.map(serieLabel => serieLabel[xIndex] || null);
+    const getXTooltipHeader = (xIndex: number): ChartTooltip => {
+      if (!chartTooltipData.current) return null;
+      return chartTooltipData.current[0][xIndex] || null;
     };
 
     setChartOptions({
@@ -39,7 +39,7 @@ const ExperimentChart: React.FC<Props> = ({
       ],
       height: 400,
       legend: { show: false },
-      plugins: [ tooltipsPlugin({ getTooltipTextForXIndex }) ],
+      plugins: [ tooltipsPlugin({ getXTooltipHeader }) ],
       scales: {
         x: { time: false },
         y: { distr: scale === Scale.Log ? 3 : 1 },

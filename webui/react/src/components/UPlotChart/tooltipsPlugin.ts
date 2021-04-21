@@ -4,13 +4,14 @@ import { glasbeyColor } from 'utils/color';
 
 import css from './tooltipsPlugin.module.scss';
 
-export type ChartTooltipData = (string | null)[];
+export type ChartTooltip = string|null;
 
 interface Props {
-  getTooltipTextForXIndex?: (xIndex: number) => ChartTooltipData;
+  getXTooltipHeader?: (xIndex: number) => ChartTooltip,
+  getXTooltipYLabels?: (xIndex: number) => ChartTooltip[];
 }
 
-export const tooltipsPlugin = ({ getTooltipTextForXIndex }: Props = {}): Plugin => {
+export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props = {}): Plugin => {
   let barEl: HTMLDivElement|null = null;
   let displayedIdx: number|null = null;
   let tooltipEl: HTMLDivElement|null = null;
@@ -18,29 +19,34 @@ export const tooltipsPlugin = ({ getTooltipTextForXIndex }: Props = {}): Plugin 
   const _buildTooltipHtml = (uPlot: uPlot, idx: number): string => {
     let html = '';
 
+    let header: ChartTooltip = null;
+    if (typeof getXTooltipHeader === 'function') {
+      header = getXTooltipHeader(idx);
+    }
+    let yLabels: ChartTooltip[] = [];
+    if (typeof getXTooltipYLabels === 'function') {
+      yLabels = getXTooltipYLabels(idx);
+    }
+
     const xSerie = uPlot.series[0];
     const xValue = (typeof xSerie.value === 'function' ?
       xSerie.value(uPlot, uPlot.data[0][idx], 0, idx) : uPlot.data[0][idx]);
     html += `<div class="${css.valueX}">`
+      + (header ? header + '<br />' : '')
       + `${xSerie.label}: ${xValue}`
       + '</div>';
-
-    let tooltipForXIndex: ChartTooltipData = [];
-    if (typeof getTooltipTextForXIndex === 'function') {
-      tooltipForXIndex = getTooltipTextForXIndex(idx);
-    }
 
     uPlot.series.forEach((serie, i) => {
       if (serie.scale === 'x' || !serie.show) return;
 
-      const tooltipText = tooltipForXIndex[i - 1] || null;
+      const label = yLabels[i - 1] || null;
       const valueRaw = uPlot.data[i][idx];
 
       const cssClass = valueRaw ? css.valueY : css.valueYEmpty;
       html += `<div class="${cssClass}">`
         + `<span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>`
+        + (label ? label + '<br />' : '')
         + `${serie.label}: ${valueRaw || 'N/A'}`
-        + (tooltipText ? '<br />' + tooltipText : '')
         + '</div>';
     });
 
