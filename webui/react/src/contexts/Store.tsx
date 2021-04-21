@@ -140,7 +140,6 @@ const reducer = (state: State, action: Action) => {
     case StoreAction.Reset:
       return clone(initState) as State;
     case StoreAction.SetAgents: {
-      if (action.value.length === 0) return state;
       if (isEqual(state.agents, action.value)) return state;
       const cluster = agentsToOverview(action.value);
       updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
