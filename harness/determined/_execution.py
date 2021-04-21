@@ -126,7 +126,7 @@ def _make_local_execution_env(
         det_trial_unique_port_offset=0,
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="",
-        det_agent_id="local",
+        det_agent_id="",
         det_experiment_id="",
         det_task_token="",
         det_cluster_id="",

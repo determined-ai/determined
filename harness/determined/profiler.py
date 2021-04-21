@@ -1,29 +1,38 @@
-import logging
-import threading
-import psutil
-import pynvml
 import datetime
 import logging
 import queue
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Callable
 
 import psutil
-try:
-    import pynvml
-    pynvml.nvmlInit()
-except ModuleNotFoundError:
-    pass
-except pynvml.NVMLError_LibraryNotFound:
-    pass
-
 from determined.common import api
 from determined.common.api import TrialProfilerMetricsBatch
+
+SendQueueType = """queue.Queue[Union[
+    List['TrialProfilerMetricsBatch'],
+    'ShutdownMessage',
+]]"""
+
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 
 LOG_NAMESPACE = "determined-profiler"
+
+SHOULD_PROFILE_GPUS = None
+try:
+    import pynvml
+    pynvml.nvmlInit()
+    SHOULD_PROFILE_GPUS = True
+except ModuleNotFoundError:
+    logging.info(f"{LOG_NAMESPACE} pynvml not found. Not collecting GPU metrics")
+    SHOULD_PROFILE_GPUS = False
+except pynvml.NVMLError_LibraryNotFound:
+    logging.info(f"{LOG_NAMESPACE} pynvml LibraryNotFound error. Not collecting GPU metrics")
+    SHOULD_PROFILE_GPUS = False
+
+assert SHOULD_PROFILE_GPUS is not None, "Could not set up pynvml, but also did not fail in the expected way."
+
 
 
 class ProfilerAgent:
@@ -78,32 +87,34 @@ class ProfilerAgent:
         self.master_url = master_url
         self.start_on_batch = start_on_batch
         self.end_after_batch = end_after_batch
-
-        # Set up timer to stop collecting after 5 minutes
         self.has_started = False
         self.has_finished = False
+
+        # Set up timer to stop collecting after 5 minutes
         self.max_collection_seconds = 300
-        self.shutdown_timer = threading.Timer(self.max_collection_seconds, self._end_collection)
-        self.shutdown_timer.daemon = True
+        self.shutdown_timer = CustomTimer(self.max_collection_seconds, self._end_collection)
         self.shutdown_lock = threading.Lock()
 
         # Set up the thread responsible for making API calls
-        self.send_queue: """queue.Queue[Union[
-            List['TrialProfilerMetricsBatch'],
-            'ShutdownMessage',
-        ]]""" = queue.Queue()
+        self.send_queue: SendQueueType = queue.Queue()
         self.sender_thread = ProfilerSenderThread(self.send_queue, self.master_url)
-        self.sender_thread.start()
 
-        # Launch the system metric collecting thread, but not the actual collection of metrics
         self.sys_metric_collector_thread = SysMetricCollectorThread(
             trial_id, agent_id, self.send_queue
         )
-        self.sys_metric_collector_thread.start()
 
         # TODO: Add data structure to batch timings and then send to SenderThread
         #       Does this need to be its own thread to flush correctly?
         # self.timings_batcher = TimingsBatcher()
+
+    # Start the ProfilingAgent and the children threads. This does not mean 'start collecting metrics'
+    def start(self):
+        self.sender_thread.start()
+        self.sys_metric_collector_thread.start()
+        self.shutdown_timer.start()
+
+    def end(self):
+        self._end_collection()
 
     @property
     def is_enabled(self) -> bool:
@@ -132,20 +143,24 @@ class ProfilerAgent:
     def _begin_collection(self) -> None:
         self.sys_metric_collector_thread.activate()
         # TODO: Start up TimingBatcher as well
-        self.shutdown_timer.start()
+        self.shutdown_timer.begin_timer()
         self.has_started = True
 
     def _end_collection(self) -> None:
         """
         Stop collecting data and shut down child threads. This function can be invoked due to the
-        max batch idx being exceeded or due to timeout, so the function needs to be threadsafe.
+        max batch idx being exceeded, due to timeout or due to the ProfilingAgent shutting down as
+        the harness exits, so the function needs to be threadsafe and idempotent.
         """
-        # Make _end_collection idempotent
+
         with self.shutdown_lock:
             if self.has_finished:
                 return
 
             # Shut down in reverse creation order
+            self.shutdown_timer.kill()
+            self.shutdown_timer.join()
+
             self.sys_metric_collector_thread.kill()
             self.sys_metric_collector_thread.join()
 
@@ -195,7 +210,7 @@ class SysMetricBatcher:
     def clear(self) -> None:
         self.batch = {
             SysMetricType.GPU_UTIL_METRIC: {},
-            SysMetricType.GPU_FREE_MEMORY_METRIC: [],
+            SysMetricType.GPU_FREE_MEMORY_METRIC: {},
             SysMetricType.NET_THRU_SENT_METRIC: [],
             SysMetricType.NET_THRU_RECV_METRIC: [],
             SysMetricType.DISK_IOPS_METRIC: [],
@@ -205,14 +220,14 @@ class SysMetricBatcher:
             SysMetricType.SIMPLE_CPU_UTIL_METRIC: [],
         }  # type: Dict[str, Any]
 
-    def add_nongpu_measurement(self, metric_type: str, measurement: "Measurement") -> None:
+    def add_nongpu_measurement(self, metric_type: str, measurement: Measurement) -> None:
         assert (
             metric_type in self.batch.keys()
         ), f"Tried to add unknown type of non-GPU metric: {metric_type}"
         self.batch[metric_type].append(measurement)
 
     def add_gpu_measurement(
-        self, metric_type: str, gpu_uuid: str, measurement: "Measurement"
+        self, metric_type: str, gpu_uuid: str, measurement: Measurement
     ) -> None:
         assert (
             metric_type in self.batch.keys()
@@ -224,14 +239,14 @@ class SysMetricBatcher:
     def convert_to_timestamp_str(self, timestamp: datetime.datetime) -> str:
         return timestamp.isoformat() + "Z"
 
-    def convert_to_post_format(self) -> List["TrialProfilerMetricsBatch"]:
+    def convert_to_post_format(self) -> List[TrialProfilerMetricsBatch]:
         def to_post_format(
-            measurements: List[Any], labels: Dict[str, Any]
-        ) -> "TrialProfilerMetricsBatch":
+            measurements: List[Measurement], labels: Dict[str, Any]
+        ) -> TrialProfilerMetricsBatch:
             values, batches, timestamps = [], [], []
             for m in measurements:
                 values.append(m.measurement)
-                batches.append(m.batch_index)
+                batches.append(m.batch_idx)
                 timestamps.append(self.convert_to_timestamp_str(m.timestamp))
             return TrialProfilerMetricsBatch(values, batches, timestamps, labels)
 
@@ -246,8 +261,10 @@ class SysMetricBatcher:
 
         trial_profiler_metrics_batches = []
         for metric_name in self.batch.keys():
-            # TODO: Don't forget to include GPU Memory
-            if metric_name != SysMetricType.GPU_UTIL_METRIC and len(self.batch[metric_name]) > 0:
+            if (
+                metric_name not in [SysMetricType.GPU_UTIL_METRIC, SysMetricType.GPU_FREE_MEMORY_METRIC]
+                and len(self.batch[metric_name]) > 0
+            ):
                 trial_profiler_metrics_batches.append(
                     to_post_format(
                         self.batch[metric_name],
@@ -255,21 +272,21 @@ class SysMetricBatcher:
                     )
                 )
 
-            # GPU Metrics need to be grouped by GPU UUID
-            # TODO: Don't forget to include GPU Memory
+            # GPU Metrics need to be batched by GPU UUID
             if (
-                metric_name == SysMetricType.GPU_UTIL_METRIC
+                metric_name in [SysMetricType.GPU_UTIL_METRIC, SysMetricType.GPU_FREE_MEMORY_METRIC]
                 and len(self.batch[metric_name].keys()) > 0
             ):
                 for gpu_uuid in self.batch[metric_name].keys():
-                    trial_profiler_metrics_batches.append(
-                        to_post_format(
-                            self.batch[metric_name][gpu_uuid],
-                            make_labels(
-                                metric_name, SYSTEM_METRIC_TYPE_ENUM, gpu_uuid_label=gpu_uuid
-                            ),
+                    if len(self.batch[metric_name][gpu_uuid]) > 0:
+                        trial_profiler_metrics_batches.append(
+                            to_post_format(
+                                self.batch[metric_name][gpu_uuid],
+                                make_labels(
+                                    metric_name, SYSTEM_METRIC_TYPE_ENUM, gpu_uuid_label=gpu_uuid
+                                ),
+                            )
                         )
-                    )
 
         return trial_profiler_metrics_batches
 
@@ -306,11 +323,11 @@ class SysMetricCollectorThread(threading.Thread):
         self.send_queue = send_queue
         self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
         self.current_batch = SysMetricBatcher(trial_id, agent_id)
-        self.current_batch.clear()
 
         super().__init__(daemon=True)
 
     def activate(self) -> None:
+        """ Begin collecting System Metrics """
         self.control_queue.put(StartMessage())
 
     def kill(self) -> None:
@@ -321,84 +338,83 @@ class SysMetricCollectorThread(threading.Thread):
 
     def run(self) -> None:
         last_measurement_time = None
-        batch_start_time = None
         cpu_util_collector = SimpleCpuUtilCollector()
         gpu_util_collector = GpuUtilCollector()
         gpu_memory_collection = GpuMemoryCollector()
-        network_throughput_collector = NetThroughputCollector()
+        net_throughput_collector = NetThroughputCollector()
         free_memory_collector = FreeMemoryCollector()
         disk_collector = DiskReadWriteRateCollector()
 
+        # Do nothing while we wait for a StartMessage
         msg = self.control_queue.get()
         if isinstance(msg, ShutdownMessage):
             return
 
+        # Do initial measurement for rate-based collectors
+        net_throughput_collector.reset()
+        disk_collector.reset()
+
         batch_start_time = time.time()
-        next_collection = time.time()
+        next_collection = time.time() + self.MEASUREMENT_INTERVAL
 
         while True:
+            # This code is using a trick with the control_queue to sleep/block until the next
+            # measurement should be taken, while still being able to respond to a shutdown
+            # request immediately.
             now = time.time()
             if now < next_collection:
-                # check for quit message while we wait
                 sleep_time = next_collection - now
+                # a negative timeout will lead to an exception when retrieving from the queue
+                sleep_time = max(sleep_time, 0)
                 try:
                     msg = self.control_queue.get(timeout=sleep_time)
                     if isinstance(msg, ShutdownMessage):
-                        # Drop any partial batches
+                        # Drop any partial batches if we receive a shutdown
                         return
                 except queue.Empty:
                     pass
 
             next_collection += self.MEASUREMENT_INTERVAL
 
-            # One-time initialization
-            if last_measurement_time is None:
-                last_measurement_time = time.time()
-                network_throughput_collector.reset()
-                disk_collector.reset()
+            cpu_util = cpu_util_collector.measure(self.current_batch_idx)
+            self.current_batch.add_nongpu_measurement(
+                SysMetricType.SIMPLE_CPU_UTIL_METRIC, cpu_util
+            )
 
-            # Check if it is time to take a new measurement
-            if time.time() - last_measurement_time > self.MEASUREMENT_INTERVAL:
-                immutable_batch_idx = self.current_batch_idx
-                cpu_util = cpu_util_collector.measure(immutable_batch_idx)
-                gpu_util = gpu_util_collector.measure(immutable_batch_idx)
-                gpu_memory = gpu_memory_collection.measure(immutable_batch_idx)
-                net_thru_sent, net_thru_recv = network_throughput_collector.measure(
-                    immutable_batch_idx
-                )
-                free_memory = free_memory_collector.measure(immutable_batch_idx)
-                disk_read_thru, disk_write_thru, iops = disk_collector.measure(immutable_batch_idx)
+            net_thru_sent, net_thru_recv = net_throughput_collector.measure(self.current_batch_idx)
+            self.current_batch.add_nongpu_measurement(
+                SysMetricType.NET_THRU_SENT_METRIC, net_thru_sent
+            )
+            self.current_batch.add_nongpu_measurement(
+                SysMetricType.NET_THRU_RECV_METRIC, net_thru_recv
+            )
 
+            free_memory = free_memory_collector.measure(self.current_batch_idx)
+            self.current_batch.add_nongpu_measurement(
+                SysMetricType.FREE_MEM_METRIC, free_memory
+            )
+
+            disk_read_thru, disk_write_thru, iops = disk_collector.measure(self.current_batch_idx)
+            self.current_batch.add_nongpu_measurement(
+                SysMetricType.DISK_THRU_READ_METRIC, disk_read_thru
+            )
+            self.current_batch.add_nongpu_measurement(
+                SysMetricType.DISK_THRU_WRITE_METRIC, disk_write_thru
+            )
+            self.current_batch.add_nongpu_measurement(SysMetricType.DISK_IOPS_METRIC, iops)
+
+            if SHOULD_PROFILE_GPUS:
+                gpu_util = gpu_util_collector.measure(self.current_batch_idx)
                 for gpu_uuid in gpu_util.keys():
                     self.current_batch.add_gpu_measurement(
                         SysMetricType.GPU_UTIL_METRIC, gpu_uuid, gpu_util[gpu_uuid]
                     )
 
+                gpu_memory = gpu_memory_collection.measure(self.current_batch_idx)
                 for gpu_uuid in gpu_memory.keys():
                     self.current_batch.add_gpu_measurement(
                         SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_util[gpu_uuid]
                     )
-
-                self.current_batch.add_nongpu_measurement(
-                    SysMetricType.NET_THRU_SENT_METRIC, net_thru_sent
-                )
-                self.current_batch.add_nongpu_measurement(
-                    SysMetricType.NET_THRU_RECV_METRIC, net_thru_recv
-                )
-                self.current_batch.add_nongpu_measurement(SysMetricType.DISK_IOPS_METRIC, iops)
-                self.current_batch.add_nongpu_measurement(
-                    SysMetricType.DISK_THRU_READ_METRIC, disk_read_thru
-                )
-                self.current_batch.add_nongpu_measurement(
-                    SysMetricType.DISK_THRU_WRITE_METRIC, disk_write_thru
-                )
-                self.current_batch.add_nongpu_measurement(
-                    SysMetricType.FREE_MEM_METRIC, free_memory
-                )
-                self.current_batch.add_nongpu_measurement(
-                    SysMetricType.SIMPLE_CPU_UTIL_METRIC, cpu_util
-                )
-                last_measurement_time = time.time()
 
             # Check if it is time to flush the batch and start a new batch
             if time.time() - batch_start_time > self.FLUSH_INTERVAL:
@@ -407,9 +423,12 @@ class SysMetricCollectorThread(threading.Thread):
                 batch_start_time = time.time()
 
 
-# This is a thread that exists solely so that we can make API calls without blocking
-# It has a Queue through which work is sent to the thread
+
 class ProfilerSenderThread(threading.Thread):
+    """
+    This is a thread that exists solely so that we can make API calls without blocking.
+    It has a Queue through which work is sent to the thread
+    """
     def __init__(self, inbound_queue: queue.Queue, master_url: str) -> None:
         self.master_url = master_url
         self.inbound_queue = inbound_queue
@@ -433,14 +452,14 @@ GIGA = 1_000_000_000
 
 
 class SimpleCpuUtilCollector:
-    def measure(self, batch_idx: int) -> "Measurement":
+    def measure(self, batch_idx: int) -> Measurement:
         cpu_util = psutil.cpu_percent()
         timestamp = datetime.datetime.utcnow()
         return Measurement(timestamp, batch_idx, cpu_util)
 
 
 class FreeMemoryCollector:
-    def measure(self, batch_idx: int) -> "Measurement":
+    def measure(self, batch_idx: int) -> Measurement:
         free_mem_bytes = psutil.virtual_memory().available
         timestamp = datetime.datetime.utcnow()
         return Measurement(timestamp, batch_idx, free_mem_bytes * GIGA)
@@ -456,7 +475,7 @@ class NetThroughputCollector:
         self.start_sent = net.bytes_sent
         self.start_recv = net.bytes_recv
 
-    def measure(self, batch_idx: int) -> Tuple["Measurement", "Measurement"]:
+    def measure(self, batch_idx: int) -> Tuple[Measurement, Measurement]:
         net = psutil.net_io_counters()
         end_time = time.time()
 
@@ -495,7 +514,7 @@ class DiskReadWriteRateCollector:
         self.start_read_count = disk.read_count
         self.start_write_count = disk.write_count
 
-    def measure(self, batch_idx: int) -> Tuple["Measurement", "Measurement", "Measurement"]:
+    def measure(self, batch_idx: int) -> Tuple[Measurement, Measurement, Measurement]:
         disk = psutil.disk_io_counters()
         end_time = time.time()
 
@@ -533,7 +552,7 @@ class GpuUtilCollector:
     def __init__(self) -> None:
         self.num_gpus = pynvml.nvmlDeviceGetCount()
 
-    def measure(self, batch_idx: int) -> Dict[str, "Measurement"]:
+    def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         measurements = {}
         timestamp = datetime.datetime.utcnow()
         for i in range(self.num_gpus):
@@ -550,7 +569,7 @@ class GpuMemoryCollector:
     def __init__(self) -> None:
         self.num_gpus = pynvml.nvmlDeviceGetCount()
 
-    def measure(self, batch_idx: int) -> Dict[str, "Measurement"]:
+    def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         measurements = {}
         timestamp = datetime.datetime.utcnow()
         for i in range(self.num_gpus):
@@ -561,3 +580,49 @@ class GpuMemoryCollector:
             except pynvml.NVMLError as e:
                 logging.info(f"{LOG_NAMESPACE}: failed to sample GPU memory for GPU {i}: {e}")
         return measurements
+
+
+class CustomTimer(threading.Thread):
+    """
+    Version of threading.Timer that can be cleaned up if the timer is no longer needed
+    ```
+    timer = CustomTimer(300, callback_fn, callback_args=[1,2,3])
+    timer.start()  # start the thread, not the timer
+    timer.begin_timer()
+
+    # After 300 seconds, callback_fn will be executed
+
+    # If we need to clean up the timer
+    timer.kill()  # This is idempotent and will work fine if the timer has gone off
+    ```
+    """
+
+    def __init__(self, duration: int, callback: Callable, callback_args: Optional[List[Any]] = None):
+        self.duration = duration
+        self.callback = callback
+        self.callback_args = callback_args if callback_args is not None else []
+        self._timer_has_begun = False
+        self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
+
+        super().__init__(daemon=True)
+
+    def begin_timer(self) -> None:
+        if not self._timer_has_begun:
+            self.control_queue.put(StartMessage())
+            self._timer_has_begun = True
+
+    def kill(self) -> None:
+        self.control_queue.put(ShutdownMessage())
+
+    def run(self) -> None:
+        msg = self.control_queue.get()
+        if isinstance(msg, ShutdownMessage):
+            return
+
+        try:
+            msg = self.control_queue.get(timeout=self.duration)
+            if isinstance(msg, ShutdownMessage):
+                return
+        except queue.Empty:
+            # Time is up!
+            self.callback(*self.callback_args)

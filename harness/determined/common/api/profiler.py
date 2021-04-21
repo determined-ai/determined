@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Any
 
 import backoff
 from requests.exceptions import RequestException
@@ -17,7 +17,7 @@ class TrialProfilerMetricsBatch:
         values: List[float],
         batches: List[int],
         timestamps: List[str],
-        labels: Dict[str, str],
+        labels: Dict[str, Any],
     ):
         self.values = values
         self.batches = batches
