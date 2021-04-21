@@ -35,11 +35,13 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
     setCanSubmit(false);
     try {
       const options = { signal: canceler.signal };
-      const loginRequest: V1LoginRequest = {
-        password: creds.password || '',
-        username: creds.username || '',
-      };
-      const { token } = await login({ ...loginRequest, ...options });
+      const { token } = await login(
+        {
+          password: creds.password || '',
+          username: creds.username || '',
+        }
+        , options,
+      );
       updateDetApi({ apiKey: `Bearer ${token}` });
       const user = await getCurrentUser(options);
       storeDispatch({

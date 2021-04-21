@@ -86,8 +86,9 @@ export const commandToEndpoint: Record<CommandType, string> = {
 export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, LoginResponse> = {
   name: 'login',
   postProcess: (resp) => ({ token: resp.token, user: decoder.mapV1User(resp.user) }),
-  request: (params) => detApi.Auth.determinedLogin(
-    { ...params, isHashed: true, password: saltAndHashPassword(params.password) },
+  request: (params, options) => detApi.Auth.determinedLogin(
+    { ...params, isHashed: true, password: saltAndHashPassword(params.password) }
+    , options,
   ),
 };
 
