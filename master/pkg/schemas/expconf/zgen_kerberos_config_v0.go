@@ -19,14 +19,6 @@ func (k *KerberosConfigV0) SetConfigFile(val string) {
 	k.RawConfigFile = &val
 }
 
-func (k KerberosConfigV0) WithDefaults() KerberosConfigV0 {
-	return schemas.WithDefaults(k).(KerberosConfigV0)
-}
-
-func (k KerberosConfigV0) Merge(other KerberosConfigV0) KerberosConfigV0 {
-	return schemas.Merge(k, other).(KerberosConfigV0)
-}
-
 func (k KerberosConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedKerberosConfigV0()
 }

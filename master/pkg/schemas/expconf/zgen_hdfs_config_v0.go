@@ -8,53 +8,26 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (h HDFSConfigV0) SaveExperimentBest() int {
-	if h.RawSaveExperimentBest == nil {
-		panic("You must call WithDefaults on HDFSConfigV0 before .RawSaveExperimentBest")
-	}
-	return *h.RawSaveExperimentBest
-}
-
-func (h *HDFSConfigV0) SetSaveExperimentBest(val int) {
-	h.RawSaveExperimentBest = &val
-}
-
-func (h HDFSConfigV0) SaveTrialBest() int {
-	if h.RawSaveTrialBest == nil {
-		panic("You must call WithDefaults on HDFSConfigV0 before .RawSaveTrialBest")
-	}
-	return *h.RawSaveTrialBest
-}
-
-func (h *HDFSConfigV0) SetSaveTrialBest(val int) {
-	h.RawSaveTrialBest = &val
-}
-
-func (h HDFSConfigV0) SaveTrialLatest() int {
-	if h.RawSaveTrialLatest == nil {
-		panic("You must call WithDefaults on HDFSConfigV0 before .RawSaveTrialLatest")
-	}
-	return *h.RawSaveTrialLatest
-}
-
-func (h *HDFSConfigV0) SetSaveTrialLatest(val int) {
-	h.RawSaveTrialLatest = &val
-}
-
 func (h HDFSConfigV0) URL() string {
-	return h.RawURL
+	if h.RawURL == nil {
+		panic("You must call WithDefaults on HDFSConfigV0 before .RawURL")
+	}
+	return *h.RawURL
 }
 
 func (h *HDFSConfigV0) SetURL(val string) {
-	h.RawURL = val
+	h.RawURL = &val
 }
 
 func (h HDFSConfigV0) Path() string {
-	return h.RawPath
+	if h.RawPath == nil {
+		panic("You must call WithDefaults on HDFSConfigV0 before .RawPath")
+	}
+	return *h.RawPath
 }
 
 func (h *HDFSConfigV0) SetPath(val string) {
-	h.RawPath = val
+	h.RawPath = &val
 }
 
 func (h HDFSConfigV0) User() *string {
@@ -63,14 +36,6 @@ func (h HDFSConfigV0) User() *string {
 
 func (h *HDFSConfigV0) SetUser(val *string) {
 	h.RawUser = val
-}
-
-func (h HDFSConfigV0) WithDefaults() HDFSConfigV0 {
-	return schemas.WithDefaults(h).(HDFSConfigV0)
-}
-
-func (h HDFSConfigV0) Merge(other HDFSConfigV0) HDFSConfigV0 {
-	return schemas.Merge(h, other).(HDFSConfigV0)
 }
 
 func (h HDFSConfigV0) ParsedSchema() interface{} {

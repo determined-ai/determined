@@ -59,14 +59,6 @@ func (t *TestRootV0) SetNodefaultArray(val []string) {
 	t.RawNodefaultArray = val
 }
 
-func (t TestRootV0) WithDefaults() TestRootV0 {
-	return schemas.WithDefaults(t).(TestRootV0)
-}
-
-func (t TestRootV0) Merge(other TestRootV0) TestRootV0 {
-	return schemas.Merge(t, other).(TestRootV0)
-}
-
 func (t TestRootV0) ParsedSchema() interface{} {
 	return schemas.ParsedTestRootV0()
 }

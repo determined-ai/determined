@@ -46,14 +46,6 @@ func (b *BindMountV0) SetPropagation(val string) {
 	b.RawPropagation = &val
 }
 
-func (b BindMountV0) WithDefaults() BindMountV0 {
-	return schemas.WithDefaults(b).(BindMountV0)
-}
-
-func (b BindMountV0) Merge(other BindMountV0) BindMountV0 {
-	return schemas.Merge(b, other).(BindMountV0)
-}
-
 func (b BindMountV0) ParsedSchema() interface{} {
 	return schemas.ParsedBindMountV0()
 }

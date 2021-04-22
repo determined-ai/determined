@@ -30,14 +30,6 @@ func (e *EnvironmentImageMapV0) SetGPU(val string) {
 	e.RawGPU = &val
 }
 
-func (e EnvironmentImageMapV0) WithDefaults() EnvironmentImageMapV0 {
-	return schemas.WithDefaults(e).(EnvironmentImageMapV0)
-}
-
-func (e EnvironmentImageMapV0) Merge(other EnvironmentImageMapV0) EnvironmentImageMapV0 {
-	return schemas.Merge(e, other).(EnvironmentImageMapV0)
-}
-
 func (e EnvironmentImageMapV0) ParsedSchema() interface{} {
 	return schemas.ParsedEnvironmentImageMapV0()
 }

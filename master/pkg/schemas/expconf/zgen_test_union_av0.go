@@ -35,14 +35,6 @@ func (t *TestUnionAV0) SetCommonVal(val string) {
 	t.RawCommonVal = &val
 }
 
-func (t TestUnionAV0) WithDefaults() TestUnionAV0 {
-	return schemas.WithDefaults(t).(TestUnionAV0)
-}
-
-func (t TestUnionAV0) Merge(other TestUnionAV0) TestUnionAV0 {
-	return schemas.Merge(t, other).(TestUnionAV0)
-}
-
 func (t TestUnionAV0) ParsedSchema() interface{} {
 	return schemas.ParsedTestUnionAV0()
 }

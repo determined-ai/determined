@@ -8,55 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SingleConfigV0) Metric() string {
-	return s.RawMetric
-}
-
-func (s *SingleConfigV0) SetMetric(val string) {
-	s.RawMetric = val
-}
-
-func (s SingleConfigV0) SmallerIsBetter() bool {
-	if s.RawSmallerIsBetter == nil {
-		panic("You must call WithDefaults on SingleConfigV0 before .RawSmallerIsBetter")
-	}
-	return *s.RawSmallerIsBetter
-}
-
-func (s *SingleConfigV0) SetSmallerIsBetter(val bool) {
-	s.RawSmallerIsBetter = &val
-}
-
-func (s SingleConfigV0) SourceTrialID() *int {
-	return s.RawSourceTrialID
-}
-
-func (s *SingleConfigV0) SetSourceTrialID(val *int) {
-	s.RawSourceTrialID = val
-}
-
-func (s SingleConfigV0) SourceCheckpointUUID() *string {
-	return s.RawSourceCheckpointUUID
-}
-
-func (s *SingleConfigV0) SetSourceCheckpointUUID(val *string) {
-	s.RawSourceCheckpointUUID = val
-}
-
 func (s SingleConfigV0) MaxLength() LengthV0 {
-	return s.RawMaxLength
+	if s.RawMaxLength == nil {
+		panic("You must call WithDefaults on SingleConfigV0 before .RawMaxLength")
+	}
+	return *s.RawMaxLength
 }
 
 func (s *SingleConfigV0) SetMaxLength(val LengthV0) {
-	s.RawMaxLength = val
-}
-
-func (s SingleConfigV0) WithDefaults() SingleConfigV0 {
-	return schemas.WithDefaults(s).(SingleConfigV0)
-}
-
-func (s SingleConfigV0) Merge(other SingleConfigV0) SingleConfigV0 {
-	return schemas.Merge(s, other).(SingleConfigV0)
+	s.RawMaxLength = &val
 }
 
 func (s SingleConfigV0) ParsedSchema() interface{} {

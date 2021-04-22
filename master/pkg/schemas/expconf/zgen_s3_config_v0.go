@@ -8,45 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s S3ConfigV0) SaveExperimentBest() int {
-	if s.RawSaveExperimentBest == nil {
-		panic("You must call WithDefaults on S3ConfigV0 before .RawSaveExperimentBest")
-	}
-	return *s.RawSaveExperimentBest
-}
-
-func (s *S3ConfigV0) SetSaveExperimentBest(val int) {
-	s.RawSaveExperimentBest = &val
-}
-
-func (s S3ConfigV0) SaveTrialBest() int {
-	if s.RawSaveTrialBest == nil {
-		panic("You must call WithDefaults on S3ConfigV0 before .RawSaveTrialBest")
-	}
-	return *s.RawSaveTrialBest
-}
-
-func (s *S3ConfigV0) SetSaveTrialBest(val int) {
-	s.RawSaveTrialBest = &val
-}
-
-func (s S3ConfigV0) SaveTrialLatest() int {
-	if s.RawSaveTrialLatest == nil {
-		panic("You must call WithDefaults on S3ConfigV0 before .RawSaveTrialLatest")
-	}
-	return *s.RawSaveTrialLatest
-}
-
-func (s *S3ConfigV0) SetSaveTrialLatest(val int) {
-	s.RawSaveTrialLatest = &val
-}
-
 func (s S3ConfigV0) Bucket() string {
-	return s.RawBucket
+	if s.RawBucket == nil {
+		panic("You must call WithDefaults on S3ConfigV0 before .RawBucket")
+	}
+	return *s.RawBucket
 }
 
 func (s *S3ConfigV0) SetBucket(val string) {
-	s.RawBucket = val
+	s.RawBucket = &val
 }
 
 func (s S3ConfigV0) AccessKey() string {
@@ -77,14 +47,6 @@ func (s S3ConfigV0) EndpointURL() *string {
 
 func (s *S3ConfigV0) SetEndpointURL(val *string) {
 	s.RawEndpointURL = val
-}
-
-func (s S3ConfigV0) WithDefaults() S3ConfigV0 {
-	return schemas.WithDefaults(s).(S3ConfigV0)
-}
-
-func (s S3ConfigV0) Merge(other S3ConfigV0) S3ConfigV0 {
-	return schemas.Merge(s, other).(S3ConfigV0)
 }
 
 func (s S3ConfigV0) ParsedSchema() interface{} {

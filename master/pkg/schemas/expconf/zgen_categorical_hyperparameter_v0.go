@@ -16,14 +16,6 @@ func (c *CategoricalHyperparameterV0) SetVals(val []interface{}) {
 	c.RawVals = val
 }
 
-func (c CategoricalHyperparameterV0) WithDefaults() CategoricalHyperparameterV0 {
-	return schemas.WithDefaults(c).(CategoricalHyperparameterV0)
-}
-
-func (c CategoricalHyperparameterV0) Merge(other CategoricalHyperparameterV0) CategoricalHyperparameterV0 {
-	return schemas.Merge(c, other).(CategoricalHyperparameterV0)
-}
-
 func (c CategoricalHyperparameterV0) ParsedSchema() interface{} {
 	return schemas.ParsedCategoricalHyperparameterV0()
 }

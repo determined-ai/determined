@@ -24,14 +24,6 @@ func (e *EnvironmentVariablesMapV0) SetGPU(val []string) {
 	e.RawGPU = val
 }
 
-func (e EnvironmentVariablesMapV0) WithDefaults() EnvironmentVariablesMapV0 {
-	return schemas.WithDefaults(e).(EnvironmentVariablesMapV0)
-}
-
-func (e EnvironmentVariablesMapV0) Merge(other EnvironmentVariablesMapV0) EnvironmentVariablesMapV0 {
-	return schemas.Merge(e, other).(EnvironmentVariablesMapV0)
-}
-
 func (e EnvironmentVariablesMapV0) ParsedSchema() interface{} {
 	return schemas.ParsedEnvironmentVariablesMapV0()
 }

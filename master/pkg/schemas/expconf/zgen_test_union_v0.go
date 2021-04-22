@@ -18,34 +18,6 @@ func (t TestUnionV0) GetUnionMember() interface{} {
 	panic("no union member defined")
 }
 
-func (t TestUnionV0) CommonVal() string {
-	if t.RawA != nil {
-		return t.RawA.CommonVal()
-	}
-	if t.RawB != nil {
-		return t.RawB.CommonVal()
-	}
-	panic("no union member defined")
-}
-
-func (t TestUnionV0) Type() string {
-	if t.RawA != nil {
-		return t.RawA.Type()
-	}
-	if t.RawB != nil {
-		return t.RawB.Type()
-	}
-	panic("no union member defined")
-}
-
-func (t TestUnionV0) WithDefaults() TestUnionV0 {
-	return schemas.WithDefaults(t).(TestUnionV0)
-}
-
-func (t TestUnionV0) Merge(other TestUnionV0) TestUnionV0 {
-	return schemas.Merge(t, other).(TestUnionV0)
-}
-
 func (t TestUnionV0) ParsedSchema() interface{} {
 	return schemas.ParsedTestUnionV0()
 }

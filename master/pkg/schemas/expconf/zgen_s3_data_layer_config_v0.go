@@ -9,19 +9,25 @@ import (
 )
 
 func (s S3DataLayerConfigV0) Bucket() string {
-	return s.RawBucket
+	if s.RawBucket == nil {
+		panic("You must call WithDefaults on S3DataLayerConfigV0 before .RawBucket")
+	}
+	return *s.RawBucket
 }
 
 func (s *S3DataLayerConfigV0) SetBucket(val string) {
-	s.RawBucket = val
+	s.RawBucket = &val
 }
 
 func (s S3DataLayerConfigV0) BucketDirectoryPath() string {
-	return s.RawBucketDirectoryPath
+	if s.RawBucketDirectoryPath == nil {
+		panic("You must call WithDefaults on S3DataLayerConfigV0 before .RawBucketDirectoryPath")
+	}
+	return *s.RawBucketDirectoryPath
 }
 
 func (s *S3DataLayerConfigV0) SetBucketDirectoryPath(val string) {
-	s.RawBucketDirectoryPath = val
+	s.RawBucketDirectoryPath = &val
 }
 
 func (s S3DataLayerConfigV0) LocalCacheContainerPath() *string {
@@ -62,14 +68,6 @@ func (s S3DataLayerConfigV0) EndpointURL() *string {
 
 func (s *S3DataLayerConfigV0) SetEndpointURL(val *string) {
 	s.RawEndpointURL = val
-}
-
-func (s S3DataLayerConfigV0) WithDefaults() S3DataLayerConfigV0 {
-	return schemas.WithDefaults(s).(S3DataLayerConfigV0)
-}
-
-func (s S3DataLayerConfigV0) Merge(other S3DataLayerConfigV0) S3DataLayerConfigV0 {
-	return schemas.Merge(s, other).(S3DataLayerConfigV0)
 }
 
 func (s S3DataLayerConfigV0) ParsedSchema() interface{} {

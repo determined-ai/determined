@@ -8,55 +8,26 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (a AdaptiveASHAConfigV0) Metric() string {
-	return a.RawMetric
-}
-
-func (a *AdaptiveASHAConfigV0) SetMetric(val string) {
-	a.RawMetric = val
-}
-
-func (a AdaptiveASHAConfigV0) SmallerIsBetter() bool {
-	if a.RawSmallerIsBetter == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawSmallerIsBetter")
-	}
-	return *a.RawSmallerIsBetter
-}
-
-func (a *AdaptiveASHAConfigV0) SetSmallerIsBetter(val bool) {
-	a.RawSmallerIsBetter = &val
-}
-
-func (a AdaptiveASHAConfigV0) SourceTrialID() *int {
-	return a.RawSourceTrialID
-}
-
-func (a *AdaptiveASHAConfigV0) SetSourceTrialID(val *int) {
-	a.RawSourceTrialID = val
-}
-
-func (a AdaptiveASHAConfigV0) SourceCheckpointUUID() *string {
-	return a.RawSourceCheckpointUUID
-}
-
-func (a *AdaptiveASHAConfigV0) SetSourceCheckpointUUID(val *string) {
-	a.RawSourceCheckpointUUID = val
-}
-
 func (a AdaptiveASHAConfigV0) MaxLength() LengthV0 {
-	return a.RawMaxLength
+	if a.RawMaxLength == nil {
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawMaxLength")
+	}
+	return *a.RawMaxLength
 }
 
 func (a *AdaptiveASHAConfigV0) SetMaxLength(val LengthV0) {
-	a.RawMaxLength = val
+	a.RawMaxLength = &val
 }
 
 func (a AdaptiveASHAConfigV0) MaxTrials() int {
-	return a.RawMaxTrials
+	if a.RawMaxTrials == nil {
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawMaxTrials")
+	}
+	return *a.RawMaxTrials
 }
 
 func (a *AdaptiveASHAConfigV0) SetMaxTrials(val int) {
-	a.RawMaxTrials = val
+	a.RawMaxTrials = &val
 }
 
 func (a AdaptiveASHAConfigV0) BracketRungs() []int {
@@ -120,14 +91,6 @@ func (a AdaptiveASHAConfigV0) StopOnce() bool {
 
 func (a *AdaptiveASHAConfigV0) SetStopOnce(val bool) {
 	a.RawStopOnce = &val
-}
-
-func (a AdaptiveASHAConfigV0) WithDefaults() AdaptiveASHAConfigV0 {
-	return schemas.WithDefaults(a).(AdaptiveASHAConfigV0)
-}
-
-func (a AdaptiveASHAConfigV0) Merge(other AdaptiveASHAConfigV0) AdaptiveASHAConfigV0 {
-	return schemas.Merge(a, other).(AdaptiveASHAConfigV0)
 }
 
 func (a AdaptiveASHAConfigV0) ParsedSchema() interface{} {

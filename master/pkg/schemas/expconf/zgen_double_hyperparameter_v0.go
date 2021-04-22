@@ -32,14 +32,6 @@ func (d *DoubleHyperparameterV0) SetCount(val *int) {
 	d.RawCount = val
 }
 
-func (d DoubleHyperparameterV0) WithDefaults() DoubleHyperparameterV0 {
-	return schemas.WithDefaults(d).(DoubleHyperparameterV0)
-}
-
-func (d DoubleHyperparameterV0) Merge(other DoubleHyperparameterV0) DoubleHyperparameterV0 {
-	return schemas.Merge(d, other).(DoubleHyperparameterV0)
-}
-
 func (d DoubleHyperparameterV0) ParsedSchema() interface{} {
 	return schemas.ParsedDoubleHyperparameterV0()
 }

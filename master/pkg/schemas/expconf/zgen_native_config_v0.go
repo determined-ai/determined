@@ -16,14 +16,6 @@ func (n *NativeConfigV0) SetCommand(val []string) {
 	n.RawCommand = val
 }
 
-func (n NativeConfigV0) WithDefaults() NativeConfigV0 {
-	return schemas.WithDefaults(n).(NativeConfigV0)
-}
-
-func (n NativeConfigV0) Merge(other NativeConfigV0) NativeConfigV0 {
-	return schemas.Merge(n, other).(NativeConfigV0)
-}
-
 func (n NativeConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedNativeConfigV0()
 }

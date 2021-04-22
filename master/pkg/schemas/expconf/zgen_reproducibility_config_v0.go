@@ -19,14 +19,6 @@ func (r *ReproducibilityConfigV0) SetExperimentSeed(val uint32) {
 	r.RawExperimentSeed = &val
 }
 
-func (r ReproducibilityConfigV0) WithDefaults() ReproducibilityConfigV0 {
-	return schemas.WithDefaults(r).(ReproducibilityConfigV0)
-}
-
-func (r ReproducibilityConfigV0) Merge(other ReproducibilityConfigV0) ReproducibilityConfigV0 {
-	return schemas.Merge(r, other).(ReproducibilityConfigV0)
-}
-
 func (r ReproducibilityConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedReproducibilityConfigV0()
 }

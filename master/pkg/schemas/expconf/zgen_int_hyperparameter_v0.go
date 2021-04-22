@@ -32,14 +32,6 @@ func (i *IntHyperparameterV0) SetCount(val *int) {
 	i.RawCount = val
 }
 
-func (i IntHyperparameterV0) WithDefaults() IntHyperparameterV0 {
-	return schemas.WithDefaults(i).(IntHyperparameterV0)
-}
-
-func (i IntHyperparameterV0) Merge(other IntHyperparameterV0) IntHyperparameterV0 {
-	return schemas.Merge(i, other).(IntHyperparameterV0)
-}
-
 func (i IntHyperparameterV0) ParsedSchema() interface{} {
 	return schemas.ParsedIntHyperparameterV0()
 }

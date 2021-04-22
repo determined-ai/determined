@@ -35,14 +35,6 @@ func (p *ProfilingConfigV0) SetEndOnBatch(val *int) {
 	p.RawEndOnBatch = val
 }
 
-func (p ProfilingConfigV0) WithDefaults() ProfilingConfigV0 {
-	return schemas.WithDefaults(p).(ProfilingConfigV0)
-}
-
-func (p ProfilingConfigV0) Merge(other ProfilingConfigV0) ProfilingConfigV0 {
-	return schemas.Merge(p, other).(ProfilingConfigV0)
-}
-
 func (p ProfilingConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedProfilingConfigV0()
 }

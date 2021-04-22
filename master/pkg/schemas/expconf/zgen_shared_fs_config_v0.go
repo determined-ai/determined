@@ -8,45 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SharedFSConfigV0) SaveExperimentBest() int {
-	if s.RawSaveExperimentBest == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .RawSaveExperimentBest")
-	}
-	return *s.RawSaveExperimentBest
-}
-
-func (s *SharedFSConfigV0) SetSaveExperimentBest(val int) {
-	s.RawSaveExperimentBest = &val
-}
-
-func (s SharedFSConfigV0) SaveTrialBest() int {
-	if s.RawSaveTrialBest == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .RawSaveTrialBest")
-	}
-	return *s.RawSaveTrialBest
-}
-
-func (s *SharedFSConfigV0) SetSaveTrialBest(val int) {
-	s.RawSaveTrialBest = &val
-}
-
-func (s SharedFSConfigV0) SaveTrialLatest() int {
-	if s.RawSaveTrialLatest == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .RawSaveTrialLatest")
-	}
-	return *s.RawSaveTrialLatest
-}
-
-func (s *SharedFSConfigV0) SetSaveTrialLatest(val int) {
-	s.RawSaveTrialLatest = &val
-}
-
 func (s SharedFSConfigV0) HostPath() string {
-	return s.RawHostPath
+	if s.RawHostPath == nil {
+		panic("You must call WithDefaults on SharedFSConfigV0 before .RawHostPath")
+	}
+	return *s.RawHostPath
 }
 
 func (s *SharedFSConfigV0) SetHostPath(val string) {
-	s.RawHostPath = val
+	s.RawHostPath = &val
 }
 
 func (s SharedFSConfigV0) ContainerPath() *string {
@@ -90,14 +60,6 @@ func (s SharedFSConfigV0) Propagation() string {
 
 func (s *SharedFSConfigV0) SetPropagation(val string) {
 	s.RawPropagation = &val
-}
-
-func (s SharedFSConfigV0) WithDefaults() SharedFSConfigV0 {
-	return schemas.WithDefaults(s).(SharedFSConfigV0)
-}
-
-func (s SharedFSConfigV0) Merge(other SharedFSConfigV0) SharedFSConfigV0 {
-	return schemas.Merge(s, other).(SharedFSConfigV0)
 }
 
 func (s SharedFSConfigV0) ParsedSchema() interface{} {

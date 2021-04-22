@@ -8,63 +8,37 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (a AsyncHalvingConfigV0) Metric() string {
-	return a.RawMetric
-}
-
-func (a *AsyncHalvingConfigV0) SetMetric(val string) {
-	a.RawMetric = val
-}
-
-func (a AsyncHalvingConfigV0) SmallerIsBetter() bool {
-	if a.RawSmallerIsBetter == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawSmallerIsBetter")
-	}
-	return *a.RawSmallerIsBetter
-}
-
-func (a *AsyncHalvingConfigV0) SetSmallerIsBetter(val bool) {
-	a.RawSmallerIsBetter = &val
-}
-
-func (a AsyncHalvingConfigV0) SourceTrialID() *int {
-	return a.RawSourceTrialID
-}
-
-func (a *AsyncHalvingConfigV0) SetSourceTrialID(val *int) {
-	a.RawSourceTrialID = val
-}
-
-func (a AsyncHalvingConfigV0) SourceCheckpointUUID() *string {
-	return a.RawSourceCheckpointUUID
-}
-
-func (a *AsyncHalvingConfigV0) SetSourceCheckpointUUID(val *string) {
-	a.RawSourceCheckpointUUID = val
-}
-
 func (a AsyncHalvingConfigV0) NumRungs() int {
-	return a.RawNumRungs
+	if a.RawNumRungs == nil {
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawNumRungs")
+	}
+	return *a.RawNumRungs
 }
 
 func (a *AsyncHalvingConfigV0) SetNumRungs(val int) {
-	a.RawNumRungs = val
+	a.RawNumRungs = &val
 }
 
 func (a AsyncHalvingConfigV0) MaxLength() LengthV0 {
-	return a.RawMaxLength
+	if a.RawMaxLength == nil {
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawMaxLength")
+	}
+	return *a.RawMaxLength
 }
 
 func (a *AsyncHalvingConfigV0) SetMaxLength(val LengthV0) {
-	a.RawMaxLength = val
+	a.RawMaxLength = &val
 }
 
 func (a AsyncHalvingConfigV0) MaxTrials() int {
-	return a.RawMaxTrials
+	if a.RawMaxTrials == nil {
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawMaxTrials")
+	}
+	return *a.RawMaxTrials
 }
 
 func (a *AsyncHalvingConfigV0) SetMaxTrials(val int) {
-	a.RawMaxTrials = val
+	a.RawMaxTrials = &val
 }
 
 func (a AsyncHalvingConfigV0) Divisor() float64 {
@@ -98,14 +72,6 @@ func (a AsyncHalvingConfigV0) StopOnce() bool {
 
 func (a *AsyncHalvingConfigV0) SetStopOnce(val bool) {
 	a.RawStopOnce = &val
-}
-
-func (a AsyncHalvingConfigV0) WithDefaults() AsyncHalvingConfigV0 {
-	return schemas.WithDefaults(a).(AsyncHalvingConfigV0)
-}
-
-func (a AsyncHalvingConfigV0) Merge(other AsyncHalvingConfigV0) AsyncHalvingConfigV0 {
-	return schemas.Merge(a, other).(AsyncHalvingConfigV0)
 }
 
 func (a AsyncHalvingConfigV0) ParsedSchema() interface{} {

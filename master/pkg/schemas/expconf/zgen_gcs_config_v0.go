@@ -8,53 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (g GCSConfigV0) SaveExperimentBest() int {
-	if g.RawSaveExperimentBest == nil {
-		panic("You must call WithDefaults on GCSConfigV0 before .RawSaveExperimentBest")
-	}
-	return *g.RawSaveExperimentBest
-}
-
-func (g *GCSConfigV0) SetSaveExperimentBest(val int) {
-	g.RawSaveExperimentBest = &val
-}
-
-func (g GCSConfigV0) SaveTrialBest() int {
-	if g.RawSaveTrialBest == nil {
-		panic("You must call WithDefaults on GCSConfigV0 before .RawSaveTrialBest")
-	}
-	return *g.RawSaveTrialBest
-}
-
-func (g *GCSConfigV0) SetSaveTrialBest(val int) {
-	g.RawSaveTrialBest = &val
-}
-
-func (g GCSConfigV0) SaveTrialLatest() int {
-	if g.RawSaveTrialLatest == nil {
-		panic("You must call WithDefaults on GCSConfigV0 before .RawSaveTrialLatest")
-	}
-	return *g.RawSaveTrialLatest
-}
-
-func (g *GCSConfigV0) SetSaveTrialLatest(val int) {
-	g.RawSaveTrialLatest = &val
-}
-
 func (g GCSConfigV0) Bucket() string {
-	return g.RawBucket
+	if g.RawBucket == nil {
+		panic("You must call WithDefaults on GCSConfigV0 before .RawBucket")
+	}
+	return *g.RawBucket
 }
 
 func (g *GCSConfigV0) SetBucket(val string) {
-	g.RawBucket = val
-}
-
-func (g GCSConfigV0) WithDefaults() GCSConfigV0 {
-	return schemas.WithDefaults(g).(GCSConfigV0)
-}
-
-func (g GCSConfigV0) Merge(other GCSConfigV0) GCSConfigV0 {
-	return schemas.Merge(g, other).(GCSConfigV0)
+	g.RawBucket = &val
 }
 
 func (g GCSConfigV0) ParsedSchema() interface{} {

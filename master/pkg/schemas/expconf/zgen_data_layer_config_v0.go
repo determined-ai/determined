@@ -21,14 +21,6 @@ func (d DataLayerConfigV0) GetUnionMember() interface{} {
 	panic("no union member defined")
 }
 
-func (d DataLayerConfigV0) WithDefaults() DataLayerConfigV0 {
-	return schemas.WithDefaults(d).(DataLayerConfigV0)
-}
-
-func (d DataLayerConfigV0) Merge(other DataLayerConfigV0) DataLayerConfigV0 {
-	return schemas.Merge(d, other).(DataLayerConfigV0)
-}
-
 func (d DataLayerConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedDataLayerConfigV0()
 }

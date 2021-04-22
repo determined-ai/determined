@@ -83,14 +83,6 @@ func (e *EnvironmentConfigV0) SetDropCapabilities(val []string) {
 	e.RawDropCapabilities = val
 }
 
-func (e EnvironmentConfigV0) WithDefaults() EnvironmentConfigV0 {
-	return schemas.WithDefaults(e).(EnvironmentConfigV0)
-}
-
-func (e EnvironmentConfigV0) Merge(other EnvironmentConfigV0) EnvironmentConfigV0 {
-	return schemas.Merge(e, other).(EnvironmentConfigV0)
-}
-
 func (e EnvironmentConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedEnvironmentConfigV0()
 }

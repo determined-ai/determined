@@ -98,6 +98,14 @@ func (e *ExperimentConfigV0) SetEnvironment(val EnvironmentConfigV0) {
 	e.RawEnvironment = &val
 }
 
+func (e ExperimentConfigV0) Hyperparameters() HyperparametersV0 {
+	return e.RawHyperparameters
+}
+
+func (e *ExperimentConfigV0) SetHyperparameters(val HyperparametersV0) {
+	e.RawHyperparameters = val
+}
+
 func (e ExperimentConfigV0) Internal() *InternalConfigV0 {
 	return e.RawInternal
 }
@@ -224,6 +232,17 @@ func (e *ExperimentConfigV0) SetSchedulingUnit(val int) {
 	e.RawSchedulingUnit = &val
 }
 
+func (e ExperimentConfigV0) Searcher() SearcherConfigV0 {
+	if e.RawSearcher == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RawSearcher")
+	}
+	return *e.RawSearcher
+}
+
+func (e *ExperimentConfigV0) SetSearcher(val SearcherConfigV0) {
+	e.RawSearcher = &val
+}
+
 func (e ExperimentConfigV0) Security() *SecurityConfigV0 {
 	return e.RawSecurity
 }
@@ -238,30 +257,6 @@ func (e ExperimentConfigV0) TensorboardStorage() *TensorboardStorageConfigV0 {
 
 func (e *ExperimentConfigV0) SetTensorboardStorage(val *TensorboardStorageConfigV0) {
 	e.RawTensorboardStorage = val
-}
-
-func (e ExperimentConfigV0) Hyperparameters() HyperparametersV0 {
-	return e.RawHyperparameters
-}
-
-func (e *ExperimentConfigV0) SetHyperparameters(val HyperparametersV0) {
-	e.RawHyperparameters = val
-}
-
-func (e ExperimentConfigV0) Searcher() SearcherConfigV0 {
-	return e.RawSearcher
-}
-
-func (e *ExperimentConfigV0) SetSearcher(val SearcherConfigV0) {
-	e.RawSearcher = val
-}
-
-func (e ExperimentConfigV0) WithDefaults() ExperimentConfigV0 {
-	return schemas.WithDefaults(e).(ExperimentConfigV0)
-}
-
-func (e ExperimentConfigV0) Merge(other ExperimentConfigV0) ExperimentConfigV0 {
-	return schemas.Merge(e, other).(ExperimentConfigV0)
 }
 
 func (e ExperimentConfigV0) ParsedSchema() interface{} {

@@ -9,19 +9,25 @@ import (
 )
 
 func (g GCSDataLayerConfigV0) Bucket() string {
-	return g.RawBucket
+	if g.RawBucket == nil {
+		panic("You must call WithDefaults on GCSDataLayerConfigV0 before .RawBucket")
+	}
+	return *g.RawBucket
 }
 
 func (g *GCSDataLayerConfigV0) SetBucket(val string) {
-	g.RawBucket = val
+	g.RawBucket = &val
 }
 
 func (g GCSDataLayerConfigV0) BucketDirectoryPath() string {
-	return g.RawBucketDirectoryPath
+	if g.RawBucketDirectoryPath == nil {
+		panic("You must call WithDefaults on GCSDataLayerConfigV0 before .RawBucketDirectoryPath")
+	}
+	return *g.RawBucketDirectoryPath
 }
 
 func (g *GCSDataLayerConfigV0) SetBucketDirectoryPath(val string) {
-	g.RawBucketDirectoryPath = val
+	g.RawBucketDirectoryPath = &val
 }
 
 func (g GCSDataLayerConfigV0) LocalCacheContainerPath() *string {
@@ -38,14 +44,6 @@ func (g GCSDataLayerConfigV0) LocalCacheHostPath() *string {
 
 func (g *GCSDataLayerConfigV0) SetLocalCacheHostPath(val *string) {
 	g.RawLocalCacheHostPath = val
-}
-
-func (g GCSDataLayerConfigV0) WithDefaults() GCSDataLayerConfigV0 {
-	return schemas.WithDefaults(g).(GCSDataLayerConfigV0)
-}
-
-func (g GCSDataLayerConfigV0) Merge(other GCSDataLayerConfigV0) GCSDataLayerConfigV0 {
-	return schemas.Merge(g, other).(GCSDataLayerConfigV0)
 }
 
 func (g GCSDataLayerConfigV0) ParsedSchema() interface{} {

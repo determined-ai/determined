@@ -35,14 +35,6 @@ func (d *DeviceV0) SetMode(val string) {
 	d.RawMode = &val
 }
 
-func (d DeviceV0) WithDefaults() DeviceV0 {
-	return schemas.WithDefaults(d).(DeviceV0)
-}
-
-func (d DeviceV0) Merge(other DeviceV0) DeviceV0 {
-	return schemas.Merge(d, other).(DeviceV0)
-}
-
 func (d DeviceV0) ParsedSchema() interface{} {
 	return schemas.ParsedDeviceV0()
 }
