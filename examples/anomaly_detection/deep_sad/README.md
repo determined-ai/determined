@@ -36,3 +36,4 @@ and run the main model via `det e create const_main.yaml . -f`.
 
 ## Results
 Both models should converge. Main model should have the final `test_auc` metric at ~97%.
+It should take about 12 minutes total to train both models on a p2.xlarge instance (using NVIDIA K80 GPUs).

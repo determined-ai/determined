@@ -1,4 +1,5 @@
 #!/bin/bash
+# This script assumes the master URL is set using DET_MASTER env variable.
 
 set -e
 

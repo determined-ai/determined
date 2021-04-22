@@ -1,3 +1,13 @@
+# PyTorch implementation of the Deep SAD method
+# adapted to Determined `PyTorchTrial` API and using MNIST dataset.
+#
+# `DeepSADAutoEncoderTrial` is based on `AETrainer`:
+# https://github.com/lukasruff/Deep-SAD-PyTorch/blob/master/src/optim/ae_trainer.py
+# `DeepSADMainTrial` is based on `DeepSADTrainer`:
+# https://github.com/lukasruff/Deep-SAD-PyTorch/blob/master/src/optim/DeepSAD_trainer.py
+#
+# See README.md for more details and running instructions.
+
 from pathlib import Path
 from typing import Any, Dict, Optional, OrderedDict, Union
 
@@ -170,7 +180,7 @@ class DeepSADMainTrial(DeepSADAutoEncoderTrial):
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.dataset: Optional[TorchvisionDataset] = None
 
-        self.eps = 1e-6
+        self.eps = self.context.get_hparam("eps")
         self.eta = self.context.get_hparam("eta")
 
     def build_training_data_loader(self) -> pytorch.DataLoader:
@@ -192,8 +202,8 @@ class DeepSADMainTrial(DeepSADAutoEncoderTrial):
             self.eta * ((dist + self.eps) ** semi_targets.float()),
         )
         loss = torch.mean(losses)
-        loss.backward()
-        self.optimizer.step()
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
 
         return {"loss": loss}
 

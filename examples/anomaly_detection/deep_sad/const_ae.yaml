@@ -1,9 +1,10 @@
 description: deepsad_ae
 hyperparameters:
-  learning_rate: .0001
+  learning_rate: 1e-4
   weight_decay: 0.5e-4
   global_batch_size: 512
   eta: 1.0
+  eps: 1e-6
 records_per_epoch: 6447
 searcher:
   name: single
