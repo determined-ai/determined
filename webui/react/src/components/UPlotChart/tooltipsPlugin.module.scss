@@ -1,9 +1,8 @@
 .tooltip {
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
+  background: var(--theme-colors-underlay);
+  color: var(--theme-colors-monochrome-17);
   display: none;
-  font-size: 11px;
-  line-height: 13px;
+  font-size: var(--theme-sizes-font-tiny);
   position: absolute;
   z-index: 100;
 
@@ -22,8 +21,10 @@
     opacity: 0.5;
   }
   .color {
-    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-color: var(--theme-colors-overlay);
     border-radius: 100%;
+    border-style: solid;
+    border-width: var(--theme-sizes-border-width);
     display: inline-block;
     height: 9px;
     left: 0;
@@ -34,9 +35,9 @@
   }
 }
 .bar {
-  background: #7f7f7f;
+  background: var(--theme-colors-underlay);
   bottom: 0;
   position: absolute;
   top: 0;
-  width: 1px;
+  width: var(--theme-sizes-border-width);
 }

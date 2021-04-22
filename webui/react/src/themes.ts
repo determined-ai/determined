@@ -55,6 +55,7 @@ export interface Theme {
     monochrome: string[];
     overlay: string;
     states: Record<StateColors, string>;
+    underlay: string;
   };
   focus: {
     shadow: string;
@@ -159,6 +160,7 @@ export const lightTheme: Theme = {
       success: '#009900',
       suspended: '#cc9900',
     },
+    underlay: 'rgba(0, 0, 0, 0.65)',
   },
   focus: { shadow: '0 0 0 0.2rem rgba(0, 155, 222, 0.25)' },
   font: { family: 'Objektiv Mk3' },
