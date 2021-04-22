@@ -10,8 +10,8 @@ message User {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "username", "admin", "active" ] }
   };
-  reserved 1;
-  reserved "id";
+  // The user ID.
+  int32 id = 1;
   // The user login name of the user.
   string username = 2;
   // Bool denoting whether the account is an admin account.
