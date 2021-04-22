@@ -17,7 +17,6 @@ import { ExperimentBase, ExperimentVisualizationType, RawJson, ValidationHistory
 import { clone, isEqual } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
-import css from './ExperimentDetails.module.scss';
 import ExperimentOverview from './ExperimentDetails/ExperimentOverview';
 import ExperimentVisualization from './ExperimentDetails/ExperimentVisualization';
 
@@ -168,7 +167,7 @@ const ExperimentDetails: React.FC = () => {
         {experiment.archived && <Badge>ARCHIVED</Badge>}
       </Space>}
       title={`Experiment ${experimentId}`}>
-      <Tabs className={css.base} defaultActiveKey={tabKey} onChange={handleTabChange}>
+      <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           <ExperimentOverview
             experiment={experiment}

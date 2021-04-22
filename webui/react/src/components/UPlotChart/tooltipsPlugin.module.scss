@@ -1,0 +1,43 @@
+.tooltip {
+  background: var(--theme-colors-underlay);
+  color: var(--theme-colors-monochrome-17);
+  display: none;
+  font-size: var(--theme-sizes-font-tiny);
+  position: absolute;
+  z-index: 100;
+
+  .valueX,
+  .valueY,
+  .valueYEmpty {
+    margin: 5px 6px;
+    position: relative;
+    white-space: nowrap;
+  }
+  .valueY,
+  .valueYEmpty {
+    padding-left: 13px;
+  }
+  .valueYEmpty {
+    opacity: 0.5;
+  }
+  .color {
+    border-color: var(--theme-colors-overlay);
+    border-radius: 100%;
+    border-style: solid;
+    border-width: var(--theme-sizes-border-width);
+    display: inline-block;
+    height: 9px;
+    left: 0;
+    position: absolute;
+    top: 3px;
+    vertical-align: top;
+    width: 9px;
+  }
+}
+.bar {
+  background: var(--theme-colors-underlay);
+  bottom: 0;
+  position: absolute;
+  top: 0;
+  width: var(--theme-sizes-border-width);
+}

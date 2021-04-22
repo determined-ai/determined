@@ -27,7 +27,6 @@ import {
 } from 'types';
 import { getMetricValue, terminalRunStates } from 'utils/types';
 
-import css from './ExperimentOverview.module.scss';
 import { columns as defaultColumns } from './ExperimentOverview.table';
 
 interface Props {
@@ -189,8 +188,8 @@ const ExperimentOverview: React.FC<Props> = ({
   }, [ canceler ]);
 
   return (
-    <div className={css.base}>
-      <Row className={css.topRow} gutter={[ 16, 16 ]}>
+    <>
+      <Row gutter={[ 16, 16 ]}>
         <Col lg={10} span={24} xl={8} xxl={6}>
           <ExperimentInfoBox
             experiment={experiment}
@@ -224,7 +223,7 @@ const ExperimentOverview: React.FC<Props> = ({
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
-    </div>
+    </>
   );
 };
 
