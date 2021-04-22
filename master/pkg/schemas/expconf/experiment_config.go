@@ -16,7 +16,6 @@ import (
 //go:generate ../gen.sh
 // ExperimentConfigV0 is a versioned experiment config.
 type ExperimentConfigV0 struct {
-	// Fields which can be omitted or defined at the cluster level.
 	RawBindMounts               BindMountsConfigV0          `json:"bind_mounts"`
 	RawCheckpointPolicy         *string                     `json:"checkpoint_policy"`
 	RawCheckpointStorage        *CheckpointStorageConfigV0  `json:"checkpoint_storage"`
@@ -26,6 +25,7 @@ type ExperimentConfigV0 struct {
 	RawDescription              *string                     `json:"description"`
 	RawEntrypoint               *string                     `json:"entrypoint"`
 	RawEnvironment              *EnvironmentConfigV0        `json:"environment"`
+	RawHyperparameters          HyperparametersV0           `json:"hyperparameters"`
 	RawInternal                 *InternalConfigV0           `json:"internal,omitempty"`
 	RawLabels                   LabelsV0                    `json:"labels"`
 	RawMaxRestarts              *int                        `json:"max_restarts"`
@@ -38,12 +38,9 @@ type ExperimentConfigV0 struct {
 	RawReproducibility          *ReproducibilityConfigV0    `json:"reproducibility"`
 	RawResources                *ResourcesConfigV0          `json:"resources"`
 	RawSchedulingUnit           *int                        `json:"scheduling_unit"`
+	RawSearcher                 *SearcherConfigV0           `json:"searcher"`
 	RawSecurity                 *SecurityConfigV0           `json:"security,omitempty"`
 	RawTensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
-
-	// Fields which must be defined by the user.
-	RawHyperparameters HyperparametersV0 `json:"hyperparameters"`
-	RawSearcher        SearcherConfigV0  `json:"searcher"`
 }
 
 func runtimeDefaultDescription() *string {
@@ -174,6 +171,7 @@ type OptimizationsConfigV0 struct {
 	RawAutoTuneTensorFusion       *bool   `json:"auto_tune_tensor_fusion"`
 }
 
+//go:generate ../gen.sh
 // BindMountsConfigV0 is the configuration for bind mounts.
 type BindMountsConfigV0 []BindMountV0
 
@@ -196,6 +194,7 @@ type BindMountV0 struct {
 	RawPropagation   *string `json:"propagation"`
 }
 
+//go:generate ../gen.sh
 // DevicesConfigV0 is the configuration for devices.
 type DevicesConfigV0 []DeviceV0
 

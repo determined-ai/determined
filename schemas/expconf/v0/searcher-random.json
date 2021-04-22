@@ -5,7 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "max_trials",
         "max_length",
         "metric"
@@ -23,14 +25,27 @@
             "default": 0
         },
         "max_trials": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [

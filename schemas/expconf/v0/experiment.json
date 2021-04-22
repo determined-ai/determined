@@ -4,14 +4,12 @@
     "title": "ExperimentConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [
-        "hyperparameters",
-        "searcher"
-    ],
     "eventuallyRequired": [
         "checkpoint_storage",
         "description",
-        "reproducibility"
+        "hyperparameters",
+        "reproducibility",
+        "searcher"
     ],
     "properties": {
         "bind_mounts": {
@@ -19,10 +17,8 @@
                 "array",
                 "null"
             ],
-            "items": {
-                "$ref": "http://determined.ai/schemas/expconf/v0/bind-mount.json"
-            },
-            "default": []
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/bind-mounts.json"
         },
         "checkpoint_policy": {
             "enum": [
@@ -93,7 +89,12 @@
             "optionalRef": "http://determined.ai/schemas/expconf/v0/environment.json"
         },
         "hyperparameters": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
         },
         "internal": {
             "type": [
@@ -196,7 +197,12 @@
             "default": 100
         },
         "searcher": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/searcher.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher.json"
         },
         "security": {
             "type": [

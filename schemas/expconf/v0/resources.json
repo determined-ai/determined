@@ -18,10 +18,8 @@
                 "array",
                 "null"
             ],
-            "items": {
-                "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
-            },
-            "default": []
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/devices.json"
         },
         "max_slots": {
             "type": [

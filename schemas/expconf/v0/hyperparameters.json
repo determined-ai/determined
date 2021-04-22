@@ -3,12 +3,18 @@
     "$id": "http://determined.ai/schemas/expconf/v0/hyperparameters.json",
     "title": "Hyperparameters",
     "type": "object",
-    "required": [
+    "eventuallyRequired": [
         "global_batch_size"
     ],
     "properties": {
         "global_batch_size": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json"
+            "type": [
+                "integer",
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json"
         }
     },
     "additionalProperties": {

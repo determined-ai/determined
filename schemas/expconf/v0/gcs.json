@@ -5,7 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "bucket"
     ],
     "properties": {
@@ -13,7 +15,11 @@
             "const": "gcs"
         },
         "bucket": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "save_experiment_best": {
             "type": [

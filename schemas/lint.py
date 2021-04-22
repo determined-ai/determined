@@ -73,7 +73,7 @@ SUPPORTED_KEYWORDS_BY_TYPE = {
     "array": {"items", "default", "unionKey", "minLength", "checks", "$comment"},
     "string": {"pattern", "default", "unionKey", "checks", "$comment"},
     "boolean": {"default", "unionKey", "checks", "$comment"},
-    "null": {"default", "unionKey", "checks", "$comment"},
+    "null": {"default", "unionKey", "checks", "optionalRef", "$comment"},
 }
 
 TOPLEVEL_KEYWORDS = {"$schema", "$id", "title"}

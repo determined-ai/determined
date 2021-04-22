@@ -5,7 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "bucket",
         "bucket_directory_path"
     ],
@@ -14,10 +16,18 @@
             "const": "s3"
         },
         "bucket": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "bucket_directory_path": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "local_cache_host_path": {
             "type": [

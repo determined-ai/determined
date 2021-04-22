@@ -5,7 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "access_key",
         "bucket",
         "secret_key"
@@ -15,13 +17,25 @@
             "const": "s3"
         },
         "access_key": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "bucket": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "secret_key": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "endpoint_url": {
             "type": [

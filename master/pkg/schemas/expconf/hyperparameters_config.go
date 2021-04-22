@@ -23,6 +23,12 @@ type HyperparameterV0 struct {
 	RawCategoricalHyperparameter *CategoricalHyperparameterV0 `union:"type,categorical" json:"-"`
 }
 
+// Merge prevents recursive merging of hyperparameters.
+func (h HyperparameterV0) Merge(other interface{}) interface{} {
+	// Never merge partial hyperparameters.
+	return h
+}
+
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 	var parsed interface{}

@@ -5,7 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "host_path"
     ],
     "properties": {
@@ -13,7 +15,11 @@
             "const": "shared_fs"
         },
         "host_path": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "storage_path": {
             "type": [

@@ -1,0 +1,91 @@
+- name: bind mounts append when merged
+  merge_as: http://determined.ai/schemas/expconf/v0/bind-mounts.json
+  case:
+    - host_path: /asdf
+      container_path: /asdf
+  merge_src:
+    - host_path: /zxcv
+      container_path: /zxcv
+  merged:
+    - host_path: /asdf
+      container_path: /asdf
+      propagation:
+      read_only:
+    - host_path: /zxcv
+      container_path: /zxcv
+      propagation:
+      read_only:
+
+- name: devices append when merged
+  merge_as: http://determined.ai/schemas/expconf/v0/devices.json
+  case:
+    - host_path: /asdf
+      container_path: /asdf
+  merge_src:
+    - host_path: /zxcv
+      container_path: /zxcv
+  merged:
+    - host_path: /asdf
+      container_path: /asdf
+      mode:
+    - host_path: /zxcv
+      container_path: /zxcv
+      mode:
+
+- name: partially-filled checkpoint storage is allowed and merges correctly
+  merge_as: http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: gcs
+    bucket: of water
+    save_experiment_best: 3
+  merge_src:
+    save_experiment_best: 10
+    save_trial_best: 10
+    save_trial_latest: 10
+  merged:
+    type: gcs
+    bucket: of water
+    save_experiment_best: 3
+    save_trial_best: 10
+    save_trial_latest: 10
+
+- name: partially-filled searcher is allowed and merges correctly
+  merge_as: http://determined.ai/schemas/expconf/v0/searcher.json
+  case:
+    name: random
+    max_trials: 10
+    max_length:
+      epochs: 1
+  merge_src:
+    metric: sae
+    smaller_is_better: true
+    source_trial_id: 1
+    source_checkpoint_uuid: SOME-RANDOM-UUID
+  merged:
+    name: random
+    max_trials: 10
+    max_length:
+      epochs: 1
+    metric: sae
+    smaller_is_better: true
+    source_trial_id: 1
+    source_checkpoint_uuid: SOME-RANDOM-UUID
+    max_concurrent_trials:
+
+- name: hyperparameters are considered atomic and are never merged recursively
+  merge_as: http://determined.ai/schemas/expconf/v0/hyperparameter.json
+  case:
+    type: int
+    minval: 10
+    maxval: 100
+    count: null
+  merge_src:
+    type: int
+    minval: 50
+    maxval: 500
+    count: 5
+  merged:
+    type: int
+    minval: 10
+    maxval: 100
+    # count is an omitempty field
