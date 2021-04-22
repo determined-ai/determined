@@ -15,17 +15,17 @@ func (s State) String() string {
 }
 
 const (
-	// Assigned state denotes that the container has been assigned to an agent but has not started
+	// Assigned state means that the container has been assigned to an agent but has not started
 	// yet.
 	Assigned State = "ASSIGNED"
-	// Pulling state denotes that the container's base image is being pulled from the Docker registry.
+	// Pulling state means that the container's base image is being pulled from the Docker registry.
 	Pulling State = "PULLING"
-	// Starting state denotes that the image has been pulled and the container is being started, but
+	// Starting state means that the image has been pulled and the container is being started, but
 	// the container is not ready yet.
 	Starting State = "STARTING"
-	// Running state denotes that the service in the container is running.
+	// Running state means that the service in the container is running.
 	Running State = "RUNNING"
-	// Terminated state denotes that the container has exited or has been aborted
+	// Terminated state means that the container has exited or has been aborted.
 	Terminated State = "TERMINATED"
 )
 

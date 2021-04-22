@@ -55,7 +55,7 @@ type FetchBatchFn func(BatchRequest) (Batch, error)
 // TerminationCheckFn checks whether the log processing should stop or not.
 type TerminationCheckFn func() (bool, error)
 
-// BatchStreamProcessor is a actor that fetches batches and processes them. It handles common
+// BatchStreamProcessor is an actor that fetches batches and processes them. It handles common
 // logic around limits, offsets and backpressure.
 //
 // The type of batches produced by the FetchBatchFn must match those handled by the

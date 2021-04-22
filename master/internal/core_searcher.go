@@ -34,8 +34,7 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 // the database.
 func (m *Master) cleanUpExperimentSnapshots() {
 	log.Info("deleting all snapshots for terminal state experiments")
-	err := m.db.DeleteSnapshotsForTerminalExperiments()
-	if err != nil {
+	if err := m.db.DeleteSnapshotsForTerminalExperiments(); err != nil {
 		log.WithError(err).Errorf("cannot delete snapshots")
 	}
 }

@@ -475,7 +475,7 @@ func convertDBErrorsToNotFound(next echo.HandlerFunc) echo.HandlerFunc {
 
 func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) error {
 	c.Logger().Infof(
-		"New connection for RW Coordinator from: %v, %s",
+		"new connection for RW Coordinator from: %v, %s",
 		socket.RemoteAddr(),
 		c.Request().URL,
 	)
@@ -504,7 +504,7 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 		resourceRequest{resourceName, readLock, socket})
 	actorRef, ok := socketActor.Get().(*actor.Ref)
 	if !ok {
-		c.Logger().Errorf("Failed to get websocket actor")
+		c.Logger().Error("failed to get websocket actor")
 		return nil
 	}
 

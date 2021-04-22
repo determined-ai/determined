@@ -139,7 +139,7 @@ func (a *apiServer) sort(
 }
 
 // filter filters in place the provide reference to the slice. The check function is given an
-// index of the current element it will check to filter. Returning false will filter remove the
+// index of the current element it will check to filter. Returning false will remove the
 // element from the slice.
 func (a *apiServer) filter(values interface{}, check func(int) bool) {
 	rv := reflect.ValueOf(values)

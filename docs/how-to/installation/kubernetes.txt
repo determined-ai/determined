@@ -233,9 +233,9 @@ runing your cluster.
    configure this option create a Kuberentes TLS secret within the
    namespace where Determined is being installed and set ``tlsSecret``
    to be the name of this secret. Users will also have to set
-   ``useNodePortForMaster`` to ``true``. Once the the NodePort service
-   is created, users can configure an Ingress to forward TLS encrypted
-   data to the NodePord service.
+   ``useNodePortForMaster`` to ``true``. Once the NodePort service is
+   created, users can configure an Ingress to forward TLS encrypted data
+   to the NodePort service.
 
 An example of how to configure an Ingress, by default this Ingress will
 perform TLS termination in the load-balancer:
