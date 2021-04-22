@@ -1,5 +1,4 @@
 import { Button, Form, Input } from 'antd';
-import { CancelTokenSource } from 'axios';
 import React, { useCallback, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -7,16 +6,14 @@ import Link from 'components/Link';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
-import { getCurrentUser, isLoginFailure, login } from 'services/api';
+import { isLoginFailure, login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
-import { Credentials } from 'types';
 import { Storage } from 'utils/storage';
 
 import css from './DeterminedAuth.module.scss';
 
 interface Props {
   canceler: AbortController;
-  source: CancelTokenSource;
 }
 
 interface FromValues {
@@ -27,7 +24,7 @@ interface FromValues {
 const storage = new Storage({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
-const DeterminedAuth: React.FC<Props> = ({ canceler, source }: Props) => {
+const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const storeDispatch = useStoreDispatch();
   const [ isBadCredentials, setIsBadCredentials ] = useState(false);
   const [ canSubmit, setCanSubmit ] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
@@ -36,10 +33,14 @@ const DeterminedAuth: React.FC<Props> = ({ canceler, source }: Props) => {
     storeDispatch({ type: StoreAction.ShowUISpinner });
     setCanSubmit(false);
     try {
-      const options = { signal: canceler.signal };
-      const { token } = await login({ ...creds as Credentials, cancelToken: source.token });
+      const { token, user } = await login(
+        {
+          password: creds.password || '',
+          username: creds.username || '',
+        }
+        , { signal: canceler.signal },
+      );
       updateDetApi({ apiKey: `Bearer ${token}` });
-      const user = await getCurrentUser(options);
       storeDispatch({
         type: StoreAction.SetAuth,
         value: { isAuthenticated: true, token, user },
@@ -63,7 +64,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler, source }: Props) => {
     } finally {
       setCanSubmit(true);
     }
-  }, [ canceler, source, storeDispatch ]);
+  }, [ canceler, storeDispatch ]);
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;

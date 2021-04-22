@@ -1,7 +1,7 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, RunState } from 'types';
+import { CommandType, DetailedUser, RunState } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -45,6 +45,7 @@ export interface ApiState<T> {
 
 export interface LoginResponse {
   token: string;
+  user: DetailedUser;
 }
 
 export interface ApiSorter<T = string> {

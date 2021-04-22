@@ -9,7 +9,7 @@ import {
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import {
-  Agent, CommandTask, CommandType, Credentials, DetailedUser, DeterminedInfo,
+  Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo,
   ExperimentBase, ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails,
   TrialPagination, ValidationHistory,
 } from 'types';
@@ -19,7 +19,9 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
 /* Authentication */
 
-export const login = generateApi<Credentials, LoginResponse>(Config.login);
+export const login = generateDetApi<
+Api.V1LoginRequest, Api.V1LoginResponse, LoginResponse
+>(Config.login);
 
 /*
  * Login is an exception where the caller will perform the error handling,

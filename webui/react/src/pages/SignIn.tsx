@@ -1,5 +1,4 @@
 import { notification } from 'antd';
-import axios from 'axios';
 import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
@@ -29,7 +28,6 @@ const SignIn: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const queries: Queries = queryString.parse(location.search);
   const [ canceler ] = useState(new AbortController());
-  const [ source ] = useState(axios.CancelToken.source());
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -84,7 +82,7 @@ const SignIn: React.FC = () => {
         </Helmet>
         <div className={css.content}>
           <Logo type={LogoTypes.OnLightVertical} />
-          <DeterminedAuth canceler={canceler} source={source} />
+          <DeterminedAuth canceler={canceler} />
         </div>
       </div>
     </Page>
