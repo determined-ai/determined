@@ -74,6 +74,7 @@ const getElements = async (
 
   for (const element of elements) {
     const hash = (await element.text()).replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
+    console.log('HASH:', hash);
     if (!map[hash]) {
       map[hash] = true;
       dedupedElements.push(element);
