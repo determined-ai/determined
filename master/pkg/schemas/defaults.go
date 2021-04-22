@@ -152,7 +152,8 @@ func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 
 	// fmt.Printf("withDefaults on %v (%T) returning %T\n", name, obj.Interface(), out.Interface())
 
-	return out
+	// Always return the matching type.
+	return out.Convert(obj.Type())
 }
 
 // jsonNameFromJSONTag is based on encoding/json's parseTag().

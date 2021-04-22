@@ -134,11 +134,13 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 				out.SetMapIndex(key, cpy(srcVal))
 			}
 		}
-		return out
+		return out.Convert(obj.Type())
 
 	case reflect.Slice:
-		// Slices get copied only if the original was a nil pointer, which should always pass
-		// through the cpy() codepath and never through here.
+		// Slices are not merged by default.  If obj is nil we copy the src.
+		if obj.IsZero() {
+			return cpy(src)
+		}
 		return cpy(obj)
 
 	// Assert that none of the "complex" kinds are present.
