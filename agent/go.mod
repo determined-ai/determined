@@ -18,13 +18,13 @@ require (
 	github.com/goreleaser/goreleaser v0.140.0
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.2
-	github.com/labstack/echo v3.3.5+incompatible
+	github.com/labstack/echo/v4 v4.2.2
 	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil v2.19.9+incompatible
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
+	golang.org/x/sys v0.0.0-20210421221651-33663a62ff08
 	golang.org/x/tools v0.0.0-20200702044944-0cc1aa72b347
 	gotest.tools v2.2.0+incompatible
 )

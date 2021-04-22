@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 // CORSWithTargetedOrigin builds on labstack/echo CORS by dynamically setting the origin header to

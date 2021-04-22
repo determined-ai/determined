@@ -21,7 +21,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
