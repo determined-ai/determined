@@ -8,7 +8,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/userv1";
 // User is an account in the determined cluster.
 message User {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "username", "admin", "active" ] }
+    json_schema: { required: [ "username", "admin", "active", "id" ] }
   };
   // The user ID.
   int32 id = 1;
