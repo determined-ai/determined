@@ -111,14 +111,14 @@ const ExperimentVisualization: React.FC<Props> = ({
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
       hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
-      hasLoaded: batches && metrics && hpImportanceMap,
+      hasLoaded: batches && setMetrics,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: ![
         ExperimentSearcherName.Single,
         ExperimentSearcherName.Pbt,
       ].includes(experiment.config.searcher.name),
     };
-  }, [ batches, experiment, metrics, hpImportanceMap ]);
+  }, [ batches, experiment, metrics ]);
 
   const hpImportance = useMemo(() => {
     if (!hpImportanceMap) return {};
