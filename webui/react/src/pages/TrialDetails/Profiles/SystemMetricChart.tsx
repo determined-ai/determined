@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Spinner from 'components/Spinner';
@@ -28,7 +28,8 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
     filters.agentId,
     filters.gpuUuid,
   );
-  const uPlotRef = useRef<uPlot|undefined>();
+
+  const xMin = chartData && chartData[0] && chartData[0][0] ? chartData[0][0] : 0;
 
   useEffect(() => {
     setChartOptions({
@@ -46,6 +47,7 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
         ...systemMetrics.names.map((name) => ({ label: getUnitForMetricName(name) })),
       ],
       height: CHART_HEIGHT,
+      scales: xMin ? { x: { auto: false, max: xMin + (5 * 60), min: xMin } } : {},
       series: [
         { label: 'Time', value: '{HH}:{mm}:{ss}' },
         ...systemMetrics.names.map((name, index) => ({
@@ -57,21 +59,15 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
       ],
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     });
-  }, [ systemMetrics.names ]);
+  }, [ systemMetrics.names, xMin ]);
 
   useEffect(() => {
-    if (!uPlotRef.current) return;
-
-    const data = convertMetricsToUplotData(systemMetrics.dataByUnixTime);
-
-    const xMin = data[0][0] || 0;
-    uPlotRef.current.setScale('x', { max: xMin + (5 * 60), min: xMin });
-    setChartData(data);
-  }, [ systemMetrics.dataByUnixTime, uPlotRef ]);
+    setChartData(convertMetricsToUplotData(systemMetrics.dataByUnixTime));
+  }, [ systemMetrics.dataByUnixTime ]);
 
   return (
     <Spinner spinning={systemMetrics.isLoading}>
-      <UPlotChart data={chartData} options={chartOptions} ref={uPlotRef} />
+      <UPlotChart data={chartData} options={chartOptions} />
     </Spinner>
   );
 };
