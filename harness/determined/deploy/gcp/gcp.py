@@ -96,14 +96,14 @@ def terraform_init(configs: Dict, env: Dict) -> None:
         terraform_dir(configs),
     )
 
-    command = ["terraform init"]
+    command = ["terraform"]
+    command += ["-chdir={}".format(terraform_dir(configs))]
+    command += ["init"]
     command += [
         "-backend-config='path={}'".format(
             os.path.join(configs["local_state_path"], "terraform.tfstate")
         )
     ]
-
-    command += [terraform_dir(configs)]
 
     output = subprocess.Popen(" ".join(command), env=env, shell=True, stdout=sys.stdout)
     output.wait()
@@ -112,11 +112,12 @@ def terraform_init(configs: Dict, env: Dict) -> None:
 def terraform_plan(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
     vars_file_path = terraform_write_variables(configs, variables_to_exclude)
 
-    command = ["terraform", "plan"]
+    command = ["terraform"]
+    command += ["-chdir={}".format(terraform_dir(configs))]
+    command += ["plan"]
 
     command += ["-input=false"]
     command += [f"-var-file={vars_file_path}"]
-    command += [terraform_dir(configs)]
 
     run_command(" ".join(command), env)
 
@@ -124,12 +125,13 @@ def terraform_plan(configs: Dict, env: Dict, variables_to_exclude: List) -> None
 def terraform_apply(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
     vars_file_path = terraform_write_variables(configs, variables_to_exclude)
 
-    command = ["terraform", "apply"]
+    command = ["terraform"]
+    command += ["-chdir={}".format(terraform_dir(configs))]
+    command = ["apply"]
 
     command += ["-input=false"]
     command += ["-auto-approve"]
     command += [f"-var-file={vars_file_path}"]
-    command += [terraform_dir(configs)]
 
     run_command(" ".join(command), env)
 
@@ -281,12 +283,13 @@ def delete(configs: Dict, env: Dict) -> None:
     stop_master(compute, tf_vars)
     terminate_running_agents(compute, tf_vars)
 
-    command = ["terraform", "destroy"]
+    command = ["terraform"]
+    command += ["-chdir={}".format(terraform_dir(configs))]
+    command += ["destroy"]
 
     command += ["-input=false"]
     command += ["-auto-approve"]
     command += [f"-var-file={vars_file_path}"]
-    command += [terraform_dir(configs)]
 
     run_command(" ".join(command), env)
 
