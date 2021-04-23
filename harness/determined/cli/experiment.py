@@ -799,7 +799,7 @@ args_description = Cmd(
             download,
             "download checkpoints for an experiment",
             [
-                experiment_id_arg("experiment ID to cancel"),
+                experiment_id_arg("experiment ID to download"),
                 Arg(
                     "-o",
                     "--output-dir",
