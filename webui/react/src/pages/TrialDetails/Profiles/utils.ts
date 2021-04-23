@@ -120,7 +120,7 @@ export const useFetchMetrics = (
       setData({
         dataByBatch: { ...fnData.dataByBatch },
         dataByUnixTime: { ...fnData.dataByUnixTime },
-        isLoading: fnData.isLoading,
+        isLoading: false,
         names: fnData.names,
       });
     });
@@ -168,7 +168,6 @@ export const useFetchMetrics = (
           internalData.dataByUnixTime[unixTime][labelName] = value;
         });
 
-        internalData.isLoading = false;
         broadcastUpdate(internalData);
       },
     );

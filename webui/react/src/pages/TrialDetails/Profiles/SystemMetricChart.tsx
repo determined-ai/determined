@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
 import React, { useEffect, useRef, useState } from 'react';
-import uPlot, { Options } from 'uplot';
+import uPlot, { AlignedData } from 'uplot';
 
 import Spinner from 'components/Spinner';
-import useResize from 'hooks/useResize';
+import UPlotChart, { Options } from 'components/UPlotChart';
 import { CHART_HEIGHT } from 'pages/TrialDetails/TrialDetailsProfiles';
 import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
@@ -19,8 +19,8 @@ export interface Props {
 }
 
 const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
-  const [ chart, setChart ] = useState<uPlot>();
-  const chartRef = useRef<HTMLDivElement>(null);
+  const [ chartData, setChartData ] = useState<AlignedData>();
+  const [ chartOptions, setChartOptions ] = useState<Options>();
   const systemMetrics = useFetchMetrics(
     trial.id,
     MetricType.System,
@@ -28,11 +28,10 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
     filters.agentId,
     filters.gpuUuid,
   );
+  const uPlotRef = useRef<uPlot|undefined>();
 
   useEffect(() => {
-    if (!chartRef.current) return;
-
-    const options = {
+    setChartOptions({
       axes: [
         {
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -57,37 +56,22 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
         })),
       ],
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
-      width: chartRef.current.offsetWidth,
-    } as Options;
-
-    const plotChart = new uPlot(options, [ [] ], chartRef.current);
-    setChart(plotChart);
-
-    return () => {
-      setChart(undefined);
-      plotChart.destroy();
-    };
-  }, [ chartRef, systemMetrics.names ]);
+    });
+  }, [ systemMetrics.names ]);
 
   useEffect(() => {
-    if (!chart) return;
+    if (!uPlotRef.current) return;
+
     const data = convertMetricsToUplotData(systemMetrics.dataByUnixTime);
 
     const xMin = data[0][0] || 0;
-
-    chart.setScale('x', { max: xMin + (5 * 60), min: xMin });
-    chart.setData(data, false);
-  }, [ chart, systemMetrics ]);
-
-  // Resize the chart when resize events happen.
-  const resize = useResize(chartRef);
-  useEffect(() => {
-    if (chart) chart.setSize({ height: CHART_HEIGHT, width: resize.width });
-  }, [ chart, resize ]);
+    uPlotRef.current.setScale('x', { max: xMin + (5 * 60), min: xMin });
+    setChartData(data);
+  }, [ systemMetrics.dataByUnixTime, uPlotRef ]);
 
   return (
     <Spinner spinning={systemMetrics.isLoading}>
-      <div ref={chartRef} />
+      <UPlotChart data={chartData} options={chartOptions} ref={uPlotRef} />
     </Spinner>
   );
 };

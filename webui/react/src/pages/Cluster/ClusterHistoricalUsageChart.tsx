@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
-import React, { useEffect, useRef, useState } from 'react';
-import uPlot, { Options, Series } from 'uplot';
+import React, { useEffect, useState } from 'react';
+import uPlot, { AlignedData, Series } from 'uplot';
 
-import useResize from 'hooks/useResize';
+import UPlotChart, { Options } from 'components/UPlotChart';
 import { glasbeyColor } from 'utils/color';
 
 import { GroupBy } from './ClusterHistoricalUsage';
@@ -25,28 +25,22 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   hoursTotal,
   time,
 }: ClusterHistoricalUsageChartProps) => {
-  const [ chart, setChart ] = useState<uPlot>();
-  const chartRef = useRef<HTMLDivElement>(null);
+  const [ chartData, setChartData ] = useState<AlignedData>();
+  const [ chartOptions, setChartOptions ] = useState<Options>();
   const hasData = Object.keys(hoursByLabel).reduce((agg, label) => (
     agg || hoursByLabel[label].length > 0
   ), false);
-  const resize = useResize(chartRef);
 
   useEffect(() => {
-    if (!chartRef.current || !hasData) return;
-
     let dateFormat = 'MM-DD';
     let timeSeries: Series = { label: 'Day', value: '{YYYY}-{MM}-{DD}' };
     if (groupBy === GroupBy.Month) {
       dateFormat = 'YYYY-MM';
       timeSeries = { label: 'Month', value: '{YYYY}-{MM}' };
     }
-    const timeUnix: number[] = time.map(item => Date.parse(item) / 1000);
 
-    const data = [ timeUnix ];
     const series: Series[] = [ timeSeries ];
     if (hoursTotal) {
-      data.push(hoursTotal);
       series.push({
         label: 'total',
         show: false,
@@ -55,7 +49,6 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       });
     }
     Object.keys(hoursByLabel).forEach(label => {
-      data.push(hoursByLabel[label]);
       series.push({
         label,
         stroke: glasbeyColor(series.length - 1),
@@ -63,7 +56,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       });
     });
 
-    const options = {
+    setChartOptions({
       axes: [
         {
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -87,22 +80,23 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       height,
       series,
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
-      width: chartRef.current.offsetWidth,
-    } as Options;
-
-    const plotChart = new uPlot(options, data as uPlot.AlignedData, chartRef.current);
-    setChart(plotChart);
-
-    return () => {
-      setChart(undefined);
-      plotChart.destroy();
-    };
+    });
   }, [ groupBy, hasData, height, hoursByLabel, hoursTotal, time ]);
 
-  // Resize the chart when resize events happen.
   useEffect(() => {
-    if (chart) chart.setSize({ height, width: resize.width });
-  }, [ chart, height, resize ]);
+    const timeUnix: number[] = time.map(item => Date.parse(item) / 1000);
+
+    const data: AlignedData = [ timeUnix ];
+    if (hoursTotal) {
+      data.push(hoursTotal);
+    }
+
+    Object.keys(hoursByLabel).forEach(label => {
+      data.push(hoursByLabel[label]);
+    });
+
+    setChartData(data);
+  }, [ hoursByLabel, hoursTotal, time ]);
 
   if (!hasData) {
     return (<div>No data to plot.</div>);
@@ -110,7 +104,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
 
   return (
     <div className={css.base}>
-      <div ref={chartRef} />
+      <UPlotChart data={chartData} options={chartOptions} />
     </div>
   );
 };

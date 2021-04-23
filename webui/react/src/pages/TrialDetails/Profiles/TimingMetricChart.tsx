@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import uPlot, { Options } from 'uplot';
+import React, { useEffect, useState } from 'react';
+import uPlot, { AlignedData } from 'uplot';
 
 import Spinner from 'components/Spinner';
-import useResize from 'hooks/useResize';
+import UPlotChart, { Options } from 'components/UPlotChart';
 import { CHART_HEIGHT } from 'pages/TrialDetails/TrialDetailsProfiles';
 import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
@@ -15,14 +15,12 @@ export interface Props {
 }
 
 const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
-  const [ chart, setChart ] = useState<uPlot>();
-  const chartRef = useRef<HTMLDivElement>(null);
+  const [ chartData, setChartData ] = useState<AlignedData>();
+  const [ chartOptions, setChartOptions ] = useState<Options>();
   const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
 
   useEffect(() => {
-    if (!chartRef.current) return;
-
-    const options = {
+    setChartOptions({
       axes: [
         {
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -46,32 +44,16 @@ const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
         })),
       ],
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
-      width: chartRef.current.offsetWidth,
-    } as Options;
-
-    const plotChart = new uPlot(options, [ [] ], chartRef.current);
-    setChart(plotChart);
-
-    return () => {
-      setChart(undefined);
-      plotChart.destroy();
-    };
-  }, [ chartRef, timingMetrics.names ]);
+    });
+  }, [ timingMetrics.names ]);
 
   useEffect(() => {
-    if (!chart) return;
-    chart.setData(convertMetricsToUplotData(timingMetrics.dataByBatch));
-  }, [ chart, timingMetrics ]);
-
-  // Resize the chart when resize events happen.
-  const resize = useResize(chartRef);
-  useEffect(() => {
-    if (chart) chart.setSize({ height: CHART_HEIGHT, width: resize.width });
-  }, [ chart, resize ]);
+    setChartData(convertMetricsToUplotData(timingMetrics.dataByBatch));
+  }, [ timingMetrics ]);
 
   return (
     <Spinner spinning={timingMetrics.isLoading}>
-      <div ref={chartRef} />
+      <UPlotChart data={chartData} options={chartOptions} />
     </Spinner>
   );
 };
