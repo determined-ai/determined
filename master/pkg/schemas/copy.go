@@ -21,7 +21,7 @@ func cpy(v reflect.Value) reflect.Value {
 
 	case reflect.Interface:
 		if v.IsZero() {
-			return v.Elem()
+			return v
 		}
 		out = cpy(v.Elem())
 
@@ -72,5 +72,5 @@ func cpy(v reflect.Value) reflect.Value {
 		return v
 	}
 
-	return out
+	return out.Convert(v.Type())
 }
