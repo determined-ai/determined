@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // JSONErrorHandler sends a JSON response with a single "message" key containing the error message.

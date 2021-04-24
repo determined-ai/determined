@@ -8,7 +8,7 @@ import (
 
 	dcontainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"

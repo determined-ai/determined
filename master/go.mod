@@ -33,9 +33,10 @@ require (
 	github.com/jackc/pgconn v1.8.0
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
-	github.com/labstack/echo v3.3.5+incompatible
-	github.com/labstack/gommon v0.0.0-20180613044413-d6898124de91
+	github.com/labstack/echo/v4 v4.2.2
+	github.com/labstack/gommon v0.3.0
 	github.com/lib/pq v1.8.0 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/o1egl/paseto v1.0.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
@@ -52,11 +53,11 @@ require (
 	github.com/spf13/viper v1.7.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
-	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.uber.org/atomic v1.7.0 // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200602114024-627f9648deb9
+	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
+	golang.org/x/net v0.0.0-20210421230115-4e50805a0758
+	golang.org/x/sys v0.0.0-20210421221651-33663a62ff08 // indirect
 	golang.org/x/tools v0.0.0-20200702044944-0cc1aa72b347
 	google.golang.org/api v0.26.0
 	google.golang.org/grpc v1.29.1

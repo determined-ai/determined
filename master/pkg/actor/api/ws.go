@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 )
@@ -54,6 +54,8 @@ func (l *logger) Output() io.Writer     { return l.log.Out }
 
 func (l *logger) SetPrefix(p string) { /* Logrus uses formatters rather than prefixes. */ }
 func (l *logger) Prefix() string     { return "" }
+
+func (l *logger) SetHeader(h string) { /* Logrus uses formatters rather than headers. */ }
 
 func (l *logger) Print(i ...interface{})                    { l.log.Print(i...) }
 func (l *logger) Printf(format string, args ...interface{}) { l.log.Printf(format, args...) }

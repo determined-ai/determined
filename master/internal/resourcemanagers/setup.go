@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
