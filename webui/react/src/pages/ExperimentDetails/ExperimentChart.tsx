@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { AlignedData } from 'uplot';
 
 import ScaleSelectFilter, { Scale } from 'components/ScaleSelectFilter';
@@ -22,18 +22,37 @@ const ExperimentChart: React.FC<Props> = ({
   validationHistory,
   validationMetric,
 }: Props) => {
-  const [ chartData, setChartData ] = useState<AlignedData>();
-  const [ chartOptions, setChartOptions ] = useState<Options>();
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
   const chartTooltipData = useRef<ChartTooltip[][]>();
 
-  useEffect(() => {
-    const getXTooltipHeader = (xIndex: number): ChartTooltip => {
-      if (!chartTooltipData.current) return null;
-      return chartTooltipData.current[0][xIndex] || null;
-    };
+  const getXTooltipHeader = useCallback((xIndex: number): ChartTooltip => {
+    if (!chartTooltipData.current) return null;
+    return chartTooltipData.current[0][xIndex] || null;
+  }, []);
 
-    setChartOptions({
+  const chartData: AlignedData = useMemo(() => {
+    if (!startTime || !validationHistory) return [ [ ] ];
+
+    const startTimestamp = new Date(startTime).getTime();
+    const x: number[] = [];
+    const y: number[] = [];
+    const yTooltip: string[] = [];
+
+    validationHistory.forEach(validation => {
+      if (!validation.validationError) return;
+
+      const endTimestamp = new Date(validation.endTime).getTime();
+
+      x.push((endTimestamp - startTimestamp) / 1000);
+      y.push(validation.validationError);
+      yTooltip.push('Trial ' + validation.trialId);
+    });
+
+    chartTooltipData.current = [ yTooltip ];
+    return [ x, y ];
+  }, [ chartTooltipData, startTime, validationHistory ]);
+  const chartOptions: Options = useMemo(() => {
+    return {
       axes: [
         { label: 'Time Elapsed (sec)' },
         { label: 'Metric Value' },
@@ -56,30 +75,8 @@ const ExperimentChart: React.FC<Props> = ({
           width: 2,
         },
       ],
-    });
-  }, [ scale, validationMetric ]);
-
-  useEffect(() => {
-    if (!startTime || !validationHistory) return;
-
-    const startTimestamp = new Date(startTime).getTime();
-    const x: number[] = [];
-    const y: number[] = [];
-    const yTooltip: string[] = [];
-
-    validationHistory.forEach(validation => {
-      if (!validation.validationError) return;
-
-      const endTimestamp = new Date(validation.endTime).getTime();
-
-      x.push((endTimestamp - startTimestamp) / 1000);
-      y.push(validation.validationError);
-      yTooltip.push('Trial ' + validation.trialId);
-    });
-
-    chartTooltipData.current = [ yTooltip ];
-    setChartData([ x, y ]);
-  }, [ chartTooltipData, startTime, validationHistory ]);
+    };
+  }, [ getXTooltipHeader, scale, validationMetric ]);
 
   const options = <ScaleSelectFilter value={scale} onChange={setScale} />;
   const title = 'Best Validation Metric'

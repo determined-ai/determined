@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlotChart';
@@ -25,13 +25,21 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   hoursTotal,
   time,
 }: ClusterHistoricalUsageChartProps) => {
-  const [ chartData, setChartData ] = useState<AlignedData>();
-  const [ chartOptions, setChartOptions ] = useState<Options>();
-  const hasData = Object.keys(hoursByLabel).reduce((agg, label) => (
-    agg || hoursByLabel[label].length > 0
-  ), false);
+  const chartData: AlignedData = useMemo(() => {
+    const timeUnix: number[] = time.map(item => Date.parse(item) / 1000);
 
-  useEffect(() => {
+    const data: AlignedData = [ timeUnix ];
+    if (hoursTotal) {
+      data.push(hoursTotal);
+    }
+
+    Object.keys(hoursByLabel).forEach(label => {
+      data.push(hoursByLabel[label]);
+    });
+
+    return data;
+  }, [ hoursByLabel, hoursTotal, time ]);
+  const chartOptions: Options = useMemo(() => {
     let dateFormat = 'MM-DD';
     let timeSeries: Series = { label: 'Day', value: '{YYYY}-{MM}-{DD}' };
     if (groupBy === GroupBy.Month) {
@@ -56,7 +64,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       });
     });
 
-    setChartOptions({
+    return {
       axes: [
         {
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -80,23 +88,12 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
       height,
       series,
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
-    });
-  }, [ groupBy, hasData, height, hoursByLabel, hoursTotal, time ]);
-
-  useEffect(() => {
-    const timeUnix: number[] = time.map(item => Date.parse(item) / 1000);
-
-    const data: AlignedData = [ timeUnix ];
-    if (hoursTotal) {
-      data.push(hoursTotal);
-    }
-
-    Object.keys(hoursByLabel).forEach(label => {
-      data.push(hoursByLabel[label]);
-    });
-
-    setChartData(data);
-  }, [ hoursByLabel, hoursTotal, time ]);
+    };
+  }, [ groupBy, height, hoursByLabel, hoursTotal ]);
+  const hasData = useMemo(() => {
+    return Object.keys(hoursByLabel)
+      .reduce((agg, label) => agg || hoursByLabel[label].length > 0, false);
+  }, [ hoursByLabel ]);
 
   if (!hasData) {
     return (<div>No data to plot.</div>);

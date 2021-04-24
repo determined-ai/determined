@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Spinner from 'components/Spinner';
@@ -19,8 +19,6 @@ export interface Props {
 }
 
 const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
-  const [ chartData, setChartData ] = useState<AlignedData>();
-  const [ chartOptions, setChartOptions ] = useState<Options>();
   const systemMetrics = useFetchMetrics(
     trial.id,
     MetricType.System,
@@ -29,10 +27,16 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
     filters.gpuUuid,
   );
 
-  const xMin = chartData && chartData[0] && chartData[0][0] ? chartData[0][0] : 0;
+  const chartData: AlignedData = useMemo(() => {
+    return convertMetricsToUplotData(systemMetrics.dataByUnixTime);
+  }, [ systemMetrics.dataByUnixTime ]);
 
-  useEffect(() => {
-    setChartOptions({
+  const xMin = useMemo(() => {
+    return chartData && chartData[0] && chartData[0][0] ? chartData[0][0] : 0;
+  }, [ chartData ]);
+
+  const chartOptions: Options = useMemo(() => {
+    return {
       axes: [
         {
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -47,7 +51,7 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
         ...systemMetrics.names.map((name) => ({ label: getUnitForMetricName(name) })),
       ],
       height: CHART_HEIGHT,
-      scales: xMin ? { x: { auto: false, max: xMin + (5 * 60), min: xMin } } : {},
+      scales: xMin ? { x: { auto: false, max: xMin + (5 * 60), min: xMin } } : undefined,
       series: [
         { label: 'Time', value: '{HH}:{mm}:{ss}' },
         ...systemMetrics.names.map((name, index) => ({
@@ -58,12 +62,8 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
         })),
       ],
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
-    });
+    };
   }, [ systemMetrics.names, xMin ]);
-
-  useEffect(() => {
-    setChartData(convertMetricsToUplotData(systemMetrics.dataByUnixTime));
-  }, [ systemMetrics.dataByUnixTime ]);
 
   return (
     <Spinner spinning={systemMetrics.isLoading}>

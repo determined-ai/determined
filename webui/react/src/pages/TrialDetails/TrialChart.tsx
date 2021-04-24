@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -32,12 +32,12 @@ const TrialChart: React.FC<Props> = ({
   validationMetric,
   workloads,
 }: Props) => {
-  const [ chartData, setChartData ] = useState<AlignedData>();
-  const [ chartOptions, setChartOptions ] = useState<Options>();
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
-  const defaultMetric = metricNames.find(metricName => {
-    return metricName.name === validationMetric && metricName.type === MetricType.Validation;
-  });
+  const defaultMetric = useMemo(() => {
+    return metricNames.find(metricName => (
+      metricName.name === validationMetric && metricName.type === MetricType.Validation
+    ));
+  }, [ metricNames, validationMetric ]);
   const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
   const initMetric = defaultMetric || fallbackMetric;
   const storage = useStorage(STORAGE_PATH);
@@ -46,35 +46,7 @@ const TrialChart: React.FC<Props> = ({
     storage.getWithDefault(storageKey || '', initMetric ? [ initMetric ] : []),
   );
 
-  useEffect(() => {
-    setChartOptions({
-      axes: [
-        { label: 'Batches' },
-        { label: 'Metric Value' },
-      ],
-      height: 400,
-      legend: { show: false },
-      plugins: [ tooltipsPlugin(), trackAxis() ],
-      scales: {
-        x: { time: false },
-        y: { distr: scale === Scale.Log ? 3 : 1 },
-      },
-      series: [
-        { label: 'Batch' },
-        ...metricNames.map((metricName, index) => ({
-          label: metricName.name,
-          show: (metrics.find(metric => (
-            metricName.name === metric.name && metricName.type === metric.type
-          ))) != null,
-          spanGaps: true,
-          stroke: glasbeyColor(index),
-          width: 2,
-        })),
-      ],
-    });
-  }, [ metricNames, metrics, scale ]);
-
-  useEffect(() => {
+  const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number>> = {};
     metricNames.forEach((metric, index) => yValues[index] = {});
@@ -98,8 +70,35 @@ const TrialChart: React.FC<Props> = ({
       return xValues.map(xValue => yValue[xValue] || null);
     });
 
-    setChartData([ xValues, ...yValuesArray ]);
+    return [ xValues, ...yValuesArray ];
   }, [ metricNames, workloads ]);
+  const chartOptions: Options = useMemo(() => {
+    return {
+      axes: [
+        { label: 'Batches' },
+        { label: 'Metric Value' },
+      ],
+      height: 400,
+      legend: { show: false },
+      plugins: [ tooltipsPlugin(), trackAxis() ],
+      scales: {
+        x: { time: false },
+        y: { distr: scale === Scale.Log ? 3 : 1 },
+      },
+      series: [
+        { label: 'Batch' },
+        ...metricNames.map((metricName, index) => ({
+          label: metricName.name,
+          show: (metrics.find(metric => (
+            metricName.name === metric.name && metricName.type === metric.type
+          ))) != null,
+          spanGaps: true,
+          stroke: glasbeyColor(index),
+          width: 2,
+        })),
+      ],
+    };
+  }, [ metricNames, metrics, scale ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     setMetrics(value);

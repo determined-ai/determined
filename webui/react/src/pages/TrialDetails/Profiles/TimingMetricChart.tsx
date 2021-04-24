@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Spinner from 'components/Spinner';
@@ -15,12 +15,13 @@ export interface Props {
 }
 
 const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
-  const [ chartData, setChartData ] = useState<AlignedData>();
-  const [ chartOptions, setChartOptions ] = useState<Options>();
   const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
 
-  useEffect(() => {
-    setChartOptions({
+  const chartData: AlignedData = useMemo(() => {
+    return convertMetricsToUplotData(timingMetrics.dataByBatch);
+  }, [ timingMetrics ]);
+  const chartOptions: Options = useMemo(() => {
+    return {
       axes: [
         {
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -44,12 +45,8 @@ const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
         })),
       ],
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
-    });
+    };
   }, [ timingMetrics.names ]);
-
-  useEffect(() => {
-    setChartData(convertMetricsToUplotData(timingMetrics.dataByBatch));
-  }, [ timingMetrics ]);
 
   return (
     <Spinner spinning={timingMetrics.isLoading}>

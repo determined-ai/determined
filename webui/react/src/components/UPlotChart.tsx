@@ -27,7 +27,7 @@ const UPlotChart: React.FC<Props> = ({ data, options }: Props) => {
 
     const optionsExtended = uPlot.assign(
       {
-        cursor: { drag: { dist: 10, uni: 100, x: true, y: true } },
+        cursor: { drag: { dist: 5, uni: null, x: true, y: true } },
         width: chartDivRef.current.offsetWidth,
       },
       options,
