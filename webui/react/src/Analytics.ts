@@ -48,7 +48,36 @@ const getReadyAnalytics = (): SegmentAnalytics.AnalyticsJS | undefined => {
   return undefined;
 };
 
-export const setupAnalytics = async (auth: Auth, info: DeterminedInfo): Promise<void> => {
+export const loadAnalytics = async (info: DeterminedInfo): Promise<void> => {
+  if (!data.analytics) data.analytics = getReadyAnalytics();
+  if (!data.analytics || data.isEnabled) return;
+
+  /*
+   * Segment key should be 32 characters composed of upper case letters,
+   * lower case letters and numbers 0-9.
+   */
+  if (info.isTelemetryEnabled) {
+    try {
+      const telemetry = await getTelemetry({});
+      const isProperKey = telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(telemetry.segmentKey);
+      if (isProperKey) {
+        data.analytics.load(telemetry.segmentKey || '');
+        data.isEnabled = true;
+      }
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Failed to load telemetry.',
+        silent: true,
+        type: ErrorType.Server,
+      });
+    }
+  }
+};
+
+export const setupAnalytics = (auth: Auth, info: DeterminedInfo): void => {
   if (!data.analytics) data.analytics = getReadyAnalytics();
   if (!data.analytics || data.isEnabled) return;
 
@@ -58,30 +87,29 @@ export const setupAnalytics = async (auth: Auth, info: DeterminedInfo): Promise<
    */
   if (auth.user && info.isTelemetryEnabled) {
     try {
-      const telemetry = await getTelemetry({});
-      const isProperKey = telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(telemetry.segmentKey);
-      if (isProperKey) {
-        data.analytics.load(telemetry.segmentKey || '');
-        data.analytics.identify(auth.user.username, {
-          clusterId: info.clusterId,
-          clusterName: info.clusterName,
-          edition: 'OSS',
-          masterId: info.masterId,
-          version: info.version,
-        });
-        data.isEnabled = true;
-      }
+      data.analytics.identify(auth.user.username, {
+        clusterId: info.clusterId,
+        clusterName: info.clusterName,
+        edition: 'OSS',
+        masterId: info.masterId,
+        version: info.version,
+      });
     } catch (e) {
       handleError({
         error: e,
         level: ErrorLevel.Error,
         message: e.message,
-        publicMessage: 'Failed to get telemetry info',
+        publicMessage: 'Failed to set telemetry identity.',
         silent: true,
         type: ErrorType.Server,
       });
     }
   }
+};
+
+export const resetAnalytics = (): void => {
+  if (!data.analytics) data.analytics = getReadyAnalytics();
+  if (data.analytics) data.analytics.reset();
 };
 
 /*

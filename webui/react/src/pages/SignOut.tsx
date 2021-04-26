@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
+import { resetAnalytics } from 'Analytics';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
@@ -18,6 +19,7 @@ const SignOut: React.FC = () => {
       setIsSigningOut(true);
       try {
         await logout({});
+        resetAnalytics();
       } catch (e) {
         handleError({
           error: e,
@@ -28,6 +30,7 @@ const SignOut: React.FC = () => {
           type: ErrorType.Server,
         });
       }
+      resetAnalytics();
       updateDetApi({ apiKey: undefined });
       storeDispatch({ type: StoreAction.ResetAuth });
       history.push(paths.login(), location.state);

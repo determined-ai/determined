@@ -1,7 +1,7 @@
 import { Button, notification } from 'antd';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 
-import { setupAnalytics } from 'Analytics';
+import { loadAnalytics } from 'Analytics';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import Router from 'components/Router';
@@ -20,7 +20,7 @@ import { paths } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-  const { auth, info } = useStore();
+  const { info } = useStore();
   const [ canceler ] = useState(new AbortController());
 
   const fetchInfo = useFetchInfo(canceler);
@@ -33,7 +33,7 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    setupAnalytics(auth, info);
+    loadAnalytics(info);
 
     // Check to make sure the WebUI version matches the platform version.
     if (info.version !== process.env.VERSION) {
@@ -54,7 +54,7 @@ const AppView: React.FC = () => {
         placement: 'bottomRight',
       });
     }
-  }, [ auth, info ]);
+  }, [ info ]);
 
   useEffect(() => {
     return () => canceler.abort();

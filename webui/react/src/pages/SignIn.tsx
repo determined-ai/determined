@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useLocation } from 'react-router-dom';
 
+import { setupAnalytics } from 'Analytics';
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
@@ -24,7 +25,7 @@ interface Queries {
 
 const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
-  const { auth } = useStore();
+  const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
   const queries: Queries = queryString.parse(location.search);
   const [ canceler ] = useState(new AbortController());
@@ -43,6 +44,8 @@ const SignIn: React.FC = () => {
    */
   useEffect(() => {
     if (auth.isAuthenticated) {
+      setupAnalytics(auth, info);
+
       // Stop the spinner, prepping for user redirect.
       storeDispatch({ type: StoreAction.HideUISpinner });
 
@@ -57,8 +60,8 @@ const SignIn: React.FC = () => {
       storeDispatch({ type: StoreAction.HideUISpinner });
     }
   }, [
-    auth.checked,
-    auth.isAuthenticated,
+    auth,
+    info,
     location,
     queries,
     storeDispatch,
