@@ -23,9 +23,9 @@ const UserSelectFilterWithUsers: React.FC<Props> = ({ value }: Props) => {
     storeDispatch({
       type: StoreAction.SetUsers,
       value: [
-        { isActive: true, isAdmin: true, username: 'admin' },
-        { isActive: true, isAdmin: false, username: 'user' },
-        { isActive: false, isAdmin: false, username: 'inactive' },
+        { id: 1, isActive: true, isAdmin: true, username: 'admin' },
+        { id: 2, isActive: true, isAdmin: false, username: 'user' },
+        { id: 3, isActive: false, isAdmin: false, username: 'inactive' },
       ],
     });
   }, [ storeDispatch ]);

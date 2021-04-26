@@ -22,6 +22,7 @@ export interface User {
 }
 
 export interface DetailedUser extends User {
+  id: number;
   isActive: boolean;
   isAdmin: boolean;
 }
