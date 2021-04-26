@@ -1,7 +1,6 @@
 import { notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
-import { Helmet } from 'react-helmet';
 import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
@@ -75,11 +74,8 @@ const SignIn: React.FC = () => {
    * accessing a page from the browser when the user is already verified.
    */
   return auth.checked ? (
-    <Page>
+    <Page docTitle="Sign In">
       <div className={css.base}>
-        <Helmet>
-          <title>Sign In - Determined</title>
-        </Helmet>
         <div className={css.content}>
           <Logo type={LogoTypes.OnLightVertical} />
           <DeterminedAuth canceler={canceler} />
