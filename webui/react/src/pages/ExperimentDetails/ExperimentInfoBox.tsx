@@ -2,7 +2,6 @@ import { Button, Tooltip } from 'antd';
 import Modal from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useState } from 'react';
-import MonacoEditor from 'react-monaco-editor';
 import TimeAgo from 'timeago-react';
 
 import CheckpointModal from 'components/CheckpointModal';
@@ -29,6 +28,8 @@ export interface TopWorkloads {
   bestCheckpoint?: CheckpointDetail;
   bestValidation?: number;
 }
+
+const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
 
 const ExperimentInfoBox: React.FC<Props> = (
   { experiment, bestValidation, bestCheckpoint, onTagsChange }: Props,

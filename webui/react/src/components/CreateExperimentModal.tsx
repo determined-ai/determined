@@ -2,7 +2,6 @@ import { Alert, Button, Form, Input, Modal } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import MonacoEditor from 'react-monaco-editor';
 
 import { RawJson } from 'types';
 import { clone } from 'utils/data';
@@ -34,6 +33,8 @@ const getMaxLengthValue = (config: RawJson) => {
   const value = (Object.keys(config.searcher?.max_length || {}) || [])[1];
   return value ? parseInt(value) : undefined;
 };
+
+const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
 
 const CreateExperimentModal: React.FC<Props> = ({
   config = {},
