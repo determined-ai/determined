@@ -2,7 +2,7 @@ import { Button, notification } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 
-import { setupAnalytics } from 'Analytics';
+import { loadAnalytics } from 'Analytics';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
@@ -27,7 +27,7 @@ import { paths, serverAddress } from './routes/utils';
 const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
-  const { auth, info, ui } = useStore();
+  const { info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
   const { setThemeId } = useTheme();
 
@@ -42,7 +42,7 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    setupAnalytics(auth, info);
+    loadAnalytics(info);
 
     /*
      * Check to make sure the WebUI version matches the platform version.
@@ -67,7 +67,7 @@ const AppView: React.FC = () => {
         placement: 'bottomRight',
       });
     }
-  }, [ auth, info ]);
+  }, [ info ]);
 
   // Detect branding changes and update theme accordingly.
   useEffect(() => {
