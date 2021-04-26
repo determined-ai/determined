@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: Fix the issue of trial logs not rendering properly on Safari
+   14.

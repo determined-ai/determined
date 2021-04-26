@@ -448,6 +448,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     <Page {...props.pageProps} options={logOptions}>
       <Section
         bodyBorder
+        bodyDynamic
         bodyNoPadding
         filters={FilterComponent && <FilterComponent
           filter={filter}
