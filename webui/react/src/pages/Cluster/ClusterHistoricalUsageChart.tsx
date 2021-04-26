@@ -2,6 +2,7 @@ import dayjs from 'dayjs';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 
+import Message, { MessageType } from 'components/Message';
 import UPlotChart, { Options } from 'components/UPlotChart';
 import { glasbeyColor } from 'utils/color';
 
@@ -96,7 +97,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   }, [ hoursByLabel ]);
 
   if (!hasData) {
-    return (<div>No data to plot.</div>);
+    return <Message title="No data to plot." type={MessageType.Empty} />;
   }
 
   return (

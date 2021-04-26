@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
+import Message, { MessageType } from 'components/Message';
 import useResize from 'hooks/useResize';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
@@ -81,6 +82,17 @@ const UPlotChart: React.FC<Props> = ({ data, options }: Props) => {
       throttleFunc.cancel();
     };
   }, [ chart ]);
+
+  /*
+   * Don't plot the chart if there are no X values.
+   */
+  const hasData: boolean = useMemo(() => {
+    return !!(data && data[0].length > 0);
+  }, [ data ]);
+
+  if (!hasData) {
+    return <Message title="No data to plot." type={MessageType.Empty} />;
+  }
 
   return <div ref={chartDivRef} />;
 };
