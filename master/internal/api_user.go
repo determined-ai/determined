@@ -25,6 +25,7 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 		}
 	}
 	return &userv1.User{
+		Id:             int32(user.ID),
 		Username:       user.Username,
 		Admin:          user.Admin,
 		Active:         user.Active,
@@ -49,6 +50,7 @@ func getUser(d *db.PgDB, username string) (*userv1.User, error) {
 		}
 	}
 	return &userv1.User{
+		Id:             int32(user.ID),
 		Username:       user.Username,
 		Admin:          user.Admin,
 		Active:         user.Active,
