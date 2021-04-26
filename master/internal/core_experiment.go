@@ -434,7 +434,6 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	dbExp, validateOnly, taskSpec, err := m.parseCreateExperiment(&params)
-
 	if err != nil {
 		return nil, echo.NewHTTPError(
 			http.StatusBadRequest,
@@ -442,7 +441,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	if validateOnly {
-		return nil, c.NoContent(http.StatusNoContent)
+		return nil, nil
 	}
 
 	dbExp.OwnerID = &user.ID
@@ -459,7 +458,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		Config:   e.Config,
 		Labels:   make([]string, 0),
 	}
-	return c.JSON(http.StatusCreated, response), nil
+	return response, nil
 }
 
 func (m *Master) postExperimentKill(c echo.Context) (interface{}, error) {
