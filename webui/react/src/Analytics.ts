@@ -87,7 +87,7 @@ export const setupAnalytics = (auth: Auth, info: DeterminedInfo): void => {
    */
   if (auth.user && info.isTelemetryEnabled) {
     try {
-      data.analytics.identify(auth.user.username, {
+      data.analytics.identify(auth.user.id.toString(), {
         clusterId: info.clusterId,
         clusterName: info.clusterName,
         edition: 'OSS',
