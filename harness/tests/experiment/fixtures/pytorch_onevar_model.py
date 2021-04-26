@@ -106,8 +106,8 @@ class OneVarTrial(pytorch.PyTorchTrial):
 
         self.loss_fn = torch.nn.MSELoss()
 
-        self.cls_reducer = context.experimental.wrap_reducer(TriangleLabelSum(), name="cls_reducer")
-        self.fn_reducer = context.experimental.wrap_reducer(triangle_label_sum, name="fn_reducer")
+        self.cls_reducer = context.wrap_reducer(TriangleLabelSum(), name="cls_reducer")
+        self.fn_reducer = context.wrap_reducer(triangle_label_sum, name="fn_reducer")
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int

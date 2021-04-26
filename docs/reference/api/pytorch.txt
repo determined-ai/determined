@@ -95,10 +95,11 @@ Trial Context
 
 .. autoclass:: determined.pytorch.PyTorchTrialContext
    :members:
+   :inherited-members:
 
 .. autoclass:: determined.pytorch.PyTorchExperimentalContext
    :members:
-   :exclude-members: reduce_metrics, reset_reducers
+   :exclude-members: reduce_metrics, reset_reducers, wrap_reducer
 
 Gradient Clipping
 -----------------
@@ -117,8 +118,8 @@ to define custom reducers. Custom reducers can be either a function or
 an implementation of the :class:`determined.pytorch.MetricReducer`
 interface.
 
-See :meth:`determined.pytorch.PyTorchExperimentalContext.wrap_reducer()`
-for more details.
+See :meth:`context.wrap_reducer()
+<determined.pytorch.PyTorchTrialContext.wrap_reducer>` for more details.
 
 .. autoclass:: determined.pytorch.MetricReducer
    :members: reset, per_slot_reduce, cross_slot_reduce

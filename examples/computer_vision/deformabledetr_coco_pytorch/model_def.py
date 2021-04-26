@@ -222,7 +222,7 @@ class DeformableDETRTrial(PyTorchTrial):
         iou_types = tuple(
             k for k in ("segm", "bbox") if k in self.postprocessors.keys()
         )
-        self.reducer = self.context.experimental.wrap_reducer(
+        self.reducer = self.context.wrap_reducer(
             COCOReducer(self.base_ds, iou_types, self.cat_ids),
             for_training=False,
             for_validation=True,

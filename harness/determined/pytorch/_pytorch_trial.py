@@ -27,7 +27,7 @@ class PyTorchTrialController(det.LoopTrialController):
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
         self.context = cast(pytorch.PyTorchTrialContext, self.context)
-        self.context.experimental._set_allgather_fn(self.allgather_metrics)
+        self.context._set_allgather_fn(self.allgather_metrics)
         self.callbacks = self.trial.build_callbacks()
 
         check.gt_eq(
@@ -270,7 +270,7 @@ class PyTorchTrialController(det.LoopTrialController):
         self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Response:
         check.gt(step_id, 0)
-        self.context.experimental.reset_reducers()
+        self.context.reset_reducers()
 
         # Set the behavior of certain layers (e.g., dropout) that are different
         # between training and inference.
@@ -333,9 +333,7 @@ class PyTorchTrialController(det.LoopTrialController):
         # Ignore batch_metrics entirely for custom reducers; there's no guarantee that per-batch
         # metrics are even logical for a custom reducer.
         metrics["avg_metrics"].update(
-            self._convert_metrics_to_numpy(
-                self.context.experimental.reduce_metrics(for_training=True)
-            )
+            self._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
         )
 
         if not self.is_chief:
@@ -355,7 +353,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
     @torch.no_grad()  # type: ignore
     def _compute_validation_metrics(self) -> workload.Response:
-        self.context.experimental.reset_reducers()
+        self.context.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
         # different between training and inference.
         for model in self.context.models:
@@ -436,9 +434,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 num_inputs = self.context.get_per_slot_batch_size() * len(self.validation_loader)
 
         metrics.update(
-            self._convert_metrics_to_numpy(
-                self.context.experimental.reduce_metrics(for_training=False)
-            )
+            self._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
         )
 
         if self.hvd_config.use and any(

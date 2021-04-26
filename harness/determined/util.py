@@ -2,13 +2,14 @@ import collections
 import datetime
 import enum
 import inspect
+import logging
 import os
 import pathlib
 import random
 import shutil
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Set, cast
+from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, cast
 
 import numpy as np
 import simplejson
@@ -210,3 +211,22 @@ def filter_duplicates(
             duplicates.add(item)
         last_item = item
     return duplicates
+
+
+T = TypeVar("T", bound=Callable[..., Any])
+
+
+def deprecated(msg: str) -> Callable[[T], T]:
+    def make_wrapper(fn: T) -> T:
+        warned = False
+
+        def wrapper(*arg: List, **kwarg: Dict) -> Any:
+            nonlocal warned
+            if not warned:
+                warned = True
+                logging.warning(msg)
+            return fn(*arg, **kwarg)
+
+        return cast(T, wrapper)
+
+    return make_wrapper

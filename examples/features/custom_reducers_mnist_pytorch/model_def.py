@@ -96,7 +96,7 @@ class MNistTrial(PyTorchTrial):
         # We let name=None (by not specifiying name) to return a dictionary of metrics from a
         # single reducer (one f1_score per class).  If we were going to return a single metric
         # (rather than a dictionary of multiple metrics) we would have to specify the name here.
-        self.f1_score = self.context.experimental.wrap_reducer(PerClassF1Score())
+        self.f1_score = self.context.wrap_reducer(PerClassF1Score())
 
     def build_training_data_loader(self) -> DataLoader:
         if not self.data_downloaded:
