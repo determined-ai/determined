@@ -76,6 +76,13 @@
     border-radius: 0 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius);
   }
 }
+.base.bodyDynamic {
+  .body > :global(.ant-spin-nested-loading) {
+    height: 100%;
+    position: absolute;
+    width: 100%;
+  }
+}
 .base.bodyNoPadding {
   .body { padding: 0; }
 }

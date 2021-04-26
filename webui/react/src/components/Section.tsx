@@ -8,6 +8,7 @@ import Spinner from './Spinner';
 
 interface Props {
   bodyBorder?: boolean;
+  bodyDynamic?: boolean;
   bodyNoPadding?: boolean;
   bodyScroll?: boolean;
   divider?: boolean;
@@ -28,6 +29,7 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
 
   if (props.bodyBorder) classes.push(css.bodyBorder);
+  if (props.bodyDynamic) classes.push(css.bodyDynamic);
   if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.bodyScroll) classes.push(css.bodyScroll);
   if (props.divider) classes.push(css.divider);
