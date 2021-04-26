@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Tuple, Union
 import tensorflow as tf
 
 import determined as det
-from determined import _data_layer, estimator, horovod
+from determined import _data_layer, estimator, horovod, util
 from determined.common import check
 from determined.horovod import hvd
 
@@ -28,17 +28,22 @@ ServingInputReceiverFn = Callable[
 ]
 
 
-class EstimatorContext:
+class EstimatorContext(estimator._EstimatorReducerContext):
     """
     Base context class that contains runtime information for any Determined
     workflow that uses the ``tf.estimator`` API.
     """
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+        super().__init__()
         self.env = env
         self.hvd_config = hvd_config
 
-        self.experimental = EstimatorExperimentalContext(env=env, hvd_config=hvd_config)
+        self.experimental = EstimatorExperimentalContext(
+            env=env,
+            hvd_config=hvd_config,
+            parent=self,
+        )
 
         self.optimizer_initialized = False
         self.dataset_initialized = False
@@ -147,13 +152,6 @@ class EstimatorNativeContext(det.NativeContext, EstimatorContext):
             self._train_fn()
 
 
-def default_allgather_fn(metrics: Any) -> List:
-    """
-    A noop allgather implementation to ensure that custom reducers work outside of Determined.
-    """
-    return [metrics]
-
-
 class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     """
     Context class that contains experimental runtime information and features
@@ -163,107 +161,28 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     the ``context.experimental`` namespace.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+    def __init__(
+        self, env: det.EnvContext, hvd_config: horovod.HorovodContext, parent: EstimatorContext
+    ) -> None:
         super().__init__(env=env, hvd_config=hvd_config)
-        self._allgather_fn = default_allgather_fn  # type: Callable[[Any], List]
-        # allgather is not parallelizable, so we have to strictly order how they are placed in the
-        # graph via tf.control_dependencies().
-        self._allgather_ops = []  # type: List[tf.Operation]
+        self._parent = parent
 
-    def _set_allgather_fn(self, fn: Callable[[Any], List]) -> None:
-        self._allgather_fn = fn
-
+    @util.deprecated(
+        "context.experimental.allgather_metrics() is deprecated since 0.15.2 and will be removed "
+        "in a future version.  It is not intended to have a replacement; please contact Determined "
+        "if you depend on this experimental method."
+    )
     def allgather_metrics(self, metrics: Any) -> List:
-        return self._allgather_fn(metrics)
+        return self._parent._allgather_fn(metrics)
 
-    def _build_allgather_op(self, build_op_fn: Callable[[], tf.Operation]) -> tf.Operation:
-        """Build an op that uses allgather in a way that is safely sequentialized."""
-
-        with tf.compat.v1.control_dependencies(self._allgather_ops):
-            new_op = build_op_fn()
-        self._allgather_ops.append(new_op)
-        return new_op
-
-    def _reset_allgather_ops(self) -> None:
-        """Every Estimator evaluation happens on a clean graph, so forget the old operations."""
-        self._allgather_ops = []
-
+    @util.deprecated(
+        "context.experimental.make_metric() is deprecated since 0.15.2 and will be removed in a "
+        "future version; use context.make_metric() directly."
+    )
     def make_metric(
         self,
         metric: Any,
         reducer: Union[Callable[[List[Any]], Any], "estimator.MetricReducer"],
         numpy_dtype: Any,
     ) -> Tuple[tf.Operation, tf.Operation]:
-        """
-        Return an estimator-compatible validation metric which will be calculated properly, even
-        during distributed evaluation.
-
-        During distributed evaluation, many types of metrics calculated via ``tf.metrics`` or
-        ``tf.keras.metrics`` cannot be aggregated properly from the per-slot final metrics
-        calculated by each separate Estimator replica. One example is ``tf.metrics.auc``, where
-        the ROC AUC calculated over predictions and labels from a full dataset cannot be derived
-        from the individual ROC AUC metrics evaluated over several shards of a dataset.
-
-        Determined solves this problem by offering customizable metrics which are
-        Estimator-compatible.  For example, ROC AUC could be properly calculated during distributed
-        evaluation by calling ``sklearn.metrics.roc_auc_score`` in a custom ``reducer`` function
-        passed to ``make_metric``.
-
-        The ``metric`` input can be a tensor, a list of tensors, or a dictionary of tensors.
-        Nested structures are not supported.
-
-        The ``reducer`` should be either a single function that can calculate the metric from a
-        list of the per-batch values of ``metric``, or it can be an instance of a
-        :class:`det.estimator.MetricReducer<determined.estimator.MetricReducer>`.
-
-        The ``numpy_dtype`` must be a numpy dtype.  It is used internally to determined the output
-        type of the TensorFlow ``py_func`` to report the final metric result to the Estimator API.
-        The format of ``numpy_dtype`` should be anything that ``np.dtype()`` accepts.
-
-        The primary motivation for passing a function as the reducer is simplicity. Metrics from
-        all batches will be buffered in memory and passed over the network where they will be
-        reduced all at once. This introduces some overhead, but it is likely unnoticeable for
-        scalar metrics or on validation datasets of small or medium size. This single function
-        strategy may also be desirable for quick prototyping or for calculating metrics that are
-        difficult or impossible to calculate incrementally.
-
-        The primary motivation for passing a ``det.estimator.MetricsReducer`` as the reducer is
-        performance. ``det.estimator.MetricsReducer`` allows the user to incrementally calculate
-        the partial metric on each slot, taking advantage of distributed computation, minimizing
-        memory usage, and minimizing the network communication before the final
-        ``cross_slot_reduce`` operation.
-
-        Evaluation performance may be improved by precomputing as much as possible in the graph so
-        that less computation on the ``metric`` value is required within the reducer.
-
-        Example usage where ``reducer`` is a function:
-
-        .. code-block:: python
-
-           def my_mean_reducer(all_batch_metrics):
-               # Use hstack in case not all batches are equal length.
-               return np.mean(np.hstack(all_batch_metrics))
-
-           def my_estimator_model_function(features, labels, mode):
-               ...
-               if mode == tf.estimator.ModeKeys.EVAL:
-
-                   my_avg_prediction = context.experimental.make_metric(
-                        metric=predictions, reducer=my_mean_reducer, numpy_dtype=np.float32
-                   )
-
-                   return tf.estimator.EstimatorSpec(
-                       mode,
-                       loss=loss,
-                       eval_metric_ops={"my_avg_prediction": my_avg_prediction},
-                   )
-        """
-        if isinstance(reducer, estimator.MetricReducer):
-            return estimator._DistributedMetricMaker(
-                self, metric, reducer, numpy_dtype
-            ).make_metric()
-
-        simple_reducer = estimator._SimpleMetricReducer(reducer)
-        return estimator._DistributedMetricMaker(
-            self, metric, simple_reducer, numpy_dtype
-        ).make_metric()
+        return self._parent.make_metric(metric, reducer, numpy_dtype)

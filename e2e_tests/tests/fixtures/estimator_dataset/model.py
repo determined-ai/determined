@@ -94,8 +94,8 @@ class EstimatorDatasetTrial(estimator.EstimatorTrial):
         eval_metrics_ops = None
         if mode == tf.estimator.ModeKeys.EVAL:
             # Use the custom metrics API.
-            fn_sum = self.context.experimental.make_metric(labels, sum_reducer, np.float32)
-            cls_sum = self.context.experimental.make_metric(labels, SumReducer(), np.float32)
+            fn_sum = self.context.make_metric(labels, sum_reducer, np.float32)
+            cls_sum = self.context.make_metric(labels, SumReducer(), np.float32)
 
             eval_metrics_ops = {"label_sum_fn": fn_sum, "label_sum_cls": cls_sum}
 

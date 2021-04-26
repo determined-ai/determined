@@ -37,6 +37,7 @@ context object where these functions will be found will be in
 
 .. autoclass:: determined.estimator.EstimatorContext
    :members:
+   :inherited-members:
    :member-order: bysource
 
    EstimatorTrialContext always has a
@@ -50,7 +51,7 @@ context object where these functions will be found will be in
    experimental features.
 
 .. autoclass:: determined.estimator.EstimatorExperimentalContext
-   :members: cache_train_dataset, cache_validation_dataset, make_metric
+   :members: cache_train_dataset, cache_validation_dataset
    :member-order: bysource
 
 .. _estimators-custom-reducers:
@@ -64,9 +65,8 @@ for their metrics. Custom reducers can be either a function or an
 implementation of the :class:`determined.estimator.MetricReducer`
 interface.
 
-See
-:func:`determined.estimator.EstimatorExperimentalContext.make_metric()`
-for more details.
+See :func:`context.make_metric()
+<determined.estimator.EstimatorContext.make_metric>` for more details.
 
 .. autoclass:: determined.estimator.MetricReducer
    :members: accumulate, cross_slot_reduce
