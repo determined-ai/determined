@@ -3,7 +3,8 @@ import logging
 import queue
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from types import TracebackType
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import psutil
 
@@ -14,7 +15,6 @@ SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 
 LOG_NAMESPACE = "determined-profiler"
 
-SHOULD_PROFILE_GPUS = None
 try:
     import pynvml
 
@@ -28,8 +28,6 @@ except pynvml.NVMLError_LibraryNotFound:
     SHOULD_PROFILE_GPUS = False
 except Exception as e:
     raise RuntimeError(f"Could not set up pynvml, but it failed with an unexpected error: {e}")
-
-assert SHOULD_PROFILE_GPUS is not None
 
 
 class Measurement:
@@ -94,7 +92,9 @@ class ProfilerAgent:
         if self.is_enabled:
             # Set up timer to stop collecting after 5 minutes
             self.max_collection_seconds = 300
-            self.shutdown_timer = CustomTimer(self.max_collection_seconds, self._end_collection)
+            self.shutdown_timer = PreemptibleTimer(
+                self.max_collection_seconds, self._end_collection
+            )
 
             # Set up the thread responsible for making API calls
             self.send_queue = (
@@ -107,7 +107,7 @@ class ProfilerAgent:
                     trial_id, agent_id, self.send_queue
                 )
 
-            # TODO: Add data structure to batch timings and then send to SenderThread
+            # TODO [DET-5062]: Add data structure to batch timings and then send to SenderThread
             #       Does this need to be its own thread to flush correctly?
             # if self.timings_is_enabled:
             #     self.timings_batcher = TimingsBatcher()
@@ -132,7 +132,12 @@ class ProfilerAgent:
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         self.end()
 
     @property
@@ -170,11 +175,7 @@ class ProfilerAgent:
         self.sys_metric_collector_thread.update_batch_idx(self.current_batch_idx)
 
         # Check if we should start collecting metrics
-        if (
-            not self.is_active
-            and not self.has_finished
-            and self.current_batch_idx >= self.start_on_batch
-        ):
+        if not self.has_started and self.current_batch_idx >= self.start_on_batch:
             self._begin_collection()
 
         # Check if we should stop collecting metrics due to batch idx being exceeded
@@ -191,7 +192,7 @@ class ProfilerAgent:
 
         # Note: due to its simplicity, sender_thread doesn't need to be activated
         self.sys_metric_collector_thread.activate()
-        # TODO: Activate TimingBatcher as well
+        # TODO [DET-5062]: Activate TimingBatcher as well
         self.shutdown_timer.activate()
         self.has_started = True
 
@@ -215,7 +216,7 @@ class ProfilerAgent:
                     self.sys_metric_collector_thread.kill()
                     self.sys_metric_collector_thread.join()
 
-                # TODO: Shut down TimingBatcher as well
+                # TODO [DET-5062]: Shut down TimingBatcher as well
 
                 self.sender_thread.kill()
                 self.sender_thread.join()
@@ -225,14 +226,14 @@ class ProfilerAgent:
     def record_timing(self, timing: float) -> None:
         if not self.is_active:
             return
-        # TODO: Add new timing to TimingBatcher
+        # TODO [DET-5062]: Add new timing to TimingBatcher
 
 
-class CustomTimer(threading.Thread):
+class PreemptibleTimer(threading.Thread):
     """
     Version of threading.Timer that can be cleaned up if the timer is no longer needed
     ```
-    timer = CustomTimer(300, callback_fn, callback_args=[1,2,3])
+    timer = CustomTimer(300, callback_fn)
     timer.start()  # start the thread, not the timer
     timer.begin_timer()
 
@@ -243,14 +244,11 @@ class CustomTimer(threading.Thread):
     ```
     """
 
-    def __init__(
-        self, duration: int, callback: Callable, callback_args: Optional[List[Any]] = None
-    ):
+    def __init__(self, duration: int, callback: Callable):
         self.duration = duration
         self.callback = callback
-        self.callback_args = callback_args if callback_args is not None else []
         self._timer_has_begun = False
-        self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
+        self.control_queue: "queue.Queue[Union[StartMessage, ShutdownMessage]]" = queue.Queue()
 
         super().__init__(daemon=True)
 
@@ -273,7 +271,7 @@ class CustomTimer(threading.Thread):
                 return
         except queue.Empty:
             # Time is up!
-            self.callback(*self.callback_args)
+            self.callback()
 
 
 class SysMetricCollectorThread(threading.Thread):
@@ -546,7 +544,7 @@ class FreeMemoryCollector:
     def measure(self, batch_idx: int) -> Measurement:
         free_mem_bytes = psutil.virtual_memory().available
         timestamp = datetime.datetime.utcnow()
-        return Measurement(timestamp, batch_idx, free_mem_bytes * GIGA)
+        return Measurement(timestamp, batch_idx, free_mem_bytes / GIGA)
 
 
 class NetThroughputCollector:
@@ -575,8 +573,8 @@ class NetThroughputCollector:
         sent_throughput_bytes_per_second = delta_sent_bytes / time_delta
         recv_throughput_bytes_per_second = delta_recv_bytes / time_delta
 
-        sent_throughput_gigabits_per_second = sent_throughput_bytes_per_second * 8 * GIGA
-        recv_throughput_gigabits_per_second = recv_throughput_bytes_per_second * 8 * GIGA
+        sent_throughput_gigabits_per_second = sent_throughput_bytes_per_second * 8 / GIGA
+        recv_throughput_gigabits_per_second = recv_throughput_bytes_per_second * 8 / GIGA
 
         timestamp = datetime.datetime.fromtimestamp(end_time)
         return Measurement(timestamp, batch_idx, sent_throughput_gigabits_per_second), Measurement(
