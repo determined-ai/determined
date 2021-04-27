@@ -1,0 +1,11 @@
+:orphan:
+
+**Fixes**
+
+-  ``PyTorchTrial``'s
+   :meth:`~determined.pytorch.PyTorchTrialContext.to_device` no longer
+   throws errors on non-numeric Numpy-like data. As PyTorch is still
+   unable to move such data to the GPU, non-numeric arrays will simply
+   remain on the CPU. This is especially useful to NLP practitioners who
+   wish to make use of Numpy's string manipulations anywhere in their
+   data pipelines.
