@@ -1,8 +1,9 @@
 package kubernetes
 
 import (
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
