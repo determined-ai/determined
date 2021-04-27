@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState
+} from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -12,11 +14,15 @@ export interface Options extends Omit<uPlot.Options, 'width'> {
 interface Props {
   data?: AlignedData;
   options?: Options;
+  ref?: React.Ref<uPlot|undefined>;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
 
-const UPlotChart: React.FC<Props> = ({ data, options }: Props) => {
+const UPlotChart: React.FC<Props> = forwardRef((
+  { data, options }: Props,
+  ref?: React.Ref<uPlot|undefined>,
+) => {
   const [ chart, setChart ] = useState<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
   const hasData: boolean = useMemo(() => !!(data && data[0].length > 0), [ data ]);
@@ -84,9 +90,11 @@ const UPlotChart: React.FC<Props> = ({ data, options }: Props) => {
     };
   }, [ chart ]);
 
+  useImperativeHandle(ref, () => chart, [ chart ]);
+
   return hasData
     ? <div ref={chartDivRef} />
     : <Message title="No data to plot." type={MessageType.Empty} />;
-};
+});
 
 export default UPlotChart;
