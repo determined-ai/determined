@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  The custom metric reducer APIs for both :ref:`pytorch
+   <pytorch-custom-reducers>` and :ref:`estimators
+   <estimators-custom-reducers>` have been promoted from experimental
+   status to general availability.
