@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
+import HelmetDecorator from 'storybook/HelmetDecorator';
 import StoreDecorator from 'storybook/StoreDecorator';
 import { downloadText, simulateLogsDownload } from 'utils/browser';
 
@@ -7,7 +8,7 @@ import LogViewer, { LogViewerHandles } from './LogViewer';
 
 export default {
   component: LogViewer,
-  decorators: [ StoreDecorator ],
+  decorators: [ HelmetDecorator, StoreDecorator ],
   parameters: { layout: 'fullscreen' },
   title: 'LogViewer',
 };
