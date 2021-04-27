@@ -139,6 +139,10 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
 
+	case podPreemption:
+		ctx.Log().Info("received preemption command")
+		p.taskActor.System().Tell(p.taskActor, sproto.ReleaseResources{})
+
 	case sproto.ContainerLog:
 		p.receiveContainerLog(ctx, msg)
 

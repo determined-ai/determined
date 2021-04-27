@@ -60,6 +60,7 @@ type pods struct {
 	informer                *actor.Ref
 	nodeInformer            *actor.Ref
 	eventListener           *actor.Ref
+	preemptionListener      *actor.Ref
 	resourceRequestQueue    *actor.Ref
 	podNameToPodHandler     map[string]*actor.Ref
 	containerIDToPodHandler map[string]*actor.Ref
@@ -125,6 +126,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.startPodInformer(ctx)
 		p.startNodeInformer(ctx)
 		p.startEventListener(ctx)
+		p.startPreemptionListener(ctx)
 		ctx.Tell(p.cluster, sproto.SetPods{Pods: ctx.Self()})
 
 	case sproto.StartTaskPod:
@@ -140,6 +142,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
+
+	case podPreemption:
+		p.receivePodPreemption(ctx, msg)
 
 	case sproto.KillTaskPod:
 		p.receiveKillPod(ctx, msg)
@@ -162,6 +167,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return errors.Errorf("node informer failed")
 		case p.eventListener:
 			return errors.Errorf("event listener failed")
+		case p.preemptionListener:
+			return errors.Errorf("preemption listener failed")
 		case p.resourceRequestQueue:
 			return errors.Errorf("resource request actor failed")
 		}
@@ -259,6 +266,11 @@ func (p *pods) startEventListener(ctx *actor.Context) {
 		"event-listener", newEventListener(p.clientSet, p.namespace, ctx.Self()))
 }
 
+func (p *pods) startPreemptionListener(ctx *actor.Context) {
+	p.preemptionListener, _ = ctx.ActorOf(
+		"preemption-listener", newPreemptionListener(p.clientSet, p.namespace, ctx.Self()))
+}
+
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 	p.resourceRequestQueue, _ = ctx.ActorOf(
 		"kubernetes-resource-request-queue",
@@ -326,6 +338,16 @@ func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 		return
 	}
 
+	ctx.Tell(ref, msg)
+}
+
+func (p *pods) receivePodPreemption(ctx *actor.Context, msg podPreemption) {
+	ref, ok := p.podNameToPodHandler[msg.podName]
+	if !ok {
+		ctx.Log().WithField("pod-name", msg.podName).Debug(
+			"received preemption command for unregistered container id")
+		return
+	}
 	ctx.Tell(ref, msg)
 }
 
