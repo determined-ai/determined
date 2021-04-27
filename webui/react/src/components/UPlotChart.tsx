@@ -1,5 +1,5 @@
 import React, {
-  forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState
+  forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState,
 } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
