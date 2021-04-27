@@ -57,6 +57,17 @@ func (p *preemptionListener) Receive(ctx *actor.Context) error {
 }
 
 func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) error {
+	// check if there are pods to preempt on startup
+	pods, err := p.clientSet.CoreV1().Pods(p.namespace).List(
+		metaV1.ListOptions{LabelSelector: "determined-preemption"})
+	if err != nil {
+		return errors.Wrap(err,
+			"error in initializing preemption listener: checking for pods to preempt")
+	}
+	for _, pod := range pods.Items {
+		ctx.Tell(p.podsHandler, podPreemption{podName: pod.Name})
+	}
+
 	watch, err := p.clientSet.CoreV1().Pods(p.namespace).Watch(
 		metaV1.ListOptions{LabelSelector: "determined-preemption"})
 	if err != nil {
