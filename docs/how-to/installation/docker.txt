@@ -160,6 +160,7 @@ configuration file:
 .. code::
 
    docker run \
+       -v /var/run/docker.sock:/var/run/docker.sock \
        --name determined-agent \
        --network determined \
        -e DET_MASTER_HOST=<Determined master hostname or IP> \
