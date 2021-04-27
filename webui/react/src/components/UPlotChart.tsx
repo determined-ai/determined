@@ -49,7 +49,7 @@ const UPlotChart: React.FC<Props> = ({ data, options }: Props) => {
    */
   useEffect(() => {
     if (!chart || !data) return;
-    setTimeout(() => chart.setData(data), 1000);
+    chart.setData(data);
   }, [ chart, data ]);
 
   /*
