@@ -19,36 +19,37 @@ const SCROLL_THROTTLE_TIME = 500;
 const UPlotChart: React.FC<Props> = ({ data, options }: Props) => {
   const [ chart, setChart ] = useState<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
+  const hasData: boolean = useMemo(() => !!(data && data[0].length > 0), [ data ]);
 
   /*
    * Chart setup.
    */
   useEffect(() => {
-    if (!chartDivRef.current || !options) return;
+    if (!chartDivRef.current || !hasData || !options) return;
 
     const optionsExtended = uPlot.assign(
       {
         cursor: { drag: { dist: 5, uni: null, x: true, y: true } },
+        hooks: { ready: [ (chart: uPlot) => setChart(chart) ] },
         width: chartDivRef.current.offsetWidth,
       },
       options,
     );
 
     const plotChart = new uPlot(optionsExtended as uPlot.Options, [ [] ], chartDivRef.current);
-    setChart(plotChart);
 
     return () => {
       setChart(undefined);
       plotChart.destroy();
     };
-  }, [ chartDivRef, options ]);
+  }, [ chartDivRef, hasData, options ]);
 
   /*
    * Chart data.
    */
   useEffect(() => {
     if (!chart || !data) return;
-    chart.setData(data);
+    setTimeout(() => chart.setData(data), 1000);
   }, [ chart, data ]);
 
   /*
@@ -56,7 +57,7 @@ const UPlotChart: React.FC<Props> = ({ data, options }: Props) => {
    */
   const resize = useResize(chartDivRef);
   useEffect(() => {
-    if (!chart || !options?.height) return;
+    if (!chart || !options?.height || !resize.width) return;
     chart.setSize({ height: options.height, width: resize.width });
   }, [ chart, options?.height, resize ]);
 
@@ -83,18 +84,9 @@ const UPlotChart: React.FC<Props> = ({ data, options }: Props) => {
     };
   }, [ chart ]);
 
-  /*
-   * Don't plot the chart if there are no X values.
-   */
-  const hasData: boolean = useMemo(() => {
-    return !!(data && data[0].length > 0);
-  }, [ data ]);
-
-  if (!hasData) {
-    return <Message title="No data to plot." type={MessageType.Empty} />;
-  }
-
-  return <div ref={chartDivRef} />;
+  return hasData
+    ? <div ref={chartDivRef} />
+    : <Message title="No data to plot." type={MessageType.Empty} />;
 };
 
 export default UPlotChart;
