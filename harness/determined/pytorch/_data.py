@@ -394,13 +394,17 @@ def to_device(
 
     if isinstance(data, dict):
         return {k: to_device(v, device, warned_types) for k, v in data.items()}  # type: ignore
-    if isinstance(data, list):
+    elif isinstance(data, list):
         return [to_device(d, device, warned_types) for d in data]  # type: ignore
-    if isinstance(data, tuple):
+    elif isinstance(data, tuple):
         return tuple(to_device(d, device, warned_types) for d in data)  # type: ignore
-    if isinstance(data, np.ndarray):
-        return torch.from_numpy(data).to(device)
-    if hasattr(data, "to") and callable(data.to):  # type: ignore
+    elif isinstance(data, np.ndarray):
+        # Torch supports floats, complex floats, ints, uints, and bools as tensors.
+        # Those correspond to numpy dtype kinds: "f", "c", "i", "u", and "b", respectively.
+        # Do not attempt to convert any other kinds to tensors.
+        if data.dtype.kind in "fciub":
+            return torch.from_numpy(data).to(device)
+    elif hasattr(data, "to") and callable(data.to):  # type: ignore
         return data.to(device)  # type: ignore
 
     if type(data) not in warned_types:
@@ -409,4 +413,4 @@ def to_device(
             f"Was not able to move data item of type '{type(data).__name__}' to device."
         )
 
-    return data
+    return data  # type:ignore
